@@ -15,4 +15,6 @@ Een module is pas afgerond wanneer minimaal:
 - de product owner de module heeft goedgekeurd;
 - wijzigingen zijn gecommit en gepusht.
 
+Voor een databasemodule geldt aanvullend dat de schema-validatie en clientgeneratie slagen, migraties op een lege database werken, de seed herhaalbaar is en constraints en indexen aantoonbaar zijn gecontroleerd.
+
 Module 2A en Module 2B zijn handmatig goedgekeurd door de product owner. De product owner heeft expliciet opdracht gegeven de modules vóór commit en push als afgerond te registreren. Commit en push blijven afzonderlijke overdrachtsacties en worden niet zelfstandig door Codex uitgevoerd.

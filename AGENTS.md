@@ -12,6 +12,10 @@
 - Werk documentatie bij wanneer een besluit of functionaliteit verandert.
 - Schrijf zichtbare gebruikersinterface standaard in het Nederlands.
 - Gebruik technisch gangbaar Engels voor code, variabelen, functies, componenten, databasevelden en bestandsnamen.
+- Lees voor databasewijzigingen ook `docs/database.md`, `docs/data-dictionary.md`, `docs/ERD.md` en ADR-002.
+- Maak schemawijzigingen uitsluitend via controleerbare Prisma-migraties; wijzig een reeds toegepaste migratie niet achteraf.
+- Seed uitsluitend idempotente referentiedata en nooit secrets, persoonsgegevens of productiegegevens.
+- Behandel `npm run db:reset` als destructief en gebruik dit alleen expliciet op een lokale ontwikkeldatabase.
 
 Relevante documentatie:
 

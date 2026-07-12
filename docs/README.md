@@ -22,6 +22,13 @@ Deze map bevat de leidende projectdocumentatie. Lees vóór een wijziging minima
 - [Technical debt](technical-debt.md)
 - [ADR’s](adr/)
 
+## Database en datamodel
+
+- [Databasehandleiding](database.md)
+- [Datadictionary](data-dictionary.md)
+- [Entity Relationship Diagram](ERD.md)
+- [ADR-002: PostgreSQL, Prisma en datamodel](adr/ADR-002-postgresql-prisma-en-datamodel.md)
+
 Aanvullend staan de overkoepelende principes in [PROJECT_PRINCIPLES.md](../PROJECT_PRINCIPLES.md) en wijzigingen in [CHANGELOG.md](../CHANGELOG.md).
 
 Documentatie wordt bijgewerkt zodra een besluit, risico of functionaliteit verandert.

@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: workmatchr-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: workmatchr
+      POSTGRES_USER: workmatchr
+      POSTGRES_PASSWORD: workmatchr_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - workmatchr_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U workmatchr -d workmatchr"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+volumes:
+  workmatchr_postgres_data:
+    name: workmatchr-postgres-data

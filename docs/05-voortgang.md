@@ -66,6 +66,35 @@ De homepage is visueel goedgekeurd. De eerste indruk is licht, duidelijk en prof
 
 Module 2B is inhoudelijk en visueel goedgekeurd.
 
+## Module 3 — Database en datamodel
+
+**Status:** afgerond
+
+### Technisch opgeleverd
+
+- PostgreSQL 17 via Docker Compose met healthcheck en persistent volume;
+- Prisma ORM 7 met PostgreSQL-driveradapter en gedeelde lazy client;
+- volledig relationeel kernmodel met UUID's, UTC-tijdstempels, indexen en constraints;
+- initiële, op een lege database geteste migratie;
+- idempotente seed voor sectoren, specialismen en certificeringstypen;
+- databasehandleiding, datadictionary, ERD en ADR-002.
+
+### Afbakening
+
+Authenticatie, schermen, functionele intake, matching, betalingen en daadwerkelijke creditsverwerking zijn bewust niet gebouwd.
+
+### Acceptatieresultaat
+
+- de initiële migratie is succesvol op een lege database uitgevoerd;
+- de idempotente seed is tweemaal zonder duplicaten uitgevoerd;
+- de databaseverbinding werkt;
+- Prisma Studio is handmatig geopend en de referentiedata is gecontroleerd;
+- Docker-container `workmatchr-postgres` is healthy;
+- `.env` wordt door Git genegeerd en niet gevolgd;
+- de handmatige acceptatiecontrole door de product owner is geslaagd.
+
+Module 3 is technisch en handmatig goedgekeurd.
+
 ## Volgende module
 
-Module 3 — Database en datamodel is de volgende module en is nog niet gestart.
+Module 4 — Authenticatie en rollen is de volgende module en is nog niet gestart.

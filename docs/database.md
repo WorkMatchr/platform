@@ -1,0 +1,117 @@
+# Database WorkMatchr
+
+## Keuze
+
+WorkMatchr gebruikt PostgreSQL 17 voor lokale ontwikkeling en Prisma ORM 7 als schema-, migration- en data-accesslaag. Alle primaire sleutels zijn PostgreSQL-UUID’s en alle zakelijke timestamps gebruiken UTC via `timestamptz`.
+
+## Lokale ontwikkelomgeving
+
+- container: `workmatchr-postgres`;
+- hostpoort: `5432`;
+- database: `workmatchr`;
+- gebruiker: `workmatchr`;
+- volume: `workmatchr-postgres-data`;
+- verbindingswaarde: uitsluitend lokaal in `.env`;
+- veilige voorbeeldwaarde: `.env.example`.
+
+Starten en stoppen:
+
+```bash
+docker compose up -d
+docker compose stop
+```
+
+## Migrationstrategie
+
+- `prisma/schema.prisma` is de declaratieve bron.
+- Elke wijziging krijgt een nieuwe, controleerbare migration.
+- Migrations worden lokaal gemaakt met `npm run db:migrate -- --name <naam>`.
+- Productie gebruikt uitsluitend `npm run db:deploy`; de productieprovider is nog niet gekozen.
+- Handgeschreven SQL is toegestaan voor betrouwbare PostgreSQL-constraints die Prisma niet kan uitdrukken.
+- Een bestaande, gedeelde migration wordt niet achteraf gewijzigd.
+
+## Seedstrategie
+
+`prisma/seed.ts` seedt uitsluitend referentiedata via upsert op stabiele slugs:
+
+- 12 sectoren;
+- 13 specialismen;
+- 7 certificeringstypen.
+
+De seed bevat geen personen, organisaties, accounts, e-mailadressen of andere persoonsgegevens. Prisma 7 voert de seed alleen expliciet uit via `npm run db:seed`.
+
+## Historie- en verwijderbeleid
+
+| Categorie | Beleid |
+| --- | --- |
+| User en Organization | Soft delete via `archivedAt` en status. |
+| Membership | Status `REMOVED`; niet stilzwijgend verwijderen. |
+| Location, ProviderProfile, ProviderCertification | Soft delete via `archivedAt`. |
+| Intake en Assignment | Statusgebaseerd plus `archivedAt`; opdrachten kunnen ook worden geannuleerd. |
+| ProviderSelection en AssignmentResolution | Nooit verwijderen nadat zakelijke historie bestaat. |
+| AdminActionLog | Append-only, nooit wijzigen of verwijderen. |
+| CreditTransaction | Append-only, nooit wijzigen of verwijderen. |
+| Sector, Specialism en Certification | Deactiveren via `isActive`. |
+| Koppeltabellen | Alleen hard verwijderen vóór zakelijk gebruik; services bewaren historie zodra records zijn gebruikt. |
+
+Foreign keys gebruiken `RESTRICT`; cascades mogen geen zakelijke historie verwijderen. Hard delete is alleen bedoeld voor lokale reset of aantoonbaar ongebruikte draftdata.
+
+## Transactionele bedrijfsregels voor latere services
+
+### Maximaal drie actieve aanbiederselecties
+
+Actieve statussen zijn `SELECTED`, `INVITED`, `VIEWED`, `RESPONDED` en `AWARDED`. Een latere service vergrendelt de Assignment-rij, telt actieve selecties en schrijft alleen binnen dezelfde database-transactie wanneer het maximum niet wordt overschreden.
+
+### Primaire vestiging
+
+Een latere organisatieservice bewaakt transactioneel dat hoogstens één niet-gearchiveerde locatie `isPrimary = true` heeft.
+
+### Providerorganisatie
+
+Een `ProviderProfile` mag alleen gekoppeld zijn aan een Organization met type `PROVIDER` of `BOTH`. Dit wordt later in één transactionele service gevalideerd.
+
+### Credits
+
+- saldo en grootboekregel worden atomair bijgewerkt;
+- concurrente mutaties gebruiken rijvergrendeling of een gelijkwaardig mechanisme;
+- `PURCHASE` en `REFUND` zijn positief;
+- `SPEND` en `EXPIRATION` zijn negatief;
+- `ADMIN_ADJUSTMENT` mag positief of negatief zijn, maar nooit nul;
+- aankopen en bestedingen zijn een veelvoud van 10;
+- transacties worden nooit gewijzigd of verwijderd.
+
+## JSON-velden
+
+`AssignmentProviderSelection.scoreDetails` ondersteunt versieerbare score-uitleg:
+
+```ts
+type ScoreDetails = {
+  version: string
+  factors: Array<{
+    key: string
+    score: number
+    weight: number
+    explanation?: string
+  }>
+}
+```
+
+`AdminActionLog.metadata` ondersteunt beperkte auditcontext:
+
+```ts
+type AdminActionMetadata = {
+  changedFields?: string[]
+  previousStatus?: string
+  nextStatus?: string
+  context?: Record<string, string | number | boolean | null>
+}
+```
+
+Schema-validatie voor deze JSON-structuren wordt in een latere servicelaag verplicht.
+
+## Beperkingen en toekomstige productie
+
+- Productiedatabaseprovider, backups, monitoring, pooling en herstelprocedures zijn nog niet gekozen.
+- E-mailuniciteit is databasebreed maar nog hoofdlettergevoelig; normalisatie volgt in de authenticatie-/gebruikersservice.
+- KvK-nummer is bewust niet uniek totdat validatie en internationale uitbreiding zijn besloten.
+- Bewaartermijnen en AVG-verwijderverzoeken moeten voor livegang worden vastgesteld.
