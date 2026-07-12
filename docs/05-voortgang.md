@@ -1,0 +1,71 @@
+# Voortgang WorkMatchr
+
+## Module 1 — Projectbasis
+
+**Status:** afgerond
+
+De technische projectbasis, Nederlandstalige homepage, metadata en oorspronkelijke projectdocumentatie zijn opgeleverd en geaccepteerd.
+
+## Module 2A — Design system en huisstijl
+
+**Status:** afgerond
+
+### Visuele acceptatiecorrecties
+
+- donkere paginavlakken sterk beperkt;
+- witte en zeer lichtblauwe oppervlakken zijn dominant;
+- visuele hiërarchie en tekstcontrast verduidelijkt;
+- homepage gebruikt het centrale design system;
+- primaire propositie begint bij situatie- en vraagverheldering;
+- originele procesvisual toegevoegd.
+
+### Controles
+
+- `npm run lint`: geslaagd;
+- `npm run typecheck`: geslaagd;
+- `npm run build`: geslaagd;
+- `npm audit`: geslaagd, 0 kwetsbaarheden;
+- desktop, tablet en mobiel rond 390 pixels: geslaagd zonder horizontale overflow;
+- toetsenbordfocus en mobiel menu: geslaagd;
+- representatief kleurcontrast: voldoet aan WCAG 2.2 AA;
+- reduced-motionregel: aanwezig;
+- CTA-anker en consolecontrole: geslaagd;
+- 200% browserzoom en werkelijke hovertoestand: opgenomen in de handmatige visuele acceptatie;
+- handmatige visuele goedkeuring door de product owner: geslaagd.
+
+De homepage is visueel goedgekeurd. De eerste indruk is licht, duidelijk en professioneel. Het centrale design system en de visuele toepassing zijn geaccepteerd.
+
+## Module 2B — Publieke homepage
+
+**Status:** afgerond
+
+### Opgeleverde onderdelen
+
+- lichte responsive Header met mobiel menu;
+- hero met vraagverhelderende propositie;
+- één gelabelde demonstratieve intake-invoer;
+- transparante beschikbaarheidsmelding;
+- vertrouwenspunten en originele procesvisual;
+- herkenbare hulpvragen;
+- vierstappenproces;
+- controleerbare vertrouwensargumenten;
+- lichte kaarten voor opdrachtgevers en aanbieders;
+- lichte slot-CTA en bestaande Footer.
+
+### Controles
+
+- automatische controles: geslaagd;
+- desktop, tablet, mobiel, toetsenbordfocus, contrast, navigatie en console: geslaagd;
+- handmatige visuele acceptatie door de product owner: geslaagd.
+
+### Acceptatieresultaat
+
+- De route van hulpvraag naar vraagverheldering en maximaal drie specialisten is direct begrijpelijk.
+- De homepage is licht, duidelijk en professioneel.
+- De intake blijft bewust demonstratief en niet functioneel.
+
+Module 2B is inhoudelijk en visueel goedgekeurd.
+
+## Volgende module
+
+Module 3 — Database en datamodel is de volgende module en is nog niet gestart.

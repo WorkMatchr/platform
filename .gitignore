@@ -1,0 +1,19 @@
+# dependencies
+/node_modules
+
+# Next.js
+/.next
+/out
+
+# productie
+/build
+
+# lokale configuratie en secrets
+.env
+.env.*
+!.env.example
+
+# tooling
+*.log
+*.tsbuildinfo
+.DS_Store
