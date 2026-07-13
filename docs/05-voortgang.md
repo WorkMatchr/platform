@@ -206,7 +206,7 @@ De definitieve technische en handmatige acceptatie is geslaagd. Module 4B is afg
 
 ### Volgende stap
 
-De volgende stap is de technische en handmatige acceptatie van Module 5A. Na expliciete product-ownergoedkeuring kan Module 5B starten met bevoegde indiening en transactionele opdrachtvorming. Matching, AI, credits en Mollie blijven latere modules.
+De technische en handmatige acceptatie van Module 5A staat nog open. Module 5B is op expliciete opdracht technisch gestart met ontwerp en server-side opdrachtvorming; UI en Server Actions volgen pas na een afzonderlijke opdracht. Matching, AI, credits en Mollie blijven latere modules.
 
 ### Bewuste afbakening
 
@@ -214,3 +214,33 @@ De volgende stap is de technische en handmatige acceptatie van Module 5A. Na exp
 - `SUBMITTED`, `CONVERTED` en transactionele opdrachtvorming volgen in Module 5B;
 - vraagsetpublicatiebeheer en vertakkende vraagbomen volgen pas na afzonderlijk ontwerp;
 - matching, AI, credits en Mollie vallen buiten Module 5A.
+
+## Module 5B — Opdrachtvorming
+
+**Status:** in uitvoering
+
+### Module 5B.1 — Ontwerp opdrachtvorming
+
+**Status:** afgerond
+
+- lifecycle, rollen, statussen, gegevensovername en foutscenario’s vastgelegd;
+- transactionele, idempotente en onomkeerbare conversie besloten in ADR-006;
+- matching, aanbieders, credits, Mollie en AI expliciet buiten scope gehouden.
+
+### Module 5B.2 — Assignment datamodel en conversieservice
+
+**Status:** technisch opgeleverd; product-owneracceptatie staat nog open
+
+- indieningsactor en conversietijd op `Intake` toegevoegd;
+- `Assignment.version`, append-only `AssignmentStatusHistory` en `AssignmentRevision` toegevoegd;
+- maximaal één opdracht per intake blijft databasebreed afgedwongen;
+- alleen `OWNER` en `ADMIN` kunnen server-side converteren;
+- volledige intakevalidatie, tenantcontrole en optimistic concurrency worden opnieuw uitgevoerd;
+- `READY_FOR_REVIEW → SUBMITTED → Assignment DRAFT → CONVERTED` verloopt in één `Serializable` transactie;
+- titel en omschrijving worden deterministisch zonder AI afgeleid;
+- herhaalde conversie retourneert idempotent dezelfde opdracht;
+- database-integriteitstest dekt historie, revisievolgorde, onomkeerbaarheid en immutable antwoorden.
+
+### Volgende stap
+
+Product-owneracceptatie van de technische Module 5A- en 5B.2-basis, gevolgd door een afzonderlijk ontworpen UI-/Server-Actionstap voor expliciete indiening.

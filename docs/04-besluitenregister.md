@@ -72,9 +72,14 @@
 | B-061 | `Intake.freeText` blijft de immutable oorspronkelijke bronopname. | Het actuele verduidelijkte antwoord staat in `IntakeAnswer`. |
 | B-062 | Per intake bestaat maximaal één opdracht. | Een unieke nullable `Assignment.intakeId` bereidt veilige opdrachtvorming in 5B voor. |
 | B-063 | Vraagset versie 1 is niet-persoonlijke, idempotent gecontroleerde referentiedata. | De migratie legt haar vast; de seed valideert en overschrijft gepubliceerde inhoud nooit. |
+| B-064 | Alleen actieve `OWNER` en `ADMIN` mogen een intake omzetten naar een opdracht. | Organisatie-, membership-, tenant- en accountstatus worden server-side opnieuw gecontroleerd. |
+| B-065 | Opdrachtvorming is één transactionele overgang via `SUBMITTED` naar `CONVERTED`. | Opdracht, statushistorie en initiële revisie ontstaan atomair; fouten rollen volledig terug. |
+| B-066 | Een geslaagde intakeconversie is onomkeerbaar en idempotent. | Correcties volgen later op de opdracht; de bronintake en haar antwoorden blijven immutable. |
+| B-067 | Opdrachten hebben een actuele versie plus append-only status- en inhoudshistorie. | Optimistische concurrency en reconstructeerbare revisies beschermen toekomstige wijzigingen. |
 
 Zie [ADR-001](adr/ADR-001-design-system-en-huisstijl.md) voor de onderbouwing van het design system.
 Zie [ADR-002](adr/ADR-002-postgresql-prisma-en-datamodel.md) voor de database- en datamodelkeuzes.
 Zie [ADR-003](adr/ADR-003-better-auth-en-platformrollen.md) voor de authenticatie- en platformrolkeuzes.
 Zie [ADR-004](adr/ADR-004-organisaties-autorisatie-en-logo-opslag.md) voor organisatie-, autorisatie- en logo-opslagkeuzes.
 Zie [ADR-005](adr/ADR-005-versieerbare-intake-en-antwoordhistorie.md) voor vraagsetversies, intakeantwoorden en historie.
+Zie [ADR-006](adr/ADR-006-transactionele-opdrachtvorming.md) voor atomische, idempotente en onomkeerbare opdrachtvorming.

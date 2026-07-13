@@ -46,3 +46,7 @@ export function canReopenIntake(context: IntakePolicyContext): boolean {
 export function canArchiveIntake(context: IntakePolicyContext): boolean {
   return canEditIntake(context)
 }
+
+export function canConvertIntake(context: IntakePolicyContext): boolean {
+  return hasActiveClientContext(context) && managesOrganization(context)
+}

@@ -48,9 +48,9 @@ De seed bevat geen personen, organisaties, accounts, e-mailadressen, intakes of 
 | User en Organization | Soft delete via `archivedAt` en status. |
 | Membership | Status `REMOVED`; niet stilzwijgend verwijderen. |
 | Location, ProviderProfile, ProviderCertification | Soft delete via `archivedAt`. |
-| Intake en Assignment | Statusgebaseerd plus `archivedAt`; `freeText` blijft immutable en per intake bestaat maximaal één opdracht. |
+| Intake en Assignment | Statusgebaseerd plus `archivedAt`; `freeText` blijft immutable, conversie is onomkeerbaar en per intake bestaat maximaal één opdracht. |
 | IntakeQuestionnaireVersion, IntakeQuestion en IntakeQuestionOption | Alleen `DRAFT` is inhoudelijk wijzigbaar; gepubliceerd/gepensioneerd is immutable. |
-| IntakeAnswerRevision en IntakeStatusHistory | Append-only; niet wijzigen of verwijderen. |
+| IntakeAnswerRevision, IntakeStatusHistory, AssignmentRevision en AssignmentStatusHistory | Append-only; niet wijzigen of verwijderen. |
 | ProviderSelection en AssignmentResolution | Nooit verwijderen nadat zakelijke historie bestaat. |
 | AdminActionLog | Append-only, nooit wijzigen of verwijderen. |
 | CreditTransaction | Append-only, nooit wijzigen of verwijderen. |
@@ -68,6 +68,16 @@ Foreign keys gebruiken `RESTRICT`; cascades mogen geen zakelijke historie verwij
 - optimistic concurrency gebruikt de oplopende intake- en antwoordversie;
 - opties, vraagtypen, actieve organisatielocaties en tenantrelaties worden in de toekomstige intakeservice opnieuw gevalideerd;
 - `Intake.freeText` blijft de oorspronkelijke bronopname en wordt niet met actuele antwoorden gesynchroniseerd.
+
+### Opdrachtvorming
+
+- alleen een actieve `OWNER` of `ADMIN` van dezelfde actieve opdrachtgeverorganisatie mag converteren;
+- de service valideert de actuele intakeversie, status, volledige vraagset, opties en locatie opnieuw;
+- `READY_FOR_REVIEW → SUBMITTED → CONVERTED`, opdracht `DRAFT`, beide statushistories en de eerste opdrachtrevisie ontstaan in één `Serializable` transactie;
+- een consistente herhaling retourneert idempotent dezelfde opdracht;
+- de unieke `Assignment.intakeId` voorkomt ook databasebreed een tweede opdracht;
+- `Assignment.version` en aansluitende `AssignmentRevision`-records bewaken toekomstige concurrente opdrachtwijzigingen;
+- een geconverteerde intake, haar actuele antwoorden en de intakekoppeling van de opdracht kunnen niet worden teruggedraaid of inhoudelijk gewijzigd.
 
 ### Maximaal drie actieve aanbiederselecties
 

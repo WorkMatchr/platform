@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased — Module 5A.1, 5A.2 en 5A.3
+## Unreleased — Module 5A.1, 5A.2, 5A.3 en 5B.2
 
 **Status:** technisch opgeleverd; product-owneracceptatie staat nog open.
 
@@ -24,6 +24,12 @@
 - geautoriseerde read-service met geserialiseerde overzichts- en detailmodellen;
 - toegankelijke velden voor tekst, getal, datum, boolean, keuze, meerkeuze en organisatielocatie;
 - loading- en errorstates en responsive voortgangsweergave.
+- ADR-006 en het geaccepteerde ontwerp voor transactionele opdrachtvorming;
+- indieningsmetadata op `Intake` en optimistic concurrency op `Assignment`;
+- append-only `AssignmentStatusHistory` en `AssignmentRevision`;
+- server-side conversieservice voor `READY_FOR_REVIEW → SUBMITTED → Assignment DRAFT → CONVERTED`;
+- deterministische titel- en omschrijvinggeneratie zonder AI;
+- gerichte rollen-, idempotentie-, concurrency-, rollback- en database-integriteitstests.
 
 ### Gewijzigd
 
@@ -34,10 +40,12 @@
 - homepage- en Header-CTA’s verwijzen naar de beveiligde intakeflow;
 - lokale login-returnpaden kunnen veilig terugkeren naar de bedoelde hulpvraagroute;
 - roadmap-, voortgangs-, risico- en technical-debtdocumentatie bijgewerkt.
+- opdrachtvorming is atomair, idempotent en alleen beschikbaar voor actieve `OWNER` en `ADMIN`;
+- geconverteerde intakes, antwoorden en assignment-intakekoppelingen zijn onomkeerbaar beschermd.
 
 ### Buiten scope
 
-- indiening en opdrachtvorming;
+- UI en Server Actions voor indiening en opdrachtbeheer;
 - vraagsetpublicatiebeheer en vertakkende vraagbomen;
 - matching, AI, credits en Mollie.
 

@@ -12,6 +12,7 @@ Deze map bevat de leidende projectdocumentatie. Lees vóór een wijziging minima
 6. [Ontwerp Module 5 — Vraagverheldering, intake en opdrachten](module-5-ontwerp.md)
 7. [Technisch implementatieplan Module 5A — Intake fundament](module-5a-implementatieplan.md)
 8. [Voorstel vraagset Module 5A — versie 1](module-5a-vraagset-v1.md)
+9. [Ontwerp Module 5B — Opdrachtvorming](module-5b-ontwerp.md)
 
 ## Ontwerp en kwaliteit
 
@@ -32,6 +33,7 @@ Deze map bevat de leidende projectdocumentatie. Lees vóór een wijziging minima
 - [Entity Relationship Diagram](ERD.md)
 - [ADR-002: PostgreSQL, Prisma en datamodel](adr/ADR-002-postgresql-prisma-en-datamodel.md)
 - [ADR-005: Versieerbare intake en antwoordhistorie](adr/ADR-005-versieerbare-intake-en-antwoordhistorie.md)
+- [ADR-006: Transactionele opdrachtvorming](adr/ADR-006-transactionele-opdrachtvorming.md)
 
 ## Authenticatie en beveiliging
 

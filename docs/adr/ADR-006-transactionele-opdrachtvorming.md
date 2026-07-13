@@ -1,6 +1,6 @@
 # ADR-006 — Transactionele opdrachtvorming
 
-- **Status:** voorgesteld voor acceptatie
+- **Status:** geaccepteerd voor Module 5B.2
 - **Datum:** 13 juli 2026
 
 ## Context

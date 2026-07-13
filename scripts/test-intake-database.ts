@@ -223,8 +223,70 @@ async function verifyIntegrity(client: Client) {
       'Tijdelijke opdracht',
       'Alleen voor de tijdelijke database-integriteitstest.',
       CURRENT_TIMESTAMP
+    );
+
+    INSERT INTO "AssignmentStatusHistory" (
+      "id", "assignmentId", "fromStatus", "toStatus", "changedByUserId", "reason"
+    ) VALUES (
+      '00000000-0000-4000-8000-000000009008',
+      '00000000-0000-4000-8000-000000009007',
+      NULL,
+      'DRAFT',
+      '00000000-0000-4000-8000-000000009001',
+      'Tijdelijke beginstatus voor de integriteitstest.'
+    );
+
+    INSERT INTO "AssignmentRevision" (
+      "id", "assignmentId", "version", "title", "description", "allowsRemoteWork", "changedByUserId"
+    ) VALUES (
+      '00000000-0000-4000-8000-000000009009',
+      '00000000-0000-4000-8000-000000009007',
+      1,
+      'Tijdelijke opdracht',
+      'Alleen voor de tijdelijke database-integriteitstest.',
+      false,
+      '00000000-0000-4000-8000-000000009001'
     )
   `)
+
+  await expectDatabaseFailure('wijziging van opdrachtstatushistorie', () =>
+    client.query(`
+      UPDATE "AssignmentStatusHistory"
+      SET "reason" = 'Niet toegestaan'
+      WHERE "id" = '00000000-0000-4000-8000-000000009008'
+    `),
+  )
+
+  await expectDatabaseFailure('wijziging van een opdrachtrevisie', () =>
+    client.query(`
+      UPDATE "AssignmentRevision"
+      SET "title" = 'Niet toegestaan'
+      WHERE "id" = '00000000-0000-4000-8000-000000009009'
+    `),
+  )
+
+  await expectDatabaseFailure('een opdrachtrevisie zonder actuele opdrachtversie', () =>
+    client.query(`
+      INSERT INTO "AssignmentRevision" (
+        "assignmentId", "version", "title", "description", "allowsRemoteWork", "changedByUserId"
+      ) VALUES (
+        '00000000-0000-4000-8000-000000009007',
+        2,
+        'Niet-aansluitende revisie',
+        'Deze revisie moet door de database worden geweigerd.',
+        false,
+        '00000000-0000-4000-8000-000000009001'
+      )
+    `),
+  )
+
+  await expectDatabaseFailure('wijziging van de intakekoppeling van een opdracht', () =>
+    client.query(`
+      UPDATE "Assignment"
+      SET "intakeId" = NULL, "updatedAt" = CURRENT_TIMESTAMP
+      WHERE "id" = '00000000-0000-4000-8000-000000009007'
+    `),
+  )
 
   await expectDatabaseFailure('een tweede opdracht voor dezelfde intake', () =>
     client.query(`
@@ -259,6 +321,47 @@ async function verifyIntegrity(client: Client) {
       )
     `),
   )
+
+  await expectDatabaseFailure('conversie zonder volledige indieningsmetadata', () =>
+    client.query(`
+      UPDATE "Intake"
+      SET "status" = 'CONVERTED', "updatedAt" = CURRENT_TIMESTAMP
+      WHERE "id" = '00000000-0000-4000-8000-000000009003'
+    `),
+  )
+
+  await client.query(`
+    UPDATE "Intake"
+    SET
+      "status" = 'SUBMITTED',
+      "submittedAt" = CURRENT_TIMESTAMP,
+      "submittedByUserId" = '00000000-0000-4000-8000-000000009001',
+      "updatedAt" = CURRENT_TIMESTAMP
+    WHERE "id" = '00000000-0000-4000-8000-000000009003';
+
+    UPDATE "Intake"
+    SET
+      "status" = 'CONVERTED',
+      "convertedAt" = CURRENT_TIMESTAMP,
+      "updatedAt" = CURRENT_TIMESTAMP
+    WHERE "id" = '00000000-0000-4000-8000-000000009003'
+  `)
+
+  await expectDatabaseFailure('terugdraaien van een geconverteerde intake', () =>
+    client.query(`
+      UPDATE "Intake"
+      SET "status" = 'IN_PROGRESS', "updatedAt" = CURRENT_TIMESTAMP
+      WHERE "id" = '00000000-0000-4000-8000-000000009003'
+    `),
+  )
+
+  await expectDatabaseFailure('wijziging van een antwoord na conversie', () =>
+    client.query(`
+      UPDATE "IntakeAnswer"
+      SET "textValue" = 'Niet toegestaan', "updatedAt" = CURRENT_TIMESTAMP
+      WHERE "id" = '00000000-0000-4000-8000-000000009004'
+    `),
+  )
 }
 
 async function main() {
@@ -276,7 +379,7 @@ async function main() {
     testClient = new Client({ connectionString: testUrl.toString() })
     await testClient.connect()
     await verifyIntegrity(testClient)
-    console.info('Database-integriteit Module 5A.1: geslaagd.')
+    console.info('Database-integriteit Module 5A.1 en Module 5B.2: geslaagd.')
   } finally {
     if (testClient) {
       await testClient.end()

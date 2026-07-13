@@ -157,10 +157,13 @@ model User {
   approvedProviderProfiles     ProviderProfile[]             @relation("ProviderProfileApprover")
   verifiedProviderCertificates ProviderCertification[]       @relation("CertificationVerifier")
   createdIntakes               Intake[]                      @relation("IntakeCreator")
+  submittedIntakes             Intake[]                      @relation("IntakeSubmitter")
   updatedIntakeAnswers         IntakeAnswer[]                @relation("IntakeAnswerUpdater")
   changedIntakeAnswerRevisions IntakeAnswerRevision[]        @relation("IntakeAnswerRevisionActor")
   changedIntakeStatuses        IntakeStatusHistory[]         @relation("IntakeStatusHistoryActor")
   createdAssignments           Assignment[]                  @relation("AssignmentCreator")
+  changedAssignmentStatuses    AssignmentStatusHistory[]     @relation("AssignmentStatusHistoryActor")
+  changedAssignmentRevisions   AssignmentRevision[]          @relation("AssignmentRevisionActor")
   selectedProviderSelections   AssignmentProviderSelection[] @relation("ProviderSelectionActor")
   assignmentResolutions        AssignmentResolution[]        @relation("AssignmentResolutionActor")
   adminActions                 AdminActionLog[]              @relation("AdminActionActor")
@@ -277,22 +280,23 @@ model OrganizationMembership {
 }
 
 model OrganizationLocation {
-  id              String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizationId  String                 @db.Uuid
-  label           String
-  addressLine     String
-  postalCode      String
-  city            String
-  province        String?
-  countryCode     String                 @db.Char(2)
-  isPrimary       Boolean                @default(false)
-  createdAt       DateTime               @default(now()) @db.Timestamptz(3)
-  updatedAt       DateTime               @updatedAt @db.Timestamptz(3)
-  archivedAt      DateTime?              @db.Timestamptz(3)
-  organization    Organization           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  assignments     Assignment[]
-  intakeAnswers   IntakeAnswer[]
-  answerRevisions IntakeAnswerRevision[]
+  id                  String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId      String                 @db.Uuid
+  label               String
+  addressLine         String
+  postalCode          String
+  city                String
+  province            String?
+  countryCode         String                 @db.Char(2)
+  isPrimary           Boolean                @default(false)
+  createdAt           DateTime               @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime               @updatedAt @db.Timestamptz(3)
+  archivedAt          DateTime?              @db.Timestamptz(3)
+  organization        Organization           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  assignments         Assignment[]
+  assignmentRevisions AssignmentRevision[]
+  intakeAnswers       IntakeAnswer[]
+  answerRevisions     IntakeAnswerRevision[]
 
   @@index([organizationId])
   @@index([city])
@@ -300,16 +304,17 @@ model OrganizationLocation {
 }
 
 model Sector {
-  id            String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name          String
-  slug          String               @unique
-  description   String?
-  isActive      Boolean              @default(true)
-  createdAt     DateTime             @default(now()) @db.Timestamptz(3)
-  updatedAt     DateTime             @updatedAt @db.Timestamptz(3)
-  organizations OrganizationSector[]
-  providers     ProviderSector[]
-  assignments   Assignment[]
+  id                  String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                String
+  slug                String               @unique
+  description         String?
+  isActive            Boolean              @default(true)
+  createdAt           DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime             @updatedAt @db.Timestamptz(3)
+  organizations       OrganizationSector[]
+  providers           ProviderSector[]
+  assignments         Assignment[]
+  assignmentRevisions AssignmentRevision[]
 
   @@index([isActive])
 }
@@ -329,20 +334,21 @@ model OrganizationSector {
 }
 
 model Specialism {
-  id                    String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name                  String
-  slug                  String                 @unique
-  description           String?
-  parentId              String?                @db.Uuid
-  isActive              Boolean                @default(true)
-  createdAt             DateTime               @default(now()) @db.Timestamptz(3)
-  updatedAt             DateTime               @updatedAt @db.Timestamptz(3)
-  parent                Specialism?            @relation("SpecialismHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
-  children              Specialism[]           @relation("SpecialismHierarchy")
-  providers             ProviderSpecialism[]
-  detectedIntakes       Intake[]               @relation("DetectedIntakeSpecialism")
-  primaryAssignments    Assignment[]           @relation("PrimaryAssignmentSpecialism")
-  assignmentSpecialisms AssignmentSpecialism[]
+  id                         String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                       String
+  slug                       String                 @unique
+  description                String?
+  parentId                   String?                @db.Uuid
+  isActive                   Boolean                @default(true)
+  createdAt                  DateTime               @default(now()) @db.Timestamptz(3)
+  updatedAt                  DateTime               @updatedAt @db.Timestamptz(3)
+  parent                     Specialism?            @relation("SpecialismHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children                   Specialism[]           @relation("SpecialismHierarchy")
+  providers                  ProviderSpecialism[]
+  detectedIntakes            Intake[]               @relation("DetectedIntakeSpecialism")
+  primaryAssignments         Assignment[]           @relation("PrimaryAssignmentSpecialism")
+  primaryAssignmentRevisions AssignmentRevision[]   @relation("PrimaryAssignmentRevisionSpecialism")
+  assignmentSpecialisms      AssignmentSpecialism[]
 
   @@index([parentId])
   @@index([isActive])
@@ -533,9 +539,12 @@ model Intake {
   createdAt              DateTime                   @default(now()) @db.Timestamptz(3)
   updatedAt              DateTime                   @updatedAt @db.Timestamptz(3)
   submittedAt            DateTime?                  @db.Timestamptz(3)
+  submittedByUserId      String?                    @db.Uuid
+  convertedAt            DateTime?                  @db.Timestamptz(3)
   archivedAt             DateTime?                  @db.Timestamptz(3)
   clientOrganization     Organization               @relation(fields: [clientOrganizationId], references: [id], onDelete: Restrict)
   createdByUser          User                       @relation("IntakeCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  submittedByUser        User?                      @relation("IntakeSubmitter", fields: [submittedByUserId], references: [id], onDelete: Restrict)
   questionnaireVersion   IntakeQuestionnaireVersion @relation(fields: [questionnaireVersionId], references: [id], onDelete: Restrict)
   detectedSpecialism     Specialism?                @relation("DetectedIntakeSpecialism", fields: [detectedSpecialismId], references: [id], onDelete: Restrict)
   answers                IntakeAnswer[]
@@ -544,6 +553,7 @@ model Intake {
 
   @@index([clientOrganizationId])
   @@index([createdByUserId])
+  @@index([submittedByUserId])
   @@index([questionnaireVersionId])
   @@index([status])
   @@index([clientOrganizationId, status, updatedAt])
@@ -648,6 +658,7 @@ model Assignment {
   title                String
   description          String
   status               AssignmentStatus              @default(DRAFT)
+  version              Int                           @default(1)
   primarySpecialismId  String?                       @db.Uuid
   sectorId             String?                       @db.Uuid
   employeeCount        Int?
@@ -669,6 +680,8 @@ model Assignment {
   specialisms          AssignmentSpecialism[]
   providerSelections   AssignmentProviderSelection[]
   resolution           AssignmentResolution?
+  statusHistory        AssignmentStatusHistory[]
+  revisions            AssignmentRevision[]
 
   @@index([clientOrganizationId])
   @@index([createdByUserId])
@@ -679,6 +692,52 @@ model Assignment {
   @@index([createdAt])
   @@index([responseDeadline])
   @@index([archivedAt])
+}
+
+model AssignmentStatusHistory {
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assignmentId    String            @db.Uuid
+  fromStatus      AssignmentStatus?
+  toStatus        AssignmentStatus
+  changedByUserId String            @db.Uuid
+  reason          String?
+  createdAt       DateTime          @default(now()) @db.Timestamptz(3)
+  assignment      Assignment        @relation(fields: [assignmentId], references: [id], onDelete: Restrict)
+  changedByUser   User              @relation("AssignmentStatusHistoryActor", fields: [changedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([assignmentId, createdAt])
+  @@index([changedByUserId])
+  @@index([toStatus])
+}
+
+model AssignmentRevision {
+  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assignmentId        String                @db.Uuid
+  version             Int
+  title               String
+  description         String
+  primarySpecialismId String?               @db.Uuid
+  sectorId            String?               @db.Uuid
+  employeeCount       Int?
+  desiredStartDate    DateTime?             @db.Date
+  responseDeadline    DateTime?             @db.Timestamptz(3)
+  locationId          String?               @db.Uuid
+  allowsRemoteWork    Boolean
+  changedByUserId     String                @db.Uuid
+  createdAt           DateTime              @default(now()) @db.Timestamptz(3)
+  assignment          Assignment            @relation(fields: [assignmentId], references: [id], onDelete: Restrict)
+  primarySpecialism   Specialism?           @relation("PrimaryAssignmentRevisionSpecialism", fields: [primarySpecialismId], references: [id], onDelete: Restrict)
+  sector              Sector?               @relation(fields: [sectorId], references: [id], onDelete: Restrict)
+  location            OrganizationLocation? @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  changedByUser       User                  @relation("AssignmentRevisionActor", fields: [changedByUserId], references: [id], onDelete: Restrict)
+
+  @@unique([assignmentId, version])
+  @@index([assignmentId])
+  @@index([primarySpecialismId])
+  @@index([sectorId])
+  @@index([locationId])
+  @@index([changedByUserId])
+  @@index([createdAt])
 }
 
 model AssignmentSpecialism {

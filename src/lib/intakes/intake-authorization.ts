@@ -3,6 +3,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { IntakeServiceError } from "@/lib/intakes/intake-errors";
 import {
   canArchiveIntake,
+  canConvertIntake,
   canCreateIntake,
   canEditIntake,
   canMarkIntakeReadyForReview,
@@ -193,3 +194,9 @@ export const requireIntakeArchiver = (
   userId: string,
   intakeId: string,
 ) => requireIntakeAccess(transaction, userId, intakeId, canArchiveIntake);
+
+export const requireIntakeConverter = (
+  transaction: TransactionClient,
+  userId: string,
+  intakeId: string,
+) => requireIntakeAccess(transaction, userId, intakeId, canConvertIntake);

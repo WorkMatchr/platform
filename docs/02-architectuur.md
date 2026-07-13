@@ -28,6 +28,8 @@
 - maximaal één optionele opdracht per intake als databasebrede invariant.
 - transactionele intakeservices met tenantautorisatie, dynamische validatie en optimistische concurrency;
 - beveiligde App Router-interface met dunne Server Actions en geautoriseerde read-modellen.
+- transactionele, idempotente opdrachtvorming vanuit `READY_FOR_REVIEW` met `Serializable` isolatie;
+- append-only opdrachtstatus- en inhoudshistorie met optimistic concurrency op `Assignment.version`.
 
 ## Structuurprincipes
 
@@ -45,6 +47,8 @@
 - Iedere intake blijft gekoppeld aan de bij aanmaak vastgezette vraagsetversie; gepubliceerde inhoud wordt niet in-place gewijzigd.
 - Actuele antwoorden en revisies worden in de intakeservice atomair geschreven; type-, optie-, locatie- en tenantvalidatie is server-side verplicht.
 - Intakepagina’s en componenten benaderen Prisma niet rechtstreeks; reads en writes lopen via afzonderlijke intake-services.
+- Alleen actieve `OWNER`- en `ADMIN`-memberships kunnen server-side een intake converteren; de conversieservice valideert status, tenant, volledige antwoorden en versie opnieuw.
+- Een geconverteerde intake is immutable; iedere opdracht blijft via de unieke `intakeId` herleidbaar naar haar bron.
 - Lokale bestandsschijf wordt nooit als productieopslag gebruikt; productie zonder provider faalt veilig.
 
 ## Bewust uitgestelde keuzes

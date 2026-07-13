@@ -126,6 +126,8 @@ erDiagram
   Organization ||--o{ Assignment : commissions
   User ||--o{ Assignment : creates
   Assignment ||--o{ AssignmentSpecialism : requires
+  Assignment ||--o{ AssignmentStatusHistory : transitions
+  Assignment ||--o{ AssignmentRevision : revises
   Specialism ||--o{ AssignmentSpecialism : requested_as
   Assignment ||--o{ AssignmentProviderSelection : selects
   ProviderProfile ||--o{ AssignmentProviderSelection : selected_for
@@ -154,6 +156,8 @@ erDiagram
     uuid clientOrganizationId FK
     uuid createdByUserId FK
     int version
+    uuid submittedByUserId FK
+    datetime convertedAt
   }
   IntakeAnswer {
     uuid id PK
@@ -168,8 +172,22 @@ erDiagram
   }
   Assignment {
     uuid id PK
+    uuid intakeId FK,UK
     uuid clientOrganizationId FK
     AssignmentStatus status
+    int version
+  }
+  AssignmentStatusHistory {
+    uuid id PK
+    uuid assignmentId FK
+    AssignmentStatus toStatus
+    uuid changedByUserId FK
+  }
+  AssignmentRevision {
+    uuid id PK
+    uuid assignmentId FK
+    int version
+    uuid changedByUserId FK
   }
   AssignmentProviderSelection {
     uuid id PK

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { IntakePolicyContext } from './intake-types'
 import {
   canArchiveIntake,
+  canConvertIntake,
   canEditIntake,
   canMarkIntakeReadyForReview,
   canReopenIntake,
@@ -52,5 +53,21 @@ describe('intakeautorisatiebeleid', () => {
 
   it.each(['SUBMITTED', 'CONVERTED', 'ARCHIVED'] as const)('weigert inhoudelijke wijziging in status %s', (intakeStatus) => {
     expect(canEditIntake({ ...baseContext, membershipRole: 'OWNER', intakeStatus })).toBe(false)
+  })
+
+  it.each(['OWNER', 'ADMIN'] as const)('staat conversie toe voor een actieve %s', (membershipRole) => {
+    expect(canConvertIntake({ ...baseContext, membershipRole, intakeStatus: 'READY_FOR_REVIEW' })).toBe(true)
+  })
+
+  it('weigert conversie voor MEMBER en inactieve organisatiecontext', () => {
+    expect(canConvertIntake({ ...baseContext, intakeStatus: 'READY_FOR_REVIEW' })).toBe(false)
+    expect(
+      canConvertIntake({
+        ...baseContext,
+        membershipRole: 'OWNER',
+        organizationStatus: 'SUSPENDED',
+        intakeStatus: 'READY_FOR_REVIEW',
+      }),
+    ).toBe(false)
   })
 })

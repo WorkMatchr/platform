@@ -1,6 +1,6 @@
 # Ontwerp Module 5B.1 — Opdrachtvorming
 
-- **Status:** voorgesteld ontwerp; nog te accepteren vóór implementatie
+- **Status:** geaccepteerd ontwerp; databasefundering en conversieservice in Module 5B.2 technisch gerealiseerd
 - **Module:** 5B.1
 - **Datum:** 13 juli 2026
 - **Bronnen:** [Ontwerp Module 5](module-5-ontwerp.md), [implementatieplan Module 5A](module-5a-implementatieplan.md) en [ADR-005](adr/ADR-005-versieerbare-intake-en-antwoordhistorie.md)
@@ -312,7 +312,7 @@ Een latere Module 5B-implementatie mag pas starten na acceptatie van dit ontwerp
 - unit-, service-, database-, concurrency- en tenantisolatietests;
 - updates van architectuur, datadictionary, ERD, roadmap, voortgang, risico’s, technical debt en changelog.
 
-Tot die implementatie blijven `SUBMITTED`, `CONVERTED` en opdrachtvorming functioneel uitgeschakeld.
+De databasefundering en server-side conversieservice zijn in Module 5B.2 gerealiseerd. UI en Server Actions blijven uitgeschakeld tot een afzonderlijke vervolgopdracht.
 
 ## 13. Acceptatiecriteria voor het ontwerp
 
