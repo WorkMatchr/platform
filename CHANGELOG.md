@@ -19,6 +19,7 @@ Alle betekenisvolle wijzigingen aan WorkMatchr worden in dit bestand bijgehouden
 ### Gewijzigd
 
 - accountpagina toont een passende organisatie-CTA;
+- organisatieformulieren behouden invoer na validatiefouten, markeren alleen de betreffende velden en focussen het eerste foutveld;
 - `Organization` bevat uitsluitend afleidbare logometadata, geen binary of absoluut pad;
 - roadmap, voortgang, architectuur, datadictionary, ERD, security, risico’s, technical debt en Definition of Done bijgewerkt.
 

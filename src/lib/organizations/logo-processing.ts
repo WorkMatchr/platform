@@ -1,4 +1,5 @@
 import sharp from 'sharp'
+import { logLogoDevelopment, logoErrorDetails } from './logo-development-log'
 
 export const MAX_LOGO_SIZE_BYTES = 2 * 1024 * 1024
 export const MAX_LOGO_DIMENSION = 10_000
@@ -30,8 +31,16 @@ export async function processOrganizationLogo(data: Buffer, declaredMimeType: st
   }
 
   try {
+    logLogoDevelopment('processing', 'sharp-started')
     const image = sharp(data, { failOn: 'error', limitInputPixels: MAX_LOGO_DIMENSION * MAX_LOGO_DIMENSION })
     const metadata = await image.metadata()
+    logLogoDevelopment('processing', 'metadata-read', {
+      format: metadata.format,
+      width: metadata.width,
+      height: metadata.height,
+      channels: metadata.channels,
+      hasAlpha: metadata.hasAlpha,
+    })
     if (!metadata.format || !ALLOWED_FORMATS.has(metadata.format)) {
       throw new LogoValidationError('De werkelijke bestandsinhoud is geen toegestane afbeelding.')
     }
@@ -48,8 +57,15 @@ export async function processOrganizationLogo(data: Buffer, declaredMimeType: st
       .webp({ quality: 82, alphaQuality: 90 })
       .toBuffer({ resolveWithObject: true })
 
+    logLogoDevelopment('processing', 'webp-conversion-succeeded', {
+      width: info.width,
+      height: info.height,
+      sizeBytes: output.length,
+    })
+
     return { data: output, mimeType: 'image/webp', sizeBytes: output.length, width: info.width, height: info.height }
   } catch (error) {
+    logLogoDevelopment('processing', 'failed', logoErrorDetails(error))
     if (error instanceof LogoValidationError) throw error
     throw new LogoValidationError('Het afbeeldingsbestand kon niet veilig worden verwerkt.')
   }

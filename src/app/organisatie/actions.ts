@@ -7,14 +7,15 @@ import { requireUser } from '@/lib/authorization'
 import { getPrisma } from '@/lib/prisma'
 import { ACTIVE_ORGANIZATION_COOKIE, requireManageableOrganization } from '@/lib/organizations/organization-authorization'
 import { removeOrganizationLogo, replaceOrganizationLogo } from '@/lib/organizations/logo-service'
-import { LogoValidationError } from '@/lib/organizations/logo-processing'
+import { logLogoDevelopment, logoErrorDetails } from '@/lib/organizations/logo-development-log'
 import { createOrganization, OrganizationServiceError, updateOrganization } from '@/lib/organizations/organization-service'
-import { createOrganizationSchema, organizationFormData, organizationProfileSchema } from '@/lib/organizations/organization-validation'
+import { createOrganizationSchema, organizationFormData, organizationProfileSchema, type OrganizationFormValues } from '@/lib/organizations/organization-validation'
 
 export type OrganizationActionState = {
   message?: string
   success?: boolean
   errors?: Record<string, string[] | undefined>
+  values?: OrganizationFormValues
 }
 
 const activeOrganizationCookieOptions = {
@@ -27,14 +28,15 @@ const activeOrganizationCookieOptions = {
 
 export async function createOrganizationAction(_state: OrganizationActionState, formData: FormData): Promise<OrganizationActionState> {
   const user = await requireUser()
-  const parsed = createOrganizationSchema.safeParse(organizationFormData(formData))
-  if (!parsed.success) return { message: 'Controleer de gemarkeerde velden.', errors: parsed.error.flatten().fieldErrors }
+  const values = organizationFormData(formData)
+  const parsed = createOrganizationSchema.safeParse(values)
+  if (!parsed.success) return { message: 'Controleer de gemarkeerde velden.', errors: parsed.error.flatten().fieldErrors, values }
 
   let organizationId: string
   try {
     organizationId = (await createOrganization(user.id, parsed.data)).id
   } catch (error) {
-    return { message: error instanceof OrganizationServiceError ? error.message : 'De organisatie kon niet worden aangemaakt.' }
+    return { message: error instanceof OrganizationServiceError ? error.message : 'De organisatie kon niet worden aangemaakt.', values }
   }
 
   ;(await cookies()).set(ACTIVE_ORGANIZATION_COOKIE, organizationId, activeOrganizationCookieOptions)
@@ -44,13 +46,14 @@ export async function createOrganizationAction(_state: OrganizationActionState, 
 export async function updateOrganizationAction(_state: OrganizationActionState, formData: FormData): Promise<OrganizationActionState> {
   const organizationId = String(formData.get('organizationId') ?? '')
   const context = await requireManageableOrganization(organizationId)
-  const parsed = organizationProfileSchema.safeParse(organizationFormData(formData))
-  if (!parsed.success) return { message: 'Controleer de gemarkeerde velden.', errors: parsed.error.flatten().fieldErrors }
+  const values = organizationFormData(formData)
+  const parsed = organizationProfileSchema.safeParse(values)
+  if (!parsed.success) return { message: 'Controleer de gemarkeerde velden.', errors: parsed.error.flatten().fieldErrors, values }
 
   try {
     await updateOrganization(context.user.id, organizationId, parsed.data)
   } catch (error) {
-    return { message: error instanceof OrganizationServiceError ? error.message : 'De wijzigingen konden niet worden opgeslagen.' }
+    return { message: error instanceof OrganizationServiceError ? error.message : 'De wijzigingen konden niet worden opgeslagen.', values }
   }
 
   revalidatePath('/organisatie')
@@ -77,13 +80,20 @@ export async function uploadOrganizationLogoAction(_state: OrganizationActionSta
   const file = formData.get('logo')
   if (!(file instanceof File)) return { message: 'Selecteer een logo.' }
 
+  logLogoDevelopment('upload', 'received', {
+    fileName: file.name,
+    mimeType: file.type,
+    sizeBytes: file.size,
+  })
+
   try {
     await replaceOrganizationLogo(context.user.id, organizationId, file)
     revalidatePath('/organisatie')
     revalidatePath('/organisatie/profiel')
     return { message: 'Het logo is opgeslagen.', success: true }
   } catch (error) {
-    return { message: error instanceof LogoValidationError ? error.message : 'Het logo kon niet veilig worden opgeslagen.' }
+    logLogoDevelopment('upload', 'failed', logoErrorDetails(error))
+    return { message: 'Het logo kon niet veilig worden opgeslagen.' }
   }
 }
 

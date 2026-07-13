@@ -87,23 +87,47 @@ export const createOrganizationSchema = organizationProfileSchema.and(
 export type OrganizationProfileInput = z.infer<typeof organizationProfileSchema>
 export type CreateOrganizationInput = z.infer<typeof createOrganizationSchema>
 
-export function organizationFormData(formData: FormData): Record<string, unknown> {
+export type OrganizationFormValues = {
+  name: string
+  tradeName: string
+  organizationType: string
+  chamberOfCommerceNumber: string
+  generalEmail: string
+  phone: string
+  website: string
+  employeeCount: string
+  sectorIds: string[]
+  primarySectorId: string
+  addressLine: string
+  postalCode: string
+  city: string
+  province: string
+  countryCode: string
+  acceptedBusinessAccuracy: string
+}
+
+function stringValue(formData: FormData, field: string): string {
+  const value = formData.get(field)
+  return typeof value === 'string' ? value : ''
+}
+
+export function organizationFormData(formData: FormData): OrganizationFormValues {
   return {
-    name: formData.get('name'),
-    tradeName: formData.get('tradeName'),
-    organizationType: formData.get('organizationType'),
-    chamberOfCommerceNumber: formData.get('chamberOfCommerceNumber'),
-    generalEmail: formData.get('generalEmail'),
-    phone: formData.get('phone'),
-    website: formData.get('website'),
-    employeeCount: formData.get('employeeCount'),
-    sectorIds: formData.getAll('sectorIds'),
-    primarySectorId: formData.get('primarySectorId'),
-    addressLine: formData.get('addressLine'),
-    postalCode: formData.get('postalCode'),
-    city: formData.get('city'),
-    province: formData.get('province'),
-    countryCode: formData.get('countryCode'),
-    acceptedBusinessAccuracy: formData.get('acceptedBusinessAccuracy'),
+    name: stringValue(formData, 'name'),
+    tradeName: stringValue(formData, 'tradeName'),
+    organizationType: stringValue(formData, 'organizationType'),
+    chamberOfCommerceNumber: stringValue(formData, 'chamberOfCommerceNumber'),
+    generalEmail: stringValue(formData, 'generalEmail'),
+    phone: stringValue(formData, 'phone'),
+    website: stringValue(formData, 'website'),
+    employeeCount: stringValue(formData, 'employeeCount'),
+    sectorIds: formData.getAll('sectorIds').filter((value): value is string => typeof value === 'string'),
+    primarySectorId: stringValue(formData, 'primarySectorId'),
+    addressLine: stringValue(formData, 'addressLine'),
+    postalCode: stringValue(formData, 'postalCode'),
+    city: stringValue(formData, 'city'),
+    province: stringValue(formData, 'province'),
+    countryCode: stringValue(formData, 'countryCode'),
+    acceptedBusinessAccuracy: stringValue(formData, 'acceptedBusinessAccuracy'),
   }
 }

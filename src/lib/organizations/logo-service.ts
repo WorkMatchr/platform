@@ -2,6 +2,7 @@ import { getPrisma } from '@/lib/prisma'
 import { canManageOrganization } from './organization-policy'
 import { getOrganizationLogoStorage } from './logo-storage'
 import { processOrganizationLogo } from './logo-processing'
+import { logLogoDevelopment, logoErrorDetails } from './logo-development-log'
 
 async function requireLogoManager(userId: string, organizationId: string) {
   const membership = await getPrisma().organizationMembership.findUnique({
@@ -32,8 +33,17 @@ export async function replaceOrganizationLogo(userId: string, organizationId: st
         logoUpdatedAt: new Date(),
       },
     })
+    logLogoDevelopment('database', 'metadata-update-succeeded')
   } catch (error) {
-    await storage.delete(newStorageKey)
+    logLogoDevelopment('database', 'metadata-update-failed', logoErrorDetails(error))
+    try {
+      await storage.delete(newStorageKey)
+    } catch (cleanupError) {
+      logLogoDevelopment('storage', 'rollback-delete-failed', {
+        storageKey: newStorageKey,
+        ...logoErrorDetails(cleanupError),
+      })
+    }
     throw error
   }
 

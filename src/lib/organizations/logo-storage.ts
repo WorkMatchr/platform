@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto'
-import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, stat, unlink, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { getOrganizationLogoPublicUrl, isValidLogoStorageKey } from './logo-url'
+import { logLogoDevelopment, logoErrorDetails } from './logo-development-log'
 
 export interface OrganizationLogoStorage {
   save(data: Buffer): Promise<string>
@@ -30,9 +31,19 @@ export class LocalOrganizationLogoStorage implements OrganizationLogoStorage {
 
   async save(data: Buffer): Promise<string> {
     const storageKey = `${randomUUID()}.webp`
-    await mkdir(this.baseDirectory, { recursive: true })
-    await writeFile(this.resolve(storageKey), data, { flag: 'wx' })
-    return storageKey
+    logLogoDevelopment('storage', 'storage-key-generated', { storageKey })
+
+    try {
+      await mkdir(this.baseDirectory, { recursive: true })
+      const directory = await stat(this.baseDirectory)
+      logLogoDevelopment('storage', 'target-directory-checked', { exists: directory.isDirectory() })
+      await writeFile(this.resolve(storageKey), data, { flag: 'wx' })
+      logLogoDevelopment('storage', 'write-succeeded', { storageKey, sizeBytes: data.length })
+      return storageKey
+    } catch (error) {
+      logLogoDevelopment('storage', 'write-failed', { storageKey, ...logoErrorDetails(error) })
+      throw error
+    }
   }
 
   async delete(storageKey: string): Promise<void> {

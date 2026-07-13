@@ -10,6 +10,8 @@ Een actieve gebruiker kan via `/organisatie/nieuw` een `CLIENT`-, `PROVIDER`- of
 
 Het organisatietype is na aanmaak in versie 1 alleen-lezen. Een latere beheeractie moet typewijziging, ProviderProfile-archivering en audit als één gecontroleerd proces uitvoeren.
 
+Bij een validatiefout behouden de onboarding- en profielformulieren alle ingevulde waarden. Fouten worden bij het betreffende veld getoond, foutvelden worden visueel en semantisch gemarkeerd en de toetsenbordfocus gaat naar het eerste foutveld.
+
 ## Actieve organisatie
 
 Bij één actieve membership wordt de organisatie automatisch gekozen. Bij meerdere memberships kan de gebruiker wisselen. Een HttpOnly-, SameSite=Lax-cookie bevat uitsluitend de gekozen `organizationId`; iedere lezing en mutatie valideert server-side opnieuw dat gebruiker, membership en organisatie toegang toestaan. De cookie is nooit een autorisatiebron.
