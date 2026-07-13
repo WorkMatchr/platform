@@ -20,7 +20,16 @@ Alle IDs zijn UUID’s. `createdAt` en `updatedAt` zijn UTC-timestamps tenzij an
 | `ProviderSector` | Sectorervaring van aanbieder. | Uniek `providerProfileId + sectorId`; niet-negatieve ervaring. | Geen persoonsgegevens. |
 | `Certification` | Beheerbaar certificeringstype. | Unieke slug; `isActive`-index. | Deactiveren, niet verwijderen wanneer gebruikt. |
 | `ProviderCertification` | Certificaat van aanbieder. | Meerdere certificaten per type toegestaan; verifierrelatie; datumcheck. | `archivedAt`; certificaatnummer kan gevoelig zijn; uploads volgen later. |
-| `Intake` | Vrije hulpvraag vóór opdracht. | Optionele gebruiker/organisatie/specialisme; status- en datumindexen. | `archivedAt`; vrije tekst kan gevoelige informatie bevatten; vraagbomen/AI later. |
+| `IntakeQuestionnaire` | Stabiele identiteit van een intakevraagset; `slug`, `name`, `isActive`. | Unieke slug; 1:n versies. | Niet-persoonlijke referentiedata; deactiveren wanneer geen nieuwe intakes mogen starten. |
+| `IntakeQuestionnaireVersion` | Oplopende vraagsetversie met `DRAFT`, `PUBLISHED` of `RETIRED`. | Uniek questionnaire/versie; maximaal één gepubliceerde versie; publicatiedatumcheck. | Gepubliceerd/gepensioneerd inhoudelijk immutable; nieuwe inhoud krijgt een nieuwe versie. |
+| `IntakeQuestion` | Getypeerde en geordende vraag met categorie, label en validatiegrenzen. | Unieke key en volgorde per versie; opties en antwoorden. | Inhoud van gepubliceerde versies is immutable. |
+| `IntakeQuestionOption` | Stabiele keuzeoptie, inclusief exclusieve onzekerheidsoptie. | Unieke value en volgorde per vraag. | Alleen voor keuzevragen; gepubliceerde opties zijn immutable. |
+| `Intake` | Conceptuele hulpvraag met verplichte organisatie, maker en vastgezette vraagsetversie. | Versie-, tenant-, status- en datumindexen; maximaal één Assignment. | `freeText` is immutable bronopname; `archivedAt`; inhoud kan gevoelige bedrijfsinformatie bevatten. |
+| `IntakeAnswer` | Actuele getypeerde antwoordwaarde met oplopende versie. | Uniek intake/vraag; maximaal één scalarwaarde; actor- en locatierelaties. | Mutaties vereisen atomair een revisie via de toekomstige service. |
+| `IntakeAnswerOption` | Actuele gekozen opties bij keuzevragen. | Samengestelde primaire sleutel antwoord/optie. | Service valideert vraag-, optie- en vraagsetconsistentie. |
+| `IntakeAnswerRevision` | Volledige getypeerde snapshot van één antwoordversie. | Uniek antwoord/versie; actor en optionele locatie. | Append-only en reconstrueerbaar; AVG-bewaartermijn nog vaststellen. |
+| `IntakeAnswerRevisionOption` | Historische gekozen opties bij een antwoordrevisie. | Samengestelde primaire sleutel revisie/optie. | Append-only. |
+| `IntakeStatusHistory` | Zakelijke historie van intakestatusovergangen. | Intake, oude/nieuwe status, actor en tijdstip. | Append-only. |
 | `Assignment` | Concrete opdracht. | Verplichte client/creator; optionele intake, locatie, sector en primair specialisme; status/datumindexen. | `archivedAt` of status; omschrijving kan gevoelige bedrijfsinformatie bevatten. |
 | `AssignmentSpecialism` | Meerdere gevraagde specialismen. | Uniek `assignmentId + specialismId`. | Na publicatie als historie behouden. |
 | `AssignmentProviderSelection` | Herleidbare reguliere providerselectie. | Uniek assignment/provider; score 0–100; bron/status/datumindexen. | Nooit stilzwijgend verwijderen; max. drie actieve selecties later transactioneel. |

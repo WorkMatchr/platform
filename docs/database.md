@@ -32,13 +32,14 @@ docker compose stop
 
 ## Seedstrategie
 
-`prisma/seed.ts` seedt uitsluitend referentiedata via upsert op stabiele slugs:
+`prisma/seed.ts` seedt uitsluitend referentiedata via stabiele slugs, keys en versies:
 
 - 12 sectoren;
 - 13 specialismen;
 - 7 certificeringstypen.
+- 1 gepubliceerde intakevraagsetversie met 12 vragen en 35 keuzeopties.
 
-De seed bevat geen personen, organisaties, accounts, e-mailadressen of andere persoonsgegevens. Prisma 7 voert de seed alleen expliciet uit via `npm run db:seed`.
+De seed bevat geen personen, organisaties, accounts, e-mailadressen, intakes of andere persoonsgegevens. Een gepubliceerde vraagset wordt uitsluitend vergeleken en nooit overschreven. Prisma 7 voert de seed alleen expliciet uit via `npm run db:seed`.
 
 ## Historie- en verwijderbeleid
 
@@ -47,7 +48,9 @@ De seed bevat geen personen, organisaties, accounts, e-mailadressen of andere pe
 | User en Organization | Soft delete via `archivedAt` en status. |
 | Membership | Status `REMOVED`; niet stilzwijgend verwijderen. |
 | Location, ProviderProfile, ProviderCertification | Soft delete via `archivedAt`. |
-| Intake en Assignment | Statusgebaseerd plus `archivedAt`; opdrachten kunnen ook worden geannuleerd. |
+| Intake en Assignment | Statusgebaseerd plus `archivedAt`; `freeText` blijft immutable en per intake bestaat maximaal één opdracht. |
+| IntakeQuestionnaireVersion, IntakeQuestion en IntakeQuestionOption | Alleen `DRAFT` is inhoudelijk wijzigbaar; gepubliceerd/gepensioneerd is immutable. |
+| IntakeAnswerRevision en IntakeStatusHistory | Append-only; niet wijzigen of verwijderen. |
 | ProviderSelection en AssignmentResolution | Nooit verwijderen nadat zakelijke historie bestaat. |
 | AdminActionLog | Append-only, nooit wijzigen of verwijderen. |
 | CreditTransaction | Append-only, nooit wijzigen of verwijderen. |
@@ -57,6 +60,14 @@ De seed bevat geen personen, organisaties, accounts, e-mailadressen of andere pe
 Foreign keys gebruiken `RESTRICT`; cascades mogen geen zakelijke historie verwijderen. Hard delete is alleen bedoeld voor lokale reset of aantoonbaar ongebruikte draftdata.
 
 ## Transactionele bedrijfsregels voor latere services
+
+### Intakeantwoorden
+
+- `IntakeAnswer` bewaart de actuele getypeerde waarde;
+- iedere succesvolle wijziging schrijft atomair dezelfde versie naar `IntakeAnswerRevision`;
+- optimistic concurrency gebruikt de oplopende intake- en antwoordversie;
+- opties, vraagtypen, actieve organisatielocaties en tenantrelaties worden in de toekomstige intakeservice opnieuw gevalideerd;
+- `Intake.freeText` blijft de oorspronkelijke bronopname en wordt niet met actuele antwoorden gesynchroniseerd.
 
 ### Maximaal drie actieve aanbiederselecties
 

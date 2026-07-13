@@ -1,6 +1,6 @@
 # Technisch implementatieplan Module 5A — Intake fundament
 
-- **Status:** implementatieplan; nog geen code of migratie uitgevoerd
+- **Status:** leidend implementatieplan; databasefundering 5A.1 gerealiseerd, services en interface nog niet geïmplementeerd
 - **Module:** 5A
 - **Datum:** 13 juli 2026
 - **Bron:** [Ontwerp Module 5](module-5-ontwerp.md)

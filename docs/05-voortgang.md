@@ -158,11 +158,27 @@ De handmatige acceptatie door de product owner is bevestigd. Module 4A is afgero
 
 De definitieve technische en handmatige acceptatie is geslaagd. Module 4B is afgerond.
 
-## Volgende module
+## Module 5A — Intake fundament
 
-**Module 5 — Vraagverheldering, intake en opdrachten** is de volgende module en is nog niet gestart.
+**Status:** in uitvoering
 
-De beoogde scope is een functionele, gevalideerde opdrachtgeversflow van vraagverheldering via conceptintake naar een indienbare opdracht. Matching, maximaal drie aanbiederselecties, credits, Mollie-betalingen en AI-intake blijven buiten Module 5.
+### Module 5A.1 — Intake datamodel
+
+**Status:** technisch opgeleverd; product-owneracceptatie staat nog open
+
+- versieerbare vraagsets, versies, vragen en opties toegevoegd;
+- intake gekoppeld aan verplichte organisatie, maker en vastgezette vraagsetversie;
+- getypeerde actuele antwoorden en append-only antwoordrevisies toegevoegd;
+- append-only intakestatushistorie toegevoegd;
+- oorspronkelijke `freeText` databasebreed immutable gemaakt;
+- maximaal één optionele opdracht per intake voorbereid;
+- vraagset versie 1 met 12 vragen en 35 opties als niet-persoonlijke referentiedata vastgelegd;
+- migratie en dubbele seed op bestaande en lege tijdelijke database geslaagd;
+- database-integriteitstest voor constraints, historie en immutability toegevoegd.
+
+### Volgende stap
+
+De volgende stap binnen Module 5A is de server-side autorisatie-, validatie- en intakeservicelaag. UI, formulieren, indienen, opdrachtvorming, matching, AI, credits en Mollie zijn nog niet gebouwd.
 
 ### Besluitpunten vóór de start
 

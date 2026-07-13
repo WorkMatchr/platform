@@ -31,6 +31,7 @@ Deze map bevat de leidende projectdocumentatie. Lees vóór een wijziging minima
 - [Datadictionary](data-dictionary.md)
 - [Entity Relationship Diagram](ERD.md)
 - [ADR-002: PostgreSQL, Prisma en datamodel](adr/ADR-002-postgresql-prisma-en-datamodel.md)
+- [ADR-005: Versieerbare intake en antwoordhistorie](adr/ADR-005-versieerbare-intake-en-antwoordhistorie.md)
 
 ## Authenticatie en beveiliging
 

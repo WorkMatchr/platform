@@ -70,6 +70,35 @@ enum IntakeStatus {
   ARCHIVED
 }
 
+enum IntakeQuestionnaireVersionStatus {
+  DRAFT
+  PUBLISHED
+  RETIRED
+}
+
+enum IntakeQuestionCategory {
+  HELP_REQUEST
+  DESIRED_OUTCOME
+  SITUATION
+  IMPACT
+  URGENCY
+  LOCATION
+  WORK_MODE
+  PLANNING
+  CONSTRAINTS
+}
+
+enum IntakeQuestionInputType {
+  SHORT_TEXT
+  LONG_TEXT
+  NUMBER
+  BOOLEAN
+  DATE
+  SINGLE_SELECT
+  MULTI_SELECT
+  ORGANIZATION_LOCATION
+}
+
 enum AssignmentStatus {
   DRAFT
   READY_FOR_REVIEW
@@ -128,6 +157,9 @@ model User {
   approvedProviderProfiles     ProviderProfile[]             @relation("ProviderProfileApprover")
   verifiedProviderCertificates ProviderCertification[]       @relation("CertificationVerifier")
   createdIntakes               Intake[]                      @relation("IntakeCreator")
+  updatedIntakeAnswers         IntakeAnswer[]                @relation("IntakeAnswerUpdater")
+  changedIntakeAnswerRevisions IntakeAnswerRevision[]        @relation("IntakeAnswerRevisionActor")
+  changedIntakeStatuses        IntakeStatusHistory[]         @relation("IntakeStatusHistoryActor")
   createdAssignments           Assignment[]                  @relation("AssignmentCreator")
   selectedProviderSelections   AssignmentProviderSelection[] @relation("ProviderSelectionActor")
   assignmentResolutions        AssignmentResolution[]        @relation("AssignmentResolutionActor")
@@ -245,20 +277,22 @@ model OrganizationMembership {
 }
 
 model OrganizationLocation {
-  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizationId String       @db.Uuid
-  label          String
-  addressLine    String
-  postalCode     String
-  city           String
-  province       String?
-  countryCode    String       @db.Char(2)
-  isPrimary      Boolean      @default(false)
-  createdAt      DateTime     @default(now()) @db.Timestamptz(3)
-  updatedAt      DateTime     @updatedAt @db.Timestamptz(3)
-  archivedAt     DateTime?    @db.Timestamptz(3)
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  assignments    Assignment[]
+  id              String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId  String                 @db.Uuid
+  label           String
+  addressLine     String
+  postalCode      String
+  city            String
+  province        String?
+  countryCode     String                 @db.Char(2)
+  isPrimary       Boolean                @default(false)
+  createdAt       DateTime               @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime               @updatedAt @db.Timestamptz(3)
+  archivedAt      DateTime?              @db.Timestamptz(3)
+  organization    Organization           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  assignments     Assignment[]
+  intakeAnswers   IntakeAnswer[]
+  answerRevisions IntakeAnswerRevision[]
 
   @@index([organizationId])
   @@index([city])
@@ -410,32 +444,205 @@ model ProviderCertification {
   @@index([archivedAt])
 }
 
+model IntakeQuestionnaire {
+  id        String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug      String                       @unique
+  name      String
+  isActive  Boolean                      @default(true)
+  createdAt DateTime                     @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime                     @updatedAt @db.Timestamptz(3)
+  versions  IntakeQuestionnaireVersion[]
+
+  @@index([isActive])
+}
+
+model IntakeQuestionnaireVersion {
+  id              String                           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  questionnaireId String                           @db.Uuid
+  version         Int
+  status          IntakeQuestionnaireVersionStatus @default(DRAFT)
+  publishedAt     DateTime?                        @db.Timestamptz(3)
+  createdAt       DateTime                         @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime                         @updatedAt @db.Timestamptz(3)
+  questionnaire   IntakeQuestionnaire              @relation(fields: [questionnaireId], references: [id], onDelete: Restrict)
+  questions       IntakeQuestion[]
+  intakes         Intake[]
+
+  @@unique([questionnaireId, version])
+  @@index([questionnaireId])
+  @@index([status])
+  @@index([publishedAt])
+}
+
+model IntakeQuestion {
+  id                     String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  questionnaireVersionId String                     @db.Uuid
+  key                    String
+  category               IntakeQuestionCategory
+  inputType              IntakeQuestionInputType
+  label                  String
+  helpText               String?
+  isRequired             Boolean                    @default(false)
+  sortOrder              Int
+  minLength              Int?
+  maxLength              Int?
+  minNumber              Decimal?                   @db.Decimal(12, 2)
+  maxNumber              Decimal?                   @db.Decimal(12, 2)
+  minSelections          Int?
+  maxSelections          Int?
+  createdAt              DateTime                   @default(now()) @db.Timestamptz(3)
+  updatedAt              DateTime                   @updatedAt @db.Timestamptz(3)
+  questionnaireVersion   IntakeQuestionnaireVersion @relation(fields: [questionnaireVersionId], references: [id], onDelete: Restrict)
+  options                IntakeQuestionOption[]
+  answers                IntakeAnswer[]
+
+  @@unique([questionnaireVersionId, key])
+  @@unique([questionnaireVersionId, sortOrder])
+  @@index([questionnaireVersionId])
+  @@index([category])
+}
+
+model IntakeQuestionOption {
+  id          String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  questionId  String                       @db.Uuid
+  value       String
+  label       String
+  sortOrder   Int
+  isActive    Boolean                      @default(true)
+  isExclusive Boolean                      @default(false)
+  createdAt   DateTime                     @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime                     @updatedAt @db.Timestamptz(3)
+  question    IntakeQuestion               @relation(fields: [questionId], references: [id], onDelete: Restrict)
+  answers     IntakeAnswerOption[]
+  revisions   IntakeAnswerRevisionOption[]
+
+  @@unique([questionId, value])
+  @@unique([questionId, sortOrder])
+  @@index([questionId])
+}
+
 model Intake {
-  id                   String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  clientOrganizationId String?       @db.Uuid
-  createdByUserId      String?       @db.Uuid
-  freeText             String
-  status               IntakeStatus  @default(DRAFT)
-  detectedSpecialismId String?       @db.Uuid
-  createdAt            DateTime      @default(now()) @db.Timestamptz(3)
-  updatedAt            DateTime      @updatedAt @db.Timestamptz(3)
-  submittedAt          DateTime?     @db.Timestamptz(3)
-  archivedAt           DateTime?     @db.Timestamptz(3)
-  clientOrganization   Organization? @relation(fields: [clientOrganizationId], references: [id], onDelete: Restrict)
-  createdByUser        User?         @relation("IntakeCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
-  detectedSpecialism   Specialism?   @relation("DetectedIntakeSpecialism", fields: [detectedSpecialismId], references: [id], onDelete: Restrict)
-  assignments          Assignment[]
+  id                     String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clientOrganizationId   String                     @db.Uuid
+  createdByUserId        String                     @db.Uuid
+  questionnaireVersionId String                     @db.Uuid
+  freeText               String
+  status                 IntakeStatus               @default(DRAFT)
+  version                Int                        @default(1)
+  detectedSpecialismId   String?                    @db.Uuid
+  createdAt              DateTime                   @default(now()) @db.Timestamptz(3)
+  updatedAt              DateTime                   @updatedAt @db.Timestamptz(3)
+  submittedAt            DateTime?                  @db.Timestamptz(3)
+  archivedAt             DateTime?                  @db.Timestamptz(3)
+  clientOrganization     Organization               @relation(fields: [clientOrganizationId], references: [id], onDelete: Restrict)
+  createdByUser          User                       @relation("IntakeCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  questionnaireVersion   IntakeQuestionnaireVersion @relation(fields: [questionnaireVersionId], references: [id], onDelete: Restrict)
+  detectedSpecialism     Specialism?                @relation("DetectedIntakeSpecialism", fields: [detectedSpecialismId], references: [id], onDelete: Restrict)
+  answers                IntakeAnswer[]
+  statusHistory          IntakeStatusHistory[]
+  assignment             Assignment?
 
   @@index([clientOrganizationId])
   @@index([createdByUserId])
+  @@index([questionnaireVersionId])
   @@index([status])
+  @@index([clientOrganizationId, status, updatedAt])
+  @@index([createdByUserId, status, updatedAt])
   @@index([createdAt])
   @@index([archivedAt])
 }
 
+model IntakeAnswer {
+  id                     String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  intakeId               String                 @db.Uuid
+  questionId             String                 @db.Uuid
+  version                Int                    @default(1)
+  textValue              String?
+  numberValue            Decimal?               @db.Decimal(12, 2)
+  booleanValue           Boolean?
+  dateValue              DateTime?              @db.Date
+  organizationLocationId String?                @db.Uuid
+  updatedByUserId        String                 @db.Uuid
+  createdAt              DateTime               @default(now()) @db.Timestamptz(3)
+  updatedAt              DateTime               @updatedAt @db.Timestamptz(3)
+  intake                 Intake                 @relation(fields: [intakeId], references: [id], onDelete: Restrict)
+  question               IntakeQuestion         @relation(fields: [questionId], references: [id], onDelete: Restrict)
+  organizationLocation   OrganizationLocation?  @relation(fields: [organizationLocationId], references: [id], onDelete: Restrict)
+  updatedByUser          User                   @relation("IntakeAnswerUpdater", fields: [updatedByUserId], references: [id], onDelete: Restrict)
+  options                IntakeAnswerOption[]
+  revisions              IntakeAnswerRevision[]
+
+  @@unique([intakeId, questionId])
+  @@index([intakeId])
+  @@index([questionId])
+  @@index([organizationLocationId])
+  @@index([updatedByUserId])
+}
+
+model IntakeAnswerOption {
+  intakeAnswerId String               @db.Uuid
+  optionId       String               @db.Uuid
+  createdAt      DateTime             @default(now()) @db.Timestamptz(3)
+  intakeAnswer   IntakeAnswer         @relation(fields: [intakeAnswerId], references: [id], onDelete: Restrict)
+  option         IntakeQuestionOption @relation(fields: [optionId], references: [id], onDelete: Restrict)
+
+  @@id([intakeAnswerId, optionId])
+  @@index([optionId])
+}
+
+model IntakeAnswerRevision {
+  id                     String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  intakeAnswerId         String                       @db.Uuid
+  version                Int
+  textValue              String?
+  numberValue            Decimal?                     @db.Decimal(12, 2)
+  booleanValue           Boolean?
+  dateValue              DateTime?                    @db.Date
+  organizationLocationId String?                      @db.Uuid
+  changedByUserId        String                       @db.Uuid
+  createdAt              DateTime                     @default(now()) @db.Timestamptz(3)
+  intakeAnswer           IntakeAnswer                 @relation(fields: [intakeAnswerId], references: [id], onDelete: Restrict)
+  organizationLocation   OrganizationLocation?        @relation(fields: [organizationLocationId], references: [id], onDelete: Restrict)
+  changedByUser          User                         @relation("IntakeAnswerRevisionActor", fields: [changedByUserId], references: [id], onDelete: Restrict)
+  options                IntakeAnswerRevisionOption[]
+
+  @@unique([intakeAnswerId, version])
+  @@index([intakeAnswerId])
+  @@index([organizationLocationId])
+  @@index([changedByUserId])
+  @@index([createdAt])
+}
+
+model IntakeAnswerRevisionOption {
+  intakeAnswerRevisionId String               @db.Uuid
+  optionId               String               @db.Uuid
+  createdAt              DateTime             @default(now()) @db.Timestamptz(3)
+  intakeAnswerRevision   IntakeAnswerRevision @relation(fields: [intakeAnswerRevisionId], references: [id], onDelete: Restrict)
+  option                 IntakeQuestionOption @relation(fields: [optionId], references: [id], onDelete: Restrict)
+
+  @@id([intakeAnswerRevisionId, optionId])
+  @@index([optionId])
+}
+
+model IntakeStatusHistory {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  intakeId        String        @db.Uuid
+  fromStatus      IntakeStatus?
+  toStatus        IntakeStatus
+  changedByUserId String        @db.Uuid
+  reason          String?
+  createdAt       DateTime      @default(now()) @db.Timestamptz(3)
+  intake          Intake        @relation(fields: [intakeId], references: [id], onDelete: Restrict)
+  changedByUser   User          @relation("IntakeStatusHistoryActor", fields: [changedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([intakeId, createdAt])
+  @@index([changedByUserId])
+  @@index([toStatus])
+}
+
 model Assignment {
   id                   String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  intakeId             String?                       @db.Uuid
+  intakeId             String?                       @unique @db.Uuid
   clientOrganizationId String                        @db.Uuid
   createdByUserId      String                        @db.Uuid
   title                String
@@ -463,7 +670,6 @@ model Assignment {
   providerSelections   AssignmentProviderSelection[]
   resolution           AssignmentResolution?
 
-  @@index([intakeId])
   @@index([clientOrganizationId])
   @@index([createdByUserId])
   @@index([status])

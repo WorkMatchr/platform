@@ -1,5 +1,34 @@
 # Changelog
 
+## Unreleased — Module 5A.1
+
+**Status:** technisch opgeleverd; product-owneracceptatie staat nog open.
+
+### Toegevoegd
+
+- versieerbare intakevraagsets, vraagsetversies, vragen en opties;
+- getypeerde actuele antwoorden, keuzejoins en append-only antwoordrevisies;
+- append-only intakestatushistorie;
+- PostgreSQL-checkconstraints, partiële publicatie-index en immutability-triggers;
+- eerste gepubliceerde arbo- en veiligheidsvraagset met 12 vragen en 35 opties;
+- idempotente seedvalidatie voor immutable gepubliceerde vraagsetinhoud;
+- lokale tijdelijke database-integriteitstest via `npm run test:db`;
+- ADR-005 voor versiebeheer, antwoordhistorie en de intake-opdrachtrelatie.
+
+### Gewijzigd
+
+- `Intake` vereist een organisatie, maker en vastgezette vraagsetversie;
+- `Intake.freeText` is een immutable bronopname;
+- `Assignment.intakeId` is optioneel uniek;
+- database-, architectuur-, ERD-, roadmap-, voortgangs-, risico- en technical-debtdocumentatie bijgewerkt.
+
+### Buiten scope
+
+- UI en formulieren;
+- server-side intakeautorisatie en servicelogica;
+- indiening en opdrachtvorming;
+- matching, AI, credits en Mollie.
+
 Alle betekenisvolle wijzigingen aan WorkMatchr worden in dit bestand bijgehouden.
 
 ## Unreleased — Module 4B

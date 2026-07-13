@@ -1,6 +1,6 @@
 # Voorstel vraagset Module 5A — versie 1
 
-- **Status:** inhoudelijk voorstel, nog niet gepubliceerd
+- **Status:** technisch als `PUBLISHED` referentiedata vastgelegd in Module 5A.1; inhoudelijke product-owneracceptatie staat nog open
 - **Module:** 5A — Intake fundament
 - **Doelgroep:** opdrachtgever binnen een actieve organisatie van type `CLIENT` of `BOTH`
 - **Domein:** arbo en veiligheid

@@ -23,6 +23,9 @@
 - transactionele organisatieservice met membershipgebaseerde tenantautorisatie;
 - server-side gevalideerde actieve-organisatiekeuze via HttpOnly-cookie;
 - verwisselbare logo-opslag met lokale developmentadapter en Sharp-WebP-verwerking.
+- versieerbare intakevraagsets met immutable gepubliceerde versies;
+- getypeerde actuele intakeantwoorden met append-only revisie- en statushistorie;
+- maximaal één optionele opdracht per intake als databasebrede invariant.
 
 ## Structuurprincipes
 
@@ -37,6 +40,8 @@
 - Regels die meerdere rijen raken, zoals maximaal drie actieve selecties en een sluitend creditsaldo, worden later transactioneel in de servicelaag afgedwongen.
 - Beveiligde routes controleren sessie, platformrol en actuele accountstatus server-side via centrale helpers.
 - Organisatieacties controleren daarnaast actuele membershiprol en organisatie-/membershipstatus server-side.
+- Iedere intake blijft gekoppeld aan de bij aanmaak vastgezette vraagsetversie; gepubliceerde inhoud wordt niet in-place gewijzigd.
+- Actuele antwoorden en revisies worden in de toekomstige intakeservice atomair geschreven; type-, optie-, locatie- en tenantvalidatie blijft server-side verplicht.
 - Lokale bestandsschijf wordt nooit als productieopslag gebruikt; productie zonder provider faalt veilig.
 
 ## Bewust uitgestelde keuzes

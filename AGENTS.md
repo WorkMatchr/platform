@@ -24,6 +24,9 @@
 - Lees voor organisatiewijzigingen ook `docs/organizations.md`, `docs/authorization.md`, `docs/file-storage.md` en ADR-004.
 - Valideer organisatie- en membershipstatus en organisatierol server-side; vertrouw nooit uitsluitend op een organizationId uit cookie, query of formulier.
 - Gebruik voor uploadtests uitsluitend tijdelijke generieke bestanden buiten Git en verwijder testrecords en opslagbestanden na afloop.
+- Lees voor intake- of vraagsetwijzigingen ook `docs/module-5-ontwerp.md`, `docs/module-5a-implementatieplan.md`, `docs/module-5a-vraagset-v1.md` en ADR-005.
+- Wijzig gepubliceerde of gepensioneerde vraagsetversies nooit in-place; maak voor inhoudelijke wijzigingen een nieuwe versie.
+- Schrijf actuele intakeantwoorden en append-only antwoordrevisies later atomair en valideer vraagset, optie, locatie en tenant server-side.
 
 Relevante documentatie:
 
@@ -40,3 +43,4 @@ Relevante documentatie:
 - [Definition of Done](docs/definition-of-done.md)
 - [Bekende risico’s](docs/known-risks.md)
 - [Technical debt](docs/technical-debt.md)
+- [ADR-005 intakeversies en antwoordhistorie](docs/adr/ADR-005-versieerbare-intake-en-antwoordhistorie.md)

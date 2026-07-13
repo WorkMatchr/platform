@@ -66,8 +66,15 @@
 | B-055 | De productieobject-storageprovider wordt later gekozen. | Productie zonder provider weigert upload veilig. |
 | B-056 | Module 4B is na de definitieve technische en handmatige acceptatie afgerond. | Organisatie-onboarding, autorisatie, logo-opslag en validatie-UX zijn aantoonbaar gecontroleerd. |
 | B-057 | Module 5 bouwt als volgende module de functionele vraagverheldering, intake en opdrachtflow. | Matching, credits, betalingen en AI-intake blijven afzonderlijke latere modules. |
+| B-058 | Module 5A.1 gebruikt versieerbare, genormaliseerde intakevraagsets. | Versie 1 is lineair; toekomstige vertakkingen vereisen een afzonderlijk ontwerp. |
+| B-059 | Gepubliceerde en gepensioneerde vraagsetinhoud is databasebreed immutable. | Tekst-, optie-, volgorde- of validatiewijzigingen maken een nieuwe versie. |
+| B-060 | Intakeantwoorden hebben een actuele waarde plus append-only revisiehistorie. | Iedere succesvolle wijziging moet later atomair beide representaties bijwerken. |
+| B-061 | `Intake.freeText` blijft de immutable oorspronkelijke bronopname. | Het actuele verduidelijkte antwoord staat in `IntakeAnswer`. |
+| B-062 | Per intake bestaat maximaal één opdracht. | Een unieke nullable `Assignment.intakeId` bereidt veilige opdrachtvorming in 5B voor. |
+| B-063 | Vraagset versie 1 is niet-persoonlijke, idempotent gecontroleerde referentiedata. | De migratie legt haar vast; de seed valideert en overschrijft gepubliceerde inhoud nooit. |
 
 Zie [ADR-001](adr/ADR-001-design-system-en-huisstijl.md) voor de onderbouwing van het design system.
 Zie [ADR-002](adr/ADR-002-postgresql-prisma-en-datamodel.md) voor de database- en datamodelkeuzes.
 Zie [ADR-003](adr/ADR-003-better-auth-en-platformrollen.md) voor de authenticatie- en platformrolkeuzes.
 Zie [ADR-004](adr/ADR-004-organisaties-autorisatie-en-logo-opslag.md) voor organisatie-, autorisatie- en logo-opslagkeuzes.
+Zie [ADR-005](adr/ADR-005-versieerbare-intake-en-antwoordhistorie.md) voor vraagsetversies, intakeantwoorden en historie.

@@ -14,7 +14,7 @@
    Persoonlijke accounts, e-mailverificatie, wachtwoordherstel, database-sessies en platformrollen zijn technisch en handmatig geaccepteerd.
 6. **Module 4B — Organisaties, memberships en organisatielogo — afgerond**
    Organisatie-onboarding, rollen, actieve organisatie, profielbeheer, veilige logo-opslag en toegankelijke validatie-UX zijn technisch en handmatig geaccepteerd.
-7. **Module 5 — Vraagverheldering, intake en opdrachten — volgende module**
-   Bouw de eerste functionele opdrachtgeversflow van gevalideerde vraagverheldering via conceptintake naar een indienbare opdracht. Matching, credits en betalingen vallen buiten deze module.
+7. **Module 5 — Vraagverheldering, intake en opdrachten — in uitvoering**
+   Module 5A.1 levert de versieerbare databasefundering voor vraagsets, intakes, actuele antwoorden en append-only historie. De volgende stap bouwt autorisatie, validatie en de intakeservice; UI, opdrachtvorming en matching zijn nog niet actief.
 
-Module 5 is nog niet gestart. Latere modules behandelen volledige aanbieder-onboarding, matching, credits, Mollie-betalingen, berichten, beheer en productievoorbereiding. AI-intake volgt pas in een latere versie.
+Latere modules behandelen volledige aanbieder-onboarding, matching, credits, Mollie-betalingen, berichten, beheer en productievoorbereiding. AI-intake volgt pas in een latere versie.

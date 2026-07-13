@@ -110,7 +110,19 @@ erDiagram
 erDiagram
   Organization ||--o{ Intake : submits
   User ||--o{ Intake : creates
-  Intake ||--o{ Assignment : converts_to
+  IntakeQuestionnaire ||--o{ IntakeQuestionnaireVersion : versions
+  IntakeQuestionnaireVersion ||--o{ IntakeQuestion : contains
+  IntakeQuestion ||--o{ IntakeQuestionOption : offers
+  IntakeQuestionnaireVersion ||--o{ Intake : defines
+  Intake ||--o{ IntakeAnswer : contains
+  IntakeQuestion ||--o{ IntakeAnswer : answers
+  IntakeAnswer ||--o{ IntakeAnswerOption : selects
+  IntakeQuestionOption ||--o{ IntakeAnswerOption : selected_as
+  IntakeAnswer ||--o{ IntakeAnswerRevision : revises
+  IntakeAnswerRevision ||--o{ IntakeAnswerRevisionOption : snapshots
+  IntakeQuestionOption ||--o{ IntakeAnswerRevisionOption : snapshotted_as
+  Intake ||--o{ IntakeStatusHistory : transitions
+  Intake ||--o| Assignment : converts_to
   Organization ||--o{ Assignment : commissions
   User ||--o{ Assignment : creates
   Assignment ||--o{ AssignmentSpecialism : requires
@@ -119,6 +131,41 @@ erDiagram
   ProviderProfile ||--o{ AssignmentProviderSelection : selected_for
   Assignment ||--o| AssignmentResolution : resolves_with
   ProviderProfile ||--o{ AssignmentResolution : awarded_to
+  IntakeQuestionnaire {
+    uuid id PK
+    string slug UK
+    boolean isActive
+  }
+  IntakeQuestionnaireVersion {
+    uuid id PK
+    uuid questionnaireId FK
+    int version
+    IntakeQuestionnaireVersionStatus status
+  }
+  IntakeQuestion {
+    uuid id PK
+    uuid questionnaireVersionId FK
+    string key
+    IntakeQuestionInputType inputType
+  }
+  Intake {
+    uuid id PK
+    uuid questionnaireVersionId FK
+    uuid clientOrganizationId FK
+    uuid createdByUserId FK
+    int version
+  }
+  IntakeAnswer {
+    uuid id PK
+    uuid intakeId FK
+    uuid questionId FK
+    int version
+  }
+  IntakeAnswerRevision {
+    uuid id PK
+    uuid intakeAnswerId FK
+    int version
+  }
   Assignment {
     uuid id PK
     uuid clientOrganizationId FK

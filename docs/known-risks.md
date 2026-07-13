@@ -52,3 +52,5 @@
 | R-048 | Contactgegevens worden onbedoeld publiek. | Middel | Hoog | Alleen logo publiek serveren; contactvelden uitsluitend in beveiligde pagina’s. | Product/backend | Beheerst |
 | R-049 | Organisatiegegevens worden zonder audit aangepast. | Hoog | Hoog | Centrale auditlogging in een latere beheermodule toevoegen. | Backend/audit | Open |
 | R-050 | ProviderProfile raakt inconsistent met organizationType. | Laag | Hoog | Aanmaak transactioneel; type na aanmaak read-only tot beheeractie beschikbaar is. | Backend/database | Beheerst |
+| R-051 | Gepubliceerde vragen of opties wijzigen waardoor bestaande intakes van betekenis veranderen. | Laag | Zeer hoog | PostgreSQL-triggers maken gepubliceerde en gepensioneerde vraagsetinhoud immutable; wijzigingen krijgen een nieuwe versie. | Database/backend | Beheerst |
+| R-052 | Actuele antwoorden en revisiehistorie raken bij een gedeeltelijke schrijfactie uit synchronisatie. | Middel | Hoog | Revisies zijn append-only en opeenvolgend; de volgende intakeservice schrijft actueel antwoord en revisie atomair met concurrencycontrole. | Backend/database | Open |
