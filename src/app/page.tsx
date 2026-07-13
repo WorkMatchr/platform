@@ -36,7 +36,7 @@ const situations = [
 
 const steps = [
   ['01', 'Beschrijf Uw situatie', 'Vertel in gewone woorden wat er binnen Uw organisatie speelt.'],
-  ['02', 'Wij verduidelijken de hulpvraag', 'De toekomstige dynamische intake stelt alleen vragen die nodig zijn om Uw situatie te begrijpen.'],
+  ['02', 'Wij verduidelijken de hulpvraag', 'De intake stelt gerichte vragen die nodig zijn om Uw situatie te begrijpen.'],
   ['03', 'Wij selecteren maximaal drie passende specialisten', 'De selectie sluit aan op de oplossing die bij Uw vraag past.'],
   ['04', 'U kiest zelf', 'U vergelijkt de passende aanbieders en houdt zelf de regie over Uw keuze.'],
 ] as const
@@ -56,8 +56,8 @@ const audiences = [
     label: 'Voor opdrachtgevers',
     title: 'Van situatie naar een overzichtelijke keuze',
     points: ['Beschrijf Uw situatie', 'Doorloop een gerichte intake', 'Ontvang een overzichtelijke selectie', 'Kies zelf'],
-    cta: 'Bekijk hoe het werkt',
-    href: '#hoe-werkt-het',
+    cta: 'Start Uw hulpvraag',
+    href: '/hulpvragen/nieuw',
   },
   {
     id: 'voor-aanbieders',
@@ -111,9 +111,9 @@ export default function HomePage() {
             />
             <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <Text size="sm" className="text-text-secondary">
-                De digitale intake komt binnenkort beschikbaar.
+                De intake is beschikbaar na inloggen. De invoer hierboven is een voorbeeld.
               </Text>
-              <LinkButton href="#hoe-werkt-het" className="shrink-0">
+              <LinkButton href="/hulpvragen/nieuw" className="shrink-0">
                 Start Uw intake
               </LinkButton>
             </div>
@@ -170,8 +170,8 @@ export default function HomePage() {
           <Badge>Hoe WorkMatchr werkt</Badge>
           <Heading className="mt-4">Eerst begrijpen, daarna gericht selecteren</Heading>
           <Text className="mt-5 text-text-secondary">
-            Versie 1 gebruikt later een dynamische intake. Dit is een demonstratie van de toekomstige werkwijze,
-            geen werkende AI-intake.
+            Versie 1 gebruikt vaste, gevalideerde vragen om Uw situatie te verduidelijken. Er wordt geen AI of
+            matchinglogica gebruikt.
           </Text>
         </div>
         <ol className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -233,7 +233,7 @@ export default function HomePage() {
         <Text size="lg" className="mx-auto mt-5 max-w-2xl text-text-secondary">
           Vertel ons waar Uw organisatie tegenaan loopt. Wij helpen U gericht verder.
         </Text>
-        <LinkButton href="#intake" className="mt-8">
+        <LinkButton href="/hulpvragen/nieuw" className="mt-8">
           Start Uw intake
         </LinkButton>
       </Section>

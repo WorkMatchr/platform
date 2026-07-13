@@ -80,7 +80,10 @@ export const requireIntakeCreator = async (
     throw accessDenied();
   }
 
-  return { organizationId: organization.id };
+  return {
+    organizationId: organization.id,
+    membershipRole: membership.role,
+  };
 };
 
 const intakeAccessSelect = {

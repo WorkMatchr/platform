@@ -54,7 +54,11 @@ Verbergt aanvullende toegankelijke tekst visueel zonder deze uit de accessibilit
 
 ### Demonstratieve intake
 
-De homepage gebruikt voorlopig een native, gelabelde `textarea`. Deze invoer heeft bewust geen submit-, opslag- of AI-functionaliteit. De CTA verwijst naar de uitleg van de toekomstige werkwijze en de beschikbaarheidsmelding blijft zichtbaar.
+De homepage gebruikt een native, gelabelde `textarea` als expliciete voorbeeldinvoer. Deze voorbeeldtekst wordt bewust niet via queryparameters of cookies naar de beveiligde flow meegenomen. De CTA verwijst naar `/hulpvragen/nieuw`, waar na authenticatie de functionele intake start.
+
+### Intakecomponenten
+
+Componenten in `src/components/intakes` leveren overzichtskaarten, status, voortgang, startformulier, dynamische vraagvelden, stapformulier en controlesamenvatting. Alleen formulieren met `useActionState` zijn clientcomponenten; overige intakeweergave blijft server-side. Alle dynamische velden hebben labels, helptekst, foutkoppeling en toetsenbordbediening.
 
 ## Richtlijnen
 

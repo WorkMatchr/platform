@@ -6,7 +6,7 @@
 | TD-002 | Hoog | De exacte primaire kleur uit het FSC-logo ontbreekt. | `brand-primary` vervangen door de definitieve logokleur en contrast opnieuw toetsen. | Na ontvangst definitieve kleur |
 | TD-003 | Middel | Tijdelijke ankerlinks bestaan nog. | Vervangen door definitieve routes zodra de betreffende pagina’s worden gebouwd. | Latere publieke module |
 | TD-004 | Middel | Privacy en algemene voorwaarden bevatten nog geen juridisch definitieve inhoud. | Juridische inhoud laten vaststellen en de bestaande pagina’s definitief opleveren. | Juridische module |
-| TD-005 | Hoog | De intake op de homepage is demonstratief en niet functioneel. | Een afzonderlijke, gevalideerde opdrachtgeversintake bouwen. | Module 5 |
+| TD-005 | Laag | De voorbeeldtekst op de homepage wordt niet vooraf ingevuld in de beveiligde intake. | Pas na een afzonderlijke privacy- en authenticatiekeuze bepalen of veilige overdracht wenselijk is. | Latere UX-verfijning |
 | TD-006 | Hoog | De productieprovider, back-upstrategie en monitoring voor PostgreSQL zijn nog niet gekozen. | Selecteer de productieomgeving en leg hersteldoelen, back-ups en monitoring vast. | Productievoorbereiding |
 | TD-007 | Hoog | Een platformbeheerinterface voor organisatie-ingrijpen ontbreekt. | Bouw afzonderlijke, auditeerbare beheeracties. | Latere beheermodule |
 | TD-008 | Middel | De versieerbare intakefundering en conceptservice bestaan, maar vraagsetpublicatiebeheer en toekomstige vertakkingen ontbreken nog. | Bouw gecontroleerd publicatiebeheer; voeg vertakkingen pas na afzonderlijk ontwerp toe. | Latere vraagboommodule |

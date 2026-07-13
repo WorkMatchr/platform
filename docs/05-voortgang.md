@@ -189,13 +189,28 @@ De definitieve technische en handmatige acceptatie is geslaagd. Module 4B is afg
 - voortgang meldt ontbrekende vragen en de eerstvolgende onvolledige categorie;
 - gerichte tests voor beleid, validatie, revisies, statusovergangen en versieconflicten toegevoegd.
 
+### Module 5A.3 — Intake interface en Server Actions
+
+**Status:** technisch opgeleverd; product-owneracceptatie staat nog open
+
+- beveiligde routes onder `/hulpvragen` voor overzicht, start, hervatten, categorieën en controle toegevoegd;
+- vragen en eerder opgeslagen antwoorden worden uit de vastgezette vraagsetversie getoond;
+- dunne Server Actions gebruiken uitsluitend de bestaande intake-services voor mutaties;
+- formulierwaarden blijven behouden na validatie- en concurrencyfouten;
+- veldfouten worden gekoppeld, gemarkeerd en het eerste foutveld krijgt focus;
+- voortgang, ontbrekende categorieën, loading- en errorstates zijn toegevoegd;
+- `OWNER` en `ADMIN` zien organisatie-intakes; `MEMBER` uitsluitend eigen intakes;
+- `READY_FOR_REVIEW`, heropenen en gecontroleerd archiveren zijn via de servicelaag ontsloten;
+- homepage-CTA’s verwijzen naar de beveiligde intakeflow en de voorbeeldinvoer is expliciet als voorbeeld gemarkeerd;
+- browsercontrole bevestigt homepageweergave, CTA, beveiligde authredirect, ontbrekende error-overlay en geen horizontale overflow op de gecontroleerde pagina.
+
 ### Volgende stap
 
-De volgende stap binnen Module 5A is 5A.3: dunne Server Actions en de intake-interface voor starten, vraagstappen en controle. Indienen, opdrachtvorming, matching, AI, credits en Mollie zijn nog niet gebouwd.
+De volgende stap is de technische en handmatige acceptatie van Module 5A. Na expliciete product-ownergoedkeuring kan Module 5B starten met bevoegde indiening en transactionele opdrachtvorming. Matching, AI, credits en Mollie blijven latere modules.
 
 ### Bewuste afbakening
 
 - Module 5A activeert maximaal status `READY_FOR_REVIEW`;
 - `SUBMITTED`, `CONVERTED` en transactionele opdrachtvorming volgen in Module 5B;
 - vraagsetpublicatiebeheer en vertakkende vraagbomen volgen pas na afzonderlijk ontwerp;
-- UI, matching, AI, credits en Mollie vallen buiten 5A.2.
+- matching, AI, credits en Mollie vallen buiten Module 5A.

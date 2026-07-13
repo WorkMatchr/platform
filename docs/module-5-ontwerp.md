@@ -1,6 +1,6 @@
 # Ontwerp Module 5 — Vraagverheldering, intake en opdrachten
 
-- **Status:** leidend ontwerp; databasefundering 5A.1 gerealiseerd, overige onderdelen nog te implementeren
+- **Status:** leidend ontwerp; Module 5A.1, 5A.2 en 5A.3 technisch gerealiseerd, acceptatie en Module 5B staan nog open
 - **Module:** 5
 - **Afhankelijk van:** afgeronde Modules 3, 4A en 4B
 - **Buiten scope:** matching, aanbieders, credits, Mollie-betalingen en AI

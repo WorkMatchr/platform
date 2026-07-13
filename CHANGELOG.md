@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased — Module 5A.1 en 5A.2
+## Unreleased — Module 5A.1, 5A.2 en 5A.3
 
 **Status:** technisch opgeleverd; product-owneracceptatie staat nog open.
 
@@ -18,7 +18,12 @@
 - transactionele services voor intakeaanmaak, conceptopslag, gereedmelden, heropenen en archiveren;
 - dynamische validatie op vraagtype, vraagsetversie, categorie, opties en organisatielocaties;
 - optimistische concurrencycontrole voor intake- en antwoordversies;
-- gerichte tests voor rollenbeleid, validatie, antwoordrevisies, statusovergangen en versieconflicten.
+- gerichte tests voor rollenbeleid, validatie, antwoordrevisies, statusovergangen en versieconflicten;
+- beveiligde App Router-flow onder `/hulpvragen` voor overzicht, starten, vraagstappen en controle;
+- dunne Server Actions met invoerbehoud, veldfouten, foutfocus, revalidatie en veilige redirects;
+- geautoriseerde read-service met geserialiseerde overzichts- en detailmodellen;
+- toegankelijke velden voor tekst, getal, datum, boolean, keuze, meerkeuze en organisatielocatie;
+- loading- en errorstates en responsive voortgangsweergave.
 
 ### Gewijzigd
 
@@ -26,11 +31,12 @@
 - `Intake.freeText` is een immutable bronopname;
 - `Assignment.intakeId` is optioneel uniek;
 - actuele antwoorden en append-only revisies worden atomair bijgewerkt;
+- homepage- en Header-CTA’s verwijzen naar de beveiligde intakeflow;
+- lokale login-returnpaden kunnen veilig terugkeren naar de bedoelde hulpvraagroute;
 - roadmap-, voortgangs-, risico- en technical-debtdocumentatie bijgewerkt.
 
 ### Buiten scope
 
-- UI en formulieren;
 - indiening en opdrachtvorming;
 - vraagsetpublicatiebeheer en vertakkende vraagbomen;
 - matching, AI, credits en Mollie.

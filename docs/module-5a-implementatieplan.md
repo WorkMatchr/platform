@@ -1,6 +1,6 @@
 # Technisch implementatieplan Module 5A — Intake fundament
 
-- **Status:** leidend implementatieplan; databasefundering 5A.1 en servicelaag 5A.2 gerealiseerd, interface nog niet geïmplementeerd
+- **Status:** leidend implementatieplan; databasefundering 5A.1, servicelaag 5A.2 en interface 5A.3 technisch gerealiseerd; acceptatie staat open
 - **Module:** 5A
 - **Datum:** 13 juli 2026
 - **Bron:** [Ontwerp Module 5](module-5-ontwerp.md)

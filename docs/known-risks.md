@@ -9,7 +9,7 @@
 | R-005 | Te veel visuele complexiteit vermindert overzicht. | Laag | Middel | Rustige layouts, beperkte schaduwen en functionele animaties als ontwerpprincipe bewaken. | Product/design | Beheerst |
 | R-006 | De beheeromgeving wordt minder toegankelijk dan de publieke website. | Middel | Hoog | Dezelfde componenten en Definition of Done voor alle applicatieonderdelen gebruiken. | Front-end | Open |
 | R-007 | Publieke website en dashboards krijgen een afwijkende huisstijl. | Middel | Hoog | Eén gedeeld token- en componentensysteem gebruiken. | Front-end | Open |
-| R-008 | De demonstratieve intake wordt aangezien voor werkende functionaliteit. | Middel | Hoog | Duidelijke beschikbaarheidsmelding tonen en geen submit- of opslagfunctionaliteit aanbieden. | Product/front-end | Beheerst |
+| R-008 | De voorbeeldinvoer op de homepage wordt aangezien voor het functionele intakeformulier. | Laag | Middel | De invoer expliciet als voorbeeld labelen en alle CTA’s naar de afzonderlijke beveiligde intakeflow laten verwijzen. | Product/front-end | Beheerst |
 | R-009 | De homepage wordt opnieuw te donker of visueel zwaar. | Middel | Middel | Licht oppervlak als standaard vastleggen en donkere vlakken beperken tot kleine accenten. | Product/design | Beheerst |
 | R-010 | Het mobiele menu is onvoldoende toegankelijk. | Laag | Hoog | Native `details` en `summary`, zichtbare focus en handmatige toetsenbordcontrole gebruiken. | Front-end | Open |
 | R-011 | Onnodige persoonsgegevens worden opgeslagen. | Middel | Hoog | Dataminimalisatie, doelbinding en veldreview toepassen vóór iedere functionele module. | Product/backend | Open |

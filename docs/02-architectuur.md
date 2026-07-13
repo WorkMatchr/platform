@@ -26,6 +26,8 @@
 - versieerbare intakevraagsets met immutable gepubliceerde versies;
 - getypeerde actuele intakeantwoorden met append-only revisie- en statushistorie;
 - maximaal één optionele opdracht per intake als databasebrede invariant.
+- transactionele intakeservices met tenantautorisatie, dynamische validatie en optimistische concurrency;
+- beveiligde App Router-interface met dunne Server Actions en geautoriseerde read-modellen.
 
 ## Structuurprincipes
 
@@ -41,7 +43,8 @@
 - Beveiligde routes controleren sessie, platformrol en actuele accountstatus server-side via centrale helpers.
 - Organisatieacties controleren daarnaast actuele membershiprol en organisatie-/membershipstatus server-side.
 - Iedere intake blijft gekoppeld aan de bij aanmaak vastgezette vraagsetversie; gepubliceerde inhoud wordt niet in-place gewijzigd.
-- Actuele antwoorden en revisies worden in de toekomstige intakeservice atomair geschreven; type-, optie-, locatie- en tenantvalidatie blijft server-side verplicht.
+- Actuele antwoorden en revisies worden in de intakeservice atomair geschreven; type-, optie-, locatie- en tenantvalidatie is server-side verplicht.
+- Intakepagina’s en componenten benaderen Prisma niet rechtstreeks; reads en writes lopen via afzonderlijke intake-services.
 - Lokale bestandsschijf wordt nooit als productieopslag gebruikt; productie zonder provider faalt veilig.
 
 ## Bewust uitgestelde keuzes

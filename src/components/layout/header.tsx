@@ -50,7 +50,7 @@ export function Header() {
               </li>
             </ul>
           </nav>
-          <LinkButton href="#intake">Start Uw intake</LinkButton>
+          <LinkButton href="/hulpvragen/nieuw">Start Uw intake</LinkButton>
         </div>
 
         <details className="group relative lg:hidden">
@@ -76,7 +76,7 @@ export function Header() {
                   </Link>
                 </li>
               </ul>
-              <LinkButton href="#intake" className="mt-3 w-full">
+              <LinkButton href="/hulpvragen/nieuw" className="mt-3 w-full">
                 Start Uw intake
               </LinkButton>
             </nav>

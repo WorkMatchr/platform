@@ -15,6 +15,6 @@
 6. **Module 4B — Organisaties, memberships en organisatielogo — afgerond**
    Organisatie-onboarding, rollen, actieve organisatie, profielbeheer, veilige logo-opslag en toegankelijke validatie-UX zijn technisch en handmatig geaccepteerd.
 7. **Module 5 — Vraagverheldering, intake en opdrachten — in uitvoering**
-   Module 5A.1 levert de versieerbare databasefundering. Module 5A.2 levert tenantautorisatie, dynamische validatie, transactionele intakeservices, append-only antwoordrevisies en optimistische concurrency. De volgende stap bouwt dunne Server Actions en de intake-interface; indiening, opdrachtvorming en matching zijn nog niet actief.
+   Module 5A.1 levert de versieerbare databasefundering, 5A.2 de beveiligde servicelaag en 5A.3 de toegankelijke interface en Server Actions tot `READY_FOR_REVIEW`. Technische en handmatige acceptatie van Module 5A is de volgende stap; indiening, opdrachtvorming en matching zijn nog niet actief.
 
 Latere modules behandelen volledige aanbieder-onboarding, matching, credits, Mollie-betalingen, berichten, beheer en productievoorbereiding. AI-intake volgt pas in een latere versie.

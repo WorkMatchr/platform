@@ -6,14 +6,15 @@ import type { PlatformRole } from '@/generated/prisma/enums'
 import { auth } from '@/lib/auth'
 import { canAccessAccount, shouldRevokeExistingSessions } from '@/lib/auth-policy'
 import { getPrisma } from '@/lib/prisma'
+import { getSafeReturnUrl } from '@/lib/safe-redirect'
 
 export async function getCurrentSession() {
   return auth.api.getSession({ headers: await headers() })
 }
 
-export async function requireUser() {
+export async function requireUser(returnTo = '/account') {
   const session = await getCurrentSession()
-  if (!session) redirect('/inloggen?returnTo=/account')
+  if (!session) redirect(`/inloggen?returnTo=${encodeURIComponent(getSafeReturnUrl(returnTo))}`)
 
   const user = await getPrisma().user.findUnique({
     where: { id: session.user.id },

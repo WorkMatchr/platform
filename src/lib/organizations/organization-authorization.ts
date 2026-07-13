@@ -20,8 +20,8 @@ const membershipSelect = {
   },
 }
 
-export async function getActiveOrganizationContext() {
-  const user = await requireUser()
+export async function getActiveOrganizationContext(returnTo = '/account') {
+  const user = await requireUser(returnTo)
   const memberships = await getPrisma().organizationMembership.findMany({
     where: { userId: user.id, status: 'ACTIVE', organization: { status: { not: 'ARCHIVED' } } },
     select: membershipSelect,
@@ -36,8 +36,8 @@ export async function getActiveOrganizationContext() {
   return { user, memberships, activeMembership }
 }
 
-export async function requireOrganizationMembership(organizationId?: string) {
-  const context = await getActiveOrganizationContext()
+export async function requireOrganizationMembership(organizationId?: string, returnTo = '/account') {
+  const context = await getActiveOrganizationContext(returnTo)
   const membership = organizationId
     ? context.memberships.find((candidate) => candidate.organization.id === organizationId)
     : context.activeMembership
