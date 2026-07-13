@@ -176,13 +176,26 @@ De definitieve technische en handmatige acceptatie is geslaagd. Module 4B is afg
 - migratie en dubbele seed op bestaande en lege tijdelijke database geslaagd;
 - database-integriteitstest voor constraints, historie en immutability toegevoegd.
 
+### Module 5A.2 — Intake service en autorisatie
+
+**Status:** technisch opgeleverd; product-owneracceptatie staat nog open
+
+- centrale server-side tenantautorisatie voor actieve `CLIENT`- en `BOTH`-organisaties toegevoegd;
+- `OWNER` en `ADMIN` beheren organisatie-intakes; `MEMBER` beheert alleen eigen conceptintakes;
+- transactionele services voor aanmaken, concept opslaan, gereedmelden, heropenen en archiveren toegevoegd;
+- actuele antwoorden en append-only antwoordrevisies worden atomair bijgewerkt;
+- vraagtype-, optie-, categorie-, vraagsetversie- en organisatielocatievalidatie toegevoegd;
+- optimistische concurrency op intake- en antwoordversies toegevoegd;
+- voortgang meldt ontbrekende vragen en de eerstvolgende onvolledige categorie;
+- gerichte tests voor beleid, validatie, revisies, statusovergangen en versieconflicten toegevoegd.
+
 ### Volgende stap
 
-De volgende stap binnen Module 5A is de server-side autorisatie-, validatie- en intakeservicelaag. UI, formulieren, indienen, opdrachtvorming, matching, AI, credits en Mollie zijn nog niet gebouwd.
+De volgende stap binnen Module 5A is 5A.3: dunne Server Actions en de intake-interface voor starten, vraagstappen en controle. Indienen, opdrachtvorming, matching, AI, credits en Mollie zijn nog niet gebouwd.
 
-### Besluitpunten vóór de start
+### Bewuste afbakening
 
-- welke organisatierollen een intake mogen aanmaken, wijzigen en indienen;
-- hoe vraagbomen, antwoorden en wijzigingen versieerbaar worden vastgelegd;
-- welke statusovergangen en minimale gegevens gelden voor concept, gereed voor controle en ingediend;
-- welke vrije tekst en mogelijk gevoelige informatie noodzakelijk is, hoe lang die wordt bewaard en wanneer een intake een opdracht wordt.
+- Module 5A activeert maximaal status `READY_FOR_REVIEW`;
+- `SUBMITTED`, `CONVERTED` en transactionele opdrachtvorming volgen in Module 5B;
+- vraagsetpublicatiebeheer en vertakkende vraagbomen volgen pas na afzonderlijk ontwerp;
+- UI, matching, AI, credits en Mollie vallen buiten 5A.2.

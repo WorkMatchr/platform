@@ -9,7 +9,7 @@
 | TD-005 | Hoog | De intake op de homepage is demonstratief en niet functioneel. | Een afzonderlijke, gevalideerde opdrachtgeversintake bouwen. | Module 5 |
 | TD-006 | Hoog | De productieprovider, back-upstrategie en monitoring voor PostgreSQL zijn nog niet gekozen. | Selecteer de productieomgeving en leg hersteldoelen, back-ups en monitoring vast. | Productievoorbereiding |
 | TD-007 | Hoog | Een platformbeheerinterface voor organisatie-ingrijpen ontbreekt. | Bouw afzonderlijke, auditeerbare beheeracties. | Latere beheermodule |
-| TD-008 | Middel | De versieerbare intakefundering bestaat, maar conditionele vraagregels, publicatiebeheer en de intakeservice ontbreken nog. | Bouw gecontroleerde validatie/publicatieservices; voeg vertakkingen pas na afzonderlijk ontwerp toe. | Module 5A en latere vraagboommodule |
+| TD-008 | Middel | De versieerbare intakefundering en conceptservice bestaan, maar vraagsetpublicatiebeheer en toekomstige vertakkingen ontbreken nog. | Bouw gecontroleerd publicatiebeheer; voeg vertakkingen pas na afzonderlijk ontwerp toe. | Latere vraagboommodule |
 | TD-009 | Hoog | Maximaal drie actieve aanbiederselecties is nog niet transactioneel afgedwongen. | Voeg een transactionele selectieservice met locking en tests toe. | Matchingmodule |
 | TD-010 | Hoog | Creditsaldo, transactielogboek en veelvouden van 10 hebben nog geen servicelaag. | Implementeer één atomaire creditsservice met locking en invarianttests. | Creditsmodule |
 | TD-011 | Middel | Eén primaire organisatielocatie wordt transactioneel maar nog niet met een databasebrede partiële constraint bewaakt. | Beoordeel een PostgreSQL-partiële unieke index naast de servicelaag. | Databasehardening |

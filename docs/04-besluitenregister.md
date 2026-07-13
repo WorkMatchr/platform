@@ -68,7 +68,7 @@
 | B-057 | Module 5 bouwt als volgende module de functionele vraagverheldering, intake en opdrachtflow. | Matching, credits, betalingen en AI-intake blijven afzonderlijke latere modules. |
 | B-058 | Module 5A.1 gebruikt versieerbare, genormaliseerde intakevraagsets. | Versie 1 is lineair; toekomstige vertakkingen vereisen een afzonderlijk ontwerp. |
 | B-059 | Gepubliceerde en gepensioneerde vraagsetinhoud is databasebreed immutable. | Tekst-, optie-, volgorde- of validatiewijzigingen maken een nieuwe versie. |
-| B-060 | Intakeantwoorden hebben een actuele waarde plus append-only revisiehistorie. | Iedere succesvolle wijziging moet later atomair beide representaties bijwerken. |
+| B-060 | Intakeantwoorden hebben een actuele waarde plus append-only revisiehistorie. | Iedere succesvolle wijziging werkt beide representaties atomair bij met optimistische concurrencycontrole. |
 | B-061 | `Intake.freeText` blijft de immutable oorspronkelijke bronopname. | Het actuele verduidelijkte antwoord staat in `IntakeAnswer`. |
 | B-062 | Per intake bestaat maximaal één opdracht. | Een unieke nullable `Assignment.intakeId` bereidt veilige opdrachtvorming in 5B voor. |
 | B-063 | Vraagset versie 1 is niet-persoonlijke, idempotent gecontroleerde referentiedata. | De migratie legt haar vast; de seed valideert en overschrijft gepubliceerde inhoud nooit. |

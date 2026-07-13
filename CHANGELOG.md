@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased — Module 5A.1
+## Unreleased — Module 5A.1 en 5A.2
 
 **Status:** technisch opgeleverd; product-owneracceptatie staat nog open.
 
@@ -13,20 +13,26 @@
 - eerste gepubliceerde arbo- en veiligheidsvraagset met 12 vragen en 35 opties;
 - idempotente seedvalidatie voor immutable gepubliceerde vraagsetinhoud;
 - lokale tijdelijke database-integriteitstest via `npm run test:db`;
-- ADR-005 voor versiebeheer, antwoordhistorie en de intake-opdrachtrelatie.
+- ADR-005 voor versiebeheer, antwoordhistorie en de intake-opdrachtrelatie;
+- centrale tenantautorisatie voor organisatie-intakes;
+- transactionele services voor intakeaanmaak, conceptopslag, gereedmelden, heropenen en archiveren;
+- dynamische validatie op vraagtype, vraagsetversie, categorie, opties en organisatielocaties;
+- optimistische concurrencycontrole voor intake- en antwoordversies;
+- gerichte tests voor rollenbeleid, validatie, antwoordrevisies, statusovergangen en versieconflicten.
 
 ### Gewijzigd
 
 - `Intake` vereist een organisatie, maker en vastgezette vraagsetversie;
 - `Intake.freeText` is een immutable bronopname;
 - `Assignment.intakeId` is optioneel uniek;
-- database-, architectuur-, ERD-, roadmap-, voortgangs-, risico- en technical-debtdocumentatie bijgewerkt.
+- actuele antwoorden en append-only revisies worden atomair bijgewerkt;
+- roadmap-, voortgangs-, risico- en technical-debtdocumentatie bijgewerkt.
 
 ### Buiten scope
 
 - UI en formulieren;
-- server-side intakeautorisatie en servicelogica;
 - indiening en opdrachtvorming;
+- vraagsetpublicatiebeheer en vertakkende vraagbomen;
 - matching, AI, credits en Mollie.
 
 Alle betekenisvolle wijzigingen aan WorkMatchr worden in dit bestand bijgehouden.
