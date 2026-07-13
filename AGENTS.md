@@ -21,6 +21,9 @@
 - Controleer platformrol en actuele accountstatus server-side dicht bij beschermd gegevensgebruik.
 - Voeg nooit authsecrets, Resend-keys, wachtwoorden, sessietokens of verificatie-/resettokens toe aan Git of documentatie.
 - Gebruik voor authflowtests uitsluitend tijdelijke `example.invalid`-accounts en verwijder alle gekoppelde records na afloop.
+- Lees voor organisatiewijzigingen ook `docs/organizations.md`, `docs/authorization.md`, `docs/file-storage.md` en ADR-004.
+- Valideer organisatie- en membershipstatus en organisatierol server-side; vertrouw nooit uitsluitend op een organizationId uit cookie, query of formulier.
+- Gebruik voor uploadtests uitsluitend tijdelijke generieke bestanden buiten Git en verwijder testrecords en opslagbestanden na afloop.
 
 Relevante documentatie:
 

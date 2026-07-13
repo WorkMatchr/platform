@@ -38,3 +38,17 @@
 | R-034 | Trusted origins of proxyheaders zijn in productie verkeerd ingesteld. | Middel | Hoog | Deployment-specifieke origins, proxyketen en client-IP-header vóór livegang testen. | DevOps/security | Open |
 | R-035 | Juridische akkoordpagina’s zijn nog niet definitief. | Hoog | Hoog | Tijdelijke status eerlijk tonen en juridische inhoud vóór livegang laten vaststellen. | Product/juridisch | Open |
 | R-036 | Persoonsgegevens belanden in authlogs. | Middel | Hoog | Minimale logging, redactie en productie-logreview uitvoeren. | Security/DevOps | Open |
+| R-037 | Een gebruiker krijgt toegang tot een organisatie van een ander. | Laag | Zeer hoog | Iedere actie valideert userId, actieve membership en organisatie server-side. | Backend/security | Beheerst |
+| R-038 | Een organizationId uit clientstate wordt vertrouwd. | Middel | Zeer hoog | Cookie/formulier alleen als keuze gebruiken en membership opnieuw opzoeken. | Backend/security | Beheerst |
+| R-039 | Gedeeltelijke organisatieaanmaak ontstaat. | Laag | Hoog | Alle onboardingrecords in één Prisma-transactie aanmaken. | Backend/database | Beheerst |
+| R-040 | Dubbele memberships ontstaan. | Laag | Hoog | Samengestelde unieke index en transactionele aanmaak behouden. | Database | Beheerst |
+| R-041 | Meerdere primaire locaties ontstaan. | Middel | Hoog | Updates transactioneel resetten en één locatie primair maken; databasebrede constraint later beoordelen. | Backend/database | Open |
+| R-042 | Schadelijke afbeeldingsinhoud wordt opgeslagen. | Middel | Zeer hoog | Werkelijke inhoud met Sharp decoderen en opnieuw naar WebP coderen. | Backend/security | Beheerst |
+| R-043 | SVG-scriptinhoud wordt uitgevoerd. | Middel | Hoog | SVG volledig weigeren in versie 1. | Backend/security | Beheerst |
+| R-044 | Directory traversal leest willekeurige bestanden. | Laag | Zeer hoog | Alleen UUID-v4-WebP-keys en gecontroleerde resolved paden accepteren. | Backend/security | Beheerst |
+| R-045 | Oude logo’s blijven achter. | Middel | Middel | Vervanging en verwijdering ruimen bestanden op; latere object storage krijgt orphan-cleanup. | Storage/backend | Open |
+| R-046 | Lokale schijf wordt als productieopslag gebruikt. | Middel | Hoog | Productie zonder provider hard weigeren. | DevOps/storage | Beheerst |
+| R-047 | Logo-opslag en database raken uit synchronisatie. | Middel | Hoog | Veilige schrijfvolgorde, rollbackcleanup en toekomstige periodieke reconciliatie. | Backend/storage | Open |
+| R-048 | Contactgegevens worden onbedoeld publiek. | Middel | Hoog | Alleen logo publiek serveren; contactvelden uitsluitend in beveiligde pagina’s. | Product/backend | Beheerst |
+| R-049 | Organisatiegegevens worden zonder audit aangepast. | Hoog | Hoog | Centrale auditlogging in een latere beheermodule toevoegen. | Backend/audit | Open |
+| R-050 | ProviderProfile raakt inconsistent met organizationType. | Laag | Hoog | Aanmaak transactioneel; type na aanmaak read-only tot beheeractie beschikbaar is. | Backend/database | Beheerst |

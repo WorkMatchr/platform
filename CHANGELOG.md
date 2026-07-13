@@ -2,6 +2,35 @@
 
 Alle betekenisvolle wijzigingen aan WorkMatchr worden in dit bestand bijgehouden.
 
+## Unreleased — Module 4B
+
+**Status:** technisch opgeleverd en te testen op 13 juli 2026.
+
+### Toegevoegd
+
+- organisatie-onboarding met transactionele OWNER-membership, sectoren en primaire locatie;
+- beveiligd organisatieoverzicht, profielbewerking en actieve-organisatiekiezer;
+- centrale server-side organisatieautorisatie voor `OWNER`, `ADMIN` en `MEMBER`;
+- automatisch `ProviderProfile` met status `DRAFT` voor `PROVIDER` en `BOTH`;
+- veilige upload, vervanging en verwijdering van één organisatielogo;
+- lokale verwisselbare logo-opslag, gecontroleerde mediaroute en Sharp-WebP-verwerking;
+- afzonderlijke logometadatamigratie, ADR-004 en gerichte organisatietests.
+
+### Gewijzigd
+
+- accountpagina toont een passende organisatie-CTA;
+- `Organization` bevat uitsluitend afleidbare logometadata, geen binary of absoluut pad;
+- roadmap, voortgang, architectuur, datadictionary, ERD, security, risico’s, technical debt en Definition of Done bijgewerkt.
+
+### Gecontroleerd
+
+- CLIENT- en PROVIDER-aanmaak, OWNER-relatie, DRAFT-profiel, profielwijziging en wisselen tussen organisaties;
+- manipulatie van organizationId, MEMBER-beheerweigering en accountstatusbeleid;
+- logo-inhoud, MIME, grootte, SVG-weigering, WebP-conversie, traversal, vervanging en verwijdering;
+- migraties en seed op bestaande en lege tijdelijke PostgreSQL-database;
+- mobiele layout rond 390 pixels, toetsenbordfocus, homepage en bestaande authenticatie;
+- tijdelijke acceptatiedata en testlogo’s verwijderd.
+
 ## Unreleased — Module 4A
 
 **Status:** technisch opgeleverd en te testen op 12 juli 2026.

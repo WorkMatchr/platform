@@ -205,6 +205,12 @@ model Organization {
   phone                   String?
   generalEmail            String?
   employeeCount           Int?
+  logoStorageKey          String?                  @unique
+  logoMimeType            String?
+  logoSizeBytes           Int?
+  logoWidth               Int?
+  logoHeight              Int?
+  logoUpdatedAt           DateTime?                @db.Timestamptz(3)
   createdAt               DateTime                 @default(now()) @db.Timestamptz(3)
   updatedAt               DateTime                 @updatedAt @db.Timestamptz(3)
   archivedAt              DateTime?                @db.Timestamptz(3)

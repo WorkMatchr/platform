@@ -64,11 +64,11 @@ Actieve statussen zijn `SELECTED`, `INVITED`, `VIEWED`, `RESPONDED` en `AWARDED`
 
 ### Primaire vestiging
 
-Een latere organisatieservice bewaakt transactioneel dat hoogstens één niet-gearchiveerde locatie `isPrimary = true` heeft.
+De organisatieservice bewaakt transactioneel dat bij onboarding en profielwijziging precies één niet-gearchiveerde locatie `isPrimary = true` heeft. Een aanvullende databasebrede partiële unieke index blijft als hardeningpunt geregistreerd.
 
 ### Providerorganisatie
 
-Een `ProviderProfile` mag alleen gekoppeld zijn aan een Organization met type `PROVIDER` of `BOTH`. Dit wordt later in één transactionele service gevalideerd.
+Bij onboarding krijgt een Organization met type `PROVIDER` of `BOTH` in dezelfde transactie maximaal één `ProviderProfile` met status `DRAFT`. Het organisatietype is daarna in versie 1 read-only.
 
 ### Credits
 

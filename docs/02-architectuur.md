@@ -20,6 +20,9 @@
 - Better Auth 1.6 met de officiële Prisma-adapter;
 - databasegebaseerde sessies en database-rate-limiting;
 - verwisselbare e-mailservice met Resend-voorbereiding.
+- transactionele organisatieservice met membershipgebaseerde tenantautorisatie;
+- server-side gevalideerde actieve-organisatiekeuze via HttpOnly-cookie;
+- verwisselbare logo-opslag met lokale developmentadapter en Sharp-WebP-verwerking.
 
 ## Structuurprincipes
 
@@ -33,7 +36,9 @@
 - Historische bedrijfsgegevens worden standaard gedeactiveerd of gearchiveerd; relaties gebruiken geen cascade-delete.
 - Regels die meerdere rijen raken, zoals maximaal drie actieve selecties en een sluitend creditsaldo, worden later transactioneel in de servicelaag afgedwongen.
 - Beveiligde routes controleren sessie, platformrol en actuele accountstatus server-side via centrale helpers.
+- Organisatieacties controleren daarnaast actuele membershiprol en organisatie-/membershipstatus server-side.
+- Lokale bestandsschijf wordt nooit als productieopslag gebruikt; productie zonder provider faalt veilig.
 
 ## Bewust uitgestelde keuzes
 
-Organisatieautorisatie, betalingen, hosting, productieback-ups, bestandsopslag en andere infrastructuurkeuzes worden pas vastgelegd in de module waarin ze nodig zijn. Module 4A levert alleen persoonlijke accounts en platformrollen.
+Betalingen, hosting, productieback-ups en andere infrastructuurkeuzes worden pas vastgelegd in de module waarin ze nodig zijn. De definitieve object-storageprovider, auditlogging en membershipbeheer zijn bewust uitgesteld.

@@ -48,6 +48,24 @@
 | B-042 | Rate limiting gebruikt de gedeelde PostgreSQL-database. | Productie-proxy- en client-IP-configuratie wordt vóór deployment vastgesteld. |
 | B-043 | Organisaties en organisatierollen vallen buiten Module 4A. | Module 4B start alleen na expliciete opdracht. |
 
+## 13 juli 2026
+
+| ID | Besluit | Toelichting |
+| --- | --- | --- |
+| B-044 | Een gebruiker kan meerdere organisaties hebben. | Een gevalideerde actieve-organisatiekeuze houdt de interface eenvoudig. |
+| B-045 | De organisatiecreator wordt actieve `OWNER`. | Organisatie en membership ontstaan in één transactie. |
+| B-046 | Memberships bepalen organisatieautorisatie. | Clientstate en organizationId zijn nooit zelfstandig vertrouwd. |
+| B-047 | `MEMBER` is read-only voor het organisatieprofiel. | Alleen `OWNER` en `ADMIN` mogen wijzigen. |
+| B-048 | Organisatieaanmaak is transactioneel. | Organisatie, membership, sectoren, locatie en eventueel ProviderProfile ontstaan atomair. |
+| B-049 | `PROVIDER` en `BOTH` krijgen een `ProviderProfile` met status `DRAFT`. | Volledige onboarding en goedkeuring volgen later. |
+| B-050 | Per organisatie bestaat maximaal één logo. | Alleen afleidbare metadata staat in PostgreSQL. |
+| B-051 | Een logo is maximaal 2 MB. | Grootte wordt vóór beelddecodering server-side gecontroleerd. |
+| B-052 | PNG, JPEG en WebP zijn toegestaan. | Invoer wordt opnieuw gecodeerd naar WebP. |
+| B-053 | SVG is niet toegestaan in versie 1. | Actieve inhoud en sanitizationrisico worden vermeden. |
+| B-054 | Lokale logo-opslag is uitsluitend voor development. | `.local-storage` wordt door Git genegeerd. |
+| B-055 | De productieobject-storageprovider wordt later gekozen. | Productie zonder provider weigert upload veilig. |
+
 Zie [ADR-001](adr/ADR-001-design-system-en-huisstijl.md) voor de onderbouwing van het design system.
 Zie [ADR-002](adr/ADR-002-postgresql-prisma-en-datamodel.md) voor de database- en datamodelkeuzes.
 Zie [ADR-003](adr/ADR-003-better-auth-en-platformrollen.md) voor de authenticatie- en platformrolkeuzes.
+Zie [ADR-004](adr/ADR-004-organisaties-autorisatie-en-logo-opslag.md) voor organisatie-, autorisatie- en logo-opslagkeuzes.

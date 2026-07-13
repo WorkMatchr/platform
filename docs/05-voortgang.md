@@ -97,7 +97,7 @@ Module 3 is technisch en handmatig goedgekeurd.
 
 ## Module 4A — Authenticatie en platformrollen
 
-**Status:** te testen
+**Status:** afgerond
 
 ### Technisch opgeleverd
 
@@ -122,8 +122,37 @@ Module 3 is technisch en handmatig goedgekeurd.
 - tijdelijke testdata: verwijderd;
 - lint, typecheck, build, tests en audit: geslaagd.
 
-Toetsenbordfocus moet nog handmatig door de product owner worden bevestigd. Definitieve afronding volgt pas na handmatige acceptatie.
+De handmatige acceptatie door de product owner is bevestigd. Module 4A is afgerond.
+
+## Module 4B — Organisaties, memberships en organisatielogo
+
+**Status:** te testen
+
+### Technisch opgeleverd
+
+- transactionele organisatieaanmaak met actieve OWNER-membership;
+- sectoren, primaire sector en precies één primaire locatie bij onboarding;
+- beveiligd overzicht en profielbewerking voor OWNER en ADMIN;
+- MEMBER is server-side read-only;
+- gevalideerde actieve-organisatiekeuze voor meerdere memberships;
+- `ProviderProfile` DRAFT voor PROVIDER en BOTH;
+- PNG/JPEG/WebP-validatie, Sharp-verwerking en gestandaardiseerde WebP-output;
+- lokale developmentopslag, gecontroleerde mediaroute en veilige productie-weigering;
+- nieuwe logometadatamigratie en gerichte geautomatiseerde tests.
+
+### Technische acceptatie
+
+- CLIENT en PROVIDER aanmaken, OWNER, sector en primaire locatie: geslaagd;
+- providerstatus DRAFT en organisatie wisselen: geslaagd;
+- profiel wijzigen, organizationId-manipulatie en MEMBER-weigering: geslaagd;
+- logo uploaden, vervangen, verwijderen en placeholder: geslaagd;
+- mobiel rond 390 pixels, geen horizontale overflow en zichtbare toetsenbordfocus: geslaagd;
+- migraties en seed op bestaande en lege tijdelijke database: geslaagd;
+- tijdelijke acceptatiedata, tijdelijke database en testlogo’s: verwijderd;
+- tests, lint, typecheck, build en audit: geslaagd.
+
+Definitieve afronding volgt na handmatige acceptatie door de product owner.
 
 ## Volgende module
 
-Module 4B — Organisaties en memberships is niet gestart en volgt alleen na expliciete opdracht.
+De volgende module is nog niet gestart en wordt alleen na een expliciete opdracht bepaald.

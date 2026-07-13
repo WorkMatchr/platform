@@ -2,7 +2,7 @@
 
 ## Scope Module 4A
 
-Module 4A levert uitsluitend persoonlijke accounts met Better Auth 1.6.23: registratie, verplichte e-mailverificatie, login, logout, wachtwoordherstel, databasegebaseerde sessies en een beveiligde accountpagina. Organisaties, memberships en aanbiedersprofielen horen bij Module 4B.
+Module 4A levert persoonlijke accounts met Better Auth 1.6.23: registratie, verplichte e-mailverificatie, login, logout, wachtwoordherstel, databasegebaseerde sessies en een beveiligde accountpagina. Module 4B bouwt hierop voort met afzonderlijke organisatie- en membershipautorisatie; Better Auth blijft de enige sessiebron.
 
 ## Architectuur
 
@@ -36,7 +36,7 @@ De aanvraag geeft altijd dezelfde neutrale bevestiging. De token is één uur ge
 - `BLOCKED`: login wordt generiek vóór sessieaanmaak geweigerd; bestaande sessie wordt bij server-side gebruik verwijderd.
 - `ARCHIVED`: login wordt generiek vóór sessieaanmaak geweigerd; bestaande sessie wordt bij server-side gebruik verwijderd.
 
-Iedere beveiligde serverroute moet `requireUser` of `requirePlatformRole` gebruiken. Clientchecks en `proxy.ts` zijn niet de beveiligingsgrens. Er is in Module 4A bewust geen organisatieautorisatie en geen adminpagina.
+Iedere beveiligde serverroute gebruikt `requireUser` of `requirePlatformRole`. Organisatieroutes voegen de centrale helpers uit `docs/authorization.md` toe. Clientchecks en `proxy.ts` zijn niet de beveiligingsgrens. Er is nog geen adminpagina.
 
 ## Lokale e-mailtest
 

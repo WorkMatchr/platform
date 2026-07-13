@@ -46,6 +46,9 @@ erDiagram
     uuid id PK
     OrganizationType organizationType
     OrganizationStatus status
+    string logoStorageKey UK
+    string logoMimeType
+    int logoSizeBytes
   }
   OrganizationMembership {
     uuid id PK

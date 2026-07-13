@@ -19,4 +19,6 @@ Voor een databasemodule geldt aanvullend dat de schema-validatie en clientgenera
 
 Voor een authenticatiemodule geldt aanvullend dat registratie, verificatie, login, logout, wachtwoordherstel, sessie-intrekking en server-side routebeveiliging zijn getest; accountenumeratie en open redirects worden voorkomen; secrets blijven buiten Git; tijdelijke testaccounts worden verwijderd; en `npm test` en `npm audit` slagen.
 
+Voor een organisatiemodule geldt aanvullend dat tenantautorisatie server-side is getest; organisatie en creator-membership atomair ontstaan; OWNER/ADMIN/MEMBER-regels aantoonbaar werken; actieve organisatiekeuze geen clientstate vertrouwt; bestandsinhoud en opslagkeys worden gevalideerd; productieopslag veilig faalt zonder provider; en alle tijdelijke organisaties, accounts en bestanden zijn verwijderd.
+
 Module 2A en Module 2B zijn handmatig goedgekeurd door de product owner. De product owner heeft expliciet opdracht gegeven de modules vóór commit en push als afgerond te registreren. Commit en push blijven afzonderlijke overdrachtsacties en worden niet zelfstandig door Codex uitgevoerd.

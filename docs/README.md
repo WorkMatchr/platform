@@ -35,6 +35,13 @@ Deze map bevat de leidende projectdocumentatie. Lees vóór een wijziging minima
 - [Beveiliging](security.md)
 - [ADR-003: Better Auth en platformrollen](adr/ADR-003-better-auth-en-platformrollen.md)
 
+## Organisaties en bestanden
+
+- [Organisaties](organizations.md)
+- [Organisatieautorisatie](authorization.md)
+- [Bestandsopslag](file-storage.md)
+- [ADR-004: Organisaties, autorisatie en logo-opslag](adr/ADR-004-organisaties-autorisatie-en-logo-opslag.md)
+
 Aanvullend staan de overkoepelende principes in [PROJECT_PRINCIPLES.md](../PROJECT_PRINCIPLES.md) en wijzigingen in [CHANGELOG.md](../CHANGELOG.md).
 
 Documentatie wordt bijgewerkt zodra een besluit, risico of functionaliteit verandert.
