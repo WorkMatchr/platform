@@ -10,6 +10,8 @@ Deze map bevat de leidende projectdocumentatie. Lees vóór een wijziging minima
 4. [Besluitenregister](04-besluitenregister.md)
 5. [Voortgang](05-voortgang.md)
 6. [Ontwerp Module 5 — Vraagverheldering, intake en opdrachten](module-5-ontwerp.md)
+7. [Technisch implementatieplan Module 5A — Intake fundament](module-5a-implementatieplan.md)
+8. [Voorstel vraagset Module 5A — versie 1](module-5a-vraagset-v1.md)
 
 ## Ontwerp en kwaliteit
 
