@@ -1,0 +1,2 @@
+import { AuthShell, StatusMessage } from '@/components/auth/auth-shell'
+export default function PrivacyPage() { return <AuthShell title="Privacy-informatie" intro="De definitieve privacyverklaring wordt nog juridisch opgesteld."><StatusMessage>Registreer alleen wanneer U begrijpt dat deze pagina tijdelijk is. WorkMatchr verwerkt voor Module 4A uitsluitend de gegevens die nodig zijn voor Uw persoonlijke account.</StatusMessage></AuthShell> }

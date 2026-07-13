@@ -2,6 +2,38 @@
 
 Alle betekenisvolle wijzigingen aan WorkMatchr worden in dit bestand bijgehouden.
 
+## Unreleased — Module 4A
+
+**Status:** technisch opgeleverd en te testen op 12 juli 2026.
+
+### Toegevoegd
+
+- Better Auth 1.6.23 met officiële Prisma-adapter;
+- registratie, verplichte e-mailverificatie, login, logout en wachtwoordherstel;
+- databasegebaseerde sessies en database-rate-limiting;
+- beveiligde persoonlijke accountpagina en server-side autorisatiehelpers;
+- verwisselbare e-mailservice met development-consolemail en Resend-voorbereiding;
+- modellen `Session`, `Account`, `Verification` en `RateLimit`;
+- afzonderlijke authmigratie en 24 gerichte unit-tests;
+- authenticatie-, security- en ADR-003-documentatie.
+
+### Gewijzigd
+
+- bestaand `User` uitgebreid met `emailVerified`, `image` en authrelaties zonder zakelijke relaties te wijzigen;
+- Better Auth `name` gemapt op bestaand `displayName`;
+- Header-link “Inloggen” verwijst naar `/inloggen`;
+- roadmap, besluiten, voortgang, risico’s, technical debt, datadictionary, ERD en Definition of Done bijgewerkt.
+
+### Gecontroleerd
+
+- migraties op bestaande en lege tijdelijke PostgreSQL-database;
+- registratie vóór en na verificatie, generieke fouten, accountpagina en logout;
+- wachtwoordreset, intrekking van sessies en weigering van oud wachtwoord;
+- geblokkeerde accountstatus en bestaande sessie server-side geweigerd;
+- mobiele layout rond 390 pixels zonder horizontale overflow;
+- tijdelijke testaccounts en authrecords volledig verwijderd;
+- Prisma-validatie, tests, lint, typecheck, build en audit.
+
 ## Unreleased — Module 3
 
 **Status:** technisch en handmatig goedgekeurd door de product owner op 12 juli 2026.

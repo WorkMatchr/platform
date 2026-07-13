@@ -7,6 +7,8 @@ De ERD is per domein gesplitst voor leesbaarheid. Velden zijn beperkt tot primai
 ```mermaid
 erDiagram
   User ||--o{ OrganizationMembership : has
+  User ||--o{ Session : authenticates_with
+  User ||--o{ Account : owns
   Organization ||--o{ OrganizationMembership : has
   Organization ||--o{ OrganizationLocation : owns
   Organization ||--o{ OrganizationSector : classified_as
@@ -16,6 +18,29 @@ erDiagram
     string email UK
     PlatformRole platformRole
     UserStatus status
+    boolean emailVerified
+  }
+  Session {
+    uuid id PK
+    uuid userId FK
+    string token UK
+    datetime expiresAt
+  }
+  Account {
+    uuid id PK
+    uuid userId FK
+    string providerId
+    string accountId
+  }
+  Verification {
+    uuid id PK
+    string identifier
+    datetime expiresAt
+  }
+  RateLimit {
+    uuid id PK
+    string key UK
+    int count
   }
   Organization {
     uuid id PK

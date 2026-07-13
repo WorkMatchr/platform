@@ -95,6 +95,35 @@ Authenticatie, schermen, functionele intake, matching, betalingen en daadwerkeli
 
 Module 3 is technisch en handmatig goedgekeurd.
 
+## Module 4A — Authenticatie en platformrollen
+
+**Status:** te testen
+
+### Technisch opgeleverd
+
+- Better Auth met e-mail/wachtwoord en officiële Prisma-adapter;
+- verplichte e-mailverificatie en wachtwoordherstel;
+- databasegebaseerde sessies en database-rate-limiting;
+- server-side accountstatus- en platformrolcontrole;
+- registratie-, login-, reset-, verificatie- en accountpagina’s;
+- development-consolemail en voorbereide Resend-productiemail;
+- nieuwe afzonderlijke authenticatiemigratie;
+- gerichte geautomatiseerde beveiligingstests.
+
+### Technische acceptatie
+
+- registratie, verificatie, login, logout en wachtwoordherstel: geslaagd;
+- login vóór verificatie en foutieve login: veilig geweigerd;
+- oud wachtwoord na reset: geweigerd; nieuw wachtwoord: geaccepteerd;
+- `BLOCKED`-account en bestaande sessie: server-side geweigerd en ingetrokken;
+- `ARCHIVED`-account en bestaande sessie: server-side geweigerd en ingetrokken;
+- 390-pixellayout: geen horizontale overflow;
+- migraties op bestaande en lege tijdelijke database: geslaagd;
+- tijdelijke testdata: verwijderd;
+- lint, typecheck, build, tests en audit: geslaagd.
+
+Toetsenbordfocus moet nog handmatig door de product owner worden bevestigd. Definitieve afronding volgt pas na handmatige acceptatie.
+
 ## Volgende module
 
-Module 4 — Authenticatie en rollen is de volgende module en is nog niet gestart.
+Module 4B — Organisaties en memberships is niet gestart en volgt alleen na expliciete opdracht.

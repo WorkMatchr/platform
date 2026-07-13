@@ -42,7 +42,7 @@ export function Header() {
               ))}
               <li>
                 <Link
-                  href="#inloggen"
+                  href="/inloggen"
                   className="inline-flex min-h-11 items-center rounded-control px-1 transition-colors duration-normal hover:text-brand-primary-hover"
                 >
                   Inloggen
@@ -71,7 +71,7 @@ export function Header() {
                   </li>
                 ))}
                 <li>
-                  <Link className="flex min-h-11 items-center rounded-control px-3 hover:bg-brand-primary-subtle" href="#inloggen">
+                  <Link className="flex min-h-11 items-center rounded-control px-3 hover:bg-brand-primary-subtle" href="/inloggen">
                     Inloggen
                   </Link>
                 </li>

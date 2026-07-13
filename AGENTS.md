@@ -16,6 +16,11 @@
 - Maak schemawijzigingen uitsluitend via controleerbare Prisma-migraties; wijzig een reeds toegepaste migratie niet achteraf.
 - Seed uitsluitend idempotente referentiedata en nooit secrets, persoonsgegevens of productiegegevens.
 - Behandel `npm run db:reset` als destructief en gebruik dit alleen expliciet op een lokale ontwikkeldatabase.
+- Lees voor authenticatiewijzigingen ook `docs/authentication.md`, `docs/security.md` en ADR-003.
+- Gebruik Better Auth als enige bron voor wachtwoordhashing, cookies, tokens en sessie-authenticatie; bouw hiervoor geen parallelle logica.
+- Controleer platformrol en actuele accountstatus server-side dicht bij beschermd gegevensgebruik.
+- Voeg nooit authsecrets, Resend-keys, wachtwoorden, sessietokens of verificatie-/resettokens toe aan Git of documentatie.
+- Gebruik voor authflowtests uitsluitend tijdelijke `example.invalid`-accounts en verwijder alle gekoppelde records na afloop.
 
 Relevante documentatie:
 

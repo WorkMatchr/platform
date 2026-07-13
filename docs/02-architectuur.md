@@ -17,6 +17,9 @@
 - UUID's als primaire sleutels en UTC-tijdstempels met tijdzone;
 - versiebeheerbare Prisma-migraties en een idempotente seed voor referentiedata;
 - lokale database-isolatie via Docker Compose.
+- Better Auth 1.6 met de officiële Prisma-adapter;
+- databasegebaseerde sessies en database-rate-limiting;
+- verwisselbare e-mailservice met Resend-voorbereiding.
 
 ## Structuurprincipes
 
@@ -29,7 +32,8 @@
 - Databasetoegang loopt via de gedeelde, lazy geïnitialiseerde Prisma-client in `src/lib/prisma.ts`.
 - Historische bedrijfsgegevens worden standaard gedeactiveerd of gearchiveerd; relaties gebruiken geen cascade-delete.
 - Regels die meerdere rijen raken, zoals maximaal drie actieve selecties en een sluitend creditsaldo, worden later transactioneel in de servicelaag afgedwongen.
+- Beveiligde routes controleren sessie, platformrol en actuele accountstatus server-side via centrale helpers.
 
 ## Bewust uitgestelde keuzes
 
-Authenticatie, autorisatie, betalingen, hosting, productieback-ups, bestandsopslag en andere infrastructuurkeuzes worden pas vastgelegd in de module waarin ze nodig zijn. Module 3 levert uitsluitend de databasebasis en implementeert nog geen bedrijfsprocessen.
+Organisatieautorisatie, betalingen, hosting, productieback-ups, bestandsopslag en andere infrastructuurkeuzes worden pas vastgelegd in de module waarin ze nodig zijn. Module 4A levert alleen persoonlijke accounts en platformrollen.

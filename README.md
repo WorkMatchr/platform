@@ -2,7 +2,7 @@
 
 WorkMatchr wordt een volledig onafhankelijk platform dat organisaties koppelt aan passende arbo- en veiligheidsspecialisten. Per opdracht worden maximaal drie aanbieders objectief geselecteerd; betaalde voorkeursposities bestaan niet.
 
-Module 1, **Module 2A: design system en huisstijl**, **Module 2B: publieke homepage** en **Module 3: database en datamodel** zijn afgerond. Module 4: authenticatie en rollen is de volgende module. Authenticatie, betalingen, matching en andere bedrijfsfunctionaliteit worden pas in de daarvoor bestemde modules toegevoegd.
+Module 1, **Module 2A: design system en huisstijl**, **Module 2B: publieke homepage** en **Module 3: database en datamodel** zijn afgerond. Module 4A: authenticatie en platformrollen is technisch opgeleverd en staat op **te testen**. Module 4B is niet gestart.
 
 ## Vereisten
 
@@ -20,6 +20,8 @@ npm run db:deploy
 npm run db:seed
 ```
 
+Vul voor authenticatie lokaal minimaal `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` en `NEXT_PUBLIC_APP_URL` in. Zonder Resend-configuratie worden verificatie- en resetlinks uitsluitend buiten productie als development-only naar de serverterminal geschreven. Gebruik in productie altijd een sterk willekeurig geheim en een afzonderlijke WorkMatchr-Resendconfiguratie.
+
 ## Lokaal starten
 
 ```bash
@@ -34,6 +36,8 @@ Open daarna [http://localhost:3001](http://localhost:3001). Start WorkMatchr exp
 npm run lint
 npm run typecheck
 npm run build
+npm test
+npm audit
 ```
 
 ## Databasecommando's
@@ -69,4 +73,4 @@ Lees [docs/README.md](docs/README.md) voor de documentatie-index, [PROJECT_PRINC
 
 ## Status
 
-Module 2A, Module 2B en Module 3 zijn handmatig goedgekeurd en afgerond. Module 4 is de volgende module en is nog niet gestart. De actuele status staat in [docs/05-voortgang.md](docs/05-voortgang.md).
+Module 2A, Module 2B en Module 3 zijn handmatig goedgekeurd en afgerond. Module 4A staat op te testen; Module 4B is niet gestart. De actuele status staat in [docs/05-voortgang.md](docs/05-voortgang.md).

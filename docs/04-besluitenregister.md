@@ -34,6 +34,20 @@
 | B-028 | Seed-data bevat uitsluitend niet-persoonlijke referentiedata. | De seed is idempotent en veilig herhaalbaar. |
 | B-029 | Authenticatie, dynamische intake, matching, betalingen en creditslogica vallen buiten Module 3. | Het datamodel bereidt deze modules voor zonder onafgemaakte functionaliteit te activeren. |
 | B-030 | De productiedatabaseprovider is nog niet gekozen. | Hosting, back-ups, hersteldoelen, monitoring en datalocatie worden vóór livegang afzonderlijk beoordeeld. |
+| B-031 | WorkMatchr gebruikt Better Auth voor persoonlijke accounts. | Zelfgebouwde hashing, cookies en tokenlogica zijn uitgesloten. |
+| B-032 | Module 4A gebruikt uitsluitend e-mail en wachtwoord. | Social login, MFA en passkeys vallen buiten deze module. |
+| B-033 | E-mailverificatie is verplicht voordat een sessie kan ontstaan. | Nieuwe accounts starten als `INVITED` en worden na verificatie `ACTIVE`. |
+| B-034 | Wachtwoordherstel gebruikt een eenmalige link van één uur. | Na reset worden bestaande sessies ingetrokken. |
+| B-035 | Sessies worden databasegebaseerd opgeslagen. | Sessies zijn centraal intrekbaar en statuscontrole blijft server-side. |
+| B-036 | Wachtwoorden hebben 12–128 tekens. | Hashing en verificatie worden volledig door Better Auth uitgevoerd. |
+| B-037 | Autorisatie wordt dicht bij server-side gegevensgebruik uitgevoerd. | Clientchecks en proxy zijn niet de beveiligingsgrens. |
+| B-038 | `BLOCKED` en `ARCHIVED` krijgen geen toegang. | Nieuwe sessies worden geweigerd en bestaande sessies bij beveiligd gebruik ingetrokken. |
+| B-039 | E-mailadressen worden getrimd en naar lowercase genormaliseerd. | Dit gebeurt vóór opslag en in de registratievalidatie. |
+| B-040 | Lokale authmail wordt development-only naar de serverterminal geschreven. | Alleen verificatie- en resetlinks; geen wachtwoorden of sessietokens. |
+| B-041 | Productiemail gebruikt een afzonderlijke WorkMatchr-Resendconfiguratie. | Ontbrekende productieconfiguratie faalt veilig. |
+| B-042 | Rate limiting gebruikt de gedeelde PostgreSQL-database. | Productie-proxy- en client-IP-configuratie wordt vóór deployment vastgesteld. |
+| B-043 | Organisaties en organisatierollen vallen buiten Module 4A. | Module 4B start alleen na expliciete opdracht. |
 
 Zie [ADR-001](adr/ADR-001-design-system-en-huisstijl.md) voor de onderbouwing van het design system.
 Zie [ADR-002](adr/ADR-002-postgresql-prisma-en-datamodel.md) voor de database- en datamodelkeuzes.
+Zie [ADR-003](adr/ADR-003-better-auth-en-platformrollen.md) voor de authenticatie- en platformrolkeuzes.

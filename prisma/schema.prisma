@@ -117,6 +117,8 @@ model User {
   id                           String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email                        String                        @unique
   displayName                  String?
+  emailVerified                Boolean                       @default(false)
+  image                        String?
   platformRole                 PlatformRole                  @default(USER)
   status                       UserStatus                    @default(INVITED)
   createdAt                    DateTime                      @default(now()) @db.Timestamptz(3)
@@ -131,9 +133,65 @@ model User {
   assignmentResolutions        AssignmentResolution[]        @relation("AssignmentResolutionActor")
   adminActions                 AdminActionLog[]              @relation("AdminActionActor")
   createdCreditTransactions    CreditTransaction[]           @relation("CreditTransactionActor")
+  sessions                     Session[]
+  accounts                     Account[]
 
   @@index([status])
   @@index([createdAt])
+}
+
+model Session {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @db.Uuid
+  token     String   @unique
+  expiresAt DateTime @db.Timestamptz(3)
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Account {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                String    @db.Uuid
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  accessTokenExpiresAt  DateTime? @db.Timestamptz(3)
+  refreshTokenExpiresAt DateTime? @db.Timestamptz(3)
+  scope                 String?
+  idToken               String?
+  password              String?
+  createdAt             DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime  @updatedAt @db.Timestamptz(3)
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  identifier String
+  value      String
+  expiresAt  DateTime @db.Timestamptz(3)
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([identifier])
+  @@index([expiresAt])
+}
+
+model RateLimit {
+  id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key         String @unique
+  count       Int
+  lastRequest BigInt
 }
 
 model Organization {

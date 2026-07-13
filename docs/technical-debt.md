@@ -15,3 +15,13 @@
 | TD-011 | Middel | Eén primaire organisatielocatie wordt nog niet over meerdere rijen afgedwongen. | Borg dit transactioneel in de toekomstige organisatieservice. | Organisatiemodule |
 | TD-012 | Middel | JSON-velden hebben nog geen runtime schemavalidatie. | Voeg versieerbare schema's en validatie aan de servicegrenzen toe. | Bij eerste gebruik JSON-velden |
 | TD-013 | Middel | Bewaartermijnen en AVG-verwijder-/anonimiseringsbeleid zijn nog niet vastgesteld. | Stel beleid vast en vertaal dit naar archivering en anonimisering. | Juridische/productievoorbereiding |
+| TD-014 | Hoog | Definitieve WorkMatchr-e-mailafzender en domeinauthenticatie ontbreken. | Resend-domein, SPF, DKIM en DMARC configureren en testen. | Productievoorbereiding |
+| TD-015 | Hoog | Productieproxy, trusted origins en client-IP-bron zijn nog niet vastgesteld. | Per deployment vastleggen en rate-limiting end-to-end testen. | Productievoorbereiding |
+| TD-016 | Hoog | Juridische privacyverklaring en algemene voorwaarden zijn placeholders. | Juridisch definitieve pagina’s opleveren vóór livegang. | Juridische module |
+| TD-017 | Middel | Organisatie-onboarding en memberships ontbreken. | Uitwerken zonder vooruit te lopen op autorisatie. | Module 4B |
+| TD-018 | Middel | Uitnodigingen voor organisatieleden ontbreken. | Veilige uitnodigingsflow ontwerpen. | Module 4B |
+| TD-019 | Middel | Platformbeheerinterface ontbreekt. | Afzonderlijke beheerfunctionaliteit met audit bouwen. | Latere beheermodule |
+| TD-020 | Laag | MFA en passkeys zijn nog niet beoordeeld. | Risicogestuurd beoordelen voor een latere versie. | Latere securitymodule |
+| TD-021 | Laag | Social login valt buiten versie 1. | Alleen heroverwegen bij aantoonbare gebruikersbehoefte. | Latere versie |
+| TD-022 | Laag | Gebruikers hebben nog geen sessiebeheerpagina. | Actieve sessies en handmatige intrekking later beoordelen. | Latere accountmodule |
+| TD-023 | Hoog | Authbewaartermijnen en privacyverwijdering zijn nog niet definitief. | Retentie en anonimisering juridisch en technisch vastleggen. | Productievoorbereiding |

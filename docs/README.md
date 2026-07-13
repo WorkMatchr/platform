@@ -29,6 +29,12 @@ Deze map bevat de leidende projectdocumentatie. Lees vóór een wijziging minima
 - [Entity Relationship Diagram](ERD.md)
 - [ADR-002: PostgreSQL, Prisma en datamodel](adr/ADR-002-postgresql-prisma-en-datamodel.md)
 
+## Authenticatie en beveiliging
+
+- [Authenticatie](authentication.md)
+- [Beveiliging](security.md)
+- [ADR-003: Better Auth en platformrollen](adr/ADR-003-better-auth-en-platformrollen.md)
+
 Aanvullend staan de overkoepelende principes in [PROJECT_PRINCIPLES.md](../PROJECT_PRINCIPLES.md) en wijzigingen in [CHANGELOG.md](../CHANGELOG.md).
 
 Documentatie wordt bijgewerkt zodra een besluit, risico of functionaliteit verandert.
