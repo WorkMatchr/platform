@@ -5,15 +5,15 @@
 | TD-001 | Hoog | Het definitieve WorkMatchr-logo ontbreekt. | Definitief logo ontwerpen, valideren en als toegankelijke asset toevoegen. | Na ontvangst definitief logo |
 | TD-002 | Hoog | De exacte primaire kleur uit het FSC-logo ontbreekt. | `brand-primary` vervangen door de definitieve logokleur en contrast opnieuw toetsen. | Na ontvangst definitieve kleur |
 | TD-003 | Middel | Tijdelijke ankerlinks bestaan nog. | Vervangen door definitieve routes zodra de betreffende pagina’s worden gebouwd. | Latere publieke module |
-| TD-004 | Middel | Juridische pagina’s zijn nog niet gebouwd. | Privacy en algemene voorwaarden inhoudelijk en technisch opleveren. | Nog te bepalen |
-| TD-005 | Hoog | De intake op de homepage is demonstratief en niet functioneel. | Dynamische intake later als afzonderlijke, gevalideerde module bouwen. | Latere intakemodule |
+| TD-004 | Middel | Privacy en algemene voorwaarden bevatten nog geen juridisch definitieve inhoud. | Juridische inhoud laten vaststellen en de bestaande pagina’s definitief opleveren. | Juridische module |
+| TD-005 | Hoog | De intake op de homepage is demonstratief en niet functioneel. | Een afzonderlijke, gevalideerde opdrachtgeversintake bouwen. | Module 5 |
 | TD-006 | Hoog | De productieprovider, back-upstrategie en monitoring voor PostgreSQL zijn nog niet gekozen. | Selecteer de productieomgeving en leg hersteldoelen, back-ups en monitoring vast. | Productievoorbereiding |
 | TD-007 | Hoog | Een platformbeheerinterface voor organisatie-ingrijpen ontbreekt. | Bouw afzonderlijke, auditeerbare beheeracties. | Latere beheermodule |
-| TD-008 | Middel | De intake- en specialismenstructuur is nog statisch. | Ontwerp versieerbare dynamische vraagbomen zonder Module 3 te vervuilen. | Latere intakemodule |
+| TD-008 | Middel | De intake- en specialismenstructuur is nog statisch. | Ontwerp versieerbare dynamische vraagbomen zonder Module 3 te vervuilen. | Module 5 |
 | TD-009 | Hoog | Maximaal drie actieve aanbiederselecties is nog niet transactioneel afgedwongen. | Voeg een transactionele selectieservice met locking en tests toe. | Matchingmodule |
 | TD-010 | Hoog | Creditsaldo, transactielogboek en veelvouden van 10 hebben nog geen servicelaag. | Implementeer één atomaire creditsservice met locking en invarianttests. | Creditsmodule |
 | TD-011 | Middel | Eén primaire organisatielocatie wordt transactioneel maar nog niet met een databasebrede partiële constraint bewaakt. | Beoordeel een PostgreSQL-partiële unieke index naast de servicelaag. | Databasehardening |
-| TD-012 | Middel | JSON-velden hebben nog geen runtime schemavalidatie. | Voeg versieerbare schema's en validatie aan de servicegrenzen toe. | Bij eerste gebruik JSON-velden |
+| TD-012 | Middel | JSON-velden hebben nog geen runtime schemavalidatie. | Voeg vóór het eerste functionele gebruik versieerbare schema's en validatie aan de servicegrenzen toe. | Module 5 |
 | TD-013 | Middel | Bewaartermijnen en AVG-verwijder-/anonimiseringsbeleid zijn nog niet vastgesteld. | Stel beleid vast en vertaal dit naar archivering en anonimisering. | Juridische/productievoorbereiding |
 | TD-014 | Hoog | Definitieve WorkMatchr-e-mailafzender en domeinauthenticatie ontbreken. | Resend-domein, SPF, DKIM en DMARC configureren en testen. | Productievoorbereiding |
 | TD-015 | Hoog | Productieproxy, trusted origins en client-IP-bron zijn nog niet vastgesteld. | Per deployment vastleggen en rate-limiting end-to-end testen. | Productievoorbereiding |
@@ -32,3 +32,4 @@
 | TD-028 | Middel | Organisatiearchivering en herstelproces ontbreken. | Statusovergangen, gevolgen en beheerherstel ontwerpen. | Latere beheermodule |
 | TD-029 | Hoog | AVG-bewaartermijnen voor organisatiegegevens ontbreken. | Juridisch beleid vertalen naar archivering en anonimisering. | Juridische/productievoorbereiding |
 | TD-030 | Middel | Export en verwijdering van organisatiegegevens ontbreken. | Veilige export- en verwijderworkflow ontwerpen. | Latere privacy-module |
+| TD-031 | Laag | Tijdelijke developmentlogging voor de logo-uploadketen is nog aanwezig. | Verwijder de tijdelijke diagnosevelden of vervang ze door het toekomstige centrale observabilitybeleid. | Eerstvolgende onderhoudsmoment |

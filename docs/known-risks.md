@@ -46,7 +46,7 @@
 | R-042 | Schadelijke afbeeldingsinhoud wordt opgeslagen. | Middel | Zeer hoog | Werkelijke inhoud met Sharp decoderen en opnieuw naar WebP coderen. | Backend/security | Beheerst |
 | R-043 | SVG-scriptinhoud wordt uitgevoerd. | Middel | Hoog | SVG volledig weigeren in versie 1. | Backend/security | Beheerst |
 | R-044 | Directory traversal leest willekeurige bestanden. | Laag | Zeer hoog | Alleen UUID-v4-WebP-keys en gecontroleerde resolved paden accepteren. | Backend/security | Beheerst |
-| R-045 | Oude logo’s blijven achter. | Middel | Middel | Vervanging en verwijdering ruimen bestanden op; latere object storage krijgt orphan-cleanup. | Storage/backend | Open |
+| R-045 | Oude logo’s blijven achter. | Middel | Middel | Vervanging en verwijdering ruimen bestanden aantoonbaar op; latere object storage krijgt orphan-cleanup. | Storage/backend | Beheerst |
 | R-046 | Lokale schijf wordt als productieopslag gebruikt. | Middel | Hoog | Productie zonder provider hard weigeren. | DevOps/storage | Beheerst |
 | R-047 | Logo-opslag en database raken uit synchronisatie. | Middel | Hoog | Veilige schrijfvolgorde, rollbackcleanup en toekomstige periodieke reconciliatie. | Backend/storage | Open |
 | R-048 | Contactgegevens worden onbedoeld publiek. | Middel | Hoog | Alleen logo publiek serveren; contactvelden uitsluitend in beveiligde pagina’s. | Product/backend | Beheerst |

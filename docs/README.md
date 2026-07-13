@@ -9,6 +9,7 @@ Deze map bevat de leidende projectdocumentatie. Lees vóór een wijziging minima
 3. [Roadmap](03-roadmap.md)
 4. [Besluitenregister](04-besluitenregister.md)
 5. [Voortgang](05-voortgang.md)
+6. [Ontwerp Module 5 — Vraagverheldering, intake en opdrachten](module-5-ontwerp.md)
 
 ## Ontwerp en kwaliteit
 

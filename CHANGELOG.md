@@ -4,7 +4,7 @@ Alle betekenisvolle wijzigingen aan WorkMatchr worden in dit bestand bijgehouden
 
 ## Unreleased — Module 4B
 
-**Status:** technisch opgeleverd en te testen op 13 juli 2026.
+**Status:** technisch en handmatig goedgekeurd; afgerond op 13 juli 2026.
 
 ### Toegevoegd
 
@@ -30,11 +30,13 @@ Alle betekenisvolle wijzigingen aan WorkMatchr worden in dit bestand bijgehouden
 - logo-inhoud, MIME, grootte, SVG-weigering, WebP-conversie, traversal, vervanging en verwijdering;
 - migraties en seed op bestaande en lege tijdelijke PostgreSQL-database;
 - mobiele layout rond 390 pixels, toetsenbordfocus, homepage en bestaande authenticatie;
+- behoud van formulierwaarden, veldgebonden foutmarkering en focus op het eerste foutveld;
+- definitieve eindcontrole met 60 tests, lint, typecheck, build, audit en `git diff --check`;
 - tijdelijke acceptatiedata en testlogo’s verwijderd.
 
 ## Unreleased — Module 4A
 
-**Status:** technisch opgeleverd en te testen op 12 juli 2026.
+**Status:** technisch en handmatig goedgekeurd; afgerond op 12 juli 2026.
 
 ### Toegevoegd
 

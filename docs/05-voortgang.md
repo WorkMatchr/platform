@@ -126,7 +126,7 @@ De handmatige acceptatie door de product owner is bevestigd. Module 4A is afgero
 
 ## Module 4B — Organisaties, memberships en organisatielogo
 
-**Status:** te testen
+**Status:** afgerond
 
 ### Technisch opgeleverd
 
@@ -149,10 +149,24 @@ De handmatige acceptatie door de product owner is bevestigd. Module 4A is afgero
 - mobiel rond 390 pixels, geen horizontale overflow en zichtbare toetsenbordfocus: geslaagd;
 - migraties en seed op bestaande en lege tijdelijke database: geslaagd;
 - tijdelijke acceptatiedata, tijdelijke database en testlogo’s: verwijderd;
-- tests, lint, typecheck, build en audit: geslaagd.
+- validatiefouten behouden alle formulierwaarden, markeren de betreffende velden en focussen het eerste foutveld: geslaagd;
+- PNG- en JPG-upload na regeneratie van de Prisma Client: geslaagd;
+- tests: 60 van 60 geslaagd;
+- lint, typecheck, build, audit en `git diff --check`: geslaagd;
+- audit: 0 bekende kwetsbaarheden;
+- `.env`, lokale opslagbestanden, testaccounts, testlogo’s en secrets: niet aanwezig in de wijziging of acceptatieomgeving.
 
-Definitieve afronding volgt na handmatige acceptatie door de product owner.
+De definitieve technische en handmatige acceptatie is geslaagd. Module 4B is afgerond.
 
 ## Volgende module
 
-De volgende module is nog niet gestart en wordt alleen na een expliciete opdracht bepaald.
+**Module 5 — Vraagverheldering, intake en opdrachten** is de volgende module en is nog niet gestart.
+
+De beoogde scope is een functionele, gevalideerde opdrachtgeversflow van vraagverheldering via conceptintake naar een indienbare opdracht. Matching, maximaal drie aanbiederselecties, credits, Mollie-betalingen en AI-intake blijven buiten Module 5.
+
+### Besluitpunten vóór de start
+
+- welke organisatierollen een intake mogen aanmaken, wijzigen en indienen;
+- hoe vraagbomen, antwoorden en wijzigingen versieerbaar worden vastgelegd;
+- welke statusovergangen en minimale gegevens gelden voor concept, gereed voor controle en ingediend;
+- welke vrije tekst en mogelijk gevoelige informatie noodzakelijk is, hoe lang die wordt bewaard en wanneer een intake een opdracht wordt.

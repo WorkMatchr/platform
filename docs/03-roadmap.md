@@ -12,7 +12,9 @@
    PostgreSQL, Prisma ORM, migraties, kernentiteiten, referentiedata en lokale Docker-omgeving zijn technisch en handmatig geaccepteerd.
 5. **Module 4A — Authenticatie en platformrollen — afgerond**
    Persoonlijke accounts, e-mailverificatie, wachtwoordherstel, database-sessies en platformrollen zijn technisch en handmatig geaccepteerd.
-6. **Module 4B — Organisaties, memberships en organisatielogo — te testen**
-   Organisatie-onboarding, rollen, actieve organisatie, profielbeheer en veilige lokale logo-opslag zijn technisch opgeleverd. Definitieve afronding volgt na acceptatie door de product owner.
+6. **Module 4B — Organisaties, memberships en organisatielogo — afgerond**
+   Organisatie-onboarding, rollen, actieve organisatie, profielbeheer, veilige logo-opslag en toegankelijke validatie-UX zijn technisch en handmatig geaccepteerd.
+7. **Module 5 — Vraagverheldering, intake en opdrachten — volgende module**
+   Bouw de eerste functionele opdrachtgeversflow van gevalideerde vraagverheldering via conceptintake naar een indienbare opdracht. Matching, credits en betalingen vallen buiten deze module.
 
-De volgende module is nog niet gestart. Latere modules behandelen opdrachten, volledige aanbieder-onboarding, dynamische vraagbomen, matching, credits, Mollie-betalingen, berichten, beheer en productievoorbereiding. AI-intake volgt pas in een latere versie.
+Module 5 is nog niet gestart. Latere modules behandelen volledige aanbieder-onboarding, matching, credits, Mollie-betalingen, berichten, beheer en productievoorbereiding. AI-intake volgt pas in een latere versie.
