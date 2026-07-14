@@ -3,7 +3,7 @@ import type { AssignmentStatus } from '@/generated/prisma/client'
 export const assignmentStatusLabels: Record<AssignmentStatus, string> = {
   DRAFT: 'Concept',
   READY_FOR_REVIEW: 'Klaar voor controle',
-  OPEN: 'Open',
+  OPEN: 'Gepubliceerd',
   MATCHING: 'Matching wordt voorbereid',
   AWAITING_RESPONSES: 'Wacht op reacties',
   IN_SELECTION: 'Selectie',

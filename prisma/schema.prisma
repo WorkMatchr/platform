@@ -162,6 +162,7 @@ model User {
   changedIntakeAnswerRevisions IntakeAnswerRevision[]        @relation("IntakeAnswerRevisionActor")
   changedIntakeStatuses        IntakeStatusHistory[]         @relation("IntakeStatusHistoryActor")
   createdAssignments           Assignment[]                  @relation("AssignmentCreator")
+  publishedAssignments         Assignment[]                  @relation("AssignmentPublisher")
   changedAssignmentStatuses    AssignmentStatusHistory[]     @relation("AssignmentStatusHistoryActor")
   changedAssignmentRevisions   AssignmentRevision[]          @relation("AssignmentRevisionActor")
   selectedProviderSelections   AssignmentProviderSelection[] @relation("ProviderSelectionActor")
@@ -669,11 +670,15 @@ model Assignment {
   createdAt            DateTime                      @default(now()) @db.Timestamptz(3)
   updatedAt            DateTime                      @updatedAt @db.Timestamptz(3)
   publishedAt          DateTime?                     @db.Timestamptz(3)
+  publishedByUserId    String?                       @db.Uuid
+  publishedVersion     Int?
   closedAt             DateTime?                     @db.Timestamptz(3)
   archivedAt           DateTime?                     @db.Timestamptz(3)
   intake               Intake?                       @relation(fields: [intakeId], references: [id], onDelete: Restrict)
   clientOrganization   Organization                  @relation(fields: [clientOrganizationId], references: [id], onDelete: Restrict)
   createdByUser        User                          @relation("AssignmentCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  publishedByUser      User?                         @relation("AssignmentPublisher", fields: [publishedByUserId], references: [id], onDelete: Restrict)
+  publishedRevision    AssignmentRevision?           @relation("AssignmentPublishedRevision", fields: [id, publishedVersion], references: [assignmentId, version], onDelete: Restrict)
   primarySpecialism    Specialism?                   @relation("PrimaryAssignmentSpecialism", fields: [primarySpecialismId], references: [id], onDelete: Restrict)
   sector               Sector?                       @relation(fields: [sectorId], references: [id], onDelete: Restrict)
   location             OrganizationLocation?         @relation(fields: [locationId], references: [id], onDelete: Restrict)
@@ -683,13 +688,16 @@ model Assignment {
   statusHistory        AssignmentStatusHistory[]
   revisions            AssignmentRevision[]
 
+  @@unique([id, publishedVersion])
   @@index([clientOrganizationId])
   @@index([createdByUserId])
+  @@index([publishedByUserId])
   @@index([status])
   @@index([primarySpecialismId])
   @@index([sectorId])
   @@index([locationId])
   @@index([createdAt])
+  @@index([publishedAt])
   @@index([responseDeadline])
   @@index([archivedAt])
 }
@@ -730,6 +738,7 @@ model AssignmentRevision {
   sector              Sector?               @relation(fields: [sectorId], references: [id], onDelete: Restrict)
   location            OrganizationLocation? @relation(fields: [locationId], references: [id], onDelete: Restrict)
   changedByUser       User                  @relation("AssignmentRevisionActor", fields: [changedByUserId], references: [id], onDelete: Restrict)
+  publishedAssignment Assignment?           @relation("AssignmentPublishedRevision")
 
   @@unique([assignmentId, version])
   @@index([assignmentId])

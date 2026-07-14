@@ -6,9 +6,9 @@ import { Heading } from '@/components/ui/heading'
 import { AssignmentServiceError } from '@/lib/assignments/assignment-errors'
 import { getAssignmentDetail } from '@/lib/assignments/assignment-query-service'
 import { requireOrganizationMembership } from '@/lib/organizations/organization-authorization'
-import { cancelAssignmentAction, markAssignmentReadyAction, reopenAssignmentAction } from '@/app/opdrachten/actions'
+import { cancelAssignmentAction, markAssignmentReadyAction, reopenAssignmentAction, withdrawPublishedAssignmentAction } from '@/app/opdrachten/actions'
 
-export const metadata: Metadata = { title: 'Conceptopdracht | WorkMatchr' }
+export const metadata: Metadata = { title: 'Opdracht | WorkMatchr' }
 
 export default async function AssignmentDetailPage({ params, searchParams }: { params: Promise<{ assignmentId: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { assignmentId } = await params
@@ -29,14 +29,18 @@ export default async function AssignmentDetailPage({ params, searchParams }: { p
         ? 'De opdracht is teruggezet naar concept.'
         : query.status === 'geannuleerd'
           ? 'De opdracht is geannuleerd. De historie blijft bewaard.'
+          : query.status === 'gepubliceerd'
+            ? 'De opdracht is gepubliceerd en staat gereed voor marktverwerking.'
+            : query.status === 'ingetrokken'
+              ? 'De publicatie is ingetrokken. De opdracht en historie blijven bewaard.'
           : null
 
   return (
       <Section spacing="compact" containerSize="narrow">
         <Heading as="h1" size="h2" className="break-words">{assignment.title}</Heading>
-        <p className="mt-3 text-text-secondary">Bekijk de gegevens en herkomst van deze conceptopdracht.</p>
+        <p className="mt-3 text-text-secondary">Bekijk de gegevens, status en herkomst van deze opdracht.</p>
         {notice && <p role="status" className="mt-6 rounded-control bg-success/10 p-4 text-success">{notice}</p>}
-        <div className="mt-8"><AssignmentDetail assignment={assignment} actions={{ ready: markAssignmentReadyAction, reopen: reopenAssignmentAction, cancel: cancelAssignmentAction }} /></div>
+        <div className="mt-8"><AssignmentDetail assignment={assignment} actions={{ ready: markAssignmentReadyAction, reopen: reopenAssignmentAction, cancel: cancelAssignmentAction, withdraw: withdrawPublishedAssignmentAction }} /></div>
       </Section>
     )
 }

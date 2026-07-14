@@ -26,7 +26,7 @@ const transactionClient = {
   organizationLocation: { findFirst: mocks.locationFind },
 }
 
-function assignment(status: 'DRAFT' | 'READY_FOR_REVIEW' | 'CANCELLED' = 'DRAFT', version = 1) {
+function assignment(status: 'DRAFT' | 'READY_FOR_REVIEW' | 'OPEN' | 'CANCELLED' = 'DRAFT', version = 1) {
   return {
     id: assignmentId,
     clientOrganizationId: organizationId,
@@ -83,6 +83,14 @@ describe('opdrachtmutatieservice', () => {
   it('weigert wijziging van een geannuleerde opdracht', async () => {
     mocks.requireManager.mockResolvedValue(assignment('CANCELLED'))
     await expect(updateAssignment(userId, organizationId, editInput)).rejects.toMatchObject({ code: 'INVALID_STATUS' })
+  })
+
+  it('weigert inhoudswijziging en generiek annuleren van een gepubliceerde opdracht', async () => {
+    mocks.requireManager.mockResolvedValue(assignment('OPEN'))
+    await expect(updateAssignment(userId, organizationId, editInput)).rejects.toMatchObject({ code: 'INVALID_STATUS' })
+    await expect(cancelAssignment(userId, organizationId, { assignmentId, expectedAssignmentVersion: 1, reason: 'Deze generieke actie mag publicatie niet intrekken.' })).rejects.toMatchObject({ code: 'INVALID_STATUS' })
+    await expect(reopenAssignment(userId, organizationId, { assignmentId, expectedAssignmentVersion: 1, reason: 'Deze opdracht mag niet terug naar een interne status.' })).rejects.toMatchObject({ code: 'INVALID_STATUS' })
+    expect(mocks.updateMany).not.toHaveBeenCalled()
   })
 
   it('weigert een onbevoegde wijziging zonder databasewrite', async () => {

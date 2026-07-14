@@ -24,3 +24,13 @@ Platformrollen en organisatierollen zijn verschillende autorisatielagen. Een pla
 - de succesroute, lijst en detailroute voeren ieder opnieuw autorisatie uit.
 
 `OWNER` en `ADMIN` mogen een opdracht beheren via `requireAssignmentManager`. Deze helper controleert opnieuw gebruiker, membership, organisatietype, organisatiecontext, tenant en opdrachtstatus. `MEMBER` heeft geen mutatierecht. Verborgen IDs en versies begrenzen uitsluitend het record en concurrency; zij verlenen nooit toegang.
+
+## Publiceren en intrekken
+
+- alleen een actuele `OWNER` of `ADMIN` met een actieve membership bij dezelfde actieve `CLIENT`- of `BOTH`-organisatie mag publiceren of intrekken;
+- `MEMBER` behoudt uitsluitend het bestaande begrensde leesrecht en krijgt door `OPEN` geen extra bevoegdheid;
+- een platformrol `ADMIN` zonder actieve tenantmembership heeft geen operationele publicatierol;
+- `requireAssignmentManager` valideert actor, accountstatus, membership, organisatie, organisatietype en tenant opnieuw binnen de transactieservice;
+- een niet-bestaande of gemanipuleerde opdracht-ID en een opdracht buiten de tenant leveren dezelfde veilige toegangsuitkomst;
+- publicatie- en intrekformulieren bevatten geen `organizationId`; de Server Actions bepalen de actieve tenant opnieuw en laten de centrale service alle rollen- en tenantregels afdwingen;
+- `organizationId` en `publishedByUserId` komen niet uit clientinvoer: de toekomstige Server Action moet beide uit de server-side context afleiden.

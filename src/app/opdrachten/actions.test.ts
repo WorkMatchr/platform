@@ -8,6 +8,8 @@ const mocks = vi.hoisted(() => ({
   markReady: vi.fn(),
   reopen: vi.fn(),
   cancel: vi.fn(),
+  publish: vi.fn(),
+  withdraw: vi.fn(),
   revalidatePath: vi.fn(),
   redirect: vi.fn(),
 }))
@@ -29,9 +31,19 @@ vi.mock('@/lib/assignments/assignment-service', () => ({
   reopenAssignment: mocks.reopen,
   cancelAssignment: mocks.cancel,
 }))
+vi.mock('@/lib/assignments/assignment-publication-service', () => ({
+  publishAssignment: mocks.publish,
+  withdrawPublishedAssignment: mocks.withdraw,
+}))
 
 import { AssignmentServiceError } from '@/lib/assignments/assignment-errors'
-import { cancelAssignmentAction, updateAssignmentAction, submitIntakeAction } from './actions'
+import {
+  cancelAssignmentAction,
+  publishAssignmentAction,
+  submitIntakeAction,
+  updateAssignmentAction,
+  withdrawPublishedAssignmentAction,
+} from './actions'
 
 const userId = '00000000-0000-4000-8000-000000000001'
 const organizationId = '00000000-0000-4000-8000-000000000002'
@@ -75,6 +87,72 @@ beforeEach(() => {
   mocks.convert.mockResolvedValue({ id: assignmentId, status: 'DRAFT', version: 1, idempotent: false })
   mocks.updateAssignment.mockResolvedValue({ id: assignmentId, status: 'DRAFT', version: 4 })
   mocks.cancel.mockResolvedValue({ id: assignmentId, status: 'CANCELLED', version: 4 })
+  mocks.publish.mockResolvedValue({ id: assignmentId, status: 'OPEN', version: 4, idempotent: false })
+  mocks.withdraw.mockResolvedValue({ id: assignmentId, status: 'CANCELLED', version: 5, idempotent: false })
+})
+
+describe('opdrachtpublicatie-Server Actions', () => {
+  function publicationFormData(confirmed = true) {
+    const data = new FormData()
+    data.set('assignmentId', assignmentId)
+    data.set('expectedAssignmentVersion', '3')
+    data.set('organizationId', '00000000-0000-4000-8000-000000000099')
+    if (confirmed) data.set('confirmed', 'on')
+    return data
+  }
+
+  it('publiceert via de bestaande service met uitsluitend de server-side tenant', async () => {
+    await publishAssignmentAction({}, publicationFormData())
+    expect(mocks.publish).toHaveBeenCalledWith(userId, organizationId, {
+      assignmentId,
+      expectedAssignmentVersion: 3,
+    })
+    expect(mocks.redirect).toHaveBeenCalledWith(
+      `/opdrachten/${assignmentId}?status=gepubliceerd`,
+    )
+  })
+
+  it('publiceert niet zonder expliciete bevestiging', async () => {
+    const result = await publishAssignmentAction({}, publicationFormData(false))
+    expect(result.errors?.confirmed).toBeDefined()
+    expect(mocks.publish).not.toHaveBeenCalled()
+  })
+
+  it('behoudt veilige bevestigingscontext bij een concurrencyconflict', async () => {
+    mocks.publish.mockRejectedValue(
+      new AssignmentServiceError(
+        'CONFLICT',
+        'De opdracht is intussen gewijzigd. Vernieuw de gegevens en probeer het opnieuw.',
+      ),
+    )
+    const result = await publishAssignmentAction({}, publicationFormData())
+    expect(result.message).toContain('intussen gewijzigd')
+    expect(result.values?.confirmed).toBe('on')
+    expect(mocks.redirect).not.toHaveBeenCalled()
+  })
+
+  it('trekt alleen in met een geldige reden en expliciete bevestiging', async () => {
+    const data = publicationFormData()
+    data.set('reason', 'De organisatie trekt deze publicatie bewust en definitief in.')
+    await withdrawPublishedAssignmentAction({}, data)
+    expect(mocks.withdraw).toHaveBeenCalledWith(userId, organizationId, {
+      assignmentId,
+      expectedAssignmentVersion: 3,
+      reason: 'De organisatie trekt deze publicatie bewust en definitief in.',
+    })
+    expect(mocks.redirect).toHaveBeenCalledWith(
+      `/opdrachten/${assignmentId}?status=ingetrokken`,
+    )
+  })
+
+  it('behoudt de intrekkingsreden wanneer bevestiging ontbreekt', async () => {
+    const data = publicationFormData(false)
+    data.set('reason', 'De organisatie trekt deze publicatie bewust en definitief in.')
+    const result = await withdrawPublishedAssignmentAction({}, data)
+    expect(result.errors?.confirmed).toBeDefined()
+    expect(result.values?.reason).toContain('bewust en definitief')
+    expect(mocks.withdraw).not.toHaveBeenCalled()
+  })
 })
 
 describe('opdrachtmutatie-Server Actions', () => {

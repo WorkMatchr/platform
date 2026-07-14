@@ -79,6 +79,18 @@ Foreign keys gebruiken `RESTRICT`; cascades mogen geen zakelijke historie verwij
 - `Assignment.version` en aansluitende `AssignmentRevision`-records bewaken toekomstige concurrente opdrachtwijzigingen;
 - een geconverteerde intake, haar actuele antwoorden en de intakekoppeling van de opdracht kunnen niet worden teruggedraaid of inhoudelijk gewijzigd.
 
+### Gecontroleerde opdrachtpublicatie
+
+- uitsluitend een actieve organisatie-`OWNER` of organisatie-`ADMIN` binnen dezelfde actieve `CLIENT`- of `BOTH`-tenant mag publiceren of intrekken;
+- `READY_FOR_REVIEW → OPEN` verhoogt `Assignment.version`, schrijft een volledige revisiesnapshot en legt actor, tijd en `publishedVersion` atomair vast;
+- `(Assignment.id, publishedVersion)` verwijst naar `(AssignmentRevision.assignmentId, version)`;
+- een opdrachtrevisie moet gelijk zijn aan de actuele opdrachtversie en strikt nieuwer zijn dan eerdere inhoudsrevisies; statusovergangen mogen versienummers zonder inhoudsrevisie veroorzaken;
+- complete publicatiemetadata is verplicht voor `OPEN` en latere marktstatussen en volledig afwezig op nooit-gepubliceerde interne statussen;
+- publicatie- en intrekkingshistorie zijn uniek en moeten bij actor, tijd en actuele opdrachtstatus aansluiten;
+- zakelijke inhoud, specialismekoppelingen en publicatiemetadata zijn na publicatie databasebreed immutable;
+- `OPEN → CANCELLED` bewaart metadata en snapshot; een ingetrokken publicatie kan niet terug naar `OPEN`, `READY_FOR_REVIEW` of `DRAFT`;
+- publicatie maakt geen providerselectie, matching-, credit- of betaalrecord.
+
 ### Maximaal drie actieve aanbiederselecties
 
 Actieve statussen zijn `SELECTED`, `INVITED`, `VIEWED`, `RESPONDED` en `AWARDED`. Een latere service vergrendelt de Assignment-rij, telt actieve selecties en schrijft alleen binnen dezelfde database-transactie wanneer het maximum niet wordt overschreden.

@@ -64,6 +64,25 @@ async function expectDatabaseFailure(label: string, action: () => Promise<unknow
   assert.equal(failed, true, `${label} had door PostgreSQL geweigerd moeten worden.`)
 }
 
+async function expectTransactionRollback(
+  client: Client,
+  label: string,
+  action: () => Promise<unknown>,
+) {
+  let failed = false
+  await client.query('BEGIN')
+
+  try {
+    await action()
+    await client.query('COMMIT')
+  } catch {
+    failed = true
+    await client.query('ROLLBACK')
+  }
+
+  assert.equal(failed, true, `${label} had de volledige transactie moeten terugdraaien.`)
+}
+
 async function verifyIntegrity(client: Client) {
   const referenceCounts = await client.query<{
     questionnaires: number
@@ -411,43 +430,223 @@ async function verifyIntegrity(client: Client) {
     );
 
     UPDATE "Assignment"
-    SET "status" = 'CANCELLED', "version" = 5, "updatedAt" = CURRENT_TIMESTAMP
+    SET "status" = 'READY_FOR_REVIEW', "version" = 5, "updatedAt" = CURRENT_TIMESTAMP
     WHERE "id" = '00000000-0000-4000-8000-000000009007';
     INSERT INTO "AssignmentStatusHistory" (
       "id", "assignmentId", "fromStatus", "toStatus", "changedByUserId", "reason"
     ) VALUES (
       '00000000-0000-4000-8000-000000009013',
       '00000000-0000-4000-8000-000000009007',
-      'DRAFT', 'CANCELLED',
+      'DRAFT', 'READY_FOR_REVIEW',
       '00000000-0000-4000-8000-000000009001',
-      'De tijdelijke opdracht wordt na de integriteitscontrole geannuleerd.'
+      'De tijdelijke opdracht staat opnieuw gereed voor publicatiecontrole.'
     );
   `)
 
-  const module5b3State = await client.query<{
+  await expectDatabaseFailure('OPEN zonder publicatiemetadata', () =>
+    client.query(`
+      UPDATE "Assignment"
+      SET "status" = 'OPEN', "version" = 6, "updatedAt" = CURRENT_TIMESTAMP
+      WHERE "id" = '00000000-0000-4000-8000-000000009007'
+    `),
+  )
+
+  await expectDatabaseFailure('een publicatieversie zonder bijbehorende revisie', () =>
+    client.query(`
+      UPDATE "Assignment"
+      SET
+        "status" = 'OPEN',
+        "version" = 6,
+        "publishedAt" = '2026-07-14T10:00:00.000Z',
+        "publishedByUserId" = '00000000-0000-4000-8000-000000009001',
+        "publishedVersion" = 6,
+        "updatedAt" = CURRENT_TIMESTAMP
+      WHERE "id" = '00000000-0000-4000-8000-000000009007'
+    `),
+  )
+
+  await expectTransactionRollback(client, 'een gedeeltelijke publicatiesnapshot', async () => {
+    await client.query(`
+      UPDATE "Assignment"
+      SET "version" = 6, "updatedAt" = CURRENT_TIMESTAMP
+      WHERE "id" = '00000000-0000-4000-8000-000000009007'
+    `)
+    await client.query(`
+      INSERT INTO "AssignmentRevision" (
+        "assignmentId", "version", "title", "description", "allowsRemoteWork", "changedByUserId"
+      ) VALUES (
+        '00000000-0000-4000-8000-000000009007',
+        5,
+        'Niet-toegestane rollbackrevisie',
+        'Deze revisie gebruikt niet de actuele opdrachtversie.',
+        false,
+        '00000000-0000-4000-8000-000000009001'
+      )
+    `)
+  })
+
+  await expectDatabaseFailure('publicatiehistorie zonder bijbehorende publicatie', () =>
+    client.query(`
+      INSERT INTO "AssignmentStatusHistory" (
+        "assignmentId", "fromStatus", "toStatus", "changedByUserId", "reason"
+      ) VALUES (
+        '00000000-0000-4000-8000-000000009007',
+        'READY_FOR_REVIEW', 'OPEN',
+        '00000000-0000-4000-8000-000000009001',
+        'Deze historie heeft nog geen geldige publicatie.'
+      )
+    `),
+  )
+
+  await client.query(`
+    BEGIN;
+
+    UPDATE "Assignment"
+    SET "version" = 6, "updatedAt" = CURRENT_TIMESTAMP
+    WHERE "id" = '00000000-0000-4000-8000-000000009007';
+
+    INSERT INTO "AssignmentRevision" (
+      "id", "assignmentId", "version", "title", "description", "allowsRemoteWork", "changedByUserId"
+    ) VALUES (
+      '00000000-0000-4000-8000-000000009014',
+      '00000000-0000-4000-8000-000000009007',
+      6,
+      'Aangepaste tijdelijke opdracht',
+      'De inhoud is gecontroleerd en aangepast binnen Module 5B.3.',
+      false,
+      '00000000-0000-4000-8000-000000009001'
+    );
+
+    UPDATE "Assignment"
+    SET
+      "status" = 'OPEN',
+      "publishedAt" = '2026-07-14T10:00:00.000Z',
+      "publishedByUserId" = '00000000-0000-4000-8000-000000009001',
+      "publishedVersion" = 6,
+      "updatedAt" = CURRENT_TIMESTAMP
+    WHERE "id" = '00000000-0000-4000-8000-000000009007';
+
+    INSERT INTO "AssignmentStatusHistory" (
+      "id", "assignmentId", "fromStatus", "toStatus", "changedByUserId", "reason", "createdAt"
+    ) VALUES (
+      '00000000-0000-4000-8000-000000009015',
+      '00000000-0000-4000-8000-000000009007',
+      'READY_FOR_REVIEW', 'OPEN',
+      '00000000-0000-4000-8000-000000009001',
+      'Opdracht gepubliceerd en gereed voor toekomstige marktverwerking.',
+      '2026-07-14T10:00:00.000Z'
+    );
+
+    COMMIT;
+  `)
+
+  await expectDatabaseFailure('inhoudswijziging na publicatie', () =>
+    client.query(`
+      UPDATE "Assignment"
+      SET "title" = 'Niet toegestaan na publicatie', "updatedAt" = CURRENT_TIMESTAMP
+      WHERE "id" = '00000000-0000-4000-8000-000000009007'
+    `),
+  )
+
+  await expectDatabaseFailure('wijziging van publicatiemetadata', () =>
+    client.query(`
+      UPDATE "Assignment"
+      SET "publishedAt" = CURRENT_TIMESTAMP, "updatedAt" = CURRENT_TIMESTAMP
+      WHERE "id" = '00000000-0000-4000-8000-000000009007'
+    `),
+  )
+
+  await expectDatabaseFailure('dubbele publicatiehistorie', () =>
+    client.query(`
+      INSERT INTO "AssignmentStatusHistory" (
+        "assignmentId", "fromStatus", "toStatus", "changedByUserId", "reason"
+      ) VALUES (
+        '00000000-0000-4000-8000-000000009007',
+        'READY_FOR_REVIEW', 'OPEN',
+        '00000000-0000-4000-8000-000000009001',
+        'Deze tweede publicatiehistorie is niet toegestaan.'
+      )
+    `),
+  )
+
+  await client.query(`
+    UPDATE "Assignment"
+    SET "status" = 'CANCELLED', "version" = 7, "updatedAt" = CURRENT_TIMESTAMP
+    WHERE "id" = '00000000-0000-4000-8000-000000009007';
+
+    INSERT INTO "AssignmentStatusHistory" (
+      "id", "assignmentId", "fromStatus", "toStatus", "changedByUserId", "reason"
+    ) VALUES (
+      '00000000-0000-4000-8000-000000009016',
+      '00000000-0000-4000-8000-000000009007',
+      'OPEN', 'CANCELLED',
+      '00000000-0000-4000-8000-000000009001',
+      'De tijdelijke publicatie wordt na de integriteitscontrole ingetrokken.'
+    )
+  `)
+
+  await expectDatabaseFailure('herpublicatie van een ingetrokken opdracht', () =>
+    client.query(`
+      UPDATE "Assignment"
+      SET "status" = 'OPEN', "version" = 8, "updatedAt" = CURRENT_TIMESTAMP
+      WHERE "id" = '00000000-0000-4000-8000-000000009007'
+    `),
+  )
+
+  await expectDatabaseFailure('dubbele intrekkingshistorie', () =>
+    client.query(`
+      INSERT INTO "AssignmentStatusHistory" (
+        "assignmentId", "fromStatus", "toStatus", "changedByUserId", "reason"
+      ) VALUES (
+        '00000000-0000-4000-8000-000000009007',
+        'OPEN', 'CANCELLED',
+        '00000000-0000-4000-8000-000000009001',
+        'Deze tweede intrekkingshistorie is niet toegestaan.'
+      )
+    `),
+  )
+
+  const module5c2State = await client.query<{
     assignment_status: string
     assignment_version: number
     intake_status: string
     revisions: number
     status_history: number
+    publication_history: number
+    withdrawal_history: number
+    published_by_user_id: string
+    published_version: number
+    snapshot_title: string
   }>(`
     SELECT
       a."status"::text AS assignment_status,
       a."version" AS assignment_version,
       i."status"::text AS intake_status,
       (SELECT COUNT(*)::int FROM "AssignmentRevision" r WHERE r."assignmentId" = a."id") AS revisions,
-      (SELECT COUNT(*)::int FROM "AssignmentStatusHistory" h WHERE h."assignmentId" = a."id") AS status_history
+      (SELECT COUNT(*)::int FROM "AssignmentStatusHistory" h WHERE h."assignmentId" = a."id") AS status_history,
+      (SELECT COUNT(*)::int FROM "AssignmentStatusHistory" h WHERE h."assignmentId" = a."id" AND h."toStatus" = 'OPEN') AS publication_history,
+      (SELECT COUNT(*)::int FROM "AssignmentStatusHistory" h WHERE h."assignmentId" = a."id" AND h."fromStatus" = 'OPEN' AND h."toStatus" = 'CANCELLED') AS withdrawal_history,
+      a."publishedByUserId"::text AS published_by_user_id,
+      a."publishedVersion" AS published_version,
+      r."title" AS snapshot_title
     FROM "Assignment" a
     JOIN "Intake" i ON i."id" = a."intakeId"
+    JOIN "AssignmentRevision" r
+      ON r."assignmentId" = a."id" AND r."version" = a."publishedVersion"
     WHERE a."id" = '00000000-0000-4000-8000-000000009007'
   `)
 
-  assert.deepEqual(module5b3State.rows[0], {
+  assert.deepEqual(module5c2State.rows[0], {
     assignment_status: 'CANCELLED',
-    assignment_version: 5,
+    assignment_version: 7,
     intake_status: 'CONVERTED',
-    revisions: 2,
-    status_history: 4,
+    revisions: 3,
+    status_history: 6,
+    publication_history: 1,
+    withdrawal_history: 1,
+    published_by_user_id: '00000000-0000-4000-8000-000000009001',
+    published_version: 6,
+    snapshot_title: 'Aangepaste tijdelijke opdracht',
   })
 }
 
@@ -466,7 +665,7 @@ async function main() {
     testClient = new Client({ connectionString: testUrl.toString() })
     await testClient.connect()
     await verifyIntegrity(testClient)
-    console.info('Database-integriteit Module 5A.1, Module 5B.2 en Module 5B.3: geslaagd.')
+    console.info('Database-integriteit Module 5A.1, Module 5B.2, Module 5B.3 en Module 5C.2: geslaagd.')
   } finally {
     if (testClient) {
       await testClient.end()

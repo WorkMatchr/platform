@@ -38,6 +38,9 @@ beforeEach(() => {
     employeeCount: 12,
     desiredStartDate: null,
     allowsRemoteWork: false,
+    publishedAt: null,
+    publishedVersion: null,
+    publishedByUser: null,
     createdAt: new Date('2026-07-13T10:00:00Z'),
     updatedAt: new Date('2026-07-13T10:00:00Z'),
     clientOrganization: { name: 'Voorbeeldorganisatie' },
@@ -71,7 +74,14 @@ describe('opdrachtqueryservice', () => {
     const result = await getAssignmentDetail(userId, organizationId, assignmentId)
     expect(mocks.requireViewer).toHaveBeenCalledWith(transactionClient, userId, organizationId, assignmentId)
     expect(mocks.requireViewer.mock.invocationCallOrder[0]).toBeLessThan(mocks.assignmentFindUnique.mock.invocationCallOrder[0])
-    expect(result).toMatchObject({ status: 'DRAFT', organizationName: 'Voorbeeldorganisatie', revisionCount: 1 })
+    expect(result).toMatchObject({
+      status: 'DRAFT',
+      organizationName: 'Voorbeeldorganisatie',
+      publishedAt: null,
+      publishedByName: null,
+      publishedVersion: null,
+      revisionCount: 1,
+    })
   })
 
   it('onthult een opdracht uit een andere organisatie niet', async () => {

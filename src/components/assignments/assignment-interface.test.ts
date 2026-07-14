@@ -6,10 +6,12 @@ const interfaceFiles = [
   'src/app/opdrachten/page.tsx',
   'src/app/opdrachten/[assignmentId]/page.tsx',
   'src/app/opdrachten/[assignmentId]/aangemaakt/page.tsx',
+  'src/app/opdrachten/[assignmentId]/publiceren/page.tsx',
   'src/components/assignments/assignment-list.tsx',
   'src/components/assignments/assignment-detail.tsx',
   'src/components/assignments/assignment-edit-form.tsx',
   'src/components/assignments/assignment-status-actions.tsx',
+  'src/components/assignments/assignment-publication-actions.tsx',
   'src/components/assignments/submit-intake-form.tsx',
 ]
 
@@ -20,6 +22,28 @@ describe('opdrachtinterfacearchitectuur', () => {
       expect(content).not.toContain('getPrisma')
       expect(content).not.toContain('PrismaClient')
     }
+  })
+
+  it('maakt publicatie expliciet en activeert geen toekomstige domeinen', async () => {
+    const [page, form, detail] = await Promise.all([
+      readFile('src/app/opdrachten/[assignmentId]/publiceren/page.tsx', 'utf8'),
+      readFile('src/components/assignments/assignment-publication-actions.tsx', 'utf8'),
+      readFile('src/components/assignments/assignment-detail.tsx', 'utf8'),
+    ])
+    expect(page).toContain('Publicatie controleren')
+    expect(page).toContain('De opdracht wordt nog niet aan aanbieders getoond.')
+    expect(page).toContain('Matching, credits en betalingen starten niet.')
+    expect(form).toContain('Opdracht publiceren')
+    expect(form).toContain('Publicatie intrekken')
+    expect(form).toContain('loading={pending}')
+    expect(form).toContain('[aria-invalid="true"]')
+    expect(form).not.toContain('name="organizationId"')
+    expect(detail).toContain('Gereed voor marktverwerking')
+
+    const combined = `${page}\n${form}`
+    expect(combined).not.toContain('AssignmentProviderSelection')
+    expect(combined).not.toContain('CreditTransaction')
+    expect(combined).not.toContain('Mollie')
   })
 
   it('toont waarschuwing, loadingstatus en expliciete bevestiging', async () => {

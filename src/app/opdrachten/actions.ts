@@ -8,6 +8,7 @@ import { AssignmentServiceError } from '@/lib/assignments/assignment-errors'
 import { getIntakeSubmissionContext } from '@/lib/assignments/assignment-query-service'
 import { requireOrganizationMembership } from '@/lib/organizations/organization-authorization'
 import { cancelAssignment, markAssignmentReadyForReview, reopenAssignment, updateAssignment } from '@/lib/assignments/assignment-service'
+import { publishAssignment, withdrawPublishedAssignment } from '@/lib/assignments/assignment-publication-service'
 import { assignmentEditSchema, assignmentReasonTransitionSchema, assignmentTransitionSchema } from '@/lib/assignments/assignment-validation'
 
 export type AssignmentActionState = {
@@ -24,6 +25,12 @@ const submitSchema = z.object({
 })
 const cancelActionSchema = assignmentReasonTransitionSchema.extend({
   confirmed: z.literal('on', { error: 'Bevestig dat U de opdracht wilt annuleren.' }),
+})
+const publishActionSchema = assignmentTransitionSchema.extend({
+  confirmed: z.literal('on', { error: 'Bevestig dat U de opdracht definitief wilt publiceren.' }),
+})
+const withdrawActionSchema = assignmentReasonTransitionSchema.extend({
+  confirmed: z.literal('on', { error: 'Bevestig dat U de publicatie wilt intrekken.' }),
 })
 
 function safeSubmissionMessage(error: AssignmentServiceError): string {
@@ -166,4 +173,70 @@ export async function cancelAssignmentAction(_state: AssignmentActionState, form
   revalidatePath('/opdrachten')
   revalidatePath(`/opdrachten/${parsed.data.assignmentId}`)
   redirect(`/opdrachten/${parsed.data.assignmentId}?status=geannuleerd`)
+}
+
+export async function publishAssignmentAction(
+  _state: AssignmentActionState,
+  formData: FormData,
+): Promise<AssignmentActionState> {
+  const values = {
+    assignmentId: String(formData.get('assignmentId') ?? ''),
+    expectedAssignmentVersion: String(formData.get('expectedAssignmentVersion') ?? ''),
+    confirmed: String(formData.get('confirmed') ?? ''),
+  }
+  const parsed = publishActionSchema.safeParse(values)
+  if (!parsed.success) {
+    return {
+      message: 'Bevestig de publicatie voordat U verdergaat.',
+      errors: parsed.error.flatten().fieldErrors,
+      values,
+    }
+  }
+
+  const context = await activeAssignmentContext(`/opdrachten/${parsed.data.assignmentId}/publiceren`)
+  try {
+    await publishAssignment(context.userId, context.organizationId, {
+      assignmentId: parsed.data.assignmentId,
+      expectedAssignmentVersion: parsed.data.expectedAssignmentVersion,
+    })
+  } catch (error) {
+    return safeAssignmentState(error, values)
+  }
+
+  revalidatePath('/opdrachten')
+  revalidatePath(`/opdrachten/${parsed.data.assignmentId}`)
+  redirect(`/opdrachten/${parsed.data.assignmentId}?status=gepubliceerd`)
+}
+
+export async function withdrawPublishedAssignmentAction(
+  _state: AssignmentActionState,
+  formData: FormData,
+): Promise<AssignmentActionState> {
+  const values = {
+    ...reasonValues(formData),
+    confirmed: String(formData.get('confirmed') ?? ''),
+  }
+  const parsed = withdrawActionSchema.safeParse(values)
+  if (!parsed.success) {
+    return {
+      message: 'Controleer de gegevens voor het intrekken.',
+      errors: parsed.error.flatten().fieldErrors,
+      values,
+    }
+  }
+
+  const context = await activeAssignmentContext(`/opdrachten/${parsed.data.assignmentId}`)
+  try {
+    await withdrawPublishedAssignment(context.userId, context.organizationId, {
+      assignmentId: parsed.data.assignmentId,
+      expectedAssignmentVersion: parsed.data.expectedAssignmentVersion,
+      reason: parsed.data.reason,
+    })
+  } catch (error) {
+    return safeAssignmentState(error, values)
+  }
+
+  revalidatePath('/opdrachten')
+  revalidatePath(`/opdrachten/${parsed.data.assignmentId}`)
+  redirect(`/opdrachten/${parsed.data.assignmentId}?status=ingetrokken`)
 }

@@ -26,6 +26,9 @@ export type AssignmentDetailView = AssignmentListItem & {
   desiredStartDate: string | null
   location: string | null
   allowsRemoteWork: boolean
+  publishedAt: string | null
+  publishedByName: string | null
+  publishedVersion: number | null
   revisionCount: number
   canManage: boolean
   statusHistory: Array<{
@@ -138,8 +141,11 @@ export async function getAssignmentDetail(
         employeeCount: true,
         desiredStartDate: true,
         allowsRemoteWork: true,
+        publishedAt: true,
+        publishedVersion: true,
         createdAt: true,
         updatedAt: true,
+        publishedByUser: { select: { displayName: true } },
         clientOrganization: { select: { name: true } },
         intake: { select: { id: true, freeText: true } },
         sector: { select: { name: true } },
@@ -169,6 +175,9 @@ export async function getAssignmentDetail(
       desiredStartDate: assignment.desiredStartDate?.toISOString() ?? null,
       location: assignment.location ? `${assignment.location.label} — ${assignment.location.city}` : null,
       allowsRemoteWork: assignment.allowsRemoteWork,
+      publishedAt: assignment.publishedAt?.toISOString() ?? null,
+      publishedByName: assignment.publishedByUser?.displayName ?? null,
+      publishedVersion: assignment.publishedVersion,
       revisionCount: assignment._count.revisions,
       canManage: ['OWNER', 'ADMIN'].includes(access.clientOrganization.memberships[0]!.role),
       statusHistory: assignment.statusHistory.map((item) => ({

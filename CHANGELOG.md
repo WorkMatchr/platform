@@ -1,8 +1,8 @@
 # Changelog
 
-## Unreleased — Module 5A.1, 5A.2, 5A.3, 5B.2 en 5B.3
+## Unreleased — Module 5A.1, 5A.2, 5A.3, 5B.2, 5B.3, 5C.1, 5C.2 en 5C.3
 
-**Status:** Module 5B.3 is technisch afgerond en door de product owner geaccepteerd. Module 5A en Module 5B.2 houden hun bestaande afzonderlijke acceptatiestatus.
+**Status:** Module 5C.1, Module 5C.2 en Module 5C.3 zijn afgerond en product-ownergeaccepteerd. Module 5C is als geheel afgerond. Module 6A is nog niet gestart. Module 5A en Module 5B.2 houden hun bestaande afzonderlijke acceptatiestatus.
 
 ### Toegevoegd
 
@@ -30,6 +30,16 @@
 - server-side conversieservice voor `READY_FOR_REVIEW → SUBMITTED → Assignment DRAFT → CONVERTED`;
 - deterministische titel- en omschrijvinggeneratie zonder AI;
 - gerichte rollen-, idempotentie-, concurrency-, rollback- en database-integriteitstests.
+- ontwerp voor gecontroleerde opdrachtpublicatie als gereedstelling voor toekomstige matching;
+- ADR-007 voor `OPEN`, immutable publicatiesnapshots, intrekken en de scheiding met aanbieders, matching, credits en Mollie.
+- `publishedByUserId` en `publishedVersion` met een relationele koppeling naar de exacte `AssignmentRevision`;
+- databaseconstraints en triggers voor complete metadata, unieke historie, immutable publicatie-inhoud en uitgesloten herpublicatie;
+- centrale transactionele services voor publiceren en intrekken met tenantautorisatie, optimistic concurrency en idempotentie;
+- gerichte publicatie-, intrek-, rollback- en database-integriteitstests.
+- beveiligde publicatiecontrole onder `/opdrachten/[assignmentId]/publiceren`;
+- toegankelijke bevestigings- en intrekformulieren met foutfocus, invoerbehoud en pendingstatus;
+- dunne Server Actions voor publiceren en intrekken via de bestaande transactionele services;
+- gepubliceerde detailweergave met actor, tijd, publicatieversie en marktverwerkingsstatus.
 
 ### Gewijzigd
 
@@ -54,10 +64,18 @@
 - formulieren behouden veilige invoer, koppelen veldfouten en focussen het eerste foutveld;
 - de tijdelijke database-integriteitstest dekt nu ook inhoudsrevisie, statusflow en het behoud van de geconverteerde intake.
 - de product owner heeft de indieningsinterface, opdrachtbewerking, interne statusflow en afbakening zonder publicatie of matching geaccepteerd.
+- roadmap, besluiten, voortgang, risico's en technical debt bijgewerkt voor het technisch opgestelde Module 5C.1-ontwerp zonder functionele implementatie.
+- Module 5C.1 administratief afgerond na expliciete product-owneracceptatie van model B en de zichtbare termen “Gepubliceerd” en “Gereed voor marktverwerking”;
+- opdrachtrevisies mogen statusgerelateerde versies overslaan, maar moeten altijd gelijk zijn aan de actuele opdrachtversie en strikt nieuwer zijn;
+- architectuur-, opdracht-, autorisatie-, security-, database-, datadictionary- en ERD-documentatie bijgewerkt voor Module 5C.2.
+- Module 5C.2 administratief afgerond na definitieve product-owneracceptatie; Module 5C.3 gestart.
+- het centrale statuslabel voor `OPEN` is zichtbaar als “Gepubliceerd”;
+- publicatie- en intrekacties bepalen de tenant uitsluitend server-side en activeren geen aanbiederszichtbaarheid, matching, credits of betaling.
+- Module 5C.3 en Module 5C als geheel administratief afgerond na geslaagde product-owneracceptatie van de publicatiecontrole, detailweergave en intrekflow.
 
 ### Buiten scope
 
-- publicatie, zichtbaarheid voor aanbieders en definitieve opdrachtnummering;
+- zichtbaarheid voor aanbieders en definitieve opdrachtnummering;
 - vraagsetpublicatiebeheer en vertakkende vraagbomen;
 - matching, AI, credits en Mollie.
 

@@ -265,4 +265,57 @@ De technische en handmatige acceptatie van Module 5A staat nog open. Module 5B i
 
 ### Volgende stap
 
-Aanbevolen volgende stap: Module 5C — ontwerp van gecontroleerde opdrachtpublicatie. Deze module is nog niet gestart of afgerond. Matching, aanbiedersselectie, credits, Mollie en AI vereisen daarna nog afzonderlijke modules en besluiten.
+Module 5C.1, Module 5C.2 en Module 5C.3 zijn afgerond en product-ownergeaccepteerd. Module 5C is als geheel afgerond. Matching, aanbiedersselectie, credits, Mollie en AI vereisen afzonderlijke modules en besluiten.
+
+## Module 5C — Gecontroleerde opdrachtpublicatie
+
+**Status:** afgerond; product-owneracceptatie geslaagd.
+
+### Module 5C.1 — Ontwerp gecontroleerde publicatie
+
+**Status:** afgerond; product-owneracceptatie geslaagd.
+
+- drie publicatiemodellen zijn beoordeeld; gereedstelling voor matching is het voorkeursmodel;
+- `OPEN` is ontworpen als gepubliceerde, maar niet voor aanbieders zichtbare toestand;
+- uitsluitend actieve organisatie-`OWNER` en organisatie-`ADMIN` mogen publiceren en intrekken;
+- `READY_FOR_REVIEW → OPEN` en `OPEN → CANCELLED` zijn als enige nieuwe 5C-overgangen ontworpen;
+- een immutable publicatiesnapshot met actor, tijd en publicatieversie is vastgelegd in ADR-007;
+- publicatie, matching, aanbiederszichtbaarheid, credits en Mollie zijn expliciet van elkaar gescheiden;
+- database-, service-, autorisatie-, concurrency-, UX- en testimpact zijn beschreven;
+- de product owner heeft model B, `OPEN`, volledige immutability, intrekken zonder herpublicatie en de termen “Gepubliceerd” en “Gereed voor marktverwerking” expliciet geaccepteerd.
+
+### Module 5C.2 — Databasefundering en publicatieservice
+
+**Status:** afgerond; product-owneracceptatie geslaagd.
+
+- `publishedByUserId` en `publishedVersion` met restrictieve relaties en passende indexen toegevoegd;
+- `publishedVersion` verwijst databasebreed naar exact de immutable publicatierevisie;
+- constraints en triggers bewaken complete metadata, geldige historie, immutable inhoud, intrekken en het verbod op herpublicatie;
+- centrale `publishAssignment`- en `withdrawPublishedAssignment`-services toegevoegd;
+- alleen actuele organisatie-`OWNER` en organisatie-`ADMIN` binnen dezelfde actieve `CLIENT`- of `BOTH`-tenant worden toegelaten;
+- publicatie valideert status, versie, titel, omschrijving, locatie/remote, aanwezige optionele waarden en geconverteerde bronintake opnieuw;
+- publicatie en intrekken zijn transactioneel, concurrencyveilig en idempotent;
+- publicatie maakt geen providerselectie, matching-, credit- of betaalrecord;
+- gerichte unit-, regressie- en tijdelijke database-integriteitstests zijn toegevoegd.
+- de product owner heeft de databasefundering, publicatieservice, intrekservice en technische afbakening definitief geaccepteerd.
+
+### Module 5C.3 — Publicatie-interface en Server Actions
+
+**Status:** afgerond; product-owneracceptatie geslaagd.
+
+- beveiligde controlepagina voor `READY_FOR_REVIEW` toegevoegd;
+- publicatie vereist een expliciete, niet vooraf aangevinkte bevestiging;
+- dunne Server Actions bepalen gebruiker en tenant server-side en hergebruiken de bestaande services;
+- gepubliceerde opdrachten tonen “Gepubliceerd”, “Gereed voor marktverwerking”, actor, tijd en publicatieversie;
+- bevoegde `OWNER` en `ADMIN` kunnen de publicatie met verplichte reden en bevestiging intrekken;
+- validatie-, concurrency- en integriteitsfouten blijven veilig en behouden niet-geheime formulierinvoer;
+- interface-architectuurtests bewaken dat geen Prisma-, provider-, matching-, credit- of betaalhandeling wordt toegevoegd.
+- volledige testsuite: 27 testbestanden en 190 tests geslaagd;
+- lint, typecheck, productiebuild, audit (0 kwetsbaarheden), Prisma-validatie en database-integriteitstest geslaagd;
+- HTTP-smokecheck: homepage bereikbaar, beveiligde publicatieroute toont de inlogervaring met returnpad en geen erroroverlay;
+- de eerdere geautomatiseerde browsercontrole bleef technisch beperkt; de product owner heeft de volledige zichtbare Module 5C.3-flow daarna handmatig geaccepteerd.
+- de product owner heeft de publicatiecontrole, statusuitleg, gepubliceerde detailweergave en intrekflow geaccepteerd.
+
+### Volgende stap
+
+Module 5C is technisch en door de product owner geaccepteerd. Module 6A — Uitlegbare selectie van geschikte aanbieders is de aanbevolen volgende module en is nog niet gestart. De afzonderlijke acceptatiestatussen van Module 5A en 5B.2 blijven ongewijzigd.

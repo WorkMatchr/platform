@@ -2,6 +2,14 @@
 
 **Status Module 5B.3:** afgerond en product-ownergeaccepteerd.
 
+**Status Module 5C.1:** afgerond en product-ownergeaccepteerd.
+
+**Status Module 5C.2:** afgerond en product-ownergeaccepteerd.
+
+**Status Module 5C.3:** afgerond en product-ownergeaccepteerd.
+
+**Status Module 5C:** afgerond en product-ownergeaccepteerd.
+
 ## Scope Module 5B.3
 
 Module 5B.3 ontsluit de bestaande transactionele opdrachtvorming via een expliciete gebruikersflow. Een opdracht ontstaat nooit door alleen een intake te openen of gereed te melden. Een actieve `OWNER` of `ADMIN` bevestigt indiening op `/hulpvragen/[intakeId]/indienen`; daarna roept één dunne Server Action uitsluitend de bestaande conversieservice aan.
@@ -49,3 +57,24 @@ De centrale mutatieservice staat alleen deze overgangen toe:
 - `DRAFT` of `READY_FOR_REVIEW → CANCELLED` met dezelfde redenvalidatie en een afzonderlijke expliciete bevestiging.
 
 Iedere statusovergang verhoogt de versie en schrijft append-only statushistorie. Annuleren verwijdert niets en laat de bronintake `CONVERTED`. Statussen voor publicatie of matching zijn niet bereikbaar via de interface of Server Actions.
+
+## Gecontroleerde publicatie
+
+De centrale `publishAssignment`-service publiceert uitsluitend `READY_FOR_REVIEW → OPEN`. `OPEN` heeft de zichtbare betekenis **Gepubliceerd** met de toelichting **Gereed voor marktverwerking**. Publicatie maakt de opdracht niet zichtbaar voor aanbieders en start geen matching, providerselectie, credits of Mollie.
+
+Publicatie vereist een actieve organisatie-`OWNER` of organisatie-`ADMIN` binnen dezelfde actieve `CLIENT`- of `BOTH`-tenant. De service valideert status, actuele versie, titel, omschrijving, locatie of remote mogelijkheid, aanwezige optionele waarden en de geconverteerde bronintake opnieuw.
+
+Binnen één `Serializable` transactie:
+
+1. wordt de actuele versie conditioneel gereserveerd;
+2. ontstaat een volledige `AssignmentRevision` op de nieuwe versie;
+3. worden `OPEN`, `publishedAt`, `publishedByUserId` en `publishedVersion` gezet;
+4. ontstaat precies één append-only `READY_FOR_REVIEW → OPEN`-historieregel.
+
+Een consistente herhaling retourneert idempotent dezelfde publicatie. Een achterhaalde versie, gedeeltelijke metadata of afwijkende snapshot schrijft niets en levert een veilige domeinfout.
+
+Na publicatie zijn alle zakelijke opdrachtvelden, specialismekoppelingen en publicatiemetadata immutable. Intrekken verloopt uitsluitend via `withdrawPublishedAssignment`, van `OPEN → CANCELLED`, met een reden van 10 tot en met 500 tekens. Metadata, snapshot en `CONVERTED`-intake blijven behouden. Herpublicatie is in versie 1 uitgesloten.
+
+Module 5C.3 ontsluit publicatie via `/opdrachten/[assignmentId]/publiceren`. De server-rendered controlepagina toont de definitieve opdrachtgegevens en betekenis van publicatie. Alleen een expliciet bevestigd formulier roept de dunne Server Action aan; die bepaalt gebruiker en actieve organisatie server-side en gebruikt uitsluitend `publishAssignment`.
+
+Na publicatie toont het opdrachtdetail **Gepubliceerd**, **Gereed voor marktverwerking**, publicatieactor, publicatiemoment en de vastgelegde versie. Intrekken is voor `OWNER` en `ADMIN` beschikbaar via een ingeklapte actie met een reden van 10–500 tekens en een afzonderlijke bevestiging. De interface bevat geen aanbieder-, matching-, credit- of betaalhandeling.

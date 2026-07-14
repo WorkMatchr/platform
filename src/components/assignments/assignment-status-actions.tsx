@@ -68,10 +68,16 @@ export function AssignmentStatusActions({ assignmentId, status, version, actions
         </div>
       )}
       {status === 'READY_FOR_REVIEW' && (
-        <details className="mt-5 rounded-control border border-border p-4">
-          <summary className="min-h-11 cursor-pointer font-semibold text-brand-dark">Terug voor correctie</summary>
-          <ReasonForm action={actions.reopen} assignmentId={assignmentId} version={version} mode="reopen" />
-        </details>
+        <div className="mt-5 space-y-5">
+          <div>
+            <p className="mb-4 text-sm text-text-secondary">Controleer de definitieve gegevens en bevestig daarna afzonderlijk de publicatie.</p>
+            <LinkButton href={`/opdrachten/${assignmentId}/publiceren`}>Publicatie controleren</LinkButton>
+          </div>
+          <details className="rounded-control border border-border p-4">
+            <summary className="min-h-11 cursor-pointer font-semibold text-brand-dark">Terug voor correctie</summary>
+            <ReasonForm action={actions.reopen} assignmentId={assignmentId} version={version} mode="reopen" />
+          </details>
+        </div>
       )}
       {(status === 'DRAFT' || status === 'READY_FOR_REVIEW') && (
         <details className="mt-5 rounded-control border border-border p-4">

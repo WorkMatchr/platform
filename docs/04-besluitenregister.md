@@ -83,9 +83,25 @@
 | B-072 | Een reden voor terugzetten of annuleren bevat 10 tot en met 500 tekens. | De reden blijft bruikbaar voor historie, wordt server-side begrensd en wordt niet aan de opdrachtomschrijving toegevoegd. |
 | B-073 | Inhoud en status van een opdracht gebruiken afzonderlijke append-only histories. | Een inhoudswijziging schrijft precies één revisiesnapshot; een statusovergang schrijft statushistorie en beide gebruiken optimistic concurrency. |
 
+## 14 juli 2026 — Module 5C
+
+De product owner heeft B-074 tot en met B-080 geaccepteerd. ADR-007 is in Module 5C.2 en Module 5C.3 technisch toegepast; Module 5C is als geheel afgerond en product-ownergeaccepteerd.
+
+| ID | Besluit | Toelichting |
+| --- | --- | --- |
+| B-074 | Publicatie is gereedstelling voor toekomstige marktverwerking, niet algemene zichtbaarheid. | Aanbieders krijgen in Module 5C geen toegang en matching start niet. |
+| B-075 | De bestaande status `OPEN` vertegenwoordigt de gepubliceerde toestand. | `PUBLISHED` en `PUBLICATION_PENDING` voegen voor de gekozen korte transactionele handeling geen nieuwe betekenis toe. |
+| B-076 | Alleen actieve organisatie-`OWNER` en organisatie-`ADMIN` mogen publiceren en intrekken. | `MEMBER` krijgt geen extra rechten; platformbeheer zonder actieve tenantmembership evenmin. |
+| B-077 | De gepubliceerde opdrachtinhoud is een immutable, herleidbare snapshot. | Publicatietijd, actor en publicatieversie worden atomair met revisie en statushistorie vastgelegd. |
+| B-078 | Publicatie kan alleen via `OPEN → CANCELLED` worden ingetrokken en niet worden herpubliceerd binnen Module 5C. | Een reden is verplicht; historie blijft behouden en inhoud keert niet terug naar `DRAFT`. |
+| B-079 | Publicatie activeert geen matching, providerselectie, credits of Mollie. | Het toekomstige kostmoment en aanbiederscontract worden in afzonderlijke modules besloten. |
+| B-080 | `publishedVersion` verwijst naar exact één immutable `AssignmentRevision`. | De revisie gebruikt de actuele opdrachtversie en mag versies overslaan die uitsluitend door statusovergangen zijn ontstaan. |
+| B-081 | Publicatie- en intrekkingshistorie worden databasebreed op uniciteit en samenhang gecontroleerd. | Actor en tijd van de publicatiehistorie moeten overeenkomen met de actuele publicatiemetadata. |
+
 Zie [ADR-001](adr/ADR-001-design-system-en-huisstijl.md) voor de onderbouwing van het design system.
 Zie [ADR-002](adr/ADR-002-postgresql-prisma-en-datamodel.md) voor de database- en datamodelkeuzes.
 Zie [ADR-003](adr/ADR-003-better-auth-en-platformrollen.md) voor de authenticatie- en platformrolkeuzes.
 Zie [ADR-004](adr/ADR-004-organisaties-autorisatie-en-logo-opslag.md) voor organisatie-, autorisatie- en logo-opslagkeuzes.
 Zie [ADR-005](adr/ADR-005-versieerbare-intake-en-antwoordhistorie.md) voor vraagsetversies, intakeantwoorden en historie.
 Zie [ADR-006](adr/ADR-006-transactionele-opdrachtvorming.md) voor atomische, idempotente en onomkeerbare opdrachtvorming.
+Zie [ADR-007](adr/ADR-007-gecontroleerde-opdrachtpublicatie.md) voor de betekenis van publicatie, de immutable snapshot en de scheiding met matching.

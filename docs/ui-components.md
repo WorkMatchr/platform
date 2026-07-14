@@ -62,7 +62,7 @@ Componenten in `src/components/intakes` leveren overzichtskaarten, status, voort
 
 ### Opdrachten
 
-Componenten in `src/components/assignments` leveren de centrale statusbadge, overzichtskaarten, opdrachtdetail, het expliciete indienformulier, het bewerkformulier en statusacties. Alleen formulieren zijn clientcomponenten voor `useActionState`, foutfocus, waardebehoud en pendingstatus; lijst, detail en succesweergave blijven server-rendered. Statuslabels komen uitsluitend uit `assignment-presentation.ts`. De UI toont geen UUID’s of enumwaarden en bevat bewust geen publicatie- of matchingknoppen.
+Componenten in `src/components/assignments` leveren de centrale statusbadge, overzichtskaarten, opdrachtdetail, het expliciete indienformulier, het bewerkformulier, statusacties en bevestigde publicatie- en intrekformulieren. Alleen formulieren zijn clientcomponenten voor `useActionState`, foutfocus, waardebehoud en pendingstatus; lijst, detail, publicatiecontrole en succesweergave blijven server-rendered. Statuslabels komen uitsluitend uit `assignment-presentation.ts`. De UI toont geen UUID’s of enumwaarden. Publicatie is beschikbaar voor bevoegde opdrachtgevers; aanbiederszichtbaarheid, matching, credits en betaling blijven afwezig.
 
 ## Richtlijnen
 

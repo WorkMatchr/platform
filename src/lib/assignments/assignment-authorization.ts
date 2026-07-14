@@ -72,7 +72,9 @@ export async function requireAssignmentManager(
     where: { id: assignmentId, clientOrganizationId: organizationId },
     select: {
       id: true,
+      intakeId: true,
       clientOrganizationId: true,
+      createdByUserId: true,
       status: true,
       version: true,
       title: true,
@@ -84,6 +86,11 @@ export async function requireAssignmentManager(
       responseDeadline: true,
       locationId: true,
       allowsRemoteWork: true,
+      publishedAt: true,
+      publishedByUserId: true,
+      publishedVersion: true,
+      closedAt: true,
+      archivedAt: true,
       clientOrganization: {
         select: {
           status: true,

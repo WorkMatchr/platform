@@ -125,9 +125,11 @@ erDiagram
   Intake ||--o| Assignment : converts_to
   Organization ||--o{ Assignment : commissions
   User ||--o{ Assignment : creates
+  User ||--o{ Assignment : publishes
   Assignment ||--o{ AssignmentSpecialism : requires
   Assignment ||--o{ AssignmentStatusHistory : transitions
   Assignment ||--o{ AssignmentRevision : revises
+  Assignment ||--o| AssignmentRevision : published_as
   Specialism ||--o{ AssignmentSpecialism : requested_as
   Assignment ||--o{ AssignmentProviderSelection : selects
   ProviderProfile ||--o{ AssignmentProviderSelection : selected_for
@@ -176,6 +178,9 @@ erDiagram
     uuid clientOrganizationId FK
     AssignmentStatus status
     int version
+    uuid publishedByUserId FK
+    int publishedVersion FK
+    datetime publishedAt
   }
   AssignmentStatusHistory {
     uuid id PK

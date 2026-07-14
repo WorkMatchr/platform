@@ -6,7 +6,7 @@ describe('opdrachtpresentatie', () => {
     expect(assignmentStatusLabels).toEqual({
       DRAFT: 'Concept',
       READY_FOR_REVIEW: 'Klaar voor controle',
-      OPEN: 'Open',
+      OPEN: 'Gepubliceerd',
       MATCHING: 'Matching wordt voorbereid',
       AWAITING_RESPONSES: 'Wacht op reacties',
       IN_SELECTION: 'Selectie',

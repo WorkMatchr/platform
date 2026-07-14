@@ -47,3 +47,17 @@ E-mail wordt getrimd, naar lowercase genormaliseerd en begrensd. Wachtwoorden zi
 ## Opdrachtvorming
 
 Indienen gebruikt een POST-Server Action zonder open redirect en zonder `organizationId` of versie uit clientinvoer als autorisatiebron. De actie leest de actieve organisatie server-side en geeft de laatst bekende intakeversie alleen door voor optimistic concurrency; de bestaande conversieservice controleert rol, tenant, actuele versie, status en volledigheid opnieuw. Dubbele indiening is op UI-, service- en databaseniveau begrensd. Succes wordt pas getoond nadat de transactie een bestaande of nieuw gevormde opdracht heeft teruggegeven. Opdrachtqueries en -mutaties stellen actieve gebruiker, membership, organisatie, organisatietype en tenant opnieuw vast. Applicatielogs bevatten geen hulpvraag, antwoorden, opdrachtomschrijving, redenen of volledige persoonsgegevens.
+
+## Opdrachtpublicatie
+
+- publicatie en intrekken lopen uitsluitend via centrale transactionele services;
+- alleen actieve organisatie-`OWNER` en organisatie-`ADMIN` binnen dezelfde actieve opdrachtgevertenant zijn bevoegd;
+- `OPEN` verleent geen toegang aan aanbieders, platformbeheer of anonieme gebruikers;
+- optimistic concurrency en `Serializable` isolatie voorkomen dubbele of gedeeltelijke publicatie;
+- `publishedVersion` verwijst naar een immutable revisiesnapshot; databaseconstraints bewaken metadata en historie;
+- zakelijke inhoud, specialismekoppelingen en publicatiemetadata kunnen na publicatie niet worden gewijzigd;
+- publicatie maakt geen matching-, providerselectie-, credit- of betaalrecord;
+- veilige domeinfouten bevestigen geen opdrachtbestaan buiten de tenant;
+- logs mogen uitsluitend eventnaam, interne identifier, versies, resultaat en foutcode bevatten, nooit titel, omschrijving, intakeantwoorden, reden, tokens, secrets of volledige persoonsgegevens.
+- de publicatiecontrole is een beveiligde serverroute; de Server Actions vertrouwen geen client-side tenantcontext en muteren uitsluitend via de centrale services;
+- expliciete bevestiging, pendingstatus en optimistic concurrency beperken onbedoelde of dubbele publicatie en intrekking.
