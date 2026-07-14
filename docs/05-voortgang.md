@@ -241,6 +241,28 @@ De technische en handmatige acceptatie van Module 5A staat nog open. Module 5B i
 - herhaalde conversie retourneert idempotent dezelfde opdracht;
 - database-integriteitstest dekt historie, revisievolgorde, onomkeerbaarheid en immutable antwoorden.
 
+### Module 5B.3 — Opdrachtinterface en expliciete indienflow
+
+**Status:** afgerond; product-owneracceptatie geslaagd
+
+- controlepagina toont organisatie, oorspronkelijke hulpvraag, voortgang, antwoorden, ontbrekende onderdelen en gevolgen van indiening;
+- alleen actieve `OWNER` en `ADMIN` krijgen de expliciete indienactie; `MEMBER` krijgt een neutrale controlemelding;
+- aparte server-rendered bevestigingspagina en loading-/disabledstatus voorkomen onbedoelde of dubbele indiening;
+- één dunne indienactie leest de organisatie server-side, valideert de laatst bekende versie en hergebruikt uitsluitend de bestaande conversieservice;
+- idempotente herhaling leidt veilig naar dezelfde opdracht; concurrency- en validatiefouten krijgen gewone Nederlandse meldingen;
+- beveiligde succesroute, opdrachtenlijst en opdrachtdetail zijn toegevoegd;
+- `OWNER` en `ADMIN` zien alle opdrachten van de actieve organisatie; `MEMBER` alleen opdrachten uit de eigen intake;
+- statussen worden centraal vertaald en conceptpagina’s melden dat publicatie en matching nog niet zijn gestart;
+- `OWNER` en `ADMIN` kunnen titel, omschrijving en ondersteunde optionele velden van een `DRAFT`-opdracht wijzigen;
+- iedere inhoudswijziging verhoogt de versie en schrijft precies één append-only revisie; concurrencyconflicten overschrijven niets;
+- de interne flow ondersteunt gereedmelden, gemotiveerd terugzetten en bevestigd annuleren zonder de geconverteerde intake terug te draaien;
+- redenen bevatten 10 tot en met 500 tekens en blijven gescheiden van de opdrachtomschrijving;
+- formulieren behouden waarden, koppelen fouten, focussen het eerste foutveld en blokkeren dubbele submit tijdens verwerking;
+- de tijdelijke database-integriteitstest dekt migraties, dubbele seed, revisievolgorde, statusflow en immutable intakegegevens en ruimt zichzelf op;
+- unit-, service-, database-, lint-, typecheck-, build-, audit- en diffcontroles worden bij de definitieve oplevering opnieuw gerapporteerd;
+- de product owner heeft de volledige Module 5B.3-flow, zichtbare statusbenamingen, wijzigingsinterface en expliciete afbakening zonder publicatie of matching geaccepteerd;
+- Module 5B.3 is administratief en technisch afgerond.
+
 ### Volgende stap
 
-Product-owneracceptatie van de technische Module 5A- en 5B.2-basis, gevolgd door een afzonderlijk ontworpen UI-/Server-Actionstap voor expliciete indiening.
+Aanbevolen volgende stap: Module 5C — ontwerp van gecontroleerde opdrachtpublicatie. Deze module is nog niet gestart of afgerond. Matching, aanbiedersselectie, credits, Mollie en AI vereisen daarna nog afzonderlijke modules en besluiten.

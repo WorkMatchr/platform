@@ -7,8 +7,9 @@ import { IntakeReadyForm } from '@/components/intakes/intake-ready-form'
 import { IntakeStatusBadge } from '@/components/intakes/intake-status-badge'
 import type { IntakeDetailView, IntakeQuestionView } from '@/lib/intakes/intake-query-service'
 import { getIntakeCategoryByKey, intakeCategorySteps } from '@/lib/intakes/intake-presentation'
+import { generateAssignmentDescription, generateAssignmentTitle } from '@/lib/assignments/assignment-generation'
 
-function displayValue(question: IntakeQuestionView, intake: IntakeDetailView): string {
+export function displayIntakeAnswer(question: IntakeQuestionView, intake: IntakeDetailView): string {
   const value = question.value
   if (value === null || value === '' || (Array.isArray(value) && value.length === 0)) return 'Niet ingevuld'
   if (typeof value === 'boolean') return value ? 'Ja' : 'Nee'
@@ -43,6 +44,22 @@ export function IntakeReview({
       .map((key) => intake.questions.find((question) => question.key === key)?.category)
       .filter((category): category is IntakeQuestionView['category'] => Boolean(category)),
   )]
+  const maySubmit = intake.viewerRole === 'OWNER' || intake.viewerRole === 'ADMIN'
+  const firstMissingStep = getIntakeCategoryByKey(missingCategories[0])
+  const answerText = (key: string) => {
+    const value = intake.questions.find((question) => question.key === key)?.value
+    return typeof value === 'string' ? value : ''
+  }
+  const assignmentPreview = intake.status === 'READY_FOR_REVIEW'
+    ? {
+        title: generateAssignmentTitle(answerText('HELP_REQUEST_DESCRIPTION')),
+        description: generateAssignmentDescription({
+          helpRequest: answerText('HELP_REQUEST_DESCRIPTION'),
+          desiredOutcome: answerText('DESIRED_OUTCOME_DESCRIPTION'),
+          situation: answerText('SITUATION_DESCRIPTION'),
+        }),
+      }
+    : null
 
   return (
     <div className="space-y-6">
@@ -56,6 +73,16 @@ export function IntakeReview({
           </p>
         </div>
         <div className="mt-5"><IntakeProgress progress={intake.progress} /></div>
+        <dl className="mt-5 grid gap-4 border-t border-border pt-5 sm:grid-cols-2">
+          <div>
+            <dt className="text-sm font-semibold text-text-secondary">Organisatie</dt>
+            <dd className="mt-1 font-medium text-text-primary">{intake.organizationName}</dd>
+          </div>
+          <div>
+            <dt className="text-sm font-semibold text-text-secondary">Oorspronkelijke hulpvraag</dt>
+            <dd className="mt-1 whitespace-pre-wrap font-medium text-text-primary">{intake.freeText}</dd>
+          </div>
+        </dl>
       </div>
 
       {missingCategories.length > 0 && (
@@ -83,7 +110,7 @@ export function IntakeReview({
           <section key={step.category} className="rounded-card border border-border bg-surface p-6 sm:p-7" aria-labelledby={`review-${step.category}`}>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 id={`review-${step.category}`} className="text-xl font-bold text-brand-dark">{step.label}</h2>
-              {intake.status !== 'READY_FOR_REVIEW' && (
+              {(intake.status === 'DRAFT' || intake.status === 'IN_PROGRESS') && (
                 <LinkButton href={`/hulpvragen/${intake.id}/${step.slug}`} variant="ghost">Wijzigen</LinkButton>
               )}
             </div>
@@ -91,7 +118,7 @@ export function IntakeReview({
               {questions.map((question) => (
                 <div key={question.id}>
                   <dt className="text-sm font-semibold text-text-secondary">{question.label}</dt>
-                  <dd className="mt-1 whitespace-pre-wrap font-medium text-text-primary">{displayValue(question, intake)}</dd>
+                  <dd className="mt-1 whitespace-pre-wrap font-medium text-text-primary">{displayIntakeAnswer(question, intake)}</dd>
                 </div>
               ))}
             </dl>
@@ -99,20 +126,56 @@ export function IntakeReview({
         )
       })}
 
-      {intake.status === 'READY_FOR_REVIEW' ? (
-        <div className="rounded-card border border-success/30 bg-success/10 p-6">
-          <h2 className="text-lg font-bold text-brand-dark">Klaar voor de volgende module</h2>
+      {intake.status === 'CONVERTED' ? (
+        <div className="rounded-card border border-border bg-surface-subtle p-6">
+          <h2 className="text-lg font-bold text-brand-dark">Deze intake is veilig bewaard</h2>
           <p className="mt-2 text-text-secondary">
-            De intake is gereed voor controle. Indienen, opdrachtvorming en matching zijn in deze versie nog niet beschikbaar.
+            De hulpvraag is ingediend en kan niet meer worden gewijzigd. De gevormde conceptopdracht vindt U bij Uw opdrachten.
           </p>
+          <LinkButton href="/opdrachten" variant="outline" className="mt-5">Naar mijn opdrachten</LinkButton>
+        </div>
+      ) : intake.status === 'READY_FOR_REVIEW' ? (
+        <div className="space-y-6">
+          {assignmentPreview && (
+            <section className="rounded-card border border-border bg-surface p-6" aria-labelledby="assignment-preview-title">
+              <h2 id="assignment-preview-title" className="text-xl font-bold text-brand-dark">Voorbeeld van Uw conceptopdracht</h2>
+              <p className="mt-2 text-sm text-text-secondary">Deze titel en omschrijving worden zonder AI uit Uw gecontroleerde antwoorden samengesteld.</p>
+              <dl className="mt-5 space-y-5">
+                <div><dt className="text-sm font-semibold text-text-secondary">Titel</dt><dd className="mt-1 font-bold text-brand-dark">{assignmentPreview.title}</dd></div>
+                <div><dt className="text-sm font-semibold text-text-secondary">Omschrijving</dt><dd className="mt-1 whitespace-pre-wrap text-text-primary">{assignmentPreview.description}</dd></div>
+              </dl>
+            </section>
+          )}
+          <div className="rounded-card border border-warning/40 bg-warning/10 p-6">
+          <h2 className="text-lg font-bold text-brand-dark">Klaar om bewust in te dienen</h2>
+          <p className="mt-2 text-text-secondary">
+            Na succesvolle indiening wordt deze intake bewaard en kan deze niet meer worden gewijzigd. WorkMatchr maakt een conceptopdracht aan. Publicatie en matching starten nog niet.
+          </p>
+          {maySubmit ? (
+            <LinkButton href={`/hulpvragen/${intake.id}/indienen`} className="mt-5 w-full sm:w-auto">
+              Hulpvraag indienen
+            </LinkButton>
+          ) : (
+            <p className="mt-4 font-semibold text-brand-dark">
+              Uw hulpvraag staat klaar voor controle door een eigenaar of beheerder van de organisatie.
+            </p>
+          )}
+          </div>
         </div>
       ) : (
-        <IntakeReadyForm
-          action={action}
-          intakeId={intake.id}
-          expectedIntakeVersion={intake.version}
-          isComplete={intake.progress.isComplete}
-        />
+        <>
+          <IntakeReadyForm
+            action={action}
+            intakeId={intake.id}
+            expectedIntakeVersion={intake.version}
+            isComplete={intake.progress.isComplete}
+          />
+          {!intake.progress.isComplete && firstMissingStep && (
+            <LinkButton href={`/hulpvragen/${intake.id}/${firstMissingStep.slug}`} variant="outline" className="w-full sm:w-auto">
+              Ga naar het eerstvolgende ontbrekende onderdeel
+            </LinkButton>
+          )}
+        </>
       )}
     </div>
   )

@@ -2,7 +2,7 @@
 
 WorkMatchr wordt een volledig onafhankelijk platform dat organisaties koppelt aan passende arbo- en veiligheidsspecialisten. Per opdracht worden maximaal drie aanbieders objectief geselecteerd; betaalde voorkeursposities bestaan niet.
 
-Module 1, **Module 2A**, **Module 2B**, **Module 3** en **Module 4A: authenticatie en platformrollen** zijn afgerond. **Module 4B: organisaties, memberships en organisatielogo** is technisch opgeleverd en staat op **te testen**.
+Module 1 tot en met Module 4B zijn afgerond. Module 5 is in uitvoering; Module 5B.3 is technisch afgerond en door de product owner geaccepteerd.
 
 ## Vereisten
 
@@ -75,4 +75,4 @@ Lees [docs/README.md](docs/README.md) voor de documentatie-index, [PROJECT_PRINC
 
 ## Status
 
-Module 1 tot en met Module 4A zijn afgerond. Module 4B staat op te testen en wacht op acceptatie door de product owner. De actuele status staat in [docs/05-voortgang.md](docs/05-voortgang.md).
+Module 1 tot en met Module 4B zijn afgerond. Module 5A en Module 5B.2 zijn technisch opgeleverd en houden hun afzonderlijke acceptatiestatus. Module 5B.3 met expliciete indiening, opdrachtbewerking en interne statusflow is afgerond en product-ownergeaccepteerd. De actuele status staat in [docs/05-voortgang.md](docs/05-voortgang.md).

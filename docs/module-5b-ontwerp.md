@@ -1,6 +1,6 @@
 # Ontwerp Module 5B.1 — Opdrachtvorming
 
-- **Status:** geaccepteerd ontwerp; databasefundering en conversieservice in Module 5B.2 technisch gerealiseerd
+- **Status:** geaccepteerd ontwerp; Module 5B.3 technisch gerealiseerd en product-ownergeaccepteerd, Module 5B.2 behoudt zijn afzonderlijke acceptatiestatus
 - **Module:** 5B.1
 - **Datum:** 13 juli 2026
 - **Bronnen:** [Ontwerp Module 5](module-5-ontwerp.md), [implementatieplan Module 5A](module-5a-implementatieplan.md) en [ADR-005](adr/ADR-005-versieerbare-intake-en-antwoordhistorie.md)
@@ -312,7 +312,7 @@ Een latere Module 5B-implementatie mag pas starten na acceptatie van dit ontwerp
 - unit-, service-, database-, concurrency- en tenantisolatietests;
 - updates van architectuur, datadictionary, ERD, roadmap, voortgang, risico’s, technical debt en changelog.
 
-De databasefundering en server-side conversieservice zijn in Module 5B.2 gerealiseerd. UI en Server Actions blijven uitgeschakeld tot een afzonderlijke vervolgopdracht.
+De databasefundering en server-side conversieservice zijn in Module 5B.2 gerealiseerd. Module 5B.3 ontsluit deze service via een aparte server-rendered bevestigingspagina en dunne Server Actions. De acties lezen gebruiker en actieve organisatie server-side en vertrouwen geen tenant- of rolvelden uit formulieren. Na idempotent succes volgt een opnieuw geautoriseerde succesroute. `OWNER` en `ADMIN` kunnen toegestane zakelijke velden in `DRAFT` wijzigen, intern gereedmelden, met een reden van 10 tot en met 500 tekens terugzetten en na expliciete bevestiging annuleren. Publicatie en matching blijven uitgeschakeld.
 
 ## 13. Acceptatiecriteria voor het ontwerp
 

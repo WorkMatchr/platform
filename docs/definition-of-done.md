@@ -21,4 +21,6 @@ Voor een authenticatiemodule geldt aanvullend dat registratie, verificatie, logi
 
 Voor een organisatiemodule geldt aanvullend dat tenantautorisatie server-side is getest; organisatie en creator-membership atomair ontstaan; OWNER/ADMIN/MEMBER-regels aantoonbaar werken; actieve organisatiekeuze geen clientstate vertrouwt; bestandsinhoud en opslagkeys worden gevalideerd; productieopslag veilig faalt zonder provider; en alle tijdelijke organisaties, accounts en bestanden zijn verwijderd.
 
+Voor een intake- en opdrachtvormingsmodule geldt aanvullend dat expliciete indiening geen GET-side effect heeft; alleen actieve `OWNER` en `ADMIN` mogen indienen en muteren; `MEMBER`-leesrecht aantoonbaar begrensd is; tenantisolatie geldt voor lijst, detail, succesroute en mutaties; de laatst bekende versie alleen voor service-side concurrency wordt gebruikt; idempotentie, concurrency en rollback zijn getest; inhouds- en statushistorie append-only blijven; technische statussen niet in de UI lekken; en tijdelijke intake-, opdracht- en accountgegevens zijn verwijderd.
+
 Module 2A en Module 2B zijn handmatig goedgekeurd door de product owner. De product owner heeft expliciet opdracht gegeven de modules vóór commit en push als afgerond te registreren. Commit en push blijven afzonderlijke overdrachtsacties en worden niet zelfstandig door Codex uitgevoerd.

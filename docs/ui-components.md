@@ -60,6 +60,10 @@ De homepage gebruikt een native, gelabelde `textarea` als expliciete voorbeeldin
 
 Componenten in `src/components/intakes` leveren overzichtskaarten, status, voortgang, startformulier, dynamische vraagvelden, stapformulier en controlesamenvatting. Alleen formulieren met `useActionState` zijn clientcomponenten; overige intakeweergave blijft server-side. Alle dynamische velden hebben labels, helptekst, foutkoppeling en toetsenbordbediening.
 
+### Opdrachten
+
+Componenten in `src/components/assignments` leveren de centrale statusbadge, overzichtskaarten, opdrachtdetail, het expliciete indienformulier, het bewerkformulier en statusacties. Alleen formulieren zijn clientcomponenten voor `useActionState`, foutfocus, waardebehoud en pendingstatus; lijst, detail en succesweergave blijven server-rendered. Statuslabels komen uitsluitend uit `assignment-presentation.ts`. De UI toont geen UUID’s of enumwaarden en bevat bewust geen publicatie- of matchingknoppen.
+
 ## Richtlijnen
 
 - Gebruik semantische componenten en correcte headingniveaus.

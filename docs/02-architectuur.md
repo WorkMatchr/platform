@@ -30,6 +30,8 @@
 - beveiligde App Router-interface met dunne Server Actions en geautoriseerde read-modellen.
 - transactionele, idempotente opdrachtvorming vanuit `READY_FOR_REVIEW` met `Serializable` isolatie;
 - append-only opdrachtstatus- en inhoudshistorie met optimistic concurrency op `Assignment.version`.
+- dunne Assignment-Server Actions die uitsluitend servercontext normaliseren, valideren en centrale mutatieservices aanroepen;
+- tenantgebonden opdrachtqueries en mutaties waarbij `OWNER` en `ADMIN` beheren en `MEMBER` alleen een opdracht uit de eigen intake kan lezen.
 
 ## Structuurprincipes
 
@@ -49,6 +51,8 @@
 - Intakepagina’s en componenten benaderen Prisma niet rechtstreeks; reads en writes lopen via afzonderlijke intake-services.
 - Alleen actieve `OWNER`- en `ADMIN`-memberships kunnen server-side een intake converteren; de conversieservice valideert status, tenant, volledige antwoorden en versie opnieuw.
 - Een geconverteerde intake is immutable; iedere opdracht blijft via de unieke `intakeId` herleidbaar naar haar bron.
+- Zakelijke correcties vinden alleen op een `DRAFT`-opdracht plaats. Iedere inhoudswijziging verhoogt `Assignment.version` en schrijft in dezelfde transactie één append-only `AssignmentRevision`.
+- Interne statusovergangen schrijven afzonderlijke append-only `AssignmentStatusHistory`; terugzetten en annuleren vereisen een reden van 10 tot en met 500 tekens.
 - Lokale bestandsschijf wordt nooit als productieopslag gebruikt; productie zonder provider faalt veilig.
 
 ## Bewust uitgestelde keuzes

@@ -43,3 +43,7 @@ Better Auth gebruikt `storage: database` en de Prisma-tabel `RateLimit`. Specifi
 ## Invoer en privacy
 
 E-mail wordt getrimd, naar lowercase genormaliseerd en begrensd. Wachtwoorden zijn 12–128 tekens. Naam, contactvelden en adressen kunnen persoonsgegevens zijn. Contactvelden zijn niet automatisch publiek; organisatielogo’s zijn publiek leesbaar. Logs bevatten geen volledige formulieren, adressen, telefoonnummers, e-mailadressen, bestandsinhoud of absolute opslagpaden. Juridische pagina’s, bewaartermijnen, auditlogging en productie-logbeleid blijven vóór livegang openstaande werkzaamheden.
+
+## Opdrachtvorming
+
+Indienen gebruikt een POST-Server Action zonder open redirect en zonder `organizationId` of versie uit clientinvoer als autorisatiebron. De actie leest de actieve organisatie server-side en geeft de laatst bekende intakeversie alleen door voor optimistic concurrency; de bestaande conversieservice controleert rol, tenant, actuele versie, status en volledigheid opnieuw. Dubbele indiening is op UI-, service- en databaseniveau begrensd. Succes wordt pas getoond nadat de transactie een bestaande of nieuw gevormde opdracht heeft teruggegeven. Opdrachtqueries en -mutaties stellen actieve gebruiker, membership, organisatie, organisatietype en tenant opnieuw vast. Applicatielogs bevatten geen hulpvraag, antwoorden, opdrachtomschrijving, redenen of volledige persoonsgegevens.

@@ -1,8 +1,8 @@
 # Changelog
 
-## Unreleased — Module 5A.1, 5A.2, 5A.3 en 5B.2
+## Unreleased — Module 5A.1, 5A.2, 5A.3, 5B.2 en 5B.3
 
-**Status:** technisch opgeleverd; product-owneracceptatie staat nog open.
+**Status:** Module 5B.3 is technisch afgerond en door de product owner geaccepteerd. Module 5A en Module 5B.2 houden hun bestaande afzonderlijke acceptatiestatus.
 
 ### Toegevoegd
 
@@ -42,10 +42,22 @@
 - roadmap-, voortgangs-, risico- en technical-debtdocumentatie bijgewerkt.
 - opdrachtvorming is atomair, idempotent en alleen beschikbaar voor actieve `OWNER` en `ADMIN`;
 - geconverteerde intakes, antwoorden en assignment-intakekoppelingen zijn onomkeerbaar beschermd.
+- expliciete, toegankelijke indienbevestiging voor actieve `OWNER` en `ADMIN` toegevoegd;
+- idempotente Server Action hergebruikt de bestaande transactionele conversieservice en actuele server-side intakeversie;
+- beveiligde opdrachtenlijst, opdrachtdetail en herlaadbare succesroute toegevoegd;
+- `MEMBER` leest uitsluitend opdrachten uit de eigen intake en kan niet indienen;
+- technische opdrachtstatussen worden centraal naar gewone Nederlandse taal vertaald;
+- conceptopdrachten melden expliciet dat publicatie en matching nog niet zijn gestart.
+- `OWNER` en `ADMIN` kunnen toegestane conceptvelden wijzigen met optimistic concurrency en één append-only revisie per wijziging;
+- interne statusacties ondersteunen `DRAFT → READY_FOR_REVIEW`, gemotiveerd terugzetten naar `DRAFT` en bevestigd annuleren naar `CANCELLED`;
+- terugzet- en annuleringsredenen zijn verplicht en begrensd op 10 tot en met 500 tekens;
+- formulieren behouden veilige invoer, koppelen veldfouten en focussen het eerste foutveld;
+- de tijdelijke database-integriteitstest dekt nu ook inhoudsrevisie, statusflow en het behoud van de geconverteerde intake.
+- de product owner heeft de indieningsinterface, opdrachtbewerking, interne statusflow en afbakening zonder publicatie of matching geaccepteerd.
 
 ### Buiten scope
 
-- UI en Server Actions voor indiening en opdrachtbeheer;
+- publicatie, zichtbaarheid voor aanbieders en definitieve opdrachtnummering;
 - vraagsetpublicatiebeheer en vertakkende vraagbomen;
 - matching, AI, credits en Mollie.
 

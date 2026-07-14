@@ -362,6 +362,93 @@ async function verifyIntegrity(client: Client) {
       WHERE "id" = '00000000-0000-4000-8000-000000009004'
     `),
   )
+
+  await client.query(`
+    UPDATE "Assignment"
+    SET
+      "title" = 'Aangepaste tijdelijke opdracht',
+      "description" = 'De inhoud is gecontroleerd en aangepast binnen Module 5B.3.',
+      "version" = 2,
+      "updatedAt" = CURRENT_TIMESTAMP
+    WHERE "id" = '00000000-0000-4000-8000-000000009007';
+
+    INSERT INTO "AssignmentRevision" (
+      "id", "assignmentId", "version", "title", "description", "allowsRemoteWork", "changedByUserId"
+    ) VALUES (
+      '00000000-0000-4000-8000-000000009010',
+      '00000000-0000-4000-8000-000000009007',
+      2,
+      'Aangepaste tijdelijke opdracht',
+      'De inhoud is gecontroleerd en aangepast binnen Module 5B.3.',
+      false,
+      '00000000-0000-4000-8000-000000009001'
+    );
+
+    UPDATE "Assignment"
+    SET "status" = 'READY_FOR_REVIEW', "version" = 3, "updatedAt" = CURRENT_TIMESTAMP
+    WHERE "id" = '00000000-0000-4000-8000-000000009007';
+    INSERT INTO "AssignmentStatusHistory" (
+      "id", "assignmentId", "fromStatus", "toStatus", "changedByUserId", "reason"
+    ) VALUES (
+      '00000000-0000-4000-8000-000000009011',
+      '00000000-0000-4000-8000-000000009007',
+      'DRAFT', 'READY_FOR_REVIEW',
+      '00000000-0000-4000-8000-000000009001',
+      'Opdracht intern gereed voor controle.'
+    );
+
+    UPDATE "Assignment"
+    SET "status" = 'DRAFT', "version" = 4, "updatedAt" = CURRENT_TIMESTAMP
+    WHERE "id" = '00000000-0000-4000-8000-000000009007';
+    INSERT INTO "AssignmentStatusHistory" (
+      "id", "assignmentId", "fromStatus", "toStatus", "changedByUserId", "reason"
+    ) VALUES (
+      '00000000-0000-4000-8000-000000009012',
+      '00000000-0000-4000-8000-000000009007',
+      'READY_FOR_REVIEW', 'DRAFT',
+      '00000000-0000-4000-8000-000000009001',
+      'De planning moet voor de acceptatietest worden aangepast.'
+    );
+
+    UPDATE "Assignment"
+    SET "status" = 'CANCELLED', "version" = 5, "updatedAt" = CURRENT_TIMESTAMP
+    WHERE "id" = '00000000-0000-4000-8000-000000009007';
+    INSERT INTO "AssignmentStatusHistory" (
+      "id", "assignmentId", "fromStatus", "toStatus", "changedByUserId", "reason"
+    ) VALUES (
+      '00000000-0000-4000-8000-000000009013',
+      '00000000-0000-4000-8000-000000009007',
+      'DRAFT', 'CANCELLED',
+      '00000000-0000-4000-8000-000000009001',
+      'De tijdelijke opdracht wordt na de integriteitscontrole geannuleerd.'
+    );
+  `)
+
+  const module5b3State = await client.query<{
+    assignment_status: string
+    assignment_version: number
+    intake_status: string
+    revisions: number
+    status_history: number
+  }>(`
+    SELECT
+      a."status"::text AS assignment_status,
+      a."version" AS assignment_version,
+      i."status"::text AS intake_status,
+      (SELECT COUNT(*)::int FROM "AssignmentRevision" r WHERE r."assignmentId" = a."id") AS revisions,
+      (SELECT COUNT(*)::int FROM "AssignmentStatusHistory" h WHERE h."assignmentId" = a."id") AS status_history
+    FROM "Assignment" a
+    JOIN "Intake" i ON i."id" = a."intakeId"
+    WHERE a."id" = '00000000-0000-4000-8000-000000009007'
+  `)
+
+  assert.deepEqual(module5b3State.rows[0], {
+    assignment_status: 'CANCELLED',
+    assignment_version: 5,
+    intake_status: 'CONVERTED',
+    revisions: 2,
+    status_history: 4,
+  })
 }
 
 async function main() {
@@ -379,7 +466,7 @@ async function main() {
     testClient = new Client({ connectionString: testUrl.toString() })
     await testClient.connect()
     await verifyIntegrity(testClient)
-    console.info('Database-integriteit Module 5A.1 en Module 5B.2: geslaagd.')
+    console.info('Database-integriteit Module 5A.1, Module 5B.2 en Module 5B.3: geslaagd.')
   } finally {
     if (testClient) {
       await testClient.end()

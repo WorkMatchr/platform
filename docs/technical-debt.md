@@ -33,3 +33,9 @@
 | TD-029 | Hoog | AVG-bewaartermijnen voor organisatiegegevens ontbreken. | Juridisch beleid vertalen naar archivering en anonimisering. | Juridische/productievoorbereiding |
 | TD-030 | Middel | Export en verwijdering van organisatiegegevens ontbreken. | Veilige export- en verwijderworkflow ontwerpen. | Latere privacy-module |
 | TD-031 | Laag | Tijdelijke developmentlogging voor de logo-uploadketen is nog aanwezig. | Verwijder de tijdelijke diagnosevelden of vervang ze door het toekomstige centrale observabilitybeleid. | Eerstvolgende onderhoudsmoment |
+| TD-032 | Middel | Definitieve, juridisch bruikbare opdrachtnummering ontbreekt. | Nummeringsregels, tenantbereik, onveranderlijkheid en migratiebeleid productmatig vaststellen. | Latere opdrachtmodule |
+| TD-033 | Laag | Inhoudsrevisies worden technisch bewaard maar hebben nog geen afzonderlijke vergelijkingsweergave. | Privacybewuste revisievergelijking ontwerpen wanneer gebruikers die nodig hebben. | Latere opdrachtmodule |
+| TD-035 | Hoog | Publicatieflow, matching, aanbiedersreacties en credits zijn nog niet gebouwd. | Per domein afzonderlijk ontwerpen en pas na expliciete acceptatie activeren. | Latere modules |
+| TD-036 | Middel | Notificaties en auditlogweergave ontbreken. | Privacybewuste notificatie- en auditpresentatie ontwerpen. | Latere modules |
+| TD-037 | Hoog | AVG-bewaartermijnen voor intake-, antwoord-, opdracht- en revisiehistorie ontbreken. | Juridisch beleid vaststellen en vertalen naar gecontroleerde retentie en anonimisering. | Productievoorbereiding |
+| TD-038 | Laag | Statuslabels voor toekomstige publicatie- en matchingstatussen zijn nog niet ontworpen of inhoudelijk gevalideerd. | Product owner en UX betrekken bij het ontwerp van de toekomstige statusflow. | Toekomstige publicatie- en matchingmodules |

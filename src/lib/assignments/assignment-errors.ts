@@ -18,15 +18,18 @@ const DEFAULT_MESSAGES: Record<AssignmentServiceErrorCode, string> = {
 export class AssignmentServiceError extends Error {
   readonly code: AssignmentServiceErrorCode
   readonly issues: IntakeValidationIssue[]
+  readonly fieldErrors: Record<string, string[]>
 
   constructor(
     code: AssignmentServiceErrorCode,
     message = DEFAULT_MESSAGES[code],
     issues: IntakeValidationIssue[] = [],
+    fieldErrors: Record<string, string[]> = {},
   ) {
     super(message)
     this.name = 'AssignmentServiceError'
     this.code = code
     this.issues = issues
+    this.fieldErrors = fieldErrors
   }
 }

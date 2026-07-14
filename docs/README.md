@@ -44,6 +44,7 @@ Deze map bevat de leidende projectdocumentatie. Lees vóór een wijziging minima
 ## Organisaties en bestanden
 
 - [Organisaties](organizations.md)
+- [Opdrachten](assignments.md)
 - [Organisatieautorisatie](authorization.md)
 - [Bestandsopslag](file-storage.md)
 - [ADR-004: Organisaties, autorisatie en logo-opslag](adr/ADR-004-organisaties-autorisatie-en-logo-opslag.md)

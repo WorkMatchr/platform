@@ -1,6 +1,6 @@
 # ADR-006 — Transactionele opdrachtvorming
 
-- **Status:** geaccepteerd voor Module 5B.2
+- **Status:** geaccepteerd en toegepast in Module 5B.2 en 5B.3
 - **Datum:** 13 juli 2026
 
 ## Context
@@ -38,3 +38,5 @@ Module 5A levert versieerbare intakes tot `READY_FOR_REVIEW`. Module 5B moet een
 - `MEMBER` kan een uit de eigen intake gevormde opdracht bekijken, maar niet indienen of muteren.
 - Bewaar- en anonimiseringstermijnen moeten vóór productie in het AVG-beleid worden vastgesteld.
 - De precieze implementatie, migratie en tests volgen in een afzonderlijke Module 5B-stap.
+- Module 5B.3 gebruikt een afzonderlijke bevestigingsroute en een POST-Server Action; gereedmelden en GET-routes converteren nooit automatisch.
+- De Server Action haalt de actuele intakeversie en actieve organisatie server-side op en redirect bij idempotent succes naar dezelfde beveiligde opdracht.

@@ -32,7 +32,7 @@ export default async function IntakeReviewPage({
     if (error instanceof IntakeServiceError) notFound()
     throw error
   }
-  if (intake.status !== 'DRAFT' && intake.status !== 'IN_PROGRESS' && intake.status !== 'READY_FOR_REVIEW') {
+  if (!['DRAFT', 'IN_PROGRESS', 'READY_FOR_REVIEW', 'CONVERTED'].includes(intake.status)) {
     redirect('/hulpvragen')
   }
   const query = await searchParams
@@ -42,7 +42,7 @@ export default async function IntakeReviewPage({
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <Heading as="h1" size="h2">Controleer Uw intake</Heading>
-          <p className="mt-3 text-text-secondary">Bekijk de volledige vraagverheldering voordat U deze gereedmeldt.</p>
+          <p className="mt-3 text-text-secondary">Bekijk de volledige vraagverheldering en controleer wat er met Uw hulpvraag gebeurt.</p>
         </div>
         <LinkButton href="/hulpvragen" variant="outline">Naar overzicht</LinkButton>
       </div>
@@ -60,7 +60,7 @@ export default async function IntakeReviewPage({
           <input type="hidden" name="expectedIntakeVersion" value={intake.version} />
           <h2 className="text-lg font-bold text-brand-dark">Nog iets aanpassen?</h2>
           <p className="mt-2 text-text-secondary">Zet de intake terug naar ‘In behandeling’ om antwoorden te wijzigen.</p>
-          <Button type="submit" variant="outline" className="mt-5">Intake heropenen</Button>
+          <Button type="submit" variant="outline" className="mt-5">Terug voor correctie</Button>
         </form>
       )}
       {(intake.status === 'DRAFT' || intake.status === 'IN_PROGRESS') && (

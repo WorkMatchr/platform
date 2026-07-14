@@ -76,6 +76,12 @@
 | B-065 | Opdrachtvorming is één transactionele overgang via `SUBMITTED` naar `CONVERTED`. | Opdracht, statushistorie en initiële revisie ontstaan atomair; fouten rollen volledig terug. |
 | B-066 | Een geslaagde intakeconversie is onomkeerbaar en idempotent. | Correcties volgen later op de opdracht; de bronintake en haar antwoorden blijven immutable. |
 | B-067 | Opdrachten hebben een actuele versie plus append-only status- en inhoudshistorie. | Optimistische concurrency en reconstructeerbare revisies beschermen toekomstige wijzigingen. |
+| B-068 | Opdrachtvorming start uitsluitend na een aparte, expliciete POST-bevestiging. | Gereedmelden of openen van een intake heeft geen side effect; de Server Action hergebruikt de bestaande conversieservice. |
+| B-069 | `MEMBER` ziet alleen een opdracht uit de eigen intake en mag niet indienen. | Het bestaande 5B-autorisatiemodel wordt niet stilzwijgend verruimd naar alle organisatieopdrachten. |
+| B-070 | Opdrachtstatussen worden centraal naar gewone Nederlandse taal vertaald. | UUID's, enumwaarden en interne auditmetadata lekken niet naar de gebruikersinterface. |
+| B-071 | Module 5B.3 gebruikt nog geen definitieve opdrachtnummering. | De UI toont “Conceptopdracht” met titel en datum totdat product en juridisch een nummeringsbeleid vaststellen. |
+| B-072 | Een reden voor terugzetten of annuleren bevat 10 tot en met 500 tekens. | De reden blijft bruikbaar voor historie, wordt server-side begrensd en wordt niet aan de opdrachtomschrijving toegevoegd. |
+| B-073 | Inhoud en status van een opdracht gebruiken afzonderlijke append-only histories. | Een inhoudswijziging schrijft precies één revisiesnapshot; een statusovergang schrijft statushistorie en beide gebruiken optimistic concurrency. |
 
 Zie [ADR-001](adr/ADR-001-design-system-en-huisstijl.md) voor de onderbouwing van het design system.
 Zie [ADR-002](adr/ADR-002-postgresql-prisma-en-datamodel.md) voor de database- en datamodelkeuzes.
