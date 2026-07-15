@@ -318,4 +318,90 @@ Module 5C.1, Module 5C.2 en Module 5C.3 zijn afgerond en product-ownergeacceptee
 
 ### Volgende stap
 
-Module 5C is technisch en door de product owner geaccepteerd. Module 6A — Uitlegbare selectie van geschikte aanbieders is de aanbevolen volgende module en is nog niet gestart. De afzonderlijke acceptatiestatussen van Module 5A en 5B.2 blijven ongewijzigd.
+Module 5C is technisch en door de product owner geaccepteerd. De afzonderlijke acceptatiestatussen van Module 5A en 5B.2 blijven ongewijzigd.
+
+## Module 6A — Uitlegbare selectie van geschikte aanbieders
+
+**Status:** ontwerpfase; geen providerkwalificatie- of Decision Engine-functionaliteit geïmplementeerd.
+
+### Module 6A.0 — Providerkwalificatie & Onboarding
+
+**Status:** ontwerp afgerond; product-owneracceptatie geslaagd op 14 juli 2026.
+
+- de huidige providerdata en ontbrekende kwalificatiegegevens zijn geanalyseerd;
+- lifecycle, dossiers, verificatielabels, platform- en beroepskwalificatie, readiness en selecteerbaarheid zijn vastgesteld;
+- rollen, gegevensownership, security, privacy, documentbeheer, versiebeheer en audit zijn ontworpen;
+- het toegestane en verboden gegevenscontract voor de toekomstige Decision Engine is afgebakend;
+- provincies, `LANDELIJK`, `REMOTE`, de 30-dagentermijn voor capaciteit en globale capaciteitsniveaus zijn vastgesteld;
+- bestaande providerdata blijft zelfverklaard en historische prestaties blijven buiten Decision Engine v1;
+- de waarschijnlijke database-impact is beschreven zonder Prisma, migraties of code te wijzigen;
+- ADR-008 heeft status `Geaccepteerd`; productie- en AVG-besluiten blijven open.
+
+### Module 6A.1 — WorkMatchr Decision Engine v1
+
+**Status:** ontwerp afgerond; product-owneracceptatie geslaagd op 14 juli 2026.
+
+- kandidaatverzameling is gescheiden van platformkwalificatie, opdrachtspecifieke knock-outs en rangschikking;
+- knock-outs, gewogen integer score, minimumscore, rangschikking en tie-breakers zijn als expliciet model ontworpen;
+- historische prestaties, AI, marketingtekst, persoonsgegevens, bewijsdocumenten, credits en betaalstatus blijven buiten v1;
+- de exacte minimale providerprojectie voor 6A.2 en de aanvullende opdrachtsnapshot voor 6A.4 zijn vastgelegd;
+- selectie start uitsluitend na een expliciete actie van `OWNER` of `ADMIN` op een `OPEN` opdracht en nooit automatisch bij publicatie;
+- volledige interne rangorde, maximaal drie geselecteerden, geen kunstmatige aanvulling en geen automatische reserveactivering zijn vastgesteld;
+- de opdrachtgever krijgt kwalitatieve uitleg en relevante criteria, maar geen exacte scores, volledige ranglijst of concurrentinformatie;
+- `Explainability before Score`, fairnessmaatregelen, drie uitlegniveaus en een immutable Decision Report zijn vastgesteld;
+- iedere run krijgt een interne Confidence Check die context geeft maar de selectie niet beïnvloedt;
+- de versieerbare gewichten zijn voorlopig vastgesteld op 40/25/15/10/10 en de minimumscore op 60% van de actieve criteria;
+- de lexicografische tie-breakers en de uitgesloten commerciële en historische invloeden zijn bevestigd;
+- engine-, model-, regel-, taxonomie-, projectie- en rapportschemaversies zijn onderscheiden;
+- concurrency, idempotentie, foutscenario’s, bezwaar, teststrategie en toekomstige contracten met 6B–6D zijn beschreven;
+- ADR-009 heeft status `Geaccepteerd`; resterende implementatie-, productie- en AVG-besluiten blijven zichtbaar open;
+- er zijn geen Prisma-, code-, route-, UI-, test- of dependencywijzigingen uitgevoerd.
+
+### Module 6A.2.0 — Technische impactanalyse providerkwalificatie
+
+**Status:** afgerond; product-owneracceptatie geslaagd op 14 juli 2026.
+
+- de bestaande Prisma-, organisatie-, autorisatie-, historie-, document- en taxonomiebasis is onderzocht;
+- herbruikbare patronen en noodzakelijke uitbreidingen zijn vastgelegd;
+- het providerkwalificatiedomein en de minimale Trusted Provider Projection zijn technisch afgebakend;
+- er zijn geen Prisma-, migratie-, service-, route-, UI-, test- of dependencywijzigingen uitgevoerd.
+
+### Module 6A.2.1 — Implementatieplan providerkwalificatie
+
+**Status:** afgerond; product-owneracceptatie geslaagd op 14 juli 2026.
+
+- `ProviderProfile` blijft aggregate root;
+- legacyproviderdata migreert uitsluitend als `SELF_DECLARED` en verleent geen readiness, verificatie, kwalificatie of selecteerbaarheid;
+- lifecycle, readiness, platformkwalificatie, beroepskwalificatie, selecteerbaarheid en blokkades blijven afzonderlijk;
+- expliciete domeinmodellen en koppeltabellen vervangen een generiek polymorf assertionmodel in v1;
+- tien kleine, afzonderlijk testbare migratiefasen zijn gepland;
+- services, transactiegrenzen, concurrency, idempotentie, constraints, triggers en teststrategie zijn uitgewerkt;
+- de Trusted Provider Projection gebruikt voorgesteld canonical JSON, SHA-256 en opgeslagen schema-/canonicalisatieversies;
+- ADR-010 heeft status `Geaccepteerd`;
+- Module 6A.2 is afgerond en product-ownergeaccepteerd op 15 juli 2026; de concrete v1-taxonomie en het bindende fail-closed beleid blijven van kracht.
+
+### Overige vervolgstatus
+
+- Module 6A.2 — Providerkwalificatie datamodel en services: afgerond en product-ownergeaccepteerd;
+- Module 6A.3 — Provider-onboardinginterface: volgende module; niet gestart;
+- Module 6A.4 — Decision Engine datamodel en services: niet gestart;
+- Module 6A.5 — Selectie-interface en acceptatie: niet gestart.
+
+### Module 6A.2 — Afgerond en product-ownergeaccepteerd
+
+**Status:** afgerond; product-owneracceptatie geslaagd op 15 juli 2026.
+
+- vijf additieve, niet-destructieve migraties introduceren het kwalificatiedomein, verzekeringsconfiguratie, immutable scanbesluiten, vier-ogenblokkades en aanvullende immutabilityhardening;
+- vijf diensten, acht competenties, twaalf provincies plus `NATIONWIDE` en `REMOTE`, twee verzekeringstypen en neutrale reason codes zijn idempotent geseed;
+- bestaande specialismen, sectorervaringen en certificeringen worden herstartbaar en uitsluitend als `SELF_DECLARED` gemigreerd met auditregistratie;
+- `OWNER` en organisatie-`ADMIN` mogen providerfacts en compliance beheren; `MEMBER` niet;
+- platformreview gebruikt uitsluitend expliciete actuele `PROVIDER_REVIEWER`, `PROVIDER_APPROVER` en `PROVIDER_AUDITOR`-grants zonder `PlatformRole.ADMIN`-fallback;
+- kwalificatiebesluiten, blokkades en herstel vereisen server-side en databasebreed vier ogen;
+- ontbrekende voorwaarden-, verzekerings- of capabilityconfiguratie blokkeert positieve uitkomsten expliciet;
+- canonical JSON, SHA-256, bronversies, invalidation en minimale immutable Trusted Provider Projections zijn geïmplementeerd;
+- bewijsbytes, provider-onboarding-UI, Decision Engine, matching, aanbiederszichtbaarheid, credits en betalingen zijn niet gebouwd of geactiveerd;
+- automatische unit-, service-, schema- en tijdelijke database-integriteitstests zijn geslaagd;
+- de product owner heeft de volledige fail-closed providerkwalificatiefundering geaccepteerd;
+- geen provider wordt automatisch geverifieerd, gekwalificeerd of selecteerbaar en zonder volledige geldige configuratie ontstaat geen Trusted Provider Projection.
+
+De eerstvolgende aanbevolen module is Module 6A.3 — Provider-onboardinginterface. Deze module is nog niet gestart. Decision Engine, matching, uitnodigingen, credits en Mollie blijven niet geïmplementeerd.

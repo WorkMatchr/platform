@@ -14,6 +14,10 @@ Deze map bevat de leidende projectdocumentatie. Lees vóór een wijziging minima
 8. [Voorstel vraagset Module 5A — versie 1](module-5a-vraagset-v1.md)
 9. [Ontwerp Module 5B — Opdrachtvorming](module-5b-ontwerp.md)
 10. [Ontwerp Module 5C — Gecontroleerde opdrachtpublicatie](module-5c-ontwerp.md)
+11. [Geaccepteerd ontwerp Module 6A.0 — Providerkwalificatie en onboarding](module-6a0-providerkwalificatie-ontwerp.md)
+12. [Geaccepteerd ontwerp Module 6A.1 — WorkMatchr Decision Engine v1](module-6a-decision-engine-ontwerp.md)
+13. [Geaccepteerde technische impactanalyse Module 6A.2.0 — Providerkwalificatie](module-6a2-providerkwalificatie-technisch-ontwerp.md)
+14. [Geaccepteerd implementatieplan Module 6A.2.1 — Providerkwalificatie](module-6a2-providerkwalificatie-implementatieplan.md)
 
 ## Ontwerp en kwaliteit
 
@@ -36,6 +40,9 @@ Deze map bevat de leidende projectdocumentatie. Lees vóór een wijziging minima
 - [ADR-005: Versieerbare intake en antwoordhistorie](adr/ADR-005-versieerbare-intake-en-antwoordhistorie.md)
 - [ADR-006: Transactionele opdrachtvorming](adr/ADR-006-transactionele-opdrachtvorming.md)
 - [ADR-007: Gecontroleerde opdrachtpublicatie](adr/ADR-007-gecontroleerde-opdrachtpublicatie.md)
+- [ADR-008: Providerkwalificatie als fundament voor selectie — geaccepteerd](adr/ADR-008-providerkwalificatie-als-fundament-voor-selectie.md)
+- [ADR-009: Deterministische, versieerbare en uitlegbare selectie — geaccepteerd](adr/ADR-009-deterministische-versieerbare-en-uitlegbare-selectie.md)
+- [ADR-010: Fijnmazige platformrollen voor providerkwalificatie — geaccepteerd](adr/ADR-010-fijnmazige-platformrollen-providerkwalificatie.md)
 
 ## Authenticatie en beveiliging
 

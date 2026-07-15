@@ -61,3 +61,15 @@ Indienen gebruikt een POST-Server Action zonder open redirect en zonder `organiz
 - logs mogen uitsluitend eventnaam, interne identifier, versies, resultaat en foutcode bevatten, nooit titel, omschrijving, intakeantwoorden, reden, tokens, secrets of volledige persoonsgegevens.
 - de publicatiecontrole is een beveiligde serverroute; de Server Actions vertrouwen geen client-side tenantcontext en muteren uitsluitend via de centrale services;
 - expliciete bevestiging, pendingstatus en optimistic concurrency beperken onbedoelde of dubbele publicatie en intrekking.
+
+## Providerkwalificatie Module 6A.2
+
+- Bewijsbytes blijven buiten PostgreSQL en buiten publieke mediaroutes; alleen private metadata en checksums zijn gemodelleerd.
+- Een evidence revision wordt nooit door een provider als schoon gemarkeerd. Alleen een afzonderlijk immutable scanbesluit met `CLEAN` maakt het bewijs bruikbaar.
+- Platformpermissions zijn least-privilege, tijdgebonden, intrekbaar en geven geen tenantmembership.
+- `PlatformRole.ADMIN` is geen fallback voor reviewer- of approverrechten.
+- Hoog-risicobesluiten gebruiken vier ogen in service én database.
+- Revisions, reviews, qualification decisions, assessments, blocks, releases, scanbesluiten en projecties zijn databasebreed immutable.
+- Logging mag alleen interne IDs, codes, versies, checksums en resultaten bevatten; geen bestandinhoud, polisnummer, professionalcontactdata, vrije motivering, tokens of secrets.
+- Trusted Provider Projections bevatten uitsluitend vooraf toegestane gevalideerde feiten en sluiten PII, evidence, marketingtekst, credits, betaling en prestaties technisch uit.
+- Ontbrekende of verlopen configuratie, capaciteit, verificatie of bronbasis kan nooit naar een positieve status promoveren.

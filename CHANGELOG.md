@@ -1,8 +1,84 @@
 # Changelog
 
+## Unreleased — Module 6A.2
+
+**Status:** Module 6A.2.0, Module 6A.2.1 en Module 6A.2 zijn afgerond en product-ownergeaccepteerd. ADR-010 is geaccepteerd. Module 6A.3 is de volgende module en is nog niet gestart.
+
+- diensten v1 en competenties v1 zijn als gesloten, versieerbare referentiesets vastgesteld;
+- bestaande specialismen, sectoren en certificeringstypen blijven ongewijzigd en worden uitsluitend als `SELF_DECLARED` gemigreerd;
+- capabilitykwalificatie, verzekeringen en voorwaarden worden configureerbaar en versieerbaar gemodelleerd zonder inhoudelijke positieve seedconfiguratie;
+- ontbrekende configuratie blokkeert verificatie, kwalificatie, readiness, selecteerbaarheid en Trusted Provider Projections veilig.
+- de product owner heeft de fail-closed providerkwalificatiefundering op 15 juli 2026 definitief geaccepteerd;
+- Decision Engine, matching, uitnodigingen, credits en Mollie blijven niet geïmplementeerd.
+
+### Toegevoegd
+
+- technische impactanalyse voor het providerkwalificatiedomein;
+- implementatieplan met expliciet datamodel, tien kleine migratiefasen, services, constraints, triggers en teststrategie;
+- concreet Trusted Provider Projection-schema met canonical JSON, SHA-256 en versieerbare canonicalisatie;
+- geaccepteerd ADR-010 voor `PROVIDER_REVIEWER`, `PROVIDER_APPROVER`, `PROVIDER_AUDITOR` en vier-ogencontrole.
+- vijf additieve Prisma-migraties voor taxonomie, providerfacts, professionals, compliance, evidence, permissions, besluiten, assessments, blokkades, projecties en immutabilityhardening;
+- modulaire server-side services voor capabilities, sectorervaring, werkgebied, capaciteit, professionals, compliance, verificatie, kwalificatie, readiness, selecteerbaarheid en projecties;
+- append-only scanbesluiten, verificatiereviews, kwalificatiebesluiten, assessments, blokkades, releases en projectie-invalidation;
+- idempotente referentieseed en herstartbare `SELF_DECLARED` legacybackfill met auditregistratie;
+- unit-, service-, migratiecontract- en tijdelijke PostgreSQL-integriteitstests.
+
+### Gewijzigd
+
+- bindende besluiten voor legacydata, statusscheiding, expliciete domeinmodellen, taxonomieën, capaciteit, verificatie, blokkades en projecties zijn geregistreerd;
+- roadmap en voortgang registreren Module 6A.2 als afgerond en product-ownergeaccepteerd en Module 6A.3 als volgende, nog niet gestarte module;
+- risico’s en technical debt zijn uitgebreid voor migratie, bewijsopslag, platformpermissions en canonicalisatie;
+- er zijn geen routes, UI, productieafhankelijkheden, matching-, credit- of betaalfuncties toegevoegd.
+
+## Unreleased — Module 6A.1
+
+**Status:** ontwerp afgerond en product-ownergeaccepteerd op 14 juli 2026. Er zijn geen schema-, code- of functiewijzigingen uitgevoerd.
+
+### Toegevoegd
+
+- volledig ontwerp voor WorkMatchr Decision Engine v1;
+- minimale provider- en opdrachtprojecties met immutable snapshots;
+- strikt gescheiden kandidaatverzameling, knock-outs, integer scoring, rangschikking en tie-breakers;
+- geaccepteerde, versieerbare gewichten, minimumscore over actieve criteria, maximaal drie geselecteerden en volledige interne rangorde;
+- fairness-, explainability-, privacy-, security-, concurrency- en idempotentiemodel;
+- expliciete selectiestart door `OWNER` of `ADMIN`, zonder automatische reserveactivering of kunstmatige aanvulling;
+- `Explainability before Score` en een interne Confidence Check die de selectie niet beïnvloedt;
+- immutable Decision Report en engine-, model-, regel-, taxonomie- en schemaversionering;
+- ADR-009 met status `Geaccepteerd`;
+- toekomstige contractmodules 6B voor uitnodigingen, 6C voor offertes en 6D voor vergelijking, gunning en evaluatie.
+
+### Gewijzigd
+
+- roadmap en voortgang tonen 6A.1 als ontwerp afgerond en product-ownergeaccepteerd;
+- architectuur, risico’s en technical debt uitgebreid voor reproduceerbare selectie;
+- 6A.2 is de volgende module en blijft, evenals 6A.3 tot en met 6A.5, niet gestart;
+- providerkwalificatie, selectie, uitnodigingen, credits en betalingen blijven niet geïmplementeerd.
+
+## Unreleased — Module 6A.0
+
+**Status:** ontwerp afgerond en product-ownergeaccepteerd op 14 juli 2026. Er zijn geen schema-, code- of functiewijzigingen uitgevoerd.
+
+### Toegevoegd
+
+- integraal ontwerp voor providerkwalificatie en onboarding;
+- providerlifecycle en afzonderlijke dossiers voor organisatie, capabilities, sectoren, werkgebied, capaciteit, competenties, compliance en historie;
+- expliciete scheiding tussen platformkwalificatie, beroepskwalificatie, readiness, selecteerbaarheid en historische prestaties;
+- gegevenscontract met toegestane, knock-out-, score-, uitlegbaarheids- en verboden gegevens voor de toekomstige Decision Engine;
+- voorstel voor database-impact, versiebeheer, verificatie, security, privacy en audit;
+- ADR-008 met status `Geaccepteerd`;
+- definitieve keuzes voor centrale taxonomieën, werkgebied, capaciteit, verificatielabels, selecteerbaarheid en immutable kwalificatiebesluiten.
+
+### Gewijzigd
+
+- roadmap en voortgang tonen Module 6A.0 als ontwerp afgerond en product-ownergeaccepteerd;
+- Module 6A.1 is als ontwerp afgerond en product-ownergeaccepteerd;
+- Module 6A.2 tot en met Module 6A.5 blijven implementatiemodules die niet zijn gestart;
+- modulevolgorde aangescherpt naar providerfundering, providerinterface, Decision Engine-fundering en selectieacceptatie;
+- risico- en technical-debtregistratie uitgebreid voor providerdata en kwalificatie.
+
 ## Unreleased — Module 5A.1, 5A.2, 5A.3, 5B.2, 5B.3, 5C.1, 5C.2 en 5C.3
 
-**Status:** Module 5C.1, Module 5C.2 en Module 5C.3 zijn afgerond en product-ownergeaccepteerd. Module 5C is als geheel afgerond. Module 6A is nog niet gestart. Module 5A en Module 5B.2 houden hun bestaande afzonderlijke acceptatiestatus.
+**Status:** Module 5C.1, Module 5C.2 en Module 5C.3 zijn afgerond en product-ownergeaccepteerd. Module 5C is als geheel afgerond. Module 6A.0 en Module 6A.1 zijn als ontwerp afgerond en product-ownergeaccepteerd; Module 6A.2 is de volgende module en is nog niet gestart. Module 6A.3 tot en met Module 6A.5 zijn eveneens niet gestart. Module 5A en Module 5B.2 houden hun bestaande afzonderlijke acceptatiestatus.
 
 ### Toegevoegd
 

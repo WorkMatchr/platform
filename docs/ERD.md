@@ -104,6 +104,38 @@ erDiagram
   }
 ```
 
+## Providerkwalificatie Module 6A.2
+
+```mermaid
+erDiagram
+  Organization ||--o| ProviderProfile : has
+  ProviderProfile ||--o{ ProviderCapability : owns
+  ProviderCapability ||--o{ ProviderCapabilityRevision : versions
+  ProviderProfile ||--o{ ProviderSectorExperience : owns
+  ProviderProfile ||--o{ ProviderWorkArea : owns
+  ProviderProfile ||--o{ ProviderCapacitySnapshot : confirms
+  ProviderProfile ||--o{ ProviderProfessional : engages
+  ProviderProfessional ||--o| ProviderProfessionalPrivateData : isolates
+  ProviderProfessional ||--o{ ProviderProfessionalQualification : holds
+  ProviderProfile ||--o{ ProviderInsurance : holds
+  ProviderProfile ||--o{ ProviderEvidenceDocument : owns
+  ProviderEvidenceDocument ||--o{ ProviderEvidenceRevision : versions
+  ProviderEvidenceRevision ||--o| ProviderEvidenceScanDecision : scans
+  ProviderTaxonomy ||--o{ ProviderTaxonomyVersion : versions
+  ProviderTaxonomyVersion ||--o{ ProviderTaxonomyTerm : contains
+  ProviderProfile ||--o{ ProviderVerificationReview : reviews
+  ProviderProfile ||--o{ ProviderQualificationDecision : qualifies
+  ProviderProfile ||--o{ ProviderReadinessAssessment : assesses
+  ProviderProfile ||--o{ ProviderSelectabilityAssessment : assesses
+  ProviderProfile ||--o{ ProviderBlock : blocks
+  ProviderBlock ||--o| ProviderBlockRelease : releases
+  ProviderProfile ||--o{ TrustedProviderProjection : projects
+  TrustedProviderProjection ||--o| TrustedProviderProjectionInvalidation : invalidates
+  User ||--o{ ProviderPlatformPermissionGrant : receives
+```
+
+Alle roots blijven aan één `ProviderProfile` gekoppeld. Revisions, reviews, besluiten, assessments, blokkades en projecties zijn append-only. `ProviderProfessionalPrivateData` en `ProviderEvidenceRevision` vallen bewust buiten de Trusted Provider Projection.
+
 ## Intake en opdrachten
 
 ```mermaid

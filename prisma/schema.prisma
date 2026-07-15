@@ -61,6 +61,140 @@ enum CertificationVerificationStatus {
   EXPIRED
 }
 
+enum ProviderLifecycleStatus {
+  DRAFT
+  READY_FOR_REVIEW
+  IN_REVIEW
+  CHANGES_REQUESTED
+  QUALIFIED
+  SUSPENDED
+  REJECTED
+  ARCHIVED
+}
+
+enum ProviderReadinessStatus {
+  INCOMPLETE
+  READY
+  STALE
+}
+
+enum ProviderPlatformQualificationStatus {
+  NOT_ASSESSED
+  PENDING
+  QUALIFIED
+  CHANGES_REQUESTED
+  REJECTED
+  SUSPENDED
+  EXPIRED
+}
+
+enum ProviderSelectabilityStatus {
+  NOT_SELECTABLE
+  SELECTABLE
+  STALE
+  BLOCKED
+}
+
+enum ProviderVerificationLevel {
+  SELF_DECLARED
+  DOCUMENT_CHECKED
+  VERIFIED
+}
+
+enum ProviderCapacityLevel {
+  LIMITED
+  NORMAL
+  AMPLE
+}
+
+enum ProviderDeliveryMode {
+  ON_SITE
+  HYBRID
+  REMOTE
+}
+
+enum ProviderTaxonomyKind {
+  SERVICE
+  SPECIALISM
+  SECTOR
+  COMPETENCY
+  QUALIFICATION
+  CERTIFICATION
+  REGION
+  INSURANCE_TYPE
+}
+
+enum ProviderTaxonomyVersionStatus {
+  DRAFT
+  PUBLISHED
+  RETIRED
+}
+
+enum ProviderRecordStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum ProviderPlatformPermission {
+  PROVIDER_REVIEWER
+  PROVIDER_APPROVER
+  PROVIDER_AUDITOR
+}
+
+enum ProviderQualificationScope {
+  PLATFORM
+  CAPABILITY
+}
+
+enum ProviderQualificationOutcome {
+  QUALIFIED
+  CHANGES_REQUESTED
+  REJECTED
+  SUSPENDED
+  RESTORED
+  EXPIRED
+}
+
+enum ProviderVerificationOutcome {
+  DOCUMENT_CHECKED
+  VERIFIED
+  CHANGES_REQUESTED
+  REJECTED
+  EXPIRED
+}
+
+enum ProviderBlockType {
+  COMPLIANCE
+  QUALIFICATION
+  SECURITY
+  LEGAL
+  DATA_QUALITY
+}
+
+enum ProviderEvidenceStatus {
+  DRAFT
+  AVAILABLE
+  ARCHIVED
+}
+
+enum ProviderEvidenceScanStatus {
+  PENDING
+  CLEAN
+  QUARANTINED
+  REJECTED
+}
+
+enum ProviderTermStatus {
+  DRAFT
+  ACTIVE
+  RETIRED
+}
+
+enum ProviderRequirementKind {
+  QUALIFICATION
+  CERTIFICATION
+}
+
 enum IntakeStatus {
   DRAFT
   IN_PROGRESS
@@ -143,34 +277,48 @@ enum CreditTransactionType {
 }
 
 model User {
-  id                           String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email                        String                        @unique
-  displayName                  String?
-  emailVerified                Boolean                       @default(false)
-  image                        String?
-  platformRole                 PlatformRole                  @default(USER)
-  status                       UserStatus                    @default(INVITED)
-  createdAt                    DateTime                      @default(now()) @db.Timestamptz(3)
-  updatedAt                    DateTime                      @updatedAt @db.Timestamptz(3)
-  archivedAt                   DateTime?                     @db.Timestamptz(3)
-  memberships                  OrganizationMembership[]
-  approvedProviderProfiles     ProviderProfile[]             @relation("ProviderProfileApprover")
-  verifiedProviderCertificates ProviderCertification[]       @relation("CertificationVerifier")
-  createdIntakes               Intake[]                      @relation("IntakeCreator")
-  submittedIntakes             Intake[]                      @relation("IntakeSubmitter")
-  updatedIntakeAnswers         IntakeAnswer[]                @relation("IntakeAnswerUpdater")
-  changedIntakeAnswerRevisions IntakeAnswerRevision[]        @relation("IntakeAnswerRevisionActor")
-  changedIntakeStatuses        IntakeStatusHistory[]         @relation("IntakeStatusHistoryActor")
-  createdAssignments           Assignment[]                  @relation("AssignmentCreator")
-  publishedAssignments         Assignment[]                  @relation("AssignmentPublisher")
-  changedAssignmentStatuses    AssignmentStatusHistory[]     @relation("AssignmentStatusHistoryActor")
-  changedAssignmentRevisions   AssignmentRevision[]          @relation("AssignmentRevisionActor")
-  selectedProviderSelections   AssignmentProviderSelection[] @relation("ProviderSelectionActor")
-  assignmentResolutions        AssignmentResolution[]        @relation("AssignmentResolutionActor")
-  adminActions                 AdminActionLog[]              @relation("AdminActionActor")
-  createdCreditTransactions    CreditTransaction[]           @relation("CreditTransactionActor")
-  sessions                     Session[]
-  accounts                     Account[]
+  id                               String                                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email                            String                                 @unique
+  displayName                      String?
+  emailVerified                    Boolean                                @default(false)
+  image                            String?
+  platformRole                     PlatformRole                           @default(USER)
+  status                           UserStatus                             @default(INVITED)
+  createdAt                        DateTime                               @default(now()) @db.Timestamptz(3)
+  updatedAt                        DateTime                               @updatedAt @db.Timestamptz(3)
+  archivedAt                       DateTime?                              @db.Timestamptz(3)
+  memberships                      OrganizationMembership[]
+  approvedProviderProfiles         ProviderProfile[]                      @relation("ProviderProfileApprover")
+  verifiedProviderCertificates     ProviderCertification[]                @relation("CertificationVerifier")
+  createdIntakes                   Intake[]                               @relation("IntakeCreator")
+  submittedIntakes                 Intake[]                               @relation("IntakeSubmitter")
+  updatedIntakeAnswers             IntakeAnswer[]                         @relation("IntakeAnswerUpdater")
+  changedIntakeAnswerRevisions     IntakeAnswerRevision[]                 @relation("IntakeAnswerRevisionActor")
+  changedIntakeStatuses            IntakeStatusHistory[]                  @relation("IntakeStatusHistoryActor")
+  createdAssignments               Assignment[]                           @relation("AssignmentCreator")
+  publishedAssignments             Assignment[]                           @relation("AssignmentPublisher")
+  changedAssignmentStatuses        AssignmentStatusHistory[]              @relation("AssignmentStatusHistoryActor")
+  changedAssignmentRevisions       AssignmentRevision[]                   @relation("AssignmentRevisionActor")
+  selectedProviderSelections       AssignmentProviderSelection[]          @relation("ProviderSelectionActor")
+  assignmentResolutions            AssignmentResolution[]                 @relation("AssignmentResolutionActor")
+  adminActions                     AdminActionLog[]                       @relation("AdminActionActor")
+  createdCreditTransactions        CreditTransaction[]                    @relation("CreditTransactionActor")
+  sessions                         Session[]
+  accounts                         Account[]
+  providerPermissionSubjects       ProviderPlatformPermissionGrant[]      @relation("ProviderPermissionSubject")
+  providerPermissionGranters       ProviderPlatformPermissionGrant[]      @relation("ProviderPermissionGranter")
+  providerPermissionRevokers       ProviderPlatformPermissionRevocation[] @relation("ProviderPermissionRevoker")
+  providerTermAcceptances          ProviderTermAcceptance[]
+  providerVerificationReviews      ProviderVerificationReview[]           @relation("ProviderVerificationReviewer")
+  providerQualificationReviews     ProviderQualificationDecision[]        @relation("ProviderQualificationReviewer")
+  providerQualificationApprovals   ProviderQualificationDecision[]        @relation("ProviderQualificationApprover")
+  providerReadinessAssessments     ProviderReadinessAssessment[]
+  providerSelectabilityAssessments ProviderSelectabilityAssessment[]
+  providerBlocks                   ProviderBlock[]                        @relation("ProviderBlockActor")
+  providerBlockReviews             ProviderBlock[]                        @relation("ProviderBlockReviewer")
+  providerBlockReleases            ProviderBlockRelease[]                 @relation("ProviderBlockReleaseActor")
+  providerBlockReleaseReviews      ProviderBlockRelease[]                 @relation("ProviderBlockReleaseReviewer")
+  providerProjections              TrustedProviderProjection[]
 
   @@index([status])
   @@index([createdAt])
@@ -231,25 +379,25 @@ model RateLimit {
 }
 
 model Organization {
-  id                      String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                      String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name                    String
   tradeName               String?
   chamberOfCommerceNumber String?
   organizationType        OrganizationType
-  status                  OrganizationStatus       @default(PENDING)
+  status                  OrganizationStatus          @default(PENDING)
   website                 String?
   phone                   String?
   generalEmail            String?
   employeeCount           Int?
-  logoStorageKey          String?                  @unique
+  logoStorageKey          String?                     @unique
   logoMimeType            String?
   logoSizeBytes           Int?
   logoWidth               Int?
   logoHeight              Int?
-  logoUpdatedAt           DateTime?                @db.Timestamptz(3)
-  createdAt               DateTime                 @default(now()) @db.Timestamptz(3)
-  updatedAt               DateTime                 @updatedAt @db.Timestamptz(3)
-  archivedAt              DateTime?                @db.Timestamptz(3)
+  logoUpdatedAt           DateTime?                   @db.Timestamptz(3)
+  createdAt               DateTime                    @default(now()) @db.Timestamptz(3)
+  updatedAt               DateTime                    @updatedAt @db.Timestamptz(3)
+  archivedAt              DateTime?                   @db.Timestamptz(3)
   memberships             OrganizationMembership[]
   locations               OrganizationLocation[]
   sectors                 OrganizationSector[]
@@ -257,6 +405,7 @@ model Organization {
   clientIntakes           Intake[]
   clientAssignments       Assignment[]
   creditAccount           CreditAccount?
+  insuredProviderPolicies ProviderInsuranceRevision[] @relation("InsuredOrganization")
 
   @@index([organizationType])
   @@index([status])
@@ -305,17 +454,18 @@ model OrganizationLocation {
 }
 
 model Sector {
-  id                  String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name                String
-  slug                String               @unique
-  description         String?
-  isActive            Boolean              @default(true)
-  createdAt           DateTime             @default(now()) @db.Timestamptz(3)
-  updatedAt           DateTime             @updatedAt @db.Timestamptz(3)
-  organizations       OrganizationSector[]
-  providers           ProviderSector[]
-  assignments         Assignment[]
-  assignmentRevisions AssignmentRevision[]
+  id                        String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                      String
+  slug                      String                     @unique
+  description               String?
+  isActive                  Boolean                    @default(true)
+  createdAt                 DateTime                   @default(now()) @db.Timestamptz(3)
+  updatedAt                 DateTime                   @updatedAt @db.Timestamptz(3)
+  organizations             OrganizationSector[]
+  providers                 ProviderSector[]
+  assignments               Assignment[]
+  assignmentRevisions       AssignmentRevision[]
+  providerSectorTaxonomyMap ProviderSectorTaxonomyMap?
 
   @@index([isActive])
 }
@@ -335,51 +485,77 @@ model OrganizationSector {
 }
 
 model Specialism {
-  id                         String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name                       String
-  slug                       String                 @unique
-  description                String?
-  parentId                   String?                @db.Uuid
-  isActive                   Boolean                @default(true)
-  createdAt                  DateTime               @default(now()) @db.Timestamptz(3)
-  updatedAt                  DateTime               @updatedAt @db.Timestamptz(3)
-  parent                     Specialism?            @relation("SpecialismHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
-  children                   Specialism[]           @relation("SpecialismHierarchy")
-  providers                  ProviderSpecialism[]
-  detectedIntakes            Intake[]               @relation("DetectedIntakeSpecialism")
-  primaryAssignments         Assignment[]           @relation("PrimaryAssignmentSpecialism")
-  primaryAssignmentRevisions AssignmentRevision[]   @relation("PrimaryAssignmentRevisionSpecialism")
-  assignmentSpecialisms      AssignmentSpecialism[]
+  id                            String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                          String
+  slug                          String                         @unique
+  description                   String?
+  parentId                      String?                        @db.Uuid
+  isActive                      Boolean                        @default(true)
+  createdAt                     DateTime                       @default(now()) @db.Timestamptz(3)
+  updatedAt                     DateTime                       @updatedAt @db.Timestamptz(3)
+  parent                        Specialism?                    @relation("SpecialismHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children                      Specialism[]                   @relation("SpecialismHierarchy")
+  providers                     ProviderSpecialism[]
+  detectedIntakes               Intake[]                       @relation("DetectedIntakeSpecialism")
+  primaryAssignments            Assignment[]                   @relation("PrimaryAssignmentSpecialism")
+  primaryAssignmentRevisions    AssignmentRevision[]           @relation("PrimaryAssignmentRevisionSpecialism")
+  assignmentSpecialisms         AssignmentSpecialism[]
+  providerSpecialismTaxonomyMap ProviderSpecialismTaxonomyMap?
 
   @@index([parentId])
   @@index([isActive])
 }
 
 model ProviderProfile {
-  id                    String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizationId        String                        @unique @db.Uuid
-  approvalStatus        ProviderApprovalStatus        @default(DRAFT)
-  approvedAt            DateTime?                     @db.Timestamptz(3)
-  approvedByUserId      String?                       @db.Uuid
-  rejectionReason       String?
-  description           String?
-  maxTravelDistanceKm   Int?
-  acceptsRemoteWork     Boolean                       @default(false)
-  isAvailable           Boolean                       @default(false)
-  createdAt             DateTime                      @default(now()) @db.Timestamptz(3)
-  updatedAt             DateTime                      @updatedAt @db.Timestamptz(3)
-  archivedAt            DateTime?                     @db.Timestamptz(3)
-  organization          Organization                  @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  approvedByUser        User?                         @relation("ProviderProfileApprover", fields: [approvedByUserId], references: [id], onDelete: Restrict)
-  specialisms           ProviderSpecialism[]
-  sectors               ProviderSector[]
-  certifications        ProviderCertification[]
-  assignmentSelections  AssignmentProviderSelection[]
-  assignmentResolutions AssignmentResolution[]
+  id                          String                              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId              String                              @unique @db.Uuid
+  approvalStatus              ProviderApprovalStatus              @default(DRAFT)
+  approvedAt                  DateTime?                           @db.Timestamptz(3)
+  approvedByUserId            String?                             @db.Uuid
+  rejectionReason             String?
+  description                 String?
+  maxTravelDistanceKm         Int?
+  acceptsRemoteWork           Boolean                             @default(false)
+  isAvailable                 Boolean                             @default(false)
+  createdAt                   DateTime                            @default(now()) @db.Timestamptz(3)
+  updatedAt                   DateTime                            @updatedAt @db.Timestamptz(3)
+  archivedAt                  DateTime?                           @db.Timestamptz(3)
+  lifecycleStatus             ProviderLifecycleStatus             @default(DRAFT)
+  readinessStatus             ProviderReadinessStatus             @default(INCOMPLETE)
+  platformQualificationStatus ProviderPlatformQualificationStatus @default(NOT_ASSESSED)
+  selectabilityStatus         ProviderSelectabilityStatus         @default(NOT_SELECTABLE)
+  version                     Int                                 @default(1)
+  organization                Organization                        @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  approvedByUser              User?                               @relation("ProviderProfileApprover", fields: [approvedByUserId], references: [id], onDelete: Restrict)
+  specialisms                 ProviderSpecialism[]
+  sectors                     ProviderSector[]
+  certifications              ProviderCertification[]
+  assignmentSelections        AssignmentProviderSelection[]
+  assignmentResolutions       AssignmentResolution[]
+  capabilities                ProviderCapability[]
+  sectorExperiences           ProviderSectorExperience[]
+  workAreas                   ProviderWorkArea[]
+  capacitySnapshots           ProviderCapacitySnapshot[]
+  professionals               ProviderProfessional[]
+  organizationQualifications  ProviderOrganizationQualification[]
+  insurances                  ProviderInsurance[]
+  evidenceDocuments           ProviderEvidenceDocument[]
+  termAcceptances             ProviderTermAcceptance[]
+  verificationReviews         ProviderVerificationReview[]
+  qualificationDecisions      ProviderQualificationDecision[]
+  readinessAssessments        ProviderReadinessAssessment[]
+  selectabilityAssessments    ProviderSelectabilityAssessment[]
+  blocks                      ProviderBlock[]
+  trustedProjections          TrustedProviderProjection[]
+  migrationAudits             ProviderMigrationAudit[]
 
   @@index([approvalStatus])
   @@index([isAvailable])
   @@index([archivedAt])
+  @@index([lifecycleStatus])
+  @@index([readinessStatus])
+  @@index([platformQualificationStatus])
+  @@index([selectabilityStatus])
 }
 
 model ProviderSpecialism {
@@ -414,15 +590,16 @@ model ProviderSector {
 }
 
 model Certification {
-  id          String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name        String
-  slug        String                  @unique
-  issuer      String?
-  description String?
-  isActive    Boolean                 @default(true)
-  createdAt   DateTime                @default(now()) @db.Timestamptz(3)
-  updatedAt   DateTime                @updatedAt @db.Timestamptz(3)
-  providers   ProviderCertification[]
+  id                               String                            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                             String
+  slug                             String                            @unique
+  issuer                           String?
+  description                      String?
+  isActive                         Boolean                           @default(true)
+  createdAt                        DateTime                          @default(now()) @db.Timestamptz(3)
+  updatedAt                        DateTime                          @updatedAt @db.Timestamptz(3)
+  providers                        ProviderCertification[]
+  providerCertificationTaxonomyMap ProviderCertificationTaxonomyMap?
 
   @@index([isActive])
 }
@@ -449,6 +626,685 @@ model ProviderCertification {
   @@index([verificationStatus])
   @@index([expiresAt])
   @@index([archivedAt])
+}
+
+model ProviderTaxonomy {
+  id        String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  kind      ProviderTaxonomyKind      @unique
+  code      String                    @unique
+  name      String
+  createdAt DateTime                  @default(now()) @db.Timestamptz(3)
+  versions  ProviderTaxonomyVersion[]
+}
+
+model ProviderReasonCode {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String   @unique
+  domain    String
+  label     String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([domain, isActive])
+}
+
+model ProviderTaxonomyVersion {
+  id          String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  taxonomyId  String                        @db.Uuid
+  version     Int
+  status      ProviderTaxonomyVersionStatus @default(DRAFT)
+  checksum    String?                       @db.VarChar(64)
+  publishedAt DateTime?                     @db.Timestamptz(3)
+  retiredAt   DateTime?                     @db.Timestamptz(3)
+  createdAt   DateTime                      @default(now()) @db.Timestamptz(3)
+  taxonomy    ProviderTaxonomy              @relation(fields: [taxonomyId], references: [id], onDelete: Restrict)
+  terms       ProviderTaxonomyTerm[]
+
+  @@unique([taxonomyId, version])
+  @@index([status])
+}
+
+model ProviderTaxonomyTerm {
+  id                                 String                                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  versionId                          String                                       @db.Uuid
+  code                               String
+  label                              String
+  parentId                           String?                                      @db.Uuid
+  sortOrder                          Int
+  isActive                           Boolean                                      @default(true)
+  createdAt                          DateTime                                     @default(now()) @db.Timestamptz(3)
+  version                            ProviderTaxonomyVersion                      @relation(fields: [versionId], references: [id], onDelete: Restrict)
+  parent                             ProviderTaxonomyTerm?                        @relation("ProviderTaxonomyHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children                           ProviderTaxonomyTerm[]                       @relation("ProviderTaxonomyHierarchy")
+  specialismMap                      ProviderSpecialismTaxonomyMap?
+  sectorMap                          ProviderSectorTaxonomyMap?
+  certificationMap                   ProviderCertificationTaxonomyMap?
+  capabilityServices                 ProviderCapabilityRevision[]                 @relation("CapabilityService")
+  capabilitySpecialisms              ProviderCapabilityRevision[]                 @relation("CapabilitySpecialism")
+  capabilityCompetencies             ProviderCapabilityRevision[]                 @relation("CapabilityCompetency")
+  sectorExperienceRevisions          ProviderSectorExperienceRevision[]
+  workAreaRevisions                  ProviderWorkAreaRevision[]
+  professionalQualificationRevisions ProviderProfessionalQualificationRevision[]
+  organizationQualificationRevisions ProviderOrganizationQualificationRevision[]
+  insuranceTypeRevisions             ProviderInsuranceRevision[]
+  requirementServices                ProviderCapabilityQualificationRequirement[] @relation("RequirementService")
+  requirementSpecialisms             ProviderCapabilityQualificationRequirement[] @relation("RequirementSpecialism")
+  requirementTerms                   ProviderCapabilityQualificationRequirement[] @relation("RequirementTerm")
+  insuranceRequirementTypes          ProviderInsuranceRequirement[]
+
+  @@unique([versionId, code])
+  @@unique([versionId, sortOrder])
+  @@index([parentId])
+}
+
+model ProviderSpecialismTaxonomyMap {
+  termId       String               @id @db.Uuid
+  specialismId String               @unique @db.Uuid
+  term         ProviderTaxonomyTerm @relation(fields: [termId], references: [id], onDelete: Restrict)
+  specialism   Specialism           @relation(fields: [specialismId], references: [id], onDelete: Restrict)
+}
+
+model ProviderSectorTaxonomyMap {
+  termId   String               @id @db.Uuid
+  sectorId String               @unique @db.Uuid
+  term     ProviderTaxonomyTerm @relation(fields: [termId], references: [id], onDelete: Restrict)
+  sector   Sector               @relation(fields: [sectorId], references: [id], onDelete: Restrict)
+}
+
+model ProviderCertificationTaxonomyMap {
+  termId          String               @id @db.Uuid
+  certificationId String               @unique @db.Uuid
+  term            ProviderTaxonomyTerm @relation(fields: [termId], references: [id], onDelete: Restrict)
+  certification   Certification        @relation(fields: [certificationId], references: [id], onDelete: Restrict)
+}
+
+model ProviderPlatformPermissionGrant {
+  id              String                                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String                                @db.Uuid
+  permission      ProviderPlatformPermission
+  validFrom       DateTime                              @db.Timestamptz(3)
+  validUntil      DateTime?                             @db.Timestamptz(3)
+  grantedByUserId String                                @db.Uuid
+  reasonCode      String
+  createdAt       DateTime                              @default(now()) @db.Timestamptz(3)
+  user            User                                  @relation("ProviderPermissionSubject", fields: [userId], references: [id], onDelete: Restrict)
+  grantedByUser   User                                  @relation("ProviderPermissionGranter", fields: [grantedByUserId], references: [id], onDelete: Restrict)
+  revocation      ProviderPlatformPermissionRevocation?
+
+  @@index([userId, permission, validFrom, validUntil])
+}
+
+model ProviderPlatformPermissionRevocation {
+  id              String                          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  grantId         String                          @unique @db.Uuid
+  revokedByUserId String                          @db.Uuid
+  reasonCode      String
+  revokedAt       DateTime                        @default(now()) @db.Timestamptz(3)
+  grant           ProviderPlatformPermissionGrant @relation(fields: [grantId], references: [id], onDelete: Restrict)
+  revokedByUser   User                            @relation("ProviderPermissionRevoker", fields: [revokedByUserId], references: [id], onDelete: Restrict)
+}
+
+model ProviderCapability {
+  id                         String                                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerProfileId          String                                        @db.Uuid
+  version                    Int                                           @default(1)
+  status                     ProviderRecordStatus                          @default(ACTIVE)
+  legacySourceId             String?                                       @unique @db.Uuid
+  createdAt                  DateTime                                      @default(now()) @db.Timestamptz(3)
+  providerProfile            ProviderProfile                               @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  revisions                  ProviderCapabilityRevision[]
+  professionalQualifications ProviderProfessionalQualificationCapability[]
+  qualificationDecisions     ProviderQualificationDecision[]
+
+  @@index([providerProfileId, status])
+}
+
+model ProviderCapabilityRevision {
+  id                   String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerCapabilityId String                       @db.Uuid
+  version              Int
+  serviceTermId        String?                      @db.Uuid
+  specialismTermId     String?                      @db.Uuid
+  competencyTermId     String?                      @db.Uuid
+  deliveryModes        ProviderDeliveryMode[]
+  verificationLevel    ProviderVerificationLevel    @default(SELF_DECLARED)
+  validFrom            DateTime?                    @db.Timestamptz(3)
+  validUntil           DateTime?                    @db.Timestamptz(3)
+  createdAt            DateTime                     @default(now()) @db.Timestamptz(3)
+  capability           ProviderCapability           @relation(fields: [providerCapabilityId], references: [id], onDelete: Restrict)
+  serviceTerm          ProviderTaxonomyTerm?        @relation("CapabilityService", fields: [serviceTermId], references: [id], onDelete: Restrict)
+  specialismTerm       ProviderTaxonomyTerm?        @relation("CapabilitySpecialism", fields: [specialismTermId], references: [id], onDelete: Restrict)
+  competencyTerm       ProviderTaxonomyTerm?        @relation("CapabilityCompetency", fields: [competencyTermId], references: [id], onDelete: Restrict)
+  verificationReviews  ProviderVerificationReview[]
+
+  @@unique([providerCapabilityId, version])
+  @@index([serviceTermId, specialismTermId])
+  @@index([verificationLevel])
+}
+
+model ProviderSectorExperience {
+  id                String                             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerProfileId String                             @db.Uuid
+  version           Int                                @default(1)
+  status            ProviderRecordStatus               @default(ACTIVE)
+  legacySourceId    String?                            @unique @db.Uuid
+  createdAt         DateTime                           @default(now()) @db.Timestamptz(3)
+  providerProfile   ProviderProfile                    @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  revisions         ProviderSectorExperienceRevision[]
+
+  @@index([providerProfileId, status])
+}
+
+model ProviderSectorExperienceRevision {
+  id                  String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sectorExperienceId  String                       @db.Uuid
+  version             Int
+  sectorTermId        String                       @db.Uuid
+  experienceYears     Int?
+  verificationLevel   ProviderVerificationLevel    @default(SELF_DECLARED)
+  createdAt           DateTime                     @default(now()) @db.Timestamptz(3)
+  sectorExperience    ProviderSectorExperience     @relation(fields: [sectorExperienceId], references: [id], onDelete: Restrict)
+  sectorTerm          ProviderTaxonomyTerm         @relation(fields: [sectorTermId], references: [id], onDelete: Restrict)
+  verificationReviews ProviderVerificationReview[]
+
+  @@unique([sectorExperienceId, version])
+  @@index([sectorTermId])
+}
+
+model ProviderWorkArea {
+  id                String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerProfileId String                     @db.Uuid
+  version           Int                        @default(1)
+  status            ProviderRecordStatus       @default(ACTIVE)
+  createdAt         DateTime                   @default(now()) @db.Timestamptz(3)
+  providerProfile   ProviderProfile            @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  revisions         ProviderWorkAreaRevision[]
+
+  @@index([providerProfileId, status])
+}
+
+model ProviderWorkAreaRevision {
+  id                  String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workAreaId          String                       @db.Uuid
+  version             Int
+  regionTermId        String                       @db.Uuid
+  maxTravelDistanceKm Int?
+  verificationLevel   ProviderVerificationLevel    @default(SELF_DECLARED)
+  createdAt           DateTime                     @default(now()) @db.Timestamptz(3)
+  workArea            ProviderWorkArea             @relation(fields: [workAreaId], references: [id], onDelete: Restrict)
+  regionTerm          ProviderTaxonomyTerm         @relation(fields: [regionTermId], references: [id], onDelete: Restrict)
+  verificationReviews ProviderVerificationReview[]
+
+  @@unique([workAreaId, version])
+  @@index([regionTermId])
+}
+
+model ProviderCapacitySnapshot {
+  id                    String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerProfileId     String                @db.Uuid
+  acceptsNewAssignments Boolean
+  earliestStartDate     DateTime?             @db.Date
+  capacityLevel         ProviderCapacityLevel
+  confirmedAt           DateTime              @db.Timestamptz(3)
+  validUntil            DateTime              @db.Timestamptz(3)
+  createdAt             DateTime              @default(now()) @db.Timestamptz(3)
+  providerProfile       ProviderProfile       @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+
+  @@index([providerProfileId, validUntil])
+}
+
+model ProviderProfessional {
+  id                String                              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerProfileId String                              @db.Uuid
+  version           Int                                 @default(1)
+  status            ProviderRecordStatus                @default(ACTIVE)
+  createdAt         DateTime                            @default(now()) @db.Timestamptz(3)
+  providerProfile   ProviderProfile                     @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  privateData       ProviderProfessionalPrivateData?
+  qualifications    ProviderProfessionalQualification[]
+
+  @@index([providerProfileId, status])
+}
+
+model ProviderProfessionalPrivateData {
+  professionalId String               @id @db.Uuid
+  displayName    String
+  contactEmail   String?
+  createdAt      DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime             @updatedAt @db.Timestamptz(3)
+  professional   ProviderProfessional @relation(fields: [professionalId], references: [id], onDelete: Restrict)
+}
+
+model ProviderProfessionalQualification {
+  id             String                                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  professionalId String                                        @db.Uuid
+  version        Int                                           @default(1)
+  status         ProviderRecordStatus                          @default(ACTIVE)
+  createdAt      DateTime                                      @default(now()) @db.Timestamptz(3)
+  professional   ProviderProfessional                          @relation(fields: [professionalId], references: [id], onDelete: Restrict)
+  revisions      ProviderProfessionalQualificationRevision[]
+  capabilities   ProviderProfessionalQualificationCapability[]
+
+  @@index([professionalId, status])
+}
+
+model ProviderProfessionalQualificationRevision {
+  id                  String                            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  qualificationId     String                            @db.Uuid
+  version             Int
+  qualificationTermId String                            @db.Uuid
+  issuer              String?
+  registrationNumber  String?
+  issuedAt            DateTime?                         @db.Date
+  validUntil          DateTime?                         @db.Date
+  verificationLevel   ProviderVerificationLevel         @default(SELF_DECLARED)
+  evidenceRevisionId  String?                           @db.Uuid
+  createdAt           DateTime                          @default(now()) @db.Timestamptz(3)
+  qualification       ProviderProfessionalQualification @relation(fields: [qualificationId], references: [id], onDelete: Restrict)
+  qualificationTerm   ProviderTaxonomyTerm              @relation(fields: [qualificationTermId], references: [id], onDelete: Restrict)
+  evidenceRevision    ProviderEvidenceRevision?         @relation("ProfessionalQualificationEvidence", fields: [evidenceRevisionId], references: [id], onDelete: Restrict)
+  verificationReviews ProviderVerificationReview[]
+
+  @@unique([qualificationId, version])
+  @@index([qualificationTermId, validUntil])
+}
+
+model ProviderProfessionalQualificationCapability {
+  qualificationId String                            @db.Uuid
+  capabilityId    String                            @db.Uuid
+  qualification   ProviderProfessionalQualification @relation(fields: [qualificationId], references: [id], onDelete: Restrict)
+  capability      ProviderCapability                @relation(fields: [capabilityId], references: [id], onDelete: Restrict)
+
+  @@id([qualificationId, capabilityId])
+  @@index([capabilityId])
+}
+
+model ProviderOrganizationQualification {
+  id                String                                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerProfileId String                                      @db.Uuid
+  version           Int                                         @default(1)
+  status            ProviderRecordStatus                        @default(ACTIVE)
+  legacySourceId    String?                                     @unique @db.Uuid
+  createdAt         DateTime                                    @default(now()) @db.Timestamptz(3)
+  providerProfile   ProviderProfile                             @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  revisions         ProviderOrganizationQualificationRevision[]
+
+  @@index([providerProfileId, status])
+}
+
+model ProviderOrganizationQualificationRevision {
+  id                  String                            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  qualificationId     String                            @db.Uuid
+  version             Int
+  qualificationTermId String                            @db.Uuid
+  registrationNumber  String?
+  issuedAt            DateTime?                         @db.Date
+  validUntil          DateTime?                         @db.Date
+  verificationLevel   ProviderVerificationLevel         @default(SELF_DECLARED)
+  evidenceRevisionId  String?                           @db.Uuid
+  createdAt           DateTime                          @default(now()) @db.Timestamptz(3)
+  qualification       ProviderOrganizationQualification @relation(fields: [qualificationId], references: [id], onDelete: Restrict)
+  qualificationTerm   ProviderTaxonomyTerm              @relation(fields: [qualificationTermId], references: [id], onDelete: Restrict)
+  evidenceRevision    ProviderEvidenceRevision?         @relation("OrganizationQualificationEvidence", fields: [evidenceRevisionId], references: [id], onDelete: Restrict)
+  verificationReviews ProviderVerificationReview[]
+
+  @@unique([qualificationId, version])
+  @@index([qualificationTermId, validUntil])
+}
+
+model ProviderCapabilityRequirementConfig {
+  id             String                                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  version        Int                                          @unique
+  status         ProviderTaxonomyVersionStatus                @default(DRAFT)
+  effectiveFrom  DateTime?                                    @db.Timestamptz(3)
+  effectiveUntil DateTime?                                    @db.Timestamptz(3)
+  checksum       String?                                      @db.VarChar(64)
+  publishedAt    DateTime?                                    @db.Timestamptz(3)
+  createdAt      DateTime                                     @default(now()) @db.Timestamptz(3)
+  requirements   ProviderCapabilityQualificationRequirement[]
+  decisions      ProviderQualificationDecision[]
+}
+
+model ProviderCapabilityQualificationRequirement {
+  id                            String                              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  configId                      String                              @db.Uuid
+  serviceTermId                 String                              @db.Uuid
+  specialismTermId              String?                             @db.Uuid
+  requirementTermId             String                              @db.Uuid
+  kind                          ProviderRequirementKind
+  isRequired                    Boolean                             @default(true)
+  minimumVerification           ProviderVerificationLevel
+  requiresValidity              Boolean                             @default(true)
+  requiresProfessionalLiability Boolean                             @default(false)
+  createdAt                     DateTime                            @default(now()) @db.Timestamptz(3)
+  config                        ProviderCapabilityRequirementConfig @relation(fields: [configId], references: [id], onDelete: Restrict)
+  serviceTerm                   ProviderTaxonomyTerm                @relation("RequirementService", fields: [serviceTermId], references: [id], onDelete: Restrict)
+  specialismTerm                ProviderTaxonomyTerm?               @relation("RequirementSpecialism", fields: [specialismTermId], references: [id], onDelete: Restrict)
+  requirementTerm               ProviderTaxonomyTerm                @relation("RequirementTerm", fields: [requirementTermId], references: [id], onDelete: Restrict)
+
+  @@unique([configId, serviceTermId, specialismTermId, requirementTermId])
+  @@index([serviceTermId, specialismTermId])
+}
+
+model ProviderInsuranceRequirementConfig {
+  id             String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  version        Int                            @unique
+  status         ProviderTaxonomyVersionStatus  @default(DRAFT)
+  effectiveFrom  DateTime?                      @db.Timestamptz(3)
+  effectiveUntil DateTime?                      @db.Timestamptz(3)
+  checksum       String?                        @db.VarChar(64)
+  publishedAt    DateTime?                      @db.Timestamptz(3)
+  createdAt      DateTime                       @default(now()) @db.Timestamptz(3)
+  requirements   ProviderInsuranceRequirement[]
+}
+
+model ProviderInsuranceRequirement {
+  id                   String                             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  configId             String                             @db.Uuid
+  insuranceTypeTermId  String                             @db.Uuid
+  isRequired           Boolean                            @default(true)
+  minimumVerification  ProviderVerificationLevel
+  minimumCoverageCents BigInt?
+  coverageGeography    String?
+  createdAt            DateTime                           @default(now()) @db.Timestamptz(3)
+  config               ProviderInsuranceRequirementConfig @relation(fields: [configId], references: [id], onDelete: Restrict)
+  insuranceTypeTerm    ProviderTaxonomyTerm               @relation(fields: [insuranceTypeTermId], references: [id], onDelete: Restrict)
+
+  @@unique([configId, insuranceTypeTermId])
+  @@index([insuranceTypeTermId])
+}
+
+model ProviderInsurance {
+  id                String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerProfileId String                      @db.Uuid
+  version           Int                         @default(1)
+  status            ProviderRecordStatus        @default(ACTIVE)
+  createdAt         DateTime                    @default(now()) @db.Timestamptz(3)
+  providerProfile   ProviderProfile             @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  revisions         ProviderInsuranceRevision[]
+
+  @@index([providerProfileId, status])
+}
+
+model ProviderInsuranceRevision {
+  id                    String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  insuranceId           String                       @db.Uuid
+  version               Int
+  insuranceTypeTermId   String                       @db.Uuid
+  insurer               String
+  policyReference       String
+  effectiveFrom         DateTime                     @db.Date
+  expiresAt             DateTime                     @db.Date
+  insuredOrganizationId String                       @db.Uuid
+  coverageAmountCents   BigInt?
+  coverageGeography     String?
+  evidenceRevisionId    String                       @db.Uuid
+  verificationLevel     ProviderVerificationLevel    @default(SELF_DECLARED)
+  createdAt             DateTime                     @default(now()) @db.Timestamptz(3)
+  insurance             ProviderInsurance            @relation(fields: [insuranceId], references: [id], onDelete: Restrict)
+  insuranceTypeTerm     ProviderTaxonomyTerm         @relation(fields: [insuranceTypeTermId], references: [id], onDelete: Restrict)
+  insuredOrganization   Organization                 @relation("InsuredOrganization", fields: [insuredOrganizationId], references: [id], onDelete: Restrict)
+  evidenceRevision      ProviderEvidenceRevision     @relation("InsuranceEvidence", fields: [evidenceRevisionId], references: [id], onDelete: Restrict)
+  verificationReviews   ProviderVerificationReview[]
+
+  @@unique([insuranceId, version])
+  @@index([insuranceTypeTermId, expiresAt])
+}
+
+model ProviderEvidenceDocument {
+  id                String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerProfileId String                     @db.Uuid
+  status            ProviderEvidenceStatus     @default(DRAFT)
+  version           Int                        @default(1)
+  createdAt         DateTime                   @default(now()) @db.Timestamptz(3)
+  providerProfile   ProviderProfile            @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  revisions         ProviderEvidenceRevision[]
+
+  @@index([providerProfileId, status])
+}
+
+model ProviderEvidenceRevision {
+  id                         String                                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  evidenceDocumentId         String                                      @db.Uuid
+  version                    Int
+  storageKey                 String                                      @unique
+  originalFileName           String
+  mimeType                   String
+  sizeBytes                  Int
+  sha256                     String                                      @db.VarChar(64)
+  scanStatus                 ProviderEvidenceScanStatus                  @default(PENDING)
+  createdAt                  DateTime                                    @default(now()) @db.Timestamptz(3)
+  evidenceDocument           ProviderEvidenceDocument                    @relation(fields: [evidenceDocumentId], references: [id], onDelete: Restrict)
+  professionalQualifications ProviderProfessionalQualificationRevision[] @relation("ProfessionalQualificationEvidence")
+  organizationQualifications ProviderOrganizationQualificationRevision[] @relation("OrganizationQualificationEvidence")
+  insuranceRevisions         ProviderInsuranceRevision[]                 @relation("InsuranceEvidence")
+  verificationReviews        ProviderVerificationReview[]
+  scanDecision               ProviderEvidenceScanDecision?
+
+  @@unique([evidenceDocumentId, version])
+  @@index([scanStatus])
+}
+
+model ProviderEvidenceScanDecision {
+  id                 String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  evidenceRevisionId String                     @unique @db.Uuid
+  scanStatus         ProviderEvidenceScanStatus
+  scannerReference   String
+  checksum           String                     @db.VarChar(64)
+  createdAt          DateTime                   @default(now()) @db.Timestamptz(3)
+  evidenceRevision   ProviderEvidenceRevision   @relation(fields: [evidenceRevisionId], references: [id], onDelete: Restrict)
+
+  @@index([scanStatus, createdAt])
+}
+
+model ProviderTermDocument {
+  id        String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String                        @unique
+  label     String
+  createdAt DateTime                      @default(now()) @db.Timestamptz(3)
+  versions  ProviderTermDocumentVersion[]
+}
+
+model ProviderTermDocumentVersion {
+  id               String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  documentId       String                   @db.Uuid
+  version          Int
+  label            String
+  status           ProviderTermStatus       @default(DRAFT)
+  effectiveFrom    DateTime?                @db.Timestamptz(3)
+  effectiveUntil   DateTime?                @db.Timestamptz(3)
+  isRequired       Boolean                  @default(true)
+  contentReference String?
+  checksum         String?                  @db.VarChar(64)
+  createdAt        DateTime                 @default(now()) @db.Timestamptz(3)
+  document         ProviderTermDocument     @relation(fields: [documentId], references: [id], onDelete: Restrict)
+  acceptances      ProviderTermAcceptance[]
+
+  @@unique([documentId, version])
+  @@index([status, effectiveFrom, effectiveUntil])
+}
+
+model ProviderTermAcceptance {
+  id                String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerProfileId String                      @db.Uuid
+  documentVersionId String                      @db.Uuid
+  acceptedByUserId  String                      @db.Uuid
+  acceptedAt        DateTime                    @default(now()) @db.Timestamptz(3)
+  providerProfile   ProviderProfile             @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  documentVersion   ProviderTermDocumentVersion @relation(fields: [documentVersionId], references: [id], onDelete: Restrict)
+  acceptedByUser    User                        @relation(fields: [acceptedByUserId], references: [id], onDelete: Restrict)
+
+  @@unique([providerProfileId, documentVersionId])
+  @@index([acceptedByUserId, acceptedAt])
+}
+
+model ProviderVerificationReview {
+  id                                  String                                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerProfileId                   String                                     @db.Uuid
+  capabilityRevisionId                String?                                    @db.Uuid
+  sectorExperienceRevisionId          String?                                    @db.Uuid
+  workAreaRevisionId                  String?                                    @db.Uuid
+  professionalQualificationRevisionId String?                                    @db.Uuid
+  organizationQualificationRevisionId String?                                    @db.Uuid
+  insuranceRevisionId                 String?                                    @db.Uuid
+  evidenceRevisionId                  String?                                    @db.Uuid
+  outcome                             ProviderVerificationOutcome
+  resultingLevel                      ProviderVerificationLevel
+  reviewerUserId                      String                                     @db.Uuid
+  reasonCode                          String
+  validFrom                           DateTime                                   @db.Timestamptz(3)
+  validUntil                          DateTime?                                  @db.Timestamptz(3)
+  checksum                            String                                     @db.VarChar(64)
+  createdAt                           DateTime                                   @default(now()) @db.Timestamptz(3)
+  providerProfile                     ProviderProfile                            @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  capabilityRevision                  ProviderCapabilityRevision?                @relation(fields: [capabilityRevisionId], references: [id], onDelete: Restrict)
+  sectorExperienceRevision            ProviderSectorExperienceRevision?          @relation(fields: [sectorExperienceRevisionId], references: [id], onDelete: Restrict)
+  workAreaRevision                    ProviderWorkAreaRevision?                  @relation(fields: [workAreaRevisionId], references: [id], onDelete: Restrict)
+  professionalQualificationRevision   ProviderProfessionalQualificationRevision? @relation(fields: [professionalQualificationRevisionId], references: [id], onDelete: Restrict)
+  organizationQualificationRevision   ProviderOrganizationQualificationRevision? @relation(fields: [organizationQualificationRevisionId], references: [id], onDelete: Restrict)
+  insuranceRevision                   ProviderInsuranceRevision?                 @relation(fields: [insuranceRevisionId], references: [id], onDelete: Restrict)
+  evidenceRevision                    ProviderEvidenceRevision?                  @relation(fields: [evidenceRevisionId], references: [id], onDelete: Restrict)
+  reviewerUser                        User                                       @relation("ProviderVerificationReviewer", fields: [reviewerUserId], references: [id], onDelete: Restrict)
+
+  @@index([providerProfileId, createdAt])
+  @@index([reviewerUserId, createdAt])
+}
+
+model ProviderQualificationDecision {
+  id                  String                               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerProfileId   String                               @db.Uuid
+  capabilityId        String?                              @db.Uuid
+  scope               ProviderQualificationScope
+  outcome             ProviderQualificationOutcome
+  requirementConfigId String?                              @db.Uuid
+  reviewedByUserId    String                               @db.Uuid
+  approvedByUserId    String                               @db.Uuid
+  reasonCode          String
+  validFrom           DateTime                             @db.Timestamptz(3)
+  validUntil          DateTime?                            @db.Timestamptz(3)
+  sourceChecksum      String                               @db.VarChar(64)
+  createdAt           DateTime                             @default(now()) @db.Timestamptz(3)
+  providerProfile     ProviderProfile                      @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  capability          ProviderCapability?                  @relation(fields: [capabilityId], references: [id], onDelete: Restrict)
+  requirementConfig   ProviderCapabilityRequirementConfig? @relation(fields: [requirementConfigId], references: [id], onDelete: Restrict)
+  reviewedByUser      User                                 @relation("ProviderQualificationReviewer", fields: [reviewedByUserId], references: [id], onDelete: Restrict)
+  approvedByUser      User                                 @relation("ProviderQualificationApprover", fields: [approvedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([providerProfileId, scope, createdAt])
+  @@index([capabilityId, createdAt])
+}
+
+model ProviderReadinessAssessment {
+  id                       String                            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerProfileId        String                            @db.Uuid
+  status                   ProviderReadinessStatus
+  reasonCodes              String[]
+  sourceVersion            Int
+  assessedByUserId         String?                           @db.Uuid
+  checksum                 String                            @db.VarChar(64)
+  createdAt                DateTime                          @default(now()) @db.Timestamptz(3)
+  providerProfile          ProviderProfile                   @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  assessedByUser           User?                             @relation(fields: [assessedByUserId], references: [id], onDelete: Restrict)
+  selectabilityAssessments ProviderSelectabilityAssessment[]
+  projections              TrustedProviderProjection[]
+
+  @@index([providerProfileId, createdAt])
+}
+
+model ProviderSelectabilityAssessment {
+  id                    String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerProfileId     String                      @db.Uuid
+  readinessAssessmentId String                      @db.Uuid
+  status                ProviderSelectabilityStatus
+  reasonCodes           String[]
+  sourceVersion         Int
+  assessedByUserId      String?                     @db.Uuid
+  checksum              String                      @db.VarChar(64)
+  createdAt             DateTime                    @default(now()) @db.Timestamptz(3)
+  providerProfile       ProviderProfile             @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  readinessAssessment   ProviderReadinessAssessment @relation(fields: [readinessAssessmentId], references: [id], onDelete: Restrict)
+  assessedByUser        User?                       @relation(fields: [assessedByUserId], references: [id], onDelete: Restrict)
+  projections           TrustedProviderProjection[]
+
+  @@index([providerProfileId, createdAt])
+}
+
+model ProviderBlock {
+  id                String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerProfileId String                @db.Uuid
+  type              ProviderBlockType
+  reasonCode        String
+  reviewedByUserId  String                @db.Uuid
+  blockedByUserId   String                @db.Uuid
+  createdAt         DateTime              @default(now()) @db.Timestamptz(3)
+  providerProfile   ProviderProfile       @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  reviewedByUser    User                  @relation("ProviderBlockReviewer", fields: [reviewedByUserId], references: [id], onDelete: Restrict)
+  blockedByUser     User                  @relation("ProviderBlockActor", fields: [blockedByUserId], references: [id], onDelete: Restrict)
+  release           ProviderBlockRelease?
+
+  @@index([providerProfileId, type, createdAt])
+}
+
+model ProviderBlockRelease {
+  id               String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  blockId          String        @unique @db.Uuid
+  reasonCode       String
+  reviewedByUserId String        @db.Uuid
+  releasedByUserId String        @db.Uuid
+  releasedAt       DateTime      @default(now()) @db.Timestamptz(3)
+  block            ProviderBlock @relation(fields: [blockId], references: [id], onDelete: Restrict)
+  reviewedByUser   User          @relation("ProviderBlockReleaseReviewer", fields: [reviewedByUserId], references: [id], onDelete: Restrict)
+  releasedByUser   User          @relation("ProviderBlockReleaseActor", fields: [releasedByUserId], references: [id], onDelete: Restrict)
+}
+
+model TrustedProviderProjection {
+  id                        String                                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerProfileId         String                                 @db.Uuid
+  readinessAssessmentId     String                                 @db.Uuid
+  selectabilityAssessmentId String                                 @db.Uuid
+  schemaVersion             Int
+  canonicalizationVersion   String
+  sourceVersion             Int
+  payload                   Json
+  sha256                    String                                 @db.VarChar(64)
+  validFrom                 DateTime                               @db.Timestamptz(3)
+  validUntil                DateTime                               @db.Timestamptz(3)
+  createdByUserId           String?                                @db.Uuid
+  createdAt                 DateTime                               @default(now()) @db.Timestamptz(3)
+  providerProfile           ProviderProfile                        @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  readinessAssessment       ProviderReadinessAssessment            @relation(fields: [readinessAssessmentId], references: [id], onDelete: Restrict)
+  selectabilityAssessment   ProviderSelectabilityAssessment        @relation(fields: [selectabilityAssessmentId], references: [id], onDelete: Restrict)
+  createdByUser             User?                                  @relation(fields: [createdByUserId], references: [id], onDelete: Restrict)
+  invalidation              TrustedProviderProjectionInvalidation?
+
+  @@unique([providerProfileId, sourceVersion])
+  @@index([providerProfileId, validUntil])
+  @@index([sha256])
+}
+
+model TrustedProviderProjectionInvalidation {
+  id            String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectionId  String                    @unique @db.Uuid
+  reasonCode    String
+  invalidatedAt DateTime                  @default(now()) @db.Timestamptz(3)
+  projection    TrustedProviderProjection @relation(fields: [projectionId], references: [id], onDelete: Restrict)
+}
+
+model ProviderMigrationAudit {
+  id                String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerProfileId String          @db.Uuid
+  migrationCode     String
+  sourceType        String
+  sourceId          String          @db.Uuid
+  targetType        String
+  targetId          String          @db.Uuid
+  resultCode        String
+  createdAt         DateTime        @default(now()) @db.Timestamptz(3)
+  providerProfile   ProviderProfile @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+
+  @@unique([migrationCode, sourceType, sourceId])
+  @@index([providerProfileId, createdAt])
 }
 
 model IntakeQuestionnaire {
@@ -678,7 +1534,7 @@ model Assignment {
   clientOrganization   Organization                  @relation(fields: [clientOrganizationId], references: [id], onDelete: Restrict)
   createdByUser        User                          @relation("AssignmentCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
   publishedByUser      User?                         @relation("AssignmentPublisher", fields: [publishedByUserId], references: [id], onDelete: Restrict)
-  publishedRevision    AssignmentRevision?           @relation("AssignmentPublishedRevision", fields: [id, publishedVersion], references: [assignmentId, version], onDelete: Restrict)
+  publishedRevision    AssignmentRevision?           @relation("AssignmentPublishedRevision", fields: [id, publishedVersion], references: [assignmentId, version], onDelete: Restrict, map: "Assignment_published_revision_fkey")
   primarySpecialism    Specialism?                   @relation("PrimaryAssignmentSpecialism", fields: [primarySpecialismId], references: [id], onDelete: Restrict)
   sector               Sector?                       @relation(fields: [sectorId], references: [id], onDelete: Restrict)
   location             OrganizationLocation?         @relation(fields: [locationId], references: [id], onDelete: Restrict)

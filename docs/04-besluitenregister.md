@@ -98,6 +98,79 @@ De product owner heeft B-074 tot en met B-080 geaccepteerd. ADR-007 is in Module
 | B-080 | `publishedVersion` verwijst naar exact één immutable `AssignmentRevision`. | De revisie gebruikt de actuele opdrachtversie en mag versies overslaan die uitsluitend door statusovergangen zijn ontstaan. |
 | B-081 | Publicatie- en intrekkingshistorie worden databasebreed op uniciteit en samenhang gecontroleerd. | Actor en tijd van de publicatiehistorie moeten overeenkomen met de actuele publicatiemetadata. |
 
+## 14 juli 2026 — Module 6A.0
+
+De product owner heeft het providerkwalificatieontwerp en ADR-008 geaccepteerd. Er is nog geen providerkwalificatie-, onboarding- of Decision Engine-functionaliteit geïmplementeerd.
+
+| ID | Besluit | Toelichting |
+| --- | --- | --- |
+| B-082 | Platformkwalificatie, beroepskwalificatie, readiness, selecteerbaarheid en historische prestaties blijven afzonderlijke begrippen. | Een positieve status in één begrip impliceert geen positieve status in een ander begrip. |
+| B-083 | Alleen organisatie-`OWNER` en organisatie-`ADMIN` mogen juridische en complianceverklaringen indienen of wijzigen. | `MEMBER` krijgt hiervoor geen mutatierecht. |
+| B-084 | Zelfverklaarde gegevens worden nooit automatisch als geverifieerd behandeld. | Bron, verificatiemethode en geldigheid blijven expliciet. |
+| B-085 | Diensten, specialismen, sectoren, regio’s en kwalificaties gebruiken centrale, versieerbare taxonomieën. | Gepubliceerde betekenis wordt niet in-place gewijzigd. |
+| B-086 | Werkgebied gebruikt in versie 1 Nederlandse provincies, landelijke dekking en remote inzet. | De technische codes zijn volgens B-114 `NATIONWIDE` en `REMOTE`; het zichtbare Nederlandse label blijft **Landelijk**. Organisatielocaties en vrije tekst zijn geen automatische werkgebiedsbron. |
+| B-087 | Capaciteit bestaat in versie 1 uit acceptatie van nieuwe opdrachten, vroegste startdatum, globale capaciteit en laatste bevestigingsdatum. | Globale capaciteit gebruikt `BEPERKT`, `NORMAAL` of `RUIM`. |
+| B-088 | Capaciteitsgegevens zijn maximaal 30 dagen actueel. | Verouderde capaciteit maakt een provider niet selecteerbaar totdat deze opnieuw is bevestigd. |
+| B-089 | Verificatielabels zijn **Zelf verklaard**, **Document gecontroleerd** en **Geverifieerd**. | Technische workflowstatussen blijven hiervan gescheiden. |
+| B-090 | `Premium Verified` wordt niet gebruikt. | Er bestaat geen commercieel verificatieniveau. |
+| B-091 | Verificatie heeft geen commerciële betekenis en verhoogt niet automatisch de selectiescore. | Betaling en inhoudelijke betrouwbaarheid blijven gescheiden. |
+| B-092 | Bestaande providerdata blijft behouden als zelfverklaarde data. | Deze data wordt niet automatisch een gevalideerde selectiebron. |
+| B-093 | Een provider is pas selecteerbaar met complete en actuele verplichte kwalificatie-, capability-, regio-, capaciteit- en compliancegegevens. | Selecteerbaarheid is een afgeleide, tijdelijke status. |
+| B-094 | Bewijsdocumenten worden veilig, versieerbaar en niet-publiek opgeslagen. | Productieopslag en AVG-bewaarbeleid moeten nog worden vastgesteld. |
+| B-095 | Correcties en herbeoordelingen schrijven een nieuw immutable kwalificatiebesluit. | Eerdere besluiten worden niet vervangen of overschreven. |
+| B-096 | Historische prestaties worden niet gebruikt in Decision Engine v1. | Methodiek, volume en biasbeheersing vereisen later een afzonderlijk besluit. |
+| B-097 | De Decision Engine leest uitsluitend een minimale, gevalideerde en versieerbare providerprojectie. | Ruwe dossier- en bewijsdata blijven buiten de beslislaag. |
+| B-098 | Vrije marketingtekst, persoonsgegevens, bewijsdocumenten, credits en betaalstatus beïnvloeden de selectie niet. | Selectie gebruikt alleen vooraf toegestane, herleidbare feiten. |
+
+## 14 juli 2026 — Module 6A.1
+
+De product owner heeft het ontwerp voor WorkMatchr Decision Engine v1 en ADR-009 geaccepteerd. De geaccepteerde besluiten beschrijven uitsluitend de toekomstige selectiearchitectuur; providerkwalificatie en de Decision Engine zijn nog niet geïmplementeerd.
+
+| ID | Besluit | Toelichting |
+| --- | --- | --- |
+| B-099 | Selectie start niet automatisch bij publicatie. | Alleen een actieve organisatie-`OWNER` of organisatie-`ADMIN` start expliciet een selectieronde voor een `OPEN` opdracht. |
+| B-100 | De engine vult een selectie nooit kunstmatig aan. | Drie, twee, één of nul geschikte providers leveren respectievelijk drie, twee, één of geen geselecteerde providers op. |
+| B-101 | De volledige interne rangorde mag worden opgeslagen, maar reserveactivering is nooit automatisch. | Een vervolgselectie vereist een expliciete nieuwe actie en wordt als afzonderlijke, herleidbare ronde vastgelegd. |
+| B-102 | De opdrachtgever ziet kwalitatieve uitleg, geschiktheidsredenen en relevante criteria. | Exacte interne scores, de volledige ranglijst en concurrentinformatie blijven intern. |
+| B-103 | Iedere Decision Engine-run bevat een interne Confidence Check. | De kwaliteitsinschatting beschrijft onder meer kandidatenvolume, projectiecompleetheid, actualiteit en uitzonderingen, maar beïnvloedt de selectie niet. |
+| B-104 | `Explainability before Score` is een leidend ontwerpprincipe. | Een geschiktheidsbesluit moet eerst begrijpelijk verklaarbaar zijn; interne puntberekening is ondergeschikt aan die uitleg. |
+| B-105 | De voorlopige gewichten voor v1 zijn capabilities 40%, sectorfit 25%, leveringsvoorkeur 15%, gewenste start 10% en aanvullende kwalificaties 10%. | Alle gewichten zijn onderdeel van een immutable, versieerbaar model. |
+| B-106 | De minimumscore is 60% van de actieve criteria. | Niet-toepasselijke criteria tellen niet mee in teller of noemer; de grens geldt niet over alle mogelijke criteria. |
+| B-107 | Tie-breakers volgen een vaste lexicografische volgorde. | Eerst aanvullende capabilityscore, daarna sectorfit, gewenste startscore, leveringsvoorkeurscore en ten slotte een reproduceerbare cryptografische hash. |
+| B-108 | Betaling, credits, bedrijfsgrootte, historische prestaties en commerciële status hebben geen invloed op selectie of tie-breakers. | Historische prestaties blijven buiten Decision Engine v1; de uitsluiting uit B-096 en B-098 is hiermee voor het volledige selectiemodel bevestigd. |
+
+## 14–15 juli 2026 — Module 6A.2.0, 6A.2.1 en 6A.2
+
+De product owner heeft Module 6A.2.0, Module 6A.2.1, ADR-010 en op 15 juli 2026 de volledige implementatie van Module 6A.2 geaccepteerd. De concrete v1-taxonomie, configuratiegrenzen en het bindende fail-closed beleid blijven ongewijzigd van kracht. Module 6A.3 is de volgende module en is nog niet gestart.
+
+| ID | Besluit | Toelichting |
+| --- | --- | --- |
+| B-109 | `ProviderProfile` blijft de aggregate root van providerkwalificatie. | Nieuwe capabilities, professionals, compliance, decisions, assessments en projecties blijven direct of indirect tenantgebonden aan dit profiel. |
+| B-110 | Bestaande providerdata migreert uitsluitend als `SELF_DECLARED`. | Legacydata verleent geen automatische readiness, verificatie, platform- of beroepskwalificatie of selecteerbaarheid. |
+| B-111 | Providerlifecycle, readiness, platformkwalificatie, beroepskwalificatie, selecteerbaarheid en blokkades krijgen afzonderlijke modellen en historie. | Een positieve status in één begrip impliceert geen positieve status in een ander begrip. |
+| B-112 | Module 6A.2 gebruikt expliciete domeinmodellen en koppeltabellen. | Een generiek polymorf assertion-supertype of losse `entityType + entityId`-relatie wordt in versie 1 niet gebruikt. |
+| B-113 | Diensten, specialismen, sectoren, competentie-/kwalificatietypen, certificeringstypen en provincies gebruiken centrale, versieerbare taxonomieën. | Vrije waarden zijn niet beschikbaar voor de Decision Engine. |
+| B-114 | Werkgebied v1 bestaat uit Nederlandse provincies, `NATIONWIDE`, `REMOTE` en een optionele maximale reisafstand. | Internationale inzet valt buiten v1; de selectiesemantiek van reisafstand vereist nog een productbesluit. |
+| B-115 | Capaciteit wordt uitsluitend via append-only snapshots vastgelegd. | Snapshot bevat acceptatie nieuwe opdrachten, vroegste start, `LIMITED`/`NORMAL`/`AMPLE`, actor, bevestiging, verval en versie en is maximaal 30 dagen geldig. |
+| B-116 | Readiness betekent volledigheid en syntactische geldigheid, niet verificatie. | Een compleet dossier kan nog ongecontroleerd, ongekwalificeerd en niet-selecteerbaar zijn. |
+| B-117 | Platformkwalificatie vereist een actieve providerorganisatie, gecontroleerde organisatiebasis, actuele voorwaarden, geldige vereiste verzekering, geen blokkade en een formeel besluit. | De precieze polis- en criteriaversies blijven vóór service-implementatie vast te stellen. |
+| B-118 | Beroepskwalificatie is capabilitygebonden en afzonderlijk per dienst/specialisme. | Organisatieclaims en professionele kwalificaties worden niet samengevoegd. |
+| B-119 | Selecteerbaarheid is afgeleid en herleidbaar. | Er komt geen handmatig selecteerbaar-vinkje; iedere uitkomst verwijst naar actuele bronbesluiten en assessments. |
+| B-120 | Verificatieniveaus zijn `SELF_DECLARED`, `DOCUMENT_CHECKED` en `VERIFIED`. | Een hoger verificatieniveau geeft niet automatisch een hogere selectiescore. |
+| B-121 | Module 6A.2 gebruikt `PROVIDER_REVIEWER`, `PROVIDER_APPROVER` en `PROVIDER_AUDITOR`. | ADR-010 en de daarin vastgelegde vier-ogencontrole voor hoog-risicobesluiten zijn geaccepteerd. |
+| B-122 | Bewijs krijgt versioned, private metadata; bestandbytes staan niet in PostgreSQL. | Object-storageprovider, bestandbeleid en bewaartermijnen blijven open vóór productie. |
+| B-123 | Kwalificatiebesluiten en blokkades zijn append-only. | Actor, reden, bewijsversies, tijd en geldig interval blijven behouden; correctie schrijft een nieuw besluit of release. |
+| B-124 | De Trusted Provider Projection is immutable en minimaal. | Canonical JSON en SHA-256 worden opgeslagen met expliciete schema-, canonicalisatie- en bronversie; persoonsgegevens en bewijsmetadata ontbreken. |
+| B-125 | Diensten v1 gebruiken vijf gesloten codes en competenties v1 acht gesloten codes. | Vrije waarden tellen niet mee voor kwalificatie of toekomstige selectie; Nederlandse labels staan in referentiedata. |
+| B-126 | Bestaande specialismen, sectoren en certificeringstypen blijven ongewijzigd. | Versieerbare mappings en legacyrelaties worden uitsluitend `SELF_DECLARED`; oude `APPROVED`, `VERIFIED` en `isAvailable` verhogen geen nieuwe status. |
+| B-127 | Capabilitykwalificatie gebruikt een versieerbare, configureerbare vereistenmatrix. | Zonder actieve inhoudelijke configuratie levert de service `QUALIFICATION_REQUIREMENTS_NOT_CONFIGURED` en geen positief besluit. |
+| B-128 | Verzekeringsvereisten zijn versieerbare configuratie. | `GENERAL_LIABILITY` moet expliciet vereist zijn; dekking, geografie en verificatieniveau zijn configureerbaar en nooit stilzwijgend hardcoded. |
+| B-129 | Juridische voorwaarden en verklaringen zijn versieerbaar en expliciet te accepteren. | De seed bevat alleen conceptreferenties; ontbrekende actuele configuratie blokkeert platformkwalificatie met `TERMS_NOT_CONFIGURED`. |
+| B-130 | Bewijsscanresultaten zijn afzonderlijke immutable besluiten. | Een provider kan scanstatus niet verhogen; alleen een expliciet `CLEAN` scanbesluit maakt private bewijsmetadata bruikbaar. |
+| B-131 | Canonicalisatieprotocol v1 is `WORKMATCHR-CJ-1` met SHA-256. | Objectkeys worden deterministisch gesorteerd, numerieke waarden zijn veilige gehele getallen en golden vectors bewaken reproduceerbaarheid. |
+| B-132 | Ontbrekende of verouderde configuratie faalt gesloten. | Geen automatische verificatie, kwalificatie, readiness, selecteerbaarheid of Trusted Provider Projection is toegestaan. |
+| B-133 | Module 6A.2 is afgerond en product-ownergeaccepteerd. | Legacydata blijft uitsluitend `SELF_DECLARED`; zonder volledige geldige configuratie ontstaat geen positieve status of Trusted Provider Projection. Decision Engine, matching, uitnodigingen, credits en Mollie blijven buiten scope en niet geïmplementeerd. |
+
 Zie [ADR-001](adr/ADR-001-design-system-en-huisstijl.md) voor de onderbouwing van het design system.
 Zie [ADR-002](adr/ADR-002-postgresql-prisma-en-datamodel.md) voor de database- en datamodelkeuzes.
 Zie [ADR-003](adr/ADR-003-better-auth-en-platformrollen.md) voor de authenticatie- en platformrolkeuzes.
@@ -105,3 +178,6 @@ Zie [ADR-004](adr/ADR-004-organisaties-autorisatie-en-logo-opslag.md) voor organ
 Zie [ADR-005](adr/ADR-005-versieerbare-intake-en-antwoordhistorie.md) voor vraagsetversies, intakeantwoorden en historie.
 Zie [ADR-006](adr/ADR-006-transactionele-opdrachtvorming.md) voor atomische, idempotente en onomkeerbare opdrachtvorming.
 Zie [ADR-007](adr/ADR-007-gecontroleerde-opdrachtpublicatie.md) voor de betekenis van publicatie, de immutable snapshot en de scheiding met matching.
+Zie [ADR-008](adr/ADR-008-providerkwalificatie-als-fundament-voor-selectie.md) voor het geaccepteerde kwalificatiefundament en het minimale gegevenscontract voor toekomstige selectie.
+Zie [ADR-009](adr/ADR-009-deterministische-versieerbare-en-uitlegbare-selectie.md) voor het geaccepteerde deterministische selectie-, snapshot- en Decision Report-model.
+Zie [ADR-010](adr/ADR-010-fijnmazige-platformrollen-providerkwalificatie.md) voor het geaccepteerde reviewer-, approver-, auditor- en vier-ogenmodel.

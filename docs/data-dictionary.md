@@ -39,3 +39,22 @@ Alle IDs zijn UUID’s. `createdAt` en `updatedAt` zijn UTC-timestamps tenzij an
 | `AdminActionLog` | Append-only beheerhandelingen. | Actor-FK; entity- en datumindexen; geen `updatedAt`. | Nooit wijzigen/verwijderen; metadata begrenzen via latere validatie. |
 | `CreditAccount` | Afgeleid actueel creditsaldo per organisatie. | Eén per organisatie; saldo niet negatief. | Niet los verwijderen; alleen transactioneel wijzigen. |
 | `CreditTransaction` | Append-only creditgrootboek. | Account/actorrelaties; bedrag niet nul, saldo niet negatief; datum/type/reference-indexen. | Nooit wijzigen/verwijderen; creditservice volgt later. |
+
+## Providerkwalificatie Module 6A.2
+
+| Modelgroep | Doel en belangrijkste constraints | Gevoeligheid en historie |
+| --- | --- | --- |
+| `ProviderTaxonomy*` en mappingtabellen | Versieerbare diensten, competenties, regio’s, verzekeringen en ongewijzigde legacyreferenties; maximaal één gepubliceerde versie per taxonomie. | Gepubliceerd/gepensioneerd immutable; geen vrije selectiewaarden. |
+| `ProviderCapability*`, `ProviderSectorExperience*`, `ProviderWorkArea*` | Actuele roots met oplopende versie en append-only revisions met expliciet verificatieniveau. | Legacyclaims zijn uitsluitend `SELF_DECLARED`; bronwijziging invalideert projectie. |
+| `ProviderCapacitySnapshot` | Acceptatie nieuwe opdrachten, vroegste start, globale capaciteit, bevestiging en verval. | Append-only; geldigheid maximaal 30 dagen. |
+| `ProviderProfessional` en `ProviderProfessionalPrivateData` | Providergebonden professional en fysiek gescheiden naam/contactgegevens. | Persoonsgegevens ontbreken in Trusted Provider Projection. |
+| `ProviderProfessionalQualification*` en `ProviderOrganizationQualification*` | Versieerbare kwalificatie- en certificaatclaims met optionele private bewijsrevisie. | Revisions append-only; verificatie volgt alleen via reviewbesluit. |
+| `ProviderEvidence*` en `ProviderEvidenceScanDecision` | Private bestandsmetadata, checksum en afzonderlijk malware-/veiligheidsbesluit. | Geen bytes in database; revisions en scanbesluiten immutable. |
+| `ProviderInsurance*` en `ProviderInsuranceRequirement*` | Polisfacts en versieerbare eisen voor type, verificatie, dekking en geografie. | Polisreferentie is gevoelig en ontbreekt in projecties. |
+| `ProviderTermDocument*` en `ProviderTermAcceptance` | Versieerbare juridische/configuratiedocumenten en expliciete acceptatieactor/tijd. | Acceptaties append-only; seed activeert geen juridische inhoud. |
+| `ProviderPlatformPermission*` | Tijdgebonden reviewer-, approver- en auditorgrant met append-only intrekking. | Geen impliciete `ADMIN`-fallback. |
+| `ProviderVerificationReview`, `ProviderQualificationDecision` | Immutable beoordeling en formeel besluit met reason code, geldigheid en checksum. | Hoog risico vereist twee verschillende bevoegde actoren. |
+| `ProviderReadinessAssessment`, `ProviderSelectabilityAssessment` | Afgeleide snapshots met bronversie, reason codes en checksum. | Fail-closed; nooit handmatig positief vinkje. |
+| `ProviderBlock*` | Immutable blokkade en afzonderlijk herstelbesluit. | Vier ogen voor blokkeren en herstellen. |
+| `TrustedProviderProjection*` | Minimale gevalideerde providerfacts voor toekomstige Decision Engine. | Immutable en versioned; geen PII, evidence, marketing, credits, betaling of prestaties. |
+| `ProviderMigrationAudit` | Herleidbare legacybron-naar-doelregistratie. | Append-only en uniek per migratie, brontype en bron-ID. |

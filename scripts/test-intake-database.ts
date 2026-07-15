@@ -650,6 +650,130 @@ async function verifyIntegrity(client: Client) {
   })
 }
 
+async function seedLegacyProviderFixture(client: Client) {
+  await client.query(`
+    INSERT INTO "User" ("id", "email", "displayName", "emailVerified", "status", "createdAt", "updatedAt")
+    VALUES ('00000000-0000-4000-8000-000000006001', 'provider-owner-6a2@example.invalid', 'Tijdelijke providerbeheerder', true, 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+    INSERT INTO "Organization" ("id", "name", "organizationType", "status", "createdAt", "updatedAt")
+    VALUES ('00000000-0000-4000-8000-000000006002', 'Tijdelijke Provider 6A2', 'PROVIDER', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+    INSERT INTO "OrganizationMembership" ("id", "userId", "organizationId", "role", "status", "createdAt", "updatedAt")
+    VALUES ('00000000-0000-4000-8000-000000006003', '00000000-0000-4000-8000-000000006001', '00000000-0000-4000-8000-000000006002', 'OWNER', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+    INSERT INTO "ProviderProfile" ("id", "organizationId", "approvalStatus", "isAvailable", "createdAt", "updatedAt")
+    VALUES ('00000000-0000-4000-8000-000000006004', '00000000-0000-4000-8000-000000006002', 'APPROVED', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+    INSERT INTO "ProviderSpecialism" ("id", "providerProfileId", "specialismId", "experienceYears", "createdAt", "updatedAt")
+    SELECT '00000000-0000-4000-8000-000000006005', '00000000-0000-4000-8000-000000006004', "id", 5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+    FROM "Specialism" WHERE "slug" = 'veiligheidskundige';
+
+    INSERT INTO "ProviderSector" ("id", "providerProfileId", "sectorId", "experienceYears", "createdAt", "updatedAt")
+    SELECT '00000000-0000-4000-8000-000000006006', '00000000-0000-4000-8000-000000006004', "id", 4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+    FROM "Sector" WHERE "slug" = 'bouw';
+
+    INSERT INTO "ProviderCertification" ("id", "providerProfileId", "certificationId", "certificateNumber", "verificationStatus", "createdAt", "updatedAt")
+    SELECT '00000000-0000-4000-8000-000000006007', '00000000-0000-4000-8000-000000006004', "id", 'TIJDELIJK-6A2', 'VERIFIED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+    FROM "Certification" WHERE "slug" = 'hvk-diploma';
+  `)
+}
+
+async function verifyProviderQualificationIntegrity(client: Client) {
+  const referenceCounts = await client.query<{
+    services: number
+    competencies: number
+    regions: number
+    insurance_types: number
+    active_terms: number
+    active_insurance_configs: number
+    active_capability_configs: number
+  }>(`
+    SELECT
+      (SELECT COUNT(*)::int FROM "ProviderTaxonomyTerm" t JOIN "ProviderTaxonomyVersion" v ON v."id" = t."versionId" JOIN "ProviderTaxonomy" x ON x."id" = v."taxonomyId" WHERE x."kind" = 'SERVICE') AS services,
+      (SELECT COUNT(*)::int FROM "ProviderTaxonomyTerm" t JOIN "ProviderTaxonomyVersion" v ON v."id" = t."versionId" JOIN "ProviderTaxonomy" x ON x."id" = v."taxonomyId" WHERE x."kind" = 'COMPETENCY') AS competencies,
+      (SELECT COUNT(*)::int FROM "ProviderTaxonomyTerm" t JOIN "ProviderTaxonomyVersion" v ON v."id" = t."versionId" JOIN "ProviderTaxonomy" x ON x."id" = v."taxonomyId" WHERE x."kind" = 'REGION') AS regions,
+      (SELECT COUNT(*)::int FROM "ProviderTaxonomyTerm" t JOIN "ProviderTaxonomyVersion" v ON v."id" = t."versionId" JOIN "ProviderTaxonomy" x ON x."id" = v."taxonomyId" WHERE x."kind" = 'INSURANCE_TYPE') AS insurance_types,
+      (SELECT COUNT(*)::int FROM "ProviderTermDocumentVersion" WHERE "status" = 'ACTIVE') AS active_terms,
+      (SELECT COUNT(*)::int FROM "ProviderInsuranceRequirementConfig" WHERE "status" = 'PUBLISHED') AS active_insurance_configs,
+      (SELECT COUNT(*)::int FROM "ProviderCapabilityRequirementConfig" WHERE "status" = 'PUBLISHED') AS active_capability_configs
+  `)
+  assert.deepEqual(referenceCounts.rows[0], {
+    services: 5,
+    competencies: 8,
+    regions: 14,
+    insurance_types: 2,
+    active_terms: 0,
+    active_insurance_configs: 0,
+    active_capability_configs: 0,
+  })
+
+  const migrated = await client.query<{
+    lifecycle: string
+    readiness: string
+    qualification: string
+    selectability: string
+    capability_level: string
+    sector_level: string
+    certification_level: string
+    audits: number
+  }>(`
+    SELECT
+      p."lifecycleStatus"::text AS lifecycle,
+      p."readinessStatus"::text AS readiness,
+      p."platformQualificationStatus"::text AS qualification,
+      p."selectabilityStatus"::text AS selectability,
+      cr."verificationLevel"::text AS capability_level,
+      sr."verificationLevel"::text AS sector_level,
+      qr."verificationLevel"::text AS certification_level,
+      (SELECT COUNT(*)::int FROM "ProviderMigrationAudit" a WHERE a."providerProfileId" = p."id") AS audits
+    FROM "ProviderProfile" p
+    JOIN "ProviderCapability" c ON c."providerProfileId" = p."id"
+    JOIN "ProviderCapabilityRevision" cr ON cr."providerCapabilityId" = c."id" AND cr."version" = 1
+    JOIN "ProviderSectorExperience" s ON s."providerProfileId" = p."id"
+    JOIN "ProviderSectorExperienceRevision" sr ON sr."sectorExperienceId" = s."id" AND sr."version" = 1
+    JOIN "ProviderOrganizationQualification" q ON q."providerProfileId" = p."id"
+    JOIN "ProviderOrganizationQualificationRevision" qr ON qr."qualificationId" = q."id" AND qr."version" = 1
+    WHERE p."id" = '00000000-0000-4000-8000-000000006004'
+  `)
+  assert.deepEqual(migrated.rows[0], {
+    lifecycle: 'DRAFT',
+    readiness: 'INCOMPLETE',
+    qualification: 'NOT_ASSESSED',
+    selectability: 'NOT_SELECTABLE',
+    capability_level: 'SELF_DECLARED',
+    sector_level: 'SELF_DECLARED',
+    certification_level: 'SELF_DECLARED',
+    audits: 3,
+  })
+
+  await expectDatabaseFailure('capacity langer dan dertig dagen', () =>
+    client.query(`
+      INSERT INTO "ProviderCapacitySnapshot" ("providerProfileId", "acceptsNewAssignments", "capacityLevel", "confirmedAt", "validUntil")
+      VALUES ('00000000-0000-4000-8000-000000006004', true, 'NORMAL', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '31 days')
+    `),
+  )
+
+  await expectDatabaseFailure('mutatie van append-only capabilityrevisie', () =>
+    client.query(`UPDATE "ProviderCapabilityRevision" SET "verificationLevel" = 'VERIFIED' WHERE "providerCapabilityId" IN (SELECT "id" FROM "ProviderCapability" WHERE "providerProfileId" = '00000000-0000-4000-8000-000000006004')`),
+  )
+
+  await expectDatabaseFailure('mutatie van gepubliceerde taxonomieterm', () =>
+    client.query(`UPDATE "ProviderTaxonomyTerm" SET "label" = 'Niet toegestaan' WHERE "code" = 'SAFETY_ADVICE'`),
+  )
+
+  await expectDatabaseFailure('kwalificatiebesluit zonder vier ogen', () =>
+    client.query(`
+      INSERT INTO "ProviderQualificationDecision" (
+        "providerProfileId", "scope", "outcome", "reviewedByUserId", "approvedByUserId", "reasonCode", "validFrom", "sourceChecksum"
+      ) VALUES (
+        '00000000-0000-4000-8000-000000006004', 'PLATFORM', 'REJECTED',
+        '00000000-0000-4000-8000-000000006001', '00000000-0000-4000-8000-000000006001',
+        'CONFIGURATION_INCOMPLETE', CURRENT_TIMESTAMP, repeat('a', 64)
+      )
+    `),
+  )
+}
+
 async function main() {
   const admin = new Client({ connectionString: adminUrl.toString() })
   let testClient: Client | undefined
@@ -665,7 +789,11 @@ async function main() {
     testClient = new Client({ connectionString: testUrl.toString() })
     await testClient.connect()
     await verifyIntegrity(testClient)
-    console.info('Database-integriteit Module 5A.1, Module 5B.2, Module 5B.3 en Module 5C.2: geslaagd.')
+    await seedLegacyProviderFixture(testClient)
+    runNpmScript('db:seed')
+    runNpmScript('db:seed')
+    await verifyProviderQualificationIntegrity(testClient)
+    console.info('Database-integriteit Module 5A.1, Module 5B.2, Module 5B.3, Module 5C.2 en Module 6A.2: geslaagd.')
   } finally {
     if (testClient) {
       await testClient.end()

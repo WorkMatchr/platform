@@ -2,7 +2,7 @@
 
 WorkMatchr wordt een volledig onafhankelijk platform dat organisaties koppelt aan passende arbo- en veiligheidsspecialisten. Per opdracht worden maximaal drie aanbieders objectief geselecteerd; betaalde voorkeursposities bestaan niet.
 
-Module 1 tot en met Module 4B zijn afgerond. Module 5 is in uitvoering; Module 5B.3 is technisch afgerond en door de product owner geaccepteerd.
+Module 1 tot en met Module 4B zijn afgerond. Module 5C is afgerond en product-ownergeaccepteerd; Module 5A en Module 5B.2 houden hun afzonderlijke acceptatiestatus. Module 6A.0, Module 6A.1 en Module 6A.2 zijn afgerond en product-ownergeaccepteerd. Module 6A.3 is de volgende module en is nog niet gestart; de Decision Engine, matching, uitnodigingen, credits en Mollie zijn nog niet geïmplementeerd.
 
 ## Vereisten
 
@@ -75,4 +75,4 @@ Lees [docs/README.md](docs/README.md) voor de documentatie-index, [PROJECT_PRINC
 
 ## Status
 
-Module 1 tot en met Module 4B zijn afgerond. Module 5A en Module 5B.2 zijn technisch opgeleverd en houden hun afzonderlijke acceptatiestatus. Module 5B.3 met expliciete indiening, opdrachtbewerking en interne statusflow is afgerond en product-ownergeaccepteerd. De actuele status staat in [docs/05-voortgang.md](docs/05-voortgang.md).
+Module 1 tot en met Module 4B zijn afgerond. Module 5C is volledig afgerond en product-ownergeaccepteerd; Module 5A en Module 5B.2 houden hun afzonderlijke acceptatiestatus. Module 6A.0 — Ontwerp providerkwalificatie, Module 6A.1 — Ontwerp Decision Engine en Module 6A.2 — Providerkwalificatie datamodel en services zijn afgerond en product-ownergeaccepteerd. Module 6A.3 — Provider-onboardinginterface is de volgende module en is nog niet gestart; Module 6A.4 en Module 6A.5 zijn eveneens niet gestart. De actuele status staat in [docs/05-voortgang.md](docs/05-voortgang.md).

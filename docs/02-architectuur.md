@@ -60,6 +60,13 @@
 - Matching leest later uitsluitend de revisie op `publishedVersion`. Na publicatie zijn zakelijke opdrachtvelden, specialismekoppelingen en publicatiemetadata immutable; intrekken verloopt uitsluitend via `OPEN → CANCELLED`.
 - Publicatie-Server Actions accepteren geen tenant-ID als autorisatiebron, bepalen de actieve organisatie server-side en roepen uitsluitend de centrale publicatieservices aan.
 - `Assignment.version` stijgt bij inhoud en status. Een inhoudsrevisie gebruikt de actuele opdrachtversie en is strikt nieuwer dan eerdere revisies; statusgerelateerde versienummers hoeven geen lege revisies te krijgen.
+- Providerkwalificatie wordt vóór toekomstige selectie een afzonderlijke domeingrens. Platformkwalificatie, beroepskwalificatie, readiness, selecteerbaarheid en historische prestaties blijven gescheiden en versieerbaar.
+- De toekomstige Decision Engine leest uitsluitend een minimale, gevalideerde providerprojectie met bron, verificatie, geldigheid en snapshotversie; ruwe bewijsdocumenten, direct identificerende persoonsgegevens, vrije marketingtekst en commerciële status blijven buiten de selectielaag.
+- Het geaccepteerde 6A.1-ontwerp gebruikt een deterministische pipeline van kandidaatverzameling, afzonderlijke knock-outs, integer scoring, lexicografische tie-breakers en maximaal drie geselecteerden. `Explainability before Score` is leidend: WorkMatchr communiceert primair de reden van geschiktheid en niet de interne berekening.
+- Een selectieronde start uitsluitend na een expliciete actie van een actieve organisatie-`OWNER` of organisatie-`ADMIN` op een `OPEN` opdracht. Publicatie start de Decision Engine niet automatisch.
+- Iedere toekomstige selectieronde bevriest opdracht-, provider-, engine-, model-, regel- en taxonomieversies en finaliseert kandidaatresultaten plus een immutable Decision Report atomair. Het rapport bevat een interne Confidence Check die context geeft over datakwaliteit en uitzonderingen, maar knock-outs, score, rangorde en selectie niet beïnvloedt.
+- De engine vult een uitkomst nooit kunstmatig aan: drie, twee, één of nul geschikte providers leiden respectievelijk tot drie, twee, één of geen geselecteerde providers. De volledige interne rangorde mag worden opgeslagen; reserveactivering is nooit automatisch en een vervolgselectie vereist een expliciete nieuwe actie.
+- Selectie activeert geen uitnodiging, providerrecht, credits of betaling. Opdrachtgevers zien kwalitatieve geschiktheidsredenen en relevante criteria, maar geen exacte interne scores, volledige rangorde of concurrentinformatie.
 - Lokale bestandsschijf wordt nooit als productieopslag gebruikt; productie zonder provider faalt veilig.
 
 ## Bewust uitgestelde keuzes

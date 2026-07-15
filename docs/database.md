@@ -148,3 +148,18 @@ Schema-validatie voor deze JSON-structuren wordt in een latere servicelaag verpl
 - E-mailuniciteit is databasebreed maar nog hoofdlettergevoelig; normalisatie volgt in de authenticatie-/gebruikersservice.
 - KvK-nummer is bewust niet uniek totdat validatie en internationale uitbreiding zijn besloten.
 - Bewaartermijnen en AVG-verwijderverzoeken moeten voor livegang worden vastgesteld.
+
+## Providerkwalificatie — Module 6A.2
+
+Module 6A.2 voegt vijf additieve migraties toe. `ProviderProfile` blijft aggregate root en start voor het nieuwe domein met `DRAFT`, `INCOMPLETE`, `NOT_ASSESSED` en `NOT_SELECTABLE`. Legacyvelden en -tabellen blijven bestaan en worden niet als nieuwe waarheid gelezen.
+
+- centrale `ProviderTaxonomy`, immutable gepubliceerde versies, termen en expliciete mappings naar bestaande sectoren, specialismen en certificeringstypen;
+- versie-roots en append-only revisions voor capabilities, sectorervaring, werkgebieden, professionele en organisatiekwalificaties, verzekeringen en evidence;
+- capacitysnapshots zijn append-only en databasebreed maximaal 30 dagen geldig;
+- platformpermissions zijn expliciet, tijdgebonden en intrekbaar; `PlatformRole.ADMIN` verleent geen impliciet providerrecht;
+- verification reviews, qualification decisions, readiness/selectability assessments, blocks, releases en Trusted Provider Projections zijn immutable;
+- vier ogen wordt met foreign keys en `reviewer != approver`-checks afgedwongen;
+- projecties bewaren canonical JSON, SHA-256, schema-, canonicalisatie- en bronversie en krijgen bij bronmutatie een append-only invalidation;
+- bewijsbytes staan niet in PostgreSQL; scanresultaten zijn afzonderlijke immutable besluiten.
+
+De seed publiceert alleen vastgestelde referentietaxonomieën. Juridische documentversies blijven `DRAFT`; verzekerings- en capabilityvereistenconfiguraties blijven leeg. Daardoor kan seed of migratie nooit automatisch een provider kwalificeren of selecteerbaar maken. Legacybackfill is idempotent via unieke bron-ID’s en schrijft uitsluitend `SELF_DECLARED` plus `ProviderMigrationAudit`.

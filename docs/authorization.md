@@ -34,3 +34,13 @@ Platformrollen en organisatierollen zijn verschillende autorisatielagen. Een pla
 - een niet-bestaande of gemanipuleerde opdracht-ID en een opdracht buiten de tenant leveren dezelfde veilige toegangsuitkomst;
 - publicatie- en intrekformulieren bevatten geen `organizationId`; de Server Actions bepalen de actieve tenant opnieuw en laten de centrale service alle rollen- en tenantregels afdwingen;
 - `organizationId` en `publishedByUserId` komen niet uit clientinvoer: de toekomstige Server Action moet beide uit de server-side context afleiden.
+
+## Providerkwalificatie
+
+- actieve organisatie-`OWNER` en organisatie-`ADMIN` mogen providerfacts, capaciteit, professionalgegevens, evidence-metadata, verzekeringen en verklaringen binnen de eigen actieve `PROVIDER`- of `BOTH`-tenant beheren;
+- `MEMBER` kan deze gevoelige kwalificatiemutaties niet uitvoeren;
+- tenant, organisatie-, membership- en accountstatus worden binnen iedere write-transactie opnieuw gecontroleerd;
+- `PROVIDER_REVIEWER`, `PROVIDER_APPROVER` en `PROVIDER_AUDITOR` zijn expliciete tijdgebonden grants, los van organisatierollen en `PlatformRole.ADMIN`;
+- een platformactor met een actieve membership bij dezelfde provider wordt wegens belangenconflict geweigerd;
+- formele kwalificatie, blokkade en herstel vereisen een actuele reviewer en een andere actuele approver;
+- ontbrekende permissions of configuratie falen gesloten met een veilige domeincode.
