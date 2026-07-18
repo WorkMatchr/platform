@@ -1,5 +1,139 @@
 # Changelog
 
+## Aanvulling niet uitgebracht — ADR-013 Fase 2B rolwijziging
+
+- algemene `MEMBER <-> ADMIN`-rolwijziging voor actieve tenant-OWNER toegevoegd met optimistic role-precondition, append-only historie en onmiddellijke sessie-intrekking;
+- tokenloze rolwijzigingsnotificatie met append-only poging/resultaat, provider-message-ID, eerlijke foutstatus en afzonderlijke veilige resend toegevoegd;
+- definitieve accountverwijdering bewust niet zichtbaar gemaakt; Better Auth-e-mailvrijgave, accountbrede intrekking, KMS, outbox, purge, back-upverwijdering en retentietoegang blijven expliciete Fase 2C-blockers;
+
+## Niet uitgebracht — ADR-013 Fase 2B Lifecycle en tenant
+
+- goedgekeurde OWNER/ADMIN/MEMBER-bevoegdhedenmatrix centraal vastgelegd;
+- OWNER toevoegen en OWNER overdragen als afzonderlijke, transactionele acties gerealiseerd;
+- herstelbaar blokkeren en deblokkeren met append-only events, sessie- en resetintrekking toegevoegd;
+- self-block, laatste-OWNER-mutaties, platformaccounts, migratieaccounts en cross-tenantbeheer fail-closed geweigerd;
+- creatorbeheer beperkt uitsluitend het bereik van reeds bestaande rechten;
+- centraal platformbeheer vereist `ACTIVE`, `PlatformRole.ADMIN` en actieve membership bij `WORKMATCHR_PLATFORM`;
+- membershipbeëindiging blijft bewust niet beschikbaar tot de volledige lifecycle atomair is;
+- tenantaccountbeheer onder `/organisatie/gebruikers`, preflight 3.0 en integratietests toegevoegd;
+- uitnodigen van afzonderlijke MEMBER- en ADMIN-accounts toegevoegd met Better Auth-verificatie, eigen wachtwoord, één tenantmembership en append-only acceptatiehistorie;
+- geen Prisma-schema, migratie, accountverwijdering, e-mailvrijgave, anonimisering of één-membershipmigratie uitgevoerd.
+
+**Status:** technisch geïmplementeerd; product-owneracceptatie staat open.
+
+## Niet uitgebracht — ADR-013 Fase 2A Platform en provisioning
+
+- product-owneracceptatie geslaagd op 17 juli 2026; Fase 2A is administratief afgerond;
+- centrale `PLATFORM_OPERATOR`-organisatie gecontroleerd en idempotent geactiveerd via `WORKMATCHR_PLATFORM`;
+- immutable organisatieprovisioninghistorie met expliciete systeemactorsemantiek toegevoegd;
+- tijdelijke uitgenodigde User als `MIGRATION_TEMP` geclassificeerd en voor beide bestaande Users een `MIGRATED_UNKNOWN`-event vastgelegd;
+- centrale fail-closed platformlookup, tenantlijstfilter en normale organisatiegovernanceguards toegevoegd;
+- preflight 2.0 herkent opgeloste Fase 2A-feiten en behoudt multi-membership en last-OWNER als open punten;
+- geen membership, OWNER, e-mailadres, Better Auth-record, sessie, token of platformpermission gewijzigd.
+
+## Niet uitgebracht — ADR-013 Fase 1 Expand
+
+- Additief accountstatus-, lifecycle- en migratieclassificatiefundament toegevoegd zonder bestaande records te wijzigen.
+- Technische platformorganisatie-identiteit en expliciete idempotente bootstrap voorbereid, maar niet uitgevoerd.
+- Databasebreed append-only provisioning- en membershiphistorie toegevoegd.
+- Nullable creatorprojectie en maximaal dertig dagen begrensd retentiedatamodel toegevoegd zonder verwijderings- of encryptieflow.
+- Bestaande multi-memberships, actieve-organisatiecookie en Better Auth-data bewust behouden.
+
+## Unreleased — productverbeteringen dienstverlenersprofiel
+
+### Gewijzigd
+
+- beschikbaarheid en capaciteit verwijderd uit de aanbiedersgerichte UX, dossiercompleetheid, open acties, readiness, selecteerbaarheid, nieuwe dossierindieningen en Trusted Provider Projection;
+- historische capaciteitstabellen en constraints niet-destructief behouden en als deprecated gemarkeerd; nieuwe providerwrites zijn uitgeschakeld;
+- headerdropdowns en mobiele dossiernavigatie gebruiken één toegankelijk disclosure-patroon met muis-, toetsenbord-, buitenklik-, route- en logoutsluiting plus focusherstel;
+- professionalkaarten bieden directe acties voor bekijken en kwalificaties beheren;
+- kwalificatie-invoer vereenvoudigd tot centrale kwalificatie, naam, zelfverklaard gecertificeerd ja/nee en een toegankelijke koppeling aan meerdere actieve diensten;
+- de dienstenpagina toont op desktop het invoerformulier links en een compacte dienstenlijst rechts, met formulier-vóór-lijst op kleinere schermen;
+- competentie verwijderd uit de zichtbare dienstinvoer en uit nieuwe dienstwrites, zonder bestaande competentiemodellen of historische data destructief te wijzigen;
+- zichtbare gebruikerstaal gebruikt **Dienstverlenersprofiel**, **Verzekeringsgegevens** en **Kwalificaties beheren**;
+- providerqueries binnen dezelfde interactieve transactie worden sequentieel uitgevoerd om gelijktijdige `pg.Client`-queries en de bijbehorende deprecationwaarschuwing te voorkomen;
+- vastgelegd dat WorkMatchr geen HR-systeem, personeelsplanning of diploma-administratie is en dat verwijdering en anonimisering een afzonderlijke module vereisen.
+
+## Unreleased — Founding Principles
+
+### Documentatie
+
+- `docs/FOUNDING_PRINCIPLES.md` toegevoegd als productmatig en architectonisch kompas van WorkMatchr;
+- missie, vijf Founding Principles, ontwerpfilosofie, governance, langetermijnbelofte en verplichte ontwerpregel vastgelegd;
+- ADR-012 aangewezen als voorgesteld toekomstig governancefundament voor gedelegeerde platformbevoegdheden;
+- verwijzingen toegevoegd aan de project-README en documentatie-index;
+- geen code, Prisma, routes, tests, dependencies of configuratie gewijzigd voor deze documentatiemodule.
+
+## Unreleased — Module 6A.3 workflowfundering
+
+**Status:** Module 6A.3.0 tot en met Module 6A.3.4 zijn afgerond en product-ownergeaccepteerd. ADR-011 blijft geaccepteerd. Module 6A.3.5 is in uitvoering: automatische acceptatie is geslaagd, maar handmatige rollen-, mobiele en browseracceptatie staat open. Module 6A.3 als geheel is nog niet afgerond.
+
+### Hersteld tijdens Module 6A.3.5
+
+- publieke en ingelogde navigatie gebruiken nu één server-side, gevalideerde Better Auth-sessiebron;
+- de dashboardheader ontvangt dezelfde actieve organisatie, providercontext en actuele `OWNER`-, `ADMIN`- of `MEMBER`-membership als beschermde pagina’s en Server Components;
+- ingelogde gebruikers zien geen loginactie meer, maar een accountmenu met organisatie-, providerdossier- en logoutacties;
+- wisselen van actieve organisatie invalideert de rootlayout, zodat header en pagina in dezelfde nieuwe tenantcontext renderen;
+- regressiedekking toegevoegd voor publieke en ingelogde headers, opdrachtgever/provider, logout, organisatiewissel en sessievernieuwing.
+- het accountscherm onderscheidt platformrol en rol binnen de actieve organisatie en toont daarnaast organisatienaam, type en status;
+- bij meerdere memberships wordt de actieve organisatie expliciet getoond en kan deze vanuit het accountscherm worden gewisseld;
+- regressiedekking toegevoegd voor één en meerdere organisaties, `OWNER`, `ADMIN`, `MEMBER` en wisselen van actieve organisatie.
+- accountgegevens gebruiken een bredere maar begrensde kaart, een auto-fitgrid met minimale kolombreedte en veilige afbreking van lange waarden bij smalle weergave en 200% zoom;
+- de professional-CTA gebruikt het bestaande contrastgeteste `LinkButton`; OWNER/ADMIN bij `PROVIDER` en `BOTH` worden toegestaan, terwijl MEMBER, CLIENT en verkeerde tenant server-side geweigerd blijven;
+- workflow- en providerconfiguratieblokkades bij professionals tonen een expliciete Nederlandse melding zonder een contrastarme disabled actie;
+- open actions bevatten een consistent contract voor code, titel, route, doelpaginatitel en hoofdgroep; Sectorervaring houdt **Diensten en ervaring** actief;
+- de hoofdgroep **Diensten en ervaring** opent een responsief overzicht met afzonderlijke, toetsenbordbedienbare kaarten voor Diensten en specialismen en Sectorervaring; beide detailroutes houden dezelfde hoofdgroep actief;
+- de eerstvolgende-actiekaart volgt de inhoudshoogte en rekt niet langer mee met de naastliggende kolom;
+- zichtbare UUID-validatie is vernederlandst en `verzekeringsmetadata` is vervangen door `verzekeringsgegevens`;
+- de onafhankelijke behandeling van Remote naast provincies en Landelijk blijft door regressietests geborgd.
+- de PostgreSQL-integriteitstest gebruikt de Promise-interface met expliciete `connect()`/`await query()`/`end()`; daarnaast zijn parallelle querygroepen binnen één providertransactie geserialiseerd.
+
+### Toegevoegd voor Module 6A.3.4
+
+- volledige Nederlandstalige routeboom onder `/aanbiedersdossier` met dashboard, zeven navigatiegroepen, sectiepagina’s en controle-/indienflow;
+- toegankelijke Client-formulieren met handmatig opslaan, veldvalidatie, invoerbehoud, focus op het eerste foutveld en waarschuwing bij niet-opgeslagen wijzigingen;
+- dunne Server Actions bovenop de bestaande tenantveilige provider-services voor mutaties, archivering, verklaringen, indiening, intrekken, findings en herindiening;
+- OWNER/ADMIN-mutatierechten, minimaal MEMBER-readmodel en workflowgestuurde read-onlysecties;
+- fail-closed bewijsinterface zonder publieke of onbeveiligde uploadroute;
+- interfacecontracttests voor routes, servicegrenzen en bewijsveiligheid.
+- integrale acceptatie herstelde zichtbare technische enumwaarden naar Nederlandse labels en completeerde ARIA-foutkoppelingen en waarschuwingen bij niet-opgeslagen workflowwijzigingen.
+
+### Toegevoegd voor Module 6A.3.3
+
+- transactionele create-, revise-, archive- en reactivate-services voor providerfacts met optimistic concurrency en centrale projectie-invalidation;
+- versioned completenesspolicy, geprioriteerde open acties en Nederlandse status-/expiry-presentatiemodellen;
+- tenantveilige dashboard-, sectie-, controle- en MEMBER-querymodellen met server-side gegevensminimalisatie;
+- providercontracten voor indienen, intrekken, findings beantwoorden en candidategebonden herindienen;
+- centrale read-only-/heropeningscontrole tijdens dossierbeoordeling;
+- niet-destructieve migratie voor candidatebinding van findingresolutions en intrekken vanuit aanvullende-informatieflow;
+- unit-, service- en tijdelijke database-integriteitstests voor de nieuwe servicelaag.
+
+### Toegevoegd
+
+- integraal UX- en functioneel ontwerp voor **Mijn providerdossier**;
+- geaccepteerde informatiearchitectuur met zeven taakgerichte groepen;
+- providerdashboard, statusmodel, voortgang, rollen, privacy-, security- en fail-closed UX;
+- zestien tekstuele wireframes, Nederlandse routestructuur en conceptueel componentmodel;
+- foutscenario’s, mobiele UX, WCAG 2.2 AA, analyticsgrenzen en acceptatiestrategie;
+- bindende productbesluiten voor rollen, statussen, handmatig opslaan, professionalidentiteit, dossierindiening en fail-closed bewijs;
+- technische impactanalyse van bestaande servicecapaciteit, ontbrekende mutaties en querymodellen;
+- ontwerp voor immutable dossiercandidate, transactionele indiening, gecontroleerde heropening en herindiening;
+- database-impact, autorisatie-, presentatie-, evidence-, concurrency-, invalidation- en teststrategie;
+- geaccepteerde workflowbesluiten voor candidates, submissions, reviewcases, findings, resolutions, withdrawal, herindiening en candidatebinding;
+- geaccepteerde ADR-011 voor immutable providerdossierindiening en beoordeling;
+- technisch implementatieplan voor Module 6A.3.2–6A.3.5 met maximaal twee niet-destructieve migraties;
+- modelanalyse, databaseconstraints, triggers, legacygedrag, services, interface en acceptatiestrategie.
+- twee additieve migraties voor immutable candidates, submissions, statushistorie, reviewcases, findings, resolutions, professionalidentiteitsrevisies, capaciteitsactor en candidatebinding;
+- transactionele, tenantveilige basisservices voor indienen, intrekken, review, informatieverzoek, findingresolution, herindiening en definitieve vier-ogenstatusovergangen;
+- canonical dossier-snapshots via `WORKMATCHR-CJ-1`, SHA-256 en databasebrede uniciteit en immutability;
+- unit- en database-integriteitstests voor workflow, concurrency, rollen en hardening.
+
+### Afbakening
+
+- geen routes, Server Actions, componenten, uploads, dependencies of configuratiewijzigingen;
+- platformreview, Decision Engine, matching, uitnodigingen, credits en Mollie blijven buiten scope en niet geïmplementeerd;
+- bewijsupload en positieve kwalificatie/selecteerbaarheid blijven fail-closed zonder volledige geldige productieconfiguratie.
+
 ## Unreleased — Module 6A.2
 
 **Status:** Module 6A.2.0, Module 6A.2.1 en Module 6A.2 zijn afgerond en product-ownergeaccepteerd. ADR-010 is geaccepteerd. Module 6A.3 is de volgende module en is nog niet gestart.

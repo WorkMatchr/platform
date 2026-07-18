@@ -14,13 +14,23 @@ Deze map bevat de leidende projectdocumentatie. Lees vóór een wijziging minima
 8. [Voorstel vraagset Module 5A — versie 1](module-5a-vraagset-v1.md)
 9. [Ontwerp Module 5B — Opdrachtvorming](module-5b-ontwerp.md)
 10. [Ontwerp Module 5C — Gecontroleerde opdrachtpublicatie](module-5c-ontwerp.md)
-11. [Geaccepteerd ontwerp Module 6A.0 — Providerkwalificatie en onboarding](module-6a0-providerkwalificatie-ontwerp.md)
-12. [Geaccepteerd ontwerp Module 6A.1 — WorkMatchr Decision Engine v1](module-6a-decision-engine-ontwerp.md)
-13. [Geaccepteerde technische impactanalyse Module 6A.2.0 — Providerkwalificatie](module-6a2-providerkwalificatie-technisch-ontwerp.md)
-14. [Geaccepteerd implementatieplan Module 6A.2.1 — Providerkwalificatie](module-6a2-providerkwalificatie-implementatieplan.md)
+11. [Ontwerp Module 5D.0 — Intake & Submission Improvements](module-5d-intake-submission-verbeteringen.md)
+12. [Geaccepteerd ontwerp Module 6A.0 — Providerkwalificatie en onboarding](module-6a0-providerkwalificatie-ontwerp.md)
+13. [Geaccepteerd ontwerp Module 6A.1 — WorkMatchr Decision Engine v1](module-6a-decision-engine-ontwerp.md)
+14. [Geaccepteerde technische impactanalyse Module 6A.2.0 — Providerkwalificatie](module-6a2-providerkwalificatie-technisch-ontwerp.md)
+15. [Geaccepteerd implementatieplan Module 6A.2.1 — Providerkwalificatie](module-6a2-providerkwalificatie-implementatieplan.md)
+16. [Geaccepteerd UX- en functioneel ontwerp Module 6A.3.0 — Provider Onboarding Interface](module-6a3-provider-onboarding-ux-ontwerp.md)
+17. [Geaccepteerde technische impactanalyse Module 6A.3.1 — Provider Onboarding Interface](module-6a3-provider-onboarding-technische-impactanalyse.md)
+18. [Implementatieplan Module 6A.3.2–6A.3.5 — Provider Onboarding Interface](module-6a3-provider-onboarding-implementatieplan.md)
+19. [Technische impactanalyse — één account per organisatie](impactanalyse-een-account-per-organisatie.md)
+20. [ADR-013 accountarchitectuur-preflight](account-architecture-preflight.md)
+21. [ADR-013 Fase 1 — technische implementatie Expand](adr-013-fase-1-expand-technische-implementatie.md)
+22. [ADR-013 Fase 2A — Platform en provisioning](adr-013-fase-2a-platform-en-provisioning.md)
+23. [ADR-013 Fase 2B — Lifecycle en tenant](adr-013-fase-2b-lifecycle-en-tenant.md)
 
 ## Ontwerp en kwaliteit
 
+- [Founding Principles](FOUNDING_PRINCIPLES.md)
 - [Design system](design-system.md)
 - [UI-componenten](ui-components.md)
 - [UX-principes](UX_PRINCIPLES.md)
@@ -36,6 +46,7 @@ Deze map bevat de leidende projectdocumentatie. Lees vóór een wijziging minima
 - [Databasehandleiding](database.md)
 - [Datadictionary](data-dictionary.md)
 - [Entity Relationship Diagram](ERD.md)
+- [Deterministische testdataset dienstverleners](test-provider-dataset.md)
 - [ADR-002: PostgreSQL, Prisma en datamodel](adr/ADR-002-postgresql-prisma-en-datamodel.md)
 - [ADR-005: Versieerbare intake en antwoordhistorie](adr/ADR-005-versieerbare-intake-en-antwoordhistorie.md)
 - [ADR-006: Transactionele opdrachtvorming](adr/ADR-006-transactionele-opdrachtvorming.md)
@@ -43,6 +54,9 @@ Deze map bevat de leidende projectdocumentatie. Lees vóór een wijziging minima
 - [ADR-008: Providerkwalificatie als fundament voor selectie — geaccepteerd](adr/ADR-008-providerkwalificatie-als-fundament-voor-selectie.md)
 - [ADR-009: Deterministische, versieerbare en uitlegbare selectie — geaccepteerd](adr/ADR-009-deterministische-versieerbare-en-uitlegbare-selectie.md)
 - [ADR-010: Fijnmazige platformrollen voor providerkwalificatie — geaccepteerd](adr/ADR-010-fijnmazige-platformrollen-providerkwalificatie.md)
+- [ADR-011: Immutable providerdossierindiening en beoordeling — geaccepteerd](adr/ADR-011-immutable-providerdossierindiening-en-beoordeling.md)
+- [ADR-012: Gedelegeerde bevoegdheden namens organisaties — voorgesteld](adr/ADR-012-gedelegeerde-bevoegdheden-namens-organisaties.md)
+- [ADR-013: Eén organisatie per tenantaccount, platformrollen en gecontroleerde accountverwijdering — geaccepteerd](adr/ADR-013-een-organisatie-per-tenantaccount-platformrollen-en-gecontroleerde-accountverwijdering.md)
 
 ## Authenticatie en beveiliging
 
@@ -58,6 +72,6 @@ Deze map bevat de leidende projectdocumentatie. Lees vóór een wijziging minima
 - [Bestandsopslag](file-storage.md)
 - [ADR-004: Organisaties, autorisatie en logo-opslag](adr/ADR-004-organisaties-autorisatie-en-logo-opslag.md)
 
-Aanvullend staan de overkoepelende principes in [PROJECT_PRINCIPLES.md](../PROJECT_PRINCIPLES.md) en wijzigingen in [CHANGELOG.md](../CHANGELOG.md).
+Het productmatige en architectonische kompas staat in [FOUNDING_PRINCIPLES.md](FOUNDING_PRINCIPLES.md). Aanvullend staan de uitvoeringsprincipes in [PROJECT_PRINCIPLES.md](../PROJECT_PRINCIPLES.md) en wijzigingen in [CHANGELOG.md](../CHANGELOG.md).
 
 Documentatie wordt bijgewerkt zodra een besluit, risico of functionaliteit verandert.
