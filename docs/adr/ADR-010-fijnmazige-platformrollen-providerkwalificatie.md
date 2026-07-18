@@ -22,11 +22,13 @@ De volgende permissions worden ontworpen:
 
 Een gebruiker kan meerdere permissions hebben. Toekenningen hebben scope, `validFrom`, optioneel `validUntil`, toekennende actor, reden en append-only historie.
 
+De organisatiebinding uit ADR-013 is aanvullend op de permission: reviewer en approver moeten lid zijn van de server-side aangewezen WorkMatchr-beheerorganisatie en mogen geen membership bij de beoordeelde provider hebben. Een auditor kan zonder organisatiemembership werken. Alleen centraal WorkMatchr-beheer mag auditorrechten en andere platformpermissions toekennen of intrekken; een organisatie-`OWNER` of -`ADMIN` kan dit nooit.
+
 ### 2. Scheiding met providerrollen
 
 - `OrganizationMembershipRole.OWNER` en `.ADMIN` mogen providerdata beheren en indienen, maar niet verifiëren, kwalificeren of blokkeren.
 - `MEMBER` blijft read-only voor niet-gevoelige providerdelen.
-- Een platformpermission geeft geen tenantmembership en geen recht om providerdata namens de organisatie te wijzigen.
+- Een platformpermission geeft geen membership bij de beoordeelde provider en geen recht om providerdata namens die organisatie te wijzigen. ADR-013 vereist voor `PROVIDER_REVIEWER` en `PROVIDER_APPROVER` daarnaast een actieve membership bij de centrale WorkMatchr-beheerorganisatie; `PROVIDER_AUDITOR` is de expliciete uitzondering zonder organisatiemembership.
 - Heeft één persoon zowel provider- als platformrechten, dan mag deze geen eigen organisatie of economisch verbonden provider beoordelen. De service controleert belangenconflict server-side.
 
 ### 3. Vier-ogencontrole
@@ -100,6 +102,8 @@ Zolang geen approver expliciet is toegewezen, faalt kwalificatie in productie ve
 Iedere gevoelige service controleert binnen de transactie:
 
 - actieve `User.status`;
+- voor reviewer/approver: een actieve membership bij de WorkMatchr-beheerorganisatie;
+- voor auditor: afwezigheid van een tenantmembership en een expliciet centraal toegekende grant;
 - actuele permission en geldigheidsinterval;
 - casescope of providercontext;
 - belangenconflict;
@@ -147,7 +151,7 @@ Afgewezen omdat review, formeel besluit en onafhankelijke audit dan onvoldoende 
 ## Openstaande implementatie- en productiepunten
 
 - vereiste onafhankelijkheid en omgang met belangenconflicten;
-- wie permissions mag toekennen en intrekken;
+- welke centrale WorkMatchr-beheerrol reviewer- en approverpermissions precies mag toekennen en intrekken;
 - scope: globaal, taxonomie/capability, regio of specifieke case;
 - maximale geldigheidsduur en periodieke rechtenreview;
 - noodprocedure bij incidenten en afwezigheid;
@@ -161,5 +165,6 @@ Afgewezen omdat review, formeel besluit en onafhankelijke audit dan onvoldoende 
 - [ADR-008 — Providerkwalificatie als fundament voor selectie](ADR-008-providerkwalificatie-als-fundament-voor-selectie.md)
 - [ADR-009 — Deterministische, versieerbare en uitlegbare selectie](ADR-009-deterministische-versieerbare-en-uitlegbare-selectie.md)
 - [ADR-003 — Better Auth en platformrollen](ADR-003-better-auth-en-platformrollen.md)
+- [ADR-013 — Eén organisatie per tenantaccount, platformrollen en gecontroleerde accountverwijdering](ADR-013-een-organisatie-per-tenantaccount-platformrollen-en-gecontroleerde-accountverwijdering.md)
 
 ADR-010 is geaccepteerd. De openstaande implementatie- en productiepunten wijzigen de functiescheiding niet.

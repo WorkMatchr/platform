@@ -4,13 +4,17 @@ Alle IDs zijn UUID’s. `createdAt` en `updatedAt` zijn UTC-timestamps tenzij an
 
 | Model | Doel en belangrijkste velden | Relaties en constraints | Archivering, gevoeligheid en toekomst |
 | --- | --- | --- | --- |
-| `User` | Menselijke gebruiker; `email`, `displayName`, `emailVerified`, `image`, `platformRole`, `status`. | Unieke e-mail; Better Auth mappt `name` op `displayName`; memberships, auth-, opdrachtcreator- en publicatieactorrelaties. | `archivedAt`; e-mail en naam zijn persoonsgegevens; één bron voor identiteit en zakelijke relaties. |
+| `User` | Menselijke gebruiker; naast Better Auth-velden bevat het additive ADR-013-fundament nullable lifecyclemetadata, `migrationClassification` en `createdByUserId`. | Unieke e-mail blijft ongewijzigd; creator-, blokkeer- en deletionrequestactor zijn nullable self-relations. Er is nog geen unieke membership-FK. | `ARCHIVED` blijft legacy; `DELETION_PENDING` en `ANONYMIZED` zijn beschikbaar maar niet geactiveerd. E-mail en naam zijn persoonsgegevens. |
 | `Session` | Better Auth-databasesessie met uniek token, vervaldatum, optioneel IP-adres en user-agent. | Verplichte User-FK; unieke token; indexen op gebruiker en vervaldatum. | Intrekbaar en verwijderbaar; token is strikt geheim en wordt nooit getoond of gelogd. |
 | `Account` | Authenticatiemethode en Better Auth-wachtwoordhash. | Verplichte User-FK; unieke `providerId + accountId`; index op gebruiker. | Credentialhash is uiterst gevoelig; geen hard delete van User via cascade. Social providers zijn niet geconfigureerd. |
 | `Verification` | Eenmalige, kortlevende e-mailverificatie- en resettokens. | Indexen op identifier en vervaldatum; geen User-FK om enumeratie en flowkoppeling intern te houden. | Gevoelig en tijdelijk; verlopen/verbruikte records worden door Better Auth verwijderd. |
 | `RateLimit` | Gedeelde Better Auth-abusecounter per sleutel. | Unieke key; count en epoch-millisecond `lastRequest`. | Tijdelijke securitydata; productieproxy bepaalt betrouwbare IP-herkomst. |
-| `Organization` | Opdrachtgever, aanbieder of beide; contact- en bedrijfsgegevens plus optionele `logoStorageKey`, `logoMimeType`, `logoSizeBytes`, `logoWidth`, `logoHeight`, `logoUpdatedAt`. | Type/status-indexen; 1:n memberships/locations; 1:1 provider/creditaccount; unieke storage key en complete-logometadatacheck. KvK niet uniek. | `archivedAt`; contactvelden kunnen persoonsgegevens bevatten; geen binary, URL of absoluut opslagpad. |
-| `OrganizationMembership` | Gebruikersrol binnen organisatie. | Uniek `userId + organizationId`; indexen op beide FKs en status. | Status `REMOVED`; geen hard delete na gebruik. |
+| `Organization` | Opdrachtgever, aanbieder, beide of technische `PLATFORM_OPERATOR`; contact- en bedrijfsgegevens plus optionele logo-metadata en `systemKey`. | Type/status-indexen; nullable systemKey is uniek en alleen toegestaan/verplicht voor platformoperator. | Platformorganisatie wordt op systemKey herkend, niet op naam; bootstrap is niet automatisch uitgevoerd. |
+| `OrganizationMembership` | Actuele gebruikersrol binnen organisatie. | Uniek `userId + organizationId`; indexen op beide FKs en status. De toekomstige unieke `userId`-regel is nog niet actief. | Status `REMOVED`; bestaande multi-memberships blijven tijdens Expand geldig. |
+| `AccountProvisioningEvent` | Append-only accountprovisioning, lifecycle- en migratiegebeurtenis met subject, optionele actor/context, reden, correlation/idempotency key en veilige JSON. | Unieke nullable idempotency key; `RESTRICT` op alle historische relaties; indexes per actor, subject, context, type en tijd. | Geen `updatedAt`; database-trigger blokkeert update/delete; Fase 2B schrijft blokkeren en herstellen atomair met de statusmutatie; geen credentials, tokens of contactdata in metadata. |
+| `OrganizationMembershipEvent` | Append-only historie voor uitnodiging, rol, status, beëindiging, overdrachtsvoorbereiding en migratieclassificatie. | Verplichte stabiele membership-, User- en Organization-FK; optionele actor; unieke nullable idempotency key. | Database-trigger blokkeert update/delete; Fase 2B gebruikt afzonderlijke events voor OWNER toevoegen, OWNER overdragen en gewone rolwijziging. Membershipbeëindiging blijft fail-closed. |
+| `OrganizationProvisioningEvent` | Append-only systeemhistorie voor bootstrap, toekenning van een technische systeemidentiteit en activering van platformgovernance. | Verplichte Organization-FK, verplichte unieke idempotency key en expliciete `SYSTEM`/`USER`-actorsoort; een User-actor is alleen bij `USER` verplicht. | Database-trigger blokkeert update/delete; Fase 2A gebruikt uitsluitend `SYSTEM` met null `actorUserId`; metadata bevat geen persoonsgegevens of secrets. |
+| `DeletedAccountRetention` | Toekomstig maximaal dertig dagen durend retentiefundament met optionele encrypted e-mail, niet-loginbare hash en sleutelreferentie. | Unieke `subjectUserId`; alleen `RESTRICT`-relatie naar User; databasecheck op purgevenster en gekoppelde encrypted data/sleutelreferentie. | Geen encryptiecode, authrelatie, herstelpad of purgejob; productie blijft geblokkeerd tot KMS-/privacybesluiten. |
 | `OrganizationLocation` | Vestiging of werklocatie. | Organisatie-FK; landcodecheck; assignmentrelatie. | `archivedAt`; adres is potentieel gevoelig; primaire locatie wordt door de organisatieservice transactioneel bewaakt. |
 | `Sector` | Beheerbare sectorclassificatie. | Unieke slug; `isActive`-index. | Deactiveren, niet verwijderen wanneer gebruikt. |
 | `OrganizationSector` | Sectoren van een organisatie. | Uniek `organizationId + sectorId`. | Primaire sector wordt bij onboarding en wijziging server-side gevalideerd. |
@@ -46,7 +50,7 @@ Alle IDs zijn UUID’s. `createdAt` en `updatedAt` zijn UTC-timestamps tenzij an
 | --- | --- | --- |
 | `ProviderTaxonomy*` en mappingtabellen | Versieerbare diensten, competenties, regio’s, verzekeringen en ongewijzigde legacyreferenties; maximaal één gepubliceerde versie per taxonomie. | Gepubliceerd/gepensioneerd immutable; geen vrije selectiewaarden. |
 | `ProviderCapability*`, `ProviderSectorExperience*`, `ProviderWorkArea*` | Actuele roots met oplopende versie en append-only revisions met expliciet verificatieniveau. | Legacyclaims zijn uitsluitend `SELF_DECLARED`; bronwijziging invalideert projectie. |
-| `ProviderCapacitySnapshot` | Acceptatie nieuwe opdrachten, vroegste start, globale capaciteit, bevestiging en verval. | Append-only; geldigheid maximaal 30 dagen. |
+| `ProviderCapacitySnapshot` | Deprecated historische beschikbaarheids- en capaciteitsregistratie. | Append-only bewaard; geen nieuwe writes en geen gebruik voor completeness, readiness, selecteerbaarheid of selectie. |
 | `ProviderProfessional` en `ProviderProfessionalPrivateData` | Providergebonden professional en fysiek gescheiden naam/contactgegevens. | Persoonsgegevens ontbreken in Trusted Provider Projection. |
 | `ProviderProfessionalQualification*` en `ProviderOrganizationQualification*` | Versieerbare kwalificatie- en certificaatclaims met optionele private bewijsrevisie. | Revisions append-only; verificatie volgt alleen via reviewbesluit. |
 | `ProviderEvidence*` en `ProviderEvidenceScanDecision` | Private bestandsmetadata, checksum en afzonderlijk malware-/veiligheidsbesluit. | Geen bytes in database; revisions en scanbesluiten immutable. |
@@ -58,3 +62,21 @@ Alle IDs zijn UUID’s. `createdAt` en `updatedAt` zijn UTC-timestamps tenzij an
 | `ProviderBlock*` | Immutable blokkade en afzonderlijk herstelbesluit. | Vier ogen voor blokkeren en herstellen. |
 | `TrustedProviderProjection*` | Minimale gevalideerde providerfacts voor toekomstige Decision Engine. | Immutable en versioned; geen PII, evidence, marketing, credits, betaling of prestaties. |
 | `ProviderMigrationAudit` | Herleidbare legacybron-naar-doelregistratie. | Append-only en uniek per migratie, brontype en bron-ID. |
+
+## Providerdossierworkflow Module 6A.3.2
+
+| Model | Doel en constraints | Historie en gevoeligheid |
+| --- | --- | --- |
+| `ProviderDossierSubmission` | Logisch indieningsaggregate met actuele candidate, optimistic version en idempotency key. | Maximaal één actief per provider; alleen vastgestelde statusovergangen. |
+| `ProviderDossierCandidate` | Reproduceerbare hybride snapshot met bronversies, canonical JSON, SHA-256 en exacte bewijsrelaties. | Volledig immutable; nieuwe `PROVIDER-DOSSIER-2`-versies bevatten geen capaciteit, historische v1-candidates blijven intact. |
+| `ProviderDossierSubmissionHistory` | Actor- en candidategebonden statusaudit. | Append-only; reden bij zakelijke overgang. |
+| `ProviderDossierReviewCase` | Afgebakende beoordeling van exact één candidate. | Maximaal één open per provider; alleen gecontroleerd sluiten. |
+| `ProviderDossierFinding` | Providerveilige bevinding per dossieronderdeel met optionele interne notitie. | Append-only; inhoud kan compliance-informatie bevatten. |
+| `ProviderDossierFindingResolution` | Afzonderlijke, versieerbare reactie op een finding. | Append-only; een correctie schrijft een nieuwe versie. |
+| `ProviderProfessionalIdentityRevision` | Minimale naam, functionele rol en actiefstatus. | Append-only; geen privécontact, geboortedatum of adres. |
+### Module 6A.3.3 servicevelden
+
+- `ProviderDossierFindingResolution.candidateId`: optionele verwijzing naar de immutable candidate waarvoor een resolution bij herindiening opnieuw is vastgelegd. Historische resolutions blijven bewust `null`.
+- `ProviderProfile.version`: centrale optimistic-concurrencybron voor providerfactmutaties en invalidation.
+- completeness `policyVersion`: versie van de syntactische volledigheidspolicy; geen kwalificatie- of selecteerbaarheidsoordeel.
+- completeness `checksum`: reproduceerbare SHA-256 over policyversie, bronprofielversie en sectieresultaten.

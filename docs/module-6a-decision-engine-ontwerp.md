@@ -1,5 +1,7 @@
 # Module 6A.1 — Uitlegbare selectie van geschikte aanbieders
 
+> **Actuele productcorrectie (16 juli 2026):** Decision Engine v1 mag capaciteit, beschikbaarheid, capaciteitsbanden en vroegste startdata niet lezen, scoren of als knock-out gebruiken. De eerdere passages hierover zijn vervangen door B-173; aanbieders beslissen pas per uitnodiging of zij reageren.
+
 ## 1. Documentstatus
 
 - Werknaam: **WorkMatchr Decision Engine v1**.
@@ -772,7 +774,7 @@ De product owner moet beslissen of de exacte totaalscore aan opdrachtgevers zich
 1. **6A.0 — Ontwerp providerkwalificatie:** afgerond en geaccepteerd.
 2. **6A.1 — Ontwerp Decision Engine:** afgerond en product-ownergeaccepteerd.
 3. **6A.2 — Providerkwalificatie datamodel en services:** afgerond en product-ownergeaccepteerd; taxonomieën, dossiers, projectie, kwalificatiebesluiten, bewijsmetadata en integriteit zijn server-side gerealiseerd.
-4. **6A.3 — Provider-onboardinginterface:** volgende module, nog niet gestart; dossierflow, documenten, readiness, review en actualiseren.
+4. **6A.3 — Provider-onboardinginterface:** 6A.3.0 en 6A.3.1 geaccepteerd; 6A.3.2 technisch opgeleverd met product-owneracceptatie open; 6A.3.3 en de interface volgen nog.
 5. **6A.4 — Decision Engine datamodel en services:** modelversies, snapshots, rondes, evaluatoren en rapport.
 6. **6A.5 — Selectie-interface en acceptatie:** start/status/uitleg, security-, fairness- en product-owneracceptatie.
 7. **6B — Uitnodigingen en providertoegang.**

@@ -21,7 +21,7 @@
 - databasegebaseerde sessies en database-rate-limiting;
 - verwisselbare e-mailservice met Resend-voorbereiding.
 - transactionele organisatieservice met membershipgebaseerde tenantautorisatie;
-- server-side gevalideerde actieve-organisatiekeuze via HttpOnly-cookie;
+- server-side gevalideerde actieve-organisatiekeuze via HttpOnly-cookie in de huidige implementatie;
 - verwisselbare logo-opslag met lokale developmentadapter en Sharp-WebP-verwerking.
 - versieerbare intakevraagsets met immutable gepubliceerde versies;
 - getypeerde actuele intakeantwoorden met append-only revisie- en statushistorie;
@@ -49,6 +49,7 @@
 - Regels die meerdere rijen raken, zoals maximaal drie actieve selecties en een sluitend creditsaldo, worden later transactioneel in de servicelaag afgedwongen.
 - Beveiligde routes controleren sessie, platformrol en actuele accountstatus server-side via centrale helpers.
 - Organisatieacties controleren daarnaast actuele membershiprol en organisatie-/membershipstatus server-side.
+- ADR-013 Fase 1 Expand is additief geïmplementeerd met lifecyclevelden, platformorganisatie-identiteit en append-only provisioning-/membershiphistorie. De doelarchitectuur is nog niet geactiveerd: multi-memberships, actieve-organisatiecookie en requestcontext blijven tot Migrate/Contract werken. Reviewer/approverbinding en de auditoruitzondering zijn alleen als niet-geactiveerd fundament vastgelegd.
 - Iedere intake blijft gekoppeld aan de bij aanmaak vastgezette vraagsetversie; gepubliceerde inhoud wordt niet in-place gewijzigd.
 - Actuele antwoorden en revisies worden in de intakeservice atomair geschreven; type-, optie-, locatie- en tenantvalidatie is server-side verplicht.
 - Intakepagina’s en componenten benaderen Prisma niet rechtstreeks; reads en writes lopen via afzonderlijke intake-services.
@@ -68,7 +69,18 @@
 - De engine vult een uitkomst nooit kunstmatig aan: drie, twee, één of nul geschikte providers leiden respectievelijk tot drie, twee, één of geen geselecteerde providers. De volledige interne rangorde mag worden opgeslagen; reserveactivering is nooit automatisch en een vervolgselectie vereist een expliciete nieuwe actie.
 - Selectie activeert geen uitnodiging, providerrecht, credits of betaling. Opdrachtgevers zien kwalitatieve geschiktheidsredenen en relevante criteria, maar geen exacte interne scores, volledige rangorde of concurrentinformatie.
 - Lokale bestandsschijf wordt nooit als productieopslag gebruikt; productie zonder provider faalt veilig.
+- Providerdossierbeoordeling leest uitsluitend een immutable `ProviderDossierCandidate`, niet de mutable live-data. Candidates gebruiken `PROVIDER-DOSSIER-1`, `WORKMATCHR-CJ-1`, SHA-256 en expliciete bronversies.
+- Dossierindiening, intrekken, beoordeling, informatieverzoek en herindiening lopen transactioneel via centrale provider-dossierservices met tenantcontrole, expliciete providerpermissions, optimistic concurrency en idempotentie.
+- Findings en resolutions zijn append-only; dossiergoedkeuring veroorzaakt geen automatische platformkwalificatie, selecteerbaarheid of Trusted Provider Projection.
+- Providerfactmutaties gebruiken één centrale profielversie voor optimistic concurrency, maken readiness/selecteerbaarheid fail-closed en invalidateren de actuele Trusted Provider Projection zonder immutable candidates te wijzigen.
+- Dossiercompleetheid is een versioned syntactische policy en blijft strikt gescheiden van verificatie, kwalificatie en selecteerbaarheid. Dashboard-, sectie- en MEMBER-read-modellen selecteren tenantveilig alleen noodzakelijke velden.
+- Capaciteit en beschikbaarheid zijn per productbesluit van 16 juli 2026 geen providerprofiel- of selectiegegeven. Historische capaciteit blijft technisch leesbaar, maar nieuwe writes zijn uitgeschakeld en completeness, readiness, selecteerbaarheid, `PROVIDER-DOSSIER-2` en Trusted Provider Projection lezen deze data niet.
+- WorkMatchr is geen HR-systeem, personeelsplanning of diploma-administratie. Professionele gegevens blijven beperkt tot wat aantoonbaar nodig is voor platformbesluiten. ADR-013 bepaalt voor accountdata maximaal dertig dagen afgeschermde retentie na verwijdering en daarna anonimisering of verwijdering; bewaartermijnen voor overige organisatie-, dossier- en bewijsdata blijven afzonderlijk juridisch uit te werken.
 
 ## Bewust uitgestelde keuzes
+
+### ADR-013 platformidentiteit en provisioning
+
+De centrale platformorganisatie is een afzonderlijke systeemtenant met immutable `systemKey`, niet een organisatie die op naam wordt herkend. Systeemgedreven bootstrap gebruikt een expliciete systeemactor in append-only historie; onbekende legacyactoren blijven null en worden als `MIGRATED_UNKNOWN` verklaard. Normale tenant-, provider-, intake- en opdrachtgrenzen sluiten `PLATFORM_OPERATOR` fail-closed uit. De doelarchitectuur met één membership per normaal tenantaccount is nog niet geactiveerd.
 
 Betalingen, hosting, productieback-ups en andere infrastructuurkeuzes worden pas vastgelegd in de module waarin ze nodig zijn. De definitieve object-storageprovider, auditlogging en membershipbeheer zijn bewust uitgesteld.

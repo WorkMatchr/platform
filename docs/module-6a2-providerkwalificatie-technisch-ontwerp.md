@@ -1,5 +1,7 @@
 # Module 6A.2.0 — Technische impactanalyse providerkwalificatie
 
+> **Doelarchitectuur ADR-013 (17 juli 2026, nog niet geïmplementeerd):** de actieve-organisatiecookie vervalt na een afzonderlijke tenantaccountmigratie. Reviewer en approver vereisen dan naast hun permission een actieve membership bij de centrale WorkMatchr-beheerorganisatie; de auditor is de expliciete uitzondering zonder organisatiemembership. Dit wijzigt de providerkwalificatie, fail-closed regels en vier-ogencontrole uit dit ontwerp niet.
+
 ## Status
 
 - Fase: technische impactanalyse afgerond.
@@ -708,3 +710,7 @@ De product owner heeft de resterende v1-besluiten vastgesteld. De technische uit
 De eerste gepubliceerde taxonomie bevat de vijf vastgestelde diensten, acht competenties, bestaande specialismen/sectoren/certificeringstypen, twaalf provincies, `NATIONWIDE`, `REMOTE` en twee verzekeringstypen. Juridische documentversies blijven concept en inhoudelijke capability- en verzekeringsvereisten worden niet positief geseed. Legacyrelaties worden uitsluitend als `SELF_DECLARED` gekopieerd en verhogen geen status.
 
 `WORKMATCHR-CJ-1` bouwt de Trusted Provider Projection deterministisch en bewaart SHA-256, schema-, canonicalisatie- en bronversie. De projectie bevat geen PII, bewijsmetadata, vrije marketingtekst, credits, betaling of prestaties. Iedere providerbronmutatie schrijft een projectie-invalidation. De Decision Engine en alle UI blijven buiten Module 6A.2.
+
+## Relatie met ADR-013 Fase 1
+
+De bestaande `ProviderPlatformPermissionGrant` blijft het enige permissionmodel. ADR-013 Expand voegt alleen de technische platformorganisatie-identiteit en een niet-geactiveerde foundationpolicy toe. Reviewer en approver krijgen nog geen automatische membership of permission; auditor krijgt geen nieuwe rechten. Providerkwalificatie, vier-ogenchecks en immutable historie blijven inhoudelijk ongewijzigd.

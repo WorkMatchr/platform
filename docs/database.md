@@ -163,3 +163,39 @@ Module 6A.2 voegt vijf additieve migraties toe. `ProviderProfile` blijft aggrega
 - bewijsbytes staan niet in PostgreSQL; scanresultaten zijn afzonderlijke immutable besluiten.
 
 De seed publiceert alleen vastgestelde referentietaxonomieën. Juridische documentversies blijven `DRAFT`; verzekerings- en capabilityvereistenconfiguraties blijven leeg. Daardoor kan seed of migratie nooit automatisch een provider kwalificeren of selecteerbaar maken. Legacybackfill is idempotent via unieke bron-ID’s en schrijft uitsluitend `SELF_DECLARED` plus `ProviderMigrationAudit`.
+
+## Providerdossierworkflow — Module 6A.3.2
+
+Twee additieve migraties introduceren `ProviderDossierSubmission`, immutable `ProviderDossierCandidate`, append-only statushistorie, reviewcases, findings en afzonderlijke resolutions. Een partial unique index staat per provider maximaal één actieve submission en één open reviewcase toe. Candidates bewaren schema- en canonicalisatieversie, bronprofielversie, canonical JSON, SHA-256, bronreferenties en echte foreign keys naar capaciteit en bewijsrevisies.
+
+Nieuwe professionalidentiteiten worden append-only gereviseerd; historische ontbrekende revisies worden niet verzonnen. `confirmedByUserId` en candidatebinding zijn nullable voor historie, maar nieuwe capacitywrites vereisen een actor en maximaal dertig dagen geldigheid. Triggers beschermen candidates, historie, findings en resolutions tegen update/delete en begrenzen geldige workflowovergangen. Alle relaties gebruiken `RESTRICT`; de migraties bevatten geen destructieve wijziging of positieve kwalificatiebackfill.
+### Aanvulling Module 6A.3.3
+
+De niet-destructieve migratie `20260715170000_complete_provider_dossier_resubmission_binding`:
+
+- voegt een nullable `candidateId` met `RESTRICT`-relatie toe aan findingresolutions, zodat historische records zonder fictieve backfill geldig blijven;
+- valideert bij nieuwe candidategebonden resolutions dat de candidate tot dezelfde submission en een herindiening behoort;
+- staat de bindend besloten overgang van `ADDITIONAL_INFORMATION_REQUIRED` naar `WITHDRAWN` toe;
+- wijzigt of verwijdert geen bestaande dossier-, provider- of legacydata.
+
+Alle providerfactmutaties lopen transactioneel via optimistic concurrency en verhogen centraal de profielversie. Daardoor worden readiness en selecteerbaarheid fail-closed gemaakt en wordt een actuele Trusted Provider Projection ongeldig verklaard, zonder een lopende immutable dossiercandidate te wijzigen.
+
+### Deprecatie capaciteit — 16 juli 2026
+
+`ProviderCapacitySnapshot`, `ProviderCapacityLevel`, de optionele candidatebinding en bestaande databaseconstraints blijven uitsluitend voor historische compatibiliteit bestaan. De applicatie schrijft geen nieuwe capaciteitssnapshots, vereist geen 30-dagenbevestiging en gebruikt capaciteit niet voor dossiercompleetheid, readiness, selecteerbaarheid of projecties. Nieuwe dossiercandidates gebruiken `PROVIDER-DOSSIER-2` en laten `capacitySnapshotId` leeg; bestaande `PROVIDER-DOSSIER-1`-candidates blijven immutable en reproduceerbaar.
+
+De additieve migratie `20260716120000_simplify_provider_qualification_input` voegt alleen `isCertified` met veilige standaardwaarde `false` toe aan professionele kwalificatierevisies. Zij verwijdert of herinterpreteert geen historische kwalificatiegegevens.
+
+## Opt-in testdataset dienstverleners
+
+De gewone referentieseed bevat nooit organisaties of personen. Voor providerkwalificatie- en filtertests bestaat daarom een afzonderlijke, volledig fictieve dataset in de gereserveerde lokale database `workmatchr_test_providers`. Laden, controleren en verwijderen gebeurt uitsluitend via de expliciete `seed:test-providers`-commando’s. Zie [Deterministische testdataset dienstverleners](test-provider-dataset.md) voor de veiligheidsgrenzen, verdeling en testscenario’s.
+
+## ADR-013 Fase 1 — Expand
+
+Migratie `20260717150000_add_adr013_expand_foundation` breidt het schema additief uit met toekomstige accountstatussen, nullable lifecycleprojecties, `PLATFORM_OPERATOR`, unieke nullable `Organization.systemKey`, append-only provisioning- en membershipevents en een afzonderlijk retentiefundament. Eventtabellen hebben database-triggers tegen update/delete en `RESTRICT`-relaties naar blijvende auditidentiteiten. `User.createdByUserId` is een nullable praktische projectie met `SET NULL`; events blijven de auditbron.
+
+Er is geen membership-uniciteit, data-backfill, platformorganisatie, statusovergang of accountverwijderingsflow geactiveerd. De seed blijft referentiedata-only. De platformorganisatie heeft een afzonderlijke expliciete bootstrap met dry-run als standaard. Zie [technische implementatie](adr-013-fase-1-expand-technische-implementatie.md).
+
+### ADR-013 Fase 2A
+
+Migratie `20260717190000_add_platform_provisioning_events` voegt `OrganizationProvisioningEvent` en de actorsoorten `SYSTEM`/`USER` toe. Databasechecks bewaken de actorbinding, idempotency en positieve schemaversie; dezelfde append-only trigger weigert update/delete. Na back-up en dry-run is exact één platformorganisatie gebootstrapt en zijn drie systeemevents plus twee `MIGRATED_UNKNOWN`-accountevents geschreven. De tenantmemberships en authdata zijn ongewijzigd. Zie [Fase 2A — Platform en provisioning](adr-013-fase-2a-platform-en-provisioning.md).

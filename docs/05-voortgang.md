@@ -320,6 +320,21 @@ Module 5C.1, Module 5C.2 en Module 5C.3 zijn afgerond en product-ownergeacceptee
 
 Module 5C is technisch en door de product owner geaccepteerd. De afzonderlijke acceptatiestatussen van Module 5A en 5B.2 blijven ongewijzigd.
 
+## Module 5D.0 — Ontwerp Intake & Submission Improvements
+
+**Status:** ontwerp in uitvoering; nog niet product-ownergeaccepteerd en niet geïmplementeerd.
+
+- de bestaande intake-, opdrachtvormings- en publicatieflow wordt onderzocht op begrijpelijkheid en noodzakelijke beslismomenten;
+- een permissionlaag voor gedelegeerde procesbevoegdheden naast `OWNER`, `ADMIN` en `MEMBER` is voorgesteld in ADR-012;
+- bestaande organisatielocaties, tijdelijke opdrachtlocaties en volledig remote uitvoering worden als afzonderlijke locatievormen ontworpen;
+- `IntakeLocation`, append-only locatierevisies en een immutable `AssignmentLocationSnapshot` zijn als toekomstige domeinobjecten uitgewerkt;
+- een nieuwe vraagsetversie is vereist; het gepubliceerde `PRIMARY_LOCATION` uit versie 1 blijft immutable;
+- de beoogde flow is **Vragen → Controleoverzicht → Definitief indienen → Succes**, met maximaal twee expliciete beslissingen wanneer overdracht aan een bevoegde collega nodig is;
+- indienen, publiceren en later gunnen blijven afzonderlijke procesrechten en afzonderlijke workflowhandelingen;
+- Module 5D.0 wijzigt geen code, Prisma, migratie, route, service, test, dependency of configuratie.
+
+ADR-012 heeft status `Voorgesteld`. Alle genoemde datamodellen, permissioncodes, migratiefasen en interfaces blijven ontwerp totdat de product owner de openstaande governance-, juridische, AVG- en locatiebesluiten expliciet heeft genomen.
+
 ## Module 6A — Uitlegbare selectie van geschikte aanbieders
 
 **Status:** ontwerpfase; geen providerkwalificatie- of Decision Engine-functionaliteit geïmplementeerd.
@@ -383,7 +398,7 @@ Module 5C is technisch en door de product owner geaccepteerd. De afzonderlijke a
 ### Overige vervolgstatus
 
 - Module 6A.2 — Providerkwalificatie datamodel en services: afgerond en product-ownergeaccepteerd;
-- Module 6A.3 — Provider-onboardinginterface: volgende module; niet gestart;
+- Module 6A.3 — Provider-onboardinginterface: 6A.3.0 tot en met 6A.3.4 afgerond en product-ownergeaccepteerd; ADR-011 geaccepteerd; 6A.3.5 in uitvoering met handmatige rollen-, mobiele en browseracceptatie open;
 - Module 6A.4 — Decision Engine datamodel en services: niet gestart;
 - Module 6A.5 — Selectie-interface en acceptatie: niet gestart.
 
@@ -404,4 +419,82 @@ Module 5C is technisch en door de product owner geaccepteerd. De afzonderlijke a
 - de product owner heeft de volledige fail-closed providerkwalificatiefundering geaccepteerd;
 - geen provider wordt automatisch geverifieerd, gekwalificeerd of selecteerbaar en zonder volledige geldige configuratie ontstaat geen Trusted Provider Projection.
 
-De eerstvolgende aanbevolen module is Module 6A.3 — Provider-onboardinginterface. Deze module is nog niet gestart. Decision Engine, matching, uitnodigingen, credits en Mollie blijven niet geïmplementeerd.
+### Module 6A.3.0 — UX- en functioneel ontwerp Provider Onboarding Interface
+
+**Status:** afgerond en product-ownergeaccepteerd op 15 juli 2026.
+
+- **Mijn providerdossier** is als centraal providerconcept uitgewerkt;
+- een informatiearchitectuur met zeven taakgerichte groepen voorkomt te veel navigatiestappen;
+- dashboard, vijf afzonderlijke statussamenvattingen, volledigheid en eerstvolgende actie zijn ontworpen;
+- bedrijfsgegevens worden uit bestaand organisatiebeheer hergebruikt en niet dubbel opgeslagen;
+- diensten, sectorervaring, werkgebied, capaciteit, professionals, kwalificaties, verzekeringen, bewijsstukken en verklaringen zijn functioneel uitgewerkt;
+- OWNER en ADMIN beheren en dienen later in; MEMBER krijgt in v1 een veilige read-only ervaring;
+- verificatie, kwalificatie, readiness, selecteerbaarheid en blokkades blijven server-side en afzonderlijk;
+- zestien tekstuele wireframes, Nederlandse routes, componentmodel, foutscenario’s, mobiele UX en WCAG 2.2 AA zijn beschreven;
+- productieopslag, scanning, juridische configuratie, reviewworkflow en indieningscontracten blijven fail-closed of open;
+- er zijn geen wijzigingen uitgevoerd aan Prisma, migraties, services, routes, Server Actions, UI, tests, dependencies of configuratie.
+
+De product owner heeft aanvullend vastgesteld dat de vijf zichtbare statusbegrippen gescheiden blijven, MEMBER volledig read-only is, handmatig opslaan wordt gebruikt, beoordeling een vastgezette candidate leest en alleen aangewezen onderdelen gecontroleerd kunnen worden heropend. De minimale professionalidentiteit en de productie-fail-closedgrens voor PDF-bewijs zijn eveneens vastgesteld.
+
+### Module 6A.3.1 — Technische impactanalyse Provider Onboarding Interface
+
+**Status:** afgerond en product-ownergeaccepteerd op 15 juli 2026.
+
+- de bestaande providerbackend is per dossieronderdeel beoordeeld op lezen, aanmaken, wijzigen, archiveren, revisies en UI-gereedheid;
+- create-only services voor capabilities, sectorervaring, werkgebied, professionals, kwalificaties, verzekeringen en bewijsmetadata vereisen eerst veilige read-, revise- en archivecontracten;
+- een providerquery- en presentatielaag met een geminimaliseerd MEMBER-read-model is ontworpen;
+- een immutable dossiercandidate, transactionele indiening, append-only statushistorie, gerichte findings en expliciete herindiening zijn vastgesteld;
+- dossierconcept en indienbaarheid blijven afgeleide statussen; reviewstatussen worden opgeslagen en blijven gescheiden van readiness, qualification en selectability;
+- de publieke logo-opslag is ongeschikt voor bewijs; productie-upload blijft zonder private storage, malwarecontrole en downloadaudit fail-closed;
+- database-impact, foutcodes, Server Action-contract, concurrency, invalidation, security, privacy, performance en teststrategie zijn uitgewerkt;
+- ADR-011 is als architectuurbeslissing geaccepteerd en vormt de bindende basis voor de schema-implementatie;
+- er zijn geen code-, Prisma-, migratie-, route-, UI-, test-, dependency- of configuratiewijzigingen uitgevoerd.
+
+### Module 6A.3.2–6A.3.5 — Implementatieplan
+
+**Status:** 6A.3.2 tot en met 6A.3.4 afgerond en product-ownergeaccepteerd op 15 juli 2026. 6A.3.5 is in uitvoering; automatische acceptatie is geslaagd en handmatige rollen-, mobiele en browseracceptatie staat open.
+
+- 6A.3.2 bouwt via maximaal twee additieve migraties candidates, submissions, statushistorie, reviewcases, findings, resolutions, professionalidentiteitsrevisies, capaciteitsactor en candidatebinding;
+- 6A.3.3 bouwt revision/archivewrites, submission, withdrawal, resubmission, completeness, queryservices, MEMBER-read-model en presentatiemodellen;
+- 6A.3.4 bouwt de Nederlandse providerinterface met zeven navigatiegroepen, handmatig opslaan, dunne Server Actions en gecontroleerde indiening;
+- 6A.3.5 voert database-, service-, rollen-, browser-, concurrency-, WCAG- en product-owneracceptatie uit;
+- ADR-011 heeft status `Geaccepteerd`;
+- bewijsupload blijft productie-fail-closed en gebruikt nooit de publieke logo-opslag;
+- Decision Engine, matching, uitnodigingen, credits en Mollie blijven niet geïmplementeerd.
+
+### Vervolgstatus
+
+- Module 6A.3: nog niet geïmplementeerd;
+- Module 6A.4 — Decision Engine datamodel en services: niet gestart;
+- Module 6A.5 — Selectie-interface en acceptatie: niet gestart;
+- matching, uitnodigingen, credits en Mollie: niet geïmplementeerd.
+
+Module 6A.3.2 tot en met 6A.3.4 zijn afgerond en product-ownergeaccepteerd. Tijdens 6A.3.5 zijn zichtbare technische enumwaarden vertaald en ARIA-foutkoppelingen en waarschuwingen bij niet-opgeslagen workflowwijzigingen hersteld. Automatische, database- en veilige unauthenticated runtimecontroles zijn geslaagd. Volledige OWNER/ADMIN/MEMBER-, indienings-/herindienings-, mobiele, WCAG- en visuele browseracceptatie staat handmatig open; daarom blijven 6A.3.5 en Module 6A.3 als geheel niet afgerond.
+
+Tijdens de product-owneracceptatie is daarnaast de inconsistentie tussen authenticatie, navigatie en providercontext hersteld. Publieke en dashboardheader, layouts, pagina’s en Server Components lezen nu dezelfde request-scoped Better Auth-gebruiker en server-side gevalideerde actieve membership. De dashboardheader volgt organisatie- en sessievernieuwing en toont nooit `Inloggen` voor een gevalideerd ingelogde gebruiker. Gerichte regressietests dekken publieke bezoeker, opdrachtgever, provider, logout, organisatiewissel en sessievernieuwing. De handmatige product-owneracceptatie van Module 6A.3.5 blijft open.
+
+Een tweede acceptatiebevinding rond rollenweergave is hersteld. Het accountscherm toont platformrol en rol binnen de actieve organisatie afzonderlijk, samen met organisatienaam, organisatietype en organisatiestatus. Bij meerdere organisaties is de actieve organisatie expliciet en kan deze met de bestaande server-side gevalideerde wisselactie worden gewijzigd. Regressietests dekken één organisatie, meerdere organisaties, `OWNER`, `ADMIN`, `MEMBER` en een actieve-organisatiewissel. De handmatige product-owneracceptatie van Module 6A.3.5 blijft open.
+
+Aanvullende acceptatiebevindingen zijn technisch hersteld zonder Module 6A.3.5 af te ronden. De accountgrid voorkomt overlap van lange waarden; de vrijwel onzichtbare professional-CTA gebruikte onbestaande `bg-brand`/`text-brand`-tokens en is vervangen door het bestaande `LinkButton`; providerrollen en tenantgrenzen blijven server-side afgedwongen. Open actions dragen nu expliciete route-, pagina- en hoofdgroepmetadata, Sectorervaring houdt **Diensten en ervaring** actief en de donkere actiekaart volgt de inhoudshoogte. Remote blijft onafhankelijk van provincies en Landelijk, technische UUID-copy is verwijderd en zichtbare verzekeringscopy gebruikt `verzekeringsgegevens`. Volledige handmatige hercontrole op circa 390px, tablet, desktop, 200% zoom en OWNER/ADMIN/MEMBER blijft open.
+
+### ADR-013 Fase 1 — Expand
+
+Het additive technische fundament is op 17 juli 2026 geïmplementeerd: toekomstige accountstatussen en lifecycleprojecties, `PLATFORM_OPERATOR` met unieke `systemKey`, append-only provisioning- en membershipevents, nullable `createdByUserId`, een expliciete platformorganisatiebootstrap en een maximaal dertig dagen begrensd retentiedatamodel. De lokale migratie is na een gevalideerde back-up uitgevoerd. Er is geen platformorganisatie gebootstrapt en geen bestaande User, membership, organisatie, authrecord of tenantcontext gemigreerd. Migrate en Contract zijn niet gestart; Module 6A.3-statussen zijn hierdoor niet gewijzigd.
+
+De informatiearchitectuur van **Diensten en ervaring** is aanvullend hersteld met `/aanbiedersdossier/diensten-en-ervaring` als overzichtspagina. De hoofdgroep opent daar twee duidelijke, responsieve en toetsenbordbedienbare sectiekaarten voor **Diensten en specialismen** en **Sectorervaring**. De open actie **Vul sectorervaring in** blijft rechtstreeks naar `/aanbiedersdossier/sectorervaring` wijzen en beide detailpagina's houden dezelfde hoofdgroep actief. Handmatige product-owneracceptatie op mobiel, tablet en desktop blijft open.
+
+De PostgreSQL `client.query`-deprecationwaarschuwing is opnieuw onderzocht. Het integriteitsscript gebruikt de Promise-interface met expliciete `connect()`, geawaitte `query()`-aanroepen en `end()`. De volledige tijdelijke-databasecontrole is op 15 juli 2026 zonder deprecationwaarschuwing geslaagd en heeft de tijdelijke database in de `finally`-cleanup verwijderd.
+
+### ADR-013 Fase 2A — Platform en provisioning
+
+**Status:** afgerond en product-ownergeaccepteerd op 17 juli 2026.
+
+Na een gecontroleerde back-up en dry-run is exact één `PLATFORM_OPERATOR` met `WORKMATCHR_PLATFORM` geactiveerd. De goedgekeurde uitgenodigde User zonder membership is `MIGRATION_TEMP`; beide bestaande Users hebben exact één append-only `MIGRATED_UNKNOWN`-event met null-actor en behouden null `createdByUserId`. Drie systeemevents leggen bootstrap, systeemidentiteit en governance vast. De tweede execute was volledig idempotent. De product owner heeft de technische oplevering op 17 juli 2026 geaccepteerd. Preflight 2.0 toont nog uitsluitend multi-membership als blocker en behoudt beide last-OWNER-waarschuwingen. Fase 2B, de één-membershipmigratie en Contract zijn niet gestart.
+
+### ADR-013 Fase 2B — Lifecycle en tenant
+
+De product owner heeft de bevoegdhedenmatrix aangevuld en goedgekeurd. OWNER toevoegen en OWNER overdragen zijn afzonderlijke acties; creatorbeheer beperkt alleen het bereik van bestaande rechten; centraal platformbeheer vereist `ACTIVE`, `PlatformRole.ADMIN` en actieve membership bij `WORKMATCHR_PLATFORM`; self-block wordt altijd geweigerd; membershipbeëindiging blijft fail-closed.
+
+De servicelaag, tenantguards, platformactorpolicies en Nederlandse accountbeheerinterface zijn technisch gerealiseerd zonder Prisma- of migratiewijziging. Blokkeren en herstellen zijn transactioneel, idempotent en append-only geaudit; blokkeren trekt sessies en wachtwoordresetmiddelen in. Last-OWNER-, tenant-, platform- en migratiebescherming zijn fail-closed. Preflight 3.0 en tijdelijke-database-integratietests zijn toegevoegd. De bekende legacy User met meerdere memberships blijft de enige migratieblocker en is niet gewijzigd. Product-owneracceptatie van Fase 2B staat open.
+
+De accountbeheerpagina ondersteunt nu tevens uitnodigingen binnen dezelfde tenant. OWNER kan MEMBER en ADMIN uitnodigen; ADMIN uitsluitend MEMBER. User, Better Auth-credential, membership en audittrail ontstaan transactioneel; verificatie activeert User en membership atomair; de gebruiker stelt daarna een eigen wachtwoord in en krijgt uitsluitend een eigen sessie. OWNER-toekenning en platformbeheer blijven buiten deze uitnodigingsflow. Product-owneracceptatie blijft open.

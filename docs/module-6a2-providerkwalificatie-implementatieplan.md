@@ -1,5 +1,9 @@
 # Module 6A.2.1 — Implementatieplan providerkwalificatie
 
+> **Actuele productcorrectie (16 juli 2026):** `ProviderCapacitySnapshot` blijft uitsluitend voor historische compatibiliteit bestaan. Nieuwe writes zijn uitgeschakeld en capaciteit telt niet mee in completeness, readiness, selecteerbaarheid, dossiercandidates of Trusted Provider Projection.
+
+> **Doelarchitectuur ADR-013 (17 juli 2026, nog niet geïmplementeerd):** reviewer en approver krijgen een actieve membership bij de centrale WorkMatchr-beheerorganisatie én een expliciete permission; de auditor kan zonder organisatiemembership bestaan. Alleen centraal WorkMatchr-beheer kent platformpermissions toe. De beoordeelde provider blijft een verboden membershipcontext voor reviewer en approver.
+
 ## 1. Documentstatus
 
 - Datum: 14 juli 2026.

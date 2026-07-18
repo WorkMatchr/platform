@@ -1,5 +1,7 @@
 # Module 6A.0 — Providerkwalificatie en onboarding
 
+> **Actuele productcorrectie (16 juli 2026):** alle capaciteitseisen in dit historische ontwerp zijn vervangen door B-173. Aanbieders beslissen per uitnodiging of zij reageren; capaciteit wordt niet meer uitgevraagd of gebruikt voor volledigheid, readiness, selecteerbaarheid of selectie.
+
 ## Status
 
 - Fase: ontwerp afgerond.
@@ -7,7 +9,7 @@
 - Product-owneracceptatie: geslaagd op 14 juli 2026.
 - Implementatie van de gekoppelde Module 6A.2: afgerond en product-ownergeaccepteerd op 15 juli 2026.
 - Dit 6A.0-ontwerp zelf bevatte geen schemawijzigingen; de geaccepteerde databasefundering is later in Module 6A.2 gerealiseerd.
-- Actuele vervolgstatus: Module 6A.3 — Provider-onboardinginterface is de volgende module en is nog niet gestart.
+- Actuele vervolgstatus: Module 6A.3 — Provider-onboardinginterface is de volgende module; 6A.3.0 en 6A.3.1 zijn geaccepteerd en 6A.3.2 is technisch opgeleverd met product-owneracceptatie open.
 
 ## 1. Doel
 
@@ -645,7 +647,7 @@ Module 6A.0 is product-ownergeaccepteerd. De acceptatie bevestigt dat:
 1. **Module 6A.0 — Ontwerp providerkwalificatie:** afgerond en product-ownergeaccepteerd.
 2. **Module 6A.1 — Ontwerp Decision Engine:** afgerond en product-ownergeaccepteerd.
 3. **Module 6A.2 — Providerkwalificatie datamodel en services:** afgerond en product-ownergeaccepteerd.
-4. **Module 6A.3 — Provider-onboardinginterface:** volgende module; nog niet gestart.
+4. **Module 6A.3 — Provider-onboardinginterface:** 6A.3.0 en 6A.3.1 geaccepteerd; 6A.3.2 technisch opgeleverd met product-owneracceptatie open; 6A.3.3 niet gestart.
 5. **Module 6A.4 — Decision Engine datamodel en services:** nog niet gestart.
 6. **Module 6A.5 — Selectie-interface en acceptatie:** nog niet gestart.
 

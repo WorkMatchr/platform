@@ -13,7 +13,7 @@ WorkMatchr heeft een relationele databasefundering nodig voor organisaties, aanb
 - Prisma ORM beheert schema, migrations, gegenereerde TypeScript-client en lokale seed.
 - Primaire sleutels zijn UUID’s.
 - User en Organization zijn gescheiden.
-- Memberships ondersteunen meerdere organisaties per gebruiker.
+- Memberships modelleren tenantrol, status en historie. De oorspronkelijke ondersteuning voor meerdere organisaties per gebruiker is voor de doelarchitectuur gesupersedeerd door ADR-013: een normaal tenantaccount krijgt maximaal één actieve membership.
 - Organization kan `CLIENT`, `PROVIDER` of `BOTH` zijn.
 - Zakelijke foreign keys gebruiken `RESTRICT`.
 - Credits gebruiken een append-only grootboek plus afgeleid saldo.
@@ -49,3 +49,4 @@ Gebruikers, organisaties, intakes, opdrachten en providerdata worden gearchiveer
 - PostgreSQL-specifieke migrations zijn onderdeel van de codebase.
 - Productie vereist migrationdeploy, backups, monitoring en een providerkeuze.
 - JSON blijft beperkt tot score-uitleg en auditcontext en krijgt later runtime-schema-validatie.
+- ADR-013 Fase 1 en 2A hebben additieve lifecycle-, provisioning- en platformorganisatievelden plus append-only historie toegevoegd. De unieke membershipregel mag pas na handmatige oplossing van alle multi-membershipconflicten worden geactiveerd; de overige relationele en historische uitgangspunten uit dit ADR blijven gelden.

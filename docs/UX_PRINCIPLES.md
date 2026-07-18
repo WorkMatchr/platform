@@ -1,5 +1,7 @@
 # UX-principes WorkMatchr
 
+> Module 6A.3.2 wijzigt geen interface. Dossierconcept en indienbaarheid blijven afgeleid; de zeven ontworpen navigatiegroepen en toegankelijke formulieren volgen pas in 6A.3.4.
+
 1. De gebruiker hoeft niet vooraf te weten welke specialist nodig is.
 2. De homepage maakt binnen vijf seconden duidelijk wat de gebruiker kan doen en wat WorkMatchr daarna doet.
 3. Eén invoer ondersteunt zowel concrete specialistvragen als open hulpvragen.

@@ -1,5 +1,7 @@
 # ADR-008 — Providerkwalificatie als fundament voor selectie
 
+> **Actuele productcorrectie (16 juli 2026):** de eerdere capaciteitseisen in deze ADR zijn voor toekomstige uitvoering vervangen door B-173. WorkMatchr is geen personeelsplanning. Beschikbaarheid, capaciteitsband, vroegste startdatum en 30-dagenbevestiging zijn geen completeness-, readiness-, selecteerbaarheids- of selectiecriterium. Historische modellen blijven niet-destructief bewaard.
+
 ## Status
 
 Geaccepteerd door de product owner op 14 juli 2026.

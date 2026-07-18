@@ -74,6 +74,26 @@ erDiagram
   }
 ```
 
+## ADR-013 Fase 1 — accountarchitectuur Expand
+
+```mermaid
+erDiagram
+  User ||--o{ User : created_by_projection
+  User ||--o{ AccountProvisioningEvent : provisioning_subject
+  User ||--o{ AccountProvisioningEvent : provisioning_actor
+  User ||--o{ OrganizationMembershipEvent : membership_subject
+  User ||--o{ OrganizationMembershipEvent : membership_actor
+  User ||--o| DeletedAccountRetention : temporary_retention
+  Organization ||--o{ AccountProvisioningEvent : provisioning_context
+  Organization ||--o{ OrganizationMembershipEvent : membership_context
+  Organization ||--o{ OrganizationProvisioningEvent : system_provisioning
+  User ||--o{ OrganizationProvisioningEvent : optional_user_actor
+  OrganizationMembership ||--o{ AccountProvisioningEvent : provisioning_context
+  OrganizationMembership ||--o{ OrganizationMembershipEvent : append_only_history
+```
+
+De drie eventmodellen zijn databasebreed append-only. `OrganizationProvisioningEvent` maakt systeemgedreven bootstrap expliciet zonder een fictieve User-actor. Retentie is geen authenticatiemodel. De doelconstraint van maximaal één membership per normale tenant-User is bewust nog niet toegevoegd.
+
 ## Aanbieders en expertise
 
 ```mermaid
@@ -239,6 +259,25 @@ erDiagram
     AssignmentResolutionType type
   }
 ```
+
+## Providerdossierworkflow
+
+```mermaid
+erDiagram
+  ProviderProfile ||--o{ ProviderDossierSubmission : submits
+  ProviderDossierSubmission ||--|{ ProviderDossierCandidate : versions
+  ProviderDossierSubmission ||--o{ ProviderDossierSubmissionHistory : records
+  ProviderDossierCandidate ||--o{ ProviderDossierReviewCase : reviewed_as
+  ProviderDossierReviewCase ||--o{ ProviderDossierFinding : contains
+  ProviderDossierFinding ||--o{ ProviderDossierFindingResolution : resolved_by
+  ProviderDossierCandidate ||--o{ ProviderDossierFindingResolution : binds_resubmission
+  ProviderDossierCandidate ||--o{ ProviderDossierCandidateEvidence : references
+  ProviderEvidenceRevision ||--o{ ProviderDossierCandidateEvidence : frozen_in
+  ProviderProfessional ||--o{ ProviderProfessionalIdentityRevision : identifies
+  User ||--o{ ProviderDossierSubmissionHistory : acts
+```
+
+`ProviderDossierCandidate` en alle historie-/finding-/resolutionrecords zijn immutable. Nieuwe herindieningsresoluties zijn aan de nieuwe candidate gebonden; historische resolutions blijven zonder fictieve backfill geldig. Partial unique indexes bewaken één actieve submission en één open reviewcase per provider.
 
 ## Credits en audit
 
