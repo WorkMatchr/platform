@@ -1,10 +1,30 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
+import { Button, type ButtonVariant } from '@/components/ui/button'
 import { authClient } from '@/lib/auth-client'
 
-export function LogoutButton() {
+type LogoutButtonProps = {
+  className?: string
+  variant?: ButtonVariant
+}
+
+export function LogoutButton({ className = '', variant = 'outline' }: LogoutButtonProps) {
   const [loading, setLoading] = useState(false)
-  return <Button variant="outline" loading={loading} onClick={async () => { setLoading(true); await authClient.signOut(); window.location.assign('/') }}>Uitloggen</Button>
+
+  async function handleLogout() {
+    setLoading(true)
+    try {
+      await authClient.signOut()
+      window.location.assign('/')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Button className={className} variant={variant} loading={loading} onClick={handleLogout}>
+      Uitloggen
+    </Button>
+  )
 }

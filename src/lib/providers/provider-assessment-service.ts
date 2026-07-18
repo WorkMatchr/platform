@@ -15,14 +15,10 @@ export async function calculateProviderReadiness(providerProfileId: string, at =
     })
     if (!provider) throw new ProviderServiceError('NOT_FOUND')
     const reasons: string[] = []
-    const [capabilityCount, workAreaCount, capacity] = await Promise.all([
-      transaction.providerCapability.count({ where: { providerProfileId, status: 'ACTIVE', revisions: { some: { serviceTermId: { not: null } } } } }),
-      transaction.providerWorkArea.count({ where: { providerProfileId, status: 'ACTIVE' } }),
-      transaction.providerCapacitySnapshot.findFirst({ where: { providerProfileId }, orderBy: { confirmedAt: 'desc' } }),
-    ])
+    const capabilityCount = await transaction.providerCapability.count({ where: { providerProfileId, status: 'ACTIVE', revisions: { some: { serviceTermId: { not: null } } } } })
+    const workAreaCount = await transaction.providerWorkArea.count({ where: { providerProfileId, status: 'ACTIVE' } })
     if (capabilityCount === 0) reasons.push('CAPABILITIES_INCOMPLETE')
     if (workAreaCount === 0) reasons.push('WORK_AREAS_INCOMPLETE')
-    if (!capacity || capacity.validUntil <= at) reasons.push('CAPACITY_STALE')
     try {
       await requirePlatformQualificationBasis(transaction, providerProfileId, at)
     } catch (error) {
@@ -49,7 +45,6 @@ export async function calculateProviderSelectability(providerProfileId: string, 
         platformQualificationStatus: true,
         readinessAssessments: { orderBy: { createdAt: 'desc' }, take: 1 },
         blocks: { where: { release: null }, select: { id: true } },
-        capacitySnapshots: { orderBy: { confirmedAt: 'desc' }, take: 1 },
         capabilities: {
           where: { status: 'ACTIVE' },
           select: { id: true, qualificationDecisions: { where: { outcome: { in: ['QUALIFIED', 'RESTORED'] }, validFrom: { lte: at }, OR: [{ validUntil: null }, { validUntil: { gt: at } }] }, take: 1 } },
@@ -65,8 +60,6 @@ export async function calculateProviderSelectability(providerProfileId: string, 
     }
     if (provider.platformQualificationStatus !== 'QUALIFIED') reasons.push('REQUIREMENTS_NOT_CONFIGURED')
     if (provider.blocks.length > 0) reasons.push('PROVIDER_BLOCKED')
-    const capacity = provider.capacitySnapshots[0]
-    if (!capacity || capacity.validUntil <= at || !capacity.acceptsNewAssignments) reasons.push('CAPACITY_STALE')
     if (provider.capabilities.length === 0 || provider.capabilities.some((item) => item.qualificationDecisions.length === 0)) {
       reasons.push('QUALIFICATION_REQUIREMENTS_NOT_CONFIGURED')
     }

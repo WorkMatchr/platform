@@ -13,12 +13,21 @@ export type ProviderErrorCode =
   | 'FOUR_EYES_REQUIRED'
   | 'PROVIDER_BLOCKED'
   | 'PROJECTION_NOT_ALLOWED'
+  | 'ACTIVE_SUBMISSION_EXISTS'
+  | 'DOSSIER_NOT_SUBMITTABLE'
+  | 'DOSSIER_LOCKED'
+  | 'SECTION_NOT_EDITABLE'
+  | 'FINDING_NOT_RESOLVED'
+  | 'TERM_NOT_ACCEPTED'
+  | 'CAPACITY_EXPIRED'
+  | 'CAPACITY_DEPRECATED'
+  | 'UNEXPECTED_FAILURE'
 
 const messages: Record<ProviderErrorCode, string> = {
-  ACCESS_DENIED: 'U heeft geen toegang tot deze provideractie.',
-  NOT_FOUND: 'De providergegevens zijn niet gevonden.',
-  VALIDATION_ERROR: 'De aangeleverde providergegevens zijn niet geldig.',
-  CONFLICT: 'De providergegevens zijn intussen gewijzigd. Vernieuw de gegevens en probeer het opnieuw.',
+  ACCESS_DENIED: 'U heeft geen toegang tot deze actie in het dienstverlenersprofiel.',
+  NOT_FOUND: 'De aanbiedersgegevens zijn niet gevonden.',
+  VALIDATION_ERROR: 'De aangeleverde aanbiedersgegevens zijn niet geldig.',
+  CONFLICT: 'De aanbiedersgegevens zijn intussen gewijzigd. Vernieuw de gegevens en probeer het opnieuw.',
   IDEMPOTENCY_CONFLICT: 'Deze herhaalde aanvraag wijkt af van de oorspronkelijke aanvraag.',
   CONFIGURATION_INCOMPLETE: 'De kwalificatieconfiguratie is nog niet volledig.',
   REQUIREMENTS_NOT_CONFIGURED: 'De kwalificatievereisten zijn nog niet geconfigureerd.',
@@ -27,8 +36,17 @@ const messages: Record<ProviderErrorCode, string> = {
   QUALIFICATION_REQUIREMENTS_NOT_CONFIGURED: 'De beroepskwalificatievereisten zijn nog niet geconfigureerd.',
   EVIDENCE_NOT_CLEAN: 'Het bewijsdocument is nog niet veilig beschikbaar.',
   FOUR_EYES_REQUIRED: 'Dit besluit vereist twee verschillende bevoegde beoordelaars.',
-  PROVIDER_BLOCKED: 'De provider is geblokkeerd voor deze actie.',
-  PROJECTION_NOT_ALLOWED: 'Er kan geen geldige providerprojectie worden gemaakt.',
+  PROVIDER_BLOCKED: 'De aanbieder is geblokkeerd voor deze actie.',
+  PROJECTION_NOT_ALLOWED: 'De gevalideerde selectiegegevens kunnen nog niet veilig worden samengesteld.',
+  ACTIVE_SUBMISSION_EXISTS: 'Er bestaat al een actieve dossierindiening.',
+  DOSSIER_NOT_SUBMITTABLE: 'Het dienstverlenersprofiel is nog niet gereed om in te dienen.',
+  DOSSIER_LOCKED: 'Het dienstverlenersprofiel is tijdens de beoordeling alleen-lezen.',
+  SECTION_NOT_EDITABLE: 'Dit dossieronderdeel is niet heropend voor wijzigingen.',
+  FINDING_NOT_RESOLVED: 'Nog niet alle herstelpunten zijn voldoende beantwoord.',
+  TERM_NOT_ACCEPTED: 'Een verplichte verklaring is nog niet geaccepteerd.',
+  CAPACITY_EXPIRED: 'De capaciteitsbevestiging is verlopen.',
+  CAPACITY_DEPRECATED: 'Beschikbaarheids- en capaciteitsgegevens worden niet meer in het dienstverlenersprofiel bijgehouden.',
+  UNEXPECTED_FAILURE: 'De actie kon niet veilig worden uitgevoerd.',
 }
 
 export class ProviderServiceError extends Error {

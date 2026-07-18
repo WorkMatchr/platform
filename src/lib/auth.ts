@@ -3,9 +3,11 @@ import { APIError, createAuthMiddleware } from 'better-auth/api'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
 import { nextCookies } from 'better-auth/next-js'
 import { passwordResetEmail, sendAuthEmail, verificationEmail } from '@/lib/email'
+import { captureAuthEmailDelivery } from '@/lib/auth-email-delivery-context'
 import { getPrisma } from '@/lib/prisma'
 import { GENERIC_SIGN_IN_ERROR, normalizeEmail, registrationSchema } from '@/lib/auth-validation'
-import { AUTH_SESSION_POLICY, canStartSession } from '@/lib/auth-policy'
+import { AUTH_SESSION_POLICY, canStartSession, canUseAccountRecovery, shouldActivateVerifiedInvitation } from '@/lib/auth-policy'
+import { activateVerifiedInvitation } from '@/lib/account-architecture/invitation-acceptance-service'
 
 const appUrl = process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3001'
 
@@ -20,7 +22,11 @@ export const auth = betterAuth({
     fields: { name: 'displayName' },
     additionalFields: {
       platformRole: { type: ['USER', 'ADMIN'], defaultValue: 'USER', input: false },
-      status: { type: ['INVITED', 'ACTIVE', 'BLOCKED', 'ARCHIVED'], defaultValue: 'INVITED', input: false },
+      status: {
+        type: ['INVITED', 'ACTIVE', 'BLOCKED', 'ARCHIVED', 'DELETION_PENDING', 'ANONYMIZED'],
+        defaultValue: 'INVITED',
+        input: false,
+      },
     },
   },
   emailAndPassword: {
@@ -32,6 +38,8 @@ export const auth = betterAuth({
     revokeSessionsOnPasswordReset: AUTH_SESSION_POLICY.revokeSessionsOnPasswordReset,
     resetPasswordTokenExpiresIn: 3600,
     sendResetPassword: async ({ user, url }) => {
+      const current = await getPrisma().user.findUnique({ where: { id: user.id }, select: { status: true } })
+      if (!canUseAccountRecovery(current?.status ?? null)) return
       await sendAuthEmail(passwordResetEmail(user.email, user.name, url))
     },
   },
@@ -41,7 +49,8 @@ export const auth = betterAuth({
     sendOnSignIn: false,
     autoSignInAfterVerification: false,
     sendVerificationEmail: async ({ user, url }) => {
-      await sendAuthEmail(verificationEmail(user.email, user.name, url))
+      const delivery = await sendAuthEmail(verificationEmail(user.email, user.name, url))
+      captureAuthEmailDelivery(delivery)
     },
   },
   session: { expiresIn: 60 * 60 * 24 * 7, updateAge: 60 * 60 * 24 },
@@ -67,8 +76,24 @@ export const auth = betterAuth({
           ? await getPrisma().user.findUnique({ where: { email }, select: { status: true } })
           : null
 
-        if (user?.status === 'BLOCKED' || user?.status === 'ARCHIVED') {
+        if (user && !canStartSession(user.status)) {
           throw new APIError('UNAUTHORIZED', { message: GENERIC_SIGN_IN_ERROR })
+        }
+      }
+
+      if (ctx.path === '/reset-password') {
+        const token = typeof ctx.body?.token === 'string' ? ctx.body.token : ''
+        if (token) {
+          const verification = await getPrisma().verification.findFirst({
+            where: { identifier: `reset-password:${token}` },
+            select: { value: true },
+          })
+          const user = verification
+            ? await getPrisma().user.findUnique({ where: { id: verification.value }, select: { status: true } })
+            : null
+          if (user && !canUseAccountRecovery(user.status)) {
+            throw new APIError('BAD_REQUEST', { message: 'De herstelcode is ongeldig of verlopen.' })
+          }
         }
       }
 
@@ -94,7 +119,16 @@ export const auth = betterAuth({
     user: {
       create: { before: async (user) => ({ data: { ...user, email: user.email.trim().toLowerCase() } }) },
       update: {
-        before: async (data) => ({ data: data.emailVerified === true ? { ...data, status: 'ACTIVE' } : data }),
+        after: async (user, context) => {
+          if (context?.path !== '/verify-email') return
+          const current = await getPrisma().user.findUnique({
+            where: { id: user.id },
+            select: { status: true, emailVerified: true, migrationClassification: true },
+          })
+          if (current && shouldActivateVerifiedInvitation(current)) {
+            await activateVerifiedInvitation(user.id)
+          }
+        },
       },
     },
     session: {

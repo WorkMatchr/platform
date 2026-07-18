@@ -774,6 +774,162 @@ async function verifyProviderQualificationIntegrity(client: Client) {
   )
 }
 
+async function verifyProviderDossierIntegrity(client: Client) {
+  await client.query(`
+    INSERT INTO "ProviderDossierSubmission" (
+      "id", "providerProfileId", "submittedByUserId", "idempotencyKey", "updatedAt"
+    ) VALUES (
+      '00000000-0000-4000-8000-000000006101', '00000000-0000-4000-8000-000000006004',
+      '00000000-0000-4000-8000-000000006001', 'database-integrity-6a3', CURRENT_TIMESTAMP
+    );
+    INSERT INTO "ProviderDossierCandidate" (
+      "id", "providerProfileId", "submissionId", "candidateVersion", "sourceProfileVersion",
+      "schemaVersion", "canonicalizationVersion", "sourceReferences", "canonicalPayload", "sha256", "createdByUserId"
+    ) VALUES (
+      '00000000-0000-4000-8000-000000006102', '00000000-0000-4000-8000-000000006004',
+      '00000000-0000-4000-8000-000000006101', 1, 1, 'PROVIDER-DOSSIER-1', 'WORKMATCHR-CJ-1',
+      '{"profileVersion":1}'::jsonb, '{"provider":"fixture"}'::jsonb, repeat('a', 64),
+      '00000000-0000-4000-8000-000000006001'
+    );
+    UPDATE "ProviderDossierSubmission" SET "currentCandidateId" = '00000000-0000-4000-8000-000000006102'
+    WHERE "id" = '00000000-0000-4000-8000-000000006101';
+    INSERT INTO "ProviderDossierSubmissionHistory" (
+      "submissionId", "candidateId", "toStatus", "reasonCode", "actorUserId"
+    ) VALUES (
+      '00000000-0000-4000-8000-000000006101', '00000000-0000-4000-8000-000000006102',
+      'SUBMITTED', 'DOSSIER_SUBMITTED', '00000000-0000-4000-8000-000000006001'
+    );
+    INSERT INTO "ProviderDossierReviewCase" (
+      "id", "providerProfileId", "submissionId", "candidateId", "openedByUserId"
+    ) VALUES (
+      '00000000-0000-4000-8000-000000006103', '00000000-0000-4000-8000-000000006004',
+      '00000000-0000-4000-8000-000000006101', '00000000-0000-4000-8000-000000006102',
+      '00000000-0000-4000-8000-000000006001'
+    );
+    INSERT INTO "ProviderDossierFinding" (
+      "id", "reviewCaseId", "candidateId", "section", "reasonCode", "providerMessage", "createdByUserId"
+    ) VALUES (
+      '00000000-0000-4000-8000-000000006104', '00000000-0000-4000-8000-000000006103',
+      '00000000-0000-4000-8000-000000006102', 'EVIDENCE', 'EVIDENCE_INCOMPLETE',
+      'Lever een geldig en actueel bewijsdocument aan.', '00000000-0000-4000-8000-000000006001'
+    );
+    INSERT INTO "ProviderDossierFindingResolution" (
+      "id", "findingId", "version", "response", "resolvedByUserId"
+    ) VALUES (
+      '00000000-0000-4000-8000-000000006105', '00000000-0000-4000-8000-000000006104', 1,
+      'Het gevraagde bewijs is opnieuw aan het dossier toegevoegd.', '00000000-0000-4000-8000-000000006001'
+    );
+  `)
+
+  await expectDatabaseFailure('tweede actieve dossiersubmission', () => client.query(`
+    INSERT INTO "ProviderDossierSubmission" ("providerProfileId", "submittedByUserId", "idempotencyKey", "updatedAt")
+    VALUES ('00000000-0000-4000-8000-000000006004', '00000000-0000-4000-8000-000000006001', 'parallel-6a3', CURRENT_TIMESTAMP)
+  `))
+  await expectDatabaseFailure('dubbele candidateverie', () => client.query(`
+    INSERT INTO "ProviderDossierCandidate" (
+      "providerProfileId", "submissionId", "candidateVersion", "sourceProfileVersion", "schemaVersion",
+      "canonicalizationVersion", "sourceReferences", "canonicalPayload", "sha256", "createdByUserId"
+    ) VALUES (
+      '00000000-0000-4000-8000-000000006004', '00000000-0000-4000-8000-000000006101', 1, 1,
+      'PROVIDER-DOSSIER-1', 'WORKMATCHR-CJ-1', '{}'::jsonb, '{}'::jsonb, repeat('b', 64),
+      '00000000-0000-4000-8000-000000006001'
+    )
+  `))
+  await expectDatabaseFailure('tweede open review case', () => client.query(`
+    INSERT INTO "ProviderDossierReviewCase" ("providerProfileId", "submissionId", "candidateId", "openedByUserId")
+    VALUES ('00000000-0000-4000-8000-000000006004', '00000000-0000-4000-8000-000000006101',
+      '00000000-0000-4000-8000-000000006102', '00000000-0000-4000-8000-000000006001')
+  `))
+  await expectDatabaseFailure('mutatie van immutable dossiercandidate', () => client.query(`
+    UPDATE "ProviderDossierCandidate" SET "sha256" = repeat('c', 64) WHERE "id" = '00000000-0000-4000-8000-000000006102'
+  `))
+  await expectDatabaseFailure('verwijderen van append-only dossierhistorie', () => client.query(`
+    DELETE FROM "ProviderDossierSubmissionHistory" WHERE "submissionId" = '00000000-0000-4000-8000-000000006101'
+  `))
+  await expectDatabaseFailure('mutatie van append-only findingresolution', () => client.query(`
+    UPDATE "ProviderDossierFindingResolution" SET "response" = 'Niet toegestaan aangepast antwoord.' WHERE "id" = '00000000-0000-4000-8000-000000006105'
+  `))
+  await expectDatabaseFailure('ongeldige directe eindstatus', () => client.query(`
+    UPDATE "ProviderDossierSubmission" SET "status" = 'APPROVED', "version" = 2 WHERE "id" = '00000000-0000-4000-8000-000000006101'
+  `))
+
+  await client.query(`
+    UPDATE "ProviderDossierSubmission" SET "status" = 'UNDER_REVIEW', "version" = 2
+    WHERE "id" = '00000000-0000-4000-8000-000000006101';
+    UPDATE "ProviderDossierReviewCase"
+    SET "status" = 'CLOSED', "version" = 2, "closedByUserId" = '00000000-0000-4000-8000-000000006001', "closedAt" = CURRENT_TIMESTAMP
+    WHERE "id" = '00000000-0000-4000-8000-000000006103';
+    UPDATE "ProviderDossierSubmission" SET "status" = 'ADDITIONAL_INFORMATION_REQUIRED', "version" = 3
+    WHERE "id" = '00000000-0000-4000-8000-000000006101';
+  `)
+
+  await client.query('BEGIN')
+  try {
+    await client.query(`
+      UPDATE "ProviderDossierSubmission"
+      SET "status" = 'WITHDRAWN', "version" = 4, "closedAt" = CURRENT_TIMESTAMP
+      WHERE "id" = '00000000-0000-4000-8000-000000006101'
+    `)
+    const withdrawal = await client.query<{ status: string }>(`
+      SELECT "status"::text AS status FROM "ProviderDossierSubmission"
+      WHERE "id" = '00000000-0000-4000-8000-000000006101'
+    `)
+    assert.equal(withdrawal.rows[0]?.status, 'WITHDRAWN')
+  } finally {
+    await client.query('ROLLBACK')
+  }
+
+  await client.query(`
+    INSERT INTO "ProviderDossierCandidate" (
+      "id", "providerProfileId", "submissionId", "candidateVersion", "sourceProfileVersion", "schemaVersion",
+      "canonicalizationVersion", "sourceReferences", "canonicalPayload", "sha256", "createdByUserId"
+    ) VALUES (
+      '00000000-0000-4000-8000-000000006106', '00000000-0000-4000-8000-000000006004',
+      '00000000-0000-4000-8000-000000006101', 2, 1, 'PROVIDER-DOSSIER-1', 'WORKMATCHR-CJ-1',
+      '{"profileVersion":1}'::jsonb, '{"provider":"corrected"}'::jsonb, repeat('d', 64),
+      '00000000-0000-4000-8000-000000006001'
+    );
+    INSERT INTO "ProviderDossierFindingResolution" (
+      "id", "findingId", "candidateId", "version", "response", "resolvedByUserId"
+    ) VALUES (
+      '00000000-0000-4000-8000-000000006107', '00000000-0000-4000-8000-000000006104',
+      '00000000-0000-4000-8000-000000006106', 2,
+      'De correctie is kandidaatgebonden en opnieuw ter beoordeling aangeboden.',
+      '00000000-0000-4000-8000-000000006001'
+    );
+    UPDATE "ProviderDossierSubmission"
+    SET "status" = 'SUBMITTED', "version" = 4, "currentCandidateId" = '00000000-0000-4000-8000-000000006106'
+    WHERE "id" = '00000000-0000-4000-8000-000000006101';
+  `)
+
+  await expectDatabaseFailure('resolutionbinding aan oorspronkelijke candidate', () => client.query(`
+    INSERT INTO "ProviderDossierFindingResolution" (
+      "findingId", "candidateId", "version", "response", "resolvedByUserId"
+    ) VALUES (
+      '00000000-0000-4000-8000-000000006104', '00000000-0000-4000-8000-000000006102', 3,
+      'Deze resolution mag niet aan de oorspronkelijke candidate worden gekoppeld.',
+      '00000000-0000-4000-8000-000000006001'
+    )
+  `))
+
+  const resubmission = await client.query<{ candidate_version: number; candidates: number; bound_resolutions: number }>(`
+    SELECT c."candidateVersion" AS candidate_version,
+      (SELECT COUNT(*)::int FROM "ProviderDossierCandidate" WHERE "submissionId" = s."id") AS candidates,
+      (SELECT COUNT(*)::int FROM "ProviderDossierFindingResolution" WHERE "candidateId" = c."id") AS bound_resolutions
+    FROM "ProviderDossierSubmission" s JOIN "ProviderDossierCandidate" c ON c."id" = s."currentCandidateId"
+    WHERE s."id" = '00000000-0000-4000-8000-000000006101'
+  `)
+  assert.deepEqual(resubmission.rows[0], { candidate_version: 2, candidates: 2, bound_resolutions: 1 })
+
+  const historic = await client.query<{ missing_identity_revisions: number; missing_capacity_actors: number }>(`
+    SELECT
+      (SELECT COUNT(*)::int FROM "ProviderProfessional" p WHERE NOT EXISTS (SELECT 1 FROM "ProviderProfessionalIdentityRevision" r WHERE r."professionalId" = p."id")) AS missing_identity_revisions,
+      (SELECT COUNT(*)::int FROM "ProviderCapacitySnapshot" WHERE "confirmedByUserId" IS NULL) AS missing_capacity_actors
+  `)
+  assert.equal(historic.rows[0]?.missing_identity_revisions ?? 0, 0)
+  assert.equal(historic.rows[0]?.missing_capacity_actors ?? 0, 0)
+}
+
 async function main() {
   const admin = new Client({ connectionString: adminUrl.toString() })
   let testClient: Client | undefined
@@ -793,7 +949,8 @@ async function main() {
     runNpmScript('db:seed')
     runNpmScript('db:seed')
     await verifyProviderQualificationIntegrity(testClient)
-    console.info('Database-integriteit Module 5A.1, Module 5B.2, Module 5B.3, Module 5C.2 en Module 6A.2: geslaagd.')
+    await verifyProviderDossierIntegrity(testClient)
+    console.info('Database-integriteit Module 5A.1, Module 5B.2, Module 5B.3, Module 5C.2, Module 6A.2, Module 6A.3.2 en Module 6A.3.3: geslaagd.')
   } finally {
     if (testClient) {
       await testClient.end()

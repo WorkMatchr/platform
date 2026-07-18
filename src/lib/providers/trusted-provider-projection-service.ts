@@ -3,8 +3,9 @@ import { getPrisma } from '@/lib/prisma'
 import { hashProviderJson, type CanonicalValue } from './provider-canonical-json'
 import { ProviderServiceError } from './provider-errors'
 
-const PROJECTION_SCHEMA_VERSION = 1
+const PROJECTION_SCHEMA_VERSION = 2
 const CANONICALIZATION_VERSION = 'WORKMATCHR-CJ-1'
+const NO_SCHEDULED_EXPIRY = new Date('9999-12-31T23:59:59.999Z')
 
 type ProjectionSource = {
   providerProfileId: string
@@ -19,13 +20,6 @@ type ProjectionSource = {
   }>
   sectors: Array<{ sectorCode: string; verificationLevel: string }>
   workAreas: Array<{ regionCode: string; maxTravelDistanceKm: number | null; verificationLevel: string }>
-  capacity: {
-    acceptsNewAssignments: boolean
-    earliestStartDate: string | null
-    capacityLevel: string
-    confirmedAt: string
-    validUntil: string
-  }
   platformQualificationDecisionId: string
 }
 
@@ -34,7 +28,6 @@ export function buildTrustedProviderPayload(source: ProjectionSource): Canonical
     capabilities: source.capabilities
       .map((item) => ({ ...item, deliveryModes: [...item.deliveryModes].sort() }))
       .sort((left, right) => `${left.serviceCode}:${left.specialismCode ?? ''}`.localeCompare(`${right.serviceCode}:${right.specialismCode ?? ''}`, 'en')),
-    capacity: source.capacity,
     platformQualificationDecisionId: source.platformQualificationDecisionId,
     providerProfileId: source.providerProfileId,
     schemaVersion: PROJECTION_SCHEMA_VERSION,
@@ -60,10 +53,12 @@ export async function createTrustedProviderProjection(providerProfileId: string,
           readinessAssessments: { where: { status: 'READY' }, orderBy: { createdAt: 'desc' }, take: 1 },
           selectabilityAssessments: { where: { status: 'SELECTABLE' }, orderBy: { createdAt: 'desc' }, take: 1 },
           qualificationDecisions: { where: { scope: 'PLATFORM', outcome: { in: ['QUALIFIED', 'RESTORED'] }, validFrom: { lte: at }, OR: [{ validUntil: null }, { validUntil: { gt: at } }] }, orderBy: { createdAt: 'desc' }, take: 1 },
-          capacitySnapshots: { where: { validUntil: { gt: at }, acceptsNewAssignments: true }, orderBy: { confirmedAt: 'desc' }, take: 1 },
           capabilities: {
             where: { status: 'ACTIVE', qualificationDecisions: { some: { outcome: { in: ['QUALIFIED', 'RESTORED'] }, validFrom: { lte: at }, OR: [{ validUntil: null }, { validUntil: { gt: at } }] } } },
-            select: { revisions: { orderBy: { version: 'desc' }, take: 1, include: { serviceTerm: true, specialismTerm: true, competencyTerm: true, verificationReviews: { where: { validFrom: { lte: at }, OR: [{ validUntil: null }, { validUntil: { gt: at } }] }, orderBy: { createdAt: 'desc' }, take: 1 } } } },
+            select: {
+              qualificationDecisions: { where: { outcome: { in: ['QUALIFIED', 'RESTORED'] }, validFrom: { lte: at }, OR: [{ validUntil: null }, { validUntil: { gt: at } }] }, orderBy: { createdAt: 'desc' }, take: 1, select: { validUntil: true } },
+              revisions: { orderBy: { version: 'desc' }, take: 1, include: { serviceTerm: true, specialismTerm: true, competencyTerm: true, verificationReviews: { where: { validFrom: { lte: at }, OR: [{ validUntil: null }, { validUntil: { gt: at } }] }, orderBy: { createdAt: 'desc' }, take: 1 } } },
+            },
           },
           sectorExperiences: { where: { status: 'ACTIVE' }, select: { revisions: { orderBy: { version: 'desc' }, take: 1, include: { sectorTerm: true, verificationReviews: { where: { validFrom: { lte: at }, OR: [{ validUntil: null }, { validUntil: { gt: at } }] }, orderBy: { createdAt: 'desc' }, take: 1 } } } } },
           workAreas: { where: { status: 'ACTIVE' }, select: { revisions: { orderBy: { version: 'desc' }, take: 1, include: { regionTerm: true, verificationReviews: { where: { validFrom: { lte: at }, OR: [{ validUntil: null }, { validUntil: { gt: at } }] }, orderBy: { createdAt: 'desc' }, take: 1 } } } } },
@@ -72,13 +67,11 @@ export async function createTrustedProviderProjection(providerProfileId: string,
       const readiness = provider?.readinessAssessments[0]
       const selectability = provider?.selectabilityAssessments[0]
       const platformDecision = provider?.qualificationDecisions[0]
-      const capacity = provider?.capacitySnapshots[0]
       if (
         !provider ||
         !readiness ||
         !selectability ||
         !platformDecision ||
-        !capacity ||
         readiness.sourceVersion !== provider.version ||
         selectability.sourceVersion !== provider.version
       ) {
@@ -106,15 +99,18 @@ export async function createTrustedProviderProjection(providerProfileId: string,
         })),
         sectors: sectors.map((revision) => ({ sectorCode: revision.sectorTerm.code, verificationLevel: currentVerification(revision) })),
         workAreas: workAreas.map((revision) => ({ regionCode: revision.regionTerm.code, maxTravelDistanceKm: revision.maxTravelDistanceKm, verificationLevel: currentVerification(revision) })),
-        capacity: {
-          acceptsNewAssignments: capacity.acceptsNewAssignments,
-          earliestStartDate: capacity.earliestStartDate?.toISOString().slice(0, 10) ?? null,
-          capacityLevel: capacity.capacityLevel,
-          confirmedAt: capacity.confirmedAt.toISOString(),
-          validUntil: capacity.validUntil.toISOString(),
-        },
         platformQualificationDecisionId: platformDecision.id,
       })
+      const sourceExpiries = [
+        platformDecision.validUntil,
+        ...provider.capabilities.flatMap((item) => item.qualificationDecisions.map((decision) => decision.validUntil)),
+        ...provider.capabilities.flatMap((item) => item.revisions.flatMap((revision) => revision.verificationReviews.map((review) => review.validUntil))),
+        ...provider.sectorExperiences.flatMap((item) => item.revisions.flatMap((revision) => revision.verificationReviews.map((review) => review.validUntil))),
+        ...provider.workAreas.flatMap((item) => item.revisions.flatMap((revision) => revision.verificationReviews.map((review) => review.validUntil))),
+      ].filter((value): value is Date => value !== null)
+      const validUntil = sourceExpiries.length > 0
+        ? new Date(Math.min(...sourceExpiries.map((value) => value.getTime())))
+        : NO_SCHEDULED_EXPIRY
       const { sha256 } = hashProviderJson(payload)
       const existing = await transaction.trustedProviderProjection.findUnique({
         where: { providerProfileId_sourceVersion: { providerProfileId, sourceVersion: provider.version } },
@@ -135,7 +131,7 @@ export async function createTrustedProviderProjection(providerProfileId: string,
           payload: payload as Prisma.InputJsonValue,
           sha256,
           validFrom: at,
-          validUntil: capacity.validUntil,
+          validUntil,
           createdByUserId,
         },
         select: { id: true, sha256: true },

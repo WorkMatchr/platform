@@ -4,10 +4,20 @@ import { Card } from '@/components/ui/card'
 import { Heading } from '@/components/ui/heading'
 import { Text } from '@/components/ui/text'
 
-export function AuthShell({ title, intro, children }: { title: string; intro: string; children: ReactNode }) {
+export function AuthShell({
+  title,
+  intro,
+  children,
+  wide = false,
+}: {
+  title: string
+  intro: string
+  children: ReactNode
+  wide?: boolean
+}) {
   return (
     <main className="px-5 py-12 sm:px-8 sm:py-20">
-      <Card className="mx-auto w-full max-w-lg p-6 sm:p-9">
+      <Card className={`mx-auto w-full ${wide ? 'max-w-3xl' : 'max-w-lg'} p-6 sm:p-9`}>
         <Link href="/" className="text-lg font-bold text-brand-dark" aria-label="WorkMatchr, naar de homepage">
           Work<span className="text-brand-primary">Matchr</span>
         </Link>

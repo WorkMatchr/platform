@@ -40,6 +40,7 @@ export async function createOrganizationAction(_state: OrganizationActionState, 
   }
 
   ;(await cookies()).set(ACTIVE_ORGANIZATION_COOKIE, organizationId, activeOrganizationCookieOptions)
+  revalidatePath('/', 'layout')
   redirect('/organisatie?aangemaakt=1')
 }
 
@@ -65,12 +66,19 @@ export async function switchOrganizationAction(formData: FormData) {
   const organizationId = String(formData.get('organizationId') ?? '')
   const membership = await getPrisma().organizationMembership.findUnique({
     where: { userId_organizationId: { userId: user.id, organizationId } },
-    include: { organization: { select: { status: true } } },
+    include: { organization: { select: { status: true, organizationType: true, systemKey: true } } },
   })
-  if (!membership || membership.status !== 'ACTIVE' || membership.organization.status === 'ARCHIVED') {
+  if (
+    !membership ||
+    membership.status !== 'ACTIVE' ||
+    membership.organization.status === 'ARCHIVED' ||
+    membership.organization.organizationType === 'PLATFORM_OPERATOR' ||
+    membership.organization.systemKey !== null
+  ) {
     redirect('/organisatie?toegang=geweigerd')
   }
   ;(await cookies()).set(ACTIVE_ORGANIZATION_COOKIE, organizationId, activeOrganizationCookieOptions)
+  revalidatePath('/', 'layout')
   redirect('/organisatie')
 }
 

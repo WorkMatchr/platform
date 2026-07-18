@@ -10,7 +10,6 @@ describe('Trusted Provider Projection contract', () => {
       capabilities: [{ serviceCode: 'SAFETY_ADVICE', specialismCode: null, competencyCode: 'SAFETY_ADVISORY', deliveryModes: ['REMOTE'], verificationLevel: 'VERIFIED' }],
       sectors: [{ sectorCode: 'bouw', verificationLevel: 'DOCUMENT_CHECKED' }],
       workAreas: [{ regionCode: 'NATIONWIDE', maxTravelDistanceKm: null, verificationLevel: 'DOCUMENT_CHECKED' }],
-      capacity: { acceptsNewAssignments: true, earliestStartDate: null, capacityLevel: 'NORMAL', confirmedAt: '2026-07-14T12:00:00.000Z', validUntil: '2026-08-13T12:00:00.000Z' },
       platformQualificationDecisionId: 'decision-1',
       marketingText: 'mag niet mee',
       professionalName: 'mag niet mee',
@@ -21,6 +20,9 @@ describe('Trusted Provider Projection contract', () => {
     expect(serialized).not.toContain('professionalName')
     expect(serialized).not.toContain('credits')
     expect(serialized).not.toContain('evidence')
+    expect(serialized).not.toContain('capacity')
+    expect(serialized).not.toContain('acceptsNewAssignments')
+    expect(serialized).toContain('"schemaVersion":2')
     expect(serialized).toContain('SAFETY_ADVICE')
   })
 })

@@ -21,3 +21,9 @@
 *.log
 *.tsbuildinfo
 .DS_Store
+
+# lokale ADR-013-preflightrapporten (kunnen persoonsgegevens bevatten)
+/reports/account-architecture-preflight.md
+/reports/account-architecture-preflight.json
+/reports/account-architecture-record-decisions.md
+/reports/account-architecture-record-decisions.json

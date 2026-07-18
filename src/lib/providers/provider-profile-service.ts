@@ -5,6 +5,8 @@ import { requireProviderManager } from './provider-authorization'
 import { ProviderServiceError } from './provider-errors'
 import { expectedVersionSchema, uuidSchema } from './provider-validation'
 import { parseProviderInput, reserveProviderVersion } from './provider-write-utils'
+import { requireProviderSectionEditable } from './provider-dossier-access'
+import { hasConflictingActiveWorkArea } from './provider-work-area-rules'
 
 const sectorExperienceSchema = z.object({
   expectedProfileVersion: expectedVersionSchema,
@@ -25,9 +27,10 @@ async function requireTerm(
 ) {
   const term = await transaction.providerTaxonomyTerm.findFirst({
     where: { id: termId, isActive: true, version: { status: 'PUBLISHED', taxonomy: { kind } } },
-    select: { id: true },
+    select: { id: true, code: true },
   })
   if (!term) throw new ProviderServiceError('VALIDATION_ERROR')
+  return term
 }
 
 export async function createProviderSectorExperience(userId: string, providerProfileId: string, rawInput: unknown) {
@@ -35,6 +38,7 @@ export async function createProviderSectorExperience(userId: string, providerPro
   return getPrisma().$transaction(
     async (transaction) => {
       await requireProviderManager(transaction, userId, providerProfileId)
+      await requireProviderSectionEditable(transaction, providerProfileId, 'SECTOR_EXPERIENCE')
       await requireTerm(transaction, input.sectorTermId, 'SECTOR')
       const record = await transaction.providerSectorExperience.create({
         data: {
@@ -55,7 +59,11 @@ export async function createProviderWorkArea(userId: string, providerProfileId: 
   return getPrisma().$transaction(
     async (transaction) => {
       await requireProviderManager(transaction, userId, providerProfileId)
-      await requireTerm(transaction, input.regionTermId, 'REGION')
+      await requireProviderSectionEditable(transaction, providerProfileId, 'WORK_AREA')
+      const term = await requireTerm(transaction, input.regionTermId, 'REGION')
+      if (await hasConflictingActiveWorkArea(transaction, providerProfileId, term.code)) {
+        throw new ProviderServiceError('VALIDATION_ERROR')
+      }
       const record = await transaction.providerWorkArea.create({
         data: {
           providerProfileId,

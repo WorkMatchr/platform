@@ -4,11 +4,12 @@ import { requireProviderManager } from './provider-authorization'
 import { ProviderServiceError } from './provider-errors'
 import { createCapabilitySchema } from './provider-validation'
 import { parseProviderInput, reserveProviderVersion } from './provider-write-utils'
+import { requireProviderSectionEditable } from './provider-dossier-access'
 
 async function requirePublishedTerm(
   transaction: Prisma.TransactionClient,
   termId: string | undefined,
-  kind: 'SERVICE' | 'SPECIALISM' | 'COMPETENCY',
+  kind: 'SERVICE' | 'SPECIALISM',
 ) {
   if (!termId) return
   const term = await transaction.providerTaxonomyTerm.findFirst({
@@ -27,11 +28,9 @@ export async function createProviderCapability(
   return getPrisma().$transaction(
     async (transaction) => {
       await requireProviderManager(transaction, userId, providerProfileId)
-      await Promise.all([
-        requirePublishedTerm(transaction, input.serviceTermId, 'SERVICE'),
-        requirePublishedTerm(transaction, input.specialismTermId, 'SPECIALISM'),
-        requirePublishedTerm(transaction, input.competencyTermId, 'COMPETENCY'),
-      ])
+      await requireProviderSectionEditable(transaction, providerProfileId, 'CAPABILITIES')
+      await requirePublishedTerm(transaction, input.serviceTermId, 'SERVICE')
+      await requirePublishedTerm(transaction, input.specialismTermId, 'SPECIALISM')
       const capability = await transaction.providerCapability.create({
         data: {
           providerProfileId,
@@ -40,7 +39,6 @@ export async function createProviderCapability(
               version: 1,
               serviceTermId: input.serviceTermId,
               specialismTermId: input.specialismTermId,
-              competencyTermId: input.competencyTermId,
               deliveryModes: [...new Set(input.deliveryModes)],
               verificationLevel: 'SELF_DECLARED',
             },

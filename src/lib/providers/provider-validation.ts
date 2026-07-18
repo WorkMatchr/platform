@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const uuidSchema = z.uuid()
+export const uuidSchema = z.uuid({ error: 'Selecteer een geldige waarde.' })
 export const expectedVersionSchema = z.int().positive()
 export const reasonCodeSchema = z.string().trim().min(2).max(100).regex(/^[A-Z0-9_]+$/)
 export const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/)
@@ -9,7 +9,6 @@ export const createCapabilitySchema = z.object({
   expectedProfileVersion: expectedVersionSchema,
   serviceTermId: uuidSchema.optional(),
   specialismTermId: uuidSchema.optional(),
-  competencyTermId: uuidSchema.optional(),
   deliveryModes: z.array(z.enum(['ON_SITE', 'HYBRID', 'REMOTE'])).min(1).max(3),
 }).refine((input) => input.serviceTermId || input.specialismTermId, 'Een dienst of specialisme is verplicht.')
 

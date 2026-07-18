@@ -14,7 +14,11 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:db": "tsx scripts/test-intake-database.ts",
+    "test:db": "npm run test:db:core && npm run test:db:providers && npm run test:db:accounts && npm run test:db:account-lifecycle",
+    "test:db:core": "tsx scripts/test-intake-database.ts",
+    "test:db:providers": "tsx scripts/test-provider-dataset-database.ts",
+    "test:db:accounts": "tsx scripts/test-account-architecture-database.ts",
+    "test:db:account-lifecycle": "tsx scripts/test-account-lifecycle-database.ts",
     "db:generate": "prisma generate",
     "db:format": "prisma format",
     "db:validate": "prisma validate",
@@ -22,7 +26,13 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
-    "db:reset": "prisma migrate reset"
+    "db:reset": "prisma migrate reset",
+    "seed:test-providers": "tsx scripts/seed-test-providers.ts seed",
+    "seed:test-providers:verify": "tsx scripts/seed-test-providers.ts verify",
+    "seed:test-providers:remove": "tsx scripts/seed-test-providers.ts remove",
+    "preflight:account-architecture": "tsx scripts/run-account-architecture-preflight.ts",
+    "bootstrap:platform-organization": "tsx scripts/bootstrap-platform-organization.ts",
+    "migrate:adr013-platform-provisioning": "tsx scripts/migrate-adr013-platform-provisioning.ts"
   },
   "dependencies": {
     "@better-auth/prisma-adapter": "^1.6.23",

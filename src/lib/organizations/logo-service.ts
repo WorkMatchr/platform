@@ -3,6 +3,7 @@ import { canManageOrganization } from './organization-policy'
 import { getOrganizationLogoStorage } from './logo-storage'
 import { processOrganizationLogo } from './logo-processing'
 import { logLogoDevelopment, logoErrorDetails } from './logo-development-log'
+import { assertNormalOrganizationOperationAllowed } from '@/lib/account-architecture/platform-organization-governance'
 
 async function requireLogoManager(userId: string, organizationId: string) {
   const membership = await getPrisma().organizationMembership.findUnique({
@@ -12,6 +13,7 @@ async function requireLogoManager(userId: string, organizationId: string) {
   if (!membership || !canManageOrganization(membership.role, membership.status, membership.organization.status)) {
     throw new Error('U heeft geen toegang tot deze organisatieactie.')
   }
+  assertNormalOrganizationOperationAllowed(membership.organization, 'UPDATE')
   return membership.organization
 }
 

@@ -2,12 +2,14 @@ import { getPrisma } from '@/lib/prisma'
 import { requireProviderManager } from './provider-authorization'
 import { evidenceMetadataSchema } from './provider-validation'
 import { parseProviderInput, reserveProviderVersion } from './provider-write-utils'
+import { requireProviderSectionEditable } from './provider-dossier-access'
 
 export async function registerProviderEvidenceMetadata(userId: string, providerProfileId: string, rawInput: unknown) {
   const input = parseProviderInput(evidenceMetadataSchema, rawInput)
   return getPrisma().$transaction(
     async (transaction) => {
       await requireProviderManager(transaction, userId, providerProfileId)
+      await requireProviderSectionEditable(transaction, providerProfileId, 'EVIDENCE')
       const document = await transaction.providerEvidenceDocument.create({
         data: {
           providerProfileId,

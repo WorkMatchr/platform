@@ -1,7 +1,17 @@
 import { readFile } from 'node:fs/promises'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const mocks = vi.hoisted(() => ({ transaction: vi.fn(), userFind: vi.fn(), sectorCount: vi.fn(), organizationCreate: vi.fn() }))
+const mocks = vi.hoisted(() => ({
+  transaction: vi.fn(),
+  userFind: vi.fn(),
+  membershipFindFirst: vi.fn(),
+  sectorCount: vi.fn(),
+  organizationCreate: vi.fn(),
+  membershipEventFind: vi.fn(),
+  membershipEventCreate: vi.fn(),
+  accountEventFind: vi.fn(),
+  accountEventCreate: vi.fn(),
+}))
 
 vi.mock('@/lib/prisma', () => ({
   getPrisma: () => ({
@@ -22,12 +32,26 @@ const input = {
 function prepare(status: 'ACTIVE' | 'BLOCKED' | 'ARCHIVED' = 'ACTIVE') {
   const transactionClient = {
     user: { findUnique: mocks.userFind },
+    organizationMembership: { findFirst: mocks.membershipFindFirst },
     sector: { count: mocks.sectorCount },
     organization: { create: mocks.organizationCreate },
+    organizationMembershipEvent: {
+      findUnique: mocks.membershipEventFind,
+      create: mocks.membershipEventCreate,
+    },
+    accountProvisioningEvent: {
+      findUnique: mocks.accountEventFind,
+      create: mocks.accountEventCreate,
+    },
   }
   mocks.userFind.mockResolvedValue({ status })
+  mocks.membershipFindFirst.mockResolvedValue(null)
   mocks.sectorCount.mockResolvedValue(1)
-  mocks.organizationCreate.mockResolvedValue({ id: 'organization-id' })
+  mocks.organizationCreate.mockResolvedValue({ id: 'organization-id', memberships: [{ id: 'membership-id' }] })
+  mocks.membershipEventFind.mockResolvedValue(null)
+  mocks.membershipEventCreate.mockResolvedValue({ id: 'membership-event-id' })
+  mocks.accountEventFind.mockResolvedValue(null)
+  mocks.accountEventCreate.mockResolvedValue({ id: 'account-event-id' })
   mocks.transaction.mockImplementation((callback) => callback(transactionClient))
 }
 

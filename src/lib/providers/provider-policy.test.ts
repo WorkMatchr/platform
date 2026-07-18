@@ -10,14 +10,22 @@ const activeProviderActor = {
 }
 
 describe('providerautorisatiebeleid', () => {
-  it.each(['OWNER', 'ADMIN'] as const)('staat actieve %s toe providerdata te beheren', (membershipRole) => {
-    expect(canManageProviderData({ ...activeProviderActor, membershipRole })).toBe(true)
+  it.each([
+    ['OWNER', 'PROVIDER'],
+    ['OWNER', 'BOTH'],
+    ['ADMIN', 'BOTH'],
+  ] as const)('staat actieve %s bij %s toe providerdata te beheren', (membershipRole, organizationType) => {
+    expect(canManageProviderData({ ...activeProviderActor, membershipRole, organizationType })).toBe(true)
   })
 
   it('weigert MEMBER, inactieve memberships en geschorste organisaties', () => {
     expect(canManageProviderData({ ...activeProviderActor, membershipRole: 'MEMBER' })).toBe(false)
     expect(canManageProviderData({ ...activeProviderActor, membershipStatus: 'SUSPENDED' })).toBe(false)
     expect(canManageProviderData({ ...activeProviderActor, organizationStatus: 'SUSPENDED' })).toBe(false)
+  })
+
+  it('weigert een CLIENT-organisatie ook voor een OWNER', () => {
+    expect(canManageProviderData({ ...activeProviderActor, organizationType: 'CLIENT' })).toBe(false)
   })
 
   it('accepteert uitsluitend een actuele, niet-ingetrokken expliciete permission', () => {

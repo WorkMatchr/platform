@@ -17,12 +17,19 @@ enum UserStatus {
   ACTIVE
   BLOCKED
   ARCHIVED
+  DELETION_PENDING
+  ANONYMIZED
+}
+
+enum UserMigrationClassification {
+  MIGRATION_TEMP
 }
 
 enum OrganizationType {
   CLIENT
   PROVIDER
   BOTH
+  PLATFORM_OPERATOR
 }
 
 enum OrganizationStatus {
@@ -43,6 +50,44 @@ enum MembershipStatus {
   ACTIVE
   SUSPENDED
   REMOVED
+}
+
+enum AccountProvisioningEventType {
+  ACCOUNT_INVITED
+  ACCOUNT_CREATED
+  INVITATION_ACCEPTED
+  ORGANIZATION_LINKED
+  ROLE_GRANTED
+  ROLE_CHANGED
+  ACCOUNT_BLOCKED
+  ACCOUNT_UNBLOCKED
+  DELETION_REQUESTED
+  ACCOUNT_DELETED
+  ACCOUNT_ANONYMIZED
+  MEMBERSHIP_TERMINATED
+  MIGRATED_UNKNOWN
+}
+
+enum OrganizationProvisioningEventType {
+  ORGANIZATION_BOOTSTRAPPED
+  SYSTEM_IDENTITY_ASSIGNED
+  GOVERNANCE_ACTIVATED
+}
+
+enum ProvisioningActorType {
+  SYSTEM
+  USER
+}
+
+enum OrganizationMembershipEventType {
+  MEMBERSHIP_CREATED
+  INVITATION_SENT
+  INVITATION_ACCEPTED
+  ROLE_CHANGED
+  STATUS_CHANGED
+  MEMBERSHIP_TERMINATED
+  ORGANIZATION_TRANSFER_PREPARED
+  MIGRATION_CLASSIFIED
 }
 
 enum ProviderApprovalStatus {
@@ -195,6 +240,38 @@ enum ProviderRequirementKind {
   CERTIFICATION
 }
 
+enum ProviderDossierSection {
+  ORGANIZATION
+  CAPABILITIES
+  SECTOR_EXPERIENCE
+  WORK_AREA
+  CAPACITY
+  PROFESSIONALS
+  QUALIFICATIONS
+  INSURANCE
+  EVIDENCE
+  DECLARATIONS
+}
+
+enum ProviderDossierSubmissionStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  ADDITIONAL_INFORMATION_REQUIRED
+  APPROVED
+  REJECTED
+  EXPIRED
+  WITHDRAWN
+}
+
+enum ProviderDossierReviewCaseStatus {
+  OPEN
+  CLOSED
+}
+
+enum ProviderDossierFindingStatus {
+  OPEN
+}
+
 enum IntakeStatus {
   DRAFT
   IN_PROGRESS
@@ -287,7 +364,30 @@ model User {
   createdAt                        DateTime                               @default(now()) @db.Timestamptz(3)
   updatedAt                        DateTime                               @updatedAt @db.Timestamptz(3)
   archivedAt                       DateTime?                              @db.Timestamptz(3)
+  createdByUserId                  String?                                @db.Uuid
+  blockedAt                        DateTime?                              @db.Timestamptz(3)
+  blockedByUserId                  String?                                @db.Uuid
+  deletionRequestedAt              DateTime?                              @db.Timestamptz(3)
+  deletionRequestedByUserId        String?                                @db.Uuid
+  deletionEffectiveAt              DateTime?                              @db.Timestamptz(3)
+  anonymizedAt                     DateTime?                              @db.Timestamptz(3)
+  retentionPurgeAt                 DateTime?                              @db.Timestamptz(3)
+  lifecycleReasonCode              String?                                @db.VarChar(80)
+  lifecycleReasonNote              String?                                @db.VarChar(500)
+  migrationClassification          UserMigrationClassification?
+  createdByUser                    User?                                  @relation("UserProvisioningCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdUsers                     User[]                                 @relation("UserProvisioningCreator")
+  blockedByUser                    User?                                  @relation("UserBlockActor", fields: [blockedByUserId], references: [id], onDelete: SetNull)
+  blockedUsers                     User[]                                 @relation("UserBlockActor")
+  deletionRequestedByUser          User?                                  @relation("UserDeletionRequestActor", fields: [deletionRequestedByUserId], references: [id], onDelete: SetNull)
+  deletionRequestedUsers           User[]                                 @relation("UserDeletionRequestActor")
   memberships                      OrganizationMembership[]
+  provisioningEventsAsSubject      AccountProvisioningEvent[]             @relation("AccountProvisioningSubject")
+  provisioningEventsAsActor        AccountProvisioningEvent[]             @relation("AccountProvisioningActor")
+  organizationProvisioningEvents   OrganizationProvisioningEvent[]        @relation("OrganizationProvisioningActor")
+  membershipEventsAsSubject        OrganizationMembershipEvent[]          @relation("OrganizationMembershipEventSubject")
+  membershipEventsAsActor          OrganizationMembershipEvent[]          @relation("OrganizationMembershipEventActor")
+  deletedAccountRetention          DeletedAccountRetention?
   approvedProviderProfiles         ProviderProfile[]                      @relation("ProviderProfileApprover")
   verifiedProviderCertificates     ProviderCertification[]                @relation("CertificationVerifier")
   createdIntakes                   Intake[]                               @relation("IntakeCreator")
@@ -319,9 +419,22 @@ model User {
   providerBlockReleases            ProviderBlockRelease[]                 @relation("ProviderBlockReleaseActor")
   providerBlockReleaseReviews      ProviderBlockRelease[]                 @relation("ProviderBlockReleaseReviewer")
   providerProjections              TrustedProviderProjection[]
+  confirmedProviderCapacities      ProviderCapacitySnapshot[]             @relation("ProviderCapacityConfirmer")
+  providerProfessionalIdentities   ProviderProfessionalIdentityRevision[] @relation("ProviderProfessionalIdentityActor")
+  createdProviderCandidates        ProviderDossierCandidate[]             @relation("ProviderDossierCandidateActor")
+  submittedProviderDossiers        ProviderDossierSubmission[]            @relation("ProviderDossierSubmitter")
+  providerDossierHistory           ProviderDossierSubmissionHistory[]     @relation("ProviderDossierHistoryActor")
+  openedProviderReviewCases        ProviderDossierReviewCase[]            @relation("ProviderDossierReviewCaseOpener")
+  closedProviderReviewCases        ProviderDossierReviewCase[]            @relation("ProviderDossierReviewCaseCloser")
+  createdProviderFindings          ProviderDossierFinding[]               @relation("ProviderDossierFindingActor")
+  resolvedProviderFindings         ProviderDossierFindingResolution[]     @relation("ProviderDossierFindingResolutionActor")
 
   @@index([status])
   @@index([createdAt])
+  @@index([createdByUserId])
+  @@index([blockedByUserId])
+  @@index([deletionRequestedByUserId])
+  @@index([migrationClassification])
 }
 
 model Session {
@@ -379,33 +492,37 @@ model RateLimit {
 }
 
 model Organization {
-  id                      String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name                    String
-  tradeName               String?
-  chamberOfCommerceNumber String?
-  organizationType        OrganizationType
-  status                  OrganizationStatus          @default(PENDING)
-  website                 String?
-  phone                   String?
-  generalEmail            String?
-  employeeCount           Int?
-  logoStorageKey          String?                     @unique
-  logoMimeType            String?
-  logoSizeBytes           Int?
-  logoWidth               Int?
-  logoHeight              Int?
-  logoUpdatedAt           DateTime?                   @db.Timestamptz(3)
-  createdAt               DateTime                    @default(now()) @db.Timestamptz(3)
-  updatedAt               DateTime                    @updatedAt @db.Timestamptz(3)
-  archivedAt              DateTime?                   @db.Timestamptz(3)
-  memberships             OrganizationMembership[]
-  locations               OrganizationLocation[]
-  sectors                 OrganizationSector[]
-  providerProfile         ProviderProfile?
-  clientIntakes           Intake[]
-  clientAssignments       Assignment[]
-  creditAccount           CreditAccount?
-  insuredProviderPolicies ProviderInsuranceRevision[] @relation("InsuredOrganization")
+  id                       String                          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                     String
+  tradeName                String?
+  chamberOfCommerceNumber  String?
+  organizationType         OrganizationType
+  status                   OrganizationStatus              @default(PENDING)
+  website                  String?
+  phone                    String?
+  generalEmail             String?
+  employeeCount            Int?
+  logoStorageKey           String?                         @unique
+  logoMimeType             String?
+  logoSizeBytes            Int?
+  logoWidth                Int?
+  logoHeight               Int?
+  logoUpdatedAt            DateTime?                       @db.Timestamptz(3)
+  createdAt                DateTime                        @default(now()) @db.Timestamptz(3)
+  updatedAt                DateTime                        @updatedAt @db.Timestamptz(3)
+  archivedAt               DateTime?                       @db.Timestamptz(3)
+  systemKey                String?                         @unique @db.VarChar(100)
+  memberships              OrganizationMembership[]
+  provisioningEvents       AccountProvisioningEvent[]
+  systemProvisioningEvents OrganizationProvisioningEvent[]
+  membershipEvents         OrganizationMembershipEvent[]
+  locations                OrganizationLocation[]
+  sectors                  OrganizationSector[]
+  providerProfile          ProviderProfile?
+  clientIntakes            Intake[]
+  clientAssignments        Assignment[]
+  creditAccount            CreditAccount?
+  insuredProviderPolicies  ProviderInsuranceRevision[]     @relation("InsuredOrganization")
 
   @@index([organizationType])
   @@index([status])
@@ -413,20 +530,116 @@ model Organization {
 }
 
 model OrganizationMembership {
-  id             String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId         String                     @db.Uuid
-  organizationId String                     @db.Uuid
-  role           OrganizationMembershipRole
-  status         MembershipStatus           @default(INVITED)
-  createdAt      DateTime                   @default(now()) @db.Timestamptz(3)
-  updatedAt      DateTime                   @updatedAt @db.Timestamptz(3)
-  user           User                       @relation(fields: [userId], references: [id], onDelete: Restrict)
-  organization   Organization               @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  id                 String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId             String                        @db.Uuid
+  organizationId     String                        @db.Uuid
+  role               OrganizationMembershipRole
+  status             MembershipStatus              @default(INVITED)
+  createdAt          DateTime                      @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime                      @updatedAt @db.Timestamptz(3)
+  user               User                          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  organization       Organization                  @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  provisioningEvents AccountProvisioningEvent[]
+  historyEvents      OrganizationMembershipEvent[]
 
   @@unique([userId, organizationId])
   @@index([userId])
   @@index([organizationId])
   @@index([status])
+}
+
+model AccountProvisioningEvent {
+  id             String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  eventType      AccountProvisioningEventType
+  subjectUserId  String                       @db.Uuid
+  actorUserId    String?                      @db.Uuid
+  organizationId String?                      @db.Uuid
+  membershipId   String?                      @db.Uuid
+  occurredAt     DateTime                     @default(now()) @db.Timestamptz(3)
+  reasonCode     String?                      @db.VarChar(80)
+  metadata       Json?                        @db.JsonB
+  correlationId  String?                      @db.VarChar(160)
+  idempotencyKey String?                      @unique @db.VarChar(160)
+  schemaVersion  Int                          @default(1)
+  createdAt      DateTime                     @default(now()) @db.Timestamptz(3)
+  subjectUser    User                         @relation("AccountProvisioningSubject", fields: [subjectUserId], references: [id], onDelete: Restrict)
+  actorUser      User?                        @relation("AccountProvisioningActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+  organization   Organization?                @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  membership     OrganizationMembership?      @relation(fields: [membershipId], references: [id], onDelete: Restrict)
+
+  @@index([subjectUserId, occurredAt])
+  @@index([actorUserId, occurredAt])
+  @@index([organizationId, occurredAt])
+  @@index([membershipId, occurredAt])
+  @@index([eventType, occurredAt])
+}
+
+model OrganizationProvisioningEvent {
+  id             String                            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  eventType      OrganizationProvisioningEventType
+  organizationId String                            @db.Uuid
+  actorType      ProvisioningActorType             @default(SYSTEM)
+  actorUserId    String?                           @db.Uuid
+  occurredAt     DateTime                          @default(now()) @db.Timestamptz(3)
+  reasonCode     String                            @db.VarChar(80)
+  metadata       Json?                             @db.JsonB
+  correlationId  String?                           @db.VarChar(160)
+  idempotencyKey String                            @unique @db.VarChar(160)
+  schemaVersion  Int                               @default(1)
+  createdAt      DateTime                          @default(now()) @db.Timestamptz(3)
+  organization   Organization                      @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  actorUser      User?                             @relation("OrganizationProvisioningActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, occurredAt])
+  @@index([actorUserId, occurredAt])
+  @@index([eventType, occurredAt])
+}
+
+model OrganizationMembershipEvent {
+  id             String                          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  eventType      OrganizationMembershipEventType
+  membershipId   String                          @db.Uuid
+  userId         String                          @db.Uuid
+  organizationId String                          @db.Uuid
+  actorUserId    String?                         @db.Uuid
+  previousRole   OrganizationMembershipRole?
+  newRole        OrganizationMembershipRole?
+  previousStatus MembershipStatus?
+  newStatus      MembershipStatus?
+  occurredAt     DateTime                        @default(now()) @db.Timestamptz(3)
+  reasonCode     String                          @db.VarChar(80)
+  correlationId  String?                         @db.VarChar(160)
+  idempotencyKey String?                         @unique @db.VarChar(160)
+  metadata       Json?                           @db.JsonB
+  schemaVersion  Int                             @default(1)
+  createdAt      DateTime                        @default(now()) @db.Timestamptz(3)
+  membership     OrganizationMembership          @relation(fields: [membershipId], references: [id], onDelete: Restrict)
+  subjectUser    User                            @relation("OrganizationMembershipEventSubject", fields: [userId], references: [id], onDelete: Restrict)
+  organization   Organization                    @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  actorUser      User?                           @relation("OrganizationMembershipEventActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([membershipId, occurredAt])
+  @@index([userId, occurredAt])
+  @@index([organizationId, occurredAt])
+  @@index([actorUserId, occurredAt])
+  @@index([eventType, occurredAt])
+}
+
+model DeletedAccountRetention {
+  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  subjectUserId          String    @unique @db.Uuid
+  encryptedEmail         String?
+  normalizedEmailHash    String?   @db.VarChar(128)
+  encryptionKeyReference String?   @db.VarChar(255)
+  retainedAt             DateTime  @db.Timestamptz(3)
+  purgeAt                DateTime  @db.Timestamptz(3)
+  purgedAt               DateTime? @db.Timestamptz(3)
+  reasonCode             String    @db.VarChar(80)
+  schemaVersion          Int       @default(1)
+  createdAt              DateTime  @default(now()) @db.Timestamptz(3)
+  subjectUser            User      @relation(fields: [subjectUserId], references: [id], onDelete: Restrict)
+
+  @@index([purgeAt, purgedAt])
 }
 
 model OrganizationLocation {
@@ -548,6 +761,9 @@ model ProviderProfile {
   blocks                      ProviderBlock[]
   trustedProjections          TrustedProviderProjection[]
   migrationAudits             ProviderMigrationAudit[]
+  dossierSubmissions          ProviderDossierSubmission[]
+  dossierCandidates           ProviderDossierCandidate[]
+  dossierReviewCases          ProviderDossierReviewCase[]
 
   @@index([approvalStatus])
   @@index([isAvailable])
@@ -841,30 +1057,50 @@ model ProviderWorkAreaRevision {
 }
 
 model ProviderCapacitySnapshot {
-  id                    String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  providerProfileId     String                @db.Uuid
+  id                    String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerProfileId     String                     @db.Uuid
   acceptsNewAssignments Boolean
-  earliestStartDate     DateTime?             @db.Date
+  earliestStartDate     DateTime?                  @db.Date
   capacityLevel         ProviderCapacityLevel
-  confirmedAt           DateTime              @db.Timestamptz(3)
-  validUntil            DateTime              @db.Timestamptz(3)
-  createdAt             DateTime              @default(now()) @db.Timestamptz(3)
-  providerProfile       ProviderProfile       @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  confirmedAt           DateTime                   @db.Timestamptz(3)
+  validUntil            DateTime                   @db.Timestamptz(3)
+  createdAt             DateTime                   @default(now()) @db.Timestamptz(3)
+  confirmedByUserId     String?                    @db.Uuid
+  providerProfile       ProviderProfile            @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  confirmedByUser       User?                      @relation("ProviderCapacityConfirmer", fields: [confirmedByUserId], references: [id], onDelete: Restrict)
+  dossierCandidates     ProviderDossierCandidate[]
 
   @@index([providerProfileId, validUntil])
 }
 
 model ProviderProfessional {
-  id                String                              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  providerProfileId String                              @db.Uuid
-  version           Int                                 @default(1)
-  status            ProviderRecordStatus                @default(ACTIVE)
-  createdAt         DateTime                            @default(now()) @db.Timestamptz(3)
-  providerProfile   ProviderProfile                     @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  id                String                                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerProfileId String                                 @db.Uuid
+  version           Int                                    @default(1)
+  status            ProviderRecordStatus                   @default(ACTIVE)
+  createdAt         DateTime                               @default(now()) @db.Timestamptz(3)
+  providerProfile   ProviderProfile                        @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
   privateData       ProviderProfessionalPrivateData?
   qualifications    ProviderProfessionalQualification[]
+  identityRevisions ProviderProfessionalIdentityRevision[]
 
   @@index([providerProfileId, status])
+}
+
+model ProviderProfessionalIdentityRevision {
+  id              String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  professionalId  String               @db.Uuid
+  version         Int
+  displayName     String               @db.VarChar(160)
+  functionalRole  String               @db.VarChar(160)
+  status          ProviderRecordStatus @default(ACTIVE)
+  createdByUserId String?              @db.Uuid
+  createdAt       DateTime             @default(now()) @db.Timestamptz(3)
+  professional    ProviderProfessional @relation(fields: [professionalId], references: [id], onDelete: Restrict)
+  createdByUser   User?                @relation("ProviderProfessionalIdentityActor", fields: [createdByUserId], references: [id], onDelete: Restrict)
+
+  @@unique([professionalId, version])
+  @@index([professionalId, status])
 }
 
 model ProviderProfessionalPrivateData {
@@ -895,6 +1131,7 @@ model ProviderProfessionalQualificationRevision {
   version             Int
   qualificationTermId String                            @db.Uuid
   issuer              String?
+  isCertified         Boolean                           @default(false)
   registrationNumber  String?
   issuedAt            DateTime?                         @db.Date
   validUntil          DateTime?                         @db.Date
@@ -1081,6 +1318,7 @@ model ProviderEvidenceRevision {
   insuranceRevisions         ProviderInsuranceRevision[]                 @relation("InsuranceEvidence")
   verificationReviews        ProviderVerificationReview[]
   scanDecision               ProviderEvidenceScanDecision?
+  dossierCandidateEvidence   ProviderDossierCandidateEvidence[]
 
   @@unique([evidenceDocumentId, version])
   @@index([scanStatus])
@@ -1157,6 +1395,9 @@ model ProviderVerificationReview {
   validUntil                          DateTime?                                  @db.Timestamptz(3)
   checksum                            String                                     @db.VarChar(64)
   createdAt                           DateTime                                   @default(now()) @db.Timestamptz(3)
+  dossierCandidateId                  String?                                    @db.Uuid
+  dossierSubmissionId                 String?                                    @db.Uuid
+  dossierReviewCaseId                 String?                                    @db.Uuid
   providerProfile                     ProviderProfile                            @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
   capabilityRevision                  ProviderCapabilityRevision?                @relation(fields: [capabilityRevisionId], references: [id], onDelete: Restrict)
   sectorExperienceRevision            ProviderSectorExperienceRevision?          @relation(fields: [sectorExperienceRevisionId], references: [id], onDelete: Restrict)
@@ -1166,9 +1407,13 @@ model ProviderVerificationReview {
   insuranceRevision                   ProviderInsuranceRevision?                 @relation(fields: [insuranceRevisionId], references: [id], onDelete: Restrict)
   evidenceRevision                    ProviderEvidenceRevision?                  @relation(fields: [evidenceRevisionId], references: [id], onDelete: Restrict)
   reviewerUser                        User                                       @relation("ProviderVerificationReviewer", fields: [reviewerUserId], references: [id], onDelete: Restrict)
+  dossierCandidate                    ProviderDossierCandidate?                  @relation(fields: [dossierCandidateId], references: [id], onDelete: Restrict)
+  dossierSubmission                   ProviderDossierSubmission?                 @relation(fields: [dossierSubmissionId], references: [id], onDelete: Restrict)
+  dossierReviewCase                   ProviderDossierReviewCase?                 @relation(fields: [dossierReviewCaseId], references: [id], onDelete: Restrict)
 
   @@index([providerProfileId, createdAt])
   @@index([reviewerUserId, createdAt])
+  @@index([dossierCandidateId])
 }
 
 model ProviderQualificationDecision {
@@ -1185,14 +1430,166 @@ model ProviderQualificationDecision {
   validUntil          DateTime?                            @db.Timestamptz(3)
   sourceChecksum      String                               @db.VarChar(64)
   createdAt           DateTime                             @default(now()) @db.Timestamptz(3)
+  dossierCandidateId  String?                              @db.Uuid
+  dossierSubmissionId String?                              @db.Uuid
+  dossierReviewCaseId String?                              @db.Uuid
   providerProfile     ProviderProfile                      @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
   capability          ProviderCapability?                  @relation(fields: [capabilityId], references: [id], onDelete: Restrict)
   requirementConfig   ProviderCapabilityRequirementConfig? @relation(fields: [requirementConfigId], references: [id], onDelete: Restrict)
   reviewedByUser      User                                 @relation("ProviderQualificationReviewer", fields: [reviewedByUserId], references: [id], onDelete: Restrict)
   approvedByUser      User                                 @relation("ProviderQualificationApprover", fields: [approvedByUserId], references: [id], onDelete: Restrict)
+  dossierCandidate    ProviderDossierCandidate?            @relation(fields: [dossierCandidateId], references: [id], onDelete: Restrict)
+  dossierSubmission   ProviderDossierSubmission?           @relation(fields: [dossierSubmissionId], references: [id], onDelete: Restrict)
+  dossierReviewCase   ProviderDossierReviewCase?           @relation(fields: [dossierReviewCaseId], references: [id], onDelete: Restrict)
 
   @@index([providerProfileId, scope, createdAt])
   @@index([capabilityId, createdAt])
+  @@index([dossierCandidateId])
+}
+
+model ProviderDossierSubmission {
+  id                     String                             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerProfileId      String                             @db.Uuid
+  status                 ProviderDossierSubmissionStatus    @default(SUBMITTED)
+  version                Int                                @default(1)
+  currentCandidateId     String?                            @unique @db.Uuid
+  submittedByUserId      String                             @db.Uuid
+  idempotencyKey         String                             @db.VarChar(160)
+  submittedAt            DateTime                           @default(now()) @db.Timestamptz(3)
+  closedAt               DateTime?                          @db.Timestamptz(3)
+  updatedAt              DateTime                           @updatedAt @db.Timestamptz(3)
+  providerProfile        ProviderProfile                    @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  currentCandidate       ProviderDossierCandidate?          @relation("CurrentProviderDossierCandidate", fields: [currentCandidateId], references: [id], onDelete: Restrict)
+  submittedByUser        User                               @relation("ProviderDossierSubmitter", fields: [submittedByUserId], references: [id], onDelete: Restrict)
+  candidates             ProviderDossierCandidate[]         @relation("ProviderDossierCandidates")
+  history                ProviderDossierSubmissionHistory[]
+  reviewCases            ProviderDossierReviewCase[]
+  verificationReviews    ProviderVerificationReview[]
+  qualificationDecisions ProviderQualificationDecision[]
+
+  @@unique([providerProfileId, idempotencyKey])
+  @@index([providerProfileId, status])
+}
+
+model ProviderDossierCandidate {
+  id                      String                             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerProfileId       String                             @db.Uuid
+  submissionId            String                             @db.Uuid
+  candidateVersion        Int
+  sourceProfileVersion    Int
+  schemaVersion           String                             @db.VarChar(80)
+  canonicalizationVersion String                             @db.VarChar(80)
+  sourceReferences        Json                               @db.JsonB
+  canonicalPayload        Json                               @db.JsonB
+  sha256                  String                             @db.VarChar(64)
+  createdByUserId         String                             @db.Uuid
+  createdAt               DateTime                           @default(now()) @db.Timestamptz(3)
+  providerProfile         ProviderProfile                    @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  submission              ProviderDossierSubmission          @relation("ProviderDossierCandidates", fields: [submissionId], references: [id], onDelete: Restrict)
+  currentForSubmission    ProviderDossierSubmission?         @relation("CurrentProviderDossierCandidate")
+  createdByUser           User                               @relation("ProviderDossierCandidateActor", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  capacitySnapshotId      String?                            @db.Uuid
+  capacitySnapshot        ProviderCapacitySnapshot?          @relation(fields: [capacitySnapshotId], references: [id], onDelete: Restrict)
+  evidence                ProviderDossierCandidateEvidence[]
+  history                 ProviderDossierSubmissionHistory[]
+  reviewCases             ProviderDossierReviewCase[]
+  verificationReviews     ProviderVerificationReview[]
+  qualificationDecisions  ProviderQualificationDecision[]
+  providerDossierFindings ProviderDossierFinding[]
+  findingResolutions      ProviderDossierFindingResolution[]
+
+  @@unique([providerProfileId, candidateVersion])
+  @@unique([submissionId, candidateVersion])
+  @@index([providerProfileId, createdAt])
+  @@index([sha256])
+}
+
+model ProviderDossierCandidateEvidence {
+  candidateId        String                   @db.Uuid
+  evidenceRevisionId String                   @db.Uuid
+  candidate          ProviderDossierCandidate @relation(fields: [candidateId], references: [id], onDelete: Restrict)
+  evidenceRevision   ProviderEvidenceRevision @relation(fields: [evidenceRevisionId], references: [id], onDelete: Restrict)
+
+  @@id([candidateId, evidenceRevisionId])
+  @@index([evidenceRevisionId])
+}
+
+model ProviderDossierSubmissionHistory {
+  id           String                           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  submissionId String                           @db.Uuid
+  candidateId  String                           @db.Uuid
+  fromStatus   ProviderDossierSubmissionStatus?
+  toStatus     ProviderDossierSubmissionStatus
+  reasonCode   String?                          @db.VarChar(80)
+  reason       String?                          @db.VarChar(500)
+  actorUserId  String                           @db.Uuid
+  createdAt    DateTime                         @default(now()) @db.Timestamptz(3)
+  submission   ProviderDossierSubmission        @relation(fields: [submissionId], references: [id], onDelete: Restrict)
+  candidate    ProviderDossierCandidate         @relation(fields: [candidateId], references: [id], onDelete: Restrict)
+  actorUser    User                             @relation("ProviderDossierHistoryActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([submissionId, createdAt])
+}
+
+model ProviderDossierReviewCase {
+  id                     String                          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerProfileId      String                          @db.Uuid
+  submissionId           String                          @db.Uuid
+  candidateId            String                          @db.Uuid
+  status                 ProviderDossierReviewCaseStatus @default(OPEN)
+  version                Int                             @default(1)
+  openedByUserId         String                          @db.Uuid
+  openedAt               DateTime                        @default(now()) @db.Timestamptz(3)
+  closedByUserId         String?                         @db.Uuid
+  closedAt               DateTime?                       @db.Timestamptz(3)
+  providerProfile        ProviderProfile                 @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  submission             ProviderDossierSubmission       @relation(fields: [submissionId], references: [id], onDelete: Restrict)
+  candidate              ProviderDossierCandidate        @relation(fields: [candidateId], references: [id], onDelete: Restrict)
+  openedByUser           User                            @relation("ProviderDossierReviewCaseOpener", fields: [openedByUserId], references: [id], onDelete: Restrict)
+  closedByUser           User?                           @relation("ProviderDossierReviewCaseCloser", fields: [closedByUserId], references: [id], onDelete: Restrict)
+  findings               ProviderDossierFinding[]
+  verificationReviews    ProviderVerificationReview[]
+  qualificationDecisions ProviderQualificationDecision[]
+
+  @@index([providerProfileId, status])
+  @@index([submissionId, openedAt])
+}
+
+model ProviderDossierFinding {
+  id              String                             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reviewCaseId    String                             @db.Uuid
+  candidateId     String                             @db.Uuid
+  section         ProviderDossierSection
+  reasonCode      String                             @db.VarChar(80)
+  providerMessage String                             @db.VarChar(1000)
+  internalNote    String?                            @db.VarChar(2000)
+  status          ProviderDossierFindingStatus       @default(OPEN)
+  createdByUserId String                             @db.Uuid
+  createdAt       DateTime                           @default(now()) @db.Timestamptz(3)
+  reviewCase      ProviderDossierReviewCase          @relation(fields: [reviewCaseId], references: [id], onDelete: Restrict)
+  candidate       ProviderDossierCandidate           @relation(fields: [candidateId], references: [id], onDelete: Restrict)
+  createdByUser   User                               @relation("ProviderDossierFindingActor", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  resolutions     ProviderDossierFindingResolution[]
+
+  @@index([reviewCaseId, section])
+  @@index([candidateId])
+}
+
+model ProviderDossierFindingResolution {
+  id               String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  findingId        String                    @db.Uuid
+  version          Int
+  response         String                    @db.VarChar(1000)
+  resolvedByUserId String                    @db.Uuid
+  candidateId      String?                   @db.Uuid
+  createdAt        DateTime                  @default(now()) @db.Timestamptz(3)
+  finding          ProviderDossierFinding    @relation(fields: [findingId], references: [id], onDelete: Restrict)
+  resolvedByUser   User                      @relation("ProviderDossierFindingResolutionActor", fields: [resolvedByUserId], references: [id], onDelete: Restrict)
+  candidate        ProviderDossierCandidate? @relation(fields: [candidateId], references: [id], onDelete: Restrict)
+
+  @@unique([findingId, version])
+  @@index([findingId, createdAt])
+  @@index([candidateId])
 }
 
 model ProviderReadinessAssessment {

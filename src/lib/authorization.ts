@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { cache } from 'react'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import type { PlatformRole } from '@/generated/prisma/enums'
@@ -12,9 +13,9 @@ export async function getCurrentSession() {
   return auth.api.getSession({ headers: await headers() })
 }
 
-export async function requireUser(returnTo = '/account') {
+export const getCurrentUser = cache(async () => {
   const session = await getCurrentSession()
-  if (!session) redirect(`/inloggen?returnTo=${encodeURIComponent(getSafeReturnUrl(returnTo))}`)
+  if (!session) return null
 
   const user = await getPrisma().user.findUnique({
     where: { id: session.user.id },
@@ -23,9 +24,15 @@ export async function requireUser(returnTo = '/account') {
 
   if (!user || shouldRevokeExistingSessions(user.status) || !canAccessAccount(user.status)) {
     await getPrisma().session.deleteMany({ where: { userId: session.user.id } })
-    redirect('/inloggen?toegang=geweigerd')
+    return null
   }
 
+  return user
+})
+
+export async function requireUser(returnTo = '/account') {
+  const user = await getCurrentUser()
+  if (!user) redirect(`/inloggen?returnTo=${encodeURIComponent(getSafeReturnUrl(returnTo))}`)
   return user
 }
 

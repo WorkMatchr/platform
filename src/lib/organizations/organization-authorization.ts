@@ -1,9 +1,12 @@
+import { cache } from 'react'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import type { OrganizationMembershipRole } from '@/generated/prisma/client'
-import { requireUser } from '@/lib/authorization'
+import { getCurrentUser } from '@/lib/authorization'
 import { getPrisma } from '@/lib/prisma'
+import { getSafeReturnUrl } from '@/lib/safe-redirect'
 import { canManageOrganization, canUseMembership, canViewOrganization, selectActiveMembership } from './organization-policy'
+import { normalTenantOrganizationWhere } from '@/lib/account-architecture/platform-organization-governance'
 
 export const ACTIVE_ORGANIZATION_COOKIE = 'workmatchr.activeOrganization'
 
@@ -20,10 +23,15 @@ const membershipSelect = {
   },
 }
 
-export async function getActiveOrganizationContext(returnTo = '/account') {
-  const user = await requireUser(returnTo)
+export const getOptionalActiveOrganizationContext = cache(async () => {
+  const user = await getCurrentUser()
+  if (!user) return null
   const memberships = await getPrisma().organizationMembership.findMany({
-    where: { userId: user.id, status: 'ACTIVE', organization: { status: { not: 'ARCHIVED' } } },
+    where: {
+      userId: user.id,
+      status: 'ACTIVE',
+      organization: { status: { not: 'ARCHIVED' }, ...normalTenantOrganizationWhere },
+    },
     select: membershipSelect,
     orderBy: { createdAt: 'asc' },
   })
@@ -34,6 +42,12 @@ export async function getActiveOrganizationContext(returnTo = '/account') {
   const activeMembership = selectActiveMembership(memberships, selectedId)
 
   return { user, memberships, activeMembership }
+})
+
+export async function getActiveOrganizationContext(returnTo = '/account') {
+  const context = await getOptionalActiveOrganizationContext()
+  if (!context) redirect(`/inloggen?returnTo=${encodeURIComponent(getSafeReturnUrl(returnTo))}`)
+  return context
 }
 
 export async function requireOrganizationMembership(organizationId?: string, returnTo = '/account') {

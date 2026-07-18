@@ -4,6 +4,7 @@ import { requireProviderManager } from './provider-authorization'
 import { ProviderServiceError } from './provider-errors'
 import { expectedVersionSchema, insuranceSchema, uuidSchema } from './provider-validation'
 import { parseProviderInput, reserveProviderVersion } from './provider-write-utils'
+import { requireProviderSectionEditable } from './provider-dossier-access'
 
 const termAcceptanceSchema = z.object({
   documentVersionId: uuidSchema,
@@ -18,6 +19,7 @@ export async function acceptProviderTerm(
   const input = parseProviderInput(termAcceptanceSchema, rawInput)
   return getPrisma().$transaction(async (transaction) => {
     await requireProviderManager(transaction, userId, providerProfileId)
+    await requireProviderSectionEditable(transaction, providerProfileId, 'DECLARATIONS')
     const now = new Date()
     const version = await transaction.providerTermDocumentVersion.findFirst({
       where: {
@@ -45,25 +47,24 @@ export async function registerProviderInsurance(userId: string, providerProfileI
   return getPrisma().$transaction(
     async (transaction) => {
       const provider = await requireProviderManager(transaction, userId, providerProfileId)
+      await requireProviderSectionEditable(transaction, providerProfileId, 'INSURANCE')
       if (input.insuredOrganizationId !== provider.organizationId) throw new ProviderServiceError('VALIDATION_ERROR')
-      const [insuranceType, evidence] = await Promise.all([
-        transaction.providerTaxonomyTerm.findFirst({
-          where: {
-            id: input.insuranceTypeTermId,
-            isActive: true,
-            version: { status: 'PUBLISHED', taxonomy: { kind: 'INSURANCE_TYPE' } },
-          },
-          select: { id: true },
-        }),
-        transaction.providerEvidenceRevision.findFirst({
-          where: {
-            id: input.evidenceRevisionId,
-            evidenceDocument: { providerProfileId, status: 'AVAILABLE' },
-            scanDecision: { scanStatus: 'CLEAN' },
-          },
-          select: { id: true },
-        }),
-      ])
+      const insuranceType = await transaction.providerTaxonomyTerm.findFirst({
+        where: {
+          id: input.insuranceTypeTermId,
+          isActive: true,
+          version: { status: 'PUBLISHED', taxonomy: { kind: 'INSURANCE_TYPE' } },
+        },
+        select: { id: true },
+      })
+      const evidence = await transaction.providerEvidenceRevision.findFirst({
+        where: {
+          id: input.evidenceRevisionId,
+          evidenceDocument: { providerProfileId, status: 'AVAILABLE' },
+          scanDecision: { scanStatus: 'CLEAN' },
+        },
+        select: { id: true },
+      })
       if (!insuranceType) throw new ProviderServiceError('VALIDATION_ERROR')
       if (!evidence) throw new ProviderServiceError('EVIDENCE_NOT_CLEAN')
       const insurance = await transaction.providerInsurance.create({

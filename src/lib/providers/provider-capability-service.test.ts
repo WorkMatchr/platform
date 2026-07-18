@@ -7,10 +7,12 @@ const mocks = vi.hoisted(() => ({
   capabilityCreate: vi.fn(),
   profileUpdateMany: vi.fn(),
   projectionFind: vi.fn(),
+  requireEditable: vi.fn(),
 }))
 
 vi.mock('@/lib/prisma', () => ({ getPrisma: () => ({ $transaction: mocks.transaction }) }))
 vi.mock('./provider-authorization', () => ({ requireProviderManager: mocks.requireManager }))
+vi.mock('./provider-dossier-access', () => ({ requireProviderSectionEditable: mocks.requireEditable }))
 
 import { createProviderCapability } from './provider-capability-service'
 
@@ -44,6 +46,8 @@ describe('provider capability service', () => {
     expect(mocks.capabilityCreate).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ revisions: { create: expect.objectContaining({ verificationLevel: 'SELF_DECLARED' }) } }),
     }))
+    const revision = mocks.capabilityCreate.mock.calls[0]?.[0].data.revisions.create
+    expect(revision).not.toHaveProperty('competencyTermId')
     expect(mocks.profileUpdateMany).toHaveBeenCalledWith(expect.objectContaining({ where: { id: id('1'), version: 1, archivedAt: null } }))
   })
 

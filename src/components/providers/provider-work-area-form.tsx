@@ -1,0 +1,12 @@
+'use client'
+
+import { FieldError, fieldClassName } from '@/components/auth/auth-shell'
+import { Button } from '@/components/ui/button'
+import type { ProviderActionState } from '@/app/aanbiedersdossier/actions'
+import { ProviderFormFeedback } from './provider-form-feedback'
+import { useProviderForm } from './use-provider-form'
+
+export function ProviderWorkAreaForm({ action, profileVersion, regions, record }: { action: (state: ProviderActionState, formData: FormData) => Promise<ProviderActionState>; profileVersion: number; regions: Array<{ id: string; code: string; label: string }>; record?: { id: string; version: number; regionTermId: string; maxTravelDistanceKm: number | null } }) {
+  const form = useProviderForm(action)
+  return <form data-provider-form={form.formId} action={form.formAction} onChange={() => form.setDirty(true)} className="grid gap-5 sm:grid-cols-2" noValidate><input type="hidden" name="expectedProfileVersion" value={profileVersion} />{record && <><input type="hidden" name="workAreaId" value={record.id} /><input type="hidden" name="expectedRecordVersion" value={record.version} /></>}<div className="sm:col-span-2"><ProviderFormFeedback state={form.state} dirty={form.dirty} /></div><div><label htmlFor={`region-${record?.id ?? 'new'}`} className="font-semibold">Werkgebied</label><select id={`region-${record?.id ?? 'new'}`} name="regionTermId" defaultValue={form.value('regionTermId', record?.regionTermId ?? '')} className={fieldClassName} aria-invalid={form.invalid('regionTermId')} aria-describedby="regionTermId-error"><option value="">Kies een provincie, Landelijk of Remote</option>{regions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}</select><FieldError id="regionTermId-error" message={form.error('regionTermId')} /></div><div><label htmlFor={`distance-${record?.id ?? 'new'}`} className="font-semibold">Maximale reisafstand <span className="font-normal text-text-secondary">(optioneel)</span></label><input id={`distance-${record?.id ?? 'new'}`} name="maxTravelDistanceKm" type="number" min="0" max="1000" defaultValue={form.value('maxTravelDistanceKm', record?.maxTravelDistanceKm?.toString() ?? '')} className={fieldClassName} /></div><p className="text-sm text-text-secondary sm:col-span-2">Landelijk maakt losse provincies overbodig. Remote blijft onafhankelijk. Internationale inzet is niet beschikbaar.</p><div className="sm:col-span-2"><Button type="submit" loading={form.pending}>Opslaan</Button></div></form>
+}
