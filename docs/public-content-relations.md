@@ -8,7 +8,7 @@ De relatielaag helpt bezoekers vanuit een vraag of onderwerp door te gaan naar u
 
 ## 2. Contenttypen
 
-De catalogus onderscheidt `knowledge`, `service`, `obligation`, `sector` en `tool`. `kind` maakt daarnaast onderscheid tussen overzicht, detail en tool. De Advieswijzer is een tool en geen kennisartikel, verplichting of dienst. Sectoren hebben alleen een live overzicht; fictieve sectordetailitems ontbreken bewust.
+De catalogus onderscheidt `knowledge`, `service`, `obligation`, `sector`, `tool` en `overview`. `kind` maakt daarnaast onderscheid tussen overzicht, detail en tool. De Advieswijzer is een tool en geen kennisartikel, verplichting of dienst. P1.11 voegt uitsluitend de zes werkelijk gebouwde sectordetailroutes toe.
 
 ## 3. Contentcatalogus
 
@@ -68,6 +68,6 @@ Gerelateerde content gebruikt een semantische sectie, één duidelijke H2 en kaa
 
 Interne links volgen de informatiehiërarchie en behouden unieke metadata, canonicals en Open Graph-informatie. Er worden geen automatische SEO-teksten, keywordschema’s of fictieve routes gegenereerd. De inhoudelijke rol van iedere RI&E-pagina blijft onderscheidend, zodat de pagina’s elkaar aanvullen in plaats van dupliceren.
 
-## 12. Grens met P1.8
+## 12. Uitbreiding in P1.8–P1.12
 
-P1.7 bouwt geen CMS, zoeken, filters, dynamische routes, nieuwe contentclusters of sectordetailpagina’s. P1.8 en latere uitbreidingen zijn niet gestart. Nieuwe content wordt pas aan de catalogus en relaties toegevoegd nadat een live, inhoudelijk bruikbare en indexeerbare route bestaat.
+P1.8–P1.12 breiden hetzelfde principe uit naar diensten, verplichtingen, sectoren en kennisartikelen. Iedere detailpagina heeft expliciete associaties met maximaal drie aanvullende inhoudelijke doelen en de Advieswijzer. Zoektermen worden uitsluitend voor zoeken gebruikt en leiden nooit automatisch tot relaties. Een CMS, databasecontent en automatische relatiegeneratie blijven buiten scope.

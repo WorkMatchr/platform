@@ -259,6 +259,17 @@ De product owner heeft de doelarchitectuur uit ADR-013 vastgesteld. Fase 1 Expan
 | B-206 | Alleen bestaande, gepubliceerde en indexeerbare publieke content mag clusteritem zijn. | Private, tijdelijke, juridische tussen-, auth- en toekomstige routes falen gesloten in de validator. |
 | B-207 | De Advieswijzer is een begeleide vervolgstap en geen juridisch advies. | De tool wordt niet als kennis, verplichting of dienst gemodelleerd en claimt geen matching, opslag of offertegeneratie. |
 | B-208 | Sectorrelaties veroorzaken geen fictieve detailroutes. | Zolang alleen `/sectoren` live is, blijven sectoritems classificatie en niet-linkbare context. |
+| B-209 | Public Content Platform v1 blijft code- en typegedreven. | Publieke content gebruikt geen CMS of database; wijzigingen blijven reviewbaar in TypeScript. |
+| B-210 | Kennis, dienst, verplichting en sector hebben ieder een gespecialiseerd model en een eigen inhoudelijke rol. | Gedeelde status-, bron-, FAQ- en metadatavelden voorkomen duplicatie zonder één universele page builder te maken. |
+| B-211 | Wettelijke en medische kerninformatie vereist een primaire of gezaghebbende officiële bron. | Publicatie zonder bron-ID en controledatum faalt gesloten. |
+| B-212 | Publieke content bevat geen kostenindicaties, beschikbaarheidsgaranties of automatische selectieclaims. | Contextafhankelijke dienstverlening wordt niet als vast productresultaat gepresenteerd. |
+| B-213 | Contentrelaties blijven expliciet en redactioneel; keywords bepalen nooit relaties. | Zoektermen dienen uitsluitend vindbaarheid binnen de zoekfunctie. |
+| B-214 | De kenniszoekfunctie doorzoekt uitsluitend live, indexeerbare typed detailcontent. | Overzichten, tools, private routes en juridische noindex-routes zijn uitgesloten. |
+| B-215 | Zoekranking is transparant en rule-based. | Exacte titel, titelinhoud, alias, samenvatting en contenttype bepalen in die volgorde de score; gelijke scores worden alfabetisch gesorteerd. |
+| B-216 | Zoekquery en contenttypefilter worden in URL-parameters `q` en `type` bewaard. | Resultaten blijven deelbaar en terug-/vooruitnavigatie blijft begrijpelijk; sitemap bevat geen queryvarianten. |
+| B-217 | Sectorpagina’s geven representatieve context en geen universele risico-uitkomst. | Werkelijke werkzaamheden en organisatiecontext blijven bepalend. |
+| B-218 | De Advieswijzer blijft een begeleide vervolgstap en geen juridische, medische of automatische selectie-uitkomst. | Iedere detailpagina bevat maximaal één primaire vervolgstap en hoogstens enkele inhoudelijke relaties. |
+| B-219 | Nieuwe publieke content vereist bron-, route-, metadata-, FAQ- en relatievalidatie. | Ongeldige configuratie moet tijdens tests of build fail closed zichtbaar worden. |
 
 ADR-011 heeft status **Geaccepteerd**. Het implementatieplan begrenst 6A.3.2 tot maximaal twee niet-destructieve migraties en houdt de bredere services, interface en acceptatie in afzonderlijke vervolgstappen.
 

@@ -30,7 +30,7 @@ De primaire actie is **Stel uw vraag** en verwijst sinds P1.6 naar de werkende A
 
 - **Diensten** leggen professionele ondersteuning uit en verbinden kennis en verplichtingen aan een mogelijke vervolgstap.
 - **Wettelijke verplichtingen** geven algemene, brongebonden context zonder individueel juridisch advies te suggereren.
-- **Sectoren** ordenen later risico’s, verplichtingen en diensten vanuit branchecontext; P1.5 introduceert geen sectordetailroutes.
+- **Sectoren** ordenen risico’s, verplichtingen en diensten vanuit branchecontext en trekken geen universele conclusie over een individuele organisatie.
 - **Kenniscentrum** bevat vraaggestuurde, controleerbare uitleg met bronnen en relaties naar verplichtingen en diensten.
 
 ## 4. URL-conventies
@@ -80,14 +80,14 @@ De productie-origin staat centraal in `src/config/site.ts`. Inhoudelijke publiek
 
 `sitemap.ts` bevat uitsluitend bestaande indexeerbare publieke routes. `robots.ts` verwijst naar die sitemap en sluit private applicatiegebieden uit. Sitemap, navigatie en footer gebruiken dezelfde routecatalogus.
 
-## 11. Toekomstige uitbreidingen
+## 11. Contentplatform v1
 
-Nieuwe dienst-, verplichting-, sector- en kennisdetailpagina’s volgen de vastgelegde conventies. Subnavigatie wordt pas toegevoegd bij aantoonbare inhoudelijke noodzaak. Een publieke route voor specialisten vereist eerst voldoende inhoud en een afzonderlijk productbesluit.
+P1.8–P1.12 voegen 33 typed detailitems toe via gespecialiseerde modellen en statisch gegenereerde routes. De overzichten, sitemap, relaties en kenniszoekfunctie gebruiken dezelfde centrale catalogus. Zoekquery’s veranderen de canonical route niet en komen niet in de sitemap. Subnavigatie wordt pas toegevoegd bij aantoonbare inhoudelijke noodzaak. Een publieke route voor specialisten vereist eerst voldoende inhoud en een afzonderlijk productbesluit.
 
 ## 12. Grens met P1.6 en P1.7
 
 - **P1.6** levert de eerste begeleide personeelsflow op `/advieswijzer` met maximaal vijf beslismomenten. Andere startsituaties blijven eerlijk niet beschikbaar.
 - **P1.7** levert de relationele interne link- en SEO-clusterlaag met een typed catalogus, expliciete relaties, CTA-hiërarchie en validatie. De relaties worden niet automatisch uit keywords afgeleid.
-- **P1.8** en latere contentuitbreiding zijn niet gestart. Nieuwe clusteritems vereisen eerst een live, inhoudelijk bruikbare en indexeerbare route.
+- **P1.8–P1.12** leveren de typed contentfoundation, eerste brede inhoudsset en transparante kenniszoekfunctie. Nieuwe clusteritems vereisen nog steeds eerst een live, inhoudelijk bruikbare en indexeerbare route.
 
 P1.5 wijzigt geen Prisma-schema, database, authenticatie, tenantlogica, private navigatie of dependencies.

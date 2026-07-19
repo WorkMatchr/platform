@@ -8,7 +8,7 @@ export function PublicPageHero({ eyebrow, title, description }: PublicPageHeroPr
   return (
     <header className="max-w-3xl py-10 sm:py-14">
       {eyebrow && <Badge variant="neutral">{eyebrow}</Badge>}
-      <Heading as="h1" size="h1" className="mt-5">{title}</Heading>
+      <Heading as="h1" size="h1" className="mt-5 min-w-0 break-words">{title}</Heading>
       <Text size="lg" className="mt-5 max-w-2xl text-text-secondary">{description}</Text>
     </header>
   )

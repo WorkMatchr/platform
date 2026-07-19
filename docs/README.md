@@ -35,6 +35,11 @@ Deze map bevat de leidende projectdocumentatie. Lees vóór een wijziging minima
 - [Publieke informatiearchitectuur en navigatie — Module P1.5](public-information-architecture.md)
 - [Guided Intake Engine v1 — Module P1.6](guided-intake-engine-v1.md)
 - [Publieke contentrelaties en SEO-clusters — Module P1.7](public-content-relations.md)
+- [Public Content Platform v1 — Modules P1.8–P1.12](public-content-platform-v1.md)
+- [Publiek dienstenmodel](public-service-content-model.md)
+- [Publiek verplichtingenmodel](public-obligation-content-model.md)
+- [Publiek sectormodel](public-sector-content-model.md)
+- [Zoeken in publieke kennis v1](knowledge-search-v1.md)
 
 ## Ontwerp en kwaliteit
 

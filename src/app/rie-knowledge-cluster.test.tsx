@@ -3,9 +3,16 @@ import { describe, expect, it } from 'vitest'
 import RieServiceRoute, { metadata as serviceMetadata } from './diensten/rie/page'
 import RieQuestionPage, { metadata as questionMetadata } from './kenniscentrum/moet-ik-een-rie-hebben/page'
 import RieLegalRoute, { metadata as legalMetadata } from './wettelijke-verplichtingen/rie/page'
-import { rieLegalPage, rieQuestionArticle, rieServicePage } from '@/content/knowledge/rie'
+import { getKnowledgeArticleBySlug } from '@/content/knowledge/articles'
+import { getObligationBySlug } from '@/content/obligations'
+import { resolvePublicSources } from '@/content/public-sources'
+import { getServiceBySlug } from '@/content/services'
 import { resolvePublicContentCta, resolvePublicContentRelations } from '@/content/public-content'
 import { isRegisteredPublicHref } from '@/content/public-routes'
+
+const rieQuestionArticle = getKnowledgeArticleBySlug('moet-ik-een-rie-hebben')!
+const rieServicePage = getServiceBySlug('rie')!
+const rieLegalPage = getObligationBySlug('rie')!
 
 const routes = [
   ['vraag', RieQuestionPage, rieQuestionArticle, 'Kennis', '/kenniscentrum/moet-ik-een-rie-hebben', '/wettelijke-verplichtingen/rie', '/diensten/rie'],
@@ -46,8 +53,9 @@ describe('RI&E-kenniscluster', () => {
   }
 
   it('legt bewijs- en validatiestatus per bron vast', () => {
-    expect(rieQuestionArticle.sources.every((source) => source.evidenceLevel)).toBe(true)
-    expect(rieQuestionArticle.sources.every((source) => source.validationStatus === 'VALIDATED')).toBe(true)
+    const sources = resolvePublicSources(rieQuestionArticle.sourceIds)
+    expect(sources.every((source) => source.evidenceLevel)).toBe(true)
+    expect(rieQuestionArticle.validationStatus).toBe('VALIDATED')
   })
 
   it('heeft unieke metadata en canonicals', () => {
@@ -58,12 +66,12 @@ describe('RI&E-kenniscluster', () => {
 
   it('verbindt iedere detailpagina met de twee andere rollen en de Advieswijzer', () => {
     for (const document of [rieQuestionArticle, rieServicePage, rieLegalPage]) {
-      const relations = resolvePublicContentRelations(document.contentId)
-      const cta = resolvePublicContentCta(document.contentId)
-      expect(relations).toHaveLength(3)
-      expect(new Set(relations.map((relation) => relation.href))).toHaveLength(3)
+      const relations = resolvePublicContentRelations(document.id)
+      const cta = resolvePublicContentCta(document.id)
+      expect(relations).toHaveLength(4)
+      expect(new Set(relations.map((relation) => relation.href))).toHaveLength(4)
       expect(relations.some((relation) => relation.href === '/advieswijzer')).toBe(true)
-      expect(relations.some((relation) => relation.id === document.contentId)).toBe(false)
+      expect(relations.some((relation) => relation.id === document.id)).toBe(false)
       expect(cta?.primary.href).toMatch(/^\//)
     }
   })

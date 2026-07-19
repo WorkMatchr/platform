@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
+import HomePage from './page'
 import ServicesPage from './diensten/page'
 import KnowledgeCenterPage from './kenniscentrum/page'
 import SectorsPage from './sectoren/page'
@@ -24,17 +25,26 @@ describe('publieke platformpagina’s', () => {
     })
   }
 
-  it('maakt de niet-functionele zoekinterface eerlijk herkenbaar', () => {
+  it('maakt de functionele zoekinterface eerlijk herkenbaar', () => {
     const html = renderToStaticMarkup(<KnowledgeCenterPage />)
-    expect(html).toContain('disabled=""')
-    expect(html).toContain('Zoeken en filteren zijn nog niet beschikbaar')
+    expect(html).toContain('Zoeken wordt geladen')
+    expect(html).toContain('Gepubliceerde kennisartikelen')
     expect(html).not.toMatch(/populair|trending/i)
   })
 
   it('laat lange kaarttitels veilig afbreken op smalle schermen', () => {
     const html = renderToStaticMarkup(<LegalObligationsPage />)
-    expect(html).toContain('Arbeidsgezondheidskundig onderzoek')
+    expect(html).toContain('Basiscontract arbodienstverlening')
     expect(html).toContain('break-words')
+  })
+
+  it('toont op de homepage actuele dienstlabels en klikbare live sectoren', () => {
+    const html = renderToStaticMarkup(<HomePage />)
+
+    expect(html).toContain('Bekijk Ondersteuning van de preventiemedewerker')
+    expect(html).toContain('href="/sectoren/bouw"')
+    expect(html).toContain('href="/sectoren/zakelijke-dienstverlening"')
+    expect(html).not.toContain('Er zijn nog geen afzonderlijke sectorpagina’s')
   })
 
   it('gebruikt uitsluitend bestaande interne bestemmingen', () => {
@@ -51,9 +61,9 @@ describe('publieke platformpagina’s', () => {
       const html = renderToStaticMarkup(<Page />)
       expect(html).toContain('Verken vanuit dit overzicht')
       expect(html).toContain('Start de Advieswijzer')
-      expect(html).toMatch(/Kennis|Dienst/)
+      expect(html).toMatch(/Overzicht|Dienst|Kennis/)
       expect(html.match(/Verken vanuit dit overzicht/g)).toHaveLength(1)
-      expect(html).not.toMatch(/href="\/sectoren\//)
+      expect(html).not.toContain('href="#"')
     }
   })
 })

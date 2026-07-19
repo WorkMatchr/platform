@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { publicHomepageContent } from '@/content/public-homepage'
 import { legalOverview, sectorOverview, serviceOverview } from '@/content/public-overviews'
-import { rieQuestionArticle } from '@/content/knowledge/rie'
+import { getKnowledgeArticleBySlug } from '@/content/knowledge/articles'
 import { Section } from '@/components/layout/section'
 import { ProcessSteps } from '@/components/public/process-steps'
 import { PublicCallToAction } from '@/components/public/public-call-to-action'
@@ -11,7 +11,6 @@ import { PublicStatusNotice } from '@/components/public/public-status-notice'
 import { SituationGrid } from '@/components/public/situation-grid'
 import { TrustPrinciples } from '@/components/public/trust-principles'
 import { Badge } from '@/components/ui/badge'
-import { Card } from '@/components/ui/card'
 import { Heading } from '@/components/ui/heading'
 import { LinkButton } from '@/components/ui/link-button'
 import { Text } from '@/components/ui/text'
@@ -29,6 +28,8 @@ export const metadata: Metadata = {
     type: 'website',
   },
 }
+
+const rieQuestionArticle = getKnowledgeArticleBySlug('moet-ik-een-rie-hebben')!
 
 export default function HomePage() {
   const content = publicHomepageContent
@@ -68,7 +69,7 @@ export default function HomePage() {
         </div>
         <div className="mt-10 grid gap-5 md:grid-cols-3">
           {featuredServices.map((service) => (
-            <PublicContentCard key={service.title} {...service} headingLevel="h3" linkLabel="Bekijk RI&E-ondersteuning" />
+            <PublicContentCard key={service.title} {...service} headingLevel="h3" linkLabel={`Bekijk ${service.title}`} />
           ))}
         </div>
       </Section>
@@ -130,7 +131,7 @@ export default function HomePage() {
             <Badge>Sectoren</Badge>
             <Heading className="mt-4">Werk en risico’s verschillen per sector</Heading>
             <Text size="lg" className="mt-5 text-text-secondary">
-              De sectoringangen laten zien welke context later verder wordt uitgewerkt. Er zijn nog geen afzonderlijke sectorpagina’s.
+              Bekijk welke aandachtspunten vaak spelen in verschillende werkomgevingen. Uw werkzaamheden en organisatiecontext blijven altijd bepalend.
             </Text>
           </div>
           <LinkButton href="/sectoren" variant="outline">Bekijk het sectoroverzicht</LinkButton>
@@ -138,10 +139,7 @@ export default function HomePage() {
         <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {sectorOverview.map((sector) => (
             <li key={sector.title}>
-              <Card className="h-full p-5 shadow-none sm:p-5">
-                <Heading as="h3" size="h3">{sector.title}</Heading>
-                <Text size="sm" className="mt-2 text-text-secondary">{sector.description}</Text>
-              </Card>
+              <PublicContentCard {...sector} headingLevel="h3" linkLabel={`Bekijk ${sector.title}`} />
             </li>
           ))}
         </ul>

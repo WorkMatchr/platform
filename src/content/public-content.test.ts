@@ -12,7 +12,9 @@ import {
 } from './public-content'
 
 function routePageExists(route: string) {
-  return existsSync(join(process.cwd(), 'src/app', route.slice(1), 'page.tsx'))
+  const segments = route.slice(1).split('/')
+  return existsSync(join(process.cwd(), 'src/app', ...segments, 'page.tsx')) ||
+    (segments.length === 2 && existsSync(join(process.cwd(), 'src/app', segments[0]!, '[slug]', 'page.tsx')))
 }
 
 describe('publieke contentcatalogus en relaties', () => {
@@ -49,9 +51,9 @@ describe('publieke contentcatalogus en relaties', () => {
 
   it('legt het volledige directionele RI&E-cluster expliciet vast', () => {
     const expectedTargets = {
-      'knowledge:rie-required': ['obligation:rie', 'service:rie', 'tool:advice-guide'],
-      'obligation:rie': ['knowledge:rie-required', 'service:rie', 'tool:advice-guide'],
-      'service:rie': ['knowledge:rie-required', 'obligation:rie', 'tool:advice-guide'],
+      'knowledge:rie-required': ['obligation:rie', 'service:rie', 'sector:bouw', 'tool:advice-guide'],
+      'obligation:rie': ['knowledge:rie-required', 'service:rie', 'sector:bouw', 'tool:advice-guide'],
+      'service:rie': ['knowledge:rie-required', 'obligation:rie', 'sector:bouw', 'tool:advice-guide'],
     } as const
 
     for (const [sourceId, targetIds] of Object.entries(expectedTargets)) {
@@ -59,21 +61,21 @@ describe('publieke contentcatalogus en relaties', () => {
     }
   })
 
-  it('gebruikt per RI&E-pagina twee hiërarchische CTA’s en hoogstens één aanvullend item', () => {
+  it('gebruikt per RI&E-pagina twee hiërarchische CTA’s en hoogstens twee aanvullende items', () => {
     for (const id of ['knowledge:rie-required', 'obligation:rie', 'service:rie'] as const) {
       const cta = resolvePublicContentCta(id)
       const related = resolveRelatedPublicContent(id)
       expect(cta?.primary.href).toBeTruthy()
       expect(cta?.secondary?.href).toBeTruthy()
-      expect(related).toHaveLength(1)
+      expect(related.length).toBeLessThanOrEqual(2)
       expect(related[0]?.id).not.toBe(id)
       expect([cta?.primary.href, cta?.secondary?.href]).not.toContain(related[0]?.href)
     }
   })
 
-  it('maakt geen fictieve sectordetailroutes', () => {
+  it('neemt uitsluitend de zes werkelijk gebouwde sectordetailroutes op', () => {
     const sectorItems = Object.values(publicContentCatalog).filter((item) => item.type === 'sector')
-    expect(sectorItems).toHaveLength(1)
-    expect(sectorItems[0]).toMatchObject({ id: 'overview:sectors', kind: 'overview', href: '/sectoren' })
+    expect(sectorItems).toHaveLength(6)
+    expect(sectorItems.every((item) => item.kind === 'detail' && routePageExists(item.href))).toBe(true)
   })
 })

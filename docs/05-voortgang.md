@@ -582,3 +582,16 @@ De product owner heeft P1.2 en P1.3 vervolgens goedgekeurd. De eerdere openstaan
 - CTA-hiërarchie toont maximaal twee acties en één aanvullend gerelateerd item;
 - overzichtspagina’s zijn compact onderling verbonden zonder fictieve sectordetailroutes;
 - P1.8, Prisma, dependencies, auth, tenantlogica, private navigatie en Guided Intake-beslislogica zijn niet gestart of gewijzigd.
+
+## Modules P1.8–P1.12 — Public Content Platform v1
+
+**Status:** technisch opgeleverd; product-owneracceptatie open.
+
+- P1.8: gedeelde typed basis, gespecialiseerde modellen, centrale officiële bronnen, vier templates, metadatahelper en fail-closed validators gebouwd;
+- P1.9: acht live diensten gepubliceerd en het dienstenoverzicht volledig op live content aangesloten;
+- P1.10: tien genuanceerde verplichtingenpagina’s met wettelijke basis, disclaimer en officiële bronnen gepubliceerd;
+- P1.11: zes onderscheidende sectorpagina’s gepubliceerd zonder universele sectorconclusies;
+- P1.12: negen kennisartikelen doorzoekbaar gemaakt met typefilters, transparante ranking, URL-state, resultaatstatus, reset en eerlijke lege toestand;
+- alle nieuwe detailroutes zijn canonical, indexeerbaar en opgenomen in de sitemap;
+- middelbare veiligheidskundige, arbeidsdeskundige, gemeenten/publieke organisaties en detailhandel/horeca zijn bewust niet gepubliceerd vanwege onvoldoende onderscheidende bronanalyse binnen deze sprint;
+- CMS, databasecontent, automatische bronmonitoring, Prisma, auth, tenantlogica, matching, offertes en AI zijn niet toegevoegd.

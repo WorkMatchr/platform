@@ -48,3 +48,7 @@ Prisma, CMS, AI, Product Intelligence, automatische bronmonitoring, FAQ-schema e
 P1.7 koppelt de drie RI&E-routes via stabiele content-ID’s aan elkaar en aan de Advieswijzer. De kennisroute leidt primair naar wettelijke context, de verplichtingenroute naar praktische uitleg en de dienstroute naar begeleide vraagverheldering. Iedere pagina toont daarnaast maximaal één aanvullend inhoudelijk item. Zelfverwijzingen, duplicaten, private routes en niet-indexeerbare content worden fail closed geweigerd.
 
 De pagina’s houden hun oorspronkelijke inhoudelijke rol en bronnen. P1.7 voegt geen automatische keywordlinks, nieuwe RI&E-inhoud, structured data, CMS of dynamische routegeneratie toe.
+
+## Migratie naar Public Content Platform v1
+
+P1.8 migreert de drie bestaande RI&E-routes naar de gespecialiseerde kennis-, dienst- en verplichtingtemplates. Route, inhoudelijke rol, officiële bronbasis, controledatum en label **Bronnen gecontroleerd** blijven behouden. Het cluster is uitgebreid met expliciete sectorcontext voor bouw en met inhoudelijke verbindingen naar plan van aanpak en preventiemedewerker. De bestaande P1.7-CTA-hiërarchie blijft leidend.

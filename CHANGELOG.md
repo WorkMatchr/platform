@@ -1,5 +1,17 @@
 # Changelog
 
+## Niet uitgebracht — Modules P1.8–P1.12 Public Content Platform v1
+
+- definitieve typed contentfoundation toegevoegd met gespecialiseerde modellen voor kennis, diensten, verplichtingen en sectoren;
+- centrale officiële broncatalogus, bronresolver, metadatahelper en fail-closed content-, route-, bron-, FAQ- en relatievalidatie toegevoegd;
+- acht diensten, tien wettelijke verplichtingen, zes sectoren en negen kennisartikelen inhoudelijk gepubliceerd;
+- vier herbruikbare detailtemplates met breadcrumbs, contentrol, status, controledatum, FAQ, bronnen, CTA en gerelateerde content toegevoegd;
+- publieke overzichten bijgewerkt zodat uitsluitend live detailroutes worden getoond;
+- kenniscentrum uitgebreid met transparante client-side zoek- en filterfunctie op typed content, inclusief URL-state, lege toestand en stabiele ranking;
+- sitemap uitgebreid met uitsluitend de nieuwe live, indexeerbare canonical routes;
+- geen Prisma-, dependency-, auth-, tenant-, private navigatie-, matching-, offerte- of AI-wijzigingen uitgevoerd;
+- status: technisch opgeleverd, product-owneracceptatie open.
+
 ## Niet uitgebracht — Module P1.7 relationele interne links en SEO-clusters
 
 - centrale typed contentcatalogus toegevoegd voor live overzichten, RI&E-details en de Advieswijzer;

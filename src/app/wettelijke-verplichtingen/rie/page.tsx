@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
-import { KnowledgeDocumentPage } from '@/components/public/knowledge-document-page'
-import { rieLegalPage } from '@/content/knowledge/rie'
+import { ObligationDetailPage } from '@/components/public/obligation-detail-page'
+import { getObligationBySlug } from '@/content/obligations'
+import { createPublicContentMetadata } from '@/content/public-metadata'
 
-export const metadata: Metadata = { title: 'RI&E als wettelijke verplichting | WorkMatchr', description: rieLegalPage.summary, alternates: { canonical: '/wettelijke-verplichtingen/rie' }, openGraph: { title: 'RI&E als wettelijke verplichting | WorkMatchr', description: rieLegalPage.summary, url: '/wettelijke-verplichtingen/rie' } }
-export default function RieLegalRoute() { return <KnowledgeDocumentPage document={rieLegalPage} breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Wettelijke verplichtingen', href: '/wettelijke-verplichtingen' }, { label: 'RI&E' }]} /> }
+const content = getObligationBySlug('rie')!
+export const metadata: Metadata = createPublicContentMetadata(content)
+export default function RieLegalRoute() { return <ObligationDetailPage content={content} /> }

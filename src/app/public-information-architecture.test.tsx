@@ -17,7 +17,9 @@ import sitemap from './sitemap'
 
 function routePageExists(route: string) {
   if (route === '/') return existsSync(join(process.cwd(), 'src/app/page.tsx'))
-  return existsSync(join(process.cwd(), 'src/app', route.slice(1), 'page.tsx'))
+  const segments = route.slice(1).split('/')
+  return existsSync(join(process.cwd(), 'src/app', ...segments, 'page.tsx')) ||
+    (segments.length === 2 && existsSync(join(process.cwd(), 'src/app', segments[0]!, '[slug]', 'page.tsx')))
 }
 
 describe('publieke informatiearchitectuur', () => {

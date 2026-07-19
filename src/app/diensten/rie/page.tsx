@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
-import { KnowledgeDocumentPage } from '@/components/public/knowledge-document-page'
-import { rieServicePage } from '@/content/knowledge/rie'
+import { ServiceDetailPage } from '@/components/public/service-detail-page'
+import { createPublicContentMetadata } from '@/content/public-metadata'
+import { getServiceBySlug } from '@/content/services'
 
-export const metadata: Metadata = { title: 'Ondersteuning bij uw RI&E | WorkMatchr', description: rieServicePage.summary, alternates: { canonical: '/diensten/rie' }, openGraph: { title: 'Ondersteuning bij uw RI&E | WorkMatchr', description: rieServicePage.summary, url: '/diensten/rie' } }
-export default function RieServiceRoute() { return <KnowledgeDocumentPage document={rieServicePage} breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Diensten', href: '/diensten' }, { label: 'RI&E' }]} /> }
+const content = getServiceBySlug('rie')!
+export const metadata: Metadata = createPublicContentMetadata(content)
+export default function RieServiceRoute() { return <ServiceDetailPage content={content} /> }
