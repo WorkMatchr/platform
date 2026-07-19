@@ -243,6 +243,16 @@ De product owner heeft de doelarchitectuur uit ADR-013 vastgesteld. Fase 1 Expan
 | B-190 | Self-block wordt altijd geweigerd en de laatste actieve OWNER blijft beschermd. | Er is geen impliciet overridepad in tenantbeheer. |
 | B-191 | Membershipbeëindiging blijft fail-closed totdat accountstatus, membership, sessies, herstelmiddelen en historie volledig atomair kunnen worden verwerkt. | Fase 2B biedt deze actie niet aan en de service weigert haar expliciet. |
 | B-192 | ADR-013 Fase 2B is technisch geïmplementeerd met product-owneracceptatie open. | Er is geen schema- of datamigratie uitgevoerd; de bestaande legacy multi-membership blijft voor een latere migratiefase. |
+| B-193 | Publieke kennis scheidt uitleg, wettelijke verplichting en dienstverlening. | Bezoekers zien het doel en de bewijskracht van informatie; de eerste typed contentbasis is nog geen database of Validation Engine. |
+| B-194 | Juridische kernbeweringen verwijzen naar actuele primaire of officiële bronnen en tonen een controledatum. | RI&E-inhoud gebruikt artikel 5 Arbowet, Nederlandse Arbeidsinspectie en Rijksoverheid; contextafhankelijke toepassing leidt niet tot individueel juridisch advies. |
+| B-195 | De publieke homepage presenteert herkenbare situaties vóór diensten. | Bezoekers hoeven vooraf geen vakterm of specialist te kennen; CTA’s verwijzen uitsluitend naar bestaande routes en een werkend homepageanker. P1.4 bevat geen zelfscan of automatische matching. |
+| B-196 | Publieke navigatie bevat uitsluitend live, inhoudelijk bruikbare routes met Nederlandse leesbare slugs. | Dode links, tijdelijke `#`-links, willekeurige ID’s en vroegtijdige categorielagen zijn uitgesloten. “Voor specialisten” volgt pas wanneer een verantwoorde publieke route bestaat. |
+| B-197 | “Stel uw vraag” verwijst tot P1.6 naar de situatiesectie op de homepage. | P1.6 bouwt later de begeleide intake; P1.5 claimt geen zelfscan, AI-advies of automatische matching. |
+| B-198 | Publieke routekennis en contentrelaties hebben een compacte getypeerde bron. | Desktop, mobiel, footer, sitemap en bestaande RI&E-relaties blijven controleerbaar. P1.7 kan later de geautomatiseerde interne link- en SEO-laag bouwen. |
+| B-199 | Guided Intake Engine v1 gebruikt exact vijf inhoudelijke beslismomenten voor de eerste personeelsflow. | Iedere vraag levert een aantoonbaar feit of beslisdoel; de conditionele gewenste datum preciseert vraag vijf en is geen extra beslismoment. |
+| B-200 | De Advieswijzer geeft inhoudelijk advies vóór een verwijzing naar dienstverlening. | Vragen, antwoorden, feiten, flow, regels en aanbevelingen zijn getypeerd en gescheiden; React bevat geen verspreide inhoudelijke beslisregels. |
+| B-201 | Alleen “Ik heb personeel in dienst” is in P1.6 een werkende startsituatie. | Andere startsituaties worden uitsluitend als niet beschikbaar getoond en hebben geen interactief verborgen pad. |
+| B-202 | P1.6 verwerkt antwoorden uitsluitend tijdelijk in de browser. | AI, database, Prisma, matching, offerteflow, accountopslag en sessiebehoud zijn uitgesloten. |
 
 ADR-011 heeft status **Geaccepteerd**. Het implementatieplan begrenst 6A.3.2 tot maximaal twee niet-destructieve migraties en houdt de bredere services, interface en acceptatie in afzonderlijke vervolgstappen.
 

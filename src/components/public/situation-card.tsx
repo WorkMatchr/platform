@@ -12,7 +12,7 @@ export function SituationCard({ situation }: { situation: SituationContent }) {
       <IconContainer><PublicIcon name={situation.icon} /></IconContainer>
       <Heading as="h3" size="h3" className="mt-5">{situation.title}</Heading>
       <Text className="mt-3 pb-12 text-text-secondary">{situation.description}</Text>
-      <Link href={situation.href} className="absolute inset-x-7 bottom-7 inline-flex min-h-11 items-center rounded-control font-semibold text-brand-primary-hover after:absolute after:inset-0 after:rounded-card">
+      <Link href={situation.href} className="absolute inset-x-7 bottom-7 inline-flex min-h-11 items-center rounded-control font-semibold text-brand-primary-hover after:absolute after:inset-0 after:rounded-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-primary">
         {situation.label}<span aria-hidden="true" className="ml-2">→</span>
       </Link>
     </Card>

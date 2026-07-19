@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Container } from '@/components/layout/container'
-import { publicFooterGroups } from '@/content/public-homepage'
+import { publicFooterGroups } from '@/content/public-routes'
 
 export function Footer() {
   return (
@@ -10,7 +10,7 @@ export function Footer() {
           <Link href="/" className="inline-flex min-h-11 items-center rounded-control text-lg font-bold text-brand-dark">Work<span className="text-brand-primary">Matchr</span></Link>
           <p className="mt-3 max-w-sm leading-6">Onafhankelijke digitale begeleiding bij arbo- en veiligheidsvragen.</p>
           <p className="mt-5 max-w-lg text-xs leading-5">
-            De informatie op WorkMatchr is algemeen van aard en vervangt geen beoordeling van Uw specifieke situatie door een bevoegde deskundige.
+            De informatie op WorkMatchr is algemeen van aard en vervangt geen beoordeling van uw specifieke situatie door een bevoegde deskundige.
           </p>
         </div>
         <div className="grid gap-8 sm:grid-cols-3">
@@ -20,7 +20,7 @@ export function Footer() {
               <ul className="mt-3 space-y-1">
                 {group.links.map((item) => (
                   <li key={item.href}>
-                    <Link href={item.href} className="inline-flex min-h-11 items-center rounded-control hover:text-brand-primary-hover">{item.label}</Link>
+                    <Link href={item.href} className="inline-flex min-h-11 items-center rounded-control hover:text-brand-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary">{item.label}</Link>
                   </li>
                 ))}
               </ul>

@@ -1,3 +1,5 @@
+import { publicAnchors, publicRoutes } from './public-routes'
+
 export type InternalHref = `/${string}`
 
 export type PublicIconName =
@@ -30,156 +32,90 @@ export type PreviewCardContent = LinkContent & {
   description: string
 }
 
-export const publicNavigation = [
-  { href: '/', label: 'Home' },
-  { href: '/#herkenbare-situaties', label: 'Waarmee kunnen wij U helpen?' },
-  { href: '/diensten', label: 'Diensten' },
-  { href: '/wettelijke-verplichtingen', label: 'Wettelijke verplichtingen' },
-  { href: '/sectoren', label: 'Sectoren' },
-  { href: '/kenniscentrum', label: 'Kenniscentrum' },
-  { href: '/over-workmatchr', label: 'Over WorkMatchr' },
-  { href: '/contact', label: 'Contact' },
-] as const satisfies readonly LinkContent[]
-
-export const publicFooterGroups = [
-  {
-    title: 'Verkennen',
-    links: publicNavigation.filter((item) => item.href !== '/' && !item.href.includes('#')),
-  },
-  {
-    title: 'Juridisch',
-    links: [
-      { href: '/privacy', label: 'Privacy' },
-      { href: '/cookies', label: 'Cookies' },
-      { href: '/algemene-voorwaarden', label: 'Algemene voorwaarden' },
-    ],
-  },
-  {
-    title: 'Account',
-    links: [{ href: '/inloggen', label: 'Inloggen' }],
-  },
-] as const satisfies readonly { title: string; links: readonly LinkContent[] }[]
-
 export const publicHomepageContent = {
   hero: {
     eyebrow: 'Uw digitale arbo-adviseur',
-    title: 'Waarmee kunnen wij U helpen?',
+    title: 'Waarmee kunnen wij u helpen?',
     description:
-      'WorkMatchr helpt U begrijpen welke verplichtingen gelden, welke oplossing bij Uw organisatie past en welke specialist U daarbij kan ondersteunen.',
-    primaryAction: { href: '/advieswijzer', label: 'Start de Advieswijzer' },
-    secondaryAction: { href: '/kenniscentrum', label: 'Bekijk het kenniscentrum' },
+      'WorkMatchr helpt organisaties hun vraag over arbeidsomstandigheden, veiligheid en gezondheid te verduidelijken en leidt vervolgens naar relevante informatie of passende deskundigheid.',
+    primaryAction: { href: publicAnchors.askQuestion, label: 'Bekijk waar u kunt beginnen' },
+    secondaryAction: { href: publicRoutes.services, label: 'Bekijk alle diensten' },
   },
-  process: ['Vraag', 'Begrijpen', 'Advies', 'Specialist'],
-  uncertainty: {
-    title: 'Nog niet zeker wat U nodig heeft?',
-    description:
-      'Dat is precies waar WorkMatchr voor bedoeld is. Beantwoord een aantal korte vragen en krijg inzicht in een passende vervolgstap.',
-    action: { href: '/advieswijzer', label: 'Start de Advieswijzer' },
-  },
+  process: ['Situatie', 'Verduidelijking', 'Inzicht', 'Vervolgstap'],
   situations: [
     {
-      title: 'Ik wil voldoen aan de Arbowet',
-      description: 'Krijg overzicht van veelvoorkomende verplichtingen en ontdek welke vervolgstap past.',
-      href: '/wettelijke-verplichtingen',
+      title: 'Ik heb personeel in dienst',
+      description: 'Bekijk welke onderwerpen rond gezond en veilig werken voor werkgevers relevant kunnen zijn.',
+      href: publicRoutes.adviceGuide,
+      label: 'Start de Advieswijzer',
+      icon: 'growth',
+    },
+    {
+      title: 'Ik twijfel of ik een RI&E nodig heb',
+      description: 'Lees wanneer de RI&E-verplichting in beginsel geldt en welke context van belang is.',
+      href: publicRoutes.rieQuestion,
+      label: 'Lees het korte antwoord',
+      icon: 'checklist',
+    },
+    {
+      title: 'Ik wil voldoen aan mijn arboverplichtingen',
+      description: 'Verken veelvoorkomende verplichtingen en de algemene wettelijke context.',
+      href: publicRoutes.obligations,
       label: 'Bekijk de verplichtingen',
       icon: 'law',
     },
     {
-      title: 'Ik heb een RI&E nodig',
-      description: 'Lees wat een risico-inventarisatie en -evaluatie inhoudt en waar U kunt beginnen.',
-      href: '/diensten',
-      label: 'Lees meer over RI&E',
-      icon: 'checklist',
-    },
-    {
-      title: 'Ik zoek een specialist',
-      description: 'Verduidelijk eerst Uw vraag, zodat later gericht naar passende deskundigheid kan worden gezocht.',
-      href: '/advieswijzer',
-      label: 'Verduidelijk Uw vraag',
-      icon: 'search',
-    },
-    {
-      title: 'Er is een incident gebeurd',
-      description: 'Breng rustig in kaart wat er is gebeurd en welke deskundige ondersteuning mogelijk relevant is.',
-      href: '/advieswijzer',
-      label: 'Bekijk de vervolgstap',
+      title: 'Er is een incident of bijna-ongeval gebeurd',
+      description: 'Oriënteer u op mogelijke deskundige ondersteuning en relevante vervolgstappen.',
+      href: publicRoutes.services,
+      label: 'Bekijk passende diensten',
       icon: 'incident',
     },
     {
-      title: 'Ik wil ziekteverzuim verminderen',
-      description: 'Verken welke vragen helpen om oorzaken, verantwoordelijkheden en ondersteuning te ordenen.',
-      href: '/kenniscentrum',
-      label: 'Bekijk betrouwbare uitleg',
+      title: 'Ik heb te maken met verzuim of gezondheidsklachten',
+      description: 'Vind algemene informatie over gezondheid, preventie en specialistische ondersteuning.',
+      href: publicRoutes.knowledge,
+      label: 'Ga naar het kenniscentrum',
       icon: 'health',
     },
     {
-      title: 'Onze organisatie groeit',
-      description: 'Ontdek welke arbo- en veiligheidsaandachtspunten bij veranderingen kunnen ontstaan.',
-      href: '/advieswijzer',
-      label: 'Breng Uw situatie in kaart',
-      icon: 'growth',
-    },
-    {
-      title: 'Ik weet nog niet wat ik nodig heb',
-      description: 'Begin bij Uw situatie. U hoeft vooraf geen dienst of specialist te kiezen.',
-      href: '/advieswijzer',
-      label: 'Start bij Uw vraag',
-      icon: 'advice',
+      title: 'Ik zoek direct een deskundige',
+      description: 'Bekijk welke vormen van arbo- en veiligheidsondersteuning beschikbaar of in voorbereiding zijn.',
+      href: publicRoutes.services,
+      label: 'Bekijk alle diensten',
+      icon: 'search',
     },
   ] satisfies readonly SituationContent[],
   steps: [
     {
-      title: 'Uw vraag begrijpen',
-      description: 'WorkMatchr helpt verduidelijken wat er binnen Uw organisatie speelt.',
+      title: 'Vertel wat er speelt',
+      description: 'Begin bij uw vraag, situatie of mogelijke verplichting.',
     },
     {
-      title: 'Inzicht in verplichtingen en oplossingen',
-      description:
-        'U krijgt inzicht in relevante aandachtspunten, mogelijke verplichtingen en passende dienstverlening.',
+      title: 'Krijg inzicht in wat relevant is',
+      description: 'WorkMatchr brengt kennis, verplichtingen en mogelijke oplossingen overzichtelijk samen.',
     },
     {
-      title: 'De juiste specialist vinden',
-      description: 'Wanneer Uw vraag duidelijk is, helpt WorkMatchr U passende aanbieders te vinden.',
+      title: 'Vind passende deskundigheid',
+      description: 'Wanneer externe ondersteuning nodig is, kunt u verder naar passende dienstverlening of specialisten.',
     },
   ] satisfies readonly ProcessStepContent[],
-  frequentlyAsked: [
-    { title: 'Wanneer is een RI&E verplicht?', href: '/kenniscentrum' },
-    { title: 'Heb ik een preventiemedewerker nodig?', href: '/kenniscentrum' },
-    { title: 'Wanneer is een PMO relevant?', href: '/kenniscentrum' },
-    { title: 'Wat doet een arbeidshygiënist?', href: '/kenniscentrum' },
-    { title: 'Wanneer moet ik een bedrijfsarts inschakelen?', href: '/kenniscentrum' },
-    { title: 'Wat moet ik doen na een arbeidsongeval?', href: '/kenniscentrum' },
-  ] as const satisfies readonly { title: string; href: InternalHref }[],
-  knowledgeCategories: [
-    { title: 'Arbowet en verplichtingen', description: 'Algemene uitleg over verantwoordelijkheden en wettelijke kaders.' },
-    { title: 'RI&E en preventie', description: 'Informatie over risico’s herkennen, beoordelen en beheersen.' },
-    { title: 'Veilig en gezond werken', description: 'Praktische aandachtspunten voor arbeidsomstandigheden.' },
-    { title: 'Verzuim en inzetbaarheid', description: 'Uitleg over gezondheid, verzuim en duurzame inzetbaarheid.' },
-    { title: 'Specialistische ondersteuning', description: 'Een wegwijzer voor verschillende deskundigen en diensten.' },
-  ],
-  sectors: [
-    { title: 'Bouw', description: 'Een vertrekpunt voor vragen rond wisselende werkplekken en samenwerking.' },
-    { title: 'Industrie', description: 'Een vertrekpunt voor vragen rond processen, installaties en werkomgeving.' },
-    { title: 'Zorg', description: 'Een vertrekpunt voor vragen rond gezond en veilig werken in de zorg.' },
-    { title: 'Onderwijs', description: 'Een vertrekpunt voor vragen rond medewerkers, gebouwen en organisatie.' },
-    { title: 'Logistiek', description: 'Een vertrekpunt voor vragen rond transport, opslag en werkprocessen.' },
-    { title: 'Overheid en gemeenten', description: 'Een vertrekpunt voor uiteenlopende publieke werkomgevingen.' },
-  ],
   principles: [
-    { title: 'Eerst begrijpen', description: 'Wij helpen U eerst bepalen wat Uw organisatie nodig heeft.' },
+    { title: 'Vraaggestuurd', description: 'Eerst de situatie begrijpen, daarna bepalen wat relevant is.' },
     {
-      title: 'Onafhankelijke begeleiding',
-      description: 'De vraag en passende oplossing staan centraal, niet een vooraf geselecteerde aanbieder.',
+      title: 'Onafhankelijk',
+      description: 'De vraag van de organisatie staat centraal, niet één specifieke aanbieder.',
     },
     {
-      title: 'Gerichte verbinding',
-      description: 'Pas wanneer de vraag voldoende duidelijk is, volgt de koppeling met passende specialisten.',
+      title: 'Onderbouwd',
+      description: 'Wettelijke en inhoudelijke informatie wordt gekoppeld aan controleerbare bronnen.',
     },
+    { title: 'Transparant', description: 'Status, controledatum en bronnen worden zichtbaar gemaakt waar dat relevant is.' },
   ],
   closing: {
-    title: 'Klaar om Uw vraag te verduidelijken?',
-    description: 'Start met een aantal korte vragen. U hoeft vooraf niet te weten welke dienst of specialist U nodig heeft.',
-    primaryAction: { href: '/advieswijzer', label: 'Start de Advieswijzer' },
-    secondaryAction: { href: '/contact', label: 'Neem contact op' },
+    title: 'Weet u nog niet precies wat u nodig heeft?',
+    description: 'Begin bij uw situatie en bekijk vervolgens welke informatie, verplichtingen of mogelijke oplossingen relevant kunnen zijn.',
+    primaryAction: { href: publicAnchors.askQuestion, label: 'Begin bij uw situatie' },
+    secondaryAction: { href: publicRoutes.knowledge, label: 'Bekijk het kenniscentrum' },
   },
 } as const

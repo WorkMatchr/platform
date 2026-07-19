@@ -1,5 +1,50 @@
 # Changelog
 
+## Niet uitgebracht — Module P1.6 Guided Intake Engine v1
+
+- bestaande route `/advieswijzer` vervangen door een volledig werkende, publieke personeelsflow;
+- exact vijf getypeerde beslismomenten toegevoegd voor situatie, organisatieomvang, RI&E-status, beslisdoel en gewenste termijn;
+- conditioneel datumveld toegevoegd als precisering van **Wanneer wilt u dit geregeld hebben?**;
+- vragen, antwoorden, feiten, flowvalidatie, beslisregels en aanbevelingen modulair van elkaar gescheiden;
+- centrale deterministische adviezen toegevoegd voor ontbrekende, onbekende, verouderde en actuele RI&E-situaties;
+- advies, redenen en eerste acties bewust vóór kennislinks en mogelijke dienstverlening geplaatst;
+- toegankelijke voortgang, radio-invoer, foutfocus, terugnavigatie, invoerbehoud en opnieuw beginnen toegevoegd;
+- primaire publieke CTA en de situatie **Ik heb personeel in dienst** gekoppeld aan de werkende Advieswijzer;
+- overige startsituaties uitsluitend als niet beschikbaar gepresenteerd;
+- geen AI, database, Prisma, matching, offerteflow, accountopslag, sessiebehoud of P1.7-functionaliteit toegevoegd;
+- status: technisch opgeleverd, product-owneracceptatie open.
+
+## Niet uitgebracht — Module P1.5 publieke informatiearchitectuur en navigatie
+
+- getypeerde publieke routecatalogus toegevoegd als gedeelde bron voor desktopnavigatie, mobiel menu, footer, contentrelaties en sitemap;
+- definitieve live hoofdstructuur ingevoerd met **Stel uw vraag** als primaire CTA en zonder dode route voor specialisten;
+- actieve status robuust gemaakt voor geneste routes, trailing slashes, queryparameters en hashes;
+- footerarchitectuur, RI&E-kruisverwijzingen, metadata, canonicals en indexatiebeleid geharmoniseerd;
+- eenvoudige publieke sitemap, robots-regels en Nederlandse 404-pagina toegevoegd;
+- gerichte regressietests toegevoegd voor routebestaan, navigatie, footer, breadcrumbs, contentrelaties, sitemap, robots en 404;
+- geen Prisma-, dependency-, auth-, tenant-, private navigatie- of P1.6/P1.7-wijziging uitgevoerd;
+- status: technisch opgeleverd, product-owneracceptatie open.
+
+## Niet uitgebracht — Module P1.4 vraaggestuurde homepage
+
+- homepage herbouwd rond zes herkenbare situaties vóór diensten;
+- eerlijke hero- en slot-CTA’s toegevoegd naar bestaande routes en het toegankelijke situatiesanker;
+- typed diensten-, verplichtingen-, RI&E- en sectorcontent hergebruikt zonder fictieve detailroutes;
+- drie processtappen en vier transparante positioneringsprincipes opgenomen;
+- homepage-metadata en gerichte semantische route- en contenttests uitgebreid;
+- geen zelfscan, automatische matching, Prisma-, dependency-, auth-, tenant- of private navigatiewijziging uitgevoerd;
+- status: technisch opgeleverd, product-owneracceptatie open.
+
+## Niet uitgebracht — Modules P1.2 en P1.3 publieke layout en RI&E
+
+- vier publieke placeholders vervangen door inhoudelijke overzichtspagina’s met één gedeelde layout;
+- herbruikbare breadcrumbs, page hero, kaarten, statusmelding, bronnenlijst, gerelateerde onderwerpen en kennis-CTA toegevoegd;
+- eerste RI&E-kenniscluster toegevoegd met vraaggestuurde uitleg, dienstpagina en wettelijke context;
+- typed content- en bronnenbasis met bewijsniveau, validatiestatus en controledatum toegevoegd;
+- officiële bronnen gebruikt zonder individuele juridische conclusies te trekken;
+- geen Prisma-, dependency-, auth-, private navigatie-, CMS-, Product Intelligence- of AI-wijziging uitgevoerd;
+- status: technisch opgeleverd, product-owneracceptatie open.
+
 ## Niet uitgebracht — Module P1.1 publieke homepage
 
 - vraaggestuurde publieke homepage gebouwd rond **Vraag → Begrijpen → Advies → Specialist**;

@@ -501,7 +501,7 @@ De accountbeheerpagina ondersteunt nu tevens uitnodigingen binnen dezelfde tenan
 
 ## Module P1.1 — Vraaggestuurde publieke homepage
 
-**Status:** technisch opgeleverd; product-owneracceptatie open.
+**Status:** afgerond en product-ownergeaccepteerd.
 
 - centrale positionering **Begrijpen gaat vóór verbinden** vertaald naar Vraag → Begrijpen → Advies → Specialist;
 - publieke header uitgebreid met actieve route, complete desktopnavigatie en toegankelijke mobiele navigatie;
@@ -513,3 +513,60 @@ De accountbeheerpagina ondersteunt nu tevens uitnodigingen binnen dezelfde tenan
 - Product Intelligence uitsluitend documentair voorbereid; er is geen tracking, logging, CMS, AI, matching of databasewijziging toegevoegd;
 - automatische homepage-, route-, header-, navigatie- en footertests toegevoegd;
 - handmatige acceptatie op desktop, mobiel, toetsenbord, 200% zoom, console en ingelogde/uitgelogde sessie staat open.
+
+## Modules P1.2 en P1.3 — Publieke platformlayout en RI&E-kenniscluster
+
+**Status:** afgerond en product-ownergeaccepteerd.
+
+- gedeelde publieke layoutcomponenten voor hero, breadcrumbs, kaarten, CTA’s, bronnen, gerelateerde onderwerpen en rustige statusmeldingen toegevoegd;
+- `/diensten`, `/wettelijke-verplichtingen`, `/sectoren` en `/kenniscentrum` van placeholders naar bruikbare overzichtspagina’s gebracht;
+- vraaggestuurde uitleg, dienstinformatie en wettelijke context voor RI&E gepubliceerd op drie afzonderlijke routes;
+- typed content- en bronnenmodel met bewijsniveau, validatiestatus en controledatum toegevoegd;
+- juridische kerninhoud op 19 juli 2026 gecontroleerd tegen artikel 5 Arbowet, Nederlandse Arbeidsinspectie en Rijksoverheid;
+- Prisma, CMS, Product Intelligence, AI, automatische bronmonitoring en zoekfunctionaliteit zijn niet geïmplementeerd;
+- product-owneracceptatie voor responsive weergave, 200% zoom, toetsenbord, links en sessievarianten is afgerond.
+
+De product owner heeft P1.2 en P1.3 vervolgens goedgekeurd. De eerdere openstaande acceptatiestatus is daarmee afgesloten.
+
+## Module P1.4 — Vraaggestuurde homepage
+
+**Status:** technisch opgeleverd; product-owneracceptatie open.
+
+- hero en primaire CTA beginnen bij de vraag “Waarmee kunnen wij u helpen?”;
+- zes herkenbare werkgeverssituaties staan vóór diensten en gebruiken uitsluitend bestaande routes;
+- een beperkte dienstenselectie hergebruikt de typed overzichtscontent en maakt voorbereidingsstatus zichtbaar;
+- drie processtappen formuleren voorzichtig hoe WorkMatchr van situatie naar mogelijke deskundigheid leidt;
+- RI&E is als wettelijke verplichting en als enige gepubliceerde kennispublicatie uitgelicht;
+- sectoren zijn compact en zonder fictieve detailroutes opgenomen;
+- vraaggestuurd, onafhankelijk, onderbouwd en transparant vormen de vier positioneringsprincipes;
+- er is geen werkende zelfscan, dynamische vraagboom, automatische matching of brede navigatiewijziging toegevoegd;
+- P1.5 en P1.6 zijn technisch opgeleverd met product-owneracceptatie open.
+
+## Module P1.5 — Publieke informatiearchitectuur en navigatie
+
+**Status:** technisch opgeleverd; product-owneracceptatie open.
+
+- één getypeerde catalogus bevat alle bestaande publieke routes, hoofditems, footergroepen en RI&E-contentrelaties;
+- desktopheader en mobiel menu gebruiken dezelfde bron, met **Stel uw vraag** als primaire CTA en **Inloggen** als secundaire actie;
+- geneste routes, trailing slashes, queryparameters en hashes worden betrouwbaar verwerkt voor de actieve status;
+- breadcrumbs op de drie RI&E-detailroutes blijven semantisch en consistent;
+- footer, homepage en overzichtspagina’s verwijzen uitsluitend naar geregistreerde bestaande routes;
+- sitemap en robots bevatten alleen de bedoelde publieke indexeerbare routes en sluiten private applicatiegebieden uit;
+- tijdelijke en juridische placeholderpagina’s en authroutes zijn bewust niet indexeerbaar;
+- een publieke 404 biedt vervolgroutes naar homepage, situaties, kenniscentrum en diensten;
+- “Voor specialisten” is niet opgenomen omdat nog geen inhoudelijk passende publieke route bestaat;
+- P1.6 gebruikt deze informatiearchitectuur nu voor de eerste personeelsflow; P1.7, Prisma, dependencies, auth, tenantlogica en private navigatie zijn niet gestart of gewijzigd.
+
+## Module P1.6 — Guided Intake Engine v1
+
+**Status:** technisch opgeleverd; product-owneracceptatie open.
+
+- de bestaande route `/advieswijzer` bevat de eerste volledig werkende flow **Ik heb personeel in dienst**;
+- exact vijf unieke beslismomenten leggen personeelssituatie, omvang, RI&E-status, beslisdoel en gewenste termijn vast;
+- **Wanneer wilt u dit geregeld hebben?** is één vraag; de conditionele datum is alleen een precisering;
+- vragen, antwoorden, feiten, flow, validatie, regels en aanbevelingen zijn getypeerd en modulair gescheiden;
+- centrale deterministische regels geven eerst advies, onderbouwing en eerste acties;
+- kennis en wettelijke context staan vóór een afzonderlijke sectie met mogelijke dienstverlening;
+- andere startsituaties worden eerlijk als **volgt later** getoond en zijn niet interactief;
+- invoer blijft lokaal in React-state, kan tijdens de flow worden herzien en wordt niet opgeslagen;
+- AI, database, Prisma, matching, offerteflow, accountopslag, sessiebehoud en P1.7 zijn niet geïmplementeerd.

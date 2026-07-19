@@ -3,7 +3,8 @@ import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('next/navigation', () => ({ usePathname: () => '/kenniscentrum' }))
 
-import { PublicNavigation } from './public-navigation'
+import { PublicNavigation, isPublicNavigationItemActive } from './public-navigation'
+import { publicNavigationItems, publicRoutes } from '@/content/public-routes'
 
 describe('publieke navigatie', () => {
   it('markeert de actieve route in desktop- en mobiele navigatie', () => {
@@ -13,11 +14,22 @@ describe('publieke navigatie', () => {
     expect(html).toContain('Hoofdnavigatie openen of sluiten')
   })
 
-  it('biedt de volledige navigatie en Advieswijzer zonder dode links', () => {
+  it('biedt dezelfde volledige routeconfiguratie op desktop en mobiel', () => {
     const html = renderToStaticMarkup(<PublicNavigation />)
-    expect(html).toContain('Wettelijke verplichtingen')
-    expect(html).toContain('Over WorkMatchr')
-    expect(html).toContain('Start de Advieswijzer')
+    for (const item of publicNavigationItems) {
+      expect(html.match(new RegExp(`href="${item.href}"`, 'g'))).toHaveLength(2)
+      expect(html.match(new RegExp(`>${item.label}<`, 'g'))).toHaveLength(2)
+    }
+    expect(html).toContain('Stel uw vraag')
+    expect(html).not.toContain('Voor specialisten')
     expect(html).not.toContain('href="#"')
+  })
+
+  it('normaliseert geneste routes, trailing slashes, querystrings en hashes', () => {
+    expect(isPublicNavigationItemActive('/diensten/rie', publicRoutes.services)).toBe(true)
+    expect(isPublicNavigationItemActive('/diensten/rie/?bron=menu#inhoud', publicRoutes.services)).toBe(true)
+    expect(isPublicNavigationItemActive('/kenniscentrum/', publicRoutes.knowledge)).toBe(true)
+    expect(isPublicNavigationItemActive('/sectoren-extra', publicRoutes.sectors)).toBe(false)
+    expect(isPublicNavigationItemActive('/', '/#situaties')).toBe(false)
   })
 })

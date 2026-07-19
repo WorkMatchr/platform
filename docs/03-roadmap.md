@@ -40,6 +40,13 @@ Latere modules behandelen credits, Mollie-betalingen, berichten, verder beheer e
 
 - **Module P1.1 — Vraaggestuurde publieke homepage — technisch opgeleverd; product-owneracceptatie open.** De publieke header, hero, situatie-ingangen, werkwijze, veelgestelde onderwerpen, kennis- en sectorpreviews, kernprincipes, slot-CTA, footer en noodzakelijke eerlijke tussenpagina’s zijn gebouwd. De dynamische Advieswijzer, volledige contentpagina’s, CMS, zoeken, analytics en Product Intelligence zijn niet geïmplementeerd.
 
+- **Module P1.2 — Publieke platformlayout — afgerond en product-ownergeaccepteerd.** Vier publieke placeholders zijn vervangen door samenhangende overzichtspagina’s met gedeelde hero-, breadcrumb-, kaart-, status-, bron-, relatie- en CTA-patronen.
+- **Module P1.3 — Eerste kenniscluster RI&E — afgerond en product-ownergeaccepteerd.** Drie onderbouwde RI&E-routes gebruiken een typed content- en bronnenbasis. CMS, databasecontent, automatische validatie, Product Intelligence en AI blijven buiten scope.
+- **Module P1.4 — Vraaggestuurde homepage — technisch opgeleverd; product-owneracceptatie open.** De homepage begint bij zes herkenbare situaties en leidt uitsluitend naar bestaande kennis, wettelijke context, diensten en overzichten. Er is geen werkende zelfscan of automatische matching.
+- **Module P1.5 — Publieke informatiearchitectuur en navigatie — technisch opgeleverd; product-owneracceptatie open.** Een getypeerde live-routecatalogus voedt desktopheader, mobiel menu, footer, inhoudsrelaties, sitemap en robots. Actieve status, breadcrumbs, Nederlandse URL-conventies en een publieke 404 zijn geborgd. “Voor specialisten” blijft backlog omdat een inhoudelijk passende publieke route ontbreekt.
+- **Module P1.6 — Guided Intake Engine v1 — technisch opgeleverd; product-owneracceptatie open.** `/advieswijzer` bevat een data-gedreven personeelsflow met exact vijf beslismomenten, herleidbare feiten, centrale deterministische regels en advies vóór dienstverlening. Andere startsituaties zijn niet als werkend gepresenteerd. AI, database, Prisma, matching, accountopslag en sessiebehoud blijven buiten scope.
+- **Module P1.7 — Relationele interne link- en SEO-laag — niet gestart.** Geautomatiseerde contentrelaties en verdere SEO-orkestratie volgen pas na afzonderlijk ontwerp.
+
 ## ADR-013 migratieprogramma
 
 - **Fase 0/0B — preflight en recordbesluiten — afgerond en goedgekeurd.**

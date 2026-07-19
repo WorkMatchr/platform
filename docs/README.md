@@ -29,6 +29,12 @@ Deze map bevat de leidende projectdocumentatie. Lees vóór een wijziging minima
 23. [ADR-013 Fase 2B — Lifecycle en tenant](adr-013-fase-2b-lifecycle-en-tenant.md)
 24. [Architectuur publieke homepage — Module P1.1](public-website-homepage-architecture.md)
 
+- [Publieke platformlayout — Module P1.2](public-platform-layout.md)
+- [RI&E-kenniscluster — Module P1.3](rie-knowledge-cluster.md)
+- [Vraaggestuurde homepage — Module P1.4](public-homepage-experience.md)
+- [Publieke informatiearchitectuur en navigatie — Module P1.5](public-information-architecture.md)
+- [Guided Intake Engine v1 — Module P1.6](guided-intake-engine-v1.md)
+
 ## Ontwerp en kwaliteit
 
 - [Founding Principles](FOUNDING_PRINCIPLES.md)

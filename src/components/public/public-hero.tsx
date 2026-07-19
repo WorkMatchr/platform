@@ -35,7 +35,7 @@ export function PublicHero({ hero, process }: PublicHeroProps) {
           ))}
         </ol>
         <p className="mt-5 text-sm leading-6 text-text-secondary">
-          Onafhankelijke uitleg en vraagverheldering komen vóór een eventuele selectie van aanbieders.
+          Informatie en vraagverheldering komen vóór een eventuele vervolgstap naar dienstverlening.
         </p>
       </Card>
     </Section>

@@ -2,19 +2,29 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { publicNavigation } from '@/content/public-homepage'
+import { publicNavigationItems, type PublicNavigationHref } from '@/content/public-routes'
 import { DisclosureMenu } from '@/components/ui/disclosure-menu'
 import { LinkButton } from '@/components/ui/link-button'
 
-function isCurrent(pathname: string | null, href: string) {
-  if (!pathname) return false
-  if (href === '/') return pathname === '/'
-  const route = href.split('#')[0]
-  return route.length > 1 && (pathname === route || pathname.startsWith(`${route}/`))
+function normalizePath(value: string) {
+  const pathname = value.split(/[?#]/, 1)[0] || '/'
+  const withLeadingSlash = pathname.startsWith('/') ? pathname : `/${pathname}`
+  return withLeadingSlash === '/' ? withLeadingSlash : withLeadingSlash.replace(/\/+$/, '')
 }
 
-function NavigationLink({ href, label, pathname, mobile = false }: { href: string; label: string; pathname: string | null; mobile?: boolean }) {
-  const current = isCurrent(pathname, href)
+export function isPublicNavigationItemActive(pathname: string | null, href: PublicNavigationHref) {
+  if (!pathname) return false
+  if (href.includes('#')) return false
+
+  const currentPath = normalizePath(pathname)
+  const route = normalizePath(href)
+  if (route === '/') return currentPath === route
+
+  return currentPath === route || currentPath.startsWith(`${route}/`)
+}
+
+function NavigationLink({ href, label, pathname, mobile = false }: { href: PublicNavigationHref; label: string; pathname: string | null; mobile?: boolean }) {
+  const current = isPublicNavigationItemActive(pathname, href)
   return (
     <Link
       href={href}
@@ -30,17 +40,20 @@ function NavigationLink({ href, label, pathname, mobile = false }: { href: strin
 
 export function PublicNavigation() {
   const pathname = usePathname()
+  const primaryItem = publicNavigationItems.find((item) => item.kind === 'primary')!
+  const standardItems = publicNavigationItems.filter((item) => item.kind === 'standard')
+  const authItems = publicNavigationItems.filter((item) => item.kind === 'auth')
 
   return (
     <>
       <div className="hidden items-center gap-5 xl:flex">
         <nav aria-label="Hoofdnavigatie">
           <ul className="flex items-center gap-3 text-sm font-medium text-text-secondary">
-            {publicNavigation.map((item) => <li key={item.href}><NavigationLink {...item} pathname={pathname} /></li>)}
-            <li><NavigationLink href="/inloggen" label="Inloggen" pathname={pathname} /></li>
+            {standardItems.map((item) => <li key={item.href}><NavigationLink {...item} pathname={pathname} /></li>)}
+            {authItems.map((item) => <li key={item.href}><NavigationLink {...item} pathname={pathname} /></li>)}
           </ul>
         </nav>
-        <LinkButton href="/advieswijzer" className="shrink-0">Start de Advieswijzer</LinkButton>
+        <LinkButton href={primaryItem.href} className="shrink-0">{primaryItem.label}</LinkButton>
       </div>
       <DisclosureMenu
         ariaLabel="Hoofdnavigatie openen of sluiten"
@@ -50,11 +63,11 @@ export function PublicNavigation() {
         trigger={<>Menu<span aria-hidden="true" className="ml-2">&#9662;</span></>}
       >
         <nav aria-label="Mobiele hoofdnavigatie">
+          <LinkButton href={primaryItem.href} className="mb-3 w-full">{primaryItem.label}</LinkButton>
           <ul className="space-y-1 text-sm font-medium">
-            {publicNavigation.map((item) => <li key={item.href}><NavigationLink {...item} pathname={pathname} mobile /></li>)}
-            <li><NavigationLink href="/inloggen" label="Inloggen" pathname={pathname} mobile /></li>
+            {standardItems.map((item) => <li key={item.href}><NavigationLink {...item} pathname={pathname} mobile /></li>)}
+            {authItems.map((item) => <li key={item.href}><NavigationLink {...item} pathname={pathname} mobile /></li>)}
           </ul>
-          <LinkButton href="/advieswijzer" className="mt-3 w-full">Start de Advieswijzer</LinkButton>
         </nav>
       </DisclosureMenu>
     </>
