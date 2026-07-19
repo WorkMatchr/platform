@@ -31,6 +31,12 @@ describe('publieke platformpagina’s', () => {
     expect(html).not.toMatch(/populair|trending/i)
   })
 
+  it('laat lange kaarttitels veilig afbreken op smalle schermen', () => {
+    const html = renderToStaticMarkup(<LegalObligationsPage />)
+    expect(html).toContain('Arbeidsgezondheidskundig onderzoek')
+    expect(html).toContain('break-words')
+  })
+
   it('gebruikt uitsluitend bestaande interne bestemmingen', () => {
     const html = pages.map(([, Page]) => renderToStaticMarkup(<Page />)).join('')
     const hrefs = [...html.matchAll(/href="(\/[^"]*)"/g)].map((match) => match[1])
@@ -38,5 +44,16 @@ describe('publieke platformpagina’s', () => {
     expect(hrefs).toContain('/diensten/rie')
     expect(hrefs).toContain('/wettelijke-verplichtingen/rie')
     expect(hrefs).toContain('/kenniscentrum/moet-ik-een-rie-hebben')
+  })
+
+  it('verbindt overzichten compact met een zichtbaar contenttype en begeleide vervolgstap', () => {
+    for (const [, Page] of pages) {
+      const html = renderToStaticMarkup(<Page />)
+      expect(html).toContain('Verken vanuit dit overzicht')
+      expect(html).toContain('Start de Advieswijzer')
+      expect(html).toMatch(/Kennis|Dienst/)
+      expect(html.match(/Verken vanuit dit overzicht/g)).toHaveLength(1)
+      expect(html).not.toMatch(/href="\/sectoren\//)
+    }
   })
 })

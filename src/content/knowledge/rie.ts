@@ -1,5 +1,4 @@
 import type { KnowledgeDocument, KnowledgeSource } from './types'
-import { publicRoutes, rieContentReferences } from '../public-routes'
 
 export const rieSources = [
   {
@@ -36,21 +35,9 @@ export const rieSources = [
   },
 ] as const satisfies readonly KnowledgeSource[]
 
-const relatedTopics = [
-  {
-    title: rieContentReferences.obligation.title,
-    description: 'Lees de algemene wettelijke context en verantwoordelijkheden.',
-    href: rieContentReferences.obligation.href,
-  },
-  {
-    title: rieContentReferences.service.title,
-    description: 'Bekijk wanneer deskundige ondersteuning nuttig kan zijn.',
-    href: rieContentReferences.service.href,
-  },
-] as const
-
 export const rieQuestionArticle = {
   id: 'knowledge-rie-required-v1',
+  contentId: 'knowledge:rie-required',
   type: 'EXPLANATION',
   slug: 'moet-ik-een-rie-hebben',
   title: 'Moet ik een RI&E hebben?',
@@ -112,18 +99,12 @@ export const rieQuestionArticle = {
       ],
     },
   ],
-  relatedTopics,
-  callToAction: {
-    title: 'Breng uw situatie in kaart',
-    description: 'De Advieswijzer helpt u uw vraag te verduidelijken zonder een juridische conclusie voor u te trekken.',
-    primary: { label: 'Start de Advieswijzer', href: publicRoutes.adviceGuide },
-    secondary: { label: 'Bekijk RI&E-ondersteuning', href: publicRoutes.rieService },
-  },
   sources: rieSources,
 } as const satisfies KnowledgeDocument
 
 export const rieServicePage = {
   id: 'service-rie-v1',
+  contentId: 'service:rie',
   type: 'SERVICE',
   slug: 'rie',
   title: 'Ondersteuning bij uw RI&E',
@@ -137,13 +118,12 @@ export const rieServicePage = {
     { id: 'specialist', title: 'Wat kan een specialist uitvoeren?', paragraphs: ['Een specialist kan de aanpak structureren, risico’s onderzoeken en bevindingen onderbouwen. Vooraf zijn onder meer werkzaamheden, locaties, personeelsgroepen, incidentinformatie en bestaande maatregelen relevant.'] },
     { id: 'verantwoordelijkheid', title: 'Wat blijft uw verantwoordelijkheid?', paragraphs: ['De werkgever blijft verantwoordelijk voor de RI&E, het plan van aanpak en de uitvoering en actualisatie daarvan. WorkMatchr voert niet automatisch een RI&E uit: wij helpen uw vraag verduidelijken en kunnen u later met passende aanbieders verbinden.'] },
   ],
-  relatedTopics,
-  callToAction: { title: 'Verduidelijk uw RI&E-vraag', description: 'Leg eerst vast wat er binnen uw organisatie speelt en welke ondersteuning u zoekt.', primary: { label: 'Start de Advieswijzer', href: publicRoutes.adviceGuide }, secondary: { label: 'Lees of een RI&E nodig is', href: publicRoutes.rieQuestion } },
   sources: rieSources,
 } as const satisfies KnowledgeDocument
 
 export const rieLegalPage = {
   id: 'legal-rie-v1',
+  contentId: 'obligation:rie',
   type: 'LEGAL_OBLIGATION',
   slug: 'rie',
   title: 'RI&E als wettelijke verplichting',
@@ -157,7 +137,5 @@ export const rieLegalPage = {
     { id: 'toetsing', title: 'Toetsing en uitzonderingen', paragraphs: ['De Nederlandse Arbeidsinspectie licht toe dat toetsing door een gecertificeerde deskundige bij meer dan 25 medewerkers aan de orde kan zijn en dat kleinere werkgevers onder voorwaarden een erkend branche-instrument zonder afzonderlijke toetsing kunnen gebruiken. Controleer altijd of die voorwaarden op uw situatie van toepassing zijn.'] },
     { id: 'actualisatie', title: 'Actualisatie en verantwoordelijkheid', paragraphs: ['De Arbowet verlangt aanpassing wanneer ervaring, gewijzigde werkmethoden of werkomstandigheden, of de stand van wetenschap en professionele dienstverlening daartoe aanleiding geven. De werkgever blijft verantwoordelijk.'] },
   ],
-  relatedTopics,
-  callToAction: { title: 'Geen individuele conclusie zonder context', description: 'Breng uw organisatie en werkzaamheden eerst zorgvuldig in kaart.', primary: { label: 'Start de Advieswijzer', href: publicRoutes.adviceGuide }, secondary: { label: 'Bekijk RI&E-ondersteuning', href: publicRoutes.rieService } },
   sources: rieSources,
 } as const satisfies KnowledgeDocument

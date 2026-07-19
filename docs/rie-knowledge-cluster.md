@@ -42,3 +42,9 @@ De inhoud parafraseert de bronnen en neemt geen lange citaten over. Toetsingsuit
 ## Buiten scope
 
 Prisma, CMS, AI, Product Intelligence, automatische bronmonitoring, FAQ-schema en een generieke Knowledge Graph zijn niet toegevoegd.
+
+## Relationele laag P1.7
+
+P1.7 koppelt de drie RI&E-routes via stabiele content-ID’s aan elkaar en aan de Advieswijzer. De kennisroute leidt primair naar wettelijke context, de verplichtingenroute naar praktische uitleg en de dienstroute naar begeleide vraagverheldering. Iedere pagina toont daarnaast maximaal één aanvullend inhoudelijk item. Zelfverwijzingen, duplicaten, private routes en niet-indexeerbare content worden fail closed geweigerd.
+
+De pagina’s houden hun oorspronkelijke inhoudelijke rol en bronnen. P1.7 voegt geen automatische keywordlinks, nieuwe RI&E-inhoud, structured data, CMS of dynamische routegeneratie toe.

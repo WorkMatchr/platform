@@ -24,13 +24,7 @@ export type KnowledgeSource = {
   note: string
 }
 
-export type KnowledgeLink = {
-  title: string
-  description: string
-  href: InternalHref
-}
-
-export type KnowledgeCallToActionContent = {
+export type PublicCallToActionContent = {
   title: string
   description: string
   primary: { label: string; href: InternalHref }
@@ -39,6 +33,7 @@ export type KnowledgeCallToActionContent = {
 
 export type KnowledgeDocument = {
   id: string
+  contentId: 'knowledge:rie-required' | 'service:rie' | 'obligation:rie'
   type: KnowledgeContentType
   slug: string
   title: string
@@ -46,7 +41,5 @@ export type KnowledgeDocument = {
   status: KnowledgeContentStatus
   lastReviewed: string
   sections: readonly KnowledgeSection[]
-  relatedTopics: readonly KnowledgeLink[]
-  callToAction: KnowledgeCallToActionContent
   sources: readonly KnowledgeSource[]
 }

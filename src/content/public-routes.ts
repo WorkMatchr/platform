@@ -74,34 +74,6 @@ export const indexablePublicRoutes = [
   publicRoutes.adviceGuide,
 ] as const satisfies readonly PublicRoute[]
 
-export type PublicContentReference = {
-  type: 'knowledge' | 'service' | 'obligation' | 'sector'
-  slug: string
-  title: string
-  href: PublicRoute
-}
-
-export const rieContentReferences = {
-  knowledge: {
-    type: 'knowledge',
-    slug: 'moet-ik-een-rie-hebben',
-    title: 'Moet ik een RI&E hebben?',
-    href: publicRoutes.rieQuestion,
-  },
-  service: {
-    type: 'service',
-    slug: 'rie',
-    title: 'Ondersteuning bij een RI&E',
-    href: publicRoutes.rieService,
-  },
-  obligation: {
-    type: 'obligation',
-    slug: 'rie',
-    title: 'RI&E als wettelijke verplichting',
-    href: publicRoutes.rieObligation,
-  },
-} as const satisfies Record<string, PublicContentReference>
-
 export function isRegisteredPublicHref(href: string): href is PublicNavigationHref {
   return (Object.values(publicRoutes) as readonly string[]).includes(href) || (Object.values(publicAnchors) as readonly string[]).includes(href)
 }

@@ -1,7 +1,48 @@
-import type { KnowledgeLink } from '@/content/knowledge/types'
 import { Heading } from '@/components/ui/heading'
+import {
+  publicContentTypeLabels,
+  type PublicContentId,
+  type ResolvedPublicContentRelation,
+} from '@/content/public-content'
 import { PublicContentCard } from './public-content-card'
 
-export function RelatedTopics({ topics }: { topics: readonly KnowledgeLink[] }) {
-  return <section aria-labelledby="related-title"><Heading as="h2" size="h2" id="related-title">Gerelateerde onderwerpen</Heading><div className="mt-6 grid gap-5 md:grid-cols-2">{topics.map((topic) => <PublicContentCard key={topic.href} {...topic} headingLevel="h3" linkLabel="Bekijk dit onderwerp" />)}</div></section>
+type RelatedTopicsProps = {
+  currentContentId: PublicContentId
+  topics: readonly ResolvedPublicContentRelation[]
+  title?: string
+  limit?: number
+}
+
+export function RelatedTopics({
+  currentContentId,
+  topics,
+  title = 'Verder vanuit dit onderwerp',
+  limit = 3,
+}: RelatedTopicsProps) {
+  const uniqueTopics = [...new Map(
+    topics
+      .filter((topic) => topic.id !== currentContentId)
+      .map((topic) => [topic.id, topic]),
+  ).values()].slice(0, Math.max(0, limit))
+
+  if (uniqueTopics.length === 0) return null
+
+  return (
+    <section aria-labelledby={`${currentContentId}-related-title`}>
+      <Heading as="h2" size="h2" id={`${currentContentId}-related-title`}>{title}</Heading>
+      <div className="mt-6 grid gap-5 md:grid-cols-2">
+        {uniqueTopics.map((topic) => (
+          <PublicContentCard
+            key={topic.id}
+            title={topic.title}
+            description={topic.description}
+            href={topic.href}
+            contentTypeLabel={publicContentTypeLabels[topic.type]}
+            headingLevel="h3"
+            linkLabel={`Ga naar ${topic.title}`}
+          />
+        ))}
+      </div>
+    </section>
+  )
 }

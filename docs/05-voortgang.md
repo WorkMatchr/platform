@@ -530,7 +530,7 @@ De product owner heeft P1.2 en P1.3 vervolgens goedgekeurd. De eerdere openstaan
 
 ## Module P1.4 — Vraaggestuurde homepage
 
-**Status:** technisch opgeleverd; product-owneracceptatie open.
+**Status:** afgerond en product-ownergeaccepteerd.
 
 - hero en primaire CTA beginnen bij de vraag “Waarmee kunnen wij u helpen?”;
 - zes herkenbare werkgeverssituaties staan vóór diensten en gebruiken uitsluitend bestaande routes;
@@ -544,7 +544,7 @@ De product owner heeft P1.2 en P1.3 vervolgens goedgekeurd. De eerdere openstaan
 
 ## Module P1.5 — Publieke informatiearchitectuur en navigatie
 
-**Status:** technisch opgeleverd; product-owneracceptatie open.
+**Status:** afgerond en product-ownergeaccepteerd.
 
 - één getypeerde catalogus bevat alle bestaande publieke routes, hoofditems, footergroepen en RI&E-contentrelaties;
 - desktopheader en mobiel menu gebruiken dezelfde bron, met **Stel uw vraag** als primaire CTA en **Inloggen** als secundaire actie;
@@ -555,11 +555,11 @@ De product owner heeft P1.2 en P1.3 vervolgens goedgekeurd. De eerdere openstaan
 - tijdelijke en juridische placeholderpagina’s en authroutes zijn bewust niet indexeerbaar;
 - een publieke 404 biedt vervolgroutes naar homepage, situaties, kenniscentrum en diensten;
 - “Voor specialisten” is niet opgenomen omdat nog geen inhoudelijk passende publieke route bestaat;
-- P1.6 gebruikt deze informatiearchitectuur nu voor de eerste personeelsflow; P1.7, Prisma, dependencies, auth, tenantlogica en private navigatie zijn niet gestart of gewijzigd.
+- P1.6 gebruikt deze informatiearchitectuur voor de eerste personeelsflow; Prisma, dependencies, auth, tenantlogica en private navigatie zijn niet gewijzigd.
 
 ## Module P1.6 — Guided Intake Engine v1
 
-**Status:** technisch opgeleverd; product-owneracceptatie open.
+**Status:** afgerond en product-ownergeaccepteerd.
 
 - de bestaande route `/advieswijzer` bevat de eerste volledig werkende flow **Ik heb personeel in dienst**;
 - exact vijf unieke beslismomenten leggen personeelssituatie, omvang, RI&E-status, beslisdoel en gewenste termijn vast;
@@ -569,4 +569,16 @@ De product owner heeft P1.2 en P1.3 vervolgens goedgekeurd. De eerdere openstaan
 - kennis en wettelijke context staan vóór een afzonderlijke sectie met mogelijke dienstverlening;
 - andere startsituaties worden eerlijk als **volgt later** getoond en zijn niet interactief;
 - invoer blijft lokaal in React-state, kan tijdens de flow worden herzien en wordt niet opgeslagen;
-- AI, database, Prisma, matching, offerteflow, accountopslag, sessiebehoud en P1.7 zijn niet geïmplementeerd.
+- AI, database, Prisma, matching, offerteflow, accountopslag en sessiebehoud zijn niet geïmplementeerd.
+
+## Module P1.7 — Relationele interne links en SEO-clusters
+
+**Status:** technisch opgeleverd; product-owneracceptatie open.
+
+- centrale typed catalogus toegevoegd voor live publieke overzichten, RI&E-details en de Advieswijzer;
+- relaties verwijzen directioneel naar stabiele content-ID’s en worden pas voor presentatie opgelost;
+- validator en module-assertie bewaken routes, indexatie, status, typen, zelfreferenties en duplicaten fail closed;
+- iedere RI&E-pagina behoudt een eigen rol en verwijst naar de twee andere rollen en de Advieswijzer;
+- CTA-hiërarchie toont maximaal twee acties en één aanvullend gerelateerd item;
+- overzichtspagina’s zijn compact onderling verbonden zonder fictieve sectordetailroutes;
+- P1.8, Prisma, dependencies, auth, tenantlogica, private navigatie en Guided Intake-beslislogica zijn niet gestart of gewijzigd.

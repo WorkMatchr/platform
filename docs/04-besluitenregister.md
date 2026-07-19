@@ -253,6 +253,12 @@ De product owner heeft de doelarchitectuur uit ADR-013 vastgesteld. Fase 1 Expan
 | B-200 | De Advieswijzer geeft inhoudelijk advies vóór een verwijzing naar dienstverlening. | Vragen, antwoorden, feiten, flow, regels en aanbevelingen zijn getypeerd en gescheiden; React bevat geen verspreide inhoudelijke beslisregels. |
 | B-201 | Alleen “Ik heb personeel in dienst” is in P1.6 een werkende startsituatie. | Andere startsituaties worden uitsluitend als niet beschikbaar getoond en hebben geen interactief verborgen pad. |
 | B-202 | P1.6 verwerkt antwoorden uitsluitend tijdelijk in de browser. | AI, database, Prisma, matching, offerteflow, accountopslag en sessiebehoud zijn uitgesloten. |
+| B-203 | Publieke contentrelaties zijn expliciet, directioneel en typed. | Relaties verwijzen naar stabiele content-ID’s; zichtbare gegevens komen via een resolver uit de centrale catalogus. |
+| B-204 | Contentrelaties worden nooit automatisch uit losse keywords afgeleid. | Iedere relatie heeft een inhoudelijk doel en wordt redactioneel vastgelegd. |
+| B-205 | Iedere RI&E-detailpagina houdt een eigen inhoudelijke rol. | Kennis beantwoordt de praktijksituatie, wettelijke verplichting geeft algemene rechtscontext en dienst beschrijft mogelijke ondersteuning. |
+| B-206 | Alleen bestaande, gepubliceerde en indexeerbare publieke content mag clusteritem zijn. | Private, tijdelijke, juridische tussen-, auth- en toekomstige routes falen gesloten in de validator. |
+| B-207 | De Advieswijzer is een begeleide vervolgstap en geen juridisch advies. | De tool wordt niet als kennis, verplichting of dienst gemodelleerd en claimt geen matching, opslag of offertegeneratie. |
+| B-208 | Sectorrelaties veroorzaken geen fictieve detailroutes. | Zolang alleen `/sectoren` live is, blijven sectoritems classificatie en niet-linkbare context. |
 
 ADR-011 heeft status **Geaccepteerd**. Het implementatieplan begrenst 6A.3.2 tot maximaal twee niet-destructieve migraties en houdt de bredere services, interface en acceptatie in afzonderlijke vervolgstappen.
 

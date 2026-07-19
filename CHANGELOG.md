@@ -1,5 +1,18 @@
 # Changelog
 
+## Niet uitgebracht — Module P1.7 relationele interne links en SEO-clusters
+
+- centrale typed contentcatalogus toegevoegd voor live overzichten, RI&E-details en de Advieswijzer;
+- stabiele content-ID’s, directionele relaties, relationele doelen, resolver en CTA-resolver toegevoegd;
+- fail-closed validatie toegevoegd voor routebestaan, indexatie, type, zelfreferenties, duplicaten en expliciete CTA-relaties;
+- het RI&E-cluster verbonden via praktische uitleg, wettelijke context, dienstverlening en de Advieswijzer;
+- gerelateerde content geconsolideerd tot één begrensd, toegankelijk patroon met zichtbare contenttypelabels;
+- CTA-hiërarchie per contentrol ingevoerd zonder offerte-, matching- of juridisch-adviesclaims;
+- vier overzichtspagina’s compact verbonden zonder fictieve sectorroutes of overmatige linkblokken;
+- regressietests toegevoegd voor catalogus, relaties, validator, RI&E-pagina’s en presentatie;
+- geen Prisma-, dependency-, auth-, tenant-, private navigatie- of Guided Intake-besliswijziging uitgevoerd;
+- status: technisch opgeleverd, product-owneracceptatie open.
+
 ## Niet uitgebracht — Module P1.6 Guided Intake Engine v1
 
 - bestaande route `/advieswijzer` vervangen door een volledig werkende, publieke personeelsflow;
@@ -12,7 +25,7 @@
 - primaire publieke CTA en de situatie **Ik heb personeel in dienst** gekoppeld aan de werkende Advieswijzer;
 - overige startsituaties uitsluitend als niet beschikbaar gepresenteerd;
 - geen AI, database, Prisma, matching, offerteflow, accountopslag, sessiebehoud of P1.7-functionaliteit toegevoegd;
-- status: technisch opgeleverd, product-owneracceptatie open.
+- status: afgerond en product-ownergeaccepteerd.
 
 ## Niet uitgebracht — Module P1.5 publieke informatiearchitectuur en navigatie
 
@@ -23,7 +36,7 @@
 - eenvoudige publieke sitemap, robots-regels en Nederlandse 404-pagina toegevoegd;
 - gerichte regressietests toegevoegd voor routebestaan, navigatie, footer, breadcrumbs, contentrelaties, sitemap, robots en 404;
 - geen Prisma-, dependency-, auth-, tenant-, private navigatie- of P1.6/P1.7-wijziging uitgevoerd;
-- status: technisch opgeleverd, product-owneracceptatie open.
+- status: afgerond en product-ownergeaccepteerd.
 
 ## Niet uitgebracht — Module P1.4 vraaggestuurde homepage
 
@@ -33,7 +46,7 @@
 - drie processtappen en vier transparante positioneringsprincipes opgenomen;
 - homepage-metadata en gerichte semantische route- en contenttests uitgebreid;
 - geen zelfscan, automatische matching, Prisma-, dependency-, auth-, tenant- of private navigatiewijziging uitgevoerd;
-- status: technisch opgeleverd, product-owneracceptatie open.
+- status: afgerond en product-ownergeaccepteerd.
 
 ## Niet uitgebracht — Modules P1.2 en P1.3 publieke layout en RI&E
 
@@ -43,7 +56,7 @@
 - typed content- en bronnenbasis met bewijsniveau, validatiestatus en controledatum toegevoegd;
 - officiële bronnen gebruikt zonder individuele juridische conclusies te trekken;
 - geen Prisma-, dependency-, auth-, private navigatie-, CMS-, Product Intelligence- of AI-wijziging uitgevoerd;
-- status: technisch opgeleverd, product-owneracceptatie open.
+- status: afgerond en product-ownergeaccepteerd.
 
 ## Niet uitgebracht — Module P1.1 publieke homepage
 
@@ -54,7 +67,7 @@
 - minimale eerlijke tussenpagina’s voorkomen dode of misleidende links naar nog niet gebouwde publieke modules;
 - SEO-basis, skiplink, headingstructuur, algemene disclaimer en gerichte regressietests toegevoegd;
 - Product Intelligence alleen documentair voorbereid; geen analytics, tracking, CMS, AI, matching, Prisma- of databasewijziging uitgevoerd;
-- status: technisch opgeleverd, product-owneracceptatie open.
+- status: afgerond en product-ownergeaccepteerd.
 
 ## Aanvulling niet uitgebracht — ADR-013 Fase 2B rolwijziging
 

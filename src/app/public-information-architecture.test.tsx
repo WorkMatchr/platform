@@ -9,8 +9,8 @@ import {
   publicFooterGroups,
   publicNavigationItems,
   publicRoutes,
-  rieContentReferences,
 } from '@/content/public-routes'
+import { publicContentCatalog } from '@/content/public-content'
 import NotFound from './not-found'
 import robots from './robots'
 import sitemap from './sitemap'
@@ -46,13 +46,19 @@ describe('publieke informatiearchitectuur', () => {
     expect(html).not.toContain('href="#"')
   })
 
-  it('legt de RI&E-kruisverwijzingen getypeerd en zonder dubbelzinnige slugs vast', () => {
-    expect(Object.values(rieContentReferences).map((reference) => reference.type)).toEqual([
+  it('legt de RI&E-content getypeerd en met stabiele identiteiten vast', () => {
+    const rieItems = [
+      publicContentCatalog['knowledge:rie-required'],
+      publicContentCatalog['service:rie'],
+      publicContentCatalog['obligation:rie'],
+    ]
+    expect(rieItems.map((item) => item.type)).toEqual([
       'knowledge',
       'service',
       'obligation',
     ])
-    expect(new Set(Object.values(rieContentReferences).map((reference) => reference.href))).toHaveLength(3)
+    expect(new Set(rieItems.map((item) => item.id))).toHaveLength(3)
+    expect(new Set(rieItems.map((item) => item.href))).toHaveLength(3)
   })
 
   it('neemt alleen inhoudelijke publieke routes op in de sitemap', () => {

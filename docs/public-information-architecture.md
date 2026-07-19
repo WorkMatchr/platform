@@ -72,7 +72,7 @@ De compacte catalogus bevat alle bestaande publieke bestemmingen. `indexablePubl
 
 ## 9. Interne relaties
 
-`PublicContentReference` koppelt een `knowledge`, `service`, `obligation` of `sector` aan een unieke slug, titel en geregistreerde route. Het RI&E-cluster gebruikt deze basis voor gerelateerde onderwerpen. P1.5 maakt hiervan geen database- of SEO-engine.
+P1.7 heeft deze basis geconsolideerd in `src/content/public-content.ts`. Een stabiele content-ID verwijst naar een live catalogusitem; expliciete directionele relaties bevatten alleen ID en verwacht type. Titel, beschrijving, route, status en zichtbaar contenttype worden door de resolver geleverd. De validator weigert ontbrekende, private, niet-indexeerbare, zelfgerichte, dubbele of verkeerd getypeerde relaties fail closed.
 
 ## 10. Metadata, sitemap en indexatie
 
@@ -87,6 +87,7 @@ Nieuwe dienst-, verplichting-, sector- en kennisdetailpagina’s volgen de vastg
 ## 12. Grens met P1.6 en P1.7
 
 - **P1.6** levert de eerste begeleide personeelsflow op `/advieswijzer` met maximaal vijf beslismomenten. Andere startsituaties blijven eerlijk niet beschikbaar.
-- **P1.7** kan later geautomatiseerde interne relaties en een SEO-laag uitwerken. P1.5 levert alleen de getypeerde, handmatig controleerbare basis.
+- **P1.7** levert de relationele interne link- en SEO-clusterlaag met een typed catalogus, expliciete relaties, CTA-hiërarchie en validatie. De relaties worden niet automatisch uit keywords afgeleid.
+- **P1.8** en latere contentuitbreiding zijn niet gestart. Nieuwe clusteritems vereisen eerst een live, inhoudelijk bruikbare en indexeerbare route.
 
 P1.5 wijzigt geen Prisma-schema, database, authenticatie, tenantlogica, private navigatie of dependencies.

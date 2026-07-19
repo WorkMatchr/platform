@@ -34,6 +34,7 @@ Deze map bevat de leidende projectdocumentatie. Lees vóór een wijziging minima
 - [Vraaggestuurde homepage — Module P1.4](public-homepage-experience.md)
 - [Publieke informatiearchitectuur en navigatie — Module P1.5](public-information-architecture.md)
 - [Guided Intake Engine v1 — Module P1.6](guided-intake-engine-v1.md)
+- [Publieke contentrelaties en SEO-clusters — Module P1.7](public-content-relations.md)
 
 ## Ontwerp en kwaliteit
 
