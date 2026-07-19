@@ -498,3 +498,18 @@ De product owner heeft de bevoegdhedenmatrix aangevuld en goedgekeurd. OWNER toe
 De servicelaag, tenantguards, platformactorpolicies en Nederlandse accountbeheerinterface zijn technisch gerealiseerd zonder Prisma- of migratiewijziging. Blokkeren en herstellen zijn transactioneel, idempotent en append-only geaudit; blokkeren trekt sessies en wachtwoordresetmiddelen in. Last-OWNER-, tenant-, platform- en migratiebescherming zijn fail-closed. Preflight 3.0 en tijdelijke-database-integratietests zijn toegevoegd. De bekende legacy User met meerdere memberships blijft de enige migratieblocker en is niet gewijzigd. Product-owneracceptatie van Fase 2B staat open.
 
 De accountbeheerpagina ondersteunt nu tevens uitnodigingen binnen dezelfde tenant. OWNER kan MEMBER en ADMIN uitnodigen; ADMIN uitsluitend MEMBER. User, Better Auth-credential, membership en audittrail ontstaan transactioneel; verificatie activeert User en membership atomair; de gebruiker stelt daarna een eigen wachtwoord in en krijgt uitsluitend een eigen sessie. OWNER-toekenning en platformbeheer blijven buiten deze uitnodigingsflow. Product-owneracceptatie blijft open.
+
+## Module P1.1 — Vraaggestuurde publieke homepage
+
+**Status:** technisch opgeleverd; product-owneracceptatie open.
+
+- centrale positionering **Begrijpen gaat vóór verbinden** vertaald naar Vraag → Begrijpen → Advies → Specialist;
+- publieke header uitgebreid met actieve route, complete desktopnavigatie en toegankelijke mobiele navigatie;
+- hero, twijfelboodschap, zeven herkenbare situaties, werkwijze, veelgestelde vragen, kenniscentrumpreview, sectorpreview, kernprincipes en afsluitende CTA gebouwd;
+- homepagecontent compile-time typeveilig gecentraliseerd in `src/content/public-homepage.ts`;
+- publieke footer uitgebreid met navigatie, juridische routes, accountlink en rustige algemene disclaimer;
+- minimale eerlijke tussenpagina’s toegevoegd om dode of misleidende links te voorkomen;
+- SEO-basis, skiplink, semantische headings, focusgedrag, reduced motion en responsieve kaarten geborgd;
+- Product Intelligence uitsluitend documentair voorbereid; er is geen tracking, logging, CMS, AI, matching of databasewijziging toegevoegd;
+- automatische homepage-, route-, header-, navigatie- en footertests toegevoegd;
+- handmatige acceptatie op desktop, mobiel, toetsenbord, 200% zoom, console en ingelogde/uitgelogde sessie staat open.

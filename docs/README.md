@@ -27,6 +27,7 @@ Deze map bevat de leidende projectdocumentatie. Lees vóór een wijziging minima
 21. [ADR-013 Fase 1 — technische implementatie Expand](adr-013-fase-1-expand-technische-implementatie.md)
 22. [ADR-013 Fase 2A — Platform en provisioning](adr-013-fase-2a-platform-en-provisioning.md)
 23. [ADR-013 Fase 2B — Lifecycle en tenant](adr-013-fase-2b-lifecycle-en-tenant.md)
+24. [Architectuur publieke homepage — Module P1.1](public-website-homepage-architecture.md)
 
 ## Ontwerp en kwaliteit
 

@@ -1,5 +1,16 @@
 # Changelog
 
+## Niet uitgebracht — Module P1.1 publieke homepage
+
+- vraaggestuurde publieke homepage gebouwd rond **Vraag → Begrijpen → Advies → Specialist**;
+- publieke header uitgebreid met complete navigatie, actieve route en toegankelijk mobiel disclosuremenu;
+- herbruikbare publieke componenten en een compile-time typeveilige contentbron toegevoegd;
+- veelgestelde onderwerpen, kenniscentrum- en sectorpreview, kernprincipes, slot-CTA en publieke footer toegevoegd;
+- minimale eerlijke tussenpagina’s voorkomen dode of misleidende links naar nog niet gebouwde publieke modules;
+- SEO-basis, skiplink, headingstructuur, algemene disclaimer en gerichte regressietests toegevoegd;
+- Product Intelligence alleen documentair voorbereid; geen analytics, tracking, CMS, AI, matching, Prisma- of databasewijziging uitgevoerd;
+- status: technisch opgeleverd, product-owneracceptatie open.
+
 ## Aanvulling niet uitgebracht — ADR-013 Fase 2B rolwijziging
 
 - algemene `MEMBER <-> ADMIN`-rolwijziging voor actieve tenant-OWNER toegevoegd met optimistic role-precondition, append-only historie en onmiddellijke sessie-intrekking;

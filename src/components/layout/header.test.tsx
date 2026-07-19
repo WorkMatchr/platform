@@ -84,9 +84,12 @@ describe('headerweergave per sessiecontext', () => {
 
   it('gebruikt voor publieke en ingelogde menu\u2019s hetzelfde sluitbare interactiepatroon', () => {
     const source = readFileSync(join(process.cwd(), 'src/components/layout/header.tsx'), 'utf8')
+    const publicNavigation = readFileSync(join(process.cwd(), 'src/components/layout/public-navigation.tsx'), 'utf8')
     const logout = readFileSync(join(process.cwd(), 'src/components/auth/logout-button.tsx'), 'utf8')
-    expect(source.match(/<DisclosureMenu/g)).toHaveLength(2)
+    expect(source.match(/<DisclosureMenu/g)).toHaveLength(1)
+    expect(publicNavigation.match(/<DisclosureMenu/g)).toHaveLength(1)
     expect(source).not.toContain('<details')
+    expect(publicNavigation).not.toContain('<details')
     expect(logout).toContain("window.location.assign('/')")
   })
 })

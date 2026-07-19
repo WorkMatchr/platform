@@ -36,6 +36,10 @@
 
 Latere modules behandelen credits, Mollie-betalingen, berichten, verder beheer en productievoorbereiding. AI-intake en AI-matching volgen pas na afzonderlijk ontwerp in een latere versie.
 
+## Publieke website
+
+- **Module P1.1 — Vraaggestuurde publieke homepage — technisch opgeleverd; product-owneracceptatie open.** De publieke header, hero, situatie-ingangen, werkwijze, veelgestelde onderwerpen, kennis- en sectorpreviews, kernprincipes, slot-CTA, footer en noodzakelijke eerlijke tussenpagina’s zijn gebouwd. De dynamische Advieswijzer, volledige contentpagina’s, CMS, zoeken, analytics en Product Intelligence zijn niet geïmplementeerd.
+
 ## ADR-013 migratieprogramma
 
 - **Fase 0/0B — preflight en recordbesluiten — afgerond en goedgekeurd.**
