@@ -270,6 +270,16 @@ De product owner heeft de doelarchitectuur uit ADR-013 vastgesteld. Fase 1 Expan
 | B-217 | Sectorpagina’s geven representatieve context en geen universele risico-uitkomst. | Werkelijke werkzaamheden en organisatiecontext blijven bepalend. |
 | B-218 | De Advieswijzer blijft een begeleide vervolgstap en geen juridische, medische of automatische selectie-uitkomst. | Iedere detailpagina bevat maximaal één primaire vervolgstap en hoogstens enkele inhoudelijke relaties. |
 | B-219 | Nieuwe publieke content vereist bron-, route-, metadata-, FAQ- en relatievalidatie. | Ongeldige configuratie moet tijdens tests of build fail closed zichtbaar worden. |
+| B-220 | Marketplace v1 gebruikt gescheiden transactionele domeinen voor selectie, deelname, offerte, gunning, credits, berichten en notificaties. | Scheiding houdt autorisatie, audit, herstel en invarianten uitlegbaar. |
+| B-221 | Matching start uitsluitend na een expliciete actie van een opdrachtgever-OWNER of -ADMIN. | Publicatie alleen activeert geen selectie of uitnodiging. |
+| B-222 | Matching sluit harde ongeschiktheid uit vóór integer scoring en selecteert maximaal drie providers. | Ongeschikte providers worden nooit kunstmatig toegevoegd. |
+| B-223 | Deelname en creditreservering vormen één atomaire handeling. | Zonder reservering ontstaat geen deelname. |
+| B-224 | Offerte-indiening en creditconsumptie vormen één atomaire handeling. | Zonder consumptie ontstaat geen geldige indiening. |
+| B-225 | Per opdracht kan databasebreed maximaal één immutable gunningsbesluit bestaan. | Overige geldige offertes worden transactioneel afgewezen. |
+| B-226 | De creditledger is append-only en ondersteunt beschikbaar, gereserveerd en besteed. | Grants en correcties voegen records toe; bestaande mutaties worden nooit overschreven. |
+| B-227 | Berichten bestaan alleen per opdracht, opdrachtgever en één deelnemende provider. | Concurrenten delen geen kanaal of gegevens. |
+| B-228 | Notificaties zijn persistent en idempotent; extern e-mailtransport gebruikt een outbox. | Transportfalen wijzigt de zakelijke transactie niet. |
+| B-229 | Credits kopen en betaalintegratie vallen buiten Fase 3. | Geen pakket-, factuur-, btw-, Mollie-, Stripe- of webhookfunctionaliteit wordt geactiveerd. |
 
 ADR-011 heeft status **Geaccepteerd**. Het implementatieplan begrenst 6A.3.2 tot maximaal twee niet-destructieve migraties en houdt de bredere services, interface en acceptatie in afzonderlijke vervolgstappen.
 
@@ -286,3 +296,10 @@ Zie [ADR-010](adr/ADR-010-fijnmazige-platformrollen-providerkwalificatie.md) voo
 Zie [ADR-011](adr/ADR-011-immutable-providerdossierindiening-en-beoordeling.md) voor immutable providerdossierindiening en beoordeling.
 Zie [ADR-012](adr/ADR-012-gedelegeerde-bevoegdheden-namens-organisaties.md) voor de voorgestelde organisatieprocesrechten.
 Zie [ADR-013](adr/ADR-013-een-organisatie-per-tenantaccount-platformrollen-en-gecontroleerde-accountverwijdering.md) voor één organisatie per tenantaccount, platformactorbinding en gecontroleerde accountverwijdering.
+Zie [ADR-014](adr/ADR-014-marketplace-transaction-platform-v1.md) voor het transactionele marktplaatsfundament.
+Zie [ADR-015](adr/ADR-015-deterministische-matching-en-handmatige-interventie.md) voor selectie, snapshots en interventie.
+Zie [ADR-016](adr/ADR-016-immutable-offerteversies-en-zichtbaarheid.md) voor offerteversies en tenantzichtbaarheid.
+Zie [ADR-017](adr/ADR-017-transactionele-en-immutable-gunning.md) voor gunning.
+Zie [ADR-018](adr/ADR-018-creditledger-en-reserveringen.md) voor credits.
+Zie [ADR-019](adr/ADR-019-opdrachtgebonden-berichtenisolatie.md) voor communicatie-isolatie.
+Zie [ADR-020](adr/ADR-020-persistente-notificaties-en-outbox.md) voor notificaties en outbox.

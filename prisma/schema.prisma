@@ -351,6 +351,78 @@ enum CreditTransactionType {
   REFUND
   ADMIN_ADJUSTMENT
   EXPIRATION
+  ADMIN_GRANT
+  ADMIN_CORRECTION
+  RESERVATION
+  RESERVATION_RELEASE
+  CONSUMPTION
+}
+
+enum MarketplaceMatchRunStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+  SUPERSEDED
+}
+
+enum MarketplaceMatchCandidateStatus {
+  EXCLUDED
+  ELIGIBLE
+  SELECTED
+}
+
+enum ProviderInvitationStatus {
+  INVITED
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  WITHDRAWN
+}
+
+enum ProviderParticipationStatus {
+  ACTIVE
+  WITHDRAWN
+  EXPIRED
+  CLOSED
+}
+
+enum QuoteStatus {
+  DRAFT
+  SUBMITTED
+  WITHDRAWN
+  EXPIRED
+  REJECTED
+  AWARDED
+}
+
+enum AwardDecisionStatus {
+  FINAL
+  ESCALATED
+}
+
+enum CreditReservationStatus {
+  ACTIVE
+  CONSUMED
+  RELEASED
+  CANCELLED
+}
+
+enum MessageChannelStatus {
+  OPEN
+  READ_ONLY
+  CLOSED
+}
+
+enum MarketplaceMessageStatus {
+  SENT
+  REMOVED
+}
+
+enum NotificationOutboxStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
 }
 
 model User {
@@ -428,6 +500,16 @@ model User {
   closedProviderReviewCases        ProviderDossierReviewCase[]            @relation("ProviderDossierReviewCaseCloser")
   createdProviderFindings          ProviderDossierFinding[]               @relation("ProviderDossierFindingActor")
   resolvedProviderFindings         ProviderDossierFindingResolution[]     @relation("ProviderDossierFindingResolutionActor")
+  startedMarketplaceMatchRuns      MarketplaceMatchRun[]                  @relation("MarketplaceMatchRunActor")
+  marketplaceMatchInterventions    MarketplaceMatchIntervention[]         @relation("MarketplaceMatchInterventionActor")
+  acceptedProviderInvitations      ProviderInvitation[]                   @relation("ProviderInvitationAcceptanceActor")
+  createdMarketplaceParticipations ProviderParticipation[]                @relation("ProviderParticipationActor")
+  submittedQuoteVersions           QuoteVersion[]                         @relation("QuoteVersionSubmitter")
+  marketplaceAwardDecisions        AwardDecision[]                        @relation("AwardDecisionActor")
+  sentMarketplaceMessages          MarketplaceMessage[]                   @relation("MarketplaceMessageSender")
+  receivedMarketplaceNotifications MarketplaceNotification[]              @relation("MarketplaceNotificationRecipient")
+  readMarketplaceNotifications     MarketplaceNotification[]              @relation("MarketplaceNotificationReader")
+  marketplaceAuditEvents           MarketplaceAuditEvent[]                @relation("MarketplaceAuditActor")
 
   @@index([status])
   @@index([createdAt])
@@ -492,37 +574,42 @@ model RateLimit {
 }
 
 model Organization {
-  id                       String                          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name                     String
-  tradeName                String?
-  chamberOfCommerceNumber  String?
-  organizationType         OrganizationType
-  status                   OrganizationStatus              @default(PENDING)
-  website                  String?
-  phone                    String?
-  generalEmail             String?
-  employeeCount            Int?
-  logoStorageKey           String?                         @unique
-  logoMimeType             String?
-  logoSizeBytes            Int?
-  logoWidth                Int?
-  logoHeight               Int?
-  logoUpdatedAt            DateTime?                       @db.Timestamptz(3)
-  createdAt                DateTime                        @default(now()) @db.Timestamptz(3)
-  updatedAt                DateTime                        @updatedAt @db.Timestamptz(3)
-  archivedAt               DateTime?                       @db.Timestamptz(3)
-  systemKey                String?                         @unique @db.VarChar(100)
-  memberships              OrganizationMembership[]
-  provisioningEvents       AccountProvisioningEvent[]
-  systemProvisioningEvents OrganizationProvisioningEvent[]
-  membershipEvents         OrganizationMembershipEvent[]
-  locations                OrganizationLocation[]
-  sectors                  OrganizationSector[]
-  providerProfile          ProviderProfile?
-  clientIntakes            Intake[]
-  clientAssignments        Assignment[]
-  creditAccount            CreditAccount?
-  insuredProviderPolicies  ProviderInsuranceRevision[]     @relation("InsuredOrganization")
+  id                        String                          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                      String
+  tradeName                 String?
+  chamberOfCommerceNumber   String?
+  organizationType          OrganizationType
+  status                    OrganizationStatus              @default(PENDING)
+  website                   String?
+  phone                     String?
+  generalEmail              String?
+  employeeCount             Int?
+  logoStorageKey            String?                         @unique
+  logoMimeType              String?
+  logoSizeBytes             Int?
+  logoWidth                 Int?
+  logoHeight                Int?
+  logoUpdatedAt             DateTime?                       @db.Timestamptz(3)
+  createdAt                 DateTime                        @default(now()) @db.Timestamptz(3)
+  updatedAt                 DateTime                        @updatedAt @db.Timestamptz(3)
+  archivedAt                DateTime?                       @db.Timestamptz(3)
+  systemKey                 String?                         @unique @db.VarChar(100)
+  memberships               OrganizationMembership[]
+  provisioningEvents        AccountProvisioningEvent[]
+  systemProvisioningEvents  OrganizationProvisioningEvent[]
+  membershipEvents          OrganizationMembershipEvent[]
+  locations                 OrganizationLocation[]
+  sectors                   OrganizationSector[]
+  providerProfile           ProviderProfile?
+  clientIntakes             Intake[]
+  clientAssignments         Assignment[]
+  creditAccount             CreditAccount?
+  insuredProviderPolicies   ProviderInsuranceRevision[]     @relation("InsuredOrganization")
+  marketplaceInvitations    ProviderInvitation[]
+  marketplaceParticipations ProviderParticipation[]
+  marketplaceQuotes         Quote[]
+  messageChannelsAsClient   MarketplaceMessageChannel[]     @relation("MarketplaceMessageClientOrganization")
+  marketplaceAuditEvents    MarketplaceAuditEvent[]
 
   @@index([organizationType])
   @@index([status])
@@ -764,6 +851,11 @@ model ProviderProfile {
   dossierSubmissions          ProviderDossierSubmission[]
   dossierCandidates           ProviderDossierCandidate[]
   dossierReviewCases          ProviderDossierReviewCase[]
+  marketplaceMatchCandidates  MarketplaceMatchCandidate[]
+  marketplaceInvitations      ProviderInvitation[]
+  marketplaceParticipations   ProviderParticipation[]
+  marketplaceQuotes           Quote[]
+  marketplaceMessageChannels  MarketplaceMessageChannel[]
 
   @@index([approvalStatus])
   @@index([isAvailable])
@@ -1656,24 +1748,25 @@ model ProviderBlockRelease {
 }
 
 model TrustedProviderProjection {
-  id                        String                                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  providerProfileId         String                                 @db.Uuid
-  readinessAssessmentId     String                                 @db.Uuid
-  selectabilityAssessmentId String                                 @db.Uuid
-  schemaVersion             Int
-  canonicalizationVersion   String
-  sourceVersion             Int
-  payload                   Json
-  sha256                    String                                 @db.VarChar(64)
-  validFrom                 DateTime                               @db.Timestamptz(3)
-  validUntil                DateTime                               @db.Timestamptz(3)
-  createdByUserId           String?                                @db.Uuid
-  createdAt                 DateTime                               @default(now()) @db.Timestamptz(3)
-  providerProfile           ProviderProfile                        @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
-  readinessAssessment       ProviderReadinessAssessment            @relation(fields: [readinessAssessmentId], references: [id], onDelete: Restrict)
-  selectabilityAssessment   ProviderSelectabilityAssessment        @relation(fields: [selectabilityAssessmentId], references: [id], onDelete: Restrict)
-  createdByUser             User?                                  @relation(fields: [createdByUserId], references: [id], onDelete: Restrict)
-  invalidation              TrustedProviderProjectionInvalidation?
+  id                         String                                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerProfileId          String                                 @db.Uuid
+  readinessAssessmentId      String                                 @db.Uuid
+  selectabilityAssessmentId  String                                 @db.Uuid
+  schemaVersion              Int
+  canonicalizationVersion    String
+  sourceVersion              Int
+  payload                    Json
+  sha256                     String                                 @db.VarChar(64)
+  validFrom                  DateTime                               @db.Timestamptz(3)
+  validUntil                 DateTime                               @db.Timestamptz(3)
+  createdByUserId            String?                                @db.Uuid
+  createdAt                  DateTime                               @default(now()) @db.Timestamptz(3)
+  providerProfile            ProviderProfile                        @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  readinessAssessment        ProviderReadinessAssessment            @relation(fields: [readinessAssessmentId], references: [id], onDelete: Restrict)
+  selectabilityAssessment    ProviderSelectabilityAssessment        @relation(fields: [selectabilityAssessmentId], references: [id], onDelete: Restrict)
+  createdByUser              User?                                  @relation(fields: [createdByUserId], references: [id], onDelete: Restrict)
+  invalidation               TrustedProviderProjectionInvalidation?
+  marketplaceMatchCandidates MarketplaceMatchCandidate[]
 
   @@unique([providerProfileId, sourceVersion])
   @@index([providerProfileId, validUntil])
@@ -1905,41 +1998,47 @@ model IntakeStatusHistory {
 }
 
 model Assignment {
-  id                   String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  intakeId             String?                       @unique @db.Uuid
-  clientOrganizationId String                        @db.Uuid
-  createdByUserId      String                        @db.Uuid
-  title                String
-  description          String
-  status               AssignmentStatus              @default(DRAFT)
-  version              Int                           @default(1)
-  primarySpecialismId  String?                       @db.Uuid
-  sectorId             String?                       @db.Uuid
-  employeeCount        Int?
-  desiredStartDate     DateTime?                     @db.Date
-  responseDeadline     DateTime?                     @db.Timestamptz(3)
-  locationId           String?                       @db.Uuid
-  allowsRemoteWork     Boolean                       @default(false)
-  createdAt            DateTime                      @default(now()) @db.Timestamptz(3)
-  updatedAt            DateTime                      @updatedAt @db.Timestamptz(3)
-  publishedAt          DateTime?                     @db.Timestamptz(3)
-  publishedByUserId    String?                       @db.Uuid
-  publishedVersion     Int?
-  closedAt             DateTime?                     @db.Timestamptz(3)
-  archivedAt           DateTime?                     @db.Timestamptz(3)
-  intake               Intake?                       @relation(fields: [intakeId], references: [id], onDelete: Restrict)
-  clientOrganization   Organization                  @relation(fields: [clientOrganizationId], references: [id], onDelete: Restrict)
-  createdByUser        User                          @relation("AssignmentCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
-  publishedByUser      User?                         @relation("AssignmentPublisher", fields: [publishedByUserId], references: [id], onDelete: Restrict)
-  publishedRevision    AssignmentRevision?           @relation("AssignmentPublishedRevision", fields: [id, publishedVersion], references: [assignmentId, version], onDelete: Restrict, map: "Assignment_published_revision_fkey")
-  primarySpecialism    Specialism?                   @relation("PrimaryAssignmentSpecialism", fields: [primarySpecialismId], references: [id], onDelete: Restrict)
-  sector               Sector?                       @relation(fields: [sectorId], references: [id], onDelete: Restrict)
-  location             OrganizationLocation?         @relation(fields: [locationId], references: [id], onDelete: Restrict)
-  specialisms          AssignmentSpecialism[]
-  providerSelections   AssignmentProviderSelection[]
-  resolution           AssignmentResolution?
-  statusHistory        AssignmentStatusHistory[]
-  revisions            AssignmentRevision[]
+  id                         String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  intakeId                   String?                       @unique @db.Uuid
+  clientOrganizationId       String                        @db.Uuid
+  createdByUserId            String                        @db.Uuid
+  title                      String
+  description                String
+  status                     AssignmentStatus              @default(DRAFT)
+  version                    Int                           @default(1)
+  primarySpecialismId        String?                       @db.Uuid
+  sectorId                   String?                       @db.Uuid
+  employeeCount              Int?
+  desiredStartDate           DateTime?                     @db.Date
+  responseDeadline           DateTime?                     @db.Timestamptz(3)
+  locationId                 String?                       @db.Uuid
+  allowsRemoteWork           Boolean                       @default(false)
+  createdAt                  DateTime                      @default(now()) @db.Timestamptz(3)
+  updatedAt                  DateTime                      @updatedAt @db.Timestamptz(3)
+  publishedAt                DateTime?                     @db.Timestamptz(3)
+  publishedByUserId          String?                       @db.Uuid
+  publishedVersion           Int?
+  closedAt                   DateTime?                     @db.Timestamptz(3)
+  archivedAt                 DateTime?                     @db.Timestamptz(3)
+  intake                     Intake?                       @relation(fields: [intakeId], references: [id], onDelete: Restrict)
+  clientOrganization         Organization                  @relation(fields: [clientOrganizationId], references: [id], onDelete: Restrict)
+  createdByUser              User                          @relation("AssignmentCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  publishedByUser            User?                         @relation("AssignmentPublisher", fields: [publishedByUserId], references: [id], onDelete: Restrict)
+  publishedRevision          AssignmentRevision?           @relation("AssignmentPublishedRevision", fields: [id, publishedVersion], references: [assignmentId, version], onDelete: Restrict, map: "Assignment_published_revision_fkey")
+  primarySpecialism          Specialism?                   @relation("PrimaryAssignmentSpecialism", fields: [primarySpecialismId], references: [id], onDelete: Restrict)
+  sector                     Sector?                       @relation(fields: [sectorId], references: [id], onDelete: Restrict)
+  location                   OrganizationLocation?         @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  specialisms                AssignmentSpecialism[]
+  providerSelections         AssignmentProviderSelection[]
+  resolution                 AssignmentResolution?
+  statusHistory              AssignmentStatusHistory[]
+  revisions                  AssignmentRevision[]
+  marketplaceMatchRuns       MarketplaceMatchRun[]
+  marketplaceInvitations     ProviderInvitation[]
+  marketplaceParticipations  ProviderParticipation[]
+  marketplaceQuotes          Quote[]
+  awardDecision              AwardDecision?
+  marketplaceMessageChannels MarketplaceMessageChannel[]
 
   @@unique([id, publishedVersion])
   @@index([clientOrganizationId])
@@ -2080,13 +2179,18 @@ model AdminActionLog {
 }
 
 model CreditAccount {
-  id             String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizationId String              @unique @db.Uuid
-  balance        Int                 @default(0)
-  createdAt      DateTime            @default(now()) @db.Timestamptz(3)
-  updatedAt      DateTime            @updatedAt @db.Timestamptz(3)
-  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  transactions   CreditTransaction[]
+  id               String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId   String              @unique @db.Uuid
+  balance          Int                 @default(0)
+  availableBalance Int                 @default(0)
+  reservedBalance  Int                 @default(0)
+  spentBalance     Int                 @default(0)
+  version          Int                 @default(1)
+  createdAt        DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime            @updatedAt @db.Timestamptz(3)
+  organization     Organization        @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  transactions     CreditTransaction[]
+  reservations     CreditReservation[]
 }
 
 model CreditTransaction {
@@ -2098,14 +2202,338 @@ model CreditTransaction {
   referenceType   String?
   referenceId     String?               @db.Uuid
   description     String?
+  reason          String?               @db.VarChar(500)
+  idempotencyKey  String?               @unique @db.VarChar(120)
+  availableAfter  Int?
+  reservedAfter   Int?
+  spentAfter      Int?
+  reservationId   String?               @db.Uuid
   createdByUserId String?               @db.Uuid
   createdAt       DateTime              @default(now()) @db.Timestamptz(3)
   creditAccount   CreditAccount         @relation(fields: [creditAccountId], references: [id], onDelete: Restrict)
   createdByUser   User?                 @relation("CreditTransactionActor", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  reservation     CreditReservation?    @relation(fields: [reservationId], references: [id], onDelete: Restrict)
 
   @@index([creditAccountId])
   @@index([type])
   @@index([createdByUserId])
   @@index([createdAt])
   @@index([referenceType, referenceId])
+  @@index([reservationId])
+}
+
+model MarketplaceMatchRun {
+  id                 String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assignmentId       String                         @db.Uuid
+  assignmentVersion  Int
+  status             MarketplaceMatchRunStatus      @default(RUNNING)
+  engineVersion      String                         @db.VarChar(40)
+  modelVersion       String                         @db.VarChar(40)
+  ruleVersion        String                         @db.VarChar(40)
+  taxonomyVersion    String                         @db.VarChar(80)
+  startedByUserId    String                         @db.Uuid
+  idempotencyKey     String                         @unique @db.VarChar(120)
+  confidenceLevel    String                         @db.VarChar(20)
+  confidenceReasons  String[]
+  assignmentSnapshot Json
+  inputChecksum      String                         @db.Char(64)
+  decisionReport     Json?
+  decisionChecksum   String?                        @db.Char(64)
+  startedAt          DateTime                       @default(now()) @db.Timestamptz(3)
+  completedAt        DateTime?                      @db.Timestamptz(3)
+  assignment         Assignment                     @relation(fields: [assignmentId], references: [id], onDelete: Restrict)
+  startedByUser      User                           @relation("MarketplaceMatchRunActor", fields: [startedByUserId], references: [id], onDelete: Restrict)
+  candidates         MarketplaceMatchCandidate[]
+  interventions      MarketplaceMatchIntervention[]
+  invitations        ProviderInvitation[]
+
+  @@index([assignmentId, startedAt])
+  @@index([status])
+}
+
+model MarketplaceMatchCandidate {
+  id                String                          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  matchRunId        String                          @db.Uuid
+  providerProfileId String                          @db.Uuid
+  projectionId      String                          @db.Uuid
+  status            MarketplaceMatchCandidateStatus
+  rank              Int?
+  scoreNumerator    Int?
+  scoreDenominator  Int?
+  normalizedScore   Int?
+  exclusionReasons  String[]
+  explanation       Json
+  tieBreaker        Json?
+  providerSnapshot  Json
+  snapshotChecksum  String                          @db.Char(64)
+  createdAt         DateTime                        @default(now()) @db.Timestamptz(3)
+  matchRun          MarketplaceMatchRun             @relation(fields: [matchRunId], references: [id], onDelete: Restrict)
+  providerProfile   ProviderProfile                 @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  projection        TrustedProviderProjection       @relation(fields: [projectionId], references: [id], onDelete: Restrict)
+  invitation        ProviderInvitation?
+
+  @@unique([matchRunId, providerProfileId])
+  @@index([matchRunId, status, rank])
+  @@index([providerProfileId])
+}
+
+model MarketplaceMatchIntervention {
+  id                   String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  matchRunId           String              @db.Uuid
+  actorUserId          String              @db.Uuid
+  reason               String              @db.VarChar(500)
+  originalSelection    Json
+  replacementSelection Json
+  createdAt            DateTime            @default(now()) @db.Timestamptz(3)
+  matchRun             MarketplaceMatchRun @relation(fields: [matchRunId], references: [id], onDelete: Restrict)
+  actorUser            User                @relation("MarketplaceMatchInterventionActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([matchRunId, createdAt])
+  @@index([actorUserId])
+}
+
+model ProviderInvitation {
+  id                     String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assignmentId           String                    @db.Uuid
+  matchRunId             String                    @db.Uuid
+  matchCandidateId       String                    @unique @db.Uuid
+  providerProfileId      String                    @db.Uuid
+  providerOrganizationId String                    @db.Uuid
+  status                 ProviderInvitationStatus  @default(INVITED)
+  creditCost             Int
+  deadlineAt             DateTime                  @db.Timestamptz(3)
+  snapshot               Json
+  snapshotChecksum       String                    @db.Char(64)
+  idempotencyKey         String                    @unique @db.VarChar(120)
+  invitedAt              DateTime                  @default(now()) @db.Timestamptz(3)
+  acceptedAt             DateTime?                 @db.Timestamptz(3)
+  acceptedByUserId       String?                   @db.Uuid
+  declinedAt             DateTime?                 @db.Timestamptz(3)
+  withdrawnAt            DateTime?                 @db.Timestamptz(3)
+  assignment             Assignment                @relation(fields: [assignmentId], references: [id], onDelete: Restrict)
+  matchRun               MarketplaceMatchRun       @relation(fields: [matchRunId], references: [id], onDelete: Restrict)
+  matchCandidate         MarketplaceMatchCandidate @relation(fields: [matchCandidateId], references: [id], onDelete: Restrict)
+  providerProfile        ProviderProfile           @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  providerOrganization   Organization              @relation(fields: [providerOrganizationId], references: [id], onDelete: Restrict)
+  acceptedByUser         User?                     @relation("ProviderInvitationAcceptanceActor", fields: [acceptedByUserId], references: [id], onDelete: Restrict)
+  participation          ProviderParticipation?
+
+  @@unique([assignmentId, providerProfileId])
+  @@index([providerOrganizationId, status])
+  @@index([assignmentId, status])
+  @@index([deadlineAt])
+}
+
+model ProviderParticipation {
+  id                     String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assignmentId           String                      @db.Uuid
+  invitationId           String                      @unique @db.Uuid
+  providerProfileId      String                      @db.Uuid
+  providerOrganizationId String                      @db.Uuid
+  status                 ProviderParticipationStatus @default(ACTIVE)
+  version                Int                         @default(1)
+  createdByUserId        String                      @db.Uuid
+  idempotencyKey         String                      @unique @db.VarChar(120)
+  acceptedAt             DateTime                    @default(now()) @db.Timestamptz(3)
+  closedAt               DateTime?                   @db.Timestamptz(3)
+  assignment             Assignment                  @relation(fields: [assignmentId], references: [id], onDelete: Restrict)
+  invitation             ProviderInvitation          @relation(fields: [invitationId], references: [id], onDelete: Restrict)
+  providerProfile        ProviderProfile             @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  providerOrganization   Organization                @relation(fields: [providerOrganizationId], references: [id], onDelete: Restrict)
+  createdByUser          User                        @relation("ProviderParticipationActor", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  creditReservation      CreditReservation?
+  quote                  Quote?
+  messageChannel         MarketplaceMessageChannel?
+
+  @@unique([assignmentId, providerProfileId])
+  @@index([providerOrganizationId, status])
+  @@index([assignmentId, status])
+}
+
+model Quote {
+  id                     String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assignmentId           String                @db.Uuid
+  participationId        String                @unique @db.Uuid
+  providerProfileId      String                @db.Uuid
+  providerOrganizationId String                @db.Uuid
+  status                 QuoteStatus           @default(DRAFT)
+  version                Int                   @default(1)
+  currentVersionId       String?               @unique @db.Uuid
+  submittedVersionId     String?               @unique @db.Uuid
+  createdAt              DateTime              @default(now()) @db.Timestamptz(3)
+  updatedAt              DateTime              @updatedAt @db.Timestamptz(3)
+  submittedAt            DateTime?             @db.Timestamptz(3)
+  assignment             Assignment            @relation(fields: [assignmentId], references: [id], onDelete: Restrict)
+  participation          ProviderParticipation @relation(fields: [participationId], references: [id], onDelete: Restrict)
+  providerProfile        ProviderProfile       @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  providerOrganization   Organization          @relation(fields: [providerOrganizationId], references: [id], onDelete: Restrict)
+  versions               QuoteVersion[]        @relation("QuoteVersions")
+  currentVersion         QuoteVersion?         @relation("QuoteCurrentVersion", fields: [currentVersionId], references: [id], onDelete: Restrict)
+  submittedVersion       QuoteVersion?         @relation("QuoteSubmittedVersion", fields: [submittedVersionId], references: [id], onDelete: Restrict)
+  awardDecision          AwardDecision?
+
+  @@unique([assignmentId, providerProfileId])
+  @@index([assignmentId, status])
+  @@index([providerOrganizationId, status])
+}
+
+model QuoteVersion {
+  id                String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  quoteId           String         @db.Uuid
+  version           Int
+  priceCents        BigInt
+  priceExplanation  String         @db.VarChar(1000)
+  approach          String         @db.Text
+  planning          String         @db.VarChar(2000)
+  terms             String?        @db.VarChar(2000)
+  validUntil        DateTime?      @db.Date
+  submittedByUserId String         @db.Uuid
+  createdAt         DateTime       @default(now()) @db.Timestamptz(3)
+  quote             Quote          @relation("QuoteVersions", fields: [quoteId], references: [id], onDelete: Restrict)
+  submittedByUser   User           @relation("QuoteVersionSubmitter", fields: [submittedByUserId], references: [id], onDelete: Restrict)
+  currentForQuote   Quote?         @relation("QuoteCurrentVersion")
+  submittedForQuote Quote?         @relation("QuoteSubmittedVersion")
+  awardDecision     AwardDecision?
+
+  @@unique([quoteId, version])
+  @@index([quoteId, createdAt])
+}
+
+model AwardDecision {
+  id                     String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assignmentId           String              @unique @db.Uuid
+  quoteId                String              @unique @db.Uuid
+  quoteVersionId         String              @unique @db.Uuid
+  providerOrganizationId String              @db.Uuid
+  clientOrganizationId   String              @db.Uuid
+  decidedByUserId        String              @db.Uuid
+  status                 AwardDecisionStatus @default(FINAL)
+  motivation             String              @db.VarChar(1000)
+  snapshot               Json
+  snapshotChecksum       String              @db.Char(64)
+  idempotencyKey         String              @unique @db.VarChar(120)
+  decidedAt              DateTime            @default(now()) @db.Timestamptz(3)
+  assignment             Assignment          @relation(fields: [assignmentId], references: [id], onDelete: Restrict)
+  quote                  Quote               @relation(fields: [quoteId], references: [id], onDelete: Restrict)
+  quoteVersion           QuoteVersion        @relation(fields: [quoteVersionId], references: [id], onDelete: Restrict)
+  decidedByUser          User                @relation("AwardDecisionActor", fields: [decidedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([providerOrganizationId])
+  @@index([clientOrganizationId])
+  @@index([decidedAt])
+}
+
+model CreditReservation {
+  id              String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  creditAccountId String                  @db.Uuid
+  participationId String                  @unique @db.Uuid
+  amount          Int
+  status          CreditReservationStatus @default(ACTIVE)
+  idempotencyKey  String                  @unique @db.VarChar(120)
+  createdAt       DateTime                @default(now()) @db.Timestamptz(3)
+  consumedAt      DateTime?               @db.Timestamptz(3)
+  releasedAt      DateTime?               @db.Timestamptz(3)
+  releaseReason   String?                 @db.VarChar(500)
+  creditAccount   CreditAccount           @relation(fields: [creditAccountId], references: [id], onDelete: Restrict)
+  participation   ProviderParticipation   @relation(fields: [participationId], references: [id], onDelete: Restrict)
+  transactions    CreditTransaction[]
+
+  @@index([creditAccountId, status])
+}
+
+model MarketplaceMessageChannel {
+  id                   String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assignmentId         String                @db.Uuid
+  participationId      String                @unique @db.Uuid
+  clientOrganizationId String                @db.Uuid
+  providerProfileId    String                @db.Uuid
+  status               MessageChannelStatus  @default(OPEN)
+  createdAt            DateTime              @default(now()) @db.Timestamptz(3)
+  closedAt             DateTime?             @db.Timestamptz(3)
+  assignment           Assignment            @relation(fields: [assignmentId], references: [id], onDelete: Restrict)
+  participation        ProviderParticipation @relation(fields: [participationId], references: [id], onDelete: Restrict)
+  clientOrganization   Organization          @relation("MarketplaceMessageClientOrganization", fields: [clientOrganizationId], references: [id], onDelete: Restrict)
+  providerProfile      ProviderProfile       @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  messages             MarketplaceMessage[]
+
+  @@unique([assignmentId, providerProfileId])
+  @@index([clientOrganizationId, status])
+  @@index([providerProfileId, status])
+}
+
+model MarketplaceMessage {
+  id                   String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  channelId            String                    @db.Uuid
+  senderUserId         String                    @db.Uuid
+  senderOrganizationId String                    @db.Uuid
+  content              String                    @db.VarChar(4000)
+  status               MarketplaceMessageStatus  @default(SENT)
+  idempotencyKey       String                    @unique @db.VarChar(120)
+  createdAt            DateTime                  @default(now()) @db.Timestamptz(3)
+  removedAt            DateTime?                 @db.Timestamptz(3)
+  channel              MarketplaceMessageChannel @relation(fields: [channelId], references: [id], onDelete: Restrict)
+  senderUser           User                      @relation("MarketplaceMessageSender", fields: [senderUserId], references: [id], onDelete: Restrict)
+
+  @@index([channelId, createdAt])
+  @@index([senderOrganizationId])
+}
+
+model MarketplaceNotification {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  recipientUserId String    @db.Uuid
+  eventId         String    @db.VarChar(120)
+  type            String    @db.VarChar(80)
+  title           String    @db.VarChar(160)
+  body            String    @db.VarChar(500)
+  targetRoute     String    @db.VarChar(300)
+  idempotencyKey  String    @unique @db.VarChar(160)
+  createdAt       DateTime  @default(now()) @db.Timestamptz(3)
+  readAt          DateTime? @db.Timestamptz(3)
+  readByUserId    String?   @db.Uuid
+  recipientUser   User      @relation("MarketplaceNotificationRecipient", fields: [recipientUserId], references: [id], onDelete: Restrict)
+  readByUser      User?     @relation("MarketplaceNotificationReader", fields: [readByUserId], references: [id], onDelete: Restrict)
+
+  @@unique([recipientUserId, eventId])
+  @@index([recipientUserId, readAt, createdAt])
+}
+
+model NotificationOutbox {
+  id              String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  eventId         String                   @db.VarChar(120)
+  channel         String                   @db.VarChar(20)
+  recipientUserId String?                  @db.Uuid
+  templateKey     String                   @db.VarChar(80)
+  payload         Json
+  status          NotificationOutboxStatus @default(PENDING)
+  idempotencyKey  String                   @unique @db.VarChar(160)
+  attemptCount    Int                      @default(0)
+  availableAt     DateTime                 @default(now()) @db.Timestamptz(3)
+  processedAt     DateTime?                @db.Timestamptz(3)
+  lastErrorCode   String?                  @db.VarChar(80)
+  createdAt       DateTime                 @default(now()) @db.Timestamptz(3)
+
+  @@index([status, availableAt])
+  @@index([eventId])
+}
+
+model MarketplaceAuditEvent {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actorUserId    String?       @db.Uuid
+  actorRole      String        @db.VarChar(80)
+  organizationId String?       @db.Uuid
+  action         String        @db.VarChar(100)
+  entityType     String        @db.VarChar(80)
+  entityId       String        @db.Uuid
+  previousState  String?       @db.VarChar(80)
+  nextState      String?       @db.VarChar(80)
+  reason         String?       @db.VarChar(500)
+  correlationKey String?       @unique @db.VarChar(160)
+  metadata       Json?
+  createdAt      DateTime      @default(now()) @db.Timestamptz(3)
+  actorUser      User?         @relation("MarketplaceAuditActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
+  @@index([entityType, entityId, createdAt])
+  @@index([organizationId, createdAt])
+  @@index([actorUserId, createdAt])
 }

@@ -38,6 +38,21 @@ Latere modules behandelen credits, Mollie-betalingen, berichten, verder beheer e
 
 ## Publieke website
 
+## Fase 3 — Marketplace Transaction Platform v1
+
+**Status: technisch opgeleverd; product-owneracceptatie open.**
+
+- F3.1 Provider Onboarding: bestaande 6A.3-interface en immutable dossierworkflow hergebruikt;
+- F3.2 Providerkwalificatie en readiness: bestaande fail-closed kwalificatiebasis en Trusted Provider Projection hergebruikt;
+- F3.3 Matching Engine: deterministische selectie, Decision Report en maximaal drie uitnodigingen gebouwd;
+- F3.4 Offerteflow: deelname, reservering, immutable offerteversies en indiening gebouwd;
+- F3.5 Gunning: één transactioneel immutable gunningsbesluit gebouwd;
+- F3.6 Credits: ledger, reservering, consumptie, vrijgave, grants en correcties gebouwd;
+- F3.7 Dashboards: opdrachtgever-, provider- en beheerweergaven gebouwd;
+- F3.8 Berichten en notificaties: geïsoleerde tekstkanalen, in-appnotificaties en outbox gebouwd.
+
+Volgende stap is integrale product-owneracceptatie en productiehardening. Credits kopen en betaalintegratie zijn een afzonderlijke toekomstige module.
+
 - **Module P1.1 — Vraaggestuurde publieke homepage — afgerond en product-ownergeaccepteerd.** De publieke header, hero, situatie-ingangen, werkwijze, veelgestelde onderwerpen, kennis- en sectorpreviews, kernprincipes, slot-CTA, footer en noodzakelijke eerlijke tussenpagina’s zijn gebouwd. De dynamische Advieswijzer, volledige contentpagina’s, CMS, zoeken, analytics en Product Intelligence zijn niet geïmplementeerd.
 
 - **Module P1.2 — Publieke platformlayout — afgerond en product-ownergeaccepteerd.** Vier publieke placeholders zijn vervangen door samenhangende overzichtspagina’s met gedeelde hero-, breadcrumb-, kaart-, status-, bron-, relatie- en CTA-patronen.

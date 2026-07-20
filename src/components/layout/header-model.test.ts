@@ -37,8 +37,8 @@ describe('gedeelde headercontext', () => {
   it('toont een ingelogde opdrachtgever zonder login- of providerlink', () => {
     const model = buildHeaderViewModel(clientContext)
     expect(model.authenticated).toBe(true)
-    expect(model.primaryLinks.map((item) => item.label)).toEqual(['Hulpvragen', 'Opdrachten'])
-    expect(model.menuLinks.map((item) => item.label)).toEqual(['Mijn account', 'Mijn organisatie'])
+    expect(model.primaryLinks.map((item) => item.label)).toEqual(['Dashboard', 'Hulpvragen', 'Opdrachten'])
+    expect(model.menuLinks.map((item) => item.label)).toEqual(['Mijn account', 'Mijn organisatie', 'Notificaties'])
     expect(model.menuLinks.some((item) => item.href === '/inloggen')).toBe(false)
   })
 

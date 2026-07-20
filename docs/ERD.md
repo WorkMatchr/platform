@@ -306,3 +306,27 @@ erDiagram
     uuid entityId
   }
 ```
+
+## Marketplace Transaction Platform v1
+
+```mermaid
+erDiagram
+  Assignment ||--o{ MarketplaceMatchRun : selected_in
+  MarketplaceMatchRun ||--o{ MarketplaceMatchCandidate : evaluates
+  TrustedProviderProjection ||--o{ MarketplaceMatchCandidate : freezes
+  MarketplaceMatchCandidate ||--o| ProviderInvitation : invites
+  ProviderInvitation ||--o| ProviderParticipation : accepted_as
+  ProviderParticipation ||--o| CreditReservation : reserves
+  ProviderParticipation ||--o| Quote : offers
+  Quote ||--|{ QuoteVersion : versions
+  Quote ||--o| AwardDecision : wins
+  Assignment ||--o| AwardDecision : resolves
+  CreditAccount ||--o{ CreditReservation : holds
+  CreditAccount ||--o{ CreditTransaction : records
+  ProviderParticipation ||--o| MarketplaceMessageChannel : opens
+  MarketplaceMessageChannel ||--o{ MarketplaceMessage : contains
+  User ||--o{ MarketplaceNotification : receives
+  User ||--o{ MarketplaceAuditEvent : acts
+```
+
+Kandidaten, interventies, offerteversies, gunningen, ledgerregels en marktaudit zijn append-only. Unieke relaties voorkomen dubbele uitnodiging, deelname, offerte, reservering en gunning.

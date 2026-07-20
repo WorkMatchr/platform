@@ -595,3 +595,20 @@ De product owner heeft P1.2 en P1.3 vervolgens goedgekeurd. De eerdere openstaan
 - alle nieuwe detailroutes zijn canonical, indexeerbaar en opgenomen in de sitemap;
 - middelbare veiligheidskundige, arbeidsdeskundige, gemeenten/publieke organisaties en detailhandel/horeca zijn bewust niet gepubliceerd vanwege onvoldoende onderscheidende bronanalyse binnen deze sprint;
 - CMS, databasecontent, automatische bronmonitoring, Prisma, auth, tenantlogica, matching, offertes en AI zijn niet toegevoegd.
+
+## Fase 3 — Marketplace Transaction Platform v1
+
+**Status:** technisch opgeleverd; product-owneracceptatie open.
+
+Deze actuele Fase 3-status volgt de historische Module 6A-notities op waarin matching, uitnodigingen en credits nog niet waren geïmplementeerd. Die oudere regels beschrijven de toenmalige modulegrens en zijn geen huidige productstatus.
+
+- Gate A: bestaande provideronboarding, candidates, reviewcases, findings, vier ogen, readiness, selecteerbaarheid en projecties gecontroleerd en hergebruikt;
+- Gate B: deterministic matching, uitsluiting vóór ranking, maximaal drie selecties, Decision Report en idempotente uitnodigingen gebouwd;
+- Gate C: deelname/reservering, offerteversies/consumptie en unieke immutable gunning gebouwd;
+- Gate D: append-only creditledger, grants, correcties, vrijgave en niet-negatieve saldi gebouwd;
+- Gate E: rolgebonden dashboards, opdrachtgebonden berichten, notificaties en outbox gebouwd;
+- additieve migraties `20260720150000_add_marketplace_transaction_platform` en `20260720173000_make_marketplace_audit_correlation_unique` toegepast op de bestaande lokale database en getest op een lege tijdelijke database;
+- providerweigering, gecontroleerde matchinterventie en creditcorrectie gebruiken verplichte redenen, server-side autorisatie en unieke auditcorrelaties;
+- reviewer, approver en auditor gebruiken hun bestaande gescheiden platformactorgrondslag; alleen centraal platformbeheer ziet mutatieacties;
+- product-owneracceptatie, volledige browserrollenflow en productie-outboxverwerking staan open;
+- credits kopen, betalingen, AI, reviews en publieke providerzoeking zijn niet gestart.

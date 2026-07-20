@@ -138,6 +138,16 @@ describe('provider-onboardinginterface', () => {
     }
   })
 
+  it('laadt de controlepagina eenmaal en invalideert providerdata na een reviewstatuswijziging', () => {
+    const controlPage = readFileSync(route('controleren'), 'utf8')
+    const reviewActions = readFileSync(join(root, 'src', 'app', 'beheer', 'dossiers', 'actions.ts'), 'utf8')
+    expect(controlPage).toContain('await getProviderDossierControlView(')
+    expect(controlPage).not.toContain('Promise.all')
+    expect(controlPage).not.toContain('getProviderDossierDashboard')
+    expect(controlPage).toContain('profileVersion={control.profileVersion}')
+    expect(reviewActions.match(/revalidatePath\('\/aanbiedersdossier', 'layout'\)/g)).toHaveLength(4)
+  })
+
   it('gebruikt begrijpelijke verzekerings- en validatieteksten', () => {
     const actions = readFileSync(join(root, 'src', 'app', 'aanbiedersdossier', 'actions.ts'), 'utf8')
     const insurance = readFileSync(route('verzekeringen'), 'utf8')

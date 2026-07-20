@@ -1,5 +1,18 @@
 # Changelog
 
+## Niet uitgebracht — Fase 3 Marketplace Transaction Platform v1
+
+- bestaande provideronboarding, vier-ogenkwalificatie, readiness, selecteerbaarheid en Trusted Provider Projection als Gate A hergebruikt en fail-closed gehouden;
+- deterministische Matching Engine met uitsluiting vóór ranking, maximaal drie geselecteerden, immutable candidates, Confidence Check, Decision Report en idempotente uitnodigingen toegevoegd;
+- transactionele deelname met creditreservering en geïsoleerd berichtenkanaal toegevoegd;
+- offerteconcepten met immutable versies, serverdeadline en atomische indiening/creditconsumptie toegevoegd;
+- unieke, immutable gunning met afwijzing van overige offertes, opdrachtstatus, audit en notificaties toegevoegd;
+- creditledger met beschikbare, gereserveerde en bestede saldi, grants, correcties, vrijgave en database-invarianten toegevoegd;
+- rol- en tenantgebonden dashboards, berichten, notificaties en outbox toegevoegd;
+- twee additieve Prisma-migraties, unit- en database-integratietests en ADR-014 t/m ADR-020 toegevoegd;
+- credits kopen, betalingen, AI, reviews, publieke providerzoeking en bestandsbijlagen niet geactiveerd;
+- status: technisch opgeleverd; product-owneracceptatie open.
+
 ## Niet uitgebracht — Modules P1.8–P1.12 Public Content Platform v1
 
 - definitieve typed contentfoundation toegevoegd met gespecialiseerde modellen voor kennis, diensten, verplichtingen en sectoren;

@@ -128,6 +128,7 @@ export async function getProviderDossierControlView(userId: string, providerProf
   const dashboard = await getProviderDossierDashboard(userId, providerProfileId)
   return {
     providerProfileId,
+    profileVersion: dashboard.profileVersion,
     viewerRole: dashboard.viewerRole,
     statuses: dashboard.statuses,
     completeness: dashboard.completeness,

@@ -80,3 +80,22 @@ Alle IDs zijn UUID’s. `createdAt` en `updatedAt` zijn UTC-timestamps tenzij an
 - `ProviderProfile.version`: centrale optimistic-concurrencybron voor providerfactmutaties en invalidation.
 - completeness `policyVersion`: versie van de syntactische volledigheidspolicy; geen kwalificatie- of selecteerbaarheidsoordeel.
 - completeness `checksum`: reproduceerbare SHA-256 over policyversie, bronprofielversie en sectieresultaten.
+
+## Marketplace Transaction Platform v1
+
+| Model | Doel en constraints | Historie en gevoeligheid |
+| --- | --- | --- |
+| `MarketplaceMatchRun` | Versieerbare selectieronde met opdrachtsnapshot, engine/model/regels, Confidence Check en Decision Report. | Finalisatie verandert alleen `RUNNING` naar een terminale status; afgeronde context blijft auditbaar. |
+| `MarketplaceMatchCandidate` | Eén providerprojectie-uitkomst per run met uitsluiting of score/rang. | Append-only; bevat geen PII, bewijs, credits of betaling. |
+| `MarketplaceMatchIntervention` | Originele en vervangende selectie plus actor en reden. | Append-only; harde uitsluiting blijft bindend. |
+| `ProviderInvitation` | Unieke uitnodiging per opdracht/provider met deadline, creditkosten en snapshot. | Provider ziet alleen eigen uitnodiging; idempotent. |
+| `ProviderParticipation` | Unieke actieve betrokkenheid na acceptatie. | Tenantgebonden; heeft maximaal één reservering, offerte en kanaal. |
+| `Quote` / `QuoteVersion` | Actuele offertestatus plus immutable inhoudsversies. | Providerinhoud is commercieel vertrouwelijk; concurrenten hebben geen toegang. |
+| `AwardDecision` | Unieke definitieve gunning per opdracht met exacte offerteversie en snapshot. | Append-only en niet normaal terugdraaibaar. |
+| `CreditAccount` | Beschikbare, gereserveerde en bestede projectietotalen met optimistic version. | Saldi zijn niet-negatief en worden alleen via ledgertransacties gewijzigd. |
+| `CreditReservation` | Exclusieve reservering per deelname. | Wordt exact eenmaal geconsumeerd of vrijgegeven. |
+| `CreditTransaction` | Immutable ledgerregel met type, totalen, zakelijke referentie en idempotentiesleutel. | Financiële historie; nooit wijzigen of verwijderen. |
+| `MarketplaceMessageChannel` / `MarketplaceMessage` | Eén geïsoleerd kanaal per opdracht en deelnemende provider; tekstberichten. | Concurrenten delen geen kanaal; fysieke verwijdering is uitgesloten. |
+| `MarketplaceNotification` | Persistente ontvangergebonden melding met gelezenstatus. | Geen private inhoud in titel/body; uniek per ontvanger/gebeurtenis. |
+| `NotificationOutbox` | Asynchrone transportopdracht los van de kerntransactie. | Payload is geminimaliseerd; retries zijn idempotent. |
+| `MarketplaceAuditEvent` | Actor-, rol-, tenant-, status-, reden- en correlatiecontext voor kritieke marktacties. | Append-only; metadata mag geen secrets of volledige zakelijke inhoud bevatten. |

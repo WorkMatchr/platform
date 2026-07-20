@@ -144,6 +144,20 @@ Schema-validatie voor deze JSON-structuren wordt in een latere servicelaag verpl
 
 ## Beperkingen en toekomstige productie
 
+## Marketplace Transaction Platform v1
+
+Migratie `20260720150000_add_marketplace_transaction_platform` is additief en introduceert:
+
+- `MarketplaceMatchRun`, `MarketplaceMatchCandidate` en `MarketplaceMatchIntervention`;
+- `ProviderInvitation` en `ProviderParticipation`;
+- `Quote`, immutable `QuoteVersion` en uniek `AwardDecision`;
+- uitgebreid `CreditAccount`, `CreditReservation` en immutable `CreditTransaction`;
+- `MarketplaceMessageChannel`, `MarketplaceMessage`, `MarketplaceNotification`, `NotificationOutbox` en `MarketplaceAuditEvent`.
+
+Unieke constraints begrenzen één uitnodiging, deelname en offerte per opdracht/provider, één reservering per deelname, één gunning per opdracht en één notificatie per ontvanger/gebeurtenis. PostgreSQL-checks bewaken positieve creditkosten, niet-negatieve saldi, exclusieve reserveringsterminaliteit, geldige scores en positieve offerteprijzen. Triggers maken kandidaten, interventies, offerteversies, gunningen, ledgerregels en marktaudit append-only.
+
+Legacy `CreditAccount.balance` blijft tijdelijk de projectie van beschikbaar saldo. De migratie backfillt bestaande waarden naar `availableBalance`; nieuwe services schrijven beide atomair. Contractcleanup volgt pas na afzonderlijke compatibiliteitsacceptatie.
+
 - Productiedatabaseprovider, backups, monitoring, pooling en herstelprocedures zijn nog niet gekozen.
 - E-mailuniciteit is databasebreed maar nog hoofdlettergevoelig; normalisatie volgt in de authenticatie-/gebruikersservice.
 - KvK-nummer is bewust niet uniek totdat validatie en internationale uitbreiding zijn besloten.
@@ -199,3 +213,5 @@ Er is geen membership-uniciteit, data-backfill, platformorganisatie, statusoverg
 ### ADR-013 Fase 2A
 
 Migratie `20260717190000_add_platform_provisioning_events` voegt `OrganizationProvisioningEvent` en de actorsoorten `SYSTEM`/`USER` toe. Databasechecks bewaken de actorbinding, idempotency en positieve schemaversie; dezelfde append-only trigger weigert update/delete. Na back-up en dry-run is exact één platformorganisatie gebootstrapt en zijn drie systeemevents plus twee `MIGRATED_UNKNOWN`-accountevents geschreven. De tenantmemberships en authdata zijn ongewijzigd. Zie [Fase 2A — Platform en provisioning](adr-013-fase-2a-platform-en-provisioning.md).
+
+Migratie `20260720173000_make_marketplace_audit_correlation_unique` vervangt de gewone index op `MarketplaceAuditEvent.correlationKey` door een unieke index. Daardoor kan dezelfde bedrijfsactie ook bij herhaling of concurrency maximaal één auditrecord opleveren.

@@ -1,0 +1,15 @@
+export const MARKETPLACE_ENGINE_VERSION = 'WORKMATCHR-DECISION-1'
+export const MARKETPLACE_MODEL_VERSION = 'WORKMATCHR-MODEL-1'
+export const MARKETPLACE_RULE_VERSION = 'WORKMATCHR-RULES-1'
+export const MARKETPLACE_TAXONOMY_CONTRACT = 'TRUSTED-PROVIDER-PROJECTION-2'
+export const MARKETPLACE_CREDIT_COST = 10
+export const MARKETPLACE_MINIMUM_SCORE = 6000
+export const MARKETPLACE_MAX_SELECTIONS = 3
+
+export const MARKETPLACE_WEIGHTS = {
+  capabilities: 4000,
+  sectorFit: 2500,
+  deliveryPreference: 1500,
+  desiredStart: 1000,
+  additionalQualifications: 1000,
+} as const

@@ -41,13 +41,15 @@ export function buildHeaderViewModel(context: HeaderContext | null): HeaderViewM
       role: context.activeMembership.role,
     } : null,
     primaryLinks: [
+      ...(organization ? [{ href: '/dashboard', label: 'Dashboard' }] : []),
       ...(supportsClientWork ? [{ href: '/hulpvragen', label: 'Hulpvragen' }, { href: '/opdrachten', label: 'Opdrachten' }] : []),
-      ...(supportsProviderWork ? [{ href: '/aanbiedersdossier', label: 'Dienstverlenersprofiel' }] : []),
+      ...(supportsProviderWork ? [{ href: '/aanbiedersdossier', label: 'Dienstverlenersprofiel' }, { href: '/uitnodigingen', label: 'Uitnodigingen' }] : []),
     ],
     menuLinks: [
       { href: '/account', label: 'Mijn account' },
       { href: organization ? '/organisatie' : '/organisatie/nieuw', label: 'Mijn organisatie' },
       ...(supportsProviderWork ? [{ href: '/aanbiedersdossier', label: 'Dienstverlenersprofiel' }] : []),
+      ...(organization ? [{ href: '/notificaties', label: 'Notificaties' }] : []),
     ],
   }
 }

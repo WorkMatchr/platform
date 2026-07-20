@@ -79,6 +79,19 @@
 
 ## Bewust uitgestelde keuzes
 
+## Marketplace Transaction Platform v1
+
+- Matching wordt expliciet gestart en leest uitsluitend de gepubliceerde opdrachtsnapshot en actuele Trusted Provider Projections.
+- Matchruns, kandidaten, interventies en Decision Reports bewaren engine-, model-, regel-, taxonomie- en bronversies met checksums.
+- Uitnodiging, deelname, offerte, gunning, creditreservering, berichtenkanaal en notificaties zijn afzonderlijke aggregates met unieke idempotentiesleutels.
+- Deelname en reservering, offerte-indiening en consumptie, en gunning met afwijzing van overige offertes zijn ieder één `Serializable` transactie.
+- De creditledger is append-only; actuele beschikbare, gereserveerde en bestede totalen zijn gecontroleerde projecties met niet-negatieve databaseconstraints.
+- Berichten zijn uitsluitend mogelijk binnen één opdracht, één opdrachtgever en één deelnemende provider. Concurrenten delen nooit een kanaal.
+- In-appnotificaties zijn persistent. E-mail gebruikt een outbox zodat transportfalen de zakelijke transactie niet breekt.
+- Private routes gebruiken Server Components voor reads en dunne Server Actions bovenop centrale services voor writes.
+
+Credits kopen, betalingen, AI, reviews, publieke providerzoeking, realtime communicatie en berichtbijlagen blijven uitgesteld.
+
 ### ADR-013 platformidentiteit en provisioning
 
 De centrale platformorganisatie is een afzonderlijke systeemtenant met immutable `systemKey`, niet een organisatie die op naam wordt herkend. Systeemgedreven bootstrap gebruikt een expliciete systeemactor in append-only historie; onbekende legacyactoren blijven null en worden als `MIGRATED_UNKNOWN` verklaard. Normale tenant-, provider-, intake- en opdrachtgrenzen sluiten `PLATFORM_OPERATOR` fail-closed uit. De doelarchitectuur met één membership per normaal tenantaccount is nog niet geactiveerd.

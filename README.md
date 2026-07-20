@@ -4,7 +4,7 @@ WorkMatchr verzamelt uitsluitend gegevens die noodzakelijk zijn voor uitlegbare 
 
 WorkMatchr wordt een volledig onafhankelijk platform dat organisaties koppelt aan passende arbo- en veiligheidsspecialisten. Per opdracht worden maximaal drie aanbieders objectief geselecteerd; betaalde voorkeursposities bestaan niet.
 
-Module 1 tot en met Module 4B zijn afgerond. Module 5C is afgerond en product-ownergeaccepteerd; Module 5A en Module 5B.2 houden hun afzonderlijke acceptatiestatus. Module 6A.0, Module 6A.1 en Module 6A.2 zijn afgerond en product-ownergeaccepteerd. Module 6A.3.0 tot en met Module 6A.3.4 zijn afgerond en product-ownergeaccepteerd; Module 6A.3.5 is in uitvoering met handmatige rollen-, mobiele en browseracceptatie open. Module 6A.3 als geheel, de Decision Engine, matching, uitnodigingen, credits en Mollie zijn nog niet geïmplementeerd.
+Module 1 tot en met Module 4B en Module 5C zijn afgerond. De providerfundering uit Module 6A is beschikbaar. Fase 3 Marketplace Transaction Platform v1 is technisch opgeleverd met product-owneracceptatie open: selectie, uitnodigingen, deelname, offertes, gunning, credits, dashboards, berichten en notificaties zijn gebouwd. Credits kopen, Mollie en andere betaalfunctionaliteit zijn niet geïmplementeerd.
 
 ## Vereisten
 
@@ -73,8 +73,8 @@ prisma/                # Datamodel, migraties en idempotente seed
 docker-compose.yml     # Lokale PostgreSQL 17-omgeving
 ```
 
-Lees [docs/FOUNDING_PRINCIPLES.md](docs/FOUNDING_PRINCIPLES.md) voor het productmatige en architectonische kompas, [docs/README.md](docs/README.md) voor de documentatie-index, [ADR-013](docs/adr/ADR-013-een-organisatie-per-tenantaccount-platformrollen-en-gecontroleerde-accountverwijdering.md), de [technische Fase 1 Expand-implementatie](docs/adr-013-fase-1-expand-technische-implementatie.md), [Fase 2A Platform en provisioning](docs/adr-013-fase-2a-platform-en-provisioning.md) en [Fase 2B Lifecycle en tenant](docs/adr-013-fase-2b-lifecycle-en-tenant.md) voor de accountarchitectuur, [PROJECT_PRINCIPLES.md](PROJECT_PRINCIPLES.md) voor de projectprincipes en [AGENTS.md](AGENTS.md) voor de werkafspraken voor Codex.
+Lees [docs/FOUNDING_PRINCIPLES.md](docs/FOUNDING_PRINCIPLES.md) voor het productmatige en architectonische kompas, [docs/README.md](docs/README.md) voor de documentatie-index, [Marketplace Transaction Platform v1](docs/marketplace-transaction-platform-v1.md) voor Fase 3, [ADR-013](docs/adr/ADR-013-een-organisatie-per-tenantaccount-platformrollen-en-gecontroleerde-accountverwijdering.md) voor de accountarchitectuur, [PROJECT_PRINCIPLES.md](PROJECT_PRINCIPLES.md) voor de projectprincipes en [AGENTS.md](AGENTS.md) voor de werkafspraken voor Codex.
 
 ## Status
 
-Module 1 tot en met Module 4B zijn afgerond. Module 5C is volledig afgerond en product-ownergeaccepteerd; Module 5A en Module 5B.2 houden hun afzonderlijke acceptatiestatus. Module 6A.0 — Ontwerp providerkwalificatie, Module 6A.1 — Ontwerp Decision Engine en Module 6A.2 — Providerkwalificatie datamodel en services zijn afgerond en product-ownergeaccepteerd. Module 6A.3.0 tot en met 6A.3.4 zijn eveneens afgerond en product-ownergeaccepteerd; Module 6A.3.5 is in uitvoering met handmatige acceptatie open. Module 6A.4 en Module 6A.5 zijn niet gestart. De actuele status staat in [docs/05-voortgang.md](docs/05-voortgang.md).
+De eerdere moduleacceptaties blijven ongewijzigd. Fase 3 Marketplace Transaction Platform v1 is technisch opgeleverd; integrale product-owneracceptatie en productiehardening staan open. De actuele status staat in [docs/05-voortgang.md](docs/05-voortgang.md).
