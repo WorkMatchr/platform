@@ -3,6 +3,12 @@ import { z } from 'zod'
 export const GENERIC_SIGN_IN_ERROR = 'De combinatie van e-mailadres en wachtwoord is niet correct.'
 export const GENERIC_RESET_CONFIRMATION =
   'Als dit e-mailadres bij ons bekend is, ontvangt U een bericht met verdere instructies.'
+export const GENERIC_VERIFICATION_CONFIRMATION =
+  'Als dit e-mailadres bij ons bekend is en nog verificatie nodig heeft, ontvangt U een nieuw bericht.'
+export const GENERIC_AUTH_REQUEST_ERROR =
+  'De aanvraag kon niet worden verwerkt. Probeer het later opnieuw.'
+export const GENERIC_AUTH_RATE_LIMIT_ERROR =
+  'U hebt te veel pogingen gedaan. Probeer het later opnieuw.'
 
 const email = z.string().trim().max(254).email('Vul een geldig e-mailadres in.').transform((value) => value.toLowerCase())
 const password = z.string().min(12, 'Gebruik minimaal 12 tekens.').max(128, 'Gebruik maximaal 128 tekens.')

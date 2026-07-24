@@ -4,7 +4,12 @@ import Link from 'next/link'
 import { useState, type FormEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import { FieldError, StatusMessage, fieldClassName } from '@/components/auth/auth-shell'
-import { registrationSchema } from '@/lib/auth-validation'
+import { runRegistrationRequest } from '@/lib/auth-form-request'
+import {
+  GENERIC_AUTH_RATE_LIMIT_ERROR,
+  GENERIC_AUTH_REQUEST_ERROR,
+  registrationSchema,
+} from '@/lib/auth-validation'
 
 export function RegisterForm() {
   const [loading, setLoading] = useState(false)
@@ -23,7 +28,7 @@ export function RegisterForm() {
 
     setErrors({})
     setLoading(true)
-    const response = await fetch('/api/auth/sign-up/email', {
+    const requestResult = await runRegistrationRequest(() => fetch('/api/auth/sign-up/email', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
@@ -34,13 +39,11 @@ export function RegisterForm() {
         acceptedTerms: true,
         callbackURL: '/verifieer-email?status=geslaagd',
       }),
-    })
+    }))
     setLoading(false)
 
-    if (!response.ok) {
-      setMessage(response.status === 429 ? 'U hebt te veel pogingen gedaan. Probeer het later opnieuw.' : 'Registreren is niet gelukt. Controleer Uw gegevens of probeer het later opnieuw.')
-      return
-    }
+    if (requestResult === 'rate_limited') return setMessage(GENERIC_AUTH_RATE_LIMIT_ERROR)
+    if (requestResult === 'technical_error') return setMessage(GENERIC_AUTH_REQUEST_ERROR)
     window.location.assign('/registreren/controleer-email')
   }
 

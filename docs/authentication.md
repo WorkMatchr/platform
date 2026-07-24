@@ -6,7 +6,7 @@ Module 4A levert persoonlijke accounts met Better Auth 1.6.23: registratie, verp
 
 ## Architectuur
 
-- Next.js-handler: `/api/auth/[...all]` via de officiële `toNextJsHandler`.
+- Next.js-handler: `/api/auth/[...all]` via de officiële `toNextJsHandler`; server en client leggen `/api/auth` beide expliciet als `basePath` vast.
 - Prisma-adapter: `@better-auth/prisma-adapter` met PostgreSQL en de bestaande Prisma 7-client.
 - Eén gebruikersbron: het bestaande `User`-model.
 - Better Auths technische veld `name` is gemapt op `User.displayName`.
@@ -33,7 +33,7 @@ Registratie normaliseert e-mail naar lowercase en valideert server-side naam, e-
 
 Login vereist een geverifieerd, actief account. Fouten zijn generiek om accountenumeratie te voorkomen. Een lokale return-URL moet met `/` beginnen en mag geen externe of ambigue URL zijn. Beveiligde routes kunnen zo na login veilig terugkeren naar de bedoelde lokale pagina, waaronder de hulpvraagflow. Logout gebruikt Better Auths POST-endpoint en trekt de sessie in.
 
-De dashboardheader toont de actuele gebruiker en actieve organisatie uit dezelfde servercontext als de pagina. Het accountmenu bevat `Mijn account`, `Mijn organisatie`, voor een actieve providerorganisatie `Providerdossier`, en `Uitloggen`. Na logout volgt een volledige navigatie naar de publieke homepage; na een organisatiekeuze wordt de rootlayout opnieuw opgebouwd.
+De dashboardheader toont de actuele gebruiker en actieve organisatie uit dezelfde servercontext als de pagina. Het accountmenu bevat `Mijn account`, `Mijn organisatie`, voor een actieve dienstverlenersorganisatie `Dienstverlenersprofiel`, en `Uitloggen`. Na logout volgt een volledige navigatie naar de publieke homepage; na een organisatiekeuze wordt de rootlayout opnieuw opgebouwd.
 
 Het accountscherm presenteert de platformrol en de rol binnen de actieve organisatie als afzonderlijke bevoegdheidslagen. Bij een actieve membership toont het scherm ook organisatienaam, organisatietype en organisatiestatus. In de huidige implementatie blijft bij meerdere organisaties de actieve organisatie expliciet zichtbaar en kan de bestaande tenantveilige organisatie-wisselactie vanaf het accountscherm worden gebruikt. Deze wisselactie vervalt bij uitvoering van ADR-013.
 
@@ -54,7 +54,11 @@ Iedere beveiligde serverroute gebruikt `requireUser` of `requirePlatformRole`. O
 
 ## Lokale e-mailtest
 
-Zonder e-mailprovider schrijft de server uitsluitend voor fictieve development- en testadressen onder `example.invalid` de verificatie- of resetlink met label `DEVELOPMENT-ONLY AUTH LINK` naar de terminal. Een echt adres zonder `RESEND_API_KEY` of `AUTH_EMAIL_FROM` faalt in iedere omgeving veilig en wordt nooit als verzonden behandeld. Wachtwoorden en sessietokens worden niet gelogd.
+In development schrijft de server een eenmalige verificatie- of resetlink in een herkenbaar meerregelig blok naar de terminal. De link gebruikt de actuele, toegestane localhost-origin en poort van het request; `BETTER_AUTH_URL` en `NEXT_PUBLIC_APP_URL` blijven de expliciete fallback. Dit loggen gebeurt niet in productie en verandert de Resend-verzending niet.
+
+Zonder e-mailprovider geldt uitsluitend voor fictieve development- en testadressen onder `example.invalid` dat het terminallog als developmentbezorging wordt geaccepteerd. Een echt adres zonder `RESEND_API_KEY` of `AUTH_EMAIL_FROM` faalt in iedere omgeving veilig en wordt nooit als verzonden behandeld. Buiten de noodzakelijke eenmalige developmentlink worden geen wachtwoorden, sessietokens of secrets gelogd.
+
+Registratie, verificatieverzoeken en wachtwoordherstel behandelen Better Auth-fouten, HTTP-fouten en netwerkfouten expliciet. Alleen een technisch geaccepteerde aanvraag toont de generieke, niet-enumererende bevestiging; een technische fout kan daardoor niet als succesvolle aanvraag worden gepresenteerd.
 
 Organisatie-uitnodigingen gelden pas als verzonden nadat Resend het bericht heeft geaccepteerd en een message ID heeft teruggegeven. Iedere bezorgpoging en het geaccepteerde of mislukte resultaat worden append-only vastgelegd. Een verzendfout laat de bestaande `User` en `OrganizationMembership` intact, zodat veilig opnieuw verzenden geen duplicaataccount of tweede membership maakt.
 

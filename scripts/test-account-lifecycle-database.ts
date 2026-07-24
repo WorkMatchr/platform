@@ -37,6 +37,7 @@ function deploySchema() {
 }
 
 async function main() {
+  Object.assign(process.env, { NODE_ENV: 'development' })
   delete process.env.RESEND_API_KEY
   delete process.env.AUTH_EMAIL_FROM
   const admin = new Client({ connectionString: adminUrl.toString() })
@@ -45,7 +46,7 @@ async function main() {
   const originalConsoleInfo = console.info
   console.info = (...values: unknown[]) => {
     const message = values.map(String).join(' ')
-    if (message.startsWith('[DEVELOPMENT-ONLY AUTH LINK]')) authLinks.push(message)
+    if (message.includes('EMAIL VERIFICATION') || message.includes('PASSWORD RESET')) authLinks.push(message)
     else originalConsoleInfo(...values)
   }
   let prisma: Awaited<ReturnType<typeof import('../src/lib/prisma')['getPrisma']>> | null = null
@@ -54,16 +55,28 @@ async function main() {
     deploySchema()
     process.env.DATABASE_URL = testUrl.toString()
 
-    const [{ getPrisma }, lifecycle, owners, membershipPolicy, invitations, authModule, emailModule] = await Promise.all([
+    const [{ getPrisma }, lifecycle, owners, membershipPolicy, invitations, authModule, authRoute, emailModule] = await Promise.all([
       import('../src/lib/prisma'),
       import('../src/lib/account-architecture/account-lifecycle-service'),
       import('../src/lib/account-architecture/owner-management-service'),
       import('../src/lib/account-architecture/tenant-membership-policy'),
       import('../src/lib/account-architecture/organization-invitation-service'),
       import('../src/lib/auth'),
+      import('../src/app/api/auth/[...all]/route'),
       import('../src/lib/email'),
     ])
     prisma = getPrisma()
+
+    const unknownResetEmail = `test-wm-unknown-reset-${randomUUID()}@example.invalid`
+    const unknownResetResponse = await authRoute.POST(new Request('http://localhost:4317/api/auth/request-password-reset', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: unknownResetEmail, redirectTo: '/wachtwoord-herstellen' }),
+    }))
+    assert.equal(unknownResetResponse.status, 200)
+    const unknownResetBody = await unknownResetResponse.text()
+    assert(!unknownResetBody.includes(unknownResetEmail), 'De generieke resetbevestiging mag het adres niet herhalen.')
+    assert.match(unknownResetBody, /if (?:this email exists|the email is registered)/i)
 
     const organization = await prisma.organization.create({
       data: { name: 'TEST-WM-Lifecycle', organizationType: 'CLIENT', status: 'ACTIVE' },
@@ -344,7 +357,9 @@ async function main() {
     assert.equal(ownerAdminInvite.status, 'CREATED')
     const verificationMessage = authLinks[verificationLinkCount]
     assert(verificationMessage, 'De Better Auth-verificatielink voor de uitnodiging ontbreekt.')
-    const verificationUrl = new URL(verificationMessage.slice(verificationMessage.indexOf('http')))
+    const verificationMatch = verificationMessage.match(/Verification URL:\s*\n(\S+)/)
+    assert(verificationMatch?.[1], 'De volledige Better Auth-verificatie-URL ontbreekt.')
+    const verificationUrl = new URL(verificationMatch[1])
     const verificationToken = verificationUrl.searchParams.get('token')
     assert(verificationToken, 'De Better Auth-verificatietoken ontbreekt.')
     await authModule.auth.api.verifyEmail({ query: { token: verificationToken } })
@@ -360,10 +375,18 @@ async function main() {
     }), 1)
 
     const resetLinkCount = authLinks.length
-    await authModule.auth.api.requestPasswordReset({ body: { email: ownerAdminEmail, redirectTo: '/wachtwoord-herstellen' } })
+    const resetResponse = await authRoute.POST(new Request('http://localhost:4317/api/auth/request-password-reset', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: ownerAdminEmail, redirectTo: '/wachtwoord-herstellen' }),
+    }))
+    assert.equal(resetResponse.status, 200)
     const resetMessage = authLinks[resetLinkCount]
     assert(resetMessage, 'De Better Auth-wachtwoordherstellink ontbreekt.')
-    const resetUrl = new URL(resetMessage.slice(resetMessage.indexOf('http')))
+    const resetMatch = resetMessage.match(/Reset URL:\s*\n(\S+)/)
+    assert(resetMatch?.[1], 'De volledige Better Auth-wachtwoordherstel-URL ontbreekt.')
+    const resetUrl = new URL(resetMatch[1])
+    assert.equal(resetUrl.origin, 'http://localhost:4317')
     const resetToken = resetUrl.pathname.split('/').filter(Boolean).at(-1)
     assert(resetToken, 'De Better Auth-wachtwoordresettoken ontbreekt.')
     const invitedPassword = `Test-WM-${randomUUID()}!`

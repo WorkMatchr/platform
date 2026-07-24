@@ -4,7 +4,8 @@ import { useState, type FormEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import { FieldError, StatusMessage, fieldClassName } from '@/components/auth/auth-shell'
 import { authClient } from '@/lib/auth-client'
-import { resetPasswordSchema } from '@/lib/auth-validation'
+import { runAuthClientRequest } from '@/lib/auth-form-request'
+import { GENERIC_AUTH_REQUEST_ERROR, resetPasswordSchema } from '@/lib/auth-validation'
 
 export function ResetPasswordForm({ token }: { token?: string }) {
   const [loading, setLoading] = useState(false)
@@ -13,12 +14,15 @@ export function ResetPasswordForm({ token }: { token?: string }) {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    setMessage(undefined)
     const result = resetPasswordSchema.safeParse({ ...Object.fromEntries(new FormData(event.currentTarget)), token })
     if (!result.success) { setErrors(result.error.flatten().fieldErrors); return }
     setErrors({}); setLoading(true)
-    const response = await authClient.resetPassword({ newPassword: result.data.password, token: result.data.token })
+    const requestResult = await runAuthClientRequest(
+      () => authClient.resetPassword({ newPassword: result.data.password, token: result.data.token }),
+    )
     setLoading(false)
-    if (response.error) return setMessage('De herstellink is ongeldig of verlopen. Vraag een nieuwe link aan.')
+    if (requestResult !== 'accepted') return setMessage(GENERIC_AUTH_REQUEST_ERROR)
     window.location.assign('/inloggen?wachtwoord=hersteld')
   }
 

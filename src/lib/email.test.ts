@@ -44,24 +44,56 @@ describe('authenticatie-e-mails', () => {
     vi.stubEnv('NODE_ENV', 'production')
     delete process.env.RESEND_API_KEY
     delete process.env.AUTH_EMAIL_FROM
+    const log = vi.spyOn(console, 'info').mockImplementation(() => undefined)
     await expect(sendAuthEmail(passwordResetEmail('test@example.invalid', 'Test', 'https://workmatchr.invalid/reset')))
       .rejects.toMatchObject({ code: 'EMAIL_DELIVERY_NOT_CONFIGURED' } satisfies Partial<AuthEmailDeliveryError>)
+    expect(log).not.toHaveBeenCalled()
   })
-  it('logt development-links zonder wachtwoorden of sessietokens', async () => {
+  it('logt de volledige verificatielink in het vaste developmentformaat', async () => {
     vi.stubEnv('NODE_ENV', 'development')
     delete process.env.RESEND_API_KEY
     delete process.env.AUTH_EMAIL_FROM
     const log = vi.spyOn(console, 'info').mockImplementation(() => undefined)
-    await sendAuthEmail(verificationEmail('test@example.invalid', 'Test', 'https://workmatchr.invalid/verify?token=verification-token'))
-    const output = log.mock.calls.flat().join(' ')
-    expect(output).toContain('DEVELOPMENT-ONLY AUTH LINK')
-    expect(output).not.toContain('credential-marker')
-    expect(output).not.toContain('session-marker')
+    const url = 'http://localhost:4317/api/auth/verify-email?token=verification-token'
+    await sendAuthEmail(verificationEmail('verification@example.invalid', 'Test', url))
+    expect(log).toHaveBeenCalledWith([
+      '==================================================',
+      'EMAIL VERIFICATION',
+      '',
+      'Email:',
+      'verification@example.invalid',
+      '',
+      'Verification URL:',
+      url,
+      '',
+      '==================================================',
+    ].join('\n'))
+  })
+  it('logt de volledige resetlink in het vaste developmentformaat', async () => {
+    vi.stubEnv('NODE_ENV', 'development')
+    delete process.env.RESEND_API_KEY
+    delete process.env.AUTH_EMAIL_FROM
+    const log = vi.spyOn(console, 'info').mockImplementation(() => undefined)
+    const url = 'http://localhost:4317/wachtwoord-herstellen/reset-token'
+    await sendAuthEmail(passwordResetEmail('reset@example.invalid', 'Test', url))
+    expect(log).toHaveBeenCalledWith([
+      '==================================================',
+      'PASSWORD RESET',
+      '',
+      'Email:',
+      'reset@example.invalid',
+      '',
+      'Reset URL:',
+      url,
+      '',
+      '==================================================',
+    ].join('\n'))
   })
   it('behandelt een echt adres zonder Resend-configuratie nooit als verzonden', async () => {
     vi.stubEnv('NODE_ENV', 'development')
     delete process.env.RESEND_API_KEY
     delete process.env.AUTH_EMAIL_FROM
+    vi.spyOn(console, 'info').mockImplementation(() => undefined)
     await expect(sendAuthEmail(verificationEmail(
       'info@feenstra-safetyconsulting.nl',
       'Feenstra Safety Consulting',
@@ -85,8 +117,10 @@ describe('authenticatie-e-mails', () => {
     })
   })
   it('accepteert alleen een Resend-response met message ID als succesvolle verzending', async () => {
+    vi.stubEnv('NODE_ENV', 'production')
     vi.stubEnv('RESEND_API_KEY', 'test-resend-key')
     vi.stubEnv('AUTH_EMAIL_FROM', 'WorkMatchr <account@workmatchr.nl>')
+    const log = vi.spyOn(console, 'info').mockImplementation(() => undefined)
     resendMocks.send.mockResolvedValue({ data: { id: 'resend-message-123' }, error: null })
     await expect(sendAuthEmail(passwordResetEmail(
       'ontvanger@example.invalid',
@@ -98,6 +132,7 @@ describe('authenticatie-e-mails', () => {
       status: 'ACCEPTED',
       messageId: 'resend-message-123',
     })
+    expect(log).not.toHaveBeenCalled()
   })
   it('behoudt de Resend-statuscode bij een providerafwijzing', async () => {
     vi.stubEnv('RESEND_API_KEY', 'test-resend-key')

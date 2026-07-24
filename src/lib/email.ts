@@ -44,6 +44,24 @@ function isDevelopmentTestRecipient(email: AuthEmail): boolean {
   return process.env.NODE_ENV !== 'production' && email.to.toLowerCase().endsWith('@example.invalid')
 }
 
+function logDevelopmentAuthLink(email: AuthEmail): void {
+  if (process.env.NODE_ENV !== 'development' || !email.developmentUrl) return
+
+  const passwordReset = email.kind === 'PASSWORD_RESET'
+  console.info([
+    '==================================================',
+    passwordReset ? 'PASSWORD RESET' : 'EMAIL VERIFICATION',
+    '',
+    'Email:',
+    email.to,
+    '',
+    passwordReset ? 'Reset URL:' : 'Verification URL:',
+    email.developmentUrl,
+    '',
+    '==================================================',
+  ].join('\n'))
+}
+
 export function getAuthEmailConfigurationStatus() {
   const from = process.env.AUTH_EMAIL_FROM?.trim() ?? ''
   return {
@@ -57,11 +75,11 @@ export async function sendAuthEmail(email: AuthEmail): Promise<AuthEmailDelivery
   const apiKey = process.env.RESEND_API_KEY
   const from = process.env.AUTH_EMAIL_FROM
 
+  logDevelopmentAuthLink(email)
+
   if (!apiKey || !from) {
     if (isDevelopmentTestRecipient(email)) {
-      if (email.developmentUrl) {
-        console.info(`[DEVELOPMENT-ONLY AUTH LINK] ${email.subject}: ${email.developmentUrl}`)
-      } else {
+      if (!email.developmentUrl) {
         console.info(`[DEVELOPMENT-ONLY AUTH EMAIL] ${email.subject}`)
       }
       return {

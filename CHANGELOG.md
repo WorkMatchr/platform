@@ -1,5 +1,17 @@
 # Changelog
 
+## Niet uitgebracht — Module 6A.3 laatste UX- en authenticatieafwerking
+
+- de dienstenpagina van het **Dienstverlenersprofiel** verfijnd tot een responsive tweekolomsindeling met het invoerformulier vóór en links van de compacte dienstenlijst;
+- zichtbare dienstverlenersterminologie in navigatie, koppen en documentatie geharmoniseerd;
+- Better Auths server- en client-`basePath` expliciet vastgelegd op `/api/auth`;
+- lokale verificatie- en wachtwoordresetlinks voorzien van vaste developmentlogblokken met de actuele toegestane localhost-origin en poort;
+- Resend-productiebezorging en veilige developmentfallback ongewijzigd fail-closed gehouden;
+- registratie-, verificatie- en wachtwoordherstelformulieren laten alleen na een technisch geaccepteerde aanvraag een succesbevestiging zien;
+- regressietests toegevoegd voor authroutes, developmentlogging, productiestilte, HTTP- en netwerkfouten en de dienstenlayout;
+- geen Prisma-schema, migratie, dependency of één-account-per-organisatiewijziging uitgevoerd;
+- status: technisch opgeleverd; resterende visuele en handmatige product-owneracceptatie open.
+
 ## Niet uitgebracht — Fase 3 Marketplace Transaction Platform v1
 
 - bestaande provideronboarding, vier-ogenkwalificatie, readiness, selecteerbaarheid en Trusted Provider Projection als Gate A hergebruikt en fail-closed gehouden;

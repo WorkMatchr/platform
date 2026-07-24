@@ -8,14 +8,29 @@ import { getPrisma } from '@/lib/prisma'
 import { GENERIC_SIGN_IN_ERROR, normalizeEmail, registrationSchema } from '@/lib/auth-validation'
 import { AUTH_SESSION_POLICY, canStartSession, canUseAccountRecovery, shouldActivateVerifiedInvitation } from '@/lib/auth-policy'
 import { activateVerifiedInvitation } from '@/lib/account-architecture/invitation-acceptance-service'
+import { AUTH_BASE_PATH } from '@/lib/auth-config'
 
-const appUrl = process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3001'
+const configuredAppUrl =
+  process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+const authBaseURL =
+  process.env.NODE_ENV === 'development'
+    ? {
+        allowedHosts: ['localhost:*', '127.0.0.1:*'],
+        fallback: configuredAppUrl,
+        protocol: 'http' as const,
+      }
+    : configuredAppUrl
+const authTrustedOrigins =
+  process.env.NODE_ENV === 'development'
+    ? [configuredAppUrl, 'http://localhost:*', 'http://127.0.0.1:*']
+    : [configuredAppUrl]
 
 export const auth = betterAuth({
   appName: 'WorkMatchr',
-  baseURL: appUrl,
+  baseURL: authBaseURL,
+  basePath: AUTH_BASE_PATH,
   secret: process.env.BETTER_AUTH_SECRET,
-  trustedOrigins: [appUrl],
+  trustedOrigins: authTrustedOrigins,
   database: prismaAdapter(getPrisma(), { provider: 'postgresql' }),
   advanced: { database: { generateId: 'uuid' }, useSecureCookies: process.env.NODE_ENV === 'production' },
   user: {
@@ -40,7 +55,8 @@ export const auth = betterAuth({
     sendResetPassword: async ({ user, url }) => {
       const current = await getPrisma().user.findUnique({ where: { id: user.id }, select: { status: true } })
       if (!canUseAccountRecovery(current?.status ?? null)) return
-      await sendAuthEmail(passwordResetEmail(user.email, user.name, url))
+      const delivery = await sendAuthEmail(passwordResetEmail(user.email, user.name, url))
+      captureAuthEmailDelivery(delivery)
     },
   },
   emailVerification: {
