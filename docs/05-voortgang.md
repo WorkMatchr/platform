@@ -499,6 +499,14 @@ De servicelaag, tenantguards, platformactorpolicies en Nederlandse accountbeheer
 
 De accountbeheerpagina ondersteunt nu tevens uitnodigingen binnen dezelfde tenant. OWNER kan MEMBER en ADMIN uitnodigen; ADMIN uitsluitend MEMBER. User, Better Auth-credential, membership en audittrail ontstaan transactioneel; verificatie activeert User en membership atomair; de gebruiker stelt daarna een eigen wachtwoord in en krijgt uitsluitend een eigen sessie. OWNER-toekenning en platformbeheer blijven buiten deze uitnodigingsflow. Product-owneracceptatie blijft open.
 
+### Module 6B — één account per organisatie
+
+**Status:** technisch afgerond; handmatige product-owneracceptatie open.
+
+De Contract-fase is op 24 juli 2026 uitgevoerd. De preflight vond nul multi-memberships; de nieuwe niet-destructieve migratie bewaakt dit opnieuw en maakt `OrganizationMembership.userId` databasebreed uniek. De requestcontext leest per request rechtstreeks de enige membership en gebruikt geen organisatiecookie, sessieclaim of clientkeuze. Account-, header- en organisatiepagina’s bevatten geen wisselaar en geen actie voor een tweede organisatie. Een andere organisatie vereist een afzonderlijke User, e-mailidentiteit, credential en sessie.
+
+Append-only provisioning- en membershipevents, actorverwijzingen en foreign keys zijn ongewijzigd. Uitnodigingen, blokkeren, herstellen en rolwijziging behouden hun bestaande transactionele en tenantgebonden policies. Platformaccounts kunnen zonder tenantmembership bestaan; reviewer/approverbinding en auditoruitzondering blijven via de bestaande platformpolicies afgedwongen. De preflight meldt nog historische provisioning-, OWNER- en accountclassificatiepunten die niet automatisch zijn gemuteerd. Accountverwijdering, retentie/purge en membershipbeëindiging blijven fail-closed en vallen niet onder deze oplevering.
+
 ## Module P1.1 — Vraaggestuurde publieke homepage
 
 **Status:** afgerond en product-ownergeaccepteerd.

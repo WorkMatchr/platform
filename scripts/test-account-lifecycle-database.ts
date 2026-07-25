@@ -46,7 +46,11 @@ async function main() {
   const originalConsoleInfo = console.info
   console.info = (...values: unknown[]) => {
     const message = values.map(String).join(' ')
-    if (message.includes('EMAIL VERIFICATION') || message.includes('PASSWORD RESET')) authLinks.push(message)
+    if (
+      message.includes('EMAIL VERIFICATION') ||
+      message.includes('PASSWORD RESET') ||
+      message.includes('ACCOUNT ACTIVATION')
+    ) authLinks.push(message)
     else originalConsoleInfo(...values)
   }
   let prisma: Awaited<ReturnType<typeof import('../src/lib/prisma')['getPrisma']>> | null = null
@@ -348,22 +352,36 @@ async function main() {
     }), 2)
 
     const ownerAdminEmail = `test-wm-invite-owner-admin-${randomUUID()}@example.invalid`
-    const verificationLinkCount = authLinks.length
+    const activationLinkCount = authLinks.length
     const ownerAdminInvite = await invitations.inviteOrganizationUser({
       actorUserId: owner.id, organizationId: organization.id, displayName: 'Uitgenodigde beheerder',
       email: ownerAdminEmail, role: 'ADMIN',
       idempotencyKey: `test:invite-owner-admin:${randomUUID()}`,
+      requestHeaders: new Headers({
+        host: 'localhost:4317',
+        'x-forwarded-host': 'localhost:4317',
+        'x-forwarded-proto': 'http',
+      }),
     })
     assert.equal(ownerAdminInvite.status, 'CREATED')
-    const verificationMessage = authLinks[verificationLinkCount]
-    assert(verificationMessage, 'De Better Auth-verificatielink voor de uitnodiging ontbreekt.')
-    const verificationMatch = verificationMessage.match(/Verification URL:\s*\n(\S+)/)
-    assert(verificationMatch?.[1], 'De volledige Better Auth-verificatie-URL ontbreekt.')
-    const verificationUrl = new URL(verificationMatch[1])
-    const verificationToken = verificationUrl.searchParams.get('token')
-    assert(verificationToken, 'De Better Auth-verificatietoken ontbreekt.')
-    await authModule.auth.api.verifyEmail({ query: { token: verificationToken } })
-    assert.equal((await prisma.user.findUniqueOrThrow({ where: { id: ownerAdminInvite.userId } })).status, 'ACTIVE')
+    const activationMessage = authLinks[activationLinkCount]
+    assert(activationMessage, 'De Better Auth-activatielink voor de uitnodiging ontbreekt.')
+    const activationMatch = activationMessage.match(/Activation URL:\s*\n(\S+)/)
+    assert(activationMatch?.[1], 'De volledige Better Auth-activatie-URL ontbreekt.')
+    const activationUrl = new URL(activationMatch[1])
+    assert.equal(activationUrl.origin, 'http://localhost:4317')
+    assert.equal(decodeURIComponent(activationUrl.searchParams.get('callbackURL') ?? ''), '/account-activeren')
+    const activationToken = activationUrl.pathname.split('/').filter(Boolean).at(-1)
+    assert(activationToken, 'De Better Auth-activatietoken ontbreekt.')
+    assert.equal((await prisma.user.findUniqueOrThrow({ where: { id: ownerAdminInvite.userId } })).status, 'INVITED')
+    assert.equal((await prisma.organizationMembership.findUniqueOrThrow({
+      where: { id: ownerAdminInvite.membershipId },
+    })).status, 'INVITED')
+    const invitedPassword = `Test-WM-${randomUUID()}!`
+    await authModule.auth.api.resetPassword({ body: { token: activationToken, newPassword: invitedPassword } })
+    const activatedUser = await prisma.user.findUniqueOrThrow({ where: { id: ownerAdminInvite.userId } })
+    assert.equal(activatedUser.status, 'ACTIVE')
+    assert.equal(activatedUser.emailVerified, true)
     assert.equal((await prisma.organizationMembership.findUniqueOrThrow({
       where: { id: ownerAdminInvite.membershipId },
     })).status, 'ACTIVE')
@@ -374,23 +392,7 @@ async function main() {
       where: { membershipId: ownerAdminInvite.membershipId, eventType: 'INVITATION_ACCEPTED' },
     }), 1)
 
-    const resetLinkCount = authLinks.length
-    const resetResponse = await authRoute.POST(new Request('http://localhost:4317/api/auth/request-password-reset', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email: ownerAdminEmail, redirectTo: '/wachtwoord-herstellen' }),
-    }))
-    assert.equal(resetResponse.status, 200)
-    const resetMessage = authLinks[resetLinkCount]
-    assert(resetMessage, 'De Better Auth-wachtwoordherstellink ontbreekt.')
-    const resetMatch = resetMessage.match(/Reset URL:\s*\n(\S+)/)
-    assert(resetMatch?.[1], 'De volledige Better Auth-wachtwoordherstel-URL ontbreekt.')
-    const resetUrl = new URL(resetMatch[1])
-    assert.equal(resetUrl.origin, 'http://localhost:4317')
-    const resetToken = resetUrl.pathname.split('/').filter(Boolean).at(-1)
-    assert(resetToken, 'De Better Auth-wachtwoordresettoken ontbreekt.')
-    const invitedPassword = `Test-WM-${randomUUID()}!`
-    await authModule.auth.api.resetPassword({ body: { token: resetToken, newPassword: invitedPassword } })
+    assert.equal(authLinks.length, activationLinkCount + 1, 'Accountactivatie mag geen tweede e-mail vereisen.')
     const signIn = await authModule.auth.api.signInEmail({ body: { email: ownerAdminEmail, password: invitedPassword } })
     assert(signIn.token, 'De uitgenodigde gebruiker moet een eigen Better Auth-sessie kunnen starten.')
     assert.equal(await prisma.session.count({ where: { userId: ownerAdminInvite.userId } }), 1)

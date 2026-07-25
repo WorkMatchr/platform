@@ -73,7 +73,7 @@ prisma/                # Datamodel, migraties en idempotente seed
 docker-compose.yml     # Lokale PostgreSQL 17-omgeving
 ```
 
-Lees [docs/FOUNDING_PRINCIPLES.md](docs/FOUNDING_PRINCIPLES.md) voor het productmatige en architectonische kompas, [docs/README.md](docs/README.md) voor de documentatie-index, [Marketplace Transaction Platform v1](docs/marketplace-transaction-platform-v1.md) voor Fase 3, [ADR-013](docs/adr/ADR-013-een-organisatie-per-tenantaccount-platformrollen-en-gecontroleerde-accountverwijdering.md) voor de accountarchitectuur, [PROJECT_PRINCIPLES.md](PROJECT_PRINCIPLES.md) voor de projectprincipes en [AGENTS.md](AGENTS.md) voor de werkafspraken voor Codex.
+Lees [docs/FOUNDING_PRINCIPLES.md](docs/FOUNDING_PRINCIPLES.md) voor het productmatige en architectonische kompas, [docs/README.md](docs/README.md) voor de documentatie-index, [Marketplace Transaction Platform v1](docs/marketplace-transaction-platform-v1.md) voor Fase 3, [ADR-013](docs/adr/ADR-013-een-organisatie-per-tenantaccount-platformrollen-en-gecontroleerde-accountverwijdering.md) en het [Contract-migratierunbook](docs/adr-013-contract-migratie-runbook.md) voor de accountarchitectuur, [PROJECT_PRINCIPLES.md](PROJECT_PRINCIPLES.md) voor de projectprincipes en [AGENTS.md](AGENTS.md) voor de werkafspraken voor Codex.
 
 ## Status
 

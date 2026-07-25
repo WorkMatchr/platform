@@ -45,6 +45,7 @@ export default function HomePage() {
         tabIndex={-1}
         aria-labelledby="situations-title"
         className="scroll-mt-24 focus:outline-none"
+        spacing="compact"
       >
         <div className="max-w-3xl">
           <Badge variant="neutral">Begin bij uw situatie</Badge>
@@ -53,7 +54,7 @@ export default function HomePage() {
             Kies wat het dichtst bij uw vraag komt. U hoeft nog niet te weten welke dienst of deskundige u nodig heeft.
           </Text>
         </div>
-        <div className="mt-10"><SituationGrid situations={content.situations} /></div>
+        <div className="mt-8"><SituationGrid situations={content.situations} /></div>
       </Section>
 
       <Section className="border-y border-border bg-surface">

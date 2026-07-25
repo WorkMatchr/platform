@@ -49,13 +49,16 @@ export type ServiceContent = PublicContentBase & {
   type: 'service'
   positioning: string
   problem: string
+  practiceExample: string
   appropriateWhen: readonly string[]
   notDirectlyWhen: readonly string[]
   audience: string
   process: readonly string[]
   outcomes: readonly string[]
   expertise: readonly string[]
+  preparation: string
   organizationResponsibility: string
+  rieRelationship: string
   legalContext: string
 }
 
@@ -88,8 +91,13 @@ export type SectorContent = PublicContentBase & {
 export type KnowledgeArticleContent = PublicContentBase & {
   type: 'knowledge'
   shortAnswer: string
+  relevantWhen: string
   context: readonly string[]
+  practiceExample: string
   practicalPoints: readonly string[]
+  rieRelationship: string
+  supportWhen: string
+  nextStep: string
   legalContext: string
 }
 

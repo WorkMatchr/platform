@@ -34,8 +34,7 @@ function normalizePostalCode(value: unknown): unknown {
 
 export const organizationTypeSchema = z.enum(['CLIENT', 'PROVIDER', 'BOTH'])
 
-export const organizationProfileSchema = z
-  .object({
+export const organizationProfileSchema = z.object({
     name: plainText('Officiële organisatienaam', 2, 160),
     tradeName: optionalPlainText('Handelsnaam', 160),
     chamberOfCommerceNumber: optionalPlainText('KvK-nummer', 32),
@@ -64,25 +63,24 @@ export const organizationProfileSchema = z
       z.number().int('Aantal medewerkers moet een geheel getal zijn.').nonnegative('Aantal medewerkers kan niet negatief zijn.').max(10_000_000).optional(),
     ),
     sectorIds: z.array(z.string().uuid()).min(1, 'Selecteer minimaal één sector.').max(12),
-    primarySectorId: z.string().uuid('Kies een primaire sector.'),
     addressLine: plainText('Adresregel', 2, 200),
     postalCode: z.preprocess(normalizePostalCode, plainText('Postcode', 2, 20)),
     city: plainText('Plaats', 2, 100),
     province: optionalPlainText('Provincie', 100),
     countryCode: z.string().trim().length(2, 'Landcode bestaat uit twee letters.').regex(/^[a-zA-Z]{2}$/, 'Landcode bestaat uit twee letters.').transform((value) => value.toUpperCase()),
   })
+
+export const createOrganizationSchema = organizationProfileSchema
+  .extend({
+    organizationType: organizationTypeSchema,
+    primarySectorId: z.string().uuid('Kies een primaire sector.'),
+    acceptedBusinessAccuracy: z.literal('on', { error: 'Bevestig dat de zakelijke gegevens correct zijn.' }),
+  })
   .superRefine((value, context) => {
     if (!value.sectorIds.includes(value.primarySectorId)) {
       context.addIssue({ code: 'custom', path: ['primarySectorId'], message: 'De primaire sector moet ook geselecteerd zijn.' })
     }
   })
-
-export const createOrganizationSchema = organizationProfileSchema.and(
-  z.object({
-    organizationType: organizationTypeSchema,
-    acceptedBusinessAccuracy: z.literal('on', { error: 'Bevestig dat de zakelijke gegevens correct zijn.' }),
-  }),
-)
 
 export type OrganizationProfileInput = z.infer<typeof organizationProfileSchema>
 export type CreateOrganizationInput = z.infer<typeof createOrganizationSchema>

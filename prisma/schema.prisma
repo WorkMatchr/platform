@@ -618,7 +618,7 @@ model Organization {
 
 model OrganizationMembership {
   id                 String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId             String                        @db.Uuid
+  userId             String                        @unique @db.Uuid
   organizationId     String                        @db.Uuid
   role               OrganizationMembershipRole
   status             MembershipStatus              @default(INVITED)
@@ -630,7 +630,6 @@ model OrganizationMembership {
   historyEvents      OrganizationMembershipEvent[]
 
   @@unique([userId, organizationId])
-  @@index([userId])
   @@index([organizationId])
   @@index([status])
 }

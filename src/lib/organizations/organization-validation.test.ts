@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { createOrganizationSchema, organizationProfileSchema } from './organization-validation'
 
@@ -22,6 +24,17 @@ describe('organisatievalidatie', () => {
   it('vereist dat de primaire sector geselecteerd is', () => {
     const result = createOrganizationSchema.safeParse({ ...validInput, primarySectorId: '00000000-0000-4000-8000-000000000002' })
     expect(result.success).toBe(false)
+  })
+
+  it('vereist bij profielwijzigingen geen tweede primaire-sector-keuze', () => {
+    const profileInput: Record<string, unknown> = { ...validInput }
+    delete profileInput.primarySectorId
+    expect(organizationProfileSchema.safeParse(profileInput).success).toBe(true)
+  })
+
+  it('toont de primaire-sector-keuze uitsluitend bij organisatieaanmaak', () => {
+    const form = readFileSync(join(process.cwd(), 'src', 'components', 'organizations', 'organization-form.tsx'), 'utf8')
+    expect(form).toMatch(/\{mode === 'create' && <div className="mt-5"><label[^>]*>Primaire sector/)
   })
 
   it('weigert negatieve en niet-gehele medewerkerstellingen', () => {

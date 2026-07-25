@@ -1,6 +1,5 @@
 import { AuthShell, StatusMessage } from '@/components/auth/auth-shell'
 import { LogoutButton } from '@/components/auth/logout-button'
-import { OrganizationSwitcher } from '@/components/organizations/organization-switcher'
 import { LinkButton } from '@/components/ui/link-button'
 import { getActiveOrganizationContext } from '@/lib/organizations/organization-authorization'
 import { buildAccountViewModel } from './account-view-model'
@@ -43,22 +42,12 @@ export default async function AccountPage() {
           Actieve organisatie
         </h2>
         {model.activeOrganization ? (
-          <>
-            <dl className="mt-4 grid grid-cols-[repeat(auto-fit,minmax(min(100%,16rem),1fr))] gap-4">
-              <Detail label="Organisatienaam" value={model.activeOrganization.name} />
-              <Detail label="Rol binnen actieve organisatie" value={model.activeOrganization.roleLabel} />
-              <Detail label="Organisatietype" value={model.activeOrganization.typeLabel} />
-              <Detail label="Organisatiestatus" value={model.activeOrganization.statusLabel} />
-            </dl>
-            {model.organizationCount > 1 && (
-              <div className="mt-6">
-                <OrganizationSwitcher
-                  activeOrganizationId={model.activeOrganization.id}
-                  organizations={model.organizations}
-                />
-              </div>
-            )}
-          </>
+          <dl className="mt-4 grid grid-cols-[repeat(auto-fit,minmax(min(100%,16rem),1fr))] gap-4">
+            <Detail label="Organisatienaam" value={model.activeOrganization.name} />
+            <Detail label="Rol binnen organisatie" value={model.activeOrganization.roleLabel} />
+            <Detail label="Organisatietype" value={model.activeOrganization.typeLabel} />
+            <Detail label="Organisatiestatus" value={model.activeOrganization.statusLabel} />
+          </dl>
         ) : (
           <p className="mt-3 text-text-secondary">Er is nog geen actieve organisatie.</p>
         )}
@@ -67,7 +56,7 @@ export default async function AccountPage() {
       <div className="mt-7">
         <StatusMessage>
           {hasOrganization
-            ? `U heeft toegang tot ${model.organizationCount === 1 ? 'één organisatie' : `${model.organizationCount} organisaties`}.`
+            ? 'Uw account is aan deze organisatie gekoppeld.'
             : 'Maak Uw organisatie aan om Uw WorkMatchr-omgeving in te richten.'}
         </StatusMessage>
       </div>
@@ -75,11 +64,6 @@ export default async function AccountPage() {
         <LinkButton href={hasOrganization ? '/organisatie' : '/organisatie/nieuw'}>
           {hasOrganization ? 'Naar Uw organisatie' : 'Maak Uw organisatie aan'}
         </LinkButton>
-        {hasOrganization && (
-          <LinkButton href="/organisatie/nieuw" variant="outline">
-            Organisatie toevoegen
-          </LinkButton>
-        )}
       </div>
       <div className="mt-7">
         <LogoutButton />

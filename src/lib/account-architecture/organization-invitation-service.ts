@@ -4,7 +4,7 @@ import type { OrganizationMembershipRole } from '@/generated/prisma/enums'
 import { getPrisma } from '@/lib/prisma'
 import { appendAccountProvisioningEvent, appendOrganizationMembershipEvent } from './account-history-service'
 import { canManageTenantAccount } from './account-management-policy'
-import { hashInvitationCredential, sendOrganizationInvitationVerification } from './better-auth-invitation-service'
+import { hashInvitationCredential, sendOrganizationInvitationActivation } from './better-auth-invitation-service'
 import { normalTenantOrganizationWhere } from './platform-organization-governance'
 import { assertCanCreateTenantMembership } from './tenant-membership-policy'
 import { AuthEmailDeliveryError, type AuthEmailDeliveryResult } from '@/lib/email'
@@ -29,6 +29,7 @@ export type InviteOrganizationUserInput = {
   email: string
   role: Extract<OrganizationMembershipRole, 'ADMIN' | 'MEMBER'>
   idempotencyKey: string
+  requestHeaders?: Headers
 }
 
 type InvitationResult = {
@@ -42,6 +43,7 @@ export type ResendOrganizationInvitationInput = {
   organizationId: string
   subjectUserId: string
   idempotencyKey: string
+  requestHeaders?: Headers
 }
 
 async function requireInviter(
@@ -258,16 +260,26 @@ async function recordDeliveryFailure(
 
 function deliveryError(error: unknown): OrganizationInvitationServiceError {
   const technicalCode = error instanceof AuthEmailDeliveryError ? error.code : 'EMAIL_DELIVERY_UNKNOWN'
-  const message = technicalCode === 'EMAIL_DELIVERY_NOT_CONFIGURED'
-    ? 'De uitnodiging is opgeslagen, maar e-mailbezorging is niet geconfigureerd. Controleer de serverconfiguratie en probeer opnieuw.'
-    : 'De uitnodiging is opgeslagen, maar de e-mailprovider heeft verzending niet geaccepteerd. Probeer opnieuw of controleer de e-mailconfiguratie.'
+  const message = 'De uitnodiging is aangemaakt, maar de e-mail kon niet worden verzonden. Controleer de e-mailinstellingen of probeer het later opnieuw.'
   return new OrganizationInvitationServiceError('DELIVERY_FAILED', message, technicalCode)
 }
 
 async function deliverInvitation(input: InviteOrganizationUserInput, result: InvitationResult): Promise<void> {
   await recordDeliveryAttempt(input, result)
   try {
-    const delivery = await sendOrganizationInvitationVerification(input.email)
+    const organization = await getPrisma().organization.findFirst({
+      where: { id: input.organizationId, status: 'ACTIVE', ...normalTenantOrganizationWhere },
+      select: { name: true },
+    })
+    if (!organization) {
+      throw new OrganizationInvitationServiceError('INVALID_TENANT', 'De organisatie is niet beschikbaar.')
+    }
+    const delivery = await sendOrganizationInvitationActivation({
+      email: input.email,
+      organizationId: input.organizationId,
+      organizationName: organization.name,
+      requestHeaders: input.requestHeaders,
+    })
     await recordInvitationSent(input, result, delivery)
   } catch (error) {
     const safeError = deliveryError(error)
@@ -344,6 +356,7 @@ export async function resendOrganizationInvitation(input: ResendOrganizationInvi
     email: target.user.email,
     role: target.role,
     idempotencyKey: input.idempotencyKey,
+    requestHeaders: input.requestHeaders,
   }
   const result: InvitationResult = { status: 'RESENT', userId: input.subjectUserId, membershipId: target.id }
   await deliverInvitation(invitationInput, result)

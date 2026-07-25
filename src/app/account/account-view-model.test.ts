@@ -49,18 +49,11 @@ describe('accountweergave van platform- en organisatierollen', () => {
     })
   })
 
-  it('maakt bij meerdere organisaties de actieve organisatie expliciet', () => {
-    const first = membership('organization-1', 'Eerste BV', 'OWNER')
-    const second = membership('organization-2', 'Tweede BV', 'MEMBER', 'PROVIDER')
+  it('toont een platformaccount zonder tenantorganisatie zonder selector', () => {
+    const model = buildAccountViewModel(context([], null))
 
-    const model = buildAccountViewModel(context([first, second], second))
-
-    expect(model.organizationCount).toBe(2)
-    expect(model.activeOrganization?.name).toBe('Tweede BV')
-    expect(model.organizations).toEqual([
-      { id: 'organization-1', name: 'Eerste BV' },
-      { id: 'organization-2', name: 'Tweede BV' },
-    ])
+    expect(model.organizationCount).toBe(0)
+    expect(model.activeOrganization).toBeNull()
   })
 
   it('presenteert OWNER als Eigenaar naast de afzonderlijke platformrol', () => {
@@ -90,19 +83,11 @@ describe('accountweergave van platform- en organisatierollen', () => {
     expect(model.activeOrganization?.roleLabel).toBe('Lid')
   })
 
-  it('ververst alle organisatiegegevens na wisselen van actieve organisatie', () => {
-    const first = membership('organization-1', 'Opdrachtgever BV', 'OWNER')
-    const second = membership('organization-2', 'Provider BV', 'ADMIN', 'PROVIDER')
+  it('bevat geen organisatiewisselaar of tweede-organisatieactie', () => {
+    const pageSource = readFileSync(join(process.cwd(), 'src/app/account/page.tsx'), 'utf8')
 
-    const before = buildAccountViewModel(context([first, second], first))
-    const after = buildAccountViewModel(context([first, second], second))
-
-    expect(before.activeOrganization).toEqual(
-      expect.objectContaining({ id: 'organization-1', roleLabel: 'Eigenaar', typeLabel: 'Opdrachtgever' }),
-    )
-    expect(after.activeOrganization).toEqual(
-      expect.objectContaining({ id: 'organization-2', roleLabel: 'Beheerder', typeLabel: 'Aanbieder' }),
-    )
+    expect(pageSource).not.toContain('OrganizationSwitcher')
+    expect(pageSource).not.toContain('Organisatie toevoegen')
   })
 
   it('behoudt een lang e-mailadres en gebruikt een responsief afbreekcontract', () => {

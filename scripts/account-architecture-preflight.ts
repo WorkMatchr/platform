@@ -4,7 +4,6 @@ import path from 'node:path'
 import type { Pool, PoolClient, QueryResultRow } from 'pg'
 
 export const REPORT_VERSION = '3.0'
-const ADR013_LEGACY_MULTI_MEMBERSHIP_USER_ID = '202fc2db-cb99-489e-a6f0-2ad1e05dcf75'
 
 export type Severity = 'INFO' | 'WARNING' | 'BLOCKER'
 export type PhaseStatus = 'RESOLVED_PHASE_2A' | 'RESOLVED_PHASE_2B' | 'OPEN_PHASE_2B' | 'LATER_MIGRATION_BLOCKER' | 'INFORMATIONAL'
@@ -664,13 +663,12 @@ export function buildPreflightReport(snapshot: PreflightSnapshot, metadata: Repo
       && !currentPermissions.some((permission) => permission.permission !== 'PROVIDER_AUDITOR')
 
     if (memberships.length > 1) {
-      const approvedLegacy = user.id === ADR013_LEGACY_MULTI_MEMBERSHIP_USER_ID
       addFinding(findings, {
-        code: approvedLegacy ? 'ADR013_LEGACY_MULTI_MEMBERSHIP' : 'ADR013_NEW_MULTI_MEMBERSHIP', severity: 'BLOCKER', category: 'MULTI_MEMBERSHIP', entityType: 'User', entityId: user.id,
-        description: approvedLegacy ? 'De expliciet goedgekeurde legacygebruiker heeft tijdelijk twee tenantmemberships.' : 'Een niet-goedgekeurde gebruiker heeft meer dan één organisatiemembership.',
+        code: 'ADR013_MULTI_MEMBERSHIP_CONTRACT_VIOLATION', severity: 'BLOCKER', category: 'MULTI_MEMBERSHIP', entityType: 'User', entityId: user.id,
+        description: 'Een gebruiker heeft meer dan één organisatiemembership en schendt de contractregel.',
         evidence: { displayName: user.displayName, email: user.email, membershipCount: memberships.length, memberships, platformRole: user.platformRole, permissions: currentPermissions.map((item) => item.permission), lastKnownAuthActivity: auth?.lastSessionActivityAt ?? null, historicalDependencies: dependenciesFor(snapshot, user.id) },
-        adr013Impact: approvedLegacy ? 'De unieke membershipregel blijft geblokkeerd tot Fase 2C deze concrete uitzondering handmatig oplost.' : 'De Fase 2B-servicelaagregel is geschonden; stop verdere migratie.',
-        recommendedAction: approvedLegacy ? 'Behoud beide memberships ongewijzigd tot de goedgekeurde Fase 2C-recordbeslissing.' : 'Onderzoek de nieuwe koppeling en herstel uitsluitend handmatig via een afzonderlijk geautoriseerd plan.',
+        adr013Impact: 'De database en requestcontext kunnen niet veilig aan het ADR-013-contract voldoen.',
+        recommendedAction: 'Onderzoek de koppeling en herstel uitsluitend handmatig via een afzonderlijk geautoriseerd plan.',
         manualReview: true,
         phaseStatus: 'LATER_MIGRATION_BLOCKER',
       })
@@ -1014,8 +1012,6 @@ export function buildPreflightReport(snapshot: PreflightSnapshot, metadata: Repo
     warnings: sortedFindings.filter((finding) => finding.severity === 'WARNING'),
     manualReview: sortedFindings.filter((finding) => finding.manualReview),
     architectureDeviations: [
-      'OrganizationMembership is alleen uniek op (userId, organizationId), niet op userId.',
-      'De applicatie gebruikt workmatchr.activeOrganization en ondersteunt organisatiewisseling.',
       'User.email is verplicht en databasebreed hoofdlettergevoelig uniek.',
       'Toekomstige registratie- en uitnodigingsflows schrijven createdByUserId en provisioningevents nog niet atomair.',
       'Reviewer en approver hebben nog geen afdwingbare membership bij een technisch gemarkeerde WorkMatchr-beheerorganisatie.',
@@ -1185,7 +1181,6 @@ const staticPatterns: Array<{ code: string; expression: RegExp; description: str
   { code: 'STATIC_ACTIVE_ORGANIZATION_COOKIE', expression: /ACTIVE_ORGANIZATION_COOKIE|workmatchr\.activeOrganization/g, description: 'Bestand gebruikt de actieve-organisatiecookie.' },
   { code: 'STATIC_ORGANIZATION_SWITCH', expression: /switchOrganizationAction|OrganizationSwitcher/g, description: 'Bestand ondersteunt organisatiewisseling.' },
   { code: 'STATIC_MULTI_MEMBERSHIP_QUERY', expression: /organizationMembership\.findMany|memberships\.length|memberships\[0\]/g, description: 'Bestand neemt een collectie memberships of de eerste membership als context aan.' },
-  { code: 'STATIC_ADD_ORGANIZATION_ROUTE', expression: /\/organisatie\/nieuw/g, description: 'Bestand verwijst naar de route voor extra organisatieaanmaak.' },
 ]
 
 export async function scanStaticTenantAssumptions(rootDirectory: string): Promise<StaticIndicator[]> {

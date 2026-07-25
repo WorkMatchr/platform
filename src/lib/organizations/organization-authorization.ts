@@ -1,14 +1,10 @@
 import { cache } from 'react'
-import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import type { OrganizationMembershipRole } from '@/generated/prisma/client'
 import { getCurrentUser } from '@/lib/authorization'
 import { getPrisma } from '@/lib/prisma'
 import { getSafeReturnUrl } from '@/lib/safe-redirect'
-import { canManageOrganization, canUseMembership, canViewOrganization, selectActiveMembership } from './organization-policy'
-import { normalTenantOrganizationWhere } from '@/lib/account-architecture/platform-organization-governance'
-
-export const ACTIVE_ORGANIZATION_COOKIE = 'workmatchr.activeOrganization'
+import { canManageOrganization, canUseMembership, canViewOrganization, isUsableTenantMembership } from './organization-policy'
 
 const membershipSelect = {
   id: true,
@@ -26,22 +22,14 @@ const membershipSelect = {
 export const getOptionalActiveOrganizationContext = cache(async () => {
   const user = await getCurrentUser()
   if (!user) return null
-  const memberships = await getPrisma().organizationMembership.findMany({
-    where: {
-      userId: user.id,
-      status: 'ACTIVE',
-      organization: { status: { not: 'ARCHIVED' }, ...normalTenantOrganizationWhere },
-    },
+  const membership = await getPrisma().organizationMembership.findUnique({
+    where: { userId: user.id },
     select: membershipSelect,
-    orderBy: { createdAt: 'asc' },
   })
 
-  if (memberships.length === 0) return { user, memberships, activeMembership: null }
+  const activeMembership = isUsableTenantMembership(membership) ? membership : null
 
-  const selectedId = (await cookies()).get(ACTIVE_ORGANIZATION_COOKIE)?.value
-  const activeMembership = selectActiveMembership(memberships, selectedId)
-
-  return { user, memberships, activeMembership }
+  return { user, memberships: activeMembership ? [activeMembership] : [], activeMembership }
 })
 
 export async function getActiveOrganizationContext(returnTo = '/account') {
@@ -52,9 +40,10 @@ export async function getActiveOrganizationContext(returnTo = '/account') {
 
 export async function requireOrganizationMembership(organizationId?: string, returnTo = '/account') {
   const context = await getActiveOrganizationContext(returnTo)
-  const membership = organizationId
-    ? context.memberships.find((candidate) => candidate.organization.id === organizationId)
-    : context.activeMembership
+  const membership =
+    !organizationId || organizationId === context.activeMembership?.organization.id
+      ? context.activeMembership
+      : null
 
   if (!membership || !canUseMembership(membership.status) || !canViewOrganization(membership.organization.status)) {
     redirect('/organisatie/nieuw')

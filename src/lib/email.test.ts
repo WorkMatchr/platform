@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { AuthEmailDeliveryError, passwordResetEmail, roleChangeNotificationEmail, sendAuthEmail, verificationEmail } from '@/lib/email'
+import {
+  AuthEmailDeliveryError,
+  invitationActivationEmail,
+  passwordResetEmail,
+  roleChangeNotificationEmail,
+  sendAuthEmail,
+  verificationEmail,
+} from '@/lib/email'
 
 const resendMocks = vi.hoisted(() => ({ send: vi.fn() }))
 vi.mock('resend', () => ({
@@ -16,10 +23,18 @@ afterEach(() => {
 
 describe('authenticatie-e-mails', () => {
   it('maakt een Nederlandstalige verificatiemail met veilige HTML', () => { const email = verificationEmail('test@example.invalid', '<Test>', 'https://workmatchr.invalid/verifieer?token=test'); expect(email.subject).toContain('Bevestig'); expect(email.html).toContain('&lt;Test&gt;') })
-  it('maakt een uitnodigingsmail zonder gedeeld tijdelijk wachtwoord', () => {
-    const email = verificationEmail('test@example.invalid', 'Test', 'https://workmatchr.invalid/verify?callbackURL=%2Fverifieer-email%3Fstatus%3Duitnodiging')
-    expect(email.subject).toContain('uitgenodigd')
-    expect(email.text).toContain('een eigen wachtwoord')
+  it('maakt een uitnodigingsmail met één duidelijke accountactivatie', () => {
+    const email = invitationActivationEmail(
+      'test@example.invalid',
+      'Test',
+      'Voorbeeldorganisatie',
+      'https://workmatchr.invalid/account-activeren?token=test',
+    )
+    expect(email.subject).toContain('Account activeren')
+    expect(email.text).toContain('Account activeren')
+    expect(email.html).toContain('Account activeren')
+    expect(email.text).not.toContain('Wachtwoord vergeten')
+    expect(email.text).not.toContain('Wachtwoord instellen')
     expect(email.text).not.toContain('tijdelijk wachtwoord:')
   })
   it('maakt een Nederlandstalige herstelmail', () => { expect(passwordResetEmail('test@example.invalid', 'Test', 'https://workmatchr.invalid/reset').subject).toContain('Herstel') })
@@ -89,15 +104,31 @@ describe('authenticatie-e-mails', () => {
       '==================================================',
     ].join('\n'))
   })
+  it('logt een uitnodiging in development als accountactivatie', async () => {
+    vi.stubEnv('NODE_ENV', 'development')
+    delete process.env.RESEND_API_KEY
+    delete process.env.AUTH_EMAIL_FROM
+    const log = vi.spyOn(console, 'info').mockImplementation(() => undefined)
+    const url = 'http://localhost:4317/api/auth/reset-password/activation-token?callbackURL=%2Faccount-activeren'
+    await sendAuthEmail(invitationActivationEmail(
+      'activation@example.invalid',
+      'Test',
+      'Voorbeeldorganisatie',
+      url,
+    ))
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('ACCOUNT ACTIVATION'))
+    expect(log).toHaveBeenCalledWith(expect.stringContaining(`Activation URL:\n${url}`))
+  })
   it('behandelt een echt adres zonder Resend-configuratie nooit als verzonden', async () => {
     vi.stubEnv('NODE_ENV', 'development')
     delete process.env.RESEND_API_KEY
     delete process.env.AUTH_EMAIL_FROM
     vi.spyOn(console, 'info').mockImplementation(() => undefined)
-    await expect(sendAuthEmail(verificationEmail(
+    await expect(sendAuthEmail(invitationActivationEmail(
       'info@feenstra-safetyconsulting.nl',
       'Feenstra Safety Consulting',
-      'http://localhost:3000/api/auth/verify-email?token=verborgen&callbackURL=%2Fverifieer-email%3Fstatus%3Duitnodiging',
+      'Feenstra Safety Consulting',
+      'http://localhost:3000/api/auth/reset-password/verborgen?callbackURL=%2Faccount-activeren',
     ))).rejects.toMatchObject({ code: 'EMAIL_DELIVERY_NOT_CONFIGURED' } satisfies Partial<AuthEmailDeliveryError>)
   })
   it('geeft voor een development-testadres een expliciet niet-productieresultaat terug', async () => {
@@ -105,10 +136,11 @@ describe('authenticatie-e-mails', () => {
     delete process.env.RESEND_API_KEY
     delete process.env.AUTH_EMAIL_FROM
     vi.spyOn(console, 'info').mockImplementation(() => undefined)
-    await expect(sendAuthEmail(verificationEmail(
+    await expect(sendAuthEmail(invitationActivationEmail(
       'invite@example.invalid',
       'Testgebruiker',
-      'http://localhost:3000/api/auth/verify-email?token=test&callbackURL=%2Fverifieer-email%3Fstatus%3Duitnodiging',
+      'Voorbeeldorganisatie',
+      'http://localhost:3000/api/auth/reset-password/test?callbackURL=%2Faccount-activeren',
     ))).resolves.toEqual({
       accepted: true,
       transport: 'DEVELOPMENT_LOG',

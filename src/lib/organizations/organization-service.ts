@@ -13,9 +13,8 @@ export class OrganizationServiceError extends Error {
   }
 }
 
-async function validateSectors(transaction: Prisma.TransactionClient, sectorIds: string[], primarySectorId: string) {
+async function validateSectors(transaction: Prisma.TransactionClient, sectorIds: string[]) {
   const uniqueIds = [...new Set(sectorIds)]
-  if (!uniqueIds.includes(primarySectorId)) throw new OrganizationServiceError('De primaire sector moet geselecteerd zijn.')
   const count = await transaction.sector.count({ where: { id: { in: uniqueIds }, isActive: true } })
   if (count !== uniqueIds.length) throw new OrganizationServiceError('Eén of meer geselecteerde sectoren zijn niet beschikbaar.')
   return uniqueIds
@@ -34,7 +33,10 @@ export async function createOrganization(userId: string, input: CreateOrganizati
       throw error
     }
 
-    const sectorIds = await validateSectors(transaction, input.sectorIds, input.primarySectorId)
+    const sectorIds = await validateSectors(transaction, input.sectorIds)
+    if (!sectorIds.includes(input.primarySectorId)) {
+      throw new OrganizationServiceError('De primaire sector moet geselecteerd zijn.')
+    }
     const organization = await transaction.organization.create({
       data: {
         name: input.name,
@@ -111,7 +113,14 @@ export async function updateOrganization(userId: string, organizationId: string,
     }
     assertNormalOrganizationOperationAllowed(membership.organization, 'UPDATE')
 
-    const sectorIds = await validateSectors(transaction, input.sectorIds, input.primarySectorId)
+    const sectorIds = await validateSectors(transaction, input.sectorIds)
+    const currentPrimarySector = await transaction.organizationSector.findFirst({
+      where: { organizationId, isPrimary: true },
+      select: { sectorId: true },
+    })
+    const primarySectorId = currentPrimarySector && sectorIds.includes(currentPrimarySector.sectorId)
+      ? currentPrimarySector.sectorId
+      : sectorIds[0]
     const primaryLocation = await transaction.organizationLocation.findFirst({
       where: { organizationId, archivedAt: null, isPrimary: true },
       select: { id: true },
@@ -132,7 +141,7 @@ export async function updateOrganization(userId: string, organizationId: string,
     })
     await transaction.organizationSector.deleteMany({ where: { organizationId } })
     await transaction.organizationSector.createMany({
-      data: sectorIds.map((sectorId) => ({ organizationId, sectorId, isPrimary: sectorId === input.primarySectorId })),
+      data: sectorIds.map((sectorId) => ({ organizationId, sectorId, isPrimary: sectorId === primarySectorId })),
     })
     await transaction.organizationLocation.updateMany({ where: { organizationId, archivedAt: null }, data: { isPrimary: false } })
     await transaction.organizationLocation.update({

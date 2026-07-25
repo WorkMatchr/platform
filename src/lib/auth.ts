@@ -2,12 +2,16 @@ import { betterAuth } from 'better-auth'
 import { APIError, createAuthMiddleware } from 'better-auth/api'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
 import { nextCookies } from 'better-auth/next-js'
-import { passwordResetEmail, sendAuthEmail, verificationEmail } from '@/lib/email'
-import { captureAuthEmailDelivery } from '@/lib/auth-email-delivery-context'
+import { invitationActivationEmail, passwordResetEmail, sendAuthEmail, verificationEmail } from '@/lib/email'
+import { captureAuthEmailDelivery, getInvitationActivationEmailContext } from '@/lib/auth-email-delivery-context'
 import { getPrisma } from '@/lib/prisma'
 import { GENERIC_SIGN_IN_ERROR, normalizeEmail, registrationSchema } from '@/lib/auth-validation'
 import { AUTH_SESSION_POLICY, canStartSession, canUseAccountRecovery, shouldActivateVerifiedInvitation } from '@/lib/auth-policy'
-import { activateVerifiedInvitation } from '@/lib/account-architecture/invitation-acceptance-service'
+import {
+  activateInvitationAfterPasswordReset,
+  activateVerifiedInvitation,
+  isPendingOrganizationInvitation,
+} from '@/lib/account-architecture/invitation-acceptance-service'
 import { AUTH_BASE_PATH } from '@/lib/auth-config'
 
 const configuredAppUrl =
@@ -53,10 +57,25 @@ export const auth = betterAuth({
     revokeSessionsOnPasswordReset: AUTH_SESSION_POLICY.revokeSessionsOnPasswordReset,
     resetPasswordTokenExpiresIn: 3600,
     sendResetPassword: async ({ user, url }) => {
+      const invitationContext = getInvitationActivationEmailContext()
+      if (invitationContext) {
+        if (!await isPendingOrganizationInvitation(user.id, invitationContext.organizationId)) return
+        const delivery = await sendAuthEmail(invitationActivationEmail(
+          user.email,
+          user.name,
+          invitationContext.organizationName,
+          url,
+        ))
+        captureAuthEmailDelivery(delivery)
+        return
+      }
       const current = await getPrisma().user.findUnique({ where: { id: user.id }, select: { status: true } })
       if (!canUseAccountRecovery(current?.status ?? null)) return
       const delivery = await sendAuthEmail(passwordResetEmail(user.email, user.name, url))
       captureAuthEmailDelivery(delivery)
+    },
+    onPasswordReset: async ({ user }) => {
+      await activateInvitationAfterPasswordReset(user.id)
     },
   },
   emailVerification: {
@@ -104,10 +123,14 @@ export const auth = betterAuth({
             where: { identifier: `reset-password:${token}` },
             select: { value: true },
           })
-          const user = verification
-            ? await getPrisma().user.findUnique({ where: { id: verification.value }, select: { status: true } })
-            : null
-          if (user && !canUseAccountRecovery(user.status)) {
+          const userId = verification?.value
+          const allowed = userId
+            ? canUseAccountRecovery((await getPrisma().user.findUnique({
+                where: { id: userId },
+                select: { status: true },
+              }))?.status ?? null) || await isPendingOrganizationInvitation(userId)
+            : false
+          if (!allowed) {
             throw new APIError('BAD_REQUEST', { message: 'De herstelcode is ongeldig of verlopen.' })
           }
         }

@@ -69,9 +69,5 @@ export function buildAccountViewModel(context: AccountContext) {
           statusLabel: organizationStatusLabels[activeMembership.organization.status],
         }
       : null,
-    organizations: context.memberships.map((membership) => ({
-      id: membership.organization.id,
-      name: membership.organization.name,
-    })),
   }
 }

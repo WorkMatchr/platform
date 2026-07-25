@@ -24,13 +24,78 @@ export async function activateVerifiedInvitation(userId: string): Promise<'ACTIV
     if (!user || user.status !== 'INVITED' || !user.emailVerified || user.migrationClassification !== null) {
       return 'NOT_APPLICABLE'
     }
-    if (user.memberships.length > 1) return 'NOT_APPLICABLE'
-
-    const membership = user.memberships[0]
-    if (membership && membership.status !== 'INVITED') return 'NOT_APPLICABLE'
+    if (user.memberships.length !== 0) return 'NOT_APPLICABLE'
     await transaction.user.update({ where: { id: userId }, data: { status: 'ACTIVE' } })
-    if (!membership) return 'ACTIVATED'
+    return 'ACTIVATED'
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 10_000 })
+}
 
+export async function isPendingOrganizationInvitation(
+  userId: string,
+  organizationId?: string,
+): Promise<boolean> {
+  const user = await getPrisma().user.findUnique({
+    where: { id: userId },
+    select: {
+      status: true,
+      migrationClassification: true,
+      memberships: {
+        where: {
+          status: { in: ['INVITED', 'ACTIVE', 'SUSPENDED'] },
+        },
+        select: {
+          organizationId: true,
+          status: true,
+          organization: {
+            select: { status: true, organizationType: true, systemKey: true },
+          },
+        },
+      },
+    },
+  })
+  if (!user || user.status !== 'INVITED' || user.migrationClassification !== null || user.memberships.length !== 1) {
+    return false
+  }
+  const membership = user.memberships[0]
+  return Boolean(
+    membership &&
+    membership.status === 'INVITED' &&
+    (!organizationId || membership.organizationId === organizationId) &&
+    membership.organization.status === 'ACTIVE' &&
+    membership.organization.organizationType !== 'PLATFORM_OPERATOR' &&
+    membership.organization.systemKey === null,
+  )
+}
+
+export async function activateInvitationAfterPasswordReset(
+  userId: string,
+): Promise<'ACTIVATED' | 'NOT_APPLICABLE'> {
+  return getPrisma().$transaction(async (transaction) => {
+    await transaction.$queryRaw(Prisma.sql`SELECT id FROM "User" WHERE id = ${userId}::uuid FOR UPDATE`)
+    const user = await transaction.user.findUnique({
+      where: { id: userId },
+      select: {
+        status: true,
+        migrationClassification: true,
+        memberships: {
+          where: {
+            status: { in: ['INVITED', 'ACTIVE', 'SUSPENDED'] },
+            organization: { status: 'ACTIVE', ...normalTenantOrganizationWhere },
+          },
+          select: { id: true, organizationId: true, role: true, status: true },
+        },
+      },
+    })
+    if (!user || user.status !== 'INVITED' || user.migrationClassification !== null || user.memberships.length !== 1) {
+      return 'NOT_APPLICABLE'
+    }
+    const membership = user.memberships[0]
+    if (!membership || membership.status !== 'INVITED') return 'NOT_APPLICABLE'
+
+    await transaction.user.update({
+      where: { id: userId },
+      data: { status: 'ACTIVE', emailVerified: true },
+    })
     await transaction.organizationMembership.update({
       where: { id: membership.id },
       data: { status: 'ACTIVE' },

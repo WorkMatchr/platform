@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto'
 import { auth } from '@/lib/auth'
-import { withAuthEmailDeliveryCapture } from '@/lib/auth-email-delivery-context'
+import { withInvitationActivationDelivery } from '@/lib/auth-email-delivery-context'
 import { AuthEmailDeliveryError, type AuthEmailDeliveryResult } from '@/lib/email'
 
 export async function hashInvitationCredential(): Promise<string> {
@@ -8,10 +8,19 @@ export async function hashInvitationCredential(): Promise<string> {
   return context.password.hash(randomBytes(48).toString('base64url'))
 }
 
-export async function sendOrganizationInvitationVerification(email: string): Promise<AuthEmailDeliveryResult> {
-  const delivery = await withAuthEmailDeliveryCapture(() => auth.api.sendVerificationEmail({
-    body: { email, callbackURL: '/verifieer-email?status=uitnodiging' },
-  }))
+export async function sendOrganizationInvitationActivation(input: {
+  email: string
+  organizationId: string
+  organizationName: string
+  requestHeaders?: Headers
+}): Promise<AuthEmailDeliveryResult> {
+  const delivery = await withInvitationActivationDelivery(
+    { organizationId: input.organizationId, organizationName: input.organizationName },
+    () => auth.api.requestPasswordReset({
+      body: { email: input.email, redirectTo: '/account-activeren' },
+      headers: input.requestHeaders,
+    }),
+  )
   if (!delivery) {
     throw new AuthEmailDeliveryError(
       'EMAIL_PROVIDER_RESPONSE_INVALID',

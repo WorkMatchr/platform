@@ -1,11 +1,9 @@
 'use server'
 
-import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { requireUser } from '@/lib/authorization'
-import { getPrisma } from '@/lib/prisma'
-import { ACTIVE_ORGANIZATION_COOKIE, requireManageableOrganization } from '@/lib/organizations/organization-authorization'
+import { requireManageableOrganization } from '@/lib/organizations/organization-authorization'
 import { removeOrganizationLogo, replaceOrganizationLogo } from '@/lib/organizations/logo-service'
 import { logLogoDevelopment, logoErrorDetails } from '@/lib/organizations/logo-development-log'
 import { createOrganization, OrganizationServiceError, updateOrganization } from '@/lib/organizations/organization-service'
@@ -18,28 +16,18 @@ export type OrganizationActionState = {
   values?: OrganizationFormValues
 }
 
-const activeOrganizationCookieOptions = {
-  httpOnly: true,
-  sameSite: 'lax' as const,
-  secure: process.env.NODE_ENV === 'production',
-  path: '/',
-  maxAge: 60 * 60 * 24 * 365,
-}
-
 export async function createOrganizationAction(_state: OrganizationActionState, formData: FormData): Promise<OrganizationActionState> {
   const user = await requireUser()
   const values = organizationFormData(formData)
   const parsed = createOrganizationSchema.safeParse(values)
   if (!parsed.success) return { message: 'Controleer de gemarkeerde velden.', errors: parsed.error.flatten().fieldErrors, values }
 
-  let organizationId: string
   try {
-    organizationId = (await createOrganization(user.id, parsed.data)).id
+    await createOrganization(user.id, parsed.data)
   } catch (error) {
     return { message: error instanceof OrganizationServiceError ? error.message : 'De organisatie kon niet worden aangemaakt.', values }
   }
 
-  ;(await cookies()).set(ACTIVE_ORGANIZATION_COOKIE, organizationId, activeOrganizationCookieOptions)
   revalidatePath('/', 'layout')
   redirect('/organisatie?aangemaakt=1')
 }
@@ -59,27 +47,6 @@ export async function updateOrganizationAction(_state: OrganizationActionState, 
 
   revalidatePath('/organisatie')
   redirect('/organisatie?gewijzigd=1')
-}
-
-export async function switchOrganizationAction(formData: FormData) {
-  const user = await requireUser()
-  const organizationId = String(formData.get('organizationId') ?? '')
-  const membership = await getPrisma().organizationMembership.findUnique({
-    where: { userId_organizationId: { userId: user.id, organizationId } },
-    include: { organization: { select: { status: true, organizationType: true, systemKey: true } } },
-  })
-  if (
-    !membership ||
-    membership.status !== 'ACTIVE' ||
-    membership.organization.status === 'ARCHIVED' ||
-    membership.organization.organizationType === 'PLATFORM_OPERATOR' ||
-    membership.organization.systemKey !== null
-  ) {
-    redirect('/organisatie?toegang=geweigerd')
-  }
-  ;(await cookies()).set(ACTIVE_ORGANIZATION_COOKIE, organizationId, activeOrganizationCookieOptions)
-  revalidatePath('/', 'layout')
-  redirect('/organisatie')
 }
 
 export async function uploadOrganizationLogoAction(_state: OrganizationActionState, formData: FormData): Promise<OrganizationActionState> {

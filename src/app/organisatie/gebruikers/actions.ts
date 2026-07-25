@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { requireUser } from '@/lib/authorization'
@@ -94,6 +95,7 @@ export async function inviteOrganizationUserAction(
     const result = await inviteOrganizationUser({
       actorUserId: context.user.id,
       organizationId: context.activeMembership.organization.id,
+      requestHeaders: await headers(),
       ...parsed.data,
     })
     revalidatePath('/organisatie/gebruikers')
@@ -122,7 +124,11 @@ export async function resendOrganizationInvitationAction(
     return { error: true, message: 'De uitnodiging kon niet veilig opnieuw worden verzonden.' }
   }
   try {
-    await resendOrganizationInvitation({ actorUserId: context.user.id, ...parsed.data })
+    await resendOrganizationInvitation({
+      actorUserId: context.user.id,
+      requestHeaders: await headers(),
+      ...parsed.data,
+    })
     revalidatePath('/organisatie/gebruikers')
     redirect('/organisatie/gebruikers?resultaat=opnieuw-uitgenodigd')
   } catch (error) {

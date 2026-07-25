@@ -24,7 +24,7 @@
 | TD-020 | Laag | MFA en passkeys zijn nog niet beoordeeld. | Risicogestuurd beoordelen voor een latere versie. | Latere securitymodule |
 | TD-021 | Laag | Social login valt buiten versie 1. | Alleen heroverwegen bij aantoonbare gebruikersbehoefte. | Latere versie |
 | TD-022 | Laag | Gebruikers hebben nog geen sessiebeheerpagina. | Actieve sessies en handmatige intrekking later beoordelen. | Latere accountmodule |
-| TD-023 | Hoog | De accountlifecycle en maximale beschermde retentie zijn in ADR-013 vastgesteld, maar nog niet geïmplementeerd; exacte auditbewaartermijn, encryptiesleutelbeheer, back-upuitwissing en Better Auth-adaptergedrag zijn nog open. | Voer de gefaseerde ADR-013-migratie uit en laat de resterende juridische en operationele randvoorwaarden vóór productie vaststellen. | Nieuwe account-/tenantmigratiemodule en productievoorbereiding |
+| TD-023 | Hoog | De enkelvoudige tenantcontext is geïmplementeerd, maar accountverwijdering en beschermde retentie nog niet; exacte auditbewaartermijn, encryptiesleutelbeheer, back-upuitwissing en Better Auth-adaptergedrag zijn open. | Ontwerp en bewijs verwijdering, retentie en purge afzonderlijk vóór productie. | Productievoorbereiding |
 | TD-024 | Hoog | Providergoedkeuring en beheeracties ontbreken. | Review-, goedkeurings- en schorsingsflow met audit bouwen volgens ADR-008. | Module 6A.2 en 6A.3 |
 | TD-025 | Hoog | Definitieve productieobject-storageprovider ontbreekt. | Vendor, datalocatie, authenticatie en delivery kiezen en implementeren. | Productievoorbereiding |
 | TD-026 | Hoog | Back-ups en lifecyclebeleid voor organisatielogo’s ontbreken. | Retentie, versiebeheer, orphan-cleanup en hersteldoelen vastleggen. | Productievoorbereiding |

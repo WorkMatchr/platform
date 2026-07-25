@@ -28,4 +28,24 @@ describe('Better Auth-routes', () => {
     expect(form.indexOf("requestResult === 'technical_error'"))
       .toBeLessThan(form.indexOf('GENERIC_RESET_CONFIRMATION : GENERIC_VERIFICATION_CONFIRMATION'))
   })
+
+  it('houdt uitnodigingsactivatie gescheiden van verificatie en wachtwoordherstel', () => {
+    const service = readFileSync(join(root, 'src', 'lib', 'account-architecture', 'better-auth-invitation-service.ts'), 'utf8')
+    const invitationService = readFileSync(join(root, 'src', 'lib', 'account-architecture', 'organization-invitation-service.ts'), 'utf8')
+    const form = readFileSync(join(root, 'src', 'components', 'auth', 'activate-account-form.tsx'), 'utf8')
+    const page = readFileSync(join(root, 'src', 'app', 'account-activeren', 'page.tsx'), 'utf8')
+
+    expect(service).toContain('auth.api.requestPasswordReset')
+    expect(service).toContain("redirectTo: '/account-activeren'")
+    expect(service).not.toContain('sendVerificationEmail')
+    expect(form).toContain('Account activeren')
+    expect(form).toContain('authClient.resetPassword')
+    expect(form).toContain('authClient.signIn.email')
+    expect(page).not.toContain('Wachtwoord vergeten')
+    expect(page).not.toContain('Wachtwoord instellen')
+    expect(invitationService).toContain(
+      'De uitnodiging is aangemaakt, maar de e-mail kon niet worden verzonden. Controleer de e-mailinstellingen of probeer het later opnieuw.',
+    )
+    expect(invitationService).not.toContain('e-mailprovider heeft verzending niet geaccepteerd')
+  })
 })

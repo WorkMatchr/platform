@@ -31,6 +31,19 @@ describe('vraaggestuurde publieke homepage', () => {
     expect(html).toContain('Ik heb personeel in dienst')
     expect(html).toContain('Ik twijfel of ik een RI&amp;E nodig heb')
     expect(html).toContain('href="/kenniscentrum/moet-ik-een-rie-hebben"')
+    expect(html.match(/data-card-density="compact"/g)).toHaveLength(6)
+    expect(html).toContain('grid auto-rows-fr items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3')
+    expect(html).toMatch(/Ik heb personeel in dienst[\s\S]*Start de Advieswijzer/)
+  })
+
+  it('gebruikt vier begrijpelijke proceslabels in de bedoelde volgorde', () => {
+    const html = renderHomepage()
+    const labels = ['Uw situatie', 'Enkele vragen', 'Uw advies', 'Vervolgstap']
+
+    expect(publicHomepageContent.process).toEqual(labels)
+    for (const label of labels) expect(html).toContain(label)
+    expect(html).not.toContain('>Verduidelijking<')
+    expect(html).not.toContain('>Inzicht<')
   })
 
   it('behoudt een logische semantische headingstructuur', () => {

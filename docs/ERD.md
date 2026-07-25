@@ -6,7 +6,7 @@ De ERD is per domein gesplitst voor leesbaarheid. Velden zijn beperkt tot primai
 
 ```mermaid
 erDiagram
-  User ||--o{ OrganizationMembership : has
+  User ||--o| OrganizationMembership : has
   User ||--o{ Session : authenticates_with
   User ||--o{ Account : owns
   Organization ||--o{ OrganizationMembership : has
@@ -330,3 +330,6 @@ erDiagram
 ```
 
 Kandidaten, interventies, offerteversies, gunningen, ledgerregels en marktaudit zijn append-only. Unieke relaties voorkomen dubbele uitnodiging, deelname, offerte, reservering en gunning.
+## ADR-013 Contract — enkelvoudige tenantcontext
+
+`OrganizationMembership.userId` is databasebreed uniek. Een User heeft daardoor nul of één actuele membership; één organisatie kan nog steeds meerdere memberships en dus meerdere afzonderlijke gebruikersaccounts hebben. De nulvariant ondersteunt expliciete platformaccounts en nog niet afgeronde eerste onboarding. Actorrelaties en append-only eventrelaties blijven ongewijzigd.

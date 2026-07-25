@@ -48,14 +48,15 @@ function logDevelopmentAuthLink(email: AuthEmail): void {
   if (process.env.NODE_ENV !== 'development' || !email.developmentUrl) return
 
   const passwordReset = email.kind === 'PASSWORD_RESET'
+  const accountActivation = email.kind === 'INVITATION'
   console.info([
     '==================================================',
-    passwordReset ? 'PASSWORD RESET' : 'EMAIL VERIFICATION',
+    accountActivation ? 'ACCOUNT ACTIVATION' : passwordReset ? 'PASSWORD RESET' : 'EMAIL VERIFICATION',
     '',
     'Email:',
     email.to,
     '',
-    passwordReset ? 'Reset URL:' : 'Verification URL:',
+    accountActivation ? 'Activation URL:' : passwordReset ? 'Reset URL:' : 'Verification URL:',
     email.developmentUrl,
     '',
     '==================================================',
@@ -121,23 +122,31 @@ export async function sendAuthEmail(email: AuthEmail): Promise<AuthEmailDelivery
 export function verificationEmail(to: string, name: string, url: string): AuthEmail {
   const safeName = escapeHtml(name)
   const safeUrl = escapeHtml(url)
-  const invitation = url.includes('status%3Duitnodiging') || url.includes('status=uitnodiging')
-  if (invitation) {
-    return {
-      kind: 'INVITATION',
-      to,
-      subject: 'U bent uitgenodigd voor WorkMatchr',
-      text: `Beste ${name},\n\nU bent uitgenodigd voor WorkMatchr. Bevestig eerst Uw e-mailadres via deze link: ${url}\n\nDaarna stelt U via de wachtwoordherstelpagina een eigen wachtwoord in. De link is één uur geldig.`,
-      html: `<p>Beste ${safeName},</p><p>U bent uitgenodigd voor WorkMatchr. Bevestig eerst Uw e-mailadres.</p><p><a href="${safeUrl}">E-mailadres bevestigen</a></p><p>Daarna stelt U via de wachtwoordherstelpagina een eigen wachtwoord in. De link is één uur geldig.</p>`,
-      developmentUrl: url,
-    }
-  }
   return {
     kind: 'VERIFICATION',
     to,
     subject: 'Bevestig Uw e-mailadres voor WorkMatchr',
     text: `Beste ${name},\n\nBevestig Uw e-mailadres via deze link: ${url}\n\nDe link is één uur geldig.`,
     html: `<p>Beste ${safeName},</p><p>Bevestig Uw e-mailadres voor WorkMatchr.</p><p><a href="${safeUrl}">E-mailadres bevestigen</a></p><p>De link is één uur geldig.</p>`,
+    developmentUrl: url,
+  }
+}
+
+export function invitationActivationEmail(
+  to: string,
+  name: string,
+  organizationName: string,
+  url: string,
+): AuthEmail {
+  const safeName = escapeHtml(name)
+  const safeOrganizationName = escapeHtml(organizationName)
+  const safeUrl = escapeHtml(url)
+  return {
+    kind: 'INVITATION',
+    to,
+    subject: `Account activeren voor ${organizationName}`,
+    text: `Beste ${name},\n\n${organizationName} heeft u uitgenodigd voor WorkMatchr. Account activeren: ${url}\n\nVia deze beveiligde link kiest u uw wachtwoord. De link is één uur geldig.`,
+    html: `<p>Beste ${safeName},</p><p><strong>${safeOrganizationName}</strong> heeft u uitgenodigd voor WorkMatchr.</p><p><a href="${safeUrl}">Account activeren</a></p><p>Via deze beveiligde link kiest u uw wachtwoord. De link is één uur geldig.</p>`,
     developmentUrl: url,
   }
 }

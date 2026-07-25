@@ -4,11 +4,11 @@
 
 Geaccepteerd — 17 juli 2026.
 
-Implementatiestatus: Fase 0A/0B afgerond; Fase 1 Expand technisch geïmplementeerd; Fase 2A afgerond en product-ownergeaccepteerd; Fase 2B Lifecycle en tenant technisch geïmplementeerd met product-owneracceptatie open. De bestaande multi-membershipdata en tenantcontext zijn nog niet gemigreerd. Contract is niet gestart. Zie [technische implementatie Fase 1](../adr-013-fase-1-expand-technische-implementatie.md), [Fase 2A](../adr-013-fase-2a-platform-en-provisioning.md) en [Fase 2B](../adr-013-fase-2b-lifecycle-en-tenant.md).
+Implementatiestatus: Fase 0A/0B, Expand en Platform/provisioning zijn afgerond; Fase 2B Lifecycle en tenant is technisch geïmplementeerd met product-owneracceptatie open. Module 6B heeft de enkelvoudige tenantcontext en databasebrede membershipuniciteit technisch geactiveerd; handmatige product-owneracceptatie staat open. Accountverwijdering, retentie/purge en membershipbeëindiging blijven fail-closed. Zie [technische implementatie Fase 1](../adr-013-fase-1-expand-technische-implementatie.md), [Fase 2A](../adr-013-fase-2a-platform-en-provisioning.md), [Fase 2B](../adr-013-fase-2b-lifecycle-en-tenant.md) en het [Contract-migratierunbook](../adr-013-contract-migratie-runbook.md).
 
 ## Context
 
-WorkMatchr ondersteunt nu meerdere `OrganizationMembership`-records per User en gebruikt een actieve-organisatiecookie. Dit maakt navigatie flexibel, maar vergroot de kans op tenantambiguïteit, foutieve context en moeilijk uitlegbare accountoffboarding.
+WorkMatchr ondersteunde meerdere `OrganizationMembership`-records per User en gebruikte een actieve-organisatiecookie. Module 6B heeft deze tenantambiguïteit verwijderd met één membership per User en een server-side afgeleide requestcontext.
 
 Providerkwalificatie gebruikt daarnaast gescheiden REVIEWER-, APPROVER- en AUDITOR-permissions. Vier-ogencontrole, tenantonafhankelijkheid en blijvende actorhistorie moeten behouden blijven wanneer accountbinding en verwijdering worden aangescherpt.
 

@@ -54,12 +54,10 @@ describe('gedeelde headercontext', () => {
     expect(source).toContain("window.location.assign('/')")
   })
 
-  it('ververst de header bij wisselen van actieve organisatie', () => {
-    const before = buildHeaderViewModel(clientContext)
-    const after = buildHeaderViewModel(providerContext)
-    expect(before.activeOrganization?.id).toBe('client-1')
-    expect(after.activeOrganization?.id).toBe('provider-1')
-    expect(after.menuLinks.some((item) => item.href === '/aanbiedersdossier')).toBe(true)
+  it('presenteert uitsluitend de server-side afgeleide organisatie', () => {
+    const model = buildHeaderViewModel(providerContext)
+    expect(model.activeOrganization?.id).toBe('provider-1')
+    expect(model.menuLinks.some((item) => item.href === '/aanbiedersdossier')).toBe(true)
   })
 
   it('gebruikt bij sessievernieuwing de actuele gebruikersclaims', () => {
@@ -80,6 +78,7 @@ describe('gedeelde headercontext', () => {
     )
     expect(header).toContain('getOptionalActiveOrganizationContext()')
     expect(organizations).toContain('getCurrentUser()')
-    expect(organizations).toContain('selectActiveMembership(memberships, selectedId)')
+    expect(organizations).toContain('organizationMembership.findUnique')
+    expect(organizations).not.toContain('ACTIVE_ORGANIZATION_COOKIE')
   })
 })

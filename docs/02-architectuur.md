@@ -21,7 +21,7 @@
 - databasegebaseerde sessies en database-rate-limiting;
 - verwisselbare e-mailservice met Resend-voorbereiding.
 - transactionele organisatieservice met membershipgebaseerde tenantautorisatie;
-- server-side gevalideerde actieve-organisatiekeuze via HttpOnly-cookie in de huidige implementatie;
+- server-side afgeleide organisatiecontext via de databasebreed unieke `OrganizationMembership.userId`;
 - verwisselbare logo-opslag met lokale developmentadapter en Sharp-WebP-verwerking.
 - versieerbare intakevraagsets met immutable gepubliceerde versies;
 - getypeerde actuele intakeantwoorden met append-only revisie- en statushistorie;
@@ -49,7 +49,7 @@
 - Regels die meerdere rijen raken, zoals maximaal drie actieve selecties en een sluitend creditsaldo, worden later transactioneel in de servicelaag afgedwongen.
 - Beveiligde routes controleren sessie, platformrol en actuele accountstatus server-side via centrale helpers.
 - Organisatieacties controleren daarnaast actuele membershiprol en organisatie-/membershipstatus server-side.
-- ADR-013 Fase 1 Expand is additief geïmplementeerd met lifecyclevelden, platformorganisatie-identiteit en append-only provisioning-/membershiphistorie. De doelarchitectuur is nog niet geactiveerd: multi-memberships, actieve-organisatiecookie en requestcontext blijven tot Migrate/Contract werken. Reviewer/approverbinding en de auditoruitzondering zijn alleen als niet-geactiveerd fundament vastgelegd.
+- ADR-013 Expand, Migrate en het tenant-Contract zijn geïmplementeerd. Een User heeft databasebreed maximaal één membership; requestcontext bevat geen organisatiecookie of sessieclaim. Reviewer en approver vereisen de centrale platformorganisatie en een expliciete permission; de auditor kan zonder membership bestaan. Accountverwijdering en volledige membershipbeëindiging blijven afzonderlijk fail-closed.
 - Iedere intake blijft gekoppeld aan de bij aanmaak vastgezette vraagsetversie; gepubliceerde inhoud wordt niet in-place gewijzigd.
 - Actuele antwoorden en revisies worden in de intakeservice atomair geschreven; type-, optie-, locatie- en tenantvalidatie is server-side verplicht.
 - Intakepagina’s en componenten benaderen Prisma niet rechtstreeks; reads en writes lopen via afzonderlijke intake-services.

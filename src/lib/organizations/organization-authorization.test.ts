@@ -1,16 +1,45 @@
 import { describe, expect, it } from 'vitest'
-import { selectActiveMembership } from './organization-policy'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { isUsableTenantMembership } from './organization-policy'
 
-const memberships = [{ organization: { id: 'own-a' } }, { organization: { id: 'own-b' } }]
+const tenantMembership = {
+  status: 'ACTIVE' as const,
+  organization: {
+    status: 'ACTIVE' as const,
+    organizationType: 'CLIENT' as const,
+    systemKey: null,
+  },
+}
 
-describe('actieve organisatiekeuze', () => {
-  it('accepteert uitsluitend een organisatie uit de gevalideerde memberships', () => {
-    expect(selectActiveMembership(memberships, 'own-b')?.organization.id).toBe('own-b')
-    expect(selectActiveMembership(memberships, 'foreign-id')?.organization.id).toBe('own-a')
+describe('enkelvoudige organisatiecontext', () => {
+  it('accepteert een actieve normale tenantmembership', () => {
+    expect(isUsableTenantMembership(tenantMembership)).toBe(true)
   })
 
-  it('selecteert de enige membership automatisch en geeft null zonder memberships', () => {
-    expect(selectActiveMembership([memberships[0]])?.organization.id).toBe('own-a')
-    expect(selectActiveMembership([], 'foreign-id')).toBeNull()
+  it('sluit platform-, ontbrekende en inactieve memberships uit', () => {
+    expect(isUsableTenantMembership(null)).toBe(false)
+    expect(
+      isUsableTenantMembership({
+        ...tenantMembership,
+        organization: {
+          status: 'ACTIVE',
+          organizationType: 'PLATFORM_OPERATOR',
+          systemKey: 'WORKMATCHR_PLATFORM',
+        },
+      }),
+    ).toBe(false)
+    expect(isUsableTenantMembership({ ...tenantMembership, status: 'SUSPENDED' })).toBe(false)
+  })
+
+  it('leidt de context zonder cookie of wisselactie uit de unieke userId af', () => {
+    const source = readFileSync(
+      join(process.cwd(), 'src/lib/organizations/organization-authorization.ts'),
+      'utf8',
+    )
+    expect(source).toContain('findUnique')
+    expect(source).toContain('where: { userId: user.id }')
+    expect(source).not.toContain('cookies()')
+    expect(source).not.toContain('ACTIVE_ORGANIZATION_COOKIE')
   })
 })

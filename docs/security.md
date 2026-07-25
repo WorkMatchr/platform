@@ -21,9 +21,9 @@ WorkMatchr gebruikt geen zelfgebouwde wachtwoordhashing, cookiecryptografie of J
 - organizationId uit cookie of formulier wordt nooit blind vertrouwd;
 - `OWNER` en `ADMIN` mogen wijzigen, `MEMBER` is read-only;
 - `ARCHIVED` is niet toegankelijk en `SUSPENDED` niet wijzigbaar;
-- de actieve-organisatiecookie is HttpOnly en SameSite=Lax, maar geen autorisatiebron.
+- de organisatiecontext wordt per request uit de databasebreed unieke membership afgeleid; er is geen actieve-organisatiecookie of sessieclaim.
 
-Deze opsomming beschrijft de huidige implementatie. ADR-013 legt maximaal één actieve membership per normaal tenantaccount vast. Alleen het additive Expand-fundament is geïmplementeerd; organisatiecookie, wisselaar en tenantcontext blijven tot Migrate/Contract intact. Reviewer-/approverbinding en de auditoruitzondering zijn voorbereid maar nog niet in bestaande autorisatie geactiveerd.
+ADR-013 is voor tenantcontext geactiveerd. Een normaal tenantaccount heeft maximaal één membership; reviewer en approver gebruiken de centrale platformorganisatie plus expliciete permission en een auditor kan zonder membership bestaan. Accountverwijdering en volledige membershipbeëindiging blijven afzonderlijk fail-closed.
 
 ## Bestandsuploads
 

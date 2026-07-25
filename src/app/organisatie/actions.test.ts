@@ -1,19 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
-  cookieSet: vi.fn(),
   createOrganization: vi.fn(),
   redirect: vi.fn(),
   requireUser: vi.fn(),
 }))
 
-vi.mock('next/headers', () => ({ cookies: vi.fn(async () => ({ set: mocks.cookieSet })) }))
 vi.mock('next/navigation', () => ({ redirect: mocks.redirect }))
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 vi.mock('@/lib/authorization', () => ({ requireUser: mocks.requireUser }))
 vi.mock('@/lib/prisma', () => ({ getPrisma: vi.fn() }))
 vi.mock('@/lib/organizations/organization-authorization', () => ({
-  ACTIVE_ORGANIZATION_COOKIE: 'workmatchr-active-organization',
   requireManageableOrganization: vi.fn(),
 }))
 vi.mock('@/lib/organizations/organization-service', async (importOriginal) => {
@@ -92,7 +89,7 @@ describe('organisatie Server Action', () => {
     expect(result.values?.tradeName).toBe('Reeds ingevulde handelsnaam')
   })
 
-  it('behoudt de succesvolle submit-, cookie- en redirectflow', async () => {
+  it('behoudt de succesvolle submit- en redirectflow zonder organisatiecookie', async () => {
     await createOrganizationAction({}, validFormData())
 
     expect(mocks.createOrganization).toHaveBeenCalledWith(
@@ -103,11 +100,6 @@ describe('organisatie Server Action', () => {
         website: 'https://voorbeeld.nl',
         employeeCount: 25,
       }),
-    )
-    expect(mocks.cookieSet).toHaveBeenCalledWith(
-      'workmatchr-active-organization',
-      'organization-id',
-      expect.objectContaining({ httpOnly: true, sameSite: 'lax' }),
     )
     expect(mocks.redirect).toHaveBeenCalledWith('/organisatie?aangemaakt=1')
   })

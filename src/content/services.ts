@@ -1,19 +1,75 @@
 import type { ServiceContent } from './public-content-model'
 import { publicRoutes } from './public-routes'
 
-type ServiceInput = Omit<ServiceContent, 'type' | 'status' | 'validationStatus' | 'evidenceLevel' | 'lastReviewed' | 'metadata' | 'faq' | 'notDirectlyWhen' | 'process' | 'organizationResponsibility'> & {
+const serviceEnhancements = {
+  rie: {
+    practiceExample: 'Een groeiend productiebedrijf voegt een nieuwe machine en avondploeg toe. De begeleider onderzoekt samen met medewerkers de nieuwe werkzaamheden, vergelijkt maatregelen met de praktijk en helpt risico’s, eigenaars en termijnen concreet in het plan van aanpak vast te leggen.',
+    rieRelationship: 'Deze dienst richt zich rechtstreeks op de RI&E en het bijbehorende plan van aanpak. De deskundige helpt informatie ordenen en verdiepen; de organisatie blijft eigenaar van de werkelijke risico’s, gekozen maatregelen en periodieke actualisatie.',
+    preparation: 'Verzamel vooraf de huidige RI&E, het plan van aanpak, een overzicht van werkzaamheden en locaties en relevante signalen van medewerkers. Noteer welke veranderingen sinds de vorige beoordeling hebben plaatsgevonden en welke maatregelen al zijn geprobeerd. Benoem ook waar onzekerheid zit: ontbreekt kennis over een risico, is de uitvoering vastgelopen of is onafhankelijke toetsing nodig? Met die informatie kan een deskundige sneller bepalen welke delen actualisatie, verdieping of toetsing vragen. Betrek werknemers en medezeggenschap tijdig, omdat zij zicht hebben op het dagelijkse werk en de uitvoerbaarheid van maatregelen.',
+    additionalFaq: { question: 'Hoe vaak moet een RI&E worden bijgewerkt?', answer: 'Er is geen algemene vaste termijn. Actualiseer de RI&E wanneer veranderingen, incidenten of nieuwe inzichten gevolgen kunnen hebben voor de risico’s en maatregelen.' },
+  },
+  preventiemedewerker: {
+    practiceExample: 'Bij een organisatie met meerdere vestigingen is onduidelijk wie acties uit de RI&E opvolgt. Een adviseur helpt de preventiemedewerker taken afbakenen, een overlegstructuur opzetten en signalen van medewerkers vertalen naar concrete verbeteracties.',
+    rieRelationship: 'De preventiemedewerker werkt mee aan het opstellen en uitvoeren van de RI&E. Ondersteuning is daarom vooral waardevol wanneer de RI&E wel risico’s benoemt, maar eigenaarschap, dagelijkse opvolging of terugkoppeling naar medewerkers onvoldoende is georganiseerd.',
+    preparation: 'Breng in kaart wie de preventiemedewerker is, hoeveel tijd beschikbaar is en welke taken al worden uitgevoerd. Leg daarnaast de RI&E, het plan van aanpak, afspraken met OR of PVT en terugkerende signalen uit de werkvloer klaar. Bespreek vooraf welke ondersteuning nodig is: kennisoverdracht, coaching, taakafbakening of hulp bij een concreet risico. Een duidelijke opdracht voorkomt dat externe ondersteuning de interne rol overneemt. Zorg dat werkgever, preventiemedewerker en medezeggenschap weten hoe adviezen worden besproken, wie besluiten neemt en hoe acties worden gevolgd.',
+    additionalFaq: { question: 'Hoeveel tijd heeft een preventiemedewerker nodig?', answer: 'Dat hangt af van omvang, risico’s en taken. De beschikbare tijd moet voldoende zijn om de afgesproken preventietaken in de praktijk zorgvuldig uit te voeren.' },
+  },
+  bhv: {
+    practiceExample: 'Een bedrijf heeft overdag voldoende BHV’ers, maar niet tijdens avonddiensten en vakanties. De adviseur toetst bezetting en noodscenario’s per tijdvak, bespreekt alarmering en middelen en organiseert een oefening om te zien of de afspraken daadwerkelijk werken.',
+    rieRelationship: 'De RI&E levert de risico’s en scenario’s waarop de BHV-organisatie moet aansluiten. Veranderingen in locatie, werkzaamheden, bezetting of aanwezige personen kunnen daarom aanleiding zijn om zowel de RI&E als de BHV-inrichting opnieuw te beoordelen.',
+    preparation: 'Maak per locatie en tijdvak inzichtelijk hoeveel medewerkers, bezoekers en minder zelfredzame personen aanwezig kunnen zijn. Verzamel plattegronden, noodprocedures, gegevens over alarmering en middelen en de uitkomsten van recente oefeningen. Beschrijf afwijkende situaties, zoals avondwerk, alleenwerk, evenementen of werkzaamheden met gevaarlijke stoffen. Kijk niet uitsluitend naar het aantal opgeleide BHV’ers, maar ook naar feitelijke beschikbaarheid, bereikbaarheid en samenwerking. Een adviseur kan dan gericht beoordelen welke scenario’s prioriteit hebben en waar opleiding, middelen, procedures of oefeningen moeten worden aangepast.',
+    additionalFaq: { question: 'Hoe vaak moet een organisatie oefenen?', answer: 'De wet noemt geen universele frequentie. Oefen zo vaak als nodig om scenario’s, rollen en hulpmiddelen aantoonbaar werkbaar te houden en verbeterpunten te toetsen.' },
+  },
+  bedrijfsarts: {
+    practiceExample: 'Meerdere medewerkers melden vergelijkbare klachten bij hetzelfde werkproces. De bedrijfsarts beoordeelt de relatie tussen werk en gezondheid binnen het medisch beroepsgeheim en adviseert de organisatie op groepsniveau over preventieve vervolgstappen, zonder diagnoses te delen.',
+    rieRelationship: 'Signalen van de bedrijfsarts kunnen wijzen op arbeidsrisico’s die in de RI&E onvoldoende zijn herkend of beheerst. De organisatie verwerkt uitsluitend passende, niet-medische inzichten in de risicoanalyse en het plan van aanpak; individuele gezondheidsinformatie blijft vertrouwelijk.',
+    preparation: 'Formuleer de vraag zonder om diagnoses of individuele medische gegevens te vragen. Beschrijf werkzaamheden, belasting, relevante risico’s uit de RI&E en patronen die op organisatieniveau zichtbaar zijn. Geef aan of het gaat om preventie, verzuimbegeleiding, PAGO, een mogelijk beroepsziektesignaal of advies over werkhervatting. Controleer ook welke afspraken in het basiscontract staan en hoe werknemers zelfstandig toegang krijgen. Een heldere afbakening helpt de bedrijfsarts onafhankelijk adviseren en maakt duidelijk wanneer daarnaast technische of organisatorische expertise nodig is.',
+    additionalFaq: { question: 'Kan een werknemer zelf naar de bedrijfsarts?', answer: 'Ja. Werknemers moeten de bedrijfsarts preventief en zonder onnodige drempel kunnen raadplegen, ook wanneer zij nog niet zijn uitgevallen.' },
+  },
+  pmo: {
+    practiceExample: 'Een logistieke organisatie wil een breed gezondheidsprogramma inkopen. Eerst wordt vanuit de RI&E bepaald welke blootstellingen, fysieke belasting en werktijden werkelijk relevant zijn. Daarna adviseert de bedrijfsarts welke onderzoeksopzet bij die risico’s en het preventiedoel past.',
+    rieRelationship: 'De actuele RI&E is het inhoudelijke vertrekpunt voor arbeidsgezondheidskundig onderzoek. Zonder koppeling aan concrete arbeidsrisico’s bestaat het risico dat een algemeen gezondheidsprogramma relevante werkgerelateerde schade niet onderzoekt en daardoor het wettelijke kerndoel mist.',
+    preparation: 'Begin met de actuele RI&E en laat de bedrijfsarts bepalen welke arbeidsrisico’s, groepen en onderzoeksfrequentie relevant zijn. Leg vast welk preventiedoel het onderzoek heeft, hoe deelname vrijwillig blijft en wie medische gegevens verwerkt. Bespreek vooraf welke geanonimiseerde groepsinformatie de organisatie kan ontvangen en welke maatregelen daarop kunnen volgen. Informeer werknemers begrijpelijk over doel, privacy en vervolg. Kies pas daarna een onderzoeksaanbod. Zo voorkomt u dat een brede leefstijlcheck wordt ingekocht die aantrekkelijk oogt, maar de werkelijke arbeidsrisico’s onvoldoende onderzoekt.',
+    additionalFaq: { question: 'Wat gebeurt er met de uitkomsten van een PMO?', answer: 'Individuele medische uitkomsten blijven vertrouwelijk. De organisatie kan alleen verantwoorde, niet-herleidbare groepsinzichten gebruiken om preventieve maatregelen te verbeteren.' },
+  },
+  'hogere-veiligheidskundige': {
+    practiceExample: 'Na een proceswijziging ontstaan nieuwe raakvlakken tussen productie, onderhoud en externe monteurs. De veiligheidskundige analyseert technische en organisatorische barrières, bespreekt afwijkende situaties met betrokkenen en helpt maatregelen prioriteren voordat het gewijzigde proces volledig wordt ingevoerd.',
+    rieRelationship: 'Een hogere veiligheidskundige kan specialistische onderdelen van de RI&E verdiepen of toetsen wanneer risico’s complex zijn. De bevindingen horen herleidbaar terug te komen in de risico-inschatting, het plan van aanpak en de evaluatie van ingevoerde maatregelen.',
+    preparation: 'Beschrijf het proces, de betrokken installaties, afwijkende werkzaamheden en de concrete beslissing waarvoor advies nodig is. Verzamel tekeningen, procedures, eerdere onderzoeken, incidentgegevens en relevante onderdelen van de RI&E. Benoem welke veranderingen gepland zijn en welke randvoorwaarden niet eenvoudig kunnen wijzigen. Betrek medewerkers, onderhoud, engineering en leiding waar hun kennis nodig is. Vraag de veiligheidskundige aannames, prioriteiten en resterende onzekerheden expliciet vast te leggen. Daardoor kan de organisatie maatregelen niet alleen kiezen, maar later ook controleren of de beoogde risicoreductie is bereikt.',
+    additionalFaq: { question: 'Welke informatie moet in een veiligheidsadvies staan?', answer: 'Een bruikbaar advies beschrijft de vraag, feiten, aannames, risicoafweging, voorgestelde maatregelen, prioriteiten en hoe de werking van maatregelen wordt geëvalueerd.' },
+  },
+  arbeidshygienist: {
+    practiceExample: 'Medewerkers ervaren irritatie tijdens een specifieke productiestap. De arbeidshygiënist brengt bronnen, stoffen, duur en bestaande beheersing in kaart en bepaalt of metingen nodig zijn. Het advies begint bij bronmaatregelen en beschrijft hoe de werking later wordt gecontroleerd.',
+    rieRelationship: 'De blootstellingsbeoordeling verdiept de RI&E voor gezondheidsrisico’s die niet betrouwbaar met een algemene checklist zijn vast te stellen. Aannames, meetgegevens en beheersmaatregelen moeten daarom navolgbaar worden gekoppeld aan de betreffende werkzaamheden en blootstellingsmomenten.',
+    preparation: 'Maak een overzicht van processen, gebruikte producten, hoeveelheden, taakduur, werkplekken en bestaande ventilatie of beschermingsmiddelen. Verzamel veiligheidsinformatiebladen, eerdere metingen, klachtenpatronen en relevante RI&E-onderdelen. Neem ook afwijkende werkzaamheden mee, zoals storingen, schoonmaak en onderhoud, omdat piekblootstelling daar kan ontstaan. Vraag niet direct om een meting zonder beoordelingsvraag. De arbeidshygiënist bepaalt eerst welke informatie ontbreekt en welke meetstrategie representatief is. Spreek af hoe resultaten worden uitgelegd, welke bronmaatregelen voorrang krijgen en wanneer herbeoordeling nodig is.',
+    additionalFaq: { question: 'Wie moet bij een blootstellingsonderzoek worden betrokken?', answer: 'Betrek medewerkers die het werk uitvoeren, leiding, preventiemedewerker en technische deskundigen. Zij kennen variaties, storingen en bestaande maatregelen die in documenten vaak ontbreken.' },
+  },
+  incidentonderzoek: {
+    practiceExample: 'Na een bijna-ongeval blijkt de directe handeling duidelijk, maar niet waarom meerdere beveiligingen tegelijk konden falen. Een onderzoeker verzamelt feiten en ervaringen, onderzoekt technische en organisatorische omstandigheden en helpt maatregelen kiezen die verder gaan dan extra instructie.',
+    rieRelationship: 'Een incident of bijna-ongeval levert nieuwe informatie over risico’s en de werking van maatregelen. Relevante lessen moeten daarom worden gebruikt om de RI&E en het plan van aanpak te actualiseren, zonder het onderzoek te beperken tot schuld of individueel gedrag.',
+    preparation: 'Zorg eerst voor hulpverlening, een veilige situatie en eventuele wettelijke melding. Bewaar daarna relevante feiten, zoals foto’s, instellingen, werkvergunningen, planning en verklaringen, zonder het werk van toezichthouders te hinderen. Formuleer een onderzoeksvraag die gericht is op leren en niet al één oorzaak veronderstelt. Bepaal wie onafhankelijk kan onderzoeken en welke betrokkenen gehoord moeten worden. Spreek af hoe bevindingen, onzekerheden en maatregelen worden vastgelegd. Een zorgvuldig begin verkleint de kans dat informatie verloren gaat of dat alleen de laatste menselijke handeling aandacht krijgt.',
+    additionalFaq: { question: 'Wie kan een incidentonderzoek uitvoeren?', answer: 'Dat hangt af van ernst en complexiteit. Kies iemand met passende onderzoekservaring, inhoudelijke deskundigheid en voldoende onafhankelijkheid ten opzichte van het onderzochte proces.' },
+  },
+} as const
+
+type ServiceSlug = keyof typeof serviceEnhancements
+
+type ServiceInput = Omit<ServiceContent, 'type' | 'status' | 'validationStatus' | 'evidenceLevel' | 'lastReviewed' | 'metadata' | 'faq' | 'notDirectlyWhen' | 'process' | 'organizationResponsibility' | 'practiceExample' | 'rieRelationship' | 'preparation' | 'slug'> & {
+  slug: ServiceSlug
   faq: readonly [{ question: string; answer: string }, { question: string; answer: string }]
 }
 
 function service(input: ServiceInput): ServiceContent {
+  const { additionalFaq, ...enhancement } = serviceEnhancements[input.slug]
   return {
     ...input,
-    type: 'service', status: 'PUBLISHED', validationStatus: input.slug === 'rie' ? 'VALIDATED' : 'CONTEXT_DEPENDENT', evidenceLevel: 'AUTHORITATIVE', lastReviewed: '2026-07-19',
+    ...enhancement,
+    type: 'service', status: 'PUBLISHED', validationStatus: input.slug === 'rie' ? 'VALIDATED' : 'CONTEXT_DEPENDENT', evidenceLevel: 'AUTHORITATIVE', lastReviewed: '2026-07-24',
     metadata: { title: `${input.title} | WorkMatchr`, description: input.summary },
     notDirectlyWhen: ['als de hulpvraag nog niet duidelijk is; begin dan met de Advieswijzer;', 'als direct handelen bij acuut gevaar of een medisch noodgeval nodig is.'],
     process: ['Verhelder de aanleiding, werkzaamheden en gewenste uitkomst.', 'Bepaal welke informatie, locaties en betrokkenen nodig zijn.', 'Laat de deskundige onderzoek of advies uitvoeren en bevindingen uitleggen.', 'Vertaal de uitkomst naar eigenaarschap, maatregelen en een passende evaluatie.'],
     organizationResponsibility: 'De organisatie blijft verantwoordelijk voor veilige en gezonde arbeidsomstandigheden, voor besluiten over maatregelen en voor de uitvoering en evaluatie daarvan. Een deskundige ondersteunt, maar neemt die verantwoordelijkheid niet over.',
-    faq: input.faq.map((item, index) => ({ id: `${input.slug}-faq-${index + 1}`, ...item })),
+    faq: [...input.faq, additionalFaq].map((item, index) => ({ id: `${input.slug}-faq-${index + 1}`, ...item })),
   }
 }
 

@@ -41,13 +41,48 @@ async function expectStatementFailure(client: PoolClient, query: string, values:
   assert(failed, message)
 }
 
-async function testMultiMembershipAndCreatorRelation(client: PoolClient) {
+async function testSingleMembershipConstraint(client: PoolClient) {
+  await begin(client)
+  try {
+    const userId = randomUUID()
+    const firstOrganizationId = randomUUID()
+    const secondOrganizationId = randomUUID()
+    await client.query(
+      `INSERT INTO "User" ("id", "email", "emailVerified", "platformRole", "status", "createdAt", "updatedAt")
+       VALUES ($1, $2, false, 'USER', 'INVITED', now(), now())`,
+      [userId, `subject-${userId}@example.invalid`],
+    )
+    for (const organizationId of [firstOrganizationId, secondOrganizationId]) {
+      await client.query(
+        `INSERT INTO "Organization" ("id", "name", "organizationType", "status", "createdAt", "updatedAt")
+         VALUES ($1, $2, 'CLIENT', 'ACTIVE', now(), now())`,
+        [organizationId, `TEST-WM-ADR013-${organizationId}`],
+      )
+    }
+    await client.query(
+      `INSERT INTO "OrganizationMembership" ("id", "userId", "organizationId", "role", "status", "createdAt", "updatedAt")
+       VALUES ($1, $2, $3, 'OWNER', 'ACTIVE', now(), now())`,
+      [randomUUID(), userId, firstOrganizationId],
+    )
+    await client.query('SAVEPOINT before_second_membership')
+    await expectStatementFailure(
+      client,
+      `INSERT INTO "OrganizationMembership" ("id", "userId", "organizationId", "role", "status", "createdAt", "updatedAt")
+       VALUES ($1, $2, $3, 'MEMBER', 'ACTIVE', now(), now())`,
+      [randomUUID(), userId, secondOrganizationId],
+      'Een User mag databasebreed niet aan een tweede organisatie worden gekoppeld.',
+    )
+    await client.query('ROLLBACK TO SAVEPOINT before_second_membership')
+  } finally {
+    await rollback(client)
+  }
+}
+
+async function testCreatorProjection(client: PoolClient) {
   await begin(client)
   try {
     const creatorId = randomUUID()
     const userId = randomUUID()
-    const firstOrganizationId = randomUUID()
-    const secondOrganizationId = randomUUID()
     await client.query(
       `INSERT INTO "User" ("id", "email", "emailVerified", "platformRole", "status", "createdAt", "updatedAt")
        VALUES ($1, $2, false, 'USER', 'INVITED', now(), now())`,
@@ -58,24 +93,6 @@ async function testMultiMembershipAndCreatorRelation(client: PoolClient) {
        VALUES ($1, $2, false, 'USER', 'INVITED', $3, now(), now())`,
       [userId, `subject-${userId}@example.invalid`, creatorId],
     )
-    for (const organizationId of [firstOrganizationId, secondOrganizationId]) {
-      await client.query(
-        `INSERT INTO "Organization" ("id", "name", "organizationType", "status", "createdAt", "updatedAt")
-         VALUES ($1, $2, 'CLIENT', 'ACTIVE', now(), now())`,
-        [organizationId, `TEST-WM-ADR013-${organizationId}`],
-      )
-      await client.query(
-        `INSERT INTO "OrganizationMembership" ("id", "userId", "organizationId", "role", "status", "createdAt", "updatedAt")
-         VALUES ($1, $2, $3, 'OWNER', 'ACTIVE', now(), now())`,
-        [randomUUID(), userId, organizationId],
-      )
-    }
-    const memberships = await client.query<{ count: string }>(
-      `SELECT count(*)::text AS count FROM "OrganizationMembership" WHERE "userId" = $1`,
-      [userId],
-    )
-    assert(memberships.rows[0]?.count === '2', 'Expand moet twee memberships voor één User tijdelijk toestaan.')
-
     await client.query(`DELETE FROM "User" WHERE "id" = $1`, [creatorId])
     const creatorProjection = await client.query<{ createdByUserId: string | null }>(
       `SELECT "createdByUserId" FROM "User" WHERE "id" = $1`,
@@ -289,7 +306,8 @@ async function main() {
   const client = await pool.connect()
   try {
     const before = await databaseCounts(client)
-    await testMultiMembershipAndCreatorRelation(client)
+    await testSingleMembershipConstraint(client)
+    await testCreatorProjection(client)
     await testSystemKeyConstraints(client)
     await testAppendOnlyProvisioning(client)
     await testHistoricalActorRestriction(client)
@@ -298,7 +316,7 @@ async function main() {
     await testPlatformBootstrap()
     const after = await databaseCounts(client)
     assert(JSON.stringify(after) === JSON.stringify(before), 'De integriteitstest heeft databasegegevens achtergelaten.')
-    console.log('ADR-013 Expand database-integriteit gecontroleerd; alle tijdelijke transacties zijn teruggedraaid.')
+    console.log('ADR-013 Contract database-integriteit gecontroleerd; alle tijdelijke transacties zijn teruggedraaid.')
   } finally {
     client.release()
     await pool.end()

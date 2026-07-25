@@ -11,15 +11,26 @@ import {
   publicRoutes,
 } from '@/content/public-routes'
 import { publicContentCatalog } from '@/content/public-content'
+import { generateStaticParams as generateKnowledgeParams } from './kenniscentrum/[slug]/page'
+import { generateStaticParams as generateObligationParams } from './wettelijke-verplichtingen/[slug]/page'
+import { generateStaticParams as generateSectorParams } from './sectoren/[slug]/page'
+import { generateStaticParams as generateServiceParams } from './diensten/[slug]/page'
 import NotFound from './not-found'
 import robots from './robots'
 import sitemap from './sitemap'
+
+const generatedDetailRoutes = new Set([
+  ...generateServiceParams().map(({ slug }) => `/diensten/${slug}`),
+  ...generateObligationParams().map(({ slug }) => `/wettelijke-verplichtingen/${slug}`),
+  ...generateSectorParams().map(({ slug }) => `/sectoren/${slug}`),
+  ...generateKnowledgeParams().map(({ slug }) => `/kenniscentrum/${slug}`),
+])
 
 function routePageExists(route: string) {
   if (route === '/') return existsSync(join(process.cwd(), 'src/app/page.tsx'))
   const segments = route.slice(1).split('/')
   return existsSync(join(process.cwd(), 'src/app', ...segments, 'page.tsx')) ||
-    (segments.length === 2 && existsSync(join(process.cwd(), 'src/app', segments[0]!, '[slug]', 'page.tsx')))
+    generatedDetailRoutes.has(route)
 }
 
 describe('publieke informatiearchitectuur', () => {
@@ -27,6 +38,12 @@ describe('publieke informatiearchitectuur', () => {
     const routes = Object.values(publicRoutes)
     expect(new Set(routes)).toHaveLength(routes.length)
     expect(routes.every(routePageExists)).toBe(true)
+  })
+
+  it('neemt alleen werkelijk gegenereerde detailroutes als bestaand aan', () => {
+    expect(routePageExists('/diensten/bedrijfsarts')).toBe(true)
+    expect(routePageExists('/diensten/niet-bestaande-dienst')).toBe(false)
+    expect(routePageExists('/kenniscentrum/niet-bestaand-artikel')).toBe(false)
   })
 
   it('laat navigatie en footer uitsluitend naar geregistreerde doelen verwijzen', () => {

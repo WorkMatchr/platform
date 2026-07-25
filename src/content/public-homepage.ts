@@ -41,7 +41,7 @@ export const publicHomepageContent = {
     primaryAction: { href: publicAnchors.askQuestion, label: 'Bekijk waar u kunt beginnen' },
     secondaryAction: { href: publicRoutes.services, label: 'Bekijk alle diensten' },
   },
-  process: ['Situatie', 'Verduidelijking', 'Inzicht', 'Vervolgstap'],
+  process: ['Uw situatie', 'Enkele vragen', 'Uw advies', 'Vervolgstap'],
   situations: [
     {
       title: 'Ik heb personeel in dienst',

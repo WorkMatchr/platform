@@ -215,3 +215,6 @@ Er is geen membership-uniciteit, data-backfill, platformorganisatie, statusoverg
 Migratie `20260717190000_add_platform_provisioning_events` voegt `OrganizationProvisioningEvent` en de actorsoorten `SYSTEM`/`USER` toe. Databasechecks bewaken de actorbinding, idempotency en positieve schemaversie; dezelfde append-only trigger weigert update/delete. Na back-up en dry-run is exact één platformorganisatie gebootstrapt en zijn drie systeemevents plus twee `MIGRATED_UNKNOWN`-accountevents geschreven. De tenantmemberships en authdata zijn ongewijzigd. Zie [Fase 2A — Platform en provisioning](adr-013-fase-2a-platform-en-provisioning.md).
 
 Migratie `20260720173000_make_marketplace_audit_correlation_unique` vervangt de gewone index op `MarketplaceAuditEvent.correlationKey` door een unieke index. Daardoor kan dezelfde bedrijfsactie ook bij herhaling of concurrency maximaal één auditrecord opleveren.
+### ADR-013 Contract
+
+Migratie `20260724150000_enforce_single_organization_membership` maakt `OrganizationMembership.userId` uniek. Een voorafgaande SQL-guard stopt de migratie wanneer een database nog multi-memberships bevat. De migratie verwijdert, verdeelt of herschrijft geen data en laat alle foreign keys en append-only historie intact. Zie het [Contract-migratierunbook](adr-013-contract-migratie-runbook.md).

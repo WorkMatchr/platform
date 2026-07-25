@@ -1,5 +1,17 @@
 # Changelog
 
+## Niet uitgebracht — Module 6B één account per organisatie
+
+- `OrganizationMembership.userId` is databasebreed uniek gemaakt met een fail-closed, niet-destructieve migratieguard.
+- De organisatiecontext wordt per request server-side uit de enige membership afgeleid; de actieve-organisatiecookie en organisatiewisselaar zijn verwijderd.
+- De account- en organisatie-interface bevatten geen organisatiewisselaar of actie om een tweede organisatie toe te voegen.
+- Uitnodigingen blijven afzonderlijke Users, credentials, sessies, audittrails en één membership per account gebruiken.
+- Nieuwe organisatiegebruikers activeren hun account via één Better Auth-link, kiezen direct hun wachtwoord en worden daarna ingelogd; e-mailverificatie en wachtwoordherstel blijven afzonderlijke gebruikersreizen.
+- Een mislukte e-mailbezorging laat de aangemaakte uitnodiging intact en toont een begrijpelijke melding met een veilige mogelijkheid tot opnieuw verzenden.
+- Het dubbele veld `Primaire sector` is uit de profielwijziging verwijderd; de bestaande technische sectorrelatie blijft zonder destructieve datamigratie behouden.
+- Preflight, unit- en database-integratietests zijn aangepast aan de Contract-eindtoestand; append-only historie en actorrelaties blijven intact.
+- Accountverwijdering en membershipbeëindiging blijven fail-closed totdat de afzonderlijke retentie- en lifecyclevoorwaarden zijn gerealiseerd.
+
 ## Niet uitgebracht — Module 6A.3 laatste UX- en authenticatieafwerking
 
 - de dienstenpagina van het **Dienstverlenersprofiel** verfijnd tot een responsive tweekolomsindeling met het invoerformulier vóór en links van de compacte dienstenlijst;

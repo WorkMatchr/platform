@@ -114,7 +114,9 @@ describe('ADR-013 accountarchitectuur-preflight', () => {
     expect(report.summary.usersWithZeroMemberships).toBe(3)
     expect(report.summary.usersWithExactlyOneMembership).toBe(3)
     expect(report.summary.usersWithMultipleMemberships).toBe(1)
-    const multi = report.findings.find((finding) => finding.code === 'ADR013_NEW_MULTI_MEMBERSHIP')
+    const multi = report.findings.find(
+      (finding) => finding.code === 'ADR013_MULTI_MEMBERSHIP_CONTRACT_VIOLATION',
+    )
     expect(multi?.severity).toBe('BLOCKER')
     expect(multi?.recommendedAction).toContain('handmatig')
     expect(multi?.evidence).toMatchObject({ membershipCount: 2 })

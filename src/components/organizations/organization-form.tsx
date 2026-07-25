@@ -117,12 +117,16 @@ export function OrganizationForm({ action, initialValues = {}, mode, sectors }: 
 
       <fieldset>
         <legend className="text-lg font-bold text-brand-dark">Sectoren</legend>
-        <p className="mt-2 text-sm text-text-secondary">Selecteer minimaal één sector en wijs daarna de primaire sector aan.</p>
+        <p className="mt-2 text-sm text-text-secondary">
+          {mode === 'create'
+            ? 'Selecteer minimaal één sector en wijs daarna de primaire sector aan.'
+            : 'Selecteer minimaal één sector waarin uw organisatie actief is.'}
+        </p>
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
           {sectors.map((sector) => <label key={sector.id} className={optionClassName('sectorIds')}><input type="checkbox" name="sectorIds" value={sector.id} defaultChecked={selectedSectorIds.has(sector.id)} aria-invalid={isInvalid('sectorIds')} aria-describedby={describedBy('sectorIds')} /><span>{sector.name}</span></label>)}
         </div>
         <FieldError id="sectorIds-error" message={error('sectorIds')} />
-        <div className="mt-5"><label htmlFor="primarySectorId" className="font-semibold">Primaire sector <span aria-hidden="true">*</span></label><select id="primarySectorId" name="primarySectorId" required defaultValue={value('primarySectorId', initialValues.primarySectorId ?? '')} className={inputClassName('primarySectorId')} aria-invalid={isInvalid('primarySectorId')} aria-describedby={describedBy('primarySectorId')}><option value="" disabled>Kies een sector</option>{sectors.map((sector) => <option key={sector.id} value={sector.id}>{sector.name}</option>)}</select><FieldError id="primarySectorId-error" message={error('primarySectorId')} /></div>
+        {mode === 'create' && <div className="mt-5"><label htmlFor="primarySectorId" className="font-semibold">Primaire sector <span aria-hidden="true">*</span></label><select id="primarySectorId" name="primarySectorId" required defaultValue={value('primarySectorId', initialValues.primarySectorId ?? '')} className={inputClassName('primarySectorId')} aria-invalid={isInvalid('primarySectorId')} aria-describedby={describedBy('primarySectorId')}><option value="" disabled>Kies een sector</option>{sectors.map((sector) => <option key={sector.id} value={sector.id}>{sector.name}</option>)}</select><FieldError id="primarySectorId-error" message={error('primarySectorId')} /></div>}
       </fieldset>
 
       <fieldset className="space-y-5">

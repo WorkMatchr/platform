@@ -27,16 +27,16 @@ export function PublicTextSection({ id, title, children }: { id: string; title: 
 }
 
 export function PublicBulletList({ items }: { items: readonly string[] }) {
-  return <ul className="list-disc space-y-2 pl-6 text-body leading-7 text-text-secondary">{items.map((item) => <li key={item}>{item}</li>)}</ul>
+  return <ul className="list-disc space-y-1 pl-6 text-body leading-6 text-text-secondary">{items.map((item) => <li key={item}>{item}</li>)}</ul>
 }
 
 export function PublicSteps({ items }: { items: readonly string[] }) {
-  return <ol className="space-y-3 text-text-secondary">{items.map((item, index) => <li key={item} className="flex gap-3"><span className="font-semibold text-brand-primary" aria-hidden="true">{index + 1}.</span><span>{item}</span></li>)}</ol>
+  return <ol className="space-y-1 text-body leading-6 text-text-secondary">{items.map((item, index) => <li key={item} className="flex gap-3"><span className="font-semibold text-brand-primary" aria-hidden="true">{index + 1}.</span><span>{item}</span></li>)}</ol>
 }
 
 export function PublicFaqList({ faq }: { faq: readonly PublicFaq[] }) {
   if (faq.length === 0) return null
-  return <section aria-labelledby="faq-title"><Heading as="h2" size="h2" id="faq-title">Veelgestelde vragen</Heading><dl className="mt-6 space-y-6">{faq.map((item) => <div key={item.id}><dt className="font-semibold text-text-primary">{item.question}</dt><dd className="mt-2 text-body leading-7 text-text-secondary">{item.answer}</dd></div>)}</dl></section>
+  return <section aria-labelledby="faq-title"><Heading as="h2" size="h2" id="faq-title">Veelgestelde vragen</Heading><dl className="mt-4 space-y-4">{faq.map((item) => <div key={item.id}><dt className="font-semibold leading-6 text-text-primary">{item.question}</dt><dd className="mt-1 text-body leading-6 text-text-secondary">{item.answer}</dd></div>)}</dl></section>
 }
 
 const sourceTypeLabels = {
@@ -47,5 +47,5 @@ const sourceTypeLabels = {
 } as const
 
 export function PublicSourceList({ sources }: { sources: readonly PublicSource[] }) {
-  return <section aria-labelledby="sources-title"><Heading as="h2" size="h2" id="sources-title">Bronnen en onderbouwing</Heading><ul className="mt-6 space-y-5">{sources.map((source) => <li key={source.id} className="border-l-4 border-brand-primary/30 pl-5"><a href={source.url} target="_blank" rel="noreferrer" className="font-semibold text-brand-primary underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-primary">{source.title}<span className="sr-only"> (opent in een nieuw venster)</span></a><Text size="sm" className="mt-1 text-text-secondary">{source.publisher} · {sourceTypeLabels[source.type]} · {source.evidenceLevel === 'PRIMARY' ? 'Primaire bron' : 'Gezaghebbende bron'}</Text><Text size="sm" className="mt-1 text-text-secondary">{source.note}</Text></li>)}</ul></section>
+  return <section aria-labelledby="sources-title"><Heading as="h2" size="h2" id="sources-title">Bronnen en onderbouwing</Heading><ul className="mt-4 space-y-3">{sources.map((source) => <li key={source.id} className="border-l-4 border-brand-primary/30 pl-5"><a href={source.url} target="_blank" rel="noreferrer" className="font-semibold text-brand-primary underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-primary">{source.title}<span className="sr-only"> (opent in een nieuw venster)</span></a><Text size="sm" className="mt-1 text-text-secondary">{source.publisher} · {sourceTypeLabels[source.type]} · {source.evidenceLevel === 'PRIMARY' ? 'Primaire bron' : 'Gezaghebbende bron'}</Text><Text size="sm" className="mt-1 text-text-secondary">{source.note}</Text></li>)}</ul></section>
 }

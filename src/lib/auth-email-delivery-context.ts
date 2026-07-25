@@ -1,7 +1,15 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
 import type { AuthEmailDeliveryResult } from '@/lib/email'
 
-type DeliveryCapture = { result?: AuthEmailDeliveryResult }
+export type InvitationActivationEmailContext = {
+  organizationId: string
+  organizationName: string
+}
+
+type DeliveryCapture = {
+  result?: AuthEmailDeliveryResult
+  invitationActivation?: InvitationActivationEmailContext
+}
 
 const deliveryStorage = new AsyncLocalStorage<DeliveryCapture>()
 
@@ -14,4 +22,17 @@ export async function withAuthEmailDeliveryCapture<T>(operation: () => Promise<T
   const capture: DeliveryCapture = {}
   await deliveryStorage.run(capture, operation)
   return capture.result ?? null
+}
+
+export async function withInvitationActivationDelivery<T>(
+  context: InvitationActivationEmailContext,
+  operation: () => Promise<T>,
+): Promise<AuthEmailDeliveryResult | null> {
+  const capture: DeliveryCapture = { invitationActivation: context }
+  await deliveryStorage.run(capture, operation)
+  return capture.result ?? null
+}
+
+export function getInvitationActivationEmailContext(): InvitationActivationEmailContext | null {
+  return deliveryStorage.getStore()?.invitationActivation ?? null
 }

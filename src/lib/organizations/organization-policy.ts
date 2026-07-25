@@ -31,7 +31,21 @@ export function shouldCreateProviderProfile(organizationType: 'CLIENT' | 'PROVID
   return organizationType === 'PROVIDER' || organizationType === 'BOTH'
 }
 
-export function selectActiveMembership<T extends { organization: { id: string } }>(memberships: T[], selectedId?: string): T | null {
-  if (memberships.length === 0) return null
-  return memberships.find((membership) => membership.organization.id === selectedId) ?? memberships[0]
+type TenantMembershipContext = {
+  status: MembershipStatus
+  organization: {
+    status: OrganizationStatus
+    organizationType: 'CLIENT' | 'PROVIDER' | 'BOTH' | 'PLATFORM_OPERATOR'
+    systemKey: string | null
+  }
+}
+
+export function isUsableTenantMembership(membership: TenantMembershipContext | null): boolean {
+  return Boolean(
+    membership &&
+    membership.status === 'ACTIVE' &&
+    membership.organization.status !== 'ARCHIVED' &&
+    membership.organization.organizationType !== 'PLATFORM_OPERATOR' &&
+    membership.organization.systemKey === null,
+  )
 }

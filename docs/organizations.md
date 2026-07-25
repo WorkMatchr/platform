@@ -14,9 +14,7 @@ Bij een validatiefout behouden de onboarding- en profielformulieren alle ingevul
 
 ## Actieve organisatie
 
-De huidige implementatie kiest bij één actieve membership automatisch de organisatie en laat bij meerdere memberships wisselen. Een HttpOnly-, SameSite=Lax-cookie bevat uitsluitend de gekozen `organizationId`; iedere lezing en mutatie valideert server-side opnieuw dat gebruiker, membership en organisatie toegang toestaan. De cookie is nooit een autorisatiebron.
-
-ADR-013 vervangt dit in de doelarchitectuur door maximaal één actieve membership per normaal tenantaccount. De organisatiecontext wordt dan per request server-side afgeleid, de wisselaar en “Organisatie toevoegen” vervallen, en toegang tot een andere organisatie vereist een afzonderlijke `User` met eigen e-mailadres en credentials. `OrganizationMembership` blijft bestaan voor rol, status, lifecycle en audit. Alleen Expand is geïmplementeerd; de tenantmigratie is nog niet uitgevoerd.
+Een User heeft databasebreed maximaal één `OrganizationMembership`. De organisatiecontext wordt per request server-side uit deze membership afgeleid; er is geen actieve-organisatiecookie, wisselaar of actie om een tweede organisatie toe te voegen. Toegang tot een andere organisatie vereist een afzonderlijke `User` met eigen e-mailadres, credentials en sessie. `OrganizationMembership` blijft bestaan voor rol, status, lifecycle en audit.
 
 ## Privacy
 
@@ -37,4 +35,4 @@ De route `/organisatie/gebruikers` gebruikt uitsluitend de server-side gevalidee
 
 De bestaande vooraf bekende legacy User met twee tenantmemberships is niet automatisch gewijzigd. Die situatie blijft een expliciete migratieblocker; de uitzondering staat alleen bestaande relaties toe en kan nooit een nieuw tweede membership creëren.
 
-OWNER en bevoegde ADMIN kunnen vanaf `/organisatie/gebruikers` nieuwe gebruikers voor dezelfde tenant uitnodigen. Iedere uitnodiging maakt een afzonderlijke User, Better Auth-credential en membership met append-only audittrail. OWNER kan MEMBER of ADMIN kiezen; ADMIN alleen MEMBER. Uitnodigingen naar de platformorganisatie en koppeling van een bestaand account uit een andere tenant worden geweigerd.
+OWNER en bevoegde ADMIN kunnen vanaf `/organisatie/gebruikers` nieuwe gebruikers voor dezelfde tenant uitnodigen. Iedere uitnodiging maakt een afzonderlijke User, Better Auth-credential en membership met append-only audittrail. OWNER kan MEMBER of ADMIN kiezen; ADMIN alleen MEMBER. De genodigde gebruikt één link **Account activeren**, kiest daar een persoonlijk wachtwoord en wordt na activatie direct ingelogd. Uitnodigingen naar de platformorganisatie en koppeling van een bestaand account uit een andere tenant worden geweigerd.

@@ -9,7 +9,6 @@ import {
 } from './account-management-policy'
 import { assertAccountStatusTransition } from './account-lifecycle'
 import { isPlatformOrganization } from './platform-organization-governance'
-import { isApprovedLegacyMultiMembership } from './tenant-membership-policy'
 
 const REASON_CODE_PATTERN = /^[A-Z][A-Z0-9_]{2,79}$/
 const IDEMPOTENCY_KEY_PATTERN = /^[a-zA-Z0-9:_-]{12,160}$/
@@ -191,7 +190,7 @@ async function assertValidUnblockMemberships(
       organization: { organizationType: { not: 'PLATFORM_OPERATOR' }, systemKey: null },
     },
   })
-  if (tenantMembershipCount !== 1 && !isApprovedLegacyMultiMembership(subjectUserId)) {
+  if (tenantMembershipCount !== 1) {
     throw new AccountLifecycleServiceError('CONFLICT', 'De organisatiebinding van dit account is niet eenduidig.')
   }
 }
