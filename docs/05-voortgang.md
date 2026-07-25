@@ -620,3 +620,17 @@ Deze actuele Fase 3-status volgt de historische Module 6A-notities op waarin mat
 - reviewer, approver en auditor gebruiken hun bestaande gescheiden platformactorgrondslag; alleen centraal platformbeheer ziet mutatieacties;
 - product-owneracceptatie, volledige browserrollenflow en productie-outboxverwerking staan open;
 - credits kopen, betalingen, AI, reviews en publieke providerzoeking zijn niet gestart.
+
+## Module 6C — Platformbeheer
+
+**Status:** technisch uitgevoerd; product-owneracceptatie open.
+
+- dagelijkse cockpit met compacte platform-, dienstverlener-, opdracht- en operationsignalen;
+- beveiligde registers voor organisaties, gebruikers, dienstverleners en opdrachten;
+- marketplace-inzicht zonder financiële administratie;
+- gescheiden reviewer-, approver- en auditoroverzichten zonder impliciete permissionverlening;
+- read-only audit, platforminstellingen en privacyveilige rapportages met CSV-export;
+- organisatie- en accountblokkades via centrale, transactionele en geaudite lifecycle-services;
+- geen zoektracking geactiveerd; zoektermen en conversietrends wachten op privacy-, cookie- en retentiebesluiten;
+- automatische autorisatie-, navigatie-, lifecycle-, header- en rapportagetests toegevoegd;
+- handmatige desktop-, mobiele, toetsenbord-, filter-, export- en rollenacceptatie staat open.

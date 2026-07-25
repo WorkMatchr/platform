@@ -81,4 +81,28 @@ describe('gedeelde headercontext', () => {
     expect(organizations).toContain('organizationMembership.findUnique')
     expect(organizations).not.toContain('ACTIVE_ORGANIZATION_COOKIE')
   })
+  it('toont Platformbeheer alleen bij de volledige centrale platformclaim', () => {
+    const platformAdministrator = buildHeaderViewModel({
+      user: {
+        displayName: 'Platformbeheerder',
+        email: 'platformbeheerder@example.invalid',
+        status: 'ACTIVE',
+        platformRole: 'ADMIN',
+      },
+      activeMembership: {
+        role: 'ADMIN',
+        status: 'ACTIVE',
+        organization: {
+          id: 'platform-1',
+          name: 'WorkMatchr Platform',
+          organizationType: 'PLATFORM_OPERATOR',
+          status: 'ACTIVE',
+          systemKey: 'WORKMATCHR_PLATFORM',
+          providerProfile: null,
+        },
+      },
+    })
+    expect(platformAdministrator.primaryLinks).toContainEqual({ href: '/platformbeheer', label: 'Platformbeheer' })
+    expect(buildHeaderViewModel(clientContext).primaryLinks.some((item) => item.href === '/platformbeheer')).toBe(false)
+  })
 })

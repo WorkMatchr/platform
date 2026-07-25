@@ -21,3 +21,7 @@ Dit betekent voor publieke overzichten: compactere verticale spacing, lagere kaa
 Publieke informatie legt niet alleen uit wat een onderwerp is, maar ook waarom en wanneer het relevant is, hoe het in de praktijk kan werken en welke vervolgstap passend kan zijn. De inhoud blijft begrijpelijk voor ondernemers, gebruikt concrete voorbeelden waar die verduidelijken en vermijdt zowel oppervlakkige éénregelige uitleg als encyclopedische volledigheid.
 
 Publieke dienst- en kennispagina’s bevatten als inhoudelijke richtlijn circa 500 woorden, zonder tekst te herhalen om een lengte te halen. Iedere pagina sluit de inhoud af met onderwerpgebonden veelgestelde vragen. Bulletlists, genummerde stappen, FAQ’s en bronlijsten gebruiken een compacte, consistente tussenruimte, met behoud van leesbaarheid en semantische structuur.
+
+13. Beheerinterfaces tonen eerst wat actie vraagt en daarna pas statistiek.
+
+Een dagelijkse cockpit maakt de actuele gezondheid, urgente aandacht, risico’s en aanbevolen vervolgacties binnen vijf seconden zichtbaar. Advies is rule-based, reproduceerbaar en uitlegbaar: iedere aanbeveling toont ernst, reden, brondata en een directe vervolgstap. Kleur is nooit de enige statusdrager. Lege of onbetrouwbare cijfers worden niet als betekenisvolle inzichten gepresenteerd.

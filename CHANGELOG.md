@@ -1,5 +1,19 @@
 # Changelog
 
+## Niet uitgebracht — Module 6C Platformbeheer
+
+- een afzonderlijke, compacte cockpit onder `/platformbeheer` toegevoegd voor organisaties, gebruikers, dienstverleners, opdrachten, marketplace, trends, reviewer, approver, auditor, rapportages en instellingen;
+- de cockpit geordend op begroeting en status, actievereisten, maximaal vier kerncijfers, wachtrijen, betrouwbare trends en platformgezondheid;
+- een centrale, deterministische advieslaag toegevoegd met vaste ernst, uitlegbare bronwaarden, concrete vervolgstap, deeplink en reproduceerbare sortering, zonder generatieve AI;
+- de navigatie taakgericht gegroepeerd onder Dagelijks beheer, Beoordelingen, Inzicht en Systeem, met de zichtbare labels Reviews, Goedkeuringen en Audit;
+- toegang fail-closed beperkt tot actieve `PlatformRole.ADMIN`-accounts met een actieve membership bij de actieve systeemorganisatie `WORKMATCHR_PLATFORM`;
+- organisatie- en accountblokkades gekoppeld aan transactionele lifecycle-services met verplichte reden, sessie-intrekking waar van toepassing en append-only audit;
+- geaggregeerde operationele kengetallen, filters, lifecycle-inzicht en een privacyveilige CSV-export toegevoegd;
+- reviewer-, approver- en auditorbevoegdheden bewust niet afgeleid uit platformbeheer: bestaande expliciete permissions en vier-ogenregels blijven leidend;
+- zoektermenanalyse toont een eerlijke lege toestand totdat privacy-, cookie-, retentie- en meetbesluiten zijn vastgesteld;
+- geen Prisma-schema, migratie, dependency, financiële administratie of accountverwijdering toegevoegd;
+- status: technisch uitgevoerd; product-owneracceptatie en handmatige browsercontrole open.
+
 ## Niet uitgebracht — Module 6B één account per organisatie
 
 - `OrganizationMembership.userId` is databasebreed uniek gemaakt met een fail-closed, niet-destructieve migratieguard.

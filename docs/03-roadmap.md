@@ -31,7 +31,7 @@
    - **Module 6A.4 — Decision Engine datamodel en services — niet gestart.** Kandidaatverzameling, knock-outs, scoring en uitlegbaarheidsrapporten volgen later.
    - **Module 6A.5 — Selectie-interface en acceptatie — niet gestart.** De interface en integrale product-, security-, data- en rollenacceptatie vormen de afsluiting.
 9. **Module 6B — Uitnodigingen en providertoegang — niet gestart.** Alleen geselecteerde providers krijgen later gecontroleerde toegang, berichten en een acceptatie-/weigerflow.
-10. **Module 6C — Inschrijvingen en offertes — niet gestart.** Offerteversies, reactietermijnen en providerinvoer volgen na uitnodigingen.
+10. **Module 6C — Platformbeheer — technisch uitgevoerd; product-owneracceptatie open.** De beveiligde dagelijkse cockpit toont eerst rule-based acties met ernst, uitleg, brondata en deeplink, daarna maximaal vier kerncijfers, wachtrijen, betrouwbare trends en platformgezondheid. De navigatie is taakgericht gegroepeerd. Zoektelemetrie, financiële administratie, accountverwijdering en systeemconfiguratiemutaties blijven buiten scope.
 11. **Module 6D — Offertevergelijking, gunning en evaluatie — niet gestart.** Een toekomstige vergelijking en een immutable gunningsrapport leggen keuze, criteria, prijs-kwaliteitafweging, versies, actor en tijd vast.
 
 Latere modules behandelen credits, Mollie-betalingen, berichten, verder beheer en productievoorbereiding. AI-intake en AI-matching volgen pas na afzonderlijk ontwerp in een latere versie.

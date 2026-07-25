@@ -1,13 +1,17 @@
-import type { OrganizationMembershipRole, OrganizationType } from '@/generated/prisma/client'
+import type { OrganizationMembershipRole, OrganizationType, PlatformRole, UserStatus } from '@/generated/prisma/client'
+import { isCentralPlatformAdministrator } from '@/lib/account-architecture/account-management-policy'
 
 type HeaderContext = {
-  user: { displayName: string | null; email: string }
+  user: { displayName: string | null; email: string; status?: UserStatus; platformRole?: PlatformRole }
   activeMembership: {
     role: OrganizationMembershipRole
+    status?: 'ACTIVE' | 'INVITED' | 'SUSPENDED' | 'REMOVED'
     organization: {
       id: string
       name: string
       organizationType: OrganizationType
+      status?: 'ACTIVE' | 'PENDING' | 'SUSPENDED' | 'ARCHIVED'
+      systemKey?: string | null
       providerProfile: { id: string } | null
     }
   } | null
@@ -31,6 +35,20 @@ export function buildHeaderViewModel(context: HeaderContext | null): HeaderViewM
   const supportsProviderWork = Boolean(
     organization?.providerProfile && (organization.organizationType === 'PROVIDER' || organization.organizationType === 'BOTH'),
   )
+  const isPlatformAdministrator = isCentralPlatformAdministrator({
+    status: context.user.status ?? 'INVITED',
+    platformRole: context.user.platformRole ?? 'USER',
+    platformMembership: context.activeMembership
+      ? {
+          status: context.activeMembership.status ?? 'INVITED',
+          organization: {
+            status: context.activeMembership.organization.status ?? 'PENDING',
+            organizationType: context.activeMembership.organization.organizationType,
+            systemKey: context.activeMembership.organization.systemKey ?? null,
+          },
+        }
+      : null,
+  })
 
   return {
     authenticated: true,
@@ -44,6 +62,7 @@ export function buildHeaderViewModel(context: HeaderContext | null): HeaderViewM
       ...(organization ? [{ href: '/dashboard', label: 'Dashboard' }] : []),
       ...(supportsClientWork ? [{ href: '/hulpvragen', label: 'Hulpvragen' }, { href: '/opdrachten', label: 'Opdrachten' }] : []),
       ...(supportsProviderWork ? [{ href: '/aanbiedersdossier', label: 'Dienstverlenersprofiel' }, { href: '/uitnodigingen', label: 'Uitnodigingen' }] : []),
+      ...(isPlatformAdministrator ? [{ href: '/platformbeheer', label: 'Platformbeheer' }] : []),
     ],
     menuLinks: [
       { href: '/account', label: 'Mijn account' },

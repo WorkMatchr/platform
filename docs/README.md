@@ -89,6 +89,7 @@ Deze map bevat de leidende projectdocumentatie. Lees vóór een wijziging minima
 - [ADR-019: Opdrachtgebonden berichtenisolatie](adr/ADR-019-opdrachtgebonden-berichtenisolatie.md)
 - [ADR-020: Persistente notificaties en outbox](adr/ADR-020-persistente-notificaties-en-outbox.md)
 - [Teststrategie](test-strategy.md)
+- [Module 6C: Platformbeheer](module-6c-platformbeheer.md)
 
 ## Authenticatie en beveiliging
 

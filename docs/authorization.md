@@ -89,3 +89,17 @@ Voor uitnodigingen mag OWNER een MEMBER of ADMIN toevoegen. ADMIN mag uitsluiten
 De bestaande reviewer-, approver- en auditorpermissions uit ADR-010 blijven het enige platformpermissionmodel. Een nieuwe pure policy legt het toekomstige fundament vast: reviewer en approver vereisen een actieve membership bij `WORKMATCHR_PLATFORM`; auditor vereist juist geen membership. Deze policy is nog niet aan bestaande autorisatieflows gekoppeld en kent geen rechten toe.
 
 De unieke tenantmembershipregel en enkelvoudige requestcontext zijn actief. Creatorbinding verleent geen rechten en last-OWNER-bescherming blijft fail-closed. Membershipbeëindiging blijft uitgeschakeld totdat de volledige lifecycle atomair is bewezen.
+
+## Module 6C — Platformbeheer
+
+Alle routes onder `/platformbeheer`, inclusief de CSV-export, vereisen opnieuw server-side:
+
+- `User.status = ACTIVE`;
+- `User.platformRole = ADMIN`;
+- een actieve membership;
+- een actieve organisatie van type `PLATFORM_OPERATOR`;
+- exact `Organization.systemKey = WORKMATCHR_PLATFORM`.
+
+Een tenantrol `OWNER`, `ADMIN` of `MEMBER` geeft geen toegang. Een losse platformrol zonder geldige systeemmembership evenmin. Reviewer, approver en auditor blijven afzonderlijke permissions: platformbeheer toont de wachtrijstatus, maar opent operationele dossieracties alleen wanneer de betreffende permission werkelijk actief is.
+
+Organisatieblokkades weigeren systeemorganisaties en schrijven status plus audit in één serialiseerbare transactie. Accountblokkades gebruiken de bestaande lifecyclepolicy, waaronder self-blockweigering, bescherming van het laatste actieve OWNER-account, bescherming van platformaccounts, tenantcontrole en sessie-intrekking.
