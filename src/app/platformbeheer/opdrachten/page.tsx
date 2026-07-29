@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { AdminPageHeader, AdminTable, EmptyState, FilterField, FilterForm, StatusPill } from '@/components/platform-admin/platform-admin-ui'
 import type { AssignmentStatus } from '@/generated/prisma/enums'
 import { requirePlatformAdministrator } from '@/lib/platform-admin/platform-admin-authorization'
@@ -29,7 +30,7 @@ export default async function PlatformAssignmentsPage({ searchParams }: { search
       {assignments.length === 0 ? <EmptyState>Geen opdrachten gevonden met deze filters.</EmptyState> : (
         <AdminTable headers={['Opdracht', 'Opdrachtgever', 'Status', 'Sector', 'Geselecteerd', 'Reacties', 'Open sinds']}>
           {assignments.map((assignment) => <tr key={assignment.id}>
-            <td className="px-4 py-3 font-semibold text-brand-dark">{assignment.title}</td>
+            <td className="px-4 py-3"><Link className="font-semibold text-brand-primary underline" href={`/platformbeheer/opdrachten/${assignment.id}`}>{assignment.title}</Link></td>
             <td className="px-4 py-3">{assignment.clientOrganization.name}</td>
             <td className="px-4 py-3"><StatusPill tone={assignment.status === 'AWARDED' || assignment.status === 'CLOSED' ? 'good' : assignment.status === 'CANCELLED' ? 'bad' : 'neutral'}>{assignment.status}</StatusPill></td>
             <td className="px-4 py-3">{assignment.sector?.name ?? 'Niet vastgelegd'}</td>

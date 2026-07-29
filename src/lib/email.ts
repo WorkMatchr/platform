@@ -1,7 +1,7 @@
 import { Resend } from 'resend'
 
 type AuthEmail = {
-  kind: 'INVITATION' | 'VERIFICATION' | 'PASSWORD_RESET' | 'ROLE_CHANGE_NOTIFICATION'
+  kind: 'INVITATION' | 'VERIFICATION' | 'PASSWORD_RESET' | 'ROLE_CHANGE_NOTIFICATION' | 'ADMIN_MESSAGE'
   to: string
   subject: string
   text: string
@@ -186,5 +186,24 @@ export function roleChangeNotificationEmail(input: {
     subject: `Uw rol binnen ${input.organizationName} is gewijzigd`,
     text: `Beste ${input.name},\n\nUw rol binnen ${input.organizationName} is op ${changedAt} gewijzigd van ${roleLabel(input.previousRole)} naar ${roleLabel(input.newRole)}. Uw actieve sessies zijn beëindigd; log opnieuw in om met de actuele bevoegdheden verder te gaan.\n\nWas deze wijziging onverwacht? Neem dan contact op met Uw organisatie of via de contactmogelijkheid van WorkMatchr.`,
     html: `<p>Beste ${safeName},</p><p>Uw rol binnen <strong>${safeOrganization}</strong> is op ${changedAt} gewijzigd van <strong>${roleLabel(input.previousRole)}</strong> naar <strong>${roleLabel(input.newRole)}</strong>.</p><p>Uw actieve sessies zijn beëindigd. Log opnieuw in om met de actuele bevoegdheden verder te gaan.</p><p>Was deze wijziging onverwacht? Neem dan contact op met Uw organisatie of via de contactmogelijkheid van WorkMatchr.</p>`,
+  }
+}
+
+export function administrativeEmail(input: {
+  to: string
+  recipientName: string
+  subject: string
+  message: string
+  senderName: string
+}): AuthEmail {
+  const safeName = escapeHtml(input.recipientName)
+  const safeMessage = escapeHtml(input.message).replaceAll('\n', '<br />')
+  const safeSender = escapeHtml(input.senderName)
+  return {
+    kind: 'ADMIN_MESSAGE',
+    to: input.to,
+    subject: input.subject,
+    text: `Beste ${input.recipientName},\n\n${input.message}\n\nMet vriendelijke groet,\n${input.senderName}\nWorkMatchr`,
+    html: `<p>Beste ${safeName},</p><p>${safeMessage}</p><p>Met vriendelijke groet,<br />${safeSender}<br />WorkMatchr</p>`,
   }
 }

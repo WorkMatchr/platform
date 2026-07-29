@@ -2,6 +2,20 @@
 
 Deze map bevat de leidende projectdocumentatie. Lees vóór een wijziging minimaal het document dat bij de betreffende module of beslissing hoort.
 
+## Hoogste richtinggevende document
+
+1. [De Grondwet van WorkMatchr — versie 0.1, concept](DE_GRONDWET_VAN_WORKMATCHR.md)
+
+De Grondwet bepaalt na expliciete Product Owner-goedkeuring de blijvende richting van WorkMatchr. De [Founding Principles](FOUNDING_PRINCIPLES.md) concretiseren de kernbeginselen; ADR’s leggen afzonderlijke architectuurbesluiten vast; modules en roadmap bepalen de uitvoering; code en tests implementeren de goedgekeurde besluiten.
+
+## Actuele afgeronde modules
+
+- **Module 6A.3 — Provider Onboarding UX:** afgerond, gecommit en gepusht in `736cead899df569fa03d1e2dd19ac485ceb4cc16`.
+- **Module 6B — Eén account per organisatie:** afgerond, gecommit en gepusht in `5b2c16d0086e93b3608fb06ef5a700f96960d7cc`.
+- **Module 6C/6C.1 — Platformbeheer en dagelijkse cockpit:** afgerond, gecommit en gepusht in `7812b2c`.
+
+Module 6C.2 — WOS Beheeracties & Communicatie is technisch opgeleverd en wacht op handmatige product-owneracceptatie. De afzonderlijke lifecycle voor accountverwijdering, contentbeheer/KIP en verdere Advieswijzer-optimalisatie blijven toekomstige of geparkeerde vervolgstappen.
+
 ## Product en planning
 
 1. [Productvisie](01-productvisie.md)
@@ -29,6 +43,11 @@ Deze map bevat de leidende projectdocumentatie. Lees vóór een wijziging minima
 23. [ADR-013 Fase 2B — Lifecycle en tenant](adr-013-fase-2b-lifecycle-en-tenant.md)
 24. [ADR-013 Contract — migratierunbook](adr-013-contract-migratie-runbook.md)
 24. [Architectuur publieke homepage — Module P1.1](public-website-homepage-architecture.md)
+25. [Module 7 — Nieuwe hulpvraag](module-7-nieuwe-hulpvraag-ontwerp.md)
+26. [Module 7B — Professional Advice](module-7b-professional-advice.md)
+26. [AI Intake Classifier v1 — ADR-021 Implementatiefase H](ai-intake-classifier-v1.md)
+
+- [Icebox — geparkeerde productideeën](ICEBOX.md)
 
 - [Publieke platformlayout — Module P1.2](public-platform-layout.md)
 - [RI&E-kenniscluster — Module P1.3](rie-knowledge-cluster.md)

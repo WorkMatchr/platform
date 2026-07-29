@@ -11,15 +11,27 @@ export type PublicIconName =
   | 'law'
   | 'search'
 
+export type PublicSituationKey =
+  | 'employer-with-staff'
+  | 'rie-uncertainty'
+  | 'occupational-health-obligations'
+  | 'incident-or-near-miss'
+  | 'absence-or-health-concerns'
+  | 'find-an-expert'
+
+export type PublicDestinationType = 'information' | 'services' | 'advice-guide'
+
 type LinkContent = {
   label: string
   href: InternalHref
 }
 
 export type SituationContent = LinkContent & {
+  key: PublicSituationKey
   title: string
   description: string
   icon: PublicIconName
+  destinationType: Exclude<PublicDestinationType, 'advice-guide'>
 }
 
 export type ProcessStepContent = {
@@ -31,6 +43,39 @@ export type PreviewCardContent = LinkContent & {
   title: string
   description: string
 }
+
+export const publicSituationRouting = {
+  'employer-with-staff': {
+    href: publicRoutes.obligations,
+    destinationType: 'information',
+  },
+  'rie-uncertainty': {
+    href: publicRoutes.rieQuestion,
+    destinationType: 'information',
+  },
+  'occupational-health-obligations': {
+    href: publicRoutes.obligations,
+    destinationType: 'information',
+  },
+  'incident-or-near-miss': {
+    href: publicRoutes.incidentInvestigationQuestion,
+    destinationType: 'information',
+  },
+  'absence-or-health-concerns': {
+    href: publicRoutes.occupationalPhysicianQuestion,
+    destinationType: 'information',
+  },
+  'find-an-expert': {
+    href: publicRoutes.services,
+    destinationType: 'services',
+  },
+} as const satisfies Record<
+  PublicSituationKey,
+  {
+    href: InternalHref
+    destinationType: Exclude<PublicDestinationType, 'advice-guide'>
+  }
+>
 
 export const publicHomepageContent = {
   hero: {
@@ -44,48 +89,65 @@ export const publicHomepageContent = {
   process: ['Uw situatie', 'Enkele vragen', 'Uw advies', 'Vervolgstap'],
   situations: [
     {
+      key: 'employer-with-staff',
       title: 'Ik heb personeel in dienst',
       description: 'Bekijk welke onderwerpen rond gezond en veilig werken voor werkgevers relevant kunnen zijn.',
-      href: publicRoutes.adviceGuide,
-      label: 'Start de Advieswijzer',
+      ...publicSituationRouting['employer-with-staff'],
+      label: 'Bekijk wat u moet regelen',
       icon: 'growth',
     },
     {
+      key: 'rie-uncertainty',
       title: 'Ik twijfel of ik een RI&E nodig heb',
       description: 'Lees wanneer de RI&E-verplichting in beginsel geldt en welke context van belang is.',
-      href: publicRoutes.rieQuestion,
+      ...publicSituationRouting['rie-uncertainty'],
       label: 'Lees het korte antwoord',
       icon: 'checklist',
     },
     {
+      key: 'occupational-health-obligations',
       title: 'Ik wil voldoen aan mijn arboverplichtingen',
       description: 'Verken veelvoorkomende verplichtingen en de algemene wettelijke context.',
-      href: publicRoutes.obligations,
+      ...publicSituationRouting['occupational-health-obligations'],
       label: 'Bekijk de verplichtingen',
       icon: 'law',
     },
     {
+      key: 'incident-or-near-miss',
       title: 'Er is een incident of bijna-ongeval gebeurd',
-      description: 'Oriënteer u op mogelijke deskundige ondersteuning en relevante vervolgstappen.',
-      href: publicRoutes.services,
-      label: 'Bekijk passende diensten',
+      description: 'Lees wanneer onderzoek zinvol is en welke vervolgstappen u kunt overwegen.',
+      ...publicSituationRouting['incident-or-near-miss'],
+      label: 'Lees over incidentonderzoek',
       icon: 'incident',
     },
     {
+      key: 'absence-or-health-concerns',
       title: 'Ik heb te maken met verzuim of gezondheidsklachten',
-      description: 'Vind algemene informatie over gezondheid, preventie en specialistische ondersteuning.',
-      href: publicRoutes.knowledge,
-      label: 'Ga naar het kenniscentrum',
+      description: 'Lees wanneer een bedrijfsarts kan helpen bij gezondheid, preventie en verzuim.',
+      ...publicSituationRouting['absence-or-health-concerns'],
+      label: 'Lees wanneer u een bedrijfsarts inschakelt',
       icon: 'health',
     },
     {
+      key: 'find-an-expert',
       title: 'Ik zoek direct een deskundige',
       description: 'Bekijk welke vormen van arbo- en veiligheidsondersteuning beschikbaar of in voorbereiding zijn.',
-      href: publicRoutes.services,
+      ...publicSituationRouting['find-an-expert'],
       label: 'Bekijk alle diensten',
       icon: 'search',
     },
   ] satisfies readonly SituationContent[],
+  adviceGuideEntry: {
+    title: 'Ik weet nog niet wat ik nodig heb',
+    description: 'Beantwoord enkele korte vragen. WorkMatchr helpt u uw hulpvraag duidelijk te maken.',
+    href: publicRoutes.adviceGuide,
+    label: 'Start de advieswijzer',
+    destinationType: 'advice-guide',
+  } satisfies LinkContent & {
+    title: string
+    description: string
+    destinationType: Extract<PublicDestinationType, 'advice-guide'>
+  },
   steps: [
     {
       title: 'Vertel wat er speelt',

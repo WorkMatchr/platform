@@ -283,6 +283,16 @@ De product owner heeft de doelarchitectuur uit ADR-013 vastgesteld. Fase 1 Expan
 | B-228 | Notificaties zijn persistent en idempotent; extern e-mailtransport gebruikt een outbox. | Transportfalen wijzigt de zakelijke transactie niet. |
 | B-229 | Credits kopen en betaalintegratie vallen buiten Fase 3. | Geen pakket-, factuur-, btw-, Mollie-, Stripe- of webhookfunctionaliteit wordt geactiveerd. |
 
+## 25 juli 2026 — Actuele modulestatus
+
+| ID | Besluit | Toelichting |
+| --- | --- | --- |
+| B-230 | Module 6A.3 is afgerond, gecommit en gepusht. | Provider Onboarding UX en de Better Auth-developmentflow zijn afgerond in commit `736cead899df569fa03d1e2dd19ac485ceb4cc16`. |
+| B-231 | Module 6B is afgerond, gecommit en gepusht. | Eén account per organisatie, uitnodigingsactivatie en de bijbehorende publieke UX- en contentcorrecties zijn afgerond in commit `5b2c16d0086e93b3608fb06ef5a700f96960d7cc`. Accountverwijdering blijft een afzonderlijke lifecyclefase. |
+| B-232 | Module 6C en 6C.1 zijn afgerond, gecommit en gepusht. | Platformbeheer, de dagelijkse cockpit en het regelgebaseerde adviesdashboard zijn afgerond in commit `7812b2c`; Module 6C.2 — Beheeracties en communicatie viel op dat beslismoment buiten deze oplevering. |
+| B-233 | Module 6C.2 gebruikt uitsluitend bestaande lifecycle-, governance-, audit-, autorisatie- en mailinfrastructuur. | Het Actiecentrum is een afgeleide werkvoorraad; status, verantwoordelijke, notities en individuele communicatie worden append-only in `AdminActionLog` vastgelegd. Er komt geen nieuw taak-, chat-, audit- of autorisatiemodel. Technisch opgeleverd; product-owneracceptatie staat open. |
+| B-233 | Contentbeheer/KIP en verdere Advieswijzer-optimalisatie blijven open. | Deze onderwerpen zijn niet gebouwd en worden pas via een afzonderlijke product- en moduleopdracht gestart. |
+
 ADR-011 heeft status **Geaccepteerd**. Het implementatieplan begrenst 6A.3.2 tot maximaal twee niet-destructieve migraties en houdt de bredere services, interface en acceptatie in afzonderlijke vervolgstappen.
 
 Zie [ADR-001](adr/ADR-001-design-system-en-huisstijl.md) voor de onderbouwing van het design system.

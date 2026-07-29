@@ -1,13 +1,29 @@
 import { notFound } from 'next/navigation'
 import { changePlatformUserStatusAction } from '@/app/platformbeheer/actions'
+import {
+  PlatformAdminEmailForm,
+  PlatformAdminNoteForm,
+  PlatformUserAccessActions,
+} from '@/components/platform-admin/platform-admin-actions'
 import { AdminPageHeader, AdminSection, AdminTable, StatusPill } from '@/components/platform-admin/platform-admin-ui'
 import { requirePlatformAdministrator } from '@/lib/platform-admin/platform-admin-authorization'
-import { getPlatformUserDetail } from '@/lib/platform-admin/platform-admin-query-service'
+import { getPlatformAdminObjectActivity, getPlatformUserDetail } from '@/lib/platform-admin/platform-admin-query-service'
 
-export default async function PlatformUserDetailPage({ params }: { params: Promise<{ userId: string }> }) {
+export default async function PlatformUserDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ userId: string }>
+  searchParams: Promise<Record<string, string | undefined>>
+}) {
   const { userId } = await params
+  const query = await searchParams
+  const returnTo = `/platformbeheer/gebruikers/${userId}`
   const administrator = await requirePlatformAdministrator(`/platformbeheer/gebruikers/${userId}`)
-  const user = await getPlatformUserDetail(administrator.id, userId)
+  const [user, adminActivity] = await Promise.all([
+    getPlatformUserDetail(administrator.id, userId),
+    getPlatformAdminObjectActivity(administrator.id, 'User', userId),
+  ])
   if (!user) notFound()
   const membership = user.memberships[0]
   const manageable = membership && !membership.organization.systemKey && (user.status === 'ACTIVE' || user.status === 'BLOCKED')
@@ -18,6 +34,27 @@ export default async function PlatformUserDetailPage({ params }: { params: Promi
   return (
     <>
       <AdminPageHeader title={user.displayName ?? 'Naam niet ingevuld'} description={user.email} action={<StatusPill tone={user.status === 'ACTIVE' ? 'good' : user.status === 'BLOCKED' ? 'bad' : 'warning'}>{user.status}</StatusPill>} />
+      {query.resultaat ? <p className="rounded-control border border-success-border bg-success-subtle px-4 py-3 text-sm">De beheeractie is uitgevoerd en vastgelegd.</p> : null}
+      {query.fout ? <p className="rounded-control border border-danger-border bg-danger-subtle px-4 py-3 text-sm">De beheeractie kon niet veilig worden uitgevoerd.</p> : null}
+      <AdminSection title="Beheeracties" description="Communicatie, toegang en notities blijven afzonderlijk en auditbaar.">
+        <div className="grid gap-3 xl:grid-cols-2">
+          <PlatformAdminEmailForm targetType="USER" targetId={user.id} returnTo={returnTo} />
+          <PlatformAdminNoteForm targetType="USER" targetId={user.id} returnTo={returnTo} category="Gebruikers" />
+        </div>
+        <div className="mt-3">
+          <PlatformUserAccessActions
+            userId={user.id}
+            returnTo={returnTo}
+            canActivate={user.status === 'INVITED' && membership?.status === 'INVITED'}
+            canVerify={
+              !user.emailVerified &&
+              !(user.status === 'INVITED' && membership?.status === 'INVITED') &&
+              (user.status === 'INVITED' || user.status === 'ACTIVE')
+            }
+            canReset={user.status === 'ACTIVE'}
+          />
+        </div>
+      </AdminSection>
       {manageable ? <form action={changePlatformUserStatusAction} className="flex flex-wrap items-end gap-3 rounded-card border border-border bg-surface p-4">
         <input type="hidden" name="organizationId" value={membership.organization.id} /><input type="hidden" name="subjectUserId" value={user.id} /><input type="hidden" name="operation" value={user.status === 'ACTIVE' ? 'block' : 'unblock'} />
         <label className="grid flex-1 gap-1 text-xs font-semibold text-text-secondary">Reden<input className="min-h-10 rounded-control border border-border px-3 text-sm" name="reasonNote" required minLength={5} maxLength={500} /></label>
@@ -32,6 +69,7 @@ export default async function PlatformUserDetailPage({ params }: { params: Promi
         </dl>
       </AdminSection>
       <AdminSection title="Lifecycle"><AdminTable headers={['Bron', 'Gebeurtenis', 'Reden', 'Moment']}>{events.map((event) => <tr key={event.id}><td className="px-4 py-3">{event.source}</td><td className="px-4 py-3 font-semibold">{event.action}</td><td className="px-4 py-3">{event.reason ?? '—'}</td><td className="px-4 py-3">{event.at.toLocaleString('nl-NL')}</td></tr>)}</AdminTable></AdminSection>
+      <AdminSection title="Beheeraudit"><AdminTable headers={['Actie', 'Auteur', 'Toelichting', 'Moment']}>{adminActivity.map((event) => <tr key={event.id}><td className="px-4 py-3 font-semibold">{event.action}</td><td className="px-4 py-3">{event.actorUser.displayName ?? event.actorUser.email}</td><td className="max-w-xl whitespace-pre-wrap px-4 py-3">{event.reason ?? '—'}</td><td className="px-4 py-3">{event.createdAt.toLocaleString('nl-NL')}</td></tr>)}</AdminTable></AdminSection>
       <AdminSection title="Recente sessies"><AdminTable headers={['Aangemaakt', 'Laatst gebruikt', 'Verloopt']}>{user.sessions.map((session) => <tr key={session.id}><td className="px-4 py-3">{session.createdAt.toLocaleString('nl-NL')}</td><td className="px-4 py-3">{session.updatedAt.toLocaleString('nl-NL')}</td><td className="px-4 py-3">{session.expiresAt.toLocaleString('nl-NL')}</td></tr>)}</AdminTable></AdminSection>
     </>
   )

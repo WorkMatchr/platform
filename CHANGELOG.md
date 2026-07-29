@@ -1,6 +1,108 @@
 # Changelog
 
-## Niet uitgebracht — Module 6C Platformbeheer
+## Module 7 — M7B Professional Advice
+
+- `GuidanceOutcome` uitgebreid met een gevalideerd en versieerbaar `ProfessionalAdvice`-contract;
+- deterministische adviesregels toegevoegd voor RI&E, incidenten, gevaarlijke stoffen, arbeidsgezondheid en BHV;
+- iedere specifieke uitkomst bevat één primaire en waar relevant aanvullende `ProfessionalRequirement`-objecten, zonder matching of persistence te activeren;
+- kennisartikelen en officiële bronnen worden uitsluitend vanuit bestaande gecontroleerde registers opgelost;
+- de publieke uitkomst toont situatie, advies, redenen, zelfacties, deskundigheid, kennis, mogelijke vervolgstappen en de vaste disclaimer;
+- onvolledige of niet-ondersteunde situaties blijven fail-closed zonder verzonnen deskundigheid;
+- status: technisch opgeleverd; handmatige product-owneracceptatie open.
+
+## Module 7 — M7A.2 Final UX Polish
+
+- de dubbele weergave van de oorspronkelijke hulpvraag verwijderd; de begripsbevestiging toont uitsluitend `Uw hulpvraag`;
+- de onderwerpintroductie vervangen door rustige, adviseurgerichte producttaal;
+- de AI Intake Interpreter instrueert nu intentiegericht, natuurlijk Nederlands en een directe formulering die begint met `U wilt weten`;
+- technische contracten, cachegedrag, vraagbudget, completionflow en Guidance Engine zijn ongewijzigd;
+- status: M7A definitief afgerond; M7B is niet gestart.
+
+## Module 7 — M7A.1 Understanding Confirmation
+
+- vrije hulpvragen tonen bij een bruikbare gecachete AI-uitkomst eerst de oorspronkelijke hulpvraag, een neutrale samenvatting en een begrijpelijk onderwerpvoorstel;
+- bevestigen schrijft het onderwerp als `AI_CONFIRMED` en gaat zonder tweede onderwerpvraag door naar de bestaande Clarification Engine;
+- afwijzen opent pas daarna de handmatige onderwerpkeuze; de gekozen correctie wordt append-only als `USER_CORRECTED` vastgelegd;
+- lage confidence, `UNKNOWN`, onbruikbare output en providerfallbacks gaan rechtstreeks naar de veilige handmatige keuze en krijgen `FALLBACK_SELECTION`;
+- classifier-contract versie 1.1 voegt uitsluitend een gevalideerde neutrale `summary` toe; samenvatting en hulpvraag worden niet gelogd;
+- additieve migratie `20260729143000_add_public_intake_answer_source` toegevoegd;
+- status: technisch opgeleverd; handmatige Product Owner-acceptatie staat open.
+
+## Module 7 — M7A Intake Completion
+
+- AI-classificaties worden privacyveilig hergebruikt via een SHA-256-fingerprint van genormaliseerde broninvoer, classifier-versie en model;
+- gevalideerde classificaties en veilige providerfallbacks worden persistent gecachet, zodat reload, resume en vervolgstappen geen nieuwe externe classificatie veroorzaken;
+- de Clarification Engine bewaakt expliciet maximaal vijf unieke vragen en stelt een reeds gestelde vraag niet opnieuw;
+- iedere niet-geannuleerde intake eindigt expliciet in `COMPLETED_WITH_GUIDANCE` of `COMPLETED_WITH_SAFE_FALLBACK`;
+- ontbrekende rulesets, onbekende antwoorden en budgetuitputting leveren een bruikbare algemene GuidanceOutcome zonder RI&E als generieke standaard;
+- het oude technische prototype-eindscherm is verwijderd; de publieke intake toont na afronding altijd de resultaatweergave;
+- additieve migratie `20260729100000_add_public_intake_ai_classification_cache` toegevoegd.
+
+## ADR-021 — AI Intake Structured Output-schema
+
+- niet-ondersteunde `uniqueItems`-eigenschappen verwijderd uit het OpenAI Structured Output-schema;
+- duplicaten blijven fail-closed door de bestaande server-side Zod-validatie;
+- privacyveilige fallbackredenen en optionele providerstatuscode toegevoegd aan resultaat en logging;
+- regressietests toegevoegd voor schemasupport, foutcategorisering, privacy en de Public Intake-presentatie;
+- geen Guidance-, Clarification-, Prisma- of downstreamfunctionaliteit gewijzigd.
+
+## Module 7 — Werkset 7.3a nieuwe hulpvraag starten
+
+- expliciete terminale fase `ABANDONED_BY_USER` toegevoegd voor bezoekers die bewust opnieuw beginnen;
+- centrale, serializable en idempotente service toegevoegd die de draft afsluit, de sessie intrekt en precies één append-only `DRAFT_ABANDONED_BY_USER`-event schrijft;
+- de padgebonden HttpOnly-cookie wordt na succes of idempotente herhaling expliciet met `Path=/advieswijzer` verwijderd;
+- een toegankelijke bevestigingsdialoog en rustige secundaire actie “↺ Nieuwe hulpvraag starten” toegevoegd aan iedere actieve publieke conceptintake;
+- bestaande antwoorden, antwoordrevisies en events blijven volledig behouden; na reset ontstaat pas bij nieuwe invoer of een nieuwe keuze een nieuwe draft;
+- `ABANDONED_TIMEOUT` en `EXPIRED` zijn additief gemodelleerd, maar er is bewust geen scheduler, retentiejob of automatische statusmutatie gebouwd;
+- regressietests toegevoegd voor lifecycle, idempotentie, sessie-intrekking, cookieverwijdering, historiebehoud en dialoogcontracten;
+- status: technisch opgeleverd; handmatige Product Owner-acceptatie staat open.
+
+## Module 7 — Werkset 7.3 deterministische Intake Decision Engine
+
+- één pure, centrale Intake Decision Engine toegevoegd die op basis van ingang, actuele antwoorden, vraagmetadata en lifecycle uitsluitend de volgende vraag en gereedheid voor de samenvattingsfase bepaalt;
+- vraagdefinities uitgebreid met expliciete metadata voor verplicht, optioneel, afhankelijkheden, zichtbaarheid, opnieuw vragen bij onbekend, categorie en volgorde;
+- afzonderlijke deterministische takken toegevoegd voor een nieuwe RI&E en voor actualisatie of controle van een bestaande RI&E;
+- onbekende of uitgestelde optionele antwoorden blokkeren de flow niet; noodzakelijke onbekende informatie wordt pas na de overige relevante vragen opnieuw gevraagd;
+- de publieke React-interface ontdaan van inhoudelijke vraagvolgordelogica en volledig aangesloten op de centrale engine;
+- regressietests toegevoegd voor nieuwe RI&E, actualisatie, onzekerheid, onbekende sector, onbekend aantal vestigingen, onbekende start, lifecycle en herhaalde deterministische uitkomsten;
+- geen AI, LLM, prompts, embeddings, vector search, samenvatting, accountkoppeling, opdrachtvorming, marketplace, matching, credits of offertes toegevoegd;
+- status: technisch opgeleverd; handmatige Product Owner-acceptatie staat open.
+
+## Module 7 — Werkset 7.2 begeleide intake UX-prototype
+
+- `/advieswijzer` aangesloten op de echte pseudonieme conceptintake en HttpOnly-sessie uit Werkset 7.1;
+- rustig openingsscherm toegevoegd met vrije situatieschets, privacywaarschuwing en zeven compacte herkenbare ingangen;
+- beperkte RI&E-prototypeflow toegevoegd voor bestaande RI&E-status, organisatieomvang en sector;
+- keuzes worden zonder knop “Volgende” server-side opgeslagen, met expliciet onderscheid tussen onbekend en overslaan;
+- hervatten, eerder gegeven antwoorden, veilige ongeldige-sessiemelding en responsieve context-/voortgangsweergave toegevoegd;
+- niet-RI&E-ingangen worden veilig vastgelegd, maar niet ten onrechte als werkende interactieve flow gepresenteerd;
+- geen samenvatting, registratie, accountkoppeling, `Intake`-/`Assignment`-conversie, matching, AI, credits of offertes toegevoegd;
+- status: UX-prototype technisch opgeleverd; wacht op handmatige Product Owner-acceptatie.
+
+## Module 7 — Werkset 7.1 publieke conceptintakefundering
+
+- afzonderlijk pseudoniem `PublicIntakeDraft`-domein toegevoegd zonder relaties naar gebruikers, organisaties of memberships;
+- cryptografische sessietokens van 256 bits toegevoegd, waarbij uitsluitend een SHA-256-hash in PostgreSQL wordt opgeslagen;
+- actuele getypeerde antwoorden, append-only antwoordrevisies en privacyveilige lifecycle-events toegevoegd;
+- centrale services toegevoegd voor aanmaken, hervatten, antwoordopslag, faseovergangen, veilige reads en abandonmentbepaling;
+- HttpOnly-cookie met `SameSite=Lax`, productie-`Secure`, padbeperking en 90 dagen maximale hervatbaarheid toegevoegd;
+- 30 dagen analytische inactiviteit en 90 dagen toegangsgeldigheid centraal vastgelegd, zonder scheduler of verwijderjob;
+- één additieve migratie, pure tests en tijdelijke-database-integratietests toegevoegd;
+- geen publieke intake-UI, accountkoppeling, bestaande Intake-/Assignmentconversie, matching, AI, credits of offertes geïmplementeerd;
+- status: technisch geïmplementeerd; nog niet productfunctioneel opgeleverd of product-ownergeaccepteerd.
+
+## Module 6C.2 — WOS Beheeracties & Communicatie technisch opgeleverd
+
+- centraal Actiecentrum toegevoegd met WOS-signalen, review- en goedkeuringswachtrijen, ernst, categorie, bron, datum, aanbevolen actie, verantwoordelijke, status en deeplink;
+- beheeracties toegevoegd voor individuele gebruikers, organisaties, dienstverleners en opdrachten, inclusief afzonderlijke activatie-, verificatie- en wachtwoordherstelmails;
+- compacte communicatie- en notitieformulieren toegevoegd; berichten worden uitsluitend via de bestaande mailinfrastructuur verzonden en zijn nooit massamail;
+- bestaande account- en organisatielifecycle, OWNER-governance, tenantbescherming en vier-ogenregels ongewijzigd hergebruikt;
+- `AdminActionLog` legt communicatiepogingen, bezorgresultaten, interne notities, signaalstatussen, OWNER-acties en platformbeheer-blokkades append-only vast;
+- opdrachtpagina voor platformbeheer toegevoegd met afzonderlijke communicatie naar opdrachtgever en betrokken dienstverleners en een geaudite actie “signaal onderzocht”;
+- geen Prisma-schema, migratie, dependency, accountverwijdering of nieuw autorisatiemodel toegevoegd;
+- status: technisch opgeleverd; handmatige product-owneracceptatie staat open.
+
+## Module 6C/6C.1 — Platformbeheer afgerond
 
 - een afzonderlijke, compacte cockpit onder `/platformbeheer` toegevoegd voor organisaties, gebruikers, dienstverleners, opdrachten, marketplace, trends, reviewer, approver, auditor, rapportages en instellingen;
 - de cockpit geordend op begroeting en status, actievereisten, maximaal vier kerncijfers, wachtrijen, betrouwbare trends en platformgezondheid;
@@ -12,9 +114,9 @@
 - reviewer-, approver- en auditorbevoegdheden bewust niet afgeleid uit platformbeheer: bestaande expliciete permissions en vier-ogenregels blijven leidend;
 - zoektermenanalyse toont een eerlijke lege toestand totdat privacy-, cookie-, retentie- en meetbesluiten zijn vastgesteld;
 - geen Prisma-schema, migratie, dependency, financiële administratie of accountverwijdering toegevoegd;
-- status: technisch uitgevoerd; product-owneracceptatie en handmatige browsercontrole open.
+- status van deze oplevering: afgerond, gecommit en naar `origin/main` gepusht in commit `7812b2c`; Module 6C.2 maakte geen deel uit van die commit en is inmiddels afzonderlijk technisch opgeleverd.
 
-## Niet uitgebracht — Module 6B één account per organisatie
+## Module 6B — Eén account per organisatie afgerond
 
 - `OrganizationMembership.userId` is databasebreed uniek gemaakt met een fail-closed, niet-destructieve migratieguard.
 - De organisatiecontext wordt per request server-side uit de enige membership afgeleid; de actieve-organisatiecookie en organisatiewisselaar zijn verwijderd.
@@ -25,8 +127,9 @@
 - Het dubbele veld `Primaire sector` is uit de profielwijziging verwijderd; de bestaande technische sectorrelatie blijft zonder destructieve datamigratie behouden.
 - Preflight, unit- en database-integratietests zijn aangepast aan de Contract-eindtoestand; append-only historie en actorrelaties blijven intact.
 - Accountverwijdering en membershipbeëindiging blijven fail-closed totdat de afzonderlijke retentie- en lifecyclevoorwaarden zijn gerealiseerd.
+- Status: afgerond, gecommit en naar `origin/main` gepusht in commit `5b2c16d0086e93b3608fb06ef5a700f96960d7cc`.
 
-## Niet uitgebracht — Module 6A.3 laatste UX- en authenticatieafwerking
+## Module 6A.3 — Provider Onboarding UX en authenticatieafwerking afgerond
 
 - de dienstenpagina van het **Dienstverlenersprofiel** verfijnd tot een responsive tweekolomsindeling met het invoerformulier vóór en links van de compacte dienstenlijst;
 - zichtbare dienstverlenersterminologie in navigatie, koppen en documentatie geharmoniseerd;
@@ -36,7 +139,7 @@
 - registratie-, verificatie- en wachtwoordherstelformulieren laten alleen na een technisch geaccepteerde aanvraag een succesbevestiging zien;
 - regressietests toegevoegd voor authroutes, developmentlogging, productiestilte, HTTP- en netwerkfouten en de dienstenlayout;
 - geen Prisma-schema, migratie, dependency of één-account-per-organisatiewijziging uitgevoerd;
-- status: technisch opgeleverd; resterende visuele en handmatige product-owneracceptatie open.
+- status: afgerond, gecommit en naar `origin/main` gepusht in commit `736cead899df569fa03d1e2dd19ac485ceb4cc16`.
 
 ## Niet uitgebracht — Fase 3 Marketplace Transaction Platform v1
 
@@ -196,9 +299,9 @@
 - verwijzingen toegevoegd aan de project-README en documentatie-index;
 - geen code, Prisma, routes, tests, dependencies of configuratie gewijzigd voor deze documentatiemodule.
 
-## Unreleased — Module 6A.3 workflowfundering
+## Module 6A.3 — Workflowfundering en interface afgerond
 
-**Status:** Module 6A.3.0 tot en met Module 6A.3.4 zijn afgerond en product-ownergeaccepteerd. ADR-011 blijft geaccepteerd. Module 6A.3.5 is in uitvoering: automatische acceptatie is geslaagd, maar handmatige rollen-, mobiele en browseracceptatie staat open. Module 6A.3 als geheel is nog niet afgerond.
+**Actuele status:** Module 6A.3.0 tot en met Module 6A.3.5 en Module 6A.3 als geheel zijn afgerond. De laatste UX- en Better Auth-developmentcorrecties zijn gecommit en gepusht in commit `736cead899df569fa03d1e2dd19ac485ceb4cc16`. ADR-011 blijft geaccepteerd.
 
 ### Hersteld tijdens Module 6A.3.5
 

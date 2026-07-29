@@ -3,6 +3,13 @@ import 'server-only'
 import type { AssignmentStatus } from '@/generated/prisma/enums'
 import { getPrisma } from '@/lib/prisma'
 import { buildPlatformAdviceSignals, derivePlatformStatus } from './platform-admin-advice'
+import {
+  getPlatformActionCategory,
+  getPlatformActionLabel,
+  isOpenPlatformActionStatus,
+  platformSignalAuditId,
+  type PlatformActionStatus,
+} from './platform-admin-action-center'
 import { getPlatformAdministratorContext } from './platform-admin-authorization'
 
 const MAX_ROWS = 100
@@ -414,6 +421,98 @@ export async function getPlatformAdminCockpit(actorUserId: string, at = new Date
   }
 }
 
+function readActionMetadata(value: unknown): {
+  status: PlatformActionStatus
+  responsibleUserId: string | null
+  responsibleName: string | null
+} | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+  const metadata = value as Record<string, unknown>
+  const status = metadata.status
+  if (
+    status !== 'NEW' &&
+    status !== 'IN_PROGRESS' &&
+    status !== 'WAITING_FOR_USER' &&
+    status !== 'WAITING_FOR_ORGANIZATION' &&
+    status !== 'COMPLETED' &&
+    status !== 'CLOSED'
+  ) return null
+  return {
+    status,
+    responsibleUserId: typeof metadata.responsibleUserId === 'string' ? metadata.responsibleUserId : null,
+    responsibleName: typeof metadata.responsibleName === 'string' ? metadata.responsibleName : null,
+  }
+}
+
+export async function getPlatformAdminActionCandidates(actorUserId: string, at = new Date()) {
+  const cockpit = await getPlatformAdminCockpit(actorUserId, at)
+  const staleReviewIds = new Set(
+    cockpit.signals
+      .filter((signal) => signal.ruleCode === 'REVIEW_WAITING_LONGER_THAN_SEVEN_DAYS')
+      .map((signal) => signal.id.replace('stale-review:', '')),
+  )
+  return [
+    ...cockpit.signals,
+    ...cockpit.queues.reviews.flatMap((review) => staleReviewIds.has(review.id) ? [] : [{
+      id: `review:${review.id}`,
+      severity: 'NORMAL' as const,
+      title: `Review voor ${review.label}`,
+      explanation: 'Dit ingediende dossier staat in de bestaande reviewwachtrij.',
+      recommendedAction: 'Open het dossier en laat een bevoegde reviewer de beoordeling uitvoeren.',
+      href: review.href,
+      sources: [{ label: 'Dossierstatus', value: 'SUBMITTED' }],
+      ruleCode: 'REVIEW_QUEUE_ITEM',
+      detectedAt: review.at,
+    }]),
+    ...cockpit.queues.approvals.map((approval) => ({
+      id: `approval:${approval.id}`,
+      severity: 'NORMAL' as const,
+      title: `Goedkeuring voor ${approval.label}`,
+      explanation: 'Dit beoordeelde dossier staat in de bestaande goedkeuringswachtrij.',
+      recommendedAction: 'Open het dossier en laat een bevoegde approver het besluit nemen.',
+      href: approval.href,
+      sources: [{ label: 'Dossierstatus', value: 'UNDER_REVIEW' }],
+      ruleCode: 'APPROVAL_QUEUE_ITEM',
+      detectedAt: approval.at,
+    })),
+  ]
+}
+
+export async function getPlatformActionCenter(actorUserId: string, at = new Date()) {
+  const candidates = await getPlatformAdminActionCandidates(actorUserId, at)
+  const signalAuditIds = candidates.map((signal) => platformSignalAuditId(signal.id))
+  const histories = signalAuditIds.length === 0
+    ? []
+    : await getPrisma().adminActionLog.findMany({
+        where: {
+          entityType: 'PlatformAdviceSignal',
+          entityId: { in: signalAuditIds },
+          action: 'PLATFORM_ACTION_STATUS_CHANGED',
+        },
+        orderBy: { createdAt: 'desc' },
+        select: { entityId: true, metadata: true, createdAt: true },
+      })
+  const latestByEntity = new Map<string, typeof histories[number]>()
+  for (const history of histories) {
+    if (!latestByEntity.has(history.entityId)) latestByEntity.set(history.entityId, history)
+  }
+  return candidates.flatMap((signal) => {
+    const history = latestByEntity.get(platformSignalAuditId(signal.id))
+    const state = readActionMetadata(history?.metadata)
+    const status = state?.status ?? 'NEW'
+    if (!isOpenPlatformActionStatus(status)) return []
+    return [{
+      ...signal,
+      category: getPlatformActionCategory(signal.ruleCode),
+      actionLabel: getPlatformActionLabel(signal.ruleCode),
+      status,
+      responsibleUserId: state?.responsibleUserId ?? null,
+      responsibleName: state?.responsibleName ?? null,
+      statusChangedAt: history?.createdAt ?? null,
+    }]
+  })
+}
+
 export type OrganizationListFilters = {
   query?: string
   status?: 'PENDING' | 'ACTIVE' | 'SUSPENDED' | 'ARCHIVED'
@@ -477,6 +576,27 @@ export async function getPlatformOrganizationDetail(actorUserId: string, organiz
         take: 30,
         select: { id: true, action: true, entityType: true, previousState: true, nextState: true, createdAt: true },
       },
+    },
+  })
+}
+
+export async function getPlatformAdminObjectActivity(
+  actorUserId: string,
+  entityType: 'User' | 'Organization' | 'ProviderProfile' | 'Assignment',
+  entityId: string,
+) {
+  await getPlatformAdministratorContext(actorUserId)
+  return getPrisma().adminActionLog.findMany({
+    where: { entityType, entityId },
+    orderBy: { createdAt: 'desc' },
+    take: 50,
+    select: {
+      id: true,
+      action: true,
+      reason: true,
+      metadata: true,
+      createdAt: true,
+      actorUser: { select: { displayName: true, email: true } },
     },
   })
 }
@@ -706,6 +826,65 @@ export async function listPlatformAssignments(actorUserId: string, filters: Assi
   })
 }
 
+export async function getPlatformAssignmentDetail(actorUserId: string, assignmentId: string) {
+  await getPlatformAdministratorContext(actorUserId)
+  return getPrisma().assignment.findUnique({
+    where: { id: assignmentId },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      status: true,
+      createdAt: true,
+      updatedAt: true,
+      publishedAt: true,
+      clientOrganization: {
+        select: {
+          id: true,
+          name: true,
+          generalEmail: true,
+          memberships: {
+            where: { role: 'OWNER', status: 'ACTIVE', user: { status: 'ACTIVE' } },
+            take: 1,
+            select: { user: { select: { email: true } } },
+          },
+        },
+      },
+      providerSelections: {
+        where: { status: 'SELECTED', removedAt: null },
+        orderBy: { selectedAt: 'asc' },
+        select: {
+          id: true,
+          providerProfile: {
+            select: {
+              id: true,
+              organization: { select: { name: true, generalEmail: true } },
+            },
+          },
+        },
+      },
+      marketplaceInvitations: {
+        orderBy: { invitedAt: 'asc' },
+        select: {
+          id: true,
+          status: true,
+          providerProfile: {
+            select: {
+              id: true,
+              organization: { select: { name: true, generalEmail: true } },
+            },
+          },
+        },
+      },
+      statusHistory: {
+        orderBy: { createdAt: 'desc' },
+        take: 30,
+        select: { id: true, fromStatus: true, toStatus: true, reason: true, createdAt: true },
+      },
+    },
+  })
+}
+
 export async function getPlatformMarketplaceOverview(actorUserId: string) {
   await getPlatformAdministratorContext(actorUserId)
   const prisma = getPrisma()
@@ -728,15 +907,47 @@ export async function getPlatformMarketplaceOverview(actorUserId: string) {
 export async function getPlatformRoleWorkload(actorUserId: string) {
   const context = await getPlatformAdministratorContext(actorUserId)
   const prisma = getPrisma()
-  const [submitted, underReview, changesRequested, approved, rejected, openCases] = await Promise.all([
+  const now = new Date()
+  const [submitted, underReview, changesRequested, approved, rejected, openCases, roleGrants, dossiers] = await Promise.all([
     prisma.providerDossierSubmission.count({ where: { status: 'SUBMITTED' } }),
     prisma.providerDossierSubmission.count({ where: { status: 'UNDER_REVIEW' } }),
     prisma.providerDossierSubmission.count({ where: { status: 'ADDITIONAL_INFORMATION_REQUIRED' } }),
     prisma.providerDossierSubmission.count({ where: { status: 'APPROVED' } }),
     prisma.providerDossierSubmission.count({ where: { status: 'REJECTED' } }),
     prisma.providerDossierReviewCase.count({ where: { status: 'OPEN' } }),
+    prisma.providerPlatformPermissionGrant.findMany({
+      where: {
+        validFrom: { lte: now },
+        OR: [{ validUntil: null }, { validUntil: { gt: now } }],
+        revocation: null,
+        user: { status: 'ACTIVE' },
+      },
+      orderBy: { createdAt: 'asc' },
+      select: {
+        id: true,
+        permission: true,
+        user: { select: { id: true, displayName: true, email: true } },
+      },
+    }),
+    prisma.providerDossierSubmission.findMany({
+      where: { status: { in: ['SUBMITTED', 'UNDER_REVIEW'] } },
+      orderBy: { submittedAt: 'asc' },
+      take: 20,
+      select: {
+        id: true,
+        status: true,
+        providerProfile: { select: { id: true, organization: { select: { name: true } } } },
+      },
+    }),
   ])
-  return { permissions: context.permissions, submitted, underReview, changesRequested, approved, rejected, openCases }
+  const seen = new Set<string>()
+  const roleContacts = roleGrants.flatMap((grant) => {
+    const key = `${grant.permission}:${grant.user.id}`
+    if (seen.has(key)) return []
+    seen.add(key)
+    return [{ permission: grant.permission, ...grant.user }]
+  })
+  return { permissions: context.permissions, submitted, underReview, changesRequested, approved, rejected, openCases, roleContacts, dossiers }
 }
 
 export async function getPlatformAuditOverview(actorUserId: string, query?: string) {

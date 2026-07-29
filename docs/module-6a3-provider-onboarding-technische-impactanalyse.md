@@ -2,16 +2,16 @@
 
 > **Actuele productcorrectie (16 juli 2026):** capaciteit blijft alleen als deprecated historische datastructuur bestaan. De actieve interface, services, completeness, readiness, selecteerbaarheid, nieuwe candidates en projecties gebruiken haar niet meer.
 
-> **Doelarchitectuur ADR-013 (17 juli 2026, nog niet geïmplementeerd):** normale tenantaccounts krijgen maximaal één actieve membership. Reviewer en approver handelen vanuit de WorkMatchr-beheerorganisatie met een afzonderlijke permission; de auditor mag zonder organisatiemembership bestaan. Immutable candidates, actor-ID’s, findings, resolutions en historische beslissingen worden bij die migratie niet herschreven.
+> **Actuele status ADR-013:** de enkelvoudige tenantcontext is in Module 6B geïmplementeerd en afgerond. Reviewer en approver handelen vanuit de WorkMatchr-beheerorganisatie met een afzonderlijke permission; de auditor mag zonder organisatiemembership bestaan. Immutable candidates, actor-ID’s, findings, resolutions en historische beslissingen zijn niet herschreven.
 
-> Status: afgerond en product-ownergeaccepteerd. De workflowfundering van 6A.3.2 is technisch opgeleverd; product-owneracceptatie daarvan staat open.
+> Status: deze impactanalyse is afgerond en product-ownergeaccepteerd. Module 6A.3 is inmiddels volledig afgerond, gecommit en gepusht in `736cead899df569fa03d1e2dd19ac485ceb4cc16`.
 
 ## 1. Documentstatus
 
 - Module: **6A.3.1 — Technische impactanalyse Provider Onboarding Interface**.
 - Status: afgerond en product-ownergeaccepteerd op 15 juli 2026.
 - Voorganger: Module 6A.3.0 is afgerond en product-ownergeaccepteerd.
-- Implementatiestatus Module 6A.3: niet geïmplementeerd.
+- Actuele implementatiestatus Module 6A.3: afgerond.
 - Grondslag: Module 6A.0, 6A.1, 6A.2.0, 6A.2.1 en 6A.3.0, plus ADR-008, ADR-009 en ADR-010.
 - Wijzigingssoort: uitsluitend ontwerp- en projectdocumentatie.
 
@@ -618,4 +618,4 @@ Module 6A.3.1 is technisch opgesteld wanneer:
 - teststrategie alle rollen, tenants, workflow- en securityscenario’s dekt;
 - geen code, Prisma, migratie, route, UI, test, dependency of configuratie is gewijzigd.
 
-De technische analyse voldoet aan deze criteria en is op 15 juli 2026 product-ownergeaccepteerd. Module 6A.3.2 is technisch opgeleverd met product-owneracceptatie open; Module 6A.3 als geheel blijft niet afgerond.
+De technische analyse voldoet aan deze criteria en is op 15 juli 2026 product-ownergeaccepteerd. De daaropvolgende implementatiefasen 6A.3.2 tot en met 6A.3.5 en Module 6A.3 als geheel zijn later afgerond.

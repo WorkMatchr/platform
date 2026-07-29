@@ -9,7 +9,7 @@
 - Datum: 15 juli 2026.
 - Centraal productconcept: **Dienstverlenersprofiel**.
 - Grondslag: Module 6A.0, Module 6A.1, Module 6A.2, ADR-008, ADR-009 en ADR-010.
-- Implementatiestatus Module 6A.3: niet gestart.
+- Actuele implementatiestatus Module 6A.3: afgerond, gecommit en gepusht in `736cead899df569fa03d1e2dd19ac485ceb4cc16`.
 - Scope van dit document: uitsluitend UX- en functioneel ontwerp.
 - Code, Prisma, migraties, routes, Server Actions, componenten, uploads, tests, dependencies en configuratie: niet gewijzigd.
 

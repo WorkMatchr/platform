@@ -51,6 +51,9 @@ De seed bevat geen personen, organisaties, accounts, e-mailadressen, intakes of 
 | Intake en Assignment | Statusgebaseerd plus `archivedAt`; `freeText` blijft immutable, conversie is onomkeerbaar en per intake bestaat maximaal één opdracht. |
 | IntakeQuestionnaireVersion, IntakeQuestion en IntakeQuestionOption | Alleen `DRAFT` is inhoudelijk wijzigbaar; gepubliceerd/gepensioneerd is immutable. |
 | IntakeAnswerRevision, IntakeStatusHistory, AssignmentRevision en AssignmentStatusHistory | Append-only; niet wijzigen of verwijderen. |
+| PublicIntakeDraft en PublicIntakeSession | Pseudonieme pre-authenticatiegegevens; toegang verloopt na 90 dagen. Een toekomstig retentieproces moet inhoud verwijderen of anonimiseren volgens definitief privacybeleid. |
+| PublicIntakeAnswerRevision en PublicIntakeEvent | Append-only binnen Werkset 7.1; geen tokens, hashes of volledige antwoordinhoud in events. Toekomstige retentie vereist een expliciet gecontroleerd verwijderpad. |
+| PublicIntakeAIClassificationCache | Privacyveilige technische cache met SHA-256-fingerprint, gevalideerde classificatie of getypeerde fallback; nooit de oorspronkelijke hulpvraag. Retentie volgt het nog vast te stellen publieke-intakebeleid. |
 | ProviderSelection en AssignmentResolution | Nooit verwijderen nadat zakelijke historie bestaat. |
 | AdminActionLog | Append-only, nooit wijzigen of verwijderen. |
 | CreditTransaction | Append-only, nooit wijzigen of verwijderen. |
@@ -58,6 +61,37 @@ De seed bevat geen personen, organisaties, accounts, e-mailadressen, intakes of 
 | Koppeltabellen | Alleen hard verwijderen vóór zakelijk gebruik; services bewaren historie zodra records zijn gebruikt. |
 
 Foreign keys gebruiken `RESTRICT`; cascades mogen geen zakelijke historie verwijderen. Hard delete is alleen bedoeld voor lokale reset of aantoonbaar ongebruikte draftdata.
+
+## Module 7 — publieke conceptintakefundering
+
+Migratie `20260726150000_add_public_intake_draft_foundation` is additief en introduceert:
+
+- `PublicIntakeDraft` met actuele fase, bron, flowversie, interactietijden en expiry;
+- één `PublicIntakeSession` per draft met een unieke SHA-256-tokenhash;
+- één actueel getypeerd `PublicIntakeAnswer` per draft en vraag;
+- append-only `PublicIntakeAnswerRevision` en `PublicIntakeEvent`;
+- checks op getypeerde scalarwaarden, entrypoint, fasemetadata, versie en expiry;
+- triggers voor aaneengesloten revisie- en eventnummers en tegen update/delete van historie.
+
+Alle relaties gebruiken `RESTRICT`. Er zijn geen foreign keys naar User, Organization, OrganizationMembership, Intake of Assignment. De migratie seedt geen concepten en wijzigt geen bestaande data.
+
+Migratie `20260726190000_add_public_intake_user_abandonment` voegt additief de fasen `ABANDONED_BY_USER`, `ABANDONED_TIMEOUT` en `EXPIRED` en het event `DRAFT_ABANDONED_BY_USER` toe. Alleen `ABANDONED_BY_USER` wordt in Werkset 7.3a geschreven. De servicetransactie verhoogt de draftversie, trekt de sessie in en schrijft één event met uitsluitend vorige fase, nieuwe fase en reden `USER_REQUEST`. De bestaande algemene waarde `ABANDONED` blijft ongewijzigd voor legacycompatibiliteit en wordt niet door nieuwe code geschreven. Er worden geen drafts, antwoorden, revisies, events of bestaande records gemigreerd of verwijderd.
+
+Migratie `20260729100000_add_public_intake_ai_classification_cache` voegt additief `PublicIntakeAIClassificationCache` toe. De unieke fingerprint combineert genormaliseerde broninvoer, classifier-versie en model, maar de broninvoer zelf wordt niet in deze tabel opgeslagen. Een record doorloopt uitsluitend `PROCESSING → COMPLETED`; een completed record bevat óf gevalideerde structured output óf een getypeerde fallbackreden. Hierdoor veroorzaken reload, resume en vervolgstappen geen herhaalde externe classificatie.
+
+Migratie `20260729143000_add_public_intake_answer_source` voegt additief
+`PublicIntakeAnswerSource` en een verplichte `source` toe aan actuele
+antwoorden en append-only antwoordrevisies. Bestaande rijen krijgen
+`USER_INPUT`. Nieuwe onderwerpkeuzes onderscheiden server-side
+`AI_CONFIRMED`, `USER_CORRECTED` en `FALLBACK_SELECTION`; clients kunnen deze
+herkomst niet zelf toekennen. De migratie verwijdert of herschrijft geen
+antwoordinhoud.
+
+De classificatiecache bewaart nooit de oorspronkelijke hulpvraag, maar de
+gevalideerde structured output bevat vanaf classifier-versie 1.1 een korte
+neutrale samenvatting. Omdat die samenvatting gebruikersafgeleide informatie
+kan bevatten, valt zij onder het toekomstige publieke-intakeretentiebeleid en
+wordt zij nooit gelogd.
 
 ## Transactionele bedrijfsregels voor latere services
 

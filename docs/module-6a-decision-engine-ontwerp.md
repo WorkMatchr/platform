@@ -771,10 +771,12 @@ De product owner moet beslissen of de exacte totaalscore aan opdrachtgevers zich
 
 ## 48. Aanbevolen moduleonderverdeling
 
+Deze onderverdeling legt de oorspronkelijke ontwerpvolgorde vast. De actuele modulenamen en implementatiestatus staan in de roadmap; in het bijzonder zijn Module 6A.3, Module 6B en Module 6C/6C.1 inmiddels afgerond en zijn de vroegere werklabels voor 6B en 6C door de latere roadmap vervangen.
+
 1. **6A.0 — Ontwerp providerkwalificatie:** afgerond en geaccepteerd.
 2. **6A.1 — Ontwerp Decision Engine:** afgerond en product-ownergeaccepteerd.
 3. **6A.2 — Providerkwalificatie datamodel en services:** afgerond en product-ownergeaccepteerd; taxonomieën, dossiers, projectie, kwalificatiebesluiten, bewijsmetadata en integriteit zijn server-side gerealiseerd.
-4. **6A.3 — Provider-onboardinginterface:** 6A.3.0 en 6A.3.1 geaccepteerd; 6A.3.2 technisch opgeleverd met product-owneracceptatie open; 6A.3.3 en de interface volgen nog.
+4. **6A.3 — Provider-onboardinginterface:** volledig afgerond, gecommit en gepusht.
 5. **6A.4 — Decision Engine datamodel en services:** modelversies, snapshots, rondes, evaluatoren en rapport.
 6. **6A.5 — Selectie-interface en acceptatie:** start/status/uitleg, security-, fairness- en product-owneracceptatie.
 7. **6B — Uitnodigingen en providertoegang.**

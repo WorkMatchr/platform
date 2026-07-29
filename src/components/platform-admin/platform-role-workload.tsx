@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { PlatformAdminEmailForm } from './platform-admin-actions'
 import { AdminPageHeader, AdminSection, MetricCard, StatusPill } from './platform-admin-ui'
 
 type Permission = 'REVIEWER' | 'APPROVER' | 'AUDITOR'
@@ -19,6 +20,8 @@ export function PlatformRoleWorkload({
     approved: number
     rejected: number
     openCases: number
+    roleContacts: Array<{ permission: string; id: string; displayName: string | null; email: string }>
+    dossiers: Array<{ id: string; status: string; providerProfile: { id: string; organization: { name: string } } }>
   }
 }) {
   const granted = permissions.includes(permission)
@@ -47,6 +50,33 @@ export function PlatformRoleWorkload({
             Deze platformbeheerder heeft geen afzonderlijke {title.toLowerCase()}-bevoegdheid. Daardoor blijft de operationele dossierwachtrij terecht gesloten.
           </p>
         )}
+      </AdminSection>
+      <AdminSection title={`${title} benaderen`} description="Alleen accounts met een actuele expliciete bevoegdheid worden getoond.">
+        <div className="grid gap-3 lg:grid-cols-2">
+          {data.roleContacts.filter((contact) => contact.permission === permission).map((contact) => (
+            <section className="rounded-card border border-border bg-surface p-4" key={contact.id}>
+              <h3 className="font-bold text-brand-dark">{contact.displayName ?? contact.email}</h3>
+              <p className="mb-3 break-all text-xs text-text-secondary">{contact.email}</p>
+              <PlatformAdminEmailForm
+                targetType="USER"
+                targetId={contact.id}
+                returnTo={`/platformbeheer/${permission === 'REVIEWER' ? 'reviewer' : 'approver'}`}
+                label={`${title} mailen`}
+              />
+            </section>
+          ))}
+        </div>
+      </AdminSection>
+      <AdminSection title="Open dossiers">
+        <ul className="grid gap-2">
+          {data.dossiers.map((dossier) => (
+            <li className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-border bg-surface px-4 py-3" key={dossier.id}>
+              <span><strong>{dossier.providerProfile.organization.name}</strong> · {dossier.status}</span>
+              <Link className="font-semibold text-brand-primary underline" href={`/platformbeheer/dienstverleners/${dossier.providerProfile.id}`}>Open dossier</Link>
+            </li>
+          ))}
+        </ul>
+        <Link className="mt-3 inline-flex font-semibold text-brand-primary underline" href="/platformbeheer/auditor">Audit bekijken</Link>
       </AdminSection>
     </>
   )

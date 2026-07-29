@@ -2,6 +2,63 @@
 
 De ERD is per domein gesplitst voor leesbaarheid. Velden zijn beperkt tot primaire en relationele sleutels plus bepalende statussen.
 
+## Publieke conceptintake — Module 7.1
+
+```mermaid
+erDiagram
+  PublicIntakeDraft ||--o| PublicIntakeSession : secured_by
+  PublicIntakeDraft ||--o{ PublicIntakeAnswer : contains
+  PublicIntakeDraft ||--o{ PublicIntakeAnswerRevision : histories
+  PublicIntakeDraft ||--o{ PublicIntakeEvent : records
+  PublicIntakeAnswer ||--o{ PublicIntakeAnswerRevision : versions
+  PublicIntakeAIClassificationCache {
+    uuid id PK
+    char inputFingerprint UK
+    PublicIntakeAIClassificationStatus status
+    json classificationJson
+    string fallbackReason
+  }
+  PublicIntakeDraft {
+    uuid id PK
+    PublicIntakePhase phase
+    PublicIntakeEntryPoint entryPoint
+    string flowVersion
+    int version
+    datetime lastInteractionAt
+    datetime expiresAt
+  }
+  PublicIntakeSession {
+    uuid id PK
+    uuid draftId FK,UK
+    string tokenHash UK
+    datetime expiresAt
+    datetime revokedAt
+  }
+  PublicIntakeAnswer {
+    uuid id PK
+    uuid draftId FK
+    string questionKey
+    int version
+    PublicIntakeAnswerType answerType
+    PublicIntakeAnswerSource source
+  }
+  PublicIntakeAnswerRevision {
+    uuid id PK
+    uuid draftId FK
+    uuid answerId FK
+    int revisionNumber
+    PublicIntakeAnswerSource source
+  }
+  PublicIntakeEvent {
+    uuid id PK
+    uuid draftId FK
+    int sequence
+    PublicIntakeEventType type
+  }
+```
+
+Dit domein heeft bewust geen relatie naar User, Organization, membership, Intake of Assignment. Het volledige toegangstoken wordt nooit opgeslagen; alleen de hash staat in `PublicIntakeSession`. Een bewuste reset verwijdert geen records: de draft krijgt terminaal `ABANDONED_BY_USER`, de sessie krijgt `revokedAt` en het append-only event bewaart uitsluitend fasecontext en reden. De losstaande classificatiecache bevat uitsluitend een niet-omkeerbare fingerprint en gevalideerde structured output of een veilige fallback; de vrije hulpvraag wordt niet gedupliceerd.
+
 ## Identity en organisaties
 
 ```mermaid

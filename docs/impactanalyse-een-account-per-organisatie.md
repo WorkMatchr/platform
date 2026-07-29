@@ -2,7 +2,7 @@
 
 ## Status, grondslag en scope
 
-Status: definitieve product- en architectuurbesluiten vastgelegd; preflight, Expand en het tenant-Contract zijn technisch geïmplementeerd. Handmatige product-owneracceptatie van Module 6B staat open. Verwijdering, retentie/purge en membershipbeëindiging blijven afzonderlijk fail-closed.
+Status: definitieve product- en architectuurbesluiten vastgelegd; preflight, Expand en het tenant-Contract zijn geïmplementeerd en Module 6B is afgerond, gecommit en gepusht in `5b2c16d0086e93b3608fb06ef5a700f96960d7cc`. Verwijdering, retentie/purge en membershipbeëindiging blijven afzonderlijk fail-closed.
 
 Deze analyse werkt [ADR-013](adr/ADR-013-een-organisatie-per-tenantaccount-platformrollen-en-gecontroleerde-accountverwijdering.md) technisch uit. De oorspronkelijke analyse was read-only; de daaropvolgende additive uitvoering staat in [ADR-013 Fase 1 — technische implementatie Expand](adr-013-fase-1-expand-technische-implementatie.md).
 

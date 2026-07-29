@@ -1,5 +1,41 @@
 # Voortgang WorkMatchr
 
+**Actuele Module 7-status:** M7A Intake Completion is definitief afgerond. M7B Professional Advice is technisch opgeleverd; handmatige product-owneracceptatie staat open. De Guidance Engine bouwt deterministisch een eerste advies, primaire deskundigheid, eventuele aanvullende deskundigheid en gecontroleerde kennis- en bronverwijzingen. Matching, providerselectie en Adviesdossieropslag zijn niet gestart.
+
+## Module 7 — Nieuwe hulpvraag
+
+**Status:** M7A definitief afgerond; M7B technisch opgeleverd met handmatige acceptatie open.
+
+- pseudonieme publieke conceptintake zonder fictieve gebruiker, organisatie of membership;
+- maximaal één externe AI-classificatie per unieke fingerprint, met persistent hergebruik van gevalideerde uitkomst of veilige fallback;
+- maximaal vijf unieke verduidelijkingsvragen en nooit dezelfde vraag opnieuw;
+- expliciete afronding met guidance of een bruikbare algemene fallback, zonder generieke RI&E-aanname;
+- 256-bits sessietoken in een padgebonden HttpOnly-cookie, met uitsluitend een SHA-256-hash in PostgreSQL;
+- actuele getypeerde antwoorden en append-only revisies;
+- minimale append-only lifecycle- en domeinevents zonder vrije tekst, tokens of hashes;
+- centrale services voor aanmaken, hervatten, antwoordopslag, faseovergangen en veilige read-modellen;
+- 30 dagen analytische inactiviteit en 90 dagen hervatbaarheid centraal vastgelegd;
+- één additieve migratie en afzonderlijke tijdelijke-database-integratietest.
+- openingsscherm op `/advieswijzer` met vrije invoer en zeven herkenbare situaties;
+- doorlopende RI&E-prototypeflow met afzonderlijke deterministische routes voor nieuw, actualiseren en controleren;
+- responsieve contextkolom, betekenisvolle voortgang, eerdere antwoorden en veilige hervatting;
+- expliciet onderscheid tussen een onbekend antwoord en bewust overslaan;
+- niet-RI&E-routes worden nog niet als volledig werkend gepresenteerd.
+- centrale, pure Intake Decision Engine voor volgende vraag, zichtbare tak, overgeslagen vragen, ontbrekende verplichte informatie en gereedheid voor de samenvattingsfase;
+- declaratieve vraagmetadata voor verplicht, optioneel, afhankelijkheden, zichtbaarheid, opnieuw vragen bij onbekend, categorie en volgorde;
+- geen inhoudelijke beslisboom of losse inhoudelijke `if/else`-regels in React-componenten.
+- rustige secundaire actie en toegankelijke bevestigingsdialoog om bewust een nieuwe hulpvraag te starten;
+- `ABANDONED_BY_USER` sluit de bestaande draft transactioneel en terminaal af, trekt de sessie in en bewaart alle antwoorden, revisies en events;
+- idempotente herhaling schrijft geen dubbel abandonmentevent en maakt niet automatisch een nieuwe draft;
+- `ABANDONED_TIMEOUT` en `EXPIRED` zijn alleen additief gemodelleerd; scheduler, automatische statusmutatie en retentiejob blijven uitgesteld.
+- versieerbaar Professional Advice-contract met vaste disclaimer en fail-closed fallback;
+- expliciete deterministische adviesregels voor RI&E, incidenten, gevaarlijke stoffen, arbeidsgezondheid en BHV;
+- één primaire en waar relevant aanvullende `ProfessionalRequirement`-objecten, altijd `DRAFT` en onbevestigd;
+- kennis- en bronverwijzingen uitsluitend uit bestaande gecontroleerde contentregisters;
+- rustige publieke adviesweergave zonder matching-, account-, opdracht- of commerciële CTA.
+
+Nog niet gebouwd: persistente Adviesdossiers, PDF/e-mail, definitieve indiening, account- en tenantkoppeling, conversie naar `Intake` of `Assignment`, publicatie, matching, automatische abandonment/retentie, credits en offertes.
+
 ## Module 1 — Projectbasis
 
 **Status:** afgerond
@@ -398,7 +434,7 @@ ADR-012 heeft status `Voorgesteld`. Alle genoemde datamodellen, permissioncodes,
 ### Overige vervolgstatus
 
 - Module 6A.2 — Providerkwalificatie datamodel en services: afgerond en product-ownergeaccepteerd;
-- Module 6A.3 — Provider-onboardinginterface: 6A.3.0 tot en met 6A.3.4 afgerond en product-ownergeaccepteerd; ADR-011 geaccepteerd; 6A.3.5 in uitvoering met handmatige rollen-, mobiele en browseracceptatie open;
+- Module 6A.3 — Provider Onboarding UX: volledig afgerond, gecommit en gepusht in `736cead899df569fa03d1e2dd19ac485ceb4cc16`; ADR-011 blijft geaccepteerd;
 - Module 6A.4 — Decision Engine datamodel en services: niet gestart;
 - Module 6A.5 — Selectie-interface en acceptatie: niet gestart.
 
@@ -452,7 +488,7 @@ De product owner heeft aanvullend vastgesteld dat de vijf zichtbare statusbegrip
 
 ### Module 6A.3.2–6A.3.5 — Implementatieplan
 
-**Status:** 6A.3.2 tot en met 6A.3.4 afgerond en product-ownergeaccepteerd op 15 juli 2026. 6A.3.5 is in uitvoering; automatische acceptatie is geslaagd en handmatige rollen-, mobiele en browseracceptatie staat open.
+**Actuele status:** 6A.3.2 tot en met 6A.3.5 en Module 6A.3 als geheel zijn afgerond. De laatste Provider Onboarding UX- en Better Auth-developmentcorrecties zijn gecommit en gepusht in `736cead899df569fa03d1e2dd19ac485ceb4cc16`.
 
 - 6A.3.2 bouwt via maximaal twee additieve migraties candidates, submissions, statushistorie, reviewcases, findings, resolutions, professionalidentiteitsrevisies, capaciteitsactor en candidatebinding;
 - 6A.3.3 bouwt revision/archivewrites, submission, withdrawal, resubmission, completeness, queryservices, MEMBER-read-model en presentatiemodellen;
@@ -464,24 +500,24 @@ De product owner heeft aanvullend vastgesteld dat de vijf zichtbare statusbegrip
 
 ### Vervolgstatus
 
-- Module 6A.3: nog niet geïmplementeerd;
+- Module 6A.3: afgerond, gecommit en gepusht;
 - Module 6A.4 — Decision Engine datamodel en services: niet gestart;
 - Module 6A.5 — Selectie-interface en acceptatie: niet gestart;
 - matching, uitnodigingen, credits en Mollie: niet geïmplementeerd.
 
-Module 6A.3.2 tot en met 6A.3.4 zijn afgerond en product-ownergeaccepteerd. Tijdens 6A.3.5 zijn zichtbare technische enumwaarden vertaald en ARIA-foutkoppelingen en waarschuwingen bij niet-opgeslagen workflowwijzigingen hersteld. Automatische, database- en veilige unauthenticated runtimecontroles zijn geslaagd. Volledige OWNER/ADMIN/MEMBER-, indienings-/herindienings-, mobiele, WCAG- en visuele browseracceptatie staat handmatig open; daarom blijven 6A.3.5 en Module 6A.3 als geheel niet afgerond.
+Module 6A.3.2 tot en met 6A.3.4 waren eerder al afgerond en product-ownergeaccepteerd. Tijdens 6A.3.5 zijn zichtbare technische enumwaarden vertaald en ARIA-foutkoppelingen en waarschuwingen bij niet-opgeslagen workflowwijzigingen hersteld. Automatische, database- en runtimecontroles zijn geslaagd. De daaropvolgende OWNER/ADMIN/MEMBER-, indienings-/herindienings-, mobiele, WCAG- en visuele acceptatiecorrecties zijn afgerond; 6A.3.5 en Module 6A.3 zijn niet langer open.
 
-Tijdens de product-owneracceptatie is daarnaast de inconsistentie tussen authenticatie, navigatie en providercontext hersteld. Publieke en dashboardheader, layouts, pagina’s en Server Components lezen nu dezelfde request-scoped Better Auth-gebruiker en server-side gevalideerde actieve membership. De dashboardheader volgt organisatie- en sessievernieuwing en toont nooit `Inloggen` voor een gevalideerd ingelogde gebruiker. Gerichte regressietests dekken publieke bezoeker, opdrachtgever, provider, logout, organisatiewissel en sessievernieuwing. De handmatige product-owneracceptatie van Module 6A.3.5 blijft open.
+Tijdens de product-owneracceptatie is daarnaast de inconsistentie tussen authenticatie, navigatie en providercontext hersteld. Publieke en dashboardheader, layouts, pagina’s en Server Components lezen nu dezelfde request-scoped Better Auth-gebruiker en server-side gevalideerde membership. De dashboardheader volgt sessievernieuwing en toont nooit `Inloggen` voor een gevalideerd ingelogde gebruiker. Gerichte regressietests dekken publieke bezoeker, opdrachtgever, provider, logout en sessievernieuwing. Deze bevinding behoort tot de afgeronde Module 6A.3.5-acceptatie.
 
-Een tweede acceptatiebevinding rond rollenweergave is hersteld. Het accountscherm toont platformrol en rol binnen de actieve organisatie afzonderlijk, samen met organisatienaam, organisatietype en organisatiestatus. Bij meerdere organisaties is de actieve organisatie expliciet en kan deze met de bestaande server-side gevalideerde wisselactie worden gewijzigd. Regressietests dekken één organisatie, meerdere organisaties, `OWNER`, `ADMIN`, `MEMBER` en een actieve-organisatiewissel. De handmatige product-owneracceptatie van Module 6A.3.5 blijft open.
+Een tweede acceptatiebevinding rond rollenweergave is hersteld. Het accountscherm toont platformrol en rol binnen de organisatie afzonderlijk, samen met organisatienaam, organisatietype en organisatiestatus. De latere Module 6B-contractfase heeft de toenmalige multi-organisatieweergave en organisatiewissel vervangen door één server-side afgeleide tenantcontext. De rollenweergave en de Module 6B-eindtoestand zijn beide afgerond.
 
-Aanvullende acceptatiebevindingen zijn technisch hersteld zonder Module 6A.3.5 af te ronden. De accountgrid voorkomt overlap van lange waarden; de vrijwel onzichtbare professional-CTA gebruikte onbestaande `bg-brand`/`text-brand`-tokens en is vervangen door het bestaande `LinkButton`; providerrollen en tenantgrenzen blijven server-side afgedwongen. Open actions dragen nu expliciete route-, pagina- en hoofdgroepmetadata, Sectorervaring houdt **Diensten en ervaring** actief en de donkere actiekaart volgt de inhoudshoogte. Remote blijft onafhankelijk van provincies en Landelijk, technische UUID-copy is verwijderd en zichtbare verzekeringscopy gebruikt `verzekeringsgegevens`. Volledige handmatige hercontrole op circa 390px, tablet, desktop, 200% zoom en OWNER/ADMIN/MEMBER blijft open.
+Aanvullende acceptatiebevindingen zijn technisch hersteld en later als onderdeel van Module 6A.3.5 afgerond. De accountgrid voorkomt overlap van lange waarden; de vrijwel onzichtbare professional-CTA gebruikte onbestaande `bg-brand`/`text-brand`-tokens en is vervangen door het bestaande `LinkButton`; providerrollen en tenantgrenzen blijven server-side afgedwongen. Open actions dragen nu expliciete route-, pagina- en hoofdgroepmetadata, Sectorervaring houdt **Diensten en ervaring** actief en de donkere actiekaart volgt de inhoudshoogte. Remote blijft onafhankelijk van provincies en Landelijk, technische UUID-copy is verwijderd en zichtbare verzekeringscopy gebruikt `verzekeringsgegevens`.
 
 ### ADR-013 Fase 1 — Expand
 
-Het additive technische fundament is op 17 juli 2026 geïmplementeerd: toekomstige accountstatussen en lifecycleprojecties, `PLATFORM_OPERATOR` met unieke `systemKey`, append-only provisioning- en membershipevents, nullable `createdByUserId`, een expliciete platformorganisatiebootstrap en een maximaal dertig dagen begrensd retentiedatamodel. De lokale migratie is na een gevalideerde back-up uitgevoerd. Er is geen platformorganisatie gebootstrapt en geen bestaande User, membership, organisatie, authrecord of tenantcontext gemigreerd. Migrate en Contract zijn niet gestart; Module 6A.3-statussen zijn hierdoor niet gewijzigd.
+Het additive technische fundament is op 17 juli 2026 geïmplementeerd: toekomstige accountstatussen en lifecycleprojecties, `PLATFORM_OPERATOR` met unieke `systemKey`, append-only provisioning- en membershipevents, nullable `createdByUserId`, een expliciete platformorganisatiebootstrap en een maximaal dertig dagen begrensd retentiedatamodel. De lokale migratie is na een gevalideerde back-up uitgevoerd. Er is toen geen platformorganisatie gebootstrapt en geen bestaande User, membership, organisatie, authrecord of tenantcontext gemigreerd. Op dat moment waren Migrate en Contract nog niet gestart; Module 6B heeft het Contract later afgerond.
 
-De informatiearchitectuur van **Diensten en ervaring** is aanvullend hersteld met `/aanbiedersdossier/diensten-en-ervaring` als overzichtspagina. De hoofdgroep opent daar twee duidelijke, responsieve en toetsenbordbedienbare sectiekaarten voor **Diensten en specialismen** en **Sectorervaring**. De open actie **Vul sectorervaring in** blijft rechtstreeks naar `/aanbiedersdossier/sectorervaring` wijzen en beide detailpagina's houden dezelfde hoofdgroep actief. Handmatige product-owneracceptatie op mobiel, tablet en desktop blijft open.
+De informatiearchitectuur van **Diensten en ervaring** is aanvullend hersteld met `/aanbiedersdossier/diensten-en-ervaring` als overzichtspagina. De hoofdgroep opent daar twee duidelijke, responsieve en toetsenbordbedienbare sectiekaarten voor **Diensten en specialismen** en **Sectorervaring**. De open actie **Vul sectorervaring in** blijft rechtstreeks naar `/aanbiedersdossier/sectorervaring` wijzen en beide detailpagina's houden dezelfde hoofdgroep actief. De product-owneracceptatie hiervan is binnen Module 6A.3 afgerond.
 
 De PostgreSQL `client.query`-deprecationwaarschuwing is opnieuw onderzocht. Het integriteitsscript gebruikt de Promise-interface met expliciete `connect()`, geawaitte `query()`-aanroepen en `end()`. De volledige tijdelijke-databasecontrole is op 15 juli 2026 zonder deprecationwaarschuwing geslaagd en heeft de tijdelijke database in de `finally`-cleanup verwijderd.
 
@@ -495,13 +531,13 @@ Na een gecontroleerde back-up en dry-run is exact één `PLATFORM_OPERATOR` met 
 
 De product owner heeft de bevoegdhedenmatrix aangevuld en goedgekeurd. OWNER toevoegen en OWNER overdragen zijn afzonderlijke acties; creatorbeheer beperkt alleen het bereik van bestaande rechten; centraal platformbeheer vereist `ACTIVE`, `PlatformRole.ADMIN` en actieve membership bij `WORKMATCHR_PLATFORM`; self-block wordt altijd geweigerd; membershipbeëindiging blijft fail-closed.
 
-De servicelaag, tenantguards, platformactorpolicies en Nederlandse accountbeheerinterface zijn technisch gerealiseerd zonder Prisma- of migratiewijziging. Blokkeren en herstellen zijn transactioneel, idempotent en append-only geaudit; blokkeren trekt sessies en wachtwoordresetmiddelen in. Last-OWNER-, tenant-, platform- en migratiebescherming zijn fail-closed. Preflight 3.0 en tijdelijke-database-integratietests zijn toegevoegd. De bekende legacy User met meerdere memberships blijft de enige migratieblocker en is niet gewijzigd. Product-owneracceptatie van Fase 2B staat open.
+De servicelaag, tenantguards, platformactorpolicies en Nederlandse accountbeheerinterface zijn technisch gerealiseerd zonder Prisma- of migratiewijziging. Blokkeren en herstellen zijn transactioneel, idempotent en append-only geaudit; blokkeren trekt sessies en wachtwoordresetmiddelen in. Last-OWNER-, tenant-, platform- en migratiebescherming zijn fail-closed. Preflight 3.0 en tijdelijke-database-integratietests zijn toegevoegd. De acceptatie en Contract-afronding zijn later binnen Module 6B voltooid.
 
-De accountbeheerpagina ondersteunt nu tevens uitnodigingen binnen dezelfde tenant. OWNER kan MEMBER en ADMIN uitnodigen; ADMIN uitsluitend MEMBER. User, Better Auth-credential, membership en audittrail ontstaan transactioneel; verificatie activeert User en membership atomair; de gebruiker stelt daarna een eigen wachtwoord in en krijgt uitsluitend een eigen sessie. OWNER-toekenning en platformbeheer blijven buiten deze uitnodigingsflow. Product-owneracceptatie blijft open.
+De accountbeheerpagina ondersteunt tevens uitnodigingen binnen dezelfde tenant. OWNER kan MEMBER en ADMIN uitnodigen; ADMIN uitsluitend MEMBER. User, Better Auth-credential, membership en audittrail ontstaan transactioneel; de afzonderlijke accountactivatie handelt uitnodiging, wachtwoordkeuze en de eigen sessie af. OWNER-toekenning en platformbeheer blijven buiten deze uitnodigingsflow. Deze uitnodigingsactivatie is binnen Module 6B afgerond.
 
 ### Module 6B — één account per organisatie
 
-**Status:** technisch afgerond; handmatige product-owneracceptatie open.
+**Status:** afgerond, gecommit en gepusht in `5b2c16d0086e93b3608fb06ef5a700f96960d7cc`.
 
 De Contract-fase is op 24 juli 2026 uitgevoerd. De preflight vond nul multi-memberships; de nieuwe niet-destructieve migratie bewaakt dit opnieuw en maakt `OrganizationMembership.userId` databasebreed uniek. De requestcontext leest per request rechtstreeks de enige membership en gebruikt geen organisatiecookie, sessieclaim of clientkeuze. Account-, header- en organisatiepagina’s bevatten geen wisselaar en geen actie voor een tweede organisatie. Een andere organisatie vereist een afzonderlijke User, e-mailidentiteit, credential en sessie.
 
@@ -623,7 +659,7 @@ Deze actuele Fase 3-status volgt de historische Module 6A-notities op waarin mat
 
 ## Module 6C — Platformbeheer
 
-**Status:** technisch uitgevoerd; product-owneracceptatie open.
+**Status:** Module 6C en 6C.1 zijn afgerond, gecommit en gepusht in `7812b2c`.
 
 - dagelijkse cockpit met compacte platform-, dienstverlener-, opdracht- en operationsignalen;
 - beveiligde registers voor organisaties, gebruikers, dienstverleners en opdrachten;
@@ -633,4 +669,9 @@ Deze actuele Fase 3-status volgt de historische Module 6A-notities op waarin mat
 - organisatie- en accountblokkades via centrale, transactionele en geaudite lifecycle-services;
 - geen zoektracking geactiveerd; zoektermen en conversietrends wachten op privacy-, cookie- en retentiebesluiten;
 - automatische autorisatie-, navigatie-, lifecycle-, header- en rapportagetests toegevoegd;
-- handmatige desktop-, mobiele, toetsenbord-, filter-, export- en rollenacceptatie staat open.
+- de product-owneracceptatie van Module 6C/6C.1 is afgerond;
+- Module 6C.2 — WOS Beheeracties & Communicatie is technisch opgeleverd; handmatige product-owneracceptatie staat open;
+- het Actiecentrum combineert bestaande WOS-signalen met review- en goedkeuringswachtrijen en legt status en verantwoordelijke append-only vast;
+- individuele beheercommunicatie, activatie/verificatie/wachtwoordherstel, interne notities en opdrachtopvolging gebruiken bestaande services en schrijven `AdminActionLog`;
+- accountverwijdering, massamail, chat, nieuwe autorisatiemodellen en systeemconfiguratiemutaties zijn niet toegevoegd;
+- contentbeheer/KIP en verdere Advieswijzer-optimalisatie zijn niet gebouwd en blijven geparkeerd.

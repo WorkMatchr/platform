@@ -9,16 +9,29 @@ type PublicPageLayoutProps = {
   eyebrow?: string
   title: string
   description: string
+  compactHero?: boolean
   children: ReactNode
 }
 
-export function PublicPageLayout({ breadcrumbs, eyebrow, title, description, children }: PublicPageLayoutProps) {
+export function PublicPageLayout({
+  breadcrumbs,
+  eyebrow,
+  title,
+  description,
+  compactHero = false,
+  children,
+}: PublicPageLayoutProps) {
   return (
     <div>
       <div className="border-b border-border bg-surface-subtle">
-        <Container className="pt-8">
+        <Container className={compactHero ? 'pt-4 sm:pt-5' : 'pt-8'}>
           <Breadcrumbs items={breadcrumbs} />
-          <PublicPageHero eyebrow={eyebrow} title={title} description={description} />
+          <PublicPageHero
+            eyebrow={eyebrow}
+            title={title}
+            description={description}
+            compact={compactHero}
+          />
         </Container>
       </div>
       {children}

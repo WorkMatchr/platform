@@ -2,20 +2,20 @@
 
 > **Actuele productcorrectie (16 juli 2026):** capaciteit en beschikbaarheid zijn geen onderdeel meer van provider-onboarding. Nieuwe providerwrites zijn geblokkeerd; historische snapshots en v1-candidates blijven immutable. Nieuwe dossiercandidates gebruiken `PROVIDER-DOSSIER-2` zonder capaciteitsbinding.
 
-> **Doelarchitectuur ADR-013 (17 juli 2026, nog niet geïmplementeerd):** de toekomstige enkelvoudige tenantcontext vervangt organisatiekeuze, maar verandert geen immutable dossierhistorie. Reviewer en approver moeten tot de centrale WorkMatchr-beheerorganisatie behoren en een expliciete permission hebben; de auditor is de enige platformactor die zonder organisatiemembership mag bestaan.
+> **Actuele status ADR-013:** de enkelvoudige tenantcontext is in Module 6B geactiveerd zonder immutable dossierhistorie te wijzigen. Reviewer en approver behoren tot de centrale WorkMatchr-beheerorganisatie en hebben een expliciete permission; de auditor is de platformactor die zonder organisatiemembership mag bestaan.
 
 ## 1. Documentstatus
 
 - Document: technisch implementatieplan voor Module 6A.3.2 tot en met 6A.3.5.
 - Datum: 15 juli 2026.
-- Status: technisch opgesteld; product-owneracceptatie open.
+- Status: uitgevoerd en afgerond.
 - Module 6A.3.0: afgerond en product-ownergeaccepteerd.
 - Module 6A.3.1: afgerond en product-ownergeaccepteerd.
 - Module 6A.3.2: afgerond en product-ownergeaccepteerd.
 - Module 6A.3.3: afgerond en product-ownergeaccepteerd.
 - Module 6A.3.4: afgerond en product-ownergeaccepteerd.
-- Module 6A.3.5: in uitvoering; automatische acceptatie geslaagd, handmatige rollen-, mobiele en browseracceptatie open.
-- Module 6A.3 als geheel: niet geïmplementeerd.
+- Module 6A.3.5: afgerond.
+- Module 6A.3 als geheel: afgerond, gecommit en gepusht in `736cead899df569fa03d1e2dd19ac485ceb4cc16`.
 - ADR-011: geaccepteerd en bindend voor de implementatie.
 
 Dit document wijzigt geen code, Prisma-schema, migratie, route, component, test, dependency of configuratie.

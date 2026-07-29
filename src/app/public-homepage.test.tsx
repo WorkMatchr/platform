@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import { publicHomepageContent } from '@/content/public-homepage'
+import { publicHomepageContent, publicSituationRouting } from '@/content/public-homepage'
 import { isRegisteredPublicHref, publicFooterGroups, publicNavigationItems } from '@/content/public-routes'
 import { Footer } from '@/components/layout/footer'
 import HomePage, { metadata } from './page'
@@ -33,7 +33,46 @@ describe('vraaggestuurde publieke homepage', () => {
     expect(html).toContain('href="/kenniscentrum/moet-ik-een-rie-hebben"')
     expect(html.match(/data-card-density="compact"/g)).toHaveLength(6)
     expect(html).toContain('grid auto-rows-fr items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3')
-    expect(html).toMatch(/Ik heb personeel in dienst[\s\S]*Start de Advieswijzer/)
+  })
+
+  it('routeert brede situaties naar informatie en houdt de Advieswijzer afzonderlijk', () => {
+    const html = renderHomepage()
+
+    expect(publicSituationRouting).toEqual({
+      'employer-with-staff': {
+        href: '/wettelijke-verplichtingen',
+        destinationType: 'information',
+      },
+      'rie-uncertainty': {
+        href: '/kenniscentrum/moet-ik-een-rie-hebben',
+        destinationType: 'information',
+      },
+      'occupational-health-obligations': {
+        href: '/wettelijke-verplichtingen',
+        destinationType: 'information',
+      },
+      'incident-or-near-miss': {
+        href: '/kenniscentrum/wanneer-incidentonderzoek-zinvol',
+        destinationType: 'information',
+      },
+      'absence-or-health-concerns': {
+        href: '/kenniscentrum/wanneer-bedrijfsarts-inschakelen',
+        destinationType: 'information',
+      },
+      'find-an-expert': {
+        href: '/diensten',
+        destinationType: 'services',
+      },
+    })
+    expect(publicHomepageContent.situations.map((situation) => situation.href)).not.toContain('/advieswijzer')
+    expect(html).toMatch(
+      /Ik heb personeel in dienst[\s\S]*href="\/wettelijke-verplichtingen"[\s\S]*Bekijk wat u moet regelen/,
+    )
+    expect(html).toContain('Ik weet nog niet wat ik nodig heb')
+    expect(html).toContain(
+      'Beantwoord enkele korte vragen. WorkMatchr helpt u uw hulpvraag duidelijk te maken.',
+    )
+    expect(html).toMatch(/href="\/advieswijzer"[\s\S]*Start de advieswijzer/)
   })
 
   it('gebruikt vier begrijpelijke proceslabels in de bedoelde volgorde', () => {

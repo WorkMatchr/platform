@@ -310,6 +310,70 @@ enum IntakeQuestionInputType {
   ORGANIZATION_LOCATION
 }
 
+enum PublicIntakePhase {
+  STARTED
+  CLARIFYING
+  SUMMARY_PRESENTED
+  REGISTRATION_STARTED
+  ACCOUNT_LINKED
+  SUBMITTED
+  ABANDONED
+  ABANDONED_BY_USER
+  ABANDONED_TIMEOUT
+  EXPIRED
+}
+
+enum PublicIntakeEntryPoint {
+  FREE_TEXT
+  RECOGNIZABLE_REQUEST
+}
+
+enum PublicIntakeQuestionPurpose {
+  CLARIFICATION
+  MATCHING
+  ADMINISTRATION
+}
+
+enum PublicIntakeAnswerType {
+  TEXT
+  OPTION
+  NUMBER
+  BOOLEAN
+  DATE
+  PERIOD
+}
+
+enum PublicIntakeAnswerDisposition {
+  ANSWERED
+  UNKNOWN
+  SKIPPED
+}
+
+enum PublicIntakeAnswerSource {
+  USER_INPUT
+  AI_CONFIRMED
+  USER_CORRECTED
+  FALLBACK_SELECTION
+}
+
+enum PublicIntakeEventType {
+  DRAFT_CREATED
+  ENTRY_POINT_SELECTED
+  ORIGINAL_INPUT_RECORDED
+  ANSWER_RECORDED
+  ANSWER_REVISED
+  QUESTION_SKIPPED
+  PHASE_CHANGED
+  DRAFT_RESUMED
+  DRAFT_EXPIRED_ACCESS_REJECTED
+  DRAFT_ABANDONED_BY_USER
+}
+
+enum PublicIntakeAIClassificationStatus {
+  PROCESSING
+  COMPLETED
+}
+
 enum AssignmentStatus {
   DRAFT
   READY_FOR_REVIEW
@@ -1794,6 +1858,136 @@ model ProviderMigrationAudit {
 
   @@unique([migrationCode, sourceType, sourceId])
   @@index([providerProfileId, createdAt])
+}
+
+model PublicIntakeDraft {
+  id                 String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  phase              PublicIntakePhase            @default(STARTED)
+  entryPoint         PublicIntakeEntryPoint
+  originalInput      String?                      @db.Text
+  selectedRequestKey String?                      @db.VarChar(100)
+  flowVersion        String                       @db.VarChar(50)
+  currentStep        String?                      @db.VarChar(100)
+  version            Int                          @default(1)
+  startedAt          DateTime                     @default(now()) @db.Timestamptz(3)
+  lastInteractionAt  DateTime                     @default(now()) @db.Timestamptz(3)
+  expiresAt          DateTime                     @db.Timestamptz(3)
+  submittedAt        DateTime?                    @db.Timestamptz(3)
+  linkedAt           DateTime?                    @db.Timestamptz(3)
+  createdAt          DateTime                     @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime                     @updatedAt @db.Timestamptz(3)
+  session            PublicIntakeSession?
+  answers            PublicIntakeAnswer[]
+  answerRevisions    PublicIntakeAnswerRevision[]
+  events             PublicIntakeEvent[]
+
+  @@index([phase, lastInteractionAt])
+  @@index([expiresAt])
+  @@index([createdAt])
+}
+
+model PublicIntakeSession {
+  id                      String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  draftId                 String            @unique @db.Uuid
+  tokenHash               String            @unique @db.Char(64)
+  expiresAt               DateTime          @db.Timestamptz(3)
+  lastUsedAt              DateTime          @default(now()) @db.Timestamptz(3)
+  lastResumeEventAt       DateTime?         @db.Timestamptz(3)
+  expiredAccessRecordedAt DateTime?         @db.Timestamptz(3)
+  revokedAt               DateTime?         @db.Timestamptz(3)
+  createdAt               DateTime          @default(now()) @db.Timestamptz(3)
+  draft                   PublicIntakeDraft @relation(fields: [draftId], references: [id], onDelete: Restrict)
+
+  @@index([expiresAt])
+  @@index([revokedAt])
+}
+
+model PublicIntakeAnswer {
+  id              String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  draftId         String                        @db.Uuid
+  questionKey     String                        @db.VarChar(100)
+  questionVersion Int
+  answerType      PublicIntakeAnswerType
+  disposition     PublicIntakeAnswerDisposition @default(ANSWERED)
+  source          PublicIntakeAnswerSource      @default(USER_INPUT)
+  version         Int                           @default(1)
+  textValue       String?                       @db.Text
+  optionValue     String?                       @db.VarChar(100)
+  numberValue     Decimal?                      @db.Decimal(12, 2)
+  booleanValue    Boolean?
+  dateValue       DateTime?                     @db.Date
+  periodValue     String?                       @db.VarChar(100)
+  createdAt       DateTime                      @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime                      @updatedAt @db.Timestamptz(3)
+  draft           PublicIntakeDraft             @relation(fields: [draftId], references: [id], onDelete: Restrict)
+  revisions       PublicIntakeAnswerRevision[]
+
+  @@unique([draftId, questionKey])
+  @@index([draftId])
+  @@index([questionKey])
+  @@index([questionKey, source])
+}
+
+model PublicIntakeAnswerRevision {
+  id              String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  draftId         String                        @db.Uuid
+  answerId        String                        @db.Uuid
+  questionKey     String                        @db.VarChar(100)
+  questionVersion Int
+  revisionNumber  Int
+  answerType      PublicIntakeAnswerType
+  disposition     PublicIntakeAnswerDisposition
+  source          PublicIntakeAnswerSource      @default(USER_INPUT)
+  textValue       String?                       @db.Text
+  optionValue     String?                       @db.VarChar(100)
+  numberValue     Decimal?                      @db.Decimal(12, 2)
+  booleanValue    Boolean?
+  dateValue       DateTime?                     @db.Date
+  periodValue     String?                       @db.VarChar(100)
+  createdAt       DateTime                      @default(now()) @db.Timestamptz(3)
+  draft           PublicIntakeDraft             @relation(fields: [draftId], references: [id], onDelete: Restrict)
+  answer          PublicIntakeAnswer            @relation(fields: [answerId], references: [id], onDelete: Restrict)
+
+  @@unique([answerId, revisionNumber])
+  @@index([draftId, questionKey, createdAt])
+  @@index([answerId])
+  @@index([questionKey, source, createdAt])
+}
+
+model PublicIntakeEvent {
+  id                   String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  draftId              String                @db.Uuid
+  sequence             Int
+  type                 PublicIntakeEventType
+  fromPhase            PublicIntakePhase?
+  toPhase              PublicIntakePhase?
+  questionKey          String?               @db.VarChar(100)
+  answerRevisionNumber Int?
+  detailCode           String?               @db.VarChar(100)
+  occurredAt           DateTime              @default(now()) @db.Timestamptz(3)
+  draft                PublicIntakeDraft     @relation(fields: [draftId], references: [id], onDelete: Restrict)
+
+  @@unique([draftId, sequence])
+  @@index([draftId, occurredAt])
+  @@index([type, occurredAt])
+}
+
+model PublicIntakeAIClassificationCache {
+  id                 String                             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  inputFingerprint   String                             @unique @db.Char(64)
+  classifierVersion  String                             @db.VarChar(100)
+  provider           String                             @db.VarChar(50)
+  model              String                             @db.VarChar(100)
+  status             PublicIntakeAIClassificationStatus @default(PROCESSING)
+  classificationJson Json?
+  fallbackReason     String?                            @db.VarChar(50)
+  providerStatusCode Int?
+  completedAt        DateTime?                          @db.Timestamptz(3)
+  createdAt          DateTime                           @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime                           @updatedAt @db.Timestamptz(3)
+
+  @@index([status, createdAt])
+  @@index([completedAt])
 }
 
 model IntakeQuestionnaire {

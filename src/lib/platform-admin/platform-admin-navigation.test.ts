@@ -9,7 +9,7 @@ describe('platformbeheernavigatie', () => {
       'Dagelijks beheer', 'Beoordelingen', 'Inzicht', 'Systeem',
     ])
     expect(platformAdminNavigation.map((item) => item.label)).toEqual([
-      'Dashboard', 'Organisaties', 'Gebruikers', 'Dienstverleners', 'Opdrachten',
+      'Dashboard', 'Actiecentrum', 'Organisaties', 'Gebruikers', 'Dienstverleners', 'Opdrachten',
       'Reviews', 'Goedkeuringen', 'Audit',
       'Marketplace', 'Trends', 'Rapportages', 'Instellingen',
     ])

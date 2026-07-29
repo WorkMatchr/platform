@@ -22,7 +22,7 @@ Situaties staan bewust vóór diensten. Bezoekers hoeven daardoor niet vooraf te
 
 ## Routebeleid
 
-Alle homepage-CTA’s verwijzen naar bestaande routes. De primaire hero-CTA en afsluitende CTA gebruiken het toegankelijke interne anker `/#situaties`. RI&E verwijst naar de bestaande P1.3-routes. Niet-uitgewerkte diensten en sectoren worden als oriëntatie getoond en krijgen geen fictieve detailroute.
+Alle homepage-CTA’s verwijzen naar bestaande routes. De primaire hero-CTA en afsluitende CTA gebruiken het toegankelijke interne anker `/#situaties`. Brede contexttegels verwijzen naar passende informatie of een bestaand dienstenoverzicht en vullen nooit automatisch een intake of dienstclassificatie in. Alleen de afzonderlijke ingang “Ik weet nog niet wat ik nodig heb” verwijst zonder voorinvulling naar de Advieswijzer. RI&E verwijst naar de bestaande P1.3-routes. Niet-uitgewerkte diensten en sectoren worden als oriëntatie getoond en krijgen geen fictieve detailroute.
 
 ## Grenzen
 

@@ -242,6 +242,18 @@ export async function blockAccount(input: LifecycleInput): Promise<{ outcome: Ac
     await transaction.verification.deleteMany({
       where: { value: input.subjectUserId, identifier: { startsWith: 'reset-password:' } },
     })
+    if (context.centralAdministrator) {
+      await transaction.adminActionLog.create({
+        data: {
+          actorUserId: input.actorUserId,
+          action: 'USER_BLOCKED',
+          entityType: 'User',
+          entityId: input.subjectUserId,
+          reason: input.reasonNote?.trim() || input.reasonCode,
+          metadata: { organizationId: input.organizationId, policyVersion: 'PLATFORM_ADMIN_ACTIONS_V1' },
+        },
+      })
+    }
     return { outcome: 'BLOCKED' }
   }, { isolationLevel: 'Serializable' })
 }
@@ -284,6 +296,18 @@ export async function unblockAccount(input: LifecycleInput): Promise<{ outcome: 
       },
     })
     if (updated.count !== 1) throw new AccountLifecycleServiceError('CONFLICT', 'De accountstatus is gelijktijdig gewijzigd.')
+    if (context.centralAdministrator) {
+      await transaction.adminActionLog.create({
+        data: {
+          actorUserId: input.actorUserId,
+          action: 'USER_UNBLOCKED',
+          entityType: 'User',
+          entityId: input.subjectUserId,
+          reason: input.reasonNote?.trim() || input.reasonCode,
+          metadata: { organizationId: input.organizationId, policyVersion: 'PLATFORM_ADMIN_ACTIONS_V1' },
+        },
+      })
+    }
     return { outcome: 'UNBLOCKED' }
   }, { isolationLevel: 'Serializable' })
 }

@@ -35,6 +35,11 @@
 - gecontroleerde opdrachtpublicatie met `OPEN`, publicatieactor, publicatieversie en een immutable `AssignmentRevision`-snapshot;
 - transactionele publicatie- en intrekservices met `Serializable` isolatie, optimistic concurrency en idempotente herhaling.
 - server-rendered publicatiecontrole en gepubliceerde detailweergave met dunne Server Actions, expliciete bevestiging, foutfocus en invoerbehoud.
+- afzonderlijke pseudonieme `PublicIntakeDraft`-fundering vóór authenticatie, zonder fictieve User, Organization of membership;
+- tijdelijke publieke-intakesessies met een cryptografisch token in een padgebonden HttpOnly-cookie en uitsluitend een SHA-256-hash in PostgreSQL;
+- getypeerde actuele publieke antwoorden met append-only revisies en privacyveilige lifecycle-events;
+- serialiseerbare publieke-intakeservices voor aanmaken, hervatten, antwoordopslag, faseovergangen en veilige read-modellen.
+- transactionele, idempotente beëindiging van publieke conceptintakes door de gebruiker, met terminale fase, ingetrokken sessie en append-only lifecycle-event zonder inhoudelijke metadata.
 
 ## Structuurprincipes
 
@@ -61,6 +66,8 @@
 - Matching leest later uitsluitend de revisie op `publishedVersion`. Na publicatie zijn zakelijke opdrachtvelden, specialismekoppelingen en publicatiemetadata immutable; intrekken verloopt uitsluitend via `OPEN → CANCELLED`.
 - Publicatie-Server Actions accepteren geen tenant-ID als autorisatiebron, bepalen de actieve organisatie server-side en roepen uitsluitend de centrale publicatieservices aan.
 - `Assignment.version` stijgt bij inhoud en status. Een inhoudsrevisie gebruikt de actuele opdrachtversie en is strikt nieuwer dan eerdere revisies; statusgerelateerde versienummers hoeven geen lege revisies te krijgen.
+- De publieke conceptintake is een afzonderlijk pre-authenticatie-aggregate. Toegang vereist het volledige tijdelijke token; een publiek draft-ID is nooit voldoende. De servicelaag valideert expiry en optimistic concurrency en lekt geen tokenhash of eventmetadata naar publieke DTO's.
+- De gewone publieke intakeflow ondersteunt `STARTED → CLARIFYING`, `CLARIFYING → SUMMARY_PRESENTED` en terug naar `CLARIFYING`. Vanuit iedere actieve pre-submissionfase kan uitsluitend de centrale beëindigingsservice naar terminaal `ABANDONED_BY_USER`; zij trekt de sessie in en bewaart alle historie. `ABANDONED_TIMEOUT` en `EXPIRED` zijn gereserveerd voor latere gecontroleerde processen. Account- en tenantkoppeling, definitieve indiening en overdracht naar de bestaande `Intake` blijven latere expliciete werksets.
 - Providerkwalificatie wordt vóór toekomstige selectie een afzonderlijke domeingrens. Platformkwalificatie, beroepskwalificatie, readiness, selecteerbaarheid en historische prestaties blijven gescheiden en versieerbaar.
 - De toekomstige Decision Engine leest uitsluitend een minimale, gevalideerde providerprojectie met bron, verificatie, geldigheid en snapshotversie; ruwe bewijsdocumenten, direct identificerende persoonsgegevens, vrije marketingtekst en commerciële status blijven buiten de selectielaag.
 - Het geaccepteerde 6A.1-ontwerp gebruikt een deterministische pipeline van kandidaatverzameling, afzonderlijke knock-outs, integer scoring, lexicografische tie-breakers en maximaal drie geselecteerden. `Explainability before Score` is leidend: WorkMatchr communiceert primair de reden van geschiktheid en niet de interne berekening.
@@ -80,6 +87,8 @@
 - Beheerqueries zijn geminimaliseerde read-modellen en muteren nooit rechtstreeks. Organisatieblokkades schrijven status en `AdminActionLog` atomair; accountblokkades hergebruiken de bestaande account-lifecycle inclusief sessie-intrekking en append-only provisioninghistorie.
 - `PlatformRole.ADMIN` verleent geen reviewer-, approver- of auditorpermission. Operationele dossieracties blijven afhankelijk van de expliciete, tijdgebonden permissions en de vier-ogenregel.
 - Platformrapportages bevatten uitsluitend operationele aggregaten. CSV-export wordt per request opnieuw geautoriseerd en gebruikt `private, no-store`; zoekgedrag wordt niet verzameld zolang een goedgekeurd privacy-, cookie- en retentiebeleid ontbreekt.
+- Module 6C.2 leidt het Actiecentrum af uit bestaande WOS-signalen en operationele review- en goedkeuringswachtrijen. Status, verantwoordelijke, communicatiepogingen en interne beheernotities worden append-only in het bestaande `AdminActionLog` vastgelegd; er is bewust geen nieuw taak-, chat- of autorisatiemodel geïntroduceerd.
+- Platformbeheercommunicatie gebruikt de bestaande mailinfrastructuur. Verzending, provideracceptatie of foutcode worden geaudit zonder berichtinhoud, tokens of secrets in metadata op te slaan. Lifecycle- en governanceacties blijven via hun bestaande transactionele services lopen.
 - De platformbeheercockpit gebruikt een afzonderlijke pure advieslaag bovenop geminimaliseerde read-modellen. Regels leveren vaste ernst, regelcode, uitleg, bronwaarden, aanbevolen actie en deeplink. Sortering is deterministisch op ernst, regelcode en stabiele identificatie; presentatiecomponenten bevatten geen verspreide inhoudelijke beslislogica en er wordt geen generatieve AI gebruikt.
 
 ## Bewust uitgestelde keuzes

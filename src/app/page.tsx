@@ -11,6 +11,7 @@ import { PublicStatusNotice } from '@/components/public/public-status-notice'
 import { SituationGrid } from '@/components/public/situation-grid'
 import { TrustPrinciples } from '@/components/public/trust-principles'
 import { Badge } from '@/components/ui/badge'
+import { Card } from '@/components/ui/card'
 import { Heading } from '@/components/ui/heading'
 import { LinkButton } from '@/components/ui/link-button'
 import { Text } from '@/components/ui/text'
@@ -55,6 +56,15 @@ export default function HomePage() {
           </Text>
         </div>
         <div className="mt-8"><SituationGrid situations={content.situations} /></div>
+        <Card className="mt-6 flex flex-col gap-5 p-5 shadow-none sm:flex-row sm:items-center sm:justify-between sm:p-6">
+          <div className="max-w-3xl">
+            <Heading as="h3" size="h3">{content.adviceGuideEntry.title}</Heading>
+            <Text className="mt-2 text-text-secondary">{content.adviceGuideEntry.description}</Text>
+          </div>
+          <LinkButton href={content.adviceGuideEntry.href} className="shrink-0">
+            {content.adviceGuideEntry.label}
+          </LinkButton>
+        </Card>
       </Section>
 
       <Section className="border-y border-border bg-surface">

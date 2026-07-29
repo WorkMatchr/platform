@@ -3,6 +3,7 @@ export const platformAdminNavigationGroups = [
     label: 'Dagelijks beheer',
     items: [
       { href: '/platformbeheer', label: 'Dashboard' },
+      { href: '/platformbeheer/actiecentrum', label: 'Actiecentrum' },
       { href: '/platformbeheer/organisaties', label: 'Organisaties' },
       { href: '/platformbeheer/gebruikers', label: 'Gebruikers' },
       { href: '/platformbeheer/dienstverleners', label: 'Dienstverleners' },

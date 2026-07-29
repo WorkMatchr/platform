@@ -37,6 +37,7 @@ type OwnerActionBase = {
   organizationId: string
   successorUserId: string
   reasonCode: string
+  reasonNote?: string | null
   idempotencyKey: string
 }
 
@@ -62,6 +63,9 @@ type RoleNotificationSender = (email: ReturnType<typeof roleChangeNotificationEm
 function validateInput(input: OwnerActionBase): void {
   if (!/^[A-Z][A-Z0-9_]{2,79}$/.test(input.reasonCode) || !IDEMPOTENCY_KEY_PATTERN.test(input.idempotencyKey)) {
     throw new OwnerManagementServiceError('INVALID_INPUT', 'De reden of aanvraagreferentie is ongeldig.')
+  }
+  if (input.reasonNote && input.reasonNote.trim().length > 500) {
+    throw new OwnerManagementServiceError('INVALID_INPUT', 'De toelichting is te lang.')
   }
 }
 
@@ -196,7 +200,7 @@ export async function addOrganizationOwner(input: OwnerActionBase): Promise<{ ou
   validateInput(input)
   return getPrisma().$transaction(async (transaction) => {
     await lockOrganizationMemberships(transaction, input.organizationId)
-    const { successorMembership } = await loadOwnerContext(transaction, input)
+    const { successorMembership, centralAdministrator } = await loadOwnerContext(transaction, input)
     if (successorMembership.role === 'OWNER') return { outcome: 'ALREADY_OWNER' }
 
     const previousRole = successorMembership.role
@@ -217,6 +221,23 @@ export async function addOrganizationOwner(input: OwnerActionBase): Promise<{ ou
       data: { role: 'OWNER' },
     })
     if (updated.count !== 1) throw new OwnerManagementServiceError('CONFLICT', 'De rol is gelijktijdig gewijzigd.')
+    if (centralAdministrator) {
+      await transaction.adminActionLog.create({
+        data: {
+          actorUserId: input.actorUserId,
+          action: 'ORGANIZATION_OWNER_ADDED',
+          entityType: 'Organization',
+          entityId: input.organizationId,
+          reason: input.reasonNote?.trim() || input.reasonCode,
+          metadata: {
+            successorUserId: input.successorUserId,
+            previousRole,
+            nextRole: 'OWNER',
+            policyVersion: 'PLATFORM_ADMIN_ACTIONS_V1',
+          },
+        },
+      })
+    }
     return { outcome: 'OWNER_ADDED' }
   }, { isolationLevel: 'Serializable' })
 }

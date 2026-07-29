@@ -2,6 +2,9 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { AdminSection, EmptyState, StatusPill } from '@/components/platform-admin/platform-admin-ui'
 import {
+  getPlatformActionLabel,
+} from '@/lib/platform-admin/platform-admin-action-center'
+import {
   getDutchGreeting,
   selectCoreKpis,
   selectVisibleQueues,
@@ -96,12 +99,20 @@ export default async function PlatformAdminDashboardPage() {
                       ))}
                     </dl>
                   </div>
-                  <Link
-                    className="inline-flex min-h-10 items-center justify-center rounded-control border border-brand-primary px-4 text-sm font-semibold text-brand-primary hover:bg-brand-primary-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
-                    href={signal.href}
-                  >
-                    Actie bekijken
-                  </Link>
+                  <div className="flex flex-wrap gap-2">
+                    <Link
+                      className="inline-flex min-h-10 items-center justify-center rounded-control border border-brand-primary px-4 text-sm font-semibold text-brand-primary hover:bg-brand-primary-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+                      href={signal.href}
+                    >
+                      {getPlatformActionLabel(signal.ruleCode)}
+                    </Link>
+                    <Link
+                      className="inline-flex min-h-10 items-center justify-center rounded-control bg-brand-primary px-4 text-sm font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+                      href={`/platformbeheer/actiecentrum?signaal=${encodeURIComponent(signal.id)}`}
+                    >
+                      Handel af
+                    </Link>
+                  </div>
                 </li>
               )
             })}

@@ -2,35 +2,116 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import AdviceGuidePage, { metadata } from './advieswijzer/page'
+import { PublicIntakePrototype } from '@/components/public/public-intake-prototype'
+import { PublicPageHero } from '@/components/public/public-page-hero'
+import { metadata } from './advieswijzer/page'
 
 describe('publieke Advieswijzer', () => {
-  it('rendert de eerste werkende flow zonder placeholderclaim', () => {
-    const html = renderToStaticMarkup(<AdviceGuidePage />)
-    expect(html.match(/<h1(?:\s|>)/g)).toHaveLength(1)
-    expect(html).toContain('Verduidelijk uw vraag in maximaal vijf stappen')
-    expect(html).toContain('Vraag 1 van 5')
-    expect(html).toContain('Ik heb personeel in dienst')
-    expect(html).toContain('Andere situaties')
-    expect(html).not.toContain('In ontwikkeling')
-    expect(html).not.toContain('Start de bestaande intake')
+  it('rendert het openingsscherm met vrije invoer en zeven compacte situaties', () => {
+    const html = renderToStaticMarkup(<PublicIntakePrototype initialDraft={null} />)
+    expect(html).toContain('Vermeld nog geen namen, medische gegevens')
+    expect(html).toContain('Beschrijf kort uw situatie...')
+    expect(html).toContain('Help mij verder')
+    expect(html).toContain('Of kies een herkenbare situatie')
+    expect(html.match(/aria-pressed="false"/g)).toHaveLength(7)
+    expect(html).toContain('Wij hebben een RI&amp;E nodig')
+    expect(html).toContain('Mijn situatie staat er niet tussen')
   })
 
   it('heeft unieke indexeerbare metadata en canonical', () => {
     expect(metadata.title).toBe('Advieswijzer | WorkMatchr')
-    expect(metadata.description).toContain('vijf')
+    expect(metadata.description).toContain('verduidelijk')
     expect(metadata.alternates?.canonical).toBe('/advieswijzer')
     expect(metadata.robots).toBeUndefined()
   })
 
-  it('borgt conditionele datumweergave en focusgedrag in de clientlaag', () => {
-    const source = readFileSync(join(process.cwd(), 'src/components/public/guided-intake.tsx'), 'utf8')
-    expect(source).toContain("selectedValue === question.dateRefinement.when")
-    expect(source).toContain('onInput={(event) => {')
-    expect(source).toContain('const desiredDate = event.currentTarget.value')
-    expect(source).toContain('setAnswers((current) => ({ ...current, desiredDate }))')
-    expect(source).toContain('dateRef.current?.focus()')
-    expect(source).toContain('headingRef.current?.focus()')
+  it('borgt de doorlopende flow, opslagstatus en toegankelijke vraagstructuur', () => {
+    const source = readFileSync(
+      join(process.cwd(), 'src/components/public/public-intake-workspace.tsx'),
+      'utf8',
+    )
+    expect(source).toContain('recordPublicIntakeAnswerAction')
+    expect(source).toContain('<fieldset')
+    expect(source).toContain('<legend')
+    expect(source).toContain('aria-live="polite"')
     expect(source).toContain('role="alert"')
+    expect(source).not.toContain('Volgende')
+    expect(source).not.toMatch(/Vraag \{.*\} van/)
+    expect(source).toContain('firstQuestionControlRef.current?.focus()')
+    expect(source).toContain('ref={optionIndex === 0 ? firstQuestionControlRef : undefined}')
+    expect(source).not.toContain('questionHeadingRef')
+    expect(source).toContain('aria-labelledby="public-intake-question-title"')
+    expect(source).toContain('text-[clamp(1.5rem,2.5vw,2rem)]')
+    expect(source).not.toContain('decidePublicIntake')
+    expect(source).toContain('draft.guidance.clarification')
+    expect(source).toContain('draft.guidance.outcome')
+    expect(source).toContain(
+      '<PublicIntakeGuidanceResult outcome={draft.guidance.outcome} />',
+    )
+    expect(source).toContain('isReadyForSummary &&')
+    expect(source).toContain(
+      "draft.guidance.completion.status === 'COMPLETED_WITH_SAFE_FALLBACK'",
+    )
+    expect(source).not.toContain('Deze begeleide route is nog niet beschikbaar')
+    expect(source).not.toContain("'LIMITED_ROUTE'")
+  })
+
+  it('gebruikt een compacte hero en laat de intake direct aansluiten', () => {
+    const html = renderToStaticMarkup(
+      <PublicPageHero
+        eyebrow="Advieswijzer"
+        title="Waar kunnen wij u vandaag mee helpen?"
+        description="Beschrijf kort uw situatie."
+        compact
+      />,
+    )
+    const pageSource = readFileSync(
+      join(process.cwd(), 'src/app/advieswijzer/page.tsx'),
+      'utf8',
+    )
+
+    expect(html).toContain('py-5 sm:py-7')
+    expect(html).toContain('!text-[clamp(2.25rem,3.5vw,3rem)]')
+    expect(pageSource).toContain('compactHero')
+    expect(pageSource).toContain('className="!py-5 sm:!py-7"')
+  })
+
+  it('gebruikt een compacte responsieve 30/70-werkruimte zonder prototype-eindscherm', () => {
+    const source = readFileSync(
+      join(process.cwd(), 'src/components/public/public-intake-workspace.tsx'),
+      'utf8',
+    )
+    expect(source).toContain('lg:grid-cols-[minmax(15rem,3fr)_minmax(0,7fr)]')
+    expect(source).toContain('grid gap-4')
+    expect(source).toContain('min-w-0 space-y-3')
+    expect(source).not.toContain("process.env.NODE_ENV !== 'production'")
+    expect(source).not.toContain('Module 7 — UX-prototype')
+  })
+
+  it('toont opnieuw beginnen alleen bij een actieve draft via een toegankelijke dialoog', () => {
+    const workspaceSource = readFileSync(
+      join(process.cwd(), 'src/components/public/public-intake-workspace.tsx'),
+      'utf8',
+    )
+    const startSource = readFileSync(
+      join(process.cwd(), 'src/components/public/public-intake-start.tsx'),
+      'utf8',
+    )
+    const dialogSource = readFileSync(
+      join(process.cwd(), 'src/components/public/public-intake-restart-dialog.tsx'),
+      'utf8',
+    )
+
+    expect(workspaceSource).toContain('PublicIntakeRestartDialog')
+    expect(startSource).not.toContain('Nieuwe hulpvraag starten')
+    expect(dialogSource).toContain('<dialog')
+    expect(dialogSource).toContain('Nieuwe hulpvraag starten?')
+    expect(dialogSource).toContain('Uw huidige concept wordt afgesloten.')
+    expect(dialogSource).toContain('Annuleren')
+    expect(dialogSource).toContain('↺')
+    expect(dialogSource).toContain('onClose={() => triggerRef.current?.focus()}')
+    expect(dialogSource).toContain('disabled={isPending}')
+    expect(dialogSource).toContain('loading={isPending}')
+    expect(dialogSource).toContain('role="alert"')
   })
 })

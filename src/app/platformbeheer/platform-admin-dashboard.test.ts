@@ -17,7 +17,8 @@ describe('platformbeheercockpit', () => {
     expect(source).toContain("HIGH: { label: 'Hoog'")
     expect(source).toContain("NORMAL: { label: 'Normaal'")
     expect(source).toContain('<Link')
-    expect(source).toContain('Actie bekijken')
+    expect(source).toContain('Handel af')
+    expect(source).toContain('/platformbeheer/actiecentrum')
   })
 
   it('claimt geen zoektrends zolang privacyveilige telemetrie niet operationeel is', () => {

@@ -2,7 +2,7 @@
 
 ## Status
 
-Technisch opgeleverd in Module 6A.3 en hergebruikt door Fase 3; product-owneracceptatie van de integrale marktflow staat open.
+Module 6A.3 is afgerond, gecommit en gepusht in `736cead899df569fa03d1e2dd19ac485ceb4cc16`. De provider-onboarding wordt hergebruikt door Fase 3; de afzonderlijke acceptatiestatus van de integrale marktflow verandert daardoor niet.
 
 ## Flow
 

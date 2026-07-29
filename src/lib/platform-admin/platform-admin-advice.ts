@@ -14,6 +14,7 @@ export type PlatformAdviceSignal = {
   href: string
   sources: PlatformAdviceSource[]
   ruleCode: string
+  detectedAt: Date
 }
 
 export type PlatformAdminAdviceInput = {
@@ -70,7 +71,7 @@ function source(label: string, value: string | number): PlatformAdviceSource {
 }
 
 export function buildPlatformAdviceSignals(input: PlatformAdminAdviceInput): PlatformAdviceSignal[] {
-  const signals: PlatformAdviceSignal[] = []
+  const signals: Array<Omit<PlatformAdviceSignal, 'detectedAt'>> = []
 
   if (!input.platformConfigurationValid) {
     signals.push({
@@ -212,7 +213,7 @@ export function buildPlatformAdviceSignals(input: PlatformAdminAdviceInput): Pla
     })
   }
 
-  return signals.sort((left, right) => (
+  return signals.map((signal) => ({ ...signal, detectedAt: input.at })).sort((left, right) => (
     severityOrder[left.severity] - severityOrder[right.severity] ||
     left.ruleCode.localeCompare(right.ruleCode) ||
     left.id.localeCompare(right.id)

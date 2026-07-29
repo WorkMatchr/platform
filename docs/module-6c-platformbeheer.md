@@ -2,7 +2,9 @@
 
 ## Status
 
-Technisch uitgevoerd. Product-owneracceptatie staat open.
+Module 6C en Module 6C.1 zijn afgerond, gecommit en naar `origin/main` gepusht in commit `7812b2c`.
+
+Module 6C.2 — WOS Beheeracties & Communicatie is technisch opgeleverd. De handmatige product-owneracceptatie staat open; er is nog geen commit of push voor 6C.2 uitgevoerd.
 
 ## Doel
 
@@ -94,11 +96,33 @@ Pagina’s schrijven nooit rechtstreeks naar Prisma. Organisatieblokkades verlop
 
 Accountverwijdering en systeemconfiguratiewijzigingen zijn niet toegevoegd.
 
+## Module 6C.2 — WOS Beheeracties & Communicatie
+
+Het centrale Actiecentrum volgt **Signaleren → Begrijpen → Handelen → Vastleggen → Opgelost**. De werkvoorraad wordt afgeleid uit bestaande WOS-signalen en bestaande review- en goedkeuringswachtrijen. Per item zijn ernst, categorie, bron, detectiedatum, aanbevolen actie, status, verantwoordelijke en deeplink zichtbaar.
+
+Status en verantwoordelijke worden niet in een nieuw mutable taakmodel opgeslagen. Iedere wijziging schrijft een nieuw `AdminActionLog` met een deterministische UUID-verwijzing naar het bronsignaal. Afgeronde en gesloten items blijven auditbaar en verdwijnen uit de open werkvoorraad zolang hetzelfde signaal bestaat.
+
+Beschikbare beheeracties:
+
+- individuele gebruiker mailen en bestaande activatie-, verificatie- of wachtwoordherstelmail versturen;
+- account blokkeren of deblokkeren via de bestaande account-lifecycle;
+- organisatie of dienstverlener individueel mailen;
+- organisatie blokkeren of deblokkeren via de bestaande organisatie-lifecycle;
+- bij een organisatie zonder actieve eigenaar via de bestaande governance een actieve `ADMIN` of `MEMBER` als extra `OWNER` aanwijzen;
+- opdrachtgever en iedere geselecteerde of uitgenodigde dienstverlener afzonderlijk mailen;
+- een opdrachtsignaal met reden als onderzocht vastleggen;
+- reviewer of approver met een actuele expliciete permission mailen;
+- een interne, alleen voor platformbeheer zichtbare, append-only beheernotitie toevoegen.
+
+Communicatie gebruikt de bestaande mailinfrastructuur. Alleen een door de mailprovider geaccepteerde verzending resulteert in succes. Geaccepteerde en mislukte pogingen worden geaudit met transportstatus en bericht-ID of foutcode; tokens, volledige links en berichtinhoud worden niet in auditmetadata opgeslagen.
+
+Platformbeheer verleent geen reviewer- of approverpermission en voert geen dossierbesluit uit. De bestaande vier-ogenregel, tenantisolatie, lifecycletransacties en accountarchitectuur uit Module 6B blijven ongewijzigd.
+
 ## Privacy en rapportage
 
 Rapportages bevatten alleen operationele aggregaten. CSV-responses zijn privé en niet cachebaar. WorkMatchr verzamelt in deze module geen zoektermen of volledige zoekgeschiedenis. De cockpit en trendspagina tonen daarom expliciet dat zoekgedrag nog niet beschikbaar is, totdat privacy-, cookie-, retentie- en meetbesluiten zijn goedgekeurd.
 
-## Openstaande acceptatie
+## Afgeronde acceptatie
 
 - visuele controle op desktop, tablet, circa 390 pixels en 200% zoom;
 - toetsenbord- en focuscontrole;
@@ -109,3 +133,10 @@ Rapportages bevatten alleen operationele aggregaten. CSV-responses zijn privé e
 - platformbeheerder zonder systeemmembership krijgt geen toegang;
 - reviewer-, approver- en auditorgrenzen en vier-ogenregel;
 - blokkeren en deblokkeren van organisatie en account, inclusief audit en sessie-intrekking.
+
+## Bewust open vervolgwerk
+
+- handmatige product-owneracceptatie van Module 6C.2;
+- accountverwijdering vereist een afzonderlijke lifecyclefase;
+- contentbeheer/KIP is niet gebouwd;
+- verdere optimalisatie van de Advieswijzer blijft geparkeerd.

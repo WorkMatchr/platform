@@ -4,7 +4,7 @@
 
 Geaccepteerd — 17 juli 2026.
 
-Implementatiestatus: Fase 0A/0B, Expand en Platform/provisioning zijn afgerond; Fase 2B Lifecycle en tenant is technisch geïmplementeerd met product-owneracceptatie open. Module 6B heeft de enkelvoudige tenantcontext en databasebrede membershipuniciteit technisch geactiveerd; handmatige product-owneracceptatie staat open. Accountverwijdering, retentie/purge en membershipbeëindiging blijven fail-closed. Zie [technische implementatie Fase 1](../adr-013-fase-1-expand-technische-implementatie.md), [Fase 2A](../adr-013-fase-2a-platform-en-provisioning.md), [Fase 2B](../adr-013-fase-2b-lifecycle-en-tenant.md) en het [Contract-migratierunbook](../adr-013-contract-migratie-runbook.md).
+Implementatiestatus: Fase 0A/0B, Expand, Platform/provisioning, Fase 2B Lifecycle en tenant en het Module 6B-Contract zijn afgerond. Module 6B heeft de enkelvoudige tenantcontext en databasebrede membershipuniciteit geactiveerd en is gecommit en gepusht in `5b2c16d0086e93b3608fb06ef5a700f96960d7cc`. Accountverwijdering, retentie/purge en membershipbeëindiging blijven fail-closed en vormen afzonderlijk vervolgwerk. Zie [technische implementatie Fase 1](../adr-013-fase-1-expand-technische-implementatie.md), [Fase 2A](../adr-013-fase-2a-platform-en-provisioning.md), [Fase 2B](../adr-013-fase-2b-lifecycle-en-tenant.md) en het [Contract-migratierunbook](../adr-013-contract-migratie-runbook.md).
 
 ## Context
 
