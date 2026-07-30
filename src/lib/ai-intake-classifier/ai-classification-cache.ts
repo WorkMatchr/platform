@@ -268,3 +268,34 @@ export async function classifyAIIntakeWithCache(
     return safeFallback('CACHE_UNAVAILABLE')
   }
 }
+
+export async function readCachedAIClassification(
+  helpRequest: string,
+  options: Readonly<{
+    repository?: AIClassificationCacheRepository
+    classifierVersion?: string
+    model?: string
+  }> = {},
+): Promise<AIClassifierOutput | null> {
+  const repository =
+    options.repository ?? prismaAIClassificationCacheRepository
+  const classifierVersion =
+    options.classifierVersion ?? AI_INTAKE_CLASSIFIER_VERSION
+  const model =
+    options.model ??
+    process.env.OPENAI_AI_INTAKE_MODEL?.trim() ??
+    DEFAULT_MODEL
+  const inputFingerprint = createAIClassificationFingerprint(
+    helpRequest,
+    classifierVersion,
+    model,
+  )
+
+  try {
+    const cached = await repository.find(inputFingerprint)
+    if (cached?.status !== 'COMPLETED') return null
+    return resultFromRecord(cached).classification
+  } catch {
+    return null
+  }
+}

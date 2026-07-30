@@ -19,6 +19,7 @@ export type PublicIntakeAnswerView = {
 }
 
 export type PublicIntakeDraftView = {
+  id?: string
   phase: PublicIntakePhase
   entryPoint: PublicIntakeEntryPoint
   originalInput: string | null
@@ -32,4 +33,8 @@ export type PublicIntakeDraftView = {
   answers: PublicIntakeAnswerView[]
   guidance: PublicIntakeGuidanceHandoff
   aiClassification?: AIClassifierOutput | null
+  adviceDossier?: {
+    id: string
+    dossierCode: string
+  } | null
 }

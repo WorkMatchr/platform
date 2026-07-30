@@ -1,8 +1,16 @@
 # Module 7 — Nieuwe hulpvraag
 
-> **Aanvulling 29 juli 2026:** M7A Intake Completion is definitief afgerond. M7B Professional Advice is technisch opgeleverd en wacht op handmatige product-owneracceptatie. De Guidance Engine bouwt deterministisch een eerste advies en onbevestigde `DRAFT`-vereisten voor vijf ondersteunde onderwerpen. Kennis en bronnen komen uit bestaande gecontroleerde registers; matching en persistente Adviesdossiers blijven buiten scope.
+## M7B.2 vakdisciplineclassificatie
 
-Status: M7A definitief afgerond; M7B technisch opgeleverd met handmatige acceptatie open
+Na inhoudelijke verduidelijking classificeert WorkMatchr professionele
+ondersteuning op een concrete vakdiscipline en niet op de generieke
+dienstnaam RI&E. Risicodomein en dominante context bepalen
+deterministisch één primaire discipline en alleen inhoudelijk relevante
+aanvullende of mogelijke disciplines. Zie ADR-022.
+
+> **Aanvulling 29 juli 2026:** M7A Intake Completion is definitief afgerond. M7B Professional Advice en M7C WorkMatchr Adviesdossier zijn technisch opgeleverd en wachten op handmatige product-owneracceptatie. De Guidance Engine bouwt deterministisch een eerste advies en onbevestigde `DRAFT`-vereisten voor vijf ondersteunde onderwerpen. M7C bewaart een afgeronde intake voor een ingelogde opdrachtgever als tenantgebonden dossier met immutable versies, audit en PDF; matching en opdrachtvorming blijven buiten scope.
+
+Status: M7A definitief afgerond; M7B en M7C technisch opgeleverd met handmatige acceptatie open
 
 Datum: 26 juli 2026
 

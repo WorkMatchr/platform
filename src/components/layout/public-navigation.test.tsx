@@ -25,6 +25,17 @@ describe('publieke navigatie', () => {
     expect(html).not.toContain('href="#"')
   })
 
+  it('behoudt publieke links maar verbergt de loginlink voor ingelogde gebruikers', () => {
+    const html = renderToStaticMarkup(<PublicNavigation authenticated />)
+    for (const item of publicNavigationItems.filter(
+      (item) => item.kind !== 'auth',
+    )) {
+      expect(html.match(new RegExp(`href="${item.href}"`, 'g'))).toHaveLength(2)
+    }
+    expect(html).not.toContain('href="/inloggen"')
+    expect(html).toContain('Mobiele hoofdnavigatie')
+  })
+
   it('normaliseert geneste routes, trailing slashes, querystrings en hashes', () => {
     expect(isPublicNavigationItemActive('/diensten/rie', publicRoutes.services)).toBe(true)
     expect(isPublicNavigationItemActive('/diensten/rie/?bron=menu#inhoud', publicRoutes.services)).toBe(true)

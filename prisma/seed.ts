@@ -27,7 +27,7 @@ const sectors = [
   ['overig', 'Overig'],
 ] as const
 
-const specialisms = [
+const specialismsV1 = [
   ['rie', 'RI&E', null],
   ['bedrijfsarts', 'Bedrijfsarts', null],
   ['arbodienst', 'Arbodienst', null],
@@ -41,6 +41,14 @@ const specialisms = [
   ['machineveiligheid', 'Machineveiligheid', null],
   ['brandveiligheid', 'Brandveiligheid', null],
   ['operationele-veiligheid', 'Operationele veiligheid', null],
+] as const
+
+const specialisms = [
+  ...specialismsV1,
+  ['ergonoom', 'Ergonoom', null],
+  ['arbeids-en-organisatiedeskundige', 'Arbeids- en organisatiedeskundige', null],
+  ['asbest', 'Asbestdeskundige', null],
+  ['milieudeskundige', 'Milieudeskundige', null],
 ] as const
 
 const certifications = [
@@ -119,6 +127,7 @@ function taxonomyChecksum(terms: readonly (readonly [string, string])[]): string
 async function seedProviderTaxonomy(
   kind: keyof typeof providerTaxonomies | 'SPECIALISM' | 'SECTOR' | 'CERTIFICATION',
   terms: readonly (readonly [string, string])[],
+  versionNumber = 1,
 ) {
   const taxonomy = await prisma.providerTaxonomy.upsert({
     where: { kind },
@@ -127,7 +136,7 @@ async function seedProviderTaxonomy(
   })
   const checksum = taxonomyChecksum(terms)
   const existing = await prisma.providerTaxonomyVersion.findUnique({
-    where: { taxonomyId_version: { taxonomyId: taxonomy.id, version: 1 } },
+    where: { taxonomyId_version: { taxonomyId: taxonomy.id, version: versionNumber } },
     include: { terms: { orderBy: { sortOrder: 'asc' } } },
   })
 
@@ -137,14 +146,14 @@ async function seedProviderTaxonomy(
       existing.checksum === checksum &&
       existing.terms.length === terms.length &&
       terms.every(([code, label], index) => existing.terms[index]?.code === code && existing.terms[index]?.label === label)
-    if (!matches) throw new Error(`Gepubliceerde providertaxonomie ${kind} versie 1 wijkt af en wordt niet overschreven.`)
+    if (!matches) throw new Error(`Gepubliceerde providertaxonomie ${kind} versie ${versionNumber} wijkt af en wordt niet overschreven.`)
     return existing
   }
 
   return prisma.providerTaxonomyVersion.create({
     data: {
       taxonomyId: taxonomy.id,
-      version: 1,
+      version: versionNumber,
       status: 'PUBLISHED',
       checksum,
       publishedAt: new Date(),
@@ -161,15 +170,19 @@ async function seedProviderQualificationReferences() {
     await seedProviderTaxonomy(kind, terms)
   }
 
-  const specialismVersion = await seedProviderTaxonomy('SPECIALISM', specialisms.map(([slug, name]) => [slug, name]))
+  const specialismVersion = await seedProviderTaxonomy(
+    'SPECIALISM',
+    specialisms.map(([slug, name]) => [slug, name]),
+    2,
+  )
   const sectorVersion = await seedProviderTaxonomy('SECTOR', sectors.map(([slug, name]) => [slug, name]))
   const certificationVersion = await seedProviderTaxonomy('CERTIFICATION', certifications)
 
   for (const term of specialismVersion.terms) {
     const specialism = await prisma.specialism.findUniqueOrThrow({ where: { slug: term.code } })
     await prisma.providerSpecialismTaxonomyMap.upsert({
-      where: { termId: term.id },
-      update: {},
+      where: { specialismId: specialism.id },
+      update: { termId: term.id },
       create: { termId: term.id, specialismId: specialism.id },
     })
   }

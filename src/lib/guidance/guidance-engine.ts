@@ -206,6 +206,7 @@ function createOutcome(state: GuidancePipelineState): GuidanceOutcome {
       ? [professionalAdvice.primaryProfessionalRequirement]
       : []),
     ...professionalAdvice.additionalProfessionalRequirements,
+    ...professionalAdvice.possibleProfessionalRequirements,
   ]
   const outcome: GuidanceOutcome = {
     ...outcomeWithoutAdvice,

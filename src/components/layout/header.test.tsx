@@ -32,10 +32,17 @@ describe('headerweergave per sessiecontext', () => {
     const html = await renderHeader()
 
     expect(html).toContain('Inloggen')
+    expect(html).toContain('Diensten')
+    expect(html).toContain('Wettelijke verplichtingen')
+    expect(html).toContain('Sectoren')
+    expect(html).toContain('Kenniscentrum')
+    expect(html).toContain('Over WorkMatchr')
+    expect(html).toContain('Contact')
+    expect(html).toContain('Stel uw vraag')
     expect(html).not.toContain('Mijn account')
   })
 
-  it('toont voor een opdrachtgever de dashboardheader zonder loginactie', async () => {
+  it('toont voor een opdrachtgever publieke navigatie en het accountmenu', async () => {
     mocks.getContext.mockResolvedValue({
       user: { displayName: 'Opdrachtgever', email: 'opdrachtgever@example.invalid' },
       activeMembership: {
@@ -52,6 +59,13 @@ describe('headerweergave per sessiecontext', () => {
     const html = await renderHeader()
 
     expect(html).not.toContain('Inloggen')
+    expect(html).toContain('Diensten')
+    expect(html).toContain('Wettelijke verplichtingen')
+    expect(html).toContain('Sectoren')
+    expect(html).toContain('Kenniscentrum')
+    expect(html).toContain('Over WorkMatchr')
+    expect(html).toContain('Contact')
+    expect(html).toContain('Stel uw vraag')
     expect(html).toContain('Mijn account')
     expect(html).toContain('Mijn organisatie')
     expect(html).toContain('Eigenaar')
@@ -77,9 +91,73 @@ describe('headerweergave per sessiecontext', () => {
     expect(html).not.toContain('Inloggen')
     expect(html).toContain('Aanbieder BV')
     expect(html).toContain('Beheerder')
+    expect(html).toContain('Diensten')
+    expect(html).toContain('Kenniscentrum')
+    expect(html).toContain('Contact')
     expect(html).toContain('Dienstverlenersprofiel')
     expect(html).not.toMatch(/Aanbiedersdossier|Providerdossier|Mijn providerdossier/)
     expect(html).toContain('Uitloggen')
+  })
+
+  it('toont voor een platformbeheerder publieke navigatie en de beheeractie', async () => {
+    mocks.getContext.mockResolvedValue({
+      user: {
+        displayName: 'Platformbeheerder',
+        email: 'platformbeheerder@example.invalid',
+        status: 'ACTIVE',
+        platformRole: 'ADMIN',
+      },
+      activeMembership: {
+        role: 'ADMIN',
+        status: 'ACTIVE',
+        organization: {
+          id: 'platform-1',
+          name: 'WorkMatchr Platform',
+          organizationType: 'PLATFORM_OPERATOR',
+          status: 'ACTIVE',
+          systemKey: 'WORKMATCHR_PLATFORM',
+          providerProfile: null,
+        },
+      },
+    })
+
+    const html = await renderHeader()
+
+    expect(html).not.toContain('Inloggen')
+    expect(html).toContain('Diensten')
+    expect(html).toContain('Wettelijke verplichtingen')
+    expect(html).toContain('Sectoren')
+    expect(html).toContain('Kenniscentrum')
+    expect(html).toContain('Over WorkMatchr')
+    expect(html).toContain('Contact')
+    expect(html).toContain('Platformbeheer')
+    expect(html).toContain('Mijn account')
+  })
+
+  it('houdt publieke en accountacties bereikbaar in de mobiele header', async () => {
+    mocks.getContext.mockResolvedValue({
+      user: {
+        displayName: 'Opdrachtgever',
+        email: 'opdrachtgever@example.invalid',
+      },
+      activeMembership: {
+        role: 'OWNER',
+        organization: {
+          id: 'client-1',
+          name: 'Opdrachtgever BV',
+          organizationType: 'CLIENT',
+          providerProfile: null,
+        },
+      },
+    })
+
+    const html = await renderHeader()
+
+    expect(html).toContain('Mobiele hoofdnavigatie')
+    expect(html).toContain('Hoofdnavigatie openen of sluiten')
+    expect(html).toContain('Gebruikersmenu openen of sluiten')
+    expect(html).toContain('Mijn account')
+    expect(html).toContain('Dashboard')
   })
 
   it('gebruikt voor publieke en ingelogde menu\u2019s hetzelfde sluitbare interactiepatroon', () => {

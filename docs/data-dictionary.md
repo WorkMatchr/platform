@@ -2,6 +2,14 @@
 
 Alle IDs zijn UUID’s. `createdAt` en `updatedAt` zijn UTC-timestamps tenzij anders vermeld. Relaties gebruiken standaard `RESTRICT` om zakelijke historie te beschermen.
 
+## M7B.2 vakdisciplinetaxonomie
+
+| Begrip | Waarden / betekenis | Historie |
+| --- | --- | --- |
+| `ProfessionalDisciplineCode` | MVK, HVK, Arbeidshygiënist, Ergonoom, Arbeidsdeskundige, Bedrijfsarts, A&O-deskundige, Brandveiligheidsdeskundige, Machineveiligheidsdeskundige, Asbestdeskundige, Milieudeskundige en BHV-adviseur. | Getypeerd domeincontract; geen database-enum. |
+| `ProviderTaxonomy(SPECIALISM)` versie 2 | Voegt `ergonoom`, `arbeids-en-organisatiedeskundige`, `asbest` en `milieudeskundige` toe. | Versie 1 is gepensioneerd en blijft voor historische revisies bestaan. |
+| `ProfessionalRequirement.criteria` | Concrete specialismecode voor nieuwe M7B.2-uitkomsten. | Wordt immutable opgenomen in nieuwe dossier- en aanvraagsnapshots. |
+
 | Model | Doel en belangrijkste velden | Relaties en constraints | Archivering, gevoeligheid en toekomst |
 | --- | --- | --- | --- |
 | `User` | Menselijke gebruiker; naast Better Auth-velden bevat het ADR-013-fundament nullable lifecyclemetadata, `migrationClassification` en `createdByUserId`. | Unieke e-mail blijft ongewijzigd; creator-, blokkeer- en deletionrequestactor zijn nullable self-relations. De gerelateerde actuele membership is via `OrganizationMembership.userId` maximaal enkelvoudig. | `ARCHIVED` blijft legacy; `DELETION_PENDING` en `ANONYMIZED` zijn beschikbaar maar niet geactiveerd. E-mail en naam zijn persoonsgegevens. |
@@ -15,6 +23,13 @@ Alle IDs zijn UUID’s. `createdAt` en `updatedAt` zijn UTC-timestamps tenzij an
 | `PublicIntakeAnswerRevision` | Immutable snapshot van iedere publieke antwoordversie en de bijbehorende antwoordbron. | Uniek antwoord/revisienummer; vraag-, type-, bron- en draftconsistentie; databasebrede append-only trigger. | Kan gebruikersinhoud bevatten en valt onder toekomstig retentie-/anonimiseringsbeleid. |
 | `PublicIntakeEvent` | Minimale lifecycle- en domeinhistorie zonder volledige tekst of antwoorden. | Uniek en aaneengesloten sequence per draft; alleen identifiers, codes, fasen en revisieverwijzingen; append-only. | Bevat nooit tokens, tokenhashes, secrets of volledige vrije invoer. |
 | `PublicIntakeAIClassificationCache` | Technisch hergebruik van een gevalideerde AI-samenvatting en onderwerpclassificatie of veilige fallback. | Unieke SHA-256-inputfingerprint; status `PROCESSING` of `COMPLETED`; completed bevat exclusief structured output of fallbackreden. | Bevat niet de oorspronkelijke hulpvraag, maar de korte samenvatting kan gebruikersafgeleide informatie bevatten en valt daarom onder het toekomstige publieke-intakeretentiebeleid. |
+| `AdviceDossierCounter` | Transactionele jaarteller voor herkenbare dossiercodes. | Eén rij per jaar; `nextNumber` wordt onder databasevergrendeling verhoogd. | Geen persoonsgegevens; uitsluitend via de dossierservice muteren. |
+| `AdviceDossier` | Tenantgebonden identiteit van een duurzaam Adviesdossier met code, bronroute, eigenaar, organisatie, status en actuele versie. | Code databasebreed uniek; maximaal één dossier per publieke draft; verplichte eigenaar- en organisatie-FK; optimistic version en statusindexen. | Geen provider-, matching- of opdrachttoegang; archiveren verandert de status, niet de immutable inhoud. |
+| `AdviceDossierVersion` | Volledige reproduceerbare snapshot van hulpvraag, antwoorden, guidance, professioneel advies, bronnen en versies. | Uniek dossier/versie en bron-draft/bronversie; database-trigger blokkeert update/delete. | Kan bedrijfsinformatie of persoonsgegevens bevatten; retentie- en anonimiseringbeleid is vóór productie vereist. |
+| `AdviceDossierEvent` | Minimale append-only audit voor aanmaak, versie, PDF-download en statuswijziging. | Verplichte dossier- en actor-FK; optionele versie; database-trigger blokkeert update/delete. | Metadata bevat geen volledige hulpvraag, tokens of secrets. |
+| `RequestCounter` | Transactionele jaarteller voor herkenbare aanvraagcodes. | Eén rij per jaar; `nextNumber` wordt onder een adviserende databasevergrendeling verhoogd. | Geen persoonsgegevens; uitsluitend via de requestservice muteren. |
+| `Request` | Beperkte publicatiesnapshot die losstaat van het privé Adviesdossier. | Uniek aanvraagnummer en uniek `adviceDossierId`; tenant en organisatie moeten gelijk zijn; status/tijdstempelconstraints; gepubliceerde inhoud is immutable. | Bevat samenvatting, regio, sector, planning en deskundigheid, maar geen dossierinhoud, contactpersoon of contactgegevens. |
+| `RequestEvent` | Append-only audit van publicatie en toekomstige gecontroleerde statuswijzigingen. | Verplichte request- en actor-FK; unieke idempotentiesleutel; database-trigger blokkeert update/delete. | Geen aanvraagtekst, contactgegevens, tokens of secrets. |
 | `Organization` | Opdrachtgever, aanbieder, beide of technische `PLATFORM_OPERATOR`; contact- en bedrijfsgegevens plus optionele logo-metadata en `systemKey`. | Type/status-indexen; nullable systemKey is uniek en alleen toegestaan/verplicht voor platformoperator. | Platformorganisatie wordt op systemKey herkend, niet op naam; bootstrap is niet automatisch uitgevoerd. |
 | `OrganizationMembership` | Actuele gebruikersrol binnen organisatie. | `userId` is databasebreed uniek; de samengestelde sleutel blijft voor compatibele, tenantgebonden lookups bestaan. Indexen op organisatie en status. | Een User heeft nul of één membership; nul is uitsluitend toegestaan voor expliciete platformrollen of nog niet afgeronde onboarding. |
 | `AccountProvisioningEvent` | Append-only accountprovisioning, lifecycle- en migratiegebeurtenis met subject, optionele actor/context, reden, correlation/idempotency key en veilige JSON. | Unieke nullable idempotency key; `RESTRICT` op alle historische relaties; indexes per actor, subject, context, type en tijd. | Geen `updatedAt`; database-trigger blokkeert update/delete; Fase 2B schrijft blokkeren en herstellen atomair met de statusmutatie; geen credentials, tokens of contactdata in metadata. |
@@ -105,3 +120,18 @@ Alle IDs zijn UUID’s. `createdAt` en `updatedAt` zijn UTC-timestamps tenzij an
 | `MarketplaceNotification` | Persistente ontvangergebonden melding met gelezenstatus. | Geen private inhoud in titel/body; uniek per ontvanger/gebeurtenis. |
 | `NotificationOutbox` | Asynchrone transportopdracht los van de kerntransactie. | Payload is geminimaliseerd; retries zijn idempotent. |
 | `MarketplaceAuditEvent` | Actor-, rol-, tenant-, status-, reden- en correlatiecontext voor kritieke marktacties. | Append-only; metadata mag geen secrets of volledige zakelijke inhoud bevatten. |
+
+## Module 7D.2 — Interesse tonen
+
+| Model | Doel en constraints | Historie en gevoeligheid |
+| --- | --- | --- |
+| `RequestEligibleProvider` | Immutable doelgroeprecord per aanvraag en providerorganisatie, gebonden aan exact één Trusted Provider Projection. | Uniek per aanvraag/organisatie; bewaart regelsversie, projectiechecksum en gematchte deskundigheid, maar geen PII of bewijsdata. |
+| `RequestInterest` | Actuele vrijblijvende interessestatus namens één eligible providerorganisatie. | Uniek per aanvraag/organisatie; alleen `INTERESTED` of `WITHDRAWN`; intrekken en heractiveren overschrijven nooit events. |
+| `RequestInterestEvent` | Zakelijke historie van registreren, intrekken en heractiveren. | Append-only, actor- en tenantgebonden en uniek geïdempotentiseerd. |
+
+## Module 7D.3 — Offerteplaats claimen
+
+| Model | Doel en constraints | Historie en gevoeligheid |
+| --- | --- | --- |
+| `RequestOfferSlot` | Actuele exclusieve offerteplaats voor één actieve interesse. | Maximaal één per aanvraag/organisatie en interesse; slotnummer 1–3; maximaal drie actieve claims per Request. |
+| `RequestOfferSlotEvent` | Historie van claimen en toekomstige gecontroleerde vrijgave. | Append-only; bewaart actor, tenant, slotnummer, statustransitie en idempotentiesleutel, maar geen contactgegevens. |

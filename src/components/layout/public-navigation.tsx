@@ -38,11 +38,17 @@ function NavigationLink({ href, label, pathname, mobile = false }: { href: Publi
   )
 }
 
-export function PublicNavigation() {
+export function PublicNavigation({
+  authenticated = false,
+}: {
+  authenticated?: boolean
+}) {
   const pathname = usePathname()
   const primaryItem = publicNavigationItems.find((item) => item.kind === 'primary')!
   const standardItems = publicNavigationItems.filter((item) => item.kind === 'standard')
-  const authItems = publicNavigationItems.filter((item) => item.kind === 'auth')
+  const authItems = authenticated
+    ? []
+    : publicNavigationItems.filter((item) => item.kind === 'auth')
 
   return (
     <>

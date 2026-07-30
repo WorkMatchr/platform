@@ -1,11 +1,13 @@
 import { z } from 'zod'
 import {
   contextFactValueTypes,
+  dominantContexts,
   GUIDANCE_OUTCOME_SCHEMA_VERSION,
   guidanceOutcomeSpecificities,
   guidanceOutcomeStatuses,
   guidanceSourceKinds,
   professionalAdvicePriorities,
+  professionalAdviceRiskDomains,
   PROFESSIONAL_ADVICE_SCHEMA_VERSION,
   professionalRequirementKinds,
   professionalRequirementPriorities,
@@ -210,9 +212,16 @@ const professionalAdviceSchema = z
     adviceBody: requiredStringSchema,
     adviceReasons: z.array(requiredStringSchema).min(1),
     selfActions: z.array(requiredStringSchema).min(1),
+    dominantContext: z.enum(dominantContexts),
+    relevantRiskDomains: z.array(
+      z.enum(professionalAdviceRiskDomains),
+    ),
     primaryProfessionalRequirement:
       professionalRequirementSchema.nullable(),
     additionalProfessionalRequirements: z.array(
+      professionalRequirementSchema,
+    ),
+    possibleProfessionalRequirements: z.array(
       professionalRequirementSchema,
     ),
     knowledgeReferences: z.array(
@@ -374,7 +383,18 @@ export const guidanceOutcomeContractSchema = z
         ? [outcome.professionalAdvice.primaryProfessionalRequirement]
         : []),
       ...outcome.professionalAdvice.additionalProfessionalRequirements,
+      ...outcome.professionalAdvice.possibleProfessionalRequirements,
     ]
+    const primaryCount = advisedRequirements.filter(
+      (requirement) => requirement.priority === 'PRIMARY',
+    ).length
+    if (primaryCount > 1) {
+      context.addIssue({
+        code: 'custom',
+        path: ['professionalAdvice'],
+        message: 'Professioneel advies bevat meer dan één primaire deskundigheid.',
+      })
+    }
     if (
       advisedRequirements.length !==
         outcome.professionalRequirements.length ||

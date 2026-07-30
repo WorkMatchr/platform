@@ -1,7 +1,15 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+vi.mock(
+  '@/lib/advice-dossiers/public-intake-advice-dossier-handoff',
+  () => ({
+    attachAdviceDossierForCurrentUser: vi.fn(async (draft) => draft),
+  }),
+)
+
 import { PublicIntakePrototype } from '@/components/public/public-intake-prototype'
 import { PublicPageHero } from '@/components/public/public-page-hero'
 import { metadata } from './advieswijzer/page'

@@ -3,12 +3,14 @@ import type { PublicIntakeDraftView } from './public-intake-types'
 
 const mocks = vi.hoisted(() => ({
   classify: vi.fn(),
+  readCached: vi.fn(),
 }))
 
 vi.mock(
   '@/lib/ai-intake-classifier/ai-classification-cache',
   () => ({
     classifyAIIntakeWithCache: mocks.classify,
+    readCachedAIClassification: mocks.readCached,
   }),
 )
 
@@ -25,6 +27,7 @@ const draft = {
 describe('Public Intake AI-classificatiehandoff', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mocks.readCached.mockResolvedValue(null)
     mocks.classify.mockResolvedValue({
       classification: {
         summary:
@@ -52,18 +55,49 @@ describe('Public Intake AI-classificatiehandoff', () => {
     })
   })
 
-  it('classificeert niet opnieuw na gebruikersbevestiging', async () => {
+  it('herstelt de bevestigde interpretatie uit cache zonder opnieuw te classificeren', async () => {
+    const classification = {
+      summary:
+        'U wilt weten hoe veilig met brandstof kan worden gewerkt.',
+      primarySubject: 'HAZARDOUS_SUBSTANCES',
+      secondarySubjects: [],
+      confidence: 'HIGH',
+      alternatives: ['INCIDENT'],
+    } as const
+    mocks.readCached.mockResolvedValue(classification)
+
     const result = await enrichPublicIntakeDraftWithAIClassification({
       ...draft,
       answers: [
         {
           questionKey: 'guidance_topic',
           disposition: 'ANSWERED',
+          source: 'AI_CONFIRMED',
+          value: 'HAZARDOUS_SUBSTANCES',
+        },
+      ],
+    } as PublicIntakeDraftView)
+
+    expect(result.aiClassification).toEqual(classification)
+    expect(mocks.readCached).toHaveBeenCalledWith(draft.originalInput)
+    expect(mocks.classify).not.toHaveBeenCalled()
+  })
+
+  it('gebruikt een handmatige onderwerpkeuze nooit als bevestiging van de AI-samenvatting', async () => {
+    const result = await enrichPublicIntakeDraftWithAIClassification({
+      ...draft,
+      answers: [
+        {
+          questionKey: 'guidance_topic',
+          disposition: 'ANSWERED',
+          source: 'USER_CORRECTED',
+          value: 'HAZARDOUS_SUBSTANCES',
         },
       ],
     } as PublicIntakeDraftView)
 
     expect(result.aiClassification).toBeUndefined()
+    expect(mocks.readCached).not.toHaveBeenCalled()
     expect(mocks.classify).not.toHaveBeenCalled()
   })
 

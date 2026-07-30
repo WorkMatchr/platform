@@ -5,10 +5,13 @@ import { PrismaPg } from '@prisma/adapter-pg'
 import { Client } from 'pg'
 import { PrismaClient, type Prisma } from '../src/generated/prisma/client'
 import {
+  categorySpecialisms,
   TEST_PROVIDER_DATABASE,
   TEST_PROVIDER_DATASET_VERSION,
   TEST_PROVIDER_PREFIX,
+  testClientSpecs,
   testProviderSpecs,
+  type ProfessionalCategory,
   type ServiceCode,
 } from './test-provider-dataset'
 
@@ -86,6 +89,7 @@ type ReferenceMaps = {
 async function loadReferences(prisma: PrismaClient): Promise<ReferenceMaps> {
   const terms = await prisma.providerTaxonomyTerm.findMany({
     where: { version: { status: 'PUBLISHED' } },
+    orderBy: { version: { version: 'asc' } },
     select: { id: true, code: true, version: { select: { version: true, checksum: true, taxonomy: { select: { kind: true } } } } },
   })
   const map = new Map(terms.map((term) => [`${term.version.taxonomy.kind}:${term.code}`, term]))
@@ -121,6 +125,25 @@ const professionalRoles = [
   ['Incidentonderzoeker', 'hvk-diploma'],
 ] as const
 
+const primaryProfessionalDetails: Record<ProfessionalCategory, { role: string; qualification: string }> = {
+  MVK: { role: 'Middelbaar veiligheidskundige', qualification: 'mvk-diploma' },
+  HVK: { role: 'Hoger veiligheidskundige', qualification: 'hvk-diploma' },
+  BEDRIJFSARTS: { role: 'Bedrijfsarts', qualification: 'bedrijfsartsregistratie' },
+  ARBEIDSHYGIENIST: { role: 'Arbeidshygiënist', qualification: 'arbeidshygienist' },
+  ARBEIDSDESKUNDIGE: { role: 'Arbeidsdeskundige', qualification: 'arbeids-en-organisatiedeskundige' },
+  ERGONOOM: { role: 'Ergonoom', qualification: 'gecertificeerd-kerndeskundige' },
+  BHV_SPECIALIST: { role: 'BHV-specialist', qualification: 'mvk-diploma' },
+  MACHINEVEILIGHEID: { role: 'Specialist machineveiligheid', qualification: 'hvk-diploma' },
+  ASBEST: { role: 'Asbestadviseur', qualification: 'arbeidshygienist' },
+  VEILIGHEIDSADVIES: { role: 'Veiligheidsadviseur', qualification: 'gecertificeerd-kerndeskundige' },
+}
+
+const availabilityLabels = {
+  DIRECT: 'direct beschikbaar',
+  TWO_WEEKS: 'beschikbaar binnen twee weken',
+  ONE_MONTH: 'beschikbaar binnen een maand',
+} as const
+
 async function seedProvider(
   prisma: PrismaClient,
   references: ReferenceMaps,
@@ -144,10 +167,12 @@ async function seedProvider(
     id: organizationId,
     name: spec.organizationName,
     tradeName: spec.organizationName,
+    chamberOfCommerceNumber: spec.chamberOfCommerceNumber,
     organizationType: spec.organizationType,
     status: 'ACTIVE',
-    website: `https://dienstverlener-${String(spec.number).padStart(2, '0')}.example.invalid`,
-    generalEmail: `contact@dienstverlener-${String(spec.number).padStart(2, '0')}.example.invalid`,
+    website: spec.website,
+    phone: spec.phone,
+    generalEmail: spec.email,
   } })
   await prisma.organizationMembership.create({ data: { id: uuid(`${spec.code}:membership`), userId: ownerId, organizationId, role: 'OWNER', status: 'ACTIVE' } })
   await prisma.organizationLocation.create({ data: {
@@ -156,7 +181,17 @@ async function seedProvider(
     province: spec.province, countryCode: 'NL', isPrimary: true,
   } })
   await prisma.providerProfile.create({ data: {
-    id: profileId, organizationId, description: `${TEST_PROVIDER_DATASET_VERSION}:${spec.category}`,
+    id: profileId,
+    organizationId,
+    description: [
+      `${TEST_PROVIDER_DATASET_VERSION}:${spec.category}.`,
+      `${spec.organizationName.replace(TEST_PROVIDER_PREFIX, '')} ondersteunt organisaties met ${spec.focusAreas.join(', ')}.`,
+      `Ervaring: ${spec.experienceYears} jaar.`,
+      `Fictieve beoordeling: ${spec.rating.toFixed(1).replace('.', ',')}/5 uit ${spec.reviewCount} reviews.`,
+      `Indicatief uurtarief: €${spec.hourlyRate}.`,
+      `Demo-beschikbaarheid: ${availabilityLabels[spec.availability]}.`,
+      `Logo-placeholder: ${spec.logoPlaceholder}.`,
+    ].join(' '),
     lifecycleStatus: spec.qualified ? 'QUALIFIED' : 'READY_FOR_REVIEW',
     readinessStatus: spec.selectable || spec.blocked ? 'READY' : 'INCOMPLETE',
     platformQualificationStatus: spec.qualified ? 'QUALIFIED' : 'NOT_ASSESSED',
@@ -168,12 +203,15 @@ async function seedProvider(
   for (const [capabilityIndex, serviceCode] of spec.serviceCodes.entries()) {
     const id = uuid(`${spec.code}:capability:${serviceCode}`)
     const revisionId = uuid(`${spec.code}:capability-revision:${serviceCode}`)
-    const details = serviceDetails[serviceCode]
     await prisma.providerCapability.create({ data: { id, providerProfileId: profileId } })
     await prisma.providerCapabilityRevision.create({ data: {
       id: revisionId, providerCapabilityId: id, version: 1,
       serviceTermId: requiredTerm(references, 'SERVICE', serviceCode).id,
-      specialismTermId: requiredTerm(references, 'SPECIALISM', details.specialism).id,
+      specialismTermId: requiredTerm(
+        references,
+        'SPECIALISM',
+        categorySpecialisms[spec.professionalCategory],
+      ).id,
       deliveryModes: capabilityIndex % 3 === 0 ? ['ON_SITE', 'HYBRID'] : capabilityIndex % 3 === 1 ? ['REMOTE', 'HYBRID'] : ['ON_SITE'],
       verificationLevel: 'SELF_DECLARED',
     } })
@@ -212,7 +250,10 @@ async function seedProvider(
   for (let professionalIndex = 0; professionalIndex < spec.professionalCount; professionalIndex += 1) {
     const professionalId = uuid(`${spec.code}:professional:${professionalIndex}`)
     professionalIds.push(professionalId)
-    const [role, defaultQualification] = professionalRoles[(spec.number + professionalIndex) % professionalRoles.length]
+    const fallback = professionalRoles[(spec.number + professionalIndex) % professionalRoles.length]
+    const primary = primaryProfessionalDetails[spec.professionalCategory]
+    const role = professionalIndex === 0 ? primary.role : fallback[0]
+    const defaultQualification = professionalIndex === 0 ? primary.qualification : fallback[1]
     await prisma.providerProfessional.create({ data: { id: professionalId, providerProfileId: profileId } })
     await prisma.providerProfessionalIdentityRevision.create({ data: {
       id: uuid(`${spec.code}:professional-identity:${professionalIndex}`), professionalId, version: 1,
@@ -225,7 +266,7 @@ async function seedProvider(
       contactEmail: `professional-${spec.number}-${professionalIndex + 1}@test-wm.example.invalid`,
     } })
     const qualificationCodes = professionalIndex === 0
-      ? [...new Set(spec.serviceCodes.map((serviceCode) => serviceDetails[serviceCode].qualification))]
+      ? [...new Set([primary.qualification, ...spec.serviceCodes.map((serviceCode) => serviceDetails[serviceCode].qualification)])]
       : [defaultQualification]
     for (const qualificationCode of qualificationCodes) {
       const qualificationId = uuid(`${spec.code}:qualification:${professionalIndex}:${qualificationCode}`)
@@ -333,7 +374,7 @@ async function seedProvider(
       taxonomyVersions: references.taxonomyVersions,
       capabilities: capabilityRows.map((item) => ({
         serviceCode: item.serviceCode,
-        specialismCode: serviceDetails[item.serviceCode].specialism,
+        specialismCode: categorySpecialisms[spec.professionalCategory],
         competencyCode: null,
         deliveryModes: ['HYBRID', 'ON_SITE'], verificationLevel: verifiedLevel,
       })),
@@ -350,8 +391,60 @@ async function seedProvider(
   }
 }
 
+async function seedClient(prisma: PrismaClient, spec: (typeof testClientSpecs)[number], sectorId: string) {
+  const organizationId = uuid(`${spec.code}:organization`)
+  const ownerId = uuid(`${spec.code}:owner`)
+  await prisma.user.create({ data: {
+    id: ownerId,
+    email: `owner-client-${String(spec.number).padStart(2, '0')}@test-wm.example.invalid`,
+    displayName: `${TEST_PROVIDER_PREFIX}Opdrachtgever ${String(spec.number).padStart(2, '0')}`,
+    emailVerified: true,
+    status: 'ACTIVE',
+  } })
+  await prisma.organization.create({ data: {
+    id: organizationId,
+    name: spec.organizationName,
+    tradeName: spec.organizationName,
+    chamberOfCommerceNumber: spec.chamberOfCommerceNumber,
+    organizationType: 'CLIENT',
+    status: 'ACTIVE',
+    website: spec.website,
+    phone: spec.phone,
+    generalEmail: spec.email,
+    employeeCount: spec.employeeCount,
+  } })
+  await prisma.organizationMembership.create({ data: {
+    id: uuid(`${spec.code}:membership`),
+    userId: ownerId,
+    organizationId,
+    role: 'OWNER',
+    status: 'ACTIVE',
+  } })
+  await prisma.organizationLocation.create({ data: {
+    id: uuid(`${spec.code}:location`),
+    organizationId,
+    label: 'Fictieve testvestiging',
+    addressLine: `Testlaan ${300 + spec.number}`,
+    postalCode: `${3000 + spec.number} TA`,
+    city: spec.city,
+    province: spec.province,
+    countryCode: 'NL',
+    isPrimary: true,
+  } })
+  await prisma.organizationSector.create({ data: {
+    id: uuid(`${spec.code}:sector`),
+    organizationId,
+    sectorId,
+    isPrimary: true,
+  } })
+}
+
 async function seedDataset(prisma: PrismaClient) {
   const references = await loadReferences(prisma)
+  const sectors = new Map((await prisma.sector.findMany({
+    where: { slug: { in: [...new Set(testClientSpecs.map((client) => client.sectorCode))] } },
+    select: { id: true, slug: true },
+  })).map((sector) => [sector.slug, sector.id]))
   const reviewerId = uuid('platform-reviewer')
   const approverId = uuid('platform-approver')
   await prisma.user.createMany({ data: [
@@ -359,11 +452,16 @@ async function seedDataset(prisma: PrismaClient) {
     { id: approverId, email: 'approver@test-wm.example.invalid', displayName: `${TEST_PROVIDER_PREFIX}Goedkeurder`, emailVerified: true, platformRole: 'ADMIN', status: 'ACTIVE' },
   ] })
   for (const spec of testProviderSpecs) await seedProvider(prisma, references, spec, reviewerId, approverId)
+  for (const spec of testClientSpecs) {
+    const sectorId = sectors.get(spec.sectorCode)
+    if (!sectorId) throw new Error(`Vereiste opdrachtgeversector ontbreekt: ${spec.sectorCode}`)
+    await seedClient(prisma, spec, sectorId)
+  }
 }
 
 export async function verifyTestProviderDataset(prisma: PrismaClient) {
   const organizations = await prisma.organization.findMany({
-    where: { name: { startsWith: TEST_PROVIDER_PREFIX } },
+    where: { name: { startsWith: TEST_PROVIDER_PREFIX }, providerProfile: { isNot: null } },
     include: { memberships: { include: { user: true } }, locations: true, providerProfile: {
       include: { capabilities: true, professionals: { include: { privateData: true, qualifications: { include: { capabilities: true } } } }, trustedProjections: true },
     } },
@@ -378,8 +476,15 @@ export async function verifyTestProviderDataset(prisma: PrismaClient) {
   if (organizations.some((item) => !item.memberships[0]?.user.email.endsWith('.example.invalid') || !item.memberships[0]?.user.displayName?.startsWith(TEST_PROVIDER_PREFIX))) {
     throw new Error('Niet-fictieve testgebruiker in de dataset.')
   }
-  if (organizations.some((item) => !item.locations[0]?.addressLine.startsWith('Testlaan ') || !item.locations[0]?.city.startsWith('Testplaats '))) {
+  if (organizations.some((item) => !item.locations[0]?.addressLine.startsWith('Testlaan '))) {
     throw new Error('Niet-fictief testadres in de dataset.')
+  }
+  if (organizations.some((item) =>
+    !item.chamberOfCommerceNumber?.startsWith(`${TEST_PROVIDER_PREFIX}KVK-`) ||
+    !item.phone?.startsWith('+31 20 000 ') ||
+    !item.website?.endsWith('.example.invalid') ||
+    !item.providerProfile?.description?.includes('Logo-placeholder:'))) {
+    throw new Error('Verplichte fictieve organisatie- of profielmetadata ontbreekt.')
   }
   if (organizations.some((item) => item.providerProfile?.professionals.some((professional) =>
     !professional.privateData?.displayName.startsWith(TEST_PROVIDER_PREFIX) || !professional.privateData.contactEmail?.endsWith('.example.invalid')))) {
@@ -389,12 +494,80 @@ export async function verifyTestProviderDataset(prisma: PrismaClient) {
   const qualificationCount = organizations.reduce((total, item) => total + (item.providerProfile?.professionals.reduce((sum, professional) => sum + professional.qualifications.length, 0) ?? 0), 0)
   const multiCapabilityQualifications = organizations.reduce((total, item) => total + (item.providerProfile?.professionals.reduce((sum, professional) => sum + professional.qualifications.filter((qualification) => qualification.capabilities.length > 1).length, 0) ?? 0), 0)
   if (professionalCount !== 150 || qualificationCount < 150 || multiCapabilityQualifications === 0) throw new Error('Variatie in professionals of kwalificaties klopt niet.')
+  const ergonomistNames = new Set(
+    testProviderSpecs
+      .filter((spec) => spec.professionalCategory === 'ERGONOOM')
+      .map((spec) => spec.organizationName),
+  )
+  const ergonomists = organizations.filter((organization) =>
+    ergonomistNames.has(organization.name),
+  )
+  if (
+    ergonomists.length !== 3 ||
+    ergonomists.some((organization) => {
+      const projection = organization.providerProfile?.trustedProjections[0]
+      if (
+        !projection?.payload ||
+        typeof projection.payload !== 'object' ||
+        Array.isArray(projection.payload)
+      ) {
+        return true
+      }
+      const capabilities = (
+        projection.payload as Record<string, unknown>
+      ).capabilities
+      return (
+        !Array.isArray(capabilities) ||
+        !capabilities.some(
+          (capability) =>
+            capability !== null &&
+            typeof capability === 'object' &&
+            !Array.isArray(capability) &&
+            (capability as Record<string, unknown>).specialismCode ===
+              'ergonoom',
+        )
+      )
+    })
+  ) {
+    throw new Error(
+      'De drie ergonomieorganisaties hebben geen geldige ergonomieprojectie.',
+    )
+  }
+  const clients = await prisma.organization.findMany({
+    where: { name: { startsWith: TEST_PROVIDER_PREFIX }, organizationType: 'CLIENT' },
+    include: { providerProfile: true, memberships: true, locations: true, sectors: true },
+  })
+  if (clients.length !== 20 || new Set(clients.map((item) => item.name)).size !== 20) {
+    throw new Error(`Verwacht 20 unieke fictieve opdrachtgevers, gevonden: ${clients.length}.`)
+  }
+  if (clients.some((item) =>
+    item.providerProfile ||
+    item.memberships.length !== 1 ||
+    item.locations.length !== 1 ||
+    item.sectors.length !== 1 ||
+    !item.generalEmail?.endsWith('.example.invalid') ||
+    !item.chamberOfCommerceNumber?.startsWith(`${TEST_PROVIDER_PREFIX}KLANT-KVK-`))) {
+    throw new Error('Opdrachtgeverrelaties of fictieve metadata zijn onvolledig.')
+  }
+  const forbiddenMarketplaceRecords = {
+    assignments: await prisma.assignment.count(),
+    invitations: await prisma.providerInvitation.count(),
+    participations: await prisma.providerParticipation.count(),
+    quotes: await prisma.quote.count(),
+    creditAccounts: await prisma.creditAccount.count(),
+    creditTransactions: await prisma.creditTransaction.count(),
+  }
+  if (Object.values(forbiddenMarketplaceRecords).some((count) => count !== 0)) {
+    throw new Error(`De dataset bevat ongewenste marketplace-transacties: ${JSON.stringify(forbiddenMarketplaceRecords)}.`)
+  }
   return {
-    organizations: organizations.length,
+    providers: organizations.length,
+    clients: clients.length,
     professionals: professionalCount,
     qualifications: qualificationCount,
     projections: organizations.reduce((total, item) => total + (item.providerProfile?.trustedProjections.length ?? 0), 0),
     multiCapabilityQualifications,
+    marketplaceRecords: 0,
   }
 }
 
@@ -404,14 +577,24 @@ async function inspectExistingDataset(): Promise<'missing-schema' | 'empty' | 'c
   try {
     const table = await client.query<{ exists: boolean }>(`SELECT to_regclass('public."Organization"') IS NOT NULL AS exists`)
     if (!table.rows[0]?.exists) return 'missing-schema'
-    const result = await client.query<{ total: number; marked: number }>(`
+    const result = await client.query<{ total: number; marked: number; providers: number; clients: number; currentVersion: number }>(`
       SELECT COUNT(*)::int AS total,
-             COUNT(*) FILTER (WHERE name LIKE '${TEST_PROVIDER_PREFIX}%')::int AS marked
-      FROM "Organization"
+             COUNT(*) FILTER (WHERE o.name LIKE '${TEST_PROVIDER_PREFIX}%')::int AS marked,
+             COUNT(pp.id)::int AS providers,
+             COUNT(*) FILTER (WHERE o."organizationType" = 'CLIENT')::int AS clients,
+             COUNT(*) FILTER (WHERE pp.description LIKE '${TEST_PROVIDER_DATASET_VERSION}%')::int AS "currentVersion"
+      FROM "Organization" o
+      LEFT JOIN "ProviderProfile" pp ON pp."organizationId" = o.id
     `)
-    const { total, marked } = result.rows[0] ?? { total: 0, marked: 0 }
+    const { total, marked, providers, clients, currentVersion } = result.rows[0] ?? {
+      total: 0,
+      marked: 0,
+      providers: 0,
+      clients: 0,
+      currentVersion: 0,
+    }
     if (total === 0) return 'empty'
-    if (marked === 50 && total === 50) return 'complete'
+    if (marked === 70 && total === 70 && providers === 50 && clients === 20 && currentVersion === 50) return 'complete'
     if (marked > 0 && marked === total) return 'partial'
     return 'foreign'
   } finally {

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
+import { LinkButton } from '@/components/ui/link-button'
 import {
   confirmPublicIntakeAIClassificationAction,
   recordPublicIntakeAnswerAction,
@@ -20,6 +21,7 @@ import {
   PublicIntakeMobileContext,
 } from './public-intake-context'
 import { PublicIntakeRestartDialog } from './public-intake-restart-dialog'
+import { ProfessionalRequirementList } from '@/components/advice-dossiers/professional-requirement-list'
 
 type PendingAnswer = {
   disposition: 'ANSWERED' | 'UNKNOWN' | 'SKIPPED'
@@ -117,54 +119,13 @@ export function PublicIntakeGuidanceResult({
           >
             Aanbevolen deskundigheid
           </h3>
-          {presentation.primaryProfessionalRequirement ? (
-            <div className="mt-2 rounded-control border border-brand-primary/25 bg-brand-primary-subtle p-4">
-              <p className="font-semibold text-brand-dark">
-                {presentation.primaryProfessionalRequirement.label}
-              </p>
-              <p className="mt-1 text-sm text-text-secondary">
-                {presentation.primaryProfessionalRequirement.reason}
-              </p>
-              <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-text-secondary">
-                Relevante expertise
-              </p>
-              <p className="mt-1 text-sm text-brand-dark">
-                {presentation.primaryProfessionalRequirement.expertise.join(
-                  ', ',
-                )}
-              </p>
-            </div>
-          ) : (
-            <p className="mt-2 text-text-secondary">
-              Op basis van de beschikbare informatie is nog geen specifieke
-              deskundigheid aan te bevelen.
-            </p>
-          )}
-
-          {presentation.additionalProfessionalRequirements.length > 0 && (
-            <div className="mt-3">
-              <p className="text-sm font-semibold text-brand-dark">
-                Mogelijk aanvullend
-              </p>
-              <ul className="mt-2 space-y-2">
-                {presentation.additionalProfessionalRequirements.map(
-                  (requirement) => (
-                    <li
-                      key={`${requirement.label}:${requirement.reason}`}
-                      className="rounded-control border border-border bg-surface-subtle p-3"
-                    >
-                      <p className="font-semibold text-brand-dark">
-                        {requirement.label}
-                      </p>
-                      <p className="mt-1 text-sm text-text-secondary">
-                        {requirement.reason}
-                      </p>
-                    </li>
-                  ),
-                )}
-              </ul>
-            </div>
-          )}
+          <ProfessionalRequirementList
+            primary={presentation.primaryProfessionalRequirement}
+            additional={
+              presentation.additionalProfessionalRequirements
+            }
+            possible={presentation.possibleProfessionalRequirements}
+          />
         </section>
 
         <section aria-labelledby="public-intake-knowledge-title">
@@ -232,6 +193,34 @@ export function PublicIntakeGuidanceResult({
       <p className="mt-6 border-t border-border pt-4 text-xs leading-relaxed text-text-secondary">
         {presentation.disclaimer}
       </p>
+    </section>
+  )
+}
+
+export function AnonymousAdviceSavePanel() {
+  return (
+    <section
+      className="rounded-card border border-border bg-surface-subtle p-5 sm:p-6"
+      aria-labelledby="anonymous-advice-save-title"
+    >
+      <h2
+        id="anonymous-advice-save-title"
+        className="text-lg font-bold text-brand-dark"
+      >
+        Wilt u dit advies bewaren?
+      </h2>
+      <p className="mt-2 max-w-2xl text-sm leading-relaxed text-text-secondary">
+        Log in met een opdrachtgeveraccount om dit advies op te slaan in Mijn
+        adviesdossiers.
+      </p>
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+        <LinkButton href="/inloggen?returnTo=%2Fadvieswijzer">
+          Inloggen
+        </LinkButton>
+        <LinkButton href="/registreren" variant="outline">
+          Account aanmaken
+        </LinkButton>
+      </div>
     </section>
   )
 }
@@ -531,6 +520,39 @@ export function PublicIntakeWorkspace({
 
         {isReadyForSummary && draft.guidance.outcome && (
           <PublicIntakeGuidanceResult outcome={draft.guidance.outcome} />
+        )}
+
+        {isReadyForSummary && draft.adviceDossier && (
+          <section
+            className="rounded-card border border-success-border bg-success-subtle p-5 sm:p-6"
+            aria-labelledby="public-intake-dossier-title"
+          >
+            <p className="text-sm font-semibold text-success">
+              Adviesdossier gereed
+            </p>
+            <h2
+              id="public-intake-dossier-title"
+              className="mt-1 text-xl font-bold text-brand-dark"
+            >
+              Uw WorkMatchr Adviesdossier is veilig opgeslagen
+            </h2>
+            <p className="mt-2 text-text-secondary">
+              Dossiercode{' '}
+              <span className="font-semibold text-brand-dark">
+                {draft.adviceDossier.dossierCode}
+              </span>
+            </p>
+            <LinkButton
+              className="mt-4"
+              href={`/adviesdossiers/${draft.adviceDossier.id}`}
+            >
+              Bekijk uw Adviesdossier
+            </LinkButton>
+          </section>
+        )}
+
+        {isReadyForSummary && draft.adviceDossier === null && (
+          <AnonymousAdviceSavePanel />
         )}
 
         {answeredQuestions.length > 0 && (

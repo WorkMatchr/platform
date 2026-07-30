@@ -125,7 +125,7 @@ describe('Public Intake Guidance-handoff', () => {
         },
         professionalRequirements: [
           {
-            professionalType: 'RIE_ADVISOR',
+            professionalType: 'MIDDELBAAR_VEILIGHEIDSKUNDIGE',
             priority: 'PRIMARY',
             status: 'DRAFT',
           },
@@ -278,9 +278,9 @@ describe('Public Intake Guidance-handoff', () => {
   })
 
   it.each([
-    ['HEALTH_WORKLOAD', 'OCCUPATIONAL_HEALTH', 'OCCUPATIONAL_PHYSICIAN'],
-    ['OCCUPATIONAL_HEALTH', 'OCCUPATIONAL_HEALTH', 'OCCUPATIONAL_PHYSICIAN'],
-    ['EMERGENCY_RESPONSE', 'EMERGENCY_RESPONSE', 'BHV_ADVISOR'],
+    ['HEALTH_WORKLOAD', 'OCCUPATIONAL_HEALTH', 'BEDRIJFSARTS'],
+    ['OCCUPATIONAL_HEALTH', 'OCCUPATIONAL_HEALTH', 'BEDRIJFSARTS'],
+    ['EMERGENCY_RESPONSE', 'EMERGENCY_RESPONSE', 'BHV_ADVISEUR'],
   ])(
     'levert voor de ondersteunde onderwerpkeuze %s direct een advies',
     (topic, situation, professionalType) => {

@@ -13,6 +13,15 @@
 
 Exacte interne scores en concurrentinformatie worden niet aan opdrachtgevers of providers getoond. Capaciteit, credits, betaling, omvang, prestaties en vrije tekst beïnvloeden ranking niet. Zie ADR-009 en ADR-015.
 
+## Vakdiscipline als capability
+
+Nieuwe aanvragen uit M7B.2 gebruiken de centrale, concrete
+specialismecode van de aanbevolen vakdiscipline als capabilitycriterium.
+De matcher accepteert die alleen wanneer dezelfde gecontroleerde
+`specialismCode` in de actuele Trusted Provider Projection staat. Een
+brede dienst zoals `SAFETY_ADVICE` vervangt een ontbrekend specialisme
+niet. Zie ADR-022.
+
 ## Beheerinterventie
 
 Een actieve centrale platformadmin kan vóór providerdeelname maximaal drie kandidaten uit de bestaande set `ELIGIBLE`/`SELECTED` kiezen. Harde uitsluitingen blijven bindend. Reden, actor, oorspronkelijke selectie en vervangende selectie worden immutable opgeslagen; ingetrokken uitnodigingen worden niet verwijderd. Na acceptatie is interventie fail-closed geblokkeerd.

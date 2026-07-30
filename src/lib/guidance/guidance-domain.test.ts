@@ -75,8 +75,11 @@ const guidanceOutcomeFixture = {
     adviceBody: 'Fictieve adviesinhoud voor een contracttest.',
     adviceReasons: ['Fictieve reden.'],
     selfActions: ['Fictieve actie.'],
+    dominantContext: 'UNKNOWN',
+    relevantRiskDomains: [],
     primaryProfessionalRequirement: null,
     additionalProfessionalRequirements: [],
+    possibleProfessionalRequirements: [],
     knowledgeReferences: [],
     sourceReferences: [],
     disclaimer: 'Fictieve disclaimer.',
@@ -95,7 +98,7 @@ const professionalRequirementFixture = {
   professionalSupportNeedId:
     guidanceOutcomeFixture.professionalSupportNeed.id,
   status: 'DRAFT',
-  professionalType: 'RIE_ADVISOR',
+  professionalType: 'MIDDELBAAR_VEILIGHEIDSKUNDIGE',
   priority: 'PRIMARY',
   reason: 'Fictieve reden voor passende deskundigheid.',
   expertise: ['RI&E'],
@@ -117,10 +120,10 @@ const professionalRequirementFixture = {
 describe('ADR-021 guidance-domeincontract', () => {
   it('houdt de contractversies expliciet en onafhankelijk', () => {
     expect(GUIDANCE_OUTCOME_SCHEMA_VERSION).toBe(
-      'guidance-outcome/1.1.0',
+      'guidance-outcome/1.2.0',
     )
     expect(PROFESSIONAL_REQUIREMENT_SCHEMA_VERSION).toBe(
-      'professional-requirement/1.1.0',
+      'professional-requirement/1.2.0',
     )
     expect(guidanceOutcomeFixture.schemaVersion).not.toBe(
       professionalRequirementFixture.schemaVersion,

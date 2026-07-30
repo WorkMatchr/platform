@@ -45,7 +45,11 @@ Module 6C.2 — WOS Beheeracties & Communicatie is technisch opgeleverd en wacht
 24. [Architectuur publieke homepage — Module P1.1](public-website-homepage-architecture.md)
 25. [Module 7 — Nieuwe hulpvraag](module-7-nieuwe-hulpvraag-ontwerp.md)
 26. [Module 7B — Professional Advice](module-7b-professional-advice.md)
-26. [AI Intake Classifier v1 — ADR-021 Implementatiefase H](ai-intake-classifier-v1.md)
+27. [Module 7C — WorkMatchr Adviesdossier](module-7c-adviesdossier.md)
+28. [Module 7D.1 — Aanvraag publiceren](module-7d-aanvraag-publiceren.md)
+29. [Module 7D.2 — Interesse tonen](module-7d2-interesse-tonen.md)
+30. [Module 7D.3 — Offerteplaats claimen](module-7d3-offerteplaats-claimen.md)
+31. [AI Intake Classifier v1 — ADR-021 Implementatiefase H](ai-intake-classifier-v1.md)
 
 - [Icebox — geparkeerde productideeën](ICEBOX.md)
 
@@ -107,6 +111,8 @@ Module 6C.2 — WOS Beheeracties & Communicatie is technisch opgeleverd en wacht
 - [ADR-018: Creditledger en reserveringen](adr/ADR-018-creditledger-en-reserveringen.md)
 - [ADR-019: Opdrachtgebonden berichtenisolatie](adr/ADR-019-opdrachtgebonden-berichtenisolatie.md)
 - [ADR-020: Persistente notificaties en outbox](adr/ADR-020-persistente-notificaties-en-outbox.md)
+- [ADR-021: Van dienstgestuurd naar hulpvraaggestuurd platform](adr/ADR-021-van-dienstgestuurd-naar-hulpvraaggestuurd-platform.md)
+- [ADR-022: Matchen op vakdiscipline in plaats van generieke RI&E-deskundigheid — geaccepteerd](adr/ADR-022-matchen-op-vakdiscipline.md)
 - [Teststrategie](test-strategy.md)
 - [Module 6C: Platformbeheer](module-6c-platformbeheer.md)
 

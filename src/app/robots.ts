@@ -9,6 +9,7 @@ export default function robots(): MetadataRoute.Robots {
       disallow: [
         '/account',
         '/account-activeren',
+        '/adviesdossiers',
         '/aanbiedersdossier',
         '/api/',
         '/dashboard',

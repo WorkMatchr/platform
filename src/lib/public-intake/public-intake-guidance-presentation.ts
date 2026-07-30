@@ -4,22 +4,17 @@ import type {
   GuidanceOutcome,
   ProfessionalRequirement,
 } from '@/lib/guidance/guidance-domain'
-
-const professionalTypeLabels: Readonly<Record<string, string>> =
-  Object.freeze({
-    RIE_ADVISOR: 'RI&E-deskundige',
-    INCIDENT_INVESTIGATOR: 'Veiligheidskundige of incidentonderzoeker',
-    OCCUPATIONAL_HYGIENIST: 'Arbeidshygiënist',
-    OCCUPATIONAL_PHYSICIAN: 'Bedrijfsarts',
-    PHYSICAL_WORKLOAD_SPECIALIST:
-      'Deskundige in fysieke belasting of ergonomie',
-    BHV_ADVISOR: 'BHV-adviseur',
-  })
+import {
+  professionalDisciplines,
+  type ProfessionalDisciplineCode,
+} from '@/lib/guidance/professional-disciplines'
 
 type PresentedProfessionalRequirement = Readonly<{
   label: string
+  priority: ProfessionalRequirement['priority']
   reason: string
   expertise: readonly string[]
+  capabilityCodes: readonly string[]
 }>
 
 type PresentedKnowledgeReference = Readonly<{
@@ -44,6 +39,7 @@ export type PublicIntakeGuidancePresentation = Readonly<{
   selfActions: readonly string[]
   primaryProfessionalRequirement: PresentedProfessionalRequirement | null
   additionalProfessionalRequirements: readonly PresentedProfessionalRequirement[]
+  possibleProfessionalRequirements: readonly PresentedProfessionalRequirement[]
   knowledgeReferences: readonly PresentedKnowledgeReference[]
   sourceReferences: readonly PresentedSourceReference[]
   uncertainties: readonly string[]
@@ -54,12 +50,20 @@ export type PublicIntakeGuidancePresentation = Readonly<{
 function presentRequirement(
   requirement: ProfessionalRequirement,
 ): PresentedProfessionalRequirement {
+  const capabilityCodes = requirement.criteria
+    .filter((criterion) => criterion.kind === 'CAPABILITY')
+    .flatMap((criterion) => criterion.valueCodes)
+
   return Object.freeze({
     label:
-      professionalTypeLabels[requirement.professionalType] ??
+      professionalDisciplines[
+        requirement.professionalType as ProfessionalDisciplineCode
+      ]?.label ??
       'Passende arbodeskundige',
+    priority: requirement.priority,
     reason: requirement.reason,
     expertise: Object.freeze([...requirement.expertise]),
+    capabilityCodes: Object.freeze([...new Set(capabilityCodes)]),
   })
 }
 
@@ -121,6 +125,9 @@ export function presentPublicIntakeGuidance(
         : null,
     additionalProfessionalRequirements: Object.freeze(
       advice.additionalProfessionalRequirements.map(presentRequirement),
+    ),
+    possibleProfessionalRequirements: Object.freeze(
+      advice.possibleProfessionalRequirements.map(presentRequirement),
     ),
     knowledgeReferences: Object.freeze(knowledgeReferences),
     sourceReferences: Object.freeze(sourceReferences),

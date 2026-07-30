@@ -59,6 +59,116 @@ erDiagram
 
 Dit domein heeft bewust geen relatie naar User, Organization, membership, Intake of Assignment. Het volledige toegangstoken wordt nooit opgeslagen; alleen de hash staat in `PublicIntakeSession`. Een bewuste reset verwijdert geen records: de draft krijgt terminaal `ABANDONED_BY_USER`, de sessie krijgt `revokedAt` en het append-only event bewaart uitsluitend fasecontext en reden. De losstaande classificatiecache bevat uitsluitend een niet-omkeerbare fingerprint en gevalideerde structured output of een veilige fallback; de vrije hulpvraag wordt niet gedupliceerd.
 
+## Adviesdossiers — Module 7C
+
+```mermaid
+erDiagram
+  User ||--o{ AdviceDossier : owns
+  Organization ||--o{ AdviceDossier : contains
+  PublicIntakeDraft ||--o| AdviceDossier : becomes
+  AdviceDossier ||--|{ AdviceDossierVersion : versions
+  PublicIntakeDraft ||--o{ AdviceDossierVersion : sources
+  AdviceDossier ||--o{ AdviceDossierEvent : audits
+  AdviceDossierVersion ||--o{ AdviceDossierEvent : referenced_by
+  User ||--o{ AdviceDossierEvent : acts
+  AdviceDossierCounter {
+    int year PK
+    int nextNumber
+  }
+  AdviceDossier {
+    uuid id PK
+    string dossierCode UK
+    uuid ownerUserId FK
+    uuid organizationId FK
+    uuid sourcePublicIntakeDraftId FK,UK
+    AdviceDossierSourceRoute sourceRoute
+    AdviceDossierStatus status
+    int currentVersion
+  }
+  AdviceDossierVersion {
+    uuid id PK
+    uuid adviceDossierId FK
+    int version
+    uuid sourcePublicIntakeDraftId FK
+    int sourcePublicIntakeVersion
+    json guidanceOutcome
+    json professionalAdvice
+  }
+  AdviceDossierEvent {
+    uuid id PK
+    uuid adviceDossierId FK
+    uuid adviceDossierVersionId FK
+    uuid actorUserId FK
+    AdviceDossierEventType type
+  }
+```
+
+Een publieke draft blijft pseudoniem zolang geen ingelogde opdrachtgever de complete uitkomst laat vastleggen. De handoff creëert dan een afzonderlijk tenantgebonden dossier; de publieke draft zelf krijgt geen User- of Organization-FK. Dossierversies en events zijn databasebreed immutable. Een teller levert onder vergrendeling unieke, herkenbare codes zonder `count + 1`.
+
+## Aanvraagpublicatie — Module 7D.1
+
+```mermaid
+erDiagram
+  AdviceDossier ||--o| Request : publishes_as
+  Organization ||--o{ Request : owns
+  Request ||--o{ RequestEvent : audits
+  User ||--o{ RequestEvent : acts
+  RequestCounter {
+    int year PK
+    int nextNumber
+  }
+  Request {
+    uuid id PK
+    string requestNumber UK
+    uuid tenantId FK
+    uuid organizationId FK
+    uuid adviceDossierId FK,UK
+    RequestStatus status
+    string primaryExpertise
+    datetime publishedAt
+  }
+  RequestEvent {
+    uuid id PK
+    uuid requestId FK
+    uuid actorUserId FK
+    RequestEventType type
+  }
+```
+
+Een `Request` is niet het Adviesdossier zelf, maar een beperkte publicatiesnapshot. Eén afgerond dossier levert maximaal één aanvraag op. De dossiereigenaar blijft via de dossierrelatie de enige M7D.1-actor. Gepubliceerde inhoud en events zijn immutable; matching-, provider-, offerte- en creditrelaties ontbreken bewust.
+
+## Module 7D.2 — doelgroep en interesse
+
+```mermaid
+erDiagram
+  Request ||--o{ RequestEligibleProvider : "bevriest doelgroep"
+  TrustedProviderProjection ||--o{ RequestEligibleProvider : "onderbouwt"
+  ProviderProfile ||--o{ RequestEligibleProvider : "komt in aanmerking"
+  Organization ||--o{ RequestEligibleProvider : "providerorganisatie"
+  RequestEligibleProvider ||--o| RequestInterest : "staat interesse toe"
+  Request ||--o{ RequestInterest : "ontvangt interesse"
+  Organization ||--o{ RequestInterest : "toont namens organisatie"
+  User ||--o{ RequestInterest : "registreert"
+  RequestInterest ||--o{ RequestInterestEvent : "append-only historie"
+```
+
+`RequestEligibleProvider(requestId, providerOrganizationId)` en `RequestInterest(requestId, providerOrganizationId)` zijn uniek. De samengestelde foreign key van interesse naar eligibility maakt een reactie buiten de publicatiedoelgroep onmogelijk.
+
+## Module 7D.3 — offerteplaats claimen
+
+```mermaid
+erDiagram
+  Request ||--o{ RequestOfferSlot : "begrensd tot drie actieve"
+  RequestInterest ||--o| RequestOfferSlot : "geeft claimrecht"
+  Organization ||--o{ RequestOfferSlot : "claimt namens provider"
+  User ||--o{ RequestOfferSlot : "maakt eerste claim"
+  RequestOfferSlot ||--o{ RequestOfferSlotEvent : "append-only historie"
+  User ||--o{ RequestOfferSlotEvent : "handelt"
+```
+
+`RequestOfferSlot(requestId, providerOrganizationId)` en `requestInterestId` zijn uniek. Een partial unique index op actieve `(requestId, slotNumber)`-waarden en de toegestane nummers 1–3 begrenzen het actieve totaal databasebreed. Contactgegevens maken geen deel uit van slot of event; zij worden alleen server-side geprojecteerd aan een organisatie met een actieve claim.
+
+
 ## Identity en organisaties
 
 ```mermaid

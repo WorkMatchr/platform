@@ -48,4 +48,40 @@ describe('matchingregels', () => {
     }))
     expect(rankMatchingCandidates(candidates)).toEqual(rankMatchingCandidates([...candidates].reverse()))
   })
+
+  it('matcht een concrete vakdiscipline uitsluitend op het geverifieerde specialisme', () => {
+    const ergonomicsRequest = {
+      ...assignment,
+      capabilityCode: 'ergonoom',
+    }
+    const ergonomist = evaluateMatchingCandidate(ergonomicsRequest, {
+      providerProfileId: '66666666-6666-4666-8666-666666666666',
+      capabilities: [{
+        serviceCode: 'SAFETY_ADVICE',
+        specialismCode: 'ergonoom',
+        deliveryModes: ['ON_SITE'],
+      }],
+      sectors: [{ sectorCode: 'BOUW' }],
+      workAreas: [{ regionCode: 'UTRECHT' }],
+    })
+    const genericSafetyProvider = evaluateMatchingCandidate(
+      ergonomicsRequest,
+      {
+        providerProfileId: '77777777-7777-4777-8777-777777777777',
+        capabilities: [{
+          serviceCode: 'SAFETY_ADVICE',
+          specialismCode: 'veiligheidskundige',
+          deliveryModes: ['ON_SITE'],
+        }],
+        sectors: [{ sectorCode: 'BOUW' }],
+        workAreas: [{ regionCode: 'UTRECHT' }],
+      },
+    )
+
+    expect(ergonomist.status).toBe('ELIGIBLE')
+    expect(genericSafetyProvider.status).toBe('EXCLUDED')
+    expect(genericSafetyProvider.exclusionReasons).toContain(
+      'DIENST_NIET_AANGEBODEN',
+    )
+  })
 })

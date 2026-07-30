@@ -1,5 +1,13 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+vi.mock(
+  '@/lib/advice-dossiers/public-intake-advice-dossier-handoff',
+  () => ({
+    attachAdviceDossierForCurrentUser: vi.fn(async (draft) => draft),
+  }),
+)
+
 import { buildPublicIntakeGuidanceHandoff } from '@/lib/public-intake/public-intake-guidance-handoff'
 import type { PublicIntakeDraftView } from '@/lib/public-intake/public-intake-types'
 import { PublicIntakeWorkspace } from './public-intake-workspace'

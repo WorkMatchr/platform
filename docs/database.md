@@ -1,5 +1,14 @@
 # Database WorkMatchr
 
+## M7B.2 — vakdisciplinetaxonomie
+
+Migratie `20260730170000_add_professional_discipline_taxonomy` voegt
+geen modellen of kolommen toe. Zij publiceert niet-destructief
+SPECIALISM-taxonomie versie 2 en pensioneert versie 1. Bestaande
+capabilityrevisies, Trusted Provider Projections, AdviceDossierVersions
+en Requests worden niet bijgewerkt. Alleen nieuwe providerrevisies en
+nieuwe snapshots gebruiken de actuele vakdisciplinecodes.
+
 ## Keuze
 
 WorkMatchr gebruikt PostgreSQL 17 voor lokale ontwikkeling en Prisma ORM 7 als schema-, migration- en data-accesslaag. Alle primaire sleutels zijn PostgreSQL-UUID’s en alle zakelijke timestamps gebruiken UTC via `timestamptz`.
@@ -54,6 +63,9 @@ De seed bevat geen personen, organisaties, accounts, e-mailadressen, intakes of 
 | PublicIntakeDraft en PublicIntakeSession | Pseudonieme pre-authenticatiegegevens; toegang verloopt na 90 dagen. Een toekomstig retentieproces moet inhoud verwijderen of anonimiseren volgens definitief privacybeleid. |
 | PublicIntakeAnswerRevision en PublicIntakeEvent | Append-only binnen Werkset 7.1; geen tokens, hashes of volledige antwoordinhoud in events. Toekomstige retentie vereist een expliciet gecontroleerd verwijderpad. |
 | PublicIntakeAIClassificationCache | Privacyveilige technische cache met SHA-256-fingerprint, gevalideerde classificatie of getypeerde fallback; nooit de oorspronkelijke hulpvraag. Retentie volgt het nog vast te stellen publieke-intakebeleid. |
+| AdviceDossierVersion en AdviceDossierEvent | Databasebreed immutable via triggers; inhoudsversies en auditregels worden niet bijgewerkt of verwijderd. Bewaartermijn, anonimisering en gecontroleerde fysieke verwijdering moeten vóór productie juridisch en technisch worden vastgesteld. |
+| Request en RequestEvent | Gepubliceerde aanvraaginhoud en events zijn databasebreed beschermd tegen overschrijven; statuswijziging kan later uitsluitend gecontroleerd plaatsvinden. Bewaartermijn en publicatie-/annuleringsbeleid moeten vóór productie definitief worden vastgesteld. |
+| RequestEligibleProvider, RequestInterestEvent en RequestOfferSlotEvent | Doelgroepsnapshots, interesse-events en offerteplaatsevents zijn immutable en append-only. `RequestInterest` en `RequestOfferSlot` bewaren alleen de actuele status; retentie volgt het nog vast te stellen aanvraagbeleid. |
 | ProviderSelection en AssignmentResolution | Nooit verwijderen nadat zakelijke historie bestaat. |
 | AdminActionLog | Append-only, nooit wijzigen of verwijderen. |
 | CreditTransaction | Append-only, nooit wijzigen of verwijderen. |
@@ -78,6 +90,41 @@ Alle relaties gebruiken `RESTRICT`. Er zijn geen foreign keys naar User, Organiz
 Migratie `20260726190000_add_public_intake_user_abandonment` voegt additief de fasen `ABANDONED_BY_USER`, `ABANDONED_TIMEOUT` en `EXPIRED` en het event `DRAFT_ABANDONED_BY_USER` toe. Alleen `ABANDONED_BY_USER` wordt in Werkset 7.3a geschreven. De servicetransactie verhoogt de draftversie, trekt de sessie in en schrijft één event met uitsluitend vorige fase, nieuwe fase en reden `USER_REQUEST`. De bestaande algemene waarde `ABANDONED` blijft ongewijzigd voor legacycompatibiliteit en wordt niet door nieuwe code geschreven. Er worden geen drafts, antwoorden, revisies, events of bestaande records gemigreerd of verwijderd.
 
 Migratie `20260729100000_add_public_intake_ai_classification_cache` voegt additief `PublicIntakeAIClassificationCache` toe. De unieke fingerprint combineert genormaliseerde broninvoer, classifier-versie en model, maar de broninvoer zelf wordt niet in deze tabel opgeslagen. Een record doorloopt uitsluitend `PROCESSING → COMPLETED`; een completed record bevat óf gevalideerde structured output óf een getypeerde fallbackreden. Hierdoor veroorzaken reload, resume en vervolgstappen geen herhaalde externe classificatie.
+
+## Module 7C — WorkMatchr Adviesdossier
+
+Migratie `20260729180000_add_advice_dossiers` voegt additief vier tabellen toe:
+
+- `AdviceDossierCounter` voor een transactioneel uitgegeven volgnummer per kalenderjaar;
+- `AdviceDossier` voor de tenantgebonden dossieridentiteit, eigenaar, bronroute, status en actuele versie;
+- `AdviceDossierVersion` voor immutable inhoudssnapshots;
+- `AdviceDossierEvent` voor append-only audit.
+
+De migratie wijzigt of verwijdert geen bestaande records. Unieke constraints bewaken dossiercode, één dossier per publieke draft en één versie per bron-draftversie. `RESTRICT`-foreign keys behouden actor-, tenant- en bronhistorie. Triggers blokkeren updates en deletes op inhoudsversies en events. De applicatieservice gebruikt serializable transacties, een adviserende databasevergrendeling per jaar en een rijvergrendeling op de bron-draft om parallelle creaties idempotent af te handelen.
+
+## Module 7D.1 — Aanvraag publiceren
+
+Migratie `20260730090000_add_published_requests` voegt additief `RequestCounter`, `Request` en `RequestEvent` plus drie enums toe. Er worden geen bestaande tabellen of records verwijderd. `Request.adviceDossierId` is uniek, waardoor één Adviesdossier maximaal één aanvraag kan opleveren. `tenantId` en `organizationId` zijn in deze versie verplicht gelijk en verwijzen met `RESTRICT` naar dezelfde actieve opdrachtgeverorganisatie.
+
+De requestservice vergrendelt het afgeronde Adviesdossier, controleert eigenaar, membership en tenant opnieuw binnen één serializable transactie, leest de actuele immutable dossierversie sequentieel en geeft het nummer `WM-R-YYYY-NNNNNN` uit onder een adviserende jaarlock. Parallelle publicatie levert hetzelfde request op. Na publicatie blokkeert een trigger iedere inhoudelijke wijziging; `RequestEvent` is append-only.
+
+De snapshot bevat uitsluitend titel, aangepaste bevestigde samenvatting, regio, sector, planning, opmerkingen en de bestaande primaire, aanvullende en mogelijke deskundigheid. Contactgegevens en de volledige dossierversie blijven buiten de publicatiesnapshot.
+
+## Module 7D.2 — Interesse tonen
+
+Migratie `20260730120000_add_request_interest_foundation` is additief. Zij voegt capability-, regio- en sectorcodes toe aan nieuwe aanvragen en introduceert `RequestEligibleProvider`, `RequestInterest` en `RequestInterestEvent`. Historische aanvragen krijgen lege codearrays en blijven daardoor fail-closed totdat een expliciet migratiebesluit bestaat.
+
+Publicatie leest uitsluitend actuele, niet-geïnvalideerde Trusted Provider Projections van actieve, gekwalificeerde, ready en selecteerbare providers zonder open blokkade. De bestaande deterministische kandidaatregels worden per primaire, aanvullende en mogelijke capabilitycode uitgevoerd. Alle passende organisaties worden vastgelegd; er is geen ranking, top drie of uitnodiging. Ieder doelgroeprecord bewaart de exacte projectie, checksum, bronversie, regelsversie en gematchte deskundigheid en is databasebreed immutable.
+
+Interesse is uniek per aanvraag en providerorganisatie. De service vergrendelt de combinatie aanvraag/organisatie, hercontroleert membership en tenant en schrijft status plus event in één serializable transactie. Herhaald registreren is idempotent; intrekken en heractiveren schrijven nieuwe immutable events. Een samengestelde foreign key verhindert databasebreed interesse buiten de vastgelegde doelgroep.
+
+## Module 7D.3 — Offerteplaats claimen
+
+Migratie `20260730150000_add_request_offer_slots` is additief en introduceert `RequestOfferSlot`, `RequestOfferSlotEvent` en de statussen `CLAIMED` en `RELEASED`. De samengestelde foreign key bindt ieder slot databasebreed aan exact dezelfde aanvraag, providerorganisatie en interesse.
+
+Een checkconstraint beperkt slotnummers tot 1–3. Een gedeeltelijke unieke index op `(requestId, slotNumber)` voor `CLAIMED`-records waarborgt maximaal drie actieve plaatsen, ook buiten de applicatieservice. De claimservice vergrendelt de Request-rij met `FOR UPDATE`, leest daarna de actuele bezetting en kiest het laagste vrije nummer. Herhaalde claims van dezelfde organisatie zijn idempotent. Events zijn databasebreed immutable.
+
+`expiresAt` en status `RELEASED` zijn uitsluitend voorbereidende domeinvelden. M7D.3 bevat geen automatische expiry en geen vrijgave-interface.
 
 Migratie `20260729143000_add_public_intake_answer_source` voegt additief
 `PublicIntakeAnswerSource` en een verplichte `source` toe aan actuele

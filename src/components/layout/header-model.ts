@@ -60,13 +60,28 @@ export function buildHeaderViewModel(context: HeaderContext | null): HeaderViewM
     } : null,
     primaryLinks: [
       ...(organization ? [{ href: '/dashboard', label: 'Dashboard' }] : []),
-      ...(supportsClientWork ? [{ href: '/hulpvragen', label: 'Hulpvragen' }, { href: '/opdrachten', label: 'Opdrachten' }] : []),
-      ...(supportsProviderWork ? [{ href: '/aanbiedersdossier', label: 'Dienstverlenersprofiel' }, { href: '/uitnodigingen', label: 'Uitnodigingen' }] : []),
+      ...(supportsClientWork
+        ? [
+            { href: '/hulpvragen', label: 'Hulpvragen' },
+            { href: '/adviesdossiers', label: 'Adviesdossiers' },
+            { href: '/opdrachten', label: 'Opdrachten' },
+          ]
+        : []),
+      ...(supportsProviderWork
+        ? [
+            { href: '/aanbiedersdossier', label: 'Dienstverlenersprofiel' },
+            { href: '/professional/opdrachten', label: 'Aanvragen' },
+            { href: '/uitnodigingen', label: 'Uitnodigingen' },
+          ]
+        : []),
       ...(isPlatformAdministrator ? [{ href: '/platformbeheer', label: 'Platformbeheer' }] : []),
     ],
     menuLinks: [
       { href: '/account', label: 'Mijn account' },
       { href: organization ? '/organisatie' : '/organisatie/nieuw', label: 'Mijn organisatie' },
+      ...(supportsClientWork
+        ? [{ href: '/adviesdossiers', label: 'Mijn adviesdossiers' }]
+        : []),
       ...(supportsProviderWork ? [{ href: '/aanbiedersdossier', label: 'Dienstverlenersprofiel' }] : []),
       ...(organization ? [{ href: '/notificaties', label: 'Notificaties' }] : []),
     ],

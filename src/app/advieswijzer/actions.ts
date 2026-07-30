@@ -24,6 +24,7 @@ import type {
   CreatePublicIntakeDraftInput,
   RecordPublicIntakeAnswerInput,
 } from '@/lib/public-intake/public-intake-validation'
+import { attachAdviceDossierForCurrentUser } from '@/lib/advice-dossiers/public-intake-advice-dossier-handoff'
 
 export type PublicIntakeActionResult =
   | { ok: true; draft: PublicIntakeDraftView }
@@ -32,6 +33,14 @@ export type PublicIntakeActionResult =
 export type AbandonPublicIntakeActionResult =
   | { ok: true }
   | { ok: false; message: string }
+
+async function completedDraft(
+  draft: PublicIntakeDraftView,
+): Promise<PublicIntakeDraftView> {
+  return attachAdviceDossierForCurrentUser(
+    await enrichPublicIntakeDraftWithAIClassification(draft),
+  )
+}
 
 async function readPublicIntakeSessionToken(): Promise<string | undefined> {
   return (await cookies()).get(PUBLIC_INTAKE_COOKIE_NAME)?.value
@@ -76,13 +85,18 @@ export async function createPublicIntakeDraftAction(
       if (initialAnswer) {
         return {
           ok: true,
-          draft: await recordPublicIntakeAnswer(result.sessionToken, initialAnswer),
+          draft: await completedDraft(
+            await recordPublicIntakeAnswer(
+              result.sessionToken,
+              initialAnswer,
+            ),
+          ),
         }
       }
     }
     return {
       ok: true,
-      draft: await enrichPublicIntakeDraftWithAIClassification(result.draft),
+      draft: await completedDraft(result.draft),
     }
   } catch (error) {
     return actionError(error)
@@ -90,8 +104,10 @@ export async function createPublicIntakeDraftAction(
 }
 
 export async function resumePublicIntakeDraftAction() {
-  return enrichPublicIntakeDraftWithAIClassification(
-    await resumePublicIntakeDraft(await readPublicIntakeSessionToken()),
+  return completedDraft(
+    await resumePublicIntakeDraft(
+      await readPublicIntakeSessionToken(),
+    ),
   )
 }
 
@@ -101,7 +117,12 @@ export async function recordPublicIntakeAnswerAction(
   try {
     return {
       ok: true,
-      draft: await recordPublicIntakeAnswer(await readPublicIntakeSessionToken(), input),
+      draft: await completedDraft(
+        await recordPublicIntakeAnswer(
+          await readPublicIntakeSessionToken(),
+          input,
+        ),
+      ),
     }
   } catch (error) {
     return actionError(error)
@@ -124,15 +145,17 @@ export async function confirmPublicIntakeAIClassificationAction(): Promise<Publi
 
     return {
       ok: true,
-      draft: await recordPublicIntakeAnswer(
-        sessionToken,
-        {
-          questionKey: 'guidance_topic',
-          questionVersion: 1,
-          disposition: 'ANSWERED',
-          value: understanding.subjectCode,
-        },
-        { answerSource: 'AI_CONFIRMED' },
+      draft: await completedDraft(
+        await recordPublicIntakeAnswer(
+          sessionToken,
+          {
+            questionKey: 'guidance_topic',
+            questionVersion: 1,
+            disposition: 'ANSWERED',
+            value: understanding.subjectCode,
+          },
+          { answerSource: 'AI_CONFIRMED' },
+        ),
       ),
     }
   } catch (error) {
@@ -158,9 +181,11 @@ export async function recordPublicIntakeTopicSelectionAction(
 
     return {
       ok: true,
-      draft: await recordPublicIntakeAnswer(sessionToken, input, {
-        answerSource: source,
-      }),
+      draft: await completedDraft(
+        await recordPublicIntakeAnswer(sessionToken, input, {
+          answerSource: source,
+        }),
+      ),
     }
   } catch (error) {
     return actionError(error)

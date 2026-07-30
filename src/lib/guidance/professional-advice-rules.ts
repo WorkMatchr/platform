@@ -7,19 +7,29 @@ import {
   type ProfessionalRequirement,
   type ProfessionalRequirementCriterion,
 } from './guidance-domain'
+import {
+  resolveProfessionalAdviceContext,
+  type ProfessionalAdviceContext,
+} from './professional-advice-context'
+import { hazardousSubstancesContextRules } from './professional-advice-hazardous-substances-rules'
+import { professionalAdviceDisciplineRules } from './professional-advice-discipline-rules'
+import {
+  getProfessionalDiscipline,
+  type ProfessionalDisciplineCode,
+} from './professional-disciplines'
 
 export const PROFESSIONAL_ADVICE_RULE_SET_VERSION =
-  'professional-advice-rules/1.0.0' as const
+  'professional-advice-rules/1.2.0' as const
 
 export const PROFESSIONAL_ADVICE_DISCLAIMER =
   'Dit WorkMatchr Adviesdossier is gebaseerd op de informatie die u heeft verstrekt. Het is bedoeld als eerste advies en als hulpmiddel bij het bepalen van passende vervolgstappen. Een ingeschakelde professional voert altijd een eigen beoordeling uit.' as const
 
-type RequirementDefinition = Readonly<{
-  professionalType: string
+export type RequirementDefinition = Readonly<{
+  professionalType: ProfessionalDisciplineCode
   reason: string
   expertise: readonly string[]
-  matchingTags: readonly string[]
-  capabilityCodes: readonly string[]
+  matchingTags?: readonly string[]
+  capabilityCodes?: readonly string[]
 }>
 
 type ConditionalRequirement = Readonly<{
@@ -28,7 +38,7 @@ type ConditionalRequirement = Readonly<{
   definition: RequirementDefinition
 }>
 
-type ProfessionalAdviceRule = Readonly<{
+export type ProfessionalAdviceRule = Readonly<{
   code: string
   situationCode: string
   adviceTitle: string
@@ -36,10 +46,13 @@ type ProfessionalAdviceRule = Readonly<{
   adviceReasons: readonly string[]
   selfActions: readonly string[]
   primary: RequirementDefinition
-  additional?: readonly ConditionalRequirement[]
+  additional?: readonly RequirementDefinition[]
+  conditionalAdditional?: readonly ConditionalRequirement[]
+  possible?: readonly RequirementDefinition[]
   knowledgeContentIds: readonly string[]
   sourceIds: readonly string[]
   textSignals?: readonly string[]
+  dominantContexts?: readonly ProfessionalAdviceContext['dominantContext'][]
 }>
 
 type ProfessionalAdviceInput = Omit<GuidanceOutcome, 'professionalAdvice'>
@@ -60,9 +73,9 @@ const rieAdviceRule: ProfessionalAdviceRule = Object.freeze({
     'Controleer of een erkend branche-instrument bij uw situatie past.',
   ]),
   primary: Object.freeze({
-    professionalType: 'RIE_ADVISOR',
+    professionalType: 'MIDDELBAAR_VEILIGHEIDSKUNDIGE',
     reason:
-      'Een RI&E-deskundige kan de inventarisatie structureren en beoordelen welke specialistische verdieping nodig is.',
+      'Een middelbaar veiligheidskundige kan reguliere werkplekrisico’s praktisch inventariseren en vertalen naar uitvoerbare beheersmaatregelen.',
     expertise: Object.freeze(['RI&E', 'Plan van aanpak', 'Risicobeoordeling']),
     matchingTags: Object.freeze([
       'RISK_ASSESSMENT',
@@ -95,7 +108,7 @@ const incidentAdviceRule: ProfessionalAdviceRule = Object.freeze({
     'Leg feiten vast zonder al schuld of oorzaak toe te wijzen.',
   ]),
   primary: Object.freeze({
-    professionalType: 'INCIDENT_INVESTIGATOR',
+    professionalType: 'HOGER_VEILIGHEIDSKUNDIGE',
     reason:
       'Een veiligheidskundige of incidentonderzoeker kan feiten, oorzaken en maatregelen onafhankelijk en systematisch onderzoeken.',
     expertise: Object.freeze([
@@ -113,12 +126,12 @@ const incidentAdviceRule: ProfessionalAdviceRule = Object.freeze({
       'INCIDENT_INVESTIGATION',
     ]),
   }),
-  additional: Object.freeze([
+  conditionalAdditional: Object.freeze([
     Object.freeze({
       factKey: 'INCIDENT_INJURY_OCCURRED',
       expectedValue: true,
       definition: Object.freeze({
-        professionalType: 'OCCUPATIONAL_PHYSICIAN',
+        professionalType: 'BEDRIJFSARTS',
         reason:
           'Bij letsel of gezondheidsgevolgen kan een bedrijfsarts adviseren over de relatie tussen werk en gezondheid, naast noodzakelijke acute zorg.',
         expertise: Object.freeze([
@@ -159,7 +172,7 @@ const hazardousSubstancesAdviceRule: ProfessionalAdviceRule = Object.freeze({
     'Controleer ventilatie, werkafspraken en bestaande beschermingsmaatregelen.',
   ]),
   primary: Object.freeze({
-    professionalType: 'OCCUPATIONAL_HYGIENIST',
+    professionalType: 'ARBEIDSHYGIENIST',
     reason:
       'Een arbeidshygiënist kan de blootstelling beoordelen en onderbouwen welke bron- en beheersmaatregelen passend zijn.',
     expertise: Object.freeze([
@@ -205,7 +218,7 @@ const occupationalHealthPmoAdviceRule: ProfessionalAdviceRule =
       'Leg vast hoe vrijwilligheid en vertrouwelijkheid worden geborgd.',
     ]),
     primary: Object.freeze({
-      professionalType: 'OCCUPATIONAL_PHYSICIAN',
+      professionalType: 'BEDRIJFSARTS',
       reason:
         'Een bedrijfsarts kan bepalen welke arbeidsgezondheidskundige onderzoeksopzet bij de risico’s en het preventieve doel past.',
       expertise: Object.freeze([
@@ -257,9 +270,9 @@ const occupationalHealthPhysicalAdviceRule: ProfessionalAdviceRule =
       'Neem signalen van medewerkers mee zonder medische gegevens vast te leggen.',
     ]),
     primary: Object.freeze({
-      professionalType: 'PHYSICAL_WORKLOAD_SPECIALIST',
+      professionalType: 'ERGONOOM',
       reason:
-        'Een deskundige in fysieke belasting of ergonomie kan de werkplek en belasting beoordelen en passende preventieve maatregelen onderbouwen.',
+        'Een ergonoom kan beoordelen hoeveel kracht medewerkers nodig hebben, hoe werkhouding en werkplekinrichting de fysieke belasting beïnvloeden en welke hulpmiddelen of aanpassingen passend zijn.',
       expertise: Object.freeze([
         'Fysieke belasting',
         'Ergonomie',
@@ -298,7 +311,7 @@ const occupationalHealthAdviceRule: ProfessionalAdviceRule = Object.freeze({
     'Maak de preventieve toegang tot de bedrijfsarts duidelijk.',
   ]),
   primary: Object.freeze({
-    professionalType: 'OCCUPATIONAL_PHYSICIAN',
+    professionalType: 'BEDRIJFSARTS',
     reason:
       'Een bedrijfsarts kan onafhankelijk adviseren over de relatie tussen werk en gezondheid en bewaakt daarbij het medisch beroepsgeheim.',
     expertise: Object.freeze([
@@ -338,7 +351,7 @@ const emergencyResponseAdviceRule: ProfessionalAdviceRule = Object.freeze({
     'Controleer opleidingsactualiteit, middelen en de uitkomsten van recente oefeningen.',
   ]),
   primary: Object.freeze({
-    professionalType: 'BHV_ADVISOR',
+    professionalType: 'BHV_ADVISEUR',
     reason:
       'Een BHV-adviseur kan de organisatie risicogebaseerd beoordelen en opleiding, bezetting, middelen en oefeningen in samenhang adviseren.',
     expertise: Object.freeze([
@@ -362,8 +375,10 @@ const emergencyResponseAdviceRule: ProfessionalAdviceRule = Object.freeze({
 })
 
 const adviceRules = Object.freeze([
+  ...professionalAdviceDisciplineRules,
   rieAdviceRule,
   incidentAdviceRule,
+  ...hazardousSubstancesContextRules,
   hazardousSubstancesAdviceRule,
   occupationalHealthPmoAdviceRule,
   occupationalHealthPhysicalAdviceRule,
@@ -378,8 +393,15 @@ function normalizedText(outcome: ProfessionalAdviceInput): string {
 function matchesRule(
   rule: ProfessionalAdviceRule,
   outcome: ProfessionalAdviceInput,
+  context: ProfessionalAdviceContext,
 ): boolean {
   if (rule.situationCode !== outcome.situation.code) return false
+  if (
+    rule.dominantContexts &&
+    !rule.dominantContexts.includes(context.dominantContext)
+  ) {
+    return false
+  }
   if (!rule.textSignals) return true
 
   const text = normalizedText(outcome)
@@ -390,11 +412,15 @@ function criterion(
   definition: RequirementDefinition,
   outcome: ProfessionalAdviceInput,
 ): ProfessionalRequirementCriterion {
+  const discipline = getProfessionalDiscipline(
+    definition.professionalType,
+  )
+
   return Object.freeze({
     code: `CAPABILITY_${definition.professionalType}`,
     kind: 'CAPABILITY',
     priority: 'REQUIRED',
-    valueCodes: Object.freeze([...definition.capabilityCodes]),
+    valueCodes: Object.freeze([...discipline.capabilityCodes]),
     provenance: outcome.professionalSupportNeed.provenance,
   })
 }
@@ -405,6 +431,10 @@ function requirement(
   outcome: ProfessionalAdviceInput,
   index: number,
 ): ProfessionalRequirement {
+  const discipline = getProfessionalDiscipline(
+    definition.professionalType,
+  )
+
   return Object.freeze({
     schemaVersion: PROFESSIONAL_REQUIREMENT_SCHEMA_VERSION,
     id: `professional-requirement:${outcome.id}:${priority.toLocaleLowerCase('en-US')}:${index}`,
@@ -416,7 +446,7 @@ function requirement(
     priority,
     reason: definition.reason,
     expertise: Object.freeze([...definition.expertise]),
-    matchingTags: Object.freeze([...definition.matchingTags]),
+    matchingTags: Object.freeze([...discipline.matchingTags]),
     criteria: Object.freeze([criterion(definition, outcome)]),
     createdAt: outcome.createdAt,
     confirmation: Object.freeze({ status: 'UNCONFIRMED' }),
@@ -439,13 +469,36 @@ function factMatches(
 function specificAdvice(
   rule: ProfessionalAdviceRule,
   outcome: ProfessionalAdviceInput,
+  context: ProfessionalAdviceContext,
 ): ProfessionalAdvice {
   const primary = requirement(rule.primary, 'PRIMARY', outcome, 0)
-  const additional = (rule.additional ?? [])
-    .filter((condition) => factMatches(outcome, condition))
-    .map((condition, index) =>
-      requirement(condition.definition, 'ADDITIONAL', outcome, index),
-    )
+  const seenDisciplines = new Set<ProfessionalDisciplineCode>([
+    rule.primary.professionalType,
+  ])
+  const uniqueDefinitions = (
+    definitions: readonly RequirementDefinition[],
+    maximum: number,
+  ) =>
+    definitions
+      .filter((definition) => {
+        if (seenDisciplines.has(definition.professionalType)) return false
+        seenDisciplines.add(definition.professionalType)
+        return true
+      })
+      .slice(0, maximum)
+  const additionalDefinitions = uniqueDefinitions([
+    ...(rule.additional ?? []),
+    ...(rule.conditionalAdditional ?? [])
+      .filter((condition) => factMatches(outcome, condition))
+      .map((condition) => condition.definition),
+  ], 2)
+  const additional = additionalDefinitions.map((definition, index) =>
+    requirement(definition, 'ADDITIONAL', outcome, index),
+  )
+  const possible = uniqueDefinitions(rule.possible ?? [], 2).map(
+    (definition, index) =>
+      requirement(definition, 'POSSIBLE', outcome, index),
+  )
 
   return Object.freeze({
     schemaVersion: PROFESSIONAL_ADVICE_SCHEMA_VERSION,
@@ -456,8 +509,13 @@ function specificAdvice(
     adviceBody: rule.adviceBody,
     adviceReasons: Object.freeze([...rule.adviceReasons]),
     selfActions: Object.freeze([...rule.selfActions]),
+    dominantContext: context.dominantContext,
+    relevantRiskDomains: Object.freeze([
+      ...context.relevantRiskDomains,
+    ]),
     primaryProfessionalRequirement: primary,
     additionalProfessionalRequirements: Object.freeze(additional),
+    possibleProfessionalRequirements: Object.freeze(possible),
     knowledgeReferences: Object.freeze(
       rule.knowledgeContentIds.map((contentId) =>
         Object.freeze({ contentId }),
@@ -474,17 +532,20 @@ function specificAdvice(
 export function buildProfessionalAdvice(
   outcome: ProfessionalAdviceInput,
 ): ProfessionalAdvice {
+  const context = resolveProfessionalAdviceContext(outcome)
   const rule = adviceRules.find((candidate) =>
-    matchesRule(candidate, outcome),
+    matchesRule(candidate, outcome, context),
   )
 
-  if (rule) return specificAdvice(rule, outcome)
+  if (rule) return specificAdvice(rule, outcome, context)
 
-  return buildSafeFallbackProfessionalAdvice(outcome)
+  return buildSafeFallbackProfessionalAdvice(outcome, context)
 }
 
 export function buildSafeFallbackProfessionalAdvice(
   outcome: ProfessionalAdviceInput,
+  context: ProfessionalAdviceContext =
+    resolveProfessionalAdviceContext(outcome),
 ): ProfessionalAdvice {
   return Object.freeze({
     schemaVersion: PROFESSIONAL_ADVICE_SCHEMA_VERSION,
@@ -501,8 +562,13 @@ export function buildSafeFallbackProfessionalAdvice(
       'Noteer wat er gebeurt, wie ermee te maken heeft en wat al bekend is.',
       'Leg vast welke informatie nog ontbreekt of onzeker is.',
     ]),
+    dominantContext: context.dominantContext,
+    relevantRiskDomains: Object.freeze([
+      ...context.relevantRiskDomains,
+    ]),
     primaryProfessionalRequirement: null,
     additionalProfessionalRequirements: Object.freeze([]),
+    possibleProfessionalRequirements: Object.freeze([]),
     knowledgeReferences: Object.freeze([]),
     sourceReferences: Object.freeze([]),
     disclaimer: PROFESSIONAL_ADVICE_DISCLAIMER,

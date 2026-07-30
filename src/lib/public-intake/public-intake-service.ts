@@ -243,6 +243,7 @@ async function loadPublicView(
   }
 
   return {
+    id,
     ...view,
     guidance: buildPublicIntakeGuidanceHandoff(id, view),
   }

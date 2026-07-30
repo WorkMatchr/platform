@@ -1,5 +1,83 @@
 # Changelog
 
+## Module 7 — M7B.2 Vakdisciplineclassificatie
+
+- generieke professionele RI&E-aanbevelingen vervangen door concrete, centraal gelabelde vakdisciplines;
+- deterministische regels toegevoegd voor ergonomie, stoffenblootstelling en -opslag, machineveiligheid, brandveiligheid, PSA, re-integratie en operationele veiligheidscomplexiteit;
+- disciplines worden ontdubbeld over `PRIMARY`, `ADDITIONAL` en `POSSIBLE`;
+- ruleset `professional-advice-rules/1.2.0` laat AdviceDossier-, PDF- en Request-snapshots dezelfde discipline en specialismecode bewaren;
+- SPECIALISM-taxonomie v2 niet-destructief toegevoegd en de fictieve providerprojecties op hun echte beroepsspecialisme aangesloten;
+- historische dossiers, aanvragen, projecties en taxonomie v1 blijven ongewijzigd;
+- geen extra AI-call, ranking, credits, offertefunctionaliteit of automatische selectie toegevoegd.
+
+## Module 7 — M7D.3 Offerteplaats claimen
+
+- maximaal drie exclusieve offerteplaatsen per gepubliceerde aanvraag toegevoegd;
+- alleen een actieve, geïnteresseerde en nog selecteerbare providerorganisatie kan claimen;
+- een Request-rowlock, vaste slotnummers en databaseconstraints beschermen parallelle claims;
+- claimen is idempotent en schrijft een append-only `RequestOfferSlotEvent`;
+- opdrachtgevercontactgegevens en publiceerbare opmerkingen worden uitsluitend na een succesvolle claim vrijgegeven;
+- opdrachtgevers zien alleen de geaggregeerde teller met bezette plaatsen;
+- MEMBER blijft read-only en OWNER/ADMIN worden server-side gecontroleerd;
+- offerte-inhoud, credits, berichten, betaling, vrijgave en verval zijn niet geactiveerd.
+
+## Module 7 — M7D.2 Interesse tonen
+
+- bij aanvraagpublicatie wordt de volledige doelgroep van op dat moment geldige, selecteerbare Trusted Provider Projections immutable vastgelegd;
+- bestaande deterministische knock-out- en fitregels worden zonder ranking, top drie of uitnodigingen hergebruikt;
+- providerorganisaties kunnen tenantveilig interesse registreren, intrekken en opnieuw activeren;
+- interessewrites zijn idempotent en concurrencyveilig en schrijven append-only events;
+- `/professional/opdrachten` en een geanonimiseerde detailroute zijn toegevoegd;
+- opdrachtgevers zien uitsluitend aantallen geschikte organisaties en actieve interesses;
+- contactgegevens, interne opmerkingen en het volledige Adviesdossier blijven afgeschermd;
+- credits, offerteplaatsen, offertes, berichten, notificaties, e-mail en gunning zijn niet geactiveerd.
+
+## Module 7 — M7D.1 Aanvraag publiceren
+
+- afzonderlijk `Request`-domein toegevoegd voor de beperkte, publiceerbare afleiding van een privé Adviesdossier;
+- concurrencyveilige aanvraagcodes in het formaat `WM-R-YYYY-NNNNNN` toegevoegd;
+- publicatie is idempotent, transactioneel, eigenaargebonden en volledig tenantafgeschermd;
+- controleformulier, succesweergave en overzicht “Mijn aanvragen” toegevoegd;
+- gepubliceerde aanvraaginhoud en publicatie-events zijn databasebreed beschermd tegen overschrijven;
+- contactgegevens en het volledige Adviesdossier worden niet in de publicatiesnapshot gekopieerd;
+- matching, providerselectie, offertes, credits, notificaties en e-mail zijn niet geactiveerd.
+
+## Module 7 — M7B.1 Multidisciplinair advies en prioritering
+
+- `ProfessionalAdvice` uitgebreid met een typed dominante context, relevante risicodomeinen en de prioriteiten `PRIMARY`, `ADDITIONAL` en `POSSIBLE`;
+- gevaarlijke-stoffenadvies maakt nu deterministisch onderscheid tussen blootstelling, grootschalige opslag en proportionele opslag/overslag;
+- grootschalige brandstofopslag adviseert primair een hogere veiligheidskundige, aanvullend een arbeidshygiënist en mogelijk een milieu- en brandveiligheidsdeskundige;
+- publieke uitkomst, immutable Adviesdossier-snapshot en PDF tonen dezelfde deskundigheden en prioriteiten;
+- bestaande dossierversies blijven ongewijzigd en historische secundaire vereisten zonder prioriteit blijven als aanvullend leesbaar;
+- geen extra AI-aanroep, matching, opdrachtvorming, Prismawijziging of migratie toegevoegd.
+
+## Module 7 — M7C.2 Correct Situation Summary Snapshot
+
+- de oorspronkelijke hulpvraag en de bevestigde situatiesamenvatting gebruiken afzonderlijke snapshotbronnen;
+- een expliciet bevestigde AI-interpretatie wordt read-only uit de bestaande classificatiecache hersteld; dossieropslag veroorzaakt geen nieuwe AI-aanroep;
+- historische intakes zonder beschikbare bevestigde interpretatie vallen veilig terug op bestaande gevalideerde Guidance- en M7B-samenvattingen;
+- bestaande immutable dossierversies blijven ongewijzigd.
+
+## Module 7 — M7C.1 Header Navigation and Anonymous Save UX
+
+- de volledige publieke hoofdnavigatie blijft zichtbaar voor anonieme bezoekers, opdrachtgevers, dienstverleners en platformbeheerders;
+- authenticatie vervangt uitsluitend de loginlink door het bestaande accountmenu; accountnavigatie blijft aanvullend en server-side afgeleid;
+- een afgerond anoniem advies toont nu een duidelijk bewaarblok met werkende acties voor inloggen en account aanmaken;
+- inloggen gebruikt `returnTo=/advieswijzer`, zodat de bestaande conceptsessie na succesvolle login kan worden hervat en idempotent als Adviesdossier kan worden opgeslagen;
+- registratie belooft nog geen automatische terugkeer, omdat e-mailverificatie en organisatie-onboarding nog geen doorlopende veilige `returnTo`-keten bieden;
+- geen intake-, advies-, dossier-, PDF-, matching-, opdracht- of databasegedrag gewijzigd.
+
+## Module 7 — M7C WorkMatchr Adviesdossier
+
+- tenantgebonden `AdviceDossier`-aggregaat toegevoegd met immutable, reproduceerbare `AdviceDossierVersion`-snapshots;
+- concurrencyveilige dossiercodes in het formaat `WM-YYYY-NNNNNN` toegevoegd via een transactionele jaarteller;
+- idempotente handoff toegevoegd voor afgeronde publieke intakes van ingelogde opdrachtgevers;
+- overzicht, detailweergave, statusacties en een uit exact één versie afgeleide PDF-download toegevoegd;
+- server-side eigenaar-, organisatie- en platformautorisatie en append-only dossieraudit toegevoegd;
+- pagina’s van indexering uitgesloten en retentie-, anonimisering- en verwijderbesluiten expliciet open gehouden;
+- matching, providerselectie, opdrachten, credits, offertes en betalingen zijn niet geactiveerd;
+- status: technisch opgeleverd; handmatige product-owneracceptatie open.
+
 ## Module 7 — M7B Professional Advice
 
 - `GuidanceOutcome` uitgebreid met een gevalideerd en versieerbaar `ProfessionalAdvice`-contract;

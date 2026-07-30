@@ -1,10 +1,10 @@
 # Voortgang WorkMatchr
 
-**Actuele Module 7-status:** M7A Intake Completion is definitief afgerond. M7B Professional Advice is technisch opgeleverd; handmatige product-owneracceptatie staat open. De Guidance Engine bouwt deterministisch een eerste advies, primaire deskundigheid, eventuele aanvullende deskundigheid en gecontroleerde kennis- en bronverwijzingen. Matching, providerselectie en Adviesdossieropslag zijn niet gestart.
+**Actuele Module 7-status:** M7A Intake Completion is definitief afgerond. M7B Professional Advice, M7C WorkMatchr Adviesdossier en M7D.1–M7D.3 zijn technisch opgeleverd; handmatige product-owneracceptatie staat open. Publicatie bevriest de passende providerdoelgroep. Eligible providerorganisaties kunnen interesse beheren en maximaal drie organisaties kunnen op volgorde een exclusieve offerteplaats claimen. Ranking, top drie, offerte-inhoud en credits zijn niet geactiveerd.
 
 ## Module 7 — Nieuwe hulpvraag
 
-**Status:** M7A definitief afgerond; M7B technisch opgeleverd met handmatige acceptatie open.
+**Status:** M7A definitief afgerond; M7B, M7C en M7D.1–M7D.3 technisch opgeleverd met handmatige acceptatie open.
 
 - pseudonieme publieke conceptintake zonder fictieve gebruiker, organisatie of membership;
 - maximaal één externe AI-classificatie per unieke fingerprint, met persistent hergebruik van gevalideerde uitkomst of veilige fallback;
@@ -34,7 +34,29 @@
 - kennis- en bronverwijzingen uitsluitend uit bestaande gecontroleerde contentregisters;
 - rustige publieke adviesweergave zonder matching-, account-, opdracht- of commerciële CTA.
 
-Nog niet gebouwd: persistente Adviesdossiers, PDF/e-mail, definitieve indiening, account- en tenantkoppeling, conversie naar `Intake` of `Assignment`, publicatie, matching, automatische abandonment/retentie, credits en offertes.
+M7C voegt tenantgebonden Adviesdossiers, immutable inhoudsversies, reproduceerbare PDF-download en append-only dossieraudit toe. M7D.1 publiceert één geanonimiseerde aanvraag per afgerond Adviesdossier. M7D.2 legt de passende doelgroep vast en ondersteunt interesse. M7D.3 begrenst actieve offerteplaatsen transactioneel tot drie en geeft pas daarna minimale contactgegevens vrij. E-mail, conversie naar `Intake` of `Assignment`, offerte-inhoud, credits en automatische abandonment/retentie zijn niet gebouwd.
+
+### M7D.1 — Aanvraag publiceren
+
+M7D.1 is technisch opgeleverd; handmatige product-owneracceptatie staat open. De eigenaar controleert organisatiecontext, deskundigheid, bevestigde samenvatting, planning en optionele opmerkingen. Publicatie maakt transactioneel één `Request` met een uniek `WM-R-YYYY-NNNNNN`-nummer en status `PUBLISHED`. Het privé Adviesdossier en contactgegevens worden niet als publieke inhoud gekopieerd.
+
+### M7D.2 — Interesse tonen
+
+M7D.2 is technisch opgeleverd; handmatige product-owneracceptatie staat open. Publicatie maakt transactioneel een immutable doelgroep-snapshot vanuit geldige Trusted Provider Projections. Provider-OWNER en -ADMIN kunnen interesse registreren, intrekken en heractiveren; MEMBER blijft read-only. Opdrachtgevers zien uitsluitend aantallen. Offerteplaatsen, offertes, credits, berichten, notificaties en contactdeling zijn niet gebouwd.
+
+### M7D.3 — Offerteplaats claimen
+
+M7D.3 is technisch opgeleverd; handmatige product-owneracceptatie staat open. Een Request-rowlock en databaseconstraints verdelen op volgorde maximaal drie actieve plaatsen. Alleen OWNER/ADMIN van een oorspronkelijk eligible, actief geïnteresseerde en nog selecteerbare organisatie kan claimen. Contactgegevens en extra publiceerbare opmerkingen worden uitsluitend aan een organisatie met actieve claim getoond. Offerte-inhoud, credits, berichten, vrijgave en verval zijn niet gebouwd.
+
+### M7B.1 — Multidisciplinair advies en prioritering
+
+M7B.1 is technisch opgeleverd; handmatige product-owneracceptatie staat open. Het Professional Advice-contract ondersteunt één primaire, nul of meer aanvullende en nul of meer mogelijk relevante deskundigheden. De deterministische contextregels onderscheiden onder meer blootstelling, grootschalige opslag en brandveiligheidscontext. De bestaande classificatiecache blijft leidend: adviesgeneratie veroorzaakt geen nieuwe AI-aanroep.
+
+### M7B.2 — Vakdisciplineclassificatie
+
+M7B.2 is technisch opgeleverd; handmatige product-owneracceptatie staat open. Professional Advice gebruikt concrete disciplines en centrale labels. De SPECIALISM-taxonomie v2 voegt Ergonoom, A&O-deskundige, Asbestdeskundige en Milieudeskundige toe. Nieuwe dossier- en aanvraagsnapshots nemen de disciplinecodes over; bestaande immutable historie blijft ongewijzigd. Er is geen extra AI-call, ranking of automatische providerselectie toegevoegd.
+
+Voor grootschalige brandstofopslag worden opslagveiligheid, brand- en explosieveiligheid, milieu en vergunningen, mogelijke PGS-toepasselijkheid, bodembescherming, noodscenario’s, laden/lossen/overpompen en medewerkersblootstelling als relevante domeinen vastgelegd. Er wordt geen definitieve PGS- of vergunningconclusie getrokken wanneer brandstofsoort, opslagvorm, locatie of gebruik nog onbekend is.
 
 ## Module 1 — Projectbasis
 

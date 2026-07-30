@@ -4,13 +4,14 @@
  * Deze module bevat bewust geen beslisregels, services, databasekoppelingen
  * of conversies naar bestaande intake-, opdracht- of matchingmodellen.
  */
+import type { ProfessionalDisciplineCode } from './professional-disciplines'
 
 export const GUIDANCE_OUTCOME_SCHEMA_VERSION =
-  'guidance-outcome/1.1.0' as const
+  'guidance-outcome/1.2.0' as const
 export const PROFESSIONAL_REQUIREMENT_SCHEMA_VERSION =
-  'professional-requirement/1.1.0' as const
+  'professional-requirement/1.2.0' as const
 export const PROFESSIONAL_ADVICE_SCHEMA_VERSION =
-  'professional-advice/1.0.0' as const
+  'professional-advice/1.1.0' as const
 
 export const guidanceSourceKinds = [
   'PUBLIC_INTAKE_DRAFT',
@@ -78,6 +79,47 @@ export const professionalRequirementPriorities = [
 export const professionalAdvicePriorities = [
   'PRIMARY',
   'ADDITIONAL',
+  'POSSIBLE',
+] as const
+
+export const dominantContexts = [
+  'EXPOSURE',
+  'LARGE_SCALE_STORAGE',
+  'FIRE_SAFETY',
+  'ENVIRONMENTAL_COMPLIANCE',
+  'INCIDENT_RESPONSE',
+  'OCCUPATIONAL_HEALTH',
+  'ERGONOMICS',
+  'MACHINE_SAFETY',
+  'PSYCHOSOCIAL_WORKLOAD',
+  'WORK_ABILITY',
+  'ASBEST',
+  'OPERATIONAL_SAFETY',
+  'COMPLEX_OPERATIONAL_SAFETY',
+  'EMERGENCY_PREPAREDNESS',
+  'GENERAL_RISK_ASSESSMENT',
+  'UNKNOWN',
+] as const
+
+export const professionalAdviceRiskDomains = [
+  'EMPLOYEE_EXPOSURE',
+  'STORAGE_SAFETY',
+  'FIRE_AND_EXPLOSION_SAFETY',
+  'ENVIRONMENT_AND_PERMITS',
+  'PGS_APPLICABILITY',
+  'SOIL_PROTECTION',
+  'EMERGENCY_SCENARIOS',
+  'LOADING_UNLOADING_TRANSFER',
+  'INCIDENT_INVESTIGATION',
+  'WORK_AND_HEALTH',
+  'PHYSICAL_WORKLOAD',
+  'EMERGENCY_RESPONSE',
+  'RISK_ASSESSMENT',
+  'MACHINE_AND_WORK_EQUIPMENT_SAFETY',
+  'PSYCHOSOCIAL_WORKLOAD',
+  'WORK_ABILITY_AND_REINTEGRATION',
+  'ASBEST_EXPOSURE',
+  'OPERATIONAL_SAFETY',
 ] as const
 
 export const guidanceOutcomeSpecificities = [
@@ -102,6 +144,9 @@ export type ProfessionalRequirementPriority =
   (typeof professionalRequirementPriorities)[number]
 export type ProfessionalAdvicePriority =
   (typeof professionalAdvicePriorities)[number]
+export type DominantContext = (typeof dominantContexts)[number]
+export type ProfessionalAdviceRiskDomain =
+  (typeof professionalAdviceRiskDomains)[number]
 export type GuidanceOutcomeSpecificity =
   (typeof guidanceOutcomeSpecificities)[number]
 
@@ -222,7 +267,7 @@ export type ProfessionalRequirement = Readonly<{
   guidanceOutcomeId: string
   professionalSupportNeedId: string
   status: ProfessionalRequirementStatus
-  professionalType: string
+  professionalType: ProfessionalDisciplineCode
   priority: ProfessionalAdvicePriority
   reason: string
   expertise: readonly string[]
@@ -250,8 +295,11 @@ export type ProfessionalAdvice = Readonly<{
   adviceBody: string
   adviceReasons: readonly string[]
   selfActions: readonly string[]
+  dominantContext: DominantContext
+  relevantRiskDomains: readonly ProfessionalAdviceRiskDomain[]
   primaryProfessionalRequirement: ProfessionalRequirement | null
   additionalProfessionalRequirements: readonly ProfessionalRequirement[]
+  possibleProfessionalRequirements: readonly ProfessionalRequirement[]
   knowledgeReferences: readonly GuidanceKnowledgeReference[]
   sourceReferences: readonly GuidanceSourceContentReference[]
   disclaimer: string

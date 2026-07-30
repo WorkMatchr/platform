@@ -32,6 +32,13 @@ vi.mock(
   }),
 )
 
+vi.mock(
+  '@/lib/advice-dossiers/public-intake-advice-dossier-handoff',
+  () => ({
+    attachAdviceDossierForCurrentUser: vi.fn(async (draft) => draft),
+  }),
+)
+
 import {
   abandonPublicIntakeDraftAction,
   confirmPublicIntakeAIClassificationAction,

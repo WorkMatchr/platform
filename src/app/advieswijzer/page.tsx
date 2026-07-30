@@ -11,6 +11,7 @@ import { PublicIntakeServiceError } from '@/lib/public-intake/public-intake-erro
 import { enrichPublicIntakeDraftWithAIClassification } from '@/lib/public-intake/public-intake-ai-classification'
 import { resumePublicIntakeDraft } from '@/lib/public-intake/public-intake-service'
 import type { PublicIntakeDraftView } from '@/lib/public-intake/public-intake-types'
+import { attachAdviceDossierForCurrentUser } from '@/lib/advice-dossiers/public-intake-advice-dossier-handoff'
 
 export const metadata: Metadata = {
   title: 'Advieswijzer | WorkMatchr',
@@ -31,8 +32,10 @@ async function loadDraft(): Promise<{
   if (!token) return { draft: null, invalidSession: false }
   try {
     return {
-      draft: await enrichPublicIntakeDraftWithAIClassification(
-        await resumePublicIntakeDraft(token),
+      draft: await attachAdviceDossierForCurrentUser(
+        await enrichPublicIntakeDraftWithAIClassification(
+          await resumePublicIntakeDraft(token),
+        ),
       ),
       invalidSession: false,
     }

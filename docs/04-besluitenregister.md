@@ -315,3 +315,14 @@ Zie [ADR-017](adr/ADR-017-transactionele-en-immutable-gunning.md) voor gunning.
 Zie [ADR-018](adr/ADR-018-creditledger-en-reserveringen.md) voor credits.
 Zie [ADR-019](adr/ADR-019-opdrachtgebonden-berichtenisolatie.md) voor communicatie-isolatie.
 Zie [ADR-020](adr/ADR-020-persistente-notificaties-en-outbox.md) voor notificaties en outbox.
+Zie [ADR-021](adr/ADR-021-van-dienstgestuurd-naar-hulpvraaggestuurd-platform.md) voor de hulpvraaggestuurde productarchitectuur.
+Zie [ADR-022](adr/ADR-022-matchen-op-vakdiscipline.md) voor concrete, aantoonbare vakdisciplineclassificatie.
+
+## 30 juli 2026 — M7B.2 Vakdisciplineclassificatie
+
+| ID | Besluit | Toelichting |
+| --- | --- | --- |
+| B-234 | Een RI&E is een dienst, onderzoeksvorm of mogelijke oplevering en geen zelfstandig bewijsbaar beroepsprofiel. | Nieuwe professionele aanbevelingen gebruiken concrete vakdisciplines en nooit “RI&E-deskundige” als primair profiel. |
+| B-235 | Vakdiscipline volgt uit risicodomein, dominante context en expliciete deterministische regels. | Precies één primaire discipline; aanvullende en mogelijke disciplines worden ontdubbeld en begrensd. |
+| B-236 | Eligibility vereist het concrete gecontroleerde specialisme in de Trusted Provider Projection. | Een generieke dienst of vrije profieltekst maakt een provider niet geschikt voor bijvoorbeeld ergonomie. |
+| B-237 | Bestaande dossiers, aanvragen en projecties worden niet herschreven. | Alleen nieuwe adviezen en snapshots gebruiken ruleset 1.2.0 en SPECIALISM-taxonomie v2. |

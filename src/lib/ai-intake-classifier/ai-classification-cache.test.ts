@@ -3,6 +3,7 @@ import type { SafeAIClassificationResult } from './ai-classifier-contract'
 import {
   classifyAIIntakeWithCache,
   createAIClassificationFingerprint,
+  readCachedAIClassification,
   serializeAIClassifierOutput,
   type AIClassificationCacheRepository,
 } from './ai-classification-cache'
@@ -110,6 +111,27 @@ describe('AI Intake-classificatiecache', () => {
     expect(first).toEqual(successfulResult)
     expect(resumed).toEqual(successfulResult)
     expect(classify).toHaveBeenCalledTimes(1)
+  })
+
+  it('leest een bestaande bevestigde classificatie zonder een providercall te starten', async () => {
+    const { repository } = createRepository()
+    const classify = vi.fn().mockResolvedValue(successfulResult)
+    const options = {
+      repository,
+      classify,
+      logger: vi.fn(),
+      classifierVersion: 'classifier/1',
+      model: 'model/1',
+    } as const
+    const helpRequest = 'Een fictieve medewerker is gevallen.'
+
+    await classifyAIIntakeWithCache(helpRequest, options)
+    classify.mockClear()
+
+    await expect(
+      readCachedAIClassification(helpRequest, options),
+    ).resolves.toEqual(successfulResult.classification)
+    expect(classify).not.toHaveBeenCalled()
   })
 
   it('classificeert eenmaal opnieuw wanneer de oorspronkelijke hulpvraag inhoudelijk wijzigt', async () => {

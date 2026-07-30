@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { Client } from 'pg'
 import { PrismaClient } from '../src/generated/prisma/client'
-import { expectedProvidersForScenario, testFilterScenarios } from './test-provider-dataset'
+import { expectedProvidersForScenario, testFilterScenarios, testProviderSpecs } from './test-provider-dataset'
 
 const connectionString = process.env.DATABASE_URL
 if (!connectionString) throw new Error('DATABASE_URL is niet geconfigureerd.')
@@ -49,6 +49,11 @@ async function verifyScenarios() {
       },
     })
     assert.equal(providers.length, 50)
+    const providerCodesByName = new Map(testProviderSpecs.map((provider) => [provider.organizationName, provider.code]))
+    const clientCount = await prisma.organization.count({
+      where: { name: { startsWith: 'TEST-WM-' }, organizationType: 'CLIENT' },
+    })
+    assert.equal(clientCount, 20)
     for (const scenario of testFilterScenarios) {
       const actual = providers.flatMap((provider) => {
         if (provider.selectabilityStatus !== 'SELECTABLE') return []
@@ -69,7 +74,9 @@ async function verifyScenarios() {
             ? regions.includes('NATIONWIDE')
             : regions.includes(scenario.regionCode) || regions.includes('NATIONWIDE')
         if (!regionMatches) return []
-        return [provider.organization.name.replace('TEST-WM-Dienstverlener ', 'TEST-WM-')]
+        const providerCode = providerCodesByName.get(provider.organization.name)
+        assert.ok(providerCode, `Onbekende fictieve dienstverlener: ${provider.organization.name}`)
+        return [providerCode]
       }).sort()
       assert.deepEqual(actual, expectedProvidersForScenario(scenario), `${scenario.code} wijkt af.`)
     }
@@ -109,7 +116,7 @@ async function main() {
     assert.equal(removal.status, 0, `Opruimen mislukt:\n${removal.stdout}\n${removal.stderr}`)
   }
   assert.equal(await databaseStillExists(), false, 'De tijdelijke providerdatasetdatabase is niet verwijderd.')
-  console.log('Providerdataset-integriteit: 50 fictieve dienstverleners, idempotentie en 10 scenario’s geslaagd.')
+  console.log('Marketplace-testdataset-integriteit: 50 fictieve dienstverleners, 20 opdrachtgevers, idempotentie en 10 scenario’s geslaagd.')
 }
 
 main().catch((error: unknown) => {

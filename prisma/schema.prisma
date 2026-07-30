@@ -374,6 +374,68 @@ enum PublicIntakeAIClassificationStatus {
   COMPLETED
 }
 
+enum AdviceDossierSourceRoute {
+  HELP_REQUEST
+  KNOWLEDGE
+  DIRECT_SPECIALIST_SEARCH
+}
+
+enum AdviceDossierStatus {
+  DRAFT
+  ADVICE_READY
+  SPECIALIST_SEARCHED
+  ASSIGNMENT_STARTED
+  COMPLETED
+  ARCHIVED
+}
+
+enum AdviceDossierEventType {
+  DOSSIER_CREATED
+  VERSION_CREATED
+  PDF_DOWNLOADED
+  STATUS_CHANGED
+}
+
+enum RequestStatus {
+  DRAFT
+  READY_TO_PUBLISH
+  PUBLISHED
+  CANCELLED
+}
+
+enum RequestRequestedStart {
+  AS_SOON_AS_POSSIBLE
+  WITHIN_ONE_MONTH
+  IN_CONSULTATION
+}
+
+enum RequestEventType {
+  REQUEST_PUBLISHED
+  ELIGIBILITY_SNAPSHOT_CREATED
+  STATUS_CHANGED
+}
+
+enum RequestInterestStatus {
+  INTERESTED
+  WITHDRAWN
+}
+
+enum RequestInterestEventType {
+  INTEREST_REGISTERED
+  INTEREST_WITHDRAWN
+  INTEREST_REACTIVATED
+}
+
+enum RequestOfferSlotStatus {
+  CLAIMED
+  RELEASED
+}
+
+enum RequestOfferSlotEventType {
+  CLAIMED
+  RELEASED
+}
+
 enum AssignmentStatus {
   DRAFT
   READY_FOR_REVIEW
@@ -574,6 +636,13 @@ model User {
   receivedMarketplaceNotifications MarketplaceNotification[]              @relation("MarketplaceNotificationRecipient")
   readMarketplaceNotifications     MarketplaceNotification[]              @relation("MarketplaceNotificationReader")
   marketplaceAuditEvents           MarketplaceAuditEvent[]                @relation("MarketplaceAuditActor")
+  ownedAdviceDossiers              AdviceDossier[]                        @relation("AdviceDossierOwner")
+  adviceDossierEvents              AdviceDossierEvent[]                   @relation("AdviceDossierEventActor")
+  requestEvents                    RequestEvent[]                         @relation("RequestEventActor")
+  createdRequestInterests          RequestInterest[]                      @relation("RequestInterestCreator")
+  requestInterestEvents            RequestInterestEvent[]                 @relation("RequestInterestEventActor")
+  createdRequestOfferSlots         RequestOfferSlot[]                     @relation("RequestOfferSlotCreator")
+  requestOfferSlotEvents           RequestOfferSlotEvent[]                @relation("RequestOfferSlotEventActor")
 
   @@index([status])
   @@index([createdAt])
@@ -674,6 +743,14 @@ model Organization {
   marketplaceQuotes         Quote[]
   messageChannelsAsClient   MarketplaceMessageChannel[]     @relation("MarketplaceMessageClientOrganization")
   marketplaceAuditEvents    MarketplaceAuditEvent[]
+  adviceDossiers            AdviceDossier[]
+  requestsAsTenant          Request[]                       @relation("RequestTenant")
+  requestsAsOrganization    Request[]                       @relation("RequestOrganization")
+  eligibleProviderRequests  RequestEligibleProvider[]       @relation("RequestEligibleProviderOrganization")
+  requestInterests          RequestInterest[]               @relation("RequestInterestProviderOrganization")
+  requestInterestEvents     RequestInterestEvent[]
+  requestOfferSlots         RequestOfferSlot[]              @relation("RequestOfferSlotProviderOrganization")
+  requestOfferSlotEvents    RequestOfferSlotEvent[]
 
   @@index([organizationType])
   @@index([status])
@@ -919,6 +996,7 @@ model ProviderProfile {
   marketplaceParticipations   ProviderParticipation[]
   marketplaceQuotes           Quote[]
   marketplaceMessageChannels  MarketplaceMessageChannel[]
+  eligibleRequestSnapshots    RequestEligibleProvider[]
 
   @@index([approvalStatus])
   @@index([isAvailable])
@@ -1830,6 +1908,7 @@ model TrustedProviderProjection {
   createdByUser              User?                                  @relation(fields: [createdByUserId], references: [id], onDelete: Restrict)
   invalidation               TrustedProviderProjectionInvalidation?
   marketplaceMatchCandidates MarketplaceMatchCandidate[]
+  eligibleRequestSnapshots   RequestEligibleProvider[]
 
   @@unique([providerProfileId, sourceVersion])
   @@index([providerProfileId, validUntil])
@@ -1880,6 +1959,8 @@ model PublicIntakeDraft {
   answers            PublicIntakeAnswer[]
   answerRevisions    PublicIntakeAnswerRevision[]
   events             PublicIntakeEvent[]
+  adviceDossier      AdviceDossier?
+  adviceVersions     AdviceDossierVersion[]
 
   @@index([phase, lastInteractionAt])
   @@index([expiresAt])
@@ -1988,6 +2069,267 @@ model PublicIntakeAIClassificationCache {
 
   @@index([status, createdAt])
   @@index([completedAt])
+}
+
+model AdviceDossierCounter {
+  year       Int      @id
+  nextNumber Int
+  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+}
+
+model AdviceDossier {
+  id                        String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  dossierCode               String                   @unique @db.VarChar(32)
+  ownerUserId               String                   @db.Uuid
+  organizationId            String                   @db.Uuid
+  sourceRoute               AdviceDossierSourceRoute
+  sourcePublicIntakeDraftId String?                  @unique @db.Uuid
+  subject                   String                   @db.VarChar(200)
+  status                    AdviceDossierStatus      @default(ADVICE_READY)
+  currentVersionNumber      Int                      @default(1)
+  createdAt                 DateTime                 @default(now()) @db.Timestamptz(3)
+  updatedAt                 DateTime                 @updatedAt @db.Timestamptz(3)
+  completedAt               DateTime?                @db.Timestamptz(3)
+  archivedAt                DateTime?                @db.Timestamptz(3)
+  ownerUser                 User                     @relation("AdviceDossierOwner", fields: [ownerUserId], references: [id], onDelete: Restrict)
+  organization              Organization             @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  sourcePublicIntakeDraft   PublicIntakeDraft?       @relation(fields: [sourcePublicIntakeDraftId], references: [id], onDelete: Restrict)
+  versions                  AdviceDossierVersion[]
+  events                    AdviceDossierEvent[]
+  request                   Request?
+
+  @@index([ownerUserId, createdAt])
+  @@index([organizationId, createdAt])
+  @@index([status, createdAt])
+  @@index([createdAt])
+}
+
+model AdviceDossierVersion {
+  id                                         String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  adviceDossierId                            String             @db.Uuid
+  versionNumber                              Int
+  sourcePublicIntakeDraftId                  String?            @db.Uuid
+  sourceDraftVersion                         Int?
+  originalHelpRequest                        String             @db.Text
+  situationSummary                           String             @db.Text
+  subject                                    String             @db.VarChar(200)
+  adviceTitle                                String             @db.VarChar(300)
+  adviceBody                                 String             @db.Text
+  adviceReasons                              Json               @db.JsonB
+  selfActions                                Json               @db.JsonB
+  primaryProfessionalRequirementSnapshot     Json?              @db.JsonB
+  additionalProfessionalRequirementsSnapshot Json               @db.JsonB
+  knowledgeReferencesSnapshot                Json               @db.JsonB
+  sourceReferencesSnapshot                   Json               @db.JsonB
+  uncertaintiesSnapshot                      Json               @db.JsonB
+  disclaimer                                 String             @db.Text
+  outcomeSpecificity                         String             @db.VarChar(50)
+  completionStatus                           String             @db.VarChar(50)
+  createdAt                                  DateTime           @default(now()) @db.Timestamptz(3)
+  adviceDossier                              AdviceDossier      @relation(fields: [adviceDossierId], references: [id], onDelete: Restrict)
+  sourcePublicIntakeDraft                    PublicIntakeDraft? @relation(fields: [sourcePublicIntakeDraftId], references: [id], onDelete: Restrict)
+
+  @@unique([adviceDossierId, versionNumber])
+  @@unique([sourcePublicIntakeDraftId, sourceDraftVersion])
+  @@index([adviceDossierId, createdAt])
+  @@index([sourcePublicIntakeDraftId])
+}
+
+model AdviceDossierEvent {
+  id              String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  adviceDossierId String                 @db.Uuid
+  actorUserId     String                 @db.Uuid
+  type            AdviceDossierEventType
+  versionNumber   Int?
+  fromStatus      AdviceDossierStatus?
+  toStatus        AdviceDossierStatus?
+  idempotencyKey  String                 @unique @db.VarChar(180)
+  occurredAt      DateTime               @default(now()) @db.Timestamptz(3)
+  adviceDossier   AdviceDossier          @relation(fields: [adviceDossierId], references: [id], onDelete: Restrict)
+  actorUser       User                   @relation("AdviceDossierEventActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([adviceDossierId, occurredAt])
+  @@index([actorUserId, occurredAt])
+  @@index([type, occurredAt])
+}
+
+model RequestCounter {
+  year       Int      @id
+  nextNumber Int
+  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+}
+
+model Request {
+  id                       String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  requestNumber            String                    @unique @db.VarChar(32)
+  tenantId                 String                    @db.Uuid
+  organizationId           String                    @db.Uuid
+  adviceDossierId          String                    @unique @db.Uuid
+  status                   RequestStatus             @default(DRAFT)
+  title                    String                    @db.VarChar(200)
+  publicSummary            String                    @db.Text
+  region                   String?                   @db.VarChar(120)
+  sector                   String?                   @db.VarChar(160)
+  requestedStart           RequestRequestedStart
+  notes                    String?                   @db.Text
+  primaryExpertise         String                    @db.VarChar(200)
+  additionalExpertise      String[]                  @default([])
+  possibleExpertise        String[]                  @default([])
+  primaryExpertiseCodes    String[]                  @default([])
+  additionalExpertiseCodes String[]                  @default([])
+  possibleExpertiseCodes   String[]                  @default([])
+  regionCode               String?                   @db.VarChar(120)
+  sectorCode               String?                   @db.VarChar(160)
+  createdAt                DateTime                  @default(now()) @db.Timestamptz(3)
+  updatedAt                DateTime                  @updatedAt @db.Timestamptz(3)
+  publishedAt              DateTime?                 @db.Timestamptz(3)
+  archivedAt               DateTime?                 @db.Timestamptz(3)
+  tenant                   Organization              @relation("RequestTenant", fields: [tenantId], references: [id], onDelete: Restrict)
+  organization             Organization              @relation("RequestOrganization", fields: [organizationId], references: [id], onDelete: Restrict)
+  adviceDossier            AdviceDossier             @relation(fields: [adviceDossierId], references: [id], onDelete: Restrict)
+  events                   RequestEvent[]
+  eligibleProviders        RequestEligibleProvider[]
+  interests                RequestInterest[]
+  interestEvents           RequestInterestEvent[]
+  offerSlots               RequestOfferSlot[]
+  offerSlotEvents          RequestOfferSlotEvent[]
+
+  @@index([tenantId, createdAt])
+  @@index([organizationId, createdAt])
+  @@index([status, publishedAt])
+  @@index([createdAt])
+}
+
+model RequestEligibleProvider {
+  id                     String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  requestId              String                    @db.Uuid
+  providerOrganizationId String                    @db.Uuid
+  providerProfileId      String                    @db.Uuid
+  projectionId           String                    @db.Uuid
+  eligibilityBasis       Json                      @db.JsonB
+  matchedExpertise       String[]
+  createdAt              DateTime                  @default(now()) @db.Timestamptz(3)
+  request                Request                   @relation(fields: [requestId], references: [id], onDelete: Restrict)
+  providerOrganization   Organization              @relation("RequestEligibleProviderOrganization", fields: [providerOrganizationId], references: [id], onDelete: Restrict)
+  providerProfile        ProviderProfile           @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  projection             TrustedProviderProjection @relation(fields: [projectionId], references: [id], onDelete: Restrict)
+  interest               RequestInterest?
+
+  @@unique([requestId, providerOrganizationId])
+  @@index([providerOrganizationId, createdAt])
+  @@index([providerProfileId, createdAt])
+  @@index([projectionId])
+}
+
+model RequestInterest {
+  id                     String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  requestId              String                  @db.Uuid
+  providerOrganizationId String                  @db.Uuid
+  createdByUserId        String                  @db.Uuid
+  status                 RequestInterestStatus   @default(INTERESTED)
+  createdAt              DateTime                @default(now()) @db.Timestamptz(3)
+  updatedAt              DateTime                @updatedAt @db.Timestamptz(3)
+  withdrawnAt            DateTime?               @db.Timestamptz(3)
+  request                Request                 @relation(fields: [requestId], references: [id], onDelete: Restrict)
+  providerOrganization   Organization            @relation("RequestInterestProviderOrganization", fields: [providerOrganizationId], references: [id], onDelete: Restrict)
+  createdByUser          User                    @relation("RequestInterestCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  eligibility            RequestEligibleProvider @relation(fields: [requestId, providerOrganizationId], references: [requestId, providerOrganizationId], onDelete: Restrict)
+  events                 RequestInterestEvent[]
+  offerSlot              RequestOfferSlot?
+
+  @@unique([requestId, providerOrganizationId])
+  @@unique([id, requestId, providerOrganizationId])
+  @@index([providerOrganizationId, status, createdAt])
+  @@index([requestId, status])
+  @@index([createdByUserId, createdAt])
+}
+
+model RequestInterestEvent {
+  id                     String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  interestId             String                   @db.Uuid
+  requestId              String                   @db.Uuid
+  providerOrganizationId String                   @db.Uuid
+  actorUserId            String                   @db.Uuid
+  type                   RequestInterestEventType
+  fromStatus             RequestInterestStatus?
+  toStatus               RequestInterestStatus
+  idempotencyKey         String                   @unique @db.VarChar(180)
+  occurredAt             DateTime                 @default(now()) @db.Timestamptz(3)
+  interest               RequestInterest          @relation(fields: [interestId], references: [id], onDelete: Restrict)
+  request                Request                  @relation(fields: [requestId], references: [id], onDelete: Restrict)
+  providerOrganization   Organization             @relation(fields: [providerOrganizationId], references: [id], onDelete: Restrict)
+  actorUser              User                     @relation("RequestInterestEventActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([interestId, occurredAt])
+  @@index([requestId, occurredAt])
+  @@index([providerOrganizationId, occurredAt])
+  @@index([actorUserId, occurredAt])
+}
+
+model RequestOfferSlot {
+  id                     String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  requestId              String                  @db.Uuid
+  providerOrganizationId String                  @db.Uuid
+  requestInterestId      String                  @unique @db.Uuid
+  slotNumber             Int
+  status                 RequestOfferSlotStatus  @default(CLAIMED)
+  claimedAt              DateTime                @db.Timestamptz(3)
+  expiresAt              DateTime?               @db.Timestamptz(3)
+  releasedAt             DateTime?               @db.Timestamptz(3)
+  createdByUserId        String                  @db.Uuid
+  createdAt              DateTime                @default(now()) @db.Timestamptz(3)
+  updatedAt              DateTime                @updatedAt @db.Timestamptz(3)
+  request                Request                 @relation(fields: [requestId], references: [id], onDelete: Restrict)
+  providerOrganization   Organization            @relation("RequestOfferSlotProviderOrganization", fields: [providerOrganizationId], references: [id], onDelete: Restrict)
+  requestInterest        RequestInterest         @relation(fields: [requestInterestId, requestId, providerOrganizationId], references: [id, requestId, providerOrganizationId], onDelete: Restrict)
+  createdByUser          User                    @relation("RequestOfferSlotCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  events                 RequestOfferSlotEvent[]
+
+  @@unique([requestId, providerOrganizationId])
+  @@unique([requestInterestId, requestId, providerOrganizationId])
+  @@index([requestId, status, slotNumber])
+  @@index([providerOrganizationId, status, createdAt])
+  @@index([createdByUserId, createdAt])
+}
+
+model RequestOfferSlotEvent {
+  id                     String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  offerSlotId            String                    @db.Uuid
+  requestId              String                    @db.Uuid
+  providerOrganizationId String                    @db.Uuid
+  actorUserId            String                    @db.Uuid
+  type                   RequestOfferSlotEventType
+  fromStatus             RequestOfferSlotStatus?
+  toStatus               RequestOfferSlotStatus
+  slotNumber             Int
+  idempotencyKey         String                    @unique @db.VarChar(180)
+  occurredAt             DateTime                  @default(now()) @db.Timestamptz(3)
+  offerSlot              RequestOfferSlot          @relation(fields: [offerSlotId], references: [id], onDelete: Restrict)
+  request                Request                   @relation(fields: [requestId], references: [id], onDelete: Restrict)
+  providerOrganization   Organization              @relation(fields: [providerOrganizationId], references: [id], onDelete: Restrict)
+  actorUser              User                      @relation("RequestOfferSlotEventActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([offerSlotId, occurredAt])
+  @@index([requestId, occurredAt])
+  @@index([providerOrganizationId, occurredAt])
+  @@index([actorUserId, occurredAt])
+}
+
+model RequestEvent {
+  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  requestId      String           @db.Uuid
+  actorUserId    String           @db.Uuid
+  type           RequestEventType
+  fromStatus     RequestStatus?
+  toStatus       RequestStatus?
+  idempotencyKey String           @unique @db.VarChar(180)
+  occurredAt     DateTime         @default(now()) @db.Timestamptz(3)
+  request        Request          @relation(fields: [requestId], references: [id], onDelete: Restrict)
+  actorUser      User             @relation("RequestEventActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([requestId, occurredAt])
+  @@index([actorUserId, occurredAt])
+  @@index([type, occurredAt])
 }
 
 model IntakeQuestionnaire {
