@@ -46,15 +46,33 @@ describe('opdrachtinterfacearchitectuur', () => {
     expect(combined).not.toContain('Mollie')
   })
 
-  it('toont waarschuwing, loadingstatus en expliciete bevestiging', async () => {
-    const [page, form] = await Promise.all([
+  it('publiceert vanaf het controleoverzicht in één gebruikershandeling zonder concepttussenpagina', async () => {
+    const [page, controlPage, form, review, actions] = await Promise.all([
       readFile('src/app/hulpvragen/[intakeId]/indienen/page.tsx', 'utf8'),
+      readFile('src/app/hulpvragen/[intakeId]/controle/page.tsx', 'utf8'),
       readFile('src/components/assignments/submit-intake-form.tsx', 'utf8'),
+      readFile('src/components/intakes/intake-review.tsx', 'utf8'),
+      readFile('src/app/opdrachten/actions.ts', 'utf8'),
     ])
-    expect(page).toContain('kunnen daarna niet meer worden gewijzigd')
-    expect(page).toContain('Terug naar controle')
-    expect(form).toContain('Ja, dien mijn hulpvraag in')
+    expect(page).toContain('redirect(`/hulpvragen/${intakeId}/controle`)')
+    expect(page).not.toContain('Controleer uw bevestiging')
+    expect(controlPage).toContain('Opdracht controleren')
+    expect(controlPage).toContain('publishIntakeAction')
+    expect(form).toContain('Opdracht publiceren')
+    expect(form).not.toContain('Hulpvraag indienen')
+    expect(form).not.toContain('name="confirmed"')
     expect(form).toContain('loading={pending}')
+    expect(form).toContain('disabled={!readiness.isReady}')
+    expect(review).toContain('Na publicatie kan WorkMatchr passende professionals selecteren.')
+    expect(review).toContain('Uw opdracht kan nog niet worden gepubliceerd')
+    expect(review).toContain('issue.editHref')
+    expect(review).toContain('?wijzig=1')
+    expect(review).not.toContain('Conceptopdracht')
+    expect(review).not.toContain('Concept bewerken')
+    expect(actions).toContain('publishIntakeAsAssignment')
+    expect(actions).toContain('?status=gepubliceerd')
+    expect(review).not.toContain('Intake gereedmelden')
+    expect(review).not.toContain('Gereed voor controle')
   })
 
   it('toont een passende lege staat en conceptstatus op de succesroute', async () => {
@@ -63,15 +81,16 @@ describe('opdrachtinterfacearchitectuur', () => {
       readFile('src/app/opdrachten/[assignmentId]/aangemaakt/page.tsx', 'utf8'),
     ])
     expect(list).toContain('Uw organisatie heeft nog geen opdrachten.')
-    expect(list).toContain('Start een nieuwe hulpvraag')
-    expect(success).toContain('Conceptopdracht')
+    expect(list).toContain('Start een nieuwe opdracht')
+    expect(success).toContain('Uw opdracht is aangemaakt')
+    expect(success).not.toContain('Conceptopdracht')
     expect(success).not.toContain('aanbieders geselecteerd')
   })
 
   it('blokkeert indienen bij ontbrekende velden en toont rolafhankelijke controle-informatie', async () => {
     const review = await readFile('src/components/intakes/intake-review.tsx', 'utf8')
-    expect(review).toContain('isComplete={intake.progress.isComplete}')
-    expect(review).toContain('Hulpvraag indienen')
+    expect(review).toContain('readiness.isReady')
+    expect(review).toContain('Opdracht publiceren')
     expect(review).toContain('eigenaar of beheerder van de organisatie')
   })
 
@@ -86,5 +105,15 @@ describe('opdrachtinterfacearchitectuur', () => {
     expect(statusActions).toContain("defaultChecked={state.values?.confirmed === 'on'}")
     expect(statusActions).toContain("status !== 'DRAFT' && status !== 'READY_FOR_REVIEW'")
     expect(statusActions).toContain('loading={pending}')
+    expect(statusActions).toContain('Concept bewerken')
+    expect(statusActions).toContain('Opdracht publiceren')
+    expect(statusActions).toContain('Opdracht annuleren')
+    expect(statusActions).not.toContain('Gereed voor controle')
+  })
+
+  it('laat een concept direct via de afzonderlijke bewuste publicatiestap publiceren', async () => {
+    const page = await readFile('src/app/opdrachten/[assignmentId]/publiceren/page.tsx', 'utf8')
+    expect(page).toContain("assignment.status !== 'DRAFT' && assignment.status !== 'READY_FOR_REVIEW'")
+    expect(page).toContain('Na publicatie kan WorkMatchr passende professionals selecteren.')
   })
 })

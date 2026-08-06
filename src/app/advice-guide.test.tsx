@@ -12,6 +12,7 @@ vi.mock(
 
 import { PublicIntakePrototype } from '@/components/public/public-intake-prototype'
 import { PublicPageHero } from '@/components/public/public-page-hero'
+import { resolveActiveKnowledgeContext } from '@/content/knowledge/knowledge-contexts'
 import { metadata } from './advieswijzer/page'
 
 describe('publieke Advieswijzer', () => {
@@ -24,6 +25,31 @@ describe('publieke Advieswijzer', () => {
     expect(html.match(/aria-pressed="false"/g)).toHaveLength(7)
     expect(html).toContain('Wij hebben een RI&amp;E nodig')
     expect(html).toContain('Mijn situatie staat er niet tussen')
+  })
+
+  it('toont een gevalideerde Bedrijfsarts-context zonder een hulpvraag voor te vullen', () => {
+    const context = resolveActiveKnowledgeContext('OCCUPATIONAL_PHYSICIAN')
+    const html = renderToStaticMarkup(
+      <PublicIntakePrototype initialDraft={null} knowledgeContext={context} />,
+    )
+
+    expect(html).toContain('Uw vraag gaat over het inschakelen van een bedrijfsarts.')
+    expect(html).toContain('Vertel kort waar u binnen uw organisatie tegenaan loopt.')
+    expect(html).toContain('<textarea')
+    expect(html).not.toContain('Wat moet ik regelen voor een BHV-organisatie?')
+  })
+
+  it('biedt bij een afwijkende hervatbare context een expliciete keuze', () => {
+    const source = readFileSync(
+      join(process.cwd(), 'src/components/public/public-intake-prototype.tsx'),
+      'utf8',
+    )
+
+    expect(source).toContain('Welke hulpvraag wilt u vervolgen?')
+    expect(source).toContain('We overschrijven uw eerdere antwoorden niet.')
+    expect(source).toContain('Verder met {activeKnowledgeContext.shortLabel}')
+    expect(source).toContain('Eerdere antwoorden hervatten')
+    expect(source).toContain('await clearPublicIntakeSessionAction()')
   })
 
   it('heeft unieke indexeerbare metadata en canonical', () => {
@@ -114,7 +140,7 @@ describe('publieke Advieswijzer', () => {
     expect(startSource).not.toContain('Nieuwe hulpvraag starten')
     expect(dialogSource).toContain('<dialog')
     expect(dialogSource).toContain('Nieuwe hulpvraag starten?')
-    expect(dialogSource).toContain('Uw huidige concept wordt afgesloten.')
+    expect(dialogSource).toContain('Uw huidige invulronde wordt afgesloten.')
     expect(dialogSource).toContain('Annuleren')
     expect(dialogSource).toContain('↺')
     expect(dialogSource).toContain('onClose={() => triggerRef.current?.focus()}')

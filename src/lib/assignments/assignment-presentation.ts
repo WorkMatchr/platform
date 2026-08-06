@@ -1,16 +1,20 @@
 import type { AssignmentStatus } from '@/generated/prisma/client'
 
 export const assignmentStatusLabels: Record<AssignmentStatus, string> = {
-  DRAFT: 'Concept',
-  READY_FOR_REVIEW: 'Klaar voor controle',
+  DRAFT: 'Nog invullen',
+  READY_FOR_REVIEW: 'Klaar om te publiceren',
   OPEN: 'Gepubliceerd',
-  MATCHING: 'Matching wordt voorbereid',
+  MATCHING: 'Professionals worden geselecteerd',
   AWAITING_RESPONSES: 'Wacht op reacties',
-  IN_SELECTION: 'Selectie',
+  IN_SELECTION: 'Offertes vergelijken',
   AWARDED: 'Gegund',
   CLOSED: 'Afgerond',
-  CANCELLED: 'Geannuleerd',
+  CANCELLED: 'Beëindigd',
   ARCHIVED: 'Gearchiveerd',
+}
+
+export function presentAssignmentStatus(value: string): string {
+  return assignmentStatusLabels[value as AssignmentStatus] ?? 'Status niet beschikbaar'
 }
 
 export function formatAssignmentDate(value: string): string {

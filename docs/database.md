@@ -1,5 +1,25 @@
 # Database WorkMatchr
 
+## Accounttypen
+
+Migratie `20260805100000_add_user_account_types` voegt additief `AccountType` en nullable `User.accountType` toe. Bestaande `CLIENT`-memberships worden `CLIENT`; bestaande `PROVIDER`- en `BOTH`-memberships worden `PROFESSIONAL`; `PLATFORM_OPERATOR` blijft null. Iedere backfill schrijft idempotent een bestaand append-only `MIGRATED_UNKNOWN`-provisioningevent met een expliciete accounttype-redencode. De membershiptrigger vult een ontbrekend type voor compatibele ontwikkel- of legacy-aanmaak aan en weigert een inhoudelijk conflicterende combinatie. Tabellen, memberships, opdrachten, providerprofielen en Knowledge Engine-data worden niet verwijderd of herschreven.
+
+Rollback vóór productiedata bestaat uit het verwijderen van trigger, index en nullable kolom/type. Na ingebruikname is terugrollen een afzonderlijke datamigratie: audit- en historische records worden nooit verwijderd. De migratie bevat geen destructieve reset en wijzigt geen bestaande migratie.
+
+## Marketplace Rules en financiële historie
+
+Migratie `20260801110000_add_marketplace_rules_credit_reliability` voegt uitsluitend tabellen, enumwaarden, nullable relaties, constraints, indexen en append-only triggers toe. Bestaande deelnameplaatsen worden niet belast of herschreven. `MarketplaceRuleSet`, `CreditTransaction` en `MarketplaceReliabilityEvent` mogen na publicatie of aanmaak niet worden gemuteerd of verwijderd. Zie [Marketplace Rules, credits en betrouwbaarheid](marketplace-rules-credit-reliability.md).
+
+## Professionele creditwallet
+
+De additieve migraties `20260805110000_add_professional_credit_wallet_ledger`, `20260805111000_protect_credit_wallet_projections` en `20260805112000_derive_credit_wallet_spent_projection` maken `CreditTransaction` leidend voor ieder saldo. `totalDelta` en `reservedDelta` worden gebackfilld; een ontbrekend legacy beginsaldo wordt als nieuwe openingsregel toegevoegd. De migratie stopt fail-closed bij een wallet voor een niet-professionele organisatie of een inconsistent gereserveerd saldo.
+
+PostgreSQL serialiseert ledgerinserts per wallet, valideert actor, reden en idempotentiesleutel, weigert negatieve afgeleide saldi en vernieuwt de compatibiliteitsprojecties op `CreditAccount`. Rechtstreekse wijzigingen aan die saldoprojecties worden geweigerd. Zie [Creditledger v1](credit-ledger-v1.md).
+
+## Marketplace Rules en financiële historie
+
+Migratie `20260801110000_add_marketplace_rules_credit_reliability` voegt uitsluitend tabellen, enumwaarden, nullable relaties, constraints, indexen en append-only triggers toe. Bestaande deelnameplaatsen worden niet belast of herschreven. `MarketplaceRuleSet`, `CreditTransaction` en `MarketplaceReliabilityEvent` mogen na publicatie of aanmaak niet worden gemuteerd of verwijderd. Zie [Marketplace Rules, credits en betrouwbaarheid](marketplace-rules-credit-reliability.md).
+
 ## M7B.2 — vakdisciplinetaxonomie
 
 Migratie `20260730170000_add_professional_discipline_taxonomy` voegt
@@ -8,6 +28,10 @@ SPECIALISM-taxonomie versie 2 en pensioneert versie 1. Bestaande
 capabilityrevisies, Trusted Provider Projections, AdviceDossierVersions
 en Requests worden niet bijgewerkt. Alleen nieuwe providerrevisies en
 nieuwe snapshots gebruiken de actuele vakdisciplinecodes.
+
+## Dienstentaxonomie versie 2
+
+Migratie `20260802140000_expand_provider_service_taxonomy` publiceert additief `SERVICE` versie 2 en pensioneert versie 1. Bestaande capabilityrevisies blijven ongewijzigd naar hun oorspronkelijke termen verwijzen. Nieuwe keuzes gebruiken de uitgebreide dienstencatalogus. Een lege database ontvangt dezelfde immutable versie via de expliciete referentiedataseed.
 
 ## Keuze
 
@@ -142,6 +166,29 @@ wordt zij nooit gelogd.
 
 ## Transactionele bedrijfsregels voor latere services
 
+### Immutable opdrachtlocatiesnapshot
+
+Migraties `20260801100000_add_assignment_location_snapshots` en
+`20260801101000_validate_assignment_location_snapshots` voegen een typed
+locatieblok toe aan `Assignment` en `AssignmentRevision`. De eerste migratie
+voegt enum, velden en direct afdwingbare `NOT VALID`-constraints toe, voert de
+gecontroleerde backfill uit en breidt de publicatie-immutabilitytrigger uit. De
+tweede valideert na commit alle bestaande rijen.
+
+Backfillvolgorde is deterministisch: een bestaande `locationId` wordt
+`REGISTERED` en krijgt een adreskopie; zonder locatie wordt
+`allowsRemoteWork = true` `REMOTE`; alle overige historische gevallen worden
+expliciet `UNKNOWN` en via een migratienotice gerapporteerd. De append-only-trigger
+van `AssignmentRevision` wordt uitsluitend rond deze eenmalige backfill tijdelijk
+uitgeschakeld en binnen dezelfde transactie weer geactiveerd.
+
+`locationType` en de snapshotvelden zijn leidend. `locationId` is alleen een
+tenantgevalideerde bronreferentie bij `REGISTERED`; `allowsRemoteWork` is alleen
+een legacycompatibiliteitsprojectie. Databasechecks bewaken typevorm, positieve
+locatieaantallen en de minimale gegevens per type.
+
+Migratie `20260801102000_add_assignment_location_items` maakt de geordende tabellen `AssignmentLocationItem` en `AssignmentRevisionLocationItem`. Voor `MULTIPLE` is deze lijst leidend; `locationCount` wordt ervan afgeleid. Posities lopen van 1 tot en met 25, waarden zijn maximaal 120 tekens en zijn per parent genormaliseerd uniek. Revisierrijen zijn append-only. De migratie stopt zonder dataverlies wanneer al historische `MULTIPLE`-snapshots zonder herleidbare lijst bestaan.
+
 ### Intakeantwoorden
 
 - `IntakeAnswer` bewaart de actuele getypeerde waarde;
@@ -149,6 +196,9 @@ wordt zij nooit gelogd.
 - optimistic concurrency gebruikt de oplopende intake- en antwoordversie;
 - opties, vraagtypen, actieve organisatielocaties en tenantrelaties worden in de toekomstige intakeservice opnieuw gevalideerd;
 - `Intake.freeText` blijft de oorspronkelijke bronopname en wordt niet met actuele antwoorden gesynchroniseerd.
+- Een optionele kenniscontext wordt uitsluitend server-side uit de actieve catalogus vastgelegd als context-ID, contextversie, bronroute en optionele voorgestelde categorie; zij vervangt nooit `originalInput` of `Intake.freeText`.
+- Migratie `20260802110000_add_knowledge_context_provenance` voegt dit blok additief toe aan `PublicIntakeDraft`, `Intake`, `Assignment` en `AssignmentRevision`. Bestaande rijen blijven `null`; contextvelden zijn gezamenlijk aanwezig of afwezig.
+- Publieke contextvelden en intakecontext zijn na aanmaak immutable. Bij conversie wordt het blok naar `Assignment` en de eerste revisie gekopieerd; iedere volgende publicatiesnapshot bevriest dezelfde provenance.
 
 ### Opdrachtvorming
 
@@ -299,3 +349,30 @@ Migratie `20260720173000_make_marketplace_audit_correlation_unique` vervangt de 
 ### ADR-013 Contract
 
 Migratie `20260724150000_enforce_single_organization_membership` maakt `OrganizationMembership.userId` uniek. Een voorafgaande SQL-guard stopt de migratie wanneer een database nog multi-memberships bevat. De migratie verwijdert, verdeelt of herschrijft geen data en laat alle foreign keys en append-only historie intact. Zie het [Contract-migratierunbook](adr-013-contract-migratie-runbook.md).
+
+## Testaccountwisselaar
+
+Migratie `20260731100000_add_test_session_impersonation` voegt additief `Session.impersonatedUserId` en `Session.impersonationStartedAt` toe. Bestaande sessies blijven ongewijzigd. Een checkconstraint vereist dat beide velden samen null of samen gevuld zijn en verbiedt dat actor en effectieve gebruiker gelijk zijn. De effectieve User-FK gebruikt `RESTRICT`; een index ondersteunt de veilige lookup. De applicatie leest deze velden uitsluitend buiten productie met `ENABLE_TEST_ACCOUNT_SWITCHER=true`.
+
+### Lokaal herstel M7B.2-taxonomie
+
+Een lokale database waarop SPECIALISM v1 al gepubliceerd was, kon migratie `20260730170000_add_professional_discipline_taxonomy` niet uitvoeren: de migratie probeerde v2 te publiceren vóór v1 werd ingetrokken, terwijl de unieke publicatie-index en immutabilitytrigger dit terecht blokkeerden. Het reeds gepubliceerde migratiebestand wordt niet herschreven.
+
+`npm run repair:migration:m7b2 -- inspect` controleert read-only de lokale toestand. `npm run repair:migration:m7b2 -- apply` is uitsluitend buiten productie en op localhost beschikbaar. De hersteltool vereist dat alle mislukte migratiepogingen als teruggedraaid zijn geregistreerd, vergrendelt de taxonomietabel, trekt alleen SPECIALISM v1 transactioneel in en behoudt ID, checksum, publicatietijd en alle termen. Daarna publiceert de bestaande Prisma-migratie v2 en kunnen volgende migraties normaal worden toegepast. De tool weigert afwijkende of reeds gemigreerde toestanden fail-closed.
+# Knowledge Engine-migratie
+
+Migratie `20260802100000_add_knowledge_engine_foundation` is additief: zij voegt uitsluitend Knowledge Engine-enums, tabellen, indexen, constraints en beschermende triggers toe. Bestaande zakelijke tabellen worden niet hernoemd of verwijderd. Fragmenten, citaties, validaties en auditevents zijn append-only; reeds gepubliceerde claims zijn immutable. Test de migratie op een lege lokale database en via `prisma migrate deploy` vanaf de actuele HEAD-stand.
+
+## Knowledge Review Workflow-migraties
+
+Migratie `20260802120000_add_knowledge_review_workflow` breidt het model additief uit met getypeerde claimbinding, taakversies, redactiewerkvelden, beslissingen, bronreferenties, validatiebinding en nieuwe reviewstatussen. Een guard stopt wanneer een bestaande reviewtaak niet veilig als `KnowledgeClaim` kan worden herleid. Bestaande compatibele PoC-taken worden gekoppeld zonder claiminhoud, validatiestatus of publicatiestatus te wijzigen.
+
+Migratie `20260802121000_validate_knowledge_review_workflow` activeert na de enumcommit de aanvullende status- en voltooiingsconstraint. Indexen ondersteunen wachtrijfilters en historie. PostgreSQL-triggers verhinderen update/delete van beslissingen en bronreferenties en delete van validaties en auditevents. De migratieketen is zowel vanaf een lege database als vanaf de actuele lokale ontwikkelstand getest.
+
+## Knowledge Control Workflow-migratie
+
+Migratie `20260802150000_add_knowledge_control_workflow` is additief. Zij voegt risicoklassen, broncontrolestatussen, drie broncontrolevelden op `KnowledgeClaim` en `KnowledgeImprovementReport` toe. Bestaande bronnen, claims, taken, beslissingen, validaties en publicatiestatussen worden niet herschreven. Bestaande claims krijgen uitsluitend de fail-closed defaults `MEDIUM` en `NOT_STARTED`; er ontstaat geen automatische validatie of publicatie.
+
+De meldingstabel gebruikt `RESTRICT`-foreign keys, indexen voor claim, taak, melder en status, een positieve versieconstraint en een statusconstraint voor actor/tijd/resolutie. De volledige migratieketen is op een lege tijdelijke database uitgevoerd. Op de lokale ontwikkeldata bleven vóór en na migratie exact 10 bronnen, 90 claims, 90 controletaken en 0 gepubliceerde claims aanwezig.
+
+Migratie `20260803100000_exception_driven_knowledge_control` voegt additief een getypeerde uitzonderingsreden en activatieprojectie aan reviewtaken toe. Bestaande concrete meldingen, conflicten, veroudering en publicatie-uitzonderingen worden waar mogelijk actief gemarkeerd. Overige generieke historische taken worden niet verwijderd of herschreven, maar krijgen `requiresHumanAction = false`, een deactivatietijd en een append-only auditevent. Nieuwe historische imports maken geen generieke reviewtaak meer.

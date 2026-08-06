@@ -18,12 +18,16 @@ export function IntakeCard({ intake }: { intake: IntakeListItem }) {
         <p className="mt-2 text-sm text-text-secondary">Aangemaakt door {intake.createdByDisplayName ?? 'een organisatielid'}</p>
       )}
       <div className="mt-6"><IntakeProgress progress={intake.progress} compact /></div>
-      <Link
-        href={`/hulpvragen/${intake.id}`}
-        className="mt-6 inline-flex min-h-11 items-center font-semibold text-brand-primary-hover underline underline-offset-4"
-      >
-        {intake.status === 'READY_FOR_REVIEW' ? 'Intake controleren' : 'Intake hervatten'}
-      </Link>
+      <div className="mt-6 flex flex-wrap gap-4">
+        <Link href={`/hulpvragen/${intake.id}`} className="inline-flex min-h-11 items-center font-semibold text-brand-primary-hover underline underline-offset-4">
+          {intake.status === 'READY_FOR_REVIEW' ? 'Opdracht controleren' : 'Opdracht hervatten'}
+        </Link>
+        {intake.canDelete && ['DRAFT', 'IN_PROGRESS'].includes(intake.status) && (
+          <Link href={`/hulpvragen/${intake.id}/verwijderen`} className="inline-flex min-h-11 items-center font-semibold text-error underline underline-offset-4">
+            Opdracht verwijderen
+          </Link>
+        )}
+      </div>
     </Card>
   )
 }

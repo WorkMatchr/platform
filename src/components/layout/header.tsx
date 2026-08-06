@@ -3,10 +3,13 @@ import { LogoutButton } from '@/components/auth/logout-button'
 import { Container } from '@/components/layout/container'
 import { DisclosureMenu } from '@/components/ui/disclosure-menu'
 import { getOptionalActiveOrganizationContext } from '@/lib/organizations/organization-authorization'
+import {
+  getPlatformAdministratorContext,
+  PlatformAdminAccessError,
+} from '@/lib/platform-admin/platform-admin-authorization'
+import { organizationRoleLabels } from '@/lib/presentation/platform-labels'
 import { PublicNavigation } from './public-navigation'
 import { buildHeaderViewModel, type HeaderViewModel } from './header-model'
-
-const roleLabels = { OWNER: 'Eigenaar', ADMIN: 'Beheerder', MEMBER: 'Lid' } as const
 
 function BrandLink() {
   return (
@@ -37,7 +40,16 @@ function DashboardHeader({ model }: { model: HeaderViewModel }) {
       <Container className="flex min-h-20 items-center justify-between gap-5 py-4">
         <BrandLink />
         <div className="flex min-w-0 items-center gap-2">
-          <PublicNavigation authenticated />
+          {model.isPlatformAdministrator ? (
+            <Link
+              href="/platformbeheer"
+              className="inline-flex min-h-11 items-center rounded-control px-3 text-sm font-semibold text-brand-dark hover:bg-brand-primary-subtle"
+            >
+              Platformbeheer
+            </Link>
+          ) : (
+            <PublicNavigation authenticated />
+          )}
           <DisclosureMenu
             ariaLabel="Gebruikersmenu openen of sluiten"
             className="relative shrink-0"
@@ -62,42 +74,41 @@ function DashboardHeader({ model }: { model: HeaderViewModel }) {
                 <br />
                 <span className="font-semibold text-brand-dark">{model.activeOrganization.name}</span>
                 <br />
-                {roleLabels[model.activeOrganization.role]}
+                {organizationRoleLabels[model.activeOrganization.role]}
               </p>
             )}
-            {model.primaryLinks.length > 0 && (
-              <nav className="mt-2 border-b border-border pb-2" aria-label="Accountnavigatie">
-                <ul className="space-y-1">
-                  {model.primaryLinks.map((item) => (
-                    <li key={item.href}>
-                      <Link
-                        href={item.href}
-                        className="flex min-h-11 items-center rounded-control px-3 text-sm font-semibold text-brand-dark hover:bg-brand-primary-subtle"
-                      >
-                        {item.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
-            )}
-            <nav className="mt-2" aria-label="Gebruikersmenu">
-              <ul className="space-y-1">
-                {model.menuLinks.map((item) => (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      className="flex min-h-11 items-center rounded-control px-3 text-sm font-semibold text-brand-dark hover:bg-brand-primary-subtle"
+            <div className="mt-1 divide-y divide-border">
+              {model.navigationGroups.map((group) => {
+                const headingId = `user-navigation-${group.key}`
+                return (
+                  <nav className="py-2" aria-labelledby={headingId} key={group.key}>
+                    <h2
+                      className="px-3 pb-1 text-xs font-semibold tracking-wide text-text-secondary"
+                      id={headingId}
                     >
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-                <li>
-                  <LogoutButton className="w-full justify-start px-3" variant="ghost" />
-                </li>
-              </ul>
-            </nav>
+                      {group.label}
+                    </h2>
+                    <ul className="space-y-1">
+                      {group.links.map((item) => (
+                        <li key={item.href}>
+                          <Link
+                            href={item.href}
+                            className="flex min-h-11 items-center rounded-control px-3 text-sm font-semibold text-brand-dark hover:bg-brand-primary-subtle"
+                          >
+                            {item.label}
+                          </Link>
+                        </li>
+                      ))}
+                      {group.key === 'personal' && (
+                        <li>
+                          <LogoutButton className="w-full justify-start px-3" variant="ghost" />
+                        </li>
+                      )}
+                    </ul>
+                  </nav>
+                )
+              })}
+            </div>
           </DisclosureMenu>
         </div>
       </Container>
@@ -107,6 +118,15 @@ function DashboardHeader({ model }: { model: HeaderViewModel }) {
 
 export async function Header() {
   const context = await getOptionalActiveOrganizationContext()
-  const model = buildHeaderViewModel(context)
+  let isPlatformAdministrator = false
+  if (context?.user.platformRole === 'ADMIN') {
+    try {
+      await getPlatformAdministratorContext(context.user.id)
+      isPlatformAdministrator = true
+    } catch (error) {
+      if (!(error instanceof PlatformAdminAccessError)) throw error
+    }
+  }
+  const model = buildHeaderViewModel(context, isPlatformAdministrator)
   return model.authenticated ? <DashboardHeader model={model} /> : <PublicHeader />
 }

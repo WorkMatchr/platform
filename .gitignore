@@ -17,6 +17,9 @@
 # lokale bestandsopslag (uitsluitend development)
 /.local-storage
 
+# lokale, auteursrechtelijk beperkte kennisbronnen
+/local-sources/knowledge/
+
 # tooling
 *.log
 *.tsbuildinfo
@@ -27,3 +30,4 @@
 /reports/account-architecture-preflight.json
 /reports/account-architecture-record-decisions.md
 /reports/account-architecture-record-decisions.json
+local-sources/

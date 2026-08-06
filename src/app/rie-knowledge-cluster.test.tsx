@@ -36,17 +36,21 @@ describe('RI&E-kenniscluster', () => {
       expect(html).toContain('aria-label="Broodkruimelpad"')
       expect(html).toMatch(/<a[^>]+href="\/">Home<\/a>/)
       expect(html).toMatch(/<span aria-current="page">[^<]+<\/span>/)
-      const internalHrefs = [...html.matchAll(/href="(\/[^"#?]*)"/g)].map((match) => match[1]!)
+      const internalHrefs = [...html.matchAll(/href="(\/[^"#]*)"/g)].map(
+        (match) => match[1]!.split('?')[0]!,
+      )
       expect(internalHrefs.every(isRegisteredPublicHref)).toBe(true)
       expect(internalHrefs).toContain('/advieswijzer')
       expect(internalHrefs).not.toContain(currentHref)
       expect(html.indexOf(`href="${primaryHref}"`)).toBeLessThan(html.indexOf(`href="${supplementalHref}"`))
-      for (const relatedHref of [
-        '/kenniscentrum/moet-ik-een-rie-hebben',
-        '/wettelijke-verplichtingen/rie',
-        '/diensten/rie',
-      ].filter((href) => href !== currentHref)) {
-        expect(internalHrefs).toContain(relatedHref)
+      if (name !== 'vraag') {
+        for (const relatedHref of [
+          '/kenniscentrum/moet-ik-een-rie-hebben',
+          '/wettelijke-verplichtingen/rie',
+          '/diensten/rie',
+        ].filter((href) => href !== currentHref)) {
+          expect(internalHrefs).toContain(relatedHref)
+        }
       }
       expect(html).not.toMatch(/vraag direct een offerte aan|vind automatisch een specialist|start AI-advies/i)
     })

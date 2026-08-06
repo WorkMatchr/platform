@@ -2,6 +2,10 @@ import { AuthShell, StatusMessage } from '@/components/auth/auth-shell'
 import { LogoutButton } from '@/components/auth/logout-button'
 import { LinkButton } from '@/components/ui/link-button'
 import { getActiveOrganizationContext } from '@/lib/organizations/organization-authorization'
+import {
+  getPlatformAdministratorContext,
+  PlatformAdminAccessError,
+} from '@/lib/platform-admin/platform-admin-authorization'
 import { buildAccountViewModel } from './account-view-model'
 
 export const metadata = { title: 'Uw account | WorkMatchr' }
@@ -17,11 +21,20 @@ function Detail({ label, value }: { label: string; value: string }) {
 
 export default async function AccountPage() {
   const context = await getActiveOrganizationContext()
-  const model = buildAccountViewModel(context)
+  let isPlatformAdministrator = false
+  if (context.user.platformRole === 'ADMIN') {
+    try {
+      await getPlatformAdministratorContext(context.user.id)
+      isPlatformAdministrator = true
+    } catch (error) {
+      if (!(error instanceof PlatformAdminAccessError)) throw error
+    }
+  }
+  const model = buildAccountViewModel(context, isPlatformAdministrator)
   const hasOrganization = model.organizationCount > 0
 
   return (
-    <AuthShell title={model.title} intro="Dit is Uw persoonlijke WorkMatchr-account." wide>
+    <AuthShell title={model.title} intro="Dit is uw persoonlijke WorkMatchr-account." wide>
       <section aria-labelledby="accountgegevens-heading">
         <h2 id="accountgegevens-heading" className="font-semibold text-brand-dark">
           Persoonlijk account
@@ -30,41 +43,58 @@ export default async function AccountPage() {
           <Detail label="E-mailadres" value={model.email} />
           <Detail label="Verificatiestatus" value={model.emailVerificationLabel} />
           <Detail label="Platformrol" value={model.platformRoleLabel} />
+          <Detail label="Accounttype" value={model.accountTypeLabel} />
           <Detail label="Accountstatus" value={model.accountStatusLabel} />
         </dl>
         <p className="mt-4 text-sm text-text-secondary">
-          De platformrol staat los van Uw rechten binnen een organisatie. Uw actuele organisatierol staat hieronder.
+          De platformrol staat los van uw rechten binnen een organisatie. Uw actuele organisatierol staat hieronder.
         </p>
       </section>
 
-      <section aria-labelledby="organisatiecontext-heading" className="mt-8 border-t border-border pt-7">
-        <h2 id="organisatiecontext-heading" className="font-semibold text-brand-dark">
-          Actieve organisatie
-        </h2>
-        {model.activeOrganization ? (
-          <dl className="mt-4 grid grid-cols-[repeat(auto-fit,minmax(min(100%,16rem),1fr))] gap-4">
-            <Detail label="Organisatienaam" value={model.activeOrganization.name} />
-            <Detail label="Rol binnen organisatie" value={model.activeOrganization.roleLabel} />
-            <Detail label="Organisatietype" value={model.activeOrganization.typeLabel} />
-            <Detail label="Organisatiestatus" value={model.activeOrganization.statusLabel} />
-          </dl>
-        ) : (
-          <p className="mt-3 text-text-secondary">Er is nog geen actieve organisatie.</p>
-        )}
-      </section>
+      {model.isPlatformAdministrator ? (
+        <section aria-labelledby="platformcontext-heading" className="mt-8 border-t border-border pt-7">
+          <h2 id="platformcontext-heading" className="font-semibold text-brand-dark">
+            Platformbeheer
+          </h2>
+          <p className="mt-3 text-text-secondary">
+            Dit account is uitsluitend gekoppeld aan de beveiligde beheeromgeving van WorkMatchr.
+          </p>
+          <div className="mt-5">
+            <LinkButton href="/platformbeheer">Naar platformbeheer</LinkButton>
+          </div>
+        </section>
+      ) : (
+        <>
+          <section aria-labelledby="organisatiecontext-heading" className="mt-8 border-t border-border pt-7">
+            <h2 id="organisatiecontext-heading" className="font-semibold text-brand-dark">
+              Actieve organisatie
+            </h2>
+            {model.activeOrganization ? (
+              <dl className="mt-4 grid grid-cols-[repeat(auto-fit,minmax(min(100%,16rem),1fr))] gap-4">
+                <Detail label="Organisatienaam" value={model.activeOrganization.name} />
+                <Detail label="Rol binnen organisatie" value={model.activeOrganization.roleLabel} />
+                <Detail label="Organisatietype" value={model.activeOrganization.typeLabel} />
+                <Detail label="Organisatiestatus" value={model.activeOrganization.statusLabel} />
+              </dl>
+            ) : (
+              <p className="mt-3 text-text-secondary">Er is nog geen actieve organisatie.</p>
+            )}
+          </section>
 
-      <div className="mt-7">
-        <StatusMessage>
-          {hasOrganization
-            ? 'Uw account is aan deze organisatie gekoppeld.'
-            : 'Maak Uw organisatie aan om Uw WorkMatchr-omgeving in te richten.'}
-        </StatusMessage>
-      </div>
-      <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-        <LinkButton href={hasOrganization ? '/organisatie' : '/organisatie/nieuw'}>
-          {hasOrganization ? 'Naar Uw organisatie' : 'Maak Uw organisatie aan'}
-        </LinkButton>
-      </div>
+          <div className="mt-7">
+            <StatusMessage>
+              {hasOrganization
+                ? 'Uw account is aan deze organisatie gekoppeld.'
+                : 'Maak uw organisatie aan om uw WorkMatchr-omgeving in te richten.'}
+            </StatusMessage>
+          </div>
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+            <LinkButton href={hasOrganization ? '/organisatie' : '/organisatie/nieuw'}>
+              {hasOrganization ? 'Naar uw organisatie' : 'Maak uw organisatie aan'}
+            </LinkButton>
+          </div>
+        </>
+      )}
       <div className="mt-7">
         <LogoutButton />
       </div>

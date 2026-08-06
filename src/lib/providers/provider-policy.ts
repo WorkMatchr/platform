@@ -1,4 +1,5 @@
 import type {
+  AccountType,
   MembershipStatus,
   OrganizationMembershipRole,
   OrganizationStatus,
@@ -8,6 +9,7 @@ import type {
 } from '@/generated/prisma/client'
 
 export type ProviderOrganizationActor = {
+  accountType: AccountType | null
   userStatus: UserStatus
   membershipStatus: MembershipStatus
   membershipRole: OrganizationMembershipRole
@@ -18,6 +20,7 @@ export type ProviderOrganizationActor = {
 export function canManageProviderData(actor: ProviderOrganizationActor): boolean {
   return (
     actor.userStatus === 'ACTIVE' &&
+    actor.accountType === 'PROFESSIONAL' &&
     actor.membershipStatus === 'ACTIVE' &&
     (actor.membershipRole === 'OWNER' || actor.membershipRole === 'ADMIN') &&
     actor.organizationStatus === 'ACTIVE' &&

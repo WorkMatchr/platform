@@ -2,6 +2,7 @@
 
 - Communiceer altijd in het Nederlands met de gebruiker.
 - Lees vóór wijzigingen de relevante documentatie via [docs/README.md](docs/README.md).
+- Lees voor product-, UX-, copy-, formulier-, status- of navigatiewijzigingen ook [docs/PRODUCT_CONSTITUTION.md](docs/PRODUCT_CONSTITUTION.md) en toets de oplevering aan de toepasselijke regels.
 - Volg de bestaande architectuur en naamgeving.
 - Maak kleine, controleerbare wijzigingen.
 - Verwijder geen bestaande functionaliteit zonder dit vooraf duidelijk te melden.

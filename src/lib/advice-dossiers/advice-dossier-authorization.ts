@@ -45,9 +45,8 @@ export async function getOptionalAdviceDossierViewer(): Promise<AdviceDossierVie
     userId: user.id,
     organizationId:
       membership &&
-      ['CLIENT', 'BOTH'].includes(
-        membership.organization.organizationType,
-      )
+      user.accountType === 'CLIENT' &&
+      membership.organization.organizationType === 'CLIENT'
         ? membership.organization.id
         : null,
     organizationRole: membership?.role ?? null,
@@ -61,9 +60,8 @@ export async function requireClientAdviceDossierViewer(
   const { user, activeMembership } =
     await requireOrganizationMembership(undefined, returnTo)
   if (
-    !['CLIENT', 'BOTH'].includes(
-      activeMembership.organization.organizationType,
-    )
+    user.accountType !== 'CLIENT' ||
+    activeMembership.organization.organizationType !== 'CLIENT'
   ) {
     redirect('/account')
   }

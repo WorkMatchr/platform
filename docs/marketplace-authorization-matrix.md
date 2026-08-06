@@ -1,5 +1,15 @@
 # Autorisatiematrix Marketplace v1
 
+## Platformcontext voor Marketplace Rules
+
+| Zichtbare rol | Bestaande technische grondslag | Regels | Credits | Betrouwbaarheid | Platformtoegang |
+| --- | --- | --- | --- | --- | --- |
+| Platformeigenaar | `PlatformRole.ADMIN` + actief `WORKMATCHR_PLATFORM`-membership `OWNER` | wijzigen | muteren | besluiten | uitnodigen, rollen wijzigen, blokkeren/intrekken |
+| Platformbeheerder | `PlatformRole.ADMIN` + actief membership `ADMIN` | wijzigen | muteren | besluiten | alleen bekijken |
+| Platformauditor | `PlatformRole.ADMIN` + actief membership `MEMBER` | lezen | lezen | lezen | alleen bekijken |
+
+De laatste actieve platformeigenaar, zelfblokkering en toegang zonder actieve platformcontext worden server-side geweigerd. Er is geen concurrerend rollenmodel toegevoegd.
+
 | Handeling | Client OWNER/ADMIN | Provider OWNER/ADMIN | Provider MEMBER | Reviewer | Approver | Auditor | Platformbeheer |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Dossier beheren/indienen | Nee | Ja | Lezen | Nee | Nee | Lezen | Beperkt |

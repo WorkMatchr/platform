@@ -40,6 +40,7 @@ export const auth = betterAuth({
   user: {
     fields: { name: 'displayName' },
     additionalFields: {
+      accountType: { type: ['CLIENT', 'PROFESSIONAL'], required: false, input: true },
       platformRole: { type: ['USER', 'ADMIN'], defaultValue: 'USER', input: false },
       status: {
         type: ['INVITED', 'ACTIVE', 'BLOCKED', 'ARCHIVED', 'DELETION_PENDING', 'ANONYMIZED'],
@@ -139,6 +140,7 @@ export const auth = betterAuth({
       if (ctx.path !== '/sign-up/email') return
 
       const result = registrationSchema.safeParse({
+        accountType: ctx.body?.accountType,
         name: ctx.body?.name,
         email: ctx.body?.email,
         password: ctx.body?.password,
@@ -152,6 +154,7 @@ export const auth = betterAuth({
 
       ctx.body.email = result.data.email
       ctx.body.name = result.data.name
+      ctx.body.accountType = result.data.accountType
     }),
   },
   databaseHooks: {

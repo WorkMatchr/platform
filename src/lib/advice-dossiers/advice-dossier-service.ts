@@ -285,6 +285,7 @@ async function createDossierAttempt(input: {
           select: {
             organizationId: true,
             status: true,
+            user: { select: { accountType: true } },
             organization: {
               select: { status: true, organizationType: true },
             },
@@ -297,9 +298,8 @@ async function createDossierAttempt(input: {
         membership.organizationId !== input.organizationId ||
         membership.status !== 'ACTIVE' ||
         membership.organization.status !== 'ACTIVE' ||
-        !['CLIENT', 'BOTH'].includes(
-          membership.organization.organizationType,
-        )
+        membership.user.accountType !== 'CLIENT' ||
+        membership.organization.organizationType !== 'CLIENT'
       ) {
         throw new AdviceDossierError('ACCESS_DENIED')
       }
@@ -456,6 +456,13 @@ const dossierDetailInclude = {
   versions: {
     orderBy: { versionNumber: 'desc' as const },
     take: 1,
+  },
+  request: {
+    select: {
+      id: true,
+      requestNumber: true,
+      status: true,
+    },
   },
 } satisfies Prisma.AdviceDossierInclude
 

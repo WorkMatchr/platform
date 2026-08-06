@@ -1,0 +1,112 @@
+{
+  "schemaVersion": "1.0",
+  "source": {
+    "code": "AI-07",
+    "title": "Kantoren",
+    "publisher": "Sdu Uitgevers",
+    "publicationDate": "2000-01-01",
+    "edition": "Tweede herziene druk",
+    "language": "nl",
+    "jurisdiction": "NL",
+    "sourceType": "AI_SHEET",
+    "sourceFormat": "PDF",
+    "copyrightClassification": "RESTRICTED_REFERENCE_ONLY",
+    "authorityLevel": "PROFESSIONAL_GUIDANCE",
+    "temporalStatus": "HISTORICAL",
+    "sourceFamily": "SZW-AI-BLADEN",
+    "independenceGroup": "SZW-AI-BLADEN",
+    "isPrimarySource": false,
+    "notes": "Historische bron uit 2000; normen, grenswaarden en wettelijke verwijzingen moeten worden geactualiseerd."
+  },
+  "sourceVersion": {
+    "externalKey": "ai-07:v1",
+    "versionLabel": "Tweede herziene druk",
+    "publicationDate": "2000-01-01",
+    "checksum": "8f9e0bd80a8b39d3f9864d8049c6ac598d9ef69651742985889b997dd4b476f1",
+    "extractionStatus": "EXTRACTED",
+    "reviewStatus": "REVIEW_REQUIRED"
+  },
+  "topics": [
+    {
+      "externalKey": "ai-07:topic:offices",
+      "slug": "historisch-gezonde-veilige-kantoren",
+      "title": "Gezonde en veilige kantoren (historisch)",
+      "description": "Historische kandidaat-kennis over kantoorinrichting, binnenklimaat, verlichting, geluid, ergonomie en voorzieningen.",
+      "domain": "ERGONOMICS"
+    }
+  ],
+  "fragments": [
+    { "externalKey": "ai-07:f1", "sourceVersionKey": "ai-07:v1", "pageFrom": 6, "sectionPath": "2.2 Binnenklimaat", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-07:f2", "sourceVersionKey": "ai-07:v1", "pageFrom": 8, "sectionPath": "2.3 Ventilatie", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-07:f3", "sourceVersionKey": "ai-07:v1", "pageFrom": 12, "sectionPath": "2.4 Stoffen, gassen en dampen", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-07:f4", "sourceVersionKey": "ai-07:v1", "pageFrom": 16, "sectionPath": "2.5 Licht", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-07:f5", "sourceVersionKey": "ai-07:v1", "pageFrom": 18, "sectionPath": "2.6 Geluid", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-07:f6", "sourceVersionKey": "ai-07:v1", "pageFrom": 20, "sectionPath": "3.1 Meubilair", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-07:f7", "sourceVersionKey": "ai-07:v1", "pageFrom": 22, "sectionPath": "3.1.3 Kantoortafels", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-07:f8", "sourceVersionKey": "ai-07:v1", "pageFrom": 25, "sectionPath": "3.3 Vloeroppervlak gebouw", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-07:f9", "sourceVersionKey": "ai-07:v1", "pageFrom": 26, "sectionPath": "3.4 Nevenvoorzieningen", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-07:f10", "sourceVersionKey": "ai-07:v1", "pageFrom": 26, "sectionPath": "3.5 Wegwijzers en veiligheid", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true }
+  ],
+  "claims": [
+    { "externalKey": "ai-07:c1", "topicKey": "ai-07:topic:offices", "claimType": "INSPECTION_POINT", "statement": "De beleving van het binnenklimaat hangt samen met temperatuur, straling, luchtvochtigheid, luchtbeweging, activiteit en kleding.", "applicability": "Historische comfortbenadering; actuele normen en gebouwcontext valideren.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-07:c2", "topicKey": "ai-07:topic:offices", "claimType": "CONTROL_MEASURE", "statement": "Ventilatie ondersteunt de toevoer van verse lucht en de afvoer of beperking van verontreinigingen in kantoorruimten.", "applicability": "Historische ventilatiecontext; actuele capaciteitseisen en meetwaarden valideren.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-07:c3", "topicKey": "ai-07:topic:offices", "claimType": "CONTROL_MEASURE", "statement": "Kantoorapparatuur met relevante emissies kan aanleiding geven tot afzonderlijke plaatsing, ventilatie of bronafzuiging.", "applicability": "Historische apparatuurcontext; toepassing afhankelijk van type, volume en actuele producteigenschappen.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-07:c4", "topicKey": "ai-07:topic:offices", "claimType": "INSPECTION_POINT", "statement": "Verlichting vraagt om aandacht voor daglicht, uitzicht, helderheidsverschillen, reflecties en de aard van het werk.", "applicability": "Historische verlichtingscontext; actuele normen en uitzonderingen beoordelen.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-07:c5", "topicKey": "ai-07:topic:offices", "claimType": "HAZARD", "statement": "Hinderlijk geluid kan in kantoren de concentratie, communicatie en uitvoering van aandachtvragende taken verstoren.", "applicability": "Historische geluidscontext; actuele beoordelingscriteria valideren.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-07:c6", "topicKey": "ai-07:topic:offices", "claimType": "CONTROL_MEASURE", "statement": "Kantoormeubilair hoort te passen bij de gebruiker, de taken, de benodigde reikafstanden en de gewenste werkhouding.", "applicability": "Historische ergonomische basis; actuele maatvoering en individuele behoeften beoordelen.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-07:c7", "topicKey": "ai-07:topic:offices", "claimType": "INSPECTION_POINT", "statement": "Een kantoorwerkplek vraagt om voldoende vrije been- en voetruimte en een passend ingesteld werkvlak.", "applicability": "Historische werkplekrichtlijn; actuele ergonomische normen valideren.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-07:c8", "topicKey": "ai-07:topic:offices", "claimType": "INSPECTION_POINT", "statement": "De kantoorindeling moet voldoende ruimte bieden voor werkplekken, looproutes, toegang en benodigde aanvullende voorzieningen.", "applicability": "Historische ruimtebenadering; actuele bouwkundige en arbotechnische normen toetsen.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-07:c9", "topicKey": "ai-07:topic:offices", "claimType": "CONTROL_MEASURE", "statement": "Sanitaire en algemene voorzieningen vragen om bereikbaarheid, onderhoud, ventilatie en afstemming op de aanwezige werknemers en werkzaamheden.", "applicability": "Historische voorzieningencontext; aantallen en wettelijke eisen actualiseren.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-07:c10", "topicKey": "ai-07:topic:offices", "claimType": "EMERGENCY_REQUIREMENT", "statement": "Herkenbare aanduidingen van nooduitgangen, vluchtwegen, brandblusmiddelen en eerstehulpvoorzieningen ondersteunen veilig handelen in kantoren.", "applicability": "Historische veiligheidscontext; actuele signalerings- en brandveiligheidseisen toetsen.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" }
+  ],
+  "citations": [
+    { "claimKey": "ai-07:c1", "sourceVersionKey": "ai-07:v1", "fragmentKey": "ai-07:f1", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-07:c2", "sourceVersionKey": "ai-07:v1", "fragmentKey": "ai-07:f2", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-07:c3", "sourceVersionKey": "ai-07:v1", "fragmentKey": "ai-07:f3", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-07:c4", "sourceVersionKey": "ai-07:v1", "fragmentKey": "ai-07:f4", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-07:c5", "sourceVersionKey": "ai-07:v1", "fragmentKey": "ai-07:f5", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-07:c6", "sourceVersionKey": "ai-07:v1", "fragmentKey": "ai-07:f6", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-07:c7", "sourceVersionKey": "ai-07:v1", "fragmentKey": "ai-07:f7", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-07:c8", "sourceVersionKey": "ai-07:v1", "fragmentKey": "ai-07:f8", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-07:c9", "sourceVersionKey": "ai-07:v1", "fragmentKey": "ai-07:f9", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-07:c10", "sourceVersionKey": "ai-07:v1", "fragmentKey": "ai-07:f10", "supportType": "HISTORICAL_ORIGIN" }
+  ],
+  "relations": [],
+  "rules": [],
+  "calculations": [],
+  "checklists": [
+    {
+      "code": "AI07_OFFICE_REVIEW_POC",
+      "version": 1,
+      "title": "Conceptcontrole kantooromgeving",
+      "description": "Beknopte interne PoC-controle op basis van historische aandachtspunten; geen actuele normtoets.",
+      "topicKey": "ai-07:topic:offices",
+      "audience": "INTERNAL_REVIEWER",
+      "scoringMethod": "NO_SCORE_REVIEW_ONLY",
+      "validationStatus": "UNVALIDATED",
+      "publicationStatus": "DRAFT",
+      "items": [
+        { "order": 1, "question": "Zijn klachten over temperatuur, tocht of luchtvochtigheid onderzocht?", "answerType": "YES_NO", "explanationClaimKey": "ai-07:c1", "required": true },
+        { "order": 2, "question": "Is de ventilatie afgestemd op gebruik en bezetting van de ruimte?", "answerType": "YES_NO", "explanationClaimKey": "ai-07:c2", "required": true },
+        { "order": 3, "question": "Is relevante kantoorapparatuur passend geplaatst en geventileerd?", "answerType": "YES_NO", "explanationClaimKey": "ai-07:c3", "required": true },
+        { "order": 4, "question": "Zijn daglicht, reflecties en helderheidsverschillen beoordeeld?", "answerType": "YES_NO", "explanationClaimKey": "ai-07:c4", "required": true },
+        { "order": 5, "question": "Is hinderlijk geluid rond aandachtvragende taken beperkt?", "answerType": "YES_NO", "explanationClaimKey": "ai-07:c5", "required": true },
+        { "order": 6, "question": "Zijn stoel, werkvlak en hulpmiddelen passend instelbaar?", "answerType": "YES_NO", "explanationClaimKey": "ai-07:c6", "required": true },
+        { "order": 7, "question": "Zijn beenruimte, looproutes en toegang vrij en bruikbaar?", "answerType": "YES_NO", "explanationClaimKey": "ai-07:c7", "required": true },
+        { "order": 8, "question": "Zijn vluchtwegen en noodvoorzieningen herkenbaar aangeduid?", "answerType": "YES_NO", "explanationClaimKey": "ai-07:c10", "required": true }
+      ]
+    }
+  ],
+  "procedures": [],
+  "roles": [],
+  "formTemplates": [],
+  "importMetadata": {
+    "createdAt": "2026-08-02T12:00:00.000Z",
+    "createdBy": "WORKMATCHR_POC",
+    "notes": "Handmatig samengesteld conceptpakket met korte eigen formuleringen en zonder integrale brontekst.",
+    "uncertainties": [
+      "Alle normen, grenswaarden en wettelijke verwijzingen uit de historische bron vereisen actualisatie.",
+      "De checklist is alleen een interne reviewstructuur en geen gevalideerde inspectie."
+    ]
+  }
+}

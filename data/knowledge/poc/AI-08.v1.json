@@ -1,0 +1,90 @@
+{
+  "schemaVersion": "1.0",
+  "source": {
+    "code": "AI-08",
+    "title": "Zittend en staand werk",
+    "publisher": "Sdu Uitgevers",
+    "publicationDate": "2000-01-01",
+    "edition": "Tweede herziene druk",
+    "language": "nl",
+    "jurisdiction": "NL",
+    "sourceType": "AI_SHEET",
+    "sourceFormat": "PDF",
+    "copyrightClassification": "RESTRICTED_REFERENCE_ONLY",
+    "authorityLevel": "PROFESSIONAL_GUIDANCE",
+    "temporalStatus": "HISTORICAL",
+    "sourceFamily": "SZW-AI-BLADEN",
+    "independenceGroup": "SZW-AI-BLADEN",
+    "isPrimarySource": false,
+    "notes": "Historische ergonomische bron uit 2000; maatvoering, normen en wettelijke verwijzingen vereisen actualisatie."
+  },
+  "sourceVersion": {
+    "externalKey": "ai-08:v1",
+    "versionLabel": "Tweede herziene druk",
+    "publicationDate": "2000-01-01",
+    "checksum": "4bdb641815a7d0177881dea1695241432204d4547a74d69b67f5d6b6b5b3654b",
+    "extractionStatus": "EXTRACTED",
+    "reviewStatus": "REVIEW_REQUIRED"
+  },
+  "topics": [
+    {
+      "externalKey": "ai-08:topic:posture",
+      "slug": "historisch-zittend-staand-werk",
+      "title": "Zittend en staand werk (historisch)",
+      "description": "Historische kandidaat-kennis over statische belasting, werkhouding, afwisseling en inrichting van zit- en stawerkplekken.",
+      "domain": "ERGONOMICS"
+    }
+  ],
+  "fragments": [
+    { "externalKey": "ai-08:f1", "sourceVersionKey": "ai-08:v1", "pageFrom": 7, "sectionPath": "2.1 Werkhouding", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-08:f2", "sourceVersionKey": "ai-08:v1", "pageFrom": 8, "sectionPath": "2.1 Statische belasting", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-08:f3", "sourceVersionKey": "ai-08:v1", "pageFrom": 9, "sectionPath": "2.2 Relatie tussen werkhouding, taak en werkplek", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-08:f4", "sourceVersionKey": "ai-08:v1", "pageFrom": 11, "sectionPath": "2.4 Been- en voetruimte", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-08:f5", "sourceVersionKey": "ai-08:v1", "pageFrom": 13, "sectionPath": "3 Keuze van het soort werk", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-08:f6", "sourceVersionKey": "ai-08:v1", "pageFrom": 15, "sectionPath": "4.2 De werkstoel", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-08:f7", "sourceVersionKey": "ai-08:v1", "pageFrom": 17, "sectionPath": "4.3 De werkopstelling", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-08:f8", "sourceVersionKey": "ai-08:v1", "pageFrom": 19, "sectionPath": "5 De gecombineerde zit-/stawerkplek", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-08:f9", "sourceVersionKey": "ai-08:v1", "pageFrom": 23, "sectionPath": "7 De werkplek voor staand werk", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-08:f10", "sourceVersionKey": "ai-08:v1", "pageFrom": 25, "sectionPath": "8 Aanwijzingen voor de praktijk", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true }
+  ],
+  "claims": [
+    { "externalKey": "ai-08:c1", "topicKey": "ai-08:topic:posture", "claimType": "RECOMMENDATION", "statement": "Afwisseling tussen zitten, staan en bewegen helpt eenzijdige werkhoudingen en langdurige statische belasting te beperken.", "applicability": "Historische ergonomische aanbeveling; situatiespecifiek beoordelen.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-08:c2", "topicKey": "ai-08:topic:posture", "claimType": "HEALTH_EFFECT", "statement": "Langdurige spierinspanning in een vrijwel onveranderde houding kan de doorbloeding beperken en bijdragen aan lichamelijke klachten.", "applicability": "Historische fysiologische uitleg; medische en ergonomische actualiteit valideren.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-08:c3", "topicKey": "ai-08:topic:posture", "claimType": "CONTROL_MEASURE", "statement": "Werkhoogte, reikafstand en kijkrichting horen te worden afgestemd op de taak en op verschillen in lichaamsafmetingen.", "applicability": "Historische ergonomische ontwerpcontext; actuele maatvoering en populatiegegevens toetsen.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-08:c4", "topicKey": "ai-08:topic:posture", "claimType": "INSPECTION_POINT", "statement": "Been- en voetruimte moet voldoende zijn om houdingen te wisselen en mag niet door opslag, apparatuur of losse kabels worden geblokkeerd.", "applicability": "Historische werkplekrichtlijn; actuele eisen valideren.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-08:c5", "topicKey": "ai-08:topic:posture", "claimType": "INSPECTION_POINT", "statement": "De taakinhoud en benodigde mobiliteit bepalen mede of zittend, gecombineerd zit-/stawerk of staand werk passend is.", "applicability": "Historische beslisstructuur; individueel en taakgericht toepassen.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-08:c6", "topicKey": "ai-08:topic:posture", "claimType": "CONTROL_MEASURE", "statement": "Een werkstoel voor langdurig gebruik vraagt om passende ondersteuning en instelmogelijkheden voor de individuele werknemer.", "applicability": "Historische stoelcriteria; actuele productnormen en individuele beperkingen toetsen.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-08:c7", "topicKey": "ai-08:topic:posture", "claimType": "INSPECTION_POINT", "statement": "Een zitwerkplek vraagt om samenhang tussen blikveld, reikbereik, bediening, beenruimte en werkhoogte.", "applicability": "Historische ontwerprichtlijn; actuele ergonomische beoordeling vereist.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-08:c8", "topicKey": "ai-08:topic:posture", "claimType": "CONTROL_MEASURE", "statement": "Een in hoogte verstelbare gecombineerde zit-/stawerkplek kan afwisseling ondersteunen wanneer taken zowel zittend als staand worden uitgevoerd.", "applicability": "Historische ergonomische oplossing; taak, gebruiker en technische inrichting beoordelen.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-08:c9", "topicKey": "ai-08:topic:posture", "claimType": "RISK", "statement": "Langdurig staan kan vermoeidheid en extra belasting van benen en rug veroorzaken, vooral bij een gebogen werkhouding.", "applicability": "Historische risicobeschrijving; actuele medische onderbouwing valideren.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-08:c10", "topicKey": "ai-08:topic:posture", "claimType": "RECOMMENDATION", "statement": "Werkplekontwerp kan systematisch worden opgebouwd uit taakanalyse, beproeving, implementatie, instructie en evaluatie met betrokkenheid van werknemers.", "applicability": "Historische ontwerpaanpak; toepasbaarheid per organisatie beoordelen.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" }
+  ],
+  "citations": [
+    { "claimKey": "ai-08:c1", "sourceVersionKey": "ai-08:v1", "fragmentKey": "ai-08:f1", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-08:c2", "sourceVersionKey": "ai-08:v1", "fragmentKey": "ai-08:f2", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-08:c3", "sourceVersionKey": "ai-08:v1", "fragmentKey": "ai-08:f3", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-08:c4", "sourceVersionKey": "ai-08:v1", "fragmentKey": "ai-08:f4", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-08:c5", "sourceVersionKey": "ai-08:v1", "fragmentKey": "ai-08:f5", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-08:c6", "sourceVersionKey": "ai-08:v1", "fragmentKey": "ai-08:f6", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-08:c7", "sourceVersionKey": "ai-08:v1", "fragmentKey": "ai-08:f7", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-08:c8", "sourceVersionKey": "ai-08:v1", "fragmentKey": "ai-08:f8", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-08:c9", "sourceVersionKey": "ai-08:v1", "fragmentKey": "ai-08:f9", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-08:c10", "sourceVersionKey": "ai-08:v1", "fragmentKey": "ai-08:f10", "supportType": "HISTORICAL_ORIGIN" }
+  ],
+  "relations": [],
+  "rules": [],
+  "calculations": [],
+  "checklists": [],
+  "procedures": [],
+  "roles": [],
+  "formTemplates": [],
+  "importMetadata": {
+    "createdAt": "2026-08-02T12:00:00.000Z",
+    "createdBy": "WORKMATCHR_POC",
+    "notes": "Handmatig samengesteld conceptpakket met korte eigen formuleringen en zonder integrale brontekst.",
+    "uncertainties": [
+      "Alle ergonomische maatvoering, normen en wettelijke verwijzingen vereisen actuele deskundige validatie.",
+      "De claims zijn algemene historische uitgangspunten en geen individuele werkplekbeoordeling."
+    ]
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "schemaVersion":"1.0",
+  "source":{"code":"AI-03","title":"Asbest","publisher":"Sdu Uitgevers","publicationDate":"2001-01-01","edition":"Tweede herziene druk","sourceType":"AI_SHEET","sourceFormat":"PDF","copyrightClassification":"RESTRICTED_REFERENCE_ONLY","authorityLevel":"PROFESSIONAL_GUIDANCE","temporalStatus":"HISTORICAL","sourceFamily":"SZW-AI-BLADEN","independenceGroup":"SZW-AI-BLADEN","isPrimarySource":false},
+  "sourceVersion":{"externalKey":"ai-03:v1","versionLabel":"Tweede herziene druk","publicationDate":"2001-01-01","checksum":"69d109e02eb0d966cb2d8d7f5f480a1ce4d682a325235d2078a86476c64b62b0","extractionStatus":"EXTRACTED","reviewStatus":"REVIEW_REQUIRED"},
+  "topics":[{"externalKey":"ai-03:topic:asbest","slug":"historisch-asbest","title":"Asbest (historisch)","description":"Historische kandidaat-kennis over risico, inventarisatie en beheersing.","domain":"HAZARDOUS_SUBSTANCES"}],
+  "fragments":[
+    {"externalKey":"ai-03:f1","sourceVersionKey":"ai-03:v1","pageFrom":7,"sectionPath":"Eigenschappen","fragmentType":"SECTION_REFERENCE","extractionMethod":"MANUAL_POC"},
+    {"externalKey":"ai-03:f2","sourceVersionKey":"ai-03:v1","pageFrom":11,"sectionPath":"Gezondheid","fragmentType":"SECTION_REFERENCE","extractionMethod":"MANUAL_POC"},
+    {"externalKey":"ai-03:f3","sourceVersionKey":"ai-03:v1","pageFrom":17,"sectionPath":"Inventarisatie","fragmentType":"SECTION_REFERENCE","extractionMethod":"MANUAL_POC"},
+    {"externalKey":"ai-03:f4","sourceVersionKey":"ai-03:v1","pageFrom":23,"sectionPath":"Beheersmaatregelen","fragmentType":"SECTION_REFERENCE","extractionMethod":"MANUAL_POC"},
+    {"externalKey":"ai-03:f5","sourceVersionKey":"ai-03:v1","pageFrom":29,"sectionPath":"Deskundigheid","fragmentType":"SECTION_REFERENCE","extractionMethod":"MANUAL_POC"},
+    {"externalKey":"ai-03:f6","sourceVersionKey":"ai-03:v1","pageFrom":35,"sectionPath":"Werkmethoden","fragmentType":"SECTION_REFERENCE","extractionMethod":"MANUAL_POC"},
+    {"externalKey":"ai-03:f7","sourceVersionKey":"ai-03:v1","pageFrom":41,"sectionPath":"Metingen","fragmentType":"SECTION_REFERENCE","extractionMethod":"MANUAL_POC"},
+    {"externalKey":"ai-03:f8","sourceVersionKey":"ai-03:v1","pageFrom":47,"sectionPath":"Voorschriften","fragmentType":"SECTION_REFERENCE","extractionMethod":"MANUAL_POC"}
+  ],
+  "claims":[
+    {"externalKey":"ai-03:c1","topicKey":"ai-03:topic:asbest","claimType":"HAZARD","statement":"Asbesthoudend materiaal kan bij verstoring vezels vrijgeven.","applicability":"Historische bron; actuele deskundige beoordeling vereist.","temporalStatus":"HISTORICAL","publicationStatus":"DRAFT","confidenceLevel":"LOW"},
+    {"externalKey":"ai-03:c2","topicKey":"ai-03:topic:asbest","claimType":"HEALTH_EFFECT","statement":"Blootstelling aan asbestvezels kan ernstige gezondheidsschade veroorzaken.","applicability":"Historische bron; actuele medische en juridische bron vereist.","temporalStatus":"HISTORICAL","publicationStatus":"DRAFT","confidenceLevel":"LOW"},
+    {"externalKey":"ai-03:c3","topicKey":"ai-03:topic:asbest","claimType":"INSPECTION_POINT","statement":"Voor werkzaamheden kan inventarisatie nodig zijn om asbesthoudende toepassingen te herkennen.","applicability":"Historische context; actuele verplichtingen valideren.","temporalStatus":"HISTORICAL","publicationStatus":"DRAFT","confidenceLevel":"LOW"},
+    {"externalKey":"ai-03:c4","topicKey":"ai-03:topic:asbest","claimType":"CONTROL_MEASURE","statement":"Blootstelling hoort zoveel mogelijk bij de bron te worden voorkomen of beheerst.","applicability":"Historische arbeidshygiënische context.","temporalStatus":"HISTORICAL","publicationStatus":"DRAFT","confidenceLevel":"LOW"},
+    {"externalKey":"ai-03:c5","topicKey":"ai-03:topic:asbest","claimType":"ROLE","statement":"Asbestinventarisatie en verwijdering kunnen specialistische deskundigheid vereisen.","applicability":"Historische rolbeschrijving; actuele certificatie-eisen valideren.","temporalStatus":"HISTORICAL","publicationStatus":"DRAFT","confidenceLevel":"LOW"},
+    {"externalKey":"ai-03:c6","topicKey":"ai-03:topic:asbest","claimType":"PROCEDURAL_STEP","statement":"Werkzaamheden vragen een vooraf bepaalde werkwijze die verspreiding van vezels beperkt.","applicability":"Historische procedurecontext.","temporalStatus":"HISTORICAL","publicationStatus":"DRAFT","confidenceLevel":"LOW"},
+    {"externalKey":"ai-03:c7","topicKey":"ai-03:topic:asbest","claimType":"MEASUREMENT_REQUIREMENT","statement":"Metingen kunnen onderdeel zijn van het beoordelen en beheersen van mogelijke blootstelling.","applicability":"Historische context; actuele meetmethoden valideren.","temporalStatus":"HISTORICAL","publicationStatus":"DRAFT","confidenceLevel":"LOW"},
+    {"externalKey":"ai-03:c8","topicKey":"ai-03:topic:asbest","claimType":"LEGAL_REQUIREMENT","statement":"Historische asbestvoorschriften mogen niet zonder controle als actuele verplichting worden toegepast.","applicability":"Uitsluitend historische waarschuwing.","temporalStatus":"HISTORICAL","publicationStatus":"DRAFT","confidenceLevel":"LOW"}
+  ],
+  "citations":[
+    {"claimKey":"ai-03:c1","sourceVersionKey":"ai-03:v1","fragmentKey":"ai-03:f1","supportType":"HISTORICAL_ORIGIN"},
+    {"claimKey":"ai-03:c2","sourceVersionKey":"ai-03:v1","fragmentKey":"ai-03:f2","supportType":"HISTORICAL_ORIGIN"},
+    {"claimKey":"ai-03:c3","sourceVersionKey":"ai-03:v1","fragmentKey":"ai-03:f3","supportType":"HISTORICAL_ORIGIN"},
+    {"claimKey":"ai-03:c4","sourceVersionKey":"ai-03:v1","fragmentKey":"ai-03:f4","supportType":"HISTORICAL_ORIGIN"},
+    {"claimKey":"ai-03:c5","sourceVersionKey":"ai-03:v1","fragmentKey":"ai-03:f5","supportType":"HISTORICAL_ORIGIN"},
+    {"claimKey":"ai-03:c6","sourceVersionKey":"ai-03:v1","fragmentKey":"ai-03:f6","supportType":"HISTORICAL_ORIGIN"},
+    {"claimKey":"ai-03:c7","sourceVersionKey":"ai-03:v1","fragmentKey":"ai-03:f7","supportType":"HISTORICAL_ORIGIN"},
+    {"claimKey":"ai-03:c8","sourceVersionKey":"ai-03:v1","fragmentKey":"ai-03:f8","supportType":"HISTORICAL_ORIGIN"}
+  ],"relations":[],"rules":[],"calculations":[],"checklists":[],"procedures":[],
+  "roles":[{"code":"asbestdeskundige","title":"Asbestdeskundige","description":"Historische inhoudelijke specialistische rol; actuele eisen vereisen validatie."}],
+  "formTemplates":[],"importMetadata":{"createdAt":"2026-08-02T10:00:00.000Z","createdBy":"WORKMATCHR_POC","uncertainties":["Historische wetgeving en specialistische eisen moeten volledig worden geactualiseerd."]}
+}

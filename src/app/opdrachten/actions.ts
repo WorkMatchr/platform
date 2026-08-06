@@ -3,75 +3,98 @@
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
-import { convertIntakeToAssignment } from '@/lib/assignments/assignment-conversion-service'
 import { AssignmentServiceError } from '@/lib/assignments/assignment-errors'
-import { getIntakeSubmissionContext } from '@/lib/assignments/assignment-query-service'
+import { publishIntakeAsAssignment } from '@/lib/assignments/intake-assignment-publication-service'
 import { requireOrganizationMembership } from '@/lib/organizations/organization-authorization'
-import { cancelAssignment, markAssignmentReadyForReview, reopenAssignment, updateAssignment } from '@/lib/assignments/assignment-service'
+import { archiveUnpublishedAssignment, cancelAssignment, markAssignmentReadyForReview, reopenAssignment, updateAssignment } from '@/lib/assignments/assignment-service'
 import { publishAssignment, withdrawPublishedAssignment } from '@/lib/assignments/assignment-publication-service'
 import { assignmentEditSchema, assignmentReasonTransitionSchema, assignmentTransitionSchema } from '@/lib/assignments/assignment-validation'
+import type { IntakeAssignmentReadinessIssue } from '@/lib/assignments/intake-assignment-readiness'
 
 export type AssignmentActionState = {
   message?: string
   errors?: Record<string, string[] | undefined>
   values?: Record<string, string | boolean>
+  readinessIssues?: IntakeAssignmentReadinessIssue[]
 }
-export type SubmitIntakeActionState = AssignmentActionState
+export type PublishIntakeActionState = AssignmentActionState
 
 const submitSchema = z.object({
   intakeId: z.uuid(),
   expectedIntakeVersion: z.coerce.number().int().positive(),
-  confirmed: z.literal('on', { error: 'Bevestig dat U de hulpvraag namens de organisatie indient.' }),
 })
 const cancelActionSchema = assignmentReasonTransitionSchema.extend({
-  confirmed: z.literal('on', { error: 'Bevestig dat U de opdracht wilt annuleren.' }),
+  confirmed: z.literal('on', { error: 'Bevestig dat u de opdracht wilt annuleren.' }),
 })
 const publishActionSchema = assignmentTransitionSchema.extend({
-  confirmed: z.literal('on', { error: 'Bevestig dat U de opdracht definitief wilt publiceren.' }),
+  confirmed: z.literal('on', { error: 'Bevestig dat u de opdracht definitief wilt publiceren.' }),
 })
 const withdrawActionSchema = assignmentReasonTransitionSchema.extend({
-  confirmed: z.literal('on', { error: 'Bevestig dat U de publicatie wilt intrekken.' }),
+  confirmed: z.literal('on', { error: 'Bevestig dat u de publicatie wilt intrekken.' }),
 })
 
-function safeSubmissionMessage(error: AssignmentServiceError): string {
+function safeIntakePublicationState(error: AssignmentServiceError): PublishIntakeActionState {
+  const errors = error.issues.reduce<Record<string, string[]>>((result, issue) => {
+    const key = issue.questionKey ?? issue.questionId ?? 'assignment'
+    result[key] = [...(result[key] ?? []), issue.message]
+    return result
+  }, {})
+
   switch (error.code) {
     case 'CONFLICT':
-      return 'Deze hulpvraag is ondertussen gewijzigd. Controleer de actuele gegevens voordat U opnieuw indient.'
+      return { message: 'Deze opdracht is ondertussen gewijzigd. Controleer de actuele gegevens voordat u opnieuw publiceert.' }
     case 'INVALID_STATUS':
-      return 'Controleer de hulpvraag voordat U deze indient.'
+      return { message: 'Controleer de opdracht voordat u deze publiceert.' }
     case 'VALIDATION_ERROR':
-      return 'De hulpvraag is nog niet volledig. Controleer de ontbrekende gegevens.'
+      return {
+        message: error.readinessIssues.length > 0
+          ? 'Uw opdracht kan nog niet worden gepubliceerd. Vul eerst de ontbrekende gegevens aan.'
+          : 'De opdracht is nog niet volledig. Controleer de ontbrekende gegevens.',
+        errors: {
+          ...error.fieldErrors,
+          ...errors,
+        },
+        ...(error.readinessIssues.length > 0 ? { readinessIssues: error.readinessIssues } : {}),
+      }
     case 'ACCESS_DENIED':
-      return 'U mag deze hulpvraag niet indienen.'
+      return { message: 'U mag deze opdracht niet publiceren.' }
     case 'INTEGRITY_ERROR':
-      return 'De hulpvraag kon niet veilig worden ingediend. Probeer het later opnieuw.'
+      return { message: 'Publiceren is nu niet gelukt. Uw gegevens zijn bewaard. Probeer het later opnieuw.' }
   }
 }
 
-export async function submitIntakeAction(
-  _state: SubmitIntakeActionState,
+export async function publishIntakeAction(
+  _state: PublishIntakeActionState,
   formData: FormData,
-): Promise<SubmitIntakeActionState> {
+): Promise<PublishIntakeActionState> {
   const parsed = submitSchema.safeParse({
     intakeId: formData.get('intakeId'),
     expectedIntakeVersion: formData.get('expectedIntakeVersion'),
-    confirmed: formData.get('confirmed'),
   })
-  if (!parsed.success) return { message: 'Bevestig de indiening voordat U verdergaat.', errors: parsed.error.flatten().fieldErrors }
+  if (!parsed.success) return { message: 'De publicatiegegevens zijn niet meer geldig. Vernieuw de pagina en probeer het opnieuw.', errors: parsed.error.flatten().fieldErrors }
 
   const { user, activeMembership } = await requireOrganizationMembership(undefined, '/hulpvragen')
   const organizationId = activeMembership.organization.id
 
+  let assignment
   try {
-    const context = await getIntakeSubmissionContext(user.id, organizationId, parsed.data.intakeId)
-    const assignment = await convertIntakeToAssignment(user.id, context.intakeId, {
-      expectedIntakeVersion: parsed.data.expectedIntakeVersion,
-    })
-    redirect(`/opdrachten/${assignment.id}/aangemaakt`)
+    assignment = await publishIntakeAsAssignment(
+      user.id,
+      organizationId,
+      parsed.data.intakeId,
+      {
+        expectedIntakeVersion: parsed.data.expectedIntakeVersion,
+      },
+    )
   } catch (error) {
-    if (error instanceof AssignmentServiceError) return { message: safeSubmissionMessage(error) }
+    if (error instanceof AssignmentServiceError) return safeIntakePublicationState(error)
     throw error
   }
+
+  revalidatePath('/hulpvragen')
+  revalidatePath(`/hulpvragen/${parsed.data.intakeId}/controle`)
+  revalidatePath('/opdrachten')
+  redirect(`/opdrachten/${assignment.id}?status=gepubliceerd`)
 }
 
 function assignmentValues(formData: FormData) {
@@ -82,8 +105,12 @@ function assignmentValues(formData: FormData) {
     description: String(formData.get('description') ?? ''),
     employeeCount: String(formData.get('employeeCount') ?? ''),
     desiredStartDate: String(formData.get('desiredStartDate') ?? ''),
+    locationType: String(formData.get('locationType') ?? ''),
     locationId: String(formData.get('locationId') ?? ''),
-    allowsRemoteWork: formData.get('allowsRemoteWork') === 'on',
+    locationCity: String(formData.get('locationCity') ?? ''),
+    locationRegion: String(formData.get('locationRegion') ?? ''),
+    locationDescription: String(formData.get('locationDescription') ?? ''),
+    locationCount: String(formData.get('locationCount') ?? ''),
   }
 }
 
@@ -175,6 +202,22 @@ export async function cancelAssignmentAction(_state: AssignmentActionState, form
   redirect(`/opdrachten/${parsed.data.assignmentId}?status=geannuleerd`)
 }
 
+export async function archiveAssignmentAction(formData: FormData): Promise<void> {
+  const parsed = assignmentTransitionSchema.safeParse({
+    assignmentId: String(formData.get('assignmentId') ?? ''),
+    expectedAssignmentVersion: String(formData.get('expectedAssignmentVersion') ?? ''),
+  })
+  if (!parsed.success) redirect('/opdrachten?actie=mislukt')
+  const context = await activeAssignmentContext(`/opdrachten/${parsed.data.assignmentId}/verwijderen`)
+  try {
+    await archiveUnpublishedAssignment(context.userId, context.organizationId, parsed.data)
+  } catch {
+    redirect('/opdrachten?actie=mislukt')
+  }
+  revalidatePath('/opdrachten')
+  redirect('/opdrachten?verwijderd=1')
+}
+
 export async function publishAssignmentAction(
   _state: AssignmentActionState,
   formData: FormData,
@@ -187,7 +230,7 @@ export async function publishAssignmentAction(
   const parsed = publishActionSchema.safeParse(values)
   if (!parsed.success) {
     return {
-      message: 'Bevestig de publicatie voordat U verdergaat.',
+      message: 'Bevestig de publicatie voordat u verdergaat.',
       errors: parsed.error.flatten().fieldErrors,
       values,
     }

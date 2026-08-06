@@ -1,5 +1,9 @@
 # Module 6C — Platformbeheer
 
+## Marketplacebeheer â€” aanvulling augustus 2026
+
+Platformbeheer bevat bruikbare pagina's voor **Bedrijfsregels**, **Betrouwbaarheid**, providercredits en **Platformbeheerders**. Platformeigenaar en platformbeheerder mogen regels, creditmutaties en betrouwbaarheidsonderzoeken afhandelen; de platformauditor leest uitsluitend. Alleen de platformeigenaar beheert platformtoegang. Alle acties gebruiken services, verplichte redenen, bevestiging en append-only audit. Zie [Marketplace Rules, credits en betrouwbaarheid](marketplace-rules-credit-reliability.md).
+
 ## Status
 
 Module 6C en Module 6C.1 zijn afgerond, gecommit en naar `origin/main` gepusht in commit `7812b2c`.
@@ -29,6 +33,16 @@ Toegang vereist gelijktijdig:
 5. `systemKey = WORKMATCHR_PLATFORM`.
 
 Alle controles vinden server-side plaats. Organisatierollen verlenen geen toegang. Reviewer-, approver- en auditorpermissions blijven afzonderlijk en worden niet door platformbeheer toegekend.
+
+### Testaccountwisselaar voor acceptatie
+
+In development en test kan een bevoegde platformbeheerder met `ENABLE_TEST_ACCOUNT_SWITCHER=true` bestaande actieve fictieve accounts selecteren. De wisselaar toont naam, organisatie en rol, vraagt expliciete bevestiging en gebruikt geen wachtwoord. De oorspronkelijke beheerder blijft auditactor; het gekozen account bepaalt tijdelijk alle effectieve pagina-, rol- en tenantrechten.
+
+Een zichtbare banner blijft op iedere route staan en beëindigt de testmodus via een server-side stopactie. Productie, geneste wisselingen, echte e-maildomeinen, geblokkeerde of niet-geverifieerde accounts en onbevoegde gebruikers worden geweigerd. In de afzonderlijke M7X.1-testdatabase is de dataset wel aanwezig, maar de wisselaar kan pas worden gebruikt nadat die database ook een geldig actief platformbeheeraccount met `WORKMATCHR_PLATFORM`-membership bevat.
+
+De wisselaar staat op het hoofddashboard in de platformbeheershell. Buiten productie ziet uitsluitend een reeds server-side bevoegde platformbeheerder een beperkte melding wanneer de lokale featureflag uitstaat of de accountquery veilig faalt. Een lege geldige doelgroep blijft zichtbaar als lege toestand; fouten worden niet stilzwijgend als een lege lijst gepresenteerd.
+
+Platformbeheerroutes gebruiken een afzonderlijke compacte header en footer. Publieke navigatie, `Stel uw vraag`, organisatie-aanmaak en opdrachtgeveracties worden daar niet gerenderd. De footer bevat uitsluitend de beheeridentiteit, privacy en de aanduiding van de beveiligde beheeromgeving. De gewone tenantheader, tenantfooter en organisatieflow blijven buiten `/platformbeheer` ongewijzigd.
 
 ## Cockpithiërarchie
 

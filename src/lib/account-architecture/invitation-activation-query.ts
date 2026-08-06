@@ -1,5 +1,5 @@
 import { getPrisma } from '@/lib/prisma'
-import { normalTenantOrganizationWhere } from './platform-organization-governance'
+const PLATFORM_ORGANIZATION_SYSTEM_KEY = 'WORKMATCHR_PLATFORM'
 
 export type InvitationActivationView = {
   email: string
@@ -33,26 +33,56 @@ export async function getInvitationActivationView(
       memberships: {
         where: {
           status: 'INVITED',
-          organization: { status: 'ACTIVE', ...normalTenantOrganizationWhere },
+          organization: { status: 'ACTIVE' },
         },
         select: {
-          organization: { select: { name: true } },
+          organizationId: true,
+          organization: {
+            select: {
+              name: true,
+              organizationType: true,
+              systemKey: true,
+            },
+          },
         },
+      },
+      receivedPlatformAdminInvitations: {
+        where: {
+          status: 'PENDING',
+          expiresAt: { gt: new Date() },
+        },
+        select: { platformOrganizationId: true },
       },
     },
   })
   if (
     !user ||
-    user.status !== 'INVITED' ||
     user.migrationClassification !== null ||
     user.memberships.length !== 1
   ) {
     return null
   }
 
+  const membership = user.memberships[0]!
+  const isNormalTenantInvitation =
+    user.status === 'INVITED' &&
+    membership.organization.organizationType !== 'PLATFORM_OPERATOR' &&
+    membership.organization.systemKey === null
+  const isPlatformInvitation =
+    (user.status === 'INVITED' || user.status === 'ACTIVE') &&
+    membership.organization.organizationType === 'PLATFORM_OPERATOR' &&
+    membership.organization.systemKey === PLATFORM_ORGANIZATION_SYSTEM_KEY &&
+    user.receivedPlatformAdminInvitations.some(
+      (invitation) => invitation.platformOrganizationId === membership.organizationId,
+    )
+
+  if (!isNormalTenantInvitation && !isPlatformInvitation) {
+    return null
+  }
+
   return {
     email: user.email,
     displayName: user.displayName?.trim() || 'Gebruiker',
-    organizationName: user.memberships[0]!.organization.name,
+    organizationName: membership.organization.name,
   }
 }

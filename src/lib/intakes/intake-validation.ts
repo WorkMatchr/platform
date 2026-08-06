@@ -2,11 +2,13 @@ import { z } from 'zod'
 import type { IntakeQuestionCategory, IntakeQuestionInputType } from '@/generated/prisma/client'
 import { IntakeServiceError } from './intake-errors'
 import type { IntakeProgress, NormalizedIntakeAnswer } from './intake-types'
+import { getVisibleQuestionKeys } from './intake-question-catalog'
 
 const uuidSchema = z.string().uuid()
 
 export const createIntakeInputSchema = z.object({
   freeText: z.string(),
+  knowledgeContextId: z.string().trim().min(1).max(100).optional(),
 })
 
 export const saveIntakeStepInputSchema = z.object({
@@ -117,7 +119,7 @@ function normalizeNumber(question: IntakeQuestionDefinition, value: unknown): No
   if (!/^-?\d+(?:\.\d{1,2})?$/.test(raw)) validationError(question, 'Voer een geldig getal in.')
   const normalized = Number(raw)
   if (!Number.isFinite(normalized)) validationError(question, 'Voer een geldig getal in.')
-  if (question.key === 'AFFECTED_EMPLOYEE_COUNT' && !Number.isInteger(normalized)) {
+  if ((question.key === 'AFFECTED_EMPLOYEE_COUNT' || question.key.endsWith('_COUNT')) && !Number.isInteger(normalized)) {
     validationError(question, 'Voer een geheel aantal medewerkers in.')
   }
   const min = numberBoundary(question.minNumber)
@@ -185,7 +187,7 @@ export function normalizeIntakeAnswer(
       return normalizeOptions(question, value)
     case 'ORGANIZATION_LOCATION':
       if (typeof value !== 'string' || !context.activeLocationIds.has(value)) {
-        validationError(question, 'Kies een actieve locatie van Uw organisatie.')
+        validationError(question, 'Kies een actieve organisatielocatie.')
       }
       return { ...EMPTY_ANSWER, organizationLocationId: value, isEmpty: false }
     default: {
@@ -232,21 +234,35 @@ function storedAnswerHasValue(answer: StoredIntakeAnswer | undefined): boolean {
 export function calculateIntakeProgress(
   questions: Array<Pick<IntakeQuestionDefinition, 'id' | 'key' | 'category' | 'isRequired'>>,
   answers: StoredIntakeAnswer[],
+  questionnaireVersion = 2,
 ): IntakeProgress {
   const answersByQuestion = new Map(answers.map((answer) => [answer.questionId, answer]))
+  const answerLookup = new Map<string, readonly string[]>(
+    questions.map((question) => {
+      const answer = answersByQuestion.get(question.id)
+      const values = answer?.options.map((entry) => entry.option.value) ?? []
+      return [question.key, values]
+    }),
+  )
+  const visibleQuestionKeys = getVisibleQuestionKeys(questions.map((question) => question.key), answerLookup, questionnaireVersion)
   const workModeQuestion = questions.find((question) => question.key === 'PREFERRED_WORK_MODE')
   const workModeAnswer = workModeQuestion ? answersByQuestion.get(workModeQuestion.id) : undefined
   const isRemote = workModeAnswer?.options.some((entry) => entry.option.value === 'REMOTE') ?? false
 
   const missingQuestions = questions
+    .filter((question) => visibleQuestionKeys.has(question.key))
     .filter((question) => question.isRequired || (question.key === 'PRIMARY_LOCATION' && !isRemote))
     .filter((question) => !storedAnswerHasValue(answersByQuestion.get(question.id)))
+
+  const countableQuestions = questions
+    .filter((question) => visibleQuestionKeys.has(question.key))
+    .filter((question) => question.isRequired || (question.key === 'PRIMARY_LOCATION' && !isRemote))
 
   return {
     isComplete: missingQuestions.length === 0,
     missingQuestionKeys: missingQuestions.map((question) => question.key),
     nextIncompleteCategory: missingQuestions[0]?.category ?? null,
-    answeredQuestionCount: questions.filter((question) => storedAnswerHasValue(answersByQuestion.get(question.id))).length,
-    totalQuestionCount: questions.length,
+    answeredQuestionCount: countableQuestions.filter((question) => storedAnswerHasValue(answersByQuestion.get(question.id))).length,
+    totalQuestionCount: countableQuestions.length,
   }
 }

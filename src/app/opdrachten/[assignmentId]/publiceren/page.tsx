@@ -52,7 +52,7 @@ export default async function AssignmentPublishPage({
 
   if (!assignment.canManage) notFound()
   if (assignment.status === 'OPEN') redirect(`/opdrachten/${assignment.id}`)
-  if (assignment.status !== 'READY_FOR_REVIEW') {
+  if (assignment.status !== 'DRAFT' && assignment.status !== 'READY_FOR_REVIEW') {
     redirect(`/opdrachten/${assignment.id}`)
   }
 
@@ -62,8 +62,7 @@ export default async function AssignmentPublishPage({
         Publicatie controleren
       </Heading>
       <p className="mt-3 max-w-3xl text-text-secondary">
-        Controleer de definitieve opdrachtgegevens. Na publicatie kan de inhoud
-        niet meer worden gewijzigd.
+        Na publicatie kan WorkMatchr passende professionals selecteren. Controleer daarom eerst of de opdracht volledig en correct is. Na publicatie kan de inhoud niet meer worden gewijzigd.
       </p>
 
       <div className="mt-8 space-y-6">
@@ -84,12 +83,7 @@ export default async function AssignmentPublishPage({
             <Detail label="Organisatie" value={assignment.organizationName} />
             <Detail
               label="Locatie"
-              value={
-                assignment.location ??
-                (assignment.allowsRemoteWork
-                  ? 'Op afstand mogelijk'
-                  : 'Niet ingevuld')
-              }
+              value={assignment.location}
             />
             <Detail
               label="Gewenste startdatum"
@@ -106,10 +100,9 @@ export default async function AssignmentPublishPage({
               label="Sector"
               value={assignment.sectorName ?? 'Niet ingevuld'}
             />
-            <Detail
-              label="Werken op afstand"
-              value={assignment.allowsRemoteWork ? 'Mogelijk' : 'Niet mogelijk'}
-            />
+            {assignment.locationDescription && (
+              <Detail label="Toelichting locatie" value={assignment.locationDescription} />
+            )}
           </dl>
         </Card>
 

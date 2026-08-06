@@ -5,9 +5,9 @@ export function IntakeList({ items }: { items: IntakeListItem[] }) {
   if (items.length === 0) {
     return (
       <div className="rounded-card border border-border bg-surface-subtle p-7 text-center sm:p-10">
-        <h2 className="text-xl font-bold text-brand-dark">Nog geen hulpvragen</h2>
+        <h2 className="text-xl font-bold text-brand-dark">Nog geen opdrachten</h2>
         <p className="mx-auto mt-3 max-w-xl text-text-secondary">
-          Start met een korte omschrijving. Daarna helpt WorkMatchr U de vraag stap voor stap te verduidelijken.
+          Start met een korte omschrijving van uw hulpvraag. Daarna helpt WorkMatchr u de opdracht stap voor stap duidelijk te maken.
         </p>
       </div>
     )

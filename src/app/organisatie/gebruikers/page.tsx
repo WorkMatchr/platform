@@ -20,10 +20,10 @@ import { Card } from '@/components/ui/card'
 import { Heading } from '@/components/ui/heading'
 import { requireOrganizationMembership } from '@/lib/organizations/organization-authorization'
 import { AccountManagementQueryError, getOrganizationAccountManagement } from '@/lib/account-architecture/account-management-query-service'
+import { organizationRoleLabels } from '@/lib/presentation/platform-labels'
 
 export const metadata: Metadata = { title: 'Gebruikers beheren | WorkMatchr' }
 
-const roleLabels = { OWNER: 'Eigenaar', ADMIN: 'Beheerder', MEMBER: 'Lid' } as const
 const accountStatusLabels = {
   INVITED: 'Activatie open',
   ACTIVE: 'Actief',
@@ -110,7 +110,7 @@ export default async function OrganizationUsersPage({
                 <Badge variant={account.accountStatus === 'ACTIVE' ? 'success' : 'neutral'}>{accountStatusLabels[account.accountStatus]}</Badge>
               </div>
               <p className="mt-1 break-all text-sm text-text-secondary">{account.email}</p>
-              <p className="mt-2 text-sm">Rol: <span className="font-semibold">{roleLabels[account.role]}</span></p>
+              <p className="mt-2 text-sm">Rol: <span className="font-semibold">{organizationRoleLabels[account.role]}</span></p>
               {account.invitationDeliveryStatus === 'ACCEPTED' && (
                 <p className="mt-2 text-sm text-success">De e-mailprovider heeft de uitnodiging geaccepteerd.</p>
               )}

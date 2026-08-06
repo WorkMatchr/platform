@@ -1,6 +1,9 @@
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import { AuthShell, StatusMessage } from '@/components/auth/auth-shell'
 import { EmailRequestForm } from '@/components/auth/email-request-form'
+
+export const metadata: Metadata = { title: 'E-mailadres verifiëren | WorkMatchr' }
 
 export default async function VerifyEmailPage({ searchParams }: { searchParams: Promise<{ status?: string; error?: string }> }) {
   const params = await searchParams

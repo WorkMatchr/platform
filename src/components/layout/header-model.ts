@@ -1,8 +1,7 @@
-import type { OrganizationMembershipRole, OrganizationType, PlatformRole, UserStatus } from '@/generated/prisma/client'
-import { isCentralPlatformAdministrator } from '@/lib/account-architecture/account-management-policy'
+import type { AccountType, OrganizationMembershipRole, OrganizationType, PlatformRole, UserStatus } from '@/generated/prisma/client'
 
 type HeaderContext = {
-  user: { displayName: string | null; email: string; status?: UserStatus; platformRole?: PlatformRole }
+  user: { displayName: string | null; email: string; status?: UserStatus; platformRole?: PlatformRole; accountType?: AccountType | null }
   activeMembership: {
     role: OrganizationMembershipRole
     status?: 'ACTIVE' | 'INVITED' | 'SUSPENDED' | 'REMOVED'
@@ -19,71 +18,96 @@ type HeaderContext = {
 
 export type HeaderViewModel = {
   authenticated: boolean
+  isPlatformAdministrator: boolean
   displayName: string
   activeOrganization: { id: string; name: string; role: OrganizationMembershipRole } | null
-  primaryLinks: Array<{ href: string; label: string }>
-  menuLinks: Array<{ href: string; label: string }>
+  navigationGroups: Array<{
+    key: 'work' | 'organization' | 'personal'
+    label: 'WERK' | 'ORGANISATIE' | 'PERSOONLIJK'
+    links: Array<{ href: string; label: string }>
+  }>
 }
 
-export function buildHeaderViewModel(context: HeaderContext | null): HeaderViewModel {
+export function buildHeaderViewModel(
+  context: HeaderContext | null,
+  isPlatformAdministrator = false,
+): HeaderViewModel {
   if (!context) {
-    return { authenticated: false, displayName: '', activeOrganization: null, primaryLinks: [], menuLinks: [] }
+    return {
+      authenticated: false,
+      isPlatformAdministrator: false,
+      displayName: '',
+      activeOrganization: null,
+      navigationGroups: [],
+    }
   }
 
   const organization = context.activeMembership?.organization ?? null
-  const supportsClientWork = organization?.organizationType === 'CLIENT' || organization?.organizationType === 'BOTH'
+  const supportsClientWork = context.user.accountType === 'CLIENT'
   const supportsProviderWork = Boolean(
-    organization?.providerProfile && (organization.organizationType === 'PROVIDER' || organization.organizationType === 'BOTH'),
+    context.user.accountType === 'PROFESSIONAL' && organization?.providerProfile &&
+      (organization.organizationType === 'PROVIDER' || organization.organizationType === 'BOTH'),
   )
-  const isPlatformAdministrator = isCentralPlatformAdministrator({
-    status: context.user.status ?? 'INVITED',
-    platformRole: context.user.platformRole ?? 'USER',
-    platformMembership: context.activeMembership
-      ? {
-          status: context.activeMembership.status ?? 'INVITED',
-          organization: {
-            status: context.activeMembership.organization.status ?? 'PENDING',
-            organizationType: context.activeMembership.organization.organizationType,
-            systemKey: context.activeMembership.organization.systemKey ?? null,
-          },
-        }
-      : null,
-  })
-
   return {
     authenticated: true,
+    isPlatformAdministrator,
     displayName: context.user.displayName?.trim() || 'Gebruiker',
-    activeOrganization: context.activeMembership ? {
-      id: context.activeMembership.organization.id,
-      name: context.activeMembership.organization.name,
-      role: context.activeMembership.role,
-    } : null,
-    primaryLinks: [
-      ...(organization ? [{ href: '/dashboard', label: 'Dashboard' }] : []),
-      ...(supportsClientWork
-        ? [
-            { href: '/hulpvragen', label: 'Hulpvragen' },
-            { href: '/adviesdossiers', label: 'Adviesdossiers' },
-            { href: '/opdrachten', label: 'Opdrachten' },
-          ]
-        : []),
-      ...(supportsProviderWork
-        ? [
-            { href: '/aanbiedersdossier', label: 'Dienstverlenersprofiel' },
-            { href: '/professional/opdrachten', label: 'Aanvragen' },
-            { href: '/uitnodigingen', label: 'Uitnodigingen' },
-          ]
-        : []),
-      ...(isPlatformAdministrator ? [{ href: '/platformbeheer', label: 'Platformbeheer' }] : []),
-    ],
-    menuLinks: [
-      { href: '/account', label: 'Mijn account' },
-      { href: organization ? '/organisatie' : '/organisatie/nieuw', label: 'Mijn organisatie' },
-      ...(supportsClientWork
-        ? [{ href: '/adviesdossiers', label: 'Mijn adviesdossiers' }]
-        : []),
-      ...(supportsProviderWork ? [{ href: '/aanbiedersdossier', label: 'Dienstverlenersprofiel' }] : []),
-      ...(organization ? [{ href: '/notificaties', label: 'Notificaties' }] : []),
-    ],
+    activeOrganization:
+      !isPlatformAdministrator && context.activeMembership
+        ? {
+            id: context.activeMembership.organization.id,
+            name: context.activeMembership.organization.name,
+            role: context.activeMembership.role,
+          }
+        : null,
+    navigationGroups: isPlatformAdministrator
+      ? [
+          { key: 'work', label: 'WERK', links: [{ href: '/platformbeheer', label: 'Platformbeheer' }] },
+          { key: 'personal', label: 'PERSOONLIJK', links: [{ href: '/account', label: 'Account' }] },
+        ]
+      : [
+          {
+            key: 'work',
+            label: 'WERK',
+            links: [
+              ...(organization ? [{ href: '/dashboard', label: 'Dashboard' }] : []),
+              ...(supportsClientWork
+                ? [
+                    { href: '/hulpvragen', label: 'Opdrachten' },
+                    { href: '/opdrachten', label: 'Gepubliceerde opdrachten' },
+                    { href: '/adviesdossiers', label: 'Adviesdossiers' },
+                  ]
+                : []),
+              ...(supportsProviderWork
+                ? [
+                    { href: '/professional/opdrachten', label: 'Aanvragen' },
+                    { href: '/uitnodigingen', label: 'Uitnodigingen' },
+                    { href: '/credits', label: 'Credits' },
+                  ]
+                : []),
+            ],
+          },
+          {
+            key: 'organization',
+            label: 'ORGANISATIE',
+            links: [
+              { href: organization ? '/organisatie' : '/organisatie/nieuw', label: 'Organisatie' },
+              ...(supportsProviderWork
+                ? [
+                    { href: '/aanbiedersdossier', label: 'Dienstverlenersprofiel' },
+                    { href: '/aanbiedersdossier/professionals', label: 'Professionals' },
+                  ]
+                : []),
+            ],
+          },
+          {
+            key: 'personal',
+            label: 'PERSOONLIJK',
+            links: [
+              { href: '/account', label: 'Account' },
+              ...(organization ? [{ href: '/notificaties', label: 'Notificaties' }] : []),
+            ],
+          },
+        ].filter((group) => group.links.length > 0) as HeaderViewModel['navigationGroups'],
   }
 }

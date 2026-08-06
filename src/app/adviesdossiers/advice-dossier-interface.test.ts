@@ -12,11 +12,11 @@ describe('Adviesdossier-interface en beveiliging', () => {
     const detail = read(
       'src/app/adviesdossiers/[dossierId]/page.tsx',
     )
-    expect(overview).toContain('Mijn adviesdossiers')
+    expect(overview).toContain('Adviesdossiers')
     expect(overview).toContain('Nog geen adviesdossiers')
     expect(overview).toContain('Bekijken')
     expect(detail).toContain('Download als PDF')
-    expect(detail).toContain('Terug naar Mijn adviesdossiers')
+    expect(detail).toContain('Terug naar adviesdossiers')
   })
 
   it('controleert server-side toegang voor pagina en PDF', () => {
@@ -34,7 +34,7 @@ describe('Adviesdossier-interface en beveiliging', () => {
     expect(route).toContain("'X-Robots-Tag': 'noindex")
   })
 
-  it('activeert geen matching-, professional- of opdrachtactie', () => {
+  it('activeert geen matching of directe professionalkeuze', () => {
     const all = [
       read('src/app/adviesdossiers/page.tsx'),
       read('src/app/adviesdossiers/[dossierId]/page.tsx'),
@@ -44,7 +44,15 @@ describe('Adviesdossier-interface en beveiliging', () => {
     ].join('\n')
     expect(all).not.toContain('Zoek een specialist')
     expect(all).not.toContain('Bekijk professionals')
-    expect(all).not.toContain('Start opdracht')
     expect(all).not.toContain('Vraag offerte aan')
+  })
+
+  it('biedt een idempotente opdrachtactie vanuit een passend afgerond dossier', () => {
+    const detail = read('src/app/adviesdossiers/[dossierId]/page.tsx')
+    expect(detail).toContain('Maak hiervan een opdracht')
+    expect(detail).toContain('Bekijk gekoppelde opdracht')
+    expect(detail).toContain('viewer.userId === dossier.ownerUserId')
+    expect(detail).toContain('primaryProfessionalRequirement')
+    expect(detail).toContain('/aanvragen/nieuw?dossierId=')
   })
 })

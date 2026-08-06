@@ -11,6 +11,7 @@ import {
 
 const baseContext: IntakePolicyContext = {
   userId: 'user-1',
+  accountType: 'CLIENT',
   userStatus: 'ACTIVE',
   membershipStatus: 'ACTIVE',
   membershipRole: 'MEMBER',
@@ -31,13 +32,19 @@ describe('intakeautorisatiebeleid', () => {
 
   it('laat een MEMBER alleen de eigen conceptintake beheren', () => {
     expect(canEditIntake(baseContext)).toBe(true)
+    expect(canArchiveIntake(baseContext)).toBe(false)
     expect(canEditIntake({ ...baseContext, createdByUserId: 'other-user' })).toBe(false)
   })
 
-  it('staat CLIENT en BOTH toe, maar geen PROVIDER-organisatie', () => {
+  it.each(['OWNER', 'ADMIN'] as const)('maakt verwijderen voor %s idempotent na archivering', (membershipRole) => {
+    expect(canArchiveIntake({ ...baseContext, membershipRole, intakeStatus: 'ARCHIVED' })).toBe(true)
+  })
+
+  it('staat alleen een bedrijfsaccount bij een CLIENT-organisatie toe', () => {
     expect(canEditIntake(baseContext)).toBe(true)
-    expect(canEditIntake({ ...baseContext, organizationType: 'BOTH' })).toBe(true)
+    expect(canEditIntake({ ...baseContext, organizationType: 'BOTH' })).toBe(false)
     expect(canEditIntake({ ...baseContext, organizationType: 'PROVIDER' })).toBe(false)
+    expect(canEditIntake({ ...baseContext, accountType: 'PROFESSIONAL' })).toBe(false)
   })
 
   it('weigert toegang bij een inactieve gebruiker, membership of organisatie', () => {

@@ -25,6 +25,7 @@ function context(memberships: Membership[], activeMembership: Membership | null)
       email: 'account@example.invalid',
       emailVerified: true,
       platformRole: 'USER',
+      accountType: 'CLIENT',
       status: 'ACTIVE',
     },
     memberships,
@@ -50,10 +51,15 @@ describe('accountweergave van platform- en organisatierollen', () => {
   })
 
   it('toont een platformaccount zonder tenantorganisatie zonder selector', () => {
-    const model = buildAccountViewModel(context([], null))
+    const platformContext = context([], null)
+    platformContext.user.platformRole = 'ADMIN'
+    platformContext.user.accountType = null
+    const model = buildAccountViewModel(platformContext, true)
 
     expect(model.organizationCount).toBe(0)
     expect(model.activeOrganization).toBeNull()
+    expect(model.isPlatformAdministrator).toBe(true)
+    expect(model.accountTypeLabel).toBe('Platformaccount')
   })
 
   it('presenteert OWNER als Eigenaar naast de afzonderlijke platformrol', () => {
@@ -74,13 +80,13 @@ describe('accountweergave van platform- en organisatierollen', () => {
     expect(model.activeOrganization?.roleLabel).toBe('Beheerder')
   })
 
-  it('presenteert MEMBER als Lid naast de afzonderlijke platformrol', () => {
+  it('presenteert MEMBER als Medewerker naast de afzonderlijke platformrol', () => {
     const active = membership('organization-1', 'Leden BV', 'MEMBER')
 
     const model = buildAccountViewModel(context([active], active))
 
     expect(model.platformRoleLabel).toBe('Gebruiker')
-    expect(model.activeOrganization?.roleLabel).toBe('Lid')
+    expect(model.activeOrganization?.roleLabel).toBe('Medewerker')
   })
 
   it('bevat geen organisatiewisselaar of tweede-organisatieactie', () => {

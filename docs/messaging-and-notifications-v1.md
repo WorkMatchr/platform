@@ -1,5 +1,9 @@
 # Berichten en notificaties v1
 
+## Marketplace Rules-aanvulling
+
+Opdrachtintrekking, contactverzoeken en geaccepteerde platformuitnodigingen schrijven in-appnotificaties en bestaande outboxrecords binnen de zakelijke transactie. Een outboxrecord bewijst nog geen externe bezorging; deze werkset voegt geen nieuwe mailworker toe.
+
 Een provider kan een uitnodiging gemotiveerd weigeren zonder deelname of creditreservering. De opdrachtgever ontvangt daarvan één idempotente in-appnotificatie. Berichten ontstaan pas na geaccepteerde deelname en blijven per opdracht-providercombinatie geïsoleerd.
 
 Berichten bestaan alleen binnen `opdracht + opdrachtgever + één deelnemende provider`. Concurrenten delen nooit een kanaal. `OWNER` en `ADMIN` schrijven; `MEMBER` leest. Na gunning blijft het winnaarskanaal open en worden overige kanalen alleen-lezen. Tekst is maximaal 4.000 tekens; bijlagen zijn uitgeschakeld.

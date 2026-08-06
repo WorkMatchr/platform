@@ -11,13 +11,13 @@ describe('Aanvraagpublicatie-interface', () => {
       'src/components/requests/request-publication-form.tsx',
     )
     expect(form).toContain('Aanbevolen deskundigheid')
-    expect(form).toContain('Controleer uw aanvraag')
-    expect(form).toContain('Omschrijving aanvraag')
+    expect(form).toContain('Controleer uw opdracht')
+    expect(form).toContain('Omschrijving opdracht')
     expect(form).toContain('Planning')
     expect(form).toContain('Extra opmerkingen')
     expect(form).toContain('volledige Adviesdossier')
     expect(form).toContain('niet automatisch gedeeld')
-    expect(form).toContain('Publiceer aanvraag')
+    expect(form).toContain('Publiceer opdracht')
   })
 
   it('beveiligt formulier, overzicht en succesroute server-side', () => {

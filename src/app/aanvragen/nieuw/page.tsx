@@ -1,6 +1,9 @@
 import type { Metadata } from 'next'
 import { notFound, redirect } from 'next/navigation'
-import { publishRequestAction } from '@/app/aanvragen/actions'
+import {
+  publishRequestAction,
+  submitMarketplaceContactRequestAction,
+} from '@/app/aanvragen/actions'
 import { RequestPublicationForm } from '@/components/requests/request-publication-form'
 import { Container } from '@/components/layout/container'
 import { Section } from '@/components/layout/section'
@@ -17,9 +20,9 @@ export const metadata: Metadata = {
 export default async function NewRequestPage({
   searchParams,
 }: {
-  searchParams: Promise<{ dossierId?: string }>
+  searchParams: Promise<{ dossierId?: string; contact?: string; fout?: string }>
 }) {
-  const { dossierId } = await searchParams
+  const { dossierId, contact, fout } = await searchParams
   if (!dossierId) notFound()
   const viewer = await requireClientAdviceDossierViewer(
     `/aanvragen/nieuw?dossierId=${encodeURIComponent(dossierId)}`,
@@ -41,18 +44,20 @@ export default async function NewRequestPage({
     <Section spacing="compact">
       <Container size="narrow">
         <p className="text-sm font-semibold text-brand-primary">
-          Nieuwe aanvraag
+          Nieuwe opdracht
         </p>
         <h1 className="mt-1 text-heading-2 font-bold text-brand-dark">
-          Professionele ondersteuning aanvragen
+          Professionele ondersteuning voor uw opdracht
         </h1>
         <p className="mt-2 max-w-3xl text-text-secondary">
           Controleer welke informatie professionals straks over uw
-          aanvraag mogen zien voordat u publiceert.
+          opdracht mogen zien voordat u publiceert.
         </p>
         <div className="mt-7">
           <RequestPublicationForm
             action={publishRequestAction}
+            contactAction={submitMarketplaceContactRequestAction}
+            contactResult={contact === 'verzonden' ? 'verzonden' : fout ? 'fout' : null}
             preview={preview}
           />
         </div>

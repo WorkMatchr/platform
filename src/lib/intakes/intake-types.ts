@@ -1,4 +1,5 @@
 import type {
+  AccountType,
   IntakeQuestionCategory,
   IntakeStatus,
   MembershipStatus,
@@ -10,6 +11,7 @@ import type {
 
 export type IntakeActorContext = {
   userId: string
+  accountType: AccountType | null
   userStatus: UserStatus
   membershipStatus: MembershipStatus
   membershipRole: OrganizationMembershipRole
@@ -29,6 +31,7 @@ export type IntakeAnswerInput = {
 
 export type CreateIntakeInput = {
   freeText: string
+  knowledgeContextId?: string
 }
 
 export type SaveIntakeStepInput = {

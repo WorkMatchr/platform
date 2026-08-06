@@ -18,8 +18,19 @@ export const assignmentEditSchema = z.object({
       .refine((value) => value >= new Date().toISOString().slice(0, 10), 'Kies vandaag of een datum in de toekomst.')
       .nullable(),
   ),
+  locationType: z.enum(['REGISTERED', 'OTHER', 'MULTIPLE', 'REMOTE', 'UNKNOWN']),
   locationId: z.preprocess(emptyToNull, z.uuid('Kies een geldige locatie.').nullable()),
-  allowsRemoteWork: z.boolean(),
+  locationCity: z.preprocess(emptyToNull, z.string().trim().max(120, 'Gebruik maximaal 120 tekens.').nullable()),
+  locationRegion: z.preprocess(emptyToNull, z.string().trim().max(120, 'Gebruik maximaal 120 tekens.').nullable()),
+  locationDescription: z.preprocess(emptyToNull, z.string().trim().max(1000, 'Gebruik maximaal 1.000 tekens.').nullable()),
+  locationCount: z.preprocess(emptyToNull, z.coerce.number().int().min(1, 'Vul minimaal één locatie in.').max(10000, 'Vul maximaal 10.000 locaties in.').nullable()),
+}).superRefine((value, context) => {
+  if (value.locationType === 'REGISTERED' && !value.locationId) {
+    context.addIssue({ code: 'custom', path: ['locationId'], message: 'Kies een bestaande organisatielocatie.' })
+  }
+  if (value.locationType === 'OTHER' && !value.locationCity && !value.locationRegion) {
+    context.addIssue({ code: 'custom', path: ['locationCity'], message: 'Vul een plaats of regio in.' })
+  }
 })
 
 export const assignmentReasonSchema = z.string()

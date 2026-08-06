@@ -5,8 +5,9 @@ Deze map bevat de leidende projectdocumentatie. Lees vóór een wijziging minima
 ## Hoogste richtinggevende document
 
 1. [De Grondwet van WorkMatchr — versie 0.1, concept](DE_GRONDWET_VAN_WORKMATCHR.md)
+2. [WorkMatchr Product Constitution — bindend product- en UX-kader](PRODUCT_CONSTITUTION.md)
 
-De Grondwet bepaalt na expliciete Product Owner-goedkeuring de blijvende richting van WorkMatchr. De [Founding Principles](FOUNDING_PRINCIPLES.md) concretiseren de kernbeginselen; ADR’s leggen afzonderlijke architectuurbesluiten vast; modules en roadmap bepalen de uitvoering; code en tests implementeren de goedgekeurde besluiten.
+De Grondwet bepaalt na expliciete Product Owner-goedkeuring de blijvende richting van WorkMatchr. De [Founding Principles](FOUNDING_PRINCIPLES.md) concretiseren de kernbeginselen; de Product Constitution is de bindende toetssteen voor product- en UX-gedrag; ADR’s leggen afzonderlijke architectuurbesluiten vast; modules en roadmap bepalen de uitvoering; code en tests implementeren de goedgekeurde besluiten.
 
 ## Actuele afgeronde modules
 
@@ -26,9 +27,10 @@ Module 6C.2 — WOS Beheeracties & Communicatie is technisch opgeleverd en wacht
 6. [Ontwerp Module 5 — Vraagverheldering, intake en opdrachten](module-5-ontwerp.md)
 7. [Technisch implementatieplan Module 5A — Intake fundament](module-5a-implementatieplan.md)
 8. [Voorstel vraagset Module 5A — versie 1](module-5a-vraagset-v1.md)
-9. [Ontwerp Module 5B — Opdrachtvorming](module-5b-ontwerp.md)
-10. [Ontwerp Module 5C — Gecontroleerde opdrachtpublicatie](module-5c-ontwerp.md)
-11. [Ontwerp Module 5D.0 — Intake & Submission Improvements](module-5d-intake-submission-verbeteringen.md)
+9. [Opdrachtintake vraagset — versie 2](module-5a-vraagset-v2.md)
+10. [Ontwerp Module 5B — Opdrachtvorming](module-5b-ontwerp.md)
+11. [Ontwerp Module 5C — Gecontroleerde opdrachtpublicatie](module-5c-ontwerp.md)
+12. [Ontwerp Module 5D.0 — Intake & Submission Improvements](module-5d-intake-submission-verbeteringen.md)
 12. [Geaccepteerd ontwerp Module 6A.0 — Providerkwalificatie en onboarding](module-6a0-providerkwalificatie-ontwerp.md)
 13. [Geaccepteerd ontwerp Module 6A.1 — WorkMatchr Decision Engine v1](module-6a-decision-engine-ontwerp.md)
 14. [Geaccepteerde technische impactanalyse Module 6A.2.0 — Providerkwalificatie](module-6a2-providerkwalificatie-technisch-ontwerp.md)
@@ -67,6 +69,8 @@ Module 6C.2 — WOS Beheeracties & Communicatie is technisch opgeleverd en wacht
 - [Offerteflow v1](quotation-flow-v1.md)
 - [Gunningsflow v1](award-flow-v1.md)
 - [Creditledger v1](credit-ledger-v1.md)
+- [Marketplace Rules, credits en betrouwbaarheid](marketplace-rules-credit-reliability.md)
+- [Marketplace Rules, credits en betrouwbaarheid](marketplace-rules-credit-reliability.md)
 - [Marktplaatsdashboards v1](marketplace-dashboards-v1.md)
 - [Berichten en notificaties v1](messaging-and-notifications-v1.md)
 - [Autorisatiematrix Marketplace v1](marketplace-authorization-matrix.md)
@@ -74,9 +78,18 @@ Module 6C.2 — WOS Beheeracties & Communicatie is technisch opgeleverd en wacht
 - [Publiek verplichtingenmodel](public-obligation-content-model.md)
 - [Publiek sectormodel](public-sector-content-model.md)
 - [Zoeken in publieke kennis v1](knowledge-search-v1.md)
+- [Knowledge Engine](knowledge-engine.md)
+- [Kennismodel](knowledge-model.md)
+- [Kennisimport](knowledge-import.md)
+- [Kennisvalidatie en publicatie](knowledge-validation.md)
+- [Auteursrecht en kennisbronnen](knowledge-copyright.md)
+- [Toegangsniveaus kennis](knowledge-access-tiers.md)
+- [Contextuele kennisroutes naar Advieswijzer en opdracht](knowledge-context-routing.md)
+- [Lokale broninventaris Knowledge Engine PoC](knowledge-source-inventory.md)
 
 ## Ontwerp en kwaliteit
 
+- [Product Constitution — bindend product- en UX-kader](PRODUCT_CONSTITUTION.md)
 - [Founding Principles](FOUNDING_PRINCIPLES.md)
 - [Design system](design-system.md)
 - [UI-componenten](ui-components.md)
@@ -94,6 +107,7 @@ Module 6C.2 — WOS Beheeracties & Communicatie is technisch opgeleverd en wacht
 - [Datadictionary](data-dictionary.md)
 - [Entity Relationship Diagram](ERD.md)
 - [Deterministische testdataset dienstverleners](test-provider-dataset.md)
+- [Dienstverlenersprofiel v1](dienstverlenersprofiel-v1.md)
 - [ADR-002: PostgreSQL, Prisma en datamodel](adr/ADR-002-postgresql-prisma-en-datamodel.md)
 - [ADR-005: Versieerbare intake en antwoordhistorie](adr/ADR-005-versieerbare-intake-en-antwoordhistorie.md)
 - [ADR-006: Transactionele opdrachtvorming](adr/ADR-006-transactionele-opdrachtvorming.md)
@@ -114,6 +128,7 @@ Module 6C.2 — WOS Beheeracties & Communicatie is technisch opgeleverd en wacht
 - [ADR-021: Van dienstgestuurd naar hulpvraaggestuurd platform](adr/ADR-021-van-dienstgestuurd-naar-hulpvraaggestuurd-platform.md)
 - [ADR-022: Matchen op vakdiscipline in plaats van generieke RI&E-deskundigheid — geaccepteerd](adr/ADR-022-matchen-op-vakdiscipline.md)
 - [Teststrategie](test-strategy.md)
+- [ADR-023: Gevalideerde en herleidbare Knowledge Engine](adr/ADR-023-gevalideerde-knowledge-engine.md)
 - [Module 6C: Platformbeheer](module-6c-platformbeheer.md)
 
 ## Authenticatie en beveiliging

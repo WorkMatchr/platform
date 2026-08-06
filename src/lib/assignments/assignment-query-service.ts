@@ -4,8 +4,9 @@ import { requireIntakeConverter } from '@/lib/intakes/intake-authorization'
 import { intakeIdentifierSchema } from '@/lib/intakes/intake-validation'
 import { AssignmentServiceError } from './assignment-errors'
 import { requireAssignmentManager, requireAssignmentViewer } from './assignment-authorization'
+import { assignmentLocationLabel, type AssignmentLocationSnapshot } from './assignment-location'
 
-export type AssignmentListFilter = 'all' | 'draft' | 'cancelled'
+export type AssignmentListFilter = 'active' | 'completed' | 'cancelled'
 
 export type AssignmentListItem = {
   id: string
@@ -13,6 +14,7 @@ export type AssignmentListItem = {
   status: AssignmentStatus
   createdAt: string
   organizationName: string
+  canDelete: boolean
 }
 
 export type AssignmentDetailView = AssignmentListItem & {
@@ -24,7 +26,9 @@ export type AssignmentDetailView = AssignmentListItem & {
   sectorName: string | null
   employeeCount: number | null
   desiredStartDate: string | null
-  location: string | null
+  location: string
+  locationDescription: string | null
+  locationItems: string[]
   allowsRemoteWork: boolean
   publishedAt: string | null
   publishedByName: string | null
@@ -46,15 +50,27 @@ export type AssignmentEditView = {
   version: number
   employeeCount: number | null
   desiredStartDate: string | null
+  locationType: AssignmentLocationSnapshot['locationType']
   locationId: string | null
-  allowsRemoteWork: boolean
+  locationCity: string | null
+  locationRegion: string | null
+  locationDescription: string | null
+  locationCount: number | null
+  locationItems: string[]
   locations: Array<{ id: string; label: string }>
 }
 
 function statusWhere(filter: AssignmentListFilter): Prisma.AssignmentWhereInput {
-  if (filter === 'draft') return { status: 'DRAFT' }
-  if (filter === 'cancelled') return { status: 'CANCELLED' }
-  return { status: { not: 'ARCHIVED' } }
+  if (filter === 'completed') {
+    return { publishedAt: { not: null }, status: { in: ['AWARDED', 'CLOSED'] } }
+  }
+  if (filter === 'cancelled') {
+    return { publishedAt: { not: null }, status: 'CANCELLED' }
+  }
+  return {
+    publishedAt: { not: null },
+    status: { in: ['OPEN', 'MATCHING', 'AWAITING_RESPONSES', 'IN_SELECTION'] },
+  }
 }
 
 export async function getIntakeSubmissionContext(
@@ -82,7 +98,7 @@ export async function getIntakeSubmissionContext(
 export async function listAssignmentsForOrganization(
   userId: string,
   organizationId: string,
-  filter: AssignmentListFilter = 'all',
+  filter: AssignmentListFilter = 'active',
 ): Promise<{ items: AssignmentListItem[]; viewerRole: OrganizationMembershipRole }> {
   return getPrisma().$transaction(async (transaction) => {
     const organization = await transaction.organization.findFirst({
@@ -91,7 +107,7 @@ export async function listAssignmentsForOrganization(
         id: true,
         name: true,
         memberships: {
-          where: { userId, status: 'ACTIVE', user: { status: 'ACTIVE' } },
+          where: { userId, status: 'ACTIVE', user: { status: 'ACTIVE', accountType: 'CLIENT' } },
           select: { role: true },
           take: 1,
         },
@@ -118,6 +134,7 @@ export async function listAssignmentsForOrganization(
         ...assignment,
         createdAt: assignment.createdAt.toISOString(),
         organizationName: organization.name,
+        canDelete: ['OWNER', 'ADMIN'].includes(membership.role) && ['DRAFT', 'READY_FOR_REVIEW'].includes(assignment.status),
       })),
     }
   })
@@ -140,6 +157,18 @@ export async function getAssignmentDetail(
         version: true,
         employeeCount: true,
         desiredStartDate: true,
+        locationType: true,
+        locationId: true,
+        locationName: true,
+        locationAddressLine: true,
+        locationPostalCode: true,
+        locationCity: true,
+        locationProvince: true,
+        locationCountryCode: true,
+        locationRegion: true,
+        locationDescription: true,
+        locationCount: true,
+        locationItems: { select: { placeOrRegion: true }, orderBy: { position: 'asc' } },
         allowsRemoteWork: true,
         publishedAt: true,
         publishedVersion: true,
@@ -149,7 +178,6 @@ export async function getAssignmentDetail(
         clientOrganization: { select: { name: true } },
         intake: { select: { id: true, freeText: true } },
         sector: { select: { name: true } },
-        location: { select: { label: true, city: true } },
         statusHistory: {
           select: { toStatus: true, createdAt: true, reason: true },
           orderBy: { createdAt: 'asc' },
@@ -173,13 +201,19 @@ export async function getAssignmentDetail(
       sectorName: assignment.sector?.name ?? null,
       employeeCount: assignment.employeeCount,
       desiredStartDate: assignment.desiredStartDate?.toISOString() ?? null,
-      location: assignment.location ? `${assignment.location.label} — ${assignment.location.city}` : null,
+      location: assignmentLocationLabel(assignment, assignment.locationItems),
+      locationDescription: assignment.locationDescription,
+      locationItems: (assignment.locationItems ?? []).map((item) => item.placeOrRegion),
       allowsRemoteWork: assignment.allowsRemoteWork,
       publishedAt: assignment.publishedAt?.toISOString() ?? null,
       publishedByName: assignment.publishedByUser?.displayName ?? null,
       publishedVersion: assignment.publishedVersion,
       revisionCount: assignment._count.revisions,
       canManage: ['OWNER', 'ADMIN'].includes(access.clientOrganization.memberships[0]!.role),
+      canDelete:
+        ['OWNER', 'ADMIN'].includes(access.clientOrganization.memberships[0]!.role)
+        && ['DRAFT', 'READY_FOR_REVIEW'].includes(assignment.status)
+        && assignment.publishedAt === null,
       statusHistory: assignment.statusHistory.map((item) => ({
         status: item.toStatus,
         createdAt: item.createdAt.toISOString(),
@@ -210,8 +244,13 @@ export async function getAssignmentEditView(
       version: access.version,
       employeeCount: access.employeeCount,
       desiredStartDate: access.desiredStartDate?.toISOString().slice(0, 10) ?? null,
+      locationType: access.locationType,
       locationId: access.locationId,
-      allowsRemoteWork: access.allowsRemoteWork,
+      locationCity: access.locationCity,
+      locationRegion: access.locationRegion,
+      locationDescription: access.locationDescription,
+      locationCount: access.locationCount,
+      locationItems: access.locationItems.map((item) => item.placeOrRegion),
       locations: locations.map((location) => ({ id: location.id, label: `${location.label} — ${location.city}` })),
     }
   })

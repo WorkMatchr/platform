@@ -146,7 +146,7 @@ async function main() {
         requestedStart: 'IN_CONSULTATION',
         notes: '',
       },
-      at: new Date('2026-07-30T09:00:00Z'),
+      at: new Date('2026-08-01T09:00:00Z'),
     })
     const eligible =
       await prisma.requestEligibleProvider.findMany({
@@ -299,7 +299,7 @@ async function main() {
         interestService.registerRequestInterest({
           actor,
           requestId: request.id,
-          at: new Date('2026-07-30T09:15:00Z'),
+          at: new Date('2026-08-01T09:15:00Z'),
         }),
       ),
     )
@@ -326,12 +326,12 @@ async function main() {
     await interestService.withdrawRequestInterest({
       actor,
       requestId: request.id,
-      at: new Date('2026-07-30T09:20:00Z'),
+      at: new Date('2026-08-01T09:20:00Z'),
     })
     await interestService.registerRequestInterest({
       actor,
       requestId: request.id,
-      at: new Date('2026-07-30T09:25:00Z'),
+      at: new Date('2026-08-01T09:25:00Z'),
     })
     interest = await prisma.requestInterest.findFirstOrThrow({
       where: { id: interest.id },
@@ -384,7 +384,7 @@ async function main() {
     await interestService.withdrawRequestInterest({
       actor,
       requestId: request.id,
-      at: new Date('2026-07-30T09:30:00Z'),
+      at: new Date('2026-08-01T09:30:00Z'),
     })
     await prisma.request.update({
       where: { id: request.id },

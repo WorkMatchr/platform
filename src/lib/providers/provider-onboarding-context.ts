@@ -6,7 +6,7 @@ import { requireOrganizationMembership } from '@/lib/organizations/organization-
 export async function requireProviderDossierContext(returnTo = '/aanbiedersdossier') {
   const context = await requireOrganizationMembership(undefined, returnTo)
   const organization = context.activeMembership.organization
-  if (!['PROVIDER', 'BOTH'].includes(organization.organizationType)) {
+  if (context.user.accountType !== 'PROFESSIONAL' || !['PROVIDER', 'BOTH'].includes(organization.organizationType)) {
     redirect('/organisatie?toegang=geen-aanbieder')
   }
   if (!organization.providerProfile) redirect('/organisatie?toegang=providerprofiel-ontbreekt')

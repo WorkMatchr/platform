@@ -40,6 +40,7 @@ export const publicRoutes = {
   about: '/over-workmatchr',
   contact: '/contact',
   adviceGuide: '/advieswijzer',
+  directAssignment: '/hulpvragen/nieuw',
   privacy: '/privacy',
   cookies: '/cookies',
   terms: '/algemene-voorwaarden',
@@ -61,7 +62,6 @@ export type PublicNavigationItem = {
 }
 
 export const publicNavigationItems = [
-  { label: 'Stel uw vraag', href: publicRoutes.adviceGuide, kind: 'primary' },
   { label: 'Diensten', href: publicRoutes.services, kind: 'standard' },
   { label: 'Wettelijke verplichtingen', href: publicRoutes.obligations, kind: 'standard' },
   { label: 'Sectoren', href: publicRoutes.sectors, kind: 'standard' },
@@ -74,7 +74,7 @@ export const publicNavigationItems = [
 export const publicFooterGroups = [
   {
     title: 'Vind uw route',
-    links: publicNavigationItems.filter((item) => item.kind === 'primary' || ['Diensten', 'Wettelijke verplichtingen', 'Sectoren', 'Kenniscentrum'].includes(item.label)),
+    links: publicNavigationItems.filter((item) => ['Diensten', 'Wettelijke verplichtingen', 'Sectoren', 'Kenniscentrum'].includes(item.label)),
   },
   {
     title: 'WorkMatchr',

@@ -13,7 +13,7 @@ function Detail({ label, value }: { label: string; value: string }) {
   return <div><dt className="text-sm font-semibold text-text-secondary">{label}</dt><dd className="mt-1 font-medium text-text-primary">{value}</dd></div>
 }
 
-export function AssignmentDetail({ assignment, actions }: { assignment: AssignmentDetailView; actions: { ready: Action; reopen: Action; cancel: Action; withdraw: Action } }) {
+export function AssignmentDetail({ assignment, actions }: { assignment: AssignmentDetailView; actions: { reopen: Action; cancel: Action; withdraw: Action } }) {
   const wasPublished = Boolean(assignment.publishedAt && assignment.publishedVersion)
 
   return (
@@ -26,7 +26,7 @@ export function AssignmentDetail({ assignment, actions }: { assignment: Assignme
         <dl className="mt-6 grid gap-5 sm:grid-cols-2">
           <Detail label="Organisatie" value={assignment.organizationName} />
           <Detail label="Gewenste startdatum" value={formatOptionalAssignmentDate(assignment.desiredStartDate)} />
-          <Detail label="Locatie" value={assignment.location ?? (assignment.allowsRemoteWork ? 'Op afstand mogelijk' : 'Nog niet bepaald')} />
+          <Detail label="Locatie" value={assignment.location} />
           <Detail label="Betrokken medewerkers" value={assignment.employeeCount?.toLocaleString('nl-NL') ?? 'Nog niet bepaald'} />
           <Detail label="Sector" value={assignment.sectorName ?? 'Nog niet bepaald'} />
           <Detail
@@ -40,6 +40,22 @@ export function AssignmentDetail({ assignment, actions }: { assignment: Assignme
           <Detail label="Laatst gewijzigd" value={formatAssignmentDate(assignment.updatedAt)} />
         </dl>
       </Card>
+
+      {assignment.locationDescription && (
+        <Card variant="subtle">
+          <h2 className="text-xl font-bold text-brand-dark">Toelichting op de locatie</h2>
+          <p className="mt-3 whitespace-pre-wrap text-text-secondary">{assignment.locationDescription}</p>
+        </Card>
+      )}
+
+      {assignment.locationItems.length > 0 && (
+        <Card variant="subtle">
+          <h2 className="text-xl font-bold text-brand-dark">Plaatsen en regio’s</h2>
+          <ol className="mt-3 space-y-2 text-text-secondary">
+            {assignment.locationItems.map((item) => <li key={item}>{item}</li>)}
+          </ol>
+        </Card>
+      )}
 
       {wasPublished && (
         <Card variant="subtle">

@@ -30,6 +30,7 @@ import {
   parseCreatePublicIntakeDraftInput,
   type RecordPublicIntakeAnswerInput,
 } from './public-intake-validation'
+import { resolveActiveKnowledgeContext } from '@/content/knowledge/knowledge-contexts'
 
 type Transaction = Prisma.TransactionClient
 
@@ -49,6 +50,10 @@ const publicDraftSelect = {
   entryPoint: true,
   originalInput: true,
   selectedRequestKey: true,
+  knowledgeContextId: true,
+  knowledgeContextVersion: true,
+  knowledgeSourceRoute: true,
+  knowledgeSuggestedCategory: true,
   flowVersion: true,
   currentStep: true,
   version: true,
@@ -228,9 +233,20 @@ async function loadPublicView(
     where: { id: draftId },
     select: publicDraftSelect,
   })
-  const { id, answers, ...draftView } = draft
+  const { id, answers, knowledgeContextId, knowledgeContextVersion, knowledgeSourceRoute, knowledgeSuggestedCategory, ...draftView } = draft
+  const currentContext = resolveActiveKnowledgeContext(knowledgeContextId)
   const view = {
     ...draftView,
+    knowledgeContext: currentContext && knowledgeContextVersion && knowledgeSourceRoute
+      ? {
+          id: currentContext.id,
+          version: knowledgeContextVersion,
+          sourceRoute: knowledgeSourceRoute,
+          shortLabel: currentContext.shortLabel,
+          title: currentContext.title,
+          suggestedCategory: knowledgeSuggestedCategory,
+        }
+      : null,
     answers: answers.map((answer) => ({
       questionKey: answer.questionKey,
       questionVersion: answer.questionVersion,
@@ -254,6 +270,7 @@ export async function createPublicIntakeDraft(
   options: { at?: Date } = {},
 ): Promise<{ draft: PublicIntakeDraftView; sessionToken: string }> {
   const input = parseCreatePublicIntakeDraftInput(rawInput)
+  const knowledgeContext = resolveActiveKnowledgeContext(input.knowledgeContextId)
   const at = options.at ?? new Date()
   const expiresAt = publicIntakeExpiryFrom(at)
   const sessionToken = generatePublicIntakeToken()
@@ -268,6 +285,10 @@ export async function createPublicIntakeDraft(
           originalInput: input.entryPoint === 'FREE_TEXT' ? input.originalInput : null,
           selectedRequestKey:
             input.entryPoint === 'RECOGNIZABLE_REQUEST' ? input.selectedRequestKey : null,
+          knowledgeContextId: knowledgeContext?.id ?? null,
+          knowledgeContextVersion: knowledgeContext?.version ?? null,
+          knowledgeSourceRoute: knowledgeContext?.sourceRoutes[0] ?? null,
+          knowledgeSuggestedCategory: knowledgeContext?.suggestedCategory ?? null,
           flowVersion: PUBLIC_INTAKE_FLOW_VERSION,
           currentStep: 'start',
           startedAt: at,

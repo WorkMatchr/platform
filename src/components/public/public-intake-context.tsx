@@ -47,7 +47,7 @@ function ContextContent({ step }: { step: IntakeDecisionStep }) {
       <section className="border-t border-border pt-4">
         <h2 className="font-semibold text-brand-dark">Goed om te weten</h2>
         <p className="mt-1.5">
-          Uw keuze wordt na bevestiging automatisch opgeslagen. U kunt deze conceptsessie
+          Uw keuze wordt na bevestiging automatisch opgeslagen. U kunt uw eerdere antwoorden
           later op dit apparaat hervatten.
         </p>
       </section>

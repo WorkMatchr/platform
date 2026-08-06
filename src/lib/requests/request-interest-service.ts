@@ -2,6 +2,7 @@ import type { Prisma, RequestInterestStatus } from '@/generated/prisma/client'
 import { Prisma as PrismaNamespace } from '@/generated/prisma/client'
 import { requireProviderMarketplaceAccess } from '@/lib/marketplace/marketplace-authorization'
 import { getPrisma } from '@/lib/prisma'
+import { getApplicableMarketplaceRuleSet } from '@/lib/marketplace/marketplace-rules-service'
 
 type Transaction = Prisma.TransactionClient
 
@@ -100,6 +101,10 @@ export async function getEligibleRequestForProvider(
 ) {
   return getPrisma().$transaction(async (transaction) => {
     const access = await requireProviderAccess(transaction, actor, false)
+    const marketplaceRules = await getApplicableMarketplaceRuleSet(
+      transaction,
+      new Date(),
+    )
     const eligibility =
       await transaction.requestEligibleProvider.findUnique({
         where: {
@@ -128,6 +133,10 @@ export async function getEligibleRequestForProvider(
                   status: true,
                   slotNumber: true,
                   claimedAt: true,
+                  creditAmount: true,
+                  marketplaceRuleSet: {
+                    select: { version: true, maximumParticipants: true },
+                  },
                 },
               },
             },
@@ -184,6 +193,12 @@ export async function getEligibleRequestForProvider(
     return {
       ...eligibility,
       activeOfferSlotCount,
+      marketplaceRules: {
+        version: marketplaceRules.version,
+        participationPriceCredits:
+          marketplaceRules.participationPriceCredits,
+        maximumParticipants: marketplaceRules.maximumParticipants,
+      },
       requesterDetails: requesterDetails
         ? {
             organizationName:

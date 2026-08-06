@@ -6,7 +6,7 @@ import { createOrganizationSchema, organizationProfileSchema } from './organizat
 const validInput = {
   name: 'Voorbeeld Organisatie', tradeName: '', organizationType: 'CLIENT', chamberOfCommerceNumber: '',
   generalEmail: ' CONTACT@EXAMPLE.INVALID ', phone: '', website: 'voorbeeld.nl', employeeCount: '12',
-  sectorIds: ['00000000-0000-4000-8000-000000000001'], primarySectorId: '00000000-0000-4000-8000-000000000001',
+  sectorIds: ['00000000-0000-4000-8000-000000000001'],
   addressLine: 'Voorbeeldstraat 1', postalCode: '1234ab', city: 'Utrecht', province: '', countryCode: 'nl',
   acceptedBusinessAccuracy: 'on',
 }
@@ -21,20 +21,15 @@ describe('organisatievalidatie', () => {
     expect(createOrganizationSchema.safeParse({ ...validInput, sectorIds: [] }).success).toBe(false)
   })
 
-  it('vereist dat de primaire sector geselecteerd is', () => {
-    const result = createOrganizationSchema.safeParse({ ...validInput, primarySectorId: '00000000-0000-4000-8000-000000000002' })
-    expect(result.success).toBe(false)
+  it('vereist bij aanmaak en profielwijzigingen geen primaire-sector-keuze', () => {
+    expect(createOrganizationSchema.safeParse(validInput).success).toBe(true)
+    expect(organizationProfileSchema.safeParse(validInput).success).toBe(true)
   })
 
-  it('vereist bij profielwijzigingen geen tweede primaire-sector-keuze', () => {
-    const profileInput: Record<string, unknown> = { ...validInput }
-    delete profileInput.primarySectorId
-    expect(organizationProfileSchema.safeParse(profileInput).success).toBe(true)
-  })
-
-  it('toont de primaire-sector-keuze uitsluitend bij organisatieaanmaak', () => {
+  it('toont geen primaire-sector-keuze in het organisatieformulier', () => {
     const form = readFileSync(join(process.cwd(), 'src', 'components', 'organizations', 'organization-form.tsx'), 'utf8')
-    expect(form).toMatch(/\{mode === 'create' && <div className="mt-5"><label[^>]*>Primaire sector/)
+    expect(form).not.toContain('Primaire sector')
+    expect(form).not.toContain('primarySectorId')
   })
 
   it('weigert negatieve en niet-gehele medewerkerstellingen', () => {

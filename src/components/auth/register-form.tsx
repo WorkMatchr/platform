@@ -32,6 +32,7 @@ export function RegisterForm() {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
+        accountType: result.data.accountType,
         name: result.data.name,
         email: result.data.email,
         password: result.data.password,
@@ -50,6 +51,24 @@ export function RegisterForm() {
   return (
     <form onSubmit={submit} noValidate className="space-y-5">
       {message && <StatusMessage error>{message}</StatusMessage>}
+      <fieldset>
+        <legend className="font-semibold">Hoe wilt u WorkMatchr gebruiken?</legend>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          {[
+            { value: 'CLIENT', title: 'Bedrijf', description: 'Ik wil een opdracht plaatsen en professionele ondersteuning vinden.' },
+            { value: 'PROFESSIONAL', title: 'Professional', description: 'Ik wil namens mijn organisatie reageren op passende opdrachten.' },
+          ].map((option) => (
+            <label className="flex cursor-pointer gap-3 rounded-control border border-border bg-surface p-4 focus-within:ring-2 focus-within:ring-focus" key={option.value}>
+              <input aria-describedby={`account-type-${option.value}`} name="accountType" required type="radio" value={option.value} />
+              <span>
+                <span className="block font-semibold text-brand-dark">{option.title}</span>
+                <span className="mt-1 block text-sm text-text-secondary" id={`account-type-${option.value}`}>{option.description}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+        <FieldError id="account-type-error" message={errors.accountType?.[0]} />
+      </fieldset>
       <div><label htmlFor="name" className="font-semibold">Volledige naam</label><input id="name" name="name" autoComplete="name" maxLength={100} required className={fieldClassName} aria-describedby={errors.name ? 'name-error' : undefined} /><FieldError id="name-error" message={errors.name?.[0]} /></div>
       <div><label htmlFor="email" className="font-semibold">E-mailadres</label><input id="email" name="email" type="email" autoComplete="email" maxLength={254} required className={fieldClassName} aria-describedby={errors.email ? 'email-error' : undefined} /><FieldError id="email-error" message={errors.email?.[0]} /></div>
       <div><label htmlFor="password" className="font-semibold">Wachtwoord</label><input id="password" name="password" type="password" autoComplete="new-password" minLength={12} maxLength={128} required className={fieldClassName} aria-describedby="password-help password-error" /><p id="password-help" className="mt-2 text-sm text-text-secondary">Gebruik minimaal 12 tekens.</p><FieldError id="password-error" message={errors.password?.[0]} /></div>

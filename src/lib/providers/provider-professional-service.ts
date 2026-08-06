@@ -108,7 +108,7 @@ export async function addProviderProfessionalQualification(
       await requireProviderManager(transaction, userId, providerProfileId)
       await requireProviderSectionEditable(transaction, providerProfileId, 'QUALIFICATIONS')
       const professional = await transaction.providerProfessional.findFirst({ where: { id: input.professionalId, providerProfileId, status: 'ACTIVE' }, select: { id: true } })
-      const term = await transaction.providerTaxonomyTerm.findFirst({ where: { id: input.qualificationTermId, isActive: true, version: { status: 'PUBLISHED', taxonomy: { kind: { in: ['QUALIFICATION', 'CERTIFICATION'] } } } }, select: { id: true } })
+      const term = await transaction.providerTaxonomyTerm.findFirst({ where: { id: input.qualificationTermId, isActive: true, version: { status: 'PUBLISHED', taxonomy: { kind: { in: ['QUALIFICATION', 'CERTIFICATION', 'REGISTRATION'] } } } }, select: { id: true } })
       const capabilityCount = await transaction.providerCapability.count({ where: { id: { in: input.capabilityIds }, providerProfileId, status: 'ACTIVE' } })
       const evidence = input.evidenceRevisionId
         ? await transaction.providerEvidenceRevision.findFirst({ where: { id: input.evidenceRevisionId, evidenceDocument: { providerProfileId, status: 'AVAILABLE' }, scanDecision: { scanStatus: 'CLEAN' } }, select: { id: true } })

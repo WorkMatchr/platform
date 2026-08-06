@@ -15,6 +15,7 @@ import { ProviderServiceError } from '@/lib/providers/provider-errors'
 import { requireProviderDossierContext } from '@/lib/providers/provider-onboarding-context'
 import { createProviderProfessional, addProviderProfessionalQualification, reviseProviderProfessionalIdentity } from '@/lib/providers/provider-professional-service'
 import { createProviderSectorExperience, createProviderWorkArea } from '@/lib/providers/provider-profile-service'
+import { updateProviderProfileSelections } from '@/lib/providers/provider-decision-profile-service'
 import {
   reviseProviderCapability,
   reviseProviderInsurance,
@@ -23,6 +24,7 @@ import {
   reviseProviderWorkArea,
   setProviderRecordStatus,
   updateProviderProfileFacts,
+  writeProviderOrganizationQualification,
 } from '@/lib/providers/provider-record-mutation-service'
 
 export type ProviderActionValue = string | string[] | boolean
@@ -82,17 +84,17 @@ async function actionContext(returnTo: string) {
 
 const profileSchema = z.object({
   expectedProfileVersion: positiveVersion,
-  description: z.string().max(2000).optional(),
-  maxTravelDistanceKm: optionalNumber,
-  acceptsRemoteWork: z.boolean(),
+  shortIntroduction: z.string().max(300).optional(),
+  description: z.string().max(4000).optional(),
+  workingMethod: z.string().max(3000).optional(),
 })
 
 export async function saveProviderProfileAction(_state: ProviderActionState, formData: FormData): Promise<ProviderActionState> {
   const values = {
     expectedProfileVersion: text(formData, 'expectedProfileVersion'),
+    shortIntroduction: text(formData, 'shortIntroduction'),
     description: text(formData, 'description'),
-    maxTravelDistanceKm: text(formData, 'maxTravelDistanceKm'),
-    acceptsRemoteWork: formData.get('acceptsRemoteWork') === 'on',
+    workingMethod: text(formData, 'workingMethod'),
   }
   const parsed = profileSchema.safeParse(values)
   if (!parsed.success) return validationState(parsed, values)
@@ -101,7 +103,61 @@ export async function saveProviderProfileAction(_state: ProviderActionState, for
     await updateProviderProfileFacts(context.userId, context.providerProfileId, parsed.data)
   } catch (error) { return safeProviderState(error, values) }
   revalidateDossier('/aanbiedersdossier/bedrijfsgegevens')
+  revalidatePath('/aanbiedersdossier/profiel')
   return success()
+}
+
+const profileSelectionsSchema = z.object({
+  expectedProfileVersion: positiveVersion,
+  coreExpertiseTermIds: z.array(uuid).max(3, 'Kies maximaal drie kernexpertises.'),
+  workModeTermIds: z.array(uuid).max(12),
+})
+
+export async function saveProviderProfileSelectionsAction(_state: ProviderActionState, formData: FormData): Promise<ProviderActionState> {
+  const values = {
+    expectedProfileVersion: text(formData, 'expectedProfileVersion'),
+    coreExpertiseTermIds: stringList(formData, 'coreExpertiseTermIds'),
+    workModeTermIds: stringList(formData, 'workModeTermIds'),
+  }
+  const parsed = profileSelectionsSchema.safeParse(values)
+  if (!parsed.success) return validationState(parsed, values)
+  const context = await actionContext('/aanbiedersdossier/profiel')
+  try { await updateProviderProfileSelections(context.userId, context.providerProfileId, parsed.data) }
+  catch (error) { return safeProviderState(error, values) }
+  revalidateDossier('/aanbiedersdossier/profiel')
+  return success('Uw expertise en werkvormen zijn opgeslagen.')
+}
+
+const organizationClaimSchema = z.object({
+  expectedProfileVersion: positiveVersion,
+  qualificationTermId: uuid,
+  registrationNumber: z.string().max(200).optional(),
+  issuedAt: z.preprocess((value) => value === '' ? undefined : value, z.coerce.date().optional()),
+  validUntil: z.preprocess((value) => value === '' ? undefined : value, z.coerce.date().optional()),
+}).refine((value) => !value.validUntil || !value.issuedAt || value.validUntil >= value.issuedAt, {
+  path: ['validUntil'],
+  message: 'De einddatum mag niet voor de begindatum liggen.',
+})
+
+export async function saveProviderOrganizationClaimAction(_state: ProviderActionState, formData: FormData): Promise<ProviderActionState> {
+  const values = {
+    expectedProfileVersion: text(formData, 'expectedProfileVersion'),
+    qualificationTermId: text(formData, 'qualificationTermId'),
+    registrationNumber: text(formData, 'registrationNumber'),
+    issuedAt: text(formData, 'issuedAt'),
+    validUntil: text(formData, 'validUntil'),
+  }
+  const parsed = organizationClaimSchema.safeParse(values)
+  if (!parsed.success) return validationState(parsed, values)
+  const context = await actionContext('/aanbiedersdossier/profiel')
+  try {
+    await writeProviderOrganizationQualification(context.userId, context.providerProfileId, {
+      ...parsed.data,
+      registrationNumber: optionalText(formData, 'registrationNumber'),
+    })
+  } catch (error) { return safeProviderState(error, values) }
+  revalidateDossier('/aanbiedersdossier/profiel')
+  return success('De vermelding is opgeslagen als zelf opgegeven informatie.')
 }
 
 const capabilitySchema = z.object({
@@ -255,7 +311,7 @@ export async function setProviderRecordStatusAction(_state: ProviderActionState,
   return success(parsed.data.status === 'ARCHIVED' ? 'Het onderdeel is gearchiveerd.' : 'Het onderdeel is opnieuw geactiveerd.')
 }
 
-const termSchema = z.object({ expectedProfileVersion: positiveVersion, documentVersionId: uuid, confirmed: z.literal('on', { error: 'Bevestig dat U namens de organisatie akkoord gaat.' }) })
+const termSchema = z.object({ expectedProfileVersion: positiveVersion, documentVersionId: uuid, confirmed: z.literal('on', { error: 'Bevestig dat u namens de organisatie akkoord gaat.' }) })
 
 export async function acceptProviderTermAction(_state: ProviderActionState, formData: FormData): Promise<ProviderActionState> {
   const values = { expectedProfileVersion: text(formData, 'expectedProfileVersion'), documentVersionId: text(formData, 'documentVersionId'), confirmed: text(formData, 'confirmed') }
@@ -301,7 +357,7 @@ export async function resolveProviderFindingAction(_state: ProviderActionState, 
   try { await resolveProviderDossierFinding(context.userId, context.providerProfileId, parsed.data) }
   catch (error) { return safeProviderState(error, values) }
   revalidateDossier('/aanbiedersdossier/controleren')
-  return success('Uw antwoord is als nieuwe immutable revisie vastgelegd.')
+  return success('Uw antwoord is als nieuwe, niet-wijzigbare revisie vastgelegd.')
 }
 
 const resubmitSchema = z.object({ submissionId: uuid, expectedVersion: positiveVersion, idempotencyKey: z.string().min(16).max(160), confirmed: z.literal('on', { error: 'Bevestig de herindiening.' }) })

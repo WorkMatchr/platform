@@ -7,6 +7,7 @@ import { Section } from '@/components/layout/section'
 import { OrganizationLogo } from '@/components/organizations/organization-logo'
 import { requireOrganizationMembership } from '@/lib/organizations/organization-authorization'
 import { canManageOrganization } from '@/lib/organizations/organization-policy'
+import { organizationRoleLabels as roleLabels } from '@/lib/presentation/platform-labels'
 
 export const metadata: Metadata = { title: 'Uw organisatie | WorkMatchr' }
 const typeLabels = {
@@ -16,7 +17,6 @@ const typeLabels = {
   PLATFORM_OPERATOR: 'Platformorganisatie',
 } as const
 const statusLabels = { PENDING: 'In afwachting', ACTIVE: 'Actief', SUSPENDED: 'Geschorst', ARCHIVED: 'Gearchiveerd' } as const
-const roleLabels = { OWNER: 'Eigenaar', ADMIN: 'Beheerder', MEMBER: 'Lid' } as const
 const providerLabels = { DRAFT: 'Concept', PENDING_REVIEW: 'In beoordeling', APPROVED: 'Goedgekeurd', REJECTED: 'Afgewezen', SUSPENDED: 'Geschorst' } as const
 
 export default async function OrganizationPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
@@ -25,8 +25,39 @@ export default async function OrganizationPage({ searchParams }: { searchParams:
   const location = organization.locations.find((item) => item.isPrimary) ?? organization.locations[0]
   const manageable = canManageOrganization(activeMembership.role, activeMembership.status, organization.status)
   const query = await searchParams
-  const notice = query.aangemaakt === '1' ? 'Uw organisatie is aangemaakt.' : query.gewijzigd === '1' ? 'De organisatiegegevens zijn bijgewerkt.' : query.toegang === 'geen-aanbieder' ? 'De actieve organisatie is geen dienstverlener. Kies een dienstverlenersorganisatie om het dienstverlenersprofiel te openen.' : query.toegang === 'providerprofiel-ontbreekt' ? 'Voor deze dienstverlener ontbreekt het dienstverlenersprofiel. Neem contact op met WorkMatchr voordat U professionals toevoegt.' : query.toegang ? 'Deze organisatieactie is niet toegestaan.' : null
-  return <Section spacing="compact"><div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between"><div className="flex items-center gap-5"><OrganizationLogo name={organization.name} storageKey={organization.logoStorageKey} width={organization.logoWidth} height={organization.logoHeight} /><div><Badge variant={organization.status === 'ACTIVE' ? 'success' : 'neutral'}>{statusLabels[organization.status]}</Badge><Heading as="h1" size="h2" className="mt-3">{organization.name}</Heading>{organization.tradeName && <p className="mt-1 text-text-secondary">Handelsnaam: {organization.tradeName}</p>}</div></div><div className="flex flex-wrap gap-3">{manageable && <LinkButton href="/organisatie/profiel">Profiel wijzigen</LinkButton>}{manageable && <LinkButton href="/organisatie/gebruikers" variant="outline">Gebruikers beheren</LinkButton>}</div></div>{notice && <p role="status" className="mt-6 rounded-control bg-brand-primary-subtle p-3 text-brand-dark">{notice}</p>}<Card className="mt-8"><dl className="grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3"><Detail label="Type" value={typeLabels[organization.organizationType]} /><Detail label="Uw rol" value={roleLabels[activeMembership.role]} /><Detail label="KvK-nummer" value={organization.chamberOfCommerceNumber} /><Detail label="Website" value={organization.website} link /><Detail label="Telefoon" value={organization.phone} /><Detail label="Algemeen e-mailadres" value={organization.generalEmail} /><Detail label="Aantal medewerkers" value={organization.employeeCount?.toLocaleString('nl-NL')} /><Detail label="Primaire locatie" value={location ? `${location.addressLine}, ${location.postalCode} ${location.city}, ${location.countryCode}` : null} /><Detail label="Sectoren" value={organization.sectors.map((item) => `${item.sector.name}${item.isPrimary ? ' (primair)' : ''}`).join(', ')} />{organization.providerProfile && <Detail label="Aanbiederstatus" value={providerLabels[organization.providerProfile.approvalStatus]} />}</dl></Card></Section>
+  const notice = query.aangemaakt === '1'
+    ? 'Uw organisatie is aangemaakt.'
+    : query.gewijzigd === '1'
+      ? 'De organisatiegegevens zijn bijgewerkt.'
+      : query.toegang === 'geen-aanbieder'
+        ? 'De actieve organisatie is geen dienstverlener. Kies een dienstverlenersorganisatie om het dienstverlenersprofiel te openen.'
+        : query.toegang === 'providerprofiel-ontbreekt'
+          ? 'Voor deze dienstverlener ontbreekt het dienstverlenersprofiel. Neem contact op met WorkMatchr voordat u professionals toevoegt.'
+          : query.toegang
+            ? 'Deze organisatieactie is niet toegestaan.'
+            : null
+  return <Section spacing="compact">
+    <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex items-center gap-5">
+        <OrganizationLogo name={organization.name} storageKey={organization.logoStorageKey} width={organization.logoWidth} height={organization.logoHeight} />
+        <div><Badge variant={organization.status === 'ACTIVE' ? 'success' : 'neutral'}>{statusLabels[organization.status]}</Badge><Heading as="h1" size="h2" className="mt-3">{organization.name}</Heading>{organization.tradeName && <p className="mt-1 text-text-secondary">Handelsnaam: {organization.tradeName}</p>}</div>
+      </div>
+      <div className="flex flex-wrap gap-3">{manageable && <LinkButton href="/organisatie/profiel">Profiel wijzigen</LinkButton>}{manageable && <LinkButton href="/organisatie/gebruikers" variant="outline">Gebruikers beheren</LinkButton>}</div>
+    </div>
+    {notice && <p role="status" className="mt-6 rounded-control bg-brand-primary-subtle p-3 text-brand-dark">{notice}</p>}
+    <Card className="mt-8"><dl className="grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+      <Detail label="Type" value={typeLabels[organization.organizationType]} />
+      <Detail label="Uw rol" value={roleLabels[activeMembership.role]} />
+      <Detail label="KvK-nummer" value={organization.chamberOfCommerceNumber} />
+      <Detail label="Website" value={organization.website} link />
+      <Detail label="Telefoon" value={organization.phone} />
+      <Detail label="Algemeen e-mailadres" value={organization.generalEmail} />
+      <Detail label="Aantal medewerkers" value={organization.employeeCount?.toLocaleString('nl-NL')} />
+      <Detail label="Locatie" value={location ? `${location.addressLine}, ${location.postalCode} ${location.city}, ${location.countryCode}` : null} />
+      <Detail label="Sectoren" value={organization.sectors.map((item) => item.sector.name).join(', ')} />
+      {organization.providerProfile && <Detail label="Dienstverlenerstatus" value={providerLabels[organization.providerProfile.approvalStatus]} />}
+    </dl></Card>
+  </Section>
 }
 
 function Detail({ label, value, link = false }: { label: string; value?: string | null; link?: boolean }) {

@@ -52,9 +52,9 @@ async function main() {
     const providerOrganization = await prisma.organization.create({ data: { name: 'TEST-WM-Concurrentie Dienstverlener', organizationType: 'PROVIDER', status: 'ACTIVE' } })
     const secondProviderOrganization = await prisma.organization.create({ data: { name: 'TEST-WM-Concurrentie Dienstverlener Twee', organizationType: 'PROVIDER', status: 'ACTIVE' } })
     const platformOrganization = await prisma.organization.create({ data: { name: 'TEST-WM-Platform', organizationType: 'PLATFORM_OPERATOR', status: 'ACTIVE', systemKey: 'WORKMATCHR_PLATFORM' } })
-    const clientUser = await prisma.user.create({ data: { email: `client-${randomUUID()}@example.invalid`, status: 'ACTIVE', emailVerified: true, memberships: { create: { organizationId: clientOrganization.id, role: 'OWNER', status: 'ACTIVE' } } } })
-    const providerUser = await prisma.user.create({ data: { email: `provider-${randomUUID()}@example.invalid`, status: 'ACTIVE', emailVerified: true, memberships: { create: { organizationId: providerOrganization.id, role: 'OWNER', status: 'ACTIVE' } } } })
-    const secondProviderUser = await prisma.user.create({ data: { email: `provider-two-${randomUUID()}@example.invalid`, status: 'ACTIVE', emailVerified: true, memberships: { create: { organizationId: secondProviderOrganization.id, role: 'OWNER', status: 'ACTIVE' } } } })
+    const clientUser = await prisma.user.create({ data: { email: `client-${randomUUID()}@example.invalid`, status: 'ACTIVE', accountType: 'CLIENT', emailVerified: true, memberships: { create: { organizationId: clientOrganization.id, role: 'OWNER', status: 'ACTIVE' } } } })
+    const providerUser = await prisma.user.create({ data: { email: `provider-${randomUUID()}@example.invalid`, status: 'ACTIVE', accountType: 'PROFESSIONAL', emailVerified: true, memberships: { create: { organizationId: providerOrganization.id, role: 'OWNER', status: 'ACTIVE' } } } })
+    const secondProviderUser = await prisma.user.create({ data: { email: `provider-two-${randomUUID()}@example.invalid`, status: 'ACTIVE', accountType: 'PROFESSIONAL', emailVerified: true, memberships: { create: { organizationId: secondProviderOrganization.id, role: 'OWNER', status: 'ACTIVE' } } } })
     const platformAdmin = await prisma.user.create({ data: { email: `admin-${randomUUID()}@example.invalid`, status: 'ACTIVE', emailVerified: true, platformRole: 'ADMIN', memberships: { create: { organizationId: platformOrganization.id, role: 'ADMIN', status: 'ACTIVE' } } } })
 
     async function createSelectableProvider(organizationId: string) {
@@ -67,8 +67,10 @@ async function main() {
 
     const provider = await createSelectableProvider(providerOrganization.id)
     const secondProvider = await createSelectableProvider(secondProviderOrganization.id)
-    await prisma.creditAccount.create({ data: { organizationId: providerOrganization.id, balance: 100, availableBalance: 100 } })
-    await prisma.creditAccount.create({ data: { organizationId: secondProviderOrganization.id, balance: 100, availableBalance: 100 } })
+    const providerCreditAccount = await prisma.creditAccount.create({ data: { organizationId: providerOrganization.id } })
+    const secondProviderCreditAccount = await prisma.creditAccount.create({ data: { organizationId: secondProviderOrganization.id } })
+    await prisma.creditTransaction.create({ data: { creditAccountId: providerCreditAccount.id, type: 'ADMIN_GRANT', amount: 100, totalDelta: 100, reservedDelta: 0, balanceAfter: 100, reason: 'Fictief beginsaldo voor de concurrencytest.', createdByUserId: providerUser.id, idempotencyKey: randomUUID() } })
+    await prisma.creditTransaction.create({ data: { creditAccountId: secondProviderCreditAccount.id, type: 'ADMIN_GRANT', amount: 100, totalDelta: 100, reservedDelta: 0, balanceAfter: 100, reason: 'Fictief beginsaldo voor de concurrencytest.', createdByUserId: secondProviderUser.id, idempotencyKey: randomUUID() } })
 
     async function createInvitation(providerData: typeof provider, providerOrganizationId: string, assignmentId?: string) {
       let assignment = assignmentId
@@ -77,7 +79,7 @@ async function main() {
       if (!assignmentId) {
         const publishedAt = new Date()
         assignment = await prisma!.$transaction(async (transaction) => {
-          await transaction.assignmentRevision.create({ data: { assignmentId: assignment.id, version: 1, title: assignment.title, description: assignment.description, allowsRemoteWork: false, changedByUserId: clientUser.id } })
+          await transaction.assignmentRevision.create({ data: { assignmentId: assignment.id, version: 1, title: assignment.title, description: assignment.description, locationType: 'UNKNOWN', allowsRemoteWork: false, changedByUserId: clientUser.id } })
           await transaction.assignment.update({ where: { id: assignment.id }, data: { status: 'OPEN', publishedAt, publishedByUserId: clientUser.id, publishedVersion: 1 } })
           await transaction.assignmentStatusHistory.create({ data: { assignmentId: assignment.id, fromStatus: 'READY_FOR_REVIEW', toStatus: 'OPEN', changedByUserId: clientUser.id, reason: 'Fictieve publicatie voor concurrencytest.', createdAt: publishedAt } })
           return transaction.assignment.update({ where: { id: assignment.id }, data: { status: 'AWAITING_RESPONSES' } })

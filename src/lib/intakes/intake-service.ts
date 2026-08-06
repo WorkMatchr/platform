@@ -25,6 +25,8 @@ import {
   organizationIdentifierSchema,
   saveIntakeStepInputSchema,
 } from './intake-validation'
+import { isCatalogQuestionVisible } from './intake-question-catalog'
+import { resolveActiveKnowledgeContext } from '@/content/knowledge/knowledge-contexts'
 
 const QUESTIONNAIRE_SLUG = 'client-occupational-health-and-safety'
 const INITIAL_QUESTION_KEY = 'HELP_REQUEST_DESCRIPTION'
@@ -54,6 +56,20 @@ function invalidInput(): IntakeServiceError {
   return new IntakeServiceError(
     'VALIDATION_ERROR',
     'De aangeleverde intakegegevens zijn niet geldig.',
+  )
+}
+
+function missingRequiredAnswer(question: { id: string; key: string }): IntakeServiceError {
+  const message = question.key === 'REGISTERED_LOCATION'
+    ? 'Kies een actieve organisatielocatie.'
+    : question.key === 'OTHER_LOCATION_CITY'
+      ? 'Vul een plaats of regio in.'
+      : 'Beantwoord deze vraag.'
+
+  return new IntakeServiceError(
+    'VALIDATION_ERROR',
+    'Controleer de gemarkeerde velden.',
+    [{ questionId: question.id, questionKey: question.key, message }],
   )
 }
 
@@ -205,6 +221,7 @@ export async function createIntake(
 ) {
   const validatedOrganizationId = parseInput(organizationIdentifierSchema, organizationId)
   const input = parseInput(createIntakeInputSchema, rawInput)
+  const knowledgeContext = resolveActiveKnowledgeContext(input.knowledgeContextId)
 
   return getPrisma().$transaction(async (transaction) => {
     await requireIntakeCreator(transaction, userId, validatedOrganizationId)
@@ -236,7 +253,7 @@ export async function createIntake(
       activeLocationIds: new Set(),
     })
     if (normalized.isEmpty) {
-      throw new IntakeServiceError('VALIDATION_ERROR', 'Beschrijf eerst waarbij Uw organisatie hulp nodig heeft.', [
+      throw new IntakeServiceError('VALIDATION_ERROR', 'Beschrijf eerst waarbij uw organisatie hulp nodig heeft.', [
         {
           questionId: initialQuestion.id,
           questionKey: initialQuestion.key,
@@ -251,6 +268,10 @@ export async function createIntake(
         createdByUserId: userId,
         questionnaireVersionId: questionnaireVersion.id,
         freeText: normalized.textValue!,
+        knowledgeContextId: knowledgeContext?.id ?? null,
+        knowledgeContextVersion: knowledgeContext?.version ?? null,
+        knowledgeSourceRoute: knowledgeContext?.sourceRoutes[0] ?? null,
+        knowledgeSuggestedCategory: knowledgeContext?.suggestedCategory ?? null,
       },
       select: { id: true, status: true, version: true },
     })
@@ -284,14 +305,14 @@ export async function saveIntakeStep(
     const intake = await requireIntakeEditor(transaction, userId, intakeId)
     assertExpectedVersion(intake.version, input.expectedIntakeVersion)
 
-    const questions = await transaction.intakeQuestion.findMany({
+    const allQuestions = await transaction.intakeQuestion.findMany({
       where: {
-        id: { in: input.answers.map((answer) => answer.questionId) },
         questionnaireVersionId: intake.questionnaireVersionId,
-        category: input.category,
       },
       include: questionInclude,
     })
+    const submittedIds = new Set(input.answers.map((answer) => answer.questionId))
+    const questions = allQuestions.filter((question) => submittedIds.has(question.id) && question.category === input.category)
     if (questions.length !== input.answers.length) throw invalidInput()
 
     const activeLocations = await transaction.organizationLocation.findMany({
@@ -302,15 +323,31 @@ export async function saveIntakeStep(
       select: { id: true },
     })
     const activeLocationIds = new Set(activeLocations.map(({ id }) => id))
-    const currentAnswers = await transaction.intakeAnswer.findMany({
+    const allCurrentAnswers = await transaction.intakeAnswer.findMany({
       where: {
         intakeId,
-        questionId: { in: questions.map((question) => question.id) },
       },
       include: answerInclude,
     })
+    const currentAnswers = allCurrentAnswers.filter((answer) => submittedIds.has(answer.questionId))
     const questionsById = new Map(questions.map((question) => [question.id, question]))
     const currentByQuestionId = new Map(currentAnswers.map((answer) => [answer.questionId, answer]))
+    const allQuestionsById = new Map(allQuestions.map((question) => [question.id, question]))
+    const visibilityAnswers = new Map<string, readonly string[]>(
+      allCurrentAnswers.map((answer) => [
+        allQuestionsById.get(answer.questionId)?.key ?? '',
+        answer.options.map((entry) => entry.option.value),
+      ]),
+    )
+    for (const answerInput of input.answers) {
+      const question = questionsById.get(answerInput.questionId)
+      if (!question || !['SINGLE_SELECT', 'MULTI_SELECT'].includes(question.inputType)) continue
+      const requestedIds = Array.isArray(answerInput.value) ? answerInput.value : [answerInput.value]
+      const values = requestedIds
+        .map((id) => question.options.find((option) => option.id === id)?.value)
+        .filter((value): value is string => Boolean(value))
+      visibilityAnswers.set(question.key, values)
+    }
     const mutations: Array<{
       questionId: string
       normalized: NormalizedIntakeAnswer
@@ -321,11 +358,19 @@ export async function saveIntakeStep(
     for (const answerInput of input.answers) {
       const question = questionsById.get(answerInput.questionId)
       if (!question) throw invalidInput()
-      const normalized = normalizeIntakeAnswer(question, answerInput.value, {
+      const isVisible = isCatalogQuestionVisible(
+        question.key,
+        visibilityAnswers,
+        intake.questionnaireVersion?.version ?? 1,
+      )
+      const normalized = normalizeIntakeAnswer(question, isVisible ? answerInput.value : '', {
         activeLocationIds,
       })
+      if (isVisible && question.isRequired && normalized.isEmpty) {
+        throw missingRequiredAnswer(question)
+      }
       const current = currentByQuestionId.get(question.id)
-      hasMeaningfulAnswer ||= !normalized.isEmpty
+      hasMeaningfulAnswer ||= isVisible && !normalized.isEmpty
 
       if (!current && normalized.isEmpty) continue
       if (current && answersAreEqual(current, normalized)) continue
@@ -362,7 +407,10 @@ export async function saveIntakeStep(
   })
 }
 
-async function loadProgress(transaction: Prisma.TransactionClient, intake: { id: string; questionnaireVersionId: string }) {
+async function loadProgress(
+  transaction: Prisma.TransactionClient,
+  intake: { id: string; questionnaireVersionId: string; questionnaireVersion?: { version: number } },
+) {
   const [questions, answers] = await Promise.all([
     transaction.intakeQuestion.findMany({
       where: { questionnaireVersionId: intake.questionnaireVersionId },
@@ -382,7 +430,7 @@ async function loadProgress(transaction: Prisma.TransactionClient, intake: { id:
       },
     }),
   ])
-  return calculateIntakeProgress(questions, answers)
+  return calculateIntakeProgress(questions, answers, intake.questionnaireVersion?.version ?? 1)
 }
 
 export async function getIntakeProgress(userId: string, intakeIdValue: string) {
@@ -408,7 +456,7 @@ export async function markIntakeReadyForReview(
     if (!progress.isComplete) {
       throw new IntakeServiceError(
         'VALIDATION_ERROR',
-        'Beantwoord alle verplichte vragen voordat U de intake controleert.',
+        'Beantwoord alle verplichte vragen voordat u de intake controleert.',
         progress.missingQuestionKeys.map((questionKey) => ({
           questionKey,
           message: 'Deze vraag moet nog worden beantwoord.',
@@ -448,7 +496,10 @@ export async function archiveIntake(
   const input = parseInput(intakeVersionInputSchema, rawInput)
   return getPrisma().$transaction(async (transaction) => {
     const intake = await requireIntakeArchiver(transaction, userId, intakeId)
+    if (intake.status === 'ARCHIVED') {
+      return { id: intake.id, status: intake.status, version: intake.version }
+    }
     assertExpectedVersion(intake.version, input.expectedIntakeVersion)
-    return advanceIntake(transaction, intake, userId, 'ARCHIVED', 'Conceptintake gearchiveerd.')
+    return advanceIntake(transaction, intake, userId, 'ARCHIVED', 'Niet-gepubliceerde opdracht verwijderd uit het overzicht.')
   })
 }

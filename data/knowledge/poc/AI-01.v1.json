@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0",
+  "source": { "code": "AI-01", "title": "Arbo- en verzuimbeleid", "publisher": "Sdu Uitgevers", "publicationDate": "2002-01-01", "edition": "Derde herziene druk", "language": "nl", "jurisdiction": "NL", "sourceType": "AI_SHEET", "sourceFormat": "PDF", "copyrightClassification": "RESTRICTED_REFERENCE_ONLY", "authorityLevel": "PROFESSIONAL_GUIDANCE", "temporalStatus": "HISTORICAL", "sourceFamily": "SZW-AI-BLADEN", "independenceGroup": "SZW-AI-BLADEN", "isPrimarySource": false, "notes": "Historische bron; actualiteit en juridische geldigheid moeten afzonderlijk worden gecontroleerd." },
+  "sourceVersion": { "externalKey": "ai-01:v1", "versionLabel": "Derde herziene druk", "publicationDate": "2002-01-01", "checksum": "2450ba6af453a3d5a44a999cd0dbc3f4303a0ba69ebd82dda7570638cf9d5a30", "extractionStatus": "EXTRACTED", "reviewStatus": "REVIEW_REQUIRED" },
+  "topics": [{ "externalKey": "ai-01:topic:beleid", "slug": "historisch-arbo-en-verzuimbeleid", "title": "Arbo- en verzuimbeleid (historisch)", "description": "Historische kandidaat-kennis over beleid, rollen en cyclische verbetering.", "domain": "POLICY_AND_MANAGEMENT" }],
+  "fragments": [
+    { "externalKey": "ai-01:f1", "sourceVersionKey": "ai-01:v1", "pageFrom": 7, "sectionPath": "Beleid", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-01:f2", "sourceVersionKey": "ai-01:v1", "pageFrom": 10, "sectionPath": "Beleidscyclus", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-01:f3", "sourceVersionKey": "ai-01:v1", "pageFrom": 13, "sectionPath": "Risico-inventarisatie", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-01:f4", "sourceVersionKey": "ai-01:v1", "pageFrom": 17, "sectionPath": "Werkgever", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-01:f5", "sourceVersionKey": "ai-01:v1", "pageFrom": 20, "sectionPath": "Werknemers", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-01:f6", "sourceVersionKey": "ai-01:v1", "pageFrom": 23, "sectionPath": "Medezeggenschap", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-01:f7", "sourceVersionKey": "ai-01:v1", "pageFrom": 27, "sectionPath": "Uitvoering", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-01:f8", "sourceVersionKey": "ai-01:v1", "pageFrom": 31, "sectionPath": "Evaluatie en bijsturing", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true }
+  ],
+  "claims": [
+    { "externalKey": "ai-01:c1", "topicKey": "ai-01:topic:beleid", "claimType": "RECOMMENDATION", "statement": "Arbo- en verzuimbeleid kan als samenhangend en cyclisch organisatieproces worden ingericht.", "applicability": "Historische beleidscontext; actuele toepasbaarheid vereist review.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-01:c2", "topicKey": "ai-01:topic:beleid", "claimType": "RECOMMENDATION", "statement": "Een plan-do-check-act-cyclus ondersteunt het plannen, uitvoeren, controleren en bijsturen van beleid.", "applicability": "Historische managementbenadering; inhoudelijk valideren.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-01:c3", "topicKey": "ai-01:topic:beleid", "claimType": "INSPECTION_POINT", "statement": "Een risico-inventarisatie kan dienen als feitelijke basis voor prioriteiten in het arbobeleid.", "applicability": "Historische bron; wettelijke context actualiseren.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-01:c4", "topicKey": "ai-01:topic:beleid", "claimType": "RESPONSIBILITY", "statement": "De werkgever heeft een sturende rol bij het vaststellen en organiseren van arbeidsomstandighedenbeleid.", "applicability": "Algemene historische beschrijving; juridische toets vereist.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-01:c5", "topicKey": "ai-01:topic:beleid", "claimType": "RESPONSIBILITY", "statement": "Werknemers leveren informatie en medewerking die nodig kan zijn om beleid uitvoerbaar te maken.", "applicability": "Historische beleidscontext.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-01:c6", "topicKey": "ai-01:topic:beleid", "claimType": "ROLE", "statement": "Medezeggenschap kan bijdragen aan draagvlak en controle bij beleidskeuzes over arbeidsomstandigheden.", "applicability": "Historische beschrijving; actuele bevoegdheden valideren.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-01:c7", "topicKey": "ai-01:topic:beleid", "claimType": "CONTROL_MEASURE", "statement": "Beleidsmaatregelen hebben duidelijke verantwoordelijkheden, middelen en uitvoeringsafspraken nodig.", "applicability": "Algemene historische beleidsaanbeveling.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-01:c8", "topicKey": "ai-01:topic:beleid", "claimType": "INSPECTION_POINT", "statement": "Periodieke controle en bijsturing kunnen zichtbaar maken of beleid het beoogde effect heeft.", "applicability": "Historische managementbenadering.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" }
+  ],
+  "citations": [
+    { "claimKey": "ai-01:c1", "sourceVersionKey": "ai-01:v1", "fragmentKey": "ai-01:f1", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-01:c2", "sourceVersionKey": "ai-01:v1", "fragmentKey": "ai-01:f2", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-01:c3", "sourceVersionKey": "ai-01:v1", "fragmentKey": "ai-01:f3", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-01:c4", "sourceVersionKey": "ai-01:v1", "fragmentKey": "ai-01:f4", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-01:c5", "sourceVersionKey": "ai-01:v1", "fragmentKey": "ai-01:f5", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-01:c6", "sourceVersionKey": "ai-01:v1", "fragmentKey": "ai-01:f6", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-01:c7", "sourceVersionKey": "ai-01:v1", "fragmentKey": "ai-01:f7", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-01:c8", "sourceVersionKey": "ai-01:v1", "fragmentKey": "ai-01:f8", "supportType": "HISTORICAL_ORIGIN" }
+  ],
+  "relations": [{ "externalKey": "ai-01:r1", "from": { "kind": "CLAIM", "key": "ai-01:c3" }, "to": { "kind": "CLAIM", "key": "ai-01:c1" }, "relationType": "INPUT_FOR", "rationale": "De inventarisatie kan beleidsprioriteiten voeden." }],
+  "rules": [], "calculations": [], "checklists": [], "procedures": [],
+  "roles": [
+    { "code": "werkgever", "title": "Werkgever", "description": "Inhoudelijke rol binnen arbeidsomstandighedenbeleid." },
+    { "code": "werknemer", "title": "Werknemer", "description": "Inhoudelijke rol binnen arbeidsomstandighedenbeleid." },
+    { "code": "medezeggenschap", "title": "Medezeggenschap", "description": "Inhoudelijke rol voor vertegenwoordiging en overleg." }
+  ],
+  "formTemplates": [],
+  "importMetadata": { "createdAt": "2026-08-02T10:00:00.000Z", "createdBy": "WORKMATCHR_POC", "notes": "Handmatig samengesteld conceptpakket zonder integrale brontekst.", "uncertainties": ["Pagina- en sectiereferenties moeten handmatig worden gecontroleerd.", "Alle inhoud vereist actualiteits- en juridische validatie."] }
+}

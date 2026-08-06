@@ -10,7 +10,7 @@ function provider(role: 'OWNER' | 'ADMIN' | 'MEMBER', organizationType: 'CLIENT'
     organization: {
       status: 'ACTIVE',
       organizationType,
-      memberships: [{ role, status: 'ACTIVE', user: { status: 'ACTIVE' } }],
+      memberships: [{ role, status: 'ACTIVE', user: { status: 'ACTIVE', accountType: 'PROFESSIONAL' } }],
     },
   }
 }
@@ -42,6 +42,12 @@ describe('provider-managerautorisatie voor professionals', () => {
     await expect(
       requireProviderManager(transaction(provider('OWNER', 'CLIENT')) as never, 'user-1', 'provider-1'),
     ).rejects.toMatchObject({ code: 'ACCESS_DENIED' })
+  })
+
+  it('weigert een bedrijfsaccount server-side', async () => {
+    const result = provider('OWNER', 'PROVIDER')
+    result.organization.memberships[0].user.accountType = 'CLIENT'
+    await expect(requireProviderManager(transaction(result) as never, 'user-1', 'provider-1')).rejects.toMatchObject({ code: 'ACCESS_DENIED' })
   })
 
   it('weigert een provider uit een andere tenant zonder details te lekken', async () => {

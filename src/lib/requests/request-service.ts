@@ -18,6 +18,10 @@ import {
   type RequestPublicationInput,
 } from './request-contract'
 import { createRequestEligibilitySnapshot } from './request-eligibility-service'
+import {
+  getPublicationRestriction,
+  getPublicationRestrictionInTransaction,
+} from '@/lib/marketplace/marketplace-reliability-service'
 
 type Transaction = Prisma.TransactionClient
 
@@ -27,6 +31,7 @@ export class RequestServiceError extends Error {
       | 'NOT_FOUND'
       | 'NOT_ELIGIBLE'
       | 'ACCESS_DENIED'
+      | 'PUBLICATION_REVIEW_REQUIRED'
       | 'CONFLICT',
   ) {
     super(code)
@@ -189,9 +194,7 @@ function assertDossierOwner(
   if (
     dossier.status !== 'COMPLETED' ||
     dossier.organization.status !== 'ACTIVE' ||
-    !['CLIENT', 'BOTH'].includes(
-      dossier.organization.organizationType,
-    )
+    dossier.organization.organizationType !== 'CLIENT'
   ) {
     throw new RequestServiceError('NOT_ELIGIBLE')
   }
@@ -237,6 +240,10 @@ export async function getRequestPublicationPreview(
     dossier.currentVersionNumber,
   )
   const version = dossier.versions[0]!
+  const publicationRestriction = await getPublicationRestriction({
+    organizationId: dossier.organization.id,
+    adviceDossierId: dossier.id,
+  })
   return {
     adviceDossierId: dossier.id,
     dossierCode: dossier.dossierCode,
@@ -254,6 +261,7 @@ export async function getRequestPublicationPreview(
       sector: sectorFromDossier(dossier) ?? 'Niet opgegeven',
     },
     existingRequest: dossier.request,
+    publicationRestriction,
   } as const
 }
 
@@ -363,6 +371,7 @@ async function publishRequestAttempt(input: {
           select: {
             organizationId: true,
             status: true,
+            user: { select: { accountType: true } },
             organization: {
               select: {
                 status: true,
@@ -375,12 +384,21 @@ async function publishRequestAttempt(input: {
         !membership ||
         membership.organizationId !== dossier.organizationId ||
         membership.status !== 'ACTIVE' ||
+        membership.user.accountType !== 'CLIENT' ||
         membership.organization.status !== 'ACTIVE' ||
-        !['CLIENT', 'BOTH'].includes(
-          membership.organization.organizationType,
-        )
+        membership.organization.organizationType !== 'CLIENT'
       ) {
         throw new RequestServiceError('ACCESS_DENIED')
+      }
+
+      const publicationRestriction =
+        await getPublicationRestrictionInTransaction(transaction, {
+          organizationId: dossier.organizationId,
+          adviceDossierId: dossier.id,
+          at: input.at,
+        })
+      if (publicationRestriction.blocked) {
+        throw new RequestServiceError('PUBLICATION_REVIEW_REQUIRED')
       }
 
       const version = await transaction.adviceDossierVersion.findUnique({
@@ -487,6 +505,12 @@ async function publishRequestAttempt(input: {
           occurredAt: input.at,
         },
       })
+      if (publicationRestriction.approvedContactRequestId) {
+        await transaction.marketplaceContactRequest.update({
+          where: { id: publicationRestriction.approvedContactRequestId },
+          data: { status: 'CLOSED', requestId: request.id },
+        })
+      }
       await transaction.requestEvent.create({
         data: {
           requestId: request.id,
@@ -599,6 +623,20 @@ export async function getOwnRequest(
           eligibleProviders: true,
           interests: { where: { status: 'INTERESTED' } },
           offerSlots: { where: { status: 'CLAIMED' } },
+        },
+      },
+      offerSlots: {
+        where: { status: 'CLAIMED' },
+        orderBy: { slotNumber: 'asc' },
+        select: {
+          id: true,
+          creditAmount: true,
+          marketplaceRuleSet: {
+            select: {
+              withdrawalRefundPercentage: true,
+              roundRefundUp: true,
+            },
+          },
         },
       },
     },

@@ -8,9 +8,11 @@ import { FieldError, StatusMessage, fieldClassName } from '@/components/auth/aut
 export function IntakeStartForm({
   action,
   organizationId,
+  knowledgeContextId,
 }: {
   action: (state: IntakeActionState, formData: FormData) => Promise<IntakeActionState>
   organizationId: string
+  knowledgeContextId?: string
 }) {
   const [state, formAction, pending] = useActionState(action, {})
   const formRef = useRef<HTMLFormElement>(null)
@@ -24,10 +26,11 @@ export function IntakeStartForm({
   return (
     <form ref={formRef} key={value || 'initial'} action={formAction} noValidate>
       <input type="hidden" name="organizationId" value={organizationId} />
+      {knowledgeContextId && <input type="hidden" name="knowledgeContextId" value={knowledgeContextId} />}
       {state.message && <StatusMessage error>{state.message}</StatusMessage>}
       <div className={state.message ? 'mt-6' : ''}>
         <label htmlFor="freeText" className="font-semibold text-brand-dark">
-          Waarbij heeft Uw organisatie hulp nodig? <span aria-hidden="true">*</span>
+          Waarbij heeft uw organisatie hulp nodig? <span aria-hidden="true">*</span>
         </label>
         <p id="freeText-help" className="mt-2 text-sm text-text-secondary">
           Beschrijf kort wat er speelt. Vermeld geen namen, medische gegevens, BSN’s, wachtwoorden of andere
@@ -52,7 +55,7 @@ export function IntakeStartForm({
         <FieldError id="freeText-error" message={error} />
       </div>
       <Button type="submit" loading={pending} className="mt-7 w-full sm:w-auto">
-        Hulpvraag starten
+        Doorgaan
       </Button>
     </form>
   )

@@ -34,7 +34,6 @@ function validFormData(): FormData {
   formData.set('website', 'voorbeeld.nl')
   formData.set('employeeCount', '25')
   formData.append('sectorIds', sectorId)
-  formData.set('primarySectorId', sectorId)
   formData.set('addressLine', 'Voorbeeldstraat 1')
   formData.set('postalCode', '1234 AB')
   formData.set('city', 'Utrecht')
@@ -67,7 +66,6 @@ describe('organisatie Server Action', () => {
       website: 'voorbeeld.nl',
       employeeCount: '25',
       sectorIds: [sectorId],
-      primarySectorId: sectorId,
       addressLine: 'Voorbeeldstraat 1',
       postalCode: '1234 AB',
       city: 'Utrecht',

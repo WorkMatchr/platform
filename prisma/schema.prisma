@@ -12,6 +12,11 @@ enum PlatformRole {
   ADMIN
 }
 
+enum AccountType {
+  CLIENT
+  PROFESSIONAL
+}
+
 enum UserStatus {
   INVITED
   ACTIVE
@@ -165,6 +170,9 @@ enum ProviderTaxonomyKind {
   COMPETENCY
   QUALIFICATION
   CERTIFICATION
+  MEMBERSHIP
+  REGISTRATION
+  WORK_MODE
   REGION
   INSURANCE_TYPE
 }
@@ -449,6 +457,14 @@ enum AssignmentStatus {
   ARCHIVED
 }
 
+enum AssignmentLocationType {
+  REGISTERED
+  OTHER
+  MULTIPLE
+  REMOTE
+  UNKNOWN
+}
+
 enum ProviderSelectionSource {
   AUTOMATIC
   MANUAL_ADMIN
@@ -482,6 +498,16 @@ enum CreditTransactionType {
   RESERVATION
   RESERVATION_RELEASE
   CONSUMPTION
+  PARTICIPATION_PAYMENT
+  WITHDRAWAL_REFUND
+  UNAWARDED_QUOTE_REFUND
+  MANUAL_COMPENSATION
+  COMMERCIAL_GESTURE
+  SPONSORSHIP
+  PROMOTION
+  CONTRIBUTION_BONUS
+  REVERSAL
+  OTHER
 }
 
 enum MarketplaceMatchRunStatus {
@@ -551,100 +577,473 @@ enum NotificationOutboxStatus {
   FAILED
 }
 
+enum MarketplaceRuleSetStatus {
+  DRAFT
+  PUBLISHED
+  RETIRED
+}
+
+enum MarketplaceWithdrawalReason {
+  RESOLVED_INTERNALLY
+  NO_LONGER_NEEDED
+  BUDGET_CANCELLED
+  PLANNING_CHANGED
+  PLACED_INCORRECTLY
+  OTHER
+}
+
+enum MarketplaceReliabilityEventType {
+  WITHDRAWN_WITHOUT_PARTICIPANTS
+  WITHDRAWN_AFTER_PARTICIPATION
+  EVENT_CORRECTION
+}
+
+enum MarketplaceContactRequestStatus {
+  OPEN
+  ADDITIONAL_INFORMATION_REQUIRED
+  APPROVED
+  REJECTED
+  CLOSED
+}
+
+enum PlatformAdminInvitationStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+  EXPIRED
+}
+
+enum KnowledgeSourceType {
+  AI_SHEET
+  LEGISLATION
+  REGULATION
+  INSPECTORATE_GUIDANCE
+  ARBOCATALOGUE
+  STANDARD
+  RESEARCH
+  PROFESSIONAL_GUIDANCE
+  INTERNAL_EXPERTISE
+  CASE_LAW
+  OTHER
+}
+
+enum KnowledgeSourceFormat {
+  PDF
+  LEGACY_DOC
+}
+
+enum KnowledgeCopyrightClassification {
+  PUBLIC_DOMAIN
+  OPEN_LICENSE
+  RESTRICTED_REFERENCE_ONLY
+  INTERNAL
+  UNKNOWN
+}
+
+enum KnowledgeAuthorityLevel {
+  PRIMARY_LEGAL
+  OFFICIAL_GUIDANCE
+  CONSENSUS_STANDARD
+  PROFESSIONAL_GUIDANCE
+  RESEARCH
+  INTERNAL
+  UNKNOWN
+}
+
+enum KnowledgeTemporalStatus {
+  UNKNOWN
+  CURRENT
+  HISTORICAL
+  SUPERSEDED
+  WITHDRAWN
+  UNDER_REVIEW
+}
+
+enum KnowledgeExtractionStatus {
+  NOT_STARTED
+  READY
+  EXTRACTED
+  UNSUPPORTED_FOR_EXTRACTION
+  FAILED
+}
+
+enum KnowledgeReviewStatus {
+  NOT_REVIEWED
+  REVIEW_REQUIRED
+  IN_REVIEW
+  REVIEWED
+  REJECTED
+}
+
+enum KnowledgeTopicStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum KnowledgeDomain {
+  POLICY_AND_MANAGEMENT
+  ERGONOMICS
+  HAZARDOUS_SUBSTANCES
+  NOISE
+  CONFINED_SPACES
+  EMERGENCY_RESPONSE
+  PPE
+  OCCUPATIONAL_HEALTH
+  MACHINERY
+  MEASUREMENT
+  LEGAL
+  OTHER
+}
+
+enum KnowledgeClaimType {
+  DEFINITION
+  HAZARD
+  RISK
+  HEALTH_EFFECT
+  LEGAL_REQUIREMENT
+  PROHIBITION
+  THRESHOLD
+  RECOMMENDATION
+  CONTROL_MEASURE
+  RESPONSIBILITY
+  ROLE
+  EXCEPTION
+  CONDITION
+  PROCEDURAL_STEP
+  INSPECTION_POINT
+  MEASUREMENT_REQUIREMENT
+  RECORD_RETENTION
+  TRAINING_REQUIREMENT
+  PPE_REQUIREMENT
+  EMERGENCY_REQUIREMENT
+  OTHER
+}
+
+enum KnowledgeValidationStatus {
+  UNVALIDATED
+  PARTIALLY_VALIDATED
+  VALIDATED
+  CONFLICTING
+  REJECTED
+  EXPIRED
+  REVIEW_REQUIRED
+}
+
+enum KnowledgePublicationStatus {
+  DRAFT
+  INTERNAL_REVIEW
+  APPROVED
+  PUBLISHED
+  ARCHIVED
+  REJECTED
+}
+
+enum KnowledgeConfidenceLevel {
+  UNKNOWN
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum KnowledgeSupportType {
+  DIRECT_SUPPORT
+  PARTIAL_SUPPORT
+  CONTEXT
+  CONTRADICTS
+  SUPERSEDES
+  HISTORICAL_ORIGIN
+}
+
+enum KnowledgeValidationMethod {
+  HUMAN_EXPERT_REVIEW
+  CROSS_SOURCE_CHECK
+  LEGAL_SOURCE_CHECK
+  AUTOMATED_CONSISTENCY_CHECK
+  EDITORIAL_REVIEW
+}
+
+enum KnowledgeValidatorType {
+  HUMAN
+  SYSTEM
+}
+
+enum KnowledgeRelationType {
+  IS_A
+  PART_OF
+  CAUSES
+  MAY_CAUSE
+  PREVENTS
+  MITIGATES
+  REQUIRES
+  PROHIBITS
+  APPLIES_TO
+  MEASURED_BY
+  CONTROLLED_BY
+  RELEVANT_TO
+  SUPERSEDES
+  CONFLICTS_WITH
+  IMPLEMENTED_BY
+  PERFORMED_BY
+  TRIGGERS
+  INPUT_FOR
+  OUTPUT_OF
+}
+
+enum KnowledgeRuleType {
+  DECISION_RULE
+  ELIGIBILITY_RULE
+  CLASSIFICATION_RULE
+  COMPLIANCE_RULE
+  WARNING_RULE
+  ROUTING_RULE
+}
+
+enum KnowledgeAccessTier {
+  PUBLIC_BASIC
+  REGISTERED_BASIC
+  PROFESSIONAL_PRO
+  ORGANIZATION_BUSINESS
+  INTERNAL_REVIEWER
+  PLATFORM_ADMIN
+}
+
+enum KnowledgeChecklistAnswerType {
+  YES_NO
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  NUMBER
+  TEXT
+  NOT_APPLICABLE
+}
+
+enum KnowledgeReviewPriority {
+  LOW
+  NORMAL
+  HIGH
+  CRITICAL
+}
+
+enum KnowledgeControlRisk {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum KnowledgeSourceControlStatus {
+  NOT_STARTED
+  SOURCES_REQUIRED
+  SOURCES_COLLECTED
+  CONSISTENT
+  CONFLICT_DETECTED
+  OUTDATED
+  HUMAN_EXCEPTION_REQUIRED
+  CONTROL_COMPLETE
+}
+
+enum KnowledgeImprovementReportType {
+  OUTDATED
+  INCORRECT
+  INCOMPLETE
+  SOURCE_CHANGED
+  APPLICABILITY_UNCLEAR
+  OTHER
+}
+
+enum KnowledgeImprovementReportStatus {
+  NEW
+  UNDER_INVESTIGATION
+  PROCESSED
+  REJECTED
+  DUPLICATE
+}
+
+enum KnowledgeReviewTaskStatus {
+  OPEN
+  IN_PROGRESS
+  DEFERRED
+  CHANGES_REQUIRED
+  CONTENT_APPROVED
+  REJECTED
+  COMPLETED
+  CANCELLED
+}
+
+enum KnowledgeControlExceptionType {
+  SOURCE_CONFLICT
+  INSUFFICIENT_TRACEABILITY
+  SOURCE_EXPIRED
+  PROFESSIONAL_REPORT
+  PUBLICATION_BLOCKED
+  APPLICABILITY_UNCLEAR
+  SITUATIONAL_USE
+  HIGH_RISK_PUBLICATION
+}
+
+enum KnowledgeReviewDecisionType {
+  DEFERRED
+  CHANGES_REQUIRED
+  CONTENT_APPROVED
+  REJECTED
+  VALIDATION_WITHDRAWN
+  REOPENED
+}
+
+enum KnowledgeReviewSourceReferenceAction {
+  ADDED
+  WITHDRAWN
+}
+
+enum KnowledgeAuditEventType {
+  SOURCE_REGISTERED
+  SOURCE_VERSION_ADDED
+  EXTRACTION_STARTED
+  EXTRACTION_COMPLETED
+  EXTRACTION_FAILED
+  CLAIM_CREATED
+  CLAIM_UPDATED
+  VALIDATION_ADDED
+  VALIDATION_REVOKED
+  CLAIM_APPROVED
+  CLAIM_PUBLISHED
+  CLAIM_ARCHIVED
+  CONFLICT_DETECTED
+  IMPORT_STARTED
+  IMPORT_COMPLETED
+  IMPORT_FAILED
+  REVIEW_STARTED
+  REVIEW_DRAFT_SAVED
+  REVIEW_DEFERRED
+  CLAIM_REWORDING_PROPOSED
+  CHANGES_REQUIRED
+  CONTENT_REVIEW_APPROVED
+  CONTENT_REVIEW_REJECTED
+  VALIDATION_WITHDRAWN
+  SUPPORTING_SOURCE_ADDED
+  SUPPORTING_SOURCE_REMOVED
+  REVIEW_REOPENED
+  IMPROVEMENT_REPORTED
+  IMPROVEMENT_STATUS_CHANGED
+  CONTROL_EXCEPTION_ACTIVATED
+  CONTROL_EXCEPTION_DEACTIVATED
+}
+
 model User {
-  id                               String                                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email                            String                                 @unique
-  displayName                      String?
-  emailVerified                    Boolean                                @default(false)
-  image                            String?
-  platformRole                     PlatformRole                           @default(USER)
-  status                           UserStatus                             @default(INVITED)
-  createdAt                        DateTime                               @default(now()) @db.Timestamptz(3)
-  updatedAt                        DateTime                               @updatedAt @db.Timestamptz(3)
-  archivedAt                       DateTime?                              @db.Timestamptz(3)
-  createdByUserId                  String?                                @db.Uuid
-  blockedAt                        DateTime?                              @db.Timestamptz(3)
-  blockedByUserId                  String?                                @db.Uuid
-  deletionRequestedAt              DateTime?                              @db.Timestamptz(3)
-  deletionRequestedByUserId        String?                                @db.Uuid
-  deletionEffectiveAt              DateTime?                              @db.Timestamptz(3)
-  anonymizedAt                     DateTime?                              @db.Timestamptz(3)
-  retentionPurgeAt                 DateTime?                              @db.Timestamptz(3)
-  lifecycleReasonCode              String?                                @db.VarChar(80)
-  lifecycleReasonNote              String?                                @db.VarChar(500)
-  migrationClassification          UserMigrationClassification?
-  createdByUser                    User?                                  @relation("UserProvisioningCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
-  createdUsers                     User[]                                 @relation("UserProvisioningCreator")
-  blockedByUser                    User?                                  @relation("UserBlockActor", fields: [blockedByUserId], references: [id], onDelete: SetNull)
-  blockedUsers                     User[]                                 @relation("UserBlockActor")
-  deletionRequestedByUser          User?                                  @relation("UserDeletionRequestActor", fields: [deletionRequestedByUserId], references: [id], onDelete: SetNull)
-  deletionRequestedUsers           User[]                                 @relation("UserDeletionRequestActor")
-  memberships                      OrganizationMembership[]
-  provisioningEventsAsSubject      AccountProvisioningEvent[]             @relation("AccountProvisioningSubject")
-  provisioningEventsAsActor        AccountProvisioningEvent[]             @relation("AccountProvisioningActor")
-  organizationProvisioningEvents   OrganizationProvisioningEvent[]        @relation("OrganizationProvisioningActor")
-  membershipEventsAsSubject        OrganizationMembershipEvent[]          @relation("OrganizationMembershipEventSubject")
-  membershipEventsAsActor          OrganizationMembershipEvent[]          @relation("OrganizationMembershipEventActor")
-  deletedAccountRetention          DeletedAccountRetention?
-  approvedProviderProfiles         ProviderProfile[]                      @relation("ProviderProfileApprover")
-  verifiedProviderCertificates     ProviderCertification[]                @relation("CertificationVerifier")
-  createdIntakes                   Intake[]                               @relation("IntakeCreator")
-  submittedIntakes                 Intake[]                               @relation("IntakeSubmitter")
-  updatedIntakeAnswers             IntakeAnswer[]                         @relation("IntakeAnswerUpdater")
-  changedIntakeAnswerRevisions     IntakeAnswerRevision[]                 @relation("IntakeAnswerRevisionActor")
-  changedIntakeStatuses            IntakeStatusHistory[]                  @relation("IntakeStatusHistoryActor")
-  createdAssignments               Assignment[]                           @relation("AssignmentCreator")
-  publishedAssignments             Assignment[]                           @relation("AssignmentPublisher")
-  changedAssignmentStatuses        AssignmentStatusHistory[]              @relation("AssignmentStatusHistoryActor")
-  changedAssignmentRevisions       AssignmentRevision[]                   @relation("AssignmentRevisionActor")
-  selectedProviderSelections       AssignmentProviderSelection[]          @relation("ProviderSelectionActor")
-  assignmentResolutions            AssignmentResolution[]                 @relation("AssignmentResolutionActor")
-  adminActions                     AdminActionLog[]                       @relation("AdminActionActor")
-  createdCreditTransactions        CreditTransaction[]                    @relation("CreditTransactionActor")
-  sessions                         Session[]
-  accounts                         Account[]
-  providerPermissionSubjects       ProviderPlatformPermissionGrant[]      @relation("ProviderPermissionSubject")
-  providerPermissionGranters       ProviderPlatformPermissionGrant[]      @relation("ProviderPermissionGranter")
-  providerPermissionRevokers       ProviderPlatformPermissionRevocation[] @relation("ProviderPermissionRevoker")
-  providerTermAcceptances          ProviderTermAcceptance[]
-  providerVerificationReviews      ProviderVerificationReview[]           @relation("ProviderVerificationReviewer")
-  providerQualificationReviews     ProviderQualificationDecision[]        @relation("ProviderQualificationReviewer")
-  providerQualificationApprovals   ProviderQualificationDecision[]        @relation("ProviderQualificationApprover")
-  providerReadinessAssessments     ProviderReadinessAssessment[]
-  providerSelectabilityAssessments ProviderSelectabilityAssessment[]
-  providerBlocks                   ProviderBlock[]                        @relation("ProviderBlockActor")
-  providerBlockReviews             ProviderBlock[]                        @relation("ProviderBlockReviewer")
-  providerBlockReleases            ProviderBlockRelease[]                 @relation("ProviderBlockReleaseActor")
-  providerBlockReleaseReviews      ProviderBlockRelease[]                 @relation("ProviderBlockReleaseReviewer")
-  providerProjections              TrustedProviderProjection[]
-  confirmedProviderCapacities      ProviderCapacitySnapshot[]             @relation("ProviderCapacityConfirmer")
-  providerProfessionalIdentities   ProviderProfessionalIdentityRevision[] @relation("ProviderProfessionalIdentityActor")
-  createdProviderCandidates        ProviderDossierCandidate[]             @relation("ProviderDossierCandidateActor")
-  submittedProviderDossiers        ProviderDossierSubmission[]            @relation("ProviderDossierSubmitter")
-  providerDossierHistory           ProviderDossierSubmissionHistory[]     @relation("ProviderDossierHistoryActor")
-  openedProviderReviewCases        ProviderDossierReviewCase[]            @relation("ProviderDossierReviewCaseOpener")
-  closedProviderReviewCases        ProviderDossierReviewCase[]            @relation("ProviderDossierReviewCaseCloser")
-  createdProviderFindings          ProviderDossierFinding[]               @relation("ProviderDossierFindingActor")
-  resolvedProviderFindings         ProviderDossierFindingResolution[]     @relation("ProviderDossierFindingResolutionActor")
-  startedMarketplaceMatchRuns      MarketplaceMatchRun[]                  @relation("MarketplaceMatchRunActor")
-  marketplaceMatchInterventions    MarketplaceMatchIntervention[]         @relation("MarketplaceMatchInterventionActor")
-  acceptedProviderInvitations      ProviderInvitation[]                   @relation("ProviderInvitationAcceptanceActor")
-  createdMarketplaceParticipations ProviderParticipation[]                @relation("ProviderParticipationActor")
-  submittedQuoteVersions           QuoteVersion[]                         @relation("QuoteVersionSubmitter")
-  marketplaceAwardDecisions        AwardDecision[]                        @relation("AwardDecisionActor")
-  sentMarketplaceMessages          MarketplaceMessage[]                   @relation("MarketplaceMessageSender")
-  receivedMarketplaceNotifications MarketplaceNotification[]              @relation("MarketplaceNotificationRecipient")
-  readMarketplaceNotifications     MarketplaceNotification[]              @relation("MarketplaceNotificationReader")
-  marketplaceAuditEvents           MarketplaceAuditEvent[]                @relation("MarketplaceAuditActor")
-  ownedAdviceDossiers              AdviceDossier[]                        @relation("AdviceDossierOwner")
-  adviceDossierEvents              AdviceDossierEvent[]                   @relation("AdviceDossierEventActor")
-  requestEvents                    RequestEvent[]                         @relation("RequestEventActor")
-  createdRequestInterests          RequestInterest[]                      @relation("RequestInterestCreator")
-  requestInterestEvents            RequestInterestEvent[]                 @relation("RequestInterestEventActor")
-  createdRequestOfferSlots         RequestOfferSlot[]                     @relation("RequestOfferSlotCreator")
-  requestOfferSlotEvents           RequestOfferSlotEvent[]                @relation("RequestOfferSlotEventActor")
+  id                                 String                                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email                              String                                 @unique
+  displayName                        String?
+  emailVerified                      Boolean                                @default(false)
+  image                              String?
+  platformRole                       PlatformRole                           @default(USER)
+  accountType                        AccountType?
+  status                             UserStatus                             @default(INVITED)
+  createdAt                          DateTime                               @default(now()) @db.Timestamptz(3)
+  updatedAt                          DateTime                               @updatedAt @db.Timestamptz(3)
+  archivedAt                         DateTime?                              @db.Timestamptz(3)
+  createdByUserId                    String?                                @db.Uuid
+  blockedAt                          DateTime?                              @db.Timestamptz(3)
+  blockedByUserId                    String?                                @db.Uuid
+  deletionRequestedAt                DateTime?                              @db.Timestamptz(3)
+  deletionRequestedByUserId          String?                                @db.Uuid
+  deletionEffectiveAt                DateTime?                              @db.Timestamptz(3)
+  anonymizedAt                       DateTime?                              @db.Timestamptz(3)
+  retentionPurgeAt                   DateTime?                              @db.Timestamptz(3)
+  lifecycleReasonCode                String?                                @db.VarChar(80)
+  lifecycleReasonNote                String?                                @db.VarChar(500)
+  migrationClassification            UserMigrationClassification?
+  createdByUser                      User?                                  @relation("UserProvisioningCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdUsers                       User[]                                 @relation("UserProvisioningCreator")
+  blockedByUser                      User?                                  @relation("UserBlockActor", fields: [blockedByUserId], references: [id], onDelete: SetNull)
+  blockedUsers                       User[]                                 @relation("UserBlockActor")
+  deletionRequestedByUser            User?                                  @relation("UserDeletionRequestActor", fields: [deletionRequestedByUserId], references: [id], onDelete: SetNull)
+  deletionRequestedUsers             User[]                                 @relation("UserDeletionRequestActor")
+  memberships                        OrganizationMembership[]
+  provisioningEventsAsSubject        AccountProvisioningEvent[]             @relation("AccountProvisioningSubject")
+  provisioningEventsAsActor          AccountProvisioningEvent[]             @relation("AccountProvisioningActor")
+  organizationProvisioningEvents     OrganizationProvisioningEvent[]        @relation("OrganizationProvisioningActor")
+  membershipEventsAsSubject          OrganizationMembershipEvent[]          @relation("OrganizationMembershipEventSubject")
+  membershipEventsAsActor            OrganizationMembershipEvent[]          @relation("OrganizationMembershipEventActor")
+  deletedAccountRetention            DeletedAccountRetention?
+  approvedProviderProfiles           ProviderProfile[]                      @relation("ProviderProfileApprover")
+  verifiedProviderCertificates       ProviderCertification[]                @relation("CertificationVerifier")
+  createdIntakes                     Intake[]                               @relation("IntakeCreator")
+  submittedIntakes                   Intake[]                               @relation("IntakeSubmitter")
+  updatedIntakeAnswers               IntakeAnswer[]                         @relation("IntakeAnswerUpdater")
+  changedIntakeAnswerRevisions       IntakeAnswerRevision[]                 @relation("IntakeAnswerRevisionActor")
+  changedIntakeStatuses              IntakeStatusHistory[]                  @relation("IntakeStatusHistoryActor")
+  createdAssignments                 Assignment[]                           @relation("AssignmentCreator")
+  publishedAssignments               Assignment[]                           @relation("AssignmentPublisher")
+  changedAssignmentStatuses          AssignmentStatusHistory[]              @relation("AssignmentStatusHistoryActor")
+  changedAssignmentRevisions         AssignmentRevision[]                   @relation("AssignmentRevisionActor")
+  selectedProviderSelections         AssignmentProviderSelection[]          @relation("ProviderSelectionActor")
+  assignmentResolutions              AssignmentResolution[]                 @relation("AssignmentResolutionActor")
+  adminActions                       AdminActionLog[]                       @relation("AdminActionActor")
+  createdCreditTransactions          CreditTransaction[]                    @relation("CreditTransactionActor")
+  sessions                           Session[]                              @relation("SessionActor")
+  impersonatedSessions               Session[]                              @relation("SessionEffectiveUser")
+  accounts                           Account[]
+  providerPermissionSubjects         ProviderPlatformPermissionGrant[]      @relation("ProviderPermissionSubject")
+  providerPermissionGranters         ProviderPlatformPermissionGrant[]      @relation("ProviderPermissionGranter")
+  providerPermissionRevokers         ProviderPlatformPermissionRevocation[] @relation("ProviderPermissionRevoker")
+  providerTermAcceptances            ProviderTermAcceptance[]
+  providerVerificationReviews        ProviderVerificationReview[]           @relation("ProviderVerificationReviewer")
+  providerQualificationReviews       ProviderQualificationDecision[]        @relation("ProviderQualificationReviewer")
+  providerQualificationApprovals     ProviderQualificationDecision[]        @relation("ProviderQualificationApprover")
+  providerReadinessAssessments       ProviderReadinessAssessment[]
+  providerSelectabilityAssessments   ProviderSelectabilityAssessment[]
+  providerBlocks                     ProviderBlock[]                        @relation("ProviderBlockActor")
+  providerBlockReviews               ProviderBlock[]                        @relation("ProviderBlockReviewer")
+  providerBlockReleases              ProviderBlockRelease[]                 @relation("ProviderBlockReleaseActor")
+  providerBlockReleaseReviews        ProviderBlockRelease[]                 @relation("ProviderBlockReleaseReviewer")
+  providerProjections                TrustedProviderProjection[]
+  confirmedProviderCapacities        ProviderCapacitySnapshot[]             @relation("ProviderCapacityConfirmer")
+  providerProfessionalIdentities     ProviderProfessionalIdentityRevision[] @relation("ProviderProfessionalIdentityActor")
+  createdProviderCandidates          ProviderDossierCandidate[]             @relation("ProviderDossierCandidateActor")
+  submittedProviderDossiers          ProviderDossierSubmission[]            @relation("ProviderDossierSubmitter")
+  providerDossierHistory             ProviderDossierSubmissionHistory[]     @relation("ProviderDossierHistoryActor")
+  openedProviderReviewCases          ProviderDossierReviewCase[]            @relation("ProviderDossierReviewCaseOpener")
+  closedProviderReviewCases          ProviderDossierReviewCase[]            @relation("ProviderDossierReviewCaseCloser")
+  createdProviderFindings            ProviderDossierFinding[]               @relation("ProviderDossierFindingActor")
+  resolvedProviderFindings           ProviderDossierFindingResolution[]     @relation("ProviderDossierFindingResolutionActor")
+  startedMarketplaceMatchRuns        MarketplaceMatchRun[]                  @relation("MarketplaceMatchRunActor")
+  marketplaceMatchInterventions      MarketplaceMatchIntervention[]         @relation("MarketplaceMatchInterventionActor")
+  acceptedProviderInvitations        ProviderInvitation[]                   @relation("ProviderInvitationAcceptanceActor")
+  createdMarketplaceParticipations   ProviderParticipation[]                @relation("ProviderParticipationActor")
+  submittedQuoteVersions             QuoteVersion[]                         @relation("QuoteVersionSubmitter")
+  marketplaceAwardDecisions          AwardDecision[]                        @relation("AwardDecisionActor")
+  sentMarketplaceMessages            MarketplaceMessage[]                   @relation("MarketplaceMessageSender")
+  receivedMarketplaceNotifications   MarketplaceNotification[]              @relation("MarketplaceNotificationRecipient")
+  readMarketplaceNotifications       MarketplaceNotification[]              @relation("MarketplaceNotificationReader")
+  marketplaceAuditEvents             MarketplaceAuditEvent[]                @relation("MarketplaceAuditActor")
+  ownedAdviceDossiers                AdviceDossier[]                        @relation("AdviceDossierOwner")
+  adviceDossierEvents                AdviceDossierEvent[]                   @relation("AdviceDossierEventActor")
+  requestEvents                      RequestEvent[]                         @relation("RequestEventActor")
+  createdRequestInterests            RequestInterest[]                      @relation("RequestInterestCreator")
+  requestInterestEvents              RequestInterestEvent[]                 @relation("RequestInterestEventActor")
+  createdRequestOfferSlots           RequestOfferSlot[]                     @relation("RequestOfferSlotCreator")
+  requestOfferSlotEvents             RequestOfferSlotEvent[]                @relation("RequestOfferSlotEventActor")
+  createdMarketplaceRuleSets         MarketplaceRuleSet[]                   @relation("MarketplaceRuleSetCreator")
+  marketplaceReliabilityEvents       MarketplaceReliabilityEvent[]          @relation("MarketplaceReliabilityEventActor")
+  createdMarketplaceContactRequests  MarketplaceContactRequest[]            @relation("MarketplaceContactRequestCreator")
+  reviewedMarketplaceContactRequests MarketplaceContactRequest[]            @relation("MarketplaceContactRequestReviewer")
+  sentPlatformAdminInvitations       PlatformAdminInvitation[]              @relation("PlatformAdminInvitationInviter")
+  receivedPlatformAdminInvitations   PlatformAdminInvitation[]              @relation("PlatformAdminInvitationSubject")
+  acceptedPlatformAdminInvitations   PlatformAdminInvitation[]              @relation("PlatformAdminInvitationAcceptor")
+  createdKnowledgeClaims             KnowledgeClaim[]                       @relation("KnowledgeClaimCreator")
+  reviewedKnowledgeClaims            KnowledgeClaim[]                       @relation("KnowledgeClaimReviewer")
+  knowledgeValidations               KnowledgeValidation[]                  @relation("KnowledgeValidationActor")
+  assignedKnowledgeReviewTasks       KnowledgeReviewTask[]                  @relation("KnowledgeReviewTaskAssignee")
+  editedKnowledgeReviewTasks         KnowledgeReviewTask[]                  @relation("KnowledgeReviewTaskEditor")
+  completedKnowledgeReviewTasks      KnowledgeReviewTask[]                  @relation("KnowledgeReviewTaskCompleter")
+  knowledgeReviewDecisions           KnowledgeReviewDecision[]              @relation("KnowledgeReviewDecisionActor")
+  knowledgeReviewSourceReferences    KnowledgeReviewSourceReference[]       @relation("KnowledgeReviewSourceReferenceActor")
+  knowledgeAuditEvents               KnowledgeAuditEvent[]                  @relation("KnowledgeAuditActor")
+  submittedKnowledgeImprovements     KnowledgeImprovementReport[]           @relation("KnowledgeImprovementReporter")
+  handledKnowledgeImprovements       KnowledgeImprovementReport[]           @relation("KnowledgeImprovementHandler")
 
   @@index([status])
+  @@index([accountType])
   @@index([createdAt])
   @@index([createdByUserId])
   @@index([blockedByUserId])
@@ -653,17 +1052,21 @@ model User {
 }
 
 model Session {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId    String   @db.Uuid
-  token     String   @unique
-  expiresAt DateTime @db.Timestamptz(3)
-  ipAddress String?
-  userAgent String?
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                 String    @db.Uuid
+  impersonatedUserId     String?   @db.Uuid
+  impersonationStartedAt DateTime? @db.Timestamptz(3)
+  token                  String    @unique
+  expiresAt              DateTime  @db.Timestamptz(3)
+  ipAddress              String?
+  userAgent              String?
+  createdAt              DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt              DateTime  @updatedAt @db.Timestamptz(3)
+  user                   User      @relation("SessionActor", fields: [userId], references: [id], onDelete: Restrict)
+  impersonatedUser       User?     @relation("SessionEffectiveUser", fields: [impersonatedUserId], references: [id], onDelete: Restrict)
 
   @@index([userId])
+  @@index([impersonatedUserId])
   @@index([expiresAt])
 }
 
@@ -707,50 +1110,53 @@ model RateLimit {
 }
 
 model Organization {
-  id                        String                          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name                      String
-  tradeName                 String?
-  chamberOfCommerceNumber   String?
-  organizationType          OrganizationType
-  status                    OrganizationStatus              @default(PENDING)
-  website                   String?
-  phone                     String?
-  generalEmail              String?
-  employeeCount             Int?
-  logoStorageKey            String?                         @unique
-  logoMimeType              String?
-  logoSizeBytes             Int?
-  logoWidth                 Int?
-  logoHeight                Int?
-  logoUpdatedAt             DateTime?                       @db.Timestamptz(3)
-  createdAt                 DateTime                        @default(now()) @db.Timestamptz(3)
-  updatedAt                 DateTime                        @updatedAt @db.Timestamptz(3)
-  archivedAt                DateTime?                       @db.Timestamptz(3)
-  systemKey                 String?                         @unique @db.VarChar(100)
-  memberships               OrganizationMembership[]
-  provisioningEvents        AccountProvisioningEvent[]
-  systemProvisioningEvents  OrganizationProvisioningEvent[]
-  membershipEvents          OrganizationMembershipEvent[]
-  locations                 OrganizationLocation[]
-  sectors                   OrganizationSector[]
-  providerProfile           ProviderProfile?
-  clientIntakes             Intake[]
-  clientAssignments         Assignment[]
-  creditAccount             CreditAccount?
-  insuredProviderPolicies   ProviderInsuranceRevision[]     @relation("InsuredOrganization")
-  marketplaceInvitations    ProviderInvitation[]
-  marketplaceParticipations ProviderParticipation[]
-  marketplaceQuotes         Quote[]
-  messageChannelsAsClient   MarketplaceMessageChannel[]     @relation("MarketplaceMessageClientOrganization")
-  marketplaceAuditEvents    MarketplaceAuditEvent[]
-  adviceDossiers            AdviceDossier[]
-  requestsAsTenant          Request[]                       @relation("RequestTenant")
-  requestsAsOrganization    Request[]                       @relation("RequestOrganization")
-  eligibleProviderRequests  RequestEligibleProvider[]       @relation("RequestEligibleProviderOrganization")
-  requestInterests          RequestInterest[]               @relation("RequestInterestProviderOrganization")
-  requestInterestEvents     RequestInterestEvent[]
-  requestOfferSlots         RequestOfferSlot[]              @relation("RequestOfferSlotProviderOrganization")
-  requestOfferSlotEvents    RequestOfferSlotEvent[]
+  id                           String                          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                         String
+  tradeName                    String?
+  chamberOfCommerceNumber      String?
+  organizationType             OrganizationType
+  status                       OrganizationStatus              @default(PENDING)
+  website                      String?
+  phone                        String?
+  generalEmail                 String?
+  employeeCount                Int?
+  logoStorageKey               String?                         @unique
+  logoMimeType                 String?
+  logoSizeBytes                Int?
+  logoWidth                    Int?
+  logoHeight                   Int?
+  logoUpdatedAt                DateTime?                       @db.Timestamptz(3)
+  createdAt                    DateTime                        @default(now()) @db.Timestamptz(3)
+  updatedAt                    DateTime                        @updatedAt @db.Timestamptz(3)
+  archivedAt                   DateTime?                       @db.Timestamptz(3)
+  systemKey                    String?                         @unique @db.VarChar(100)
+  memberships                  OrganizationMembership[]
+  provisioningEvents           AccountProvisioningEvent[]
+  systemProvisioningEvents     OrganizationProvisioningEvent[]
+  membershipEvents             OrganizationMembershipEvent[]
+  locations                    OrganizationLocation[]
+  sectors                      OrganizationSector[]
+  providerProfile              ProviderProfile?
+  clientIntakes                Intake[]
+  clientAssignments            Assignment[]
+  creditAccount                CreditAccount?
+  insuredProviderPolicies      ProviderInsuranceRevision[]     @relation("InsuredOrganization")
+  marketplaceInvitations       ProviderInvitation[]
+  marketplaceParticipations    ProviderParticipation[]
+  marketplaceQuotes            Quote[]
+  messageChannelsAsClient      MarketplaceMessageChannel[]     @relation("MarketplaceMessageClientOrganization")
+  marketplaceAuditEvents       MarketplaceAuditEvent[]
+  adviceDossiers               AdviceDossier[]
+  requestsAsTenant             Request[]                       @relation("RequestTenant")
+  requestsAsOrganization       Request[]                       @relation("RequestOrganization")
+  eligibleProviderRequests     RequestEligibleProvider[]       @relation("RequestEligibleProviderOrganization")
+  requestInterests             RequestInterest[]               @relation("RequestInterestProviderOrganization")
+  requestInterestEvents        RequestInterestEvent[]
+  requestOfferSlots            RequestOfferSlot[]              @relation("RequestOfferSlotProviderOrganization")
+  requestOfferSlotEvents       RequestOfferSlotEvent[]
+  marketplaceReliabilityEvents MarketplaceReliabilityEvent[]
+  marketplaceContactRequests   MarketplaceContactRequest[]
+  platformAdminInvitations     PlatformAdminInvitation[]
 
   @@index([organizationType])
   @@index([status])
@@ -954,6 +1360,8 @@ model ProviderProfile {
   approvedByUserId            String?                             @db.Uuid
   rejectionReason             String?
   description                 String?
+  shortIntroduction           String?                             @db.VarChar(300)
+  workingMethod               String?
   maxTravelDistanceKm         Int?
   acceptsRemoteWork           Boolean                             @default(false)
   isAvailable                 Boolean                             @default(false)
@@ -997,6 +1405,8 @@ model ProviderProfile {
   marketplaceQuotes           Quote[]
   marketplaceMessageChannels  MarketplaceMessageChannel[]
   eligibleRequestSnapshots    RequestEligibleProvider[]
+  coreExpertises              ProviderProfileCoreExpertise[]
+  workModes                   ProviderProfileWorkMode[]
 
   @@index([approvalStatus])
   @@index([isAvailable])
@@ -1119,6 +1529,8 @@ model ProviderTaxonomyTerm {
   versionId                          String                                       @db.Uuid
   code                               String
   label                              String
+  description                        String?
+  aliases                            String[]                                     @default([])
   parentId                           String?                                      @db.Uuid
   sortOrder                          Int
   isActive                           Boolean                                      @default(true)
@@ -1141,10 +1553,36 @@ model ProviderTaxonomyTerm {
   requirementSpecialisms             ProviderCapabilityQualificationRequirement[] @relation("RequirementSpecialism")
   requirementTerms                   ProviderCapabilityQualificationRequirement[] @relation("RequirementTerm")
   insuranceRequirementTypes          ProviderInsuranceRequirement[]
+  providerCoreExpertises             ProviderProfileCoreExpertise[]
+  providerWorkModes                  ProviderProfileWorkMode[]
 
   @@unique([versionId, code])
   @@unique([versionId, sortOrder])
   @@index([parentId])
+}
+
+model ProviderProfileCoreExpertise {
+  providerProfileId String               @db.Uuid
+  taxonomyTermId    String               @db.Uuid
+  position          Int
+  createdAt         DateTime             @default(now()) @db.Timestamptz(3)
+  providerProfile   ProviderProfile      @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  taxonomyTerm      ProviderTaxonomyTerm @relation(fields: [taxonomyTermId], references: [id], onDelete: Restrict)
+
+  @@id([providerProfileId, taxonomyTermId])
+  @@unique([providerProfileId, position])
+  @@index([taxonomyTermId])
+}
+
+model ProviderProfileWorkMode {
+  providerProfileId String               @db.Uuid
+  taxonomyTermId    String               @db.Uuid
+  createdAt         DateTime             @default(now()) @db.Timestamptz(3)
+  providerProfile   ProviderProfile      @relation(fields: [providerProfileId], references: [id], onDelete: Restrict)
+  taxonomyTerm      ProviderTaxonomyTerm @relation(fields: [taxonomyTermId], references: [id], onDelete: Restrict)
+
+  @@id([providerProfileId, taxonomyTermId])
+  @@index([taxonomyTermId])
 }
 
 model ProviderSpecialismTaxonomyMap {
@@ -1940,27 +2378,31 @@ model ProviderMigrationAudit {
 }
 
 model PublicIntakeDraft {
-  id                 String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  phase              PublicIntakePhase            @default(STARTED)
-  entryPoint         PublicIntakeEntryPoint
-  originalInput      String?                      @db.Text
-  selectedRequestKey String?                      @db.VarChar(100)
-  flowVersion        String                       @db.VarChar(50)
-  currentStep        String?                      @db.VarChar(100)
-  version            Int                          @default(1)
-  startedAt          DateTime                     @default(now()) @db.Timestamptz(3)
-  lastInteractionAt  DateTime                     @default(now()) @db.Timestamptz(3)
-  expiresAt          DateTime                     @db.Timestamptz(3)
-  submittedAt        DateTime?                    @db.Timestamptz(3)
-  linkedAt           DateTime?                    @db.Timestamptz(3)
-  createdAt          DateTime                     @default(now()) @db.Timestamptz(3)
-  updatedAt          DateTime                     @updatedAt @db.Timestamptz(3)
-  session            PublicIntakeSession?
-  answers            PublicIntakeAnswer[]
-  answerRevisions    PublicIntakeAnswerRevision[]
-  events             PublicIntakeEvent[]
-  adviceDossier      AdviceDossier?
-  adviceVersions     AdviceDossierVersion[]
+  id                         String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  phase                      PublicIntakePhase            @default(STARTED)
+  entryPoint                 PublicIntakeEntryPoint
+  originalInput              String?                      @db.Text
+  selectedRequestKey         String?                      @db.VarChar(100)
+  knowledgeContextId         String?                      @db.VarChar(100)
+  knowledgeContextVersion    Int?
+  knowledgeSourceRoute       String?                      @db.VarChar(300)
+  knowledgeSuggestedCategory String?                      @db.VarChar(100)
+  flowVersion                String                       @db.VarChar(50)
+  currentStep                String?                      @db.VarChar(100)
+  version                    Int                          @default(1)
+  startedAt                  DateTime                     @default(now()) @db.Timestamptz(3)
+  lastInteractionAt          DateTime                     @default(now()) @db.Timestamptz(3)
+  expiresAt                  DateTime                     @db.Timestamptz(3)
+  submittedAt                DateTime?                    @db.Timestamptz(3)
+  linkedAt                   DateTime?                    @db.Timestamptz(3)
+  createdAt                  DateTime                     @default(now()) @db.Timestamptz(3)
+  updatedAt                  DateTime                     @updatedAt @db.Timestamptz(3)
+  session                    PublicIntakeSession?
+  answers                    PublicIntakeAnswer[]
+  answerRevisions            PublicIntakeAnswerRevision[]
+  events                     PublicIntakeEvent[]
+  adviceDossier              AdviceDossier?
+  adviceVersions             AdviceDossierVersion[]
 
   @@index([phase, lastInteractionAt])
   @@index([expiresAt])
@@ -2078,25 +2520,26 @@ model AdviceDossierCounter {
 }
 
 model AdviceDossier {
-  id                        String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  dossierCode               String                   @unique @db.VarChar(32)
-  ownerUserId               String                   @db.Uuid
-  organizationId            String                   @db.Uuid
-  sourceRoute               AdviceDossierSourceRoute
-  sourcePublicIntakeDraftId String?                  @unique @db.Uuid
-  subject                   String                   @db.VarChar(200)
-  status                    AdviceDossierStatus      @default(ADVICE_READY)
-  currentVersionNumber      Int                      @default(1)
-  createdAt                 DateTime                 @default(now()) @db.Timestamptz(3)
-  updatedAt                 DateTime                 @updatedAt @db.Timestamptz(3)
-  completedAt               DateTime?                @db.Timestamptz(3)
-  archivedAt                DateTime?                @db.Timestamptz(3)
-  ownerUser                 User                     @relation("AdviceDossierOwner", fields: [ownerUserId], references: [id], onDelete: Restrict)
-  organization              Organization             @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  sourcePublicIntakeDraft   PublicIntakeDraft?       @relation(fields: [sourcePublicIntakeDraftId], references: [id], onDelete: Restrict)
-  versions                  AdviceDossierVersion[]
-  events                    AdviceDossierEvent[]
-  request                   Request?
+  id                         String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  dossierCode                String                      @unique @db.VarChar(32)
+  ownerUserId                String                      @db.Uuid
+  organizationId             String                      @db.Uuid
+  sourceRoute                AdviceDossierSourceRoute
+  sourcePublicIntakeDraftId  String?                     @unique @db.Uuid
+  subject                    String                      @db.VarChar(200)
+  status                     AdviceDossierStatus         @default(ADVICE_READY)
+  currentVersionNumber       Int                         @default(1)
+  createdAt                  DateTime                    @default(now()) @db.Timestamptz(3)
+  updatedAt                  DateTime                    @updatedAt @db.Timestamptz(3)
+  completedAt                DateTime?                   @db.Timestamptz(3)
+  archivedAt                 DateTime?                   @db.Timestamptz(3)
+  ownerUser                  User                        @relation("AdviceDossierOwner", fields: [ownerUserId], references: [id], onDelete: Restrict)
+  organization               Organization                @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  sourcePublicIntakeDraft    PublicIntakeDraft?          @relation(fields: [sourcePublicIntakeDraftId], references: [id], onDelete: Restrict)
+  versions                   AdviceDossierVersion[]
+  events                     AdviceDossierEvent[]
+  request                    Request?
+  marketplaceContactRequests MarketplaceContactRequest[]
 
   @@index([ownerUserId, createdAt])
   @@index([organizationId, createdAt])
@@ -2160,39 +2603,42 @@ model RequestCounter {
 }
 
 model Request {
-  id                       String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  requestNumber            String                    @unique @db.VarChar(32)
-  tenantId                 String                    @db.Uuid
-  organizationId           String                    @db.Uuid
-  adviceDossierId          String                    @unique @db.Uuid
-  status                   RequestStatus             @default(DRAFT)
-  title                    String                    @db.VarChar(200)
-  publicSummary            String                    @db.Text
-  region                   String?                   @db.VarChar(120)
-  sector                   String?                   @db.VarChar(160)
-  requestedStart           RequestRequestedStart
-  notes                    String?                   @db.Text
-  primaryExpertise         String                    @db.VarChar(200)
-  additionalExpertise      String[]                  @default([])
-  possibleExpertise        String[]                  @default([])
-  primaryExpertiseCodes    String[]                  @default([])
-  additionalExpertiseCodes String[]                  @default([])
-  possibleExpertiseCodes   String[]                  @default([])
-  regionCode               String?                   @db.VarChar(120)
-  sectorCode               String?                   @db.VarChar(160)
-  createdAt                DateTime                  @default(now()) @db.Timestamptz(3)
-  updatedAt                DateTime                  @updatedAt @db.Timestamptz(3)
-  publishedAt              DateTime?                 @db.Timestamptz(3)
-  archivedAt               DateTime?                 @db.Timestamptz(3)
-  tenant                   Organization              @relation("RequestTenant", fields: [tenantId], references: [id], onDelete: Restrict)
-  organization             Organization              @relation("RequestOrganization", fields: [organizationId], references: [id], onDelete: Restrict)
-  adviceDossier            AdviceDossier             @relation(fields: [adviceDossierId], references: [id], onDelete: Restrict)
-  events                   RequestEvent[]
-  eligibleProviders        RequestEligibleProvider[]
-  interests                RequestInterest[]
-  interestEvents           RequestInterestEvent[]
-  offerSlots               RequestOfferSlot[]
-  offerSlotEvents          RequestOfferSlotEvent[]
+  id                         String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  requestNumber              String                        @unique @db.VarChar(32)
+  tenantId                   String                        @db.Uuid
+  organizationId             String                        @db.Uuid
+  adviceDossierId            String                        @unique @db.Uuid
+  status                     RequestStatus                 @default(DRAFT)
+  title                      String                        @db.VarChar(200)
+  publicSummary              String                        @db.Text
+  region                     String?                       @db.VarChar(120)
+  sector                     String?                       @db.VarChar(160)
+  requestedStart             RequestRequestedStart
+  notes                      String?                       @db.Text
+  primaryExpertise           String                        @db.VarChar(200)
+  additionalExpertise        String[]                      @default([])
+  possibleExpertise          String[]                      @default([])
+  primaryExpertiseCodes      String[]                      @default([])
+  additionalExpertiseCodes   String[]                      @default([])
+  possibleExpertiseCodes     String[]                      @default([])
+  regionCode                 String?                       @db.VarChar(120)
+  sectorCode                 String?                       @db.VarChar(160)
+  createdAt                  DateTime                      @default(now()) @db.Timestamptz(3)
+  updatedAt                  DateTime                      @updatedAt @db.Timestamptz(3)
+  publishedAt                DateTime?                     @db.Timestamptz(3)
+  archivedAt                 DateTime?                     @db.Timestamptz(3)
+  tenant                     Organization                  @relation("RequestTenant", fields: [tenantId], references: [id], onDelete: Restrict)
+  organization               Organization                  @relation("RequestOrganization", fields: [organizationId], references: [id], onDelete: Restrict)
+  adviceDossier              AdviceDossier                 @relation(fields: [adviceDossierId], references: [id], onDelete: Restrict)
+  events                     RequestEvent[]
+  eligibleProviders          RequestEligibleProvider[]
+  interests                  RequestInterest[]
+  interestEvents             RequestInterestEvent[]
+  offerSlots                 RequestOfferSlot[]
+  offerSlotEvents            RequestOfferSlotEvent[]
+  reliabilityEvents          MarketplaceReliabilityEvent[]
+  marketplaceContactRequests MarketplaceContactRequest[]
+  creditTransactions         CreditTransaction[]
 
   @@index([tenantId, createdAt])
   @@index([organizationId, createdAt])
@@ -2277,19 +2723,26 @@ model RequestOfferSlot {
   expiresAt              DateTime?               @db.Timestamptz(3)
   releasedAt             DateTime?               @db.Timestamptz(3)
   createdByUserId        String                  @db.Uuid
+  creditAmount           Int?
+  marketplaceRuleSetId   String?                 @db.Uuid
+  creditTransactionId    String?                 @unique @db.Uuid
   createdAt              DateTime                @default(now()) @db.Timestamptz(3)
   updatedAt              DateTime                @updatedAt @db.Timestamptz(3)
   request                Request                 @relation(fields: [requestId], references: [id], onDelete: Restrict)
   providerOrganization   Organization            @relation("RequestOfferSlotProviderOrganization", fields: [providerOrganizationId], references: [id], onDelete: Restrict)
   requestInterest        RequestInterest         @relation(fields: [requestInterestId, requestId, providerOrganizationId], references: [id, requestId, providerOrganizationId], onDelete: Restrict)
   createdByUser          User                    @relation("RequestOfferSlotCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  marketplaceRuleSet     MarketplaceRuleSet?     @relation(fields: [marketplaceRuleSetId], references: [id], onDelete: Restrict)
+  creditTransaction      CreditTransaction?      @relation("RequestOfferSlotPayment", fields: [creditTransactionId], references: [id], onDelete: Restrict)
   events                 RequestOfferSlotEvent[]
+  ledgerTransactions     CreditTransaction[]     @relation("RequestOfferSlotLedger")
 
   @@unique([requestId, providerOrganizationId])
   @@unique([requestInterestId, requestId, providerOrganizationId])
   @@index([requestId, status, slotNumber])
   @@index([providerOrganizationId, status, createdAt])
   @@index([createdByUserId, createdAt])
+  @@index([marketplaceRuleSetId])
 }
 
 model RequestOfferSlotEvent {
@@ -2410,28 +2863,32 @@ model IntakeQuestionOption {
 }
 
 model Intake {
-  id                     String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  clientOrganizationId   String                     @db.Uuid
-  createdByUserId        String                     @db.Uuid
-  questionnaireVersionId String                     @db.Uuid
-  freeText               String
-  status                 IntakeStatus               @default(DRAFT)
-  version                Int                        @default(1)
-  detectedSpecialismId   String?                    @db.Uuid
-  createdAt              DateTime                   @default(now()) @db.Timestamptz(3)
-  updatedAt              DateTime                   @updatedAt @db.Timestamptz(3)
-  submittedAt            DateTime?                  @db.Timestamptz(3)
-  submittedByUserId      String?                    @db.Uuid
-  convertedAt            DateTime?                  @db.Timestamptz(3)
-  archivedAt             DateTime?                  @db.Timestamptz(3)
-  clientOrganization     Organization               @relation(fields: [clientOrganizationId], references: [id], onDelete: Restrict)
-  createdByUser          User                       @relation("IntakeCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
-  submittedByUser        User?                      @relation("IntakeSubmitter", fields: [submittedByUserId], references: [id], onDelete: Restrict)
-  questionnaireVersion   IntakeQuestionnaireVersion @relation(fields: [questionnaireVersionId], references: [id], onDelete: Restrict)
-  detectedSpecialism     Specialism?                @relation("DetectedIntakeSpecialism", fields: [detectedSpecialismId], references: [id], onDelete: Restrict)
-  answers                IntakeAnswer[]
-  statusHistory          IntakeStatusHistory[]
-  assignment             Assignment?
+  id                         String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clientOrganizationId       String                     @db.Uuid
+  createdByUserId            String                     @db.Uuid
+  questionnaireVersionId     String                     @db.Uuid
+  freeText                   String
+  knowledgeContextId         String?                    @db.VarChar(100)
+  knowledgeContextVersion    Int?
+  knowledgeSourceRoute       String?                    @db.VarChar(300)
+  knowledgeSuggestedCategory String?                    @db.VarChar(100)
+  status                     IntakeStatus               @default(DRAFT)
+  version                    Int                        @default(1)
+  detectedSpecialismId       String?                    @db.Uuid
+  createdAt                  DateTime                   @default(now()) @db.Timestamptz(3)
+  updatedAt                  DateTime                   @updatedAt @db.Timestamptz(3)
+  submittedAt                DateTime?                  @db.Timestamptz(3)
+  submittedByUserId          String?                    @db.Uuid
+  convertedAt                DateTime?                  @db.Timestamptz(3)
+  archivedAt                 DateTime?                  @db.Timestamptz(3)
+  clientOrganization         Organization               @relation(fields: [clientOrganizationId], references: [id], onDelete: Restrict)
+  createdByUser              User                       @relation("IntakeCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  submittedByUser            User?                      @relation("IntakeSubmitter", fields: [submittedByUserId], references: [id], onDelete: Restrict)
+  questionnaireVersion       IntakeQuestionnaireVersion @relation(fields: [questionnaireVersionId], references: [id], onDelete: Restrict)
+  detectedSpecialism         Specialism?                @relation("DetectedIntakeSpecialism", fields: [detectedSpecialismId], references: [id], onDelete: Restrict)
+  answers                    IntakeAnswer[]
+  statusHistory              IntakeStatusHistory[]
+  assignment                 Assignment?
 
   @@index([clientOrganizationId])
   @@index([createdByUserId])
@@ -2539,6 +2996,10 @@ model Assignment {
   createdByUserId            String                        @db.Uuid
   title                      String
   description                String
+  knowledgeContextId         String?                       @db.VarChar(100)
+  knowledgeContextVersion    Int?
+  knowledgeSourceRoute       String?                       @db.VarChar(300)
+  knowledgeSuggestedCategory String?                       @db.VarChar(100)
   status                     AssignmentStatus              @default(DRAFT)
   version                    Int                           @default(1)
   primarySpecialismId        String?                       @db.Uuid
@@ -2546,7 +3007,17 @@ model Assignment {
   employeeCount              Int?
   desiredStartDate           DateTime?                     @db.Date
   responseDeadline           DateTime?                     @db.Timestamptz(3)
+  locationType               AssignmentLocationType        @default(UNKNOWN)
   locationId                 String?                       @db.Uuid
+  locationName               String?
+  locationAddressLine        String?
+  locationPostalCode         String?
+  locationCity               String?
+  locationProvince           String?
+  locationCountryCode        String?                       @db.Char(2)
+  locationRegion             String?
+  locationDescription        String?
+  locationCount              Int?
   allowsRemoteWork           Boolean                       @default(false)
   createdAt                  DateTime                      @default(now()) @db.Timestamptz(3)
   updatedAt                  DateTime                      @updatedAt @db.Timestamptz(3)
@@ -2574,6 +3045,7 @@ model Assignment {
   marketplaceQuotes          Quote[]
   awardDecision              AwardDecision?
   marketplaceMessageChannels MarketplaceMessageChannel[]
+  locationItems              AssignmentLocationItem[]
 
   @@unique([id, publishedVersion])
   @@index([clientOrganizationId])
@@ -2587,6 +3059,20 @@ model Assignment {
   @@index([publishedAt])
   @@index([responseDeadline])
   @@index([archivedAt])
+}
+
+model AssignmentLocationItem {
+  id              String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assignmentId    String     @db.Uuid
+  position        Int
+  placeOrRegion   String
+  normalizedValue String
+  createdAt       DateTime   @default(now()) @db.Timestamptz(3)
+  assignment      Assignment @relation(fields: [assignmentId], references: [id], onDelete: Restrict)
+
+  @@unique([assignmentId, position])
+  @@unique([assignmentId, normalizedValue])
+  @@index([assignmentId])
 }
 
 model AssignmentStatusHistory {
@@ -2606,26 +3092,41 @@ model AssignmentStatusHistory {
 }
 
 model AssignmentRevision {
-  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  assignmentId        String                @db.Uuid
-  version             Int
-  title               String
-  description         String
-  primarySpecialismId String?               @db.Uuid
-  sectorId            String?               @db.Uuid
-  employeeCount       Int?
-  desiredStartDate    DateTime?             @db.Date
-  responseDeadline    DateTime?             @db.Timestamptz(3)
-  locationId          String?               @db.Uuid
-  allowsRemoteWork    Boolean
-  changedByUserId     String                @db.Uuid
-  createdAt           DateTime              @default(now()) @db.Timestamptz(3)
-  assignment          Assignment            @relation(fields: [assignmentId], references: [id], onDelete: Restrict)
-  primarySpecialism   Specialism?           @relation("PrimaryAssignmentRevisionSpecialism", fields: [primarySpecialismId], references: [id], onDelete: Restrict)
-  sector              Sector?               @relation(fields: [sectorId], references: [id], onDelete: Restrict)
-  location            OrganizationLocation? @relation(fields: [locationId], references: [id], onDelete: Restrict)
-  changedByUser       User                  @relation("AssignmentRevisionActor", fields: [changedByUserId], references: [id], onDelete: Restrict)
-  publishedAssignment Assignment?           @relation("AssignmentPublishedRevision")
+  id                         String                           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assignmentId               String                           @db.Uuid
+  version                    Int
+  title                      String
+  description                String
+  knowledgeContextId         String?                          @db.VarChar(100)
+  knowledgeContextVersion    Int?
+  knowledgeSourceRoute       String?                          @db.VarChar(300)
+  knowledgeSuggestedCategory String?                          @db.VarChar(100)
+  primarySpecialismId        String?                          @db.Uuid
+  sectorId                   String?                          @db.Uuid
+  employeeCount              Int?
+  desiredStartDate           DateTime?                        @db.Date
+  responseDeadline           DateTime?                        @db.Timestamptz(3)
+  locationType               AssignmentLocationType           @default(UNKNOWN)
+  locationId                 String?                          @db.Uuid
+  locationName               String?
+  locationAddressLine        String?
+  locationPostalCode         String?
+  locationCity               String?
+  locationProvince           String?
+  locationCountryCode        String?                          @db.Char(2)
+  locationRegion             String?
+  locationDescription        String?
+  locationCount              Int?
+  allowsRemoteWork           Boolean
+  changedByUserId            String                           @db.Uuid
+  createdAt                  DateTime                         @default(now()) @db.Timestamptz(3)
+  assignment                 Assignment                       @relation(fields: [assignmentId], references: [id], onDelete: Restrict)
+  primarySpecialism          Specialism?                      @relation("PrimaryAssignmentRevisionSpecialism", fields: [primarySpecialismId], references: [id], onDelete: Restrict)
+  sector                     Sector?                          @relation(fields: [sectorId], references: [id], onDelete: Restrict)
+  location                   OrganizationLocation?            @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  changedByUser              User                             @relation("AssignmentRevisionActor", fields: [changedByUserId], references: [id], onDelete: Restrict)
+  publishedAssignment        Assignment?                      @relation("AssignmentPublishedRevision")
+  locationItems              AssignmentRevisionLocationItem[]
 
   @@unique([assignmentId, version])
   @@index([assignmentId])
@@ -2634,6 +3135,20 @@ model AssignmentRevision {
   @@index([locationId])
   @@index([changedByUserId])
   @@index([createdAt])
+}
+
+model AssignmentRevisionLocationItem {
+  id                   String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assignmentRevisionId String             @db.Uuid
+  position             Int
+  placeOrRegion        String
+  normalizedValue      String
+  createdAt            DateTime           @default(now()) @db.Timestamptz(3)
+  assignmentRevision   AssignmentRevision @relation(fields: [assignmentRevisionId], references: [id], onDelete: Restrict)
+
+  @@unique([assignmentRevisionId, position])
+  @@unique([assignmentRevisionId, normalizedValue])
+  @@index([assignmentRevisionId])
 }
 
 model AssignmentSpecialism {
@@ -2729,25 +3244,42 @@ model CreditAccount {
 }
 
 model CreditTransaction {
-  id              String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  creditAccountId String                @db.Uuid
-  type            CreditTransactionType
-  amount          Int
-  balanceAfter    Int
-  referenceType   String?
-  referenceId     String?               @db.Uuid
-  description     String?
-  reason          String?               @db.VarChar(500)
-  idempotencyKey  String?               @unique @db.VarChar(120)
-  availableAfter  Int?
-  reservedAfter   Int?
-  spentAfter      Int?
-  reservationId   String?               @db.Uuid
-  createdByUserId String?               @db.Uuid
-  createdAt       DateTime              @default(now()) @db.Timestamptz(3)
-  creditAccount   CreditAccount         @relation(fields: [creditAccountId], references: [id], onDelete: Restrict)
-  createdByUser   User?                 @relation("CreditTransactionActor", fields: [createdByUserId], references: [id], onDelete: Restrict)
-  reservation     CreditReservation?    @relation(fields: [reservationId], references: [id], onDelete: Restrict)
+  id                      String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  creditAccountId         String                @db.Uuid
+  type                    CreditTransactionType
+  amount                  Int
+  totalDelta              Int
+  reservedDelta           Int
+  balanceAfter            Int
+  balanceBefore           Int?
+  referenceType           String?
+  referenceId             String?               @db.Uuid
+  description             String?
+  reason                  String?               @db.VarChar(500)
+  idempotencyKey          String?               @unique @db.VarChar(120)
+  availableAfter          Int?
+  availableBefore         Int?
+  reservedAfter           Int?
+  reservedBefore          Int?
+  spentAfter              Int?
+  spentBefore             Int?
+  reservationId           String?               @db.Uuid
+  createdByUserId         String?               @db.Uuid
+  marketplaceRuleSetId    String?               @db.Uuid
+  requestId               String?               @db.Uuid
+  offerSlotId             String?               @db.Uuid
+  reversalOfTransactionId String?               @unique @db.Uuid
+  auditMetadata           Json?
+  createdAt               DateTime              @default(now()) @db.Timestamptz(3)
+  creditAccount           CreditAccount         @relation(fields: [creditAccountId], references: [id], onDelete: Restrict)
+  createdByUser           User?                 @relation("CreditTransactionActor", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  reservation             CreditReservation?    @relation(fields: [reservationId], references: [id], onDelete: Restrict)
+  marketplaceRuleSet      MarketplaceRuleSet?   @relation(fields: [marketplaceRuleSetId], references: [id], onDelete: Restrict)
+  request                 Request?              @relation(fields: [requestId], references: [id], onDelete: Restrict)
+  offerSlot               RequestOfferSlot?     @relation("RequestOfferSlotLedger", fields: [offerSlotId], references: [id], onDelete: Restrict)
+  paymentForOfferSlot     RequestOfferSlot?     @relation("RequestOfferSlotPayment")
+  reversalOf              CreditTransaction?    @relation("CreditTransactionReversal", fields: [reversalOfTransactionId], references: [id], onDelete: Restrict)
+  reversedBy              CreditTransaction?    @relation("CreditTransactionReversal")
 
   @@index([creditAccountId])
   @@index([type])
@@ -2755,6 +3287,9 @@ model CreditTransaction {
   @@index([createdAt])
   @@index([referenceType, referenceId])
   @@index([reservationId])
+  @@index([marketplaceRuleSetId])
+  @@index([requestId, createdAt])
+  @@index([offerSlotId])
 }
 
 model MarketplaceMatchRun {
@@ -3070,5 +3605,646 @@ model MarketplaceAuditEvent {
 
   @@index([entityType, entityId, createdAt])
   @@index([organizationId, createdAt])
+  @@index([actorUserId, createdAt])
+}
+
+model MarketplaceRuleSet {
+  id                          String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  version                     String                        @unique @db.VarChar(40)
+  status                      MarketplaceRuleSetStatus      @default(DRAFT)
+  validFrom                   DateTime                      @db.Timestamptz(3)
+  validUntil                  DateTime?                     @db.Timestamptz(3)
+  participationPriceCredits   Int
+  minimumParticipationPrice   Int                           @default(30)
+  withdrawalRefundPercentage  Int                           @default(75)
+  roundRefundUp               Boolean                       @default(true)
+  unawardedQuoteRefundCredits Int                           @default(5)
+  maximumParticipants         Int                           @default(3)
+  withdrawalThreshold         Int                           @default(3)
+  withdrawalWindowMonths      Int                           @default(12)
+  reliabilitySignalsEnabled   Boolean                       @default(true)
+  changeReason                String                        @db.VarChar(500)
+  createdByUserId             String?                       @db.Uuid
+  createdAt                   DateTime                      @default(now()) @db.Timestamptz(3)
+  createdByUser               User?                         @relation("MarketplaceRuleSetCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  creditTransactions          CreditTransaction[]
+  offerSlots                  RequestOfferSlot[]
+  reliabilityEvents           MarketplaceReliabilityEvent[]
+
+  @@index([status, validFrom])
+  @@index([createdByUserId, createdAt])
+}
+
+model MarketplaceReliabilityEvent {
+  id                   String                          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId       String                          @db.Uuid
+  requestId            String                          @db.Uuid
+  actorUserId          String                          @db.Uuid
+  type                 MarketplaceReliabilityEventType
+  withdrawalReason     MarketplaceWithdrawalReason?
+  explanation          String?                         @db.VarChar(1000)
+  participantCount     Int                             @default(0)
+  totalRefundedCredits Int                             @default(0)
+  publishedAt          DateTime?                       @db.Timestamptz(3)
+  occurredAt           DateTime                        @default(now()) @db.Timestamptz(3)
+  marketplaceRuleSetId String?                         @db.Uuid
+  correctsEventId      String?                         @unique @db.Uuid
+  correctionReason     String?                         @db.VarChar(500)
+  organization         Organization                    @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  request              Request                         @relation(fields: [requestId], references: [id], onDelete: Restrict)
+  actorUser            User                            @relation("MarketplaceReliabilityEventActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+  marketplaceRuleSet   MarketplaceRuleSet?             @relation(fields: [marketplaceRuleSetId], references: [id], onDelete: Restrict)
+  correctsEvent        MarketplaceReliabilityEvent?    @relation("MarketplaceReliabilityCorrection", fields: [correctsEventId], references: [id], onDelete: Restrict)
+  correction           MarketplaceReliabilityEvent?    @relation("MarketplaceReliabilityCorrection")
+
+  @@unique([requestId, type])
+  @@index([organizationId, type, occurredAt])
+  @@index([requestId, occurredAt])
+  @@index([actorUserId, occurredAt])
+  @@index([marketplaceRuleSetId])
+}
+
+model MarketplaceContactRequest {
+  id                      String                          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId          String                          @db.Uuid
+  adviceDossierId         String                          @db.Uuid
+  requestId               String?                         @db.Uuid
+  createdByUserId         String                          @db.Uuid
+  status                  MarketplaceContactRequestStatus @default(OPEN)
+  explanation             String                          @db.VarChar(2000)
+  relevantWithdrawalCount Int
+  withdrawalSnapshot      Json                            @db.JsonB
+  reviewedByUserId        String?                         @db.Uuid
+  reviewReason            String?                         @db.VarChar(1000)
+  reviewedAt              DateTime?                       @db.Timestamptz(3)
+  validUntil              DateTime?                       @db.Timestamptz(3)
+  createdAt               DateTime                        @default(now()) @db.Timestamptz(3)
+  updatedAt               DateTime                        @updatedAt @db.Timestamptz(3)
+  organization            Organization                    @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  adviceDossier           AdviceDossier                   @relation(fields: [adviceDossierId], references: [id], onDelete: Restrict)
+  request                 Request?                        @relation(fields: [requestId], references: [id], onDelete: Restrict)
+  createdByUser           User                            @relation("MarketplaceContactRequestCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  reviewedByUser          User?                           @relation("MarketplaceContactRequestReviewer", fields: [reviewedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([adviceDossierId, status])
+  @@index([organizationId, status, createdAt])
+  @@index([requestId])
+  @@index([reviewedByUserId, reviewedAt])
+}
+
+model PlatformAdminInvitation {
+  id                     String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  platformOrganizationId String                        @db.Uuid
+  subjectUserId          String                        @db.Uuid
+  email                  String                        @db.VarChar(254)
+  role                   OrganizationMembershipRole
+  status                 PlatformAdminInvitationStatus @default(PENDING)
+  invitedByUserId        String                        @db.Uuid
+  acceptedByUserId       String?                       @db.Uuid
+  idempotencyKey         String                        @unique @db.VarChar(160)
+  expiresAt              DateTime                      @db.Timestamptz(3)
+  acceptedAt             DateTime?                     @db.Timestamptz(3)
+  revokedAt              DateTime?                     @db.Timestamptz(3)
+  createdAt              DateTime                      @default(now()) @db.Timestamptz(3)
+  updatedAt              DateTime                      @updatedAt @db.Timestamptz(3)
+  platformOrganization   Organization                  @relation(fields: [platformOrganizationId], references: [id], onDelete: Restrict)
+  subjectUser            User                          @relation("PlatformAdminInvitationSubject", fields: [subjectUserId], references: [id], onDelete: Restrict)
+  invitedByUser          User                          @relation("PlatformAdminInvitationInviter", fields: [invitedByUserId], references: [id], onDelete: Restrict)
+  acceptedByUser         User?                         @relation("PlatformAdminInvitationAcceptor", fields: [acceptedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([platformOrganizationId, status, createdAt])
+  @@index([email, status])
+  @@index([invitedByUserId, createdAt])
+}
+
+model KnowledgeSource {
+  id                      String                           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourceType              KnowledgeSourceType
+  sourceFormat            KnowledgeSourceFormat
+  code                    String                           @unique @db.VarChar(80)
+  title                   String                           @db.VarChar(300)
+  publisher               String?                          @db.VarChar(200)
+  publicationDate         DateTime?                        @db.Date
+  edition                 String?                          @db.VarChar(120)
+  language                String                           @default("nl") @db.VarChar(12)
+  jurisdiction            String                           @default("NL") @db.VarChar(40)
+  sourceUrl               String?                          @db.VarChar(1000)
+  localReference          String?                          @db.VarChar(200)
+  copyrightClassification KnowledgeCopyrightClassification
+  authorityLevel          KnowledgeAuthorityLevel
+  temporalStatus          KnowledgeTemporalStatus          @default(UNKNOWN)
+  sourceFamily            String                           @db.VarChar(120)
+  independenceGroup       String                           @db.VarChar(120)
+  isPrimarySource         Boolean                          @default(false)
+  notes                   String?                          @db.VarChar(1000)
+  createdAt               DateTime                         @default(now()) @db.Timestamptz(3)
+  updatedAt               DateTime                         @updatedAt @db.Timestamptz(3)
+  versions                KnowledgeSourceVersion[]
+
+  @@index([sourceType, temporalStatus])
+  @@index([sourceFamily, independenceGroup])
+  @@index([authorityLevel])
+}
+
+model KnowledgeSourceVersion {
+  id                     String                           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourceId               String                           @db.Uuid
+  versionLabel           String                           @db.VarChar(120)
+  publicationDate        DateTime?                        @db.Date
+  validFrom              DateTime?                        @db.Date
+  validUntil             DateTime?                        @db.Date
+  checksum               String?                          @db.VarChar(64)
+  extractionStatus       KnowledgeExtractionStatus        @default(NOT_STARTED)
+  reviewStatus           KnowledgeReviewStatus            @default(NOT_REVIEWED)
+  importedAt             DateTime?                        @db.Timestamptz(3)
+  createdAt              DateTime                         @default(now()) @db.Timestamptz(3)
+  updatedAt              DateTime                         @updatedAt @db.Timestamptz(3)
+  source                 KnowledgeSource                  @relation(fields: [sourceId], references: [id], onDelete: Restrict)
+  fragments              KnowledgeFragment[]
+  citations              KnowledgeCitation[]
+  reviewSourceReferences KnowledgeReviewSourceReference[]
+
+  @@unique([sourceId, versionLabel])
+  @@index([checksum])
+  @@index([extractionStatus, reviewStatus])
+}
+
+model KnowledgeFragment {
+  id               String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  externalKey      String                 @unique @db.VarChar(160)
+  sourceVersionId  String                 @db.Uuid
+  pageFrom         Int?
+  pageTo           Int?
+  sectionPath      String?                @db.VarChar(500)
+  fragmentType     String                 @db.VarChar(80)
+  internalExcerpt  String?                @db.VarChar(500)
+  excerptHash      String?                @db.VarChar(64)
+  extractionMethod String                 @db.VarChar(80)
+  requiresReview   Boolean                @default(true)
+  createdAt        DateTime               @default(now()) @db.Timestamptz(3)
+  sourceVersion    KnowledgeSourceVersion @relation(fields: [sourceVersionId], references: [id], onDelete: Restrict)
+  citations        KnowledgeCitation[]
+
+  @@index([sourceVersionId, pageFrom])
+  @@index([requiresReview])
+}
+
+model KnowledgeTopic {
+  id            String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug          String                  @unique @db.VarChar(160)
+  title         String                  @db.VarChar(240)
+  description   String                  @db.VarChar(1000)
+  domain        KnowledgeDomain
+  parentTopicId String?                 @db.Uuid
+  status        KnowledgeTopicStatus    @default(DRAFT)
+  createdAt     DateTime                @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime                @updatedAt @db.Timestamptz(3)
+  parentTopic   KnowledgeTopic?         @relation("KnowledgeTopicTree", fields: [parentTopicId], references: [id], onDelete: Restrict)
+  childTopics   KnowledgeTopic[]        @relation("KnowledgeTopicTree")
+  claims        KnowledgeClaim[]
+  checklists    KnowledgeChecklist[]
+  procedures    KnowledgeProcedure[]
+  formTemplates KnowledgeFormTemplate[]
+  relationsFrom KnowledgeRelation[]     @relation("KnowledgeRelationFromTopic")
+  relationsTo   KnowledgeRelation[]     @relation("KnowledgeRelationToTopic")
+
+  @@index([domain, status])
+  @@index([parentTopicId])
+}
+
+model KnowledgeClaim {
+  id                      String                           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  externalKey             String                           @unique @db.VarChar(160)
+  topicId                 String                           @db.Uuid
+  claimType               KnowledgeClaimType
+  statement               String                           @db.VarChar(1500)
+  normalizedStatement     String?                          @db.VarChar(1500)
+  applicability           String                           @db.VarChar(1000)
+  jurisdiction            String                           @default("NL") @db.VarChar(40)
+  validFrom               DateTime?                        @db.Date
+  validUntil              DateTime?                        @db.Date
+  temporalStatus          KnowledgeTemporalStatus          @default(UNKNOWN)
+  validationStatus        KnowledgeValidationStatus        @default(UNVALIDATED)
+  publicationStatus       KnowledgePublicationStatus       @default(DRAFT)
+  confidenceLevel         KnowledgeConfidenceLevel         @default(UNKNOWN)
+  accessTier              KnowledgeAccessTier              @default(INTERNAL_REVIEWER)
+  copyrightCheckPassed    Boolean                          @default(false)
+  nextReviewAt            DateTime?                        @db.Timestamptz(3)
+  controlRisk             KnowledgeControlRisk             @default(MEDIUM)
+  sourceControlStatus     KnowledgeSourceControlStatus     @default(NOT_STARTED)
+  lastSourceCheckedAt     DateTime?                        @db.Timestamptz(3)
+  createdByActor          String                           @db.VarChar(80)
+  createdByUserId         String?                          @db.Uuid
+  reviewedByUserId        String?                          @db.Uuid
+  reviewedAt              DateTime?                        @db.Timestamptz(3)
+  createdAt               DateTime                         @default(now()) @db.Timestamptz(3)
+  updatedAt               DateTime                         @updatedAt @db.Timestamptz(3)
+  topic                   KnowledgeTopic                   @relation(fields: [topicId], references: [id], onDelete: Restrict)
+  createdByUser           User?                            @relation("KnowledgeClaimCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  reviewedByUser          User?                            @relation("KnowledgeClaimReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+  citations               KnowledgeCitation[]
+  validations             KnowledgeValidation[]
+  relationsFrom           KnowledgeRelation[]              @relation("KnowledgeRelationFromClaim")
+  relationsTo             KnowledgeRelation[]              @relation("KnowledgeRelationToClaim")
+  explainedChecklistItems KnowledgeChecklistItem[]         @relation("KnowledgeChecklistExplanation")
+  warningProcedureSteps   KnowledgeProcedureStep[]         @relation("KnowledgeProcedureWarning")
+  responsibilities        KnowledgeResponsibility[]
+  reviewTasks             KnowledgeReviewTask[]
+  reviewSourceReferences  KnowledgeReviewSourceReference[]
+  improvementReports      KnowledgeImprovementReport[]
+
+  @@index([topicId, claimType])
+  @@index([publicationStatus, validationStatus, accessTier])
+  @@index([temporalStatus, jurisdiction])
+  @@index([normalizedStatement])
+}
+
+model KnowledgeCitation {
+  id              String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  claimId         String                 @db.Uuid
+  sourceVersionId String                 @db.Uuid
+  fragmentId      String?                @db.Uuid
+  supportType     KnowledgeSupportType
+  citationNote    String?                @db.VarChar(500)
+  createdAt       DateTime               @default(now()) @db.Timestamptz(3)
+  claim           KnowledgeClaim         @relation(fields: [claimId], references: [id], onDelete: Restrict)
+  sourceVersion   KnowledgeSourceVersion @relation(fields: [sourceVersionId], references: [id], onDelete: Restrict)
+  fragment        KnowledgeFragment?     @relation(fields: [fragmentId], references: [id], onDelete: Restrict)
+
+  @@unique([claimId, sourceVersionId, fragmentId, supportType])
+  @@index([sourceVersionId, supportType])
+  @@index([fragmentId])
+}
+
+model KnowledgeValidation {
+  id                     String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  claimId                String                    @db.Uuid
+  validationMethod       KnowledgeValidationMethod
+  status                 KnowledgeValidationStatus
+  validatorType          KnowledgeValidatorType
+  validatorUserId        String?                   @db.Uuid
+  rationale              String                    @db.VarChar(1500)
+  validatedAt            DateTime                  @db.Timestamptz(3)
+  nextReviewAt           DateTime?                 @db.Timestamptz(3)
+  reviewTaskId           String?                   @db.Uuid
+  withdrawsValidationId  String?                   @unique @db.Uuid
+  createdAt              DateTime                  @default(now()) @db.Timestamptz(3)
+  updatedAt              DateTime                  @updatedAt @db.Timestamptz(3)
+  claim                  KnowledgeClaim            @relation(fields: [claimId], references: [id], onDelete: Restrict)
+  validatorUser          User?                     @relation("KnowledgeValidationActor", fields: [validatorUserId], references: [id], onDelete: SetNull)
+  reviewTask             KnowledgeReviewTask?      @relation(fields: [reviewTaskId], references: [id], onDelete: Restrict)
+  withdrawsValidation    KnowledgeValidation?      @relation("KnowledgeValidationWithdrawal", fields: [withdrawsValidationId], references: [id], onDelete: Restrict)
+  withdrawnByValidations KnowledgeValidation[]     @relation("KnowledgeValidationWithdrawal")
+
+  @@index([claimId, validatedAt])
+  @@index([status, nextReviewAt])
+  @@index([reviewTaskId, validatedAt])
+}
+
+model KnowledgeRelation {
+  id           String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  externalKey  String                @unique @db.VarChar(160)
+  fromTopicId  String?               @db.Uuid
+  fromClaimId  String?               @db.Uuid
+  toTopicId    String?               @db.Uuid
+  toClaimId    String?               @db.Uuid
+  relationType KnowledgeRelationType
+  rationale    String?               @db.VarChar(1000)
+  createdAt    DateTime              @default(now()) @db.Timestamptz(3)
+  fromTopic    KnowledgeTopic?       @relation("KnowledgeRelationFromTopic", fields: [fromTopicId], references: [id], onDelete: Restrict)
+  fromClaim    KnowledgeClaim?       @relation("KnowledgeRelationFromClaim", fields: [fromClaimId], references: [id], onDelete: Restrict)
+  toTopic      KnowledgeTopic?       @relation("KnowledgeRelationToTopic", fields: [toTopicId], references: [id], onDelete: Restrict)
+  toClaim      KnowledgeClaim?       @relation("KnowledgeRelationToClaim", fields: [toClaimId], references: [id], onDelete: Restrict)
+
+  @@index([fromTopicId, relationType])
+  @@index([fromClaimId, relationType])
+  @@index([toTopicId, relationType])
+  @@index([toClaimId, relationType])
+}
+
+model KnowledgeRule {
+  id                String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code              String                     @db.VarChar(120)
+  title             String                     @db.VarChar(240)
+  description       String                     @db.VarChar(1000)
+  ruleType          KnowledgeRuleType
+  ruleVersion       Int
+  inputSchema       Json
+  expression        Json
+  outputSchema      Json
+  validationStatus  KnowledgeValidationStatus  @default(UNVALIDATED)
+  publicationStatus KnowledgePublicationStatus @default(DRAFT)
+  accessTier        KnowledgeAccessTier        @default(INTERNAL_REVIEWER)
+  createdAt         DateTime                   @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime                   @updatedAt @db.Timestamptz(3)
+  procedureSteps    KnowledgeProcedureStep[]
+
+  @@unique([code, ruleVersion])
+  @@index([publicationStatus, validationStatus])
+}
+
+model KnowledgeCalculation {
+  id                    String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code                  String                     @db.VarChar(120)
+  title                 String                     @db.VarChar(240)
+  description           String                     @db.VarChar(1000)
+  calculationType       String                     @db.VarChar(80)
+  calculationVersion    Int
+  inputSchema           Json
+  formulaRepresentation Json
+  outputSchema          Json
+  unitDefinitions       Json
+  limitations           String                     @db.VarChar(1500)
+  validationStatus      KnowledgeValidationStatus  @default(UNVALIDATED)
+  publicationStatus     KnowledgePublicationStatus @default(DRAFT)
+  accessTier            KnowledgeAccessTier        @default(INTERNAL_REVIEWER)
+  createdAt             DateTime                   @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime                   @updatedAt @db.Timestamptz(3)
+
+  @@unique([code, calculationVersion])
+  @@index([publicationStatus, validationStatus])
+}
+
+model KnowledgeChecklist {
+  id                String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code              String                     @db.VarChar(120)
+  version           Int
+  title             String                     @db.VarChar(240)
+  description       String                     @db.VarChar(1000)
+  topicId           String                     @db.Uuid
+  audience          KnowledgeAccessTier
+  scoringMethod     String                     @db.VarChar(80)
+  validationStatus  KnowledgeValidationStatus  @default(UNVALIDATED)
+  publicationStatus KnowledgePublicationStatus @default(DRAFT)
+  createdAt         DateTime                   @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime                   @updatedAt @db.Timestamptz(3)
+  topic             KnowledgeTopic             @relation(fields: [topicId], references: [id], onDelete: Restrict)
+  items             KnowledgeChecklistItem[]
+
+  @@unique([code, version])
+  @@index([topicId, publicationStatus])
+}
+
+model KnowledgeChecklistItem {
+  id                 String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  checklistId        String                       @db.Uuid
+  order              Int
+  question           String                       @db.VarChar(1000)
+  answerType         KnowledgeChecklistAnswerType
+  answerOptions      Json?
+  scoreRules         Json?
+  explanationClaimId String?                      @db.Uuid
+  required           Boolean                      @default(true)
+  createdAt          DateTime                     @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime                     @updatedAt @db.Timestamptz(3)
+  checklist          KnowledgeChecklist           @relation(fields: [checklistId], references: [id], onDelete: Restrict)
+  explanationClaim   KnowledgeClaim?              @relation("KnowledgeChecklistExplanation", fields: [explanationClaimId], references: [id], onDelete: Restrict)
+
+  @@unique([checklistId, order])
+  @@index([explanationClaimId])
+}
+
+model KnowledgeProcedure {
+  id                String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code              String                     @db.VarChar(120)
+  version           Int
+  title             String                     @db.VarChar(240)
+  description       String                     @db.VarChar(1000)
+  topicId           String                     @db.Uuid
+  audience          KnowledgeAccessTier
+  prerequisites     Json
+  validationStatus  KnowledgeValidationStatus  @default(UNVALIDATED)
+  publicationStatus KnowledgePublicationStatus @default(DRAFT)
+  createdAt         DateTime                   @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime                   @updatedAt @db.Timestamptz(3)
+  topic             KnowledgeTopic             @relation(fields: [topicId], references: [id], onDelete: Restrict)
+  steps             KnowledgeProcedureStep[]
+  responsibilities  KnowledgeResponsibility[]
+
+  @@unique([code, version])
+  @@index([topicId, publicationStatus])
+}
+
+model KnowledgeProcedureStep {
+  id                String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  procedureId       String                    @db.Uuid
+  order             Int
+  title             String                    @db.VarChar(240)
+  instruction       String                    @db.VarChar(1500)
+  conditionRuleId   String?                   @db.Uuid
+  responsibleRoleId String?                   @db.Uuid
+  evidenceRequired  String?                   @db.VarChar(500)
+  warningClaimId    String?                   @db.Uuid
+  createdAt         DateTime                  @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime                  @updatedAt @db.Timestamptz(3)
+  procedure         KnowledgeProcedure        @relation(fields: [procedureId], references: [id], onDelete: Restrict)
+  conditionRule     KnowledgeRule?            @relation(fields: [conditionRuleId], references: [id], onDelete: Restrict)
+  responsibleRole   KnowledgeRole?            @relation(fields: [responsibleRoleId], references: [id], onDelete: Restrict)
+  warningClaim      KnowledgeClaim?           @relation("KnowledgeProcedureWarning", fields: [warningClaimId], references: [id], onDelete: Restrict)
+  responsibilities  KnowledgeResponsibility[]
+
+  @@unique([procedureId, order])
+  @@index([conditionRuleId])
+  @@index([responsibleRoleId])
+  @@index([warningClaimId])
+}
+
+model KnowledgeRole {
+  id               String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code             String                    @unique @db.VarChar(120)
+  title            String                    @db.VarChar(240)
+  description      String                    @db.VarChar(1000)
+  createdAt        DateTime                  @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime                  @updatedAt @db.Timestamptz(3)
+  procedureSteps   KnowledgeProcedureStep[]
+  responsibilities KnowledgeResponsibility[]
+}
+
+model KnowledgeResponsibility {
+  id              String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  roleId          String                  @db.Uuid
+  claimId         String?                 @db.Uuid
+  procedureId     String?                 @db.Uuid
+  procedureStepId String?                 @db.Uuid
+  description     String                  @db.VarChar(1000)
+  createdAt       DateTime                @default(now()) @db.Timestamptz(3)
+  role            KnowledgeRole           @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  claim           KnowledgeClaim?         @relation(fields: [claimId], references: [id], onDelete: Restrict)
+  procedure       KnowledgeProcedure?     @relation(fields: [procedureId], references: [id], onDelete: Restrict)
+  procedureStep   KnowledgeProcedureStep? @relation(fields: [procedureStepId], references: [id], onDelete: Restrict)
+
+  @@index([roleId])
+  @@index([claimId])
+  @@index([procedureId])
+  @@index([procedureStepId])
+}
+
+model KnowledgeFormTemplate {
+  id                String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code              String                     @db.VarChar(120)
+  title             String                     @db.VarChar(240)
+  description       String                     @db.VarChar(1000)
+  topicId           String                     @db.Uuid
+  schemaVersion     Int
+  formSchema        Json
+  validationStatus  KnowledgeValidationStatus  @default(UNVALIDATED)
+  publicationStatus KnowledgePublicationStatus @default(DRAFT)
+  accessTier        KnowledgeAccessTier        @default(INTERNAL_REVIEWER)
+  createdAt         DateTime                   @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime                   @updatedAt @db.Timestamptz(3)
+  topic             KnowledgeTopic             @relation(fields: [topicId], references: [id], onDelete: Restrict)
+
+  @@unique([code, schemaVersion])
+  @@index([topicId, publicationStatus])
+}
+
+model KnowledgeReviewTask {
+  id                      String                           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  entityType              String                           @db.VarChar(80)
+  entityId                String                           @db.Uuid
+  claimId                 String                           @db.Uuid
+  reviewReason            String                           @db.VarChar(1000)
+  priority                KnowledgeReviewPriority          @default(NORMAL)
+  status                  KnowledgeReviewTaskStatus        @default(OPEN)
+  requiresHumanAction     Boolean                          @default(false)
+  controlExceptionType    KnowledgeControlExceptionType?
+  controlExceptionReason  String?                          @db.VarChar(1000)
+  activatedAt             DateTime?                        @db.Timestamptz(3)
+  deactivatedAt           DateTime?                        @db.Timestamptz(3)
+  version                 Int                              @default(1)
+  proposedStatement       String?                          @db.VarChar(1500)
+  substantiveNotes        String?                          @db.VarChar(1500)
+  practicalNuance         String?                          @db.VarChar(1500)
+  applicabilityConditions String?                          @db.VarChar(1500)
+  exceptions              String?                          @db.VarChar(1500)
+  editorialNote           String?                          @db.VarChar(1500)
+  proposedAccessTier      KnowledgeAccessTier?
+  assignedToId            String?                          @db.Uuid
+  lastEditedById          String?                          @db.Uuid
+  completedById           String?                          @db.Uuid
+  dueAt                   DateTime?                        @db.Timestamptz(3)
+  deferredUntil           DateTime?                        @db.Timestamptz(3)
+  nextReviewAt            DateTime?                        @db.Timestamptz(3)
+  startedAt               DateTime?                        @db.Timestamptz(3)
+  completedAt             DateTime?                        @db.Timestamptz(3)
+  createdAt               DateTime                         @default(now()) @db.Timestamptz(3)
+  updatedAt               DateTime                         @updatedAt @db.Timestamptz(3)
+  claim                   KnowledgeClaim                   @relation(fields: [claimId], references: [id], onDelete: Restrict)
+  assignedTo              User?                            @relation("KnowledgeReviewTaskAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  lastEditedBy            User?                            @relation("KnowledgeReviewTaskEditor", fields: [lastEditedById], references: [id], onDelete: SetNull)
+  completedBy             User?                            @relation("KnowledgeReviewTaskCompleter", fields: [completedById], references: [id], onDelete: SetNull)
+  decisions               KnowledgeReviewDecision[]
+  sourceReferences        KnowledgeReviewSourceReference[]
+  validations             KnowledgeValidation[]
+  improvementReports      KnowledgeImprovementReport[]
+
+  @@index([status, priority, dueAt])
+  @@index([requiresHumanAction, status, priority, dueAt])
+  @@index([controlExceptionType, requiresHumanAction])
+  @@index([entityType, entityId])
+  @@index([claimId, status])
+  @@index([assignedToId, status])
+}
+
+model KnowledgeReviewDecision {
+  id                      String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reviewTaskId            String                      @db.Uuid
+  sequence                Int
+  decisionType            KnowledgeReviewDecisionType
+  previousStatus          KnowledgeReviewTaskStatus
+  nextStatus              KnowledgeReviewTaskStatus
+  actorUserId             String                      @db.Uuid
+  reason                  String?                     @db.VarChar(1500)
+  proposedStatement       String?                     @db.VarChar(1500)
+  substantiveNotes        String?                     @db.VarChar(1500)
+  practicalNuance         String?                     @db.VarChar(1500)
+  applicabilityConditions String?                     @db.VarChar(1500)
+  exceptions              String?                     @db.VarChar(1500)
+  editorialNote           String?                     @db.VarChar(1500)
+  proposedAccessTier      KnowledgeAccessTier?
+  nextReviewAt            DateTime?                   @db.Timestamptz(3)
+  createdAt               DateTime                    @default(now()) @db.Timestamptz(3)
+  reviewTask              KnowledgeReviewTask         @relation(fields: [reviewTaskId], references: [id], onDelete: Restrict)
+  actorUser               User                        @relation("KnowledgeReviewDecisionActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@unique([reviewTaskId, sequence])
+  @@index([reviewTaskId, createdAt])
+  @@index([actorUserId, createdAt])
+}
+
+model KnowledgeReviewSourceReference {
+  id                    String                               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reviewTaskId          String                               @db.Uuid
+  claimId               String                               @db.Uuid
+  action                KnowledgeReviewSourceReferenceAction @default(ADDED)
+  sourceVersionId       String?                              @db.Uuid
+  withdrawsReferenceId  String?                              @unique @db.Uuid
+  sourceType            KnowledgeSourceType
+  title                 String                               @db.VarChar(300)
+  publisher             String?                              @db.VarChar(200)
+  urlOrReference        String?                              @db.VarChar(1000)
+  publicationDate       DateTime?                            @db.Date
+  checkedAt             DateTime?                            @db.Date
+  authorityLevel        KnowledgeAuthorityLevel
+  isPrimary             Boolean                              @default(false)
+  sourceFamily          String                               @db.VarChar(120)
+  supportType           KnowledgeSupportType
+  actorUserId           String                               @db.Uuid
+  createdAt             DateTime                             @default(now()) @db.Timestamptz(3)
+  reviewTask            KnowledgeReviewTask                  @relation(fields: [reviewTaskId], references: [id], onDelete: Restrict)
+  claim                 KnowledgeClaim                       @relation(fields: [claimId], references: [id], onDelete: Restrict)
+  sourceVersion         KnowledgeSourceVersion?              @relation(fields: [sourceVersionId], references: [id], onDelete: Restrict)
+  withdrawsReference    KnowledgeReviewSourceReference?      @relation("KnowledgeReviewSourceWithdrawal", fields: [withdrawsReferenceId], references: [id], onDelete: Restrict)
+  withdrawnByReferences KnowledgeReviewSourceReference[]     @relation("KnowledgeReviewSourceWithdrawal")
+  actorUser             User                                 @relation("KnowledgeReviewSourceReferenceActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([reviewTaskId, createdAt])
+  @@index([claimId, supportType])
+  @@index([sourceVersionId])
+  @@index([actorUserId, createdAt])
+}
+
+model KnowledgeImprovementReport {
+  id                  String                           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  claimId             String                           @db.Uuid
+  reviewTaskId        String                           @db.Uuid
+  reportType          KnowledgeImprovementReportType
+  explanation         String                           @db.VarChar(1500)
+  proposedImprovement String?                          @db.VarChar(1500)
+  sourceReference     String?                          @db.VarChar(1000)
+  reporterUserId      String                           @db.Uuid
+  status              KnowledgeImprovementReportStatus @default(NEW)
+  version             Int                              @default(1)
+  handledByUserId     String?                          @db.Uuid
+  handledAt           DateTime?                        @db.Timestamptz(3)
+  resolution          String?                          @db.VarChar(1500)
+  createdAt           DateTime                         @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime                         @updatedAt @db.Timestamptz(3)
+  claim               KnowledgeClaim                   @relation(fields: [claimId], references: [id], onDelete: Restrict)
+  reviewTask          KnowledgeReviewTask              @relation(fields: [reviewTaskId], references: [id], onDelete: Restrict)
+  reporterUser        User                             @relation("KnowledgeImprovementReporter", fields: [reporterUserId], references: [id], onDelete: Restrict)
+  handledByUser       User?                            @relation("KnowledgeImprovementHandler", fields: [handledByUserId], references: [id], onDelete: Restrict)
+
+  @@index([claimId, status, createdAt])
+  @@index([reviewTaskId, status])
+  @@index([reporterUserId, createdAt])
+  @@index([status, createdAt])
+}
+
+model KnowledgeAuditEvent {
+  id          String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  eventType   KnowledgeAuditEventType
+  entityType  String                  @db.VarChar(80)
+  entityId    String?                 @db.Uuid
+  actorUserId String?                 @db.Uuid
+  actorType   String                  @db.VarChar(80)
+  result      String                  @db.VarChar(80)
+  reason      String?                 @db.VarChar(1000)
+  metadata    Json?
+  createdAt   DateTime                @default(now()) @db.Timestamptz(3)
+  actorUser   User?                   @relation("KnowledgeAuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId, createdAt])
+  @@index([eventType, createdAt])
   @@index([actorUserId, createdAt])
 }

@@ -4,6 +4,7 @@ import { canManageAssignment, canViewAssignment } from './assignment-policy'
 
 const context: AssignmentAccessContext = {
   userId: 'user-1',
+  accountType: 'CLIENT',
   userStatus: 'ACTIVE',
   membershipRole: 'MEMBER',
   membershipStatus: 'ACTIVE',
@@ -37,5 +38,9 @@ describe('opdrachtautorisatiebeleid', () => {
   it('weigert een organisatie die uitsluitend aanbieder is', () => {
     expect(canViewAssignment({ ...context, organizationType: 'PROVIDER' })).toBe(false)
     expect(canManageAssignment({ ...context, membershipRole: 'OWNER', organizationType: 'PROVIDER' })).toBe(false)
+  })
+
+  it('weigert een professionalaccount ook bij een clientorganisatie', () => {
+    expect(canViewAssignment({ ...context, accountType: 'PROFESSIONAL' })).toBe(false)
   })
 })

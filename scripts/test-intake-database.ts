@@ -99,9 +99,9 @@ async function verifyIntegrity(client: Client) {
 
   assert.deepEqual(referenceCounts.rows[0], {
     questionnaires: 1,
-    versions: 1,
-    questions: 12,
-    options: 35,
+    versions: 2,
+    questions: 37,
+    options: 80,
   })
 
   await expectDatabaseFailure('een tweede gepubliceerde versie', () =>
@@ -109,7 +109,7 @@ async function verifyIntegrity(client: Client) {
       INSERT INTO "IntakeQuestionnaireVersion" (
         "questionnaireId", "version", "status", "publishedAt", "updatedAt"
       ) VALUES (
-        '00000000-0000-4000-8000-000000005000', 2, 'PUBLISHED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+        '00000000-0000-4000-8000-000000005000', 3, 'PUBLISHED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
       )
     `),
   )
@@ -698,7 +698,7 @@ async function verifyProviderQualificationIntegrity(client: Client) {
       (SELECT COUNT(*)::int FROM "ProviderCapabilityRequirementConfig" WHERE "status" = 'PUBLISHED') AS active_capability_configs
   `)
   assert.deepEqual(referenceCounts.rows[0], {
-    services: 5,
+    services: 19,
     competencies: 8,
     regions: 14,
     insurance_types: 2,

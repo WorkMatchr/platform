@@ -1,5 +1,127 @@
 # Changelog
 
+## Unreleased — professioneel creditwalletfundament
+
+- Alleen actieve professionele organisaties kunnen maximaal één creditwallet hebben; bedrijfsaccounts en platformorganisaties worden server-side en in PostgreSQL geweigerd.
+- `CreditTransaction` is de enige bron van waarheid voor totaal, gereserveerd en beschikbaar saldo, met getypeerde aankoop, reservering, vrijgave, afschrijving, terugbetaling, bonus en administratieve correctie.
+- Idempotentiesleutels, serialiseerbare transacties, walletlocks en databasechecks voorkomen dubbele of negatieve mutaties bij gelijktijdige verwerking.
+- Bestaande saldo-kolommen blijven uitsluitend als databasebeheerde compatibiliteitsprojectie bestaan en zijn niet langer rechtstreeks wijzigbaar.
+- Additieve, fail-closed migraties behouden bestaande wallets en ledgerhistorie en leggen een eventueel historisch beginsaldo vast als nieuwe openingsregel.
+- Er zijn geen betaalprovider, creditpakketten, prijzen, abonnementen, facturen of nieuwe correctie-interface toegevoegd.
+
+## Unreleased — accounttypen
+
+- Registratie onderscheidt expliciet **Bedrijf** en **Professional** en bewaart dit als server-side accountclaim.
+- Bedrijfsaccounts krijgen uitsluitend opdrachtgeverroutes; professionalaccounts krijgen uitsluitend providerroutes, reageren en creditinzage. Er is geen financiële functionaliteit toegevoegd.
+- Bestaande tenantaccounts worden additief en auditbaar afgeleid uit hun huidige organisatie; `CLIENT` wordt Bedrijf en `PROVIDER`/legacy `BOTH` wordt Professional. Platformaccounts blijven zonder tenantaccounttype.
+- Organisatieaanmaak, uitnodigingen, intake, opdrachten, providerdossier en marketplace dwingen de accounttypegrens server-side af.
+
+## Unreleased — risicogestuurde Knowledge Control Workflow
+
+- Menselijke kenniscontrole is uitzonderingsgestuurd gemaakt: zonder concrete bron-, inhouds-, gebruiks- of publicatie-uitzondering ontstaat geen werktaak.
+- De 90 generieke historische controletaken blijven auditbaar bewaard, maar worden additief uit de actieve werkvoorraad gehaald; historische beperkte kennis blijft intern en niet publiceerbaar.
+- Het kennisdashboard toont uitzonderingen, bronconflicten, verouderde bronnen, inhoudelijke meldingen en publicatieblokkades in plaats van een algemene controlevoorraad.
+- Het controleformulier verschijnt alleen bij een concrete uitzondering en vraagt uitsluitend om de minimale beslissing; niets wordt automatisch gepubliceerd.
+- De bestaande Knowledge Review is omgevormd tot bron- en risicogestuurde Knowledge Control zonder historische bronnen, 90 conceptclaims, 90 taken of auditdata te vervangen.
+- `LOW`, `MEDIUM`, `HIGH` en `CRITICAL` sturen minimumbronnen en controletermijnen; risico alleen maakt geen algemene menselijke taak.
+- Bronstatussen onderscheiden verzamelen, consistentie, conflict, veroudering, menselijke uitzondering en afgeronde controle; afronding publiceert nooit automatisch.
+- Professionals kunnen bij reeds gepubliceerde, gevalideerde kennis een begrensde inhoudelijke verbetering melden. De melding heropent gericht een controletaak en blijft auditbaar zonder claiminhoud te muteren.
+- De kennisbeheerinterface toont **Uitzonderingen**, **Bronconflicten**, **Verouderde bronnen**, **Inhoudelijke meldingen** en **Geblokkeerd voor publicatie**.
+- De action-state van de beheerformulieren wordt defensief genormaliseerd, waardoor de eerste render en ontbrekende veldfouten niet meer kunnen crashen op `Object.keys(...)`.
+- Een vaste, herbruikbare toelichting scheidt algemene vakinformatie expliciet van situatiegebonden professioneel advies.
+- Additieve migratie `20260802150000_add_knowledge_control_workflow` toegevoegd; bestaande claims blijven fail-closed en ongepubliceerd.
+
+## Unreleased — Dienstverlenersprofiel
+
+- Het profiel gebruikt een compacte organisatiekolom naast het inhoudelijke dienstverlenersprofiel; op mobiel worden beide onderdelen logisch onder elkaar geplaatst.
+- Introductie, omschrijving en werkwijze worden nog maar op één plek beheerd. Lidmaatschappen en registraties zijn zichtbaar en invoertechnisch van elkaar gescheiden.
+- De centrale dienstentaxonomie is als immutable versie 2 uitgebreid met de belangrijkste arbo-, veiligheids-, gezondheids- en re-integratiediensten.
+- Read-only profielqueries gebruiken geen parallelle interactieve transacties meer; mutatie-, tenant- en dossiertransacties blijven ongewijzigd.
+- Het zichtbare primaire-sectorveld is vervallen. De bestaande technische compatibiliteitsmarkering blijft behouden zonder extra gebruikerskeuze.
+- Gestructureerd organisatieprofiel toegevoegd met korte introductie, werkwijze, maximaal drie kernexpertises en centrale werkvormen.
+- Organisatiegebonden lidmaatschappen en registraties hergebruiken de bestaande versieerbare kwalificatie- en verificatiearchitectuur; individuele kwalificaties blijven bij de betreffende deskundige.
+- Opdrachtgevers kunnen een profiel uitsluitend bekijken vanuit een server-side gevalideerde selectie voor hun eigen opdracht; contactgegevens en vrije benadering blijven uitgesloten.
+- Profielvolledigheid is uitsluitend een afgeleide invulhulp. Er is geen nieuwe lifecycle-, readiness- of selecteerbaarheidsstatus.
+- Beschikbaarheid en capaciteit blijven conform B-173 volledig buiten profiel, selectie en projectie.
+
+## Unreleased — beveiligde menselijke kennisreview
+
+- Platformbeheer uitgebreid met een filterbare beoordelingswachtrij en een bronherleidbare detailweergave voor conceptkennis.
+- Concept opslaan, uitstellen, om aanpassing vragen, afwijzen, inhoudelijk goedkeuren en goedkeuring intrekken zijn transactioneel en optimistisch gelijktijdigheidsveilig gemaakt.
+- Besluiten, bronreferenties, validatie-intrekkingen en auditevents worden append-only vastgelegd; inhoudelijke goedkeuring publiceert kennis nooit automatisch.
+- Twee additieve migraties koppelen bestaande compatibele PoC-reviewtaken getypeerd aan kennisitems zonder bestaande claiminhoud of publicatiestatus te wijzigen.
+
+## Unreleased — contextuele kennisroutes
+
+- Alle negen publieke kennisdetailpagina's gebruiken één centrale, typed en versieerbare contextcatalogus voor vervolgroutes naar Advieswijzer en opdrachtintake.
+- Veilige context-ID's worden server-side gevalideerd en afzonderlijk van de oorspronkelijke gebruikersomschrijving opgeslagen.
+- Een afwijkende hervatbare Advieswijzersessie wordt niet stilzwijgend overschreven; de gebruiker kiest tussen het nieuwe onderwerp en eerdere antwoorden.
+- Kenniscontext ondersteunt classificatie alleen bij overeenkomende tekstsignalen en kan een tegenstrijdige omschrijving of expliciete gebruikerscorrectie niet overstemmen.
+- Contextprovenance loopt via publieke draft en intake naar opdracht en immutable opdrachtrevisie; analytics en matching zijn niet geactiveerd.
+- De Bedrijfsarts-route draagt expliciet `OCCUPATIONAL_PHYSICIAN` en kan niet meer als BHV-context starten.
+
+## Unreleased — Knowledge Engine-fundament en historische PoC
+
+- Herleidbaar kennismodel toegevoegd voor bronnen, versies, fragmenten, claims, citaties, validaties, relaties en gecontroleerde toepassingen.
+- Fail-closed importpipeline, formeel JSON-schema, publicatiebeleid, toegangsniveaus, beheerweergave en standaard afgeschermde zoekservice toegevoegd.
+- Historische PoC voor AI-01 tot en met AI-10 toegevoegd met uitsluitend korte eigen conceptclaims; originele bronbestanden blijven lokaal en buiten Git.
+- De beheerweergave gebruikt afzonderlijke databasetellingen, zodat begrensde tabellen niet langer als totaal worden gepresenteerd.
+
+## 2026-08-01 â€” Marketplace Rules, credits, betrouwbaarheid en platformbeheer
+
+- versieerbare Marketplace Rules met initiële prijs van 30 credits, maximaal drie deelnemers en historische regelsetbinding;
+- claimen en betalen atomair gekoppeld aan de M7D.3-deelnameplaats;
+- append-only saldohistorie uitgebreid met handmatige mutaties, tegenboekingen en saldo vóór/na;
+- transactionele 75%-teruggave bij intrekking en interne twaalfmaandsbetrouwbaarheid toegevoegd;
+- contactverzoek en platformbesluit voor geblokkeerde publicatie toegevoegd;
+- platformbeheerpagina's voor regels, credits, betrouwbaarheid en platformbeheerders toegevoegd;
+- Better Auth-platformuitnodigingen, laatste-ownerbescherming en audit/notificaties toegevoegd;
+- volledige nieuwe Request-offerte- en gunningsflow en de uitvoerende 5-creditteruggave blijven vervolgwerk.
+
+## 2026-08-01 — Immutable opdrachtlocatiesnapshot
+
+- Getypeerde locatievormen `REGISTERED`, `OTHER`, `MULTIPLE`, `REMOTE` en
+  `UNKNOWN` toegevoegd aan actuele opdrachten en immutable revisies.
+- Intakeconversie, readiness, publicatievalidatie en opdrachtweergave gebruiken
+  nu één leidend locatiecontract.
+- Bestaande geregistreerde en remote opdrachten worden veilig gebackfilld;
+  overige historische gevallen blijven expliciet en fail-safe `UNKNOWN`.
+- Meerdere opdrachtlocaties worden als een geordende relationele lijst vastgelegd in de actuele opdracht en iedere immutable revisie.
+- Een andere locatie vraagt alleen nog om plaats of regio; historische toelichtingen blijven leesbaar zonder readiness te beïnvloeden.
+- OWNER en ADMIN kunnen een nog niet gepubliceerde opdracht tenantveilig en auditbaar uit het overzicht verwijderen.
+
+## Unreleased — doelgerichte opdrachtintake versie 2
+
+- publieke hoofdnavigatie vereenvoudigd en de homepage voorzien van afzonderlijke routes naar de Advieswijzer en de directe opdrachtintake;
+- nieuwe intakes gebruiken een immutable vraagsetversie 2 met deterministisch categorievoorstel en expliciete gebruikersbevestiging;
+- de intakeclassificatie gebruikt een uitlegbaar scoremodel voor domein-, intentie-, context- en risicosignalen, met hoge, middelmatige en lage zekerheid;
+- gasopslag en capaciteitsuitbreiding worden bij samenhangende signalen als gevaarlijke stoffen herkend, terwijl losse algemene woorden geen categorie afdwingen;
+- lage zekerheid toont voortaan een neutrale keuzehulp en geen schijnvoorstel met `Dat weet ik nog niet`;
+- middelmatige zekerheid kan via een centrale, versieerbare verduidelijkingsset eerst één gewone vervolgvraag tonen; de eerste set verduidelijkt keukenveiligheid zonder direct de volledige categorielijst voor te leggen;
+- keukenverduidelijking V2 splitst apparatuur, snijrisico’s, hitte en brandwonden en brandveiligheid inhoudelijk; alleen brandveiligheid, blusmiddelen en ontruiming mappen naar BHV;
+- keukenverduidelijking V1 blijft inactief en uitleesbaar voor historische compatibiliteit;
+- gebruikerscopy binnen intake, controle en conceptopdracht volgt voortaan grammaticaal `u` en `uw` binnen lopende zinnen;
+- locatiekeuze ondersteunt een organisatielocatie, andere bedrijfslocatie, meerdere locaties, volledig op afstand en nog onbekend;
+- planning en verwachte omvang blijven uitsluitend historisch leesbaar; de professional bepaalt omvang, aanpak, planning en prijs;
+- een BHV-specifieke set en compacte generieke fallback vervangen de brede standaardvragen voor nieuwe concepten;
+- zichtbaarheid, volledigheid en servervalidatie worden centraal vanuit een getypeerde vraagcatalogus bepaald;
+- historische intakes, antwoordrevisies, opdrachtrevisies en publicaties blijven ongewijzigd.
+- planning en de vrije locatielijst bij meerdere locaties zijn voor nieuwe versie-2-intakes gedeactiveerd, terwijl opgeslagen historische antwoorden leesbaar blijven;
+- de voortgangsteller telt alleen zichtbare verplichte vragen en wordt niet verlaagd door optionele of verborgen velden;
+- controleoverzicht en transactionele publicatie gebruiken één gedeelde readiness-bron met concrete ontbrekende gegevens en directe bewerklinks;
+- het controleoverzicht bevat nu rechtstreeks één actie **Opdracht publiceren**; conversie, interne gereedstatus, publicatiesnapshot en overgang naar `OPEN` verlopen in één transactionele en idempotente gebruikershandeling;
+- succesvolle publicatie opent direct de gepubliceerde opdracht; de nieuwe intake-v2-flow gebruikt geen concepttussenpagina of tweede publicatiehandeling;
+- een gecorrigeerde BHV-categorie stuurt nu direct dezelfde zichtbare vraagset, servervalidatie en voortgang aan; een onverwacht ontbrekende vraagset toont een herstelbare configuratiemelding in plaats van een lege stap;
+- historische conceptopdrachten blijven leesbaar en compatibel; de aparte actie **Gereed voor controle** blijft uit de klantflow en de interne gereedstatus wordt bij publicatie transactioneel en auditbaar gezet.
+
+## Unreleased — lokale testaccountwisselaar
+
+- platformbeheerders kunnen buiten productie en uitsluitend met de expliciete feature flag bestaande actieve `example.invalid`-testaccounts bekijken zonder wachtwoord;
+- de oorspronkelijke Better Auth-gebruiker blijft actor, terwijl autorisatie en tenantcontext tijdens de testmodus uit de effectieve testgebruiker worden afgeleid;
+- een blijvende testmodusbanner toont account, organisatie en rol en biedt een gecontroleerde terugkeer naar platformbeheer;
+- starten en stoppen zijn transactioneel, voorkomen geneste wisselingen en schrijven append-only `AdminActionLog`-records;
+- de productieomgeving, gewone gebruikers, echte accounts, geblokkeerde accounts en niet-geverifieerde accounts worden fail-closed geweigerd.
+
 ## Module 7 — M7B.2 Vakdisciplineclassificatie
 
 - generieke professionele RI&E-aanbevelingen vervangen door concrete, centraal gelabelde vakdisciplines;

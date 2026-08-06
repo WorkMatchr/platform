@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0",
+  "sources": [
+    {
+      "code": "AI-01",
+      "format": "PDF",
+      "fileName": "<configureer-uitsluitend-in-het-lokale-manifest>",
+      "sha256": "<64-kleine-hexadecimale-tekens>"
+    }
+  ]
+}

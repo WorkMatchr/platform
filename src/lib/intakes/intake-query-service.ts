@@ -10,6 +10,8 @@ import { requireIntakeCreator, requireIntakeViewer } from './intake-authorizatio
 import { IntakeServiceError } from './intake-errors'
 import type { IntakeProgress } from './intake-types'
 import { calculateIntakeProgress } from './intake-validation'
+import { getIntakeQuestionPresentation } from './intake-question-catalog'
+import { resolveActiveKnowledgeContext } from '@/content/knowledge/knowledge-contexts'
 
 const progressQuestionSelect = {
   id: true,
@@ -37,6 +39,7 @@ export type IntakeListItem = {
   createdByDisplayName: string | null
   isOwn: boolean
   progress: IntakeProgress
+  canDelete: boolean
 }
 
 export type IntakeQuestionView = {
@@ -71,7 +74,16 @@ export type IntakeDetailView = {
   viewerRole: OrganizationMembershipRole
   status: IntakeStatus
   version: number
+  questionnaireVersion: number
   freeText: string
+  knowledgeContext: {
+    id: string
+    version: number
+    sourceRoute: string
+    title: string
+    shortLabel: string
+    suggestedCategory: string | null
+  } | null
   updatedAt: string
   progress: IntakeProgress
   questions: IntakeQuestionView[]
@@ -117,7 +129,7 @@ export async function listIntakesForOrganization(
         createdByUserId: true,
         createdByUser: { select: { displayName: true } },
         questionnaireVersion: {
-          select: { questions: { select: progressQuestionSelect, orderBy: { sortOrder: 'asc' } } },
+          select: { version: true, questions: { select: progressQuestionSelect, orderBy: { sortOrder: 'asc' } } },
         },
         answers: { select: progressAnswerSelect },
       },
@@ -134,7 +146,8 @@ export async function listIntakesForOrganization(
         updatedAt: intake.updatedAt.toISOString(),
         createdByDisplayName: intake.createdByUser.displayName,
         isOwn: intake.createdByUserId === userId,
-        progress: calculateIntakeProgress(intake.questionnaireVersion.questions, intake.answers),
+        progress: calculateIntakeProgress(intake.questionnaireVersion.questions, intake.answers, intake.questionnaireVersion.version),
+        canDelete: ['OWNER', 'ADMIN'].includes(access.membershipRole),
       })),
     }
   })
@@ -152,6 +165,10 @@ export async function getIntakeDetail(userId: string, intakeId: string): Promise
         status: true,
         version: true,
         freeText: true,
+        knowledgeContextId: true,
+        knowledgeContextVersion: true,
+        knowledgeSourceRoute: true,
+        knowledgeSuggestedCategory: true,
         updatedAt: true,
         createdByUser: { select: { displayName: true } },
         clientOrganization: {
@@ -166,6 +183,7 @@ export async function getIntakeDetail(userId: string, intakeId: string): Promise
         },
         questionnaireVersion: {
           select: {
+            version: true,
             questions: {
               select: {
                 ...progressQuestionSelect,
@@ -212,6 +230,7 @@ export async function getIntakeDetail(userId: string, intakeId: string): Promise
     const answersByQuestion = new Map(intake.answers.map((answer) => [answer.questionId, answer]))
     const membership = access.clientOrganization.memberships[0]
     if (!membership) throw new IntakeServiceError('ACCESS_DENIED')
+    const knowledgeContext = resolveActiveKnowledgeContext(intake.knowledgeContextId)
 
     return {
       id: intake.id,
@@ -222,29 +241,48 @@ export async function getIntakeDetail(userId: string, intakeId: string): Promise
       viewerRole: membership.role,
       status: intake.status,
       version: intake.version,
+      questionnaireVersion: intake.questionnaireVersion.version,
       freeText: intake.freeText,
+      knowledgeContext: knowledgeContext && intake.knowledgeContextVersion && intake.knowledgeSourceRoute
+        ? {
+            id: knowledgeContext.id,
+            version: intake.knowledgeContextVersion,
+            sourceRoute: intake.knowledgeSourceRoute,
+            title: knowledgeContext.title,
+            shortLabel: knowledgeContext.shortLabel,
+            suggestedCategory: intake.knowledgeSuggestedCategory,
+          }
+        : null,
       updatedAt: intake.updatedAt.toISOString(),
       progress: calculateIntakeProgress(
         intake.questionnaireVersion.questions,
         intake.answers,
+        intake.questionnaireVersion.version,
       ),
-      questions: intake.questionnaireVersion.questions.map((question) => ({
-        id: question.id,
-        key: question.key,
-        category: question.category,
-        inputType: question.inputType,
-        label: question.label,
-        helpText: question.helpText,
-        isRequired: question.isRequired,
-        minLength: question.minLength,
-        maxLength: question.maxLength,
-        minNumber: question.minNumber?.toString() ?? null,
-        maxNumber: question.maxNumber?.toString() ?? null,
-        minSelections: question.minSelections,
-        maxSelections: question.maxSelections,
-        options: question.options,
-        value: answerValue(answersByQuestion.get(question.id)),
-      })),
+      questions: intake.questionnaireVersion.questions.map((question) => {
+        const presentation = getIntakeQuestionPresentation(
+          question.key,
+          intake.questionnaireVersion.version,
+          question,
+        )
+        return {
+          id: question.id,
+          key: question.key,
+          category: question.category,
+          inputType: question.inputType,
+          label: presentation.label,
+          helpText: presentation.helpText,
+          isRequired: question.isRequired,
+          minLength: question.minLength,
+          maxLength: question.maxLength,
+          minNumber: question.minNumber?.toString() ?? null,
+          maxNumber: question.maxNumber?.toString() ?? null,
+          minSelections: question.minSelections,
+          maxSelections: question.maxSelections,
+          options: question.options,
+          value: answerValue(answersByQuestion.get(question.id)),
+        }
+      }),
       locations: intake.clientOrganization.locations.map((location) => ({
         id: location.id,
         label: `${location.label} — ${location.city}`,

@@ -11,7 +11,9 @@ describe('platformbeheernavigatie', () => {
     expect(platformAdminNavigation.map((item) => item.label)).toEqual([
       'Dashboard', 'Actiecentrum', 'Organisaties', 'Gebruikers', 'Dienstverleners', 'Opdrachten',
       'Reviews', 'Goedkeuringen', 'Audit',
-      'Marketplace', 'Trends', 'Rapportages', 'Instellingen',
+      'Marketplace', 'Bedrijfsregels', 'Betrouwbaarheid', 'Trends', 'Rapportages',
+      'Kennisbeheer',
+      'Platformbeheerders', 'Instellingen',
     ])
   })
 

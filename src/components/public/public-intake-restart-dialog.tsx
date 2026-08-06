@@ -64,7 +64,7 @@ export function PublicIntakeRestartDialog({
             Nieuwe hulpvraag starten?
           </h2>
           <p id="public-intake-restart-description" className="mt-3 text-text-secondary">
-            Uw huidige concept wordt afgesloten. Daarna kunt u direct opnieuw beginnen.
+            Uw huidige invulronde wordt afgesloten. Daarna kunt u direct opnieuw beginnen.
           </p>
           {error && (
             <p role="alert" className="mt-4 rounded-control bg-error/10 p-3 text-sm font-semibold text-error">

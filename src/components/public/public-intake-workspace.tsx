@@ -238,7 +238,7 @@ export function PublicIntakeWorkspace({
   const [showTopicCorrection, setShowTopicCorrection] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saveMessage, setSaveMessage] = useState(
-    initialDraft.answers.length > 0 ? 'Uw conceptsessie is hervat.' : '',
+    initialDraft.answers.length > 0 ? 'Uw eerdere antwoorden zijn hervat.' : '',
   )
   const [isPending, startTransition] = useTransition()
   const firstQuestionControlRef = useRef<HTMLInputElement>(null)

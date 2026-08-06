@@ -1,4 +1,5 @@
 import type {
+  AccountType,
   MembershipStatus,
   OrganizationMembershipRole,
   OrganizationType,
@@ -8,6 +9,7 @@ import type {
 
 export type AssignmentAccessContext = {
   userId: string
+  accountType: AccountType | null
   userStatus: UserStatus
   membershipRole: OrganizationMembershipRole
   membershipStatus: MembershipStatus
@@ -19,9 +21,10 @@ export type AssignmentAccessContext = {
 function hasActiveAssignmentContext(context: AssignmentAccessContext): boolean {
   return (
     context.userStatus === 'ACTIVE' &&
+    context.accountType === 'CLIENT' &&
     context.membershipStatus === 'ACTIVE' &&
     context.organizationStatus === 'ACTIVE' &&
-    (context.organizationType === 'CLIENT' || context.organizationType === 'BOTH')
+    context.organizationType === 'CLIENT'
   )
 }
 

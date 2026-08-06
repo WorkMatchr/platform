@@ -7,6 +7,7 @@ import type {
 } from '@/generated/prisma/client'
 import type { AIClassifierOutput } from '@/lib/ai-intake-classifier/ai-classifier-contract'
 import type { PublicIntakeGuidanceHandoff } from './public-intake-guidance-handoff'
+import type { KnowledgeContextId } from '@/content/knowledge/knowledge-contexts'
 
 export type PublicIntakeAnswerView = {
   questionKey: string
@@ -24,6 +25,14 @@ export type PublicIntakeDraftView = {
   entryPoint: PublicIntakeEntryPoint
   originalInput: string | null
   selectedRequestKey: string | null
+  knowledgeContext?: {
+    id: KnowledgeContextId
+    version: number
+    sourceRoute: string
+    shortLabel: string
+    title: string
+    suggestedCategory: string | null
+  } | null
   flowVersion: string
   currentStep: string | null
   version: number

@@ -2,9 +2,9 @@ import type { Metadata } from 'next'
 import { notFound, redirect } from 'next/navigation'
 import {
   archiveIntakeAction,
-  markIntakeReadyForReviewAction,
   reopenIntakeAction,
 } from '@/app/hulpvragen/actions'
+import { publishIntakeAction } from '@/app/opdrachten/actions'
 import { IntakeReview } from '@/components/intakes/intake-review'
 import { Section } from '@/components/layout/section'
 import { Button } from '@/components/ui/button'
@@ -13,8 +13,9 @@ import { LinkButton } from '@/components/ui/link-button'
 import { requireUser } from '@/lib/authorization'
 import { IntakeServiceError } from '@/lib/intakes/intake-errors'
 import { getIntakeDetail } from '@/lib/intakes/intake-query-service'
+import { getIntakeAssignmentReadiness } from '@/lib/assignments/intake-assignment-readiness'
 
-export const metadata: Metadata = { title: 'Intake controleren | WorkMatchr' }
+export const metadata: Metadata = { title: 'Opdracht controleren | WorkMatchr' }
 
 export default async function IntakeReviewPage({
   params,
@@ -36,13 +37,14 @@ export default async function IntakeReviewPage({
     redirect('/hulpvragen')
   }
   const query = await searchParams
+  const readiness = getIntakeAssignmentReadiness(intake)
 
   return (
     <Section spacing="compact" containerSize="narrow">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <Heading as="h1" size="h2">Controleer Uw intake</Heading>
-          <p className="mt-3 text-text-secondary">Bekijk de volledige vraagverheldering en controleer wat er met Uw hulpvraag gebeurt.</p>
+          <Heading as="h1" size="h2">Opdracht controleren</Heading>
+          <p className="mt-3 text-text-secondary">Bekijk de volledige vraagverheldering en controleer uw antwoorden voordat u de opdracht publiceert.</p>
         </div>
         <LinkButton href="/hulpvragen" variant="outline">Naar overzicht</LinkButton>
       </div>
@@ -52,7 +54,7 @@ export default async function IntakeReviewPage({
         </p>
       )}
       <div className="mt-8">
-        <IntakeReview intake={intake} action={markIntakeReadyForReviewAction} readyNotice={query.gereed === '1'} />
+        <IntakeReview intake={intake} readiness={readiness} action={publishIntakeAction} />
       </div>
       {intake.status === 'READY_FOR_REVIEW' && (
         <form action={reopenIntakeAction} className="mt-6 rounded-card border border-border bg-surface p-6">

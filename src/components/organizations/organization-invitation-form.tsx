@@ -45,7 +45,7 @@ export function OrganizationInvitationForm({ action, idempotencyKey, canInviteAd
         <select id="invitation-role" name="role" required defaultValue={state.values?.role ?? 'MEMBER'}
           className={inputClass('role')} aria-invalid={Boolean(error('role'))}
           aria-describedby={error('role') ? 'invitation-role-error' : 'invitation-role-help'}>
-          <option value="MEMBER">Lid</option>
+          <option value="MEMBER">Medewerker</option>
           {canInviteAdmin && <option value="ADMIN">Beheerder</option>}
         </select>
         <p id="invitation-role-help" className="mt-2 text-sm text-text-secondary">Een eigenaar wordt uitsluitend via de beschermde OWNER-flow toegevoegd.</p>

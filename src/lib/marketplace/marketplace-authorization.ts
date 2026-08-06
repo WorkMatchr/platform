@@ -12,8 +12,8 @@ export async function requireClientMarketplaceManager(
       organizationId,
       status: 'ACTIVE',
       role: { in: ['OWNER', 'ADMIN'] },
-      user: { status: 'ACTIVE' },
-      organization: { status: 'ACTIVE', organizationType: { in: ['CLIENT', 'BOTH'] }, systemKey: null },
+      user: { status: 'ACTIVE', accountType: 'CLIENT' },
+      organization: { status: 'ACTIVE', organizationType: 'CLIENT', systemKey: null },
     },
     select: { role: true, organizationId: true },
   })
@@ -33,7 +33,7 @@ export async function requireProviderMarketplaceAccess(
       organizationId,
       status: 'ACTIVE',
       ...(write ? { role: { in: ['OWNER', 'ADMIN'] as const } } : {}),
-      user: { status: 'ACTIVE' },
+      user: { status: 'ACTIVE', accountType: 'PROFESSIONAL' },
       organization: { status: 'ACTIVE', organizationType: { in: ['PROVIDER', 'BOTH'] }, systemKey: null },
     },
     select: {
@@ -55,11 +55,24 @@ export async function requireMarketplacePlatformAdmin(transaction: Prisma.Transa
       memberships: {
         some: {
           status: 'ACTIVE',
+          role: { in: ['OWNER', 'ADMIN'] },
           organization: { status: 'ACTIVE', systemKey: 'WORKMATCHR_PLATFORM' },
         },
       },
     },
-    select: { id: true, platformRole: true },
+    select: {
+      id: true,
+      platformRole: true,
+      memberships: {
+        where: {
+          status: 'ACTIVE',
+          role: { in: ['OWNER', 'ADMIN'] },
+          organization: { systemKey: 'WORKMATCHR_PLATFORM' },
+        },
+        select: { role: true },
+        take: 1,
+      },
+    },
   })
   if (!user) throw new MarketplaceServiceError('ACCESS_DENIED')
   return user

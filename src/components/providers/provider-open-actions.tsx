@@ -9,7 +9,7 @@ export function ProviderOpenActions({ actions, canManage }: { actions: ProviderD
     <section className="mt-6 grid items-start gap-6 lg:grid-cols-[1.1fr_1fr]" aria-labelledby="actions-heading">
       <Card variant="dark">
         <h2 id="actions-heading" className="text-xl font-bold">Uw eerstvolgende actie</h2>
-        {primary ? <><h3 className="mt-5 text-lg font-semibold">{primary.title}</h3><p className="mt-2 text-text-on-dark-muted">{canManage ? primary.description : 'Neem contact op met een OWNER of ADMIN om dit onderdeel bij te werken.'}</p>{canManage && <LinkButton className="mt-5" href={primary.routeHint}>Ga naar dit onderdeel</LinkButton>}</> : <p className="mt-4 text-text-on-dark-muted">Er zijn momenteel geen open dossieracties.</p>}
+        {primary ? <><h3 className="mt-5 text-lg font-semibold">{primary.title}</h3><p className="mt-2 text-text-on-dark-muted">{canManage ? primary.description : 'Neem contact op met een eigenaar of beheerder om dit onderdeel bij te werken.'}</p>{canManage && <LinkButton className="mt-5" href={primary.routeHint}>Ga naar dit onderdeel</LinkButton>}</> : <p className="mt-4 text-text-on-dark-muted">Er zijn momenteel geen open dossieracties.</p>}
       </Card>
       <Card>
         <h2 className="text-xl font-bold text-brand-dark">Overige open acties</h2>

@@ -49,18 +49,22 @@ function logDevelopmentAuthLink(email: AuthEmail): void {
 
   const passwordReset = email.kind === 'PASSWORD_RESET'
   const accountActivation = email.kind === 'INVITATION'
-  console.info([
-    '==================================================',
-    accountActivation ? 'ACCOUNT ACTIVATION' : passwordReset ? 'PASSWORD RESET' : 'EMAIL VERIFICATION',
-    '',
-    'Email:',
-    email.to,
-    '',
-    accountActivation ? 'Activation URL:' : passwordReset ? 'Reset URL:' : 'Verification URL:',
+  const heading = accountActivation
+    ? 'Development account activation email'
+    : passwordReset
+      ? 'Development password reset email'
+      : 'Development verification email'
+  const urlLabel = accountActivation ? 'Activation URL:' : passwordReset ? 'Reset URL:' : 'Verify URL:'
+  const block = [
+    '--------------------------------------------------',
+    heading,
+    `To: ${email.to}`,
+    urlLabel,
     email.developmentUrl,
-    '',
-    '==================================================',
-  ].join('\n'))
+    '--------------------------------------------------',
+  ].join('\n')
+
+  process.stdout.write(`${block}\n`)
 }
 
 export function getAuthEmailConfigurationStatus() {
@@ -125,9 +129,9 @@ export function verificationEmail(to: string, name: string, url: string): AuthEm
   return {
     kind: 'VERIFICATION',
     to,
-    subject: 'Bevestig Uw e-mailadres voor WorkMatchr',
-    text: `Beste ${name},\n\nBevestig Uw e-mailadres via deze link: ${url}\n\nDe link is één uur geldig.`,
-    html: `<p>Beste ${safeName},</p><p>Bevestig Uw e-mailadres voor WorkMatchr.</p><p><a href="${safeUrl}">E-mailadres bevestigen</a></p><p>De link is één uur geldig.</p>`,
+    subject: 'Bevestig uw e-mailadres voor WorkMatchr',
+    text: `Beste ${name},\n\nBevestig uw e-mailadres via deze link: ${url}\n\nDe link is één uur geldig.`,
+    html: `<p>Beste ${safeName},</p><p>Bevestig uw e-mailadres voor WorkMatchr.</p><p><a href="${safeUrl}">E-mailadres bevestigen</a></p><p>De link is één uur geldig.</p>`,
     developmentUrl: url,
   }
 }
@@ -157,7 +161,7 @@ export function passwordResetEmail(to: string, name: string, url: string): AuthE
   return {
     kind: 'PASSWORD_RESET',
     to,
-    subject: 'Herstel Uw WorkMatchr-wachtwoord',
+    subject: 'Herstel uw WorkMatchr-wachtwoord',
     text: `Beste ${name},\n\nStel een nieuw wachtwoord in via deze link: ${url}\n\nDe link is één uur geldig.`,
     html: `<p>Beste ${safeName},</p><p>U kunt een nieuw WorkMatchr-wachtwoord instellen.</p><p><a href="${safeUrl}">Wachtwoord herstellen</a></p><p>De link is één uur geldig.</p>`,
     developmentUrl: url,
@@ -184,8 +188,8 @@ export function roleChangeNotificationEmail(input: {
     kind: 'ROLE_CHANGE_NOTIFICATION',
     to: input.to,
     subject: `Uw rol binnen ${input.organizationName} is gewijzigd`,
-    text: `Beste ${input.name},\n\nUw rol binnen ${input.organizationName} is op ${changedAt} gewijzigd van ${roleLabel(input.previousRole)} naar ${roleLabel(input.newRole)}. Uw actieve sessies zijn beëindigd; log opnieuw in om met de actuele bevoegdheden verder te gaan.\n\nWas deze wijziging onverwacht? Neem dan contact op met Uw organisatie of via de contactmogelijkheid van WorkMatchr.`,
-    html: `<p>Beste ${safeName},</p><p>Uw rol binnen <strong>${safeOrganization}</strong> is op ${changedAt} gewijzigd van <strong>${roleLabel(input.previousRole)}</strong> naar <strong>${roleLabel(input.newRole)}</strong>.</p><p>Uw actieve sessies zijn beëindigd. Log opnieuw in om met de actuele bevoegdheden verder te gaan.</p><p>Was deze wijziging onverwacht? Neem dan contact op met Uw organisatie of via de contactmogelijkheid van WorkMatchr.</p>`,
+    text: `Beste ${input.name},\n\nUw rol binnen ${input.organizationName} is op ${changedAt} gewijzigd van ${roleLabel(input.previousRole)} naar ${roleLabel(input.newRole)}. Uw actieve sessies zijn beëindigd; log opnieuw in om met de actuele bevoegdheden verder te gaan.\n\nWas deze wijziging onverwacht? Neem dan contact op met uw organisatie of via de contactmogelijkheid van WorkMatchr.`,
+    html: `<p>Beste ${safeName},</p><p>Uw rol binnen <strong>${safeOrganization}</strong> is op ${changedAt} gewijzigd van <strong>${roleLabel(input.previousRole)}</strong> naar <strong>${roleLabel(input.newRole)}</strong>.</p><p>Uw actieve sessies zijn beëindigd. Log opnieuw in om met de actuele bevoegdheden verder te gaan.</p><p>Was deze wijziging onverwacht? Neem dan contact op met uw organisatie of via de contactmogelijkheid van WorkMatchr.</p>`,
   }
 }
 

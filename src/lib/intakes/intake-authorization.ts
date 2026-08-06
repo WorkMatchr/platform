@@ -28,7 +28,7 @@ const buildActor = (
   membership: {
     role: IntakeActorContext["membershipRole"];
     status: IntakeActorContext["membershipStatus"];
-    user: { status: IntakeActorContext["userStatus"] };
+    user: { status: IntakeActorContext["userStatus"]; accountType: IntakeActorContext["accountType"] };
   },
   organization: {
     status: IntakeActorContext["organizationStatus"];
@@ -36,6 +36,7 @@ const buildActor = (
   },
 ): IntakeActorContext => ({
   userId,
+  accountType: membership.user.accountType,
   userStatus: membership.user.status,
   membershipRole: membership.role,
   membershipStatus: membership.status,
@@ -64,7 +65,7 @@ export const requireIntakeCreator = async (
         select: {
           role: true,
           status: true,
-          user: { select: { status: true } },
+          user: { select: { status: true, accountType: true } },
         },
         take: 1,
       },
@@ -92,6 +93,11 @@ const intakeAccessSelect = {
   clientOrganizationId: true,
   createdByUserId: true,
   questionnaireVersionId: true,
+  questionnaireVersion: { select: { version: true } },
+  knowledgeContextId: true,
+  knowledgeContextVersion: true,
+  knowledgeSourceRoute: true,
+  knowledgeSuggestedCategory: true,
   status: true,
   version: true,
   archivedAt: true,
@@ -104,7 +110,7 @@ const intakeAccessSelect = {
           userId: true,
           role: true,
           status: true,
-          user: { select: { status: true } },
+          user: { select: { status: true, accountType: true } },
         },
       },
     },

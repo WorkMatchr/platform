@@ -8,7 +8,7 @@ import { Text } from '@/components/ui/text'
 import { listIntakesForOrganization } from '@/lib/intakes/intake-query-service'
 import { requireOrganizationMembership } from '@/lib/organizations/organization-authorization'
 
-export const metadata: Metadata = { title: 'Uw hulpvragen | WorkMatchr' }
+export const metadata: Metadata = { title: 'Uw opdrachten | WorkMatchr' }
 
 export default async function IntakeOverviewPage({
   searchParams,
@@ -19,12 +19,12 @@ export default async function IntakeOverviewPage({
   const organization = activeMembership.organization
   const query = await searchParams
 
-  if (organization.organizationType === 'PROVIDER') {
+  if (user.accountType !== 'CLIENT' || organization.organizationType !== 'CLIENT') {
     return (
       <Section spacing="compact" containerSize="narrow">
-        <Heading as="h1" size="h2">Hulpvragen zijn voor opdrachtgevers</Heading>
+        <Heading as="h1" size="h2">Opdrachten zijn voor opdrachtgevers</Heading>
         <Text className="mt-3 text-text-secondary">
-          De actieve organisatie is ingericht als aanbieder. Kies een opdrachtgeverorganisatie om een hulpvraag te starten.
+          De actieve organisatie is ingericht als dienstverlener en kan hier geen opdracht starten.
         </Text>
         <LinkButton href="/organisatie" className="mt-6">Organisatie kiezen</LinkButton>
       </Section>
@@ -33,24 +33,24 @@ export default async function IntakeOverviewPage({
 
   const { items, viewerRole } = await listIntakesForOrganization(user.id, organization.id)
   const notice = query.gearchiveerd === '1'
-    ? 'De conceptintake is gearchiveerd.'
+      ? 'De opdracht is verwijderd uit uw overzicht.'
     : query.actie === 'mislukt'
-      ? 'De intakeactie kon niet worden uitgevoerd. Vernieuw de pagina en probeer het opnieuw.'
+      ? 'De opdrachtactie kon niet worden uitgevoerd. Vernieuw de pagina en probeer het opnieuw.'
       : null
 
   return (
     <Section spacing="compact">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <Heading as="h1" size="h2">Uw hulpvragen</Heading>
+          <Heading as="h1" size="h2">Uw opdrachten</Heading>
           <Text className="mt-3 max-w-2xl text-text-secondary">
-            Start een hulpvraag, werk een concept verder uit of controleer een volledige intake voor {organization.name}.
+            Start een nieuwe opdracht, vul de benodigde gegevens aan en publiceer wanneer alles klopt voor {organization.name}.
           </Text>
           {viewerRole === 'MEMBER' && (
-            <p className="mt-2 text-sm text-text-secondary">U ziet hier alleen Uw eigen hulpvragen.</p>
+            <p className="mt-2 text-sm text-text-secondary">U ziet hier alleen uw eigen opdrachten.</p>
           )}
         </div>
-        <LinkButton href="/hulpvragen/nieuw" className="shrink-0">Nieuwe hulpvraag</LinkButton>
+        <LinkButton href="/hulpvragen/nieuw" className="shrink-0">Start een nieuwe opdracht</LinkButton>
       </div>
       {notice && (
         <p role="status" className={`mt-6 rounded-control p-3 ${query.actie ? 'bg-error/10 text-error' : 'bg-success/10 text-success'}`}>
@@ -59,9 +59,9 @@ export default async function IntakeOverviewPage({
       )}
       <div className="mt-8"><IntakeList items={items} /></div>
       <Card variant="subtle" className="mt-8">
-        <h2 className="text-lg font-bold text-brand-dark">Wat gebeurt er na deze intake?</h2>
+        <h2 className="text-lg font-bold text-brand-dark">Wat gebeurt er na publicatie?</h2>
         <p className="mt-2 text-text-secondary">
-          U kunt de vraag nu verduidelijken en gereedmaken voor controle. Indienen, opdrachtvorming en matching zijn nog niet actief.
+          Na publicatie kan WorkMatchr passende professionals selecteren. Controleer daarom eerst of uw opdracht volledig en correct is.
         </p>
       </Card>
     </Section>

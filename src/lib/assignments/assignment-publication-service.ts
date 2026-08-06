@@ -5,8 +5,8 @@ import { AssignmentServiceError } from './assignment-errors'
 import {
   assertAssignmentVersion,
   parseAssignmentInput,
-  validateAssignmentLocation,
 } from './assignment-service'
+import { validateAssignmentLocationSnapshot } from './assignment-location'
 import {
   assignmentReasonTransitionSchema,
   assignmentTransitionSchema,
@@ -134,12 +134,7 @@ async function validatePublicationRequirements(
 
   if (Object.keys(fieldErrors).length > 0) throw publicationValidationError(fieldErrors)
 
-  await validateAssignmentLocation(
-    transaction,
-    assignment.clientOrganizationId,
-    assignment.locationId,
-    assignment.allowsRemoteWork,
-  )
+  await validateAssignmentLocationSnapshot(transaction, assignment.clientOrganizationId, assignment)
   await validateOptionalReferences(transaction, assignment)
 }
 
@@ -149,15 +144,42 @@ function snapshotData(assignment: ManagedAssignment, version: number, userId: st
     version,
     title: assignment.title,
     description: assignment.description,
+    knowledgeContextId: assignment.knowledgeContextId,
+    knowledgeContextVersion: assignment.knowledgeContextVersion,
+    knowledgeSourceRoute: assignment.knowledgeSourceRoute,
+    knowledgeSuggestedCategory: assignment.knowledgeSuggestedCategory,
     primarySpecialismId: assignment.primarySpecialismId,
     sectorId: assignment.sectorId,
     employeeCount: assignment.employeeCount,
     desiredStartDate: assignment.desiredStartDate,
     responseDeadline: assignment.responseDeadline,
+    locationType: assignment.locationType,
     locationId: assignment.locationId,
+    locationName: assignment.locationName,
+    locationAddressLine: assignment.locationAddressLine,
+    locationPostalCode: assignment.locationPostalCode,
+    locationCity: assignment.locationCity,
+    locationProvince: assignment.locationProvince,
+    locationCountryCode: assignment.locationCountryCode,
+    locationRegion: assignment.locationRegion,
+    locationDescription: assignment.locationDescription,
+    locationCount: assignment.locationCount,
     allowsRemoteWork: assignment.allowsRemoteWork,
     changedByUserId: userId,
+    locationItems: (assignment.locationItems ?? []).length > 0
+      ? { create: assignment.locationItems.map(({ position, placeOrRegion, normalizedValue }) => ({ position, placeOrRegion, normalizedValue })) }
+      : undefined,
   }
+}
+
+function sameLocationItems(
+  left: readonly { position: number; placeOrRegion: string; normalizedValue: string }[],
+  right: readonly { position: number; placeOrRegion: string; normalizedValue: string }[],
+) {
+  return left.length === right.length && left.every((item, index) => {
+    const other = right[index]
+    return other?.position === item.position && other.placeOrRegion === item.placeOrRegion && other.normalizedValue === item.normalizedValue
+  })
 }
 
 async function requireConsistentPublishedState(
@@ -185,8 +207,22 @@ async function requireConsistentPublishedState(
         employeeCount: true,
         desiredStartDate: true,
         responseDeadline: true,
+        locationType: true,
         locationId: true,
+        locationName: true,
+        locationAddressLine: true,
+        locationPostalCode: true,
+        locationCity: true,
+        locationProvince: true,
+        locationCountryCode: true,
+        locationRegion: true,
+        locationDescription: true,
+        locationCount: true,
         allowsRemoteWork: true,
+        locationItems: {
+          select: { position: true, placeOrRegion: true, normalizedValue: true },
+          orderBy: { position: 'asc' },
+        },
       },
     }),
     transaction.assignmentStatusHistory.findMany({
@@ -218,8 +254,19 @@ async function requireConsistentPublishedState(
       revision.employeeCount === assignment.employeeCount &&
       sameDate(revision.desiredStartDate, assignment.desiredStartDate) &&
       sameDate(revision.responseDeadline, assignment.responseDeadline) &&
+      revision.locationType === assignment.locationType &&
       revision.locationId === assignment.locationId &&
-      revision.allowsRemoteWork === assignment.allowsRemoteWork,
+      revision.locationName === assignment.locationName &&
+      revision.locationAddressLine === assignment.locationAddressLine &&
+      revision.locationPostalCode === assignment.locationPostalCode &&
+      revision.locationCity === assignment.locationCity &&
+      revision.locationProvince === assignment.locationProvince &&
+      revision.locationCountryCode === assignment.locationCountryCode &&
+      revision.locationRegion === assignment.locationRegion &&
+      revision.locationDescription === assignment.locationDescription &&
+      revision.locationCount === assignment.locationCount &&
+      revision.allowsRemoteWork === assignment.allowsRemoteWork &&
+      sameLocationItems(revision.locationItems ?? [], assignment.locationItems ?? []),
   )
   const publicationMatches =
     publicationHistory.length === 1 &&
@@ -242,6 +289,15 @@ function isPrismaErrorWithCode(error: unknown, code: string): boolean {
 }
 
 function mapPublicationError(error: unknown, operation: 'publish' | 'withdraw'): never {
+  const prismaCode = error && typeof error === 'object' && 'code' in error && typeof error.code === 'string'
+    ? error.code
+    : undefined
+  console.error('[assignment-publication] mutatie mislukt', {
+    operation,
+    errorClass: error instanceof Error ? error.name : 'UnknownError',
+    prismaCode,
+    domainCode: error instanceof AssignmentServiceError ? error.code : undefined,
+  })
   if (error instanceof AssignmentServiceError) throw error
   if (isPrismaErrorWithCode(error, 'P2002') || isPrismaErrorWithCode(error, 'P2034')) {
     throw new AssignmentServiceError(
@@ -257,16 +313,14 @@ function mapPublicationError(error: unknown, operation: 'publish' | 'withdraw'):
   )
 }
 
-export async function publishAssignment(
+export async function publishAssignmentInTransaction(
+  transaction: Prisma.TransactionClient,
   userId: string,
   organizationId: string,
   rawInput: AssignmentTransitionInput,
 ) {
   const input = parseAssignmentInput(assignmentTransitionSchema, rawInput)
 
-  try {
-    return await getPrisma().$transaction(
-      async (transaction) => {
         const assignment = await requireAssignmentManager(
           transaction,
           userId,
@@ -296,10 +350,10 @@ export async function publishAssignment(
             'Een geannuleerde of ingetrokken opdracht kan niet worden gepubliceerd.',
           )
         }
-        if (assignment.status !== 'READY_FOR_REVIEW') {
+        if (assignment.status !== 'DRAFT' && assignment.status !== 'READY_FOR_REVIEW') {
           throw new AssignmentServiceError(
             'INVALID_STATUS',
-            'Alleen een opdracht die gereedstaat voor controle kan worden gepubliceerd.',
+            'Alleen een geldige conceptopdracht kan worden gepubliceerd.',
           )
         }
         if (assignment.closedAt || assignment.archivedAt) {
@@ -313,13 +367,44 @@ export async function publishAssignment(
         assertAssignmentVersion(assignment.version, input.expectedAssignmentVersion)
         await validatePublicationRequirements(transaction, assignment)
 
-        const publishedVersion = assignment.version + 1
+        let readyVersion = assignment.version
+        if (assignment.status === 'DRAFT') {
+          const markedReady = await transaction.assignment.updateMany({
+            where: {
+              id: assignment.id,
+              clientOrganizationId: organizationId,
+              status: 'DRAFT',
+              version: assignment.version,
+              publishedAt: null,
+              publishedByUserId: null,
+              publishedVersion: null,
+            },
+            data: {
+              status: 'READY_FOR_REVIEW',
+              version: { increment: 1 },
+            },
+          })
+          if (markedReady.count !== 1) throw new AssignmentServiceError('CONFLICT')
+
+          readyVersion += 1
+          await transaction.assignmentStatusHistory.create({
+            data: {
+              assignmentId: assignment.id,
+              fromStatus: 'DRAFT',
+              toStatus: 'READY_FOR_REVIEW',
+              changedByUserId: userId,
+              reason: 'Opdracht bij expliciete publicatie intern gereedgemaakt.',
+            },
+          })
+        }
+
+        const publishedVersion = readyVersion + 1
         const reserved = await transaction.assignment.updateMany({
           where: {
             id: assignment.id,
             clientOrganizationId: organizationId,
             status: 'READY_FOR_REVIEW',
-            version: assignment.version,
+            version: readyVersion,
             publishedAt: null,
             publishedByUserId: null,
             publishedVersion: null,
@@ -372,7 +457,21 @@ export async function publishAssignment(
           publishedVersion,
           idempotent: false,
         }
-      },
+}
+
+export async function publishAssignment(
+  userId: string,
+  organizationId: string,
+  rawInput: AssignmentTransitionInput,
+) {
+  try {
+    return await getPrisma().$transaction(
+      (transaction) => publishAssignmentInTransaction(
+        transaction,
+        userId,
+        organizationId,
+        rawInput,
+      ),
       { isolationLevel: 'Serializable' },
     )
   } catch (error) {

@@ -9,17 +9,19 @@ import {
 import { recognizableSituations } from '@/lib/public-intake/public-intake-prototype'
 import type { PublicIntakeDraftView } from '@/lib/public-intake/public-intake-types'
 import type { RecognizableRequestKey } from '@/lib/public-intake/public-intake-validation'
+import type { KnowledgeContextDefinition } from '@/content/knowledge/knowledge-contexts'
 
 type PublicIntakeStartProps = {
   sessionNotice?: string
   onCreated: (draft: PublicIntakeDraftView) => void
+  knowledgeContext?: KnowledgeContextDefinition | null
 }
 
 function resultMessage(result: PublicIntakeActionResult): string | null {
   return result.ok ? null : result.message
 }
 
-export function PublicIntakeStart({ sessionNotice, onCreated }: PublicIntakeStartProps) {
+export function PublicIntakeStart({ sessionNotice, onCreated, knowledgeContext }: PublicIntakeStartProps) {
   const [description, setDescription] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [pendingSituation, setPendingSituation] = useState<RecognizableRequestKey | null>(
@@ -44,6 +46,7 @@ export function PublicIntakeStart({ sessionNotice, onCreated }: PublicIntakeStar
       void createPublicIntakeDraftAction({
         entryPoint: 'FREE_TEXT',
         originalInput: description,
+        ...(knowledgeContext ? { knowledgeContextId: knowledgeContext.id } : {}),
       }).then(finish)
     })
   }
@@ -62,6 +65,12 @@ export function PublicIntakeStart({ sessionNotice, onCreated }: PublicIntakeStar
 
   return (
     <div className="mx-auto max-w-4xl">
+      {knowledgeContext && (
+        <section className="mb-5 rounded-card border border-brand-primary/25 bg-brand-primary-subtle p-5" aria-labelledby="knowledge-context-title">
+          <h2 id="knowledge-context-title" className="font-bold text-brand-dark">{knowledgeContext.adviceIntro}</h2>
+          <p className="mt-2 text-sm text-text-secondary">Vertel kort waar u binnen uw organisatie tegenaan loopt. U kunt de voorgestelde richting later altijd corrigeren.</p>
+        </section>
+      )}
       {sessionNotice && (
         <p
           role="status"

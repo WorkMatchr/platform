@@ -11,9 +11,9 @@ export function AssignmentList({ items }: { items: AssignmentListItem[] }) {
       <Card variant="subtle" className="text-center">
         <h2 className="text-xl font-bold text-brand-dark">Uw organisatie heeft nog geen opdrachten.</h2>
         <p className="mx-auto mt-3 max-w-xl text-text-secondary">
-          Start een hulpvraag en dien deze na de controle in om een conceptopdracht te vormen.
+          Start een nieuwe opdracht, controleer de gegevens en publiceer wanneer alles klopt.
         </p>
-        <LinkButton href="/hulpvragen/nieuw" className="mt-6">Start een nieuwe hulpvraag</LinkButton>
+        <LinkButton href="/hulpvragen/nieuw" className="mt-6">Start een nieuwe opdracht</LinkButton>
       </Card>
     )
   }
@@ -30,10 +30,11 @@ export function AssignmentList({ items }: { items: AssignmentListItem[] }) {
           </div>
           <h2 className="mt-5 break-words text-lg font-bold text-brand-dark">{assignment.title}</h2>
           <p className="mt-2 text-sm text-text-secondary">{assignment.organizationName}</p>
-          <p className="mt-2 text-sm text-text-secondary">Gebaseerd op Uw hulpvraag</p>
-          <Link href={`/opdrachten/${assignment.id}`} className="mt-6 inline-flex min-h-11 items-center font-semibold text-brand-primary-hover underline underline-offset-4">
-            Bekijk de opdracht
-          </Link>
+          <p className="mt-2 text-sm text-text-secondary">Gebaseerd op uw hulpvraag</p>
+          <div className="mt-6 flex flex-wrap gap-4">
+            <Link href={`/opdrachten/${assignment.id}`} className="inline-flex min-h-11 items-center font-semibold text-brand-primary-hover underline underline-offset-4">Bekijk de opdracht</Link>
+            {assignment.canDelete && <Link href={`/opdrachten/${assignment.id}/verwijderen`} className="inline-flex min-h-11 items-center font-semibold text-error underline underline-offset-4">Opdracht verwijderen</Link>}
+          </div>
         </Card>
       ))}
     </div>

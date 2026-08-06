@@ -1,7 +1,11 @@
-import type { AssignmentStatus, Prisma } from '@/generated/prisma/client'
+import type { AssignmentStatus } from '@/generated/prisma/client'
 import { getPrisma } from '@/lib/prisma'
 import { requireAssignmentManager } from './assignment-authorization'
 import { AssignmentServiceError } from './assignment-errors'
+import {
+  resolveAssignmentLocation,
+  validateAssignmentLocationSnapshot,
+} from './assignment-location'
 import {
   assignmentEditSchema,
   assignmentReasonTransitionSchema,
@@ -28,28 +32,11 @@ export function assertAssignmentVersion(current: number, expected: number) {
   if (current !== expected) throw new AssignmentServiceError('CONFLICT', 'De opdracht is intussen gewijzigd. Vernieuw de pagina en controleer de actuele gegevens.')
 }
 
-export async function validateAssignmentLocation(
-  transaction: Prisma.TransactionClient,
-  organizationId: string,
-  locationId: string | null,
-  allowsRemoteWork: boolean,
-) {
-  if (!locationId && !allowsRemoteWork) {
-    throw validationError({ locationId: ['Kies een locatie of geef aan dat werken op afstand mogelijk is.'] })
-  }
-  if (!locationId) return
-  const location = await transaction.organizationLocation.findFirst({
-    where: { id: locationId, organizationId, archivedAt: null },
-    select: { id: true },
-  })
-  if (!location) throw validationError({ locationId: ['Deze locatie is niet meer beschikbaar.'] })
-}
-
 function revisionData(assignment: {
   primarySpecialismId: string | null
   sectorId: string | null
   responseDeadline: Date | null
-}, input: AssignmentEditInput, version: number, userId: string) {
+}, input: AssignmentEditInput, location: Awaited<ReturnType<typeof resolveAssignmentLocation>>, version: number, userId: string) {
   return {
     version,
     title: input.title,
@@ -59,8 +46,7 @@ function revisionData(assignment: {
     employeeCount: input.employeeCount,
     desiredStartDate: input.desiredStartDate ? new Date(`${input.desiredStartDate}T00:00:00.000Z`) : null,
     responseDeadline: assignment.responseDeadline,
-    locationId: input.locationId,
-    allowsRemoteWork: input.allowsRemoteWork,
+    ...location,
     changedByUserId: userId,
   }
 }
@@ -75,7 +61,7 @@ export async function updateAssignment(
     const assignment = await requireAssignmentManager(transaction, userId, organizationId, input.assignmentId)
     if (assignment.status !== 'DRAFT') throw new AssignmentServiceError('INVALID_STATUS', 'Alleen een conceptopdracht kan worden gewijzigd.')
     assertAssignmentVersion(assignment.version, input.expectedAssignmentVersion)
-    await validateAssignmentLocation(transaction, organizationId, input.locationId, input.allowsRemoteWork)
+    const location = await resolveAssignmentLocation(transaction, organizationId, input)
     const nextVersion = assignment.version + 1
     const desiredStartDate = input.desiredStartDate ? new Date(`${input.desiredStartDate}T00:00:00.000Z`) : null
     const updated = await transaction.assignment.updateMany({
@@ -85,14 +71,13 @@ export async function updateAssignment(
         description: input.description,
         employeeCount: input.employeeCount,
         desiredStartDate,
-        locationId: input.locationId,
-        allowsRemoteWork: input.allowsRemoteWork,
+        ...location,
         version: { increment: 1 },
       },
     })
     if (updated.count !== 1) throw new AssignmentServiceError('CONFLICT')
     await transaction.assignmentRevision.create({
-      data: { assignmentId: assignment.id, ...revisionData(assignment, input, nextVersion, userId) },
+      data: { assignmentId: assignment.id, ...revisionData(assignment, input, location, nextVersion, userId) },
     })
     return { id: assignment.id, status: assignment.status, version: nextVersion }
   })
@@ -112,7 +97,7 @@ async function transitionAssignment(
     assertAssignmentVersion(assignment.version, input.expectedAssignmentVersion)
     if (toStatus === 'READY_FOR_REVIEW') {
       if (assignment.title.trim().length < 5 || assignment.description.trim().length < 20) throw validationError()
-      await validateAssignmentLocation(transaction, organizationId, assignment.locationId, assignment.allowsRemoteWork)
+      await validateAssignmentLocationSnapshot(transaction, organizationId, assignment)
     }
     const updated = await transaction.assignment.updateMany({
       where: { id: assignment.id, version: assignment.version, status: assignment.status },
@@ -139,4 +124,28 @@ export function reopenAssignment(userId: string, organizationId: string, rawInpu
 export function cancelAssignment(userId: string, organizationId: string, rawInput: AssignmentReasonTransitionInput) {
   const input = parseAssignmentInput(assignmentReasonTransitionSchema, rawInput)
   return transitionAssignment(userId, organizationId, input, ['DRAFT', 'READY_FOR_REVIEW'], 'CANCELLED', input.reason)
+}
+
+export async function archiveUnpublishedAssignment(userId: string, organizationId: string, rawInput: AssignmentTransitionInput) {
+  const input = parseAssignmentInput(assignmentTransitionSchema, rawInput)
+  return getPrisma().$transaction(async (transaction) => {
+    const assignment = await requireAssignmentManager(transaction, userId, organizationId, input.assignmentId)
+    if (assignment.status === 'ARCHIVED' && assignment.archivedAt && !assignment.publishedAt) {
+      return { id: assignment.id, status: assignment.status, version: assignment.version, idempotent: true }
+    }
+    if (!['DRAFT', 'READY_FOR_REVIEW'].includes(assignment.status) || assignment.publishedAt) {
+      throw new AssignmentServiceError('INVALID_STATUS', 'Alleen een nooit gepubliceerde opdracht kan worden verwijderd.')
+    }
+    assertAssignmentVersion(assignment.version, input.expectedAssignmentVersion)
+    const archivedAt = new Date()
+    const updated = await transaction.assignment.updateMany({
+      where: { id: assignment.id, clientOrganizationId: organizationId, status: assignment.status, version: assignment.version, publishedAt: null },
+      data: { status: 'ARCHIVED', archivedAt, version: { increment: 1 } },
+    })
+    if (updated.count !== 1) throw new AssignmentServiceError('CONFLICT')
+    await transaction.assignmentStatusHistory.create({
+      data: { assignmentId: assignment.id, fromStatus: assignment.status, toStatus: 'ARCHIVED', changedByUserId: userId, reason: 'Niet-gepubliceerde opdracht verwijderd uit het overzicht.', createdAt: archivedAt },
+    })
+    return { id: assignment.id, status: 'ARCHIVED' as const, version: assignment.version + 1, idempotent: false }
+  })
 }

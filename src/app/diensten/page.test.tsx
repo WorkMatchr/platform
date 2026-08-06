@@ -16,7 +16,8 @@ describe('publiek dienstenoverzicht', () => {
     expect(serviceOverview).toHaveLength(8)
     expect(html).toContain('data-overview-density="compact"')
     expect(html).toContain('<ul')
-    expect(html.match(/Bekijk dienst/g)).toHaveLength(serviceOverview.length)
+    expect(html).not.toContain('Bekijk dienst')
+    expect(html).not.toContain('>Dienst<')
 
     for (const item of serviceOverview) {
       expect(html).toContain(escapeHtml(item.title))

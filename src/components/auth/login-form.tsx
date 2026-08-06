@@ -25,7 +25,7 @@ export function LoginForm({ returnTo, accessDenied }: { returnTo?: string; acces
   }
 
   return <form onSubmit={submit} noValidate className="space-y-5">
-    {accessDenied && <StatusMessage error>Uw account heeft geen toegang. Neem contact op met WorkMatchr wanneer U denkt dat dit onjuist is.</StatusMessage>}
+    {accessDenied && <StatusMessage error>Uw account heeft geen toegang. Neem contact op met WorkMatchr wanneer u denkt dat dit onjuist is.</StatusMessage>}
     {message && <StatusMessage error>{message}</StatusMessage>}
     <div><label htmlFor="email" className="font-semibold">E-mailadres</label><input id="email" name="email" type="email" autoComplete="email" maxLength={254} required className={fieldClassName} /></div>
     <div><label htmlFor="password" className="font-semibold">Wachtwoord</label><input id="password" name="password" type="password" autoComplete="current-password" maxLength={128} required className={fieldClassName} /></div>

@@ -12,6 +12,7 @@ import { enrichPublicIntakeDraftWithAIClassification } from '@/lib/public-intake
 import { resumePublicIntakeDraft } from '@/lib/public-intake/public-intake-service'
 import type { PublicIntakeDraftView } from '@/lib/public-intake/public-intake-types'
 import { attachAdviceDossierForCurrentUser } from '@/lib/advice-dossiers/public-intake-advice-dossier-handoff'
+import { resolveActiveKnowledgeContext } from '@/content/knowledge/knowledge-contexts'
 
 export const metadata: Metadata = {
   title: 'Advieswijzer | WorkMatchr',
@@ -47,8 +48,16 @@ async function loadDraft(): Promise<{
   }
 }
 
-export default async function AdviceGuidePage() {
+export default async function AdviceGuidePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ context?: string | string[] }>
+}) {
   const { draft, invalidSession } = await loadDraft()
+  const contextValue = (await searchParams).context
+  const knowledgeContext = resolveActiveKnowledgeContext(
+    Array.isArray(contextValue) ? contextValue[0] : contextValue,
+  )
 
   return (
     <PublicPageLayout
@@ -59,7 +68,7 @@ export default async function AdviceGuidePage() {
       compactHero
     >
       <Section containerSize="default" spacing="compact" className="!py-5 sm:!py-7">
-        <PublicIntakePrototype initialDraft={draft} invalidSession={invalidSession} />
+        <PublicIntakePrototype initialDraft={draft} invalidSession={invalidSession} knowledgeContext={knowledgeContext} />
       </Section>
     </PublicPageLayout>
   )

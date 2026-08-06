@@ -19,7 +19,6 @@ type InitialOrganizationValues = {
   website?: string | null
   employeeCount?: number | null
   sectorIds?: string[]
-  primarySectorId?: string
   addressLine?: string
   postalCode?: string
   city?: string
@@ -32,6 +31,7 @@ type OrganizationFormProps = {
   initialValues?: InitialOrganizationValues
   mode: 'create' | 'edit'
   sectors: SectorOption[]
+  fixedOrganizationType?: Extract<OrganizationType, 'CLIENT' | 'PROVIDER'>
 }
 
 const organizationTypes = [
@@ -40,7 +40,7 @@ const organizationTypes = [
   { value: 'BOTH', label: 'Opdrachtgever en aanbieder' },
 ] as const
 
-export function OrganizationForm({ action, initialValues = {}, mode, sectors }: OrganizationFormProps) {
+export function OrganizationForm({ action, initialValues = {}, mode, sectors, fixedOrganizationType }: OrganizationFormProps) {
   const [state, formAction, pending] = useActionState(action, {})
   const formRef = useRef<HTMLFormElement>(null)
   const submittedValues = state.values
@@ -82,7 +82,13 @@ export function OrganizationForm({ action, initialValues = {}, mode, sectors }: 
           <input id="tradeName" name="tradeName" maxLength={160} defaultValue={value('tradeName', initialValues.tradeName ?? '')} className={inputClassName('tradeName')} aria-invalid={isInvalid('tradeName')} aria-describedby={describedBy('tradeName')} />
           <FieldError id="tradeName-error" message={error('tradeName')} />
         </div>
-        {mode === 'create' ? (
+        {mode === 'create' && fixedOrganizationType ? (
+          <div>
+            <p className="font-semibold">Accounttype</p>
+            <p className="mt-2 text-text-secondary">{fixedOrganizationType === 'CLIENT' ? 'Bedrijf (opdrachtgever)' : 'Professional (opdrachtnemer)'}</p>
+            <input name="organizationType" type="hidden" value={fixedOrganizationType} />
+          </div>
+        ) : mode === 'create' ? (
           <fieldset>
             <legend className="font-semibold">Organisatietype <span aria-hidden="true">*</span></legend>
             <div className="mt-3 grid gap-3 sm:grid-cols-3">
@@ -118,15 +124,12 @@ export function OrganizationForm({ action, initialValues = {}, mode, sectors }: 
       <fieldset>
         <legend className="text-lg font-bold text-brand-dark">Sectoren</legend>
         <p className="mt-2 text-sm text-text-secondary">
-          {mode === 'create'
-            ? 'Selecteer minimaal één sector en wijs daarna de primaire sector aan.'
-            : 'Selecteer minimaal één sector waarin uw organisatie actief is.'}
+          Selecteer minimaal één sector waarin uw organisatie actief is.
         </p>
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
           {sectors.map((sector) => <label key={sector.id} className={optionClassName('sectorIds')}><input type="checkbox" name="sectorIds" value={sector.id} defaultChecked={selectedSectorIds.has(sector.id)} aria-invalid={isInvalid('sectorIds')} aria-describedby={describedBy('sectorIds')} /><span>{sector.name}</span></label>)}
         </div>
         <FieldError id="sectorIds-error" message={error('sectorIds')} />
-        {mode === 'create' && <div className="mt-5"><label htmlFor="primarySectorId" className="font-semibold">Primaire sector <span aria-hidden="true">*</span></label><select id="primarySectorId" name="primarySectorId" required defaultValue={value('primarySectorId', initialValues.primarySectorId ?? '')} className={inputClassName('primarySectorId')} aria-invalid={isInvalid('primarySectorId')} aria-describedby={describedBy('primarySectorId')}><option value="" disabled>Kies een sector</option>{sectors.map((sector) => <option key={sector.id} value={sector.id}>{sector.name}</option>)}</select><FieldError id="primarySectorId-error" message={error('primarySectorId')} /></div>}
       </fieldset>
 
       <fieldset className="space-y-5">

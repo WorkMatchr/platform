@@ -13,7 +13,7 @@ export default async function ProviderDossierPage() {
   const dashboard = await getProviderDossierDashboard(context.user.id, context.providerProfileId)
   return (
     <>
-      <ProviderPageHeader title="Uw dienstverlenersprofiel" description={`Beheer de gegevens waarmee WorkMatchr Uw organisatie later zorgvuldig kan beoordelen. Laatst bijgewerkt op ${dateFormatter.format(new Date(dashboard.lastModifiedAt))}.`} readOnly={!context.canManage} />
+      <ProviderPageHeader title="Uw dienstverlenersprofiel" description={`Beheer de gegevens waarmee WorkMatchr uw organisatie later zorgvuldig kan beoordelen. Laatst bijgewerkt op ${dateFormatter.format(new Date(dashboard.lastModifiedAt))}.`} readOnly={!context.canManage} />
       <ProviderStatusSummary statuses={dashboard.statuses} />
       <ProviderCompleteness assessment={dashboard.completeness} />
       <ProviderOpenActions actions={dashboard.openActions} canManage={context.canManage} />

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { canManageProviderData, isPermissionActive, requiresFourEyes } from './provider-policy'
 
 const activeProviderActor = {
+  accountType: 'PROFESSIONAL' as const,
   userStatus: 'ACTIVE' as const,
   membershipStatus: 'ACTIVE' as const,
   membershipRole: 'OWNER' as const,
@@ -26,6 +27,10 @@ describe('providerautorisatiebeleid', () => {
 
   it('weigert een CLIENT-organisatie ook voor een OWNER', () => {
     expect(canManageProviderData({ ...activeProviderActor, organizationType: 'CLIENT' })).toBe(false)
+  })
+
+  it('weigert een bedrijfsaccount bij een providerorganisatie', () => {
+    expect(canManageProviderData({ ...activeProviderActor, accountType: 'CLIENT' })).toBe(false)
   })
 
   it('accepteert uitsluitend een actuele, niet-ingetrokken expliciete permission', () => {

@@ -1,6 +1,7 @@
 import { AdminPageHeader, AdminSection, AdminTable, MetricCard } from '@/components/platform-admin/platform-admin-ui'
 import { requirePlatformAdministrator } from '@/lib/platform-admin/platform-admin-authorization'
 import { getPlatformMarketplaceOverview } from '@/lib/platform-admin/platform-admin-query-service'
+import { creditTransactionTypeLabels } from '@/lib/marketplace/marketplace-presentation'
 
 export default async function PlatformMarketplacePage() {
   const administrator = await requirePlatformAdministrator('/platformbeheer/marketplace')
@@ -23,7 +24,7 @@ export default async function PlatformMarketplacePage() {
         <AdminTable headers={['Organisatie', 'Type', 'Aantal', 'Reden', 'Datum']}>
           {data.recentTransactions.map((transaction) => <tr key={transaction.id}>
             <td className="px-4 py-3">{transaction.creditAccount.organization.name}</td>
-            <td className="px-4 py-3">{transaction.type}</td>
+            <td className="px-4 py-3">{creditTransactionTypeLabels[transaction.type]}</td>
             <td className="px-4 py-3">{transaction.amount}</td>
             <td className="px-4 py-3">{transaction.reason}</td>
             <td className="px-4 py-3">{transaction.createdAt.toLocaleString('nl-NL')}</td>

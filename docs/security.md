@@ -15,6 +15,17 @@ WorkMatchr gebruikt geen zelfgebouwde wachtwoordhashing, cookiecryptografie of J
 - wachtwoordreset trekt bestaande sessies in;
 - platformrollen worden uitsluitend server-side gecontroleerd.
 
+### Testaccountwisselaar buiten productie
+
+- `NODE_ENV=production` schakelt de wisselaar hard uit, ook wanneer de feature flag abusievelijk `true` is;
+- de aanvullende sessievelden zijn alleen geldig wanneer doelgebruiker en starttijd beide aanwezig zijn en de doelgebruiker niet de actor is;
+- de doelgebruiker moet actief, geverifieerd en herkenbaar fictief zijn via het gereserveerde `example.invalid`-domein;
+- de oorspronkelijke platformbeheerder blijft actor; het testaccount bepaalt uitsluitend de effectieve autorisatie- en tenantcontext;
+- start en stop gebruiken één transactie voor de conditionele sessiemutatie en het `AdminActionLog`;
+- geneste wisselingen en races worden via verwachte sessiestatus geweigerd;
+- auditmetadata bevat alleen interne UUID's en de policyversie, nooit sessietoken, e-mailadres, wachtwoord of andere secrets;
+- UI-zichtbaarheid is geen beveiligingsgrens: feature flag, productieblokkade, platformbeheeridentiteit en doelgeschiktheid worden opnieuw in de servicelaag gecontroleerd.
+
 ## Organisatieautorisatie
 
 - organisatieacties vereisen een actuele `ACTIVE` gebruiker en `ACTIVE` membership;
@@ -121,3 +132,24 @@ Sessies en wachtwoordresetmiddelen worden onmiddellijk ingetrokken. Stateless Be
 Niet-OWNER-rolwijzigingen gebruiken een verwachte huidige rol als concurrency-precondition en trekken alle bestaande sessies van het doelaccount in dezelfde serializable transactie in. Notificatiebezorging volgt na commit en kan de autorisatiemutatie niet terugdraaien. Delivery-audit bevat uitsluitend rollen, tijdstip, veilige foutcode, transport en provider-message-ID; geen token, secret of e-mailinhoud.
 
 Definitieve accountverwijdering blijft fail-closed en onzichtbaar zolang directe e-mailvrijgave, accountbrede credential- en tokenintrekking, goedgekeurd KMS-sleutelbeheer, transactionele outbox, purgejob, back-upverwijdering en retentietoegangsaudit niet aantoonbaar zijn geïmplementeerd.
+# Knowledge Engine
+
+Kennisimport is lokaal en fail-closed: maximaal 5 MB en begrensde recordaantallen, strikte Zod-validatie, prototypepollutioncontrole, checksumverificatie, expliciete bevestiging en één serializable transactie. Lokale absolute paden, broninhoud en secrets worden niet gelogd of opgeslagen. Declaratieve regels ondersteunen slechts een vaste operatorlijst en voeren nooit databasecode uit. Reviewdata en beheerpagina’s vereisen bestaande server-side platformbeheerautorisatie.
+
+### Kennisreview
+
+- iedere query en mutatie vereist server-side een actieve `PlatformRole.ADMIN` én een actief membership bij `WORKMATCHR_PLATFORM`;
+- de servicelaag controleert deze voorwaarden opnieuw binnen de transactie en vertrouwt niet op zichtbaarheid van de beheerinterface;
+- mutaties gebruiken `Serializable`, rijvergrendeling en een verwachte taakversie;
+- besluiten, bronreferenties, validaties en auditevents zijn append-only en kunnen niet hard worden verwijderd;
+
+### Knowledge Control en professionele meldingen
+
+- Broncontrole blijft server-side beperkt tot actieve platformbeheerders met een actief membership bij `WORKMATCHR_PLATFORM`.
+- Een professionele verbetermelding vereist een actieve gebruiker, een actief membership bij een actieve `PROVIDER`- of `BOTH`-organisatie en een niet-gearchiveerd providerprofiel.
+- Alleen `PUBLISHED` en `VALIDATED` kennis kan via de meldroute worden gelezen; interne PoC-claims, bronfragmenten en controletaken blijven verborgen.
+- De melder kan claimtekst, validatie, publicatie of controletaken niet rechtstreeks muteren. De service vergrendelt de claim, koppelt de melding aan één open of heropende taak en schrijft een begrensd auditevent.
+- Platformafhandeling gebruikt optimistic concurrency en een rijlock. Eindstatussen vereisen actor, tijd en gemotiveerde resolutie.
+- Auditmetadata bevat uitsluitend interne ID’s, statuscodes en meldingstype; geen toelichting, voorstel, broninhoud, tokens of persoonsgegevens.
+- auditmetadata bevat alleen interne identifiers, statussen en versies, nooit concepttekst, broninhoud, persoonsgegevens of secrets;
+- inhoudelijke goedkeuring publiceert niets en verleent geen publieke toegang.

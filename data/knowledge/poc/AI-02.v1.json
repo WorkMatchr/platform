@@ -1,0 +1,40 @@
+{
+  "schemaVersion":"1.0",
+  "source":{"code":"AI-02","title":"Werken met beeldschermen","publisher":"Sdu Uitgevers","publicationDate":"2000-01-01","edition":"Tweede herziene druk","sourceType":"AI_SHEET","sourceFormat":"PDF","copyrightClassification":"RESTRICTED_REFERENCE_ONLY","authorityLevel":"PROFESSIONAL_GUIDANCE","temporalStatus":"HISTORICAL","sourceFamily":"SZW-AI-BLADEN","independenceGroup":"SZW-AI-BLADEN","isPrimarySource":false},
+  "sourceVersion":{"externalKey":"ai-02:v1","versionLabel":"Tweede herziene druk","publicationDate":"2000-01-01","checksum":"6a8b9c131e5600dcedc8ea1204552cc7284c088485921bd55a6dfbcdb83d582f","extractionStatus":"EXTRACTED","reviewStatus":"REVIEW_REQUIRED"},
+  "topics":[{"externalKey":"ai-02:topic:beeldscherm","slug":"historisch-beeldschermwerk","title":"Beeldschermwerk (historisch)","description":"Historische kandidaat-kennis over ergonomie en werkorganisatie.","domain":"ERGONOMICS"}],
+  "fragments":[
+    {"externalKey":"ai-02:f1","sourceVersionKey":"ai-02:v1","pageFrom":7,"sectionPath":"Gezondheidseffecten","fragmentType":"SECTION_REFERENCE","extractionMethod":"MANUAL_POC"},
+    {"externalKey":"ai-02:f2","sourceVersionKey":"ai-02:v1","pageFrom":11,"sectionPath":"Werkplek","fragmentType":"SECTION_REFERENCE","extractionMethod":"MANUAL_POC"},
+    {"externalKey":"ai-02:f3","sourceVersionKey":"ai-02:v1","pageFrom":15,"sectionPath":"Stoel en werktafel","fragmentType":"SECTION_REFERENCE","extractionMethod":"MANUAL_POC"},
+    {"externalKey":"ai-02:f4","sourceVersionKey":"ai-02:v1","pageFrom":19,"sectionPath":"Beeldscherm en invoermiddelen","fragmentType":"SECTION_REFERENCE","extractionMethod":"MANUAL_POC"},
+    {"externalKey":"ai-02:f5","sourceVersionKey":"ai-02:v1","pageFrom":23,"sectionPath":"Werkorganisatie","fragmentType":"SECTION_REFERENCE","extractionMethod":"MANUAL_POC"},
+    {"externalKey":"ai-02:f6","sourceVersionKey":"ai-02:v1","pageFrom":27,"sectionPath":"Software-ergonomie","fragmentType":"SECTION_REFERENCE","extractionMethod":"MANUAL_POC"},
+    {"externalKey":"ai-02:f7","sourceVersionKey":"ai-02:v1","pageFrom":31,"sectionPath":"Normen","fragmentType":"SECTION_REFERENCE","extractionMethod":"MANUAL_POC"},
+    {"externalKey":"ai-02:f8","sourceVersionKey":"ai-02:v1","pageFrom":35,"sectionPath":"Checklist","fragmentType":"SECTION_REFERENCE","extractionMethod":"MANUAL_POC"}
+  ],
+  "claims":[
+    {"externalKey":"ai-02:c1","topicKey":"ai-02:topic:beeldscherm","claimType":"HEALTH_EFFECT","statement":"Langdurig beeldschermwerk kan samenhangen met lichamelijke en visuele klachten.","applicability":"Historische bron; actuele onderbouwing vereist.","temporalStatus":"HISTORICAL","publicationStatus":"DRAFT","confidenceLevel":"LOW"},
+    {"externalKey":"ai-02:c2","topicKey":"ai-02:topic:beeldscherm","claimType":"CONTROL_MEASURE","statement":"Een passend ingerichte werkplek kan ongunstige fysieke belasting helpen beperken.","applicability":"Historische ergonomische aanbeveling.","temporalStatus":"HISTORICAL","publicationStatus":"DRAFT","confidenceLevel":"LOW"},
+    {"externalKey":"ai-02:c3","topicKey":"ai-02:topic:beeldscherm","claimType":"INSPECTION_POINT","statement":"Stoel, werkblad en gebruiksruimte horen in samenhang met de gebruiker te worden beoordeeld.","applicability":"Historische ergonomische inspectiecontext.","temporalStatus":"HISTORICAL","publicationStatus":"DRAFT","confidenceLevel":"LOW"},
+    {"externalKey":"ai-02:c4","topicKey":"ai-02:topic:beeldscherm","claimType":"INSPECTION_POINT","statement":"Plaatsing van beeldscherm en invoermiddelen beïnvloedt houding en bedieningscomfort.","applicability":"Historische ergonomische inspectiecontext.","temporalStatus":"HISTORICAL","publicationStatus":"DRAFT","confidenceLevel":"LOW"},
+    {"externalKey":"ai-02:c5","topicKey":"ai-02:topic:beeldscherm","claimType":"CONTROL_MEASURE","statement":"Afwisseling en passende organisatie van het werk kunnen langdurige eenzijdige belasting beperken.","applicability":"Historische werkorganisatiecontext.","temporalStatus":"HISTORICAL","publicationStatus":"DRAFT","confidenceLevel":"LOW"},
+    {"externalKey":"ai-02:c6","topicKey":"ai-02:topic:beeldscherm","claimType":"RECOMMENDATION","statement":"Software hoort begrijpelijk en passend bij de uit te voeren taak te zijn.","applicability":"Historische software-ergonomische aanbeveling.","temporalStatus":"HISTORICAL","publicationStatus":"DRAFT","confidenceLevel":"LOW"},
+    {"externalKey":"ai-02:c7","topicKey":"ai-02:topic:beeldscherm","claimType":"OTHER","statement":"Historische normen kunnen context geven, maar zijn niet zonder actualiteitscontrole toepasbaar.","applicability":"Uitsluitend als historische bronverwijzing.","temporalStatus":"HISTORICAL","publicationStatus":"DRAFT","confidenceLevel":"LOW"},
+    {"externalKey":"ai-02:c8","topicKey":"ai-02:topic:beeldscherm","claimType":"INSPECTION_POINT","statement":"Een gestructureerde checklist kan aandachtspunten voor beeldschermwerk zichtbaar maken.","applicability":"Historisch hulpmiddel; scoremodel valideren.","temporalStatus":"HISTORICAL","publicationStatus":"DRAFT","confidenceLevel":"LOW"}
+  ],
+  "citations":[
+    {"claimKey":"ai-02:c1","sourceVersionKey":"ai-02:v1","fragmentKey":"ai-02:f1","supportType":"HISTORICAL_ORIGIN"},
+    {"claimKey":"ai-02:c2","sourceVersionKey":"ai-02:v1","fragmentKey":"ai-02:f2","supportType":"HISTORICAL_ORIGIN"},
+    {"claimKey":"ai-02:c3","sourceVersionKey":"ai-02:v1","fragmentKey":"ai-02:f3","supportType":"HISTORICAL_ORIGIN"},
+    {"claimKey":"ai-02:c4","sourceVersionKey":"ai-02:v1","fragmentKey":"ai-02:f4","supportType":"HISTORICAL_ORIGIN"},
+    {"claimKey":"ai-02:c5","sourceVersionKey":"ai-02:v1","fragmentKey":"ai-02:f5","supportType":"HISTORICAL_ORIGIN"},
+    {"claimKey":"ai-02:c6","sourceVersionKey":"ai-02:v1","fragmentKey":"ai-02:f6","supportType":"HISTORICAL_ORIGIN"},
+    {"claimKey":"ai-02:c7","sourceVersionKey":"ai-02:v1","fragmentKey":"ai-02:f7","supportType":"HISTORICAL_ORIGIN"},
+    {"claimKey":"ai-02:c8","sourceVersionKey":"ai-02:v1","fragmentKey":"ai-02:f8","supportType":"HISTORICAL_ORIGIN"}
+  ],
+  "relations":[],"rules":[],"calculations":[],
+  "checklists":[{"code":"AI02_WORKPLACE_CHECK","version":1,"title":"Historische beeldschermwerkplekcheck","description":"Conceptuele PoC voor gestructureerde en gescoorde vragen.","topicKey":"ai-02:topic:beeldscherm","audience":"INTERNAL_REVIEWER","scoringMethod":"SUM","publicationStatus":"DRAFT","items":[{"order":1,"question":"Is de werkstoel instelbaar voor de gebruiker?","answerType":"YES_NO","scoreRules":{"true":0,"false":1},"explanationClaimKey":"ai-02:c3","required":true},{"order":2,"question":"Kan het werk regelmatig worden afgewisseld?","answerType":"YES_NO","scoreRules":{"true":0,"false":1},"explanationClaimKey":"ai-02:c5","required":true}]}],
+  "procedures":[],"roles":[],"formTemplates":[],
+  "importMetadata":{"createdAt":"2026-08-02T10:00:00.000Z","createdBy":"WORKMATCHR_POC","uncertainties":["Pagina- en sectiereferenties moeten handmatig worden gecontroleerd.","Checklist en scores zijn niet gepubliceerd of inhoudelijk gevalideerd."]}
+}

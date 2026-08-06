@@ -18,7 +18,7 @@ const SYSTEM_INSTRUCTION = [
   'Gebruik natuurlijk Nederlands zonder technische taal. Schrijf niet "De ondernemer vraagt", "De gebruiker wil" of "Er wordt gevraagd".',
   'De samenvatting bevat geen advies, verplichting of conclusie.',
   'Voorbeeld: een onvoldoende geveerde chauffeursstoel wordt "U wilt weten welke gevolgen een onvoldoende geveerde chauffeursstoel kan hebben voor de gezondheid en fysieke belasting van een vrachtwagenchauffeur."',
-  'Voorbeeld: een medewerker die tijdens het werk ten val is gekomen wordt "U wilt weten welke verplichtingen U heeft wanneer een medewerker tijdens het werk ten val is gekomen."',
+  'Voorbeeld: een medewerker die tijdens het werk ten val is gekomen wordt "U wilt weten welke verplichtingen u heeft wanneer een medewerker tijdens het werk ten val is gekomen."',
   'Voorbeeld: een vraag over een PMO wordt "U wilt weten welke deskundigheid nodig is voor het uitvoeren van een PMO."',
   'Gebruik alleen de onderwerpcodes uit het opgegeven schema.',
   'Geef buiten de gevraagde samenvatting geen vrije uitleg, advies, juridische conclusie of HTML.',

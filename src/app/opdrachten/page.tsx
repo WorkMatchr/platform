@@ -8,12 +8,12 @@ import { AssignmentServiceError } from '@/lib/assignments/assignment-errors'
 import { listAssignmentsForOrganization, type AssignmentListFilter } from '@/lib/assignments/assignment-query-service'
 import { requireOrganizationMembership } from '@/lib/organizations/organization-authorization'
 
-export const metadata: Metadata = { title: 'Mijn opdrachten | WorkMatchr' }
+export const metadata: Metadata = { title: 'Gepubliceerde opdrachten | WorkMatchr' }
 
 const filters: Array<{ value: AssignmentListFilter; label: string }> = [
-  { value: 'all', label: 'Alle' },
-  { value: 'draft', label: 'Concept' },
-  { value: 'cancelled', label: 'Geannuleerd' },
+  { value: 'active', label: 'Actief' },
+  { value: 'completed', label: 'Afgerond' },
+  { value: 'cancelled', label: 'Beëindigd' },
 ]
 
 export default async function AssignmentOverviewPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
@@ -21,7 +21,7 @@ export default async function AssignmentOverviewPage({ searchParams }: { searchP
   const query = await searchParams
   const selected = typeof query.status === 'string' && filters.some((filter) => filter.value === query.status)
     ? query.status as AssignmentListFilter
-    : 'all'
+    : 'active'
 
   let result
   try {
@@ -35,16 +35,16 @@ export default async function AssignmentOverviewPage({ searchParams }: { searchP
       <Section spacing="compact">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <Heading as="h1" size="h2">Mijn opdrachten</Heading>
-            <p className="mt-3 max-w-2xl text-text-secondary">Bekijk de conceptopdrachten van {activeMembership.organization.name}.</p>
-            {result.viewerRole === 'MEMBER' && <p className="mt-2 text-sm text-text-secondary">U ziet alleen opdrachten die uit Uw eigen hulpvragen zijn gevormd.</p>}
+            <Heading as="h1" size="h2">Gepubliceerde opdrachten</Heading>
+            <p className="mt-3 max-w-2xl text-text-secondary">Bekijk actieve en afgeronde publicaties van {activeMembership.organization.name}.</p>
+            {result.viewerRole === 'MEMBER' && <p className="mt-2 text-sm text-text-secondary">U ziet alleen opdrachten die uit uw eigen hulpvragen zijn gevormd.</p>}
           </div>
-          <LinkButton href="/hulpvragen/nieuw">Nieuwe hulpvraag</LinkButton>
+          <LinkButton href="/hulpvragen/nieuw">Nieuwe opdracht</LinkButton>
         </div>
 
         <nav aria-label="Opdrachten filteren" className="mt-7 flex flex-wrap gap-2">
           {filters.map((filter) => (
-            <LinkButton key={filter.value} href={filter.value === 'all' ? '/opdrachten' : `/opdrachten?status=${filter.value}`} variant={selected === filter.value ? 'secondary' : 'outline'}>
+            <LinkButton key={filter.value} href={filter.value === 'active' ? '/opdrachten' : `/opdrachten?status=${filter.value}`} variant={selected === filter.value ? 'secondary' : 'outline'}>
               {filter.label}
             </LinkButton>
           ))}

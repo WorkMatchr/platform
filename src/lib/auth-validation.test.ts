@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { GENERIC_RESET_CONFIRMATION, GENERIC_SIGN_IN_ERROR, normalizeEmail, registrationSchema } from '@/lib/auth-validation'
 
 const validPassword = 'a'.repeat(16)
-const valid = { name: 'Test Gebruiker', email: 'TEST@EXAMPLE.INVALID', password: validPassword, passwordConfirmation: validPassword, acceptedTerms: 'on' }
+const valid = { accountType: 'CLIENT', name: 'Test Gebruiker', email: 'TEST@EXAMPLE.INVALID', password: validPassword, passwordConfirmation: validPassword, acceptedTerms: 'on' }
 
 describe('registratievalidatie', () => {
   it('normaliseert een geldig e-mailadres', () => { expect(registrationSchema.parse(valid).email).toBe('test@example.invalid') })
@@ -10,6 +10,8 @@ describe('registratievalidatie', () => {
   it('weigert een wachtwoord korter dan twaalf tekens', () => { expect(registrationSchema.safeParse({ ...valid, password: 'a'.repeat(11), passwordConfirmation: 'a'.repeat(11) }).success).toBe(false) })
   it('weigert ongelijke wachtwoorden', () => { expect(registrationSchema.safeParse({ ...valid, passwordConfirmation: 'b'.repeat(16) }).success).toBe(false) })
   it('weigert registratie zonder juridisch akkoord', () => { expect(registrationSchema.safeParse({ ...valid, acceptedTerms: undefined }).success).toBe(false) })
+  it('weigert registratie zonder accounttype', () => { expect(registrationSchema.safeParse({ ...valid, accountType: undefined }).success).toBe(false) })
+  it('accepteert een professionalaccount', () => { expect(registrationSchema.parse({ ...valid, accountType: 'PROFESSIONAL' }).accountType).toBe('PROFESSIONAL') })
 })
 
 describe('enumeratiebestendige meldingen', () => {

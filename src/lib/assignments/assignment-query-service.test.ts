@@ -53,20 +53,29 @@ beforeEach(() => {
 })
 
 describe('opdrachtqueryservice', () => {
-  it('begrenst de lijst tot de actieve organisatie en verbergt gearchiveerde opdrachten', async () => {
+  it('begrenst de lijst tot actieve gepubliceerde opdrachten van de organisatie', async () => {
     const result = await listAssignmentsForOrganization(userId, organizationId)
     expect(mocks.organizationFind).toHaveBeenCalledWith(expect.objectContaining({ where: { id: organizationId, status: 'ACTIVE' } }))
     expect(mocks.assignmentFindMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: { clientOrganizationId: organizationId, status: { not: 'ARCHIVED' } },
+      where: {
+        clientOrganizationId: organizationId,
+        publishedAt: { not: null },
+        status: { in: ['OPEN', 'MATCHING', 'AWAITING_RESPONSES', 'IN_SELECTION'] },
+      },
     }))
     expect(result.items[0]?.organizationName).toBe('Voorbeeldorganisatie')
   })
 
   it('begrenst MEMBER in het overzicht tot opdrachten uit eigen intakes', async () => {
     mocks.organizationFind.mockResolvedValue({ id: organizationId, name: 'Voorbeeldorganisatie', memberships: [{ role: 'MEMBER' }] })
-    await listAssignmentsForOrganization(userId, organizationId, 'draft')
+    await listAssignmentsForOrganization(userId, organizationId, 'completed')
     expect(mocks.assignmentFindMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: { clientOrganizationId: organizationId, status: 'DRAFT', intake: { createdByUserId: userId } },
+      where: {
+        clientOrganizationId: organizationId,
+        publishedAt: { not: null },
+        status: { in: ['AWARDED', 'CLOSED'] },
+        intake: { createdByUserId: userId },
+      },
     }))
   })
 

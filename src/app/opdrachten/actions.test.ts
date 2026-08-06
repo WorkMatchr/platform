@@ -2,8 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
   requireOrganizationMembership: vi.fn(),
-  getSubmissionContext: vi.fn(),
-  convert: vi.fn(),
+  publishIntake: vi.fn(),
   updateAssignment: vi.fn(),
   markReady: vi.fn(),
   reopen: vi.fn(),
@@ -19,11 +18,8 @@ vi.mock('next/cache', () => ({ revalidatePath: mocks.revalidatePath }))
 vi.mock('@/lib/organizations/organization-authorization', () => ({
   requireOrganizationMembership: mocks.requireOrganizationMembership,
 }))
-vi.mock('@/lib/assignments/assignment-query-service', () => ({
-  getIntakeSubmissionContext: mocks.getSubmissionContext,
-}))
-vi.mock('@/lib/assignments/assignment-conversion-service', () => ({
-  convertIntakeToAssignment: mocks.convert,
+vi.mock('@/lib/assignments/intake-assignment-publication-service', () => ({
+  publishIntakeAsAssignment: mocks.publishIntake,
 }))
 vi.mock('@/lib/assignments/assignment-service', () => ({
   updateAssignment: mocks.updateAssignment,
@@ -40,7 +36,7 @@ import { AssignmentServiceError } from '@/lib/assignments/assignment-errors'
 import {
   cancelAssignmentAction,
   publishAssignmentAction,
-  submitIntakeAction,
+  publishIntakeAction,
   updateAssignmentAction,
   withdrawPublishedAssignmentAction,
 } from './actions'
@@ -74,8 +70,12 @@ function editFormData() {
   data.set('description', 'Een zakelijke en voldoende uitgebreide omschrijving van de opdracht.')
   data.set('employeeCount', '25')
   data.set('desiredStartDate', '2099-08-01')
+  data.set('locationType', 'REGISTERED')
   data.set('locationId', locationId)
-  data.set('allowsRemoteWork', 'on')
+  data.set('locationCity', '')
+  data.set('locationRegion', '')
+  data.set('locationDescription', '')
+  data.set('locationCount', '')
   data.set('organizationId', '00000000-0000-4000-8000-000000000099')
   return data
 }
@@ -83,8 +83,7 @@ function editFormData() {
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.requireOrganizationMembership.mockResolvedValue(organizationContext())
-  mocks.getSubmissionContext.mockResolvedValue({ intakeId, version: 7, status: 'READY_FOR_REVIEW', assignmentId: null })
-  mocks.convert.mockResolvedValue({ id: assignmentId, status: 'DRAFT', version: 1, idempotent: false })
+  mocks.publishIntake.mockResolvedValue({ id: assignmentId, status: 'OPEN', version: 3, idempotent: false })
   mocks.updateAssignment.mockResolvedValue({ id: assignmentId, status: 'DRAFT', version: 4 })
   mocks.cancel.mockResolvedValue({ id: assignmentId, status: 'CANCELLED', version: 4 })
   mocks.publish.mockResolvedValue({ id: assignmentId, status: 'OPEN', version: 4, idempotent: false })
@@ -165,8 +164,12 @@ describe('opdrachtmutatie-Server Actions', () => {
       description: 'Een zakelijke en voldoende uitgebreide omschrijving van de opdracht.',
       employeeCount: 25,
       desiredStartDate: '2099-08-01',
+      locationType: 'REGISTERED',
       locationId,
-      allowsRemoteWork: true,
+      locationCity: null,
+      locationRegion: null,
+      locationDescription: null,
+      locationCount: null,
     })
     expect(mocks.redirect).toHaveBeenCalledWith(`/opdrachten/${assignmentId}?gewijzigd=1`)
   })
@@ -200,48 +203,90 @@ describe('opdrachtmutatie-Server Actions', () => {
   })
 })
 
-describe('opdracht indien-Server Action', () => {
-  it.each(['OWNER', 'ADMIN'] as const)('dient voor een actieve %s de server-side actuele versie in', async (role) => {
+describe('opdrachtpublicatie vanuit de intake', () => {
+  it.each(['OWNER', 'ADMIN'] as const)('publiceert voor een actieve %s in één server-side handeling', async (role) => {
     mocks.requireOrganizationMembership.mockResolvedValue(organizationContext(role))
-    await submitIntakeAction({}, formData())
-    expect(mocks.getSubmissionContext).toHaveBeenCalledWith(userId, organizationId, intakeId)
-    expect(mocks.convert).toHaveBeenCalledWith(userId, intakeId, { expectedIntakeVersion: 7 })
-    expect(mocks.redirect).toHaveBeenCalledWith(`/opdrachten/${assignmentId}/aangemaakt`)
+    await publishIntakeAction({}, formData())
+    expect(mocks.publishIntake).toHaveBeenCalledWith(userId, organizationId, intakeId, {
+      expectedIntakeVersion: 7,
+    })
+    expect(mocks.redirect).toHaveBeenCalledWith(`/opdrachten/${assignmentId}?status=gepubliceerd`)
   })
 
   it.each(['niet ingelogd', 'BLOCKED', 'ARCHIVED'])('stopt wanneer de accountcontext %s is', async () => {
     mocks.requireOrganizationMembership.mockRejectedValue(new Error('Geen actieve sessie of account'))
-    await expect(submitIntakeAction({}, formData())).rejects.toThrow('Geen actieve sessie of account')
-    expect(mocks.convert).not.toHaveBeenCalled()
+    await expect(publishIntakeAction({}, formData())).rejects.toThrow('Geen actieve sessie of account')
+    expect(mocks.publishIntake).not.toHaveBeenCalled()
   })
 
   it('weigert MEMBER zonder de conversieservice aan te roepen', async () => {
     mocks.requireOrganizationMembership.mockResolvedValue(organizationContext('MEMBER'))
-    mocks.getSubmissionContext.mockRejectedValue(new AssignmentServiceError('ACCESS_DENIED'))
-    await expect(submitIntakeAction({}, formData())).resolves.toEqual({ message: 'U mag deze hulpvraag niet indienen.' })
-    expect(mocks.convert).not.toHaveBeenCalled()
+    mocks.publishIntake.mockRejectedValue(new AssignmentServiceError('ACCESS_DENIED'))
+    await expect(publishIntakeAction({}, formData())).resolves.toEqual({ message: 'U mag deze opdracht niet publiceren.' })
   })
 
   it('weigert een intake uit een andere organisatie generiek', async () => {
-    mocks.getSubmissionContext.mockRejectedValue(new AssignmentServiceError('ACCESS_DENIED'))
-    await expect(submitIntakeAction({}, formData())).resolves.toEqual({ message: 'U mag deze hulpvraag niet indienen.' })
+    mocks.publishIntake.mockRejectedValue(new AssignmentServiceError('ACCESS_DENIED'))
+    await expect(publishIntakeAction({}, formData())).resolves.toEqual({ message: 'U mag deze opdracht niet publiceren.' })
   })
 
   it('geeft voor een verkeerde status een veilige melding', async () => {
-    mocks.convert.mockRejectedValue(new AssignmentServiceError('INVALID_STATUS'))
-    await expect(submitIntakeAction({}, formData())).resolves.toEqual({ message: 'Controleer de hulpvraag voordat U deze indient.' })
+    mocks.publishIntake.mockRejectedValue(new AssignmentServiceError('INVALID_STATUS'))
+    await expect(publishIntakeAction({}, formData())).resolves.toEqual({ message: 'Controleer de opdracht voordat u deze publiceert.' })
   })
 
   it('vertaalt een concurrencyconflict zonder technische details', async () => {
-    mocks.convert.mockRejectedValue(new AssignmentServiceError('CONFLICT'))
-    await expect(submitIntakeAction({}, formData())).resolves.toEqual({
-      message: 'Deze hulpvraag is ondertussen gewijzigd. Controleer de actuele gegevens voordat U opnieuw indient.',
+    mocks.publishIntake.mockRejectedValue(new AssignmentServiceError('CONFLICT'))
+    await expect(publishIntakeAction({}, formData())).resolves.toEqual({
+      message: 'Deze opdracht is ondertussen gewijzigd. Controleer de actuele gegevens voordat u opnieuw publiceert.',
     })
   })
 
-  it.each([false, true])('redirect na %s idempotent succes naar dezelfde veilige succesroute', async (idempotent) => {
-    mocks.convert.mockResolvedValue({ id: assignmentId, status: 'DRAFT', version: 1, idempotent })
-    await submitIntakeAction({}, formData())
-    expect(mocks.redirect).toHaveBeenCalledWith(`/opdrachten/${assignmentId}/aangemaakt`)
+  it.each([false, true])('redirect na %s idempotent succes rechtstreeks naar de gepubliceerde opdracht', async (idempotent) => {
+    mocks.publishIntake.mockResolvedValue({ id: assignmentId, status: 'OPEN', version: 3, idempotent })
+    await publishIntakeAction({}, formData())
+    expect(mocks.redirect).toHaveBeenCalledWith(`/opdrachten/${assignmentId}?status=gepubliceerd`)
+  })
+
+  it('blijft bij validatiefouten op het controleoverzicht en toont concrete antwoordfouten', async () => {
+    mocks.publishIntake.mockRejectedValue(new AssignmentServiceError(
+      'VALIDATION_ERROR',
+      undefined,
+      [{ questionKey: 'BHV_EMPLOYEE_COUNT', message: 'Deze vraag moet nog worden beantwoord.' }],
+    ))
+
+    await expect(publishIntakeAction({}, formData())).resolves.toEqual({
+      message: 'De opdracht is nog niet volledig. Controleer de ontbrekende gegevens.',
+      errors: { BHV_EMPLOYEE_COUNT: ['Deze vraag moet nog worden beantwoord.'] },
+    })
+    expect(mocks.redirect).not.toHaveBeenCalled()
+  })
+
+  it('valideert een gemanipuleerd publicatieverzoek opnieuw en geeft de bewerklink terug', async () => {
+    const readinessIssue = {
+      code: 'REQUIRED_ANSWER_MISSING',
+      section: 'SITUATION',
+      questionId: '00000000-0000-4000-8000-000000000010',
+      questionKey: 'BHV_EMPLOYEE_COUNT',
+      message: 'Hoeveel medewerkers werken er ongeveer?',
+      editHref: `/hulpvragen/${intakeId}/huidige-situatie?wijzig=1`,
+    }
+    mocks.publishIntake.mockRejectedValue(new AssignmentServiceError(
+      'VALIDATION_ERROR',
+      undefined,
+      [{
+        questionId: readinessIssue.questionId,
+        questionKey: readinessIssue.questionKey,
+        message: readinessIssue.message,
+      }],
+      {},
+      [readinessIssue],
+    ))
+
+    await expect(publishIntakeAction({}, formData())).resolves.toMatchObject({
+      message: 'Uw opdracht kan nog niet worden gepubliceerd. Vul eerst de ontbrekende gegevens aan.',
+      readinessIssues: [readinessIssue],
+    })
+    expect(mocks.redirect).not.toHaveBeenCalled()
   })
 })

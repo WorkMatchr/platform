@@ -81,7 +81,11 @@ export async function claimRequestOfferSlotAction(formData: FormData) {
   if (!parsed.success) redirect('/professional/opdrachten')
 
   const actor = await actorForRequest(parsed.data.requestId)
-  let result: 'slot-claimed' | 'slots-full' | 'claim-error' =
+  let result:
+    | 'slot-claimed'
+    | 'slots-full'
+    | 'insufficient-credits'
+    | 'claim-error' =
     'slot-claimed'
   try {
     await claimRequestOfferSlot({
@@ -90,7 +94,12 @@ export async function claimRequestOfferSlotAction(formData: FormData) {
     })
   } catch (error) {
     if (error instanceof RequestOfferSlotServiceError) {
-      result = error.code === 'FULL' ? 'slots-full' : 'claim-error'
+      result =
+        error.code === 'FULL'
+          ? 'slots-full'
+          : error.code === 'INSUFFICIENT_CREDITS'
+            ? 'insufficient-credits'
+            : 'claim-error'
     } else {
       throw error
     }

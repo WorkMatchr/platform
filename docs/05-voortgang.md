@@ -1,5 +1,23 @@
 # Voortgang WorkMatchr
 
+## Contextuele kennisroutes — technisch opgeleverd
+
+**Status:** technisch opgeleverd; handmatige Product Owner-acceptatie open.
+
+Alle negen actuele kennisdetailpagina's hebben een centrale versieerbare contextmapping en consistente vervolgacties naar Advieswijzer en opdrachtintake. De server accepteert alleen bekende actieve context-ID's. Context blijft afzonderlijk van gebruikersinvoer, ondersteunt classificatie alleen bij inhoudelijke overeenstemming en wordt bij publicatie in de immutable opdrachtrevisie bevroren. Een bestaande sessie met een ander onderwerp geeft eerst een expliciete keuze. De Bedrijfsarts-regressie is automatisch afgedekt. Preventiemedewerker en arbeidshygiëne blijven bewust zonder voorgestelde categorie totdat de taxonomie daarvoor expliciet wordt uitgebreid. Analytics en matching zijn niet geactiveerd.
+
+## Marketplace Rules, Credit Ledger, betrouwbaarheid en platformbeheerders
+
+**Status:** technisch opgeleverd; handmatige Product Owner-acceptatie open.
+
+De versieerbare regelset, atomair claimen en betalen, append-only ledger, transactionele intrekkingsrefund, interne betrouwbaarheidssignalen, publicatieblokkade/contactroute en platformbeheerderuitnodigingen zijn gebouwd. Matching en uitnodiging van alle passende professionals, de nieuwe offerte- en gunningsflow en de uitvoerende 5-creditteruggave zijn niet als afgerond gemarkeerd.
+
+## Opdrachtintake vraagset versie 2 — technisch opgeleverd
+
+Nieuwe organisatie-intakes gebruiken na het uitvoeren van de idempotente referentiedataseed vraagsetversie 2. De oorspronkelijke hulpvraag blijft immutable; een deterministisch categorievoorstel wordt pas leidend nadat de gebruiker dit bevestigt of aanpast. De zichtbare vervolgvragen zijn beperkt tot categoriegerichte vragen, locatie en optionele opmerkingen. Planning, verwachte omvang en de vrije locatielijst bij meerdere locaties zijn voor nieuwe invoer gedeactiveerd; historische antwoorden blijven leesbaar.
+
+De eerste categoriegerichte set dekt BHV en ontruiming. Andere categorieën gebruiken een compacte fallback totdat daarvoor afzonderlijk goedgekeurde vraagsets bestaan. Het controleoverzicht bevat direct **Opdracht publiceren** en deelt zijn readiness-uitkomst met de autoritatieve publicatieservice. Ontbrekende verplichte gegevens of een nog niet veilig publiceerbare locatie worden concreet benoemd met een bewerklink. Opdrachtvorming, interne gereedstatus, publicatiesnapshot en overgang naar `OPEN` verlopen in één atomair en idempotent proces. De nieuwe intake-v2-flow toont geen concepttussenpagina. Matching, aanbiedersselectie, offertes, credits en betaling zijn niet door deze wijziging geactiveerd. Handmatige product-owneracceptatie van de nieuwe desktop-, mobiele en zoomflow staat open.
+
 **Actuele Module 7-status:** M7A Intake Completion is definitief afgerond. M7B Professional Advice, M7C WorkMatchr Adviesdossier en M7D.1–M7D.3 zijn technisch opgeleverd; handmatige product-owneracceptatie staat open. Publicatie bevriest de passende providerdoelgroep. Eligible providerorganisaties kunnen interesse beheren en maximaal drie organisaties kunnen op volgorde een exclusieve offerteplaats claimen. Ranking, top drie, offerte-inhoud en credits zijn niet geactiveerd.
 
 ## Module 7 — Nieuwe hulpvraag

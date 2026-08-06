@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
+import { ApplicationChrome } from '@/components/layout/application-chrome'
 import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
+import { TestImpersonationBanner } from '@/components/layout/test-impersonation-banner'
 import { siteConfig } from '@/config/site'
 import './globals.css'
 
@@ -28,11 +30,13 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <a href="#main-content" className="sr-only m-0 z-50 rounded-control bg-surface px-4 py-3 font-semibold text-brand-dark focus:not-sr-only focus:fixed focus:top-4 focus:left-4">
           Ga naar de hoofdinhoud
         </a>
-        <div className="flex min-h-screen flex-col">
-          <Header />
-          <main id="main-content" className="flex-1">{children}</main>
-          <Footer />
-        </div>
+        <ApplicationChrome
+          header={<Header />}
+          banner={<TestImpersonationBanner />}
+          footer={<Footer />}
+        >
+          {children}
+        </ApplicationChrome>
       </body>
     </html>
   )

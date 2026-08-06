@@ -20,7 +20,7 @@ describe('publieke navigatie', () => {
       expect(html.match(new RegExp(`href="${item.href}"`, 'g'))).toHaveLength(2)
       expect(html.match(new RegExp(`>${item.label}<`, 'g'))).toHaveLength(2)
     }
-    expect(html).toContain('Stel uw vraag')
+    expect(html).not.toContain('Stel uw vraag')
     expect(html).not.toContain('Voor specialisten')
     expect(html).not.toContain('href="#"')
   })

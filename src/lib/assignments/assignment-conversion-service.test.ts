@@ -190,15 +190,25 @@ const answers = [
   optionAnswer(questionIds.workMode, optionIds.remote, 'REMOTE'),
 ]
 
-function intakeRecord(role: 'OWNER' | 'ADMIN' | 'MEMBER', status = 'READY_FOR_REVIEW', version = 4) {
+function intakeRecord(
+  role: 'OWNER' | 'ADMIN' | 'MEMBER',
+  status = 'READY_FOR_REVIEW',
+  version = 4,
+  questionnaireVersion = 1,
+) {
   return {
     id: intakeId,
     clientOrganizationId: organizationId,
     createdByUserId: userId,
     questionnaireVersionId,
+    questionnaireVersion: { version: questionnaireVersion },
     status,
     version,
     archivedAt: null,
+    knowledgeContextId: 'OCCUPATIONAL_PHYSICIAN',
+    knowledgeContextVersion: 1,
+    knowledgeSourceRoute: '/kenniscentrum/wanneer-bedrijfsarts-inschakelen',
+    knowledgeSuggestedCategory: 'OCCUPATIONAL_HEALTH',
     clientOrganization: {
       status: 'ACTIVE',
       organizationType: 'CLIENT',
@@ -207,7 +217,7 @@ function intakeRecord(role: 'OWNER' | 'ADMIN' | 'MEMBER', status = 'READY_FOR_RE
           userId,
           role,
           status: 'ACTIVE',
-          user: { status: 'ACTIVE' },
+          user: { status: 'ACTIVE', accountType: 'CLIENT' },
         },
       ],
     },
@@ -255,8 +265,18 @@ describe('intake naar opdracht converteren', () => {
           status: 'DRAFT',
           title: 'Wij willen onze werkwijze op meerdere punten veiliger maken.',
           allowsRemoteWork: true,
+          knowledgeContextId: 'OCCUPATIONAL_PHYSICIAN',
+          knowledgeContextVersion: 1,
+          knowledgeSourceRoute: '/kenniscentrum/wanneer-bedrijfsarts-inschakelen',
+          knowledgeSuggestedCategory: 'OCCUPATIONAL_HEALTH',
           statusHistory: { create: expect.objectContaining({ toStatus: 'DRAFT' }) },
-          revisions: { create: expect.objectContaining({ version: 1 }) },
+          revisions: {
+            create: expect.objectContaining({
+              version: 1,
+              knowledgeContextId: 'OCCUPATIONAL_PHYSICIAN',
+              knowledgeContextVersion: 1,
+            }),
+          },
         }),
       }),
     )
@@ -267,6 +287,31 @@ describe('intake naar opdracht converteren', () => {
         data: expect.objectContaining({ status: 'CONVERTED', version: { increment: 1 } }),
       }),
     )
+  })
+
+  it('maakt een volledige versie-2-intake intern gereed en vormt in dezelfde transactie één conceptopdracht', async () => {
+    mocks.intakeFind.mockResolvedValue(intakeRecord('OWNER', 'IN_PROGRESS', 4, 2))
+
+    await expect(
+      convertIntakeToAssignment(userId, intakeId, { expectedIntakeVersion: 4 }),
+    ).resolves.toEqual({ id: assignmentId, status: 'DRAFT', version: 1, idempotent: false })
+
+    expect(mocks.intakeUpdateMany).toHaveBeenNthCalledWith(1, {
+      where: { id: intakeId, version: 4, status: 'IN_PROGRESS' },
+      data: { status: 'READY_FOR_REVIEW', version: { increment: 1 } },
+    })
+    expect(mocks.intakeUpdateMany).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ where: { id: intakeId, version: 5, status: 'READY_FOR_REVIEW' } }),
+    )
+    expect(mocks.intakeUpdateMany).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining({ where: { id: intakeId, version: 5, status: 'SUBMITTED' } }),
+    )
+    expect(mocks.intakeStatusHistoryCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({ fromStatus: 'IN_PROGRESS', toStatus: 'READY_FOR_REVIEW' }),
+    })
+    expect(mocks.assignmentCreate).toHaveBeenCalledOnce()
   })
 
   it('weigert MEMBER voordat conversiegegevens worden geladen', async () => {
@@ -296,7 +341,7 @@ describe('intake naar opdracht converteren', () => {
   })
 
   it('weigert een intake met een ongeldige status', async () => {
-    mocks.intakeFind.mockResolvedValue(intakeRecord('OWNER', 'IN_PROGRESS'))
+    mocks.intakeFind.mockResolvedValue(intakeRecord('OWNER', 'ARCHIVED'))
 
     await expect(
       convertIntakeToAssignment(userId, intakeId, { expectedIntakeVersion: 4 }),

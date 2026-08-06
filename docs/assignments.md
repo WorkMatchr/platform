@@ -1,5 +1,34 @@
 # Opdrachten
 
+> Klantterminologie, statuspresentatie en opdrachtflows volgen de bindende [WorkMatchr Product Constitution](PRODUCT_CONSTITUTION.md). Dit document beschrijft de technische en domeinspecifieke uitwerking.
+
+## Deelnameplaatsen en intrekking
+
+Voor de M7D-aanvraag geldt: claimen van een deelnameplaats is direct betalen volgens de op dat moment geldige [Marketplace Rules](marketplace-rules-credit-reliability.md). Een opdrachtgever kan een gepubliceerde opdracht met verplichte reden intrekken. Na claims worden vrijgave, gedeeltelijke terugbetaling, notificaties, audit en het interne betrouwbaarheidssignaal atomair verwerkt. Zonder claims ontstaat geen terugbetaling en telt de intrekking niet mee voor de blokkade.
+
+## Deelnameplaatsen en intrekking
+
+Voor de M7D-aanvraag geldt: claimen van een deelnameplaats is direct betalen volgens de op dat moment geldige [Marketplace Rules](marketplace-rules-credit-reliability.md). Een opdrachtgever kan een gepubliceerde opdracht met verplichte reden intrekken. Na claims worden vrijgave, gedeeltelijke terugbetaling, notificaties, audit en het interne betrouwbaarheidssignaal atomair verwerkt. Zonder claims ontstaat geen terugbetaling en telt de intrekking niet mee voor de blokkade.
+
+## Getypeerde en immutable opdrachtlocatie
+
+`Assignment.locationType` met de bijbehorende `location*`-snapshotvelden is de
+leidende bron voor de actuele opdrachtlocatie. De vijf ondersteunde vormen zijn
+`REGISTERED`, `OTHER`, `MULTIPLE`, `REMOTE` en `UNKNOWN`.
+
+- `REGISTERED` bewaart `locationId` uitsluitend als bronreferentie en bevriest
+  daarnaast naam, plaats, adres, provincie en landcode. Een latere wijziging van
+  `OrganizationLocation` verandert de opdracht of publicatiesnapshot niet.
+- `OTHER` vereist uitsluitend een plaats of regio. Historische toelichtingen blijven uitleesbaar, maar tellen niet mee voor readiness of publicatie.
+- `MULTIPLE` bewaart een geordende relationele lijst van twee tot en met 25 unieke plaatsen of regio’s; volledige adressen zijn niet vereist.
+- `REMOTE` legt expliciet vast dat uitvoering volledig op afstand plaatsvindt.
+- `UNKNOWN` legt expliciet vast dat de locatie nog niet bekend is en blokkeert
+  publicatie niet.
+
+`AssignmentLocationItem` is voor een actuele `MULTIPLE`-opdracht de leidende lijst. `AssignmentRevisionLocationItem` bevriest exact dezelfde volgorde append-only in iedere revisie. `locationCount` is alleen een afgeleide compatibiliteitswaarde. `allowsRemoteWork` blijft alleen als compatibiliteitsprojectie bestaan en
+`locationId` is nooit de presentatiebron van een gepubliceerde opdracht. Bij
+publicatie worden alle locatievelden en locatie-items naar de append-only `AssignmentRevision` gekopieerd. Daarmee blijft de gepubliceerde locatie reproduceerbaar.
+
 **Status Module 5B.3:** afgerond en product-ownergeaccepteerd.
 
 **Status Module 5C.1:** afgerond en product-ownergeaccepteerd.
@@ -12,14 +41,16 @@
 
 ## Scope Module 5B.3
 
-Module 5B.3 ontsluit de bestaande transactionele opdrachtvorming via een expliciete gebruikersflow. Een opdracht ontstaat nooit door alleen een intake te openen of gereed te melden. Een actieve `OWNER` of `ADMIN` bevestigt indiening op `/hulpvragen/[intakeId]/indienen`; daarna roept één dunne Server Action uitsluitend de bestaande conversieservice aan.
+Module 5B.3 ontsloot de bestaande transactionele opdrachtvorming via een expliciete gebruikersflow. De actuele intake-v2-flow laat een actieve `OWNER` of `ADMIN` een volledige opdracht rechtstreeks vanaf `/hulpvragen/[intakeId]/controle` publiceren. Eén dunne Server Action roept de gecombineerde conversie- en publicatieservice aan.
 
-De flow maakt een interne conceptopdracht. Publicatie, matching, aanbiedersselectie, reacties, credits, betalingen, notificaties en AI zijn niet actief.
+Intern blijft een kortstondige concept- en gereedstatus bestaan, maar deze vormen geen afzonderlijke gebruikersstap. Matching, aanbiedersselectie, reacties, credits, betalingen, notificaties en AI worden door deze handeling niet gestart.
+
+Nieuwe intakes kunnen vraagsetversie 2 gebruiken. De conversieservice leest daarvoor dezelfde immutable hulpvraagbron en ondersteunt de nieuwe doel-, context- en locatiesleutels naast de bestaande versie-1-sleutels. Planning en de door de opdrachtgever geschatte omvang worden voor nieuwe versie-2-opdrachten niet uitgevraagd of overgenomen. De statusmachine, één-opdracht-per-intake-constraint, revisies en publicatiesnapshot zijn niet gewijzigd.
 
 ## Routes
 
-- `/hulpvragen/[intakeId]/controle`: volledige intakecontrole, ontbrekende onderdelen en rolafhankelijke indienactie;
-- `/hulpvragen/[intakeId]/indienen`: server-rendered bevestiging zonder GET-side effect;
+- `/hulpvragen/[intakeId]/controle`: volledige opdrachtcontrole, ontbrekende onderdelen, bewerklinks en rolafhankelijke publicatieactie;
+- `/hulpvragen/[intakeId]/indienen`: compatibiliteitsredirect naar het controleoverzicht; bevat geen afzonderlijke bevestigingshandeling meer;
 - `/opdrachten/[assignmentId]/aangemaakt`: herlaadbare succesbevestiging voor een geautoriseerde gebruiker;
 - `/opdrachten`: opdrachten van de actieve organisatie met filters voor alle, concept en geannuleerd;
 - `/opdrachten/[assignmentId]`: read-only opdrachtgegevens, bronintake, statusgeschiedenis en revisie-informatie.
@@ -29,8 +60,8 @@ De flow maakt een interne conceptopdracht. Publicatie, matching, aanbiedersselec
 
 Alle toegang wordt server-side bepaald vanuit de actuele gebruiker, actieve membership en actieve organisatie. Route-ID's en de actieve-organisatiecookie zijn geen autorisatiebewijs.
 
-- `OWNER` en `ADMIN` bekijken alle opdrachten van de actieve organisatie en mogen een volledige intake indienen;
-- `OWNER` en `ADMIN` mogen een concept wijzigen, intern gereedmelden, gemotiveerd terugzetten en bevestigd annuleren;
+- `OWNER` en `ADMIN` bekijken alle opdrachten van de actieve organisatie en mogen een volledige intake als opdracht publiceren;
+- `OWNER` en `ADMIN` mogen een concept wijzigen, afzonderlijk en bewust publiceren en bevestigd annuleren; de interne gereedstatus wordt bij publicatie automatisch vastgelegd;
 - `MEMBER` kan niet indienen en ziet alleen een opdracht die uit de eigen intake is gevormd;
 - opdrachten uit een andere tenant en opdrachten zonder actuele toegang krijgen dezelfde veilige niet-beschikbare uitkomst;
 - gearchiveerde opdrachten staan niet in het standaardoverzicht;
@@ -38,13 +69,13 @@ Alle toegang wordt server-side bepaald vanuit de actuele gebruiker, actieve memb
 
 ## Idempotentie en fouten
 
-De knop blokkeert tijdens verzenden. De Server Action leest de actieve organisatie server-side en geeft de laatst bekende intakeversie door, waarna de bestaande `Serializable` conversieservice autorisatie, volledigheid, actuele versie, status, tenant en concurrency opnieuw controleert. Een herhaald verzoek voor een consistent geconverteerde intake leidt naar dezelfde opdracht. Een conflict, onvolledige intake of ontbrekende bevoegdheid krijgt een veilige Nederlandstalige melding zonder intake-inhoud of persoonsgegevens te loggen.
+De controlepagina en de gecombineerde `Serializable` service gebruiken één getypeerde readiness-uitkomst met concrete issues en bewerklinks. De knop is uitgeschakeld zolang bekende issues bestaan. De Server Action leest de organisatiecontext server-side en valideert autorisatie, alle actuele zichtbare verplichte antwoorden, publiceerbare locatie, status, tenant en concurrency opnieuw. Binnen dezelfde transactie wordt de opdracht gevormd, waar nodig intern `READY_FOR_REVIEW` gezet, precies één publicatiesnapshot gemaakt en de opdracht naar `OPEN` gebracht. Een herhaald verzoek leidt idempotent naar dezelfde gepubliceerde opdracht. Een conflict, onvolledige intake of ontbrekende bevoegdheid houdt de gebruiker op het controleoverzicht en benoemt waar mogelijk exact wat hersteld moet worden.
 
 ## Presentatie
 
-Technische opdrachtstatussen worden centraal vertaald in `assignment-presentation.ts`. De interface toont geen UUID's, enumwaarden, ruwe JSON of interne auditmetadata. Omdat nog geen definitieve opdrachtnummering bestaat, gebruikt de interface voorlopig “Conceptopdracht” met titel en datum; dit is geen juridische referentie.
+Technische opdrachtstatussen worden centraal vertaald in `assignment-presentation.ts`. De klantinterface toont **Nog invullen**, **Klaar om te publiceren**, **Gepubliceerd** en passende eindstatussen; zij toont geen UUID's, enumwaarden, ruwe JSON of interne auditmetadata.
 
-De oorspronkelijke intake blijft na conversie read-only beschikbaar. De opdrachtpagina meldt expliciet dat het concept nog niet is gepubliceerd en dat matching later volgt.
+De oorspronkelijke intake blijft na conversie read-only beschikbaar. De nieuwe intake-v2-flow opent na succes direct de gepubliceerde opdracht. Historische conceptopdrachten en rechtstreeks aangemaakte concepten blijven leesbaar en gebruiken de bestaande compatibiliteitsroutes.
 
 ## Wijzigingen en statusovergangen
 
@@ -60,21 +91,22 @@ Iedere statusovergang verhoogt de versie en schrijft append-only statushistorie.
 
 ## Gecontroleerde publicatie
 
-De centrale `publishAssignment`-service publiceert uitsluitend `READY_FOR_REVIEW → OPEN`. `OPEN` heeft de zichtbare betekenis **Gepubliceerd** met de toelichting **Gereed voor marktverwerking**. Publicatie maakt de opdracht niet zichtbaar voor aanbieders en start geen matching, providerselectie, credits of Mollie.
+De centrale `publishAssignment`-service accepteert een geldig `DRAFT`-concept of een historisch reeds intern gereedstaand concept. De opdrachtgever voert geen afzonderlijke actie **Gereed voor controle** meer uit. Bij publicatie registreert dezelfde transactie waar nodig eerst `DRAFT → READY_FOR_REVIEW` en daarna `READY_FOR_REVIEW → OPEN`. `OPEN` heeft de zichtbare betekenis **Gepubliceerd** met de toelichting **Gereed voor marktverwerking**. Publicatie maakt de opdracht niet zichtbaar voor aanbieders en start geen matching, providerselectie, credits of Mollie.
 
 Publicatie vereist een actieve organisatie-`OWNER` of organisatie-`ADMIN` binnen dezelfde actieve `CLIENT`- of `BOTH`-tenant. De service valideert status, actuele versie, titel, omschrijving, locatie of remote mogelijkheid, aanwezige optionele waarden en de geconverteerde bronintake opnieuw.
 
 Binnen één `Serializable` transactie:
 
-1. wordt de actuele versie conditioneel gereserveerd;
-2. ontstaat een volledige `AssignmentRevision` op de nieuwe versie;
-3. worden `OPEN`, `publishedAt`, `publishedByUserId` en `publishedVersion` gezet;
-4. ontstaat precies één append-only `READY_FOR_REVIEW → OPEN`-historieregel.
+1. wordt een `DRAFT` waar nodig conditioneel en append-only intern gereedgemaakt;
+2. wordt de actuele gereedstaande versie conditioneel gereserveerd;
+3. ontstaat precies één volledige `AssignmentRevision` op de publicatieversie;
+4. worden `OPEN`, `publishedAt`, `publishedByUserId` en `publishedVersion` gezet;
+5. ontstaat precies één append-only `READY_FOR_REVIEW → OPEN`-historieregel.
 
 Een consistente herhaling retourneert idempotent dezelfde publicatie. Een achterhaalde versie, gedeeltelijke metadata of afwijkende snapshot schrijft niets en levert een veilige domeinfout.
 
 Na publicatie zijn alle zakelijke opdrachtvelden, specialismekoppelingen en publicatiemetadata immutable. Intrekken verloopt uitsluitend via `withdrawPublishedAssignment`, van `OPEN → CANCELLED`, met een reden van 10 tot en met 500 tekens. Metadata, snapshot en `CONVERTED`-intake blijven behouden. Herpublicatie is in versie 1 uitgesloten.
 
-Module 5C.3 ontsluit publicatie via `/opdrachten/[assignmentId]/publiceren`. De server-rendered controlepagina toont de definitieve opdrachtgegevens en betekenis van publicatie. Alleen een expliciet bevestigd formulier roept de dunne Server Action aan; die bepaalt gebruiker en actieve organisatie server-side en gebruikt uitsluitend `publishAssignment`.
+De bestaande route `/opdrachten/[assignmentId]/publiceren` blijft beschikbaar voor historische of rechtstreeks aangemaakte conceptopdrachten. Nieuwe intake-v2-opdrachten worden vanaf het controleoverzicht gepubliceerd via de gecombineerde transactionele service en slaan deze tussenroute over.
 
 Na publicatie toont het opdrachtdetail **Gepubliceerd**, **Gereed voor marktverwerking**, publicatieactor, publicatiemoment en de vastgelegde versie. Intrekken is voor `OWNER` en `ADMIN` beschikbaar via een ingeklapte actie met een reden van 10–500 tekens en een afzonderlijke bevestiging. De interface bevat geen aanbieder-, matching-, credit- of betaalhandeling.

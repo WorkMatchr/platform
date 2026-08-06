@@ -35,7 +35,7 @@ describe('platformbeheeracties en communicatie', () => {
     const workload = read('src/components/platform-admin/platform-role-workload.tsx')
 
     expect(organization).toContain('Organisatie mailen')
-    expect(organization).toContain('OWNER aanwijzen')
+    expect(organization).toContain('Eigenaar aanwijzen')
     expect(assignment).toContain('Opdrachtgever mailen')
     expect(assignment).toContain('Dienstverlener mailen')
     expect(assignment).toContain('Signaal markeren als onderzocht')

@@ -83,8 +83,8 @@ export const publicHomepageContent = {
     title: 'Waarmee kunnen wij u helpen?',
     description:
       'WorkMatchr helpt organisaties hun vraag over arbeidsomstandigheden, veiligheid en gezondheid te verduidelijken en leidt vervolgens naar relevante informatie of passende deskundigheid.',
-    primaryAction: { href: publicAnchors.askQuestion, label: 'Bekijk waar u kunt beginnen' },
-    secondaryAction: { href: publicRoutes.services, label: 'Bekijk alle diensten' },
+    primaryAction: { href: publicRoutes.adviceGuide, label: 'Ontdek welke ondersteuning u nodig heeft' },
+    secondaryAction: { href: publicRoutes.directAssignment, label: 'Start uw opdracht' },
   },
   process: ['Uw situatie', 'Enkele vragen', 'Uw advies', 'Vervolgstap'],
   situations: [

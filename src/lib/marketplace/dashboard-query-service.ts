@@ -1,5 +1,6 @@
 import { getPrisma } from '@/lib/prisma'
 import { hasValidPlatformActorFoundation } from '@/lib/account-architecture/platform-actor-policy'
+import { deriveCreditBalance } from '@/lib/credits/credit-ledger-contract'
 import { MarketplaceServiceError } from './marketplace-errors'
 
 async function loadPlatformMetrics(actorPermissions: string[], canManageMarketplace: boolean) {
@@ -44,7 +45,7 @@ export async function getMarketplaceDashboard(userId: string, organizationId: st
   const prisma = getPrisma()
   const membership = await prisma.organizationMembership.findFirst({
     where: { userId, organizationId, status: 'ACTIVE', user: { status: 'ACTIVE' }, organization: { status: 'ACTIVE' } },
-    select: { role: true, organization: { select: { id: true, name: true, organizationType: true, systemKey: true, providerProfile: { select: { id: true, readinessStatus: true, platformQualificationStatus: true, selectabilityStatus: true, lifecycleStatus: true } } } } },
+    select: { role: true, user: { select: { accountType: true } }, organization: { select: { id: true, name: true, organizationType: true, systemKey: true, providerProfile: { select: { id: true, readinessStatus: true, platformQualificationStatus: true, selectabilityStatus: true, lifecycleStatus: true } } } } },
   })
   if (!membership) throw new MarketplaceServiceError('ACCESS_DENIED')
 
@@ -52,20 +53,51 @@ export async function getMarketplaceDashboard(userId: string, organizationId: st
     return loadPlatformMetrics(['PLATFORM_ADMIN'], true)
   }
 
-  if (membership.organization.providerProfile) {
+  if (
+    membership.user.accountType === 'PROFESSIONAL' &&
+    membership.organization.providerProfile &&
+    ['PROVIDER', 'BOTH'].includes(membership.organization.organizationType)
+  ) {
     const providerProfileId = membership.organization.providerProfile.id
     const [invitations, quotes, creditAccount, notifications] = await Promise.all([
       prisma.providerInvitation.findMany({ where: { providerOrganizationId: organizationId }, orderBy: { invitedAt: 'desc' }, take: 20, select: { id: true, assignmentId: true, status: true, deadlineAt: true, creditCost: true, invitedAt: true } }),
       prisma.quote.findMany({ where: { providerOrganizationId: organizationId }, orderBy: { updatedAt: 'desc' }, take: 20, select: { id: true, assignmentId: true, status: true, version: true, submittedAt: true, updatedAt: true } }),
-      prisma.creditAccount.findUnique({ where: { organizationId }, select: { availableBalance: true, reservedBalance: true, spentBalance: true } }),
+      prisma.creditTransaction.findMany({
+        where: { creditAccount: { organizationId } },
+        select: { totalDelta: true, reservedDelta: true },
+      }),
       prisma.marketplaceNotification.findMany({ where: { recipientUserId: userId }, orderBy: { createdAt: 'desc' }, take: 10, select: { id: true, title: true, body: true, targetRoute: true, readAt: true, createdAt: true } }),
     ])
-    return { kind: 'PROVIDER' as const, membership, providerProfileId, invitations, quotes, creditAccount, notifications }
+    return { kind: 'PROVIDER' as const, membership, providerProfileId, invitations, quotes, creditAccount: deriveCreditBalance(creditAccount), notifications }
   }
 
-  const [assignments, notifications] = await Promise.all([
+  if (membership.user.accountType !== 'CLIENT' || membership.organization.organizationType !== 'CLIENT') {
+    throw new MarketplaceServiceError('ACCESS_DENIED')
+  }
+
+  const ownAssignmentScope = membership.role === 'MEMBER'
+    ? { intake: { createdByUserId: userId } }
+    : {}
+  const adviceDossierScope = membership.role === 'MEMBER'
+    ? { ownerUserId: userId }
+    : {}
+  const [
+    assignments,
+    notifications,
+    conceptAssignments,
+    publishedAssignments,
+    assignmentsRequiringAction,
+    submittedOffers,
+    activeAdviceDossiers,
+    unreadNotifications,
+  ] = await Promise.all([
     prisma.assignment.findMany({
-      where: { clientOrganizationId: organizationId, archivedAt: null },
+      where: {
+        clientOrganizationId: organizationId,
+        archivedAt: null,
+        publishedAt: { not: null },
+        ...ownAssignmentScope,
+      },
       orderBy: { updatedAt: 'desc' },
       take: 20,
       select: {
@@ -79,15 +111,72 @@ export async function getMarketplaceDashboard(userId: string, organizationId: st
       },
     }),
     prisma.marketplaceNotification.findMany({ where: { recipientUserId: userId }, orderBy: { createdAt: 'desc' }, take: 10, select: { id: true, title: true, body: true, targetRoute: true, readAt: true, createdAt: true } }),
+    prisma.assignment.count({
+      where: {
+        clientOrganizationId: organizationId,
+        publishedAt: null,
+        status: { in: ['DRAFT', 'READY_FOR_REVIEW'] },
+        ...ownAssignmentScope,
+      },
+    }),
+    prisma.assignment.count({
+      where: {
+        clientOrganizationId: organizationId,
+        publishedAt: { not: null },
+        status: { not: 'ARCHIVED' },
+        ...ownAssignmentScope,
+      },
+    }),
+    prisma.assignment.count({
+      where: {
+        clientOrganizationId: organizationId,
+        publishedAt: { not: null },
+        awardDecision: null,
+        marketplaceQuotes: { some: { status: 'SUBMITTED' } },
+        ...ownAssignmentScope,
+      },
+    }),
+    prisma.quote.count({
+      where: {
+        status: 'SUBMITTED',
+        assignment: {
+          clientOrganizationId: organizationId,
+          ...ownAssignmentScope,
+        },
+      },
+    }),
+    prisma.adviceDossier.count({
+      where: {
+        organizationId,
+        status: { not: 'ARCHIVED' },
+        ...adviceDossierScope,
+      },
+    }),
+    prisma.marketplaceNotification.count({
+      where: { recipientUserId: userId, readAt: null },
+    }),
   ])
-  return { kind: 'CLIENT' as const, membership, assignments, notifications }
+  return {
+    kind: 'CLIENT' as const,
+    membership,
+    assignments,
+    notifications,
+    summary: {
+      actionRequired: assignmentsRequiringAction,
+      concepts: conceptAssignments,
+      published: publishedAssignments,
+      submittedOffers,
+      activeAdviceDossiers,
+      unreadNotifications,
+    },
+  }
 }
 
 export type MarketplaceDashboardView = Awaited<ReturnType<typeof getMarketplaceDashboard>> | Awaited<ReturnType<typeof getMarketplacePlatformDashboard>>
 
 export async function getProviderInvitationDetail(userId: string, organizationId: string, invitationId: string) {
   const membership = await getPrisma().organizationMembership.findFirst({
-    where: { userId, organizationId, status: 'ACTIVE', user: { status: 'ACTIVE' } },
+    where: { userId, organizationId, status: 'ACTIVE', user: { status: 'ACTIVE', accountType: 'PROFESSIONAL' } },
     select: { role: true },
   })
   if (!membership) throw new MarketplaceServiceError('ACCESS_DENIED')
@@ -108,7 +197,7 @@ export async function getProviderInvitationDetail(userId: string, organizationId
 
 export async function getClientQuotes(userId: string, organizationId: string, assignmentId: string) {
   const membership = await getPrisma().organizationMembership.findFirst({
-    where: { userId, organizationId, status: 'ACTIVE', user: { status: 'ACTIVE' }, role: { in: ['OWNER', 'ADMIN'] } },
+    where: { userId, organizationId, status: 'ACTIVE', user: { status: 'ACTIVE', accountType: 'CLIENT' }, role: { in: ['OWNER', 'ADMIN'] } },
     select: { role: true },
   })
   if (!membership) throw new MarketplaceServiceError('ACCESS_DENIED')
@@ -127,6 +216,7 @@ export async function getClientQuotes(userId: string, organizationId: string, as
         select: {
           id: true,
           status: true,
+          providerProfileId: true,
           providerOrganization: { select: { name: true } },
           submittedVersion: { select: { id: true, version: true, priceCents: true, priceExplanation: true, approach: true, planning: true, terms: true, validUntil: true } },
           participation: { select: { messageChannel: { select: { id: true } } } },
@@ -140,7 +230,7 @@ export async function getClientQuotes(userId: string, organizationId: string, as
 
 export async function getProviderParticipationForQuote(userId: string, organizationId: string, participationId: string) {
   const membership = await getPrisma().organizationMembership.findFirst({
-    where: { userId, organizationId, status: 'ACTIVE', role: { in: ['OWNER', 'ADMIN'] }, user: { status: 'ACTIVE' } },
+    where: { userId, organizationId, status: 'ACTIVE', role: { in: ['OWNER', 'ADMIN'] }, user: { status: 'ACTIVE', accountType: 'PROFESSIONAL' } },
     select: { role: true },
   })
   if (!membership) throw new MarketplaceServiceError('ACCESS_DENIED')
@@ -154,7 +244,7 @@ export async function getProviderParticipationForQuote(userId: string, organizat
 
 export async function getProviderQuoteDetail(userId: string, organizationId: string, quoteId: string) {
   const membership = await getPrisma().organizationMembership.findFirst({
-    where: { userId, organizationId, status: 'ACTIVE', user: { status: 'ACTIVE' } },
+    where: { userId, organizationId, status: 'ACTIVE', user: { status: 'ACTIVE', accountType: 'PROFESSIONAL' } },
     select: { role: true },
   })
   if (!membership) throw new MarketplaceServiceError('ACCESS_DENIED')
@@ -175,7 +265,7 @@ export async function getProviderQuoteDetail(userId: string, organizationId: str
 
 export async function getAssignmentSelectionView(userId: string, organizationId: string, assignmentId: string) {
   const membership = await getPrisma().organizationMembership.findFirst({
-    where: { userId, organizationId, status: 'ACTIVE', role: { in: ['OWNER', 'ADMIN'] }, user: { status: 'ACTIVE' } },
+    where: { userId, organizationId, status: 'ACTIVE', role: { in: ['OWNER', 'ADMIN'] }, user: { status: 'ACTIVE', accountType: 'CLIENT' } },
     select: { role: true },
   })
   if (!membership) throw new MarketplaceServiceError('ACCESS_DENIED')

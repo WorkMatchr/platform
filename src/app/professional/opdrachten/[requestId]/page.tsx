@@ -60,7 +60,9 @@ export default async function ProviderRequestDetailPage({
       ? detail.interest.offerSlot
       : null
   const offerSlotsFull =
-    detail.activeOfferSlotCount >= 3 && !claimedOfferSlot
+    detail.activeOfferSlotCount >=
+      detail.marketplaceRules.maximumParticipants &&
+    !claimedOfferSlot
 
   return (
     <Section spacing="compact">
@@ -122,6 +124,22 @@ export default async function ProviderRequestDetailPage({
               De offerteplaats kon niet worden geclaimd. Controleer of
               de aanvraag en uw interesse nog actief zijn.
             </p>
+          ) : null}
+          {result === 'insufficient-credits' ? (
+            <div
+              role="alert"
+              className="mt-5 rounded-control border border-error-border bg-error-subtle p-4 text-brand-dark"
+            >
+              <p className="font-semibold">
+                Uw organisatie heeft onvoldoende credits voor deze deelnameplaats.
+              </p>
+              <p className="mt-1 text-sm">
+                Er zijn geen credits afgeschreven en de gegevens van de opdrachtgever blijven afgeschermd.
+              </p>
+              <LinkButton className="mt-3" href="/credits" variant="outline">
+                Bekijk uw credits
+              </LinkButton>
+            </div>
           ) : null}
 
           <section className="mt-6">
@@ -258,9 +276,12 @@ export default async function ProviderRequestDetailPage({
             </section>
           ) : (
             <aside className="mt-6 rounded-card border border-info-border bg-info-subtle p-4 text-sm text-brand-dark">
-              Na een succesvolle claim worden de contactgegevens van
-              de opdrachtgever vrijgegeven. Er worden in deze stap
-              geen credits afgeschreven.
+              U neemt hiermee één van de maximaal{' '}
+              {detail.marketplaceRules.maximumParticipants}{' '}
+              deelnameplaatsen in. De{' '}
+              {detail.marketplaceRules.participationPriceCredits} credits
+              worden direct afgeschreven. Na een succesvolle claim worden de contactgegevens
+              van de opdrachtgever beschikbaar, zodat u een offerte kunt uitbrengen.
             </aside>
           )}
 

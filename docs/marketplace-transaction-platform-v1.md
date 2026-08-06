@@ -1,5 +1,9 @@
 # Marketplace Transaction Platform v1
 
+> De bestaande Assignment-marktplaats blijft historisch intact. De nieuwe M7D Request-flow gebruikt vanaf augustus 2026 de afzonderlijke, versieerbare [Marketplace Rules en directe claimbetaling](marketplace-rules-credit-reliability.md). De toekomstige 5-creditteruggave wordt pas gekoppeld wanneer deze Request-flow zelf offertes en gunning ondersteunt.
+
+> De bestaande Assignment-marktplaats blijft historisch intact. De nieuwe M7D Request-flow gebruikt vanaf augustus 2026 de afzonderlijke, versieerbare [Marketplace Rules en directe claimbetaling](marketplace-rules-credit-reliability.md). De toekomstige 5-creditteruggave wordt pas gekoppeld wanneer deze Request-flow zelf offertes en gunning ondersteunt.
+
 ## Status
 
 Technisch opgeleverd op 20 juli 2026; integrale product-owneracceptatie staat open.

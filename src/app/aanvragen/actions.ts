@@ -11,6 +11,10 @@ import {
   publishRequest,
   RequestServiceError,
 } from '@/lib/requests/request-service'
+import {
+  submitMarketplaceContactRequest,
+  withdrawPublishedRequest,
+} from '@/lib/marketplace/marketplace-reliability-service'
 
 export type RequestPublicationActionState = Readonly<{
   values?: RequestPublicationFormValues
@@ -56,6 +60,8 @@ export async function publishRequestAction(
         message:
           error.code === 'NOT_ELIGIBLE'
             ? 'Dit Adviesdossier is nog niet gereed voor publicatie.'
+            : error.code === 'PUBLICATION_REVIEW_REQUIRED'
+              ? 'Neem eerst contact op met WorkMatchr via het formulier op deze pagina.'
             : 'De aanvraag kon niet veilig worden gepubliceerd. Probeer het opnieuw.',
       }
     }
@@ -65,4 +71,53 @@ export async function publishRequestAction(
   revalidatePath('/aanvragen')
   revalidatePath(`/adviesdossiers/${parsed.data.adviceDossierId}`)
   redirect(`/aanvragen/${requestId}/gepubliceerd`)
+}
+
+export async function submitMarketplaceContactRequestAction(formData: FormData) {
+  const adviceDossierId = String(formData.get('adviceDossierId') ?? '')
+  const explanation = String(formData.get('contactExplanation') ?? '')
+  const viewer = await requireClientAdviceDossierViewer(
+    `/aanvragen/nieuw?dossierId=${encodeURIComponent(adviceDossierId)}`,
+  )
+  if (!viewer.organizationId) {
+    redirect(`/aanvragen/nieuw?dossierId=${encodeURIComponent(adviceDossierId)}&fout=geen-organisatie`)
+  }
+  try {
+    await submitMarketplaceContactRequest({
+      userId: viewer.userId,
+      organizationId: viewer.organizationId,
+      adviceDossierId,
+      explanation,
+    })
+  } catch {
+    redirect(`/aanvragen/nieuw?dossierId=${encodeURIComponent(adviceDossierId)}&fout=contactverzoek`)
+  }
+  revalidatePath('/platformbeheer/marketplace/betrouwbaarheid')
+  redirect(`/aanvragen/nieuw?dossierId=${encodeURIComponent(adviceDossierId)}&contact=verzonden`)
+}
+
+export async function withdrawPublishedRequestAction(formData: FormData) {
+  const requestId = String(formData.get('requestId') ?? '')
+  const viewer = await requireClientAdviceDossierViewer(
+    `/aanvragen/${encodeURIComponent(requestId)}/gepubliceerd`,
+  )
+  if (!viewer.organizationId) redirect('/aanvragen')
+  try {
+    await withdrawPublishedRequest({
+      userId: viewer.userId,
+      organizationId: viewer.organizationId,
+      values: {
+        requestId,
+        reason: String(formData.get('reason') ?? ''),
+        explanation: String(formData.get('explanation') ?? ''),
+        confirmed: formData.get('confirmed') === 'on',
+      },
+    })
+  } catch {
+    redirect(`/aanvragen/${requestId}/gepubliceerd?fout=intrekken`)
+  }
+  revalidatePath('/aanvragen')
+  revalidatePath(`/aanvragen/${requestId}/gepubliceerd`)
+  revalidatePath('/platformbeheer/marketplace/betrouwbaarheid')
+  redirect(`/aanvragen/${requestId}/gepubliceerd?intrekking=gelukt`)
 }

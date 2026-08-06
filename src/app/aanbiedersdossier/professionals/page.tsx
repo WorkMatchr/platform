@@ -37,7 +37,7 @@ export default async function ProviderProfessionalsPage() {
         <div className="mb-6">
           <ProviderFailureNotice title="Professional toevoegen is tijdelijk niet beschikbaar">
             Dit dossieronderdeel is tijdens de huidige beoordeling alleen-lezen. Rond de beoordeling af of laat
-            Professionals expliciet heropenen voordat U een professional toevoegt.
+            Professionals expliciet heropenen voordat u een professional toevoegt.
           </ProviderFailureNotice>
         </div>
       )}

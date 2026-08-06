@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { Prisma } from '@/generated/prisma/client'
-import type { OrganizationMembershipRole } from '@/generated/prisma/enums'
+import type { OrganizationMembershipRole, OrganizationType } from '@/generated/prisma/enums'
 import { getPrisma } from '@/lib/prisma'
 import { appendAccountProvisioningEvent, appendOrganizationMembershipEvent } from './account-history-service'
 import { canManageTenantAccount } from './account-management-policy'
@@ -10,6 +10,12 @@ import { assertCanCreateTenantMembership } from './tenant-membership-policy'
 import { AuthEmailDeliveryError, type AuthEmailDeliveryResult } from '@/lib/email'
 
 const POLICY_VERSION = 'ADR013_PHASE2B_INVITATION_V1'
+
+function accountTypeForOrganizationType(organizationType: OrganizationType) {
+  if (organizationType === 'CLIENT') return 'CLIENT' as const
+  if (organizationType === 'PROVIDER' || organizationType === 'BOTH') return 'PROFESSIONAL' as const
+  throw new OrganizationInvitationServiceError('INVALID_TENANT', 'De organisatie is niet beschikbaar.')
+}
 
 export class OrganizationInvitationServiceError extends Error {
   constructor(
@@ -82,6 +88,7 @@ async function requireInviter(
 async function findRetryableInvitation(
   transaction: Prisma.TransactionClient,
   input: Pick<InviteOrganizationUserInput, 'actorUserId' | 'organizationId' | 'email' | 'role'>,
+  expectedAccountType: 'CLIENT' | 'PROFESSIONAL',
 ) {
   const user = await transaction.user.findUnique({
     where: { email: input.email },
@@ -89,6 +96,7 @@ async function findRetryableInvitation(
       id: true,
       status: true,
       platformRole: true,
+      accountType: true,
       migrationClassification: true,
       createdByUserId: true,
       memberships: {
@@ -102,6 +110,7 @@ async function findRetryableInvitation(
   const retryable =
     user.status === 'INVITED' &&
     user.platformRole === 'USER' &&
+    user.accountType === expectedAccountType &&
     user.migrationClassification === null &&
     user.createdByUserId === input.actorUserId &&
     user.memberships.length === 1 &&
@@ -122,11 +131,12 @@ async function provisionInvitation(input: InviteOrganizationUserInput, passwordH
     await requireInviter(transaction, input)
     const organization = await transaction.organization.findFirst({
       where: { id: input.organizationId, status: 'ACTIVE', ...normalTenantOrganizationWhere },
-      select: { id: true },
+      select: { id: true, organizationType: true },
     })
     if (!organization) throw new OrganizationInvitationServiceError('INVALID_TENANT', 'De organisatie is niet beschikbaar.')
 
-    const existing = await findRetryableInvitation(transaction, input)
+    const accountType = accountTypeForOrganizationType(organization.organizationType)
+    const existing = await findRetryableInvitation(transaction, input, accountType)
     if (existing) return { status: 'RESENT', ...existing }
 
     const userId = randomUUID()
@@ -138,6 +148,7 @@ async function provisionInvitation(input: InviteOrganizationUserInput, passwordH
         displayName: input.displayName,
         emailVerified: false,
         platformRole: 'USER',
+        accountType,
         status: 'INVITED',
         createdByUserId: input.actorUserId,
         accounts: {
@@ -303,8 +314,9 @@ async function deliverInvitation(input: InviteOrganizationUserInput, result: Inv
 
 export async function inviteOrganizationUser(input: InviteOrganizationUserInput): Promise<InvitationResult> {
   const prisma = getPrisma()
-  await prisma.$transaction((transaction) => requireInviter(transaction, input))
-  const existing = await prisma.$transaction((transaction) => findRetryableInvitation(transaction, input))
+  const inviter = await prisma.$transaction((transaction) => requireInviter(transaction, input))
+  const expectedAccountType = accountTypeForOrganizationType(inviter.organization.organizationType)
+  const existing = await prisma.$transaction((transaction) => findRetryableInvitation(transaction, input, expectedAccountType))
   let result: InvitationResult
   if (existing) {
     result = { status: 'RESENT', ...existing }
@@ -313,7 +325,7 @@ export async function inviteOrganizationUser(input: InviteOrganizationUserInput)
       result = await provisionInvitation(input, await hashInvitationCredential())
     } catch (error) {
       if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') throw error
-      const concurrent = await prisma.$transaction((transaction) => findRetryableInvitation(transaction, input))
+      const concurrent = await prisma.$transaction((transaction) => findRetryableInvitation(transaction, input, expectedAccountType))
       if (!concurrent) throw error
       result = { status: 'RESENT', ...concurrent }
     }

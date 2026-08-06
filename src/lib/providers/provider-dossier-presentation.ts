@@ -4,6 +4,9 @@ import type {
   ProviderDossierSubmissionStatus,
   ProviderEvidenceScanStatus,
   ProviderEvidenceStatus,
+  ProviderDossierReviewCaseStatus,
+  ProviderLifecycleStatus,
+  ProviderPlatformPermission,
   ProviderPlatformQualificationStatus,
   ProviderReadinessStatus,
   ProviderSelectabilityStatus,
@@ -17,6 +20,28 @@ export const providerVerificationLabels: Record<ProviderVerificationLevel, strin
 export const providerReviewLabels: Record<ProviderDossierSubmissionStatus, string> = {
   SUBMITTED: 'Ingediend', UNDER_REVIEW: 'In beoordeling', ADDITIONAL_INFORMATION_REQUIRED: 'Aanvullende informatie nodig',
   APPROVED: 'Goedgekeurd', REJECTED: 'Afgewezen', EXPIRED: 'Verlopen', WITHDRAWN: 'Ingetrokken',
+}
+
+export const providerReviewCaseLabels: Record<ProviderDossierReviewCaseStatus, string> = {
+  OPEN: 'Open',
+  CLOSED: 'Afgerond',
+}
+
+export const providerLifecycleLabels: Record<ProviderLifecycleStatus, string> = {
+  DRAFT: 'Nog invullen',
+  READY_FOR_REVIEW: 'Klaar om in te dienen',
+  IN_REVIEW: 'In beoordeling',
+  CHANGES_REQUESTED: 'Aanvullende informatie nodig',
+  QUALIFIED: 'Gekwalificeerd',
+  SUSPENDED: 'Geschorst',
+  REJECTED: 'Afgewezen',
+  ARCHIVED: 'Gearchiveerd',
+}
+
+export const providerPermissionLabels: Record<ProviderPlatformPermission, string> = {
+  PROVIDER_REVIEWER: 'Dossiers beoordelen',
+  PROVIDER_APPROVER: 'Definitieve besluiten nemen',
+  PROVIDER_AUDITOR: 'Auditinformatie bekijken',
 }
 
 export const providerDossierSectionLabels: Record<ProviderDossierSection, string> = {
@@ -72,4 +97,12 @@ export function presentExpiry(value: Date | null, at = new Date()) {
   if (daysRemaining < 0) return { state: 'EXPIRED' as const, label: 'Verlopen', daysRemaining }
   if (daysRemaining <= 7) return { state: 'EXPIRING' as const, label: 'Verloopt binnenkort', daysRemaining }
   return { state: 'CURRENT' as const, label: 'Actueel', daysRemaining }
+}
+
+export function presentProviderReviewStatus(value: string): string {
+  return providerReviewLabels[value as ProviderDossierSubmissionStatus] ?? 'Status niet beschikbaar'
+}
+
+export function presentProviderPermission(value: string): string {
+  return providerPermissionLabels[value as ProviderPlatformPermission] ?? 'Bevoegdheid niet beschikbaar'
 }

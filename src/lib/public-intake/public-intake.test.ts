@@ -61,6 +61,24 @@ describe('publieke conceptintakefundering', () => {
     ).toThrow('Kies een geldige hulpvraag.')
   })
 
+  it('accepteert uitsluitend bekende actieve kenniscontexten', () => {
+    expect(
+      parseCreatePublicIntakeDraftInput({
+        entryPoint: 'FREE_TEXT',
+        originalInput: 'Wij willen weten wanneer wij een bedrijfsarts moeten inschakelen.',
+        knowledgeContextId: 'OCCUPATIONAL_PHYSICIAN',
+      }).knowledgeContextId,
+    ).toBe('OCCUPATIONAL_PHYSICIAN')
+
+    expect(() =>
+      parseCreatePublicIntakeDraftInput({
+        entryPoint: 'FREE_TEXT',
+        originalInput: 'Wij hebben een inhoudelijke hulpvraag voor onze organisatie.',
+        knowledgeContextId: 'GEMANIPULEERDE_CONTEXT',
+      }),
+    ).toThrow(PublicIntakeServiceError)
+  })
+
   it('weigert onbekende vragen en verkeerde typen', () => {
     expect(() =>
       normalizePublicIntakeAnswer({

@@ -9,19 +9,6 @@ import { LinkButton } from '@/components/ui/link-button'
 
 type Action = (state: AssignmentActionState, formData: FormData) => Promise<AssignmentActionState>
 
-function ReadyForm({ action, assignmentId, version }: { action: Action; assignmentId: string; version: number }) {
-  const [state, formAction, pending] = useActionState(action, {})
-  return (
-    <form action={formAction}>
-      <input type="hidden" name="assignmentId" value={assignmentId} />
-      <input type="hidden" name="expectedAssignmentVersion" value={version} />
-      {state.message && <StatusMessage error>{state.message}</StatusMessage>}
-      <p className="text-sm text-text-secondary">Gereedmelden is intern. De opdracht wordt niet gepubliceerd en matching start niet.</p>
-      <Button type="submit" loading={pending} className="mt-4 w-full sm:w-auto">Gereed voor controle</Button>
-    </form>
-  )
-}
-
 function ReasonForm({ action, assignmentId, version, mode }: { action: Action; assignmentId: string; version: number; mode: 'reopen' | 'cancel' }) {
   const [state, formAction, pending] = useActionState(action, {})
   const formRef = useRef<HTMLFormElement>(null)
@@ -56,15 +43,20 @@ function ReasonForm({ action, assignmentId, version, mode }: { action: Action; a
   )
 }
 
-export function AssignmentStatusActions({ assignmentId, status, version, actions }: { assignmentId: string; status: AssignmentStatus; version: number; actions: { ready: Action; reopen: Action; cancel: Action } }) {
+export function AssignmentStatusActions({ assignmentId, status, version, actions }: { assignmentId: string; status: AssignmentStatus; version: number; actions: { reopen: Action; cancel: Action } }) {
   if (status !== 'DRAFT' && status !== 'READY_FOR_REVIEW') return null
   return (
     <section className="rounded-card border border-border bg-surface p-6" aria-labelledby="assignment-actions-title">
       <h2 id="assignment-actions-title" className="text-xl font-bold text-brand-dark">Vervolgstap</h2>
       {status === 'DRAFT' && (
         <div className="mt-5 space-y-6">
-          <LinkButton href={`/opdrachten/${assignmentId}/bewerken`}>Concept bewerken</LinkButton>
-          <ReadyForm action={actions.ready} assignmentId={assignmentId} version={version} />
+          <p className="text-sm text-text-secondary">
+            Na publicatie kan WorkMatchr passende professionals selecteren. Controleer daarom eerst of de opdracht volledig en correct is.
+          </p>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <LinkButton href={`/opdrachten/${assignmentId}/bewerken`} variant="outline">Concept bewerken</LinkButton>
+            <LinkButton href={`/opdrachten/${assignmentId}/publiceren`}>Opdracht publiceren</LinkButton>
+          </div>
         </div>
       )}
       {status === 'READY_FOR_REVIEW' && (

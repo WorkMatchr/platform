@@ -1,5 +1,7 @@
 # WorkMatchr
 
+Product- en UX-besluiten worden getoetst aan de bindende [WorkMatchr Product Constitution](docs/PRODUCT_CONSTITUTION.md).
+
 WorkMatchr verzamelt uitsluitend gegevens die noodzakelijk zijn voor uitlegbare platformbesluiten. Het platform is geen HR-systeem, personeelsplanning of diploma-administratie. Aanbieders beslissen per uitnodiging of zij reageren; capaciteit en beschikbaarheid zijn daarom geen verplicht profiel- of selectiegegeven.
 
 WorkMatchr wordt een volledig onafhankelijk platform dat organisaties koppelt aan passende arbo- en veiligheidsspecialisten. Per opdracht worden maximaal drie aanbieders objectief geselecteerd; betaalde voorkeursposities bestaan niet.

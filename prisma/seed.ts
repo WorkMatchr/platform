@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '../src/generated/prisma/client'
 import { intakeQuestionnaireV1, type IntakeQuestionnaireQuestionSeed } from './intake-questionnaire-v1'
+import { intakeQuestionnaireV2 } from './intake-questionnaire-v2'
 
 const connectionString = process.env.DATABASE_URL
 
@@ -63,11 +64,25 @@ const certifications = [
 
 const providerTaxonomies = {
   SERVICE: [
-    ['RISK_ASSESSMENT', 'Risico-inventarisatie en -evaluatie'],
+    ['RISK_ASSESSMENT', 'RI&E'],
+    ['OCCUPATIONAL_SAFETY', 'Arbeidsveiligheid'],
+    ['ABSENCE_REINTEGRATION', 'Verzuim en re-integratie'],
+    ['OCCUPATIONAL_EXPERT_ADVICE', 'Arbeidsdeskundig advies'],
+    ['REINTEGRATION_FIRST_TRACK', 'Re-integratie eerste spoor'],
+    ['REINTEGRATION_SECOND_TRACK', 'Re-integratie tweede spoor'],
+    ['PMO', 'Preventief medisch onderzoek (PMO)'],
+    ['PAGO', 'Periodiek arbeidsgezondheidskundig onderzoek (PAGO)'],
+    ['OCCUPATIONAL_PHYSICIAN', 'Bedrijfsarts'],
+    ['OCCUPATIONAL_HEALTH_SERVICE', 'Arbodienstverlening'],
+    ['ERGONOMICS', 'Ergonomie'],
+    ['OCCUPATIONAL_HYGIENE', 'Arbeidshygiëne'],
+    ['MACHINERY_SAFETY', 'Machineveiligheid'],
+    ['INCIDENT_INVESTIGATION', 'Incidentonderzoek'],
+    ['EMERGENCY_RESPONSE', 'BHV en ontruiming'],
     ['SAFETY_ADVICE', 'Veiligheidsadvies'],
-    ['IMPLEMENTATION_SUPPORT', 'Implementatieondersteuning'],
+    ['IMPLEMENTATION_SUPPORT', 'Ondersteuning bij implementatie'],
     ['AUDIT_AND_INSPECTION', 'Audit en inspectie'],
-    ['TRAINING', 'Training'],
+    ['TRAINING', 'Opleiding en training'],
   ],
   COMPETENCY: [
     ['RISK_ASSESSMENT_EXECUTION', 'Uitvoering risico-inventarisatie'],
@@ -98,6 +113,31 @@ const providerTaxonomies = {
   INSURANCE_TYPE: [
     ['GENERAL_LIABILITY', 'Bedrijfsaansprakelijkheidsverzekering'],
     ['PROFESSIONAL_LIABILITY', 'Beroepsaansprakelijkheidsverzekering'],
+  ],
+  MEMBERSHIP: [
+    ['NVVK', 'NVVK'],
+    ['NVVA', 'NVVA'],
+    ['NVAB', 'NVAB'],
+    ['OVAL', 'OVAL'],
+    ['BAO', 'BA&O'],
+    ['NIP', 'NIP'],
+    ['NOLOC', 'NOLOC'],
+    ['NVO2', 'NVO2'],
+  ],
+  REGISTRATION: [
+    ['BIG', 'BIG-register'],
+    ['REGISTER_CASEMANAGER', 'Register casemanager'],
+    ['REGISTER_ARBEIDSDESKUNDIGE', 'Registerarbeidsdeskundige'],
+    ['REGISTER_VEILIGHEIDSKUNDIGE', 'Register veiligheidskundige'],
+    ['REGISTER_ARBEIDSHYGIENIST', 'Register arbeidshygiënist'],
+  ],
+  WORK_MODE: [
+    ['INDIVIDUAL', 'Individueel'],
+    ['GROUP', 'Groepsgewijs'],
+    ['PROJECT_BASED', 'Projectmatig'],
+    ['INTERIM', 'Interim'],
+    ['ONE_TIME_ADVICE', 'Eenmalig advies'],
+    ['PERIODIC_SUPPORT', 'Periodieke ondersteuning'],
   ],
 } as const
 
@@ -147,19 +187,33 @@ async function seedProviderTaxonomy(
       existing.terms.length === terms.length &&
       terms.every(([code, label], index) => existing.terms[index]?.code === code && existing.terms[index]?.label === label)
     if (!matches) throw new Error(`Gepubliceerde providertaxonomie ${kind} versie ${versionNumber} wijkt af en wordt niet overschreven.`)
+    if (versionNumber > 1) {
+      await prisma.providerTaxonomyVersion.updateMany({
+        where: { taxonomyId: taxonomy.id, version: { lt: versionNumber }, status: 'PUBLISHED' },
+        data: { status: 'RETIRED', retiredAt: new Date() },
+      })
+    }
     return existing
   }
 
-  return prisma.providerTaxonomyVersion.create({
-    data: {
-      taxonomyId: taxonomy.id,
-      version: versionNumber,
-      status: 'PUBLISHED',
-      checksum,
-      publishedAt: new Date(),
-      terms: { create: terms.map(([code, label], sortOrder) => ({ code, label, sortOrder })) },
-    },
-    include: { terms: true },
+  return prisma.$transaction(async (transaction) => {
+    if (versionNumber > 1) {
+      await transaction.providerTaxonomyVersion.updateMany({
+        where: { taxonomyId: taxonomy.id, version: { lt: versionNumber }, status: 'PUBLISHED' },
+        data: { status: 'RETIRED', retiredAt: new Date() },
+      })
+    }
+    return transaction.providerTaxonomyVersion.create({
+      data: {
+        taxonomyId: taxonomy.id,
+        version: versionNumber,
+        status: 'PUBLISHED',
+        checksum,
+        publishedAt: new Date(),
+        terms: { create: terms.map(([code, label], sortOrder) => ({ code, label, sortOrder })) },
+      },
+      include: { terms: true },
+    })
   })
 }
 
@@ -167,7 +221,7 @@ async function seedProviderQualificationReferences() {
   for (const [kind, terms] of Object.entries(providerTaxonomies) as Array<
     [keyof typeof providerTaxonomies, readonly (readonly [string, string])[]]
   >) {
-    await seedProviderTaxonomy(kind, terms)
+    await seedProviderTaxonomy(kind, terms, kind === 'SERVICE' ? 2 : 1)
   }
 
   const specialismVersion = await seedProviderTaxonomy(
@@ -481,6 +535,78 @@ async function seedIntakeQuestionnaireV1() {
   }
 }
 
+async function seedIntakeQuestionnaireV2() {
+  const questionnaire = await prisma.intakeQuestionnaire.upsert({
+    where: { slug: intakeQuestionnaireV2.slug },
+    update: { name: intakeQuestionnaireV2.name, isActive: true },
+    create: {
+      id: intakeQuestionnaireV2.id,
+      slug: intakeQuestionnaireV2.slug,
+      name: intakeQuestionnaireV2.name,
+      isActive: true,
+    },
+  })
+  const version = await prisma.intakeQuestionnaireVersion.findUnique({
+    where: { questionnaireId_version: { questionnaireId: questionnaire.id, version: 2 } },
+    include: { questions: { orderBy: { sortOrder: 'asc' }, include: { options: { orderBy: { sortOrder: 'asc' } } } } },
+  })
+
+  if (!version) {
+    await prisma.$transaction(async (transaction) => {
+      await transaction.intakeQuestionnaireVersion.create({
+        data: { id: intakeQuestionnaireV2.versionId, questionnaireId: questionnaire.id, version: 2, status: 'DRAFT' },
+      })
+      for (const question of intakeQuestionnaireV2.questions) {
+        const {
+          options: questionOptions = [],
+          version: _version,
+          active: _active,
+          dependsOn: _dependsOn,
+          visibleWhen: _visibleWhen,
+          ...questionData
+        } = question
+        void _version
+        void _active
+        void _dependsOn
+        void _visibleWhen
+        await transaction.intakeQuestion.create({
+          data: {
+            ...questionData,
+            questionnaireVersionId: intakeQuestionnaireV2.versionId,
+            options: { create: questionOptions.map((option) => ({ ...option, isExclusive: option.isExclusive ?? false })) },
+          },
+        })
+      }
+      await transaction.intakeQuestionnaireVersion.updateMany({
+        where: {
+          questionnaireId: questionnaire.id,
+          status: 'PUBLISHED',
+          id: { not: intakeQuestionnaireV2.versionId },
+        },
+        data: { status: 'RETIRED' },
+      })
+      await transaction.intakeQuestionnaireVersion.update({
+        where: { id: intakeQuestionnaireV2.versionId },
+        data: { status: 'PUBLISHED', publishedAt: new Date() },
+      })
+    })
+    return
+  }
+
+  if (!['PUBLISHED', 'RETIRED'].includes(version.status) || !version.publishedAt) {
+    throw new Error('Vraagset versie 2 bestaat, maar is niet gepubliceerd. De seed wijzigt geen bestaande conceptversie.')
+  }
+  if (
+    version.questions.length !== intakeQuestionnaireV2.questions.length ||
+    !intakeQuestionnaireV2.questions.every((question, index) => {
+      const stored = version.questions[index]
+      return stored ? questionMatches(stored, question) : false
+    })
+  ) {
+    throw new Error('De gepubliceerde vraagset versie 2 wijkt af van de seeddefinitie en wordt niet overschreven.')
+  }
+}
+
 async function main() {
   for (const [slug, name] of sectors) {
     await prisma.sector.upsert({ where: { slug }, update: { name, isActive: true }, create: { slug, name } })
@@ -507,6 +633,7 @@ async function main() {
   }
 
   await seedIntakeQuestionnaireV1()
+  await seedIntakeQuestionnaireV2()
   await seedProviderQualificationReferences()
   await backfillLegacyProviderClaims()
 

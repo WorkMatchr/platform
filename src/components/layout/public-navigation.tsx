@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { publicNavigationItems, type PublicNavigationHref } from '@/content/public-routes'
 import { DisclosureMenu } from '@/components/ui/disclosure-menu'
-import { LinkButton } from '@/components/ui/link-button'
 
 function normalizePath(value: string) {
   const pathname = value.split(/[?#]/, 1)[0] || '/'
@@ -44,7 +43,6 @@ export function PublicNavigation({
   authenticated?: boolean
 }) {
   const pathname = usePathname()
-  const primaryItem = publicNavigationItems.find((item) => item.kind === 'primary')!
   const standardItems = publicNavigationItems.filter((item) => item.kind === 'standard')
   const authItems = authenticated
     ? []
@@ -59,7 +57,6 @@ export function PublicNavigation({
             {authItems.map((item) => <li key={item.href}><NavigationLink {...item} pathname={pathname} /></li>)}
           </ul>
         </nav>
-        <LinkButton href={primaryItem.href} className="shrink-0">{primaryItem.label}</LinkButton>
       </div>
       <DisclosureMenu
         ariaLabel="Hoofdnavigatie openen of sluiten"
@@ -69,7 +66,6 @@ export function PublicNavigation({
         trigger={<>Menu<span aria-hidden="true" className="ml-2">&#9662;</span></>}
       >
         <nav aria-label="Mobiele hoofdnavigatie">
-          <LinkButton href={primaryItem.href} className="mb-3 w-full">{primaryItem.label}</LinkButton>
           <ul className="space-y-1 text-sm font-medium">
             {standardItems.map((item) => <li key={item.href}><NavigationLink {...item} pathname={pathname} mobile /></li>)}
             {authItems.map((item) => <li key={item.href}><NavigationLink {...item} pathname={pathname} mobile /></li>)}

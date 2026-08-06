@@ -5,6 +5,7 @@ import { assessProviderDossierCompletenessInTransaction } from './provider-dossi
 import { buildProviderDossierOpenActions } from './provider-dossier-open-actions'
 import { presentProviderStatuses, providerVerificationLabels } from './provider-dossier-presentation'
 import { ProviderServiceError } from './provider-errors'
+import { presentProviderServiceTerm } from './provider-taxonomy-presentation'
 
 export function sanitizeProviderInsuranceForMember<T extends { policyReference?: unknown; coverageAmountCents?: unknown }>(value: T) {
   const safe = { ...value }
@@ -80,12 +81,12 @@ export async function getProviderDossierSection(userId: string, providerProfileI
     const isMember = access.membershipRole === 'MEMBER'
     const base = { providerProfileId, viewerRole: access.membershipRole, readOnly: isMember }
     if (section === 'ORGANIZATION') {
-      const value = await transaction.providerProfile.findUnique({ where: { id: providerProfileId }, select: { version: true, description: true, maxTravelDistanceKm: true, acceptsRemoteWork: true, organization: { select: { name: true, tradeName: true, chamberOfCommerceNumber: true, website: true, employeeCount: true } } } })
+      const value = await transaction.providerProfile.findUnique({ where: { id: providerProfileId }, select: { version: true, shortIntroduction: true, description: true, workingMethod: true, organization: { select: { name: true, tradeName: true, chamberOfCommerceNumber: true, website: true, employeeCount: true } } } })
       return { ...base, section, value }
     }
     if (section === 'CAPABILITIES') {
       const value = await transaction.providerCapability.findMany({ where: { providerProfileId, ...(isMember ? { status: 'ACTIVE' as const } : {}) }, select: { id: true, version: true, status: true, revisions: { orderBy: { version: 'desc' }, take: 1, select: { serviceTermId: true, specialismTermId: true, competencyTermId: true, serviceTerm: { select: { code: true, label: true } }, specialismTerm: { select: { code: true, label: true } }, competencyTerm: { select: { code: true, label: true } }, deliveryModes: true, verificationLevel: true } } } })
-      return { ...base, section, value: value.map((item) => ({ ...item, revisions: item.revisions.map((revision) => ({ ...revision, verificationLabel: providerVerificationLabels[revision.verificationLevel] })) })) }
+      return { ...base, section, value: value.map((item) => ({ ...item, revisions: item.revisions.map((revision) => ({ ...revision, serviceTerm: presentProviderServiceTerm(revision.serviceTerm), verificationLabel: providerVerificationLabels[revision.verificationLevel] })) })) }
     }
     if (section === 'SECTOR_EXPERIENCE') {
       const value = await transaction.providerSectorExperience.findMany({ where: { providerProfileId, ...(isMember ? { status: 'ACTIVE' as const } : {}) }, select: { id: true, version: true, status: true, revisions: { orderBy: { version: 'desc' }, take: 1, select: { sectorTermId: true, sectorTerm: { select: { code: true, label: true } }, experienceYears: true, verificationLevel: true } } } })
@@ -147,5 +148,5 @@ export async function getProviderMemberView(userId: string, providerProfileId: s
     getProviderDossierCapabilitiesSection(userId, providerProfileId), getProviderDossierSectorSection(userId, providerProfileId),
     getProviderDossierWorkAreaSection(userId, providerProfileId),
   ])
-  return { statuses: dashboard.statuses, completeness: dashboard.completeness, openActions: dashboard.openActions.map((action) => ({ ...action, description: action.blocking ? 'Neem contact op met een OWNER of ADMIN om dit onderdeel bij te werken.' : action.description })), safeFindings: dashboard.safeFindings, capabilities: capabilities.value, sectors: sectors.value, workAreas: workAreas.value }
+  return { statuses: dashboard.statuses, completeness: dashboard.completeness, openActions: dashboard.openActions.map((action) => ({ ...action, description: action.blocking ? 'Neem contact op met een eigenaar of beheerder om dit onderdeel bij te werken.' : action.description })), safeFindings: dashboard.safeFindings, capabilities: capabilities.value, sectors: sectors.value, workAreas: workAreas.value }
 }

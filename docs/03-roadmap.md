@@ -1,5 +1,9 @@
 # Roadmap WorkMatchr
 
+## Marketplace Rules en betrouwbaarheid â€” technisch opgeleverd
+
+De fundering voor versieerbare regels, directe claimbetaling, refunds, interne betrouwbaarheid, contactverzoeken en platformbeheer is technisch opgeleverd; handmatige Product Owner-acceptatie staat open. De volledige Request-offerte- en gunningsflow, automatische 5-creditteruggave en koop-/betaalflow blijven toekomstige modules.
+
 ## Geplande modules
 
 1. **Module 1 — Projectbasis — afgerond**  
@@ -16,7 +20,7 @@
    Organisatie-onboarding, rollen, actieve organisatie, profielbeheer, veilige logo-opslag en toegankelijke validatie-UX zijn technisch en handmatig geaccepteerd.
 7. **Module 5 — Vraagverheldering, intake en opdrachten — in uitvoering**
    Module 5A.1 levert de versieerbare databasefundering, 5A.2 de beveiligde servicelaag en 5A.3 de toegankelijke interface en Server Actions tot `READY_FOR_REVIEW`. Module 5B.1 legt het opdrachtvormingsontwerp vast en 5B.2 levert het assignmentdatamodel en de server-side conversieservice. Module 5B.3 ontsluit expliciete indiening, opdrachtbewerking en de interne statusflow tot `CANCELLED` en is technisch en door de product owner geaccepteerd. Module 5A en 5B.2 houden hun bestaande afzonderlijke acceptatiestatus. **Module 5C.1, Module 5C.2 en Module 5C.3 zijn afgerond en product-ownergeaccepteerd; Module 5C is als geheel afgerond.** De databasefundering, services en opdrachtgeverinterface ondersteunen gecontroleerde publicatie en intrekken zonder aanbiederszichtbaarheid, matching, credits of betaling.
-   - **Module 5D.0 — Ontwerp Intake & Submission Improvements — ontwerp in uitvoering.** Gedelegeerde procesbevoegdheden, een vereenvoudigde indienflow, tijdelijke opdrachtlocaties, immutable locatiesnapshots, vraagsetversie 2 en toegankelijke wireframes worden uitsluitend ontworpen. ADR-012 heeft status `Voorgesteld`; er is geen code, Prisma, migratie, route of service voor Module 5D geïmplementeerd.
+   - **Module 5D.0 — Ontwerp Intake & Submission Improvements — ontwerp in uitvoering.** De bredere governance-, locatiesnapshot- en indienarchitectuur blijft ontwerpwerk. Een afgebakende opdrachtintake-vraagset versie 2 is technisch toegevoegd voor nieuwe concepten, zonder Prisma-schemawijziging en zonder historische intakes of publicaties aan te passen. ADR-012 blijft `Voorgesteld`; de overige Module 5D-onderdelen zijn niet als gebouwd gemarkeerd.
 8. **Module 6A — Uitlegbare selectie van geschikte aanbieders — providerfundering en provider-onboarding afgerond**
    - **Module 6A.0 — Ontwerp providerkwalificatie — afgerond en product-ownergeaccepteerd.** Lifecycle, betrouwbare providerdossiers, verificatie, kwalificatie, readiness en het minimale providergegevenscontract zijn vastgesteld; er is nog niets geïmplementeerd.
    - **Module 6A.1 — Ontwerp Decision Engine — afgerond en product-ownergeaccepteerd.** Het deterministische model voor expliciet gestarte selectie, kandidaatverzameling, knock-outs, integer scoring, tie-breakers, fairness, Confidence Check, snapshots en Decision Report is vastgesteld; er is niets geïmplementeerd.
@@ -46,6 +50,8 @@
 - **M7D.3 — Offerteplaats claimen — technisch opgeleverd; handmatige product-owneracceptatie open.** Een actieve interesse kan door provider-OWNER of -ADMIN transactioneel worden omgezet in één van maximaal drie exclusieve offerteplaatsen. Alleen na claim worden minimale opdrachtgevercontactgegevens zichtbaar. Offerte-inhoud, credits, berichten, vrijgave en verval blijven uitgeschakeld.
 
 Latere modules behandelen credits, Mollie-betalingen, berichten, verder beheer en productievoorbereiding. Verdere AI-intake en AI-matching volgen pas na afzonderlijk ontwerp.
+
+**Contextuele kennisroutes — technisch opgeleverd; handmatige acceptatie open.** De negen publieke kennisdetailpagina's dragen via een centrale catalogus een gevalideerde, corrigeerbare context naar Advieswijzer en opdrachtintake. De context wordt bij publicatie immutable vastgelegd. Analytics en matching gebruiken deze context nog niet.
 
 Bewust open en niet als afgerond geregistreerd zijn daarnaast contentbeheer/KIP en verdere optimalisatie van de Advieswijzer; deze onderwerpen blijven geparkeerd tot een afzonderlijke product- en moduleopdracht.
 

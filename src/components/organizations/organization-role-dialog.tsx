@@ -3,13 +3,12 @@
 import { useActionState, useRef } from 'react'
 import type { OrganizationRoleActionState } from '@/app/organisatie/gebruikers/actions'
 import { Button, buttonBaseStyles, buttonVariantStyles } from '@/components/ui/button'
+import { organizationRoleLabels } from '@/lib/presentation/platform-labels'
 
 type RoleAction = (
   state: OrganizationRoleActionState,
   formData: FormData,
 ) => Promise<OrganizationRoleActionState>
-
-const labels = { ADMIN: 'Beheerder', MEMBER: 'Lid' } as const
 
 export function OrganizationRoleDialog({
   displayName,
@@ -50,7 +49,7 @@ export function OrganizationRoleDialog({
         <form action={formAction} className="p-6 sm:p-8">
           <h2 id={`role-${subjectUserId}-title`} className="text-xl font-bold text-brand-dark">Rol wijzigen</h2>
           <p className="mt-3 break-words text-sm text-text-secondary">
-            U wijzigt de rol van {displayName} van <strong>{labels[currentRole]}</strong> naar <strong>{labels[newRole]}</strong>.
+            U wijzigt de rol van {displayName} van <strong>{organizationRoleLabels[currentRole]}</strong> naar <strong>{organizationRoleLabels[newRole]}</strong>.
           </p>
           <p className="mt-3 text-sm text-text-secondary">
             Alle actieve sessies worden direct beëindigd. De gebruiker moet opnieuw inloggen met de actuele bevoegdheden.

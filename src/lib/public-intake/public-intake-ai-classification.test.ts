@@ -117,4 +117,56 @@ describe('Public Intake AI-classificatiehandoff', () => {
       answers: [],
     })
   })
+
+  it('gebruikt overeenkomende kenniscontext begrensd bij een lage AI-uitkomst', async () => {
+    mocks.classify.mockResolvedValue({
+      classification: {
+        summary: 'U wilt weten wanneer u een bedrijfsarts moet inschakelen.',
+        primarySubject: 'UNKNOWN',
+        secondarySubjects: [],
+        confidence: 'LOW',
+        alternatives: [],
+      },
+      fallbackUsed: false,
+      fallbackReason: null,
+      providerStatusCode: null,
+    })
+
+    const result = await enrichPublicIntakeDraftWithAIClassification({
+      ...draft,
+      originalInput: 'Wij willen weten wanneer wij een bedrijfsarts moeten inschakelen.',
+      knowledgeContext: {
+        id: 'OCCUPATIONAL_PHYSICIAN',
+        version: 1,
+        sourceRoute: '/kenniscentrum/wanneer-bedrijfsarts-inschakelen',
+        shortLabel: 'Bedrijfsarts',
+        title: 'De bedrijfsarts inschakelen',
+        suggestedCategory: 'OCCUPATIONAL_HEALTH',
+      },
+    } as PublicIntakeDraftView)
+
+    expect(result.aiClassification).toMatchObject({
+      primarySubject: 'OCCUPATIONAL_HEALTH',
+      confidence: 'MEDIUM',
+    })
+  })
+
+  it('laat een bekende tegenstrijdige AI-uitkomst voorgaan op kenniscontext', async () => {
+    const result = await enrichPublicIntakeDraftWithAIClassification({
+      ...draft,
+      knowledgeContext: {
+        id: 'OCCUPATIONAL_PHYSICIAN',
+        version: 1,
+        sourceRoute: '/kenniscentrum/wanneer-bedrijfsarts-inschakelen',
+        shortLabel: 'Bedrijfsarts',
+        title: 'De bedrijfsarts inschakelen',
+        suggestedCategory: 'OCCUPATIONAL_HEALTH',
+      },
+    } as PublicIntakeDraftView)
+
+    expect(result.aiClassification).toMatchObject({
+      primarySubject: 'HAZARDOUS_SUBSTANCES',
+      confidence: 'HIGH',
+    })
+  })
 })

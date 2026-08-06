@@ -73,13 +73,7 @@ export const organizationProfileSchema = z.object({
 export const createOrganizationSchema = organizationProfileSchema
   .extend({
     organizationType: organizationTypeSchema,
-    primarySectorId: z.string().uuid('Kies een primaire sector.'),
     acceptedBusinessAccuracy: z.literal('on', { error: 'Bevestig dat de zakelijke gegevens correct zijn.' }),
-  })
-  .superRefine((value, context) => {
-    if (!value.sectorIds.includes(value.primarySectorId)) {
-      context.addIssue({ code: 'custom', path: ['primarySectorId'], message: 'De primaire sector moet ook geselecteerd zijn.' })
-    }
   })
 
 export type OrganizationProfileInput = z.infer<typeof organizationProfileSchema>
@@ -95,7 +89,6 @@ export type OrganizationFormValues = {
   website: string
   employeeCount: string
   sectorIds: string[]
-  primarySectorId: string
   addressLine: string
   postalCode: string
   city: string
@@ -120,7 +113,6 @@ export function organizationFormData(formData: FormData): OrganizationFormValues
     website: stringValue(formData, 'website'),
     employeeCount: stringValue(formData, 'employeeCount'),
     sectorIds: formData.getAll('sectorIds').filter((value): value is string => typeof value === 'string'),
-    primarySectorId: stringValue(formData, 'primarySectorId'),
     addressLine: stringValue(formData, 'addressLine'),
     postalCode: stringValue(formData, 'postalCode'),
     city: stringValue(formData, 'city'),

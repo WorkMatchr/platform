@@ -17,6 +17,8 @@ Uitsluitend een actieve tenant-`OWNER` mag een andere actieve `MEMBER` of `ADMIN
 
 De gebruiker moet actueel `ACTIVE` zijn en de membership moet `ACTIVE` zijn. `OWNER` en `ADMIN` mogen wijzigen; `MEMBER` mag alleen bekijken. `ARCHIVED` is niet toegankelijk en `SUSPENDED` is niet wijzigbaar. Een organizationId uit cookie of formulier wordt altijd gekoppeld aan de actuele gebruiker opgezocht. Fouten onthullen niet of een niet-toegankelijke organisatie bestaat.
 
+Naast rol en tenant valideert iedere domeinservice het accounttype server-side. Alleen `CLIENT` mag intakes en opdrachten aanmaken, beheren en publiceren. Alleen `PROFESSIONAL` mag providerdata beheren, op opdrachten reageren en de creditwallet lezen. Navigatie en dashboards volgen dezelfde claim, maar zijn nooit de beveiligingsgrens. Platformbevoegdheden blijven een afzonderlijke laag en vereisen geen tenantaccounttype.
+
 De dashboardheader, layouts en beschermde Server Components gebruiken per serverrequest dezelfde gecachete `getCurrentUser`- en enkelvoudige organisatiecontext. De server bepaalt de actuele membership en `OWNER`-, `ADMIN`- of `MEMBER`-rol opnieuw; cookie, sessieclaim en clientkeuze spelen geen rol. Reviewer en approver vereisen zowel een expliciete platformpermission als membership van de centrale WorkMatchr-platformorganisatie en mogen geen lid zijn van de beoordeelde provider. Alleen de expliciete auditorrol mag zonder organisatiemembership bestaan. Organisatiebeheerders kunnen geen platformpermissions toekennen.
 
 Platformrollen en organisatierollen zijn verschillende autorisatielagen. Een platformbeheerder krijgt in Module 4B niet automatisch toegang tot organisaties; de toekomstige beheerinterface krijgt afzonderlijke, auditeerbare bevoegdheden.

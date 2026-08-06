@@ -9,7 +9,7 @@ import { requireClientAdviceDossierViewer } from '@/lib/advice-dossiers/advice-d
 import { listAdviceDossiers } from '@/lib/advice-dossiers/advice-dossier-service'
 
 export const metadata: Metadata = {
-  title: 'Mijn adviesdossiers | WorkMatchr',
+  title: 'Adviesdossiers | WorkMatchr',
   robots: { index: false, follow: false },
 }
 export default async function AdviceDossiersPage() {
@@ -24,7 +24,7 @@ export default async function AdviceDossiersPage() {
             Uw account
           </p>
           <h1 className="mt-1 text-heading-2 font-bold text-brand-dark">
-            Mijn adviesdossiers
+            Adviesdossiers
           </h1>
           <p className="mt-2 max-w-3xl text-text-secondary">
             Hier vindt u de vastgelegde adviezen bij uw afgeronde

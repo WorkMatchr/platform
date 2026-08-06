@@ -6,7 +6,8 @@ import { requireProviderDossierContext } from '@/lib/providers/provider-onboardi
 import type { ProviderDossierSection } from '@/generated/prisma/client'
 
 const groups: Array<{ label: string; href: string; matchPaths: string[]; sections: ProviderDossierSection[] }> = [
-  { label: 'Dienstverlenersprofiel', href: '/aanbiedersdossier', matchPaths: ['/aanbiedersdossier'], sections: [] },
+  { label: 'Overzicht', href: '/aanbiedersdossier', matchPaths: ['/aanbiedersdossier'], sections: [] },
+  { label: 'Dienstverlenersprofiel', href: '/aanbiedersdossier/profiel', matchPaths: ['/aanbiedersdossier/profiel', '/aanbiedersdossier/voorvertoning'], sections: ['ORGANIZATION', 'CAPABILITIES'] },
   { label: 'Bedrijfsgegevens', href: '/aanbiedersdossier/bedrijfsgegevens', matchPaths: ['/aanbiedersdossier/bedrijfsgegevens'], sections: ['ORGANIZATION'] },
   { label: 'Diensten en ervaring', href: '/aanbiedersdossier/diensten-en-ervaring', matchPaths: ['/aanbiedersdossier/diensten-en-ervaring', '/aanbiedersdossier/diensten', '/aanbiedersdossier/sectorervaring'], sections: ['CAPABILITIES', 'SECTOR_EXPERIENCE'] },
   { label: 'Werkgebied', href: '/aanbiedersdossier/werkgebied', matchPaths: ['/aanbiedersdossier/werkgebied'], sections: ['WORK_AREA'] },

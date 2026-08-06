@@ -8,7 +8,7 @@ import { AssignmentServiceError } from '@/lib/assignments/assignment-errors'
 import { getAssignmentEditView } from '@/lib/assignments/assignment-query-service'
 import { requireOrganizationMembership } from '@/lib/organizations/organization-authorization'
 
-export const metadata: Metadata = { title: 'Conceptopdracht bewerken | WorkMatchr' }
+export const metadata: Metadata = { title: 'Opdracht bewerken | WorkMatchr' }
 
 export default async function AssignmentEditPage({ params }: { params: Promise<{ assignmentId: string }> }) {
   const { assignmentId } = await params
@@ -23,8 +23,8 @@ export default async function AssignmentEditPage({ params }: { params: Promise<{
   }
   return (
       <Section spacing="compact" containerSize="narrow">
-        <Heading as="h1" size="h2">Conceptopdracht bewerken</Heading>
-        <p className="mt-3 text-text-secondary">Pas alleen de zakelijke opdrachtgegevens aan. De oorspronkelijke intake en antwoorden blijven ongewijzigd.</p>
+        <Heading as="h1" size="h2">Opdracht bewerken</Heading>
+        <p className="mt-3 text-text-secondary">Pas alleen de zakelijke opdrachtgegevens aan. De oorspronkelijke hulpvraag en antwoorden blijven ongewijzigd.</p>
         <div className="mt-8 rounded-card border border-border bg-surface p-6 sm:p-8">
           <AssignmentEditForm action={updateAssignmentAction} assignment={assignment} />
         </div>

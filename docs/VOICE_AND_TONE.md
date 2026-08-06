@@ -1,5 +1,7 @@
 # Schrijfstijl WorkMatchr
 
+> Dit document werkt de schrijfstijl uit binnen de bindende [WorkMatchr Product Constitution](PRODUCT_CONSTITUTION.md). Bij een inhoudelijk conflict is de Product Constitution leidend voor product- en UX-copy.
+
 ## Onze toon
 
 WorkMatchr schrijft:
@@ -14,7 +16,7 @@ WorkMatchr schrijft:
 
 ## Aanspreekvorm
 
-Gebruik in zichtbare teksten consequent `U` en `Uw`.
+Gebruik in zichtbare teksten consequent `u` en `uw` binnen lopende zinnen. Gebruik `U` of `Uw` alleen aan het begin van een zin of bewust aan het begin van een losse titel of label.
 
 ## Richtlijnen
 

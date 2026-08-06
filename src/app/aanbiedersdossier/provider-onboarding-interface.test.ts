@@ -33,7 +33,8 @@ describe('provider-onboardinginterface', () => {
     const evidence = readFileSync(route('bewijsstukken'), 'utf8')
     expect(actions).toContain('requireProviderDossierContext')
     expect(actions).toContain('De wijziging kon niet veilig worden opgeslagen.')
-    expect(evidence).toContain('Upload is productie-fail-closed')
+    expect(evidence).toContain('Bewijsstukken uploaden is nog niet beschikbaar')
+    expect(evidence).not.toContain('productie-fail-closed')
     expect(evidence).not.toContain('type="file"')
   })
 
@@ -62,10 +63,11 @@ describe('provider-onboardinginterface', () => {
     const forms = readFileSync(join(root, 'src', 'components', 'providers', 'provider-onboarding-forms.tsx'), 'utf8')
     const service = readFileSync(join(root, 'src', 'lib', 'providers', 'provider-professional-service.ts'), 'utf8')
     expect(forms).toContain('>Kwalificatie</label>')
-    expect(forms).toContain('>Naam</label>')
-    expect(forms).toContain('>Gecertificeerd</legend>')
-    expect(forms).not.toContain('>Uitgiftedatum</label>')
-    expect(forms).not.toContain('>Geldig tot</label>')
+    expect(forms).toContain('>Opleider of uitgevende instantie</label>')
+    expect(forms).toContain('>Betreft dit een certificaat?</legend>')
+    expect(forms).toContain('>Behaald op <span')
+    expect(forms).toContain('>Geldig tot <span')
+    expect(forms).toContain('door u opgegeven')
     expect(forms).toContain('name="capabilityIds"')
     expect(forms).toContain("form.values('capabilityIds')")
     expect(service).toContain("verificationLevel: 'SELF_DECLARED'")
@@ -138,6 +140,33 @@ describe('provider-onboardinginterface', () => {
       const source = readFileSync(join(root, 'src', 'lib', 'providers', file), 'utf8')
       expect(source, file).not.toContain('Promise.all')
     }
+  })
+
+  it('start op het dienstverlenersprofiel geen drie interactieve readtransacties parallel', () => {
+    const page = readFileSync(route('profiel'), 'utf8')
+    const editor = readFileSync(join(root, 'src', 'lib', 'providers', 'provider-decision-profile-service.ts'), 'utf8')
+    const options = readFileSync(join(root, 'src', 'lib', 'providers', 'provider-onboarding-query-service.ts'), 'utf8')
+    const editorRead = editor.slice(editor.indexOf('export async function getProviderProfileEditor'), editor.indexOf('export async function getAssignmentProviderDecisionProfile'))
+
+    expect(editorRead).not.toContain('$transaction')
+    expect(options).not.toContain('$transaction')
+    expect(page.indexOf('await getProviderDossierDashboard')).toBeLessThan(page.indexOf('await Promise.all'))
+    expect(page).toContain('lg:max-h-[calc(100vh-3rem)]')
+    expect(page).toContain('lg:overflow-y-auto')
+    expect(page).toContain('Lidmaatschappen')
+    expect(page).toContain('Registraties')
+  })
+
+  it('beheert profielteksten op één plek en gebruikt begrijpelijke organisatierollen', () => {
+    const profile = readFileSync(route('profiel'), 'utf8')
+    const organization = readFileSync(route('bedrijfsgegevens'), 'utf8')
+    const header = readFileSync(join(root, 'src', 'components', 'providers', 'provider-page-header.tsx'), 'utf8')
+
+    expect(profile).toContain('Introductie, omschrijving en werkwijze')
+    expect(organization).not.toContain('<ProviderProfileForm')
+    expect(organization).toContain('Dienstverlenersprofiel openen')
+    expect(header).not.toMatch(/OWNER|ADMIN|MEMBER/)
+    expect(profile).toContain('eigenaar of beheerder')
   })
 
   it('laadt de controlepagina eenmaal en invalideert providerdata na een reviewstatuswijziging', () => {

@@ -25,10 +25,10 @@ describe('publieke platformpagina’s', () => {
     })
   }
 
-  it('maakt de functionele zoekinterface eerlijk herkenbaar', () => {
+  it('toont het kennisoverzicht zonder publieke zoekinterface', () => {
     const html = renderToStaticMarkup(<KnowledgeCenterPage />)
-    expect(html).toContain('Zoeken wordt geladen')
     expect(html).toContain('Gepubliceerde kennisartikelen')
+    expect(html).not.toContain('Zoeken in publieke informatie')
     expect(html).not.toMatch(/populair|trending/i)
   })
 

@@ -54,18 +54,51 @@ export function AssignmentEditForm({
           <FieldError id="desiredStartDate-error" message={error('desiredStartDate')} />
         </div>
       </div>
-      <div>
-        <label htmlFor="locationId" className="font-semibold">Locatie <span className="font-normal text-text-secondary">(optioneel bij volledig op afstand)</span></label>
+      <fieldset className="space-y-5 rounded-card border border-border p-5">
+        <legend className="px-1 font-semibold">Locatie</legend>
+        <div>
+          <label htmlFor="locationType" className="font-semibold">Locatievorm</label>
+          <select id="locationType" name="locationType" defaultValue={value('locationType', assignment.locationType)} className={inputClass('locationType')} aria-invalid={invalid('locationType')} aria-describedby={invalid('locationType') ? 'locationType-error' : 'locationType-help'}>
+            <option value="REGISTERED">Bestaande organisatielocatie</option>
+            <option value="OTHER">Andere locatie</option>
+            <option value="MULTIPLE">Meerdere locaties</option>
+            <option value="REMOTE">Volledig op afstand</option>
+            <option value="UNKNOWN">Locatie nog niet bekend</option>
+          </select>
+          <p id="locationType-help" className="mt-1 text-sm text-text-secondary">Alleen de gegevens die bij de gekozen locatievorm horen worden opgeslagen.</p>
+          <FieldError id="locationType-error" message={error('locationType')} />
+        </div>
+        <div>
+        <label htmlFor="locationId" className="font-semibold">Bestaande organisatielocatie</label>
         <select id="locationId" name="locationId" defaultValue={value('locationId', assignment.locationId ?? '')} className={inputClass('locationId')} aria-invalid={invalid('locationId')} aria-describedby={invalid('locationId') ? 'locationId-error' : undefined}>
           <option value="">Geen locatie gekozen</option>
           {assignment.locations.map((location) => <option key={location.id} value={location.id}>{location.label}</option>)}
         </select>
         <FieldError id="locationId-error" message={error('locationId')} />
-      </div>
-      <label className="flex min-h-11 items-start gap-3 rounded-control border border-border p-4">
-        <input type="checkbox" name="allowsRemoteWork" className="mt-1" defaultChecked={typeof state.values?.allowsRemoteWork === 'boolean' ? state.values.allowsRemoteWork : assignment.allowsRemoteWork} />
-        <span>Deze opdracht kan geheel of gedeeltelijk op afstand worden uitgevoerd.</span>
-      </label>
+        </div>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label htmlFor="locationCity" className="font-semibold">Plaats <span className="font-normal text-text-secondary">(bij andere locatie)</span></label>
+            <input id="locationCity" name="locationCity" maxLength={120} defaultValue={value('locationCity', assignment.locationCity ?? '')} className={inputClass('locationCity')} aria-invalid={invalid('locationCity')} aria-describedby={invalid('locationCity') ? 'locationCity-error' : undefined} />
+            <FieldError id="locationCity-error" message={error('locationCity')} />
+          </div>
+          <div>
+            <label htmlFor="locationRegion" className="font-semibold">Regio <span className="font-normal text-text-secondary">(optioneel)</span></label>
+            <input id="locationRegion" name="locationRegion" maxLength={120} defaultValue={value('locationRegion', assignment.locationRegion ?? '')} className={inputClass('locationRegion')} aria-invalid={invalid('locationRegion')} aria-describedby={invalid('locationRegion') ? 'locationRegion-error' : undefined} />
+            <FieldError id="locationRegion-error" message={error('locationRegion')} />
+          </div>
+        </div>
+        <div>
+          <label htmlFor="locationCount" className="font-semibold">Aantal locaties <span className="font-normal text-text-secondary">(optioneel bij meerdere locaties)</span></label>
+          <input id="locationCount" name="locationCount" type="number" min="1" max="10000" defaultValue={value('locationCount', assignment.locationCount?.toString() ?? '')} className={inputClass('locationCount')} aria-invalid={invalid('locationCount')} aria-describedby={invalid('locationCount') ? 'locationCount-error' : undefined} />
+          <FieldError id="locationCount-error" message={error('locationCount')} />
+        </div>
+        <div>
+          <label htmlFor="locationDescription" className="font-semibold">Toelichting op de locatie <span className="font-normal text-text-secondary">(optioneel)</span></label>
+          <textarea id="locationDescription" name="locationDescription" rows={3} maxLength={1000} defaultValue={value('locationDescription', assignment.locationDescription ?? '')} className={inputClass('locationDescription')} aria-invalid={invalid('locationDescription')} aria-describedby={invalid('locationDescription') ? 'locationDescription-error' : undefined} />
+          <FieldError id="locationDescription-error" message={error('locationDescription')} />
+        </div>
+      </fieldset>
       <p className="text-sm text-text-secondary">Wijzigingen gelden alleen voor het opdrachtconcept. De oorspronkelijke intake blijft ongewijzigd en bewaard.</p>
       <div className="flex flex-col-reverse gap-3 sm:flex-row">
         <LinkButton href={`/opdrachten/${assignment.id}`} variant="outline">Annuleren</LinkButton>

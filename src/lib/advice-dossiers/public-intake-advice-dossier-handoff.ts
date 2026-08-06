@@ -25,9 +25,8 @@ export async function attachAdviceDossierForCurrentUser(
     !membership ||
     membership.status !== 'ACTIVE' ||
     membership.organization.status !== 'ACTIVE' ||
-    !['CLIENT', 'BOTH'].includes(
-      membership.organization.organizationType,
-    )
+    context.user.accountType !== 'CLIENT' ||
+    membership.organization.organizationType !== 'CLIENT'
   ) {
     return { ...draft, adviceDossier: null }
   }

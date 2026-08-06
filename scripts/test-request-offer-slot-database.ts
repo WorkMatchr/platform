@@ -69,6 +69,9 @@ async function main() {
   const offerSlotService = await import(
     '../src/lib/requests/request-offer-slot-service'
   )
+  const reliabilityService = await import(
+    '../src/lib/marketplace/marketplace-reliability-service'
+  )
   const prisma = getPrisma()
 
   try {
@@ -198,13 +201,53 @@ async function main() {
       }))
     }
 
+    async function fundActors(
+      actors: Array<{ organizationId: string; userId: string }>,
+      credits = 100,
+    ) {
+      const uniqueActors = new Map(actors.map((actor) => [actor.organizationId, actor]))
+      for (const actor of uniqueActors.values()) {
+        const account = await prisma.creditAccount.upsert({
+          where: { organizationId: actor.organizationId },
+          create: {
+            organizationId: actor.organizationId,
+          },
+          update: {},
+        })
+        const ledger = await prisma.creditTransaction.aggregate({
+          where: { creditAccountId: account.id },
+          _sum: { totalDelta: true, reservedDelta: true },
+        })
+        const available =
+          (ledger._sum.totalDelta ?? 0) - (ledger._sum.reservedDelta ?? 0)
+        if (available < credits) {
+          const amount = credits - available
+          const idempotencyKey = `TEST-FUND:${actor.organizationId}:${credits}:${available}`
+          await prisma.creditTransaction.create({
+            data: {
+              creditAccountId: account.id,
+              type: 'ADMIN_GRANT',
+              amount,
+              totalDelta: amount,
+              reservedDelta: 0,
+              balanceAfter: available + amount,
+              reason: 'Fictief beginsaldo voor de offerteplaatstest.',
+              createdByUserId: actor.userId,
+              idempotencyKey,
+            },
+          })
+        }
+      }
+    }
+
     const sequentialRequest = await publishTestRequest(
       1,
-      new Date('2026-07-30T12:00:00Z'),
+      new Date('2026-08-01T12:00:00Z'),
     )
     const sequentialActors = await actorsForRequest(
       sequentialRequest.id,
     )
+    await fundActors(sequentialActors)
     for (const actor of sequentialActors.slice(0, 4)) {
       await interestService.registerRequestInterest({
         actor,
@@ -228,21 +271,25 @@ async function main() {
     const first = await offerSlotService.claimRequestOfferSlot({
       actor: sequentialActors[0]!,
       requestId: sequentialRequest.id,
-      at: new Date('2026-07-30T12:10:00Z'),
+      at: new Date('2026-08-01T12:10:00Z'),
     })
     const second = await offerSlotService.claimRequestOfferSlot({
       actor: sequentialActors[1]!,
       requestId: sequentialRequest.id,
-      at: new Date('2026-07-30T12:11:00Z'),
+      at: new Date('2026-08-01T12:11:00Z'),
     })
     const third = await offerSlotService.claimRequestOfferSlot({
       actor: sequentialActors[2]!,
       requestId: sequentialRequest.id,
-      at: new Date('2026-07-30T12:12:00Z'),
+      at: new Date('2026-08-01T12:12:00Z'),
     })
     assert.deepEqual(
       [first.slotNumber, second.slotNumber, third.slotNumber],
       [1, 2, 3],
+    )
+    assert.deepEqual(
+      [first.creditAmount, second.creditAmount, third.creditAmount],
+      [30, 30, 30],
     )
     await expectCode(
       () =>
@@ -267,6 +314,20 @@ async function main() {
       }),
       1,
     )
+    assert.equal(
+      await prisma.creditTransaction.count({
+        where: {
+          requestId: sequentialRequest.id,
+          type: 'PARTICIPATION_PAYMENT',
+        },
+      }),
+      3,
+    )
+    const fourthAccount = await prisma.creditAccount.findUniqueOrThrow({
+      where: { organizationId: sequentialActors[3]!.organizationId },
+    })
+    assert.equal(fourthAccount.availableBalance, 100)
+    assert.equal(fourthAccount.spentBalance, 0)
 
     const requesterAfterClaim =
       await interestService.getEligibleRequestForProvider(
@@ -392,13 +453,76 @@ async function main() {
       }),
     )
 
+    const withdrawal = await reliabilityService.withdrawPublishedRequest({
+      userId: viewer.userId,
+      organizationId: viewer.organizationId,
+      values: {
+        requestId: sequentialRequest.id,
+        reason: 'NO_LONGER_NEEDED',
+        confirmed: true,
+      },
+      at: new Date('2026-08-01T12:30:00Z'),
+    })
+    assert.equal(withdrawal.refundedCredits, 69)
+    assert.equal(withdrawal.idempotent, false)
+    const repeatedWithdrawal =
+      await reliabilityService.withdrawPublishedRequest({
+        userId: viewer.userId,
+        organizationId: viewer.organizationId,
+        values: {
+          requestId: sequentialRequest.id,
+          reason: 'NO_LONGER_NEEDED',
+          confirmed: true,
+        },
+        at: new Date('2026-08-01T12:31:00Z'),
+      })
+    assert.equal(repeatedWithdrawal.refundedCredits, 69)
+    assert.equal(repeatedWithdrawal.idempotent, true)
+    assert.equal(
+      await prisma.creditTransaction.count({
+        where: {
+          requestId: sequentialRequest.id,
+          type: 'WITHDRAWAL_REFUND',
+        },
+      }),
+      3,
+    )
+    const refundedAccounts = await prisma.creditAccount.findMany({
+      where: {
+        organizationId: {
+          in: sequentialActors
+            .slice(0, 3)
+            .map((actor) => actor.organizationId),
+        },
+      },
+    })
+    assert.equal(
+      refundedAccounts.every(
+        (account) =>
+          account.availableBalance === 93 && account.spentBalance === 7,
+      ),
+      true,
+    )
+    assert.equal(
+      await prisma.marketplaceReliabilityEvent.count({
+        where: {
+          requestId: sequentialRequest.id,
+          type: 'WITHDRAWN_AFTER_PARTICIPATION',
+          participantCount: 3,
+          totalRefundedCredits: 69,
+        },
+      }),
+      1,
+    )
+
     const concurrentRequest = await publishTestRequest(
       2,
-      new Date('2026-07-30T13:00:00Z'),
+      new Date('2026-08-01T13:00:00Z'),
     )
     const concurrentActors = (
       await actorsForRequest(concurrentRequest.id)
     ).slice(0, 4)
+    await fundActors(concurrentActors)
     const providerAdmin = await prisma.user.create({
       data: {
         email: 'm7d3-admin@example.invalid',
@@ -430,7 +554,7 @@ async function main() {
         offerSlotService.claimRequestOfferSlot({
           actor,
           requestId: concurrentRequest.id,
-          at: new Date('2026-07-30T13:10:00Z'),
+          at: new Date('2026-08-01T13:10:00Z'),
         }),
       ),
     )
@@ -464,12 +588,34 @@ async function main() {
       concurrentSlots.every((slot) => slot.events.length === 1),
       true,
     )
+    assert.equal(
+      await prisma.creditTransaction.count({
+        where: {
+          requestId: concurrentRequest.id,
+          type: 'PARTICIPATION_PAYMENT',
+        },
+      }),
+      3,
+    )
+    const concurrentAccounts = await prisma.creditAccount.findMany({
+      where: {
+        organizationId: {
+          in: concurrentActors.map((actor) => actor.organizationId),
+        },
+      },
+    })
+    assert.deepEqual(
+      concurrentAccounts
+        .map((account) => account.availableBalance)
+        .sort((a, b) => a - b),
+      [70, 70, 70, 100],
+    )
 
     await prisma.request.update({
       where: { id: concurrentRequest.id },
       data: {
         status: 'CANCELLED',
-        archivedAt: new Date('2026-07-30T13:20:00Z'),
+        archivedAt: new Date('2026-08-01T13:20:00Z'),
       },
     })
     const unclaimedActor = concurrentActors.find(
@@ -490,11 +636,16 @@ async function main() {
 
     assert.equal(await prisma.quote.count(), 0)
     assert.equal(await prisma.creditReservation.count(), 0)
-    assert.equal(await prisma.creditTransaction.count(), 0)
+    assert.equal(
+      await prisma.creditTransaction.count({
+        where: { type: 'PARTICIPATION_PAYMENT' },
+      }),
+      6,
+    )
     assert.equal(await prisma.marketplaceMessage.count(), 0)
 
     console.log(
-      'M7D.3-integriteit: slot 1-3, transactionele vierde weigering, parallelle claims, privacy, rollen, tenantisolatie en append-only events geslaagd.',
+      'Marketplace-integriteit: slot 1-3, atomair credits betalen, 75%-teruggave, idempotente intrekking, transactionele vierde weigering, parallelle claims, privacy, rollen, tenantisolatie en append-only events geslaagd.',
     )
   } finally {
     await prisma.$disconnect()

@@ -1,5 +1,9 @@
 # Authenticatie WorkMatchr
 
+## Platformbeheerderuitnodiging
+
+Platformtoegang gebruikt dezelfde Better Auth-accountactivatie als organisatie-uitnodigingen, maar vereist daarnaast een actieve, niet-verlopen `PlatformAdminInvitation` voor `WORKMATCHR_PLATFORM`. De platformrol wordt pas bij geldige acceptatie geactiveerd. Opnieuw verzenden maakt oudere resettokens ongeldig. De laatste platformeigenaar, zelfblokkering en onbevoegde uitnodigingen worden server-side geweigerd.
+
 ## Scope Module 4A
 
 Module 4A levert persoonlijke accounts met Better Auth 1.6.23: registratie, verplichte e-mailverificatie, login, logout, wachtwoordherstel, databasegebaseerde sessies en een beveiligde accountpagina. Module 4B bouwt hierop voort met afzonderlijke organisatie- en membershipautorisatie; Better Auth blijft de enige sessiebron.
@@ -11,11 +15,22 @@ Module 4A levert persoonlijke accounts met Better Auth 1.6.23: registratie, verp
 - Eén gebruikersbron: het bestaande `User`-model.
 - Better Auths technische veld `name` is gemapt op `User.displayName`.
 - `platformRole` en `status` zijn server-owned additional fields.
+- `accountType` is bij normale registratie verplicht en onderscheidt `CLIENT` (Bedrijf) van `PROFESSIONAL` (Professional). Alleen platformaccounts mogen dit veld leeg laten.
 - Sessies staan in `Session`; credentials staan gehasht in `Account`.
 - `Verification` bewaart kortlevende verificatie- en resettokens.
 - `RateLimit` bewaart gedeelde databasecounters voor authendpoints.
 - `getCurrentUser` is de request-scoped, server-side bron voor de gevalideerde Better Auth-gebruiker; `requireUser`, organisatiecontext, layouts, headers en beschermde Server Components bouwen op deze bron voort.
 - De rootheader kiest server-side tussen de publieke header en dashboardheader. Daardoor kan een ingelogde gebruiker tijdens hydratatie of navigatie nooit tijdelijk de loginactie zien.
+
+### Lokale testaccountwisselaar
+
+De testaccountwisselaar gebruikt geen tweede authenticatiesysteem en maakt geen nieuwe sessie of cookie. De bestaande Better Auth-sessie blijft gekoppeld aan de ingelogde platformbeheerder als actor. Alleen buiten productie en met `ENABLE_TEST_ACCOUNT_SWITCHER=true` mogen `Session.impersonatedUserId` en `Session.impersonationStartedAt` tijdelijk een effectieve testgebruiker aanwijzen.
+
+`getCurrentAuthenticationContext` levert actor en effectieve gebruiker uit dezelfde databasesessie. Alle bestaande server-side autorisatiehelpers gebruiken de effectieve gebruiker; start- en stopaudit gebruikt altijd de oorspronkelijke actor. Alleen actieve, geverifieerde accounts onder `example.invalid` of een subdomein daarvan zijn selecteerbaar. Geneste wisselingen, verlopen sessies en gewijzigde of geblokkeerde doelen worden fail-closed behandeld. Logout beëindigt de oorspronkelijke Better Auth-sessie.
+
+De wisselaar is alleen zichtbaar voor een actieve `PlatformRole.ADMIN` met een actieve membership bij de actieve `WORKMATCHR_PLATFORM`-organisatie. Na starten blijft op iedere route een testmodusbanner zichtbaar. Stoppen verwijdert de effectieve gebruiker transactioneel uit de sessie en keert terug naar `/platformbeheer`.
+
+De developmentconfiguratie staat standaard uit in `.env.example` en moet lokaal expliciet worden geactiveerd. Een bevoegde platformbeheerder ziet buiten productie een beperkte diagnosemelding wanneer de featureflag uitstaat of de veilige accountquery niet beschikbaar is. Gewone gebruikers ontvangen deze diagnose nooit en in productie wordt de volledige wisselaar, inclusief diagnose, niet gerenderd.
 
 ## Geaccepteerde doelarchitectuur ADR-013
 
@@ -27,7 +42,7 @@ Reviewer en approver zijn in de doelarchitectuur lid van de server-side aangewez
 
 ### Registratie en verificatie
 
-Registratie normaliseert e-mail naar lowercase en valideert server-side naam, e-mail, wachtwoordlengte, bevestiging en juridisch akkoord. Nieuwe gebruikers krijgen `platformRole=USER` en `status=INVITED`. Better Auth verstuurt een eenmalige verificatielink van één uur. Na verificatie wordt `emailVerified=true` en `status=ACTIVE`; automatisch inloggen is uitgeschakeld.
+Registratie normaliseert e-mail naar lowercase en valideert server-side accounttype, naam, e-mail, wachtwoordlengte, bevestiging en juridisch akkoord. Nieuwe gebruikers kiezen **Bedrijf** of **Professional**, krijgen `platformRole=USER` en `status=INVITED`. Better Auth verstuurt een eenmalige verificatielink van één uur. Na verificatie wordt `emailVerified=true` en `status=ACTIVE`; automatisch inloggen is uitgeschakeld. Het accounttype bepaalt daarna het vaste tenantorganisatietype en kan niet via de client worden omzeild.
 
 ### Login en logout
 

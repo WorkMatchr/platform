@@ -1,0 +1,112 @@
+{
+  "schemaVersion": "1.0",
+  "source": {
+    "code": "AI-06",
+    "title": "Werken met kankerverwekkende stoffen en processen",
+    "publisher": "Sdu Uitgevers",
+    "publicationDate": "2000-01-01",
+    "edition": "Tweede herziene druk",
+    "language": "nl",
+    "jurisdiction": "NL",
+    "sourceType": "AI_SHEET",
+    "sourceFormat": "PDF",
+    "copyrightClassification": "RESTRICTED_REFERENCE_ONLY",
+    "authorityLevel": "PROFESSIONAL_GUIDANCE",
+    "temporalStatus": "HISTORICAL",
+    "sourceFamily": "SZW-AI-BLADEN",
+    "independenceGroup": "SZW-AI-BLADEN",
+    "isPrimarySource": false,
+    "notes": "Historische bron uit 2000; actualiteit en juridische geldigheid moeten afzonderlijk worden beoordeeld."
+  },
+  "sourceVersion": {
+    "externalKey": "ai-06:v1",
+    "versionLabel": "Tweede herziene druk",
+    "publicationDate": "2000-01-01",
+    "checksum": "7c4f4973a1ae47cc5ef596b5660fbd45b319e47c9d7d06d3bb75687743d5329a",
+    "extractionStatus": "EXTRACTED",
+    "reviewStatus": "REVIEW_REQUIRED"
+  },
+  "topics": [
+    {
+      "externalKey": "ai-06:topic:carcinogens",
+      "slug": "historisch-kankerverwekkende-stoffen-processen",
+      "title": "Kankerverwekkende stoffen en processen (historisch)",
+      "description": "Historische kandidaat-kennis over herkenning, blootstelling en beheersing van kankerverwekkende stoffen en processen.",
+      "domain": "HAZARDOUS_SUBSTANCES"
+    }
+  ],
+  "fragments": [
+    { "externalKey": "ai-06:f1", "sourceVersionKey": "ai-06:v1", "pageFrom": 8, "sectionPath": "2 Risico-inventarisatie", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-06:f2", "sourceVersionKey": "ai-06:v1", "pageFrom": 13, "sectionPath": "3 Voorkomen van blootstelling", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-06:f3", "sourceVersionKey": "ai-06:v1", "pageFrom": 15, "sectionPath": "4 Beoordeling van de blootstelling", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-06:f4", "sourceVersionKey": "ai-06:v1", "pageFrom": 19, "sectionPath": "4.7 Lijst van blootgestelde werknemers", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-06:f5", "sourceVersionKey": "ai-06:v1", "pageFrom": 21, "sectionPath": "5 Maatregelen ter beheersing van de blootstelling", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-06:f6", "sourceVersionKey": "ai-06:v1", "pageFrom": 25, "sectionPath": "6 Algemene en individuele hygiënische maatregelen", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-06:f7", "sourceVersionKey": "ai-06:v1", "pageFrom": 28, "sectionPath": "8 Onvoorziene toename van blootstelling", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-06:f8", "sourceVersionKey": "ai-06:v1", "pageFrom": 29, "sectionPath": "8.4 Werkwijze bij calamiteiten", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-06:f9", "sourceVersionKey": "ai-06:v1", "pageFrom": 33, "sectionPath": "10 Arbeidsgezondheidskundig onderzoek", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-06:f10", "sourceVersionKey": "ai-06:v1", "pageFrom": 35, "sectionPath": "11 Voorlichting en onderricht", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true }
+  ],
+  "claims": [
+    { "externalKey": "ai-06:c1", "topicKey": "ai-06:topic:carcinogens", "claimType": "INSPECTION_POINT", "statement": "Een inventarisatie kan stoffen, mengsels, processen, werksituaties en betrokken werknemers in kaart brengen voordat blootstelling wordt beoordeeld.", "applicability": "Historische inventarisatieaanpak; actuele verplichtingen en stoffenlijsten afzonderlijk toetsen.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-06:c2", "topicKey": "ai-06:topic:carcinogens", "claimType": "CONTROL_MEASURE", "statement": "Vervanging door een minder gevaarlijke stof of werkwijze heeft in de beschreven beheersaanpak voorrang wanneer dit technisch uitvoerbaar is.", "applicability": "Historische bronaanpak; actuele arbeidshygiënische strategie juridisch en technisch valideren.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-06:c3", "topicKey": "ai-06:topic:carcinogens", "claimType": "MEASUREMENT_REQUIREMENT", "statement": "Wanneer blootstelling mogelijk blijft, kan beoordeling van aard, mate en duur nodig zijn om het gezondheidsrisico te bepalen.", "applicability": "Historische beoordelingsmethodiek; actuele meetmethoden en grenswaarden vereisen review.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-06:c4", "topicKey": "ai-06:topic:carcinogens", "claimType": "RECORD_RETENTION", "statement": "De historische bron beschrijft een registratie van werknemers van wie de gezondheid door blootstelling gevaar kan lopen.", "applicability": "Historische registratiecontext; bewaartermijnen, persoonsgegevens en actuele wettelijke grondslag afzonderlijk beoordelen.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-06:c5", "topicKey": "ai-06:topic:carcinogens", "claimType": "CONTROL_MEASURE", "statement": "Een gesloten systeem wordt als voorkeursmaatregel aan de bron beschreven wanneer vervanging niet mogelijk is.", "applicability": "Historische maatregelhiërarchie; technische haalbaarheid en actuele eisen valideren.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-06:c6", "topicKey": "ai-06:topic:carcinogens", "claimType": "PPE_REQUIREMENT", "statement": "Persoonlijke beschermingsmiddelen vormen in de beschreven rangorde een aanvullende of laatste beheerslaag, niet de eerste bronmaatregel.", "applicability": "Historische beschermingsstrategie; keuze en geschiktheid deskundig beoordelen.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-06:c7", "topicKey": "ai-06:topic:carcinogens", "claimType": "CONTROL_MEASURE", "statement": "Hygiënische maatregelen omvatten onder meer beperking van hoeveelheden, blootstellingsduur en het aantal mogelijk blootgestelde werknemers.", "applicability": "Historische beheerscontext; situatiespecifieke invulling vereist.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-06:c8", "topicKey": "ai-06:topic:carcinogens", "claimType": "EMERGENCY_REQUIREMENT", "statement": "Werkprocessen met mogelijke acute blootstelling vragen om vooraf voorbereide signalering, evacuatie, deskundige ondersteuning en noodmiddelen.", "applicability": "Historische calamiteitenaanpak; noodplan afstemmen op actuele risico's en organisatie.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-06:c9", "topicKey": "ai-06:topic:carcinogens", "claimType": "HEALTH_EFFECT", "statement": "De inhoud en frequentie van gezondheidstoezicht kunnen worden afgestemd op de uitkomst van de blootstellingsbeoordeling.", "applicability": "Historische gezondheidskundige context; actuele medische en juridische vereisten valideren.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-06:c10", "topicKey": "ai-06:topic:carcinogens", "claimType": "TRAINING_REQUIREMENT", "statement": "Werknemers hebben begrijpelijke voorlichting en instructie nodig over risico's, veilig werken en handelen bij onvoorziene blootstelling.", "applicability": "Historische voorlichtingscontext; inhoud aanpassen aan actuele stoffen, processen en noodprocedures.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" }
+  ],
+  "citations": [
+    { "claimKey": "ai-06:c1", "sourceVersionKey": "ai-06:v1", "fragmentKey": "ai-06:f1", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-06:c2", "sourceVersionKey": "ai-06:v1", "fragmentKey": "ai-06:f2", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-06:c3", "sourceVersionKey": "ai-06:v1", "fragmentKey": "ai-06:f3", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-06:c4", "sourceVersionKey": "ai-06:v1", "fragmentKey": "ai-06:f4", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-06:c5", "sourceVersionKey": "ai-06:v1", "fragmentKey": "ai-06:f5", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-06:c6", "sourceVersionKey": "ai-06:v1", "fragmentKey": "ai-06:f5", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-06:c7", "sourceVersionKey": "ai-06:v1", "fragmentKey": "ai-06:f6", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-06:c8", "sourceVersionKey": "ai-06:v1", "fragmentKey": "ai-06:f7", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-06:c9", "sourceVersionKey": "ai-06:v1", "fragmentKey": "ai-06:f9", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-06:c10", "sourceVersionKey": "ai-06:v1", "fragmentKey": "ai-06:f10", "supportType": "HISTORICAL_ORIGIN" }
+  ],
+  "relations": [
+    { "externalKey": "ai-06:r1", "from": { "kind": "CLAIM", "key": "ai-06:c2" }, "to": { "kind": "CLAIM", "key": "ai-06:c5" }, "relationType": "PREVENTS", "rationale": "Vervanging gaat in de historische beheersvolgorde vooraf aan beheersing in een gesloten systeem." }
+  ],
+  "rules": [],
+  "calculations": [],
+  "checklists": [],
+  "procedures": [
+    {
+      "code": "AI06_EMERGENCY_POC",
+      "version": 1,
+      "title": "Conceptaanpak onvoorziene blootstelling",
+      "description": "Beknopte interne PoC-procedure op basis van de historische calamiteitenstructuur; niet operationeel of gevalideerd.",
+      "topicKey": "ai-06:topic:carcinogens",
+      "audience": "INTERNAL_REVIEWER",
+      "prerequisites": { "all": [{ "field": "exposureScenarioKnown" }, { "field": "emergencyContactsAvailable" }] },
+      "validationStatus": "UNVALIDATED",
+      "publicationStatus": "DRAFT",
+      "steps": [
+        { "order": 1, "title": "Alarmeer en begrens", "instruction": "Maak de calamiteit kenbaar en voorkom verdere blootstelling volgens het lokale noodplan.", "responsibleRoleCode": "ai06-noodcoordinator", "warningClaimKey": "ai-06:c8" },
+        { "order": 2, "title": "Schakel deskundigheid in", "instruction": "Waarschuw de vooraf aangewezen deskundige en bepaal welke acties veilig kunnen worden uitgevoerd.", "responsibleRoleCode": "ai06-stofdeskundige", "warningClaimKey": "ai-06:c8" },
+        { "order": 3, "title": "Leg opvolging vast", "instruction": "Registreer de gebeurtenis en organiseer passende gezondheidskundige en preventieve opvolging.", "responsibleRoleCode": "ai06-noodcoordinator", "warningClaimKey": "ai-06:c9" }
+      ]
+    }
+  ],
+  "roles": [
+    { "code": "ai06-noodcoordinator", "title": "Noodcoördinator", "description": "Conceptrol voor coördinatie bij onvoorziene blootstelling." },
+    { "code": "ai06-stofdeskundige", "title": "Stofdeskundige", "description": "Conceptrol voor inhoudelijke beoordeling van blootstelling en veilige maatregelen." }
+  ],
+  "formTemplates": [],
+  "importMetadata": {
+    "createdAt": "2026-08-02T12:00:00.000Z",
+    "createdBy": "WORKMATCHR_POC",
+    "notes": "Handmatig samengesteld conceptpakket met korte eigen formuleringen en zonder integrale brontekst.",
+    "uncertainties": [
+      "Alle claims vereisen actualiteits-, juridische en arbeidshygiënische validatie.",
+      "De conceptprocedure is niet operationeel en moet door deskundigen worden beoordeeld."
+    ]
+  }
+}

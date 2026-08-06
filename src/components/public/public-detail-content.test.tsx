@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { knowledgeArticles } from '@/content/knowledge/articles'
+import { resolveKnowledgeContextByRoute } from '@/content/knowledge/knowledge-contexts'
 import { services } from '@/content/services'
 import { KnowledgeArticlePage } from './knowledge-article-page'
 import { PublicBulletList, PublicFaqList, PublicSteps } from './public-detail-shared'
@@ -38,6 +39,28 @@ describe('publieke detailcontent', () => {
     ]) {
       expect(html).toContain(heading)
     }
+  })
+
+  it.each(knowledgeArticles)('$href biedt contextuele routes naar advies en opdracht', (article) => {
+    const context = resolveKnowledgeContextByRoute(article.href)
+    const html = renderToStaticMarkup(<KnowledgeArticlePage content={article} />)
+
+    expect(context).not.toBeNull()
+    expect(html).toContain(`href="/advieswijzer?context=${context?.id}"`)
+    expect(html).toContain(`href="/hulpvragen/nieuw?context=${context?.id}"`)
+    expect(html).toContain('Start de Advieswijzer')
+    expect(html).toContain('Start een opdracht')
+    expect(html).not.toContain('Direct een opdracht plaatsen')
+  })
+
+  it('stuurt de Bedrijfsarts-pagina niet naar een BHV-context', () => {
+    const article = knowledgeArticles.find((item) => item.href === '/kenniscentrum/wanneer-bedrijfsarts-inschakelen')
+    expect(article).toBeDefined()
+
+    const html = renderToStaticMarkup(<KnowledgeArticlePage content={article!} />)
+
+    expect(html).toContain('href="/advieswijzer?context=OCCUPATIONAL_PHYSICIAN"')
+    expect(html).not.toContain('context=BHV')
   })
 
   it('toont publieke bullets compact en zonder kunstmatige lege regels', () => {

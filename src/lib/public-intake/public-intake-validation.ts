@@ -6,6 +6,7 @@ import type {
 } from '@/generated/prisma/client'
 import { PublicIntakeServiceError } from './public-intake-errors'
 import { getPublicIntakeQuestion } from './public-intake-questions'
+import { knowledgeContextIds, type KnowledgeContextId } from '@/content/knowledge/knowledge-contexts'
 
 export const recognizableRequestKeys = [
   'rie_needed',
@@ -26,11 +27,12 @@ const createDraftSchema = z
     selectedRequestKey: z
       .enum(recognizableRequestKeys, { error: 'Kies een geldige hulpvraag.' })
       .optional(),
+    knowledgeContextId: z.enum(knowledgeContextIds).optional(),
   })
   .strict()
   .superRefine((value, context) => {
     if (value.entryPoint === 'FREE_TEXT' && !value.originalInput) {
-      context.addIssue({ code: 'custom', path: ['originalInput'], message: 'Beschrijf Uw situatie in minimaal 20 tekens.' })
+      context.addIssue({ code: 'custom', path: ['originalInput'], message: 'Beschrijf uw situatie in minimaal 20 tekens.' })
     }
     if (value.entryPoint === 'RECOGNIZABLE_REQUEST' && !value.selectedRequestKey) {
       context.addIssue({ code: 'custom', path: ['selectedRequestKey'], message: 'Kies een geldige hulpvraag.' })
@@ -41,6 +43,7 @@ export type CreatePublicIntakeDraftInput = {
   entryPoint: PublicIntakeEntryPoint
   originalInput?: string
   selectedRequestKey?: RecognizableRequestKey
+  knowledgeContextId?: KnowledgeContextId
 }
 
 export type NormalizedPublicIntakeAnswer = {

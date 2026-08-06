@@ -6,9 +6,10 @@ const EDITABLE_STATUSES = ['DRAFT', 'IN_PROGRESS'] as const
 function hasActiveClientContext(context: IntakeActorContext): boolean {
   return (
     context.userStatus === 'ACTIVE' &&
+    context.accountType === 'CLIENT' &&
     context.membershipStatus === 'ACTIVE' &&
     context.organizationStatus === 'ACTIVE' &&
-    (context.organizationType === 'CLIENT' || context.organizationType === 'BOTH')
+    context.organizationType === 'CLIENT'
   )
 }
 
@@ -44,7 +45,10 @@ export function canReopenIntake(context: IntakePolicyContext): boolean {
 }
 
 export function canArchiveIntake(context: IntakePolicyContext): boolean {
-  return canEditIntake(context)
+  return hasActiveClientContext(context) && managesOrganization(context) && (
+    EDITABLE_STATUSES.includes(context.intakeStatus as (typeof EDITABLE_STATUSES)[number]) ||
+    context.intakeStatus === 'ARCHIVED'
+  )
 }
 
 export function canConvertIntake(context: IntakePolicyContext): boolean {

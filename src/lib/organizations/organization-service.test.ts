@@ -25,11 +25,11 @@ beforeEach(() => vi.clearAllMocks())
 
 const input = {
   name: 'Voorbeeld Organisatie', organizationType: 'CLIENT' as const, acceptedBusinessAccuracy: 'on' as const,
-  sectorIds: ['00000000-0000-4000-8000-000000000001'], primarySectorId: '00000000-0000-4000-8000-000000000001',
+  sectorIds: ['00000000-0000-4000-8000-000000000001'],
   addressLine: 'Voorbeeldstraat 1', postalCode: '1234 AB', city: 'Utrecht', countryCode: 'NL',
 }
 
-function prepare(status: 'ACTIVE' | 'BLOCKED' | 'ARCHIVED' = 'ACTIVE') {
+function prepare(status: 'ACTIVE' | 'BLOCKED' | 'ARCHIVED' = 'ACTIVE', accountType: 'CLIENT' | 'PROFESSIONAL' = 'CLIENT') {
   const transactionClient = {
     user: { findUnique: mocks.userFind },
     organizationMembership: { findFirst: mocks.membershipFindFirst },
@@ -44,7 +44,7 @@ function prepare(status: 'ACTIVE' | 'BLOCKED' | 'ARCHIVED' = 'ACTIVE') {
       create: mocks.accountEventCreate,
     },
   }
-  mocks.userFind.mockResolvedValue({ status })
+  mocks.userFind.mockResolvedValue({ status, accountType })
   mocks.membershipFindFirst.mockResolvedValue(null)
   mocks.sectorCount.mockResolvedValue(1)
   mocks.organizationCreate.mockResolvedValue({ id: 'organization-id', memberships: [{ id: 'membership-id' }] })
@@ -63,7 +63,7 @@ describe('transactionele organisatieaanmaak', () => {
     const data = mocks.organizationCreate.mock.calls.at(-1)?.[0].data
     expect(data.memberships.create).toMatchObject({ userId: 'user-id', role: 'OWNER', status: 'ACTIVE' })
     expect(data.locations.create).toMatchObject({ isPrimary: true })
-    expect(data.sectors.create).toEqual([{ sectorId: input.primarySectorId, isPrimary: true }])
+    expect(data.sectors.create).toEqual([{ sectorId: input.sectorIds[0], isPrimary: true }])
   })
 
   it.each(['BLOCKED', 'ARCHIVED'] as const)('weigert een %s gebruiker vóór schrijven', async (status) => {
@@ -72,14 +72,20 @@ describe('transactionele organisatieaanmaak', () => {
     expect(mocks.organizationCreate).not.toHaveBeenCalled()
   })
 
-  it('maakt ProviderProfile DRAFT alleen voor PROVIDER en BOTH', async () => {
+  it('maakt ProviderProfile DRAFT voor een professionalaccount', async () => {
+    prepare('ACTIVE', 'PROFESSIONAL')
+    await createOrganization('user-id', { ...input, organizationType: 'PROVIDER' })
+    expect(mocks.organizationCreate.mock.calls.at(-1)?.[0].data.providerProfile).toEqual({ create: { approvalStatus: 'DRAFT', isAvailable: false } })
+
     prepare()
-    for (const organizationType of ['PROVIDER', 'BOTH'] as const) {
-      await createOrganization('user-id', { ...input, organizationType })
-      expect(mocks.organizationCreate.mock.calls.at(-1)?.[0].data.providerProfile).toEqual({ create: { approvalStatus: 'DRAFT', isAvailable: false } })
-    }
     await createOrganization('user-id', input)
     expect(mocks.organizationCreate.mock.calls.at(-1)?.[0].data.providerProfile).toBeUndefined()
+  })
+
+  it('weigert een organisatietype dat niet bij het accounttype past', async () => {
+    prepare()
+    await expect(createOrganization('user-id', { ...input, organizationType: 'PROVIDER' })).rejects.toBeInstanceOf(OrganizationServiceError)
+    expect(mocks.organizationCreate).not.toHaveBeenCalled()
   })
 
   it('borgt dubbele memberships met een samengestelde unieke database-index', async () => {

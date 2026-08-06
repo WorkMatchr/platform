@@ -29,6 +29,20 @@ const organizationId = '00000000-0000-4000-8000-000000000002'
 const intakeId = '00000000-0000-4000-8000-000000000003'
 const questionnaireVersionId = '00000000-0000-4000-8000-000000000004'
 const questionId = '00000000-0000-4000-8000-000000000005'
+const locationModeQuestionId = '00000000-0000-4000-8000-000000000010'
+const registeredLocationQuestionId = '00000000-0000-4000-8000-000000000011'
+const otherLocationCityQuestionId = '00000000-0000-4000-8000-000000000012'
+const otherLocationDetailsQuestionId = '00000000-0000-4000-8000-000000000013'
+const registeredOptionId = '00000000-0000-4000-8000-000000000020'
+const otherOptionId = '00000000-0000-4000-8000-000000000021'
+const multipleOptionId = '00000000-0000-4000-8000-000000000022'
+const remoteOptionId = '00000000-0000-4000-8000-000000000023'
+const unknownLocationOptionId = '00000000-0000-4000-8000-000000000024'
+const ownLocationId = '00000000-0000-4000-8000-000000000030'
+const foreignLocationId = '00000000-0000-4000-8000-000000000031'
+const confirmedCategoryQuestionId = '00000000-0000-4000-8000-000000000040'
+const bhvLocationCountQuestionId = '00000000-0000-4000-8000-000000000041'
+const bhvCategoryOptionId = '00000000-0000-4000-8000-000000000042'
 
 const transactionClient = {
   organization: { findFirst: mocks.organizationFind },
@@ -57,7 +71,7 @@ const activeMembership = {
   userId,
   role: 'OWNER' as const,
   status: 'ACTIVE' as const,
-  user: { status: 'ACTIVE' as const },
+  user: { status: 'ACTIVE' as const, accountType: 'CLIENT' as const },
 }
 
 const question = {
@@ -79,6 +93,77 @@ const question = {
   createdAt: new Date(),
   updatedAt: new Date(),
   options: [],
+}
+
+const locationModeQuestion = {
+  ...question,
+  id: locationModeQuestionId,
+  key: 'LOCATION_MODE',
+  category: 'LOCATION' as const,
+  inputType: 'SINGLE_SELECT' as const,
+  minLength: null,
+  maxLength: null,
+  minSelections: 1,
+  maxSelections: 1,
+  options: [
+    { id: registeredOptionId, value: 'REGISTERED', isActive: true, isExclusive: false },
+    { id: otherOptionId, value: 'OTHER', isActive: true, isExclusive: false },
+    { id: multipleOptionId, value: 'MULTIPLE', isActive: true, isExclusive: false },
+    { id: remoteOptionId, value: 'REMOTE', isActive: true, isExclusive: false },
+    { id: unknownLocationOptionId, value: 'UNKNOWN', isActive: true, isExclusive: false },
+  ],
+}
+const registeredLocationQuestion = {
+  ...question,
+  id: registeredLocationQuestionId,
+  key: 'REGISTERED_LOCATION',
+  category: 'LOCATION' as const,
+  inputType: 'ORGANIZATION_LOCATION' as const,
+  minLength: null,
+  maxLength: null,
+}
+const otherLocationCityQuestion = {
+  ...question,
+  id: otherLocationCityQuestionId,
+  key: 'OTHER_LOCATION_CITY',
+  category: 'LOCATION' as const,
+  inputType: 'SHORT_TEXT' as const,
+  minLength: 2,
+  maxLength: 120,
+}
+const otherLocationDetailsQuestion = {
+  ...question,
+  id: otherLocationDetailsQuestionId,
+  key: 'OTHER_LOCATION_DETAILS',
+  category: 'LOCATION' as const,
+  inputType: 'LONG_TEXT' as const,
+  isRequired: false,
+  minLength: null,
+  maxLength: 1000,
+}
+const confirmedCategoryQuestion = {
+  ...question,
+  id: confirmedCategoryQuestionId,
+  key: 'CONFIRMED_HELP_CATEGORY',
+  inputType: 'SINGLE_SELECT' as const,
+  minLength: null,
+  maxLength: null,
+  minSelections: 1,
+  maxSelections: 1,
+  options: [
+    { id: bhvCategoryOptionId, value: 'BHV', isActive: true, isExclusive: false },
+  ],
+}
+const bhvLocationCountQuestion = {
+  ...question,
+  id: bhvLocationCountQuestionId,
+  key: 'BHV_LOCATION_COUNT',
+  category: 'SITUATION' as const,
+  inputType: 'NUMBER' as const,
+  minLength: null,
+  maxLength: null,
+  minNumber: 1,
+  maxNumber: 10000,
 }
 
 beforeEach(() => {
@@ -127,6 +212,26 @@ describe('intake aanmaken', () => {
       }),
     )
   })
+  it('bewaart een gevalideerde kenniscontext los van de oorspronkelijke omschrijving', async () => {
+    const freeText = 'Wij willen weten wanneer wij een bedrijfsarts moeten inschakelen.'
+
+    await createIntake(userId, organizationId, {
+      freeText,
+      knowledgeContextId: 'OCCUPATIONAL_PHYSICIAN',
+    })
+
+    expect(mocks.intakeCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          freeText,
+          knowledgeContextId: 'OCCUPATIONAL_PHYSICIAN',
+          knowledgeContextVersion: 1,
+          knowledgeSourceRoute: '/kenniscentrum/wanneer-bedrijfsarts-inschakelen',
+          knowledgeSuggestedCategory: 'OCCUPATIONAL_HEALTH',
+        }),
+      }),
+    )
+  })
 })
 
 describe('concept opslaan', () => {
@@ -136,6 +241,7 @@ describe('concept opslaan', () => {
       clientOrganizationId: organizationId,
       createdByUserId: userId,
       questionnaireVersionId,
+      questionnaireVersion: { version: 2 },
       status: 'DRAFT',
       version: 1,
       archivedAt: null,
@@ -171,6 +277,40 @@ describe('concept opslaan', () => {
         data: expect.objectContaining({ fromStatus: 'DRAFT', toStatus: 'IN_PROGRESS' }),
       }),
     )
+  })
+
+  it('accepteert een verplicht BHV-antwoord op basis van de eerder bevestigde categorie', async () => {
+    mocks.questionFindMany.mockResolvedValue([
+      confirmedCategoryQuestion,
+      bhvLocationCountQuestion,
+    ])
+    mocks.answerFindMany.mockResolvedValue([{
+      id: 'category-answer-id',
+      intakeId,
+      questionId: confirmedCategoryQuestionId,
+      version: 1,
+      textValue: null,
+      numberValue: null,
+      booleanValue: null,
+      dateValue: null,
+      organizationLocationId: null,
+      updatedByUserId: userId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      options: [{
+        optionId: bhvCategoryOptionId,
+        option: { value: 'BHV' },
+      }],
+    }])
+
+    await expect(saveIntakeStep(userId, intakeId, {
+      expectedIntakeVersion: 1,
+      category: 'SITUATION',
+      answers: [{ questionId: bhvLocationCountQuestionId, value: '2' }],
+    })).resolves.toMatchObject({ changedAnswers: 1, status: 'IN_PROGRESS' })
+    expect(mocks.answerCreate).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ questionId: bhvLocationCountQuestionId }),
+    }))
   })
 
   it('weigert een verouderde intakeversie voordat antwoorden worden geschreven', async () => {
@@ -230,6 +370,148 @@ describe('concept opslaan', () => {
     expect(mocks.revisionCreate).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ intakeAnswerId: 'answer-id', version: 2 }) }),
     )
+  })
+
+  it('wist een verborgen oude locatie uit de actuele waarde en bewaart een revisie', async () => {
+    mocks.questionFindMany.mockResolvedValue([
+      locationModeQuestion,
+      registeredLocationQuestion,
+      otherLocationCityQuestion,
+      otherLocationDetailsQuestion,
+    ])
+    mocks.locationFindMany.mockResolvedValue([{ id: ownLocationId }])
+    mocks.answerFindMany.mockResolvedValue([{
+      id: 'registered-answer-id',
+      intakeId,
+      questionId: registeredLocationQuestionId,
+      version: 1,
+      textValue: null,
+      numberValue: null,
+      booleanValue: null,
+      dateValue: null,
+      organizationLocationId: ownLocationId,
+      updatedByUserId: userId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      options: [],
+    }])
+    mocks.answerUpdateMany.mockResolvedValue({ count: 1 })
+    mocks.answerOptionDeleteMany.mockResolvedValue({ count: 0 })
+
+    await saveIntakeStep(userId, intakeId, {
+      expectedIntakeVersion: 1,
+      category: 'LOCATION',
+      answers: [
+        { questionId: locationModeQuestionId, value: otherOptionId },
+        { questionId: registeredLocationQuestionId, value: ownLocationId },
+        { questionId: otherLocationCityQuestionId, value: 'Regio Utrecht' },
+        { questionId: otherLocationDetailsQuestionId, value: '' },
+      ],
+    })
+
+    expect(mocks.answerUpdateMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 'registered-answer-id', version: 1 },
+      data: expect.objectContaining({ organizationLocationId: null }),
+    }))
+    expect(mocks.revisionCreate).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ intakeAnswerId: 'registered-answer-id', version: 2, organizationLocationId: null }),
+    }))
+  })
+
+  it('geeft een veldfout wanneer een bestaande organisatielocatie ontbreekt', async () => {
+    mocks.questionFindMany.mockResolvedValue([locationModeQuestion, registeredLocationQuestion])
+    mocks.locationFindMany.mockResolvedValue([{ id: ownLocationId }])
+
+    await expect(saveIntakeStep(userId, intakeId, {
+      expectedIntakeVersion: 1,
+      category: 'LOCATION',
+      answers: [
+        { questionId: locationModeQuestionId, value: registeredOptionId },
+        { questionId: registeredLocationQuestionId, value: '' },
+      ],
+    })).rejects.toMatchObject({
+      code: 'VALIDATION_ERROR',
+      issues: [{ questionId: registeredLocationQuestionId, message: 'Kies een actieve organisatielocatie.' }],
+    })
+  })
+
+  it('accepteert uitsluitend een actieve locatie van de eigen organisatie', async () => {
+    mocks.questionFindMany.mockResolvedValue([locationModeQuestion, registeredLocationQuestion])
+    mocks.locationFindMany.mockResolvedValue([{ id: ownLocationId }])
+
+    await expect(saveIntakeStep(userId, intakeId, {
+      expectedIntakeVersion: 1,
+      category: 'LOCATION',
+      answers: [
+        { questionId: locationModeQuestionId, value: registeredOptionId },
+        { questionId: registeredLocationQuestionId, value: ownLocationId },
+      ],
+    })).resolves.toMatchObject({ changedAnswers: 2 })
+  })
+
+  it('weigert een locatie van een andere tenant server-side', async () => {
+    mocks.questionFindMany.mockResolvedValue([locationModeQuestion, registeredLocationQuestion])
+    mocks.locationFindMany.mockResolvedValue([{ id: ownLocationId }])
+
+    await expect(saveIntakeStep(userId, intakeId, {
+      expectedIntakeVersion: 1,
+      category: 'LOCATION',
+      answers: [
+        { questionId: locationModeQuestionId, value: registeredOptionId },
+        { questionId: registeredLocationQuestionId, value: foreignLocationId },
+      ],
+    })).rejects.toMatchObject({
+      code: 'VALIDATION_ERROR',
+      issues: [{ questionId: registeredLocationQuestionId, message: 'Kies een actieve organisatielocatie.' }],
+    })
+  })
+
+  it('geeft een veldfout wanneer plaats of regio bij een andere locatie ontbreekt', async () => {
+    mocks.questionFindMany.mockResolvedValue([locationModeQuestion, registeredLocationQuestion, otherLocationCityQuestion])
+
+    await expect(saveIntakeStep(userId, intakeId, {
+      expectedIntakeVersion: 1,
+      category: 'LOCATION',
+      answers: [
+        { questionId: locationModeQuestionId, value: otherOptionId },
+        { questionId: registeredLocationQuestionId, value: '' },
+        { questionId: otherLocationCityQuestionId, value: '' },
+      ],
+    })).rejects.toMatchObject({
+      code: 'VALIDATION_ERROR',
+      issues: [{ questionId: otherLocationCityQuestionId, message: 'Vul een plaats of regio in.' }],
+    })
+  })
+
+  it('slaat meerdere locaties op zonder locatie-ID of vrije locatielijst', async () => {
+    mocks.questionFindMany.mockResolvedValue([locationModeQuestion, registeredLocationQuestion, otherLocationCityQuestion])
+
+    await expect(saveIntakeStep(userId, intakeId, {
+      expectedIntakeVersion: 1,
+      category: 'LOCATION',
+      answers: [
+        { questionId: locationModeQuestionId, value: multipleOptionId },
+        { questionId: registeredLocationQuestionId, value: '' },
+        { questionId: otherLocationCityQuestionId, value: '' },
+      ],
+    })).resolves.toMatchObject({ changedAnswers: 1 })
+  })
+
+  it.each([
+    ['volledig op afstand', remoteOptionId],
+    ['een onbekende locatie', unknownLocationOptionId],
+  ])('slaat %s op zonder fysieke locatiegegevens', async (_label, modeOptionId) => {
+    mocks.questionFindMany.mockResolvedValue([locationModeQuestion, registeredLocationQuestion, otherLocationCityQuestion])
+
+    await expect(saveIntakeStep(userId, intakeId, {
+      expectedIntakeVersion: 1,
+      category: 'LOCATION',
+      answers: [
+        { questionId: locationModeQuestionId, value: modeOptionId },
+        { questionId: registeredLocationQuestionId, value: '' },
+        { questionId: otherLocationCityQuestionId, value: '' },
+      ],
+    })).resolves.toMatchObject({ changedAnswers: 1 })
   })
 
   it('zet een volledige intake transactioneel gereed voor controle', async () => {

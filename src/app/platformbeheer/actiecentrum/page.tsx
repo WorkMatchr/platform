@@ -26,7 +26,7 @@ export default async function PlatformActionCenterPage({
         description="Signaleren, begrijpen, handelen en append-only vastleggen vanuit één compacte werkvoorraad."
       />
       {params.resultaat ? <p className="rounded-control border border-success-border bg-success-subtle px-4 py-3 text-sm">De beheeractie is vastgelegd.</p> : null}
-      {params.fout ? <p className="rounded-control border border-danger-border bg-danger-subtle px-4 py-3 text-sm">De beheeractie kon niet veilig worden verwerkt.</p> : null}
+      {params.fout ? <p className="rounded-control border border-danger-border bg-danger-subtle px-4 py-3 text-sm">De beheeractie is niet uitgevoerd. Er zijn geen wijzigingen doorgevoerd. Controleer de gegevens en uw bevoegdheid en probeer het opnieuw.</p> : null}
       <AdminSection title="Open beheeracties" description={`${actions.length} open ${actions.length === 1 ? 'actie' : 'acties'}, deterministisch geordend op ernst.`}>
         {actions.length === 0 ? <EmptyState>Er zijn geen open beheeracties.</EmptyState> : (
           <ol className="grid gap-3">

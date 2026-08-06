@@ -28,16 +28,26 @@ type RequestPublicationPreview = Readonly<{
     region: string
     sector: string
   }>
+  publicationRestriction: Readonly<{
+    blocked: boolean
+    relevantWithdrawalCount: number
+    threshold: number
+    windowMonths: number
+  }>
 }>
 
 export function RequestPublicationForm({
   action,
+  contactAction,
+  contactResult,
   preview,
 }: {
   action: (
     state: RequestPublicationActionState,
     formData: FormData,
   ) => Promise<RequestPublicationActionState>
+  contactAction: (formData: FormData) => Promise<void>
+  contactResult: 'verzonden' | 'fout' | null
   preview: RequestPublicationPreview
 }) {
   const [state, formAction, pending] = useActionState(action, {})
@@ -121,7 +131,7 @@ export function RequestPublicationForm({
 
       <section className="rounded-card border border-border bg-surface p-5 sm:p-6">
         <h2 className="text-xl font-bold text-brand-dark">
-          Controleer uw aanvraag
+          Controleer uw opdracht
         </h2>
         <dl className="mt-4 grid gap-x-6 gap-y-4 sm:grid-cols-2">
           {[
@@ -146,14 +156,14 @@ export function RequestPublicationForm({
 
       <section className="rounded-card border border-border bg-surface p-5 sm:p-6">
         <h2 className="text-xl font-bold text-brand-dark">
-          Omschrijving aanvraag
+          Omschrijving opdracht
         </h2>
         <p className="mt-2 text-sm text-text-secondary">
           De bevestigde samenvatting uit uw Adviesdossier is
           overgenomen. U kunt deze voor publicatie aanpassen.
         </p>
         <label htmlFor="publicSummary" className="sr-only">
-          Omschrijving aanvraag
+          Omschrijving opdracht
         </label>
         <textarea
           id="publicSummary"
@@ -245,7 +255,7 @@ export function RequestPublicationForm({
       <aside className="rounded-card border border-info-border bg-info-subtle p-5 text-sm text-brand-dark">
         <h2 className="font-bold">Goed om te weten</h2>
         <p className="mt-2">
-          Na publicatie wordt uw aanvraag beschikbaar gesteld aan
+          Na publicatie wordt uw opdracht beschikbaar gesteld aan
           professionals met passende deskundigheid.
         </p>
         <p className="mt-2">
@@ -255,6 +265,47 @@ export function RequestPublicationForm({
         </p>
       </aside>
 
+      {preview.publicationRestriction.blocked ? (
+        <section className="rounded-card border border-warning-border bg-warning-subtle p-5 sm:p-6">
+          <h2 className="text-xl font-bold text-brand-dark">
+            Neem eerst contact op met WorkMatchr
+          </h2>
+          <p className="mt-2 text-text-secondary">
+            U heeft in de afgelopen {preview.publicationRestriction.windowMonths} maanden{' '}
+            {preview.publicationRestriction.threshold} opdrachten ingetrokken nadat professionals zich hadden aangemeld. Neem contact op met WorkMatchr voordat u een nieuwe opdracht publiceert.
+          </p>
+          {contactResult === 'verzonden' ? (
+            <StatusMessage>
+              Uw verzoek is naar WorkMatchr gestuurd. De opdracht is nog niet gepubliceerd.
+            </StatusMessage>
+          ) : contactResult === 'fout' ? (
+            <StatusMessage error>
+              Het verzoek kon niet veilig worden verstuurd. Uw opdrachtgegevens zijn bewaard; probeer het opnieuw.
+            </StatusMessage>
+          ) : null}
+          <label className="mt-4 block font-semibold text-brand-dark" htmlFor="contactExplanation">
+            Licht toe waarom u een nieuwe opdracht wilt publiceren
+          </label>
+          <textarea
+            id="contactExplanation"
+            name="contactExplanation"
+            required
+            minLength={20}
+            maxLength={2000}
+            rows={5}
+            className={`mt-2 ${fieldClassName}`}
+          />
+          <Button
+            className="mt-4"
+            type="submit"
+            formAction={contactAction}
+            formNoValidate
+          >
+            Verzoek naar WorkMatchr sturen
+          </Button>
+        </section>
+      ) : null}
+
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
         <LinkButton
           href={`/adviesdossiers/${preview.adviceDossierId}`}
@@ -262,9 +313,11 @@ export function RequestPublicationForm({
         >
           Terug naar Adviesdossier
         </LinkButton>
-        <Button type="submit" loading={pending}>
-          Publiceer aanvraag
-        </Button>
+        {!preview.publicationRestriction.blocked ? (
+          <Button type="submit" loading={pending}>
+            Publiceer opdracht
+          </Button>
+        ) : null}
       </div>
     </form>
   )

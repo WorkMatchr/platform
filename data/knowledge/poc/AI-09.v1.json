@@ -1,0 +1,90 @@
+{
+  "schemaVersion": "1.0",
+  "source": {
+    "code": "AI-09",
+    "title": "Biologische agentia",
+    "publisher": "Sdu Uitgevers",
+    "publicationDate": "2000-01-01",
+    "edition": "Tweede herziene druk",
+    "language": "nl",
+    "jurisdiction": "NL",
+    "sourceType": "AI_SHEET",
+    "sourceFormat": "PDF",
+    "copyrightClassification": "RESTRICTED_REFERENCE_ONLY",
+    "authorityLevel": "PROFESSIONAL_GUIDANCE",
+    "temporalStatus": "HISTORICAL",
+    "sourceFamily": "SZW-AI-BLADEN",
+    "independenceGroup": "SZW-AI-BLADEN",
+    "isPrimarySource": false,
+    "notes": "Historische bron uit 2000; risicoclassificaties, grenswaarden en wettelijke verwijzingen vereisen actuele validatie."
+  },
+  "sourceVersion": {
+    "externalKey": "ai-09:v1",
+    "versionLabel": "Tweede herziene druk",
+    "publicationDate": "2000-01-01",
+    "checksum": "5e4a1b08ffbe692f02667f8926a42003c20fd846267f32ebbaa087fba039c671",
+    "extractionStatus": "EXTRACTED",
+    "reviewStatus": "REVIEW_REQUIRED"
+  },
+  "topics": [
+    {
+      "externalKey": "ai-09:topic:biological-agents",
+      "slug": "historisch-biologische-agentia",
+      "title": "Biologische agentia (historisch)",
+      "description": "Historische kandidaat-kennis over blootstelling, gezondheidsrisico's, beheersmaatregelen en incidenten met biologische agentia.",
+      "domain": "OCCUPATIONAL_HEALTH"
+    }
+  ],
+  "fragments": [
+    { "externalKey": "ai-09:f1", "sourceVersionKey": "ai-09:v1", "pageFrom": 7, "sectionPath": "1.2 Beroepsmatige blootstelling", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-09:f2", "sourceVersionKey": "ai-09:v1", "pageFrom": 9, "sectionPath": "2 Gezondheidseffecten", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-09:f3", "sourceVersionKey": "ai-09:v1", "pageFrom": 10, "sectionPath": "2.2 Indeling in risicocategorieen", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-09:f4", "sourceVersionKey": "ai-09:v1", "pageFrom": 11, "sectionPath": "3 Risico-inventarisatie en -evaluatie", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-09:f5", "sourceVersionKey": "ai-09:v1", "pageFrom": 11, "sectionPath": "3.1 Blootstellingsroutes", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-09:f6", "sourceVersionKey": "ai-09:v1", "pageFrom": 12, "sectionPath": "3.2 Beoordeling van blootstelling", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-09:f7", "sourceVersionKey": "ai-09:v1", "pageFrom": 14, "sectionPath": "4 Beheersmaatregelen", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-09:f8", "sourceVersionKey": "ai-09:v1", "pageFrom": 15, "sectionPath": "4.3 Vaccinatie en gezondheidstoezicht", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-09:f9", "sourceVersionKey": "ai-09:v1", "pageFrom": 15, "sectionPath": "4.4 Voorlichting en onderricht", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-09:f10", "sourceVersionKey": "ai-09:v1", "pageFrom": 19, "sectionPath": "5.3 Incidenten en vrijkomen van agentia", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true }
+  ],
+  "claims": [
+    { "externalKey": "ai-09:c1", "topicKey": "ai-09:topic:biological-agents", "claimType": "DEFINITION", "statement": "Beroepsmatige blootstelling aan biologische agentia kan bewust onderdeel van het werk zijn of onbedoeld ontstaan door mensen, dieren, materialen of processen.", "applicability": "Historische afbakening; per werkproces en huidige regelgeving valideren.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-09:c2", "topicKey": "ai-09:topic:biological-agents", "claimType": "HEALTH_EFFECT", "statement": "Biologische agentia kunnen onder meer infecties, allergische reacties of toxische effecten veroorzaken.", "applicability": "Historische algemene risicobeschrijving; medisch-inhoudelijk actualiseren.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-09:c3", "topicKey": "ai-09:topic:biological-agents", "claimType": "DEFINITION", "statement": "De historische bron onderscheidt biologische agentia naar de ernst van het risico en de mogelijkheden voor verspreiding, preventie en behandeling.", "applicability": "Historische classificatiesystematiek; niet gebruiken zonder toetsing aan actuele indeling.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-09:c4", "topicKey": "ai-09:topic:biological-agents", "claimType": "INSPECTION_POINT", "statement": "Een risico-inventarisatie hoort aard, mate en duur van mogelijke blootstelling te betrekken, met aandacht voor werknemers die extra kwetsbaar kunnen zijn.", "applicability": "Historisch RI&E-uitgangspunt; actuele wettelijke vereisten en risicogroepen valideren.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-09:c5", "topicKey": "ai-09:topic:biological-agents", "claimType": "RISK", "statement": "Blootstelling kan plaatsvinden via inademing, huid of slijmvliezen en via inslikken, afhankelijk van het agens en de werkzaamheden.", "applicability": "Historische algemene route-indeling; situatiespecifiek beoordelen.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-09:c6", "topicKey": "ai-09:topic:biological-agents", "claimType": "MEASUREMENT_REQUIREMENT", "statement": "Het vaststellen van blootstelling aan biologische agentia kan complex zijn en vraagt een methode die past bij het agens, de route en het werkproces.", "applicability": "Historische methodische waarschuwing; actuele meetstrategie door een deskundige laten bepalen.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-09:c7", "topicKey": "ai-09:topic:biological-agents", "claimType": "CONTROL_MEASURE", "statement": "Beheersing begint bij het voorkomen of beperken van de bron en verspreiding, gevolgd door technische, organisatorische en hygienische maatregelen.", "applicability": "Historische arbeidshygienische aanpak; actuele maatregelvolgorde valideren.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-09:c8", "topicKey": "ai-09:topic:biological-agents", "claimType": "RECOMMENDATION", "statement": "Vaccinatie of gezondheidstoezicht kan in specifieke situaties een aanvullende maatregel zijn, maar vervangt beheersing van de blootstelling niet.", "applicability": "Historisch uitgangspunt; medische indicatie, toestemming en actuele regelgeving vereisen deskundige beoordeling.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-09:c9", "topicKey": "ai-09:topic:biological-agents", "claimType": "TRAINING_REQUIREMENT", "statement": "Werknemers hebben begrijpelijke instructie nodig over risico's, hygienemaatregelen, veilig werkgedrag en handelen bij incidenten.", "applicability": "Historische instructieaanbeveling; inhoud afstemmen op actuele risico's en procedures.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-09:c10", "topicKey": "ai-09:topic:biological-agents", "claimType": "EMERGENCY_REQUIREMENT", "statement": "Bij onbedoeld vrijkomen of mogelijke besmetting zijn snelle melding, beperking van blootstelling, onderzoek en passende vervolgmaatregelen nodig.", "applicability": "Historisch incidentprincipe; actuele noodprocedure en medische opvolging vooraf vastleggen.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" }
+  ],
+  "citations": [
+    { "claimKey": "ai-09:c1", "sourceVersionKey": "ai-09:v1", "fragmentKey": "ai-09:f1", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-09:c2", "sourceVersionKey": "ai-09:v1", "fragmentKey": "ai-09:f2", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-09:c3", "sourceVersionKey": "ai-09:v1", "fragmentKey": "ai-09:f3", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-09:c4", "sourceVersionKey": "ai-09:v1", "fragmentKey": "ai-09:f4", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-09:c5", "sourceVersionKey": "ai-09:v1", "fragmentKey": "ai-09:f5", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-09:c6", "sourceVersionKey": "ai-09:v1", "fragmentKey": "ai-09:f6", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-09:c7", "sourceVersionKey": "ai-09:v1", "fragmentKey": "ai-09:f7", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-09:c8", "sourceVersionKey": "ai-09:v1", "fragmentKey": "ai-09:f8", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-09:c9", "sourceVersionKey": "ai-09:v1", "fragmentKey": "ai-09:f9", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-09:c10", "sourceVersionKey": "ai-09:v1", "fragmentKey": "ai-09:f10", "supportType": "HISTORICAL_ORIGIN" }
+  ],
+  "relations": [],
+  "rules": [],
+  "calculations": [],
+  "checklists": [],
+  "procedures": [],
+  "roles": [],
+  "formTemplates": [],
+  "importMetadata": {
+    "createdAt": "2026-08-02T12:00:00.000Z",
+    "createdBy": "WORKMATCHR_POC",
+    "notes": "Handmatig samengesteld conceptpakket met korte eigen formuleringen en zonder integrale brontekst.",
+    "uncertainties": [
+      "Risicogroepen, classificaties en maatregelen moeten aan actuele wetenschappelijke en wettelijke bronnen worden getoetst.",
+      "De bron uit 2000 kan ingetrokken of gewijzigde voorschriften bevatten."
+    ]
+  }
+}

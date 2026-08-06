@@ -5,6 +5,7 @@ import type { CreateOrganizationInput, OrganizationProfileInput } from './organi
 import { assertNormalOrganizationOperationAllowed } from '@/lib/account-architecture/platform-organization-governance'
 import { appendAccountProvisioningEvent, appendOrganizationMembershipEvent } from '@/lib/account-architecture/account-history-service'
 import { assertCanCreateTenantMembership, TenantMembershipPolicyError } from '@/lib/account-architecture/tenant-membership-policy'
+import { organizationTypeForAccountType } from '@/lib/account-types/account-type-policy'
 
 export class OrganizationServiceError extends Error {
   constructor(message = 'De organisatiegegevens konden niet veilig worden verwerkt.') {
@@ -22,8 +23,11 @@ async function validateSectors(transaction: Prisma.TransactionClient, sectorIds:
 
 export async function createOrganization(userId: string, input: CreateOrganizationInput) {
   return getPrisma().$transaction(async (transaction) => {
-    const user = await transaction.user.findUnique({ where: { id: userId }, select: { status: true } })
+    const user = await transaction.user.findUnique({ where: { id: userId }, select: { status: true, accountType: true } })
     if (!user || !canCreateOrganization(user.status)) throw new OrganizationServiceError('Uw account heeft geen toegang tot deze actie.')
+    if (!user.accountType || input.organizationType !== organizationTypeForAccountType(user.accountType)) {
+      throw new OrganizationServiceError('Het organisatietype past niet bij het gekozen accounttype.')
+    }
     try {
       await assertCanCreateTenantMembership(transaction, userId)
     } catch (error) {
@@ -34,9 +38,7 @@ export async function createOrganization(userId: string, input: CreateOrganizati
     }
 
     const sectorIds = await validateSectors(transaction, input.sectorIds)
-    if (!sectorIds.includes(input.primarySectorId)) {
-      throw new OrganizationServiceError('De primaire sector moet geselecteerd zijn.')
-    }
+    const compatibilityPrimarySectorId = sectorIds[0]
     const organization = await transaction.organization.create({
       data: {
         name: input.name,
@@ -49,7 +51,7 @@ export async function createOrganization(userId: string, input: CreateOrganizati
         generalEmail: input.generalEmail,
         employeeCount: input.employeeCount,
         memberships: { create: { userId, role: 'OWNER', status: 'ACTIVE' } },
-        sectors: { create: sectorIds.map((sectorId) => ({ sectorId, isPrimary: sectorId === input.primarySectorId })) },
+        sectors: { create: sectorIds.map((sectorId) => ({ sectorId, isPrimary: sectorId === compatibilityPrimarySectorId })) },
         locations: {
           create: {
             label: 'Hoofdlocatie',

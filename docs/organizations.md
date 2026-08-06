@@ -2,7 +2,11 @@
 
 ## Scope Module 4B
 
-Een actieve gebruiker kan via `/organisatie/nieuw` een `CLIENT`-, `PROVIDER`- of `BOTH`-organisatie aanmaken. De organisatie, actieve `OWNER`-membership, sectoren, primaire sector en primaire locatie ontstaan in één Prisma-transactie. Voor `PROVIDER` en `BOTH` ontstaat tevens maximaal één `ProviderProfile` met status `DRAFT` en `isAvailable=false`.
+Een actieve gebruiker maakt via `/organisatie/nieuw` exact het organisatietype aan dat bij het account hoort: een Bedrijf krijgt `CLIENT`, een Professional krijgt `PROVIDER`. De organisatie, actieve `OWNER`-membership, sectoren, primaire sector en primaire locatie ontstaan in één Prisma-transactie. Voor een Professional ontstaat tevens maximaal één `ProviderProfile` met status `DRAFT` en `isAvailable=false`. Bestaande `BOTH`-organisaties blijven voor historische compatibiliteit behouden en worden als professionalcontext behandeld; nieuwe `BOTH`-organisaties ontstaan niet via onboarding.
+
+## Accounttype
+
+`User.accountType` is de autoritatieve productclaim voor tenantfunctionaliteit. `Organization.organizationType` blijft de organisatieclassificatie en moet ermee overeenkomen. Een database-trigger vult het type bij legacy- en ontwikkelmemberships veilig aan en weigert conflicterende combinaties. Platformaccounts bij `WORKMATCHR_PLATFORM` hebben geen tenantaccounttype.
 
 ## Organisatieprofiel
 

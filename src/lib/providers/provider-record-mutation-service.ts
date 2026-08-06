@@ -22,13 +22,18 @@ const qualificationRevisionSchema = recordBase.extend({
 const organizationQualificationSchema = z.object({
   expectedProfileVersion: expectedVersionSchema, qualificationId: uuidSchema.optional(), expectedRecordVersion: expectedVersionSchema.optional(),
   qualificationTermId: uuidSchema, registrationNumber: z.string().trim().min(1).max(200).optional(), issuedAt: z.coerce.date().optional(), validUntil: z.coerce.date().optional(), evidenceRevisionId: uuidSchema.optional(),
-})
+}).refine((input) => !input.validUntil || !input.issuedAt || input.validUntil >= input.issuedAt, { path: ['validUntil'] })
 const insuranceRevisionSchema = insuranceSchema.extend({ insuranceId: uuidSchema, expectedRecordVersion: expectedVersionSchema })
 const evidenceRevisionSchema = evidenceMetadataSchema.extend({ evidenceDocumentId: uuidSchema, expectedRecordVersion: expectedVersionSchema })
-const profileSchema = z.object({ expectedProfileVersion: expectedVersionSchema, description: z.string().trim().max(2000).optional(), maxTravelDistanceKm: z.int().nonnegative().max(1000).optional(), acceptsRemoteWork: z.boolean() })
+const profileSchema = z.object({
+  expectedProfileVersion: expectedVersionSchema,
+  shortIntroduction: z.string().trim().max(300).optional(),
+  description: z.string().trim().max(4000).optional(),
+  workingMethod: z.string().trim().max(3000).optional(),
+})
 const statusSchema = z.object({ expectedProfileVersion: expectedVersionSchema, expectedRecordVersion: expectedVersionSchema, recordId: uuidSchema, status: z.enum(['ACTIVE', 'ARCHIVED']) })
 
-async function requireTerm(transaction: Prisma.TransactionClient, id: string | undefined, kinds: Array<'SERVICE' | 'SPECIALISM' | 'COMPETENCY' | 'SECTOR' | 'REGION' | 'QUALIFICATION' | 'CERTIFICATION' | 'INSURANCE_TYPE'>) {
+async function requireTerm(transaction: Prisma.TransactionClient, id: string | undefined, kinds: Array<'SERVICE' | 'SPECIALISM' | 'COMPETENCY' | 'SECTOR' | 'REGION' | 'QUALIFICATION' | 'CERTIFICATION' | 'MEMBERSHIP' | 'REGISTRATION' | 'WORK_MODE' | 'INSURANCE_TYPE'>) {
   if (!id) return
   const term = await transaction.providerTaxonomyTerm.findFirst({ where: { id, isActive: true, version: { status: 'PUBLISHED', taxonomy: { kind: { in: kinds } } } }, select: { id: true, code: true } })
   if (!term) throw new ProviderServiceError('VALIDATION_ERROR')
@@ -52,7 +57,14 @@ export async function updateProviderProfileFacts(userId: string, providerProfile
   return getPrisma().$transaction(async (transaction) => {
     await beginWrite(transaction, userId, providerProfileId, 'ORGANIZATION')
     const profileVersion = await reserveProviderVersion(transaction, providerProfileId, input.expectedProfileVersion)
-    await transaction.providerProfile.update({ where: { id: providerProfileId }, data: { description: input.description, maxTravelDistanceKm: input.maxTravelDistanceKm, acceptsRemoteWork: input.acceptsRemoteWork } })
+    await transaction.providerProfile.update({
+      where: { id: providerProfileId },
+      data: {
+        shortIntroduction: input.shortIntroduction,
+        description: input.description,
+        workingMethod: input.workingMethod,
+      },
+    })
     return { providerProfileId, profileVersion }
   }, { isolationLevel: 'Serializable' })
 }
@@ -101,7 +113,7 @@ export async function reviseProviderProfessionalQualification(userId: string, pr
   const input = parseProviderInput(qualificationRevisionSchema, rawInput)
   return getPrisma().$transaction(async (transaction) => {
     await beginWrite(transaction, userId, providerProfileId, 'QUALIFICATIONS')
-    await requireTerm(transaction, input.qualificationTermId, ['QUALIFICATION', 'CERTIFICATION'])
+    await requireTerm(transaction, input.qualificationTermId, ['QUALIFICATION', 'CERTIFICATION', 'REGISTRATION'])
     await requireCleanEvidence(transaction, providerProfileId, input.evidenceRevisionId)
     const updated = await transaction.providerProfessionalQualification.updateMany({ where: { id: input.qualificationId, professional: { providerProfileId }, version: input.expectedRecordVersion }, data: { version: { increment: 1 } } })
     if (updated.count !== 1) throw new ProviderServiceError('CONFLICT')
@@ -114,9 +126,18 @@ export async function writeProviderOrganizationQualification(userId: string, pro
   const input = parseProviderInput(organizationQualificationSchema, rawInput)
   return getPrisma().$transaction(async (transaction) => {
     await beginWrite(transaction, userId, providerProfileId, 'QUALIFICATIONS')
-    await requireTerm(transaction, input.qualificationTermId, ['QUALIFICATION', 'CERTIFICATION'])
+    await requireTerm(transaction, input.qualificationTermId, ['QUALIFICATION', 'CERTIFICATION', 'MEMBERSHIP', 'REGISTRATION'])
     await requireCleanEvidence(transaction, providerProfileId, input.evidenceRevisionId)
     if (!input.qualificationId) {
+      const duplicate = await transaction.providerOrganizationQualification.findFirst({
+        where: {
+          providerProfileId,
+          status: 'ACTIVE',
+          revisions: { some: { qualificationTermId: input.qualificationTermId } },
+        },
+        select: { id: true },
+      })
+      if (duplicate) throw new ProviderServiceError('VALIDATION_ERROR')
       const created = await transaction.providerOrganizationQualification.create({ data: { providerProfileId, revisions: { create: { version: 1, qualificationTermId: input.qualificationTermId, registrationNumber: input.registrationNumber, issuedAt: input.issuedAt, validUntil: input.validUntil, evidenceRevisionId: input.evidenceRevisionId, verificationLevel: 'SELF_DECLARED' } } }, select: { id: true } })
       return { ...created, recordVersion: 1, profileVersion: await reserveProviderVersion(transaction, providerProfileId, input.expectedProfileVersion), verificationLevel: 'SELF_DECLARED' as const }
     }

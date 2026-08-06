@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  MAX_ACTIVE_REQUEST_OFFER_SLOTS,
-  requestOfferSlotCreditPolicy,
   requestOfferSlotInputSchema,
   requestOfferSlotStatusLabels,
 } from './request-offer-slot-contract'
@@ -22,12 +20,7 @@ describe('RequestOfferSlot-contract', () => {
     ).toBe(false)
   })
 
-  it('legt de drie plaatsen en uitgeschakelde credits expliciet vast', () => {
-    expect(MAX_ACTIVE_REQUEST_OFFER_SLOTS).toBe(3)
-    expect(requestOfferSlotCreditPolicy).toEqual({
-      enabled: false,
-      creditsRequired: 0,
-    })
+  it('presenteert de claimstatus zonder een hardcoded prijs of maximum', () => {
     expect(requestOfferSlotStatusLabels.CLAIMED).toBe(
       'Offerteplaats geclaimd',
     )

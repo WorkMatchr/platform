@@ -12,12 +12,14 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@/lib/prisma', () => ({ getPrisma: () => ({ $transaction: mocks.transaction }) }))
 vi.mock('./assignment-authorization', () => ({ requireAssignmentManager: mocks.requireManager }))
 
-import { cancelAssignment, markAssignmentReadyForReview, reopenAssignment, updateAssignment } from './assignment-service'
+import { archiveUnpublishedAssignment, cancelAssignment, markAssignmentReadyForReview, reopenAssignment, updateAssignment } from './assignment-service'
 
 const userId = '00000000-0000-4000-8000-000000000001'
 const organizationId = '00000000-0000-4000-8000-000000000002'
 const assignmentId = '00000000-0000-4000-8000-000000000003'
 const locationId = '00000000-0000-4000-8000-000000000004'
+const futureDate = new Date()
+futureDate.setUTCDate(futureDate.getUTCDate() + 30)
 
 const transactionClient = {
   assignment: { updateMany: mocks.updateMany },
@@ -26,7 +28,7 @@ const transactionClient = {
   organizationLocation: { findFirst: mocks.locationFind },
 }
 
-function assignment(status: 'DRAFT' | 'READY_FOR_REVIEW' | 'OPEN' | 'CANCELLED' = 'DRAFT', version = 1) {
+function assignment(status: 'DRAFT' | 'READY_FOR_REVIEW' | 'OPEN' | 'CANCELLED' | 'ARCHIVED' = 'DRAFT', version = 1) {
   return {
     id: assignmentId,
     clientOrganizationId: organizationId,
@@ -39,8 +41,20 @@ function assignment(status: 'DRAFT' | 'READY_FOR_REVIEW' | 'OPEN' | 'CANCELLED' 
     employeeCount: 20,
     desiredStartDate: null,
     responseDeadline: null,
+    locationType: 'REGISTERED' as const,
     locationId,
+    locationName: 'Hoofdkantoor',
+    locationAddressLine: 'Testlaan 1',
+    locationPostalCode: '1234AB',
+    locationCity: 'Utrecht',
+    locationProvince: 'Utrecht',
+    locationCountryCode: 'NL',
+    locationRegion: 'Utrecht',
+    locationDescription: null,
+    locationCount: null,
     allowsRemoteWork: false,
+    publishedAt: null,
+    archivedAt: status === 'ARCHIVED' ? new Date('2026-08-01T10:00:00.000Z') : null,
   }
 }
 
@@ -50,9 +64,13 @@ const editInput = {
   title: 'Aangepaste veiligheidsopdracht',
   description: 'Een aangepaste en voldoende uitgebreide zakelijke opdrachtomschrijving.',
   employeeCount: 30,
-  desiredStartDate: '2026-08-01',
+  desiredStartDate: futureDate.toISOString().slice(0, 10),
+  locationType: 'REGISTERED' as const,
   locationId,
-  allowsRemoteWork: true,
+  locationCity: null,
+  locationRegion: null,
+  locationDescription: null,
+  locationCount: null,
 }
 
 beforeEach(() => {
@@ -60,7 +78,15 @@ beforeEach(() => {
   mocks.transaction.mockImplementation((callback) => callback(transactionClient))
   mocks.requireManager.mockResolvedValue(assignment())
   mocks.updateMany.mockResolvedValue({ count: 1 })
-  mocks.locationFind.mockResolvedValue({ id: locationId })
+  mocks.locationFind.mockResolvedValue({
+    id: locationId,
+    label: 'Hoofdkantoor',
+    addressLine: 'Testlaan 1',
+    postalCode: '1234AB',
+    city: 'Utrecht',
+    province: 'Utrecht',
+    countryCode: 'NL',
+  })
   mocks.revisionCreate.mockResolvedValue({ id: 'revision' })
   mocks.historyCreate.mockResolvedValue({ id: 'history' })
 })
@@ -140,5 +166,70 @@ describe('opdrachtmutatieservice', () => {
   it('weigert een te korte annuleringsreden vóór een databasewrite', async () => {
     expect(() => cancelAssignment(userId, organizationId, { assignmentId, expectedAssignmentVersion: 1, reason: 'Te kort' })).toThrow(expect.objectContaining({ code: 'VALIDATION_ERROR' }))
     expect(mocks.updateMany).not.toHaveBeenCalled()
+  })
+
+  it.each(['DRAFT', 'READY_FOR_REVIEW'] as const)('archiveert een nooit gepubliceerde %s-opdracht met auditspoor', async (status) => {
+    mocks.requireManager.mockResolvedValue(assignment(status))
+
+    await expect(archiveUnpublishedAssignment(userId, organizationId, {
+      assignmentId,
+      expectedAssignmentVersion: 1,
+    })).resolves.toMatchObject({ id: assignmentId, status: 'ARCHIVED', version: 2, idempotent: false })
+
+    expect(mocks.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: {
+        id: assignmentId,
+        clientOrganizationId: organizationId,
+        status,
+        version: 1,
+        publishedAt: null,
+      },
+      data: expect.objectContaining({ status: 'ARCHIVED', version: { increment: 1 } }),
+    }))
+    expect(mocks.historyCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        assignmentId,
+        fromStatus: status,
+        toStatus: 'ARCHIVED',
+        changedByUserId: userId,
+      }),
+    })
+  })
+
+  it('behandelt herhaald verwijderen van dezelfde ongepubliceerde opdracht idempotent', async () => {
+    mocks.requireManager.mockResolvedValue(assignment('ARCHIVED', 2))
+
+    await expect(archiveUnpublishedAssignment(userId, organizationId, {
+      assignmentId,
+      expectedAssignmentVersion: 1,
+    })).resolves.toMatchObject({ status: 'ARCHIVED', version: 2, idempotent: true })
+
+    expect(mocks.updateMany).not.toHaveBeenCalled()
+    expect(mocks.historyCreate).not.toHaveBeenCalled()
+  })
+
+  it('weigert verwijderen zodra een opdracht ooit is gepubliceerd', async () => {
+    mocks.requireManager.mockResolvedValue({
+      ...assignment('OPEN'),
+      publishedAt: new Date('2026-08-01T09:00:00.000Z'),
+    })
+
+    await expect(archiveUnpublishedAssignment(userId, organizationId, {
+      assignmentId,
+      expectedAssignmentVersion: 1,
+    })).rejects.toMatchObject({ code: 'INVALID_STATUS' })
+    expect(mocks.updateMany).not.toHaveBeenCalled()
+    expect(mocks.historyCreate).not.toHaveBeenCalled()
+  })
+
+  it('schrijft geen gedeeltelijke verwijdering bij een concurrencyconflict', async () => {
+    mocks.updateMany.mockResolvedValue({ count: 0 })
+
+    await expect(archiveUnpublishedAssignment(userId, organizationId, {
+      assignmentId,
+      expectedAssignmentVersion: 1,
+    })).rejects.toMatchObject({ code: 'CONFLICT' })
+
+    expect(mocks.historyCreate).not.toHaveBeenCalled()
   })
 })

@@ -55,7 +55,7 @@ export default async function AdviceDossierPage({
         )}
         <div className="mb-5 flex flex-wrap gap-3">
           <LinkButton href="/adviesdossiers" variant="outline">
-            Terug naar Mijn adviesdossiers
+            Terug naar adviesdossiers
           </LinkButton>
           <LinkButton
             href={`/adviesdossiers/${dossier.id}/pdf`}
@@ -73,20 +73,25 @@ export default async function AdviceDossierPage({
           snapshot={dossier.currentVersion.snapshot}
         />
 
-        {dossier.status === 'COMPLETED' && (
+        {dossier.status === 'COMPLETED' &&
+          viewer.userId === dossier.ownerUserId &&
+          dossier.currentVersion.snapshot.primaryProfessionalRequirement && (
           <div className="mt-5 rounded-card border border-border bg-surface p-5">
             <h2 className="text-xl font-bold text-brand-dark">
-              Professionele ondersteuning aanvragen
+              {dossier.request ? 'Gekoppelde opdracht' : 'Maak hiervan een opdracht'}
             </h2>
             <p className="mt-2 text-text-secondary">
-              Maak vanuit dit afgeronde Adviesdossier een afzonderlijke,
-              beperkte aanvraag voor passende professionals.
+              {dossier.request
+                ? `Deze opdracht is al gekoppeld aan adviesdossier ${dossier.dossierCode}.`
+                : 'Zet de uitkomst van dit adviesdossier om in een opdracht en ontvang reacties van passende professionals.'}
             </p>
             <LinkButton
-              href={`/aanvragen/nieuw?dossierId=${dossier.id}`}
+              href={dossier.request
+                ? `/aanvragen/${dossier.request.id}/gepubliceerd`
+                : `/aanvragen/nieuw?dossierId=${dossier.id}`}
               className="mt-4"
             >
-              Aanvraag voorbereiden
+              {dossier.request ? 'Bekijk gekoppelde opdracht' : 'Maak hiervan een opdracht'}
             </LinkButton>
           </div>
         )}

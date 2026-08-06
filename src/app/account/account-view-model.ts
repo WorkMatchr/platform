@@ -1,9 +1,11 @@
 import type {
+  AccountType,
   OrganizationMembershipRole,
   OrganizationStatus,
   OrganizationType,
   PlatformRole,
 } from '@/generated/prisma/client'
+import { organizationRoleLabels } from '@/lib/presentation/platform-labels'
 
 type AccountContext = {
   user: {
@@ -11,6 +13,7 @@ type AccountContext = {
     email: string
     emailVerified: boolean
     platformRole: PlatformRole
+    accountType: AccountType | null
     status: string
   }
   memberships: Array<{
@@ -34,7 +37,7 @@ type AccountContext = {
 }
 
 const platformRoleLabels = { USER: 'Gebruiker', ADMIN: 'Platformbeheerder' } as const
-const organizationRoleLabels = { OWNER: 'Eigenaar', ADMIN: 'Beheerder', MEMBER: 'Lid' } as const
+const accountTypeLabels = { CLIENT: 'Bedrijf', PROFESSIONAL: 'Professional' } as const
 const organizationTypeLabels = {
   CLIENT: 'Opdrachtgever',
   PROVIDER: 'Aanbieder',
@@ -50,7 +53,10 @@ const organizationStatusLabels = {
 
 export type AccountViewModel = ReturnType<typeof buildAccountViewModel>
 
-export function buildAccountViewModel(context: AccountContext) {
+export function buildAccountViewModel(
+  context: AccountContext,
+  isPlatformAdministrator = false,
+) {
   const activeMembership = context.activeMembership
 
   return {
@@ -58,7 +64,9 @@ export function buildAccountViewModel(context: AccountContext) {
     email: context.user.email,
     emailVerificationLabel: context.user.emailVerified ? 'Bevestigd' : 'Niet bevestigd',
     platformRoleLabel: platformRoleLabels[context.user.platformRole],
+    accountTypeLabel: context.user.accountType ? accountTypeLabels[context.user.accountType] : 'Platformaccount',
     accountStatusLabel: context.user.status === 'ACTIVE' ? 'Actief' : 'Niet actief',
+    isPlatformAdministrator,
     organizationCount: context.memberships.length,
     activeOrganization: activeMembership
       ? {

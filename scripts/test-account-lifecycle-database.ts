@@ -44,15 +44,28 @@ async function main() {
   await admin.connect()
   const authLinks: string[] = []
   const originalConsoleInfo = console.info
-  console.info = (...values: unknown[]) => {
+  const originalConsoleLog = console.log
+  const originalStdoutWrite = process.stdout.write.bind(process.stdout)
+  const captureAuthLink = (fallback: (...values: unknown[]) => void, values: unknown[]) => {
     const message = values.map(String).join(' ')
     if (
       message.includes('EMAIL VERIFICATION') ||
       message.includes('PASSWORD RESET') ||
-      message.includes('ACCOUNT ACTIVATION')
+      message.includes('ACCOUNT ACTIVATION') ||
+      message.includes('Development account activation email')
     ) authLinks.push(message)
-    else originalConsoleInfo(...values)
+    else fallback(...values)
   }
+  console.info = (...values: unknown[]) => captureAuthLink(originalConsoleInfo, values)
+  console.log = (...values: unknown[]) => captureAuthLink(originalConsoleLog, values)
+  process.stdout.write = ((chunk: string | Uint8Array, ...args: unknown[]) => {
+    const message = String(chunk)
+    if (message.includes('Development account activation email')) {
+      authLinks.push(message)
+      return true
+    }
+    return originalStdoutWrite(chunk, ...(args as Parameters<typeof process.stdout.write> extends [unknown, ...infer Rest] ? Rest : never))
+  }) as typeof process.stdout.write
   let prisma: Awaited<ReturnType<typeof import('../src/lib/prisma')['getPrisma']>> | null = null
   try {
     await admin.query(`CREATE DATABASE "${databaseName}"`)
@@ -629,6 +642,8 @@ async function main() {
     console.log('ADR-013 Fase 2B lifecycle-, autorisatie-, idempotentie- en concurrencytests zijn geslaagd.')
   } finally {
     console.info = originalConsoleInfo
+    console.log = originalConsoleLog
+    process.stdout.write = originalStdoutWrite as typeof process.stdout.write
     if (prisma) await prisma.$disconnect()
     await admin.query(`DROP DATABASE IF EXISTS "${databaseName}" WITH (FORCE)`)
     await admin.end()

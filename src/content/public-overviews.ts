@@ -10,11 +10,11 @@ export type PublicOverviewItem = {
   status?: string
 }
 
-export const serviceOverview = services.map((item) => ({ title: item.title, description: item.summary, href: item.href, status: 'Dienst' })) satisfies readonly PublicOverviewItem[]
+export const serviceOverview = services.map((item) => ({ title: item.title, description: item.summary, href: item.href })) satisfies readonly PublicOverviewItem[]
 
-export const legalOverview = obligations.map((item) => ({ title: item.title, description: item.summary, href: item.href, status: 'Algemene wettelijke context' })) satisfies readonly PublicOverviewItem[]
+export const legalOverview = obligations.map((item) => ({ title: item.title, description: item.summary, href: item.href })) satisfies readonly PublicOverviewItem[]
 
-export const sectorOverview = sectors.map((item) => ({ title: item.title, description: item.summary, href: item.href, status: 'Sectorcontext' })) satisfies readonly PublicOverviewItem[]
+export const sectorOverview = sectors.map((item) => ({ title: item.title, description: item.summary, href: item.href })) satisfies readonly PublicOverviewItem[]
 
 export const knowledgeCategories = [
   ['Arbowet en verplichtingen', 'Begrijp de algemene kaders en verantwoordelijkheden.'],

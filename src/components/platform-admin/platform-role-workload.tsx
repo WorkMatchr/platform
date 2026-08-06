@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { PlatformAdminEmailForm } from './platform-admin-actions'
 import { AdminPageHeader, AdminSection, MetricCard, StatusPill } from './platform-admin-ui'
+import { presentProviderReviewStatus } from '@/lib/providers/provider-dossier-presentation'
 
 type Permission = 'REVIEWER' | 'APPROVER' | 'AUDITOR'
 
@@ -71,7 +72,7 @@ export function PlatformRoleWorkload({
         <ul className="grid gap-2">
           {data.dossiers.map((dossier) => (
             <li className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-border bg-surface px-4 py-3" key={dossier.id}>
-              <span><strong>{dossier.providerProfile.organization.name}</strong> · {dossier.status}</span>
+              <span><strong>{dossier.providerProfile.organization.name}</strong> · {presentProviderReviewStatus(dossier.status)}</span>
               <Link className="font-semibold text-brand-primary underline" href={`/platformbeheer/dienstverleners/${dossier.providerProfile.id}`}>Open dossier</Link>
             </li>
           ))}

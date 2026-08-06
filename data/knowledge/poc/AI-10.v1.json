@@ -1,0 +1,123 @@
+{
+  "schemaVersion": "1.0",
+  "source": {
+    "code": "AI-10",
+    "title": "Bedrijfshulpverlening",
+    "publisher": "Sdu Uitgevers",
+    "publicationDate": "2001-01-01",
+    "language": "nl",
+    "jurisdiction": "NL",
+    "sourceType": "AI_SHEET",
+    "sourceFormat": "PDF",
+    "copyrightClassification": "RESTRICTED_REFERENCE_ONLY",
+    "authorityLevel": "PROFESSIONAL_GUIDANCE",
+    "temporalStatus": "HISTORICAL",
+    "sourceFamily": "SZW-AI-BLADEN",
+    "independenceGroup": "SZW-AI-BLADEN",
+    "isPrimarySource": false,
+    "notes": "Historische bron uit 2001; de bron vermeldt geen afzonderlijke editie en organisatorische of wettelijke eisen vereisen actuele validatie."
+  },
+  "sourceVersion": {
+    "externalKey": "ai-10:v1",
+    "versionLabel": "Uitgave 2001",
+    "publicationDate": "2001-01-01",
+    "checksum": "a414107c8b11d0351311552e344fb0e1a95db171c7654c89fa5e083a1a60cae7",
+    "extractionStatus": "EXTRACTED",
+    "reviewStatus": "REVIEW_REQUIRED"
+  },
+  "topics": [
+    {
+      "externalKey": "ai-10:topic:emergency-response",
+      "slug": "historisch-bedrijfshulpverlening-noodorganisatie",
+      "title": "Bedrijfshulpverlening en noodorganisatie (historisch)",
+      "description": "Historische kandidaat-kennis over risicoanalyse, BHV-organisatie, alarmering, ontruiming, opleiding en evaluatie.",
+      "domain": "EMERGENCY_RESPONSE"
+    }
+  ],
+  "fragments": [
+    { "externalKey": "ai-10:f1", "sourceVersionKey": "ai-10:v1", "pageFrom": 6, "sectionPath": "1.2 Verantwoordelijkheden", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-10:f2", "sourceVersionKey": "ai-10:v1", "pageFrom": 9, "sectionPath": "2.1 Risicoanalyse en maatgevende scenario's", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-10:f3", "sourceVersionKey": "ai-10:v1", "pageFrom": 10, "sectionPath": "2.2 Taken en omvang van de BHV-organisatie", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-10:f4", "sourceVersionKey": "ai-10:v1", "pageFrom": 12, "sectionPath": "2.3 Aanwezigen en omstandigheden", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-10:f5", "sourceVersionKey": "ai-10:v1", "pageFrom": 14, "sectionPath": "3 Het bedrijfshulpverleningsplan", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-10:f6", "sourceVersionKey": "ai-10:v1", "pageFrom": 15, "sectionPath": "3.2 Alarmering en communicatie", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-10:f7", "sourceVersionKey": "ai-10:v1", "pageFrom": 10, "sectionPath": "2.2 Eerste hulp, brand en ontruiming", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-10:f8", "sourceVersionKey": "ai-10:v1", "pageFrom": 17, "sectionPath": "4 Opleiding en instructie", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-10:f9", "sourceVersionKey": "ai-10:v1", "pageFrom": 19, "pageTo": 20, "sectionPath": "5 Oefenen en evalueren", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true },
+    { "externalKey": "ai-10:f10", "sourceVersionKey": "ai-10:v1", "pageFrom": 21, "sectionPath": "6 Samenwerking met externe hulpdiensten", "fragmentType": "SECTION_REFERENCE", "extractionMethod": "MANUAL_POC", "requiresReview": true }
+  ],
+  "claims": [
+    { "externalKey": "ai-10:c1", "topicKey": "ai-10:topic:emergency-response", "claimType": "RESPONSIBILITY", "statement": "De werkgever blijft verantwoordelijk voor een passende BHV-organisatie en een duidelijke verdeling van taken en bevoegdheden.", "applicability": "Historisch governanceprincipe; actuele verantwoordelijkheden en terminologie valideren.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-10:c2", "topicKey": "ai-10:topic:emergency-response", "claimType": "INSPECTION_POINT", "statement": "De inrichting van bedrijfshulpverlening hoort te worden gebaseerd op de risico-inventarisatie en op geloofwaardige noodscenario's van de organisatie.", "applicability": "Historisch uitgangspunt; actuele scenario's, bezetting en regelgeving beoordelen.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-10:c3", "topicKey": "ai-10:topic:emergency-response", "claimType": "RECOMMENDATION", "statement": "Taken, aantallen en beschikbaarheid van bedrijfshulpverleners moeten aansluiten op risico's, omvang, spreiding en aanwezigheid binnen de organisatie.", "applicability": "Historische organisatierichtlijn; geen vaste aantallen afleiden zonder actuele beoordeling.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-10:c4", "topicKey": "ai-10:topic:emergency-response", "claimType": "INSPECTION_POINT", "statement": "Bij de noodorganisatie moet rekening worden gehouden met bezoekers, verminderd zelfredzame personen, wisselende bezetting en bijzondere bedrijfsomstandigheden.", "applicability": "Historische aandachtspunten; per locatie en doelgroep concretiseren.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-10:c5", "topicKey": "ai-10:topic:emergency-response", "claimType": "PROCEDURAL_STEP", "statement": "Een BHV-plan legt onder meer organisatie, verantwoordelijkheden, alarmering, communicatielijnen en handelingsprocedures vast.", "applicability": "Historische planstructuur; inhoud afstemmen op actuele organisatie en hulpdiensten.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-10:c6", "topicKey": "ai-10:topic:emergency-response", "claimType": "CONTROL_MEASURE", "statement": "Alarmering en communicatie moeten herkenbaar, betrouwbaar en passend zijn voor de omgeving, zodat betrokkenen tijdig weten wat zij moeten doen.", "applicability": "Historische ontwerpaanbeveling; techniek, toegankelijkheid en bedrijfscontinuiteit actueel toetsen.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-10:c7", "topicKey": "ai-10:topic:emergency-response", "claimType": "EMERGENCY_REQUIREMENT", "statement": "De BHV-organisatie moet voorbereid zijn op eerste hulp, het beperken van beginnende brand en het alarmeren en ontruimen van aanwezigen.", "applicability": "Historische taakomschrijving; actuele taakgrenzen en opleidingsvereisten valideren.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-10:c8", "topicKey": "ai-10:topic:emergency-response", "claimType": "TRAINING_REQUIREMENT", "statement": "Opleiding en periodieke instructie horen aan te sluiten op de feitelijke taken, risico's, voorzieningen en procedures van de eigen organisatie.", "applicability": "Historische opleidingsaanbeveling; actuele competentie-eisen afzonderlijk vaststellen.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-10:c9", "topicKey": "ai-10:topic:emergency-response", "claimType": "RECOMMENDATION", "statement": "Oefeningen en evaluaties zijn nodig om te toetsen of mensen, middelen en procedures in de praktijk samenwerken en om verbeterpunten vast te leggen.", "applicability": "Historische kwaliteitscyclus; oefenfrequentie risicogestuurd en actueel bepalen.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" },
+    { "externalKey": "ai-10:c10", "topicKey": "ai-10:topic:emergency-response", "claimType": "RECOMMENDATION", "statement": "Afspraken met externe hulpdiensten horen de melding, toegang, informatieoverdracht en overdracht van de incidentleiding te ondersteunen.", "applicability": "Historische samenwerkingsaanbeveling; lokale afspraken en actuele hulpverleningsstructuur toetsen.", "temporalStatus": "HISTORICAL", "validationStatus": "UNVALIDATED", "publicationStatus": "DRAFT", "confidenceLevel": "LOW", "accessTier": "INTERNAL_REVIEWER" }
+  ],
+  "citations": [
+    { "claimKey": "ai-10:c1", "sourceVersionKey": "ai-10:v1", "fragmentKey": "ai-10:f1", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-10:c2", "sourceVersionKey": "ai-10:v1", "fragmentKey": "ai-10:f2", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-10:c3", "sourceVersionKey": "ai-10:v1", "fragmentKey": "ai-10:f3", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-10:c4", "sourceVersionKey": "ai-10:v1", "fragmentKey": "ai-10:f4", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-10:c5", "sourceVersionKey": "ai-10:v1", "fragmentKey": "ai-10:f5", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-10:c6", "sourceVersionKey": "ai-10:v1", "fragmentKey": "ai-10:f6", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-10:c7", "sourceVersionKey": "ai-10:v1", "fragmentKey": "ai-10:f7", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-10:c8", "sourceVersionKey": "ai-10:v1", "fragmentKey": "ai-10:f8", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-10:c9", "sourceVersionKey": "ai-10:v1", "fragmentKey": "ai-10:f9", "supportType": "HISTORICAL_ORIGIN" },
+    { "claimKey": "ai-10:c10", "sourceVersionKey": "ai-10:v1", "fragmentKey": "ai-10:f10", "supportType": "HISTORICAL_ORIGIN" }
+  ],
+  "relations": [],
+  "rules": [],
+  "calculations": [],
+  "checklists": [],
+  "procedures": [
+    {
+      "code": "AI10_EMERGENCY_ORGANIZATION_POC",
+      "version": 1,
+      "title": "Historische hoofdlijn handelen bij een noodsituatie",
+      "description": "Conceptuele volgorde voor interne review; niet gebruiken als operationele noodprocedure.",
+      "topicKey": "ai-10:topic:emergency-response",
+      "audience": "INTERNAL_REVIEWER",
+      "prerequisites": { "all": [{ "field": "organizationEmergencyPlanAvailable" }] },
+      "publicationStatus": "DRAFT",
+      "steps": [
+        { "order": 1, "title": "Alarmeer", "instruction": "Activeer de passende interne en externe alarmering volgens de geldende bedrijfsprocedure.", "responsibleRoleCode": "ai10-bhv-coordinator" },
+        { "order": 2, "title": "Beperk direct gevaar", "instruction": "Laat getrainde bedrijfshulpverleners alleen binnen hun taak en veilige mogelijkheden eerste maatregelen nemen.", "responsibleRoleCode": "ai10-bedrijfshulpverlener", "warningClaimKey": "ai-10:c7" },
+        { "order": 3, "title": "Help en ontruim", "instruction": "Verleen eerste hulp en begeleid aanwezigen volgens de vastgelegde ontruimingsprocedure.", "responsibleRoleCode": "ai10-bedrijfshulpverlener", "warningClaimKey": "ai-10:c7" },
+        { "order": 4, "title": "Draag over", "instruction": "Geef externe hulpdiensten snel toegang en de beschikbare relevante incidentinformatie.", "responsibleRoleCode": "ai10-bhv-coordinator" },
+        { "order": 5, "title": "Evalueer", "instruction": "Leg na afloop bevindingen vast en actualiseer waar nodig organisatie, middelen en procedures.", "responsibleRoleCode": "ai10-bhv-coordinator" }
+      ]
+    }
+  ],
+  "roles": [
+    {
+      "code": "ai10-werkgever",
+      "title": "Werkgever (historische bronrol)",
+      "description": "Eindverantwoordelijke voor de inrichting en werking van de BHV-organisatie."
+    },
+    {
+      "code": "ai10-bhv-coordinator",
+      "title": "BHV-coordinator (historische bronrol)",
+      "description": "Coordineert voorbereiding, inzet, opleiding en evaluatie binnen de gedelegeerde verantwoordelijkheid."
+    },
+    {
+      "code": "ai10-bedrijfshulpverlener",
+      "title": "Bedrijfshulpverlener (historische bronrol)",
+      "description": "Voert toegewezen noodtaken uit binnen opleiding, procedure en veilige mogelijkheden."
+    }
+  ],
+  "formTemplates": [],
+  "importMetadata": {
+    "createdAt": "2026-08-02T12:00:00.000Z",
+    "createdBy": "WORKMATCHR_POC",
+    "notes": "Handmatig samengesteld conceptpakket met korte eigen formuleringen en zonder integrale brontekst.",
+    "uncertainties": [
+      "De taakverdeling en organisatorische eisen uit 2001 moeten aan actuele wet- en regelgeving worden getoetst.",
+      "De procedure en rollen zijn uitsluitend interne PoC-objecten en geen operationele BHV-instructie."
+    ]
+  }
+}

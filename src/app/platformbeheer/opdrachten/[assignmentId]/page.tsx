@@ -7,6 +7,7 @@ import {
   getPlatformAdminObjectActivity,
   getPlatformAssignmentDetail,
 } from '@/lib/platform-admin/platform-admin-query-service'
+import { assignmentStatusLabels } from '@/lib/assignments/assignment-presentation'
 
 export default async function PlatformAssignmentDetailPage({
   params,
@@ -36,10 +37,10 @@ export default async function PlatformAssignmentDetailPage({
       <AdminPageHeader
         title={assignment.title}
         description={`Opdracht van ${assignment.clientOrganization.name}.`}
-        action={<StatusPill>{assignment.status}</StatusPill>}
+        action={<StatusPill>{assignmentStatusLabels[assignment.status]}</StatusPill>}
       />
       {query.resultaat ? <p className="rounded-control border border-success-border bg-success-subtle px-4 py-3 text-sm">De beheeractie is uitgevoerd en vastgelegd.</p> : null}
-      {query.fout ? <p className="rounded-control border border-danger-border bg-danger-subtle px-4 py-3 text-sm">De beheeractie kon niet veilig worden uitgevoerd.</p> : null}
+      {query.fout ? <p className="rounded-control border border-danger-border bg-danger-subtle px-4 py-3 text-sm">De beheeractie is niet uitgevoerd. Er zijn geen wijzigingen doorgevoerd. Controleer de gegevens en uw bevoegdheid en probeer het opnieuw.</p> : null}
       <div className="flex flex-wrap gap-2">
         <Link className="inline-flex min-h-10 items-center rounded-control border border-brand-primary px-4 text-sm font-semibold text-brand-primary" href="/platformbeheer/opdrachten">Terug naar opdrachten</Link>
         <Link className="inline-flex min-h-10 items-center rounded-control border border-border px-4 text-sm font-semibold" href="/platformbeheer/auditor">Audit openen</Link>
@@ -68,7 +69,7 @@ export default async function PlatformAssignmentDetailPage({
           label="Signaal markeren als onderzocht"
         />
       </AdminSection>
-      <AdminSection title="Statushistorie"><AdminTable headers={['Van', 'Naar', 'Reden', 'Moment']}>{assignment.statusHistory.map((event) => <tr key={event.id}><td className="px-4 py-3">{event.fromStatus ?? 'Nieuw'}</td><td className="px-4 py-3 font-semibold">{event.toStatus}</td><td className="px-4 py-3">{event.reason ?? '—'}</td><td className="px-4 py-3">{event.createdAt.toLocaleString('nl-NL')}</td></tr>)}</AdminTable></AdminSection>
+      <AdminSection title="Statushistorie"><AdminTable headers={['Van', 'Naar', 'Reden', 'Moment']}>{assignment.statusHistory.map((event) => <tr key={event.id}><td className="px-4 py-3">{event.fromStatus ? assignmentStatusLabels[event.fromStatus] : 'Nieuw'}</td><td className="px-4 py-3 font-semibold">{assignmentStatusLabels[event.toStatus]}</td><td className="px-4 py-3">{event.reason ?? '—'}</td><td className="px-4 py-3">{event.createdAt.toLocaleString('nl-NL')}</td></tr>)}</AdminTable></AdminSection>
       <AdminSection title="Beheeraudit"><AdminTable headers={['Actie', 'Auteur', 'Toelichting', 'Moment']}>{adminActivity.map((event) => <tr key={event.id}><td className="px-4 py-3 font-semibold">{event.action}</td><td className="px-4 py-3">{event.actorUser.displayName ?? event.actorUser.email}</td><td className="max-w-xl whitespace-pre-wrap px-4 py-3">{event.reason ?? '—'}</td><td className="px-4 py-3">{event.createdAt.toLocaleString('nl-NL')}</td></tr>)}</AdminTable></AdminSection>
     </>
   )

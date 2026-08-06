@@ -4,15 +4,15 @@ import { assignmentStatusLabels } from './assignment-presentation'
 describe('opdrachtpresentatie', () => {
   it('vertaalt iedere technische opdrachtstatus naar gewone Nederlandse taal', () => {
     expect(assignmentStatusLabels).toEqual({
-      DRAFT: 'Concept',
-      READY_FOR_REVIEW: 'Klaar voor controle',
+      DRAFT: 'Nog invullen',
+      READY_FOR_REVIEW: 'Klaar om te publiceren',
       OPEN: 'Gepubliceerd',
-      MATCHING: 'Matching wordt voorbereid',
+      MATCHING: 'Professionals worden geselecteerd',
       AWAITING_RESPONSES: 'Wacht op reacties',
-      IN_SELECTION: 'Selectie',
+      IN_SELECTION: 'Offertes vergelijken',
       AWARDED: 'Gegund',
       CLOSED: 'Afgerond',
-      CANCELLED: 'Geannuleerd',
+      CANCELLED: 'Beëindigd',
       ARCHIVED: 'Gearchiveerd',
     })
   })

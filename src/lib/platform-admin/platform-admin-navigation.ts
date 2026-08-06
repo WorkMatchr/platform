@@ -22,13 +22,19 @@ export const platformAdminNavigationGroups = [
     label: 'Inzicht',
     items: [
       { href: '/platformbeheer/marketplace', label: 'Marketplace' },
+      { href: '/platformbeheer/marketplace/regels', label: 'Bedrijfsregels' },
+      { href: '/platformbeheer/marketplace/betrouwbaarheid', label: 'Betrouwbaarheid' },
       { href: '/platformbeheer/trends', label: 'Trends' },
       { href: '/platformbeheer/rapportages', label: 'Rapportages' },
+      { href: '/platformbeheer/kennisbank', label: 'Kennisbeheer' },
     ],
   },
   {
     label: 'Systeem',
-    items: [{ href: '/platformbeheer/instellingen', label: 'Instellingen' }],
+    items: [
+      { href: '/platformbeheer/platformbeheerders', label: 'Platformbeheerders' },
+      { href: '/platformbeheer/instellingen', label: 'Instellingen' },
+    ],
   },
 ] as const
 

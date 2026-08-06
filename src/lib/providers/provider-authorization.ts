@@ -25,7 +25,7 @@ export async function requireProviderManager(
           organizationType: true,
           memberships: {
             where: { userId },
-            select: { role: true, status: true, user: { select: { status: true } } },
+            select: { role: true, status: true, user: { select: { status: true, accountType: true } } },
             take: 1,
           },
         },
@@ -37,6 +37,7 @@ export async function requireProviderManager(
     !provider ||
     !membership ||
     !canManageProviderData({
+      accountType: membership.user.accountType,
       userStatus: membership.user.status,
       membershipStatus: membership.status,
       membershipRole: membership.role,
@@ -61,7 +62,7 @@ export async function requireProviderViewer(
       organization: {
         status: 'ACTIVE',
         organizationType: { in: ['PROVIDER', 'BOTH'] },
-        memberships: { some: { userId, status: 'ACTIVE', user: { status: 'ACTIVE' } } },
+        memberships: { some: { userId, status: 'ACTIVE', user: { status: 'ACTIVE', accountType: 'PROFESSIONAL' } } },
       },
     },
     select: {

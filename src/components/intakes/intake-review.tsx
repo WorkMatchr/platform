@@ -1,13 +1,14 @@
 import Link from 'next/link'
-import type { IntakeActionState } from '@/app/hulpvragen/actions'
+import type { PublishIntakeActionState } from '@/app/opdrachten/actions'
+import { PublishIntakeForm } from '@/components/assignments/submit-intake-form'
 import { LinkButton } from '@/components/ui/link-button'
-import { StatusMessage } from '@/components/auth/auth-shell'
 import { IntakeProgress } from '@/components/intakes/intake-progress'
-import { IntakeReadyForm } from '@/components/intakes/intake-ready-form'
 import { IntakeStatusBadge } from '@/components/intakes/intake-status-badge'
 import type { IntakeDetailView, IntakeQuestionView } from '@/lib/intakes/intake-query-service'
-import { getIntakeCategoryByKey, intakeCategorySteps } from '@/lib/intakes/intake-presentation'
+import { getIntakeStepLabel, getVisibleIntakeSteps } from '@/lib/intakes/intake-presentation'
+import { createIntakeAnswerLookup, isReviewQuestionVisible } from '@/lib/intakes/intake-question-catalog'
 import { generateAssignmentDescription, generateAssignmentTitle } from '@/lib/assignments/assignment-generation'
+import type { IntakeAssignmentReadiness } from '@/lib/assignments/intake-assignment-readiness'
 
 export function displayIntakeAnswer(question: IntakeQuestionView, intake: IntakeDetailView): string {
   const value = question.value
@@ -32,39 +33,40 @@ export function displayIntakeAnswer(question: IntakeQuestionView, intake: Intake
 
 export function IntakeReview({
   intake,
+  readiness,
   action,
-  readyNotice = false,
 }: {
   intake: IntakeDetailView
-  action: (state: IntakeActionState, formData: FormData) => Promise<IntakeActionState>
-  readyNotice?: boolean
+  readiness: IntakeAssignmentReadiness
+  action: (state: PublishIntakeActionState, formData: FormData) => Promise<PublishIntakeActionState>
 }) {
-  const missingCategories = [...new Set(
-    intake.progress.missingQuestionKeys
-      .map((key) => intake.questions.find((question) => question.key === key)?.category)
-      .filter((category): category is IntakeQuestionView['category'] => Boolean(category)),
-  )]
   const maySubmit = intake.viewerRole === 'OWNER' || intake.viewerRole === 'ADMIN'
-  const firstMissingStep = getIntakeCategoryByKey(missingCategories[0])
+  const answerLookup = createIntakeAnswerLookup(intake.questions)
+  const hasAnswer = (question: IntakeQuestionView) => question.value !== null && question.value !== '' && (!Array.isArray(question.value) || question.value.length > 0)
+  const visibleQuestions = intake.questions.filter((question) => isReviewQuestionVisible(
+    question.key,
+    answerLookup,
+    intake.questionnaireVersion,
+    hasAnswer(question),
+  ))
+  const visibleSteps = getVisibleIntakeSteps([...new Set(visibleQuestions.map((question) => question.category))])
   const answerText = (key: string) => {
     const value = intake.questions.find((question) => question.key === key)?.value
     return typeof value === 'string' ? value : ''
   }
-  const assignmentPreview = intake.status === 'READY_FOR_REVIEW'
+  const assignmentPreview = readiness.isReady && intake.status !== 'CONVERTED'
     ? {
         title: generateAssignmentTitle(answerText('HELP_REQUEST_DESCRIPTION')),
         description: generateAssignmentDescription({
           helpRequest: answerText('HELP_REQUEST_DESCRIPTION'),
-          desiredOutcome: answerText('DESIRED_OUTCOME_DESCRIPTION'),
-          situation: answerText('SITUATION_DESCRIPTION'),
+          desiredOutcome: answerText('DESIRED_OUTCOME_DESCRIPTION') || answerText('GENERAL_SUPPORT_GOAL'),
+          situation: answerText('SITUATION_DESCRIPTION') || answerText('GENERAL_RELEVANT_CONTEXT'),
         }),
       }
     : null
 
   return (
     <div className="space-y-6">
-      {readyNotice && <StatusMessage>De intake is gereed voor controle.</StatusMessage>}
-
       <div className="rounded-card border border-border bg-surface-subtle p-5 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <IntakeStatusBadge status={intake.status} />
@@ -82,36 +84,43 @@ export function IntakeReview({
             <dt className="text-sm font-semibold text-text-secondary">Oorspronkelijke hulpvraag</dt>
             <dd className="mt-1 whitespace-pre-wrap font-medium text-text-primary">{intake.freeText}</dd>
           </div>
+          {intake.knowledgeContext && (
+            <div>
+              <dt className="text-sm font-semibold text-text-secondary">Onderwerp waarmee u begon</dt>
+              <dd className="mt-1 font-medium text-text-primary">{intake.knowledgeContext.title}</dd>
+            </div>
+          )}
         </dl>
       </div>
 
-      {missingCategories.length > 0 && (
+      {!readiness.isReady && (
         <div className="rounded-card border border-warning/40 bg-warning/10 p-5" role="status">
-          <h2 className="font-bold text-brand-dark">Nog niet alle verplichte vragen zijn ingevuld</h2>
+          <h2 className="font-bold text-brand-dark">Uw opdracht kan nog niet worden gepubliceerd</h2>
+          <p className="mt-2 text-text-secondary">Vul eerst de volgende gegevens aan:</p>
           <ul className="mt-3 space-y-2">
-            {missingCategories.map((category) => {
-              const step = getIntakeCategoryByKey(category)
-              return step ? (
-                <li key={category}>
-                  <Link className="font-semibold text-brand-primary-hover underline underline-offset-4" href={`/hulpvragen/${intake.id}/${step.slug}`}>
-                    {step.label} aanvullen
+            {readiness.issues.map((issue) => (
+              <li key={`${issue.code}-${issue.questionId ?? issue.section}`} className="flex flex-wrap items-baseline justify-between gap-2">
+                <span>{issue.message}</span>
+                {issue.editHref && (
+                  <Link className="font-semibold text-brand-primary-hover underline underline-offset-4" href={issue.editHref}>
+                    Aanpassen
                   </Link>
-                </li>
-              ) : null
-            })}
+                )}
+              </li>
+            ))}
           </ul>
         </div>
       )}
 
-      {intakeCategorySteps.map((step) => {
-        const questions = intake.questions.filter((question) => question.category === step.category)
+      {visibleSteps.map((step) => {
+        const questions = visibleQuestions.filter((question) => question.category === step.category)
         if (questions.length === 0) return null
         return (
           <section key={step.category} className="rounded-card border border-border bg-surface p-6 sm:p-7" aria-labelledby={`review-${step.category}`}>
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 id={`review-${step.category}`} className="text-xl font-bold text-brand-dark">{step.label}</h2>
+              <h2 id={`review-${step.category}`} className="text-xl font-bold text-brand-dark">{getIntakeStepLabel(step.category, intake.questionnaireVersion)}</h2>
               {(intake.status === 'DRAFT' || intake.status === 'IN_PROGRESS') && (
-                <LinkButton href={`/hulpvragen/${intake.id}/${step.slug}`} variant="ghost">Wijzigen</LinkButton>
+                <LinkButton href={`/hulpvragen/${intake.id}/${step.slug}?wijzig=1`} variant="ghost">Wijzigen</LinkButton>
               )}
             </div>
             <dl className="mt-5 space-y-5">
@@ -128,18 +137,18 @@ export function IntakeReview({
 
       {intake.status === 'CONVERTED' ? (
         <div className="rounded-card border border-border bg-surface-subtle p-6">
-          <h2 className="text-lg font-bold text-brand-dark">Deze intake is veilig bewaard</h2>
+          <h2 className="text-lg font-bold text-brand-dark">Deze intake is verwerkt</h2>
           <p className="mt-2 text-text-secondary">
-            De hulpvraag is ingediend en kan niet meer worden gewijzigd. De gevormde conceptopdracht vindt U bij Uw opdrachten.
+            De antwoorden zijn veilig bewaard en kunnen niet meer worden gewijzigd. De bijbehorende opdracht vindt u bij uw opdrachten.
           </p>
           <LinkButton href="/opdrachten" variant="outline" className="mt-5">Naar mijn opdrachten</LinkButton>
         </div>
-      ) : intake.status === 'READY_FOR_REVIEW' ? (
+      ) : (
         <div className="space-y-6">
           {assignmentPreview && (
             <section className="rounded-card border border-border bg-surface p-6" aria-labelledby="assignment-preview-title">
-              <h2 id="assignment-preview-title" className="text-xl font-bold text-brand-dark">Voorbeeld van Uw conceptopdracht</h2>
-              <p className="mt-2 text-sm text-text-secondary">Deze titel en omschrijving worden zonder AI uit Uw gecontroleerde antwoorden samengesteld.</p>
+              <h2 id="assignment-preview-title" className="text-xl font-bold text-brand-dark">Uw opdracht</h2>
+              <p className="mt-2 text-sm text-text-secondary">Deze titel en omschrijving worden zonder AI uit uw gecontroleerde antwoorden samengesteld en bij publicatie vastgelegd.</p>
               <dl className="mt-5 space-y-5">
                 <div><dt className="text-sm font-semibold text-text-secondary">Titel</dt><dd className="mt-1 font-bold text-brand-dark">{assignmentPreview.title}</dd></div>
                 <div><dt className="text-sm font-semibold text-text-secondary">Omschrijving</dt><dd className="mt-1 whitespace-pre-wrap text-text-primary">{assignmentPreview.description}</dd></div>
@@ -147,35 +156,20 @@ export function IntakeReview({
             </section>
           )}
           <div className="rounded-card border border-warning/40 bg-warning/10 p-6">
-          <h2 className="text-lg font-bold text-brand-dark">Klaar om bewust in te dienen</h2>
-          <p className="mt-2 text-text-secondary">
-            Na succesvolle indiening wordt deze intake bewaard en kan deze niet meer worden gewijzigd. WorkMatchr maakt een conceptopdracht aan. Publicatie en matching starten nog niet.
-          </p>
+          <h2 className="text-lg font-bold text-brand-dark">Opdracht publiceren</h2>
+          <p className="mt-2 text-text-secondary">Na publicatie kan WorkMatchr passende professionals selecteren. Controleer daarom of uw opdracht volledig en correct is.</p>
+          {intake.questionnaireVersion >= 2 && (
+            <p className="mt-3 text-sm text-text-secondary">De definitieve planning en uitvoerbaarheid spreekt u later met de professional af.</p>
+          )}
           {maySubmit ? (
-            <LinkButton href={`/hulpvragen/${intake.id}/indienen`} className="mt-5 w-full sm:w-auto">
-              Hulpvraag indienen
-            </LinkButton>
+            <PublishIntakeForm action={action} intakeId={intake.id} expectedIntakeVersion={intake.version} readiness={readiness} />
           ) : (
             <p className="mt-4 font-semibold text-brand-dark">
-              Uw hulpvraag staat klaar voor controle door een eigenaar of beheerder van de organisatie.
+              Uw opdracht staat klaar voor publicatie door een eigenaar of beheerder van de organisatie.
             </p>
           )}
           </div>
         </div>
-      ) : (
-        <>
-          <IntakeReadyForm
-            action={action}
-            intakeId={intake.id}
-            expectedIntakeVersion={intake.version}
-            isComplete={intake.progress.isComplete}
-          />
-          {!intake.progress.isComplete && firstMissingStep && (
-            <LinkButton href={`/hulpvragen/${intake.id}/${firstMissingStep.slug}`} variant="outline" className="w-full sm:w-auto">
-              Ga naar het eerstvolgende ontbrekende onderdeel
-            </LinkButton>
-          )}
-        </>
       )}
     </div>
   )

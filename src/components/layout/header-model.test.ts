@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { buildHeaderViewModel } from './header-model'
 
 const clientContext = {
-  user: { displayName: 'Opdrachtgever', email: 'opdrachtgever@example.invalid' },
+  user: { displayName: 'Opdrachtgever', email: 'opdrachtgever@example.invalid', accountType: 'CLIENT' as const },
   activeMembership: {
     role: 'OWNER' as const,
     organization: {
@@ -17,7 +17,7 @@ const clientContext = {
 }
 
 const providerContext = {
-  user: { displayName: 'Aanbieder', email: 'aanbieder@example.invalid' },
+  user: { displayName: 'Aanbieder', email: 'aanbieder@example.invalid', accountType: 'PROFESSIONAL' as const },
   activeMembership: {
     role: 'ADMIN' as const,
     organization: {
@@ -31,31 +31,51 @@ const providerContext = {
 
 describe('gedeelde headercontext', () => {
   it('toont de publieke header uitsluitend zonder sessie', () => {
-    expect(buildHeaderViewModel(null)).toEqual(expect.objectContaining({ authenticated: false, menuLinks: [] }))
+    expect(buildHeaderViewModel(null)).toEqual(expect.objectContaining({ authenticated: false, navigationGroups: [] }))
   })
 
   it('toont een ingelogde opdrachtgever zonder login- of providerlink', () => {
     const model = buildHeaderViewModel(clientContext)
     expect(model.authenticated).toBe(true)
-    expect(model.primaryLinks.map((item) => item.label)).toEqual([
-      'Dashboard',
-      'Hulpvragen',
-      'Adviesdossiers',
-      'Opdrachten',
+    expect(model.navigationGroups).toEqual([
+      {
+        key: 'work',
+        label: 'WERK',
+        links: [
+          { href: '/dashboard', label: 'Dashboard' },
+          { href: '/hulpvragen', label: 'Opdrachten' },
+          { href: '/opdrachten', label: 'Gepubliceerde opdrachten' },
+          { href: '/adviesdossiers', label: 'Adviesdossiers' },
+        ],
+      },
+      {
+        key: 'organization',
+        label: 'ORGANISATIE',
+        links: [{ href: '/organisatie', label: 'Organisatie' }],
+      },
+      {
+        key: 'personal',
+        label: 'PERSOONLIJK',
+        links: [
+          { href: '/account', label: 'Account' },
+          { href: '/notificaties', label: 'Notificaties' },
+        ],
+      },
     ])
-    expect(model.menuLinks.map((item) => item.label)).toEqual([
-      'Mijn account',
-      'Mijn organisatie',
-      'Mijn adviesdossiers',
-      'Notificaties',
-    ])
-    expect(model.menuLinks.some((item) => item.href === '/inloggen')).toBe(false)
+    expect(model.navigationGroups.flatMap((group) => group.links).some((item) => item.href === '/inloggen')).toBe(false)
+    expect(model.navigationGroups.flatMap((group) => group.links).filter((item) => item.href === '/adviesdossiers')).toHaveLength(1)
   })
 
   it('kent een ingelogde provider en diens actieve organisatierol', () => {
     const model = buildHeaderViewModel(providerContext)
     expect(model.activeOrganization).toEqual({ id: 'provider-1', name: 'Aanbieder BV', role: 'ADMIN' })
-    expect(model.menuLinks).toContainEqual({ href: '/aanbiedersdossier', label: 'Dienstverlenersprofiel' })
+    expect(model.navigationGroups.find((group) => group.key === 'organization')?.links).toEqual([
+      { href: '/organisatie', label: 'Organisatie' },
+      { href: '/aanbiedersdossier', label: 'Dienstverlenersprofiel' },
+      { href: '/aanbiedersdossier/professionals', label: 'Professionals' },
+    ])
+    expect(model.navigationGroups.find((group) => group.key === 'work')?.links).toContainEqual({ href: '/credits', label: 'Credits' })
+    expect(model.navigationGroups.flatMap((group) => group.links)).not.toContainEqual({ href: '/hulpvragen', label: 'Opdrachten' })
   })
 
   it('gebruikt Better Auth voor uitloggen', () => {
@@ -67,7 +87,7 @@ describe('gedeelde headercontext', () => {
   it('presenteert uitsluitend de server-side afgeleide organisatie', () => {
     const model = buildHeaderViewModel(providerContext)
     expect(model.activeOrganization?.id).toBe('provider-1')
-    expect(model.menuLinks.some((item) => item.href === '/aanbiedersdossier')).toBe(true)
+    expect(model.navigationGroups.flatMap((group) => group.links).some((item) => item.href === '/aanbiedersdossier')).toBe(true)
   })
 
   it('gebruikt bij sessievernieuwing de actuele gebruikersclaims', () => {
@@ -98,6 +118,7 @@ describe('gedeelde headercontext', () => {
         email: 'platformbeheerder@example.invalid',
         status: 'ACTIVE',
         platformRole: 'ADMIN',
+        accountType: null,
       },
       activeMembership: {
         role: 'ADMIN',
@@ -111,8 +132,12 @@ describe('gedeelde headercontext', () => {
           providerProfile: null,
         },
       },
-    })
-    expect(platformAdministrator.primaryLinks).toContainEqual({ href: '/platformbeheer', label: 'Platformbeheer' })
-    expect(buildHeaderViewModel(clientContext).primaryLinks.some((item) => item.href === '/platformbeheer')).toBe(false)
+    }, true)
+    expect(platformAdministrator.navigationGroups).toEqual([
+      { key: 'work', label: 'WERK', links: [{ href: '/platformbeheer', label: 'Platformbeheer' }] },
+      { key: 'personal', label: 'PERSOONLIJK', links: [{ href: '/account', label: 'Account' }] },
+    ])
+    expect(platformAdministrator.activeOrganization).toBeNull()
+    expect(buildHeaderViewModel(clientContext).navigationGroups.flatMap((group) => group.links).some((item) => item.href === '/platformbeheer')).toBe(false)
   })
 })

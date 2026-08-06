@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workmatchr.nl/schemas/knowledge-import.v1.schema.json",
+  "title": "WorkMatchr Knowledge Import v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "source", "sourceVersion", "topics", "fragments", "claims", "citations", "relations", "rules", "calculations", "checklists", "procedures", "roles", "formTemplates", "importMetadata"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "source": { "$ref": "#/$defs/source" },
+    "sourceVersion": { "$ref": "#/$defs/sourceVersion" },
+    "topics": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/topic" } },
+    "fragments": { "type": "array", "maxItems": 500, "items": { "$ref": "#/$defs/fragment" } },
+    "claims": { "type": "array", "maxItems": 500, "items": { "$ref": "#/$defs/claim" } },
+    "citations": { "type": "array", "maxItems": 1000, "items": { "$ref": "#/$defs/citation" } },
+    "relations": { "type": "array", "maxItems": 1000, "items": { "type": "object" } },
+    "rules": { "type": "array", "maxItems": 100, "items": { "type": "object" } },
+    "calculations": { "type": "array", "maxItems": 50, "items": { "type": "object" } },
+    "checklists": { "type": "array", "maxItems": 50, "items": { "type": "object" } },
+    "procedures": { "type": "array", "maxItems": 50, "items": { "type": "object" } },
+    "roles": { "type": "array", "maxItems": 100, "items": { "type": "object" } },
+    "formTemplates": { "type": "array", "maxItems": 50, "items": { "type": "object" } },
+    "importMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["createdAt", "createdBy", "uncertainties"],
+      "properties": {
+        "createdAt": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "uncertainties": { "type": "array", "maxItems": 100, "items": { "type": "string", "minLength": 1, "maxLength": 500 } }
+      }
+    }
+  },
+  "$defs": {
+    "key": { "type": "string", "pattern": "^[a-z0-9][a-z0-9:_-]{2,159}$" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "title", "sourceType", "sourceFormat", "copyrightClassification", "authorityLevel", "temporalStatus", "sourceFamily", "independenceGroup", "isPrimarySource"],
+      "properties": {
+        "code": { "type": "string", "pattern": "^AI-[0-9]{2,3}$" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "publisher": { "type": "string", "maxLength": 200 },
+        "publicationDate": { "type": "string", "format": "date" },
+        "edition": { "type": "string", "maxLength": 120 },
+        "language": { "type": "string", "minLength": 2, "maxLength": 12 },
+        "jurisdiction": { "type": "string", "minLength": 2, "maxLength": 40 },
+        "sourceType": { "enum": ["AI_SHEET", "LEGISLATION", "REGULATION", "INSPECTORATE_GUIDANCE", "ARBOCATALOGUE", "STANDARD", "RESEARCH", "PROFESSIONAL_GUIDANCE", "INTERNAL_EXPERTISE", "CASE_LAW", "OTHER"] },
+        "sourceFormat": { "enum": ["PDF", "LEGACY_DOC"] },
+        "copyrightClassification": { "enum": ["PUBLIC_DOMAIN", "OPEN_LICENSE", "RESTRICTED_REFERENCE_ONLY", "INTERNAL", "UNKNOWN"] },
+        "authorityLevel": { "enum": ["PRIMARY_LEGAL", "OFFICIAL_GUIDANCE", "CONSENSUS_STANDARD", "PROFESSIONAL_GUIDANCE", "RESEARCH", "INTERNAL", "UNKNOWN"] },
+        "temporalStatus": { "enum": ["UNKNOWN", "CURRENT", "HISTORICAL", "SUPERSEDED", "WITHDRAWN", "UNDER_REVIEW"] },
+        "sourceFamily": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "independenceGroup": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "isPrimarySource": { "type": "boolean" },
+        "notes": { "type": "string", "maxLength": 1000 }
+      }
+    },
+    "sourceVersion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["externalKey", "versionLabel", "checksum", "extractionStatus", "reviewStatus"],
+      "properties": {
+        "externalKey": { "$ref": "#/$defs/key" },
+        "versionLabel": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "publicationDate": { "type": "string", "format": "date" },
+        "validFrom": { "type": "string", "format": "date" },
+        "validUntil": { "type": "string", "format": "date" },
+        "checksum": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "extractionStatus": { "enum": ["NOT_STARTED", "READY", "EXTRACTED", "UNSUPPORTED_FOR_EXTRACTION", "FAILED"] },
+        "reviewStatus": { "enum": ["NOT_REVIEWED", "REVIEW_REQUIRED", "IN_REVIEW", "REVIEWED", "REJECTED"] }
+      }
+    },
+    "topic": {
+      "type": "object", "additionalProperties": false,
+      "required": ["externalKey", "slug", "title", "description", "domain"],
+      "properties": {
+        "externalKey": { "$ref": "#/$defs/key" }, "slug": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+        "title": { "type": "string", "maxLength": 240 }, "description": { "type": "string", "maxLength": 1000 },
+        "domain": { "enum": ["POLICY_AND_MANAGEMENT", "ERGONOMICS", "HAZARDOUS_SUBSTANCES", "NOISE", "CONFINED_SPACES", "EMERGENCY_RESPONSE", "PPE", "OCCUPATIONAL_HEALTH", "MACHINERY", "MEASUREMENT", "LEGAL", "OTHER"] },
+        "parentTopicKey": { "$ref": "#/$defs/key" }
+      }
+    },
+    "fragment": {
+      "type": "object", "additionalProperties": false,
+      "required": ["externalKey", "sourceVersionKey", "fragmentType", "extractionMethod", "requiresReview"],
+      "anyOf": [{ "required": ["pageFrom"] }, { "required": ["sectionPath"] }],
+      "properties": {
+        "externalKey": { "$ref": "#/$defs/key" }, "sourceVersionKey": { "$ref": "#/$defs/key" },
+        "pageFrom": { "type": "integer", "minimum": 1 }, "pageTo": { "type": "integer", "minimum": 1 },
+        "sectionPath": { "type": "string", "maxLength": 500 }, "fragmentType": { "type": "string", "maxLength": 80 },
+        "internalExcerpt": { "type": "string", "maxLength": 500 }, "excerptHash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "extractionMethod": { "type": "string", "maxLength": 80 }, "requiresReview": { "type": "boolean" }
+      }
+    },
+    "claim": {
+      "type": "object", "additionalProperties": false,
+      "required": ["externalKey", "topicKey", "claimType", "statement", "applicability", "temporalStatus", "validationStatus", "publicationStatus", "confidenceLevel", "accessTier"],
+      "properties": {
+        "externalKey": { "$ref": "#/$defs/key" }, "topicKey": { "$ref": "#/$defs/key" }, "claimType": { "type": "string" },
+        "statement": { "type": "string", "minLength": 1, "maxLength": 1500 }, "normalizedStatement": { "type": "string", "maxLength": 1500 },
+        "applicability": { "type": "string", "maxLength": 1000 }, "jurisdiction": { "type": "string", "maxLength": 40 },
+        "validFrom": { "type": "string", "format": "date" }, "validUntil": { "type": "string", "format": "date" },
+        "temporalStatus": { "enum": ["UNKNOWN", "CURRENT", "HISTORICAL", "SUPERSEDED", "WITHDRAWN", "UNDER_REVIEW"] },
+        "validationStatus": { "enum": ["UNVALIDATED", "PARTIALLY_VALIDATED", "VALIDATED", "CONFLICTING", "REJECTED", "EXPIRED", "REVIEW_REQUIRED"] },
+        "publicationStatus": { "const": "DRAFT" }, "confidenceLevel": { "enum": ["UNKNOWN", "LOW", "MEDIUM", "HIGH"] },
+        "accessTier": { "enum": ["PUBLIC_BASIC", "REGISTERED_BASIC", "PROFESSIONAL_PRO", "ORGANIZATION_BUSINESS", "INTERNAL_REVIEWER", "PLATFORM_ADMIN"] }
+      }
+    },
+    "citation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["claimKey", "sourceVersionKey", "fragmentKey", "supportType"],
+      "properties": {
+        "claimKey": { "$ref": "#/$defs/key" }, "sourceVersionKey": { "$ref": "#/$defs/key" }, "fragmentKey": { "$ref": "#/$defs/key" },
+        "supportType": { "enum": ["DIRECT_SUPPORT", "PARTIAL_SUPPORT", "CONTEXT", "CONTRADICTS", "SUPERSEDES", "HISTORICAL_ORIGIN"] },
+        "citationNote": { "type": "string", "maxLength": 500 }
+      }
+    }
+  }
+}

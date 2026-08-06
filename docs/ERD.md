@@ -1,5 +1,21 @@
 # ERD WorkMatchr
 
+## Marketplace Rules, credits en betrouwbaarheid
+
+```mermaid
+erDiagram
+  MarketplaceRuleSet ||--o{ RequestOfferSlot : bepaalt
+  MarketplaceRuleSet ||--o{ CreditTransaction : verklaart
+  Request ||--o{ RequestOfferSlot : bevat
+  RequestOfferSlot ||--|| CreditTransaction : betaalt
+  Request ||--o| MarketplaceReliabilityEvent : registreert
+  Organization ||--o{ MarketplaceReliabilityEvent : betreft
+  AdviceDossier ||--o{ MarketplaceContactRequest : motiveert
+  Organization ||--o{ MarketplaceContactRequest : vraagt
+  Organization ||--o{ PlatformAdminInvitation : platformcontext
+  User ||--o{ PlatformAdminInvitation : ontvangt
+```
+
 De ERD is per domein gesplitst voor leesbaarheid. Velden zijn beperkt tot primaire en relationele sleutels plus bepalende statussen.
 
 ## Publieke conceptintake — Module 7.1
@@ -22,6 +38,9 @@ erDiagram
     uuid id PK
     PublicIntakePhase phase
     PublicIntakeEntryPoint entryPoint
+    string knowledgeContextId
+    int knowledgeContextVersion
+    string knowledgeSourceRoute
     string flowVersion
     int version
     datetime lastInteractionAt
@@ -175,6 +194,7 @@ erDiagram
 erDiagram
   User ||--o| OrganizationMembership : has
   User ||--o{ Session : authenticates_with
+  User ||--o{ Session : may_be_effective_test_user
   User ||--o{ Account : owns
   Organization ||--o{ OrganizationMembership : has
   Organization ||--o{ OrganizationLocation : owns
@@ -184,12 +204,15 @@ erDiagram
     uuid id PK
     string email UK
     PlatformRole platformRole
+    AccountType accountType
     UserStatus status
     boolean emailVerified
   }
   Session {
     uuid id PK
     uuid userId FK
+    uuid impersonatedUserId FK
+    datetime impersonationStartedAt
     string token UK
     datetime expiresAt
   }
@@ -348,6 +371,8 @@ erDiagram
   Assignment ||--o{ AssignmentSpecialism : requires
   Assignment ||--o{ AssignmentStatusHistory : transitions
   Assignment ||--o{ AssignmentRevision : revises
+  Assignment ||--o{ AssignmentLocationItem : occurs_at
+  AssignmentRevision ||--o{ AssignmentRevisionLocationItem : snapshots
   Assignment ||--o| AssignmentRevision : published_as
   Specialism ||--o{ AssignmentSpecialism : requested_as
   Assignment ||--o{ AssignmentProviderSelection : selects
@@ -376,6 +401,9 @@ erDiagram
     uuid questionnaireVersionId FK
     uuid clientOrganizationId FK
     uuid createdByUserId FK
+    string knowledgeContextId
+    int knowledgeContextVersion
+    string knowledgeSourceRoute
     int version
     uuid submittedByUserId FK
     datetime convertedAt
@@ -400,6 +428,14 @@ erDiagram
     uuid publishedByUserId FK
     int publishedVersion FK
     datetime publishedAt
+    AssignmentLocationType locationType
+    uuid locationId FK
+    string locationCity
+    string locationRegion
+    int locationCount
+    string knowledgeContextId
+    int knowledgeContextVersion
+    string knowledgeSourceRoute
   }
   AssignmentStatusHistory {
     uuid id PK
@@ -412,6 +448,14 @@ erDiagram
     uuid assignmentId FK
     int version
     uuid changedByUserId FK
+    AssignmentLocationType locationType
+    uuid locationId FK
+    string locationCity
+    string locationRegion
+    int locationCount
+    string knowledgeContextId
+    int knowledgeContextVersion
+    string knowledgeSourceRoute
   }
   AssignmentProviderSelection {
     uuid id PK
@@ -426,6 +470,12 @@ erDiagram
     AssignmentResolutionType type
   }
 ```
+
+`Assignment.locationType` plus de `location*`-snapshotvelden is de actuele
+bron. Bij `MULTIPLE` is de geordende `AssignmentLocationItem`-collectie leidend en bevriest `AssignmentRevisionLocationItem` dezelfde lijst. `OrganizationLocation` is bij `REGISTERED` alleen de gevalideerde
+bronreferentie. Iedere inhoudsrevisie kopieert het volledige locatieblok, zodat
+een publicatiesnapshot niet verandert wanneer een organisatielocatie later wordt
+aangepast. `OTHER`, `MULTIPLE`, `REMOTE` en `UNKNOWN` hebben geen locatie-FK.
 
 ## Providerdossierworkflow
 
@@ -446,6 +496,39 @@ erDiagram
 
 `ProviderDossierCandidate` en alle historie-/finding-/resolutionrecords zijn immutable. Nieuwe herindieningsresoluties zijn aan de nieuwe candidate gebonden; historische resolutions blijven zonder fictieve backfill geldig. Partial unique indexes bewaken één actieve submission en één open reviewcase per provider.
 
+## Knowledge Control Workflow
+
+```mermaid
+erDiagram
+  KnowledgeClaim ||--o{ KnowledgeReviewTask : controlled_by
+  KnowledgeReviewTask ||--o{ KnowledgeReviewDecision : records
+  KnowledgeReviewTask ||--o{ KnowledgeReviewSourceReference : checks_sources
+  KnowledgeClaim ||--o{ KnowledgeValidation : validated_by
+  KnowledgeClaim ||--o{ KnowledgeImprovementReport : receives
+  KnowledgeReviewTask ||--o{ KnowledgeImprovementReport : investigates
+  User ||--o{ KnowledgeImprovementReport : reports
+  User ||--o{ KnowledgeImprovementReport : handles
+```
+
+`KnowledgeClaim` bewaart de actuele risicoklasse en broncontrolestatus. `KnowledgeReviewTask.requiresHumanAction` en de getypeerde uitzonderingsreden bepalen of een taak in de menselijke werkvoorraad verschijnt; deactivatie verwijdert de taak niet. De append-only beslissingen, bronreferenties, validaties en auditevents blijven de herleidbare historie. Een `KnowledgeImprovementReport` koppelt een professioneel signaal aan precies één claim en één controletaak, maar muteert de gepubliceerde kennis niet rechtstreeks.
+
+## Dienstverlenersprofiel v1
+
+```mermaid
+erDiagram
+  Organization ||--o| ProviderProfile : owns
+  ProviderProfile ||--o{ ProviderProfileCoreExpertise : highlights
+  ProviderTaxonomyTerm ||--o{ ProviderProfileCoreExpertise : classifies
+  ProviderProfile ||--o{ ProviderProfileWorkMode : uses
+  ProviderTaxonomyTerm ||--o{ ProviderProfileWorkMode : classifies
+  ProviderProfile ||--o{ ProviderCapability : offers
+  ProviderProfile ||--o{ ProviderOrganizationQualification : declares
+  ProviderProfile ||--o{ ProviderProfessional : connects
+  ProviderProfessional ||--o{ ProviderProfessionalQualification : holds
+```
+
+Profielvolledigheid is afgeleid en wordt niet opgeslagen. Beschikbaarheid en capaciteit maken geen deel uit van dit profielmodel.
+
 ## Credits en audit
 
 ```mermaid
@@ -457,14 +540,22 @@ erDiagram
   CreditAccount {
     uuid id PK
     uuid organizationId FK,UK
-    int balance
+    int balance "afgeleid beschikbaar"
+    int availableBalance "afgeleid"
+    int reservedBalance "afgeleid"
+    int spentBalance "afgeleid compatibel"
   }
   CreditTransaction {
     uuid id PK
     uuid creditAccountId FK
     CreditTransactionType type
     int amount
+    int totalDelta
+    int reservedDelta
     int balanceAfter
+    uuid createdByUserId FK
+    string reason
+    string idempotencyKey UK
   }
   AdminActionLog {
     uuid id PK
@@ -500,3 +591,26 @@ Kandidaten, interventies, offerteversies, gunningen, ledgerregels en marktaudit 
 ## ADR-013 Contract — enkelvoudige tenantcontext
 
 `OrganizationMembership.userId` is databasebreed uniek. Een User heeft daardoor nul of één actuele membership; één organisatie kan nog steeds meerdere memberships en dus meerdere afzonderlijke gebruikersaccounts hebben. De nulvariant ondersteunt expliciete platformaccounts en nog niet afgeronde eerste onboarding. Actorrelaties en append-only eventrelaties blijven ongewijzigd.
+# Knowledge Engine
+
+```mermaid
+erDiagram
+  KnowledgeSource ||--o{ KnowledgeSourceVersion : heeft
+  KnowledgeSourceVersion ||--o{ KnowledgeFragment : bevat
+  KnowledgeTopic ||--o{ KnowledgeClaim : ordent
+  KnowledgeClaim ||--o{ KnowledgeCitation : onderbouwd-door
+  KnowledgeSourceVersion ||--o{ KnowledgeCitation : herkomst
+  KnowledgeFragment ||--o{ KnowledgeCitation : lokaliseert
+  KnowledgeClaim ||--o{ KnowledgeValidation : beoordeeld-door
+  KnowledgeClaim ||--o{ KnowledgeReviewTask : krijgt
+  KnowledgeReviewTask ||--o{ KnowledgeReviewDecision : registreert
+  KnowledgeReviewTask ||--o{ KnowledgeReviewSourceReference : onderbouwd-met
+  KnowledgeReviewTask ||--o{ KnowledgeValidation : valideert
+  KnowledgeValidation o|--o| KnowledgeValidation : trekt-in
+  KnowledgeReviewSourceReference o|--o| KnowledgeReviewSourceReference : trekt-in
+  KnowledgeClaim ||--o{ KnowledgeRelation : verbindt
+  KnowledgeTopic ||--o{ KnowledgeChecklist : structureert
+  KnowledgeTopic ||--o{ KnowledgeProcedure : structureert
+  KnowledgeProcedure ||--o{ KnowledgeProcedureStep : bestaat-uit
+  KnowledgeRole ||--o{ KnowledgeResponsibility : draagt
+```

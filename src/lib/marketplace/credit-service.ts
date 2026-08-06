@@ -1,6 +1,7 @@
 import type { Prisma } from '@/generated/prisma/client'
 import { getPrisma } from '@/lib/prisma'
-import { requireMarketplacePlatformAdmin, requireProviderMarketplaceAccess } from './marketplace-authorization'
+import { getProfessionalCreditWallet } from '@/lib/credits/credit-wallet-service'
+import { requireMarketplacePlatformAdmin } from './marketplace-authorization'
 import { MarketplaceServiceError } from './marketplace-errors'
 import { activeOrganizationRecipients, createMarketplaceNotification, writeMarketplaceAudit } from './marketplace-events'
 
@@ -9,7 +10,8 @@ type Transaction = Prisma.TransactionClient
 async function loadAccount(transaction: Transaction, organizationId: string) {
   const account = await transaction.creditAccount.findUnique({ where: { organizationId } })
   if (!account) throw new MarketplaceServiceError('INSUFFICIENT_CREDITS')
-  return account
+  await transaction.$queryRaw`SELECT "id" FROM "CreditAccount" WHERE "id" = ${account.id}::uuid FOR UPDATE`
+  return transaction.creditAccount.findUniqueOrThrow({ where: { id: account.id } })
 }
 
 export async function reserveCreditsInTransaction(
@@ -19,16 +21,7 @@ export async function reserveCreditsInTransaction(
   const repeated = await transaction.creditReservation.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
   if (repeated) return repeated
   const account = await loadAccount(transaction, input.organizationId)
-  const updated = await transaction.creditAccount.updateMany({
-    where: { id: account.id, version: account.version, availableBalance: { gte: input.amount } },
-    data: {
-      availableBalance: { decrement: input.amount },
-      balance: { decrement: input.amount },
-      reservedBalance: { increment: input.amount },
-      version: { increment: 1 },
-    },
-  })
-  if (updated.count !== 1) throw new MarketplaceServiceError('INSUFFICIENT_CREDITS')
+  if (account.availableBalance < input.amount) throw new MarketplaceServiceError('INSUFFICIENT_CREDITS')
   const reservation = await transaction.creditReservation.create({
     data: {
       creditAccountId: account.id,
@@ -37,16 +30,21 @@ export async function reserveCreditsInTransaction(
       idempotencyKey: input.idempotencyKey,
     },
   })
-  const totals = await transaction.creditAccount.findUniqueOrThrow({ where: { id: account.id } })
   await transaction.creditTransaction.create({
     data: {
       creditAccountId: account.id,
       type: 'RESERVATION',
       amount: -input.amount,
-      balanceAfter: totals.availableBalance,
-      availableAfter: totals.availableBalance,
-      reservedAfter: totals.reservedBalance,
-      spentAfter: totals.spentBalance,
+      totalDelta: 0,
+      reservedDelta: input.amount,
+      balanceBefore: account.availableBalance,
+      balanceAfter: account.availableBalance - input.amount,
+      availableBefore: account.availableBalance,
+      availableAfter: account.availableBalance - input.amount,
+      reservedBefore: account.reservedBalance,
+      reservedAfter: account.reservedBalance + input.amount,
+      spentBefore: account.spentBalance,
+      spentAfter: account.spentBalance,
       reservationId: reservation.id,
       referenceType: 'ProviderParticipation',
       referenceId: input.participationId,
@@ -74,21 +72,24 @@ export async function consumeCreditReservationInTransaction(
     data: { status: 'CONSUMED', consumedAt: new Date() },
   })
   if (updated.count !== 1) throw new MarketplaceServiceError('CONFLICT')
-  const accountUpdate = await transaction.creditAccount.updateMany({
-    where: { id: reservation.creditAccountId, version: reservation.creditAccount.version, reservedBalance: { gte: reservation.amount } },
-    data: { reservedBalance: { decrement: reservation.amount }, spentBalance: { increment: reservation.amount }, version: { increment: 1 } },
-  })
-  if (accountUpdate.count !== 1) throw new MarketplaceServiceError('CONFLICT')
-  const totals = await transaction.creditAccount.findUniqueOrThrow({ where: { id: reservation.creditAccountId } })
+  await transaction.$queryRaw`SELECT "id" FROM "CreditAccount" WHERE "id" = ${reservation.creditAccountId}::uuid FOR UPDATE`
+  const account = await transaction.creditAccount.findUniqueOrThrow({ where: { id: reservation.creditAccountId } })
+  if (account.reservedBalance < reservation.amount) throw new MarketplaceServiceError('CONFLICT')
   return transaction.creditTransaction.create({
     data: {
       creditAccountId: reservation.creditAccountId,
       type: 'CONSUMPTION',
       amount: -reservation.amount,
-      balanceAfter: totals.availableBalance,
-      availableAfter: totals.availableBalance,
-      reservedAfter: totals.reservedBalance,
-      spentAfter: totals.spentBalance,
+      totalDelta: -reservation.amount,
+      reservedDelta: -reservation.amount,
+      balanceBefore: account.availableBalance,
+      balanceAfter: account.availableBalance,
+      availableBefore: account.availableBalance,
+      availableAfter: account.availableBalance,
+      reservedBefore: account.reservedBalance,
+      reservedAfter: account.reservedBalance - reservation.amount,
+      spentBefore: account.spentBalance,
+      spentAfter: account.spentBalance + reservation.amount,
       reservationId: reservation.id,
       referenceType: 'ProviderParticipation',
       referenceId: reservation.participationId,
@@ -112,26 +113,24 @@ export async function releaseCreditReservationInTransaction(
     data: { status: 'RELEASED', releasedAt: new Date(), releaseReason: input.reason },
   })
   if (updated.count !== 1) throw new MarketplaceServiceError('CONFLICT')
-  const accountUpdate = await transaction.creditAccount.updateMany({
-    where: { id: reservation.creditAccountId, version: reservation.creditAccount.version, reservedBalance: { gte: reservation.amount } },
-    data: {
-      availableBalance: { increment: reservation.amount },
-      balance: { increment: reservation.amount },
-      reservedBalance: { decrement: reservation.amount },
-      version: { increment: 1 },
-    },
-  })
-  if (accountUpdate.count !== 1) throw new MarketplaceServiceError('CONFLICT')
-  const totals = await transaction.creditAccount.findUniqueOrThrow({ where: { id: reservation.creditAccountId } })
+  await transaction.$queryRaw`SELECT "id" FROM "CreditAccount" WHERE "id" = ${reservation.creditAccountId}::uuid FOR UPDATE`
+  const account = await transaction.creditAccount.findUniqueOrThrow({ where: { id: reservation.creditAccountId } })
+  if (account.reservedBalance < reservation.amount) throw new MarketplaceServiceError('CONFLICT')
   return transaction.creditTransaction.create({
     data: {
       creditAccountId: reservation.creditAccountId,
       type: 'RESERVATION_RELEASE',
       amount: reservation.amount,
-      balanceAfter: totals.availableBalance,
-      availableAfter: totals.availableBalance,
-      reservedAfter: totals.reservedBalance,
-      spentAfter: totals.spentBalance,
+      totalDelta: 0,
+      reservedDelta: -reservation.amount,
+      balanceBefore: account.availableBalance,
+      balanceAfter: account.availableBalance + reservation.amount,
+      availableBefore: account.availableBalance,
+      availableAfter: account.availableBalance + reservation.amount,
+      reservedBefore: account.reservedBalance,
+      reservedAfter: account.reservedBalance - reservation.amount,
+      spentBefore: account.spentBalance,
+      spentAfter: account.spentBalance,
       reservationId: reservation.id,
       referenceType: 'ProviderParticipation',
       referenceId: reservation.participationId,
@@ -157,7 +156,18 @@ export async function grantMarketplaceCredits(input: {
     if (repeated) return repeated
     await requireMarketplacePlatformAdmin(transaction, input.actorUserId)
     const organization = await transaction.organization.findFirst({
-      where: { id: input.providerOrganizationId, status: 'ACTIVE', organizationType: { in: ['PROVIDER', 'BOTH'] }, systemKey: null },
+      where: {
+        id: input.providerOrganizationId,
+        status: 'ACTIVE',
+        organizationType: { in: ['PROVIDER', 'BOTH'] },
+        systemKey: null,
+        memberships: {
+          some: {
+            status: 'ACTIVE',
+            user: { status: 'ACTIVE', accountType: 'PROFESSIONAL' },
+          },
+        },
+      },
       select: { id: true },
     })
     if (!organization) throw new MarketplaceServiceError('NOT_FOUND')
@@ -166,19 +176,23 @@ export async function grantMarketplaceCredits(input: {
       create: { organizationId: organization.id },
       update: {},
     })
-    const updated = await transaction.creditAccount.update({
-      where: { id: account.id },
-      data: { availableBalance: { increment: input.amount }, balance: { increment: input.amount }, version: { increment: 1 } },
-    })
+    await transaction.$queryRaw`SELECT "id" FROM "CreditAccount" WHERE "id" = ${account.id}::uuid FOR UPDATE`
+    const current = await transaction.creditAccount.findUniqueOrThrow({ where: { id: account.id } })
     const ledger = await transaction.creditTransaction.create({
       data: {
         creditAccountId: account.id,
         type: 'ADMIN_GRANT',
         amount: input.amount,
-        balanceAfter: updated.availableBalance,
-        availableAfter: updated.availableBalance,
-        reservedAfter: updated.reservedBalance,
-        spentAfter: updated.spentBalance,
+        totalDelta: input.amount,
+        reservedDelta: 0,
+        balanceBefore: current.availableBalance,
+        balanceAfter: current.availableBalance + input.amount,
+        availableBefore: current.availableBalance,
+        availableAfter: current.availableBalance + input.amount,
+        reservedBefore: current.reservedBalance,
+        reservedAfter: current.reservedBalance,
+        spentBefore: current.spentBalance,
+        spentAfter: current.spentBalance,
         reason: input.reason.trim(),
         description: 'Gratis credits toegekend door WorkMatchr-beheer.',
         idempotencyKey: input.idempotencyKey,
@@ -194,7 +208,7 @@ export async function grantMarketplaceCredits(input: {
       entityId: ledger.id,
       reason: input.reason.trim(),
       correlationKey: input.idempotencyKey,
-      metadata: { amount: input.amount, availableAfter: updated.availableBalance },
+      metadata: { amount: input.amount, availableAfter: current.availableBalance + input.amount },
     })
     const recipients = await activeOrganizationRecipients(transaction, organization.id)
     for (const recipientUserId of recipients) {
@@ -227,28 +241,25 @@ export async function correctMarketplaceCredits(input: {
     await requireMarketplacePlatformAdmin(transaction, input.actorUserId)
     const account = await transaction.creditAccount.findUnique({ where: { organizationId: input.providerOrganizationId } })
     if (!account) throw new MarketplaceServiceError('NOT_FOUND')
-    const updated = await transaction.creditAccount.updateMany({
-      where: {
-        id: account.id,
-        version: account.version,
-        ...(input.amount < 0 ? { availableBalance: { gte: Math.abs(input.amount) } } : {}),
-      },
-      data: {
-        availableBalance: { increment: input.amount },
-        balance: { increment: input.amount },
-        version: { increment: 1 },
-      },
-    })
-    if (updated.count !== 1) throw new MarketplaceServiceError(input.amount < 0 ? 'INSUFFICIENT_CREDITS' : 'CONFLICT')
+    await transaction.$queryRaw`SELECT "id" FROM "CreditAccount" WHERE "id" = ${account.id}::uuid FOR UPDATE`
     const totals = await transaction.creditAccount.findUniqueOrThrow({ where: { id: account.id } })
+    if (input.amount < 0 && totals.availableBalance < Math.abs(input.amount)) {
+      throw new MarketplaceServiceError('INSUFFICIENT_CREDITS')
+    }
     const ledger = await transaction.creditTransaction.create({
       data: {
         creditAccountId: account.id,
         type: 'ADMIN_CORRECTION',
         amount: input.amount,
-        balanceAfter: totals.availableBalance,
-        availableAfter: totals.availableBalance,
+        totalDelta: input.amount,
+        reservedDelta: 0,
+        balanceBefore: totals.availableBalance,
+        balanceAfter: totals.availableBalance + input.amount,
+        availableBefore: totals.availableBalance,
+        availableAfter: totals.availableBalance + input.amount,
+        reservedBefore: totals.reservedBalance,
         reservedAfter: totals.reservedBalance,
+        spentBefore: totals.spentBalance,
         spentAfter: totals.spentBalance,
         reason: input.reason.trim(),
         description: 'Controleerbare creditcorrectie door WorkMatchr-beheer.',
@@ -265,33 +276,15 @@ export async function correctMarketplaceCredits(input: {
       entityId: ledger.id,
       reason: input.reason.trim(),
       correlationKey: input.idempotencyKey,
-      metadata: { amount: input.amount, availableAfter: totals.availableBalance },
+      metadata: { amount: input.amount, availableAfter: totals.availableBalance + input.amount },
     })
     return ledger
   }, { isolationLevel: 'Serializable' })
 }
 
 export async function getProviderCreditOverview(userId: string, providerOrganizationId: string) {
-  return getPrisma().$transaction(async (transaction) => {
-    await requireProviderMarketplaceAccess(transaction, userId, providerOrganizationId)
-    const account = await transaction.creditAccount.findUnique({
-      where: { organizationId: providerOrganizationId },
-      select: {
-        availableBalance: true,
-        reservedBalance: true,
-        spentBalance: true,
-        transactions: {
-          orderBy: { createdAt: 'desc' },
-          take: 25,
-          select: { id: true, type: true, amount: true, reason: true, referenceType: true, referenceId: true, createdAt: true },
-        },
-        reservations: {
-          where: { status: 'ACTIVE' },
-          orderBy: { createdAt: 'desc' },
-          select: { id: true, amount: true, status: true, participationId: true, createdAt: true },
-        },
-      },
-    })
-    return account ?? { availableBalance: 0, reservedBalance: 0, spentBalance: 0, transactions: [], reservations: [] }
+  return getProfessionalCreditWallet({
+    actorUserId: userId,
+    organizationId: providerOrganizationId,
   })
 }

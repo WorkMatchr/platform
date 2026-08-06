@@ -71,8 +71,22 @@ function assignment(
     employeeCount: 20,
     desiredStartDate: new Date('2099-08-01T00:00:00.000Z'),
     responseDeadline: null,
+    locationType: 'REGISTERED' as const,
     locationId,
+    locationName: 'Hoofdkantoor',
+    locationAddressLine: 'Testlaan 1',
+    locationPostalCode: '1234AB',
+    locationCity: 'Utrecht',
+    locationProvince: 'Utrecht',
+    locationCountryCode: 'NL',
+    locationRegion: 'Utrecht',
+    locationDescription: null,
+    locationCount: null,
     allowsRemoteWork: false,
+    knowledgeContextId: 'OCCUPATIONAL_PHYSICIAN',
+    knowledgeContextVersion: 1,
+    knowledgeSourceRoute: '/kenniscentrum/wanneer-bedrijfsarts-inschakelen',
+    knowledgeSuggestedCategory: 'OCCUPATIONAL_HEALTH',
     publishedAt: wasPublished ? publishedAt : null,
     publishedByUserId: wasPublished ? userId : null,
     publishedVersion: wasPublished ? 4 : null,
@@ -95,8 +109,22 @@ function snapshot(record = assignment('OPEN')) {
     employeeCount: record.employeeCount,
     desiredStartDate: record.desiredStartDate,
     responseDeadline: record.responseDeadline,
+    locationType: record.locationType,
     locationId: record.locationId,
+    locationName: record.locationName,
+    locationAddressLine: record.locationAddressLine,
+    locationPostalCode: record.locationPostalCode,
+    locationCity: record.locationCity,
+    locationProvince: record.locationProvince,
+    locationCountryCode: record.locationCountryCode,
+    locationRegion: record.locationRegion,
+    locationDescription: record.locationDescription,
+    locationCount: record.locationCount,
     allowsRemoteWork: record.allowsRemoteWork,
+    knowledgeContextId: record.knowledgeContextId,
+    knowledgeContextVersion: record.knowledgeContextVersion,
+    knowledgeSourceRoute: record.knowledgeSourceRoute,
+    knowledgeSuggestedCategory: record.knowledgeSuggestedCategory,
   }
 }
 
@@ -133,6 +161,59 @@ beforeEach(() => {
 })
 
 describe('opdrachtpublicatie', () => {
+  it('maakt een concept bij expliciete publicatie intern gereed en schrijft precies één snapshot', async () => {
+    mocks.requireManager.mockResolvedValue(assignment('DRAFT'))
+
+    await expect(
+      publishAssignment(userId, organizationId, publicationInput()),
+    ).resolves.toMatchObject({
+      id: assignmentId,
+      status: 'OPEN',
+      version: 5,
+      publishedVersion: 5,
+      idempotent: false,
+    })
+
+    expect(mocks.assignmentUpdateMany).toHaveBeenNthCalledWith(1, {
+      where: {
+        id: assignmentId,
+        clientOrganizationId: organizationId,
+        status: 'DRAFT',
+        version: 3,
+        publishedAt: null,
+        publishedByUserId: null,
+        publishedVersion: null,
+      },
+      data: { status: 'READY_FOR_REVIEW', version: { increment: 1 } },
+    })
+    expect(mocks.assignmentUpdateMany).toHaveBeenNthCalledWith(2, expect.objectContaining({
+      where: expect.objectContaining({ status: 'READY_FOR_REVIEW', version: 4 }),
+    }))
+    expect(mocks.assignmentUpdateMany).toHaveBeenNthCalledWith(3, expect.objectContaining({
+      where: expect.objectContaining({ status: 'READY_FOR_REVIEW', version: 5 }),
+      data: expect.objectContaining({ status: 'OPEN', publishedVersion: 5 }),
+    }))
+    expect(mocks.revisionCreate).toHaveBeenCalledOnce()
+    expect(mocks.revisionCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        assignmentId,
+        version: 5,
+        locationType: 'REGISTERED',
+        locationId,
+        locationName: 'Hoofdkantoor',
+        locationAddressLine: 'Testlaan 1',
+        locationCity: 'Utrecht',
+      }),
+    })
+    expect(mocks.historyCreate).toHaveBeenCalledTimes(2)
+    expect(mocks.historyCreate).toHaveBeenNthCalledWith(1, {
+      data: expect.objectContaining({ fromStatus: 'DRAFT', toStatus: 'READY_FOR_REVIEW' }),
+    })
+    expect(mocks.historyCreate).toHaveBeenNthCalledWith(2, {
+      data: expect.objectContaining({ fromStatus: 'READY_FOR_REVIEW', toStatus: 'OPEN' }),
+    })
+  })
+
   it('publiceert een geldige opdracht atomair met snapshot en precies één statushistorie-item', async () => {
     await expect(
       publishAssignment(userId, organizationId, publicationInput()),
@@ -167,6 +248,10 @@ describe('opdrachtpublicatie', () => {
         version: 4,
         title: 'Veiligheidskundige ondersteuning',
         changedByUserId: userId,
+        knowledgeContextId: 'OCCUPATIONAL_PHYSICIAN',
+        knowledgeContextVersion: 1,
+        knowledgeSourceRoute: '/kenniscentrum/wanneer-bedrijfsarts-inschakelen',
+        knowledgeSuggestedCategory: 'OCCUPATIONAL_HEALTH',
       }),
     })
     expect(mocks.assignmentUpdateMany).toHaveBeenNthCalledWith(
@@ -240,7 +325,17 @@ describe('opdrachtpublicatie', () => {
   it('laat een remote opdracht zonder locatie en zonder specialisme of responstermijn publiceren', async () => {
     mocks.requireManager.mockResolvedValue({
       ...assignment(),
+      locationType: 'REMOTE',
       locationId: null,
+      locationName: null,
+      locationAddressLine: null,
+      locationPostalCode: null,
+      locationCity: null,
+      locationProvince: null,
+      locationCountryCode: null,
+      locationRegion: null,
+      locationDescription: null,
+      locationCount: null,
       allowsRemoteWork: true,
       primarySpecialismId: null,
       responseDeadline: null,
