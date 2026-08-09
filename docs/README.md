@@ -69,6 +69,7 @@ Module 6C.2 — WOS Beheeracties & Communicatie is technisch opgeleverd en wacht
 - [Offerteflow v1](quotation-flow-v1.md)
 - [Gunningsflow v1](award-flow-v1.md)
 - [Creditledger v1](credit-ledger-v1.md)
+- [Financiële keten F3-F9](financial-chain-f3-f9.md)
 - [Marketplace Rules, credits en betrouwbaarheid](marketplace-rules-credit-reliability.md)
 - [Marketplace Rules, credits en betrouwbaarheid](marketplace-rules-credit-reliability.md)
 - [Marktplaatsdashboards v1](marketplace-dashboards-v1.md)

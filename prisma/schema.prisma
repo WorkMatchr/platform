@@ -510,6 +510,78 @@ enum CreditTransactionType {
   OTHER
 }
 
+enum FinancialPurchaseKind {
+  CREDIT_PACKAGE
+  PRO_SUBSCRIPTION
+}
+
+enum FinancialPurchaseStatus {
+  CREATED
+  PAYMENT_PENDING
+  PAID
+  FAILED
+  CANCELED
+  EXPIRED
+  REFUND_REVIEW_REQUIRED
+  PARTIALLY_REFUNDED
+  REFUNDED
+}
+
+enum FinancialPaymentStatus {
+  OPEN
+  PENDING
+  PAID
+  FAILED
+  CANCELED
+  EXPIRED
+  PARTIALLY_REFUNDED
+  REFUNDED
+}
+
+enum FinancialDocumentType {
+  INVOICE
+  CREDIT_NOTE
+}
+
+enum FinancialSyncStatus {
+  PENDING
+  PROCESSING
+  SYNCED
+  FAILED
+}
+
+enum DiscountCodeStatus {
+  ACTIVE
+  BLOCKED
+  EXPIRED
+}
+
+enum DiscountRedemptionStatus {
+  RESERVED
+  APPLIED
+  RELEASED
+}
+
+enum StarterBenefitDecision {
+  ELIGIBLE
+  REVIEW_REQUIRED
+  INELIGIBLE
+}
+
+enum StarterBenefitEvidenceSource {
+  MANUAL_PLATFORM_REVIEW
+  KVK_PROVIDER
+}
+
+enum ProfessionalSubscriptionStatus {
+  PENDING_MANDATE
+  ACTIVE
+  PAST_DUE
+  SUSPENDED
+  EXPIRED
+  CANCELED
+}
+
 enum MarketplaceMatchRunStatus {
   RUNNING
   COMPLETED
@@ -980,6 +1052,12 @@ model User {
   assignmentResolutions              AssignmentResolution[]                 @relation("AssignmentResolutionActor")
   adminActions                       AdminActionLog[]                       @relation("AdminActionActor")
   createdCreditTransactions          CreditTransaction[]                    @relation("CreditTransactionActor")
+  createdFinancialPurchases          FinancialPurchase[]                    @relation("FinancialPurchaseActor")
+  approvedFinancialRefunds           FinancialRefund[]                      @relation("FinancialRefundApprover")
+  financialEvents                    FinancialEvent[]                       @relation("FinancialEventActor")
+  createdDiscountCodes               DiscountCode[]                         @relation("DiscountCodeCreator")
+  decidedStarterBenefitReviews       StarterBenefitReview[]                 @relation("StarterBenefitReviewer")
+  grantedStarterBenefits             StarterBenefitGrant[]                  @relation("StarterBenefitGrantActor")
   sessions                           Session[]                              @relation("SessionActor")
   impersonatedSessions               Session[]                              @relation("SessionEffectiveUser")
   accounts                           Account[]
@@ -1140,6 +1218,12 @@ model Organization {
   clientIntakes                Intake[]
   clientAssignments            Assignment[]
   creditAccount                CreditAccount?
+  financialPurchases           FinancialPurchase[]
+  financialInvoices            FinancialInvoice[]
+  discountRedemptions          DiscountRedemption[]
+  starterBenefitReviews        StarterBenefitReview[]
+  starterBenefitGrants         StarterBenefitGrant[]
+  professionalSubscription     ProfessionalSubscription?
   insuredProviderPolicies      ProviderInsuranceRevision[]     @relation("InsuredOrganization")
   marketplaceInvitations       ProviderInvitation[]
   marketplaceParticipations    ProviderParticipation[]
@@ -3280,6 +3364,9 @@ model CreditTransaction {
   paymentForOfferSlot     RequestOfferSlot?     @relation("RequestOfferSlotPayment")
   reversalOf              CreditTransaction?    @relation("CreditTransactionReversal", fields: [reversalOfTransactionId], references: [id], onDelete: Restrict)
   reversedBy              CreditTransaction?    @relation("CreditTransactionReversal")
+  creditedPurchase        FinancialPurchase?    @relation("FinancialPurchaseCredit")
+  financialRefund         FinancialRefund?      @relation("FinancialRefundCredit")
+  starterBenefitGrant     StarterBenefitGrant?  @relation("StarterBenefitCredit")
 
   @@index([creditAccountId])
   @@index([type])
@@ -3290,6 +3377,359 @@ model CreditTransaction {
   @@index([marketplaceRuleSetId])
   @@index([requestId, createdAt])
   @@index([offerSlotId])
+}
+
+model FinancialPurchase {
+  id                        String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId            String                    @db.Uuid
+  createdByUserId           String                    @db.Uuid
+  kind                      FinancialPurchaseKind     @default(CREDIT_PACKAGE)
+  status                    FinancialPurchaseStatus   @default(CREATED)
+  packageSku                String                    @db.VarChar(40)
+  packageLabel              String                    @db.VarChar(120)
+  credits                   Int
+  baseAmountCents           Int
+  packageDiscountCents      Int                       @default(0)
+  proDiscountCents          Int                       @default(0)
+  discountCodeDiscountCents Int                       @default(0)
+  amountExclVatCents        Int
+  vatRateBps                Int
+  vatAmountCents            Int
+  amountInclVatCents        Int
+  currency                  String                    @db.Char(3)
+  discountCodeId            String?                   @db.Uuid
+  discountCodeSnapshot      Json?                     @db.JsonB
+  billingOrganizationName   String                    @db.VarChar(200)
+  billingAddressLine        String                    @db.VarChar(200)
+  billingPostalCode         String                    @db.VarChar(20)
+  billingCity               String                    @db.VarChar(120)
+  billingCountryCode        String                    @db.Char(2)
+  billingKvKNumber          String?                   @db.VarChar(20)
+  billingVatId              String?                   @db.VarChar(40)
+  molliePaymentId           String?                   @unique @db.VarChar(80)
+  mollieCheckoutUrl         String?                   @db.VarChar(500)
+  creditedTransactionId     String?                   @unique @db.Uuid
+  idempotencyKey            String                    @unique @db.VarChar(160)
+  paymentCreatedAt          DateTime?                 @db.Timestamptz(3)
+  paidAt                    DateTime?                 @db.Timestamptz(3)
+  terminalAt                DateTime?                 @db.Timestamptz(3)
+  createdAt                 DateTime                  @default(now()) @db.Timestamptz(3)
+  updatedAt                 DateTime                  @updatedAt @db.Timestamptz(3)
+  organization              Organization              @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  createdByUser             User                      @relation("FinancialPurchaseActor", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  discountCode              DiscountCode?             @relation(fields: [discountCodeId], references: [id], onDelete: Restrict)
+  creditedTransaction       CreditTransaction?        @relation("FinancialPurchaseCredit", fields: [creditedTransactionId], references: [id], onDelete: Restrict)
+  paymentEvents             FinancialPaymentEvent[]
+  refunds                   FinancialRefund[]
+  invoice                   FinancialInvoice?
+  discountRedemption        DiscountRedemption?
+  subscriptionFirstPayment  ProfessionalSubscription?
+  events                    FinancialEvent[]
+
+  @@index([organizationId, createdAt])
+  @@index([status, createdAt])
+  @@index([discountCodeId])
+}
+
+model FinancialPaymentEvent {
+  id                 String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  purchaseId         String                 @db.Uuid
+  molliePaymentId    String                 @db.VarChar(80)
+  status             FinancialPaymentStatus
+  amountCents        Int
+  currency           String                 @db.Char(3)
+  providerOccurredAt DateTime?              @db.Timestamptz(3)
+  payloadFingerprint String                 @db.Char(64)
+  idempotencyKey     String                 @unique @db.VarChar(160)
+  createdAt          DateTime               @default(now()) @db.Timestamptz(3)
+  purchase           FinancialPurchase      @relation(fields: [purchaseId], references: [id], onDelete: Restrict)
+
+  @@index([purchaseId, createdAt])
+  @@index([molliePaymentId, createdAt])
+}
+
+model FinancialRefund {
+  id                  String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  purchaseId          String                 @db.Uuid
+  approvedByUserId    String                 @db.Uuid
+  status              FinancialPaymentStatus @default(PENDING)
+  reason              String                 @db.VarChar(500)
+  amountCents         Int
+  credits             Int
+  mollieRefundId      String?                @unique @db.VarChar(80)
+  ledgerTransactionId String?                @unique @db.Uuid
+  idempotencyKey      String                 @unique @db.VarChar(160)
+  requestedAt         DateTime               @default(now()) @db.Timestamptz(3)
+  completedAt         DateTime?              @db.Timestamptz(3)
+  purchase            FinancialPurchase      @relation(fields: [purchaseId], references: [id], onDelete: Restrict)
+  approvedByUser      User                   @relation("FinancialRefundApprover", fields: [approvedByUserId], references: [id], onDelete: Restrict)
+  ledgerTransaction   CreditTransaction?     @relation("FinancialRefundCredit", fields: [ledgerTransactionId], references: [id], onDelete: Restrict)
+  creditNote          FinancialInvoice?
+  events              FinancialEvent[]
+
+  @@index([purchaseId, requestedAt])
+  @@index([status, requestedAt])
+}
+
+model FinancialInvoiceCounter {
+  id         Int      @id @default(1)
+  nextNumber Int
+  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+}
+
+model FinancialInvoice {
+  id                        String                           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  documentType              FinancialDocumentType            @default(INVOICE)
+  invoiceNumber             String                           @unique @db.VarChar(40)
+  sequenceNumber            Int                              @unique
+  purchaseId                String?                          @unique @db.Uuid
+  refundId                  String?                          @unique @db.Uuid
+  subscriptionPaymentId     String?                          @unique @db.Uuid
+  originalInvoiceId         String?                          @db.Uuid
+  organizationId            String                           @db.Uuid
+  issuedAt                  DateTime                         @db.Timestamptz(3)
+  sellerLegalName           String                           @db.VarChar(200)
+  sellerTradeName           String                           @db.VarChar(200)
+  sellerAddressLine         String                           @db.VarChar(200)
+  sellerPostalCode          String                           @db.VarChar(20)
+  sellerCity                String                           @db.VarChar(120)
+  sellerCountryCode         String                           @db.Char(2)
+  sellerKvKNumber           String                           @db.VarChar(20)
+  sellerVatId               String                           @db.VarChar(40)
+  customerOrganizationName  String                           @db.VarChar(200)
+  customerAddressLine       String                           @db.VarChar(200)
+  customerPostalCode        String                           @db.VarChar(20)
+  customerCity              String                           @db.VarChar(120)
+  customerCountryCode       String                           @db.Char(2)
+  customerKvKNumber         String?                          @db.VarChar(20)
+  customerVatId             String?                          @db.VarChar(40)
+  packageSku                String                           @db.VarChar(40)
+  packageLabel              String                           @db.VarChar(120)
+  credits                   Int
+  baseAmountCents           Int
+  packageDiscountCents      Int
+  proDiscountCents          Int
+  discountCodeDiscountCents Int
+  amountExclVatCents        Int
+  vatRateBps                Int
+  vatAmountCents            Int
+  amountInclVatCents        Int
+  currency                  String                           @db.Char(3)
+  molliePaymentId           String?                          @db.VarChar(80)
+  createdAt                 DateTime                         @default(now()) @db.Timestamptz(3)
+  organization              Organization                     @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  purchase                  FinancialPurchase?               @relation(fields: [purchaseId], references: [id], onDelete: Restrict)
+  refund                    FinancialRefund?                 @relation(fields: [refundId], references: [id], onDelete: Restrict)
+  subscriptionPayment       ProfessionalSubscriptionPayment? @relation(fields: [subscriptionPaymentId], references: [id], onDelete: Restrict)
+  originalInvoice           FinancialInvoice?                @relation("FinancialInvoiceCorrection", fields: [originalInvoiceId], references: [id], onDelete: Restrict)
+  corrections               FinancialInvoice[]               @relation("FinancialInvoiceCorrection")
+  jorttSync                 FinancialJorttSync?
+  events                    FinancialEvent[]
+
+  @@index([organizationId, issuedAt])
+  @@index([documentType, issuedAt])
+  @@index([originalInvoiceId])
+}
+
+model FinancialJorttSync {
+  id                String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoiceId         String                      @unique @db.Uuid
+  status            FinancialSyncStatus         @default(PENDING)
+  externalReference String?                     @unique @db.VarChar(160)
+  attemptCount      Int                         @default(0)
+  nextAttemptAt     DateTime?                   @db.Timestamptz(3)
+  lastErrorCode     String?                     @db.VarChar(80)
+  syncedAt          DateTime?                   @db.Timestamptz(3)
+  createdAt         DateTime                    @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime                    @updatedAt @db.Timestamptz(3)
+  invoice           FinancialInvoice            @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  attempts          FinancialJorttSyncAttempt[]
+
+  @@index([status, nextAttemptAt])
+}
+
+model FinancialJorttSyncAttempt {
+  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  syncId            String              @db.Uuid
+  attemptNumber     Int
+  status            FinancialSyncStatus
+  errorCode         String?             @db.VarChar(80)
+  externalReference String?             @db.VarChar(160)
+  idempotencyKey    String              @unique @db.VarChar(160)
+  createdAt         DateTime            @default(now()) @db.Timestamptz(3)
+  sync              FinancialJorttSync  @relation(fields: [syncId], references: [id], onDelete: Restrict)
+
+  @@unique([syncId, attemptNumber])
+  @@index([status, createdAt])
+}
+
+model DiscountCode {
+  id                    String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code                  String               @unique @db.VarChar(40)
+  status                DiscountCodeStatus   @default(ACTIVE)
+  validFrom             DateTime             @db.Timestamptz(3)
+  validUntil            DateTime?            @db.Timestamptz(3)
+  maximumUses           Int?
+  oncePerOrganization   Boolean              @default(false)
+  newCustomersOnly      Boolean              @default(false)
+  applicablePackageSkus String[]
+  minimumAmountCents    Int?
+  percentageBps         Int?
+  fixedAmountCents      Int?
+  bonusCredits          Int                  @default(0)
+  createdByUserId       String               @db.Uuid
+  createdAt             DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime             @updatedAt @db.Timestamptz(3)
+  createdByUser         User                 @relation("DiscountCodeCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  purchases             FinancialPurchase[]
+  redemptions           DiscountRedemption[]
+
+  @@index([status, validFrom, validUntil])
+}
+
+model DiscountRedemption {
+  id             String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  discountCodeId String                   @db.Uuid
+  organizationId String                   @db.Uuid
+  purchaseId     String                   @unique @db.Uuid
+  status         DiscountRedemptionStatus @default(RESERVED)
+  discountCents  Int
+  bonusCredits   Int                      @default(0)
+  idempotencyKey String                   @unique @db.VarChar(160)
+  createdAt      DateTime                 @default(now()) @db.Timestamptz(3)
+  appliedAt      DateTime?                @db.Timestamptz(3)
+  releasedAt     DateTime?                @db.Timestamptz(3)
+  discountCode   DiscountCode             @relation(fields: [discountCodeId], references: [id], onDelete: Restrict)
+  organization   Organization             @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  purchase       FinancialPurchase        @relation(fields: [purchaseId], references: [id], onDelete: Restrict)
+
+  @@index([discountCodeId, status])
+  @@index([organizationId, discountCodeId, status])
+}
+
+model StarterBenefitReview {
+  id                    String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId        String                       @db.Uuid
+  reviewedByUserId      String                       @db.Uuid
+  decision              StarterBenefitDecision
+  evidenceSource        StarterBenefitEvidenceSource
+  chamberOfCommerceDate DateTime?                    @db.Date
+  chamberOfCommerceHash String                       @db.Char(64)
+  ibanHash              String?                      @db.Char(64)
+  accountIdentityHash   String                       @db.Char(64)
+  nameCityHash          String                       @db.Char(64)
+  emailDomainHash       String?                      @db.Char(64)
+  reason                String                       @db.VarChar(500)
+  idempotencyKey        String                       @unique @db.VarChar(160)
+  createdAt             DateTime                     @default(now()) @db.Timestamptz(3)
+  organization          Organization                 @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  reviewedByUser        User                         @relation("StarterBenefitReviewer", fields: [reviewedByUserId], references: [id], onDelete: Restrict)
+  grant                 StarterBenefitGrant?
+
+  @@index([organizationId, createdAt])
+  @@index([decision, createdAt])
+  @@index([chamberOfCommerceHash])
+}
+
+model StarterBenefitGrant {
+  id                    String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId        String               @unique @db.Uuid
+  reviewId              String               @unique @db.Uuid
+  grantedByUserId       String               @db.Uuid
+  credits               Int                  @default(25)
+  chamberOfCommerceHash String               @unique @db.Char(64)
+  ledgerTransactionId   String               @unique @db.Uuid
+  idempotencyKey        String               @unique @db.VarChar(160)
+  grantedAt             DateTime             @default(now()) @db.Timestamptz(3)
+  organization          Organization         @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  review                StarterBenefitReview @relation(fields: [reviewId], references: [id], onDelete: Restrict)
+  grantedByUser         User                 @relation("StarterBenefitGrantActor", fields: [grantedByUserId], references: [id], onDelete: Restrict)
+  ledgerTransaction     CreditTransaction    @relation("StarterBenefitCredit", fields: [ledgerTransactionId], references: [id], onDelete: Restrict)
+}
+
+model ProfessionalSubscription {
+  id                      String                            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId          String                            @unique @db.Uuid
+  status                  ProfessionalSubscriptionStatus    @default(PENDING_MANDATE)
+  planCode                String                            @db.VarChar(40)
+  planLabel               String                            @db.VarChar(120)
+  amountExclVatCents      Int
+  vatRateBps              Int
+  vatAmountCents          Int
+  amountInclVatCents      Int
+  currency                String                            @db.Char(3)
+  mollieCustomerId        String?                           @unique @db.VarChar(80)
+  mollieMandateId         String?                           @db.VarChar(80)
+  mollieSubscriptionId    String?                           @unique @db.VarChar(80)
+  firstPaymentPurchaseId  String?                           @unique @db.Uuid
+  currentPeriodStart      DateTime?                         @db.Timestamptz(3)
+  currentPeriodEnd        DateTime?                         @db.Timestamptz(3)
+  cancelAtPeriodEnd       Boolean                           @default(false)
+  cancellationRequestedAt DateTime?                         @db.Timestamptz(3)
+  cancellationEffectiveAt DateTime?                         @db.Timestamptz(3)
+  pastDueAt               DateTime?                         @db.Timestamptz(3)
+  retryCount              Int                               @default(0)
+  activatedAt             DateTime?                         @db.Timestamptz(3)
+  suspendedAt             DateTime?                         @db.Timestamptz(3)
+  canceledAt              DateTime?                         @db.Timestamptz(3)
+  createdAt               DateTime                          @default(now()) @db.Timestamptz(3)
+  updatedAt               DateTime                          @updatedAt @db.Timestamptz(3)
+  organization            Organization                      @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  firstPaymentPurchase    FinancialPurchase?                @relation(fields: [firstPaymentPurchaseId], references: [id], onDelete: Restrict)
+  payments                ProfessionalSubscriptionPayment[]
+  events                  FinancialEvent[]
+
+  @@index([status, updatedAt])
+  @@index([cancelAtPeriodEnd, cancellationEffectiveAt])
+}
+
+model ProfessionalSubscriptionPayment {
+  id                 String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  subscriptionId     String                   @db.Uuid
+  molliePaymentId    String                   @db.VarChar(80)
+  status             FinancialPaymentStatus
+  amountExclVatCents Int
+  vatRateBps         Int
+  vatAmountCents     Int
+  amountInclVatCents Int
+  currency           String                   @db.Char(3)
+  periodStart        DateTime?                @db.Timestamptz(3)
+  periodEnd          DateTime?                @db.Timestamptz(3)
+  payloadFingerprint String                   @db.Char(64)
+  idempotencyKey     String                   @unique @db.VarChar(160)
+  createdAt          DateTime                 @default(now()) @db.Timestamptz(3)
+  subscription       ProfessionalSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
+  invoice            FinancialInvoice?
+
+  @@index([subscriptionId, createdAt])
+  @@index([molliePaymentId, createdAt])
+  @@index([status, createdAt])
+}
+
+model FinancialEvent {
+  id             String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actorUserId    String?                   @db.Uuid
+  purchaseId     String?                   @db.Uuid
+  invoiceId      String?                   @db.Uuid
+  refundId       String?                   @db.Uuid
+  subscriptionId String?                   @db.Uuid
+  eventType      String                    @db.VarChar(100)
+  result         String                    @db.VarChar(80)
+  reason         String?                   @db.VarChar(500)
+  metadata       Json?                     @db.JsonB
+  idempotencyKey String                    @unique @db.VarChar(160)
+  createdAt      DateTime                  @default(now()) @db.Timestamptz(3)
+  actorUser      User?                     @relation("FinancialEventActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+  purchase       FinancialPurchase?        @relation(fields: [purchaseId], references: [id], onDelete: Restrict)
+  invoice        FinancialInvoice?         @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  refund         FinancialRefund?          @relation(fields: [refundId], references: [id], onDelete: Restrict)
+  subscription   ProfessionalSubscription? @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
+
+  @@index([purchaseId, createdAt])
+  @@index([invoiceId, createdAt])
+  @@index([refundId, createdAt])
+  @@index([subscriptionId, createdAt])
+  @@index([eventType, createdAt])
 }
 
 model MarketplaceMatchRun {

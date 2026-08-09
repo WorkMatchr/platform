@@ -255,3 +255,259 @@ export async function getProfessionalCreditWallet(input: {
     return { walletId: wallet.id, ...balance, transactions: wallet.transactions }
   })
 }
+
+export async function recordVerifiedPurchaseCreditsInTransaction(
+  transaction: Transaction,
+  input: { purchaseId: string; idempotencyKey: string },
+) {
+  await lockIdempotencyKey(transaction, input.idempotencyKey)
+  const purchase = await transaction.financialPurchase.findUnique({
+    where: { id: input.purchaseId },
+    select: {
+      id: true,
+      status: true,
+      organizationId: true,
+      credits: true,
+      createdByUserId: true,
+      creditedTransactionId: true,
+    },
+  })
+  if (!purchase || purchase.status !== 'PAID') throw new MarketplaceServiceError('CONFLICT')
+  if (purchase.creditedTransactionId) {
+    return transaction.creditTransaction.findUniqueOrThrow({ where: { id: purchase.creditedTransactionId } })
+  }
+  const wallet = await ensureAndLockWallet(transaction, purchase.organizationId)
+  const repeated = await transaction.creditTransaction.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
+  if (repeated) {
+    if (repeated.referenceType !== 'FinancialPurchase' || repeated.referenceId !== purchase.id || repeated.totalDelta !== purchase.credits) {
+      throw new MarketplaceServiceError('CONFLICT')
+    }
+    await transaction.financialPurchase.update({ where: { id: purchase.id }, data: { creditedTransactionId: repeated.id } })
+    return repeated
+  }
+  const before = await deriveWalletBalance(transaction, wallet.id)
+  const after = deriveCreditBalance([
+    { totalDelta: before.totalBalance, reservedDelta: before.reservedBalance },
+    { totalDelta: purchase.credits, reservedDelta: 0 },
+  ])
+  const ledger = await transaction.creditTransaction.create({
+    data: {
+      creditAccountId: wallet.id,
+      type: 'PURCHASE',
+      amount: purchase.credits,
+      totalDelta: purchase.credits,
+      reservedDelta: 0,
+      balanceBefore: before.availableBalance,
+      balanceAfter: after.availableBalance,
+      availableBefore: before.availableBalance,
+      availableAfter: after.availableBalance,
+      reservedBefore: before.reservedBalance,
+      reservedAfter: after.reservedBalance,
+      reason: 'Credits gekocht via een bevestigde Mollie-betaling.',
+      referenceType: 'FinancialPurchase',
+      referenceId: purchase.id,
+      idempotencyKey: input.idempotencyKey,
+      createdByUserId: purchase.createdByUserId,
+      auditMetadata: { schemaVersion: 1, paymentVerifiedServerSide: true },
+    },
+  })
+  await transaction.financialPurchase.update({ where: { id: purchase.id }, data: { creditedTransactionId: ledger.id } })
+  await writeMarketplaceAudit(transaction, {
+    actorUserId: purchase.createdByUserId,
+    actorRole: 'VERIFIED_PAYMENT',
+    organizationId: purchase.organizationId,
+    action: 'CREDIT_PURCHASE_RECORDED',
+    entityType: 'CreditTransaction',
+    entityId: ledger.id,
+    reason: 'Mollie-betaling server-side bevestigd.',
+    correlationKey: `credit-ledger:${input.idempotencyKey}`,
+    metadata: { purchaseId: purchase.id, credits: purchase.credits, availableAfter: after.availableBalance },
+  })
+  return ledger
+}
+
+export async function recordFinancialCreditReductionInTransaction(
+  transaction: Transaction,
+  input: {
+    refundId: string
+    organizationId: string
+    actorUserId: string
+    credits: number
+    reason: string
+    idempotencyKey: string
+  },
+) {
+  await lockIdempotencyKey(transaction, input.idempotencyKey)
+  const wallet = await ensureAndLockWallet(transaction, input.organizationId)
+  const repeated = await transaction.creditTransaction.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
+  if (repeated) return repeated
+  const before = await deriveWalletBalance(transaction, wallet.id)
+  if (before.availableBalance < input.credits) throw new MarketplaceServiceError('INSUFFICIENT_CREDITS')
+  const after = deriveCreditBalance([
+    { totalDelta: before.totalBalance, reservedDelta: before.reservedBalance },
+    { totalDelta: -input.credits, reservedDelta: 0 },
+  ])
+  return transaction.creditTransaction.create({
+    data: {
+      creditAccountId: wallet.id,
+      type: 'REVERSAL',
+      amount: -input.credits,
+      totalDelta: -input.credits,
+      reservedDelta: 0,
+      balanceBefore: before.availableBalance,
+      balanceAfter: after.availableBalance,
+      availableBefore: before.availableBalance,
+      availableAfter: after.availableBalance,
+      reservedBefore: before.reservedBalance,
+      reservedAfter: after.reservedBalance,
+      reason: input.reason,
+      referenceType: 'FinancialRefund',
+      referenceId: input.refundId,
+      idempotencyKey: input.idempotencyKey,
+      createdByUserId: input.actorUserId,
+      auditMetadata: { schemaVersion: 1, financialRefund: true },
+    },
+  })
+}
+
+export async function recordAuthorizedBonusCreditsInTransaction(
+  transaction: Transaction,
+  input: {
+    organizationId: string
+    actorUserId: string
+    credits: number
+    reason: string
+    referenceType: 'StarterBenefitGrant' | 'DiscountRedemption'
+    referenceId: string
+    idempotencyKey: string
+  },
+) {
+  if (!Number.isSafeInteger(input.credits) || input.credits < 1) throw new MarketplaceServiceError('VALIDATION_ERROR')
+  await requireMarketplacePlatformAdmin(transaction, input.actorUserId)
+  await lockIdempotencyKey(transaction, input.idempotencyKey)
+  const wallet = await ensureAndLockWallet(transaction, input.organizationId)
+  const repeated = await transaction.creditTransaction.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
+  if (repeated) {
+    if (repeated.referenceType !== input.referenceType || repeated.referenceId !== input.referenceId || repeated.totalDelta !== input.credits) {
+      throw new MarketplaceServiceError('CONFLICT')
+    }
+    return repeated
+  }
+  const before = await deriveWalletBalance(transaction, wallet.id)
+  const after = deriveCreditBalance([
+    { totalDelta: before.totalBalance, reservedDelta: before.reservedBalance },
+    { totalDelta: input.credits, reservedDelta: 0 },
+  ])
+  return transaction.creditTransaction.create({
+    data: {
+      creditAccountId: wallet.id,
+      type: 'CONTRIBUTION_BONUS',
+      amount: input.credits,
+      totalDelta: input.credits,
+      reservedDelta: 0,
+      balanceBefore: before.availableBalance,
+      balanceAfter: after.availableBalance,
+      availableBefore: before.availableBalance,
+      availableAfter: after.availableBalance,
+      reservedBefore: before.reservedBalance,
+      reservedAfter: after.reservedBalance,
+      reason: input.reason,
+      referenceType: input.referenceType,
+      referenceId: input.referenceId,
+      idempotencyKey: input.idempotencyKey,
+      createdByUserId: input.actorUserId,
+      auditMetadata: { schemaVersion: 1, bonus: true },
+    },
+  })
+}
+
+export async function recordVerifiedDiscountBonusInTransaction(
+  transaction: Transaction,
+  input: { purchaseId: string; idempotencyKey: string },
+) {
+  await lockIdempotencyKey(transaction, input.idempotencyKey)
+  const purchase = await transaction.financialPurchase.findUnique({
+    where: { id: input.purchaseId },
+    include: { discountRedemption: true },
+  })
+  const redemption = purchase?.discountRedemption
+  if (!purchase || purchase.status !== 'PAID' || !redemption || redemption.bonusCredits < 1) return null
+  const wallet = await ensureAndLockWallet(transaction, purchase.organizationId)
+  const repeated = await transaction.creditTransaction.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
+  if (repeated) return repeated
+  const before = await deriveWalletBalance(transaction, wallet.id)
+  const after = deriveCreditBalance([
+    { totalDelta: before.totalBalance, reservedDelta: before.reservedBalance },
+    { totalDelta: redemption.bonusCredits, reservedDelta: 0 },
+  ])
+  return transaction.creditTransaction.create({
+    data: {
+      creditAccountId: wallet.id,
+      type: 'CONTRIBUTION_BONUS',
+      amount: redemption.bonusCredits,
+      totalDelta: redemption.bonusCredits,
+      reservedDelta: 0,
+      balanceBefore: before.availableBalance,
+      balanceAfter: after.availableBalance,
+      availableBefore: before.availableBalance,
+      availableAfter: after.availableBalance,
+      reservedBefore: before.reservedBalance,
+      reservedAfter: after.reservedBalance,
+      reason: 'Bonuscredits uit een bevestigde kortingscode.',
+      referenceType: 'DiscountRedemption',
+      referenceId: redemption.id,
+      idempotencyKey: input.idempotencyKey,
+      createdByUserId: purchase.createdByUserId,
+      auditMetadata: { schemaVersion: 1, paymentVerifiedServerSide: true },
+    },
+  })
+}
+
+export async function recordFinancialRefundCreditPhaseInTransaction(
+  transaction: Transaction,
+  input: {
+    refundId: string
+    organizationId: string
+    actorUserId: string
+    credits: number
+    phase: 'RESERVE' | 'COMPLETE' | 'RELEASE'
+    reason: string
+  },
+) {
+  const idempotencyKey = `financial-refund:${input.phase.toLowerCase()}:${input.refundId}`
+  await lockIdempotencyKey(transaction, idempotencyKey)
+  const wallet = await ensureAndLockWallet(transaction, input.organizationId)
+  const repeated = await transaction.creditTransaction.findUnique({ where: { idempotencyKey } })
+  if (repeated) return repeated
+  const before = await deriveWalletBalance(transaction, wallet.id)
+  const delta = input.phase === 'RESERVE'
+    ? { totalDelta: 0, reservedDelta: input.credits, amount: -input.credits, type: 'RESERVATION' as const }
+    : input.phase === 'COMPLETE'
+      ? { totalDelta: -input.credits, reservedDelta: -input.credits, amount: -input.credits, type: 'CONSUMPTION' as const }
+      : { totalDelta: 0, reservedDelta: -input.credits, amount: input.credits, type: 'RESERVATION_RELEASE' as const }
+  const after = deriveCreditBalance([
+    { totalDelta: before.totalBalance, reservedDelta: before.reservedBalance },
+    delta,
+  ])
+  return transaction.creditTransaction.create({
+    data: {
+      creditAccountId: wallet.id,
+      type: delta.type,
+      amount: delta.amount,
+      totalDelta: delta.totalDelta,
+      reservedDelta: delta.reservedDelta,
+      balanceBefore: before.availableBalance,
+      balanceAfter: after.availableBalance,
+      availableBefore: before.availableBalance,
+      availableAfter: after.availableBalance,
+      reservedBefore: before.reservedBalance,
+      reservedAfter: after.reservedBalance,
+      reason: input.reason,
+      referenceType: 'FinancialRefund',
+      referenceId: input.refundId,
+      idempotencyKey,
+      createdByUserId: input.actorUserId,
+      auditMetadata: { schemaVersion: 1, financialRefundPhase: input.phase },
+    },
+  })
+}

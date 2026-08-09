@@ -6,6 +6,7 @@ import { requireProviderSectionEditable } from './provider-dossier-access'
 import { ProviderServiceError } from './provider-errors'
 import { parseProviderInput, reserveProviderVersion } from './provider-write-utils'
 import { presentProviderServiceTerm } from './provider-taxonomy-presentation'
+import { hasEffectiveProEntitlement } from '@/lib/finance/pro-entitlement-service'
 
 const profileSelectionsSchema = z.object({
   expectedProfileVersion: z.int().positive(),
@@ -87,6 +88,13 @@ async function loadProfile(transaction: Prisma.TransactionClient, providerProfil
           sectors: {
             orderBy: { createdAt: 'asc' },
             select: { sector: { select: { name: true } } },
+          },
+          professionalSubscription: {
+            select: {
+              status: true,
+              cancelAtPeriodEnd: true,
+              cancellationEffectiveAt: true,
+            },
           },
         },
       },
@@ -243,6 +251,7 @@ function presentProfile(profile: NonNullable<Awaited<ReturnType<typeof loadProfi
         statusLabel: claimStatus(revision),
       }))),
     })),
+    hasActivePro: hasEffectiveProEntitlement(profile.organization.professionalSubscription),
     completeness,
   }
 }

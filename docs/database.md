@@ -376,3 +376,9 @@ Migratie `20260802150000_add_knowledge_control_workflow` is additief. Zij voegt 
 De meldingstabel gebruikt `RESTRICT`-foreign keys, indexen voor claim, taak, melder en status, een positieve versieconstraint en een statusconstraint voor actor/tijd/resolutie. De volledige migratieketen is op een lege tijdelijke database uitgevoerd. Op de lokale ontwikkeldata bleven vóór en na migratie exact 10 bronnen, 90 claims, 90 controletaken en 0 gepubliceerde claims aanwezig.
 
 Migratie `20260803100000_exception_driven_knowledge_control` voegt additief een getypeerde uitzonderingsreden en activatieprojectie aan reviewtaken toe. Bestaande concrete meldingen, conflicten, veroudering en publicatie-uitzonderingen worden waar mogelijk actief gemarkeerd. Overige generieke historische taken worden niet verwijderd of herschreven, maar krijgen `requiresHumanAction = false`, een deactivatietijd en een append-only auditevent. Nieuwe historische imports maken geen generieke reviewtaak meer.
+
+## Financiële keten F3-F9
+
+Migratie `20260809100000_add_financial_chain_f3_f9` is additief en introduceert aankoopsnapshots, Mollie-statusevents, terugbetalingen, facturen/creditnota's, Jortt-synchronisatie, kortingscodes, startersvoordeel, Pro-abonnementen en financiële auditevents. Bestaande wallet- en ledgerregels worden niet herschreven. Checkconstraints bewaken centbedragen, btw, valuta en factuurbron; triggers beschermen historie en financiële snapshots. De globale factuurteller gebruikt row locking plus een advisory lock. Zie [Financiële keten F3-F9](financial-chain-f3-f9.md).
+
+Migratie `20260809120000_harden_financial_refund_lifecycle` voegt uitsluitend de optionele `FinancialEvent.refundId`-relatie, index en `RESTRICT`-foreign key toe. Daarmee blijven refundstatuswisselingen append-only herleidbaar zonder bestaande financiële records te herschrijven.

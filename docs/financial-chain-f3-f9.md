@@ -1,0 +1,54 @@
+# Financiële keten F3-F9
+
+## Verantwoordelijkheden
+
+De financiële keten bouwt voort op het append-only creditgrootboek. Een `FinancialPurchase` bewaart vóór contact met Mollie een immutable prijs-, btw-, kortings- en klantadres-snapshot. Mollie is uitsluitend betaalprovider: alleen een server-side opnieuw opgehaalde betaling waarvan ID, organisatie, valuta, bedrag en status overeenkomen mag credits of Pro activeren.
+
+Het redirectscherm is read-only. Webhooks zijn idempotent en iedere providerstatus wordt als afzonderlijk `FinancialPaymentEvent` vastgelegd. Serialiseerbare transacties worden alleen bij PostgreSQL serialization/deadlockconflicten begrensd opnieuw uitgevoerd; validatie- en autorisatiefouten blijven direct fail-closed.
+
+## Prijzen en btw
+
+Bedragen worden uitsluitend als gehele eurocenten opgeslagen en berekend. De actuele catalogus bevat 25, 50, 75, 100, 150, 250 en 500 credits. De pakketkorting is onderdeel van de aankoop-snapshot. Nederlandse btw wordt als `2100` basispunten vastgelegd. WorkMatchr Pro kost €49 exclusief btw per maand en geeft 10% extra korting ná pakketkorting. Een actieve Pro-korting en kortingscode zijn nooit combineerbaar.
+
+De verkopersnapshot luidt Feenstra Safety Consulting, Kennemerland 71, 9405 LC Assen, KvK 57788863 en btw-id NL002107278B11. Een wijziging van organisatie- of verkopergegevens verandert een bestaande factuur niet.
+
+## Facturen, correcties en boekhouding
+
+Na een bevestigde betaling ontstaat exact één immutable factuur. De globale, concurrency-veilige teller levert nummers volgens `WM-YYMM5NNN` en groeit zonder afkap voorbij 999. Een terugbetaling corrigeert het creditgrootboek append-only en maakt een creditnota; een factuur wordt nooit herschreven.
+
+Een door Mollie aangemaakte refund blijft lokaal `PENDING` zolang de provider `queued`, `pending` of `processing` meldt. De credits blijven dan gereserveerd en er ontstaat nog geen creditnota. Alleen `refunded` voltooit de ledgercorrectie, aankoopstatus en creditnota transactioneel. `failed` en `canceled` geven de reservering append-only vrij zonder creditnota. `reconcilePendingMollieRefunds()` haalt niet-definitieve statussen uitsluitend server-side opnieuw op; status-events verwijzen via `FinancialEvent.refundId` expliciet naar de refund.
+
+`FinancialJorttSync` en immutable pogingen vormen een downstream adaptergrens. Een Jortt-storing verandert betaling, factuur of credits niet. Zolang een geverifieerd Jortt API-contract en beheerde credentials ontbreken, blijft de echte externe synchronisatie bewust geblokkeerd met een veilige foutcode.
+
+## Kortingen, startersvoordeel en Pro
+
+Kortingscodes ondersteunen één voordeelvorm per code, geldigheid, pakketbereik, minimumwaarde, gebruikslimiet, eenmalig gebruik per organisatie en alleen-nieuwe-klantbeleid. Reservering en definitieve toepassing zijn afzonderlijk en idempotent.
+
+Het startersvoordeel is 25 bonuscredits, maximaal eenmaal per economische identiteit. Zonder betrouwbare KvK-oprichtingsdatum volgt `REVIEW_REQUIRED`; sterke identiteitsmatches worden uitsluitend als SHA-256-fingerprints opgeslagen. Er worden geen IBAN, accountidentiteit of e-maildomein in leesbare vorm bewaard.
+
+Een mislukte Pro-incasso zet Pro direct op `PAST_DUE`, waardoor alleen de Pro-voordelen stoppen. Bestaande credits en reguliere platformfunctionaliteit blijven beschikbaar. Na een maand kan de status naar `SUSPENDED`; dit geeft geen matchingvoordeel of -nadeel.
+
+Een bevoegde eigenaar of beheerder kan een `ACTIVE` of `PAST_DUE` Pro-abonnement opzeggen tegen het einde van de actuele betaalperiode. `cancelAtPeriodEnd`, `cancellationRequestedAt` en `cancellationEffectiveAt` leggen deze planning vast zonder de actuele betaalstatus voortijdig te wijzigen. Mollie wordt met een vaste idempotentiesleutel geannuleerd, zodat geen nieuwe verlenging wordt gestart. Een `ACTIVE` abonnement behoudt de Pro-voordelen uitsluitend tot `cancellationEffectiveAt`; `PAST_DUE` blijft achterstallig. De aanvraag en de uiteindelijke overgang naar `CANCELED` schrijven afzonderlijke append-only `FinancialEvent`-regels.
+
+De onderhoudsrunner voert refundreconciliatie, vervallen opzeggingen en achterstanden van minimaal één maand idempotent en concurrency-safe uit. Productie roept `POST /api/maintenance/finance` met `Authorization: Bearer <FINANCIAL_MAINTENANCE_SECRET>` aan vanuit een externe scheduler, bijvoorbeeld Vercel Cron. De secret moet minimaal 32 tekens bevatten. Zonder configuratie antwoordt de route fail-closed met 503; een fout of ontbrekend bearer-token geeft 401. De externe cronconfiguratie zelf is niet onderdeel van de repository.
+
+Het platformdashboard rapporteert bruto omzet uit succesvolle creditaankopen, eerste Pro-betalingen en append-only terugkerende Pro-betalingen. Alleen definitief `REFUNDED` terugbetalingen met de bedragen uit hun creditnota worden afgetrokken. Pending, failed en canceled refunds beïnvloeden netto-omzet niet. Het dashboard toont bruto, refund en netto voor excl. btw, btw en incl. btw en houdt credit- en Pro-betalingstellers gescheiden om webhookreplays niet dubbel te tellen.
+
+## Externe acceptatiepunten
+
+- Mollie vereist een beheerde `MOLLIE_API_KEY`, publiek bereikbare webhookbasis en redirectbasis, geactiveerd betaalprofiel en voor Pro een bruikbaar mandaat/betaalmethode.
+- Jortt vereist nog een door Jortt bevestigd API-contract en productiecredentials; er wordt geen fictieve koppeling gesimuleerd.
+- Automatische KvK-bronverificatie is niet aanwezig; startersvoordeel blijft daarom een expliciete platformbeoordeling.
+- Pro-notificatievoorkeuren zijn nog niet operationeel: de huidige notificatielaag heeft uitsluitend in-app events en een e-mailoutbox, maar geen tenantgebonden voorkeurenmodel of productie-worker. De productbelofte blijft staan; invoering vraagt een afzonderlijk ontwerpbesluit zodat geen tweede notificatiesysteem ontstaat.
+- Productieacceptatie moet testbetalingen, webhookherhaling, mislukte incasso, refund en boekhoudretry met de echte sandbox-/testaccounts doorlopen.
+
+## Configuratie
+
+Alle waarden staan uitsluitend in beheerde omgevingsconfiguratie:
+
+- `MOLLIE_API_KEY`
+- `MOLLIE_WEBHOOK_BASE_URL`
+- `MOLLIE_REDIRECT_BASE_URL`
+- `FINANCIAL_MAINTENANCE_SECRET` (minimaal 32 willekeurige tekens; uitsluitend voor de server-side onderhoudsroute)
+
+Sleutels, volledige providerresponses en persoonsgegevens worden niet gelogd of gedocumenteerd.

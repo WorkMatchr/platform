@@ -93,6 +93,12 @@ Alle IDs zijn UUID’s. `createdAt` en `updatedAt` zijn UTC-timestamps tenzij an
 | `ProviderInsurance*` en `ProviderInsuranceRequirement*` | Polisfacts en versieerbare eisen voor type, verificatie, dekking en geografie. | Polisreferentie is gevoelig en ontbreekt in projecties. |
 | `ProviderTermDocument*` en `ProviderTermAcceptance` | Versieerbare juridische/configuratiedocumenten en expliciete acceptatieactor/tijd. | Acceptaties append-only; seed activeert geen juridische inhoud. |
 | `ProviderPlatformPermission*` | Tijdgebonden reviewer-, approver- en auditorgrant met append-only intrekking. | Geen impliciete `ADMIN`-fallback. |
+| `FinancialPurchase`, `FinancialPaymentEvent`, `FinancialRefund`, `FinancialEvent` | Immutable aankoopbasis, append-only betaalstatussen en gecontroleerde WorkMatchr-terugbetaling. Refundevents verwijzen via `FinancialEvent.refundId` naar hun refund. | Bedragen in eurocenten; `EUR`; pending reserveert uitsluitend, alleen server-side geverifieerd `refunded` activeert ledgercorrectie en creditnota. |
+| `FinancialInvoiceCounter`, `FinancialInvoice` | Globale nummerreeks en immutable factuur-/creditnotasnapshot. | Eén zakelijke bron per document; correcties maken een nieuw document. |
+| `FinancialJorttSync`, `FinancialJorttSyncAttempt` | Downstream boekhoudprojectie en immutable pogingen. | Een synchronisatiefout wijzigt kernrecords nooit. |
+| `DiscountCode`, `DiscountRedemption` | Configureerbaar voordeel en gereserveerd/toegepast gebruik. | Exact één voordeelvorm; Pro en code zijn niet combineerbaar. |
+| `StarterBenefitReview`, `StarterBenefitGrant` | Auditbare beoordeling en eenmalige 25-creditgrant. | Economische identiteiten uitsluitend als hashfingerprints. |
+| `ProfessionalSubscription`, `ProfessionalSubscriptionPayment` | Pro-statusprojectie en append-only terugkerende betaalstatussen. | Pro beïnvloedt matching niet; betaalproblemen blokkeren alleen Pro-voordelen. |
 | `ProviderVerificationReview`, `ProviderQualificationDecision` | Immutable beoordeling en formeel besluit met reason code, geldigheid en checksum. | Hoog risico vereist twee verschillende bevoegde actoren. |
 | `ProviderReadinessAssessment`, `ProviderSelectabilityAssessment` | Afgeleide snapshots met bronversie, reason codes en checksum. | Fail-closed; nooit handmatig positief vinkje. |
 | `ProviderBlock*` | Immutable blokkade en afzonderlijk herstelbesluit. | Vier ogen voor blokkeren en herstellen. |

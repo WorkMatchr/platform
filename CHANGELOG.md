@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-08-09 — WorkMatchr Pro opzeggen aan periode-einde
+
+- De Pro-pagina toont altijd een toegankelijke opzegactie en de Nederlandse abonnementsstatus.
+- Actieve en achterstallige abonnementen kunnen idempotent aan het einde van de betaalperiode worden opgezegd; Mollie-verlenging stopt, betaalstatus en voordelen blijven tot het toepasselijke moment intact en iedere lifecyclemutatie wordt append-only geaudit.
+- De additieve migratie `20260809110000_add_pro_cancellation_at_period_end` borgt een consistente opzegplanning.
+
+## Unreleased — financiële keten F3-F9
+
+- Mollie-refunds blijven hangend tot de provider definitief succes meldt; alleen dan volgen ledgercorrectie en creditnota. Mislukte of geannuleerde refunds geven de reservering auditbaar vrij.
+- Een beveiligde financiële onderhoudsroute reconcileert refunds en finaliseert Pro-opzeggingen en langdurige betaalachterstand zonder browserbezoek.
+- Dienstverleners met een effectief Pro-recht krijgen de beloofde Pro-badge; het platformdashboard telt credit- en Pro-omzet en trekt alleen voltooide refunds van netto-omzet af.
+- PostgreSQL-racetests bewijzen maximumgebruik, eenmaal-per-organisatie, vrijgave van kortingsreserveringen en unieke startersbonussen/economische identiteiten.
+- Mollie-creditaankopen gebruiken een immutable server-side prijs-, btw-, kortings- en factuuradres-snapshot; alleen een opnieuw opgehaalde en volledig overeenkomende providerbetaling crediteert het append-only grootboek.
+- Facturen en creditnota's krijgen een globale concurrency-veilige nummering, immutable klant- en verkopersnapshots en een ontkoppelde, herhaalbare Jortt-synchronisatiestatus.
+- Een lokaal afrondingsprobleem na een door Mollie geaccepteerde terugbetaling geeft de gereserveerde credits niet meer ten onrechte vrij; de idempotente afronding kan veilig worden hervat.
+- Kortingscodes, het gecontroleerde startersvoordeel, WorkMatchr Pro en financiële dashboards zijn tenantafgeschermd, idempotent en zonder invloed op matching.
+- De additieve migratie `20260809100000_add_financial_chain_f3_f9` bewaakt geldbedragen, bronrelaties, snapshots en append-only financiële historie in PostgreSQL.
+
 ## Unreleased — professioneel creditwalletfundament
 
 - Alleen actieve professionele organisaties kunnen maximaal één creditwallet hebben; bedrijfsaccounts en platformorganisaties worden server-side en in PostgreSQL geweigerd.

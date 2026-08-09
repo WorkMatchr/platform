@@ -588,6 +588,24 @@ erDiagram
 ```
 
 Kandidaten, interventies, offerteversies, gunningen, ledgerregels en marktaudit zijn append-only. Unieke relaties voorkomen dubbele uitnodiging, deelname, offerte, reservering en gunning.
+
+## Financiële keten F3-F9
+
+```mermaid
+erDiagram
+  Organization ||--o{ FinancialPurchase : koopt
+  FinancialPurchase ||--o{ FinancialPaymentEvent : ontvangt_status
+  FinancialPurchase ||--o| FinancialInvoice : factureert
+  FinancialPurchase ||--o{ FinancialRefund : corrigeert
+  FinancialRefund ||--o| FinancialInvoice : crediteert
+  FinancialRefund ||--o{ FinancialEvent : auditeert
+  ProfessionalSubscription ||--o{ ProfessionalSubscriptionPayment : incasseert
+  ProfessionalSubscriptionPayment ||--o| FinancialInvoice : factureert
+  FinancialInvoice ||--o| FinancialJorttSync : projecteert
+  FinancialJorttSync ||--o{ FinancialJorttSyncAttempt : probeert
+  DiscountCode ||--o{ DiscountRedemption : gebruikt
+  Organization ||--o| StarterBenefitGrant : ontvangt
+```
 ## ADR-013 Contract — enkelvoudige tenantcontext
 
 `OrganizationMembership.userId` is databasebreed uniek. Een User heeft daardoor nul of één actuele membership; één organisatie kan nog steeds meerdere memberships en dus meerdere afzonderlijke gebruikersaccounts hebben. De nulvariant ondersteunt expliciete platformaccounts en nog niet afgeronde eerste onboarding. Actorrelaties en append-only eventrelaties blijven ongewijzigd.
