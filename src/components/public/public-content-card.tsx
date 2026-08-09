@@ -43,12 +43,12 @@ export function PublicContentCard({ title, description, href, linkLabel = 'Lees 
     )
   }
   return (
-    <Card className="flex h-full min-w-0 flex-col shadow-none">
+    <Card className="flex h-full min-w-0 flex-col !p-5 shadow-none sm:!p-6">
       {contentTypeLabel && <Text size="sm" className="font-semibold text-brand-primary">{contentTypeLabel}</Text>}
       {status && <Text size="sm" className="font-semibold text-brand-primary">{status}</Text>}
       <Heading as={headingLevel} size="h3" className={`${status || contentTypeLabel ? 'mt-2 ' : ''}break-words`}>{title}</Heading>
-      <Text className="mt-3 flex-1 text-text-secondary">{description}</Text>
-      {href && <Link href={href} className="mt-6 w-fit rounded-sm font-semibold text-brand-primary underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-primary">{linkLabel}<span aria-hidden="true"> →</span></Link>}
+      <Text className="mt-2 flex-1 text-text-secondary">{description}</Text>
+      {href && <Link href={href} className="mt-4 inline-flex min-h-11 w-fit items-center rounded-control font-semibold text-brand-primary-hover underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-primary">{linkLabel}<span aria-hidden="true"> →</span></Link>}
     </Card>
   )
 }

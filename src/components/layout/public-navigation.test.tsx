@@ -20,7 +20,9 @@ describe('publieke navigatie', () => {
       expect(html.match(new RegExp(`href="${item.href}"`, 'g'))).toHaveLength(2)
       expect(html.match(new RegExp(`>${item.label}<`, 'g'))).toHaveLength(2)
     }
-    expect(html).not.toContain('Stel uw vraag')
+    expect(html.match(/>Stel uw vraag</g)).toHaveLength(2)
+    expect(html).not.toContain('Over WorkMatchr')
+    expect(html).not.toContain('>Contact<')
     expect(html).not.toContain('Voor specialisten')
     expect(html).not.toContain('href="#"')
   })
@@ -33,6 +35,7 @@ describe('publieke navigatie', () => {
       expect(html.match(new RegExp(`href="${item.href}"`, 'g'))).toHaveLength(2)
     }
     expect(html).not.toContain('href="/inloggen"')
+    expect(html).toContain('Stel uw vraag')
     expect(html).toContain('Mobiele hoofdnavigatie')
   })
 

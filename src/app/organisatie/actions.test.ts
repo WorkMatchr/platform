@@ -87,6 +87,16 @@ describe('organisatie Server Action', () => {
     expect(result.values?.tradeName).toBe('Reeds ingevulde handelsnaam')
   })
 
+  it('blokkeert doorgaan zonder sector en toont de fout pas na indienen', async () => {
+    const formData = validFormData()
+    formData.delete('sectorIds')
+
+    const result = await createOrganizationAction({}, formData)
+
+    expect(result.errors?.sectorIds).toEqual(['Selecteer minimaal één sector.'])
+    expect(mocks.createOrganization).not.toHaveBeenCalled()
+  })
+
   it('behoudt de succesvolle submit- en redirectflow zonder organisatiecookie', async () => {
     await createOrganizationAction({}, validFormData())
 

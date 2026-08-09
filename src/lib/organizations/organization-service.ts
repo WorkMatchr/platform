@@ -16,7 +16,16 @@ export class OrganizationServiceError extends Error {
 
 async function validateSectors(transaction: Prisma.TransactionClient, sectorIds: string[]) {
   const uniqueIds = [...new Set(sectorIds)]
-  const count = await transaction.sector.count({ where: { id: { in: uniqueIds }, isActive: true } })
+  const count = await transaction.providerSectorTaxonomyMap.count({
+    where: {
+      sectorId: { in: uniqueIds },
+      sector: { isActive: true },
+      term: {
+        isActive: true,
+        version: { status: 'PUBLISHED', taxonomy: { kind: 'SECTOR' } },
+      },
+    },
+  })
   if (count !== uniqueIds.length) throw new OrganizationServiceError('Eén of meer geselecteerde sectoren zijn niet beschikbaar.')
   return uniqueIds
 }

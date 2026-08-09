@@ -84,9 +84,9 @@ export const publicHomepageContent = {
     description:
       'WorkMatchr helpt organisaties hun vraag over arbeidsomstandigheden, veiligheid en gezondheid te verduidelijken en leidt vervolgens naar relevante informatie of passende deskundigheid.',
     primaryAction: { href: publicRoutes.adviceGuide, label: 'Ontdek welke ondersteuning u nodig heeft' },
-    secondaryAction: { href: publicRoutes.directAssignment, label: 'Start uw opdracht' },
+    secondaryAction: { href: publicRoutes.directAssignment, label: 'Vraag ondersteuning aan' },
   },
-  process: ['Uw situatie', 'Enkele vragen', 'Uw advies', 'Vervolgstap'],
+  process: ['Vertel uw situatie', 'Wij verduidelijken uw vraag', 'Ontvang algemene vakinformatie', 'Vind de juiste deskundige'],
   situations: [
     {
       key: 'employer-with-staff',
@@ -150,16 +150,20 @@ export const publicHomepageContent = {
   },
   steps: [
     {
-      title: 'Vertel wat er speelt',
+      title: 'Vertel uw situatie',
       description: 'Begin bij uw vraag, situatie of mogelijke verplichting.',
     },
     {
-      title: 'Krijg inzicht in wat relevant is',
-      description: 'WorkMatchr brengt kennis, verplichtingen en mogelijke oplossingen overzichtelijk samen.',
+      title: 'Wij verduidelijken uw vraag',
+      description: 'WorkMatchr helpt u stap voor stap om duidelijk te maken wat er speelt.',
     },
     {
-      title: 'Vind passende deskundigheid',
-      description: 'Wanneer externe ondersteuning nodig is, kunt u verder naar passende dienstverlening of specialisten.',
+      title: 'Ontvang algemene vakinformatie',
+      description: 'Bekijk relevante kennis, verplichtingen en mogelijke oplossingsrichtingen.',
+    },
+    {
+      title: 'Vind de juiste deskundige',
+      description: 'Wanneer professionele ondersteuning passend is, kunt u verder naar de juiste deskundigheid.',
     },
   ] satisfies readonly ProcessStepContent[],
   principles: [

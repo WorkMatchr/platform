@@ -11,7 +11,7 @@ De homepage positioneert WorkMatchr als digitale arbo-adviseur. Bezoekers beginn
 1. vraaggestuurde hero;
 2. zes herkenbare situaties;
 3. compacte oriëntatie op diensten;
-4. drie voorzichtige processtappen;
+4. vier processtappen: situatie vertellen, vraag verduidelijken, algemene vakinformatie ontvangen en de juiste deskundige vinden;
 5. algemene wettelijke context;
 6. één gepubliceerde RI&E-kennispublicatie;
 7. compacte sectororiëntatie;
@@ -32,7 +32,7 @@ Alle homepage-CTA’s verwijzen naar bestaande routes. De primaire hero-CTA en a
 - geen CMS, Prisma, AI, Product Intelligence of analytics;
 - geen wijzigingen aan authenticatie, tenantcontext of private navigatie.
 
-P1.5 behandelt later de definitieve publieke informatiearchitectuur en navigatie. P1.6 behandelt later de begeleide vraagboom of intake.
+De actuele hoofdroute volgt zichtbaar: **Vertel uw situatie → Wij verduidelijken uw vraag → Ontvang algemene vakinformatie → Vind de juiste deskundige**. P1.5 beheert de definitieve publieke informatiearchitectuur en navigatie; P1.6 levert de begeleide vraagboom of intake.
 
 ## Acceptatie
 

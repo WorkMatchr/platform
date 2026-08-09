@@ -14,15 +14,16 @@ De structuur gebruikt alleen live routes, native websemantiek en begrijpelijke N
 
 ## 2. Hoofdstructuur
 
-De primaire actie is **Stel uw vraag** en verwijst sinds P1.6 naar de werkende Advieswijzer op `/advieswijzer`. Daarnaast zijn live:
+De primaire actie is **Stel uw vraag** en verwijst sinds P1.6 naar de werkende Advieswijzer op `/advieswijzer`. De hoofdnavigatie gebruikt deze vaste volgorde:
 
+- Kenniscentrum — `/kenniscentrum`;
+- Sectoren — `/sectoren`;
 - Diensten — `/diensten`;
 - Wettelijke verplichtingen — `/wettelijke-verplichtingen`;
-- Sectoren — `/sectoren`;
-- Kenniscentrum — `/kenniscentrum`;
-- Over WorkMatchr — `/over-workmatchr`;
-- Contact — `/contact`;
+- Stel uw vraag — `/advieswijzer`;
 - Inloggen — `/inloggen`.
+
+**Over WorkMatchr** en **Contact** blijven bestaande publieke bestemmingen in de footer, maar belasten de primaire navigatie niet.
 
 **Voor specialisten** is niet opgenomen: er bestaat nog geen inhoudelijk passende publieke route. De private route naar het dienstverlenersprofiel is geen vervanging en mag niet in publieke navigatie of sitemap verschijnen. Een publieke ingang voor specialisten blijft backlog.
 
@@ -73,6 +74,8 @@ De compacte catalogus bevat alle bestaande publieke bestemmingen. `indexablePubl
 ## 9. Interne relaties
 
 P1.7 heeft deze basis geconsolideerd in `src/content/public-content.ts`. Een stabiele content-ID verwijst naar een live catalogusitem; expliciete directionele relaties bevatten alleen ID en verwacht type. Titel, beschrijving, route, status en zichtbaar contenttype worden door de resolver geleverd. De validator weigert ontbrekende, private, niet-indexeerbare, zelfgerichte, dubbele of verkeerd getypeerde relaties fail closed.
+
+Onderaan overzichten en detailpagina's toont één compact `PublicContentPathways`-component uitsluitend bestaande relaties, gegroepeerd als kennis, diensten, sectoren en wettelijke verplichtingen. De component gebruikt geen grote kaartnavigatie en eindigt met precies één primaire vervolgstap naar de Advieswijzer. Context van een kennisartikel blijft in die route behouden.
 
 ## 10. Metadata, sitemap en indexatie
 

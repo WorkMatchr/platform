@@ -74,7 +74,14 @@ describe('gedeelde headercontext', () => {
       { href: '/aanbiedersdossier', label: 'Dienstverlenersprofiel' },
       { href: '/aanbiedersdossier/professionals', label: 'Professionals' },
     ])
-    expect(model.navigationGroups.find((group) => group.key === 'work')?.links).toContainEqual({ href: '/credits', label: 'Credits' })
+    expect(model.navigationGroups.find((group) => group.key === 'financial')).toEqual({
+      key: 'financial',
+      label: 'FINANCIEEL',
+      links: [
+        { href: '/credits', label: 'Credits & facturen' },
+        { href: '/credits/pro', label: 'WorkMatchr Pro' },
+      ],
+    })
     expect(model.navigationGroups.flatMap((group) => group.links)).not.toContainEqual({ href: '/hulpvragen', label: 'Opdrachten' })
   })
 

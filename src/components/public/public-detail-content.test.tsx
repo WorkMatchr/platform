@@ -81,7 +81,7 @@ describe('publieke detailcontent', () => {
 
     expect(steps).toContain('space-y-1')
     expect(steps).toContain('leading-6')
-    expect(faq).toContain('mt-4 space-y-4')
+    expect(faq).toContain('mt-3 space-y-3')
     expect(faq).toContain('mt-1 text-body leading-6')
   })
 })

@@ -1,4 +1,5 @@
 import type { InternalHref } from './public-homepage'
+import { knowledgeArticles } from './knowledge/articles'
 import { obligations } from './obligations'
 import { sectors } from './sectors'
 import { services } from './services'
@@ -13,6 +14,8 @@ export type PublicOverviewItem = {
 export const serviceOverview = services.map((item) => ({ title: item.title, description: item.summary, href: item.href })) satisfies readonly PublicOverviewItem[]
 
 export const legalOverview = obligations.map((item) => ({ title: item.title, description: item.summary, href: item.href })) satisfies readonly PublicOverviewItem[]
+
+export const knowledgeOverview = knowledgeArticles.map((item) => ({ title: item.title, description: item.summary, href: item.href })) satisfies readonly PublicOverviewItem[]
 
 export const sectorOverview = sectors.map((item) => ({ title: item.title, description: item.summary, href: item.href })) satisfies readonly PublicOverviewItem[]
 

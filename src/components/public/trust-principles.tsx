@@ -6,7 +6,7 @@ export function TrustPrinciples({ principles }: { principles: readonly { title: 
   return (
     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
       {principles.map((principle, index) => (
-        <Card key={principle.title} variant="subtle" className="h-full shadow-none">
+        <Card key={principle.title} variant="subtle" className="h-full !p-5 shadow-none sm:!p-6">
           <p className="text-sm font-bold text-brand-primary-hover">0{index + 1}</p>
           <Heading as="h3" size="h3" className="mt-3">{principle.title}</Heading>
           <Text className="mt-3 text-text-secondary">{principle.description}</Text>

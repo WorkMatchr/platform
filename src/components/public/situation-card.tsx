@@ -9,15 +9,15 @@ import { PublicIcon } from './public-icon'
 export function SituationCard({ situation }: { situation: SituationContent }) {
   return (
     <Card
-      className="group relative flex h-full min-w-0 flex-col p-5 shadow-none transition-colors duration-normal hover:border-brand-primary sm:p-6"
+      className="group relative flex h-full min-w-0 flex-col !p-4 shadow-none transition-colors duration-normal hover:border-brand-primary sm:!p-5"
       data-card-density="compact"
     >
       <div className="flex items-start gap-4">
         <IconContainer className="size-10"><PublicIcon name={situation.icon} /></IconContainer>
         <Heading as="h3" size="h3" className="break-words pt-1">{situation.title}</Heading>
       </div>
-      <Text size="sm" className="mt-3 flex-1 text-text-secondary">{situation.description}</Text>
-      <Link href={situation.href} className="mt-4 inline-flex min-h-11 w-fit items-center rounded-control font-semibold text-brand-primary-hover after:absolute after:inset-0 after:rounded-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-primary">
+      <Text size="sm" className="mt-2 flex-1 text-text-secondary">{situation.description}</Text>
+      <Link href={situation.href} className="mt-3 inline-flex min-h-11 w-fit items-center rounded-control font-semibold text-brand-primary-hover after:absolute after:inset-0 after:rounded-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-primary">
         {situation.label}<span aria-hidden="true" className="ml-2">→</span>
       </Link>
     </Card>

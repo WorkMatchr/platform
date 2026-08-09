@@ -5,7 +5,7 @@ const mocks = vi.hoisted(() => ({
   transaction: vi.fn(),
   userFind: vi.fn(),
   membershipFindFirst: vi.fn(),
-  sectorCount: vi.fn(),
+  sectorMappingCount: vi.fn(),
   organizationCreate: vi.fn(),
   membershipEventFind: vi.fn(),
   membershipEventCreate: vi.fn(),
@@ -33,7 +33,7 @@ function prepare(status: 'ACTIVE' | 'BLOCKED' | 'ARCHIVED' = 'ACTIVE', accountTy
   const transactionClient = {
     user: { findUnique: mocks.userFind },
     organizationMembership: { findFirst: mocks.membershipFindFirst },
-    sector: { count: mocks.sectorCount },
+    providerSectorTaxonomyMap: { count: mocks.sectorMappingCount },
     organization: { create: mocks.organizationCreate },
     organizationMembershipEvent: {
       findUnique: mocks.membershipEventFind,
@@ -46,7 +46,7 @@ function prepare(status: 'ACTIVE' | 'BLOCKED' | 'ARCHIVED' = 'ACTIVE', accountTy
   }
   mocks.userFind.mockResolvedValue({ status, accountType })
   mocks.membershipFindFirst.mockResolvedValue(null)
-  mocks.sectorCount.mockResolvedValue(1)
+  mocks.sectorMappingCount.mockResolvedValue(1)
   mocks.organizationCreate.mockResolvedValue({ id: 'organization-id', memberships: [{ id: 'membership-id' }] })
   mocks.membershipEventFind.mockResolvedValue(null)
   mocks.membershipEventCreate.mockResolvedValue({ id: 'membership-event-id' })
@@ -64,6 +64,9 @@ describe('transactionele organisatieaanmaak', () => {
     expect(data.memberships.create).toMatchObject({ userId: 'user-id', role: 'OWNER', status: 'ACTIVE' })
     expect(data.locations.create).toMatchObject({ isPrimary: true })
     expect(data.sectors.create).toEqual([{ sectorId: input.sectorIds[0], isPrimary: true }])
+    expect(mocks.sectorMappingCount).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ sectorId: { in: input.sectorIds } }),
+    }))
   })
 
   it.each(['BLOCKED', 'ARCHIVED'] as const)('weigert een %s gebruiker vóór schrijven', async (status) => {

@@ -1,17 +1,17 @@
+import Image from 'next/image'
+
 import type { publicHomepageContent } from '@/content/public-homepage'
 import { Section } from '@/components/layout/section'
 import { Badge } from '@/components/ui/badge'
-import { Card } from '@/components/ui/card'
 import { Heading } from '@/components/ui/heading'
 import { LinkButton } from '@/components/ui/link-button'
 import { Text } from '@/components/ui/text'
 
 type PublicHeroProps = {
   hero: typeof publicHomepageContent.hero
-  process: typeof publicHomepageContent.process
 }
 
-export function PublicHero({ hero, process }: PublicHeroProps) {
+export function PublicHero({ hero }: PublicHeroProps) {
   return (
     <Section spacing="compact" className="overflow-hidden border-b border-border bg-brand-primary-subtle" containerClassName="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
       <div>
@@ -24,20 +24,17 @@ export function PublicHero({ hero, process }: PublicHeroProps) {
         </div>
       </div>
 
-      <Card className="relative shadow-none" aria-label="Proces van vraag naar specialist">
-        <p className="text-sm font-semibold text-brand-primary-hover">Begrijpen gaat vóór verbinden</p>
-        <ol className="mt-6 grid gap-3 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
-          {process.map((label, index) => (
-            <li key={label} className="flex min-h-24 items-center gap-3 rounded-control bg-surface-subtle p-4 sm:flex-col sm:items-start sm:justify-between">
-              <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded-full bg-brand-dark text-sm font-bold text-text-on-dark">{index + 1}</span>
-              <span className="font-semibold text-brand-dark">{label}</span>
-            </li>
-          ))}
-        </ol>
-        <p className="mt-5 text-sm leading-6 text-text-secondary">
-          Informatie en vraagverheldering komen vóór een eventuele vervolgstap naar dienstverlening.
-        </p>
-      </Card>
+      <div className="min-w-0">
+        <Image
+          src="/images/hero-begrijpen-en-verbinden.png"
+          alt="Van een duidelijke hulpvraag via betrouwbare kennis naar een passende deskundige"
+          width={1536}
+          height={1024}
+          priority
+          sizes="(min-width: 1024px) 44vw, 100vw"
+          className="h-auto w-full rounded-card object-contain"
+        />
+      </div>
     </Section>
   )
 }

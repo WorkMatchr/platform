@@ -13,12 +13,12 @@ type PublicCallToActionProps = {
 
 export function PublicCallToAction({ title, description, primaryAction, secondaryAction }: PublicCallToActionProps) {
   return (
-    <Section className="border-y border-brand-dark bg-brand-dark" containerSize="narrow" containerClassName="text-center">
+    <Section spacing="compact" className="border-y border-brand-dark bg-brand-dark" containerSize="narrow" containerClassName="text-center">
       <Heading className="text-text-on-dark">{title}</Heading>
       <Text size="lg" className="mx-auto mt-5 max-w-2xl text-text-on-dark-muted">{description}</Text>
-      <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-        <LinkButton href={primaryAction.href}>{primaryAction.label}</LinkButton>
-        <LinkButton href={secondaryAction.href} variant="outline" className="border-text-on-dark text-text-on-dark hover:bg-text-on-dark hover:text-brand-dark">
+      <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+        <LinkButton href={primaryAction.href} className="w-full sm:w-auto">{primaryAction.label}</LinkButton>
+        <LinkButton href={secondaryAction.href} variant="outline" className="w-full border-text-on-dark bg-transparent text-text-on-dark hover:bg-text-on-dark hover:text-brand-dark sm:w-auto">
           {secondaryAction.label}
         </LinkButton>
       </div>

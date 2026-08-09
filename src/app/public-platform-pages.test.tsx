@@ -59,10 +59,10 @@ describe('publieke platformpagina’s', () => {
   it('verbindt overzichten compact met een zichtbaar contenttype en begeleide vervolgstap', () => {
     for (const [, Page] of pages) {
       const html = renderToStaticMarkup(<Page />)
-      expect(html).toContain('Verken vanuit dit overzicht')
-      expect(html).toContain('Start de Advieswijzer')
-      expect(html).toMatch(/Overzicht|Dienst|Kennis/)
-      expect(html.match(/Verken vanuit dit overzicht/g)).toHaveLength(1)
+      expect(html).toContain('Verder met uw vraag')
+      expect(html).toContain('Stel uw vraag')
+      expect(html).toMatch(/Gerelateerde kennis|Gerelateerde diensten|Gerelateerde wettelijke verplichtingen/)
+      expect(html.match(/Verder met uw vraag/g)).toHaveLength(1)
       expect(html).not.toContain('href="#"')
     }
   })

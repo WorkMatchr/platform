@@ -22,8 +22,8 @@ export type HeaderViewModel = {
   displayName: string
   activeOrganization: { id: string; name: string; role: OrganizationMembershipRole } | null
   navigationGroups: Array<{
-    key: 'work' | 'organization' | 'personal'
-    label: 'WERK' | 'ORGANISATIE' | 'PERSOONLIJK'
+    key: 'work' | 'organization' | 'financial' | 'personal'
+    label: 'WERK' | 'ORGANISATIE' | 'FINANCIEEL' | 'PERSOONLIJK'
     links: Array<{ href: string; label: string }>
   }>
 }
@@ -48,6 +48,7 @@ export function buildHeaderViewModel(
     context.user.accountType === 'PROFESSIONAL' && organization?.providerProfile &&
       (organization.organizationType === 'PROVIDER' || organization.organizationType === 'BOTH'),
   )
+  const supportsProfessionalFinance = supportsProviderWork
   return {
     authenticated: true,
     isPlatformAdministrator,
@@ -82,7 +83,6 @@ export function buildHeaderViewModel(
                 ? [
                     { href: '/professional/opdrachten', label: 'Aanvragen' },
                     { href: '/uitnodigingen', label: 'Uitnodigingen' },
-                    { href: '/credits', label: 'Credits' },
                   ]
                 : []),
             ],
@@ -100,6 +100,16 @@ export function buildHeaderViewModel(
                 : []),
             ],
           },
+          ...(supportsProfessionalFinance
+            ? [{
+                key: 'financial' as const,
+                label: 'FINANCIEEL' as const,
+                links: [
+                  { href: '/credits', label: 'Credits & facturen' },
+                  { href: '/credits/pro', label: 'WorkMatchr Pro' },
+                ],
+              }]
+            : []),
           {
             key: 'personal',
             label: 'PERSOONLIJK',

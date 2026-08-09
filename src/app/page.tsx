@@ -1,13 +1,13 @@
 import type { Metadata } from 'next'
 import { publicHomepageContent } from '@/content/public-homepage'
-import { legalOverview, sectorOverview, serviceOverview } from '@/content/public-overviews'
-import { getKnowledgeArticleBySlug } from '@/content/knowledge/articles'
+import { knowledgeOverview, legalOverview, sectorOverview, serviceOverview } from '@/content/public-overviews'
 import { Section } from '@/components/layout/section'
+import { KnowledgeCarousel } from '@/components/public/knowledge-carousel'
 import { ProcessSteps } from '@/components/public/process-steps'
+import { ObligationCarousel } from '@/components/public/obligation-carousel'
 import { PublicCallToAction } from '@/components/public/public-call-to-action'
 import { PublicContentCard } from '@/components/public/public-content-card'
 import { PublicHero } from '@/components/public/public-hero'
-import { PublicStatusNotice } from '@/components/public/public-status-notice'
 import { SituationGrid } from '@/components/public/situation-grid'
 import { TrustPrinciples } from '@/components/public/trust-principles'
 import { Badge } from '@/components/ui/badge'
@@ -30,16 +30,54 @@ export const metadata: Metadata = {
   },
 }
 
-const rieQuestionArticle = getKnowledgeArticleBySlug('moet-ik-een-rie-hebben')!
-
 export default function HomePage() {
   const content = publicHomepageContent
   const featuredServices = serviceOverview.slice(0, 3)
-  const featuredLegalTopic = legalOverview[0]
+  const obligationCarouselItems = legalOverview.filter((topic) => topic.href !== undefined)
+  const knowledgeCarouselItems = knowledgeOverview.filter((article) => article.href !== undefined)
 
   return (
     <>
-      <PublicHero hero={content.hero} process={content.process} />
+      <PublicHero hero={content.hero} />
+
+      <Section spacing="compact" id="hoe-workmatchr-helpt" aria-labelledby="process-title" className="scroll-mt-24">
+        <div className="max-w-3xl">
+          <Badge variant="neutral">Hoe WorkMatchr helpt</Badge>
+          <Heading id="process-title" className="mt-4">Van vraag naar een passende vervolgstap</Heading>
+          <Text size="lg" className="mt-4 text-text-secondary">
+            WorkMatchr helpt u informatie en mogelijke oplossingen te ordenen. De publieke homepage selecteert niet automatisch een aanbieder.
+          </Text>
+        </div>
+        <div className="mt-8"><ProcessSteps steps={content.steps} /></div>
+      </Section>
+
+      <Section spacing="compact" className="border-y border-border bg-surface-subtle">
+        <div className="grid items-stretch gap-6 lg:grid-cols-2">
+          <div className="flex min-w-0 flex-col rounded-card border border-border bg-surface p-5 sm:p-6">
+            <Badge>Wettelijke verplichtingen</Badge>
+            <Heading className="mt-4">Wat moet uw organisatie regelen?</Heading>
+            <Text className="mt-3 text-text-secondary">
+              Welke verplichtingen gelden, hangt af van uw organisatie, werkzaamheden en risico’s.
+            </Text>
+            <div className="mt-4">
+              <ObligationCarousel items={obligationCarouselItems} />
+            </div>
+            <div className="mt-auto pt-4"><LinkButton href="/wettelijke-verplichtingen" variant="outline">Bekijk alle verplichtingen</LinkButton></div>
+          </div>
+
+          <div className="flex min-w-0 flex-col rounded-card border border-border bg-surface p-5 sm:p-6">
+            <Badge variant="neutral">Kenniscentrum</Badge>
+            <Heading className="mt-4">Een onderbouwd antwoord op uw vraag</Heading>
+            <Text className="mt-3 text-text-secondary">
+              In het kenniscentrum vindt u betrouwbare, herleidbare algemene vakinformatie die zorgvuldig wordt uitgebreid.
+            </Text>
+            <div className="mt-4">
+              <KnowledgeCarousel items={knowledgeCarouselItems} />
+            </div>
+            <div className="mt-auto pt-4"><LinkButton href="/kenniscentrum" variant="outline">Ga naar het kenniscentrum</LinkButton></div>
+          </div>
+        </div>
+      </Section>
 
       <Section
         id="situaties"
@@ -56,7 +94,7 @@ export default function HomePage() {
           </Text>
         </div>
         <div className="mt-8"><SituationGrid situations={content.situations} /></div>
-        <Card className="mt-6 flex flex-col gap-5 p-5 shadow-none sm:flex-row sm:items-center sm:justify-between sm:p-6">
+        <Card className="mt-6 flex flex-col gap-4 !p-5 shadow-none sm:flex-row sm:items-center sm:justify-between sm:!p-6">
           <div className="max-w-3xl">
             <Heading as="h3" size="h3">{content.adviceGuideEntry.title}</Heading>
             <Text className="mt-2 text-text-secondary">{content.adviceGuideEntry.description}</Text>
@@ -67,7 +105,7 @@ export default function HomePage() {
         </Card>
       </Section>
 
-      <Section className="border-y border-border bg-surface">
+      <Section spacing="compact" className="border-y border-border bg-surface">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
             <Badge>Gericht zoeken</Badge>
@@ -78,65 +116,14 @@ export default function HomePage() {
           </div>
           <LinkButton href="/diensten" variant="outline">Bekijk alle diensten</LinkButton>
         </div>
-        <div className="mt-10 grid gap-5 md:grid-cols-3">
+        <div className="mt-8 grid gap-4 md:grid-cols-3">
           {featuredServices.map((service) => (
             <PublicContentCard key={service.title} {...service} headingLevel="h3" linkLabel={`Bekijk ${service.title}`} />
           ))}
         </div>
       </Section>
 
-      <Section id="hoe-workmatchr-helpt" aria-labelledby="process-title" className="scroll-mt-24">
-        <div className="max-w-3xl">
-          <Badge variant="neutral">Hoe WorkMatchr helpt</Badge>
-          <Heading id="process-title" className="mt-4">Van vraag naar een passende vervolgstap</Heading>
-          <Text size="lg" className="mt-5 text-text-secondary">
-            WorkMatchr helpt u informatie en mogelijke oplossingen te ordenen. De publieke homepage selecteert niet automatisch een aanbieder.
-          </Text>
-        </div>
-        <div className="mt-10"><ProcessSteps steps={content.steps} /></div>
-      </Section>
-
-      <Section className="border-y border-border bg-surface-subtle">
-        <div className="grid items-start gap-8 lg:grid-cols-[0.85fr_1.15fr]">
-          <div className="max-w-xl">
-            <Badge>Wettelijke verplichtingen</Badge>
-            <Heading className="mt-4">Wat moet uw organisatie regelen?</Heading>
-            <Text size="lg" className="mt-5 text-text-secondary">
-              Welke verplichtingen gelden, hangt af van uw organisatie, werkzaamheden en risico’s.
-            </Text>
-            <div className="mt-7"><LinkButton href="/wettelijke-verplichtingen" variant="outline">Bekijk alle verplichtingen</LinkButton></div>
-          </div>
-          <div className="space-y-5">
-            <PublicContentCard {...featuredLegalTopic} headingLevel="h3" linkLabel="Lees de wettelijke context" />
-            <PublicStatusNotice title="Algemene informatie" description="Deze informatie helpt u gerichte vragen te stellen, maar vormt geen individueel juridisch advies voor uw organisatie." headingLevel="h3" />
-          </div>
-        </div>
-      </Section>
-
-      <Section>
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <Badge variant="neutral">Uitgelichte kennis</Badge>
-            <Heading className="mt-4">Een onderbouwd antwoord op uw vraag</Heading>
-            <Text size="lg" className="mt-5 text-text-secondary">
-              Het kenniscentrum groeit stap voor stap. We publiceren alleen onderwerpen die zorgvuldig zijn onderbouwd.
-            </Text>
-          </div>
-          <LinkButton href="/kenniscentrum" variant="outline">Naar het kenniscentrum</LinkButton>
-        </div>
-        <div className="mt-10 max-w-2xl">
-          <PublicContentCard
-            title={rieQuestionArticle.title}
-            description={rieQuestionArticle.summary}
-            href="/kenniscentrum/moet-ik-een-rie-hebben"
-            linkLabel="Lees de uitleg"
-            status="Gepubliceerd · bronnen gecontroleerd"
-            headingLevel="h3"
-          />
-        </div>
-      </Section>
-
-      <Section className="border-y border-border bg-surface">
+      <Section spacing="compact" className="border-y border-border bg-surface">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
             <Badge>Sectoren</Badge>
@@ -150,13 +137,13 @@ export default function HomePage() {
         <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {sectorOverview.map((sector) => (
             <li key={sector.title}>
-              <PublicContentCard {...sector} headingLevel="h3" linkLabel={`Bekijk ${sector.title}`} />
+              <PublicContentCard {...sector} headingLevel="h3" linkLabel={`Bekijk ${sector.title}`} compact />
             </li>
           ))}
         </ul>
       </Section>
 
-      <Section className="border-y border-border bg-brand-primary-subtle">
+      <Section spacing="compact" className="border-y border-border bg-brand-primary-subtle">
         <div className="max-w-3xl">
           <Badge variant="success">Onze werkwijze</Badge>
           <Heading className="mt-4">Begrijpen en onderbouwen vóór verbinden</Heading>

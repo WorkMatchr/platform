@@ -7,7 +7,7 @@ import type { PublicContentBase, PublicFaq, PublicSource } from '@/content/publi
 import { LastReviewed } from './last-reviewed'
 
 export function PublicDetailBody({ children }: { children: ReactNode }) {
-  return <Section containerSize="narrow" spacing="compact" containerClassName="space-y-10 sm:space-y-12">{children}</Section>
+  return <Section containerSize="narrow" spacing="compact" containerClassName="space-y-8 sm:space-y-10">{children}</Section>
 }
 
 export function PublicContentStatus({ content }: { content: PublicContentBase }) {
@@ -23,7 +23,7 @@ export function PublicContentStatus({ content }: { content: PublicContentBase })
 }
 
 export function PublicTextSection({ id, title, children }: { id: string; title: string; children: ReactNode }) {
-  return <section aria-labelledby={`${id}-title`}><Heading as="h2" size="h2" id={`${id}-title`}>{title}</Heading><div className="mt-4 space-y-4 text-text-secondary">{children}</div></section>
+  return <section aria-labelledby={`${id}-title`}><Heading as="h2" size="h2" id={`${id}-title`}>{title}</Heading><div className="mt-3 space-y-3 text-text-secondary">{children}</div></section>
 }
 
 export function PublicBulletList({ items }: { items: readonly string[] }) {
@@ -36,7 +36,7 @@ export function PublicSteps({ items }: { items: readonly string[] }) {
 
 export function PublicFaqList({ faq }: { faq: readonly PublicFaq[] }) {
   if (faq.length === 0) return null
-  return <section aria-labelledby="faq-title"><Heading as="h2" size="h2" id="faq-title">Veelgestelde vragen</Heading><dl className="mt-4 space-y-4">{faq.map((item) => <div key={item.id}><dt className="font-semibold leading-6 text-text-primary">{item.question}</dt><dd className="mt-1 text-body leading-6 text-text-secondary">{item.answer}</dd></div>)}</dl></section>
+  return <section aria-labelledby="faq-title"><Heading as="h2" size="h2" id="faq-title">Veelgestelde vragen</Heading><dl className="mt-3 space-y-3">{faq.map((item) => <div key={item.id}><dt className="font-semibold leading-6 text-text-primary">{item.question}</dt><dd className="mt-1 text-body leading-6 text-text-secondary">{item.answer}</dd></div>)}</dl></section>
 }
 
 const sourceTypeLabels = {
@@ -47,5 +47,5 @@ const sourceTypeLabels = {
 } as const
 
 export function PublicSourceList({ sources }: { sources: readonly PublicSource[] }) {
-  return <section aria-labelledby="sources-title"><Heading as="h2" size="h2" id="sources-title">Bronnen en onderbouwing</Heading><ul className="mt-4 space-y-3">{sources.map((source) => <li key={source.id} className="border-l-4 border-brand-primary/30 pl-5"><a href={source.url} target="_blank" rel="noreferrer" className="font-semibold text-brand-primary underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-primary">{source.title}<span className="sr-only"> (opent in een nieuw venster)</span></a><Text size="sm" className="mt-1 text-text-secondary">{source.publisher} · {sourceTypeLabels[source.type]} · {source.evidenceLevel === 'PRIMARY' ? 'Primaire bron' : 'Gezaghebbende bron'}</Text><Text size="sm" className="mt-1 text-text-secondary">{source.note}</Text></li>)}</ul></section>
+  return <section aria-labelledby="sources-title"><Heading as="h2" size="h2" id="sources-title">Bronnen en onderbouwing</Heading><ul className="mt-3 space-y-3">{sources.map((source) => <li key={source.id} className="border-l-4 border-brand-primary/30 pl-4"><a href={source.url} target="_blank" rel="noreferrer" className="font-semibold text-brand-primary underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-primary">{source.title}<span className="sr-only"> (opent in een nieuw venster)</span></a><Text size="sm" className="mt-1 text-text-secondary">{source.publisher} · {sourceTypeLabels[source.type]} · {source.evidenceLevel === 'PRIMARY' ? 'Primaire bron' : 'Gezaghebbende bron'}</Text><Text size="sm" className="mt-1 text-text-secondary">{source.note}</Text></li>)}</ul></section>
 }

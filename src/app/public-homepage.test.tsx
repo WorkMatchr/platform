@@ -17,8 +17,21 @@ describe('vraaggestuurde publieke homepage', () => {
     expect(html).toContain('href="/advieswijzer"')
     expect(html).toContain('Ontdek welke ondersteuning u nodig heeft')
     expect(html).toContain('href="/hulpvragen/nieuw"')
-    expect(html).toContain('Start uw opdracht')
+    expect(html).toContain('Vraag ondersteuning aan')
+    expect(html).not.toContain('Start uw opdracht')
     expect(html).not.toContain('Start de zelfscan')
+  })
+
+  it('gebruikt in de hero de definitieve illustratie in plaats van de tijdelijke placeholder', () => {
+    const html = renderHomepage()
+    expect(html).toContain('hero-begrijpen-en-verbinden.png')
+    expect(html).toContain('alt="Van een duidelijke hulpvraag via betrouwbare kennis naar een passende deskundige"')
+    expect(html).toContain('width="1536"')
+    expect(html).toContain('height="1024"')
+    expect(html).toContain('sizes="(min-width: 1024px) 44vw, 100vw"')
+    expect(html).toContain('class="h-auto w-full rounded-card object-contain"')
+    expect(html).not.toContain('data-homepage-illustration-placeholder')
+    expect(html).not.toContain('aria-label="Proces van vraag naar specialist"')
   })
 
   it('rendert alle situaties vanuit de typeveilige contentbron', () => {
@@ -77,12 +90,33 @@ describe('vraaggestuurde publieke homepage', () => {
 
   it('gebruikt vier begrijpelijke proceslabels in de bedoelde volgorde', () => {
     const html = renderHomepage()
-    const labels = ['Uw situatie', 'Enkele vragen', 'Uw advies', 'Vervolgstap']
+    const labels = ['Vertel uw situatie', 'Wij verduidelijken uw vraag', 'Ontvang algemene vakinformatie', 'Vind de juiste deskundige']
 
     expect(publicHomepageContent.process).toEqual(labels)
     for (const label of labels) expect(html).toContain(label)
     expect(html).not.toContain('>Verduidelijking<')
     expect(html).not.toContain('>Inzicht<')
+  })
+
+  it('plaatst procesuitleg en daarna verplichtingen en kennis direct na de hero', () => {
+    const html = renderHomepage()
+    const process = html.indexOf('Van vraag naar een passende vervolgstap')
+    const obligations = html.indexOf('Wat moet uw organisatie regelen?')
+    const knowledge = html.indexOf('Een onderbouwd antwoord op uw vraag')
+    const situations = html.indexOf('Waar loopt u tegenaan?')
+
+    expect(process).toBeGreaterThan(0)
+    expect(process).toBeLessThan(obligations)
+    expect(obligations).toBeLessThan(knowledge)
+    expect(knowledge).toBeLessThan(situations)
+    expect(html).toContain('grid items-stretch gap-6 lg:grid-cols-2')
+    expect(html).toContain('Bekijk alle verplichtingen')
+    expect(html).toContain('Ga naar het kenniscentrum')
+    expect(html.match(/aria-roledescription="carousel"/g)).toHaveLength(2)
+    expect(html).toContain('aria-label="Positie 1 van 10"')
+    expect(html).toContain('aria-label="Positie 1 van 9"')
+    expect(html).toContain('aria-label="Kenniscentrumartikelen"')
+    expect(html).toContain('p-5 sm:p-6')
   })
 
   it('behoudt een logische semantische headingstructuur', () => {
@@ -108,13 +142,12 @@ describe('vraaggestuurde publieke homepage', () => {
       expect(html).toContain(`href="${href}"`)
     }
     expect(html).toContain('Moet ik een RI&amp;E hebben?')
-    expect(html).toContain('Gepubliceerd · bronnen gecontroleerd')
     expect(html).not.toContain('Zoeken in het kenniscentrum')
   })
 
-  it('rendert drie processtappen en vier vertrouwensprincipes', () => {
+  it('rendert vier processtappen en vier vertrouwensprincipes', () => {
     const html = renderHomepage()
-    expect(publicHomepageContent.steps).toHaveLength(3)
+    expect(publicHomepageContent.steps).toHaveLength(4)
     expect(publicHomepageContent.principles).toHaveLength(4)
     for (const item of [...publicHomepageContent.steps, ...publicHomepageContent.principles]) {
       expect(html).toContain(item.title)

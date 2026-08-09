@@ -62,12 +62,11 @@ export type PublicNavigationItem = {
 }
 
 export const publicNavigationItems = [
+  { label: 'Kenniscentrum', href: publicRoutes.knowledge, kind: 'standard' },
+  { label: 'Sectoren', href: publicRoutes.sectors, kind: 'standard' },
   { label: 'Diensten', href: publicRoutes.services, kind: 'standard' },
   { label: 'Wettelijke verplichtingen', href: publicRoutes.obligations, kind: 'standard' },
-  { label: 'Sectoren', href: publicRoutes.sectors, kind: 'standard' },
-  { label: 'Kenniscentrum', href: publicRoutes.knowledge, kind: 'standard' },
-  { label: 'Over WorkMatchr', href: publicRoutes.about, kind: 'standard' },
-  { label: 'Contact', href: publicRoutes.contact, kind: 'standard' },
+  { label: 'Stel uw vraag', href: publicRoutes.adviceGuide, kind: 'primary' },
   { label: 'Inloggen', href: publicRoutes.login, kind: 'auth' },
 ] as const satisfies readonly PublicNavigationItem[]
 
