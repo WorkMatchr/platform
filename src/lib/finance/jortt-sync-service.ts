@@ -6,6 +6,7 @@ import { getPrisma } from '@/lib/prisma'
 export type JorttInvoicePayload = Readonly<{
   invoiceNumber: string
   documentType: 'INVOICE' | 'CREDIT_NOTE'
+  pricingMode: 'STANDARD' | 'MOLLIE_TEST_ACCEPTANCE'
   issuedAt: string
   seller: Readonly<{ legalName: string; kvkNumber: string; vatId: string }>
   customer: Readonly<{
@@ -43,6 +44,7 @@ function safeErrorCode(error: unknown) {
 function buildPayload(invoice: {
   invoiceNumber: string
   documentType: 'INVOICE' | 'CREDIT_NOTE'
+  pricingMode: 'STANDARD' | 'MOLLIE_TEST_ACCEPTANCE'
   issuedAt: Date
   sellerLegalName: string
   sellerKvKNumber: string
@@ -64,6 +66,7 @@ function buildPayload(invoice: {
   return Object.freeze({
     invoiceNumber: invoice.invoiceNumber,
     documentType: invoice.documentType,
+    pricingMode: invoice.pricingMode,
     issuedAt: invoice.issuedAt.toISOString(),
     seller: Object.freeze({ legalName: invoice.sellerLegalName, kvkNumber: invoice.sellerKvKNumber, vatId: invoice.sellerVatId }),
     customer: Object.freeze({

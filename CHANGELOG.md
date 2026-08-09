@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-09 — Mollie-sandboxacceptatieprijs
+
+- Alleen een server-side herkende Mollie-testsleutel activeert voor het pakket van 25 credits tijdelijk €1,00 exclusief btw en €1,21 inclusief btw.
+- Aankoop, factuur, creditnota, audit en boekhoudprojectie markeren de testprijs expliciet en bewaren de werkelijk betaalde bedragen; de ledger crediteert na bevestiging 25 credits.
+- Live-sleutels en alle andere pakketten blijven het normale prijscontract gebruiken; Pro-korting en kortingscodes worden nooit op de sandboxacceptatieprijs toegepast.
+
 ## 2026-08-09 — WorkMatchr Pro opzeggen aan periode-einde
 
 - De Pro-pagina toont altijd een toegankelijke opzegactie en de Nederlandse abonnementsstatus.

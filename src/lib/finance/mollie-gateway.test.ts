@@ -4,7 +4,7 @@ import { centsToMollieValue, mollieValueToCents } from './mollie-gateway'
 vi.mock('server-only', () => ({}))
 
 describe('Mollie-bedragconversie', () => {
-  it.each([[0, '0.00'], [1, '0.01'], [3_025, '30.25'], [5_929, '59.29']])(
+  it.each([[0, '0.00'], [1, '0.01'], [121, '1.21'], [3_025, '30.25'], [5_929, '59.29']])(
     'converteert %i cent verliesvrij naar %s',
     (cents, value) => {
       expect(centsToMollieValue(cents)).toBe(value)

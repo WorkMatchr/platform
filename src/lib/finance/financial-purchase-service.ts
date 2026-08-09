@@ -10,7 +10,6 @@ import {
 import { requireProviderMarketplaceAccess } from '@/lib/marketplace/marketplace-authorization'
 import { MarketplaceServiceError } from '@/lib/marketplace/marketplace-errors'
 import {
-  calculateCreditPurchasePrice,
   createCreditPurchaseSchema,
   type DiscountSnapshot,
 } from './financial-contract'
@@ -26,6 +25,11 @@ import { issueInvoiceForPaidPurchase } from './invoice-service'
 import { activateProAfterFirstPayment, processRecurringProPayment } from './subscription-service'
 import { runSerializableFinancialTransaction } from './financial-transaction'
 import { findEffectiveProSubscription } from './pro-entitlement-service'
+import {
+  calculateAuthoritativeMollieCreditPrice,
+  MOLLIE_SANDBOX_ACCEPTANCE_PRICING,
+  usesMollieTestAcceptancePrice,
+} from './mollie-test-pricing'
 
 type Transaction = Prisma.TransactionClient
 
@@ -86,6 +90,7 @@ export async function createCreditPurchase(
   gateway: MollieGateway = createMollieGateway(),
 ) {
   const values = createCreditPurchaseSchema.parse(input)
+  const usesTestAcceptancePrice = usesMollieTestAcceptancePrice(values.packageSku)
   const purchase = await runSerializableFinancialTransaction(async (transaction) => {
     await lockKey(transaction, `purchase:${values.idempotencyKey}`)
     const existing = await transaction.financialPurchase.findUnique({ where: { idempotencyKey: values.idempotencyKey } })
@@ -94,20 +99,29 @@ export async function createCreditPurchase(
       return existing
     }
     await requireProviderMarketplaceAccess(transaction, values.actorUserId, values.organizationId, true)
-    const hasActivePro = Boolean(await findEffectiveProSubscription(transaction, values.organizationId))
-    const basePrice = calculateCreditPurchasePrice({ packageSku: values.packageSku, hasActivePro })
-    const discount = await resolveDiscount(transaction, {
-      code: values.discountCode,
-      organizationId: values.organizationId,
+    const hasActivePro = usesTestAcceptancePrice
+      ? false
+      : Boolean(await findEffectiveProSubscription(transaction, values.organizationId))
+    const basePrice = calculateAuthoritativeMollieCreditPrice({ packageSku: values.packageSku, hasActivePro })
+    const discount = usesTestAcceptancePrice
+      ? null
+      : await resolveDiscount(transaction, {
+          code: values.discountCode,
+          organizationId: values.organizationId,
+          packageSku: values.packageSku,
+          packagePriceCents: basePrice.amountExclVatCents,
+          hasActivePro,
+        })
+    const price = calculateAuthoritativeMollieCreditPrice({
       packageSku: values.packageSku,
-      packagePriceCents: basePrice.amountExclVatCents,
       hasActivePro,
+      discount: discount?.snapshot,
     })
-    const price = calculateCreditPurchasePrice({ packageSku: values.packageSku, hasActivePro, discount: discount?.snapshot })
     const created = await transaction.financialPurchase.create({
       data: {
         organizationId: values.organizationId,
         createdByUserId: values.actorUserId,
+        pricingMode: price.pricingMode,
         packageSku: price.packageSku,
         packageLabel: price.packageLabel,
         credits: price.credits,
@@ -151,7 +165,17 @@ export async function createCreditPurchase(
         eventType: 'PURCHASE_CREATED',
         result: 'SUCCEEDED',
         idempotencyKey: `purchase-created:${created.id}`,
-        metadata: { packageSku: created.packageSku, amountInclVatCents: created.amountInclVatCents, currency: created.currency },
+        metadata: {
+          packageSku: created.packageSku,
+          pricingMode: created.pricingMode,
+          pricingPolicy: created.pricingMode === 'MOLLIE_TEST_ACCEPTANCE'
+            ? MOLLIE_SANDBOX_ACCEPTANCE_PRICING
+            : 'STANDARD',
+          amountExclVatCents: created.amountExclVatCents,
+          vatAmountCents: created.vatAmountCents,
+          amountInclVatCents: created.amountInclVatCents,
+          currency: created.currency,
+        },
       },
     })
     return created
@@ -162,7 +186,9 @@ export async function createCreditPurchase(
   const payment = await gateway.createPayment({
     amountValue: centsToMollieValue(purchase.amountInclVatCents),
     currency: 'EUR',
-    description: `WorkMatchr ${purchase.packageLabel}`,
+    description: purchase.pricingMode === 'MOLLIE_TEST_ACCEPTANCE'
+      ? `WorkMatchr ${purchase.packageLabel} - sandboxacceptatie`
+      : `WorkMatchr ${purchase.packageLabel}`,
     redirectUrl: new URL(`/credits/betaling/${purchase.id}`, redirectBaseUrl).toString(),
     webhookUrl: new URL('/api/payments/mollie/webhook', webhookBaseUrl).toString(),
     metadata: { purchaseId: purchase.id, organizationId: purchase.organizationId },
@@ -190,7 +216,15 @@ export async function createCreditPurchase(
         eventType: 'MOLLIE_PAYMENT_CREATED',
         result: 'SUCCEEDED',
         idempotencyKey: `mollie-payment-created:${payment.id}`,
-        metadata: { molliePaymentId: payment.id },
+        metadata: {
+          molliePaymentId: payment.id,
+          pricingMode: purchase.pricingMode,
+          pricingPolicy: purchase.pricingMode === 'MOLLIE_TEST_ACCEPTANCE'
+            ? MOLLIE_SANDBOX_ACCEPTANCE_PRICING
+            : 'STANDARD',
+          amountInclVatCents: purchase.amountInclVatCents,
+          currency: purchase.currency,
+        },
       },
       update: {},
     })

@@ -10,6 +10,8 @@ Het redirectscherm is read-only. Webhooks zijn idempotent en iedere providerstat
 
 Bedragen worden uitsluitend als gehele eurocenten opgeslagen en berekend. De actuele catalogus bevat 25, 50, 75, 100, 150, 250 en 500 credits. De pakketkorting is onderdeel van de aankoop-snapshot. Nederlandse btw wordt als `2100` basispunten vastgelegd. WorkMatchr Pro kost €49 exclusief btw per maand en geeft 10% extra korting ná pakketkorting. Een actieve Pro-korting en kortingscode zijn nooit combineerbaar.
 
+Voor de eerste Mollie-sandboxacceptatie bestaat één strikt server-side prijsmodus: uitsluitend wanneer `MOLLIE_API_KEY` met `test_` begint, kost `CREDITS_25` tijdelijk €1,00 exclusief btw en €1,21 inclusief btw. De normale catalogusprijs blijft €25,00 exclusief btw. Andere pakketten wijzigen niet en Pro-korting, kortingscodes en bonuscredits worden niet op de testprijs toegepast. `FinancialPurchase.pricingMode` en `FinancialInvoice.pricingMode` markeren deze testprijs expliciet; snapshots, Mollie-verificatie, factuur, creditnota en boekhoudprojectie gebruiken altijd de werkelijk betaalde bedragen. Bij iedere andere sleutelmodus geldt uitsluitend `STANDARD`.
+
 De verkopersnapshot luidt Feenstra Safety Consulting, Kennemerland 71, 9405 LC Assen, KvK 57788863 en btw-id NL002107278B11. Een wijziging van organisatie- of verkopergegevens verandert een bestaande factuur niet.
 
 ## Facturen, correcties en boekhouding

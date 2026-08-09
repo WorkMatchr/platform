@@ -49,6 +49,7 @@ export type DiscountSnapshot = Readonly<{
 }>
 
 export type PurchasePrice = Readonly<{
+  pricingMode: 'STANDARD' | 'MOLLIE_TEST_ACCEPTANCE'
   packageSku: CreditPackageSku
   packageLabel: string
   credits: number
@@ -98,6 +99,7 @@ export function calculateCreditPurchasePrice(input: {
   const vatRateBps = input.vatRateBps ?? DUTCH_VAT_RATE_BPS
   const vatAmountCents = roundedRate(amountExclVatCents, vatRateBps)
   return Object.freeze({
+    pricingMode: 'STANDARD',
     packageSku: item.sku,
     packageLabel: `${item.credits} credits`,
     credits: item.credits,

@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { Prisma } from '@/generated/prisma/client'
+import { MOLLIE_SANDBOX_ACCEPTANCE_PRICING } from './mollie-test-pricing'
 import { WORKMATCHR_SELLER } from './financial-contract'
 
 type Transaction = Prisma.TransactionClient
@@ -51,6 +52,7 @@ export async function issueInvoiceForPaidPurchase(
   const invoice = await transaction.financialInvoice.create({
     data: {
       documentType: 'INVOICE',
+      pricingMode: purchase.pricingMode,
       invoiceNumber: formatFinancialDocumentNumber(sequenceNumber, issuedAt),
       sequenceNumber,
       purchaseId: purchase.id,
@@ -95,7 +97,18 @@ export async function issueInvoiceForPaidPurchase(
       eventType: 'INVOICE_ISSUED',
       result: 'SUCCEEDED',
       idempotencyKey: `invoice-issued:${purchase.id}`,
-      metadata: { invoiceNumber: invoice.invoiceNumber, sequenceNumber },
+      metadata: {
+        invoiceNumber: invoice.invoiceNumber,
+        sequenceNumber,
+        pricingMode: invoice.pricingMode,
+        pricingPolicy: invoice.pricingMode === 'MOLLIE_TEST_ACCEPTANCE'
+          ? MOLLIE_SANDBOX_ACCEPTANCE_PRICING
+          : 'STANDARD',
+        amountExclVatCents: invoice.amountExclVatCents,
+        vatAmountCents: invoice.vatAmountCents,
+        amountInclVatCents: invoice.amountInclVatCents,
+        currency: invoice.currency,
+      },
     },
   })
   return invoice
@@ -120,6 +133,7 @@ export async function issueCreditNoteForCompletedRefund(
   const invoice = await transaction.financialInvoice.create({
     data: {
       documentType: 'CREDIT_NOTE',
+      pricingMode: original.pricingMode,
       invoiceNumber: formatFinancialDocumentNumber(sequenceNumber, issuedAt),
       sequenceNumber,
       refundId: refund.id,
@@ -183,6 +197,7 @@ export async function issueInvoiceForPaidSubscriptionPayment(
   const invoice = await transaction.financialInvoice.create({
     data: {
       documentType: 'INVOICE',
+      pricingMode: 'STANDARD',
       invoiceNumber: formatFinancialDocumentNumber(sequenceNumber, issuedAt),
       sequenceNumber,
       subscriptionPaymentId: payment.id,

@@ -29,6 +29,7 @@ export default async function CreditPaymentPage({ params }: { params: Promise<{ 
     <Card className="mt-6 grid gap-4">
       <div><p className="text-sm text-text-secondary">Status</p><p className="font-semibold">{statusLabels[purchase.status]}</p></div>
       <div><p className="text-sm text-text-secondary">Pakket</p><p>{purchase.packageLabel}</p></div>
+      {purchase.pricingMode === 'MOLLIE_TEST_ACCEPTANCE' ? <p className="rounded-control border border-brand/30 bg-brand/5 p-3 text-sm"><strong>Sandbox-testbetaling</strong><br />Voor deze acceptatietest is de vaste testprijs gebruikt. U ontvangt na een bevestigde betaling 25 credits.</p> : null}
       <div><p className="text-sm text-text-secondary">Totaal inclusief btw</p><p>{formatEuro(purchase.amountInclVatCents)}</p></div>
       {purchase.invoice ? <div><p className="text-sm text-text-secondary">Factuur</p><Link className="font-semibold underline" href={`/credits/facturen/${purchase.invoice.id}`}>{purchase.invoice.invoiceNumber}</Link></div> : null}
       {purchase.status === 'PAYMENT_PENDING' ? <p className="text-sm text-text-secondary">Mollie bevestigt de betaling rechtstreeks aan WorkMatchr. Vernieuw deze pagina over enkele ogenblikken.</p> : null}

@@ -14,6 +14,10 @@ const refundLifecycleMigration = readFileSync(
   join(process.cwd(), 'prisma/migrations/20260809120000_harden_financial_refund_lifecycle/migration.sql'),
   'utf8',
 )
+const sandboxPricingMigration = readFileSync(
+  join(process.cwd(), 'prisma/migrations/20260809130000_add_mollie_test_acceptance_pricing/migration.sql'),
+  'utf8',
+)
 
 describe('financiële F3-F9-migratie', () => {
   it('is additief en bevat geen destructieve schema- of datamutaties', () => {
@@ -60,5 +64,24 @@ describe('financiële refund-lifecyclemigratie', () => {
     expect(refundLifecycleMigration).toContain('ADD COLUMN "refundId" UUID')
     expect(refundLifecycleMigration).toContain('FinancialEvent_refundId_fkey')
     expect(refundLifecycleMigration).toContain('ON DELETE RESTRICT')
+  })
+})
+
+describe('Mollie sandboxacceptatieprijsmigratie', () => {
+  it('is additief en markeert aankoop en factuur met een expliciete prijsmodus', () => {
+    expect(sandboxPricingMigration).not.toMatch(/DROP\s+(TABLE|COLUMN|TYPE)/i)
+    expect(sandboxPricingMigration).not.toMatch(/DELETE\s+FROM/i)
+    expect(sandboxPricingMigration).toContain('FinancialPricingMode')
+    expect(sandboxPricingMigration).toContain('FinancialPurchase_test_pricing_check')
+    expect(sandboxPricingMigration).toContain('MOLLIE_TEST_ACCEPTANCE')
+  })
+
+  it('borgt databasebreed exact 25 credits voor 1 euro plus 21 procent btw zonder kortingen', () => {
+    expect(sandboxPricingMigration).toContain('"packageSku" = \'CREDITS_25\'')
+    expect(sandboxPricingMigration).toContain('"credits" = 25')
+    expect(sandboxPricingMigration).toContain('"amountExclVatCents" = 100')
+    expect(sandboxPricingMigration).toContain('"vatAmountCents" = 21')
+    expect(sandboxPricingMigration).toContain('"amountInclVatCents" = 121')
+    expect(sandboxPricingMigration).toContain('"discountCodeId" IS NULL')
   })
 })

@@ -527,6 +527,11 @@ enum FinancialPurchaseStatus {
   REFUNDED
 }
 
+enum FinancialPricingMode {
+  STANDARD
+  MOLLIE_TEST_ACCEPTANCE
+}
+
 enum FinancialPaymentStatus {
   OPEN
   PENDING
@@ -3385,6 +3390,7 @@ model FinancialPurchase {
   createdByUserId           String                    @db.Uuid
   kind                      FinancialPurchaseKind     @default(CREDIT_PACKAGE)
   status                    FinancialPurchaseStatus   @default(CREATED)
+  pricingMode               FinancialPricingMode      @default(STANDARD)
   packageSku                String                    @db.VarChar(40)
   packageLabel              String                    @db.VarChar(120)
   credits                   Int
@@ -3480,6 +3486,7 @@ model FinancialInvoiceCounter {
 model FinancialInvoice {
   id                        String                           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   documentType              FinancialDocumentType            @default(INVOICE)
+  pricingMode               FinancialPricingMode             @default(STANDARD)
   invoiceNumber             String                           @unique @db.VarChar(40)
   sequenceNumber            Int                              @unique
   purchaseId                String?                          @unique @db.Uuid
