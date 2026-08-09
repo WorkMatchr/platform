@@ -599,6 +599,7 @@ erDiagram
   FinancialPurchase ||--o{ FinancialRefund : corrigeert
   FinancialRefund ||--o| FinancialInvoice : crediteert
   FinancialRefund ||--o{ FinancialEvent : auditeert
+  ProfessionalSubscription ||--o{ FinancialEvent : auditeert_mandate
   ProfessionalSubscription ||--o{ ProfessionalSubscriptionPayment : incasseert
   ProfessionalSubscriptionPayment ||--o| FinancialInvoice : factureert
   FinancialInvoice ||--o| FinancialJorttSync : projecteert
@@ -606,6 +607,8 @@ erDiagram
   DiscountCode ||--o{ DiscountRedemption : gebruikt
   Organization ||--o| StarterBenefitGrant : ontvangt
 ```
+
+Een Pro-abonnement bewaart uitsluitend de Mollie customer-, mandate- en subscription-identifiers plus de gevalideerde mandate-status, methode en verificatietijd. Een iDEAL-first-payment levert bij een geactiveerde SEPA-methode een direct-debit-mandate op; kaart blijft een afzonderlijk geldig alternatief. Gevoelige rekening- en kaartgegevens blijven uitsluitend bij Mollie.
 ## ADR-013 Contract — enkelvoudige tenantcontext
 
 `OrganizationMembership.userId` is databasebreed uniek. Een User heeft daardoor nul of één actuele membership; één organisatie kan nog steeds meerdere memberships en dus meerdere afzonderlijke gebruikersaccounts hebben. De nulvariant ondersteunt expliciete platformaccounts en nog niet afgeronde eerste onboarding. Actorrelaties en append-only eventrelaties blijven ongewijzigd.

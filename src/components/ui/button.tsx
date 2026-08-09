@@ -14,6 +14,7 @@ export const buttonVariantStyles: Record<ButtonVariant, string> = {
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   loading?: boolean
+  loadingLabel?: string
   variant?: ButtonVariant
 }
 
@@ -22,6 +23,7 @@ export function Button({
   className = '',
   disabled,
   loading = false,
+  loadingLabel = 'Bezig…',
   type = 'button',
   variant = 'primary',
   ...props
@@ -40,7 +42,7 @@ export function Button({
           className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent motion-reduce:animate-none"
         />
       )}
-      {loading ? <span>Bezig…</span> : children}
+      {loading ? <span>{loadingLabel}</span> : children}
     </button>
   )
 }

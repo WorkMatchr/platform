@@ -53,6 +53,7 @@ export default async function ProPage({ searchParams }: { searchParams: Promise<
       {opgezegd && subscription?.cancellationEffectiveAt ? <p className="mt-5 rounded-control bg-success-subtle p-3 font-semibold" role="status">{cancellationExplanation}</p> : null}
 
       {!subscription ? <form action={startProSubscriptionAction} className="mt-6 grid gap-4 sm:grid-cols-2">
+        <p className="sm:col-span-2 text-sm text-text-secondary">U betaalt de eerste maand via iDEAL of kaart. Daarmee geeft u toestemming voor de daaropvolgende maandelijkse betaling van {formatEuro(WORKMATCHR_PRO_PLAN.amountInclVatCents)} inclusief btw. Mollie toont uitsluitend betaalmethoden die voor uw betaling beschikbaar zijn.</p>
         <input type="hidden" name="idempotencyKey" value={`pro-subscription:${randomUUID()}`} />
         <label className="grid gap-2 font-semibold">Organisatienaam<input className={inputClassName} name="organizationName" defaultValue={organization.name} required /></label>
         <label className="grid gap-2 font-semibold">Adres<input className={inputClassName} name="addressLine" defaultValue={location?.addressLine ?? ''} required /></label>

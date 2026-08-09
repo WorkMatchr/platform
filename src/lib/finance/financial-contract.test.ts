@@ -22,6 +22,14 @@ describe('financieel prijscontract', () => {
     expect(price).toMatchObject({ amountExclVatCents: 2_500, vatRateBps: DUTCH_VAT_RATE_BPS, vatAmountCents: 525, amountInclVatCents: 3_025, currency: 'EUR' })
   })
 
+  it('berekent voor 50 credits exact 50 euro exclusief en 60,50 inclusief btw', () => {
+    expect(calculateCreditPurchasePrice({ packageSku: 'CREDITS_50', hasActivePro: false })).toMatchObject({
+      amountExclVatCents: 5_000,
+      vatAmountCents: 1_050,
+      amountInclVatCents: 6_050,
+    })
+  })
+
   it('past Pro-korting toe na pakketkorting', () => {
     const price = calculateCreditPurchasePrice({ packageSku: 'CREDITS_100', hasActivePro: true })
     expect(price).toMatchObject({ packageDiscountCents: 500, proDiscountCents: 950, amountExclVatCents: 8_550 })

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-09 — WorkMatchr Pro via iDEAL en terugkerende incasso
+
+- De eerste Pro-maand wordt als Mollie `first` payment aangeboden via iDEAL met kaart als ondersteund alternatief; prijs en btw blijven €49,00 exclusief en €59,29 inclusief btw.
+- WorkMatchr activeert Pro en de maandelijkse subscription pas na server-side bevestiging van een geldig, privacybeperkt opgeslagen Mollie-mandate en plant de eerste incasso na de reeds betaalde maand.
+- Mandate- en subscriptionactivatie zijn append-only auditbaar; webhookretries hergebruiken een bestaande remote subscription en mislukte maandbetalingen blijven de bestaande `PAST_DUE`- en `SUSPENDED`-lifecycle volgen.
+
 ## 2026-08-09 — Mollie-sandboxacceptatieprijs
 
 - Alleen een server-side herkende Mollie-testsleutel activeert voor het pakket van 25 credits tijdelijk €1,00 exclusief btw en €1,21 inclusief btw.

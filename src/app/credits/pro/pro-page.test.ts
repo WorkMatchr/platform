@@ -10,6 +10,8 @@ describe('WorkMatchr Pro-interface', () => {
     expect(source).toContain('excl. btw per maand')
     expect(source).toContain('Start Pro via Mollie')
     expect(source).toContain('getProSubscriptionStatusLabel(subscription)')
+    expect(source).toContain('U betaalt de eerste maand via iDEAL of kaart.')
+    expect(source).toContain('daaropvolgende maandelijkse betaling')
   })
 
   it('toont de opzegknop altijd en koppelt disabled aan het centrale beleid', () => {

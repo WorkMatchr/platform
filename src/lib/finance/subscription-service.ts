@@ -6,7 +6,17 @@ import { getPrisma } from '@/lib/prisma'
 import { requireProviderMarketplaceAccess } from '@/lib/marketplace/marketplace-authorization'
 import { MarketplaceServiceError } from '@/lib/marketplace/marketplace-errors'
 import { billingAddressSchema, WORKMATCHR_PRO_PLAN } from './financial-contract'
-import { centsToMollieValue, createMollieGateway, getMollieUrls, type MollieGateway, type MolliePaymentSnapshot } from './mollie-gateway'
+import {
+  centsToMollieValue,
+  createMollieGateway,
+  getMollieUrls,
+  type MollieGateway,
+  type MollieFirstPaymentMethod,
+  type MollieMandateMethod,
+  type MollieMandateSnapshot,
+  type MolliePaymentSnapshot,
+  type MollieSubscriptionSnapshot,
+} from './mollie-gateway'
 import { issueInvoiceForPaidSubscriptionPayment } from './invoice-service'
 import { runSerializableFinancialTransaction } from './financial-transaction'
 
@@ -24,6 +34,58 @@ const cancellationInputSchema = z.object({
 
 async function lock(transaction: Prisma.TransactionClient, key: string) {
   await transaction.$queryRaw(Prisma.sql`SELECT pg_advisory_xact_lock(hashtextextended(${`subscription:${key}`}, 0))::text AS "lock"`)
+}
+
+function addUtcMonth(value: Date) {
+  const result = new Date(value)
+  const day = result.getUTCDate()
+  result.setUTCDate(1)
+  result.setUTCMonth(result.getUTCMonth() + 1)
+  const lastDayOfTargetMonth = new Date(Date.UTC(result.getUTCFullYear(), result.getUTCMonth() + 1, 0)).getUTCDate()
+  result.setUTCDate(Math.min(day, lastDayOfTargetMonth))
+  return result
+}
+
+function toMollieDate(value: Date) {
+  return value.toISOString().slice(0, 10)
+}
+
+type ValidRecurringMandate = MollieMandateSnapshot & Readonly<{
+  status: 'valid'
+  method: MollieMandateMethod
+}>
+
+function isValidRecurringMandate(mandate: MollieMandateSnapshot): mandate is ValidRecurringMandate {
+  return mandate.status === 'valid' && ['directdebit', 'creditcard'].includes(mandate.method)
+}
+
+function selectValidRecurringMandate(mandates: readonly MollieMandateSnapshot[]) {
+  const valid = mandates.filter(isValidRecurringMandate)
+  return valid.find((mandate) => mandate.method === 'directdebit')
+    ?? valid.find((mandate) => mandate.method === 'creditcard')
+    ?? null
+}
+
+function assertMatchingRemoteSubscription(
+  remote: MollieSubscriptionSnapshot,
+  subscription: {
+    id: string
+    organizationId: string
+    amountInclVatCents: number
+    currency: string
+  },
+  mandate: { id: string; method: MollieMandateMethod },
+) {
+  if (
+    remote.metadata.subscriptionId !== subscription.id
+    || remote.metadata.organizationId !== subscription.organizationId
+    || remote.amountValue !== centsToMollieValue(subscription.amountInclVatCents)
+    || remote.currency !== subscription.currency
+    || remote.interval !== '1 month'
+    || remote.mandateId !== mandate.id
+    || remote.method !== mandate.method
+    || !['pending', 'active'].includes(remote.status)
+  ) throw new Error('MOLLIE_SUBSCRIPTION_MISMATCH')
 }
 
 export async function createProSubscriptionCheckout(input: unknown, gateway: MollieGateway = createMollieGateway()) {
@@ -85,9 +147,23 @@ export async function createProSubscriptionCheckout(input: unknown, gateway: Mol
         organizationId: values.organizationId,
         idempotencyKey: `mollie-customer-${values.organizationId}`,
       })
+  if (!internal.mollieCustomerId) {
+    await runSerializableFinancialTransaction(async (transaction) => {
+      await lock(transaction, values.organizationId)
+      await transaction.professionalSubscription.update({
+        where: { id: internal.id },
+        data: { mollieCustomerId: customer.id },
+      })
+    })
+  }
   const { webhookBaseUrl, redirectBaseUrl } = getMollieUrls()
   const purchase = internal.firstPaymentPurchase
   if (!purchase) throw new Error('PRO_PURCHASE_MISSING')
+  const providerMethods = await gateway.listFirstPaymentMethods(centsToMollieValue(purchase.amountInclVatCents))
+  const methods = (['ideal', 'creditcard'] as const).filter((method): method is MollieFirstPaymentMethod => (
+    providerMethods.includes(method)
+  ))
+  if (methods.length === 0) throw new Error('MOLLIE_PRO_FIRST_PAYMENT_METHOD_UNAVAILABLE')
   const payment = await gateway.createPayment({
     amountValue: centsToMollieValue(purchase.amountInclVatCents),
     currency: 'EUR',
@@ -98,6 +174,7 @@ export async function createProSubscriptionCheckout(input: unknown, gateway: Mol
     idempotencyKey: `mollie-pro-first-${internal.id}`,
     customerId: customer.id,
     sequenceType: 'first',
+    methods,
   })
   if (!payment.checkoutUrl) throw new Error('MOLLIE_CHECKOUT_URL_MISSING')
   return runSerializableFinancialTransaction(async (transaction) => {
@@ -114,28 +191,79 @@ export async function createProSubscriptionCheckout(input: unknown, gateway: Mol
 }
 
 export async function activateProAfterFirstPayment(subscriptionId: string, gateway: MollieGateway) {
-  const subscription = await getPrisma().professionalSubscription.findUniqueOrThrow({ where: { id: subscriptionId } })
+  const subscription = await getPrisma().professionalSubscription.findUniqueOrThrow({
+    where: { id: subscriptionId },
+    include: { firstPaymentPurchase: { select: { paidAt: true, status: true } } },
+  })
   if (subscription.status === 'ACTIVE' && subscription.mollieSubscriptionId) return subscription
   if (!subscription.mollieCustomerId) throw new Error('MOLLIE_CUSTOMER_MISSING')
+  if (subscription.firstPaymentPurchase?.status !== 'PAID') throw new Error('PRO_FIRST_PAYMENT_NOT_PAID')
+  const mandates = await gateway.listCustomerMandates(subscription.mollieCustomerId)
+  const mandate = selectValidRecurringMandate(mandates)
+  if (!mandate) {
+    await getPrisma().financialEvent.upsert({
+      where: { idempotencyKey: `pro-mandate-missing:${subscription.id}` },
+      create: {
+        subscriptionId: subscription.id,
+        eventType: 'PRO_MANDATE_VALIDATION_FAILED',
+        result: 'REJECTED',
+        reason: 'Mollie heeft nog geen geldig mandaat voor terugkerende betalingen bevestigd.',
+        idempotencyKey: `pro-mandate-missing:${subscription.id}`,
+        metadata: { validMandateFound: false },
+      },
+      update: {},
+    })
+    throw new Error('MOLLIE_VALID_MANDATE_MISSING')
+  }
+  const verifiedAt = new Date()
+  await runSerializableFinancialTransaction(async (transaction) => {
+    await lock(transaction, subscription.organizationId)
+    await transaction.professionalSubscription.update({
+      where: { id: subscription.id },
+      data: {
+        mollieMandateId: mandate.id,
+        mollieMandateStatus: mandate.status,
+        mollieMandateMethod: mandate.method,
+        mollieMandateVerifiedAt: verifiedAt,
+      },
+    })
+    await transaction.financialEvent.upsert({
+      where: { idempotencyKey: `pro-mandate-activated:${subscription.id}:${mandate.id}` },
+      create: {
+        subscriptionId: subscription.id,
+        eventType: 'PRO_MANDATE_ACTIVATED',
+        result: 'SUCCEEDED',
+        idempotencyKey: `pro-mandate-activated:${subscription.id}:${mandate.id}`,
+        metadata: { mollieMandateId: mandate.id, status: mandate.status, method: mandate.method },
+      },
+      update: {},
+    })
+  })
   const { webhookBaseUrl } = getMollieUrls()
-  const remote = await gateway.createSubscription({
+  const periodStart = subscription.firstPaymentPurchase.paidAt ?? verifiedAt
+  const periodEnd = addUtcMonth(periodStart)
+  const existingRemote = await gateway.findCustomerSubscription(subscription.mollieCustomerId, subscription.id)
+  const remote = existingRemote ?? await gateway.createSubscription({
     customerId: subscription.mollieCustomerId,
     amountValue: centsToMollieValue(subscription.amountInclVatCents),
     currency: 'EUR',
     interval: '1 month',
-    description: subscription.planLabel,
+    description: `${subscription.planLabel} maandabonnement`,
     webhookUrl: new URL('/api/payments/mollie/webhook', webhookBaseUrl).toString(),
+    mandateId: mandate.id,
+    method: mandate.method,
+    startDate: toMollieDate(periodEnd),
     idempotencyKey: `mollie-pro-subscription-${subscription.id}`,
     metadata: { subscriptionId: subscription.id, organizationId: subscription.organizationId },
   })
+  assertMatchingRemoteSubscription(remote, subscription, mandate)
   return runSerializableFinancialTransaction(async (transaction) => {
     await lock(transaction, subscription.organizationId)
-    const now = new Date()
-    const periodEnd = new Date(now)
-    periodEnd.setUTCMonth(periodEnd.getUTCMonth() + 1)
+    const current = await transaction.professionalSubscription.findUniqueOrThrow({ where: { id: subscription.id } })
+    if (current.status === 'ACTIVE' && current.mollieSubscriptionId) return current
     const updated = await transaction.professionalSubscription.update({
       where: { id: subscription.id },
-      data: { status: 'ACTIVE', mollieSubscriptionId: remote.id, activatedAt: now, currentPeriodStart: now, currentPeriodEnd: periodEnd, pastDueAt: null, retryCount: 0 },
+      data: { status: 'ACTIVE', mollieSubscriptionId: remote.id, activatedAt: verifiedAt, currentPeriodStart: periodStart, currentPeriodEnd: periodEnd, pastDueAt: null, retryCount: 0 },
     })
     await transaction.financialEvent.upsert({
       where: { idempotencyKey: `pro-activated:${subscription.id}` },
@@ -151,9 +279,11 @@ export async function processRecurringProPayment(payment: MolliePaymentSnapshot)
   const subscription = await getPrisma().professionalSubscription.findUnique({ where: { mollieSubscriptionId: payment.subscriptionId } })
   if (!subscription) throw new Error('UNKNOWN_MOLLIE_SUBSCRIPTION')
   if (payment.currency !== subscription.currency || payment.amountValue !== centsToMollieValue(subscription.amountInclVatCents)) throw new Error('MOLLIE_PAYMENT_MISMATCH')
+  if (subscription.mollieMandateId && payment.mandateId !== subscription.mollieMandateId) throw new Error('MOLLIE_MANDATE_MISMATCH')
+  if (subscription.mollieMandateMethod && payment.method !== subscription.mollieMandateMethod) throw new Error('MOLLIE_MANDATE_METHOD_MISMATCH')
   return runSerializableFinancialTransaction(async (transaction) => {
     await lock(transaction, subscription.organizationId)
-    const fingerprint = await import('node:crypto').then(({ createHash }) => createHash('sha256').update(JSON.stringify({ id: payment.id, status: payment.status, amount: payment.amountValue, currency: payment.currency, subscriptionId: payment.subscriptionId })).digest('hex'))
+    const fingerprint = await import('node:crypto').then(({ createHash }) => createHash('sha256').update(JSON.stringify({ id: payment.id, status: payment.status, amount: payment.amountValue, currency: payment.currency, subscriptionId: payment.subscriptionId, mandateId: payment.mandateId, method: payment.method })).digest('hex'))
     const paymentRecord = await transaction.professionalSubscriptionPayment.upsert({
       where: { idempotencyKey: `pro-payment:${payment.id}:${payment.status}:${fingerprint}` },
       create: {

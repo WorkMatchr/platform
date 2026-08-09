@@ -11,6 +11,8 @@ import { requireProviderMarketplaceAccess } from '@/lib/marketplace/marketplace-
 import { MarketplaceServiceError } from '@/lib/marketplace/marketplace-errors'
 import {
   createCreditPurchaseSchema,
+  previewCreditPurchaseSchema,
+  type CreditPackageSku,
   type DiscountSnapshot,
 } from './financial-contract'
 import {
@@ -85,12 +87,48 @@ async function resolveDiscount(
   }
 }
 
+async function resolveCreditPurchasePrice(
+  transaction: Transaction,
+  input: { organizationId: string; packageSku: CreditPackageSku; discountCode?: string },
+) {
+  const usesTestAcceptancePrice = usesMollieTestAcceptancePrice(input.packageSku)
+  const hasActivePro = usesTestAcceptancePrice
+    ? false
+    : Boolean(await findEffectiveProSubscription(transaction, input.organizationId))
+  const basePrice = calculateAuthoritativeMollieCreditPrice({
+    packageSku: input.packageSku,
+    hasActivePro,
+  })
+  const discount = usesTestAcceptancePrice
+    ? null
+    : await resolveDiscount(transaction, {
+        code: input.discountCode,
+        organizationId: input.organizationId,
+        packageSku: input.packageSku,
+        packagePriceCents: basePrice.amountExclVatCents,
+        hasActivePro,
+      })
+  const price = calculateAuthoritativeMollieCreditPrice({
+    packageSku: input.packageSku,
+    hasActivePro,
+    discount: discount?.snapshot,
+  })
+  return { discount, price }
+}
+
+export async function previewCreditPurchasePrice(input: unknown) {
+  const values = previewCreditPurchaseSchema.parse(input)
+  return runSerializableFinancialTransaction(async (transaction) => {
+    await requireProviderMarketplaceAccess(transaction, values.actorUserId, values.organizationId, true)
+    return (await resolveCreditPurchasePrice(transaction, values)).price
+  })
+}
+
 export async function createCreditPurchase(
   input: unknown,
   gateway: MollieGateway = createMollieGateway(),
 ) {
   const values = createCreditPurchaseSchema.parse(input)
-  const usesTestAcceptancePrice = usesMollieTestAcceptancePrice(values.packageSku)
   const purchase = await runSerializableFinancialTransaction(async (transaction) => {
     await lockKey(transaction, `purchase:${values.idempotencyKey}`)
     const existing = await transaction.financialPurchase.findUnique({ where: { idempotencyKey: values.idempotencyKey } })
@@ -99,24 +137,7 @@ export async function createCreditPurchase(
       return existing
     }
     await requireProviderMarketplaceAccess(transaction, values.actorUserId, values.organizationId, true)
-    const hasActivePro = usesTestAcceptancePrice
-      ? false
-      : Boolean(await findEffectiveProSubscription(transaction, values.organizationId))
-    const basePrice = calculateAuthoritativeMollieCreditPrice({ packageSku: values.packageSku, hasActivePro })
-    const discount = usesTestAcceptancePrice
-      ? null
-      : await resolveDiscount(transaction, {
-          code: values.discountCode,
-          organizationId: values.organizationId,
-          packageSku: values.packageSku,
-          packagePriceCents: basePrice.amountExclVatCents,
-          hasActivePro,
-        })
-    const price = calculateAuthoritativeMollieCreditPrice({
-      packageSku: values.packageSku,
-      hasActivePro,
-      discount: discount?.snapshot,
-    })
+    const { discount, price } = await resolveCreditPurchasePrice(transaction, values)
     const created = await transaction.financialPurchase.create({
       data: {
         organizationId: values.organizationId,
@@ -241,6 +262,8 @@ function fingerprintPayment(payment: MolliePaymentSnapshot) {
     metadata: payment.metadata,
     paidAt: payment.paidAt,
     subscriptionId: payment.subscriptionId,
+    mandateId: payment.mandateId,
+    method: payment.method,
   })).digest('hex')
 }
 

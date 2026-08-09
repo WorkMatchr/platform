@@ -119,6 +119,15 @@ async function main() {
       currency: 'EUR', mollieCustomerId: `cst_${randomUUID()}`, mollieSubscriptionId: `sub_${randomUUID()}`,
       currentPeriodStart: periodStart, currentPeriodEnd: periodEnd, activatedAt: periodStart,
     } })
+    const mandateVerifiedAt = new Date('2026-08-09T12:01:00Z')
+    const mandateSubscription = await prisma.professionalSubscription.update({ where: { id: subscription.id }, data: {
+      mollieMandateId: `mdt_${randomUUID()}`, mollieMandateStatus: 'valid',
+      mollieMandateMethod: 'directdebit', mollieMandateVerifiedAt: mandateVerifiedAt,
+    } })
+    assert.equal(mandateSubscription.mollieMandateMethod, 'directdebit')
+    await assert.rejects(() => prisma!.professionalSubscription.update({
+      where: { id: subscription.id }, data: { mollieMandateStatus: 'pending' },
+    }), /mandate_projection_check/i)
     const scheduled = await prisma.professionalSubscription.update({ where: { id: subscription.id }, data: {
       cancelAtPeriodEnd: true, cancellationRequestedAt: periodStart, cancellationEffectiveAt: periodEnd,
     } })

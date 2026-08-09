@@ -98,7 +98,7 @@ Alle IDs zijn UUID’s. `createdAt` en `updatedAt` zijn UTC-timestamps tenzij an
 | `FinancialJorttSync`, `FinancialJorttSyncAttempt` | Downstream boekhoudprojectie en immutable pogingen. | Een synchronisatiefout wijzigt kernrecords nooit. |
 | `DiscountCode`, `DiscountRedemption` | Configureerbaar voordeel en gereserveerd/toegepast gebruik. | Exact één voordeelvorm; Pro en code zijn niet combineerbaar. |
 | `StarterBenefitReview`, `StarterBenefitGrant` | Auditbare beoordeling en eenmalige 25-creditgrant. | Economische identiteiten uitsluitend als hashfingerprints. |
-| `ProfessionalSubscription`, `ProfessionalSubscriptionPayment` | Pro-statusprojectie en append-only terugkerende betaalstatussen. | Pro beïnvloedt matching niet; betaalproblemen blokkeren alleen Pro-voordelen. |
+| `ProfessionalSubscription`, `ProfessionalSubscriptionPayment` | Pro-statusprojectie, privacybeperkte Mollie-mandaatprojectie en append-only terugkerende betaalstatussen. | Alleen mandate-ID, `valid`-status, `directdebit`/`creditcard`-methode en verificatietijd worden bewaard; geen IBAN- of kaartgegevens. Pro beïnvloedt matching niet; betaalproblemen blokkeren alleen Pro-voordelen. |
 | `ProviderVerificationReview`, `ProviderQualificationDecision` | Immutable beoordeling en formeel besluit met reason code, geldigheid en checksum. | Hoog risico vereist twee verschillende bevoegde actoren. |
 | `ProviderReadinessAssessment`, `ProviderSelectabilityAssessment` | Afgeleide snapshots met bronversie, reason codes en checksum. | Fail-closed; nooit handmatig positief vinkje. |
 | `ProviderBlock*` | Immutable blokkade en afzonderlijk herstelbesluit. | Vier ogen voor blokkeren en herstellen. |

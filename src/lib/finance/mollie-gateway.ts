@@ -1,6 +1,6 @@
 import 'server-only'
 
-import createMollieClient, { SequenceType } from '@mollie/api-client'
+import createMollieClient, { PaymentMethod, SequenceType } from '@mollie/api-client'
 import { z } from 'zod'
 
 export type MolliePaymentState =
@@ -21,6 +21,27 @@ export type MolliePaymentSnapshot = Readonly<{
   createdAt: string | null
   checkoutUrl: string | null
   subscriptionId: string | null
+  mandateId: string | null
+  method: string | null
+}>
+
+export type MollieFirstPaymentMethod = 'ideal' | 'creditcard'
+export type MollieMandateMethod = 'directdebit' | 'creditcard'
+export type MollieMandateSnapshot = Readonly<{
+  id: string
+  status: 'valid' | 'pending' | 'invalid'
+  method: MollieMandateMethod | 'paypal'
+}>
+
+export type MollieSubscriptionSnapshot = Readonly<{
+  id: string
+  status: string
+  amountValue: string
+  currency: string
+  interval: string
+  mandateId: string | null
+  method: string | null
+  metadata: Readonly<{ subscriptionId?: string; organizationId?: string }>
 }>
 
 export type MollieRefundState = 'queued' | 'pending' | 'processing' | 'refunded' | 'failed' | 'canceled'
@@ -41,6 +62,7 @@ export interface MollieGateway {
     idempotencyKey: string
     customerId?: string
     sequenceType?: 'oneoff' | 'first' | 'recurring'
+    methods?: readonly MollieFirstPaymentMethod[]
   }): Promise<MolliePaymentSnapshot>
   getPayment(paymentId: string): Promise<MolliePaymentSnapshot>
   createRefund(input: {
@@ -53,6 +75,8 @@ export interface MollieGateway {
   }): Promise<MollieRefundSnapshot>
   getRefund(input: { paymentId: string; refundId: string }): Promise<MollieRefundSnapshot>
   createCustomer(input: { name: string; email: string; organizationId: string; idempotencyKey: string }): Promise<{ id: string }>
+  listFirstPaymentMethods(amountValue: string): Promise<readonly MollieFirstPaymentMethod[]>
+  listCustomerMandates(customerId: string): Promise<readonly MollieMandateSnapshot[]>
   createSubscription(input: {
     customerId: string
     amountValue: string
@@ -60,9 +84,16 @@ export interface MollieGateway {
     interval: '1 month'
     description: string
     webhookUrl: string
+    mandateId: string
+    method: MollieMandateMethod
+    startDate: string
     idempotencyKey: string
     metadata: { subscriptionId: string; organizationId: string }
-  }): Promise<{ id: string; status: string }>
+  }): Promise<MollieSubscriptionSnapshot>
+  findCustomerSubscription(
+    customerId: string,
+    internalSubscriptionId: string,
+  ): Promise<MollieSubscriptionSnapshot | null>
   cancelSubscription(input: {
     customerId: string
     subscriptionId: string
@@ -76,6 +107,28 @@ const safeMetadataSchema = z.object({
   subscriptionId: z.string().uuid().optional(),
 }).passthrough()
 
+function subscriptionSnapshot(subscription: {
+  id: string
+  status: string
+  amount: { value: string; currency: string }
+  interval: string
+  mandateId?: string | null
+  method?: string | null
+  metadata?: unknown
+}): MollieSubscriptionSnapshot {
+  const metadata = safeMetadataSchema.safeParse(subscription.metadata)
+  return Object.freeze({
+    id: subscription.id,
+    status: subscription.status,
+    amountValue: subscription.amount.value,
+    currency: subscription.amount.currency,
+    interval: subscription.interval,
+    mandateId: subscription.mandateId ?? null,
+    method: subscription.method ?? null,
+    metadata: metadata.success ? metadata.data : {},
+  })
+}
+
 function paymentSnapshot(payment: {
   id: string
   status: string
@@ -84,6 +137,8 @@ function paymentSnapshot(payment: {
   paidAt?: string | null
   createdAt?: string | null
   subscriptionId?: string | null
+  mandateId?: string | null
+  method?: string | null
   getCheckoutUrl(): string | null
 }): MolliePaymentSnapshot {
   const status = z.enum(['open', 'pending', 'paid', 'failed', 'canceled', 'expired']).parse(payment.status)
@@ -98,6 +153,8 @@ function paymentSnapshot(payment: {
     createdAt: payment.createdAt ?? null,
     checkoutUrl: payment.getCheckoutUrl(),
     subscriptionId: payment.subscriptionId ?? null,
+    mandateId: payment.mandateId ?? null,
+    method: payment.method ?? null,
   })
 }
 
@@ -132,6 +189,7 @@ export function createMollieGateway(): MollieGateway {
           : input.sequenceType === 'recurring'
             ? SequenceType.recurring
             : SequenceType.oneoff,
+        method: input.methods?.map((method) => method === 'ideal' ? PaymentMethod.ideal : PaymentMethod.creditcard),
         idempotencyKey: input.idempotencyKey,
       })
       return paymentSnapshot(payment)
@@ -162,17 +220,46 @@ export function createMollieGateway(): MollieGateway {
       })
       return { id: customer.id }
     },
+    async listFirstPaymentMethods(amountValue) {
+      const methods = await client.methods.list({
+        sequenceType: SequenceType.first,
+        amount: { value: amountValue, currency: 'EUR' },
+      })
+      return methods
+        .map((method) => method.id)
+        .filter((method): method is PaymentMethod.ideal | PaymentMethod.creditcard => (
+          method === PaymentMethod.ideal || method === PaymentMethod.creditcard
+        ))
+    },
+    async listCustomerMandates(customerId) {
+      const mandates = await client.customerMandates.page({ customerId })
+      return mandates.map((mandate) => Object.freeze({
+        id: mandate.id,
+        status: mandate.status,
+        method: mandate.method,
+      }))
+    },
     async createSubscription(input) {
       const subscription = await client.customerSubscriptions.create({
         customerId: input.customerId,
         amount: { value: input.amountValue, currency: input.currency },
         interval: input.interval,
         description: input.description,
+        mandateId: input.mandateId,
+        method: input.method,
+        startDate: input.startDate,
         webhookUrl: input.webhookUrl,
         metadata: input.metadata,
         idempotencyKey: input.idempotencyKey,
       })
-      return { id: subscription.id, status: subscription.status }
+      return subscriptionSnapshot(subscription)
+    },
+    async findCustomerSubscription(customerId, internalSubscriptionId) {
+      for await (const subscription of client.customerSubscriptions.iterate({ customerId })) {
+        const snapshot = subscriptionSnapshot(subscription)
+        if (snapshot.metadata.subscriptionId === internalSubscriptionId) return snapshot
+      }
+      return null
     },
     async cancelSubscription(input) {
       const subscription = await client.customerSubscriptions.cancel(input.subscriptionId, {

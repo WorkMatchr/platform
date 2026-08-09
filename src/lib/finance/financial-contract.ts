@@ -38,6 +38,13 @@ export const createCreditPurchaseSchema = z.object({
   idempotencyKey: z.string().trim().min(12).max(160).regex(/^[A-Za-z0-9:_-]+$/),
 })
 
+export const previewCreditPurchaseSchema = z.object({
+  actorUserId: z.string().uuid(),
+  organizationId: z.string().uuid(),
+  packageSku: creditPackageSkuSchema,
+  discountCode: z.string().trim().toUpperCase().min(2).max(40).optional(),
+})
+
 export type BillingAddress = z.infer<typeof billingAddressSchema>
 export type CreateCreditPurchaseInput = z.infer<typeof createCreditPurchaseSchema>
 

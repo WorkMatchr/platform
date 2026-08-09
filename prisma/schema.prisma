@@ -3667,6 +3667,9 @@ model ProfessionalSubscription {
   currency                String                            @db.Char(3)
   mollieCustomerId        String?                           @unique @db.VarChar(80)
   mollieMandateId         String?                           @db.VarChar(80)
+  mollieMandateStatus     String?                           @db.VarChar(20)
+  mollieMandateMethod     String?                           @db.VarChar(30)
+  mollieMandateVerifiedAt DateTime?                         @db.Timestamptz(3)
   mollieSubscriptionId    String?                           @unique @db.VarChar(80)
   firstPaymentPurchaseId  String?                           @unique @db.Uuid
   currentPeriodStart      DateTime?                         @db.Timestamptz(3)

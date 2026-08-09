@@ -18,6 +18,10 @@ const sandboxPricingMigration = readFileSync(
   join(process.cwd(), 'prisma/migrations/20260809130000_add_mollie_test_acceptance_pricing/migration.sql'),
   'utf8',
 )
+const proMandateMigration = readFileSync(
+  join(process.cwd(), 'prisma/migrations/20260809140000_add_pro_mollie_mandate_projection/migration.sql'),
+  'utf8',
+)
 
 describe('financiële F3-F9-migratie', () => {
   it('is additief en bevat geen destructieve schema- of datamutaties', () => {
@@ -83,5 +87,22 @@ describe('Mollie sandboxacceptatieprijsmigratie', () => {
     expect(sandboxPricingMigration).toContain('"vatAmountCents" = 21')
     expect(sandboxPricingMigration).toContain('"amountInclVatCents" = 121')
     expect(sandboxPricingMigration).toContain('"discountCodeId" IS NULL')
+  })
+})
+
+describe('Mollie Pro-mandaatprojectiemigratie', () => {
+  it('is additief, privacybeperkt en laat bestaande abonnementen compatibel', () => {
+    expect(proMandateMigration).not.toMatch(/DROP\s+(TABLE|COLUMN|TYPE)/i)
+    expect(proMandateMigration).not.toMatch(/DELETE\s+FROM/i)
+    expect(proMandateMigration).not.toMatch(/UPDATE\s+"ProfessionalSubscription"/i)
+    expect(proMandateMigration).toContain('mollieMandateStatus')
+    expect(proMandateMigration).toContain('mollieMandateMethod')
+    expect(proMandateMigration).toContain('mollieMandateVerifiedAt')
+  })
+
+  it('accepteert uitsluitend een volledig geldig SEPA- of kaartmandate', () => {
+    expect(proMandateMigration).toContain('mollieMandateId" LIKE \'mdt\\_%\'')
+    expect(proMandateMigration).toContain('mollieMandateStatus" = \'valid\'')
+    expect(proMandateMigration).toContain("mollieMandateMethod\" IN ('directdebit', 'creditcard')")
   })
 })

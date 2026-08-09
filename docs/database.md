@@ -10,6 +10,10 @@ Rollback vóór productiedata bestaat uit het verwijderen van trigger, index en 
 
 Migratie `20260801110000_add_marketplace_rules_credit_reliability` voegt uitsluitend tabellen, enumwaarden, nullable relaties, constraints, indexen en append-only triggers toe. Bestaande deelnameplaatsen worden niet belast of herschreven. `MarketplaceRuleSet`, `CreditTransaction` en `MarketplaceReliabilityEvent` mogen na publicatie of aanmaak niet worden gemuteerd of verwijderd. Zie [Marketplace Rules, credits en betrouwbaarheid](marketplace-rules-credit-reliability.md).
 
+## Mollie-mandaatprojectie voor WorkMatchr Pro
+
+Migratie `20260809140000_add_pro_mollie_mandate_projection` voegt nullable status-, methode- en verificatietijdvelden toe aan `ProfessionalSubscription`. De bestaande `mollieMandateId` wordt alleen samen met een server-side bevestigd `valid` mandate voor `directdebit` of `creditcard` gevuld. De database bewaakt dat de projectie volledig aanwezig of volledig afwezig is. Bestaande abonnementen worden niet gebackfilld of herschreven; rekening-, IBAN- en kaartgegevens worden niet opgeslagen.
+
 ## Professionele creditwallet
 
 De additieve migraties `20260805110000_add_professional_credit_wallet_ledger`, `20260805111000_protect_credit_wallet_projections` en `20260805112000_derive_credit_wallet_spent_projection` maken `CreditTransaction` leidend voor ieder saldo. `totalDelta` en `reservedDelta` worden gebackfilld; een ontbrekend legacy beginsaldo wordt als nieuwe openingsregel toegevoegd. De migratie stopt fail-closed bij een wallet voor een niet-professionele organisatie of een inconsistent gereserveerd saldo.
