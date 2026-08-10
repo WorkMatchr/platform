@@ -29,9 +29,10 @@ const transaction = {
   $queryRaw: vi.fn(),
   financialPurchase: {
     create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => {
-      purchase = { id: purchaseId, ...data, status: 'CREATED', mollieCheckoutUrl: null }
+      purchase = { id: purchaseId, ...data, status: 'CREATED', molliePaymentId: null, mollieCheckoutUrl: null }
       return purchase
     }),
+    findUniqueOrThrow: vi.fn(async () => ({ ...purchase })),
     update: vi.fn(async ({ data }: { data: Record<string, unknown> }) => {
       purchase = { ...purchase, ...data }
       return purchase
@@ -91,6 +92,8 @@ function resetPendingSubscription() {
   purchase = {
     id: purchaseId,
     status: 'PAID',
+    molliePaymentId: null,
+    mollieCheckoutUrl: null,
     paidAt: new Date('2026-08-09T12:00:00Z'),
     amountInclVatCents: 5_929,
   }
@@ -214,6 +217,70 @@ describe('WorkMatchr Pro via first payment en recurring mandate', () => {
     }, gateway())).rejects.toThrow('MOLLIE_PRO_FIRST_PAYMENT_METHOD_UNAVAILABLE')
 
     expect(mocks.createPayment).not.toHaveBeenCalled()
+    expect(purchase).toMatchObject({ status: 'FAILED' })
+    expect(transaction.financialPurchase.update).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ status: 'FAILED', terminalAt: expect.any(Date) }),
+    }))
+  })
+
+  it('herstelt een lokale CREATED-poging zonder Mollie-identificatie naar een nieuwe retry', async () => {
+    purchase = { ...purchase, status: 'CREATED', molliePaymentId: null, mollieCheckoutUrl: null }
+    current = { ...current, firstPaymentAttempts: [{ attemptNumber: 1, purchase }], firstPaymentPurchase: purchase }
+    const { createProSubscriptionCheckout } = await import('./subscription-service')
+
+    await createProSubscriptionCheckout({
+      actorUserId, organizationId,
+      billingAddress: { organizationName: 'Testprofessional', addressLine: 'Teststraat 1', postalCode: '1234 AB', city: 'Assen', countryCode: 'NL' },
+      idempotencyKey: 'recover-local-created-attempt',
+    }, gateway())
+
+    expect(transaction.financialPurchase.update).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: purchaseId }, data: expect.objectContaining({ status: 'FAILED', terminalAt: expect.any(Date) }),
+    }))
+    expect(mocks.firstPaymentAttemptCreate).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ subscriptionId, attemptNumber: 2 }),
+    }))
+    expect(mocks.createPayment).toHaveBeenCalledTimes(1)
+  })
+
+  it('start geen tweede checkout voor een CREATED-poging met Mollie payment-ID', async () => {
+    purchase = { ...purchase, status: 'CREATED', molliePaymentId: 'tr_existing', mollieCheckoutUrl: null }
+    current = { ...current, firstPaymentAttempts: [{ attemptNumber: 1, purchase }], firstPaymentPurchase: purchase }
+    const { createProSubscriptionCheckout } = await import('./subscription-service')
+
+    await expect(createProSubscriptionCheckout({
+      actorUserId, organizationId,
+      billingAddress: { organizationName: 'Testprofessional', addressLine: 'Teststraat 1', postalCode: '1234 AB', city: 'Assen', countryCode: 'NL' },
+      idempotencyKey: 'created-with-provider-payment',
+    }, gateway())).rejects.toMatchObject({ code: 'CONFLICT' })
+
+    expect(mocks.createPayment).not.toHaveBeenCalled()
+    expect(mocks.firstPaymentAttemptCreate).not.toHaveBeenCalled()
+  })
+
+  it('markeert een mislukte Mollie payment-aanmaak terminal en herstelbaar', async () => {
+    current = null as unknown as Record<string, unknown>
+    mocks.createPayment.mockRejectedValue({ statusCode: 422, code: 'payment_rejected', type: 'request' })
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const { createProSubscriptionCheckout } = await import('./subscription-service')
+
+    try {
+      await expect(createProSubscriptionCheckout({
+        actorUserId, organizationId,
+        billingAddress: { organizationName: 'Testprofessional', addressLine: 'Teststraat 1', postalCode: '1234 AB', city: 'Assen', countryCode: 'NL' },
+        idempotencyKey: 'mollie-payment-create-fails',
+      }, gateway())).rejects.toMatchObject({ code: 'payment_rejected' })
+
+      expect(purchase).toMatchObject({ status: 'FAILED' })
+      expect(mocks.eventUpsert).toHaveBeenCalledWith(expect.objectContaining({
+        create: expect.objectContaining({ eventType: 'PRO_FIRST_PAYMENT_START_FAILED', reason: 'MOLLIE_PAYMENT_REJECTED' }),
+      }))
+      expect(errorSpy).toHaveBeenCalledWith('pro_first_payment_failure', expect.objectContaining({
+        category: 'MOLLIE_PAYMENT_REJECTED', step: 'payment_create', httpStatus: 422,
+      }))
+    } finally {
+      errorSpy.mockRestore()
+    }
   })
 
   it('logt bij een Mollie-fout uitsluitend veilige technische retrydiagnostiek', async () => {

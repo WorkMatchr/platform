@@ -10,6 +10,7 @@ import {
   canScheduleProCancellation,
   getProCancellationExplanation,
   getProSubscriptionStatusLabel,
+  isRetryableProFirstPaymentAttempt,
 } from '@/lib/finance/pro-subscription-presentation'
 import { requireOrganizationMembership } from '@/lib/organizations/organization-authorization'
 import { getPrisma } from '@/lib/prisma'
@@ -44,7 +45,7 @@ export default async function ProPage({ searchParams }: { searchParams: Promise<
   const retryAvailable = subscription?.status === 'PENDING_MANDATE'
     && subscription.mollieMandateId === null
     && subscription.mollieSubscriptionId === null
-    && Boolean(latestFirstPayment && ['FAILED', 'CANCELED', 'EXPIRED'].includes(latestFirstPayment.status))
+    && isRetryableProFirstPaymentAttempt(latestFirstPayment)
   const canStartFirstPayment = !subscription || retryAvailable
 
   return <Section spacing="compact" className="max-w-4xl">

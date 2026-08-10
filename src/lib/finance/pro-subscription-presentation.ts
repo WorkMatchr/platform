@@ -14,6 +14,22 @@ export type ProSubscriptionSummary = Readonly<{
   cancellationEffectiveAt: Date | null
 }>
 
+export type ProFirstPaymentAttemptSummary = Readonly<{
+  status: string
+  molliePaymentId: string | null
+  mollieCheckoutUrl: string | null
+}>
+
+const terminalFirstPaymentStatuses = ['FAILED', 'CANCELED', 'EXPIRED'] as const
+
+export function isRetryableProFirstPaymentAttempt(attempt: ProFirstPaymentAttemptSummary | null | undefined) {
+  if (!attempt) return false
+  if ((terminalFirstPaymentStatuses as readonly string[]).includes(attempt.status)) return true
+  return attempt.status === 'CREATED'
+    && attempt.molliePaymentId === null
+    && attempt.mollieCheckoutUrl === null
+}
+
 export const proSubscriptionStatusLabels: Readonly<Record<ProSubscriptionStatus, string>> = Object.freeze({
   PENDING_MANDATE: 'Activering wordt afgerond',
   ACTIVE: 'Actief',

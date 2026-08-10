@@ -20,6 +20,7 @@ import {
 } from './mollie-gateway'
 import { issueInvoiceForPaidSubscriptionPayment } from './invoice-service'
 import { runSerializableFinancialTransaction } from './financial-transaction'
+import { isRetryableProFirstPaymentAttempt } from './pro-subscription-presentation'
 
 const inputSchema = z.object({
   actorUserId: z.string().uuid(),
@@ -89,12 +90,6 @@ function assertMatchingRemoteSubscription(
   ) throw new Error('MOLLIE_SUBSCRIPTION_MISMATCH')
 }
 
-const terminalFirstPaymentStatuses = ['FAILED', 'CANCELED', 'EXPIRED'] as const
-
-function isTerminalFirstPayment(status: string) {
-  return (terminalFirstPaymentStatuses as readonly string[]).includes(status)
-}
-
 function isActiveOrMandatedSubscription(subscription: {
   status: string
   mollieSubscriptionId: string | null
@@ -139,6 +134,40 @@ function categoryForPaymentCreateFailure(subscription: { mollieCustomerId: strin
   return 'MOLLIE_PAYMENT_CREATE_FAILED'
 }
 
+async function markUnstartedProFirstPaymentAsFailed(input: {
+  organizationId: string
+  actorUserId: string
+  subscriptionId: string
+  purchaseId: string
+  category: ProFirstPaymentDiagnosticCategory
+}) {
+  await runSerializableFinancialTransaction(async (transaction) => {
+    await lock(transaction, input.organizationId)
+    const purchase = await transaction.financialPurchase.findUniqueOrThrow({ where: { id: input.purchaseId } })
+    if (purchase.status !== 'CREATED' || purchase.molliePaymentId !== null || purchase.mollieCheckoutUrl !== null) return
+
+    const terminalAt = new Date()
+    await transaction.financialPurchase.update({
+      where: { id: purchase.id },
+      data: { status: 'FAILED', terminalAt },
+    })
+    await transaction.financialEvent.upsert({
+      where: { idempotencyKey: `pro-first-payment-start-failed:${purchase.id}` },
+      create: {
+        actorUserId: input.actorUserId,
+        subscriptionId: input.subscriptionId,
+        purchaseId: purchase.id,
+        eventType: 'PRO_FIRST_PAYMENT_START_FAILED',
+        result: 'REJECTED',
+        reason: input.category,
+        idempotencyKey: `pro-first-payment-start-failed:${purchase.id}`,
+        metadata: { category: input.category, externalPaymentCreated: false },
+      },
+      update: {},
+    })
+  })
+}
+
 export async function createProSubscriptionCheckout(input: unknown, gateway: MollieGateway = createMollieGateway()) {
   const values = inputSchema.parse(input)
   const internal = await runSerializableFinancialTransaction(async (transaction) => {
@@ -156,7 +185,28 @@ export async function createProSubscriptionCheckout(input: unknown, gateway: Mol
       if (isActiveOrMandatedSubscription(existing)) throw new MarketplaceServiceError('INVALID_STATE')
       const latestPurchase = existing.firstPaymentAttempts[0]?.purchase ?? existing.firstPaymentPurchase
       if (!latestPurchase) throw new MarketplaceServiceError('CONFLICT')
-      if (!isTerminalFirstPayment(latestPurchase.status)) return { subscription: existing, purchase: latestPurchase }
+      if (!isRetryableProFirstPaymentAttempt(latestPurchase)) return { subscription: existing, purchase: latestPurchase }
+      if (latestPurchase.status === 'CREATED') {
+        const terminalAt = new Date()
+        await transaction.financialPurchase.update({
+          where: { id: latestPurchase.id },
+          data: { status: 'FAILED', terminalAt },
+        })
+        await transaction.financialEvent.upsert({
+          where: { idempotencyKey: `pro-first-payment-start-failed:${latestPurchase.id}` },
+          create: {
+            actorUserId: values.actorUserId,
+            subscriptionId: existing.id,
+            purchaseId: latestPurchase.id,
+            eventType: 'PRO_FIRST_PAYMENT_START_FAILED',
+            result: 'REJECTED',
+            reason: 'MOLLIE_PAYMENT_CREATE_FAILED',
+            idempotencyKey: `pro-first-payment-start-failed:${latestPurchase.id}`,
+            metadata: { category: 'MOLLIE_PAYMENT_CREATE_FAILED', externalPaymentCreated: false },
+          },
+          update: {},
+        })
+      }
 
       const attemptNumber = (existing.firstPaymentAttempts[0]?.attemptNumber ?? 0) + 1
       const purchase = await transaction.financialPurchase.create({
@@ -240,7 +290,7 @@ export async function createProSubscriptionCheckout(input: unknown, gateway: Mol
     return { subscription, purchase }
   })
   if (internal.purchase.mollieCheckoutUrl) return { subscription: internal.subscription, checkoutUrl: internal.purchase.mollieCheckoutUrl }
-  if (internal.purchase.status === 'PAYMENT_PENDING') throw new MarketplaceServiceError('CONFLICT')
+  if (internal.purchase.status === 'PAYMENT_PENDING' || internal.purchase.molliePaymentId) throw new MarketplaceServiceError('CONFLICT')
   const actor = await getPrisma().user.findUniqueOrThrow({ where: { id: values.actorUserId }, select: { email: true } })
   let customer: { id: string }
   try {
@@ -253,7 +303,9 @@ export async function createProSubscriptionCheckout(input: unknown, gateway: Mol
         idempotencyKey: `mollie-customer-${values.organizationId}`,
       })
   } catch (error) {
-    logProFirstPaymentDiagnostic(internal.subscription.mollieCustomerId ? 'MOLLIE_CUSTOMER_REUSE_FAILED' : 'MOLLIE_CUSTOMER_CREATE_FAILED', 'customer', { subscriptionId: internal.subscription.id, purchaseId: internal.purchase.id }, error)
+    const category = internal.subscription.mollieCustomerId ? 'MOLLIE_CUSTOMER_REUSE_FAILED' : 'MOLLIE_CUSTOMER_CREATE_FAILED'
+    logProFirstPaymentDiagnostic(category, 'customer', { subscriptionId: internal.subscription.id, purchaseId: internal.purchase.id }, error)
+    await markUnstartedProFirstPaymentAsFailed({ organizationId: values.organizationId, actorUserId: values.actorUserId, subscriptionId: internal.subscription.id, purchaseId: internal.purchase.id, category })
     throw error
   }
   if (!internal.subscription.mollieCustomerId) {
@@ -270,14 +322,12 @@ export async function createProSubscriptionCheckout(input: unknown, gateway: Mol
   try {
     ({ webhookBaseUrl, redirectBaseUrl } = getMollieUrls())
   } catch (error) {
-    logProFirstPaymentDiagnostic(
+    const category =
       error instanceof MollieUrlConfigurationError && error.field === 'webhook'
         ? 'MOLLIE_WEBHOOK_URL_INVALID'
-        : 'MOLLIE_REDIRECT_URL_INVALID',
-      'redirect_and_webhook_url_configuration',
-      { subscriptionId: internal.subscription.id, purchaseId: internal.purchase.id },
-      error,
-    )
+        : 'MOLLIE_REDIRECT_URL_INVALID'
+    logProFirstPaymentDiagnostic(category, 'redirect_and_webhook_url_configuration', { subscriptionId: internal.subscription.id, purchaseId: internal.purchase.id }, error)
+    await markUnstartedProFirstPaymentAsFailed({ organizationId: values.organizationId, actorUserId: values.actorUserId, subscriptionId: internal.subscription.id, purchaseId: internal.purchase.id, category })
     throw error
   }
   const purchase = internal.purchase
@@ -285,14 +335,18 @@ export async function createProSubscriptionCheckout(input: unknown, gateway: Mol
   try {
     providerMethods = await gateway.listFirstPaymentMethods(centsToMollieValue(purchase.amountInclVatCents))
   } catch (error) {
-    logProFirstPaymentDiagnostic('MOLLIE_METHOD_UNAVAILABLE', 'first_payment_methods', { subscriptionId: internal.subscription.id, purchaseId: purchase.id }, error)
+    const category = 'MOLLIE_METHOD_UNAVAILABLE'
+    logProFirstPaymentDiagnostic(category, 'first_payment_methods', { subscriptionId: internal.subscription.id, purchaseId: purchase.id }, error)
+    await markUnstartedProFirstPaymentAsFailed({ organizationId: values.organizationId, actorUserId: values.actorUserId, subscriptionId: internal.subscription.id, purchaseId: purchase.id, category })
     throw error
   }
   const methods = (['ideal', 'creditcard'] as const).filter((method): method is MollieFirstPaymentMethod => (
     providerMethods.includes(method)
   ))
   if (methods.length === 0) {
-    logProFirstPaymentDiagnostic('MOLLIE_METHOD_UNAVAILABLE', 'first_payment_methods', { subscriptionId: internal.subscription.id, purchaseId: purchase.id })
+    const category = 'MOLLIE_METHOD_UNAVAILABLE'
+    logProFirstPaymentDiagnostic(category, 'first_payment_methods', { subscriptionId: internal.subscription.id, purchaseId: purchase.id })
+    await markUnstartedProFirstPaymentAsFailed({ organizationId: values.organizationId, actorUserId: values.actorUserId, subscriptionId: internal.subscription.id, purchaseId: purchase.id, category })
     throw new Error('MOLLIE_PRO_FIRST_PAYMENT_METHOD_UNAVAILABLE')
   }
   let payment: MolliePaymentSnapshot
@@ -310,10 +364,17 @@ export async function createProSubscriptionCheckout(input: unknown, gateway: Mol
     methods,
     })
   } catch (error) {
-    logProFirstPaymentDiagnostic(categoryForPaymentCreateFailure(internal.subscription, error), 'payment_create', { subscriptionId: internal.subscription.id, purchaseId: purchase.id }, error)
+    const category = categoryForPaymentCreateFailure(internal.subscription, error)
+    logProFirstPaymentDiagnostic(category, 'payment_create', { subscriptionId: internal.subscription.id, purchaseId: purchase.id }, error)
+    await markUnstartedProFirstPaymentAsFailed({ organizationId: values.organizationId, actorUserId: values.actorUserId, subscriptionId: internal.subscription.id, purchaseId: purchase.id, category })
     throw error
   }
-  if (!payment.checkoutUrl) throw new Error('MOLLIE_CHECKOUT_URL_MISSING')
+  if (!payment.checkoutUrl) {
+    const category = 'MOLLIE_PAYMENT_CREATE_FAILED'
+    logProFirstPaymentDiagnostic(category, 'payment_checkout_url', { subscriptionId: internal.subscription.id, purchaseId: purchase.id })
+    await markUnstartedProFirstPaymentAsFailed({ organizationId: values.organizationId, actorUserId: values.actorUserId, subscriptionId: internal.subscription.id, purchaseId: purchase.id, category })
+    throw new Error('MOLLIE_CHECKOUT_URL_MISSING')
+  }
   return runSerializableFinancialTransaction(async (transaction) => {
     await lock(transaction, values.organizationId)
     await transaction.professionalSubscription.update({ where: { id: internal.subscription.id }, data: { mollieCustomerId: customer.id } })

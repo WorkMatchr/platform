@@ -4,6 +4,7 @@ import {
   getProCancellationExplanation,
   getProSubscriptionStatusLabel,
   hasActiveProBenefits,
+  isRetryableProFirstPaymentAttempt,
 } from './pro-subscription-presentation'
 
 const future = new Date('2026-09-09T12:00:00Z')
@@ -43,5 +44,11 @@ describe('WorkMatchr Pro-presentatie en voordeelbeleid', () => {
     expect(getProCancellationExplanation(subscription('SUSPENDED'))).toContain('opgeschort')
     expect(getProCancellationExplanation(subscription('EXPIRED'))).toContain('verlopen')
     expect(getProCancellationExplanation(subscription('PAST_DUE'))).toContain('achterstallige status blijft ongewijzigd')
+  })
+
+  it('maakt uitsluitend een niet-gestarte lokale eerste betaalpoging opnieuw probeerbaar', () => {
+    expect(isRetryableProFirstPaymentAttempt({ status: 'CREATED', molliePaymentId: null, mollieCheckoutUrl: null })).toBe(true)
+    expect(isRetryableProFirstPaymentAttempt({ status: 'CREATED', molliePaymentId: 'tr_first', mollieCheckoutUrl: null })).toBe(false)
+    expect(isRetryableProFirstPaymentAttempt({ status: 'PAYMENT_PENDING', molliePaymentId: 'tr_first', mollieCheckoutUrl: 'https://checkout.example.invalid' })).toBe(false)
   })
 })

@@ -35,8 +35,8 @@ describe('WorkMatchr Pro-interface', () => {
     expect(source).toContain('>Te betalen</dt>')
   })
 
-  it('toont een herstelactie uitsluitend voor een terminale eerste betaalpoging zonder mandate of actief abonnement', () => {
-    expect(source).toContain("['FAILED', 'CANCELED', 'EXPIRED'].includes(latestFirstPayment.status)")
+  it('toont een herstelactie voor een terminale of nooit extern gestarte eerste betaalpoging zonder mandate of actief abonnement', () => {
+    expect(source).toContain('isRetryableProFirstPaymentAttempt(latestFirstPayment)')
     expect(source).toContain("retryAvailable ? 'Betaling opnieuw proberen' : 'Start Pro via Mollie'")
     expect(source).toContain("subscription.mollieMandateId === null")
     expect(source).toContain("subscription.mollieSubscriptionId === null")
