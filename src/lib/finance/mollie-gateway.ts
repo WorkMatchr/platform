@@ -51,6 +51,33 @@ export type MollieRefundSnapshot = Readonly<{
   status: MollieRefundState
 }>
 
+export type MollieRuntimeDiagnostic = Readonly<{
+  apiKey: Readonly<{
+    present: boolean
+    startsWithTest: boolean
+    startsWithLive: boolean
+    startsWithAccess: boolean
+    lengthBeforeTrim: number | null
+    lengthAfterTrim: number | null
+    hasLeadingOrTrailingWhitespace: boolean
+    hasLineBreak: boolean
+    hasBoundaryQuote: boolean
+  }>
+  payments: Readonly<{
+    authenticationSucceeded: boolean
+    httpStatus: number | null
+    mollieErrorType: string | null
+    mollieErrorTitle: string | null
+  }>
+  methods: Readonly<{
+    requested: boolean
+    methodIds: readonly string[] | null
+    httpStatus: number | null
+    mollieErrorType: string | null
+    mollieErrorTitle: string | null
+  }>
+}>
+
 export interface MollieGateway {
   createPayment(input: {
     amountValue: string
@@ -181,6 +208,103 @@ function requireMollieConfiguration() {
     client: createMollieClient({ apiKey }),
     webhookBaseUrl: parseMollieBaseUrl(process.env.MOLLIE_WEBHOOK_BASE_URL, 'webhook'),
     redirectBaseUrl: parseMollieBaseUrl(process.env.MOLLIE_REDIRECT_BASE_URL, 'redirect'),
+  }
+}
+
+function summarizeMollieApiKey(value: string | undefined): MollieRuntimeDiagnostic['apiKey'] {
+  if (value === undefined) {
+    return Object.freeze({
+      present: false,
+      startsWithTest: false,
+      startsWithLive: false,
+      startsWithAccess: false,
+      lengthBeforeTrim: null,
+      lengthAfterTrim: null,
+      hasLeadingOrTrailingWhitespace: false,
+      hasLineBreak: false,
+      hasBoundaryQuote: false,
+    })
+  }
+
+  const trimmed = value.trim()
+  return Object.freeze({
+    present: value.length > 0,
+    startsWithTest: trimmed.startsWith('test_'),
+    startsWithLive: trimmed.startsWith('live_'),
+    startsWithAccess: trimmed.startsWith('access_'),
+    lengthBeforeTrim: value.length,
+    lengthAfterTrim: trimmed.length,
+    hasLeadingOrTrailingWhitespace: value !== trimmed,
+    hasLineBreak: /[\r\n]/u.test(value),
+    hasBoundaryQuote: /^['"]|['"]$/u.test(value),
+  })
+}
+
+function safeMollieDiagnosticError(error: unknown) {
+  const value = error as { name?: unknown; statusCode?: unknown; title?: unknown }
+  const title = typeof value?.title === 'string' ? value.title : null
+  const safeTitles = new Set([
+    'Bad Request',
+    'Unauthorized',
+    'Forbidden',
+    'Not Found',
+    'Too Many Requests',
+    'Internal Server Error',
+  ])
+  return Object.freeze({
+    httpStatus: typeof value?.statusCode === 'number' ? value.statusCode : null,
+    mollieErrorType: typeof value?.name === 'string' ? value.name : 'MollieRequestError',
+    mollieErrorTitle: title !== null && safeTitles.has(title) ? title : null,
+  })
+}
+
+/**
+ * Tijdelijke, alleen-lezen runtimediagnostiek voor de afgeschermde financiële
+ * onderhoudsroute. De waarde van de API-sleutel en Mollie-resources verlaten
+ * deze functie nooit.
+ */
+export async function runMollieRuntimeDiagnostic(): Promise<MollieRuntimeDiagnostic> {
+  const apiKey = summarizeMollieApiKey(process.env.MOLLIE_API_KEY)
+  let client: ReturnType<typeof createMollieClient>
+  try {
+    ({ client } = requireMollieConfiguration())
+  } catch (error) {
+    const failure = safeMollieDiagnosticError(error)
+    return Object.freeze({
+      apiKey,
+      payments: Object.freeze({ authenticationSucceeded: false, ...failure }),
+      methods: Object.freeze({ requested: false, methodIds: null, ...failure }),
+    })
+  }
+
+  try {
+    await client.payments.page({ limit: 1 })
+  } catch (error) {
+    const failure = safeMollieDiagnosticError(error)
+    return Object.freeze({
+      apiKey,
+      payments: Object.freeze({ authenticationSucceeded: false, ...failure }),
+      methods: Object.freeze({ requested: false, methodIds: null, httpStatus: null, mollieErrorType: null, mollieErrorTitle: null }),
+    })
+  }
+
+  try {
+    const methods = await client.methods.list({
+      sequenceType: SequenceType.first,
+      amount: { value: '59.29', currency: 'EUR' },
+    })
+    return Object.freeze({
+      apiKey,
+      payments: Object.freeze({ authenticationSucceeded: true, httpStatus: 200, mollieErrorType: null, mollieErrorTitle: null }),
+      methods: Object.freeze({ requested: true, methodIds: Object.freeze(methods.map((method) => method.id)), httpStatus: 200, mollieErrorType: null, mollieErrorTitle: null }),
+    })
+  } catch (error) {
+    const failure = safeMollieDiagnosticError(error)
+    return Object.freeze({
+      apiKey,
+      payments: Object.freeze({ authenticationSucceeded: true, httpStatus: 200, mollieErrorType: null, mollieErrorTitle: null }),
+      methods: Object.freeze({ requested: true, methodIds: null, ...failure }),
+    })
   }
 }
 

@@ -6,13 +6,14 @@ const mocks = vi.hoisted(() => ({
   createPayment: vi.fn(),
   createSubscription: vi.fn(),
   iterateSubscriptions: vi.fn(),
+  listPayments: vi.fn(),
   listMethods: vi.fn(),
   listMandates: vi.fn(),
 }))
 
 vi.mock('@mollie/api-client', () => ({
   default: () => ({
-    payments: { create: mocks.createPayment },
+    payments: { create: mocks.createPayment, page: mocks.listPayments },
     methods: { list: mocks.listMethods },
     customerMandates: { page: mocks.listMandates },
     customerSubscriptions: {
@@ -55,6 +56,7 @@ describe('Mollie-bedragconversie', () => {
       getCheckoutUrl: () => 'https://checkout.example.invalid',
     })
     mocks.createSubscription.mockResolvedValue(remoteSubscription())
+    mocks.listPayments.mockResolvedValue([])
     mocks.listMandates.mockResolvedValue([])
     mocks.listMethods.mockResolvedValue([{ id: 'ideal' }, { id: 'creditcard' }, { id: 'paypal' }])
     mocks.iterateSubscriptions.mockReturnValue((async function* () {})())
@@ -109,6 +111,27 @@ describe('Mollie-bedragconversie', () => {
       sequenceType: 'first',
       amount: { value: '59.29', currency: 'EUR' },
     }))
+  })
+
+  it('geeft uitsluitend veilige runtimekenmerken terug en leest alleen Mollie-resources', async () => {
+    process.env.MOLLIE_API_KEY = ' test_fictief\n'
+    const { runMollieRuntimeDiagnostic } = await import('./mollie-gateway')
+    const result = await runMollieRuntimeDiagnostic()
+
+    expect(result).toMatchObject({
+      apiKey: {
+        present: true,
+        startsWithTest: true,
+        lengthBeforeTrim: 14,
+        lengthAfterTrim: 12,
+        hasLeadingOrTrailingWhitespace: true,
+        hasLineBreak: true,
+      },
+      payments: { authenticationSucceeded: true, httpStatus: 200 },
+      methods: { requested: true, methodIds: ['ideal', 'creditcard', 'paypal'] },
+    })
+    expect(JSON.stringify(result)).not.toContain(process.env.MOLLIE_API_KEY)
+    expect(mocks.listPayments).toHaveBeenCalledWith({ limit: 1 })
   })
 
   it('leest uitsluitend veilige mandatevelden uit Mollie', async () => {
