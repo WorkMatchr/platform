@@ -216,6 +216,29 @@ describe('WorkMatchr Pro via first payment en recurring mandate', () => {
     expect(mocks.createPayment).not.toHaveBeenCalled()
   })
 
+  it('logt bij een Mollie-fout uitsluitend veilige technische retrydiagnostiek', async () => {
+    current = null as unknown as Record<string, unknown>
+    mocks.listFirstPaymentMethods.mockRejectedValue({ statusCode: 422, code: 'method_unavailable', type: 'request' })
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const { createProSubscriptionCheckout } = await import('./subscription-service')
+    try {
+      await expect(createProSubscriptionCheckout({
+        actorUserId,
+        organizationId,
+        billingAddress: { organizationName: 'Testprofessional', addressLine: 'Teststraat 1', postalCode: '1234 AB', city: 'Assen', countryCode: 'NL' },
+        idempotencyKey: 'safe-pro-diagnostic',
+      }, gateway())).rejects.toMatchObject({ code: 'method_unavailable' })
+
+      expect(errorSpy).toHaveBeenCalledWith('pro_first_payment_failure', expect.objectContaining({
+        category: 'MOLLIE_METHOD_UNAVAILABLE', step: 'first_payment_methods', httpStatus: 422, mollieErrorCode: 'method_unavailable', mollieErrorType: 'request',
+      }))
+      expect(JSON.stringify(errorSpy.mock.calls)).not.toContain('professional@example.invalid')
+      expect(JSON.stringify(errorSpy.mock.calls)).not.toContain('Teststraat')
+    } finally {
+      errorSpy.mockRestore()
+    }
+  })
+
   it('biedt alleen kaart wanneer Mollie iDEAL nog niet provider-ready meldt', async () => {
     current = null as unknown as Record<string, unknown>
     mocks.listFirstPaymentMethods.mockResolvedValue(['creditcard'])

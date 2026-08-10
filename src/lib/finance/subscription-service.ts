@@ -10,6 +10,7 @@ import {
   centsToMollieValue,
   createMollieGateway,
   getMollieUrls,
+  MollieUrlConfigurationError,
   type MollieGateway,
   type MollieFirstPaymentMethod,
   type MollieMandateMethod,
@@ -100,6 +101,42 @@ function isActiveOrMandatedSubscription(subscription: {
   mollieMandateId: string | null
 }) {
   return subscription.status === 'ACTIVE' || subscription.mollieSubscriptionId !== null || subscription.mollieMandateId !== null
+}
+
+type ProFirstPaymentDiagnosticCategory =
+  | 'MOLLIE_CUSTOMER_CREATE_FAILED'
+  | 'MOLLIE_CUSTOMER_REUSE_FAILED'
+  | 'MOLLIE_CUSTOMER_INVALID'
+  | 'MOLLIE_PAYMENT_CREATE_FAILED'
+  | 'MOLLIE_PAYMENT_REJECTED'
+  | 'MOLLIE_METHOD_UNAVAILABLE'
+  | 'MOLLIE_REDIRECT_URL_INVALID'
+  | 'MOLLIE_WEBHOOK_URL_INVALID'
+
+function logProFirstPaymentDiagnostic(category: ProFirstPaymentDiagnosticCategory, step: string, context: { subscriptionId: string; purchaseId: string }, error?: unknown) {
+  const candidate = error as { statusCode?: unknown; status?: unknown; code?: unknown; type?: unknown } | undefined
+  console.error('pro_first_payment_failure', {
+    category,
+    step,
+    subscriptionId: context.subscriptionId,
+    purchaseId: context.purchaseId,
+    httpStatus: typeof candidate?.statusCode === 'number' ? candidate.statusCode : typeof candidate?.status === 'number' ? candidate.status : undefined,
+    mollieErrorCode: typeof candidate?.code === 'string' ? candidate.code : undefined,
+    mollieErrorType: typeof candidate?.type === 'string' ? candidate.type : undefined,
+  })
+}
+
+function categoryForPaymentCreateFailure(subscription: { mollieCustomerId: string | null }, error: unknown): ProFirstPaymentDiagnosticCategory {
+  const candidate = error as { statusCode?: unknown; status?: unknown } | undefined
+  const httpStatus = typeof candidate?.statusCode === 'number'
+    ? candidate.statusCode
+    : typeof candidate?.status === 'number'
+      ? candidate.status
+      : undefined
+
+  if (subscription.mollieCustomerId && httpStatus === 404) return 'MOLLIE_CUSTOMER_INVALID'
+  if (httpStatus === 400 || httpStatus === 422) return 'MOLLIE_PAYMENT_REJECTED'
+  return 'MOLLIE_PAYMENT_CREATE_FAILED'
 }
 
 export async function createProSubscriptionCheckout(input: unknown, gateway: MollieGateway = createMollieGateway()) {
@@ -205,14 +242,20 @@ export async function createProSubscriptionCheckout(input: unknown, gateway: Mol
   if (internal.purchase.mollieCheckoutUrl) return { subscription: internal.subscription, checkoutUrl: internal.purchase.mollieCheckoutUrl }
   if (internal.purchase.status === 'PAYMENT_PENDING') throw new MarketplaceServiceError('CONFLICT')
   const actor = await getPrisma().user.findUniqueOrThrow({ where: { id: values.actorUserId }, select: { email: true } })
-  const customer = internal.subscription.mollieCustomerId
-    ? { id: internal.subscription.mollieCustomerId }
-    : await gateway.createCustomer({
+  let customer: { id: string }
+  try {
+    customer = internal.subscription.mollieCustomerId
+      ? { id: internal.subscription.mollieCustomerId }
+      : await gateway.createCustomer({
         name: internal.subscription.organization.name,
         email: actor.email,
         organizationId: values.organizationId,
         idempotencyKey: `mollie-customer-${values.organizationId}`,
       })
+  } catch (error) {
+    logProFirstPaymentDiagnostic(internal.subscription.mollieCustomerId ? 'MOLLIE_CUSTOMER_REUSE_FAILED' : 'MOLLIE_CUSTOMER_CREATE_FAILED', 'customer', { subscriptionId: internal.subscription.id, purchaseId: internal.purchase.id }, error)
+    throw error
+  }
   if (!internal.subscription.mollieCustomerId) {
     await runSerializableFinancialTransaction(async (transaction) => {
       await lock(transaction, values.organizationId)
@@ -222,14 +265,39 @@ export async function createProSubscriptionCheckout(input: unknown, gateway: Mol
       })
     })
   }
-  const { webhookBaseUrl, redirectBaseUrl } = getMollieUrls()
+  let webhookBaseUrl: string
+  let redirectBaseUrl: string
+  try {
+    ({ webhookBaseUrl, redirectBaseUrl } = getMollieUrls())
+  } catch (error) {
+    logProFirstPaymentDiagnostic(
+      error instanceof MollieUrlConfigurationError && error.field === 'webhook'
+        ? 'MOLLIE_WEBHOOK_URL_INVALID'
+        : 'MOLLIE_REDIRECT_URL_INVALID',
+      'redirect_and_webhook_url_configuration',
+      { subscriptionId: internal.subscription.id, purchaseId: internal.purchase.id },
+      error,
+    )
+    throw error
+  }
   const purchase = internal.purchase
-  const providerMethods = await gateway.listFirstPaymentMethods(centsToMollieValue(purchase.amountInclVatCents))
+  let providerMethods: readonly MollieFirstPaymentMethod[]
+  try {
+    providerMethods = await gateway.listFirstPaymentMethods(centsToMollieValue(purchase.amountInclVatCents))
+  } catch (error) {
+    logProFirstPaymentDiagnostic('MOLLIE_METHOD_UNAVAILABLE', 'first_payment_methods', { subscriptionId: internal.subscription.id, purchaseId: purchase.id }, error)
+    throw error
+  }
   const methods = (['ideal', 'creditcard'] as const).filter((method): method is MollieFirstPaymentMethod => (
     providerMethods.includes(method)
   ))
-  if (methods.length === 0) throw new Error('MOLLIE_PRO_FIRST_PAYMENT_METHOD_UNAVAILABLE')
-  const payment = await gateway.createPayment({
+  if (methods.length === 0) {
+    logProFirstPaymentDiagnostic('MOLLIE_METHOD_UNAVAILABLE', 'first_payment_methods', { subscriptionId: internal.subscription.id, purchaseId: purchase.id })
+    throw new Error('MOLLIE_PRO_FIRST_PAYMENT_METHOD_UNAVAILABLE')
+  }
+  let payment: MolliePaymentSnapshot
+  try {
+    payment = await gateway.createPayment({
     amountValue: centsToMollieValue(purchase.amountInclVatCents),
     currency: 'EUR',
     description: `${WORKMATCHR_PRO_PLAN.label} eerste maand`,
@@ -240,7 +308,11 @@ export async function createProSubscriptionCheckout(input: unknown, gateway: Mol
     customerId: customer.id,
     sequenceType: 'first',
     methods,
-  })
+    })
+  } catch (error) {
+    logProFirstPaymentDiagnostic(categoryForPaymentCreateFailure(internal.subscription, error), 'payment_create', { subscriptionId: internal.subscription.id, purchaseId: purchase.id }, error)
+    throw error
+  }
   if (!payment.checkoutUrl) throw new Error('MOLLIE_CHECKOUT_URL_MISSING')
   return runSerializableFinancialTransaction(async (transaction) => {
     await lock(transaction, values.organizationId)

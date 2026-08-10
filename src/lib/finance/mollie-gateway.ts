@@ -101,6 +101,16 @@ export interface MollieGateway {
   }): Promise<{ id: string; status: string }>
 }
 
+export class MollieUrlConfigurationError extends Error {
+  readonly field: 'webhook' | 'redirect'
+
+  constructor(field: 'webhook' | 'redirect') {
+    super(`MOLLIE_${field.toUpperCase()}_URL_INVALID`)
+    this.name = 'MollieUrlConfigurationError'
+    this.field = field
+  }
+}
+
 const safeMetadataSchema = z.object({
   purchaseId: z.string().uuid().optional(),
   organizationId: z.string().uuid().optional(),
@@ -158,13 +168,19 @@ function paymentSnapshot(payment: {
   })
 }
 
+function parseMollieBaseUrl(value: string | undefined, field: 'webhook' | 'redirect') {
+  const parsed = z.string().url().safeParse(value)
+  if (!parsed.success) throw new MollieUrlConfigurationError(field)
+  return parsed.data
+}
+
 function requireMollieConfiguration() {
   const apiKey = process.env.MOLLIE_API_KEY?.trim()
   if (!apiKey) throw new Error('MOLLIE_CONFIGURATION_MISSING')
   return {
     client: createMollieClient({ apiKey }),
-    webhookBaseUrl: z.string().url().parse(process.env.MOLLIE_WEBHOOK_BASE_URL),
-    redirectBaseUrl: z.string().url().parse(process.env.MOLLIE_REDIRECT_BASE_URL),
+    webhookBaseUrl: parseMollieBaseUrl(process.env.MOLLIE_WEBHOOK_BASE_URL, 'webhook'),
+    redirectBaseUrl: parseMollieBaseUrl(process.env.MOLLIE_REDIRECT_BASE_URL, 'redirect'),
   }
 }
 
