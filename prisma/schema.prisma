@@ -3430,6 +3430,7 @@ model FinancialPurchase {
   invoice                   FinancialInvoice?
   discountRedemption        DiscountRedemption?
   subscriptionFirstPayment  ProfessionalSubscription?
+  subscriptionFirstPaymentAttempts ProfessionalSubscriptionFirstPaymentAttempt[]
   events                    FinancialEvent[]
 
   @@index([organizationId, createdAt])
@@ -3686,11 +3687,25 @@ model ProfessionalSubscription {
   updatedAt               DateTime                          @updatedAt @db.Timestamptz(3)
   organization            Organization                      @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   firstPaymentPurchase    FinancialPurchase?                @relation(fields: [firstPaymentPurchaseId], references: [id], onDelete: Restrict)
+  firstPaymentAttempts    ProfessionalSubscriptionFirstPaymentAttempt[]
   payments                ProfessionalSubscriptionPayment[]
   events                  FinancialEvent[]
 
   @@index([status, updatedAt])
   @@index([cancelAtPeriodEnd, cancellationEffectiveAt])
+}
+
+model ProfessionalSubscriptionFirstPaymentAttempt {
+  id             String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  subscriptionId String                   @db.Uuid
+  purchaseId     String                   @unique @db.Uuid
+  attemptNumber  Int
+  createdAt      DateTime                 @default(now()) @db.Timestamptz(3)
+  subscription   ProfessionalSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
+  purchase       FinancialPurchase        @relation(fields: [purchaseId], references: [id], onDelete: Restrict)
+
+  @@unique([subscriptionId, attemptNumber])
+  @@index([subscriptionId, createdAt])
 }
 
 model ProfessionalSubscriptionPayment {

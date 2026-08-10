@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   listMandates: vi.fn(),
   listFirstPaymentMethods: vi.fn(),
   paymentUpsert: vi.fn(),
+  firstPaymentAttemptCreate: vi.fn(),
 }))
 
 const subscriptionId = '30000000-0000-4000-8000-000000000001'
@@ -59,8 +60,11 @@ const transaction = {
       return { ...current }
     }),
   },
+  professionalSubscriptionFirstPaymentAttempt: {
+    create: mocks.firstPaymentAttemptCreate,
+  },
   professionalSubscriptionPayment: { upsert: mocks.paymentUpsert },
-  financialEvent: { upsert: mocks.eventUpsert },
+  financialEvent: { upsert: mocks.eventUpsert, create: vi.fn() },
   organizationMembership: { findMany: vi.fn(async () => []) },
   marketplaceNotification: { upsert: vi.fn() },
 }
@@ -106,6 +110,7 @@ function resetPendingSubscription() {
     mollieMandateMethod: null,
     mollieSubscriptionId: null,
     firstPaymentPurchase: purchase,
+    firstPaymentAttempts: [],
   }
 }
 
@@ -229,6 +234,68 @@ describe('WorkMatchr Pro via first payment en recurring mandate', () => {
     }, gateway())
 
     expect(mocks.createPayment).toHaveBeenCalledWith(expect.objectContaining({ methods: ['creditcard'] }))
+  })
+
+  it.each(['FAILED', 'CANCELED', 'EXPIRED'] as const)('maakt na een terminale eerste betaling veilig een nieuwe poging voor %s', async (status) => {
+    purchase = {
+      ...purchase,
+      status,
+      molliePaymentId: `tr_${status.toLowerCase()}`,
+      mollieCheckoutUrl: null,
+    }
+    current = {
+      ...current,
+      status: 'PENDING_MANDATE',
+      mollieMandateId: null,
+      mollieMandateStatus: null,
+      mollieMandateMethod: null,
+      mollieSubscriptionId: null,
+      firstPaymentPurchase: purchase,
+      firstPaymentAttempts: [],
+    }
+    const { createProSubscriptionCheckout } = await import('./subscription-service')
+    const result = await createProSubscriptionCheckout({
+      actorUserId,
+      organizationId,
+      billingAddress: {
+        organizationName: 'Testprofessional', addressLine: 'Teststraat 1', postalCode: '1234 AB', city: 'Assen', countryCode: 'NL',
+      },
+      idempotencyKey: `retry-${status.toLowerCase()}`,
+    }, gateway())
+
+    expect(transaction.professionalSubscription.create).not.toHaveBeenCalled()
+    expect(mocks.firstPaymentAttemptCreate).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ subscriptionId, attemptNumber: 1 }),
+    }))
+    expect(mocks.createPayment).toHaveBeenCalledTimes(1)
+    expect(result.checkoutUrl).toBe('https://checkout.example.invalid')
+  })
+
+  it('start geen tweede checkout voor een werkelijk lopende eerste betaling', async () => {
+    purchase = { ...purchase, status: 'PAYMENT_PENDING', mollieCheckoutUrl: 'https://checkout.example.invalid' }
+    current = { ...current, status: 'PENDING_MANDATE', firstPaymentPurchase: purchase, firstPaymentAttempts: [] }
+    const { createProSubscriptionCheckout } = await import('./subscription-service')
+    const result = await createProSubscriptionCheckout({
+      actorUserId, organizationId,
+      billingAddress: { organizationName: 'Testprofessional', addressLine: 'Teststraat 1', postalCode: '1234 AB', city: 'Assen', countryCode: 'NL' },
+      idempotencyKey: 'pending-must-not-retry',
+    }, gateway())
+
+    expect(result.checkoutUrl).toBe('https://checkout.example.invalid')
+    expect(mocks.createPayment).not.toHaveBeenCalled()
+    expect(mocks.firstPaymentAttemptCreate).not.toHaveBeenCalled()
+  })
+
+  it('weigert first-payment retry voor een actief Pro-abonnement', async () => {
+    current = { ...current, status: 'ACTIVE', mollieMandateId: 'mdt_directdebit', mollieSubscriptionId: 'sub_test', firstPaymentAttempts: [] }
+    const { createProSubscriptionCheckout } = await import('./subscription-service')
+    await expect(createProSubscriptionCheckout({
+      actorUserId, organizationId,
+      billingAddress: { organizationName: 'Testprofessional', addressLine: 'Teststraat 1', postalCode: '1234 AB', city: 'Assen', countryCode: 'NL' },
+      idempotencyKey: 'active-must-not-retry',
+    }, gateway())).rejects.toMatchObject({ code: 'INVALID_STATE' })
+    expect(mocks.createPayment).not.toHaveBeenCalled()
+    expect(mocks.firstPaymentAttemptCreate).not.toHaveBeenCalled()
   })
 
   it('kiest een geldig SEPA-mandate vóór een geldig kaartmandate en activeert pas daarna', async () => {

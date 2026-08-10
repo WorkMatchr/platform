@@ -74,7 +74,7 @@ export async function startProSubscriptionAction(formData: FormData) {
   const { user, activeMembership } = await requireOrganizationMembership(undefined, '/credits/pro')
   let checkoutUrl: string
   try {
-    const subscription = await createProSubscriptionCheckout({
+    const checkout = await createProSubscriptionCheckout({
       actorUserId: user.id,
       organizationId: activeMembership.organization.id,
       billingAddress: {
@@ -85,7 +85,7 @@ export async function startProSubscriptionAction(formData: FormData) {
       },
       idempotencyKey: formData.get('idempotencyKey'),
     })
-    checkoutUrl = subscription.firstPaymentPurchase?.mollieCheckoutUrl ?? ''
+    checkoutUrl = checkout.checkoutUrl ?? ''
     if (!checkoutUrl) throw new Error('CHECKOUT_UNAVAILABLE')
   } catch {
     redirect('/credits/pro?fout=betaling-starten')

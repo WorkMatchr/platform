@@ -25,4 +25,20 @@ describe('WorkMatchr Pro-interface', () => {
     expect(source).toContain("opgezegd && subscription?.cancellationEffectiveAt")
     expect(source).toContain('role="status"')
   })
+
+  it('verdeelt de betaalstap in responsieve gegevens- en betalingsblokken', () => {
+    expect(source).toContain('lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]')
+    expect(source).toContain('>Uw gegevens</legend>')
+    expect(source).toContain('aria-labelledby="pro-payment-heading"')
+    expect(source).toContain('>Betaling</p>')
+    expect(source).toContain('Prijsopbouw WorkMatchr Pro')
+    expect(source).toContain('>Te betalen</dt>')
+  })
+
+  it('toont een herstelactie uitsluitend voor een terminale eerste betaalpoging zonder mandate of actief abonnement', () => {
+    expect(source).toContain("['FAILED', 'CANCELED', 'EXPIRED'].includes(latestFirstPayment.status)")
+    expect(source).toContain("retryAvailable ? 'Betaling opnieuw proberen' : 'Start Pro via Mollie'")
+    expect(source).toContain("subscription.mollieMandateId === null")
+    expect(source).toContain("subscription.mollieSubscriptionId === null")
+  })
 })

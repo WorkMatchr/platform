@@ -88,6 +88,20 @@ function assertMatchingRemoteSubscription(
   ) throw new Error('MOLLIE_SUBSCRIPTION_MISMATCH')
 }
 
+const terminalFirstPaymentStatuses = ['FAILED', 'CANCELED', 'EXPIRED'] as const
+
+function isTerminalFirstPayment(status: string) {
+  return (terminalFirstPaymentStatuses as readonly string[]).includes(status)
+}
+
+function isActiveOrMandatedSubscription(subscription: {
+  status: string
+  mollieSubscriptionId: string | null
+  mollieMandateId: string | null
+}) {
+  return subscription.status === 'ACTIVE' || subscription.mollieSubscriptionId !== null || subscription.mollieMandateId !== null
+}
+
 export async function createProSubscriptionCheckout(input: unknown, gateway: MollieGateway = createMollieGateway()) {
   const values = inputSchema.parse(input)
   const internal = await runSerializableFinancialTransaction(async (transaction) => {
@@ -95,9 +109,59 @@ export async function createProSubscriptionCheckout(input: unknown, gateway: Mol
     await requireProviderMarketplaceAccess(transaction, values.actorUserId, values.organizationId, true)
     const existing = await transaction.professionalSubscription.findUnique({
       where: { organizationId: values.organizationId },
-      include: { firstPaymentPurchase: true, organization: { select: { name: true } } },
+      include: {
+        firstPaymentPurchase: true,
+        firstPaymentAttempts: { orderBy: { attemptNumber: 'desc' }, take: 1, include: { purchase: true } },
+        organization: { select: { name: true } },
+      },
     })
-    if (existing) return existing
+    if (existing) {
+      if (isActiveOrMandatedSubscription(existing)) throw new MarketplaceServiceError('INVALID_STATE')
+      const latestPurchase = existing.firstPaymentAttempts[0]?.purchase ?? existing.firstPaymentPurchase
+      if (!latestPurchase) throw new MarketplaceServiceError('CONFLICT')
+      if (!isTerminalFirstPayment(latestPurchase.status)) return { subscription: existing, purchase: latestPurchase }
+
+      const attemptNumber = (existing.firstPaymentAttempts[0]?.attemptNumber ?? 0) + 1
+      const purchase = await transaction.financialPurchase.create({
+        data: {
+          organizationId: values.organizationId,
+          createdByUserId: values.actorUserId,
+          kind: 'PRO_SUBSCRIPTION',
+          packageSku: existing.planCode,
+          packageLabel: `${existing.planLabel} — eerste maand`,
+          credits: 0,
+          baseAmountCents: existing.amountExclVatCents,
+          amountExclVatCents: existing.amountExclVatCents,
+          vatRateBps: existing.vatRateBps,
+          vatAmountCents: existing.vatAmountCents,
+          amountInclVatCents: existing.amountInclVatCents,
+          currency: existing.currency,
+          billingOrganizationName: values.billingAddress.organizationName,
+          billingAddressLine: values.billingAddress.addressLine,
+          billingPostalCode: values.billingAddress.postalCode,
+          billingCity: values.billingAddress.city,
+          billingCountryCode: values.billingAddress.countryCode,
+          billingKvKNumber: values.billingAddress.chamberOfCommerceNumber,
+          billingVatId: values.billingAddress.vatId,
+          idempotencyKey: `pro-purchase-retry:${existing.id}:${attemptNumber}`,
+        },
+      })
+      await transaction.professionalSubscriptionFirstPaymentAttempt.create({
+        data: { subscriptionId: existing.id, purchaseId: purchase.id, attemptNumber },
+      })
+      await transaction.financialEvent.create({
+        data: {
+          actorUserId: values.actorUserId,
+          subscriptionId: existing.id,
+          purchaseId: purchase.id,
+          eventType: 'PRO_FIRST_PAYMENT_RETRY_STARTED',
+          result: 'SUCCEEDED',
+          idempotencyKey: `pro-first-payment-retry:${existing.id}:${attemptNumber}`,
+          metadata: { attemptNumber, replacesPurchaseId: latestPurchase.id },
+        },
+      })
+      return { subscription: existing, purchase }
+    }
     const purchase = await transaction.financialPurchase.create({
       data: {
         organizationId: values.organizationId,
@@ -122,7 +186,7 @@ export async function createProSubscriptionCheckout(input: unknown, gateway: Mol
         idempotencyKey: `pro-purchase:${values.idempotencyKey}`,
       },
     })
-    return transaction.professionalSubscription.create({
+    const subscription = await transaction.professionalSubscription.create({
       data: {
         organizationId: values.organizationId,
         planCode: WORKMATCHR_PRO_PLAN.code,
@@ -136,29 +200,30 @@ export async function createProSubscriptionCheckout(input: unknown, gateway: Mol
       },
       include: { firstPaymentPurchase: true, organization: { select: { name: true } } },
     })
+    return { subscription, purchase }
   })
-  if (internal.firstPaymentPurchase?.mollieCheckoutUrl) return internal
+  if (internal.purchase.mollieCheckoutUrl) return { subscription: internal.subscription, checkoutUrl: internal.purchase.mollieCheckoutUrl }
+  if (internal.purchase.status === 'PAYMENT_PENDING') throw new MarketplaceServiceError('CONFLICT')
   const actor = await getPrisma().user.findUniqueOrThrow({ where: { id: values.actorUserId }, select: { email: true } })
-  const customer = internal.mollieCustomerId
-    ? { id: internal.mollieCustomerId }
+  const customer = internal.subscription.mollieCustomerId
+    ? { id: internal.subscription.mollieCustomerId }
     : await gateway.createCustomer({
-        name: internal.organization.name,
+        name: internal.subscription.organization.name,
         email: actor.email,
         organizationId: values.organizationId,
         idempotencyKey: `mollie-customer-${values.organizationId}`,
       })
-  if (!internal.mollieCustomerId) {
+  if (!internal.subscription.mollieCustomerId) {
     await runSerializableFinancialTransaction(async (transaction) => {
       await lock(transaction, values.organizationId)
       await transaction.professionalSubscription.update({
-        where: { id: internal.id },
+        where: { id: internal.subscription.id },
         data: { mollieCustomerId: customer.id },
       })
     })
   }
   const { webhookBaseUrl, redirectBaseUrl } = getMollieUrls()
-  const purchase = internal.firstPaymentPurchase
-  if (!purchase) throw new Error('PRO_PURCHASE_MISSING')
+  const purchase = internal.purchase
   const providerMethods = await gateway.listFirstPaymentMethods(centsToMollieValue(purchase.amountInclVatCents))
   const methods = (['ideal', 'creditcard'] as const).filter((method): method is MollieFirstPaymentMethod => (
     providerMethods.includes(method)
@@ -170,8 +235,8 @@ export async function createProSubscriptionCheckout(input: unknown, gateway: Mol
     description: `${WORKMATCHR_PRO_PLAN.label} eerste maand`,
     redirectUrl: new URL(`/credits/betaling/${purchase.id}`, redirectBaseUrl).toString(),
     webhookUrl: new URL('/api/payments/mollie/webhook', webhookBaseUrl).toString(),
-    metadata: { purchaseId: purchase.id, organizationId: values.organizationId, subscriptionId: internal.id },
-    idempotencyKey: `mollie-pro-first-${internal.id}`,
+    metadata: { purchaseId: purchase.id, organizationId: values.organizationId, subscriptionId: internal.subscription.id },
+    idempotencyKey: `mollie-pro-first-${purchase.id}`,
     customerId: customer.id,
     sequenceType: 'first',
     methods,
@@ -179,25 +244,26 @@ export async function createProSubscriptionCheckout(input: unknown, gateway: Mol
   if (!payment.checkoutUrl) throw new Error('MOLLIE_CHECKOUT_URL_MISSING')
   return runSerializableFinancialTransaction(async (transaction) => {
     await lock(transaction, values.organizationId)
-    await transaction.professionalSubscription.update({ where: { id: internal.id }, data: { mollieCustomerId: customer.id } })
+    await transaction.professionalSubscription.update({ where: { id: internal.subscription.id }, data: { mollieCustomerId: customer.id } })
     await transaction.financialPurchase.update({
       where: { id: purchase.id },
       data: { status: 'PAYMENT_PENDING', molliePaymentId: payment.id, mollieCheckoutUrl: payment.checkoutUrl, paymentCreatedAt: new Date() },
     })
-    return transaction.professionalSubscription.findUniqueOrThrow({
-      where: { id: internal.id }, include: { firstPaymentPurchase: true, organization: { select: { name: true } } },
-    })
+    return { subscription: await transaction.professionalSubscription.findUniqueOrThrow({ where: { id: internal.subscription.id } }), checkoutUrl: payment.checkoutUrl }
   })
 }
 
-export async function activateProAfterFirstPayment(subscriptionId: string, gateway: MollieGateway) {
+export async function activateProAfterFirstPayment(subscriptionId: string, gateway: MollieGateway, paymentPurchaseId?: string) {
   const subscription = await getPrisma().professionalSubscription.findUniqueOrThrow({
     where: { id: subscriptionId },
     include: { firstPaymentPurchase: { select: { paidAt: true, status: true } } },
   })
   if (subscription.status === 'ACTIVE' && subscription.mollieSubscriptionId) return subscription
   if (!subscription.mollieCustomerId) throw new Error('MOLLIE_CUSTOMER_MISSING')
-  if (subscription.firstPaymentPurchase?.status !== 'PAID') throw new Error('PRO_FIRST_PAYMENT_NOT_PAID')
+  const paymentPurchase = paymentPurchaseId
+    ? await getPrisma().financialPurchase.findUnique({ where: { id: paymentPurchaseId }, select: { paidAt: true, status: true } })
+    : subscription.firstPaymentPurchase
+  if (paymentPurchase?.status !== 'PAID') throw new Error('PRO_FIRST_PAYMENT_NOT_PAID')
   const mandates = await gateway.listCustomerMandates(subscription.mollieCustomerId)
   const mandate = selectValidRecurringMandate(mandates)
   if (!mandate) {
@@ -240,7 +306,7 @@ export async function activateProAfterFirstPayment(subscriptionId: string, gatew
     })
   })
   const { webhookBaseUrl } = getMollieUrls()
-  const periodStart = subscription.firstPaymentPurchase.paidAt ?? verifiedAt
+  const periodStart = paymentPurchase.paidAt ?? verifiedAt
   const periodEnd = addUtcMonth(periodStart)
   const existingRemote = await gateway.findCustomerSubscription(subscription.mollieCustomerId, subscription.id)
   const remote = existingRemote ?? await gateway.createSubscription({

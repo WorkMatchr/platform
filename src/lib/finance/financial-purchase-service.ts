@@ -353,9 +353,16 @@ export async function processMolliePayment(
     return { purchaseId: current.id, kind: current.kind, status: 'PAYMENT_PENDING' as const, invoiceId: null }
   })
   if (result.status === 'PAID' && result.kind === 'PRO_SUBSCRIPTION') {
-    const subscription = await getPrisma().professionalSubscription.findUnique({ where: { firstPaymentPurchaseId: result.purchaseId } })
+    const subscription = await getPrisma().professionalSubscription.findFirst({
+      where: {
+        OR: [
+          { firstPaymentPurchaseId: result.purchaseId },
+          { firstPaymentAttempts: { some: { purchaseId: result.purchaseId } } },
+        ],
+      },
+    })
     if (!subscription) throw new Error('PRO_SUBSCRIPTION_MISSING')
-    await activateProAfterFirstPayment(subscription.id, gateway)
+    await activateProAfterFirstPayment(subscription.id, gateway, result.purchaseId)
   }
   return result
 }
