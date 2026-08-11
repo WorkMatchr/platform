@@ -15,6 +15,8 @@ export type CreditPricePreviewActionState = Readonly<{
   price?: PurchasePrice
 }>
 
+export type ProSubscriptionActionState = Readonly<{ error?: string }>
+
 export async function startCreditPurchaseAction(
   _state: CreditPurchaseActionState,
   formData: FormData,
@@ -70,7 +72,10 @@ export async function previewCreditPurchaseAction(
   }
 }
 
-export async function startProSubscriptionAction(formData: FormData) {
+export async function startProSubscriptionAction(
+  _state: ProSubscriptionActionState,
+  formData: FormData,
+): Promise<ProSubscriptionActionState> {
   const { user, activeMembership } = await requireOrganizationMembership(undefined, '/credits/pro')
   let checkoutUrl: string
   try {
@@ -87,8 +92,11 @@ export async function startProSubscriptionAction(formData: FormData) {
     })
     checkoutUrl = checkout.checkoutUrl ?? ''
     if (!checkoutUrl) throw new Error('CHECKOUT_UNAVAILABLE')
-  } catch {
-    redirect('/credits/pro?fout=betaling-starten')
+  } catch (error) {
+    if (error instanceof Error && error.message === 'MOLLIE_PRO_FIRST_PAYMENT_METHOD_UNAVAILABLE') {
+      return { error: 'Er is momenteel geen geschikte betaalmethode beschikbaar voor de eerste abonnementsbetaling. Pro is nog niet geactiveerd.' }
+    }
+    return { error: 'De abonnementsbetaling kon niet worden gestart. Pro is niet geactiveerd.' }
   }
   redirect(checkoutUrl)
 }
