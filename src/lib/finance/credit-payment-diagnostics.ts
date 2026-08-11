@@ -10,6 +10,9 @@ type SafeMollieError = Readonly<{
   httpStatus?: number
   mollieErrorCode?: string
   mollieErrorType?: string
+  mollieErrorField?: string
+  mollieErrorTitle?: string
+  mollieErrorDetail?: string
 }>
 
 type MollieUrlConfigurationFailure = Readonly<{
@@ -23,6 +26,16 @@ function safeErrorValue(value: unknown) {
     : undefined
 }
 
+function safeMollieText(value: unknown) {
+  if (typeof value !== 'string') return undefined
+  const normalized = value.trim()
+  if (normalized.length === 0 || normalized.length > 240) return undefined
+  if (/@|https?:\/\/|\b(api[-_ ]?key|authorization|bearer|token|secret|password|email|address|metadata|customer|iban|card|street|postcode)\b/i.test(normalized)) {
+    return undefined
+  }
+  return /^[\p{L}\p{N}\s.,:;()€%+\-/]+$/u.test(normalized) ? normalized : undefined
+}
+
 function safeMollieError(error: unknown): SafeMollieError {
   if (!error || typeof error !== 'object') return {}
   const candidate = error as Record<string, unknown>
@@ -34,6 +47,9 @@ function safeMollieError(error: unknown): SafeMollieError {
         : undefined,
     mollieErrorCode: safeErrorValue(candidate.code),
     mollieErrorType: safeErrorValue(candidate.type) ?? safeErrorValue(candidate.title),
+    mollieErrorField: safeErrorValue(candidate.field),
+    mollieErrorTitle: safeMollieText(candidate.title),
+    mollieErrorDetail: safeMollieText(candidate.detail),
   }
 }
 
