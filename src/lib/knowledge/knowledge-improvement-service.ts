@@ -62,6 +62,7 @@ async function assertPlatformAdministrator(transaction: Transaction, actorUserId
       platformRole: 'ADMIN',
       memberships: { some: {
         status: 'ACTIVE',
+        role: { in: ['OWNER', 'ADMIN'] },
         organization: { status: 'ACTIVE', organizationType: 'PLATFORM_OPERATOR', systemKey: 'WORKMATCHR_PLATFORM' },
       } },
     },

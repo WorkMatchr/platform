@@ -1,22 +1,26 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { LogoutButton } from '@/components/auth/logout-button'
-import { platformAdminNavigationGroups } from '@/lib/platform-admin/platform-admin-navigation'
+import { getPlatformAdminNavigationGroups } from '@/lib/platform-admin/platform-admin-navigation'
+import type { PlatformMembershipRole } from '@/lib/platform-admin/platform-admin-policy'
 import type { TestAccountOption } from '@/lib/test-impersonation/test-impersonation-service'
 import { TestAccountSwitcher } from './test-account-switcher'
 
 export function PlatformAdminShell({
   children,
   displayName,
+  membershipRole,
   testAccountSwitcher,
 }: {
   children: ReactNode
   displayName: string
+  membershipRole: PlatformMembershipRole
   testAccountSwitcher: {
     accounts: TestAccountOption[] | null
     unavailableReason: string | null
   } | null
 }) {
+  const navigationGroups = getPlatformAdminNavigationGroups(membershipRole)
   return (
     <div className="flex min-h-screen flex-col bg-background lg:h-full lg:min-h-0 lg:overflow-hidden">
       <header className="shrink-0 border-b border-border bg-surface">
@@ -53,7 +57,7 @@ export function PlatformAdminShell({
           ) : null}
           <nav className="mt-3" aria-label="Platformbeheer">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-              {platformAdminNavigationGroups.map((group) => (
+              {navigationGroups.map((group) => (
                 <section aria-labelledby={`navigation-${group.label.replaceAll(' ', '-').toLowerCase()}`} key={group.label}>
                   <h2
                     className="px-3 text-xs font-semibold uppercase tracking-wide text-text-secondary"

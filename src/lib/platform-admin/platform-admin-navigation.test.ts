@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { platformAdminNavigation, platformAdminNavigationGroups } from './platform-admin-navigation'
+import { getPlatformAdminNavigationGroups, platformAdminNavigation, platformAdminNavigationGroups } from './platform-admin-navigation'
 
 describe('platformbeheernavigatie', () => {
   it('groepeert alle afgesproken hoofdonderdelen in vaste volgorde', () => {
@@ -23,14 +23,22 @@ describe('platformbeheernavigatie', () => {
       expect(existsSync(join(process.cwd(), relative)), relative).toBe(true)
     }
     const layout = readFileSync(join(process.cwd(), 'src/app/platformbeheer/layout.tsx'), 'utf8')
-    expect(layout).toContain('requirePlatformAdministrator')
+    expect(layout).toContain('requirePlatformAuditor')
+  })
+
+  it('beperkt de navigatie voor een platformauditor tot audit', () => {
+    expect(getPlatformAdminNavigationGroups('MEMBER')).toEqual([
+      { label: 'Controle', items: [{ href: '/platformbeheer/auditor', label: 'Audit' }] },
+    ])
+    expect(getPlatformAdminNavigationGroups('ADMIN')).toEqual(platformAdminNavigationGroups)
+    expect(getPlatformAdminNavigationGroups('OWNER')).toEqual(platformAdminNavigationGroups)
   })
 
   it('behoudt een logische mobiele en toetsenbordvolgorde met native links', () => {
     const shell = readFileSync(join(process.cwd(), 'src/components/platform-admin/platform-admin-shell.tsx'), 'utf8')
     expect(shell).toContain('<nav')
     expect(shell).toContain('<Link')
-    expect(shell).toContain('platformAdminNavigationGroups.map')
+    expect(shell).toContain('navigationGroups.map')
     expect(shell).not.toContain('tabIndex={-1}')
   })
 })

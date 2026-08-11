@@ -31,6 +31,7 @@ export async function getOptionalAdviceDossierViewer(): Promise<AdviceDossierVie
     platformRole: user.platformRole,
     platformMembership: membership
       ? {
+          role: membership.role,
           status: membership.status,
           organization: {
             status: membership.organization.status,

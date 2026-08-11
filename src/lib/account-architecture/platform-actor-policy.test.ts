@@ -6,6 +6,7 @@ import {
 } from './platform-actor-policy'
 
 const platformMembership = {
+  role: 'ADMIN' as const,
   status: 'ACTIVE' as const,
   organization: {
     status: 'ACTIVE' as const,

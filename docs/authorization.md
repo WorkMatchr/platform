@@ -84,7 +84,7 @@ De accountbevoegdhedenmatrix is centraal vastgelegd. OWNER beheert accounts binn
 
 Creatorbinding geeft nooit een recht. Zij kan alleen het targetbereik beperken nadat de actor op basis van rol, tenant en targetrol al bevoegd is. Membershipbeëindiging is niet beschikbaar totdat alle lifecycle-effecten atomair zijn.
 
-Centraal platformbeheer vereist exact de combinatie `User.status = ACTIVE`, `PlatformRole.ADMIN` en een actieve membership bij de actieve organisatie met `systemKey = WORKMATCHR_PLATFORM`. Losse claims of permissions zijn onvoldoende.
+Centraal platformbeheer vereist exact de combinatie `User.status = ACTIVE`, `PlatformRole.ADMIN` en een actieve membership bij de actieve organisatie met `systemKey = WORKMATCHR_PLATFORM`. De membershiprol is het operationele toegangsniveau: `OWNER` is platformeigenaar, `ADMIN` is platformbeheerder en `MEMBER` is uitsluitend platformauditor. Losse claims of permissions zijn onvoldoende.
 
 Voor uitnodigingen mag OWNER een MEMBER of ADMIN toevoegen. ADMIN mag uitsluitend MEMBER toevoegen. MEMBER mag niet uitnodigen en OWNER is nooit een keuzerol in deze flow. Actorstatus, actieve membership, tenantstatus, organisatietype en targetrol worden zowel vóór credentialhashing als binnen de transactionele write opnieuw gecontroleerd. Een formulierwaarde of bestaand e-mailadres verleent geen toegang.
 
@@ -94,7 +94,7 @@ De unieke tenantmembershipregel en enkelvoudige requestcontext zijn actief. Crea
 
 ## Module 6C — Platformbeheer
 
-Alle routes onder `/platformbeheer`, inclusief de CSV-export, vereisen opnieuw server-side:
+Alle operationele routes onder `/platformbeheer`, inclusief de CSV-export, vereisen opnieuw server-side:
 
 - `User.status = ACTIVE`;
 - `User.platformRole = ADMIN`;
@@ -102,6 +102,8 @@ Alle routes onder `/platformbeheer`, inclusief de CSV-export, vereisen opnieuw s
 - een actieve organisatie van type `PLATFORM_OPERATOR`;
 - exact `Organization.systemKey = WORKMATCHR_PLATFORM`.
 
-Een tenantrol `OWNER`, `ADMIN` of `MEMBER` geeft geen toegang. Een losse platformrol zonder geldige systeemmembership evenmin. Reviewer, approver en auditor blijven afzonderlijke permissions: platformbeheer toont de wachtrijstatus, maar opent operationele dossieracties alleen wanneer de betreffende permission werkelijk actief is.
+Daarboven vereist operationeel beheer een membershiprol `OWNER` of `ADMIN`. Een membershiprol `MEMBER` kan uitsluitend de aparte read-only route `/platformbeheer/auditor` openen. Deze route toont alleen geminimaliseerde, pseudonieme auditstatus en gebeurtenistypen; zij toont geen gebruikers-, organisatie-, financiële-, inhouds- of authenticatiegegevens.
+
+Een tenantrol `OWNER`, `ADMIN` of `MEMBER` geeft geen toegang. Een losse platformrol zonder geldige systeemmembership evenmin. Reviewer en approver blijven afzonderlijke permissions: platformbeheer toont de wachtrijstatus, maar opent operationele dossieracties alleen wanneer de betreffende permission werkelijk actief is.
 
 Organisatieblokkades weigeren systeemorganisaties en schrijven status plus audit in één serialiseerbare transactie. Accountblokkades gebruiken de bestaande lifecyclepolicy, waaronder self-blockweigering, bescherming van het laatste actieve OWNER-account, bescherming van platformaccounts, tenantcontrole en sessie-intrekking.

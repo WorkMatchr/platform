@@ -39,6 +39,7 @@ describe('ADR-013 Fase 2B bevoegdhedenmatrix', () => {
       status: 'ACTIVE' as const,
       platformRole: 'ADMIN' as const,
       platformMembership: {
+        role: 'ADMIN' as const,
         status: 'ACTIVE' as const,
         organization: {
           status: 'ACTIVE' as const,
@@ -50,6 +51,7 @@ describe('ADR-013 Fase 2B bevoegdhedenmatrix', () => {
     expect(isCentralPlatformAdministrator(valid)).toBe(true)
     expect(isCentralPlatformAdministrator({ ...valid, platformRole: 'USER' })).toBe(false)
     expect(isCentralPlatformAdministrator({ ...valid, platformMembership: null })).toBe(false)
+    expect(isCentralPlatformAdministrator({ ...valid, platformMembership: { ...valid.platformMembership, role: 'MEMBER' } })).toBe(false)
   })
 
   it('weigert self-block altijd', () => {

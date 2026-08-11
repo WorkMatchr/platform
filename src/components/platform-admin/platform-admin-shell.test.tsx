@@ -16,6 +16,7 @@ describe('platformbeheershell', () => {
     const html = renderToStaticMarkup(
       <PlatformAdminShell
         displayName="Platformbeheerder"
+        membershipRole="ADMIN"
         testAccountSwitcher={{
           accounts: [],
           unavailableReason: null,
@@ -39,7 +40,7 @@ describe('platformbeheershell', () => {
 
   it('geeft navigatie en inhoud op desktop onafhankelijke scrollgebieden', () => {
     const html = renderToStaticMarkup(
-      <PlatformAdminShell displayName="Platformbeheerder" testAccountSwitcher={null}>
+      <PlatformAdminShell displayName="Platformbeheerder" membershipRole="ADMIN" testAccountSwitcher={null}>
         <div>Lange beheerinhoud</div>
       </PlatformAdminShell>,
     )
@@ -49,5 +50,19 @@ describe('platformbeheershell', () => {
     expect(html.match(/lg:overflow-y-auto/g)).toHaveLength(2)
     expect(html).toContain('lg:grid-cols-[15rem_minmax(0,1fr)]')
     expect(html).toContain('lg:self-stretch')
+  })
+
+  it('toont een auditor uitsluitend de beperkte auditnavigatie', () => {
+    const html = renderToStaticMarkup(
+      <PlatformAdminShell displayName="Platformauditor" membershipRole="MEMBER" testAccountSwitcher={null}>
+        <div>Audit</div>
+      </PlatformAdminShell>,
+    )
+
+    expect(html).toContain('Audit')
+    expect(html).not.toContain('Organisaties')
+    expect(html).not.toContain('Gebruikers')
+    expect(html).not.toContain('Financieel')
+    expect(html).not.toContain('Kennisbeheer')
   })
 })

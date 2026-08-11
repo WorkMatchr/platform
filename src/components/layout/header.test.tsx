@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
   getContext: vi.fn(),
-  getPlatformAdministratorContext: vi.fn(),
+  getPlatformContext: vi.fn(),
 }))
 
 vi.mock('@/lib/organizations/organization-authorization', () => ({
@@ -18,7 +18,7 @@ vi.mock('@/components/auth/logout-button', () => ({
 
 vi.mock('@/lib/platform-admin/platform-admin-authorization', () => ({
   PlatformAdminAccessError: class PlatformAdminAccessError extends Error {},
-  getPlatformAdministratorContext: mocks.getPlatformAdministratorContext,
+  getPlatformContext: mocks.getPlatformContext,
 }))
 
 import { Header } from './header'
@@ -29,7 +29,7 @@ async function renderHeader() {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  mocks.getPlatformAdministratorContext.mockRejectedValue(new Error('Geen platformbeheerder'))
+  mocks.getPlatformContext.mockRejectedValue(new Error('Geen platformbeheerder'))
 })
 
 describe('headerweergave per sessiecontext', () => {
@@ -123,7 +123,7 @@ describe('headerweergave per sessiecontext', () => {
   })
 
   it('toont voor een gevalideerde platformbeheerder uitsluitend beheernavigatie', async () => {
-    mocks.getPlatformAdministratorContext.mockResolvedValue({ id: 'platform-user-1' })
+    mocks.getPlatformContext.mockResolvedValue({ id: 'platform-user-1' })
     mocks.getContext.mockResolvedValue({
       user: {
         displayName: 'Platformbeheerder',

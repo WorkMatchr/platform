@@ -20,6 +20,7 @@ export type CentralPlatformAdministratorContext = {
   status: UserStatus
   platformRole: PlatformRole
   platformMembership: {
+    role: OrganizationMembershipRole
     status: 'ACTIVE' | 'INVITED' | 'SUSPENDED' | 'REMOVED'
     organization: {
       status: 'ACTIVE' | 'PENDING' | 'SUSPENDED' | 'ARCHIVED'
@@ -60,6 +61,7 @@ export function isCentralPlatformAdministrator(context: CentralPlatformAdministr
     context.status === 'ACTIVE' &&
     context.platformRole === 'ADMIN' &&
     membership?.status === 'ACTIVE' &&
+    (membership.role === 'OWNER' || membership.role === 'ADMIN') &&
     membership.organization.status === 'ACTIVE' &&
     membership.organization.organizationType === 'PLATFORM_OPERATOR' &&
     membership.organization.systemKey === 'WORKMATCHR_PLATFORM'

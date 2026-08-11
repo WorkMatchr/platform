@@ -4,7 +4,7 @@ import { Container } from '@/components/layout/container'
 import { DisclosureMenu } from '@/components/ui/disclosure-menu'
 import { getOptionalActiveOrganizationContext } from '@/lib/organizations/organization-authorization'
 import {
-  getPlatformAdministratorContext,
+  getPlatformContext,
   PlatformAdminAccessError,
 } from '@/lib/platform-admin/platform-admin-authorization'
 import { organizationRoleLabels } from '@/lib/presentation/platform-labels'
@@ -121,7 +121,7 @@ export async function Header() {
   let isPlatformAdministrator = false
   if (context?.user.platformRole === 'ADMIN') {
     try {
-      await getPlatformAdministratorContext(context.user.id)
+      await getPlatformContext(context.user.id)
       isPlatformAdministrator = true
     } catch (error) {
       if (!(error instanceof PlatformAdminAccessError)) throw error

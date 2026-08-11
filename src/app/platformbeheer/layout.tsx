@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react'
 import { PlatformAdminShell } from '@/components/platform-admin/platform-admin-shell'
-import { requirePlatformAdministrator } from '@/lib/platform-admin/platform-admin-authorization'
+import { requirePlatformAuditor } from '@/lib/platform-admin/platform-admin-authorization'
 import { getAvailableTestAccounts } from '@/lib/test-impersonation/test-impersonation-service'
 import { isTestAccountSwitcherEnabled } from '@/lib/test-impersonation/test-impersonation-policy'
 
 export default async function PlatformAdminLayout({ children }: { children: ReactNode }) {
-  const administrator = await requirePlatformAdministrator('/platformbeheer')
+  const administrator = await requirePlatformAuditor('/platformbeheer')
   let testAccountSwitcher:
     | {
         accounts: Awaited<ReturnType<typeof getAvailableTestAccounts>> | null
@@ -13,7 +13,7 @@ export default async function PlatformAdminLayout({ children }: { children: Reac
       }
     | null = null
 
-  if (process.env.NODE_ENV !== 'production') {
+  if (administrator.membershipRole !== 'MEMBER' && process.env.NODE_ENV !== 'production') {
     if (!isTestAccountSwitcherEnabled()) {
       testAccountSwitcher = {
         accounts: null,
@@ -37,6 +37,7 @@ export default async function PlatformAdminLayout({ children }: { children: Reac
   return (
     <PlatformAdminShell
       displayName={administrator.displayName?.trim() || 'Platformbeheerder'}
+      membershipRole={administrator.membershipRole}
       testAccountSwitcher={testAccountSwitcher}
     >
       {children}

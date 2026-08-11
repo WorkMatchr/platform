@@ -1,4 +1,6 @@
-export const platformAdminNavigationGroups = [
+import type { PlatformMembershipRole } from './platform-admin-policy'
+
+const operatorNavigationGroups = [
   {
     label: 'Dagelijks beheer',
     items: [
@@ -38,11 +40,24 @@ export const platformAdminNavigationGroups = [
   },
 ] as const
 
+const auditorNavigationGroups = [
+  {
+    label: 'Controle',
+    items: [{ href: '/platformbeheer/auditor', label: 'Audit' }],
+  },
+] as const
+
+export function getPlatformAdminNavigationGroups(membershipRole: PlatformMembershipRole) {
+  return membershipRole === 'MEMBER' ? auditorNavigationGroups : operatorNavigationGroups
+}
+
+export const platformAdminNavigationGroups = operatorNavigationGroups
+
 export const platformAdminNavigation = [
-  ...platformAdminNavigationGroups[0].items,
-  ...platformAdminNavigationGroups[1].items,
-  ...platformAdminNavigationGroups[2].items,
-  ...platformAdminNavigationGroups[3].items,
+  ...operatorNavigationGroups[0].items,
+  ...operatorNavigationGroups[1].items,
+  ...operatorNavigationGroups[2].items,
+  ...operatorNavigationGroups[3].items,
 ] as const
 
 export type PlatformAdminRoute = (typeof platformAdminNavigation)[number]['href']

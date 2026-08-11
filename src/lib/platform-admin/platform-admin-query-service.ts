@@ -10,7 +10,7 @@ import {
   platformSignalAuditId,
   type PlatformActionStatus,
 } from './platform-admin-action-center'
-import { getPlatformAdministratorContext } from './platform-admin-authorization'
+import { getPlatformAdministratorContext, getPlatformAuditorContext } from './platform-admin-authorization'
 
 const MAX_ROWS = 100
 
@@ -981,6 +981,50 @@ export async function getPlatformAuditOverview(actorUserId: string, query?: stri
     }),
   ])
   return { accountEvents, membershipEvents, marketplaceEvents, adminActions }
+}
+
+export async function getPlatformAuditorOverview(actorUserId: string) {
+  await getPlatformAuditorContext(actorUserId)
+  const prisma = getPrisma()
+  const [accountEvents, membershipEvents, organizationEvents, marketplaceEvents] = await Promise.all([
+    prisma.accountProvisioningEvent.findMany({
+      orderBy: { occurredAt: 'desc' },
+      take: 25,
+      select: { eventType: true, occurredAt: true },
+    }),
+    prisma.organizationMembershipEvent.findMany({
+      orderBy: { occurredAt: 'desc' },
+      take: 25,
+      select: { eventType: true, occurredAt: true },
+    }),
+    prisma.organizationProvisioningEvent.findMany({
+      orderBy: { occurredAt: 'desc' },
+      take: 25,
+      select: { eventType: true, occurredAt: true },
+    }),
+    prisma.marketplaceAuditEvent.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 25,
+      select: { action: true, createdAt: true },
+    }),
+  ])
+
+  const events = [
+    ...accountEvents.map((event) => ({ source: 'Account', action: event.eventType, at: event.occurredAt })),
+    ...membershipEvents.map((event) => ({ source: 'Lidmaatschap', action: event.eventType, at: event.occurredAt })),
+    ...organizationEvents.map((event) => ({ source: 'Organisatie', action: event.eventType, at: event.occurredAt })),
+    ...marketplaceEvents.map((event) => ({ source: 'Marketplace', action: event.action, at: event.createdAt })),
+  ].sort((a, b) => b.at.getTime() - a.at.getTime()).slice(0, 50)
+
+  return {
+    eventCounts: {
+      accounts: accountEvents.length,
+      memberships: membershipEvents.length,
+      organizations: organizationEvents.length,
+      marketplace: marketplaceEvents.length,
+    },
+    events,
+  }
 }
 
 export async function getPlatformTrends(actorUserId: string) {
