@@ -136,11 +136,15 @@ describe('vraaggestuurde publieke homepage', () => {
     expect(html).toContain('tabindex="-1"')
   })
 
-  it('toont de publieke overzichten en uitsluitend de gepubliceerde kennisinhoud', () => {
+  it('houdt alleen de directe publieke ingangen op de homepage', () => {
     const html = renderHomepage()
-    for (const href of ['/diensten', '/wettelijke-verplichtingen', '/sectoren', '/kenniscentrum']) {
+    for (const href of ['/wettelijke-verplichtingen', '/kenniscentrum']) {
       expect(html).toContain(`href="${href}"`)
     }
+    expect(html).not.toContain('Gericht zoeken')
+    expect(html).not.toContain('Weet u al welke ondersteuning u zoekt?')
+    expect(html).not.toContain('Werk en risico’s verschillen per sector')
+    expect(html).not.toContain('Bekijk het sectoroverzicht')
     expect(html).toContain('Moet ik een RI&amp;E hebben?')
     expect(html).not.toContain('Zoeken in het kenniscentrum')
   })

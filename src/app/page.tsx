@@ -1,12 +1,11 @@
 import type { Metadata } from 'next'
 import { publicHomepageContent } from '@/content/public-homepage'
-import { knowledgeOverview, legalOverview, sectorOverview, serviceOverview } from '@/content/public-overviews'
+import { knowledgeOverview, legalOverview } from '@/content/public-overviews'
 import { Section } from '@/components/layout/section'
 import { KnowledgeCarousel } from '@/components/public/knowledge-carousel'
 import { ProcessSteps } from '@/components/public/process-steps'
 import { ObligationCarousel } from '@/components/public/obligation-carousel'
 import { PublicCallToAction } from '@/components/public/public-call-to-action'
-import { PublicContentCard } from '@/components/public/public-content-card'
 import { PublicHero } from '@/components/public/public-hero'
 import { SituationGrid } from '@/components/public/situation-grid'
 import { TrustPrinciples } from '@/components/public/trust-principles'
@@ -32,7 +31,6 @@ export const metadata: Metadata = {
 
 export default function HomePage() {
   const content = publicHomepageContent
-  const featuredServices = serviceOverview.slice(0, 3)
   const obligationCarouselItems = legalOverview.filter((topic) => topic.href !== undefined)
   const knowledgeCarouselItems = knowledgeOverview.filter((article) => article.href !== undefined)
 
@@ -103,44 +101,6 @@ export default function HomePage() {
             {content.adviceGuideEntry.label}
           </LinkButton>
         </Card>
-      </Section>
-
-      <Section spacing="compact" className="border-y border-border bg-surface">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <Badge>Gericht zoeken</Badge>
-            <Heading className="mt-4">Weet u al welke ondersteuning u zoekt?</Heading>
-            <Text size="lg" className="mt-5 text-text-secondary">
-              Bekijk beschikbare dienstverlening of oriënteer u op onderwerpen die nog inhoudelijk worden uitgebreid.
-            </Text>
-          </div>
-          <LinkButton href="/diensten" variant="outline">Bekijk alle diensten</LinkButton>
-        </div>
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
-          {featuredServices.map((service) => (
-            <PublicContentCard key={service.title} {...service} headingLevel="h3" linkLabel={`Bekijk ${service.title}`} />
-          ))}
-        </div>
-      </Section>
-
-      <Section spacing="compact" className="border-y border-border bg-surface">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <Badge>Sectoren</Badge>
-            <Heading className="mt-4">Werk en risico’s verschillen per sector</Heading>
-            <Text size="lg" className="mt-5 text-text-secondary">
-              Bekijk welke aandachtspunten vaak spelen in verschillende werkomgevingen. Uw werkzaamheden en organisatiecontext blijven altijd bepalend.
-            </Text>
-          </div>
-          <LinkButton href="/sectoren" variant="outline">Bekijk het sectoroverzicht</LinkButton>
-        </div>
-        <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {sectorOverview.map((sector) => (
-            <li key={sector.title}>
-              <PublicContentCard {...sector} headingLevel="h3" linkLabel={`Bekijk ${sector.title}`} compact />
-            </li>
-          ))}
-        </ul>
       </Section>
 
       <Section spacing="compact" className="border-y border-border bg-brand-primary-subtle">

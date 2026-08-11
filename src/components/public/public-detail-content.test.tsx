@@ -1,9 +1,11 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
+import { obligations } from '@/content/obligations'
 import { knowledgeArticles } from '@/content/knowledge/articles'
 import { resolveKnowledgeContextByRoute } from '@/content/knowledge/knowledge-contexts'
 import { services } from '@/content/services'
 import { KnowledgeArticlePage } from './knowledge-article-page'
+import { ObligationDetailPage } from './obligation-detail-page'
 import { PublicBulletList, PublicFaqList, PublicSteps } from './public-detail-shared'
 import { ServiceDetailPage } from './service-detail-page'
 
@@ -41,15 +43,29 @@ describe('publieke detailcontent', () => {
     }
   })
 
-  it.each(knowledgeArticles)('$href biedt contextuele routes naar advies en opdracht', (article) => {
+  it.each(obligations)('$href plaatst de algemene toelichting eenmaal na de bronnen', (content) => {
+    const html = renderToStaticMarkup(<ObligationDetailPage content={content} />)
+    const sources = html.indexOf('Bronnen en onderbouwing')
+    const evidence = html.indexOf('Belangrijk bij deze uitleg')
+    const pathways = html.indexOf('Stel uw vraag')
+
+    expect(sources).toBeGreaterThan(0)
+    expect(evidence).toBeGreaterThan(sources)
+    expect(pathways).toBeGreaterThan(evidence)
+    expect(html.match(/Belangrijk bij deze uitleg/g)).toHaveLength(1)
+    expect(html).toContain('hierboven genoemde officiële bronnen')
+    expect(html).not.toContain('hieronder genoemde officiële bronnen')
+  })
+
+  it.each(knowledgeArticles)('$href biedt één contextuele route naar de Advieswijzer', (article) => {
     const context = resolveKnowledgeContextByRoute(article.href)
     const html = renderToStaticMarkup(<KnowledgeArticlePage content={article} />)
 
     expect(context).not.toBeNull()
     expect(html).toContain(`href="/advieswijzer?context=${context?.id}"`)
-    expect(html).toContain(`href="/hulpvragen/nieuw?context=${context?.id}"`)
-    expect(html).toContain('Start de Advieswijzer')
-    expect(html).toContain('Start een opdracht')
+    expect(html).toContain('Stel uw vraag')
+    expect(html).not.toContain(`href="/hulpvragen/nieuw?context=${context?.id}"`)
+    expect(html).not.toContain('Start een opdracht')
     expect(html).not.toContain('Direct een opdracht plaatsen')
   })
 
