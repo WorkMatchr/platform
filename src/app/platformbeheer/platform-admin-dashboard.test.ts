@@ -32,4 +32,11 @@ describe('platformbeheercockpit', () => {
     expect(source).toContain('xl:grid-cols-4')
     expect(source).not.toContain("'use client'")
   })
+
+  it('stuurt een platformauditor server-side direct naar de beperkte auditoromgeving', () => {
+    expect(source).toContain("requirePlatformAuditor('/platformbeheer')")
+    expect(source).toContain("if (administrator.membershipRole === 'MEMBER') redirect('/platformbeheer/auditor')")
+    expect(source).not.toContain('requirePlatformAdministrator')
+    expect(source).not.toContain('setTimeout')
+  })
 })

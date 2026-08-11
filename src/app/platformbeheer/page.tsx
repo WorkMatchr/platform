@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { AdminSection, EmptyState, StatusPill } from '@/components/platform-admin/platform-admin-ui'
 import {
   getPlatformActionLabel,
@@ -10,7 +11,7 @@ import {
   selectVisibleQueues,
   type PlatformAdviceSeverity,
 } from '@/lib/platform-admin/platform-admin-advice'
-import { requirePlatformAdministrator } from '@/lib/platform-admin/platform-admin-authorization'
+import { requirePlatformAuditor } from '@/lib/platform-admin/platform-admin-authorization'
 import { getPlatformAdminCockpit } from '@/lib/platform-admin/platform-admin-query-service'
 
 export const metadata: Metadata = { title: 'Platformbeheer | WorkMatchr' }
@@ -26,7 +27,9 @@ function formatDate(value: Date) {
 }
 
 export default async function PlatformAdminDashboardPage() {
-  const administrator = await requirePlatformAdministrator('/platformbeheer')
+  const administrator = await requirePlatformAuditor('/platformbeheer')
+  if (administrator.membershipRole === 'MEMBER') redirect('/platformbeheer/auditor')
+
   const now = new Date()
   const data = await getPlatformAdminCockpit(administrator.id, now)
   const displayName = administrator.displayName?.trim() || administrator.email

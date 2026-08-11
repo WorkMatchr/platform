@@ -17,7 +17,11 @@ import {
   getPlatformOperatorContext,
   getPlatformOwnerContext,
   PlatformAdminAccessError,
+  requirePlatformAuditor,
 } from './platform-admin-authorization'
+
+const { redirect } = await import('next/navigation')
+const { requireUser } = await import('@/lib/authorization')
 
 function platformUser(role: 'OWNER' | 'ADMIN' | 'MEMBER') {
   return {
@@ -36,6 +40,8 @@ function platformUser(role: 'OWNER' | 'ADMIN' | 'MEMBER') {
 describe('centrale platformguards', () => {
   beforeEach(() => {
     mocks.findFirst.mockReset()
+    vi.mocked(redirect).mockReset()
+    vi.mocked(requireUser).mockReset()
   })
 
   it('laat MEMBER uitsluitend door in de auditorguard en niet via de operatorguard', async () => {
@@ -58,5 +64,16 @@ describe('centrale platformguards', () => {
     mocks.findFirst.mockResolvedValue(platformUser('OWNER'))
     await expect(getPlatformOperatorContext('platform-user')).resolves.toMatchObject({ membershipRole: 'OWNER' })
     await expect(getPlatformOwnerContext('platform-user')).resolves.toMatchObject({ membershipRole: 'OWNER' })
+  })
+
+  it('houdt de accountflow voor niet-platformgebruikers server-side intact', async () => {
+    const redirectSignal = new Error('NEXT_REDIRECT')
+    vi.mocked(requireUser).mockResolvedValue({ id: 'regular-user' } as never)
+    mocks.findFirst.mockResolvedValue(null)
+    vi.mocked(redirect).mockImplementation(() => { throw redirectSignal })
+
+    await expect(requirePlatformAuditor('/platformbeheer')).rejects.toBe(redirectSignal)
+
+    expect(redirect).toHaveBeenCalledWith('/account')
   })
 })
