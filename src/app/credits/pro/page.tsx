@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Section } from '@/components/layout/section'
 import { Button } from '@/components/ui/button'
@@ -49,6 +50,13 @@ export default async function ProPage({ searchParams }: { searchParams: Promise<
   const canStartFirstPayment = !subscription || retryAvailable
 
   return <Section spacing="compact">
+    <nav aria-label="Broodkruimelpad" className="mb-5 text-sm text-text-secondary">
+      <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <li><Link href="/credits" className="rounded-sm underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-primary">Credits en facturen</Link></li>
+        <li aria-hidden="true">›</li>
+        <li aria-current="page">WorkMatchr Pro</li>
+      </ol>
+    </nav>
     <Heading as="h1" size="h2">WorkMatchr Pro</Heading>
     <p className="mt-3 text-text-secondary">10% extra korting op reguliere creditaankopen, aanvullende financiële inzichten en een zichtbare Pro-badge. Pro beïnvloedt matching of rangschikking nooit.</p>
     <Card className="mt-6">

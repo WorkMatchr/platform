@@ -16,6 +16,15 @@ describe('WorkMatchr Pro-interface', () => {
     expect(checkoutSource).toContain('daaropvolgende maandelijkse betaling')
   })
 
+  it('toont een compacte breadcrumb naar Credits en facturen boven de paginatitel', () => {
+    expect(source).toContain('aria-label="Broodkruimelpad"')
+    expect(source).toContain('href="/credits"')
+    expect(source).toContain('>Credits en facturen</Link>')
+    expect(source).toContain('›</li>')
+    expect(source).toContain('aria-current="page">WorkMatchr Pro</li>')
+    expect(source.indexOf('aria-label="Broodkruimelpad"')).toBeLessThan(source.indexOf('<Heading as="h1"'))
+  })
+
   it('toont de opzegknop altijd en koppelt disabled aan het centrale beleid', () => {
     expect(source).toContain('>Pro opzeggen</Button>')
     expect(source).toContain('disabled={!cancellationAvailable}')
