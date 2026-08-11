@@ -32,6 +32,7 @@ import {
   MOLLIE_SANDBOX_ACCEPTANCE_PRICING,
   usesMollieTestAcceptancePrice,
 } from './mollie-test-pricing'
+import { classifyCreditPaymentFailure, logCreditPaymentFailure } from './credit-payment-diagnostics'
 
 type Transaction = Prisma.TransactionClient
 
@@ -203,19 +204,55 @@ export async function createCreditPurchase(
   })
 
   if (purchase.molliePaymentId && purchase.mollieCheckoutUrl) return purchase
-  const { webhookBaseUrl, redirectBaseUrl } = getMollieUrls()
-  const payment = await gateway.createPayment({
-    amountValue: centsToMollieValue(purchase.amountInclVatCents),
-    currency: 'EUR',
-    description: purchase.pricingMode === 'MOLLIE_TEST_ACCEPTANCE'
-      ? `WorkMatchr ${purchase.packageLabel} - sandboxacceptatie`
-      : `WorkMatchr ${purchase.packageLabel}`,
-    redirectUrl: new URL(`/credits/betaling/${purchase.id}`, redirectBaseUrl).toString(),
-    webhookUrl: new URL('/api/payments/mollie/webhook', webhookBaseUrl).toString(),
-    metadata: { purchaseId: purchase.id, organizationId: purchase.organizationId },
-    idempotencyKey: `mollie-purchase-${purchase.id}`,
-  })
-  if (!payment.checkoutUrl) throw new Error('MOLLIE_CHECKOUT_URL_MISSING')
+  let redirectUrl: string
+  let webhookUrl: string
+  try {
+    const { webhookBaseUrl, redirectBaseUrl } = getMollieUrls()
+    redirectUrl = new URL(`/credits/betaling/${purchase.id}`, redirectBaseUrl).toString()
+    webhookUrl = new URL('/api/payments/mollie/webhook', webhookBaseUrl).toString()
+  } catch (error) {
+    logCreditPaymentFailure({
+      category: classifyCreditPaymentFailure('url_configuration', error),
+      step: 'url_configuration',
+      purchaseId: purchase.id,
+      error,
+    })
+    throw error
+  }
+  let payment: MolliePaymentSnapshot
+  try {
+    payment = await gateway.createPayment({
+      amountValue: centsToMollieValue(purchase.amountInclVatCents),
+      currency: 'EUR',
+      description: purchase.pricingMode === 'MOLLIE_TEST_ACCEPTANCE'
+        ? `WorkMatchr ${purchase.packageLabel} - sandboxacceptatie`
+        : `WorkMatchr ${purchase.packageLabel}`,
+      redirectUrl,
+      webhookUrl,
+      metadata: { purchaseId: purchase.id, organizationId: purchase.organizationId },
+      idempotencyKey: `mollie-purchase-${purchase.id}`,
+    })
+  } catch (error) {
+    logCreditPaymentFailure({
+      category: classifyCreditPaymentFailure('payment_create', error),
+      step: 'payment_create',
+      purchaseId: purchase.id,
+      redirectUrl,
+      webhookUrl,
+      error,
+    })
+    throw error
+  }
+  if (!payment.checkoutUrl) {
+    logCreditPaymentFailure({
+      category: classifyCreditPaymentFailure('payment_checkout_url'),
+      step: 'payment_checkout_url',
+      purchaseId: purchase.id,
+      redirectUrl,
+      webhookUrl,
+    })
+    throw new Error('MOLLIE_CHECKOUT_URL_MISSING')
+  }
   return runSerializableFinancialTransaction(async (transaction) => {
     await lockKey(transaction, `purchase:${purchase.id}`)
     const current = await transaction.financialPurchase.findUniqueOrThrow({ where: { id: purchase.id } })
