@@ -13,7 +13,7 @@ describe('Better Auth-routes', () => {
     expect(server).toContain('basePath: AUTH_BASE_PATH')
     expect(client).toContain('createAuthClient({')
     expect(client).toContain('basePath: AUTH_BASE_PATH')
-    expect(client).toContain('plugins: [twoFactorClient()]')
+    expect(client).toContain("plugins: [twoFactorClient({ twoFactorPage: '/tweestapsverificatie' })]")
   })
 
   it('gebruikt voor verificatie de officiële Better Auth-clientroute', () => {

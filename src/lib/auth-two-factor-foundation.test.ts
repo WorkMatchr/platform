@@ -18,12 +18,11 @@ describe('Better Auth two-factor foundation', () => {
     expect(source).toContain('maxPasswordLength: 128')
   })
 
-  it('registers the matching client plugin without adding a WorkMatchr two-factor UI', () => {
+  it('registers the matching client plugin with the dedicated WorkMatchr challenge route', () => {
     const source = read('src/lib/auth-client.ts')
 
     expect(source).toContain("import { twoFactorClient } from 'better-auth/client/plugins'")
-    expect(source).toContain('plugins: [twoFactorClient()]')
-    expect(source).not.toContain('twoFactorPage')
+    expect(source).toContain("plugins: [twoFactorClient({ twoFactorPage: '/tweestapsverificatie' })]")
   })
 
   it('models precisely the Better Auth 1.6.23 two-factor persistence requirements', () => {

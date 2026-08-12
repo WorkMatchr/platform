@@ -6,5 +6,5 @@ import { AUTH_BASE_PATH } from '@/lib/auth-config'
 
 export const authClient = createAuthClient({
   basePath: AUTH_BASE_PATH,
-  plugins: [twoFactorClient()],
+  plugins: [twoFactorClient({ twoFactorPage: '/tweestapsverificatie' })],
 })

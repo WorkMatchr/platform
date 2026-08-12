@@ -95,6 +95,11 @@ export default async function AccountPage() {
           </div>
         </>
       )}
+      <section aria-labelledby="accountbeveiliging-heading" className="mt-8 border-t border-border pt-7">
+        <h2 id="accountbeveiliging-heading" className="font-semibold text-brand-dark">Beveiliging</h2>
+        <p className="mt-3 text-text-secondary">Beheer uw tweestapsverificatie met een authenticator-app.</p>
+        <div className="mt-5"><LinkButton href="/account/beveiliging" variant="outline">Naar beveiliging</LinkButton></div>
+      </section>
       <div className="mt-7">
         <LogoutButton />
       </div>

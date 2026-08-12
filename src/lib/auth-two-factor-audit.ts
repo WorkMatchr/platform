@@ -14,6 +14,7 @@ export async function appendTwoFactorAuditEvent(
     reasonCode: string
     correlationId: string
     idempotencyKey: string
+    metadata?: Prisma.InputJsonObject
   },
 ) {
   return appendAccountProvisioningEvent(transaction, {
@@ -23,6 +24,6 @@ export async function appendTwoFactorAuditEvent(
     reasonCode: input.reasonCode,
     correlationId: input.correlationId,
     idempotencyKey: input.idempotencyKey,
-    metadata: { policyVersion: 'TWO_FACTOR_AUDIT_V1' },
+    metadata: { policyVersion: 'TWO_FACTOR_AUDIT_V1', ...input.metadata },
   })
 }
