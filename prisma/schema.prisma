@@ -71,6 +71,8 @@ enum AccountProvisioningEventType {
   ACCOUNT_ANONYMIZED
   MEMBERSHIP_TERMINATED
   MIGRATED_UNKNOWN
+  TWO_FACTOR_ENROLLED
+  TWO_FACTOR_RESET
 }
 
 enum OrganizationProvisioningEventType {
@@ -1022,6 +1024,7 @@ model User {
   displayName                        String?
   emailVerified                      Boolean                                @default(false)
   image                              String?
+  twoFactorEnabled                   Boolean                                @default(false)
   platformRole                       PlatformRole                           @default(USER)
   accountType                        AccountType?
   status                             UserStatus                             @default(INVITED)
@@ -1077,6 +1080,7 @@ model User {
   sessions                           Session[]                              @relation("SessionActor")
   impersonatedSessions               Session[]                              @relation("SessionEffectiveUser")
   accounts                           Account[]
+  twoFactors                         TwoFactor[]
   providerPermissionSubjects         ProviderPlatformPermissionGrant[]      @relation("ProviderPermissionSubject")
   providerPermissionGranters         ProviderPlatformPermissionGrant[]      @relation("ProviderPermissionGranter")
   providerPermissionRevokers         ProviderPlatformPermissionRevocation[] @relation("ProviderPermissionRevoker")
@@ -1201,6 +1205,20 @@ model RateLimit {
   key         String @unique
   count       Int
   lastRequest BigInt
+}
+
+model TwoFactor {
+  id                      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  secret                  String
+  backupCodes             String
+  userId                  String    @db.Uuid
+  verified                Boolean   @default(true)
+  failedVerificationCount Int       @default(0)
+  lockedUntil             DateTime? @db.Timestamptz(3)
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([secret])
+  @@index([userId])
 }
 
 model Organization {

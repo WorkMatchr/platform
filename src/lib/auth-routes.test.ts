@@ -6,12 +6,14 @@ import { AUTH_BASE_PATH } from '@/lib/auth-config'
 const root = process.cwd()
 
 describe('Better Auth-routes', () => {
-  it('legt de server- en client-basePath expliciet en gelijk vast', () => {
+  it('legt de server- en client-basePath expliciet en gelijk vast met de native 2FA-clientplugin', () => {
     const server = readFileSync(join(root, 'src', 'lib', 'auth.ts'), 'utf8')
     const client = readFileSync(join(root, 'src', 'lib', 'auth-client.ts'), 'utf8')
     expect(AUTH_BASE_PATH).toBe('/api/auth')
     expect(server).toContain('basePath: AUTH_BASE_PATH')
-    expect(client).toContain('createAuthClient({ basePath: AUTH_BASE_PATH })')
+    expect(client).toContain('createAuthClient({')
+    expect(client).toContain('basePath: AUTH_BASE_PATH')
+    expect(client).toContain('plugins: [twoFactorClient()]')
   })
 
   it('gebruikt voor verificatie de officiële Better Auth-clientroute', () => {

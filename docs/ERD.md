@@ -196,6 +196,7 @@ erDiagram
   User ||--o{ Session : authenticates_with
   User ||--o{ Session : may_be_effective_test_user
   User ||--o{ Account : owns
+  User ||--o{ TwoFactor : secures
   Organization ||--o{ OrganizationMembership : has
   Organization ||--o{ OrganizationLocation : owns
   Organization ||--o{ OrganizationSector : classified_as
@@ -231,6 +232,13 @@ erDiagram
     uuid id PK
     string key UK
     int count
+  }
+  TwoFactor {
+    uuid id PK
+    uuid userId FK
+    boolean verified
+    int failedVerificationCount
+    datetime lockedUntil
   }
   Organization {
     uuid id PK

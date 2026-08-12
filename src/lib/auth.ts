@@ -1,6 +1,7 @@
 import { betterAuth } from 'better-auth'
 import { APIError, createAuthMiddleware } from 'better-auth/api'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
+import { twoFactor } from 'better-auth/plugins'
 import { nextCookies } from 'better-auth/next-js'
 import { invitationActivationEmail, passwordResetEmail, sendAuthEmail, verificationEmail } from '@/lib/email'
 import { captureAuthEmailDelivery, getInvitationActivationEmailContext } from '@/lib/auth-email-delivery-context'
@@ -182,5 +183,13 @@ export const auth = betterAuth({
       },
     },
   },
-  plugins: [nextCookies()],
+  plugins: [
+    twoFactor({
+      issuer: 'WorkMatchr',
+      // A zero max age prevents trusted-device verification records from being usable.
+      trustDeviceMaxAge: 0,
+      backupCodeOptions: { storeBackupCodes: 'encrypted' },
+    }),
+    nextCookies(),
+  ],
 })

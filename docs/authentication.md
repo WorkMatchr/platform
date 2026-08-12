@@ -19,6 +19,7 @@ Module 4A levert persoonlijke accounts met Better Auth 1.6.23: registratie, verp
 - Sessies staan in `Session`; credentials staan gehasht in `Account`.
 - `Verification` bewaart kortlevende verificatie- en resettokens.
 - `RateLimit` bewaart gedeelde databasecounters voor authendpoints.
+- De technische 2FA-basis gebruikt de native Better Auth 1.6.23-TOTP-plugin. `User.twoFactorEnabled` blijft standaard `false`; `TwoFactor` bewaart uitsluitend het door Better Auth vereiste secret-, recovery-code- en verificatiestate. Recovery codes worden versleuteld opgeslagen. Trusted devices zijn technisch niet bruikbaar (`trustDeviceMaxAge: 0`). Platformverplichting, resetbeleid en account-UX volgen in een afzonderlijke werkset.
 - `getCurrentUser` is de request-scoped, server-side bron voor de gevalideerde Better Auth-gebruiker; `requireUser`, organisatiecontext, layouts, headers en beschermde Server Components bouwen op deze bron voort.
 - De rootheader kiest server-side tussen de publieke header en dashboardheader. Daardoor kan een ingelogde gebruiker tijdens hydratatie of navigatie nooit tijdelijk de loginactie zien.
 

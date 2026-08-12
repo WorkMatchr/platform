@@ -15,6 +15,10 @@ WorkMatchr gebruikt geen zelfgebouwde wachtwoordhashing, cookiecryptografie of J
 - wachtwoordreset trekt bestaande sessies in;
 - platformrollen worden uitsluitend server-side gecontroleerd.
 
+## Technisch 2FA-fundament
+
+De native Better Auth 1.6.23-TOTP-plugin is voorbereid met versleutelde recovery codes. Bestaande accounts blijven ongewijzigd en kunnen normaal met wachtwoord inloggen zolang `twoFactorEnabled=false`. Trusted devices zijn niet beschikbaar: de WorkMatchr-configuratie geeft hun verificatiestate direct een verlopen geldigheid. Het 2FA-auditfundament registreert uitsluitend eventtype, interne identifiers, reden en policyversie; TOTP-secrets, QR/otpauth-URI's, recovery codes, challengecodes, wachtwoorden en sessietokens worden niet geaccepteerd of gelogd. Verplichte platform-2FA, een gebruikersinterface en beheerde resets zijn nog niet geactiveerd.
+
 ### Testaccountwisselaar buiten productie
 
 - `NODE_ENV=production` schakelt de wisselaar hard uit, ook wanneer de feature flag abusievelijk `true` is;
