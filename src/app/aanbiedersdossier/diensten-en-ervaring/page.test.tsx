@@ -1,9 +1,9 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import { ProviderServicesExperienceOverview } from './page'
+import ProviderServicesExperiencePage from './page'
 
 describe('overzicht Diensten en ervaring', () => {
-  const html = renderToStaticMarkup(<ProviderServicesExperienceOverview />)
+  const html = renderToStaticMarkup(<ProviderServicesExperiencePage />)
 
   it('biedt duidelijke toegang tot beide onderdelen', () => {
     expect(html).toContain('Diensten en specialismen')

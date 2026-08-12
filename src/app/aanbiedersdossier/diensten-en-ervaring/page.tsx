@@ -17,7 +17,7 @@ const sections = [
   },
 ] as const
 
-export function ProviderServicesExperienceOverview() {
+function ProviderServicesExperienceOverview() {
   return (
     <>
       <ProviderPageHeader
