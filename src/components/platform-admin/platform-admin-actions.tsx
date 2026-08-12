@@ -30,6 +30,7 @@ export function PlatformAdminEmailForm({
         <input type="hidden" name="returnTo" value={returnTo} />
         <label className="grid gap-1 text-sm font-semibold">Onderwerp<input className={fieldClass} name="subject" required minLength={3} maxLength={160} /></label>
         <label className="grid gap-1 text-sm font-semibold">Bericht<textarea className={`${fieldClass} min-h-28 py-3`} name="message" required minLength={10} maxLength={4000} /></label>
+        <p className="text-xs leading-5 text-text-secondary">Gebruik dit bericht niet voor wachtwoorden, beveiligingscodes, medische gegevens of andere bijzondere/gevoelige persoonsgegevens. Verzonden beheercommunicatie wordt voor auditdoeleinden bewaard.</p>
         <button className={`${buttonClass} justify-self-start`} type="submit">Mail</button>
       </form>
     </details>

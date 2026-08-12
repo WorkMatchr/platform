@@ -128,7 +128,7 @@ Beschikbare beheeracties:
 - reviewer of approver met een actuele expliciete permission mailen;
 - een interne, alleen voor platformbeheer zichtbare, append-only beheernotitie toevoegen.
 
-Communicatie gebruikt de bestaande mailinfrastructuur. Alleen een door de mailprovider geaccepteerde verzending resulteert in succes. Geaccepteerde en mislukte pogingen worden geaudit met transportstatus en bericht-ID of foutcode; tokens, volledige links en berichtinhoud worden niet in auditmetadata opgeslagen.
+Communicatie gebruikt de bestaande mailinfrastructuur. Gewone beheerdermails worden vóór providerverzending als immutable `AdminCommunication` met exacte tekst- en HTML-snapshot vastgelegd; elke provideracceptatie of fout schrijft een afzonderlijke append-only delivery-attempt. Alleen OWNER en ADMIN kunnen die inhoud via de gekoppelde `ADMIN_EMAIL_SENT`-auditregel openen. Een provideracceptatie is uitdrukkelijk geen afleverbevestiging. Activatie-, verificatie-, wachtwoordreset- en andere securitymails houden uitsluitend de bestaande minimale bezorgaudit: tokens, volledige links en inhoud worden nooit gearchiveerd of in auditmetadata opgeslagen.
 
 Platformbeheer verleent geen reviewer- of approverpermission en voert geen dossierbesluit uit. De bestaande vier-ogenregel, tenantisolatie, lifecycletransacties en accountarchitectuur uit Module 6B blijven ongewijzigd.
 

@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { addPlatformOrganizationOwnerAction, changePlatformOrganizationStatusAction, changePlatformUserStatusAction } from '@/app/platformbeheer/actions'
 import { PlatformAdminEmailForm, PlatformAdminNoteForm } from '@/components/platform-admin/platform-admin-actions'
 import { AdminPageHeader, AdminSection, AdminTable, StatusPill } from '@/components/platform-admin/platform-admin-ui'
+import { PlatformAdminAuditRow } from '@/components/platform-admin/platform-admin-audit-row'
 import { requirePlatformAdministrator } from '@/lib/platform-admin/platform-admin-authorization'
 import { getPlatformAdminObjectActivity, getPlatformOrganizationDetail } from '@/lib/platform-admin/platform-admin-query-service'
 import { assignmentStatusLabels } from '@/lib/assignments/assignment-presentation'
@@ -72,7 +73,7 @@ export default async function PlatformOrganizationDetailPage({
       </AdminSection>
       <AdminSection title="Recente opdrachten"><AdminTable headers={['Opdracht', 'Status', 'Bijgewerkt']}>{organization.clientAssignments.map((assignment) => <tr key={assignment.id}><td className="px-4 py-3"><Link className="font-semibold text-brand-primary underline" href={`/platformbeheer/opdrachten/${assignment.id}`}>{assignment.title}</Link></td><td className="px-4 py-3">{assignmentStatusLabels[assignment.status]}</td><td className="px-4 py-3">{assignment.updatedAt.toLocaleString('nl-NL')}</td></tr>)}</AdminTable></AdminSection>
       <AdminSection title="Audit"><AdminTable headers={['Bron', 'Actie', 'Reden', 'Moment']}>{organization.membershipEvents.map((event) => <tr key={event.id}><td className="px-4 py-3">Membership</td><td className="px-4 py-3">{event.eventType}</td><td className="px-4 py-3">{event.reasonCode}</td><td className="px-4 py-3">{event.occurredAt.toLocaleString('nl-NL')}</td></tr>)}{organization.marketplaceAuditEvents.map((event) => <tr key={event.id}><td className="px-4 py-3">Marketplace</td><td className="px-4 py-3">{event.action}</td><td className="px-4 py-3">{event.entityType}</td><td className="px-4 py-3">{event.createdAt.toLocaleString('nl-NL')}</td></tr>)}</AdminTable></AdminSection>
-      <AdminSection title="Beheeraudit"><AdminTable headers={['Actie', 'Auteur', 'Toelichting', 'Moment']}>{adminActivity.map((event) => <tr key={event.id}><td className="px-4 py-3 font-semibold">{event.action}</td><td className="px-4 py-3">{event.actorUser.displayName ?? event.actorUser.email}</td><td className="max-w-xl whitespace-pre-wrap px-4 py-3">{event.reason ?? '—'}</td><td className="px-4 py-3">{event.createdAt.toLocaleString('nl-NL')}</td></tr>)}</AdminTable></AdminSection>
+      <AdminSection title="Beheeraudit"><AdminTable headers={['Actie', 'Auteur', 'Toelichting', 'Moment']}>{adminActivity.map((event) => <PlatformAdminAuditRow event={event} key={event.id} />)}</AdminTable></AdminSection>
     </>
   )
 }

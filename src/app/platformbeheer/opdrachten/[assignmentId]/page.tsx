@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { PlatformAdminEmailForm, PlatformAdminNoteForm } from '@/components/platform-admin/platform-admin-actions'
 import { AdminPageHeader, AdminSection, AdminTable, StatusPill } from '@/components/platform-admin/platform-admin-ui'
+import { PlatformAdminAuditRow } from '@/components/platform-admin/platform-admin-audit-row'
 import { requirePlatformAdministrator } from '@/lib/platform-admin/platform-admin-authorization'
 import {
   getPlatformAdminObjectActivity,
@@ -70,7 +71,7 @@ export default async function PlatformAssignmentDetailPage({
         />
       </AdminSection>
       <AdminSection title="Statushistorie"><AdminTable headers={['Van', 'Naar', 'Reden', 'Moment']}>{assignment.statusHistory.map((event) => <tr key={event.id}><td className="px-4 py-3">{event.fromStatus ? assignmentStatusLabels[event.fromStatus] : 'Nieuw'}</td><td className="px-4 py-3 font-semibold">{assignmentStatusLabels[event.toStatus]}</td><td className="px-4 py-3">{event.reason ?? '—'}</td><td className="px-4 py-3">{event.createdAt.toLocaleString('nl-NL')}</td></tr>)}</AdminTable></AdminSection>
-      <AdminSection title="Beheeraudit"><AdminTable headers={['Actie', 'Auteur', 'Toelichting', 'Moment']}>{adminActivity.map((event) => <tr key={event.id}><td className="px-4 py-3 font-semibold">{event.action}</td><td className="px-4 py-3">{event.actorUser.displayName ?? event.actorUser.email}</td><td className="max-w-xl whitespace-pre-wrap px-4 py-3">{event.reason ?? '—'}</td><td className="px-4 py-3">{event.createdAt.toLocaleString('nl-NL')}</td></tr>)}</AdminTable></AdminSection>
+      <AdminSection title="Beheeraudit"><AdminTable headers={['Actie', 'Auteur', 'Toelichting', 'Moment']}>{adminActivity.map((event) => <PlatformAdminAuditRow event={event} key={event.id} />)}</AdminTable></AdminSection>
     </>
   )
 }

@@ -1,12 +1,13 @@
 import { Resend } from 'resend'
 
-type AuthEmail = {
+export type AuthEmail = {
   kind: 'INVITATION' | 'VERIFICATION' | 'PASSWORD_RESET' | 'ROLE_CHANGE_NOTIFICATION' | 'ADMIN_MESSAGE'
   to: string
   subject: string
   text: string
   html: string
   developmentUrl?: string
+  idempotencyKey?: string
 }
 
 export type AuthEmailDeliveryResult = {
@@ -103,7 +104,10 @@ export async function sendAuthEmail(email: AuthEmail): Promise<AuthEmailDelivery
 
   let result
   try {
-    result = await new Resend(apiKey).emails.send({ from, to: email.to, subject: email.subject, text: email.text, html: email.html })
+    result = await new Resend(apiKey).emails.send(
+      { from, to: email.to, subject: email.subject, text: email.text, html: email.html },
+      email.idempotencyKey ? { headers: { 'Idempotency-Key': email.idempotencyKey } } : undefined,
+    )
   } catch {
     throw new AuthEmailDeliveryError('EMAIL_PROVIDER_UNAVAILABLE', 'De e-mailprovider kon niet worden bereikt.')
   }

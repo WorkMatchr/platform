@@ -96,6 +96,7 @@ De seed bevat geen personen, organisaties, accounts, e-mailadressen, intakes of 
 | RequestEligibleProvider, RequestInterestEvent en RequestOfferSlotEvent | Doelgroepsnapshots, interesse-events en offerteplaatsevents zijn immutable en append-only. `RequestInterest` en `RequestOfferSlot` bewaren alleen de actuele status; retentie volgt het nog vast te stellen aanvraagbeleid. |
 | ProviderSelection en AssignmentResolution | Nooit verwijderen nadat zakelijke historie bestaat. |
 | AdminActionLog | Append-only, nooit wijzigen of verwijderen. |
+| AdminCommunication en AdminCommunicationDeliveryAttempt | Immutable archief voor uitsluitend gewone beheerdermails en append-only verzendpogingen; database-triggers weigeren `UPDATE` en `DELETE`. Security- en authenticatiemails bewaren nooit volledige inhoud. |
 | CreditTransaction | Append-only, nooit wijzigen of verwijderen. |
 | Sector, Specialism en Certification | Deactiveren via `isActive`. |
 | Koppeltabellen | Alleen hard verwijderen vóór zakelijk gebruik; services bewaren historie zodra records zijn gebruikt. |

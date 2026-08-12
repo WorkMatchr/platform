@@ -7,6 +7,10 @@ const mocks = vi.hoisted(() => ({
   providerFindUnique: vi.fn(),
   assignmentFindUnique: vi.fn(),
   auditCreate: vi.fn(),
+  communicationCreate: vi.fn(),
+  deliveryAttemptCount: vi.fn(),
+  deliveryAttemptCreate: vi.fn(),
+  transaction: vi.fn(),
   sendAuthEmail: vi.fn(),
   activation: vi.fn(),
   verification: vi.fn(),
@@ -25,10 +29,16 @@ vi.mock('@/lib/prisma', () => ({
     providerProfile: { findUnique: mocks.providerFindUnique },
     assignment: { findUnique: mocks.assignmentFindUnique },
     adminActionLog: { create: mocks.auditCreate },
+    $transaction: mocks.transaction,
   }),
 }))
 vi.mock('@/lib/email', () => ({
-  administrativeEmail: (input: unknown) => input,
+  administrativeEmail: (input: { to: string; subject: string; message: string }) => ({
+    ...input,
+    kind: 'ADMIN_MESSAGE',
+    text: input.message,
+    html: `<p>${input.message}</p>`,
+  }),
   AuthEmailDeliveryError: class AuthEmailDeliveryError extends Error {
     constructor(public readonly code: string, message: string) {
       super(message)
@@ -69,6 +79,14 @@ describe('platformbeheeractieservice', () => {
     vi.clearAllMocks()
     mocks.authorize.mockResolvedValue({ id: actorUserId, displayName: 'Platformbeheerder', email: 'admin@example.invalid' })
     mocks.auditCreate.mockResolvedValue({ id: 'audit-1' })
+    mocks.communicationCreate.mockResolvedValue({ id: 'communication-1', dispatchKey: 'admin-communication:one' })
+    mocks.deliveryAttemptCount.mockResolvedValue(0)
+    mocks.deliveryAttemptCreate.mockResolvedValue({ id: 'attempt-1' })
+    mocks.transaction.mockImplementation(async (operation) => operation({
+      adminCommunication: { create: mocks.communicationCreate },
+      adminCommunicationDeliveryAttempt: { count: mocks.deliveryAttemptCount, create: mocks.deliveryAttemptCreate },
+      adminActionLog: { create: mocks.auditCreate },
+    }))
     mocks.sendAuthEmail.mockResolvedValue(delivery)
     mocks.activation.mockResolvedValue(delivery)
     mocks.capture.mockImplementation(async (operation) => {
@@ -94,7 +112,7 @@ describe('platformbeheeractieservice', () => {
     ])
   })
 
-  it('mailt een gebruiker via de bestaande mailinfrastructuur en audit het geaccepteerde resultaat', async () => {
+  it('maakt de immutable beheercommunicatie vóór providerverzending en audit de geaccepteerde bezorging', async () => {
     await expect(sendPlatformAdminMessage({
       actorUserId,
       targetType: 'USER',
@@ -103,6 +121,13 @@ describe('platformbeheeractieservice', () => {
       message: 'Neem contact op met WorkMatchr voor de vervolgstap.',
     })).resolves.toEqual(delivery)
 
+    expect(mocks.communicationCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        subject: 'Controle van uw account',
+        textSnapshot: expect.stringContaining('Neem contact op met WorkMatchr'),
+        htmlSnapshot: expect.any(String),
+      }),
+    })
     expect(mocks.sendAuthEmail).toHaveBeenCalledOnce()
     expect(mocks.auditCreate).toHaveBeenCalledWith({
       data: expect.objectContaining({
@@ -110,8 +135,12 @@ describe('platformbeheeractieservice', () => {
         actorUserId,
         entityType: 'User',
         entityId: targetId,
+        adminCommunicationId: 'communication-1',
         metadata: expect.objectContaining({ providerMessageId: 'message-1' }),
       }),
+    })
+    expect(mocks.deliveryAttemptCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({ providerStatus: 'PROVIDER_ACCEPTED', providerMessageId: 'message-1' }),
     })
   })
 
@@ -126,7 +155,10 @@ describe('platformbeheeractieservice', () => {
       message: 'Neem contact op met WorkMatchr voor de vervolgstap.',
     })).rejects.toMatchObject({ code: 'DELIVERY_FAILED' })
     expect(mocks.auditCreate).toHaveBeenCalledWith({
-      data: expect.objectContaining({ action: 'ADMIN_EMAIL_FAILED' }),
+      data: expect.objectContaining({ action: 'ADMIN_EMAIL_FAILED', adminCommunicationId: 'communication-1' }),
+    })
+    expect(mocks.deliveryAttemptCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({ providerStatus: 'FAILED', failureCode: 'EMAIL_DELIVERY_UNKNOWN' }),
     })
   })
 
@@ -166,6 +198,7 @@ describe('platformbeheeractieservice', () => {
     expect(mocks.auditCreate).toHaveBeenCalledWith({
       data: expect.objectContaining({ action: 'ADMIN_PASSWORD_RESET_EMAIL_SENT' }),
     })
+    expect(mocks.communicationCreate).not.toHaveBeenCalled()
   })
 
   it('weigert verificatie zolang de eigen activatie-uitnodiging nog openstaat', async () => {

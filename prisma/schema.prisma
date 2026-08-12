@@ -95,6 +95,16 @@ enum OrganizationMembershipEventType {
   MIGRATION_CLASSIFIED
 }
 
+enum AdminCommunicationKind {
+  ADMINISTRATIVE
+}
+
+enum AdminCommunicationDeliveryStatus {
+  PROVIDER_ACCEPTED
+  FAILED
+  DEVELOPMENT_ONLY
+}
+
 enum ProviderApprovalStatus {
   DRAFT
   PENDING_REVIEW
@@ -1056,6 +1066,7 @@ model User {
   selectedProviderSelections         AssignmentProviderSelection[]          @relation("ProviderSelectionActor")
   assignmentResolutions              AssignmentResolution[]                 @relation("AssignmentResolutionActor")
   adminActions                       AdminActionLog[]                       @relation("AdminActionActor")
+  authoredAdminCommunications        AdminCommunication[]                   @relation("AdminCommunicationAuthor")
   createdCreditTransactions          CreditTransaction[]                    @relation("CreditTransactionActor")
   createdFinancialPurchases          FinancialPurchase[]                    @relation("FinancialPurchaseActor")
   approvedFinancialRefunds           FinancialRefund[]                      @relation("FinancialRefundApprover")
@@ -3302,19 +3313,56 @@ model AssignmentResolution {
 }
 
 model AdminActionLog {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  actorUserId String   @db.Uuid
-  action      String
-  entityType  String
-  entityId    String   @db.Uuid
-  reason      String?
-  metadata    Json?
-  createdAt   DateTime @default(now()) @db.Timestamptz(3)
-  actorUser   User     @relation("AdminActionActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+  id                   String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actorUserId          String              @db.Uuid
+  action               String
+  entityType           String
+  entityId             String              @db.Uuid
+  reason               String?
+  metadata             Json?
+  adminCommunicationId String?             @db.Uuid
+  createdAt            DateTime            @default(now()) @db.Timestamptz(3)
+  actorUser            User                @relation("AdminActionActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+  adminCommunication   AdminCommunication? @relation("AdminCommunicationAudit", fields: [adminCommunicationId], references: [id], onDelete: Restrict)
 
   @@index([actorUserId])
   @@index([entityType, entityId])
+  @@index([adminCommunicationId])
   @@index([createdAt])
+}
+
+model AdminCommunication {
+  id               String                              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  kind             AdminCommunicationKind              @default(ADMINISTRATIVE)
+  targetEntityType String                              @db.VarChar(40)
+  targetEntityId   String                              @db.Uuid
+  authorUserId     String                              @db.Uuid
+  subject          String                              @db.VarChar(160)
+  textSnapshot     String                              @db.Text
+  htmlSnapshot     String?                             @db.Text
+  dispatchKey      String                              @unique @db.VarChar(120)
+  createdAt        DateTime                            @default(now()) @db.Timestamptz(3)
+  authorUser       User                                @relation("AdminCommunicationAuthor", fields: [authorUserId], references: [id], onDelete: Restrict)
+  auditEntries     AdminActionLog[]                    @relation("AdminCommunicationAudit")
+  deliveryAttempts AdminCommunicationDeliveryAttempt[]
+
+  @@index([targetEntityType, targetEntityId, createdAt])
+  @@index([authorUserId, createdAt])
+}
+
+model AdminCommunicationDeliveryAttempt {
+  id                String                           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  communicationId   String                           @db.Uuid
+  attemptNumber     Int
+  transport         String                           @db.VarChar(40)
+  providerMessageId String?                          @db.VarChar(255)
+  providerStatus    AdminCommunicationDeliveryStatus
+  failureCode       String?                          @db.VarChar(120)
+  occurredAt        DateTime                         @default(now()) @db.Timestamptz(3)
+  communication     AdminCommunication               @relation(fields: [communicationId], references: [id], onDelete: Restrict)
+
+  @@unique([communicationId, attemptNumber])
+  @@index([communicationId, occurredAt])
 }
 
 model CreditAccount {

@@ -537,6 +537,9 @@ erDiagram
   CreditAccount ||--o{ CreditTransaction : records
   User ||--o{ CreditTransaction : initiates
   User ||--o{ AdminActionLog : performs
+  User ||--o{ AdminCommunication : authors
+  AdminCommunication ||--o{ AdminCommunicationDeliveryAttempt : has
+  AdminCommunication ||--o{ AdminActionLog : referenced_by
   CreditAccount {
     uuid id PK
     uuid organizationId FK,UK
@@ -562,6 +565,20 @@ erDiagram
     uuid actorUserId FK
     string action
     uuid entityId
+  }
+  AdminCommunication {
+    uuid id PK
+    uuid authorUserId FK
+    string targetEntityType
+    uuid targetEntityId
+    string subject
+    string dispatchKey UK
+  }
+  AdminCommunicationDeliveryAttempt {
+    uuid id PK
+    uuid communicationId FK
+    int attemptNumber
+    AdminCommunicationDeliveryStatus providerStatus
   }
 ```
 

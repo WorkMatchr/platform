@@ -1,5 +1,7 @@
 import 'server-only'
 
+import { randomUUID } from 'node:crypto'
+import { Prisma } from '@/generated/prisma/client'
 import { auth } from '@/lib/auth'
 import { withAuthEmailDeliveryCapture } from '@/lib/auth-email-delivery-context'
 import { canUseAccountRecovery } from '@/lib/auth-policy'
@@ -7,6 +9,7 @@ import {
   administrativeEmail,
   AuthEmailDeliveryError,
   sendAuthEmail,
+  type AuthEmail,
   type AuthEmailDeliveryResult,
 } from '@/lib/email'
 import { getPrisma } from '@/lib/prisma'
@@ -146,6 +149,7 @@ async function recordDelivery(input: {
   messageLength: number
   delivery: AuthEmailDeliveryResult | null
   failureCode?: string
+  adminCommunicationId?: string
 }) {
   await getPrisma().adminActionLog.create({
     data: {
@@ -153,6 +157,7 @@ async function recordDelivery(input: {
       action: input.action,
       entityType: input.entityType,
       entityId: input.targetId,
+      adminCommunicationId: input.adminCommunicationId,
       reason: input.subject,
       metadata: {
         subject: input.subject,
@@ -165,6 +170,91 @@ async function recordDelivery(input: {
       },
     },
   })
+}
+
+async function createAdministrativeCommunication(input: {
+  actorUserId: string
+  targetId: string
+  entityType: string
+  subject: string
+  email: AuthEmail
+}) {
+  const dispatchKey = `admin-communication:${randomUUID()}`
+  return getPrisma().$transaction(async (transaction) => {
+    const communication = await transaction.adminCommunication.create({
+      data: {
+        kind: 'ADMINISTRATIVE',
+        targetEntityType: input.entityType,
+        targetEntityId: input.targetId,
+        authorUserId: input.actorUserId,
+        subject: input.subject,
+        textSnapshot: input.email.text,
+        htmlSnapshot: input.email.html,
+        dispatchKey,
+      },
+    })
+    await transaction.adminActionLog.create({
+      data: {
+        actorUserId: input.actorUserId,
+        action: 'ADMIN_EMAIL_CREATED',
+        entityType: input.entityType,
+        entityId: input.targetId,
+        adminCommunicationId: communication.id,
+        reason: input.subject,
+        metadata: {
+          messageLength: input.email.text.length,
+          policyVersion: 'ADMIN_COMMUNICATION_ARCHIVE_V1',
+        },
+      },
+    })
+    return communication
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 10_000 })
+}
+
+async function recordAdministrativeCommunicationDelivery(input: {
+  communicationId: string
+  actorUserId: string
+  targetId: string
+  entityType: string
+  subject: string
+  delivery: AuthEmailDeliveryResult | null
+  failureCode?: string
+}) {
+  await getPrisma().$transaction(async (transaction) => {
+    const attemptCount = await transaction.adminCommunicationDeliveryAttempt.count({
+      where: { communicationId: input.communicationId },
+    })
+    const providerStatus = input.delivery
+      ? input.delivery.status === 'DEVELOPMENT_ONLY' ? 'DEVELOPMENT_ONLY' : 'PROVIDER_ACCEPTED'
+      : 'FAILED'
+    await transaction.adminCommunicationDeliveryAttempt.create({
+      data: {
+        communicationId: input.communicationId,
+        attemptNumber: attemptCount + 1,
+        transport: input.delivery?.transport ?? 'RESEND',
+        providerMessageId: input.delivery?.messageId ?? null,
+        providerStatus,
+        failureCode: input.failureCode ?? null,
+      },
+    })
+    await transaction.adminActionLog.create({
+      data: {
+        actorUserId: input.actorUserId,
+        action: input.delivery ? 'ADMIN_EMAIL_SENT' : 'ADMIN_EMAIL_FAILED',
+        entityType: input.entityType,
+        entityId: input.targetId,
+        adminCommunicationId: input.communicationId,
+        reason: input.subject,
+        metadata: {
+          deliveryStatus: providerStatus,
+          deliveryTransport: input.delivery?.transport ?? null,
+          providerMessageId: input.delivery?.messageId ?? null,
+          failureCode: input.failureCode ?? null,
+          policyVersion: 'ADMIN_COMMUNICATION_ARCHIVE_V1',
+        },
+      },
+    })
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 10_000 })
 }
 
 export async function sendPlatformAdminMessage(input: {
@@ -180,36 +270,49 @@ export async function sendPlatformAdminMessage(input: {
   const message = cleanText(input.message, 10, 4_000, 'Schrijf een bericht van 10 tot 4.000 tekens.')
   const recipient = await resolveMailRecipient(input.targetType, input.targetId)
   if (!recipient) throw new PlatformAdminActionError('NOT_AVAILABLE', 'Voor dit doel is geen veilig e-mailadres beschikbaar.')
+  const email = administrativeEmail({
+    to: recipient.email,
+    recipientName: recipient.name,
+    subject,
+    message,
+    senderName: administrator.displayName?.trim() || 'WorkMatchr platformbeheer',
+  })
+  const communication = await createAdministrativeCommunication({
+    actorUserId: input.actorUserId,
+    targetId: input.targetId,
+    entityType: recipient.entityType,
+    subject,
+    email,
+  })
+  let delivery: AuthEmailDeliveryResult
   try {
-    const delivery = await sendAuthEmail(administrativeEmail({
-      to: recipient.email,
-      recipientName: recipient.name,
-      subject,
-      message,
-      senderName: administrator.displayName?.trim() || 'WorkMatchr platformbeheer',
-    }))
-    await recordDelivery({
-      actorUserId: input.actorUserId,
-      targetId: input.targetId,
-      entityType: recipient.entityType,
-      action: 'ADMIN_EMAIL_SENT',
-      subject,
-      messageLength: message.length,
-      delivery,
-    })
-    return delivery
+    delivery = await sendAuthEmail({ ...email, idempotencyKey: communication.dispatchKey })
   } catch (error) {
     const failureCode = error instanceof AuthEmailDeliveryError ? error.code : 'EMAIL_DELIVERY_UNKNOWN'
-    await recordDelivery({
+    await recordAdministrativeCommunicationDelivery({
+      communicationId: communication.id,
       actorUserId: input.actorUserId,
       targetId: input.targetId,
       entityType: recipient.entityType,
-      action: 'ADMIN_EMAIL_FAILED',
       subject,
-      messageLength: message.length,
       delivery: null,
       failureCode,
     })
+    throw new PlatformAdminActionError('DELIVERY_FAILED', 'De e-mail kon niet veilig worden verzonden. Probeer het later opnieuw.')
+  }
+  try {
+    await recordAdministrativeCommunicationDelivery({
+      communicationId: communication.id,
+      actorUserId: input.actorUserId,
+      targetId: input.targetId,
+      entityType: recipient.entityType,
+      subject,
+      delivery,
+    })
+    return delivery
+  } catch {
+    // The immutable snapshot exists before the provider call. Never create a
+    // contradictory failed attempt after a provider-accepted delivery.
     throw new PlatformAdminActionError('DELIVERY_FAILED', 'De e-mail kon niet veilig worden verzonden. Probeer het later opnieuw.')
   }
 }

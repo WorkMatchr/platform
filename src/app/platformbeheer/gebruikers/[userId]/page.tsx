@@ -6,6 +6,7 @@ import {
   PlatformUserAccessActions,
 } from '@/components/platform-admin/platform-admin-actions'
 import { AdminPageHeader, AdminSection, AdminTable, StatusPill } from '@/components/platform-admin/platform-admin-ui'
+import { PlatformAdminAuditRow } from '@/components/platform-admin/platform-admin-audit-row'
 import { requirePlatformAdministrator } from '@/lib/platform-admin/platform-admin-authorization'
 import { getPlatformAdminObjectActivity, getPlatformUserDetail } from '@/lib/platform-admin/platform-admin-query-service'
 import { organizationRoleLabels, platformRoleLabels, userStatusLabels } from '@/lib/presentation/platform-labels'
@@ -70,7 +71,7 @@ export default async function PlatformUserDetailPage({
         </dl>
       </AdminSection>
       <AdminSection title="Levenscyclus"><AdminTable headers={['Bron', 'Gebeurtenis', 'Reden', 'Moment']}>{events.map((event) => <tr key={event.id}><td className="px-4 py-3">{event.source}</td><td className="px-4 py-3 font-semibold">{event.action}</td><td className="px-4 py-3">{event.reason ?? '—'}</td><td className="px-4 py-3">{event.at.toLocaleString('nl-NL')}</td></tr>)}</AdminTable></AdminSection>
-      <AdminSection title="Beheeraudit"><AdminTable headers={['Actie', 'Auteur', 'Toelichting', 'Moment']}>{adminActivity.map((event) => <tr key={event.id}><td className="px-4 py-3 font-semibold">{event.action}</td><td className="px-4 py-3">{event.actorUser.displayName ?? event.actorUser.email}</td><td className="max-w-xl whitespace-pre-wrap px-4 py-3">{event.reason ?? '—'}</td><td className="px-4 py-3">{event.createdAt.toLocaleString('nl-NL')}</td></tr>)}</AdminTable></AdminSection>
+      <AdminSection title="Beheeraudit"><AdminTable headers={['Actie', 'Auteur', 'Toelichting', 'Moment']}>{adminActivity.map((event) => <PlatformAdminAuditRow event={event} key={event.id} />)}</AdminTable></AdminSection>
       <AdminSection title="Recente sessies"><AdminTable headers={['Aangemaakt', 'Laatst gebruikt', 'Verloopt']}>{user.sessions.map((session) => <tr key={session.id}><td className="px-4 py-3">{session.createdAt.toLocaleString('nl-NL')}</td><td className="px-4 py-3">{session.updatedAt.toLocaleString('nl-NL')}</td><td className="px-4 py-3">{session.expiresAt.toLocaleString('nl-NL')}</td></tr>)}</AdminTable></AdminSection>
     </>
   )

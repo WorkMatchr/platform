@@ -595,10 +595,69 @@ export async function getPlatformAdminObjectActivity(
       action: true,
       reason: true,
       metadata: true,
+      adminCommunicationId: true,
       createdAt: true,
       actorUser: { select: { displayName: true, email: true } },
     },
   })
+}
+
+export async function getPlatformAdminCommunicationDetail(actorUserId: string, communicationId: string) {
+  await getPlatformAdministratorContext(actorUserId)
+  const communication = await getPrisma().adminCommunication.findUnique({
+    where: { id: communicationId },
+    select: {
+      id: true,
+      kind: true,
+      targetEntityType: true,
+      targetEntityId: true,
+      subject: true,
+      textSnapshot: true,
+      htmlSnapshot: true,
+      createdAt: true,
+      authorUser: { select: { displayName: true, email: true } },
+      deliveryAttempts: {
+        orderBy: { attemptNumber: 'asc' },
+        select: {
+          id: true,
+          attemptNumber: true,
+          transport: true,
+          providerMessageId: true,
+          providerStatus: true,
+          failureCode: true,
+          occurredAt: true,
+        },
+      },
+    },
+  })
+  if (!communication) return null
+
+  const targetContext = await (async () => {
+    if (communication.targetEntityType === 'User') {
+      const user = await getPrisma().user.findUnique({
+        where: { id: communication.targetEntityId },
+        select: { displayName: true, email: true },
+      })
+      return user ? user.displayName?.trim() || user.email : 'Gebruiker is niet meer beschikbaar'
+    }
+    if (communication.targetEntityType === 'Organization') {
+      const organization = await getPrisma().organization.findUnique({
+        where: { id: communication.targetEntityId },
+        select: { name: true },
+      })
+      return organization?.name ?? 'Organisatie is niet meer beschikbaar'
+    }
+    if (communication.targetEntityType === 'ProviderProfile') {
+      const provider = await getPrisma().providerProfile.findUnique({
+        where: { id: communication.targetEntityId },
+        select: { organization: { select: { name: true } } },
+      })
+      return provider?.organization.name ?? 'Dienstverlener is niet meer beschikbaar'
+    }
+    return 'Doelcontext is niet beschikbaar'
+  })()
+
+  return { ...communication, targetContext }
 }
 
 export type UserListFilters = {
