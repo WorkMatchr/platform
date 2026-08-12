@@ -13,7 +13,7 @@ type PublicHeroProps = {
 
 export function PublicHero({ hero }: PublicHeroProps) {
   return (
-    <Section spacing="compact" className="overflow-hidden border-b border-border bg-brand-primary-subtle" containerClassName="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
+    <Section spacing="compact" className="overflow-hidden border-b border-border bg-brand-primary-subtle" containerClassName="grid items-center gap-12 lg:grid-cols-[0.88fr_1.12fr] lg:gap-12">
       <div>
         <Badge className="mb-6">{hero.eyebrow}</Badge>
         <Heading as="h1" size="display" className="max-w-3xl text-brand-dark">{hero.title}</Heading>
@@ -31,7 +31,7 @@ export function PublicHero({ hero }: PublicHeroProps) {
           width={1536}
           height={1024}
           priority
-          sizes="(min-width: 1024px) 44vw, 100vw"
+          sizes="(min-width: 1024px) 52vw, 100vw"
           className="h-auto w-full rounded-card object-contain"
         />
       </div>

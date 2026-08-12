@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { publicHomepageContent, publicSituationRouting } from '@/content/public-homepage'
 import { isRegisteredPublicHref, publicFooterGroups, publicNavigationItems } from '@/content/public-routes'
 import { Footer } from '@/components/layout/footer'
+import { PublicHero } from '@/components/public/public-hero'
 import HomePage, { metadata } from './page'
 
 function renderHomepage() {
@@ -28,10 +29,19 @@ describe('vraaggestuurde publieke homepage', () => {
     expect(html).toContain('alt="Van een duidelijke hulpvraag via betrouwbare kennis naar een passende deskundige"')
     expect(html).toContain('width="1536"')
     expect(html).toContain('height="1024"')
-    expect(html).toContain('sizes="(min-width: 1024px) 44vw, 100vw"')
+    expect(html).toContain('sizes="(min-width: 1024px) 52vw, 100vw"')
     expect(html).toContain('class="h-auto w-full rounded-card object-contain"')
     expect(html).not.toContain('data-homepage-illustration-placeholder')
     expect(html).not.toContain('aria-label="Proces van vraag naar specialist"')
+  })
+
+  it('geeft de hero-illustratie op desktop bewust meer ruimte zonder de mobiele stapeling te wijzigen', () => {
+    const html = renderToStaticMarkup(<PublicHero hero={publicHomepageContent.hero} />)
+
+    expect(html).toContain('lg:grid-cols-[0.88fr_1.12fr]')
+    expect(html).toContain('lg:gap-12')
+    expect(html).toContain('sizes="(min-width: 1024px) 52vw, 100vw"')
+    expect(html).not.toContain('grid-cols-2')
   })
 
   it('rendert alle situaties vanuit de typeveilige contentbron', () => {
