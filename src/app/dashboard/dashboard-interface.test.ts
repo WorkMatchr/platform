@@ -23,18 +23,17 @@ describe('opdrachtgeversdashboard en opdrachtennavigatie', () => {
     expect(service).toContain("marketplaceQuotes: { some: { status: 'SUBMITTED' } }")
     expect(service).toContain("status: { not: 'ARCHIVED' }")
     expect(service).toContain('recipientUserId: userId, readAt: null')
-    expect(component).toContain('href="/hulpvragen"')
+    expect(component).toContain("{ label: 'Nog invullen', value: dashboard.summary.concepts, href: '/opdrachten' as const }")
     expect(component).toContain('href="/adviesdossiers"')
     expect(component).toContain('href="/notificaties"')
   })
 
-  it('onderscheidt het opdrachtenoverzicht van gepubliceerde opdrachten', () => {
-    const intakeOverview = read('src/app/hulpvragen/page.tsx')
-    const publishedOverview = read('src/app/opdrachten/page.tsx')
+  it('verwijst overzichtskaarten naar de centrale pagina Mijn opdrachten', () => {
+    const component = read('src/components/marketplace/marketplace-dashboard.tsx')
+    const overview = read('src/app/opdrachten/page.tsx')
 
-    expect(intakeOverview).toContain('Uw opdrachten')
-    expect(publishedOverview).toContain('Gepubliceerde opdrachten')
-    expect(publishedOverview).toContain("{ value: 'active', label: 'Actief' }")
-    expect(publishedOverview).not.toContain('Mijn opdrachten')
+    expect(component).not.toContain("href: '/hulpvragen' as const")
+    expect(overview).toContain('Mijn opdrachten')
+    expect(overview).not.toContain('Gepubliceerde opdrachten')
   })
 })

@@ -43,8 +43,7 @@ describe('gedeelde headercontext', () => {
         label: 'WERK',
         links: [
           { href: '/dashboard', label: 'Dashboard' },
-          { href: '/hulpvragen', label: 'Opdrachten' },
-          { href: '/opdrachten', label: 'Gepubliceerde opdrachten' },
+          { href: '/opdrachten', label: 'Opdrachten' },
           { href: '/adviesdossiers', label: 'Adviesdossiers' },
         ],
       },

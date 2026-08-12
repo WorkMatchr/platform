@@ -74,8 +74,7 @@ export function buildHeaderViewModel(
               ...(organization ? [{ href: '/dashboard', label: 'Dashboard' }] : []),
               ...(supportsClientWork
                 ? [
-                    { href: '/hulpvragen', label: 'Opdrachten' },
-                    { href: '/opdrachten', label: 'Gepubliceerde opdrachten' },
+                    { href: '/opdrachten', label: 'Opdrachten' },
                     { href: '/adviesdossiers', label: 'Adviesdossiers' },
                   ]
                 : []),

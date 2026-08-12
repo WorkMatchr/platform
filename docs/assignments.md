@@ -49,10 +49,11 @@ Nieuwe intakes kunnen vraagsetversie 2 gebruiken. De conversieservice leest daar
 
 ## Routes
 
+- `/opdrachten`: canonieke pagina **Mijn opdrachten**. Deze combineert uitsluitend in de presentatie de bestaande, afzonderlijk geautoriseerde intake- en opdrachtoverzichten. De rechterkolom hergebruikt de bestaande startactie voor een nieuwe hulpvraag;
+- `/hulpvragen`: server-side compatibiliteitsredirect naar `/opdrachten`. Nieuwe en bestaande intake-detailroutes onder `/hulpvragen/...` blijven ongewijzigd beschikbaar;
 - `/hulpvragen/[intakeId]/controle`: volledige opdrachtcontrole, ontbrekende onderdelen, bewerklinks en rolafhankelijke publicatieactie;
 - `/hulpvragen/[intakeId]/indienen`: compatibiliteitsredirect naar het controleoverzicht; bevat geen afzonderlijke bevestigingshandeling meer;
 - `/opdrachten/[assignmentId]/aangemaakt`: herlaadbare succesbevestiging voor een geautoriseerde gebruiker;
-- `/opdrachten`: opdrachten van de actieve organisatie met filters voor alle, concept en geannuleerd;
 - `/opdrachten/[assignmentId]`: read-only opdrachtgegevens, bronintake, statusgeschiedenis en revisie-informatie.
 - `/opdrachten/[assignmentId]/bewerken`: bewerken van uitsluitend toegestane zakelijke velden van een `DRAFT`-opdracht.
 

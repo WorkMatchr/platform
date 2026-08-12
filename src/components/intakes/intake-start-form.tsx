@@ -9,10 +9,14 @@ export function IntakeStartForm({
   action,
   organizationId,
   knowledgeContextId,
+  label = 'Waarbij heeft uw organisatie hulp nodig?',
+  helpText = 'Beschrijf kort wat er speelt. Vermeld geen namen, medische gegevens, BSN’s, wachtwoorden of andere vertrouwelijke persoonsgegevens.',
 }: {
   action: (state: IntakeActionState, formData: FormData) => Promise<IntakeActionState>
   organizationId: string
   knowledgeContextId?: string
+  label?: string
+  helpText?: string
 }) {
   const [state, formAction, pending] = useActionState(action, {})
   const formRef = useRef<HTMLFormElement>(null)
@@ -30,11 +34,10 @@ export function IntakeStartForm({
       {state.message && <StatusMessage error>{state.message}</StatusMessage>}
       <div className={state.message ? 'mt-6' : ''}>
         <label htmlFor="freeText" className="font-semibold text-brand-dark">
-          Waarbij heeft uw organisatie hulp nodig? <span aria-hidden="true">*</span>
+          {label} <span aria-hidden="true">*</span>
         </label>
         <p id="freeText-help" className="mt-2 text-sm text-text-secondary">
-          Beschrijf kort wat er speelt. Vermeld geen namen, medische gegevens, BSN’s, wachtwoorden of andere
-          vertrouwelijke persoonsgegevens.
+          {helpText}
         </p>
         <textarea
           id="freeText"

@@ -46,7 +46,7 @@ export function MarketplaceDashboard({ dashboard }: { dashboard: MarketplaceDash
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {[
             { label: 'Actie nodig', value: dashboard.summary.actionRequired, href: '/opdrachten' as const },
-            { label: 'Nog invullen', value: dashboard.summary.concepts, href: '/hulpvragen' as const },
+            { label: 'Nog invullen', value: dashboard.summary.concepts, href: '/opdrachten' as const },
             { label: 'Gepubliceerd', value: dashboard.summary.published, href: '/opdrachten' as const },
             { label: 'Ontvangen offertes', value: dashboard.summary.submittedOffers, href: '/opdrachten' as const },
             { label: 'Actieve adviesdossiers', value: dashboard.summary.activeAdviceDossiers, href: '/adviesdossiers' as const },
@@ -74,7 +74,7 @@ export function MarketplaceDashboard({ dashboard }: { dashboard: MarketplaceDash
         </ul>
       </Card>
       <div className="flex flex-wrap gap-3">
-        <LinkButton href="/hulpvragen">Opdrachten</LinkButton>
+        <LinkButton href="/opdrachten">Opdrachten</LinkButton>
         <LinkButton href="/adviesdossiers" variant="outline">Adviesdossiers</LinkButton>
         <LinkButton href="/notificaties" variant="outline">Notificaties</LinkButton>
       </div>
