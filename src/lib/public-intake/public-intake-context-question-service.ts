@@ -19,10 +19,13 @@ function toView(question: {
   answerType: PublicIntakeAnswerType
   category: string
   sequence: number
-  source: 'AI_CONTEXT_PLANNER'
+  source: string
   createdAt: Date
 }): PublicIntakeContextQuestionView {
-  return question
+  if (question.source !== 'AI_CONTEXT_PLANNER') {
+    throw new Error('PUBLIC_INTAKE_CONTEXT_QUESTION_SOURCE_INVARIANT')
+  }
+  return { ...question, source: 'AI_CONTEXT_PLANNER' }
 }
 
 /**

@@ -72,4 +72,18 @@ describe('public intake context-question persistence', () => {
     expect(result[0]?.textSnapshot).toBe('Historische vraagtekst')
     expect(mocks.createMany).not.toHaveBeenCalled()
   })
+
+  it('fails closed for an unexpected persisted source value', async () => {
+    const existing = Array.from({ length: 5 }, (_, index) => ({
+      questionKey: `context_${index}`, catalogVersion: 'ai-context-questions/1.0.0',
+      textSnapshot: 'Historische vraagtekst', answerType: 'OPTION', category: 'WORK',
+      sequence: index + 1, source: index === 0 ? 'UNEXPECTED_SOURCE' : 'AI_CONTEXT_PLANNER', createdAt: new Date(),
+    }))
+    mocks.findMany.mockResolvedValue(existing)
+
+    await expect(ensurePublicIntakeAIContextQuestions({
+      draftId: '00000000-0000-0000-0000-000000000001', originalInput: 'Rugklachten tijdens het werk.',
+      classification, answeredQuestionKeys: [], fallbackQuestionWasAsked: false,
+    })).rejects.toThrow('PUBLIC_INTAKE_CONTEXT_QUESTION_SOURCE_INVARIANT')
+  })
 })
