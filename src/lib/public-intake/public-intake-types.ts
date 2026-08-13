@@ -14,7 +14,7 @@ export type PublicIntakeAnswerView = {
   questionVersion: number
   answerType: PublicIntakeAnswerType
   disposition: PublicIntakeAnswerDisposition
-  source: 'AI_CONTEXT_PLANNER'
+  source: PublicIntakeAnswerSource
   version: number
   value: string | number | boolean | null
 }
@@ -26,7 +26,7 @@ export type PublicIntakeContextQuestionView = {
   answerType: PublicIntakeAnswerType
   category: string
   sequence: number
-  source: PublicIntakeAnswerSource
+  source: 'AI_CONTEXT_PLANNER'
   createdAt: Date
 }
 
