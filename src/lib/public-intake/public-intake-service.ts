@@ -31,6 +31,7 @@ import {
   type RecordPublicIntakeAnswerInput,
 } from './public-intake-validation'
 import { resolveActiveKnowledgeContext } from '@/content/knowledge/knowledge-contexts'
+import { getAIContextQuestion } from '@/lib/ai-intake-classifier/ai-context-question-catalog'
 
 type Transaction = Prisma.TransactionClient
 
@@ -75,6 +76,19 @@ const publicDraftSelect = {
       booleanValue: true,
       dateValue: true,
       periodValue: true,
+    },
+  },
+  contextQuestions: {
+    orderBy: { sequence: 'asc' as const },
+    select: {
+      questionKey: true,
+      catalogVersion: true,
+      textSnapshot: true,
+      answerType: true,
+      category: true,
+      sequence: true,
+      source: true,
+      createdAt: true,
     },
   },
 } satisfies Prisma.PublicIntakeDraftSelect
@@ -233,7 +247,7 @@ async function loadPublicView(
     where: { id: draftId },
     select: publicDraftSelect,
   })
-  const { id, answers, knowledgeContextId, knowledgeContextVersion, knowledgeSourceRoute, knowledgeSuggestedCategory, ...draftView } = draft
+  const { id, answers, contextQuestions, knowledgeContextId, knowledgeContextVersion, knowledgeSourceRoute, knowledgeSuggestedCategory, ...draftView } = draft
   const currentContext = resolveActiveKnowledgeContext(knowledgeContextId)
   const view = {
     ...draftView,
@@ -256,6 +270,7 @@ async function loadPublicView(
       version: answer.version,
       value: answerValue(answer),
     })),
+    contextQuestions,
   }
 
   return {
@@ -423,7 +438,7 @@ export async function recordPublicIntakeAnswer(
 ): Promise<PublicIntakeDraftView> {
   const answer = normalizePublicIntakeAnswer(rawInput)
   const at = options.at ?? new Date()
-  const answerSource = options.answerSource ?? 'USER_INPUT'
+  const requestedAnswerSource = options.answerSource ?? 'USER_INPUT'
 
   try {
     const result = await getPrisma().$transaction(
@@ -433,6 +448,22 @@ export async function recordPublicIntakeAnswer(
         if (TERMINAL_OR_LATER_PHASES.includes(access.session.draft.phase)) {
           throw new PublicIntakeServiceError('INVALID_PHASE')
         }
+
+        const plannedContextQuestion = await transaction.publicIntakeContextQuestion.findUnique({
+          where: {
+            draftId_questionKey: {
+              draftId: access.session.draftId,
+              questionKey: answer.questionKey,
+            },
+          },
+          select: { questionKey: true },
+        })
+        if (getAIContextQuestion(answer.questionKey) && !plannedContextQuestion) {
+          throw new PublicIntakeServiceError('VALIDATION_ERROR')
+        }
+        const answerSource = plannedContextQuestion
+          ? 'AI_CONTEXT_PLANNER'
+          : requestedAnswerSource
 
         const current = await transaction.publicIntakeAnswer.findUnique({
           where: {

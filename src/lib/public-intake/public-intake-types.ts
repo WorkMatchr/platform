@@ -14,9 +14,20 @@ export type PublicIntakeAnswerView = {
   questionVersion: number
   answerType: PublicIntakeAnswerType
   disposition: PublicIntakeAnswerDisposition
-  source: PublicIntakeAnswerSource
+  source: 'AI_CONTEXT_PLANNER'
   version: number
   value: string | number | boolean | null
+}
+
+export type PublicIntakeContextQuestionView = {
+  questionKey: string
+  catalogVersion: string
+  textSnapshot: string
+  answerType: PublicIntakeAnswerType
+  category: string
+  sequence: number
+  source: PublicIntakeAnswerSource
+  createdAt: Date
 }
 
 export type PublicIntakeDraftView = {
@@ -40,6 +51,7 @@ export type PublicIntakeDraftView = {
   lastInteractionAt: Date
   expiresAt: Date
   answers: PublicIntakeAnswerView[]
+  contextQuestions?: readonly PublicIntakeContextQuestionView[]
   guidance: PublicIntakeGuidanceHandoff
   aiClassification?: AIClassifierOutput | null
   adviceDossier?: {

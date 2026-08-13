@@ -5,6 +5,15 @@ import {
 import type { AIClassifierOutput, AIIntakeSubjectCode } from '@/lib/ai-intake-classifier/ai-classifier-contract'
 import { resolveActiveKnowledgeContext } from '@/content/knowledge/knowledge-contexts'
 import type { PublicIntakeDraftView } from './public-intake-types'
+import { buildPublicIntakeGuidanceHandoff } from './public-intake-guidance-handoff'
+import { ensurePublicIntakeAIContextQuestions } from './public-intake-context-question-service'
+
+function withRefreshedGuidance(draft: PublicIntakeDraftView): PublicIntakeDraftView {
+  if (!draft.id) return draft
+  const { guidance: _guidance, ...snapshot } = draft
+  void _guidance
+  return { ...draft, guidance: buildPublicIntakeGuidanceHandoff(draft.id, snapshot) }
+}
 
 const contextCategorySubjects: Readonly<Record<string, AIIntakeSubjectCode>> = Object.freeze({
   RIE: 'RIE',
@@ -47,6 +56,21 @@ function selectedTopic(draft: PublicIntakeDraftView) {
   )
 }
 
+async function withPersistedContextQuestions(
+  draft: PublicIntakeDraftView,
+  classification: AIClassifierOutput | null,
+): Promise<PublicIntakeDraftView> {
+  if (!draft.id || !draft.originalInput || !classification) return draft
+  const contextQuestions = await ensurePublicIntakeAIContextQuestions({
+    draftId: draft.id,
+    originalInput: draft.originalInput,
+    classification,
+    answeredQuestionKeys: draft.answers.map((answer) => answer.questionKey),
+    fallbackQuestionWasAsked: draft.answers.some((answer) => answer.questionKey === 'guidance_topic'),
+  })
+  return { ...draft, contextQuestions }
+}
+
 export async function enrichPublicIntakeDraftWithAIClassification(
   draft: PublicIntakeDraftView,
 ): Promise<PublicIntakeDraftView> {
@@ -66,16 +90,17 @@ export async function enrichPublicIntakeDraftWithAIClassification(
       return draft
     }
 
-    return {
+    return withRefreshedGuidance(await withPersistedContextQuestions({
       ...draft,
       aiClassification: classification,
-    }
+    }, classification))
   }
 
   const result = await classifyAIIntakeWithCache(draft.originalInput!)
 
-  return {
+  const classification = applyKnowledgeContextSupport(draft, result.classification)
+  return withRefreshedGuidance(await withPersistedContextQuestions({
     ...draft,
-    aiClassification: applyKnowledgeContextSupport(draft, result.classification),
-  }
+    aiClassification: classification,
+  }, classification))
 }
