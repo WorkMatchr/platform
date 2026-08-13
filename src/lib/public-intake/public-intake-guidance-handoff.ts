@@ -75,10 +75,17 @@ function situationCode(draft: PublicIntakeDraftSnapshot): string {
       typeof answer.value === 'string',
   )
 
+  const aiSubject = draft.aiClassification?.confidence === 'HIGH'
+    ? draft.aiClassification.primarySubject
+    : null
+  const aiSituation = aiSubject
+    ? GUIDANCE_TOPIC_SITUATION_CODES[aiSubject]
+    : null
+
   return topicAnswer
     ? (GUIDANCE_TOPIC_SITUATION_CODES[topicAnswer.value as string] ??
         'UNSUPPORTED')
-    : 'UNCLASSIFIED'
+    : (aiSituation ?? 'UNCLASSIFIED')
 }
 
 function guidanceSource(

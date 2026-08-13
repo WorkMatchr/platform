@@ -376,6 +376,7 @@ enum PublicIntakeAnswerSource {
   AI_CONFIRMED
   USER_CORRECTED
   FALLBACK_SELECTION
+  AI_CONTEXT_PLANNER
 }
 
 enum PublicIntakeEventType {
@@ -2519,6 +2520,7 @@ model PublicIntakeDraft {
   updatedAt                  DateTime                     @updatedAt @db.Timestamptz(3)
   session                    PublicIntakeSession?
   answers                    PublicIntakeAnswer[]
+  contextQuestions           PublicIntakeContextQuestion[]
   answerRevisions            PublicIntakeAnswerRevision[]
   events                     PublicIntakeEvent[]
   adviceDossier              AdviceDossier?
@@ -2527,6 +2529,24 @@ model PublicIntakeDraft {
   @@index([phase, lastInteractionAt])
   @@index([expiresAt])
   @@index([createdAt])
+}
+
+model PublicIntakeContextQuestion {
+  id             String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  draftId        String                 @db.Uuid
+  questionKey    String                 @db.VarChar(100)
+  catalogVersion String                 @db.VarChar(100)
+  textSnapshot   String                 @db.VarChar(500)
+  answerType     PublicIntakeAnswerType
+  category       String                 @db.VarChar(50)
+  sequence       Int
+  source         String                 @default("AI_CONTEXT_PLANNER") @db.VarChar(50)
+  createdAt      DateTime               @default(now()) @db.Timestamptz(3)
+  draft          PublicIntakeDraft      @relation(fields: [draftId], references: [id], onDelete: Restrict)
+
+  @@unique([draftId, questionKey])
+  @@unique([draftId, sequence])
+  @@index([draftId, createdAt])
 }
 
 model PublicIntakeSession {

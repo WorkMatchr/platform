@@ -3,6 +3,7 @@ import type {
   PublicIntakeEntryPoint,
 } from '@/generated/prisma/client'
 import type { PublicIntakeAnswerView } from './public-intake-types'
+import { aiContextQuestionCatalog } from '@/lib/ai-intake-classifier/ai-context-question-catalog'
 import type {
   RecognizableRequestKey,
   RecordPublicIntakeAnswerInput,
@@ -102,6 +103,15 @@ export const publicIntakePrototypeQuestions = [
       { label: 'Iets anders', value: 'OTHER', disposition: 'ANSWERED' },
     ],
   },
+  ...aiContextQuestionCatalog.map((question) => ({
+    questionKey: question.questionKey,
+    questionVersion: 1 as const,
+    legend: question.text,
+    explanation: 'Deze informatie helpt om uw situatie beter te begrijpen.',
+    decisionPurpose: 'Aanvullende feitelijke context voor uw hulpvraag.',
+    inputKind: 'OPTIONS' as const,
+    options: [...question.options.map((value) => ({ label: value, value, disposition: 'ANSWERED' as const })), { label: 'Dat weet ik niet', disposition: 'UNKNOWN' as const }],
+  })),
   {
     questionKey: 'rie_has_employees',
     questionVersion: 1,

@@ -73,6 +73,23 @@ export const publicIntakeQuestions = [
       order: 1,
     },
   },
+  ...([
+    ['context_work_activity', ['Vooral lichamelijk werk', 'Vooral beeldscherm- of kantoorwerk', 'Een combinatie', 'Iets anders']],
+    ['context_physical_load', ['Tillen of dragen', 'Duwen of trekken', 'Repeterend werk', 'Langdurig zitten of staan', 'Iets anders']],
+    ['context_affected_scope', ['Bij één medewerker', 'Bij meerdere medewerkers', 'Dat weet ik niet']],
+    ['context_existing_investigation', ['Ja', 'Nee', 'Dat weet ik niet']],
+    ['context_urgency', ['Ja', 'Nee', 'Dat weet ik niet']],
+  ] as readonly (readonly [string, readonly string[]])[]).map(([questionKey, options], index): PublicIntakeQuestionDefinition => ({
+    questionKey,
+    version: 1,
+    purpose: 'CLARIFICATION' as const,
+    answerType: 'OPTION' as const,
+    requiredForSubmission: false,
+    canSkip: true,
+    decisionPurpose: 'Alleen aanvullende feitelijke context voor de bestaande adviesregels vastleggen.',
+    validation: { options },
+    decision: { enabled: false, required: false, optional: true, dependsOn: [], visibleWhen: [], repeatIfUnknown: false, category: 'SITUATION' as const, order: 2 + index },
+  })),
   {
     questionKey: 'rie_has_employees',
     version: 1,

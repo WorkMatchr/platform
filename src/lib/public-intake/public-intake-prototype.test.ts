@@ -39,6 +39,11 @@ describe('publieke intakepresentatie', () => {
   it('bevat voor iedere actieve beslisvraag één unieke presentatie', () => {
     expect(publicIntakePrototypeQuestions.map((question) => question.questionKey)).toEqual([
       'guidance_topic',
+      'context_work_activity',
+      'context_physical_load',
+      'context_affected_scope',
+      'context_existing_investigation',
+      'context_urgency',
       'rie_has_employees',
       'incident_injury_occurred',
       'hazardous_substances_storage',

@@ -244,11 +244,15 @@ export function PublicIntakeWorkspace({
   const firstQuestionControlRef = useRef<HTMLInputElement>(null)
   const confirmationContainerRef = useRef<HTMLElement>(null)
   const clarification = draft.guidance.clarification
-  const nextQuestionKey = clarification.nextQuestion?.key ?? null
-  const currentStep = clarification.isComplete ? 'SUMMARY' : 'SITUATION'
+  const nextContextQuestion = (draft.contextQuestions ?? []).find(
+    (question) => !draft.answers.some((answer) => answer.questionKey === question.questionKey),
+  )
+  const nextQuestionKey = nextContextQuestion?.questionKey ?? clarification.nextQuestion?.key ?? null
+  const currentStep = nextContextQuestion || !clarification.isComplete ? 'SITUATION' : 'SUMMARY'
   const isReadyForSummary =
-    draft.guidance.completion.status === 'COMPLETED_WITH_GUIDANCE' ||
-    draft.guidance.completion.status === 'COMPLETED_WITH_SAFE_FALLBACK'
+    !nextContextQuestion &&
+    (draft.guidance.completion.status === 'COMPLETED_WITH_GUIDANCE' ||
+      draft.guidance.completion.status === 'COMPLETED_WITH_SAFE_FALLBACK')
   const baseQuestion = getPublicIntakePrototypeQuestion(nextQuestionKey)
   const understanding =
     nextQuestionKey === 'guidance_topic'
@@ -264,7 +268,9 @@ export function PublicIntakeWorkspace({
           explanation:
             'Kies het onderwerp dat het beste bij uw vraag past. Uw keuze vervangt ons voorstel.',
         }
-      : baseQuestion
+      : baseQuestion && nextContextQuestion
+        ? { ...baseQuestion, legend: nextContextQuestion.textSnapshot }
+        : baseQuestion
 
   const answeredQuestions = useMemo(
     () => draft.answers.filter((answer) => getPublicIntakePrototypeQuestion(answer.questionKey)),

@@ -19,6 +19,17 @@ export type PublicIntakeAnswerView = {
   value: string | number | boolean | null
 }
 
+export type PublicIntakeContextQuestionView = {
+  questionKey: string
+  catalogVersion: string
+  textSnapshot: string
+  answerType: PublicIntakeAnswerType
+  category: string
+  sequence: number
+  source: 'AI_CONTEXT_PLANNER'
+  createdAt: Date
+}
+
 export type PublicIntakeDraftView = {
   id?: string
   phase: PublicIntakePhase
@@ -40,6 +51,7 @@ export type PublicIntakeDraftView = {
   lastInteractionAt: Date
   expiresAt: Date
   answers: PublicIntakeAnswerView[]
+  contextQuestions?: readonly PublicIntakeContextQuestionView[]
   guidance: PublicIntakeGuidanceHandoff
   aiClassification?: AIClassifierOutput | null
   adviceDossier?: {
