@@ -84,6 +84,10 @@ export type IntakeDetailView = {
     shortLabel: string
     suggestedCategory: string | null
   } | null
+  adviceDossierHandoff: {
+    dossierCode: string
+    subject: string
+  } | null
   updatedAt: string
   progress: IntakeProgress
   questions: IntakeQuestionView[]
@@ -169,6 +173,12 @@ export async function getIntakeDetail(userId: string, intakeId: string): Promise
         knowledgeContextVersion: true,
         knowledgeSourceRoute: true,
         knowledgeSuggestedCategory: true,
+        adviceDossierHandoff: {
+          select: {
+            dossierCodeSnapshot: true,
+            subjectSnapshot: true,
+          },
+        },
         updatedAt: true,
         createdByUser: { select: { displayName: true } },
         clientOrganization: {
@@ -251,6 +261,12 @@ export async function getIntakeDetail(userId: string, intakeId: string): Promise
             title: knowledgeContext.title,
             shortLabel: knowledgeContext.shortLabel,
             suggestedCategory: intake.knowledgeSuggestedCategory,
+          }
+        : null,
+      adviceDossierHandoff: intake.adviceDossierHandoff
+        ? {
+            dossierCode: intake.adviceDossierHandoff.dossierCodeSnapshot,
+            subject: intake.adviceDossierHandoff.subjectSnapshot,
           }
         : null,
       updatedAt: intake.updatedAt.toISOString(),

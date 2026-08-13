@@ -47,12 +47,10 @@ describe('Adviesdossier-interface en beveiliging', () => {
     expect(all).not.toContain('Vraag offerte aan')
   })
 
-  it('biedt een idempotente opdrachtactie vanuit een passend afgerond dossier', () => {
+  it('start vanuit een gereed dossier uitsluitend de bestaande opdrachtintake', () => {
     const detail = read('src/app/adviesdossiers/[dossierId]/page.tsx')
     expect(detail).toContain('Maak hiervan een opdracht')
-    expect(detail).toContain('Bekijk gekoppelde opdracht')
-    expect(detail).toContain('viewer.userId === dossier.ownerUserId')
-    expect(detail).toContain('primaryProfessionalRequirement')
-    expect(detail).toContain('/aanvragen/nieuw?dossierId=')
+    expect(detail).toContain('startAdviceDossierIntakeAction')
+    expect(detail).not.toContain('/aanvragen/nieuw?dossierId=')
   })
 })

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import type { ReactNode } from 'react'
 import type { AdviceDossierStatus } from '@/generated/prisma/client'
 import {
   adviceDossierStatusLabels,
@@ -12,12 +13,14 @@ export function AdviceDossierDetail({
   versionNumber,
   status,
   snapshot,
+  assignmentIntakeAction,
 }: {
   dossierCode: string
   createdAt: Date
   versionNumber: number
   status: AdviceDossierStatus
   snapshot: AdviceDossierSnapshot
+  assignmentIntakeAction?: ReactNode
 }) {
   return (
     <article className="rounded-card border border-border bg-surface p-5 sm:p-7 lg:p-8">
@@ -212,6 +215,19 @@ export function AdviceDossierDetail({
             genoemde deskundigheid helpen om de vraag gericht te
             bespreken.
           </p>
+          {assignmentIntakeAction && (
+            <div className="mt-5 rounded-control border border-border bg-page px-4 py-5">
+              <h3 className="text-lg font-bold text-brand-dark">
+                Professionele ondersteuning nodig?
+              </h3>
+              <p className="mt-2 text-text-secondary">
+                Maak van dit advies een opdracht. De informatie uit uw
+                Adviesdossier nemen we alvast mee, zodat u niet opnieuw
+                hoeft te beginnen.
+              </p>
+              {assignmentIntakeAction}
+            </div>
+          )}
         </section>
       </div>
 
