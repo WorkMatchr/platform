@@ -10,7 +10,10 @@ import {
   AdviceDossierError,
   getAdviceDossier,
 } from '@/lib/advice-dossiers/advice-dossier-service'
-import { changeAdviceDossierStatusAction } from '../actions'
+import {
+  changeAdviceDossierStatusAction,
+  startAdviceDossierIntakeAction,
+} from '../actions'
 
 export const metadata: Metadata = {
   title: 'WorkMatchr Adviesdossier',
@@ -71,30 +74,21 @@ export default async function AdviceDossierPage({
           versionNumber={dossier.currentVersionNumber}
           status={dossier.status}
           snapshot={dossier.currentVersion.snapshot}
+          assignmentIntakeAction={
+            !viewer.isPlatformAdministrator &&
+            viewer.organizationId === dossier.organizationId &&
+            ['ADVICE_READY', 'COMPLETED'].includes(dossier.status) ? (
+              <form
+                action={startAdviceDossierIntakeAction.bind(null, dossier.id)}
+                className="mt-4"
+              >
+                <Button type="submit">
+                  Maak hiervan een opdracht
+                </Button>
+              </form>
+            ) : undefined
+          }
         />
-
-        {dossier.status === 'COMPLETED' &&
-          viewer.userId === dossier.ownerUserId &&
-          dossier.currentVersion.snapshot.primaryProfessionalRequirement && (
-          <div className="mt-5 rounded-card border border-border bg-surface p-5">
-            <h2 className="text-xl font-bold text-brand-dark">
-              {dossier.request ? 'Gekoppelde opdracht' : 'Maak hiervan een opdracht'}
-            </h2>
-            <p className="mt-2 text-text-secondary">
-              {dossier.request
-                ? `Deze opdracht is al gekoppeld aan adviesdossier ${dossier.dossierCode}.`
-                : 'Zet de uitkomst van dit adviesdossier om in een opdracht en ontvang reacties van passende professionals.'}
-            </p>
-            <LinkButton
-              href={dossier.request
-                ? `/aanvragen/${dossier.request.id}/gepubliceerd`
-                : `/aanvragen/nieuw?dossierId=${dossier.id}`}
-              className="mt-4"
-            >
-              {dossier.request ? 'Bekijk gekoppelde opdracht' : 'Maak hiervan een opdracht'}
-            </LinkButton>
-          </div>
-        )}
 
         {dossier.status === 'ADVICE_READY' && (
           <div className="mt-5 flex flex-wrap gap-3 rounded-card border border-border bg-surface p-4">

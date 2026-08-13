@@ -74,6 +74,11 @@ export function IntakeReview({
             Laatst opgeslagen op {new Intl.DateTimeFormat('nl-NL', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(intake.updatedAt))}
           </p>
         </div>
+        {intake.adviceDossierHandoff && (
+          <p className="mt-5 rounded-control border border-success-border bg-success-subtle p-3 text-sm text-text-secondary">
+            Deze opdracht is gestart vanuit Adviesdossier {intake.adviceDossierHandoff.dossierCode}. De overgenomen gegevens blijven aan dat dossier gekoppeld; u kunt uw opdracht hier verder aanvullen.
+          </p>
+        )}
         <div className="mt-5"><IntakeProgress progress={intake.progress} /></div>
         <dl className="mt-5 grid gap-4 border-t border-border pt-5 sm:grid-cols-2">
           <div>

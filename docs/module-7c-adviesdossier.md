@@ -126,3 +126,9 @@ Bestaande `AdviceDossierVersion`-records worden niet gewijzigd. Detailpagina en 
 ### M7B.1-prioriteiten in de snapshot
 
 Nieuwe dossierversies bewaren één primaire en alle aanvullende en mogelijk relevante deskundigheden met hun expliciete prioriteit, reden en expertise. Hiervoor wordt het bestaande JSON-snapshotveld additief gebruikt; een Prismawijziging is niet nodig. Historische secundaire snapshots zonder prioriteit worden uitsluitend bij het lezen als `ADDITIONAL` geïnterpreteerd. Ze worden niet in-place aangepast. De online detailweergave en PDF lezen dezelfde immutable snapshot.
+
+### Adviesdossier naar opdrachtintake
+
+Een gereed Adviesdossier kan een bestaande opdrachtintake starten, maar publiceert nooit zelf een opdracht. De handoff maakt precies één reguliere `Intake` voor hetzelfde actieve opdrachtgeveraccount en legt daarnaast een immutable `AdviceDossierIntakeHandoff` vast. Die bevat uitsluitend de overgenomen zakelijke snapshot: dossiercode, oorspronkelijke hulpvraag, situatiesamenvatting, onderwerp, deskundigheidsrichting en beantwoorde contextvragen. Prompts, modelantwoorden, confidence, providerinformatie en cachegegevens worden niet meegenomen.
+
+De intake blijft de enige bewerkbare plaats. Aanpassingen daarin veranderen het Adviesdossier, de adviesversie en de handoffsnapshot niet. Een herhaalde actie heropent dezelfde gekoppelde intake; de unieke dossier-, versie- en intakerelaties voorkomen duplicaten. De actie valideert server-side zowel toegang tot het dossier als het bestaande recht om binnen de actieve opdrachtgeverorganisatie een intake te starten. Platformrollen verlenen geen opdrachtgeverrecht.

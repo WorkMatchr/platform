@@ -1118,6 +1118,7 @@ model User {
   readMarketplaceNotifications       MarketplaceNotification[]              @relation("MarketplaceNotificationReader")
   marketplaceAuditEvents             MarketplaceAuditEvent[]                @relation("MarketplaceAuditActor")
   ownedAdviceDossiers                AdviceDossier[]                        @relation("AdviceDossierOwner")
+  createdAdviceDossierIntakeHandoffs AdviceDossierIntakeHandoff[]           @relation("AdviceDossierIntakeHandoffCreator")
   adviceDossierEvents                AdviceDossierEvent[]                   @relation("AdviceDossierEventActor")
   requestEvents                      RequestEvent[]                         @relation("RequestEventActor")
   createdRequestInterests            RequestInterest[]                      @relation("RequestInterestCreator")
@@ -2678,6 +2679,7 @@ model AdviceDossier {
   sourcePublicIntakeDraft    PublicIntakeDraft?          @relation(fields: [sourcePublicIntakeDraftId], references: [id], onDelete: Restrict)
   versions                   AdviceDossierVersion[]
   events                     AdviceDossierEvent[]
+  intakeHandoff              AdviceDossierIntakeHandoff?
   request                    Request?
   marketplaceContactRequests MarketplaceContactRequest[]
 
@@ -2711,6 +2713,7 @@ model AdviceDossierVersion {
   createdAt                                  DateTime           @default(now()) @db.Timestamptz(3)
   adviceDossier                              AdviceDossier      @relation(fields: [adviceDossierId], references: [id], onDelete: Restrict)
   sourcePublicIntakeDraft                    PublicIntakeDraft? @relation(fields: [sourcePublicIntakeDraftId], references: [id], onDelete: Restrict)
+  intakeHandoff                              AdviceDossierIntakeHandoff?
 
   @@unique([adviceDossierId, versionNumber])
   @@unique([sourcePublicIntakeDraftId, sourceDraftVersion])
@@ -2734,6 +2737,29 @@ model AdviceDossierEvent {
   @@index([adviceDossierId, occurredAt])
   @@index([actorUserId, occurredAt])
   @@index([type, occurredAt])
+}
+
+model AdviceDossierIntakeHandoff {
+  id                                         String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  adviceDossierId                            String               @unique @db.Uuid
+  adviceDossierVersionId                     String               @unique @db.Uuid
+  intakeId                                   String               @unique @db.Uuid
+  createdByUserId                            String               @db.Uuid
+  dossierCodeSnapshot                        String               @db.VarChar(32)
+  originalHelpRequestSnapshot                String               @db.Text
+  situationSummarySnapshot                   String               @db.Text
+  subjectSnapshot                            String               @db.VarChar(200)
+  primaryProfessionalRequirementSnapshot     Json?                @db.JsonB
+  additionalProfessionalRequirementsSnapshot Json                 @db.JsonB
+  contextAnswersSnapshot                     Json                 @db.JsonB
+  createdAt                                  DateTime             @default(now()) @db.Timestamptz(3)
+  adviceDossier                              AdviceDossier        @relation(fields: [adviceDossierId], references: [id], onDelete: Restrict)
+  adviceDossierVersion                       AdviceDossierVersion @relation(fields: [adviceDossierVersionId], references: [id], onDelete: Restrict)
+  intake                                     Intake               @relation(fields: [intakeId], references: [id], onDelete: Restrict)
+  createdByUser                              User                 @relation("AdviceDossierIntakeHandoffCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+
+  @@index([createdByUserId, createdAt])
+  @@index([intakeId])
 }
 
 model RequestCounter {
@@ -3029,6 +3055,7 @@ model Intake {
   answers                    IntakeAnswer[]
   statusHistory              IntakeStatusHistory[]
   assignment                 Assignment?
+  adviceDossierHandoff       AdviceDossierIntakeHandoff?
 
   @@index([clientOrganizationId])
   @@index([createdByUserId])

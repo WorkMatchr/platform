@@ -85,4 +85,23 @@ describe('WorkMatchr Adviesdossier-detail', () => {
     expect(html).toContain('Milieudeskundige')
     expect(html).not.toContain('<table')
   })
+
+  it('plaatst de opdrachtstart als rustige vervolgstap wanneer die beschikbaar is', () => {
+    const html = renderToStaticMarkup(
+      <AdviceDossierDetail
+        dossierCode="WM-2026-000003"
+        createdAt={new Date('2026-07-29T12:00:00Z')}
+        versionNumber={1}
+        status="ADVICE_READY"
+        snapshot={adviceDossierSnapshotFixture}
+        assignmentIntakeAction={<button type="submit">Maak hiervan een opdracht</button>}
+      />,
+    )
+
+    expect(html).toContain('Professionele ondersteuning nodig?')
+    expect(html).toContain('Maak hiervan een opdracht')
+    expect(html.indexOf('Mogelijke vervolgstappen')).toBeLessThan(
+      html.indexOf('Professionele ondersteuning nodig?'),
+    )
+  })
 })

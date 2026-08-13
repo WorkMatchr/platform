@@ -107,6 +107,11 @@ export default async function IntakeCategoryPage({
           </div>
           <Heading as="h1" size="h2" className="mt-4">{getIntakeStepLabel(step.category, intake.questionnaireVersion)}</Heading>
           <p className="mt-3 text-text-secondary">Uw antwoorden worden automatisch bewaard voor {intake.organizationName}.</p>
+          {intake.adviceDossierHandoff && (
+            <p className="mt-5 rounded-control border border-success-border bg-success-subtle p-3 text-sm text-text-secondary" role="status">
+              We hebben uw hulpvraag en relevante context uit Adviesdossier {intake.adviceDossierHandoff.dossierCode} overgenomen. U kunt deze opdracht hieronder aanvullen en corrigeren.
+            </p>
+          )}
           {query.opgeslagen === '1' && (
             <p role="status" className="mt-5 rounded-control bg-success/10 p-3 text-success">De vorige stap is opgeslagen.</p>
           )}
