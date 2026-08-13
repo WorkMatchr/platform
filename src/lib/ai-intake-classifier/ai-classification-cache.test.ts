@@ -14,6 +14,7 @@ type StoredRecord = {
   classificationJson: unknown
   fallbackReason: string | null
   providerStatusCode: number | null
+  completedAt: Date | null
 }
 
 function createRepository(): {
@@ -36,6 +37,7 @@ function createRepository(): {
           classificationJson: null,
           fallbackReason: null,
           providerStatusCode: null,
+          completedAt: null,
         })
         return true
       },
@@ -46,7 +48,14 @@ function createRepository(): {
           classificationJson: result.classification,
           fallbackReason: result.fallbackReason,
           providerStatusCode: result.providerStatusCode,
+          completedAt: new Date(),
         })
+      },
+      async reclaimTechnicalFallback(input) {
+        const record = records.get(input.inputFingerprint)
+        if (!record || record.status !== 'COMPLETED' || record.completedAt?.getTime() !== input.completedAt?.getTime()) return false
+        records.set(input.inputFingerprint, { ...record, status: 'PROCESSING', classificationJson: null, fallbackReason: null, providerStatusCode: null, completedAt: null })
+        return true
       },
     },
   }
@@ -183,7 +192,7 @@ describe('AI Intake-classificatiecache', () => {
     expect(classify).toHaveBeenCalledTimes(1)
   })
 
-  it('bewaart een providerfallback zodat latere reads niet opnieuw proberen', async () => {
+  it('hergebruikt een tijdelijke providerfallback binnen de retrytermijn', async () => {
     const { repository } = createRepository()
     const fallback: SafeAIClassificationResult = {
       classification: null,
@@ -198,6 +207,7 @@ describe('AI Intake-classificatiecache', () => {
       logger: vi.fn(),
       classifierVersion: 'classifier/1',
       model: 'model/1',
+      now: () => 1_000,
     } as const
 
     expect(
@@ -212,6 +222,27 @@ describe('AI Intake-classificatiecache', () => {
         options,
       ),
     ).toEqual(fallback)
+    expect(classify).toHaveBeenCalledTimes(1)
+  })
+
+  it('classificeert een oud configuratiefallbackrecord opnieuw zodra configuratie beschikbaar is', async () => {
+    const { repository, records } = createRepository()
+    const helpRequest = 'Een fictieve hulpvraag met een eerdere configuratiefout.'
+    const fingerprint = createAIClassificationFingerprint(helpRequest, 'classifier/1', 'model/1')
+    records.set(fingerprint, { inputFingerprint: fingerprint, status: 'COMPLETED', classificationJson: null, fallbackReason: 'CONFIGURATION_MISSING', providerStatusCode: null, completedAt: new Date(1_000) })
+    const classify = vi.fn().mockResolvedValue(successfulResult)
+    await expect(classifyAIIntakeWithCache(helpRequest, { repository, classify, logger: vi.fn(), classifierVersion: 'classifier/1', model: 'model/1', now: () => 2_000 })).resolves.toEqual(successfulResult)
+    expect(classify).toHaveBeenCalledTimes(1)
+  })
+
+  it('laat precies één parallelle retry een verlopen providerfallback herclaimen', async () => {
+    const { repository, records } = createRepository()
+    const helpRequest = 'Een fictieve hulpvraag met een verlopen providerfout.'
+    const fingerprint = createAIClassificationFingerprint(helpRequest, 'classifier/1', 'model/1')
+    records.set(fingerprint, { inputFingerprint: fingerprint, status: 'COMPLETED', classificationJson: null, fallbackReason: 'PROVIDER_UNAVAILABLE', providerStatusCode: 503, completedAt: new Date(1_000) })
+    const classify = vi.fn(async () => { await new Promise((resolve) => setTimeout(resolve, 20)); return successfulResult })
+    const options = { repository, classify, logger: vi.fn(), classifierVersion: 'classifier/1', model: 'model/1', now: () => 1_000 + 5 * 60 * 1_000 } as const
+    await expect(Promise.all([classifyAIIntakeWithCache(helpRequest, options), classifyAIIntakeWithCache(helpRequest, options)])).resolves.toEqual([successfulResult, successfulResult])
     expect(classify).toHaveBeenCalledTimes(1)
   })
 

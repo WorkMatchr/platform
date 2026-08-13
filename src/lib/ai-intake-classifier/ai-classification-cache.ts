@@ -14,6 +14,7 @@ import { parseAIClassifierOutput } from './ai-classifier-validation'
 const CACHE_WAIT_INTERVAL_MS = 100
 const CACHE_WAIT_LIMIT_MS = 16_000
 const DEFAULT_MODEL = 'gpt-5.6-sol'
+export const AI_CLASSIFIER_TECHNICAL_RETRY_AFTER_MS = 5 * 60 * 1_000
 
 type ClassificationCacheRecord = Readonly<{
   inputFingerprint: string
@@ -21,6 +22,7 @@ type ClassificationCacheRecord = Readonly<{
   classificationJson: unknown
   fallbackReason: string | null
   providerStatusCode: number | null
+  completedAt: Date | null
 }>
 
 export type AIClassificationCacheRepository = Readonly<{
@@ -35,6 +37,10 @@ export type AIClassificationCacheRepository = Readonly<{
     inputFingerprint: string,
     result: SafeAIClassificationResult,
   ): Promise<void>
+  reclaimTechnicalFallback(input: Readonly<{
+    inputFingerprint: string
+    completedAt: Date | null
+  }>): Promise<boolean>
 }>
 
 type AIClassificationCacheLogEntry = Readonly<{
@@ -137,6 +143,7 @@ export const prismaAIClassificationCacheRepository: AIClassificationCacheReposit
           classificationJson: true,
           fallbackReason: true,
           providerStatusCode: true,
+          completedAt: true,
         },
       })
     },
@@ -177,7 +184,42 @@ export const prismaAIClassificationCacheRepository: AIClassificationCacheReposit
         throw new Error('AI_CLASSIFICATION_CACHE_COMPLETION_CONFLICT')
       }
     },
+    async reclaimTechnicalFallback(input) {
+      const reclaimed = await getPrisma().publicIntakeAIClassificationCache.updateMany({
+        where: {
+          inputFingerprint: input.inputFingerprint,
+          status: 'COMPLETED',
+          completedAt: input.completedAt,
+        },
+        data: {
+          status: 'PROCESSING',
+          classificationJson: Prisma.DbNull,
+          fallbackReason: null,
+          providerStatusCode: null,
+          completedAt: null,
+        },
+      })
+      return reclaimed.count === 1
+    },
   })
+
+function retryDelayForFallback(
+  fallbackReason: AIClassifierFallbackReason,
+): number {
+  return fallbackReason === 'CONFIGURATION_MISSING'
+    ? 0
+    : AI_CLASSIFIER_TECHNICAL_RETRY_AFTER_MS
+}
+
+function shouldRetryTechnicalFallback(
+  record: ClassificationCacheRecord,
+  result: SafeAIClassificationResult,
+  now: number,
+): boolean {
+  if (!result.fallbackUsed || !result.fallbackReason) return false
+  if (!record.completedAt) return true
+  return now - record.completedAt.getTime() >= retryDelayForFallback(result.fallbackReason)
+}
 
 async function waitForCompletion(
   repository: AIClassificationCacheRepository,
@@ -212,12 +254,14 @@ export async function classifyAIIntakeWithCache(
     logger?: AIClassificationCacheLogger
     classifierVersion?: string
     model?: string
+    now?: () => number
   }> = {},
 ): Promise<SafeAIClassificationResult> {
   const repository =
     options.repository ?? prismaAIClassificationCacheRepository
   const classify = options.classify ?? classifyAIIntakeSafely
   const logger = options.logger ?? defaultLogger
+  const now = options.now ?? Date.now
   const classifierVersion =
     options.classifierVersion ?? AI_INTAKE_CLASSIFIER_VERSION
   const provider = 'openai'
@@ -234,8 +278,23 @@ export async function classifyAIIntakeWithCache(
   try {
     const cached = await repository.find(inputFingerprint)
     if (cached?.status === 'COMPLETED') {
+      const cachedResult = resultFromRecord(cached)
+      if (shouldRetryTechnicalFallback(cached, cachedResult, now())) {
+        const reclaimed = await repository.reclaimTechnicalFallback({
+          inputFingerprint,
+          completedAt: cached.completedAt,
+        })
+        if (reclaimed) {
+          logger({ event: 'CACHE_MISS', classifierVersion, provider, model })
+          logger({ event: 'EXTERNAL_CALL', classifierVersion, provider, model })
+          const result = await classify(helpRequest)
+          await repository.complete(inputFingerprint, result)
+          return result
+        }
+        return waitForCompletion(repository, inputFingerprint)
+      }
       logger({ event: 'CACHE_HIT', classifierVersion, provider, model })
-      return resultFromRecord(cached)
+      return cachedResult
     }
     if (cached?.status === 'PROCESSING') {
       logger({ event: 'CACHE_HIT', classifierVersion, provider, model })

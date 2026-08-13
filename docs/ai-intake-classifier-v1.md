@@ -18,7 +18,7 @@ vrije hulpvraag
 → deterministische Guidance Engine
 ```
 
-Alleen het expliciet opgeslagen antwoord op `guidance_topic` wordt later een feit in de deterministische keten. De structured output wordt per fingerprint gecachet; de bron `AI_CONFIRMED`, `USER_CORRECTED` of `FALLBACK_SELECTION` wordt server-side in actuele antwoorddata en append-only revisies vastgelegd.
+Alleen het expliciet opgeslagen antwoord op `guidance_topic` wordt later een feit in de deterministische keten. Een geldige structured output wordt per fingerprint gecachet; de bron `AI_CONFIRMED`, `USER_CORRECTED` of `FALLBACK_SELECTION` wordt server-side in actuele antwoorddata en append-only revisies vastgelegd. Technische fallbacks zijn geen inhoudelijk resultaat: `CONFIGURATION_MISSING` wordt direct opnieuw geprobeerd zodra configuratie beschikbaar is; overige technische fallbacks worden hoogstens vijf minuten hergebruikt voordat één request de classificatie atomair opnieuw probeert.
 
 ## Providercontract
 
