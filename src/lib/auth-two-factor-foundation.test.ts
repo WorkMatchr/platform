@@ -14,8 +14,8 @@ describe('Better Auth two-factor foundation', () => {
     expect(source).toContain("issuer: 'WorkMatchr'")
     expect(source).toContain('trustDeviceMaxAge: 0')
     expect(source).toContain("storeBackupCodes: 'encrypted'")
-    expect(source).toContain('minPasswordLength: 12')
-    expect(source).toContain('maxPasswordLength: 128')
+    expect(source).toContain('minPasswordLength: 15')
+    expect(source).toContain('maxPasswordLength: 64')
   })
 
   it('registers the matching client plugin with the dedicated WorkMatchr challenge route', () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { runAuthClientRequest, runRegistrationRequest } from '@/lib/auth-form-request'
+import { runAuthClientRequest, runNewPasswordRequest, runRegistrationRequest } from '@/lib/auth-form-request'
 
 describe('authformulieraanvragen', () => {
   it('accepteert alleen een foutloze Better Auth-response', async () => {
@@ -25,5 +25,18 @@ describe('authformulieraanvragen', () => {
     await expect(runRegistrationRequest(async () => {
       throw new TypeError('Netwerk niet bereikbaar')
     })).resolves.toBe('technical_error')
+  })
+
+  it('classificeert een native HIBP-hit zonder foutdetails door te geven', async () => {
+    await expect(runNewPasswordRequest(async () => ({ error: { code: 'PASSWORD_COMPROMISED', status: 400 } }))).resolves.toBe('password_rejected')
+  })
+
+  it('faalt gesloten wanneer de breach-check niet bereikbaar is', async () => {
+    await expect(runNewPasswordRequest(async () => ({ error: { status: 500 } }))).resolves.toBe('password_check_unavailable')
+    await expect(runNewPasswordRequest(async () => { throw new TypeError('network') })).resolves.toBe('password_check_unavailable')
+  })
+
+  it('accepteert een veilige native HIBP-miss', async () => {
+    await expect(runNewPasswordRequest(async () => ({ error: null }))).resolves.toBe('accepted')
   })
 })

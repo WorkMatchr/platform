@@ -4,8 +4,9 @@ import { useState, type FormEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import { FieldError, StatusMessage, fieldClassName } from '@/components/auth/auth-shell'
 import { authClient } from '@/lib/auth-client'
-import { runAuthClientRequest } from '@/lib/auth-form-request'
+import { runAuthClientRequest, runNewPasswordRequest } from '@/lib/auth-form-request'
 import { resetPasswordSchema } from '@/lib/auth-validation'
+import { PASSWORD_CHECK_UNAVAILABLE_MESSAGE, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, PASSWORD_REJECTED_MESSAGE } from '@/lib/password-policy'
 
 const ACTIVATION_ERROR =
   'Uw account kon niet worden geactiveerd. De link is mogelijk verlopen. Vraag uw organisatie om de uitnodiging opnieuw te verzenden.'
@@ -35,10 +36,20 @@ export function ActivateAccountForm({
 
     setErrors({})
     setLoading(true)
-    const activationResult = await runAuthClientRequest(() => authClient.resetPassword({
+    const activationResult = await runNewPasswordRequest(() => authClient.resetPassword({
       newPassword: result.data.password,
       token: result.data.token,
     }))
+    if (activationResult === 'password_rejected') {
+      setLoading(false)
+      setMessage(PASSWORD_REJECTED_MESSAGE)
+      return
+    }
+    if (activationResult === 'password_check_unavailable') {
+      setLoading(false)
+      setMessage(PASSWORD_CHECK_UNAVAILABLE_MESSAGE)
+      return
+    }
     if (activationResult !== 'accepted') {
       setLoading(false)
       setMessage(ACTIVATION_ERROR)
@@ -68,8 +79,8 @@ export function ActivateAccountForm({
           name="password"
           type="password"
           autoComplete="new-password"
-          minLength={12}
-          maxLength={128}
+          minLength={PASSWORD_MIN_LENGTH}
+          maxLength={PASSWORD_MAX_LENGTH}
           required
           autoFocus
           className={fieldClassName}
@@ -85,8 +96,8 @@ export function ActivateAccountForm({
           name="passwordConfirmation"
           type="password"
           autoComplete="new-password"
-          minLength={12}
-          maxLength={128}
+          minLength={PASSWORD_MIN_LENGTH}
+          maxLength={PASSWORD_MAX_LENGTH}
           required
           className={fieldClassName}
           aria-invalid={Boolean(errors.passwordConfirmation?.[0])}

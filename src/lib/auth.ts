@@ -2,6 +2,7 @@ import { betterAuth } from 'better-auth'
 import { APIError, createAuthMiddleware, getSessionFromCtx } from 'better-auth/api'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
 import { twoFactor } from 'better-auth/plugins'
+import { haveIBeenPwned } from 'better-auth/plugins/haveibeenpwned'
 import { nextCookies } from 'better-auth/next-js'
 import { invitationActivationEmail, passwordResetEmail, sendAuthEmail, verificationEmail } from '@/lib/email'
 import { captureAuthEmailDelivery, getInvitationActivationEmailContext } from '@/lib/auth-email-delivery-context'
@@ -15,6 +16,11 @@ import {
 } from '@/lib/account-architecture/invitation-acceptance-service'
 import { AUTH_BASE_PATH } from '@/lib/auth-config'
 import { appendTwoFactorAuditEvent } from '@/lib/auth-two-factor-audit'
+import {
+  getPasswordPolicyViolation,
+  passwordPolicyMessage,
+  PASSWORD_REJECTED_MESSAGE,
+} from '@/lib/password-policy'
 
 const configuredAppUrl =
   process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
@@ -30,6 +36,32 @@ const authTrustedOrigins =
   process.env.NODE_ENV === 'development'
     ? [configuredAppUrl, 'http://localhost:*', 'http://127.0.0.1:*']
     : [configuredAppUrl]
+
+function passwordBreachCheckFailureAudit() {
+  return {
+    id: 'workmatchr-password-breach-check-failure-audit',
+    init(context: { password: { hash: (password: string) => Promise<string> } }) {
+      const hash = context.password.hash
+      return {
+        context: {
+          password: {
+            ...context.password,
+            async hash(password: string) {
+              try {
+                return await hash(password)
+              } catch (error) {
+                if ((error as { status?: unknown })?.status === 500) {
+                  console.error('PASSWORD_BREACH_CHECK_UNAVAILABLE')
+                }
+                throw error
+              }
+            },
+          },
+        },
+      }
+    },
+  }
+}
 
 export const auth = betterAuth({
   appName: 'WorkMatchr',
@@ -54,8 +86,8 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
-    minPasswordLength: 12,
-    maxPasswordLength: 128,
+    minPasswordLength: 15,
+    maxPasswordLength: 64,
     autoSignIn: false,
     revokeSessionsOnPasswordReset: AUTH_SESSION_POLICY.revokeSessionsOnPasswordReset,
     resetPasswordTokenExpiresIn: 3600,
@@ -108,6 +140,33 @@ export const auth = betterAuth({
   },
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
+      if (ctx.path === '/sign-up/email' || ctx.path === '/reset-password' || ctx.path === '/change-password' || ctx.path === '/set-password') {
+        const password = typeof ctx.body?.password === 'string'
+          ? ctx.body.password
+          : typeof ctx.body?.newPassword === 'string'
+            ? ctx.body.newPassword
+            : ''
+        const email = typeof ctx.body?.email === 'string' ? normalizeEmail(ctx.body.email) : undefined
+        const session = ctx.path === '/change-password' || ctx.path === '/set-password'
+          ? await getSessionFromCtx(ctx)
+          : null
+        const token = ctx.path === '/reset-password' && typeof ctx.body?.token === 'string' ? ctx.body.token : undefined
+        const resetVerification = token
+          ? await getPrisma().verification.findFirst({ where: { identifier: `reset-password:${token}` }, select: { value: true } })
+          : null
+        const passwordUserId = session?.user.id ?? resetVerification?.value
+        const passwordUser = passwordUserId
+          ? await getPrisma().user.findUnique({ where: { id: passwordUserId }, select: { email: true, displayName: true } })
+          : null
+        const violation = getPasswordPolicyViolation(password, {
+          email: passwordUser?.email ?? email,
+          displayName: passwordUser?.displayName ?? (typeof ctx.body?.name === 'string' ? ctx.body.name : undefined),
+        })
+        if (violation) {
+          throw new APIError('BAD_REQUEST', { code: 'PASSWORD_POLICY_REJECTED', message: passwordPolicyMessage(violation) })
+        }
+      }
+
       if (ctx.path === '/two-factor/disable') {
         const session = await getSessionFromCtx(ctx)
         const userId = session?.user.id
@@ -236,6 +295,11 @@ export const auth = betterAuth({
     },
   },
   plugins: [
+    haveIBeenPwned({
+      customPasswordCompromisedMessage: PASSWORD_REJECTED_MESSAGE,
+      paths: ['/sign-up/email', '/reset-password', '/change-password', '/set-password'],
+    }),
+    passwordBreachCheckFailureAudit(),
     twoFactor({
       issuer: 'WorkMatchr',
       // A zero max age prevents trusted-device verification records from being usable.

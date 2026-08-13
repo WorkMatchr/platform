@@ -63,7 +63,7 @@ Better Auth gebruikt `storage: database` en de Prisma-tabel `RateLimit`. Specifi
 
 ## Invoer en privacy
 
-E-mail wordt getrimd, naar lowercase genormaliseerd en begrensd. Wachtwoorden zijn 12–128 tekens. Naam, contactvelden en adressen kunnen persoonsgegevens zijn. Contactvelden zijn niet automatisch publiek; organisatielogo’s zijn publiek leesbaar. Logs bevatten geen volledige formulieren, adressen, telefoonnummers, e-mailadressen, bestandsinhoud of absolute opslagpaden. Juridische pagina’s, bewaartermijnen, auditlogging en productie-logbeleid blijven vóór livegang openstaande werkzaamheden.
+E-mail wordt getrimd, naar lowercase genormaliseerd en begrensd. Nieuwe wachtwoorden zijn 15–64 tekens en mogen wachtzinnen met spaties bevatten. Een centrale lokale denylist en Better Auths native HIBP-k-anonimitycontrole weigeren bekende, voorspelbare en gecompromitteerde wachtwoorden. Wanneer de externe breach-check tijdelijk niet beschikbaar is, wordt uitsluitend het instellen van een nieuw wachtwoord fail-closed geweigerd; bestaande sessies en logins blijven werken. Wachtwoorden, hashes, SHA-1-waarden, HIBP-prefixes en HIBP-responses worden niet gelogd of geaudit. Naam, contactvelden en adressen kunnen persoonsgegevens zijn. Contactvelden zijn niet automatisch publiek; organisatielogo’s zijn publiek leesbaar. Logs bevatten geen volledige formulieren, adressen, telefoonnummers, e-mailadressen, bestandsinhoud of absolute opslagpaden. Juridische pagina’s, bewaartermijnen, auditlogging en productie-logbeleid blijven vóór livegang openstaande werkzaamheden.
 
 ## Opdrachtvorming
 

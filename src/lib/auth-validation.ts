@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { newPasswordSchema } from '@/lib/password-policy'
 
 export const GENERIC_SIGN_IN_ERROR = 'De combinatie van e-mailadres en wachtwoord is niet correct.'
 export const GENERIC_RESET_CONFIRMATION =
@@ -11,7 +12,7 @@ export const GENERIC_AUTH_RATE_LIMIT_ERROR =
   'U hebt te veel pogingen gedaan. Probeer het later opnieuw.'
 
 const email = z.string().trim().max(254).email('Vul een geldig e-mailadres in.').transform((value) => value.toLowerCase())
-const password = z.string().min(12, 'Gebruik minimaal 12 tekens.').max(128, 'Gebruik maximaal 128 tekens.')
+const password = newPasswordSchema
 
 export const registrationSchema = z
   .object({

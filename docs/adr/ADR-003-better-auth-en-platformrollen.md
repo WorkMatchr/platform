@@ -13,7 +13,7 @@ WorkMatchr heeft veilige persoonlijke accounts nodig zonder het bestaande zakeli
 - De officiële Prisma-adapter gebruikt PostgreSQL en databasegebaseerde sessies.
 - Het bestaande `User` blijft de enige gebruikersbron; Better Auth `name` is gemapt op `displayName`.
 - `Session`, `Account`, `Verification` en `RateLimit` zijn afzonderlijke authmodellen.
-- E-mailverificatie is verplicht; wachtwoorden zijn minimaal 12 tekens.
+- E-mailverificatie is verplicht; nieuwe wachtwoorden zijn 15–64 tekens en worden centraal gecontroleerd op voorspelbare en gecompromitteerde waarden.
 - Resend is voorbereid als productieprovider; lokale consolemail is uitsluitend development-only.
 - Autorisatie vindt dicht bij server-side gegevensgebruik plaats.
 - Alleen platformrollen `USER` en `ADMIN` vallen binnen Module 4A.

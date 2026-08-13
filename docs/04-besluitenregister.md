@@ -39,7 +39,7 @@
 | B-033 | E-mailverificatie is verplicht voordat een sessie kan ontstaan. | Nieuwe accounts starten als `INVITED` en worden na verificatie `ACTIVE`. |
 | B-034 | Wachtwoordherstel gebruikt een eenmalige link van één uur. | Na reset worden bestaande sessies ingetrokken. |
 | B-035 | Sessies worden databasegebaseerd opgeslagen. | Sessies zijn centraal intrekbaar en statuscontrole blijft server-side. |
-| B-036 | Wachtwoorden hebben 12–128 tekens. | Hashing en verificatie worden volledig door Better Auth uitgevoerd. |
+| B-036 | Nieuwe wachtwoorden hebben 15–64 tekens. | Hashing en verificatie worden volledig door Better Auth uitgevoerd; lokale denylist en HIBP-k-anonimitycontrole gelden fail-closed bij een nieuw wachtwoord. |
 | B-037 | Autorisatie wordt dicht bij server-side gegevensgebruik uitgevoerd. | Clientchecks en proxy zijn niet de beveiligingsgrens. |
 | B-038 | `BLOCKED` en `ARCHIVED` krijgen geen toegang. | Nieuwe sessies worden geweigerd en bestaande sessies bij beveiligd gebruik ingetrokken. |
 | B-039 | E-mailadressen worden getrimd en naar lowercase genormaliseerd. | Dit gebeurt vóór opslag en in de registratievalidatie. |

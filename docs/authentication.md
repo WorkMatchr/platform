@@ -58,7 +58,11 @@ De accountkaart gebruikt op desktop extra beschikbare breedte, maar blijft op kl
 
 ### Wachtwoordherstel
 
-De aanvraag geeft altijd dezelfde neutrale bevestiging. De token is één uur geldig en eenmalig bruikbaar. Het nieuwe wachtwoord heeft 12–128 tekens. Better Auth trekt bestaande sessies in na een geslaagde reset.
+De aanvraag geeft altijd dezelfde neutrale bevestiging. De token is één uur geldig en eenmalig bruikbaar. Een nieuw wachtwoord heeft 15–64 tekens; spaties en wachtzinnen zijn toegestaan. Better Auth trekt bestaande sessies in na een geslaagde reset.
+
+### Wachtwoordbeleid
+
+Hetzelfde centrale wachtwoordbeleid geldt server-side voor registratie, activatie, reset en toekomstige wachtwoordwijzigingen. Bekende, voorspelbare en WorkMatchr-gerelateerde wachtwoorden worden geweigerd. Better Auths native Have I Been Pwned-plugin gebruikt uitsluitend de k-anonimity-rangecontrole: SHA-1 wordt lokaal berekend en alleen de eerste vijf tekens worden naar de range-API gestuurd. Wanneer die controle niet beschikbaar is, wordt een nieuw wachtwoord fail-closed geweigerd. Wachtwoorden, hashes, prefixes en range-responses worden niet gelogd of geaudit. Bestaande accounts hoeven hun huidige wachtwoord niet direct te wijzigen.
 
 ## Accountstatus
 
