@@ -22,6 +22,7 @@ import {
 } from './public-intake-context'
 import { PublicIntakeRestartDialog } from './public-intake-restart-dialog'
 import { ProfessionalRequirementList } from '@/components/advice-dossiers/professional-requirement-list'
+import { AdviceDossierReadyActions } from './advice-dossier-ready-actions'
 
 type PendingAnswer = {
   disposition: 'ANSWERED' | 'UNKNOWN' | 'SKIPPED'
@@ -548,12 +549,7 @@ export function PublicIntakeWorkspace({
                 {draft.adviceDossier.dossierCode}
               </span>
             </p>
-            <LinkButton
-              className="mt-4"
-              href={`/adviesdossiers/${draft.adviceDossier.id}`}
-            >
-              Bekijk uw Adviesdossier
-            </LinkButton>
+            <AdviceDossierReadyActions dossierId={draft.adviceDossier.id} />
           </section>
         )}
 

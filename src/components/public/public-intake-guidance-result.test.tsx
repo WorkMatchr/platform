@@ -10,6 +10,10 @@ vi.mock(
   }),
 )
 
+vi.mock('@/app/adviesdossiers/actions', () => ({
+  startAdviceDossierIntakeAction: vi.fn(),
+}))
+
 import type { GuidanceOutcome } from '@/lib/guidance/guidance-domain'
 import { buildPublicIntakeGuidanceHandoff } from '@/lib/public-intake/public-intake-guidance-handoff'
 import { presentPublicIntakeGuidance } from '@/lib/public-intake/public-intake-guidance-presentation'
@@ -116,6 +120,7 @@ describe('GuidanceOutcome-weergave', () => {
     )
     expect(source).toContain('isReadyForSummary && draft.adviceDossier &&')
     expect(source).toContain('<AnonymousAdviceSavePanel />')
+    expect(source).toContain('<AdviceDossierReadyActions dossierId={draft.adviceDossier.id} />')
   })
 
   it('toont geen technische codes, versies of provenance', () => {
