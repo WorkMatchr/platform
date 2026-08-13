@@ -8,6 +8,18 @@ import { authClient } from '@/lib/auth-client'
 import { GENERIC_SIGN_IN_ERROR, signInSchema } from '@/lib/auth-validation'
 import { getSafeReturnUrl } from '@/lib/safe-redirect'
 
+type TwoFactorRedirectResponse = {
+  twoFactorRedirect: true
+  twoFactorMethods: string[]
+}
+
+function getTwoFactorRedirectResponse(data: unknown): TwoFactorRedirectResponse | undefined {
+  if (!data || typeof data !== 'object') return undefined
+  const candidate = data as { twoFactorRedirect?: unknown; twoFactorMethods?: unknown }
+  if (candidate.twoFactorRedirect !== true || !Array.isArray(candidate.twoFactorMethods)) return undefined
+  return { twoFactorRedirect: true, twoFactorMethods: candidate.twoFactorMethods.filter((method): method is string => typeof method === 'string') }
+}
+
 export function LoginForm({ returnTo, accessDenied }: { returnTo?: string; accessDenied?: boolean }) {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string>()
@@ -21,7 +33,14 @@ export function LoginForm({ returnTo, accessDenied }: { returnTo?: string; acces
     const response = await authClient.signIn.email({ email: result.data.email, password: result.data.password, rememberMe: true })
     setLoading(false)
     if (response.error) return setMessage(response.error.status === 429 ? 'U hebt te veel pogingen gedaan. Probeer het later opnieuw.' : GENERIC_SIGN_IN_ERROR)
-    window.location.assign(getSafeReturnUrl(result.data.returnTo))
+    const destination = getSafeReturnUrl(result.data.returnTo, '/dashboard')
+    const twoFactorRedirect = getTwoFactorRedirectResponse(response.data)
+    if (twoFactorRedirect?.twoFactorMethods.includes('totp')) {
+      window.location.assign(`/tweestapsverificatie?returnTo=${encodeURIComponent(destination)}`)
+      return
+    }
+    if (twoFactorRedirect) return setMessage('Tweestapsverificatie kan momenteel niet worden gestart. Probeer het later opnieuw.')
+    window.location.assign(destination)
   }
 
   return <form onSubmit={submit} noValidate className="space-y-5">

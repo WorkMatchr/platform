@@ -4,6 +4,7 @@ import { TwoFactorChallengeForm } from '@/components/auth/two-factor-challenge-f
 
 export const metadata: Metadata = { title: 'Tweestapsverificatie | WorkMatchr', robots: { index: false, follow: false } }
 
-export default function TwoFactorChallengePage() {
-  return <AuthShell title="Tweestapsverificatie" intro="Vul de code uit uw authenticator-app in om veilig in te loggen."><TwoFactorChallengeForm /></AuthShell>
+export default async function TwoFactorChallengePage({ searchParams }: { searchParams: Promise<{ returnTo?: string }> }) {
+  const params = await searchParams
+  return <AuthShell title="Tweestapsverificatie" intro="Vul de code uit uw authenticator-app in om veilig in te loggen."><TwoFactorChallengeForm returnTo={params.returnTo} /></AuthShell>
 }

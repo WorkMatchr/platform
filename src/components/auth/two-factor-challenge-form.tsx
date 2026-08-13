@@ -4,8 +4,9 @@ import { useState, type FormEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import { StatusMessage, fieldClassName } from '@/components/auth/auth-shell'
 import { authClient } from '@/lib/auth-client'
+import { getSafeReturnUrl } from '@/lib/safe-redirect'
 
-export function TwoFactorChallengeForm() {
+export function TwoFactorChallengeForm({ returnTo }: { returnTo?: string }) {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string>()
   const [useRecoveryCode, setUseRecoveryCode] = useState(false)
@@ -23,7 +24,7 @@ export function TwoFactorChallengeForm() {
       : await authClient.twoFactor.verifyTotp({ code, trustDevice: false })
     setLoading(false)
     if (result.error) return setMessage('De ingevoerde code klopt niet of is verlopen. Probeer het opnieuw.')
-    window.location.assign('/dashboard')
+    window.location.assign(getSafeReturnUrl(returnTo, '/dashboard'))
   }
 
   return (

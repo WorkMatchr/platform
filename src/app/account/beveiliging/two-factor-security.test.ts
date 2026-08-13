@@ -35,9 +35,12 @@ describe('accountbeveiliging met TOTP', () => {
 
   it('rendert een aparte challenge zonder trusted-deviceoptie', () => {
     const challenge = read('src/components/auth/two-factor-challenge-form.tsx')
+    const login = read('src/components/auth/login-form.tsx')
     expect(challenge).toContain('authClient.twoFactor.verifyTotp')
     expect(challenge).toContain('authClient.twoFactor.verifyBackupCode')
     expect(challenge).toContain('trustDevice: false')
     expect(challenge).not.toContain('Dit apparaat vertrouwen')
+    expect(login).toContain('getTwoFactorRedirectResponse(response.data)')
+    expect(login).toContain('/tweestapsverificatie?returnTo=')
   })
 })

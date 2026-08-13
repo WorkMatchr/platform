@@ -48,7 +48,7 @@ Registratie normaliseert e-mail naar lowercase en valideert server-side accountt
 
 ### Login en logout
 
-Login vereist een geverifieerd, actief account. Fouten zijn generiek om accountenumeratie te voorkomen. Een lokale return-URL moet met `/` beginnen en mag geen externe of ambigue URL zijn. Beveiligde routes kunnen zo na login veilig terugkeren naar de bedoelde lokale pagina, waaronder de hulpvraagflow. Logout gebruikt Better Auths POST-endpoint en trekt de sessie in.
+Login vereist een geverifieerd, actief account. Fouten zijn generiek om accountenumeratie te voorkomen. Een lokale return-URL moet met `/` beginnen en mag geen externe of ambigue URL zijn. Beveiligde routes kunnen zo na login veilig terugkeren naar de bedoelde lokale pagina, waaronder de hulpvraagflow. Bij een Better Auth-respons met `twoFactorRedirect=true` gaat de browser eerst naar `/tweestapsverificatie`; de tijdelijke Better Auth-challenge blijft daarbij intact en de normale successredirect volgt pas na een geldige TOTP- of herstelcode. Logout gebruikt Better Auths POST-endpoint en trekt de sessie in.
 
 De dashboardheader toont de actuele gebruiker en actieve organisatie uit dezelfde servercontext als de pagina. Het accountmenu bevat `Mijn account`, `Mijn organisatie`, voor een actieve dienstverlenersorganisatie `Dienstverlenersprofiel`, en `Uitloggen`. Na logout volgt een volledige navigatie naar de publieke homepage; na een organisatiekeuze wordt de rootlayout opnieuw opgebouwd.
 
