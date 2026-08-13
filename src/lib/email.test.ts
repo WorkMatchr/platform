@@ -4,6 +4,7 @@ import {
   invitationActivationEmail,
   passwordResetEmail,
   roleChangeNotificationEmail,
+  twoFactorResetNotificationEmail,
   sendAuthEmail,
   verificationEmail,
 } from '@/lib/email'
@@ -53,6 +54,16 @@ describe('authenticatie-e-mails', () => {
     expect(email.text).toContain('opnieuw in')
     expect(email.text).toContain('contact op')
     expect(email.text).not.toContain('token=')
+    expect(email.developmentUrl).toBeUndefined()
+  })
+  it('maakt een tokenloze 2FA-resetmelding zonder interne resetdetails', () => {
+    const email = twoFactorResetNotificationEmail({
+      to: 'test@example.invalid', name: 'Testgebruiker', resetAt: new Date('2026-08-13T10:00:00.000Z'), platformRequired: true,
+    })
+    expect(email.subject).toBe('Uw tweestapsverificatie is gereset')
+    expect(email.text).toContain('opnieuw in')
+    expect(email.text).toContain('contact op')
+    expect(email.text).not.toMatch(/token|recovery|secret|reden|beheerdernaam/i)
     expect(email.developmentUrl).toBeUndefined()
   })
   it('faalt veilig in productie zonder e-mailprovider', async () => {

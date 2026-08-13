@@ -1,7 +1,7 @@
 import { Resend } from 'resend'
 
 export type AuthEmail = {
-  kind: 'INVITATION' | 'VERIFICATION' | 'PASSWORD_RESET' | 'ROLE_CHANGE_NOTIFICATION' | 'ADMIN_MESSAGE'
+  kind: 'INVITATION' | 'VERIFICATION' | 'PASSWORD_RESET' | 'ROLE_CHANGE_NOTIFICATION' | 'TWO_FACTOR_RESET_NOTIFICATION' | 'ADMIN_MESSAGE'
   to: string
   subject: string
   text: string
@@ -194,6 +194,30 @@ export function roleChangeNotificationEmail(input: {
     subject: `Uw rol binnen ${input.organizationName} is gewijzigd`,
     text: `Beste ${input.name},\n\nUw rol binnen ${input.organizationName} is op ${changedAt} gewijzigd van ${roleLabel(input.previousRole)} naar ${roleLabel(input.newRole)}. Uw actieve sessies zijn beëindigd; log opnieuw in om met de actuele bevoegdheden verder te gaan.\n\nWas deze wijziging onverwacht? Neem dan contact op met uw organisatie of via de contactmogelijkheid van WorkMatchr.`,
     html: `<p>Beste ${safeName},</p><p>Uw rol binnen <strong>${safeOrganization}</strong> is op ${changedAt} gewijzigd van <strong>${roleLabel(input.previousRole)}</strong> naar <strong>${roleLabel(input.newRole)}</strong>.</p><p>Uw actieve sessies zijn beëindigd. Log opnieuw in om met de actuele bevoegdheden verder te gaan.</p><p>Was deze wijziging onverwacht? Neem dan contact op met uw organisatie of via de contactmogelijkheid van WorkMatchr.</p>`,
+  }
+}
+
+export function twoFactorResetNotificationEmail(input: {
+  to: string
+  name: string
+  resetAt: Date
+  platformRequired: boolean
+}): AuthEmail {
+  const resetAt = new Intl.DateTimeFormat('nl-NL', {
+    dateStyle: 'long',
+    timeStyle: 'short',
+    timeZone: 'Europe/Amsterdam',
+  }).format(input.resetAt)
+  const safeName = escapeHtml(input.name)
+  const platformMessage = input.platformRequired
+    ? 'Stel tweestapsverificatie opnieuw in voordat u weer toegang krijgt tot platformbeheer.'
+    : 'U kunt tweestapsverificatie later opnieuw instellen via uw accountbeveiliging.'
+  return {
+    kind: 'TWO_FACTOR_RESET_NOTIFICATION',
+    to: input.to,
+    subject: 'Uw tweestapsverificatie is gereset',
+    text: `Beste ${input.name},\n\nUw tweestapsverificatie is op ${resetAt} door WorkMatchr-platformbeheer gereset. Uw eerdere tweestapsverificatie is niet meer actief. ${platformMessage}\n\nWas deze wijziging onverwacht? Neem dan contact op met WorkMatchr.`,
+    html: `<p>Beste ${safeName},</p><p>Uw tweestapsverificatie is op <strong>${escapeHtml(resetAt)}</strong> door WorkMatchr-platformbeheer gereset.</p><p>Uw eerdere tweestapsverificatie is niet meer actief. ${escapeHtml(platformMessage)}</p><p>Was deze wijziging onverwacht? Neem dan contact op met WorkMatchr.</p>`,
   }
 }
 

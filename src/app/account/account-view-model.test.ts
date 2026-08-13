@@ -106,7 +106,16 @@ describe('accountweergave van platform- en organisatierollen', () => {
     const pageSource = readFileSync(join(process.cwd(), 'src/app/account/page.tsx'), 'utf8')
 
     expect(model.email).toBe(longEmail)
-    expect(pageSource).toContain('grid-cols-[repeat(auto-fit,minmax(min(100%,16rem),1fr))]')
+    expect(pageSource).toContain('lg:grid-cols-[minmax(0,0.45fr)_minmax(0,0.55fr)]')
     expect(pageSource).toContain('[overflow-wrap:anywhere]')
+  })
+
+  it('ordent accountgegevens, organisatie en beveiliging in de afgesproken responsive volgorde', () => {
+    const pageSource = readFileSync(join(process.cwd(), 'src/app/account/page.tsx'), 'utf8')
+    expect(pageSource).toContain('Uw organisatie')
+    expect(pageSource).toContain('Tweestapsverificatie beheren')
+    expect(pageSource).toContain('Wachtwoord wijzigen')
+    expect(pageSource.indexOf('Persoonlijk account')).toBeLessThan(pageSource.indexOf('Uw organisatie'))
+    expect(pageSource.indexOf('Uw organisatie')).toBeLessThan(pageSource.indexOf('Beveiliging'))
   })
 })

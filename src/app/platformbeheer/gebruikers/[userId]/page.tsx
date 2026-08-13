@@ -38,7 +38,7 @@ export default async function PlatformUserDetailPage({
   return (
     <>
       <AdminPageHeader title={user.displayName ?? 'Naam niet ingevuld'} description={user.email} action={<StatusPill tone={user.status === 'ACTIVE' ? 'good' : user.status === 'BLOCKED' ? 'bad' : 'warning'}>{userStatusLabels[user.status]}</StatusPill>} />
-      {query.resultaat ? <p className="rounded-control border border-success-border bg-success-subtle px-4 py-3 text-sm">De beheeractie is uitgevoerd en vastgelegd.</p> : null}
+      {query.resultaat ? <p className={`rounded-control border px-4 py-3 text-sm ${query.resultaat === 'tweestapsverificatie-gereset-notificatie-mislukt' ? 'border-warning/40 bg-warning/10' : 'border-success-border bg-success-subtle'}`}>{query.resultaat === 'tweestapsverificatie-gereset-notificatie-mislukt' ? 'Tweestapsverificatie is gereset. De beveiligingsmelding kon mogelijk niet worden verzonden.' : 'De beheeractie is uitgevoerd en vastgelegd.'}</p> : null}
       {query.fout ? <p className="rounded-control border border-danger-border bg-danger-subtle px-4 py-3 text-sm">De beheeractie is niet uitgevoerd. Er zijn geen wijzigingen doorgevoerd. Controleer de gegevens en uw bevoegdheid en probeer het opnieuw.</p> : null}
       <AdminSection title="Beheeracties" description="Communicatie, toegang en notities blijven afzonderlijk en auditbaar.">
         <div className="grid gap-3 xl:grid-cols-2">

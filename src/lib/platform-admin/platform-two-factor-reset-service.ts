@@ -2,6 +2,7 @@ import 'server-only'
 
 import type { Prisma } from '@/generated/prisma/client'
 import { appendTwoFactorAuditEvent } from '@/lib/auth-two-factor-audit'
+import { AuthEmailDeliveryError, sendAuthEmail, twoFactorResetNotificationEmail } from '@/lib/email'
 import { getPrisma } from '@/lib/prisma'
 import { getPlatformOperatorContext } from './platform-admin-authorization'
 
@@ -34,7 +35,7 @@ export async function resetUserTwoFactor(input: {
   await getPlatformOperatorContext(input.actorUserId)
   const prisma = getPrisma()
 
-  return prisma.$transaction(async (transaction) => {
+  const reset = await prisma.$transaction(async (transaction) => {
     const actor = await transaction.user.findFirst({
       where: {
         id: input.actorUserId,
@@ -62,6 +63,8 @@ export async function resetUserTwoFactor(input: {
       where: { id: input.targetUserId },
       select: {
         id: true,
+        email: true,
+        displayName: true,
         status: true,
         twoFactorEnabled: true,
         memberships: {
@@ -145,8 +148,93 @@ export async function resetUserTwoFactor(input: {
       },
     })
 
-    return { targetUserId: target.id }
+    return {
+      targetUserId: target.id,
+      targetEmail: target.email,
+      targetName: target.displayName?.trim() || 'gebruiker',
+      platformRequired: Boolean(targetMembership),
+      resetAt: new Date(),
+    }
   }, { isolationLevel: 'Serializable' })
+
+  const notification = await notifyTwoFactorReset({
+    actorUserId: input.actorUserId,
+    targetUserId: reset.targetUserId,
+    targetEmail: reset.targetEmail,
+    targetName: reset.targetName,
+    platformRequired: reset.platformRequired,
+    resetAt: reset.resetAt,
+    idempotencyKey: input.idempotencyKey,
+  })
+
+  return { targetUserId: reset.targetUserId, notification }
+}
+
+async function notifyTwoFactorReset(input: {
+  actorUserId: string
+  targetUserId: string
+  targetEmail: string
+  targetName: string
+  platformRequired: boolean
+  resetAt: Date
+  idempotencyKey: string
+}): Promise<'SENT' | 'FAILED'> {
+  let delivery: Awaited<ReturnType<typeof sendAuthEmail>> | null = null
+  let failureCode: string | null = null
+  try {
+    delivery = await sendAuthEmail({
+      ...twoFactorResetNotificationEmail({
+        to: input.targetEmail,
+        name: input.targetName,
+        resetAt: input.resetAt,
+        platformRequired: input.platformRequired,
+      }),
+      idempotencyKey: `two-factor-reset-notification:${input.idempotencyKey}`,
+    })
+  } catch (error) {
+    failureCode = error instanceof AuthEmailDeliveryError ? error.code : 'EMAIL_DELIVERY_UNKNOWN'
+  }
+
+  const sent = Boolean(delivery)
+  try {
+    await getPrisma().$transaction(async (transaction) => {
+      const eventType = sent ? 'TWO_FACTOR_RESET_NOTIFICATION_SENT' : 'TWO_FACTOR_RESET_NOTIFICATION_FAILED'
+      const correlationId = `two-factor-reset:${input.idempotencyKey}`
+      await appendTwoFactorAuditEvent(transaction, {
+        eventType,
+        subjectUserId: input.targetUserId,
+        actorUserId: input.actorUserId,
+        reasonCode: 'PLATFORM_ADMIN_TWO_FACTOR_RESET_NOTIFICATION',
+        correlationId,
+        idempotencyKey: `${correlationId}:notification:${sent ? 'sent' : 'failed'}`,
+        metadata: {
+          transport: delivery?.transport ?? null,
+          providerMessageId: delivery?.messageId ?? null,
+          deliveryStatus: delivery?.status ?? 'FAILED',
+          failureCode,
+        },
+      })
+      await transaction.adminActionLog.create({
+        data: {
+          actorUserId: input.actorUserId,
+          action: eventType,
+          entityType: 'User',
+          entityId: input.targetUserId,
+          metadata: {
+            transport: delivery?.transport ?? null,
+            providerMessageId: delivery?.messageId ?? null,
+            deliveryStatus: delivery?.status ?? 'FAILED',
+            failureCode,
+            policyVersion: 'TWO_FACTOR_RESET_NOTIFICATION_V1',
+          },
+        },
+      })
+    }, { isolationLevel: 'Serializable' })
+  } catch {
+    // A delivery-audit outage never reverses an already committed security reset.
+    console.error('TWO_FACTOR_RESET_NOTIFICATION_AUDIT_FAILED')
+  }
+  return sent ? 'SENT' : 'FAILED'
 }
 
 async function enforceResetRateLimit(transaction: Prisma.TransactionClient, actorUserId: string) {

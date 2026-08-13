@@ -56,22 +56,26 @@ export async function resetPlatformUserTwoFactorAction(formData: FormData) {
   const parsed = twoFactorResetSchema.safeParse(Object.fromEntries(formData))
   if (!parsed.success) redirectWithResult(returnTo, 'fout', 'ongeldige-tweestapsreset')
   try {
-    await resetUserTwoFactor({
+    const reset = await resetUserTwoFactor({
       actorUserId: administrator.id,
       targetUserId: parsed.data.subjectUserId,
       reason: parsed.data.reason,
       confirmed: true,
       idempotencyKey: crypto.randomUUID(),
     })
+    revalidatePath(returnTo)
+    revalidatePath('/platformbeheer')
+    redirectWithResult(
+      returnTo,
+      'resultaat',
+      reset.notification === 'SENT' ? 'tweestapsverificatie-gereset' : 'tweestapsverificatie-gereset-notificatie-mislukt',
+    )
   } catch (error) {
     if (error instanceof PlatformTwoFactorResetError) {
       redirectWithResult(returnTo, 'fout', error.code.toLowerCase())
     }
     throw error
   }
-  revalidatePath(returnTo)
-  revalidatePath('/platformbeheer')
-  redirectWithResult(returnTo, 'resultaat', 'tweestapsverificatie-gereset')
 }
 
 const organizationActionSchema = z.object({

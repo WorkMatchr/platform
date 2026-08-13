@@ -21,6 +21,8 @@ De native Better Auth 1.6.23-TOTP-plugin gebruikt versleutelde recovery codes. G
 
 Voor verlies van authenticator of herstelcodes bestaat uitsluitend voor actieve platform-`OWNER` en -`ADMIN` een server-side herstelactie. Deze controleert actor en doel opnieuw in een serialiseerbare transactie, vereist een identiteitscontroleredelijke reden en expliciete bevestiging, en trekt vervolgens alle sessies plus resterende 2FA-/trusted-deviceverificaties van het doel in. De actie is maximaal vijf keer per vijftien minuten per actor uitvoerbaar. `MEMBER`/auditoren en gewone gebruikers worden server-side geweigerd. Een reset van de laatste actieve platformeigenaar op zichzelf faalt gesloten.
 
+Na een geslaagde beheerderreset volgt buiten de resettransactie een tokenloze securitymail. Mislukte bezorging draait de reset niet terug: `TWO_FACTOR_RESET_NOTIFICATION_SENT` of `TWO_FACTOR_RESET_NOTIFICATION_FAILED` legt uitsluitend mailtype, moment, transport, provider-message-ID en veilige foutstatus vast. De inhoud, resetreden, e-mailadres, secrets, codes en tokens worden niet in `AdminCommunication` of deze delivery-audit opgeslagen.
+
 ### Testaccountwisselaar buiten productie
 
 - `NODE_ENV=production` schakelt de wisselaar hard uit, ook wanneer de feature flag abusievelijk `true` is;

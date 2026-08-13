@@ -17,12 +17,18 @@ const mocks = vi.hoisted(() => ({
   rateUpsert: vi.fn(),
   audit: vi.fn(),
   adminAudit: vi.fn(),
+  sendEmail: vi.fn(),
 }))
 
 vi.mock('server-only', () => ({}))
 vi.mock('./platform-admin-authorization', () => ({ getPlatformOperatorContext: mocks.authorize }))
 vi.mock('@/lib/prisma', () => ({ getPrisma: () => ({ $transaction: mocks.transaction }) }))
 vi.mock('@/lib/auth-two-factor-audit', () => ({ appendTwoFactorAuditEvent: mocks.audit }))
+vi.mock('@/lib/email', () => ({
+  AuthEmailDeliveryError: class AuthEmailDeliveryError extends Error { constructor(public code: string) { super(code) } },
+  sendAuthEmail: mocks.sendEmail,
+  twoFactorResetNotificationEmail: vi.fn(() => ({ kind: 'TWO_FACTOR_RESET_NOTIFICATION', to: 'target@example.invalid', subject: 'Uw tweestapsverificatie is gereset', text: 'veilig', html: '<p>veilig</p>' })),
+}))
 
 import { PlatformTwoFactorResetError, resetUserTwoFactor } from './platform-two-factor-reset-service'
 
@@ -55,6 +61,7 @@ describe('platform 2FA-herstelservice', () => {
     mocks.verificationFindMany.mockResolvedValue([{ identifier: '2fa-pending' }, { identifier: 'trust-device-old' }])
     mocks.ownerCount.mockResolvedValue(2)
     mocks.rateFindUnique.mockResolvedValue(null)
+    mocks.sendEmail.mockResolvedValue({ accepted: true, transport: 'RESEND', status: 'ACCEPTED', messageId: 'message-1' })
     mocks.transaction.mockImplementation(async (operation) => operation({
       user: { findFirst: mocks.actorFindFirst, findUnique: mocks.targetFindUnique, update: mocks.userUpdate },
       twoFactor: { findMany: mocks.factorFindMany, deleteMany: mocks.factorDeleteMany },
@@ -68,7 +75,7 @@ describe('platform 2FA-herstelservice', () => {
   })
 
   it.each(['OWNER', 'ADMIN'])('laat een %s de reset transactioneel uitvoeren', async () => {
-    await expect(resetUserTwoFactor(resetInput())).resolves.toEqual({ targetUserId })
+    await expect(resetUserTwoFactor(resetInput())).resolves.toEqual({ targetUserId, notification: 'SENT' })
 
     expect(mocks.userUpdate).toHaveBeenCalledWith({ where: { id: targetUserId }, data: { twoFactorEnabled: false } })
     expect(mocks.factorDeleteMany).toHaveBeenCalledWith({ where: { userId: targetUserId } })
@@ -81,6 +88,10 @@ describe('platform 2FA-herstelservice', () => {
     }))
     expect(mocks.adminAudit).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ action: 'TWO_FACTOR_RESET', actorUserId, entityId: targetUserId }),
+    }))
+    expect(mocks.sendEmail).toHaveBeenCalledTimes(1)
+    expect(mocks.audit).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+      eventType: 'TWO_FACTOR_RESET_NOTIFICATION_SENT', actorUserId, subjectUserId: targetUserId,
     }))
   })
 
@@ -114,8 +125,24 @@ describe('platform 2FA-herstelservice', () => {
     expect(mocks.factorDeleteMany).not.toHaveBeenCalled()
   })
 
+  it('behoudt de reset wanneer de securitymail niet kan worden bezorgd en legt dat veilig vast', async () => {
+    mocks.sendEmail.mockRejectedValue(new Error('provider unavailable'))
+
+    await expect(resetUserTwoFactor(resetInput())).resolves.toEqual({ targetUserId, notification: 'FAILED' })
+    expect(mocks.userUpdate).toHaveBeenCalledWith({ where: { id: targetUserId }, data: { twoFactorEnabled: false } })
+    expect(mocks.factorDeleteMany).toHaveBeenCalledWith({ where: { userId: targetUserId } })
+    expect(mocks.audit).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+      eventType: 'TWO_FACTOR_RESET_NOTIFICATION_FAILED',
+      metadata: expect.objectContaining({ failureCode: 'EMAIL_DELIVERY_UNKNOWN' }),
+    }))
+  })
+
   it('neemt nooit TOTP-secrets of herstelcodes op in de herstelservice-audit', () => {
     const source = readFileSync('src/lib/platform-admin/platform-two-factor-reset-service.ts', 'utf8')
+    const migration = readFileSync('prisma/migrations/20260813100000_add_two_factor_reset_notification_audit/migration.sql', 'utf8')
     expect(source).not.toMatch(/totpURI|backupCodes|recoveryCodes|twoFactor\.secret/i)
+    expect(source).not.toContain('adminCommunication')
+    expect(migration).toContain("ADD VALUE IF NOT EXISTS 'TWO_FACTOR_RESET_NOTIFICATION_SENT'")
+    expect(migration).toContain("ADD VALUE IF NOT EXISTS 'TWO_FACTOR_RESET_NOTIFICATION_FAILED'")
   })
 })

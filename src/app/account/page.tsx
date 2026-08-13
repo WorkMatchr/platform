@@ -1,7 +1,9 @@
 import { AuthShell, StatusMessage } from '@/components/auth/auth-shell'
 import { LogoutButton } from '@/components/auth/logout-button'
 import { LinkButton } from '@/components/ui/link-button'
+import { getPrisma } from '@/lib/prisma'
 import { getActiveOrganizationContext } from '@/lib/organizations/organization-authorization'
+import { canManageOrganization } from '@/lib/organizations/organization-policy'
 import {
   getPlatformContext,
   PlatformAdminAccessError,
@@ -32,76 +34,66 @@ export default async function AccountPage() {
   }
   const model = buildAccountViewModel(context, isPlatformAdministrator)
   const hasOrganization = model.organizationCount > 0
+  const twoFactor = await getPrisma().user.findUnique({
+    where: { id: context.user.id },
+    select: { twoFactorEnabled: true, twoFactors: { where: { verified: true }, select: { id: true }, take: 1 } },
+  })
+  const twoFactorEnabled = Boolean(twoFactor?.twoFactorEnabled && twoFactor.twoFactors.length)
+  const platformRequired = isPlatformAdministrator
+  const manageableOrganization = Boolean(
+    context.activeMembership && canManageOrganization(
+      context.activeMembership.role,
+      context.activeMembership.status,
+      context.activeMembership.organization.status,
+    ),
+  )
 
   return (
     <AuthShell title={model.title} intro="Dit is uw persoonlijke WorkMatchr-account." wide>
-      <section aria-labelledby="accountgegevens-heading">
-        <h2 id="accountgegevens-heading" className="font-semibold text-brand-dark">
-          Persoonlijk account
-        </h2>
-        <dl className="mt-4 grid grid-cols-[repeat(auto-fit,minmax(min(100%,16rem),1fr))] gap-4">
-          <Detail label="E-mailadres" value={model.email} />
-          <Detail label="Verificatiestatus" value={model.emailVerificationLabel} />
-          <Detail label="Platformrol" value={model.platformRoleLabel} />
-          <Detail label="Accounttype" value={model.accountTypeLabel} />
-          <Detail label="Accountstatus" value={model.accountStatusLabel} />
-        </dl>
-        <p className="mt-4 text-sm text-text-secondary">
-          De platformrol staat los van uw rechten binnen een organisatie. Uw actuele organisatierol staat hieronder.
-        </p>
-      </section>
-
-      {model.isPlatformAdministrator ? (
-        <section aria-labelledby="platformcontext-heading" className="mt-8 border-t border-border pt-7">
-          <h2 id="platformcontext-heading" className="font-semibold text-brand-dark">
-            Platformbeheer
-          </h2>
-          <p className="mt-3 text-text-secondary">
-            Dit account is uitsluitend gekoppeld aan de beveiligde beheeromgeving van WorkMatchr.
-          </p>
-          <div className="mt-5">
-            <LinkButton href="/platformbeheer">Naar platformbeheer</LinkButton>
-          </div>
-        </section>
-      ) : (
-        <>
-          <section aria-labelledby="organisatiecontext-heading" className="mt-8 border-t border-border pt-7">
-            <h2 id="organisatiecontext-heading" className="font-semibold text-brand-dark">
-              Actieve organisatie
-            </h2>
-            {model.activeOrganization ? (
-              <dl className="mt-4 grid grid-cols-[repeat(auto-fit,minmax(min(100%,16rem),1fr))] gap-4">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,0.45fr)_minmax(0,0.55fr)] lg:items-start">
+        <section aria-labelledby="accountgegevens-heading">
+          <h2 id="accountgegevens-heading" className="font-semibold text-brand-dark">Persoonlijk account</h2>
+          <dl className="mt-4 grid gap-4 sm:grid-cols-2">
+            <Detail label="E-mailadres" value={model.email} />
+            <Detail label="Verificatiestatus" value={model.emailVerificationLabel} />
+            <Detail label="Platformrol" value={model.platformRoleLabel} />
+            <Detail label="Accounttype" value={model.accountTypeLabel} />
+            <Detail label="Accountstatus" value={model.accountStatusLabel} />
+          </dl>
+          <p className="mt-4 text-sm leading-6 text-text-secondary">De platformrol staat los van uw rechten binnen een organisatie. Uw actuele organisatierol staat hieronder.</p>
+          {model.activeOrganization ? (
+            <section aria-labelledby="organisatiecontext-heading" className="mt-8 border-t border-border pt-7">
+              <h2 id="organisatiecontext-heading" className="font-semibold text-brand-dark">Actieve organisatie</h2>
+              <dl className="mt-4 grid gap-4 sm:grid-cols-2">
                 <Detail label="Organisatienaam" value={model.activeOrganization.name} />
                 <Detail label="Rol binnen organisatie" value={model.activeOrganization.roleLabel} />
                 <Detail label="Organisatietype" value={model.activeOrganization.typeLabel} />
                 <Detail label="Organisatiestatus" value={model.activeOrganization.statusLabel} />
               </dl>
+            </section>
+          ) : null}
+        </section>
+
+        <div className="grid gap-6">
+          <section aria-labelledby="uw-organisatie-heading" className="rounded-card border border-border bg-surface p-5">
+            <h2 id="uw-organisatie-heading" className="font-semibold text-brand-dark">Uw organisatie</h2>
+            {model.isPlatformAdministrator ? (
+              <><p className="mt-3 text-sm leading-6 text-text-secondary">Dit account is gekoppeld aan de beveiligde beheeromgeving van WorkMatchr.</p><div className="mt-5"><LinkButton href="/platformbeheer">Naar platformbeheer</LinkButton></div></>
+            ) : hasOrganization ? (
+              <><p className="mt-3 text-sm leading-6 text-text-secondary">Bekijk de gegevens van uw actieve organisatie of beheer deze als uw organisatierol dat toestaat.</p><div className="mt-5 flex flex-col gap-3 sm:flex-row">{manageableOrganization ? <LinkButton href="/organisatie/profiel">Profiel wijzigen</LinkButton> : null}{manageableOrganization ? <LinkButton href="/organisatie/gebruikers" variant="outline">Gebruikers beheren</LinkButton> : <LinkButton href="/organisatie" variant="outline">Naar uw organisatie</LinkButton>}</div></>
             ) : (
-              <p className="mt-3 text-text-secondary">Er is nog geen actieve organisatie.</p>
+              <><StatusMessage>Maak uw organisatie aan om uw WorkMatchr-omgeving in te richten.</StatusMessage><div className="mt-5"><LinkButton href="/organisatie/nieuw">Maak uw organisatie aan</LinkButton></div></>
             )}
           </section>
 
-          <div className="mt-7">
-            <StatusMessage>
-              {hasOrganization
-                ? 'Uw account is aan deze organisatie gekoppeld.'
-                : 'Maak uw organisatie aan om uw WorkMatchr-omgeving in te richten.'}
-            </StatusMessage>
-          </div>
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-            <LinkButton href={hasOrganization ? '/organisatie' : '/organisatie/nieuw'}>
-              {hasOrganization ? 'Naar uw organisatie' : 'Maak uw organisatie aan'}
-            </LinkButton>
-          </div>
-        </>
-      )}
-      <section aria-labelledby="accountbeveiliging-heading" className="mt-8 border-t border-border pt-7">
-        <h2 id="accountbeveiliging-heading" className="font-semibold text-brand-dark">Beveiliging</h2>
-        <p className="mt-3 text-text-secondary">Beheer uw tweestapsverificatie met een authenticator-app.</p>
-        <div className="mt-5"><LinkButton href="/account/beveiliging" variant="outline">Naar beveiliging</LinkButton></div>
-      </section>
-      <div className="mt-7">
-        <LogoutButton />
+          <section aria-labelledby="accountbeveiliging-heading" className="rounded-card border border-border bg-surface p-5">
+            <h2 id="accountbeveiliging-heading" className="font-semibold text-brand-dark">Beveiliging</h2>
+            <p className="mt-3 text-sm leading-6 text-text-secondary">Tweestapsverificatie: <strong>{twoFactorEnabled ? 'ingeschakeld' : 'niet ingesteld of niet volledig afgerond'}</strong>.</p>
+            {platformRequired ? <p className="mt-2 text-sm leading-6 text-text-secondary">Tweestapsverificatie blijft verplicht zolang dit account toegang heeft tot platformbeheer.</p> : null}
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row"><LinkButton href="/account/beveiliging" variant="outline">{twoFactorEnabled ? 'Tweestapsverificatie beheren' : 'Tweestapsverificatie instellen'}</LinkButton><LinkButton href="/wachtwoord-vergeten" variant="outline">Wachtwoord wijzigen</LinkButton></div>
+          </section>
+          <div><LogoutButton /></div>
+        </div>
       </div>
     </AuthShell>
   )

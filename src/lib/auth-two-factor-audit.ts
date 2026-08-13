@@ -1,7 +1,11 @@
 import type { Prisma } from '@/generated/prisma/client'
 import { appendAccountProvisioningEvent } from '@/lib/account-architecture/account-history-service'
 
-export type TwoFactorAuditEventType = 'TWO_FACTOR_ENROLLED' | 'TWO_FACTOR_RESET'
+export type TwoFactorAuditEventType =
+  | 'TWO_FACTOR_ENROLLED'
+  | 'TWO_FACTOR_RESET'
+  | 'TWO_FACTOR_RESET_NOTIFICATION_SENT'
+  | 'TWO_FACTOR_RESET_NOTIFICATION_FAILED'
 
 type TwoFactorAuditTransaction = Pick<Prisma.TransactionClient, 'accountProvisioningEvent'>
 

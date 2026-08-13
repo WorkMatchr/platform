@@ -64,6 +64,10 @@ De aanvraag geeft altijd dezelfde neutrale bevestiging. De token is één uur ge
 
 Hetzelfde centrale wachtwoordbeleid geldt server-side voor registratie, activatie, reset en toekomstige wachtwoordwijzigingen. Bekende, voorspelbare en WorkMatchr-gerelateerde wachtwoorden worden geweigerd. Better Auths native Have I Been Pwned-plugin gebruikt uitsluitend de k-anonimity-rangecontrole: SHA-1 wordt lokaal berekend en alleen de eerste vijf tekens worden naar de range-API gestuurd. Wanneer die controle niet beschikbaar is, wordt een nieuw wachtwoord fail-closed geweigerd. Wachtwoorden, hashes, prefixes en range-responses worden niet gelogd of geaudit. Bestaande accounts hoeven hun huidige wachtwoord niet direct te wijzigen.
 
+### Account en tweestapsverificatie
+
+De accountpagina scheidt persoonlijke gegevens van organisatie- en beveiligingsacties. De bestaande route **Wachtwoord wijzigen** leidt naar de veilige herstelroute; er is geen tweede wachtwoordmechanisme toegevoegd. Na een beheerderreset van tweestapsverificatie worden sessies en factorrecords transactioneel ingetrokken. Pas daarna ontvangt de gebruiker een tokenloze securitymelding. De reset blijft geldig wanneer die bezorging faalt; alleen transport, provider-message-ID, veilige foutcode en status worden geaudit. De inhoud van deze securitymail wordt niet gearchiveerd als beheercommunicatie.
+
 ## Accountstatus
 
 - `ACTIVE`: mag een sessie starten en `/account` openen.
