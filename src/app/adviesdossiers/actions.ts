@@ -31,6 +31,9 @@ export async function startAdviceDossierIntakeAction(
     `/adviesdossiers/${dossierId}`,
   )
   const handoff = await startAdviceDossierIntake({ viewer, dossierId })
+  if (handoff.kind === 'REQUEST') {
+    redirect(`/aanvragen/${handoff.requestId}/gepubliceerd`)
+  }
   revalidatePath('/opdrachten')
   redirect(`/hulpvragen/${handoff.intakeId}?van=adviesdossier`)
 }

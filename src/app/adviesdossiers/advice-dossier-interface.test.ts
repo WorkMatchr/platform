@@ -52,5 +52,8 @@ describe('Adviesdossier-interface en beveiliging', () => {
     expect(detail).toContain('Maak hiervan een opdracht')
     expect(detail).toContain('startAdviceDossierIntakeAction')
     expect(detail).not.toContain('/aanvragen/nieuw?dossierId=')
+    const actions = read('src/app/adviesdossiers/actions.ts')
+    expect(actions).toContain("handoff.kind === 'REQUEST'")
+    expect(actions).toContain('/aanvragen/${handoff.requestId}/gepubliceerd')
   })
 })

@@ -17,10 +17,9 @@ export class AdviceDossierIntakeHandoffError extends Error {
   }
 }
 
-export type AdviceDossierIntakeHandoffResult = Readonly<{
-  intakeId: string
-  reused: boolean
-}>
+export type AdviceDossierIntakeHandoffResult =
+  | Readonly<{ kind: 'INTAKE'; intakeId: string; reused: boolean }>
+  | Readonly<{ kind: 'REQUEST'; requestId: string; reused: true }>
 
 function canReadDossier(
   viewer: AdviceDossierViewer,
@@ -101,6 +100,7 @@ async function createHandoffAttempt(input: {
         status: true,
         currentVersionNumber: true,
         intakeHandoff: { select: { intakeId: true } },
+        request: { select: { id: true } },
         versions: {
           orderBy: { versionNumber: 'desc' },
           take: 1,
@@ -140,7 +140,14 @@ async function createHandoffAttempt(input: {
       throw new AdviceDossierIntakeHandoffError('NOT_FOUND')
     }
     if (dossier.intakeHandoff) {
-      return { intakeId: dossier.intakeHandoff.intakeId, reused: true }
+      return {
+        kind: 'INTAKE',
+        intakeId: dossier.intakeHandoff.intakeId,
+        reused: true,
+      }
+    }
+    if (dossier.request) {
+      return { kind: 'REQUEST', requestId: dossier.request.id, reused: true }
     }
     if (!['ADVICE_READY', 'COMPLETED'].includes(dossier.status)) {
       throw new AdviceDossierIntakeHandoffError('NOT_ELIGIBLE')
@@ -307,7 +314,7 @@ async function createHandoffAttempt(input: {
       },
     })
 
-    return { intakeId: intake.id, reused: false }
+    return { kind: 'INTAKE', intakeId: intake.id, reused: false }
   }, { isolationLevel: 'Serializable' })
 }
 
@@ -330,7 +337,9 @@ export async function startAdviceDossierIntake(input: {
       where: { adviceDossierId: input.dossierId },
       select: { intakeId: true },
     })
-    if (existing) return { intakeId: existing.intakeId, reused: true }
+    if (existing) {
+      return { kind: 'INTAKE', intakeId: existing.intakeId, reused: true }
+    }
   }
   throw new AdviceDossierIntakeHandoffError('CONFLICT')
 }
