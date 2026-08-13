@@ -12,7 +12,7 @@ vi.mock('@/lib/prisma', () => ({
   }),
 }))
 
-import { ensurePublicIntakeAIContextQuestions } from './public-intake-context-question-service'
+import { ensurePublicIntakeAIContextQuestions, toPublicIntakeContextQuestionView } from './public-intake-context-question-service'
 import { AI_CONTEXT_QUESTION_CATALOG_VERSION } from '@/lib/ai-intake-classifier/ai-context-question-catalog'
 
 const classification = {
@@ -32,6 +32,14 @@ describe('public intake context-question persistence', () => {
         createMany: mocks.createMany,
       },
     }))
+  })
+
+  it('maps a valid Prisma-shaped planner record to the stable view', () => {
+    expect(toPublicIntakeContextQuestionView({
+      questionKey: 'context_work_activity', catalogVersion: 'ai-context-questions/1.0.0',
+      textSnapshot: 'Om wat voor werkzaamheden gaat het vooral?', answerType: 'OPTION',
+      category: 'WORK', sequence: 1, source: 'AI_CONTEXT_PLANNER', createdAt: new Date(),
+    }).source).toBe('AI_CONTEXT_PLANNER')
   })
 
   it('stores immutable catalog snapshots once with version, order and planner source', async () => {

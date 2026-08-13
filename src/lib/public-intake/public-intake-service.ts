@@ -32,6 +32,7 @@ import {
 } from './public-intake-validation'
 import { resolveActiveKnowledgeContext } from '@/content/knowledge/knowledge-contexts'
 import { getAIContextQuestion } from '@/lib/ai-intake-classifier/ai-context-question-catalog'
+import { toPublicIntakeContextQuestionView } from './public-intake-context-question-service'
 
 type Transaction = Prisma.TransactionClient
 
@@ -270,7 +271,7 @@ async function loadPublicView(
       version: answer.version,
       value: answerValue(answer),
     })),
-    contextQuestions,
+    contextQuestions: contextQuestions.map(toPublicIntakeContextQuestionView),
   }
 
   return {

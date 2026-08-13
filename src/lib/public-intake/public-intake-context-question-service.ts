@@ -12,7 +12,7 @@ import type { PublicIntakeContextQuestionView } from './public-intake-types'
 
 export const PUBLIC_INTAKE_CONTEXT_QUESTION_TOTAL_LIMIT = 5 as const
 
-function toView(question: {
+export function toPublicIntakeContextQuestionView(question: {
   questionKey: string
   catalogVersion: string
   textSnapshot: string
@@ -58,7 +58,7 @@ export async function ensurePublicIntakeAIContextQuestions(input: {
     })
     const usedBudget = existing.length + (input.fallbackQuestionWasAsked ? 1 : 0)
     const remaining = PUBLIC_INTAKE_CONTEXT_QUESTION_TOTAL_LIMIT - usedBudget
-    if (remaining <= 0) return existing.map(toView)
+    if (remaining <= 0) return existing.map(toPublicIntakeContextQuestionView)
 
     const selected = selectSafeAIContextQuestions({
       originalInput: input.originalInput,
@@ -68,7 +68,7 @@ export async function ensurePublicIntakeAIContextQuestions(input: {
       remainingQuestionBudget: remaining,
     }).slice(0, Math.min(AI_CONTEXT_QUESTION_LIMIT, remaining))
 
-    if (selected.length === 0) return existing.map(toView)
+    if (selected.length === 0) return existing.map(toPublicIntakeContextQuestionView)
 
     await transaction.publicIntakeContextQuestion.createMany({
       data: selected.map((question, index) => ({
@@ -98,6 +98,6 @@ export async function ensurePublicIntakeAIContextQuestions(input: {
         createdAt: true,
       },
     })
-    return stored.map(toView)
+    return stored.map(toPublicIntakeContextQuestionView)
   }, { isolationLevel: 'Serializable' })
 }
