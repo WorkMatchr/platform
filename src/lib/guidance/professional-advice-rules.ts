@@ -17,9 +17,13 @@ import {
   getProfessionalDiscipline,
   type ProfessionalDisciplineCode,
 } from './professional-disciplines'
+import {
+  confirmedFactMatches,
+  physicalWorkloadFactKeys,
+} from './confirmed-context'
 
 export const PROFESSIONAL_ADVICE_RULE_SET_VERSION =
-  'professional-advice-rules/1.2.0' as const
+  'professional-advice-rules/1.3.0' as const
 
 export const PROFESSIONAL_ADVICE_DISCLAIMER =
   'Dit WorkMatchr Adviesdossier is gebaseerd op de informatie die u heeft verstrekt. Het is bedoeld als eerste advies en als hulpmiddel bij het bepalen van passende vervolgstappen. Een ingeschakelde professional voert altijd een eigen beoordeling uit.' as const
@@ -386,6 +390,211 @@ const adviceRules = Object.freeze([
   emergencyResponseAdviceRule,
 ])
 
+type PhysicalWorkloadVariant =
+  | 'REPETITIVE_WORK'
+  | 'LIFTING_CARRYING'
+  | 'PUSHING_PULLING'
+  | 'PROLONGED_POSTURE'
+  | 'VIBRATION'
+  | 'GENERAL'
+
+function resolvePhysicalWorkloadVariant(
+  outcome: ProfessionalAdviceInput,
+): PhysicalWorkloadVariant {
+  const facts = outcome.facts
+  if (
+    confirmedFactMatches(facts, physicalWorkloadFactKeys.physicalLoad, [
+      'Repeterend werk',
+    ])
+  ) return 'REPETITIVE_WORK'
+  if (
+    confirmedFactMatches(facts, physicalWorkloadFactKeys.physicalLoad, [
+      'Tillen of dragen',
+    ])
+  ) return 'LIFTING_CARRYING'
+  if (
+    confirmedFactMatches(facts, physicalWorkloadFactKeys.physicalLoad, [
+      'Duwen of trekken',
+    ])
+  ) return 'PUSHING_PULLING'
+  if (
+    confirmedFactMatches(facts, physicalWorkloadFactKeys.physicalLoad, [
+      'Langdurig zitten of staan',
+    ])
+  ) return 'PROLONGED_POSTURE'
+  if (
+    confirmedFactMatches(facts, physicalWorkloadFactKeys.physicalLoad, [
+      'Trillingen',
+    ]) ||
+    confirmedFactMatches(facts, physicalWorkloadFactKeys.vibration, [true])
+  ) return 'VIBRATION'
+
+  const text = normalizedText(outcome)
+  if (/repeter|herhalende beweging/.test(text)) return 'REPETITIVE_WORK'
+  if (/tillen|dragen|tilbelasting/.test(text)) return 'LIFTING_CARRYING'
+  if (/duwen|trekken|tillift|rolweerstand/.test(text)) return 'PUSHING_PULLING'
+  if (/langdurig (zitten|staan)|statische houding/.test(text)) {
+    return 'PROLONGED_POSTURE'
+  }
+  if (/trilling|schokken|vering/.test(text)) return 'VIBRATION'
+  return 'GENERAL'
+}
+
+const physicalVariantContent: Readonly<
+  Record<
+    PhysicalWorkloadVariant,
+    Pick<
+      ProfessionalAdviceRule,
+      'adviceTitle' | 'adviceBody' | 'adviceReasons' | 'selfActions'
+    >
+  >
+> = Object.freeze({
+  REPETITIVE_WORK: Object.freeze({
+    adviceTitle: 'Onderzoek de belasting door repeterend werk',
+    adviceBody:
+      'Breng de herhaalde bewegingen, taakduur, werktempo, taakafwisseling en herstelmogelijkheden in de feitelijke werksituatie in kaart. Bepaal daarna welke aanpassingen de belasting doelgericht verminderen.',
+    adviceReasons: Object.freeze([
+      'De belasting door repeterend werk hangt af van de combinatie van herhaling, duur, houding, kracht en herstel.',
+      'Een beoordeling van het feitelijke werk is nodig om passende maatregelen te kiezen.',
+    ]),
+    selfActions: Object.freeze([
+      'Leg vast welke bewegingen vaak worden herhaald en hoe lang en hoe vaak dat gebeurt.',
+      'Observeer werktempo, taakafwisseling en herstelmogelijkheden tijdens het feitelijke werk.',
+      'Betrek signalen van medewerkers zonder medische gegevens vast te leggen.',
+    ]),
+  }),
+  LIFTING_CARRYING: Object.freeze({
+    adviceTitle: 'Onderzoek de belasting door tillen en dragen',
+    adviceBody:
+      'Breng gewichten, tilfrequentie, reikafstanden, werkhoudingen, loopafstanden en beschikbare hulpmiddelen in kaart. Beoordeel daarna welke bronmaatregelen en werkafspraken de belasting verminderen.',
+    adviceReasons: Object.freeze([
+      'De belasting bij tillen en dragen wordt bepaald door gewicht, frequentie, afstand, houding en herstel.',
+      'De feitelijke taak moet worden beoordeeld voordat een hulpmiddel of werkwijze wordt gekozen.',
+    ]),
+    selfActions: Object.freeze([
+      'Noteer gewichten, frequentie, reik- en loopafstanden.',
+      'Leg vast welke hulpmiddelen beschikbaar zijn en hoe die feitelijk worden gebruikt.',
+      'Observeer belastende houdingen en momenten waarop herstel mogelijk is.',
+    ]),
+  }),
+  PUSHING_PULLING: Object.freeze({
+    adviceTitle: 'Onderzoek de belasting door duwen en trekken',
+    adviceBody:
+      'Breng benodigde kracht, afstanden, routes, ondergrond, bochten, drempels en gebruikte hulpmiddelen in kaart. Beoordeel daarna welke aanpassingen de duw- en trekbelasting verminderen.',
+    adviceReasons: Object.freeze([
+      'Duw- en trekkrachten worden mede bepaald door rolweerstand, route, ondergrond en beschikbare ruimte.',
+      'Hulpmiddelen zijn alleen doeltreffend wanneer werkplek en werkproces erop aansluiten.',
+    ]),
+    selfActions: Object.freeze([
+      'Leg vast welke lasten en hulpmiddelen worden verplaatst en over welke routes.',
+      'Noteer drempels, bochten, vloerwisselingen en plekken met weinig ruimte.',
+      'Betrek medewerkers bij het vaststellen van de feitelijke belasting.',
+    ]),
+  }),
+  PROLONGED_POSTURE: Object.freeze({
+    adviceTitle: 'Onderzoek de belasting door langdurig zitten of staan',
+    adviceBody:
+      'Breng duur, werkhouding, houdingswisselingen, werkplekinrichting en herstelmogelijkheden in kaart. Bepaal daarna welke afwisseling en aanpassingen de statische belasting verminderen.',
+    adviceReasons: Object.freeze([
+      'Langdurig dezelfde houding aannemen kan de fysieke belasting vergroten.',
+      'Taakafwisseling, inrichting en herstelmogelijkheden moeten in samenhang worden beoordeeld.',
+    ]),
+    selfActions: Object.freeze([
+      'Leg vast hoe lang medewerkers achtereen zitten of staan.',
+      'Observeer houdingswisselingen en mogelijkheden om taken af te wisselen.',
+      'Controleer of de werkplekinrichting bij de feitelijke werkzaamheden past.',
+    ]),
+  }),
+  VIBRATION: Object.freeze({
+    adviceTitle: 'Onderzoek de belasting door trillingen',
+    adviceBody:
+      'Breng trillingsbronnen, blootstellingsduur, gebruiksomstandigheden en onderhoud in kaart. Beoordeel daarna welke bronmaatregelen en organisatorische maatregelen de blootstelling verminderen.',
+    adviceReasons: Object.freeze([
+      'De belasting door trillingen hangt af van bron, intensiteit, duur en gebruiksomstandigheden.',
+      'Meten of nader beoordelen kan nodig zijn om maatregelen doelgericht te kiezen.',
+    ]),
+    selfActions: Object.freeze([
+      'Leg vast welke machines, hulpmiddelen of werkzaamheden trillingen veroorzaken.',
+      'Noteer blootstellingsduur, gebruiksomstandigheden en onderhoudsstaat.',
+      'Controleer welke bronmaatregelen en taakafwisseling al worden toegepast.',
+    ]),
+  }),
+  GENERAL: Object.freeze({
+    adviceTitle: 'Onderzoek de fysieke belasting in de werksituatie',
+    adviceBody:
+      'Breng werkzaamheden, houdingen, benodigde kracht, duur, taakafwisseling en herstelmogelijkheden in kaart. Beoordeel daarna welke aanpassingen de fysieke belasting doelgericht verminderen.',
+    adviceReasons: Object.freeze([
+      'Fysieke belasting wordt bepaald door meerdere factoren in taak en werkorganisatie.',
+      'Een beoordeling van het feitelijke werk is nodig voordat maatregelen worden gekozen.',
+    ]),
+    selfActions: Object.freeze([
+      'Beschrijf de belastende werkzaamheden, duur en frequentie.',
+      'Observeer werkhoudingen, benodigde kracht en herstelmogelijkheden.',
+      'Betrek signalen van medewerkers zonder medische gegevens vast te leggen.',
+    ]),
+  }),
+})
+
+function resolvePhysicalWorkloadRule(
+  rule: ProfessionalAdviceRule,
+  outcome: ProfessionalAdviceInput,
+  context: ProfessionalAdviceContext,
+): ProfessionalAdviceRule {
+  if (context.dominantContext !== 'ERGONOMICS') return rule
+
+  const variant = resolvePhysicalWorkloadVariant(outcome)
+  const content = physicalVariantContent[variant]
+  const physicianTriggered = confirmedFactMatches(
+    outcome.facts,
+    physicalWorkloadFactKeys.occupationalPhysicianRelevant,
+    [true],
+  )
+  const vehicleTriggered =
+    confirmedFactMatches(
+      outcome.facts,
+      physicalWorkloadFactKeys.vehicle,
+      [true, 'Voertuigcontext'],
+    ) || /voertuig|chauffeur/.test(normalizedText(outcome))
+
+  return Object.freeze({
+    ...rule,
+    ...content,
+    code: `${rule.code}_${variant}`,
+    primary: occupationalHealthPhysicalAdviceRule.primary,
+    additional: physicianTriggered
+      ? Object.freeze([
+          Object.freeze({
+            professionalType: 'BEDRIJFSARTS',
+            reason:
+              'De bevestigde context vraagt aanvullend om een onafhankelijke beoordeling van de relatie tussen werk en gezondheid.',
+            expertise: Object.freeze([
+              'Werk en gezondheid',
+              'Bedrijfsgezondheidszorg',
+            ]),
+          }),
+        ])
+      : Object.freeze([]),
+    conditionalAdditional: Object.freeze([]),
+    possible: Object.freeze([]),
+    selfActions: vehicleTriggered
+      ? Object.freeze([
+          ...content.selfActions,
+          'Leg vast welk voertuig wordt gebruikt, hoe lang en onder welke omstandigheden.',
+        ])
+      : content.selfActions,
+    knowledgeContentIds: physicianTriggered
+      ? Object.freeze(['knowledge:occupational-physician'])
+      : Object.freeze([]),
+    sourceIds: physicianTriggered
+      ? Object.freeze([
+          'arbowet-current',
+          'arbeidsinspectie-rie',
+          'arboportaal-bedrijfsarts',
+        ])
+      : Object.freeze(['arbowet-current', 'arbeidsinspectie-rie']),
+  })
+}
+
 function normalizedText(outcome: ProfessionalAdviceInput): string {
   return outcome.helpRequest.originalInput.toLocaleLowerCase('nl-NL')
 }
@@ -471,9 +680,10 @@ function specificAdvice(
   outcome: ProfessionalAdviceInput,
   context: ProfessionalAdviceContext,
 ): ProfessionalAdvice {
-  const primary = requirement(rule.primary, 'PRIMARY', outcome, 0)
+  const resolvedRule = resolvePhysicalWorkloadRule(rule, outcome, context)
+  const primary = requirement(resolvedRule.primary, 'PRIMARY', outcome, 0)
   const seenDisciplines = new Set<ProfessionalDisciplineCode>([
-    rule.primary.professionalType,
+    resolvedRule.primary.professionalType,
   ])
   const uniqueDefinitions = (
     definitions: readonly RequirementDefinition[],
@@ -487,15 +697,15 @@ function specificAdvice(
       })
       .slice(0, maximum)
   const additionalDefinitions = uniqueDefinitions([
-    ...(rule.additional ?? []),
-    ...(rule.conditionalAdditional ?? [])
+    ...(resolvedRule.additional ?? []),
+    ...(resolvedRule.conditionalAdditional ?? [])
       .filter((condition) => factMatches(outcome, condition))
       .map((condition) => condition.definition),
   ], 2)
   const additional = additionalDefinitions.map((definition, index) =>
     requirement(definition, 'ADDITIONAL', outcome, index),
   )
-  const possible = uniqueDefinitions(rule.possible ?? [], 2).map(
+  const possible = uniqueDefinitions(resolvedRule.possible ?? [], 2).map(
     (definition, index) =>
       requirement(definition, 'POSSIBLE', outcome, index),
   )
@@ -503,12 +713,12 @@ function specificAdvice(
   return Object.freeze({
     schemaVersion: PROFESSIONAL_ADVICE_SCHEMA_VERSION,
     ruleSetVersion: PROFESSIONAL_ADVICE_RULE_SET_VERSION,
-    appliedRuleCode: rule.code,
+    appliedRuleCode: resolvedRule.code,
     situationSummary: outcome.summary,
-    adviceTitle: rule.adviceTitle,
-    adviceBody: rule.adviceBody,
-    adviceReasons: Object.freeze([...rule.adviceReasons]),
-    selfActions: Object.freeze([...rule.selfActions]),
+    adviceTitle: resolvedRule.adviceTitle,
+    adviceBody: resolvedRule.adviceBody,
+    adviceReasons: Object.freeze([...resolvedRule.adviceReasons]),
+    selfActions: Object.freeze([...resolvedRule.selfActions]),
     dominantContext: context.dominantContext,
     relevantRiskDomains: Object.freeze([
       ...context.relevantRiskDomains,
@@ -517,12 +727,14 @@ function specificAdvice(
     additionalProfessionalRequirements: Object.freeze(additional),
     possibleProfessionalRequirements: Object.freeze(possible),
     knowledgeReferences: Object.freeze(
-      rule.knowledgeContentIds.map((contentId) =>
+      resolvedRule.knowledgeContentIds.map((contentId) =>
         Object.freeze({ contentId }),
       ),
     ),
     sourceReferences: Object.freeze(
-      rule.sourceIds.map((sourceId) => Object.freeze({ sourceId })),
+      resolvedRule.sourceIds.map((sourceId) =>
+        Object.freeze({ sourceId }),
+      ),
     ),
     disclaimer: PROFESSIONAL_ADVICE_DISCLAIMER,
     outcomeSpecificity: 'SPECIFIC',

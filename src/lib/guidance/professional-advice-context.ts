@@ -3,6 +3,10 @@ import type {
   GuidanceOutcome,
   ProfessionalAdviceRiskDomain,
 } from './guidance-domain'
+import {
+  confirmedFactMatches,
+  physicalWorkloadFactKeys,
+} from './confirmed-context'
 
 type ProfessionalAdviceInput = Omit<GuidanceOutcome, 'professionalAdvice'>
 
@@ -174,6 +178,17 @@ export function resolveProfessionalAdviceContext(
   outcome: ProfessionalAdviceInput,
 ): ProfessionalAdviceContext {
   const text = normalize(outcome.helpRequest.originalInput)
+  const confirmedPhysicalLoad = confirmedFactMatches(
+    outcome.facts,
+    physicalWorkloadFactKeys.physicalLoad,
+    [
+      'Tillen of dragen',
+      'Duwen of trekken',
+      'Repeterend werk',
+      'Langdurig zitten of staan',
+      'Trillingen',
+    ],
+  )
 
   if (containsAny(text, ['asbest', 'asbestverdacht'])) {
     return adviceContext('ASBEST', ['ASBEST_EXPOSURE'])
@@ -231,7 +246,7 @@ export function resolveProfessionalAdviceContext(
     ])
   }
 
-  if (containsAny(text, ergonomicsSignals)) {
+  if (confirmedPhysicalLoad || containsAny(text, ergonomicsSignals)) {
     return adviceContext('ERGONOMICS', ['PHYSICAL_WORKLOAD'])
   }
 

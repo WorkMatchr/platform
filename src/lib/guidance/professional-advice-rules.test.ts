@@ -47,6 +47,17 @@ function contract(
 }
 
 describe('M7B Professional Advice-ruleset', () => {
+  const confirmedFact = (
+    key: string,
+    value: string | boolean,
+  ): GuidanceContract['facts'][number] => ({
+    key,
+    valueType: typeof value === 'boolean' ? 'BOOLEAN' : 'TEXT',
+    value,
+    status: 'CONFIRMED',
+    provenance,
+  })
+
   it('bouwt voor RI&E concreet en niet leeg advies', () => {
     const outcome = guidanceEngine.evaluate(
       contract('RIE', 'Wij willen onze RI&E actualiseren.'),
@@ -314,16 +325,127 @@ describe('M7B Professional Advice-ruleset', () => {
       ),
     )
 
-    expect(outcome.professionalAdvice.adviceTitle).toContain(
-      'fysieke belasting',
-    )
+    expect(outcome.professionalAdvice.adviceTitle).toContain('trillingen')
     expect(
       outcome.professionalAdvice.primaryProfessionalRequirement
         ?.professionalType,
     ).toBe('ERGONOOM')
   })
 
-  it('classificeert een tillift over een vloer als ergonomie met concrete nevendisciplines', () => {
+  it('bouwt advies voor repeterend werk uitsluitend uit bevestigde context', () => {
+    const outcome = guidanceEngine.evaluate(
+      contract(
+        'OCCUPATIONAL_HEALTH',
+        'Bij meerdere medewerkers ontstaan rugklachten tijdens het werk.',
+        [
+          confirmedFact(
+            'PUBLIC_INTAKE_CONTEXT_WORK_ACTIVITY',
+            'Vooral lichamelijk werk',
+          ),
+          confirmedFact(
+            'PUBLIC_INTAKE_CONTEXT_PHYSICAL_LOAD',
+            'Repeterend werk',
+          ),
+          confirmedFact(
+            'PUBLIC_INTAKE_CONTEXT_AFFECTED_SCOPE',
+            'Bij meerdere medewerkers',
+          ),
+          confirmedFact(
+            'PUBLIC_INTAKE_CONTEXT_EXISTING_INVESTIGATION',
+            'Nee',
+          ),
+        ],
+      ),
+    )
+
+    expect(outcome.summary).toContain('lichamelijk werk')
+    expect(outcome.summary).toContain('repeterend werk')
+    expect(outcome.summary).toContain('meerdere medewerkers')
+    expect(outcome.summary).toContain('nog niet onderzocht')
+    expect(
+      outcome.professionalAdvice.primaryProfessionalRequirement
+        ?.professionalType,
+    ).toBe('ERGONOOM')
+    expect(outcome.professionalAdvice.selfActions.join(' ')).toMatch(
+      /herhaald|werktempo|taakafwisseling/i,
+    )
+    expect(outcome.knowledgeNeeds[0]?.reasonFactKeys).toEqual([
+      'PUBLIC_INTAKE_CONTEXT_WORK_ACTIVITY',
+      'PUBLIC_INTAKE_CONTEXT_PHYSICAL_LOAD',
+      'PUBLIC_INTAKE_CONTEXT_AFFECTED_SCOPE',
+      'PUBLIC_INTAKE_CONTEXT_EXISTING_INVESTIGATION',
+    ])
+    expect(outcome.professionalAdvice.knowledgeReferences).toEqual([])
+    expect(outcome.professionalAdvice.sourceReferences).toEqual([
+      { sourceId: 'arbowet-current' },
+      { sourceId: 'arbeidsinspectie-rie' },
+    ])
+
+    const visibleAdvice = JSON.stringify(outcome.professionalAdvice)
+    expect(visibleAdvice).not.toMatch(
+      /stoel|voertuig|trilling|bedrijfsarts|verzuim|re-integratie/i,
+    )
+  })
+
+  it.each<[string, RegExp]>([
+    ['Langdurig zitten of staan', /langdurig zitten of staan/i],
+    ['Trillingen', /trillingen/i],
+  ])('selecteert de bevestigde fysieke-belastingvariant %s', (value, expected) => {
+    const outcome = guidanceEngine.evaluate(
+      contract('OCCUPATIONAL_HEALTH', 'Wij willen fysieke belasting beoordelen.', [
+        confirmedFact('PUBLIC_INTAKE_CONTEXT_PHYSICAL_LOAD', value),
+      ]),
+    )
+
+    expect(
+      `${outcome.professionalAdvice.adviceTitle} ${outcome.professionalAdvice.adviceBody}`,
+    ).toMatch(expected)
+  })
+
+  it('voegt voertuigcontext alleen toe wanneer die is bevestigd', () => {
+    const outcome = guidanceEngine.evaluate(
+      contract('OCCUPATIONAL_HEALTH', 'Wij willen fysieke belasting beoordelen.', [
+        confirmedFact(
+          'PUBLIC_INTAKE_CONTEXT_PHYSICAL_LOAD',
+          'Langdurig zitten of staan',
+        ),
+        confirmedFact('PUBLIC_INTAKE_CONTEXT_VEHICLE', true),
+      ]),
+    )
+
+    expect(outcome.professionalAdvice.selfActions.join(' ')).toMatch(
+      /voertuig/i,
+    )
+  })
+
+  it('selecteert bedrijfsartskennis en -bron alleen bij een eigen bevestigde trigger', () => {
+    const outcome = guidanceEngine.evaluate(
+      contract('OCCUPATIONAL_HEALTH', 'Wij willen fysieke belasting beoordelen.', [
+        confirmedFact(
+          'PUBLIC_INTAKE_CONTEXT_PHYSICAL_LOAD',
+          'Repeterend werk',
+        ),
+        confirmedFact(
+          'PUBLIC_INTAKE_CONTEXT_OCCUPATIONAL_PHYSICIAN_RELEVANT',
+          true,
+        ),
+      ]),
+    )
+
+    expect(outcome.professionalAdvice.knowledgeReferences).toEqual([
+      { contentId: 'knowledge:occupational-physician' },
+    ])
+    expect(outcome.professionalAdvice.sourceReferences).toContainEqual({
+      sourceId: 'arboportaal-bedrijfsarts',
+    })
+    expect(
+      outcome.professionalAdvice.additionalProfessionalRequirements,
+    ).toEqual([
+      expect.objectContaining({ professionalType: 'BEDRIJFSARTS' }),
+    ])
+  })
+
+  it('classificeert een tillift over een vloer als ergonomie met passende taakdetails', () => {
     const outcome = guidanceEngine.evaluate(
       contract(
         'OCCUPATIONAL_HEALTH',
@@ -338,22 +460,8 @@ describe('M7B Professional Advice-ruleset', () => {
         priority: 'PRIMARY',
       },
     })
-    expect(
-      outcome.professionalAdvice.additionalProfessionalRequirements,
-    ).toEqual([
-      expect.objectContaining({
-        professionalType: 'ARBEIDSDESKUNDIGE',
-        priority: 'ADDITIONAL',
-      }),
-    ])
-    expect(
-      outcome.professionalAdvice.possibleProfessionalRequirements,
-    ).toEqual([
-      expect.objectContaining({
-        professionalType: 'HOGER_VEILIGHEIDSKUNDIGE',
-        priority: 'POSSIBLE',
-      }),
-    ])
+    expect(outcome.professionalAdvice.additionalProfessionalRequirements).toEqual([])
+    expect(outcome.professionalAdvice.possibleProfessionalRequirements).toEqual([])
     const explanation = JSON.stringify(outcome.professionalAdvice)
     expect(explanation).toMatch(/fysieke belasting/i)
     expect(explanation).toMatch(/duw- en trekkrachten/i)
@@ -505,7 +613,7 @@ describe('M7B Professional Advice-ruleset', () => {
       PROFESSIONAL_ADVICE_DISCLAIMER,
     )
     expect(PROFESSIONAL_ADVICE_RULE_SET_VERSION).toBe(
-      'professional-advice-rules/1.2.0',
+      'professional-advice-rules/1.3.0',
     )
     expect(Object.isFrozen(first.professionalAdvice)).toBe(true)
     expect(

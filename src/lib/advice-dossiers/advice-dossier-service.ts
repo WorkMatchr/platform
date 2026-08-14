@@ -10,6 +10,7 @@ import { getPrisma } from '@/lib/prisma'
 import type { PublicIntakeDraftView } from '@/lib/public-intake/public-intake-types'
 import { getAIIntakeUnderstanding } from '@/lib/public-intake/public-intake-ai-presentation'
 import { presentPublicIntakeGuidance } from '@/lib/public-intake/public-intake-guidance-presentation'
+import { summarizeConfirmedContext } from '@/lib/guidance/confirmed-context'
 import {
   adviceDossierSnapshotSchema,
   professionalRequirementSnapshotSchema,
@@ -121,20 +122,17 @@ export function resolveAdviceDossierSituationSummary(
       answer.source === 'AI_CONFIRMED',
   )
   const understanding = getAIIntakeUnderstanding(draft.aiClassification)
-  if (
+  const baseSummary =
     confirmedTopic &&
     understanding &&
     confirmedTopic.value === understanding.subjectCode
-  ) {
-    return understanding.summary
-  }
+      ? understanding.summary
+      : outcome.helpRequest.confirmedDescription?.trim() ||
+        presentPublicIntakeGuidance(outcome).situationSummary.trim() ||
+        outcome.summary.trim() ||
+        originalHelpRequest(draft)
 
-  return (
-    outcome.helpRequest.confirmedDescription?.trim() ||
-    presentPublicIntakeGuidance(outcome).situationSummary.trim() ||
-    outcome.summary.trim() ||
-    originalHelpRequest(draft)
-  )
+  return summarizeConfirmedContext(baseSummary, outcome.facts)
 }
 
 export function buildAdviceDossierSnapshot(

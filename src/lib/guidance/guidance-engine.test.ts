@@ -212,7 +212,7 @@ describe('ADR-021 Guidance Engine v2', () => {
         expect.objectContaining({
           code: knowledgeNeedCode,
           topicCodes: [topicCode],
-          reasonFactKeys: [],
+          reasonFactKeys: ['EXPLICIT_FACT'],
         }),
       ])
       expect(outcome.solutionDirections).toEqual([

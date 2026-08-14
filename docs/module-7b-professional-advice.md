@@ -97,6 +97,23 @@ concrete discipline aan een gecontroleerde specialismecode. De
 Request-eligibilitysnapshot matcht fail-closed op die code. Een brede
 dienst of vrije profieltekst is niet voldoende.
 
+## Feitgebonden fysieke belasting
+
+Ruleset `professional-advice-rules/1.3.0` bouwt advies over fysieke
+belasting op uit de oorspronkelijke hulpvraag en bevestigde contextfacts.
+De deterministische varianten onderscheiden repeterend werk, tillen en
+dragen, duwen en trekken, langdurig zitten of staan en trillingen. Een
+voertuigactie, trillingsadvies of bedrijfsartsverwijzing wordt alleen
+toegevoegd wanneer daarvoor een eigen trigger aanwezig is.
+
+De dossiersamenvatting neemt bekende context op zonder de oorspronkelijke
+hulpvraag te vervangen. `knowledgeNeeds.reasonFactKeys` legt vast welke
+bevestigde facts de kennisbehoefte ondersteunen. Kennisartikelen en
+bronnen worden eveneens conditioneel geselecteerd; de algemene
+ergonomieroute verwijst daardoor niet vanzelf naar de bedrijfsarts.
+Guidance blijft volledig deterministisch en gebruikt geen vrije
+AI-gegenereerde adviestekst.
+
 ## Kennis, bronnen en fallback
 
 Kennisverwijzingen gebruiken uitsluitend gepubliceerde ID’s uit
@@ -111,7 +128,7 @@ uitvoert.
 
 ## Historische compatibiliteit
 
-Ruleset `professional-advice-rules/1.2.0` geldt alleen voor nieuwe
+Ruleset `professional-advice-rules/1.3.0` geldt alleen voor nieuwe
 adviezen. Bestaande immutable AdviceDossierVersions, PDF-snapshots,
 Requests en Trusted Provider Projections worden niet herschreven.
 

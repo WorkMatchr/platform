@@ -120,6 +120,50 @@ describe('AdviceDossier-snapshotbron', () => {
     ).toBe(draft.guidance.outcome!.professionalAdvice.situationSummary)
   })
 
+  it('neemt bevestigde fysieke-belastingcontext op in de dossiersamenvatting', () => {
+    const draft = completedDraft()
+    const outcome = draft.guidance.outcome!
+    const physicalDraft: PublicIntakeDraftView = {
+      ...draft,
+      originalInput:
+        'Bij meerdere medewerkers ontstaan rugklachten tijdens het werk.',
+      aiClassification: null,
+      guidance: {
+        ...draft.guidance,
+        outcome: {
+          ...outcome,
+          summary:
+            'Bij meerdere medewerkers ontstaan rugklachten tijdens het werk.',
+          professionalAdvice: {
+            ...outcome.professionalAdvice,
+            situationSummary:
+              'Bij meerdere medewerkers ontstaan rugklachten tijdens het werk.',
+          },
+          facts: [
+            {
+              key: 'PUBLIC_INTAKE_CONTEXT_WORK_ACTIVITY',
+              valueType: 'TEXT',
+              value: 'Vooral lichamelijk werk',
+              status: 'CONFIRMED',
+              provenance: { sources: [], rules: [] },
+            },
+            {
+              key: 'PUBLIC_INTAKE_CONTEXT_PHYSICAL_LOAD',
+              valueType: 'TEXT',
+              value: 'Repeterend werk',
+              status: 'CONFIRMED',
+              provenance: { sources: [], rules: [] },
+            },
+          ],
+        },
+      },
+    }
+
+    expect(resolveAdviceDossierSituationSummary(physicalDraft)).toBe(
+      'Bij meerdere medewerkers ontstaan rugklachten tijdens het werk. Het gaat vooral om lichamelijk werk. De bevestigde belasting is repeterend werk.',
+    )
+  })
+
   it('neemt alle deskundigheidsprioriteiten op in de immutable snapshot', () => {
     const draft = completedDraft()
     const outcome = draft.guidance.outcome!

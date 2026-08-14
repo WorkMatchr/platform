@@ -21,6 +21,10 @@ import {
   type GuidanceRule,
 } from './guidance-ruleset-v1'
 import { buildProfessionalAdvice } from './professional-advice-rules'
+import {
+  confirmedReasonFactKeys,
+  summarizeConfirmedContext,
+} from './confirmed-context'
 
 export const GUIDANCE_ENGINE_VERSION = 'guidance-engine/2.1.0' as const
 export { GUIDANCE_RULE_SET_VERSION } from './guidance-ruleset-v1'
@@ -102,12 +106,13 @@ function determineKnowledgeNeeds(
   contract: GuidanceContract,
   rules: readonly GuidanceRule[],
 ): readonly KnowledgeNeed[] {
+  const reasonFactKeys = confirmedReasonFactKeys({ facts: contract.facts })
   return Object.freeze(
     rules.map((rule) =>
       Object.freeze({
         code: rule.then.knowledgeNeedCode,
         topicCodes: Object.freeze([rule.then.topicCode]),
-        reasonFactKeys: Object.freeze([]),
+        reasonFactKeys,
         provenance: createRuleProvenance(contract, [rule]),
       }),
     ),
@@ -184,9 +189,11 @@ function createOutcome(state: GuidancePipelineState): GuidanceOutcome {
       engineVersion: GUIDANCE_ENGINE_VERSION,
     },
     status: 'DRAFT',
-    summary:
+    summary: summarizeConfirmedContext(
       contract.helpRequest.confirmedDescription ??
-      contract.helpRequest.originalInput,
+        contract.helpRequest.originalInput,
+      contract.facts,
+    ),
     situation: contract.situation,
     helpRequest: contract.helpRequest,
     facts: state.facts,
