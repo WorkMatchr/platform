@@ -5,6 +5,7 @@ const date = z.iso.date()
 const shortText = z.string().trim().min(1).max(500)
 const statement = z.string().trim().min(1).max(1500)
 const jsonRecord = z.record(z.string(), z.unknown())
+const sourceCode = z.string().regex(/^[A-Z0-9][A-Z0-9._:-]{1,79}$/)
 
 const temporalStatuses = [
   'UNKNOWN',
@@ -51,11 +52,14 @@ const accessTiers = [
 
 const sourceSchema = z
   .object({
-    code: z.string().regex(/^AI-\d{2,3}$/),
+    code: sourceCode,
     title: z.string().trim().min(1).max(300),
     publisher: z.string().trim().min(1).max(200).optional(),
     publicationDate: date.optional(),
+    sourceModifiedDate: date.optional(),
     edition: z.string().trim().min(1).max(120).optional(),
+    applicabilityScope: z.string().trim().min(1).max(500).optional(),
+    metadataStatus: z.enum(['COMPLETE', 'INCOMPLETE', 'UNCERTAIN']).default('UNCERTAIN'),
     language: z.string().trim().min(2).max(12).default('nl'),
     jurisdiction: z.string().trim().min(2).max(40).default('NL'),
     sourceType: z.enum([

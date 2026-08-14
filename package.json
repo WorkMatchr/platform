@@ -48,7 +48,8 @@
     "repair:migration:m7b2": "tsx scripts/repair-m7b2-taxonomy-migration.ts",
     "knowledge:validate": "tsx scripts/knowledge-import.ts validate",
     "knowledge:preview": "tsx scripts/knowledge-import.ts preview",
-    "knowledge:import": "tsx scripts/knowledge-import.ts import"
+    "knowledge:import": "tsx scripts/knowledge-import.ts import",
+    "knowledge:correct": "tsx scripts/knowledge-import.ts correct"
   },
   "dependencies": {
     "@better-auth/prisma-adapter": "^1.6.23",

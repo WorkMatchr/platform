@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import { importKnowledgePackage, previewKnowledgeImport } from '../src/lib/knowledge/knowledge-import-service'
+import { correctKnowledgePackage, importKnowledgePackage, previewKnowledgeImport } from '../src/lib/knowledge/knowledge-import-service'
 import { validateKnowledgeImport } from '../src/lib/knowledge/knowledge-import-validation'
 import { readFile, stat } from 'node:fs/promises'
 import { KNOWLEDGE_IMPORT_MAX_BYTES } from '../src/lib/knowledge/knowledge-import-schema'
@@ -7,7 +7,7 @@ import { getPrisma } from '../src/lib/prisma'
 
 async function main() {
   const [, , command, fileName, ...flags] = process.argv
-  if (!['validate', 'preview', 'import'].includes(command ?? '') || !fileName) throw new Error('Gebruik: knowledge-import <validate|preview|import> <bestand> [--confirm]')
+  if (!['validate', 'preview', 'import', 'correct'].includes(command ?? '') || !fileName) throw new Error('Gebruik: knowledge-import <validate|preview|import|correct> <bestand> [--confirm] [--reason="..."]')
   if (command === 'validate') {
     if ((await stat(fileName)).size > KNOWLEDGE_IMPORT_MAX_BYTES) throw new Error('Het importpakket is groter dan 5 MB.')
     const result = validateKnowledgeImport(JSON.parse(await readFile(fileName, 'utf8')) as unknown)
@@ -24,7 +24,12 @@ async function main() {
     return
   }
   try {
-    console.info(JSON.stringify(await importKnowledgePackage(fileName, { confirm: flags.includes('--confirm') }), null, 2))
+    if (command === 'correct') {
+      const reason = flags.find((flag) => flag.startsWith('--reason='))?.slice('--reason='.length) ?? ''
+      console.info(JSON.stringify(await correctKnowledgePackage(fileName, { confirm: flags.includes('--confirm'), correctionReason: reason }), null, 2))
+    } else {
+      console.info(JSON.stringify(await importKnowledgePackage(fileName, { confirm: flags.includes('--confirm') }), null, 2))
+    }
   } finally {
     await getPrisma().$disconnect()
   }

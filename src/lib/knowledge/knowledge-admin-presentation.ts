@@ -185,6 +185,7 @@ const auditEventLabels: Record<KnowledgeAuditEventType, string> = {
   CONFLICT_DETECTED: 'Conflict vastgesteld',
   IMPORT_STARTED: 'Import gestart',
   IMPORT_COMPLETED: 'Import afgerond',
+  IMPORT_CORRECTION_COMPLETED: 'Importcorrectie afgerond',
   IMPORT_FAILED: 'Import mislukt',
   REVIEW_STARTED: 'Kenniscontrole gestart',
   REVIEW_DRAFT_SAVED: 'Controleconcept opgeslagen',
