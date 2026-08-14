@@ -6,7 +6,7 @@
   "additionalProperties": false,
   "required": ["schemaVersion", "source", "sourceVersion", "topics", "fragments", "claims", "citations", "relations", "rules", "calculations", "checklists", "procedures", "roles", "formTemplates", "importMetadata"],
   "properties": {
-    "schemaVersion": { "const": "1.0" },
+    "schemaVersion": { "enum": ["1.0", "1.1"] },
     "source": { "$ref": "#/$defs/source" },
     "sourceVersion": { "$ref": "#/$defs/sourceVersion" },
     "topics": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/topic" } },
@@ -108,7 +108,8 @@
         "temporalStatus": { "enum": ["UNKNOWN", "CURRENT", "HISTORICAL", "SUPERSEDED", "WITHDRAWN", "UNDER_REVIEW"] },
         "validationStatus": { "enum": ["UNVALIDATED", "PARTIALLY_VALIDATED", "VALIDATED", "CONFLICTING", "REJECTED", "EXPIRED", "REVIEW_REQUIRED"] },
         "publicationStatus": { "const": "DRAFT" }, "confidenceLevel": { "enum": ["UNKNOWN", "LOW", "MEDIUM", "HIGH"] },
-        "accessTier": { "enum": ["PUBLIC_BASIC", "REGISTERED_BASIC", "PROFESSIONAL_PRO", "ORGANIZATION_BUSINESS", "INTERNAL_REVIEWER", "PLATFORM_ADMIN"] }
+        "accessTier": { "enum": ["PUBLIC_BASIC", "REGISTERED_BASIC", "PROFESSIONAL_PRO", "ORGANIZATION_BUSINESS", "INTERNAL_REVIEWER", "PLATFORM_ADMIN"] },
+        "controlRisk": { "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"] }
       }
     },
     "citation": {
@@ -120,5 +121,22 @@
         "citationNote": { "type": "string", "maxLength": 500 }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "schemaVersion": { "const": "1.1" } } },
+      "then": {
+        "properties": {
+          "claims": {
+            "items": {
+              "allOf": [
+                { "$ref": "#/$defs/claim" },
+                { "required": ["controlRisk"] }
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
 }

@@ -26,6 +26,7 @@ type FingerprintClaim = {
   publicationStatus: string
   confidenceLevel: string
   accessTier: string
+  controlRisk: string
 }
 
 type FingerprintCitation = {
@@ -137,6 +138,7 @@ export function snapshotKnowledgeImportPackage(data: KnowledgeImportPackage): Kn
       publicationStatus: claim.publicationStatus,
       confidenceLevel: claim.confidenceLevel,
       accessTier: claim.accessTier,
+      controlRisk: claim.controlRisk,
     })), (claim) => claim.key),
     citations: sortByKey(data.citations.map((citation) => ({
       claimKey: citation.claimKey,

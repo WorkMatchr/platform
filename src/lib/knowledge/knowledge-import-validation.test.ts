@@ -27,6 +27,30 @@ describe('Knowledge-importvalidatie', () => {
     const result = validateKnowledgeImport(ai01)
     expect(result.valid).toBe(true)
     expect(result.counts.claims).toBe(8)
+    expect(result.package?.claims.every((claim) => claim.controlRisk === 'CRITICAL')).toBe(true)
+  })
+
+  it('vereist vanaf contract 1.1 een expliciet geldig claimrisico', () => {
+    const missing = structuredClone(ai01) as Record<string, unknown>
+    missing.schemaVersion = '1.1'
+    expect(validateKnowledgeImport(missing).issues).toContainEqual(expect.objectContaining({
+      code: 'SCHEMA_INVALID',
+      path: 'claims.0.controlRisk',
+    }))
+
+    const invalid = structuredClone(missing) as Record<string, unknown>
+    ;((invalid.claims as Array<Record<string, unknown>>)[0]).controlRisk = 'ONBEKEND'
+    expect(validateKnowledgeImport(invalid).valid).toBe(false)
+  })
+
+  it('accepteert alle bestaande expliciete controlRisk-waarden in contract 1.1', () => {
+    const input = structuredClone(ai01) as Record<string, unknown>
+    input.schemaVersion = '1.1'
+    const risks = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
+    ;(input.claims as Array<Record<string, unknown>>).forEach((claim, index) => {
+      claim.controlRisk = risks[index % risks.length]
+    })
+    expect(validateKnowledgeImport(input).valid).toBe(true)
   })
 
   it('weigert directe publicatie', () => {
@@ -104,9 +128,10 @@ describe('Knowledge-importvalidatie', () => {
 
   it('houdt het TypeScript-contract synchroon met het formele schema', async () => {
     const schema = (await import('../../../data/knowledge/schema/knowledge-import.v1.schema.json')).default
-    expect(schema.properties.schemaVersion.const).toBe('1.0')
+    expect(schema.properties.schemaVersion.enum).toEqual(['1.0', '1.1'])
     expect(schema.required).toEqual(expect.arrayContaining(['source', 'claims', 'citations', 'importMetadata']))
     expect(schema.$defs.fragment.properties.internalExcerpt.maxLength).toBe(500)
     expect(schema.$defs.claim.properties.publicationStatus.const).toBe('DRAFT')
+    expect(schema.$defs.claim.properties.controlRisk.enum).toEqual(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'])
   })
 })

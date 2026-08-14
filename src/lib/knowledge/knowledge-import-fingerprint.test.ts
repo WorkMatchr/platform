@@ -25,6 +25,7 @@ describe('Knowledge-importfingerprint', () => {
   it.each([
     ['claimtekst', (input: Record<string, unknown>) => { (input.claims as Array<Record<string, unknown>>)[0].statement = 'Inhoudelijk gewijzigde claim.' }],
     ['claimtype', (input: Record<string, unknown>) => { (input.claims as Array<Record<string, unknown>>)[0].claimType = 'OTHER' }],
+    ['claimrisico', (input: Record<string, unknown>) => { (input.claims as Array<Record<string, unknown>>)[0].controlRisk = 'HIGH' }],
     ['pagina', (input: Record<string, unknown>) => { (input.fragments as Array<Record<string, unknown>>)[0].pageFrom = 8 }],
     ['sectie', (input: Record<string, unknown>) => { (input.fragments as Array<Record<string, unknown>>)[0].sectionPath = 'Andere sectie' }],
     ['bronfragment', (input: Record<string, unknown>) => { (input.fragments as Array<Record<string, unknown>>)[0].internalExcerpt = 'Een gecontroleerd kort bronfragment.' }],
@@ -42,5 +43,14 @@ describe('Knowledge-importfingerprint', () => {
     reordered.fragments = (reordered.fragments as unknown[]).toReversed()
     reordered.citations = (reordered.citations as unknown[]).toReversed()
     expect(fingerprintKnowledgeImportPackage(packageFrom(reordered))).toBe(original)
+  })
+
+  it('onderscheidt zowel risicoverhoging als risicoverlaging', () => {
+    const input = structuredClone(ai01) as Record<string, unknown>
+    input.schemaVersion = '1.1'
+    for (const claim of input.claims as Array<Record<string, unknown>>) claim.controlRisk = 'HIGH'
+    const high = fingerprintKnowledgeImportPackage(packageFrom(input))
+    ;((input.claims as Array<Record<string, unknown>>)[0]).controlRisk = 'MEDIUM'
+    expect(fingerprintKnowledgeImportPackage(packageFrom(input))).not.toBe(high)
   })
 })

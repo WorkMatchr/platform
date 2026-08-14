@@ -80,7 +80,8 @@ async function main() {
     const manifestSources = []
     const packageFiles: string[] = []
     let representativePackage: Record<string, unknown> | null = null
-    for (const [code, sourceKind, sourceType, logicalPath] of representativeSources) {
+    const representativeRisks = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as const
+    for (const [sourceIndex, [code, sourceKind, sourceType, logicalPath]] of representativeSources.entries()) {
       const pdf = Buffer.from(`%PDF-1.4\n% ${code}\n%%EOF\n`)
       const checksum = createHash('sha256').update(pdf).digest('hex')
       await mkdir(path.dirname(path.join(genericFixtureRoot, logicalPath)), { recursive: true })
@@ -89,12 +90,12 @@ async function main() {
       const key = code.toLocaleLowerCase('nl-NL')
       const packageFile = path.join(genericFixtureRoot, `${key}.json`)
       const knowledgePackage = {
-        schemaVersion: '1.0',
+        schemaVersion: '1.1',
         source: { code, title: `Representatieve bron ${code}`, publisher: 'Testuitgever', publicationDate: '2026-01-01', edition: 'Testeditie', applicabilityScope: 'Representatieve migratietest', metadataStatus: 'COMPLETE', language: 'nl', jurisdiction: 'NL', sourceType, sourceFormat: 'PDF', copyrightClassification: 'PUBLIC_DOMAIN', authorityLevel: sourceType === 'LEGISLATION' || sourceType === 'REGULATION' ? 'PRIMARY_LEGAL' : 'OFFICIAL_GUIDANCE', temporalStatus: 'CURRENT', sourceFamily: sourceKind, independenceGroup: sourceKind, isPrimarySource: sourceType === 'LEGISLATION' || sourceType === 'REGULATION' },
         sourceVersion: { externalKey: `${key}:v1`, versionLabel: 'v1', publicationDate: '2026-01-01', checksum, extractionStatus: 'EXTRACTED', reviewStatus: 'NOT_REVIEWED' },
         topics: [{ externalKey: `${key}:topic`, slug: `${key}-topic`, title: `Onderwerp ${code}`, description: 'Uitsluitend een representatieve migratietest.', domain: sourceType === 'LEGISLATION' || sourceType === 'REGULATION' ? 'LEGAL' : 'OTHER' }],
         fragments: [{ externalKey: `${key}:fragment`, sourceVersionKey: `${key}:v1`, pageFrom: 1, pageTo: 1, fragmentType: 'PAGE', extractionMethod: 'TEST_FIXTURE', requiresReview: false }],
-        claims: [{ externalKey: `${key}:claim`, topicKey: `${key}:topic`, claimType: 'OTHER', statement: `Conceptclaim voor ${code}.`, applicability: 'Uitsluitend een representatieve migratietest.', jurisdiction: 'NL', temporalStatus: 'CURRENT', validationStatus: 'UNVALIDATED', publicationStatus: 'DRAFT', confidenceLevel: 'MEDIUM', accessTier: 'INTERNAL_REVIEWER' }],
+        claims: [{ externalKey: `${key}:claim`, topicKey: `${key}:topic`, claimType: 'OTHER', statement: `Conceptclaim voor ${code}.`, applicability: 'Uitsluitend een representatieve migratietest.', jurisdiction: 'NL', temporalStatus: 'CURRENT', validationStatus: 'UNVALIDATED', publicationStatus: 'DRAFT', confidenceLevel: 'MEDIUM', accessTier: 'INTERNAL_REVIEWER', controlRisk: representativeRisks[sourceIndex % representativeRisks.length] }],
         citations: [{ claimKey: `${key}:claim`, sourceVersionKey: `${key}:v1`, fragmentKey: `${key}:fragment`, supportType: 'DIRECT_SUPPORT' }],
         relations: [], rules: [], calculations: [], checklists: [], procedures: [], roles: [], formTemplates: [],
         importMetadata: { createdAt: '2026-08-08T10:00:00.000Z', createdBy: 'MIGRATION_TEST', uncertainties: [] },
@@ -187,8 +188,10 @@ async function main() {
     await rollbackPool.end()
     const genericPool = new Pool({ connectionString: target.toString() })
     const genericCounts = await genericPool.query<{ sources: string; claims: string; citations: string }>(`SELECT count(*)::text sources, (SELECT count(*)::text FROM "KnowledgeClaim" WHERE "externalKey" LIKE 'gen-%') claims, (SELECT count(*)::text FROM "KnowledgeCitation" c JOIN "KnowledgeClaim" k ON k."id"=c."claimId" WHERE k."externalKey" LIKE 'gen-%') citations FROM "KnowledgeSource" WHERE "code" LIKE 'GEN-%'`)
+    const genericRisks = await genericPool.query<{ controlRisk: string }>(`SELECT DISTINCT "controlRisk" FROM "KnowledgeClaim" WHERE "externalKey" LIKE 'gen-%' ORDER BY "controlRisk"`)
     await genericPool.end()
     if (genericCounts.rows[0].sources !== '8' || genericCounts.rows[0].claims !== '9' || genericCounts.rows[0].citations !== '9') throw new Error(`Onverwachte generieke importtellingen: ${JSON.stringify(genericCounts.rows[0])}`)
+    if (genericRisks.rows.map((row) => row.controlRisk).sort().join(',') !== ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].sort().join(',')) throw new Error(`Niet alle expliciete claimrisico's zijn opgeslagen: ${JSON.stringify(genericRisks.rows)}`)
     console.info(`Volledige migratieketen en Knowledge Engine-constraints geslaagd op tijdelijke database ${databaseName}.`)
   } finally {
     if (genericFixtureRoot) await rm(genericFixtureRoot, { recursive: true, force: true })

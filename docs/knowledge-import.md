@@ -19,6 +19,12 @@ Per bron worden titel, uitgever, editie, publicatie- of wijzigingsdatum, sector/
 
 Iedere conceptclaim vereist een citatie naar een geïmporteerd fragment met minimaal een pagina of sectie. Alle claims blijven `DRAFT` en `UNVALIDATED`; import publiceert of keurt nooit kennis goed.
 
+### Expliciete claimrisico's
+
+Knowledge-importcontract `1.1` vereist voor iedere claim een expliciete `controlRisk`: `LOW`, `MEDIUM`, `HIGH` of `CRITICAL`. Dit veld wordt opgeslagen door zowel de normale import als het immutable correctiepad en maakt deel uit van de inhoudsfingerprint. Een risicowijziging is daardoor altijd een inhoudelijke wijziging en kan nooit als identieke replay worden behandeld.
+
+Legacy-pakketten met contract `1.0` blijven valideerbaar, maar een ontbrekend risico wordt uitsluitend conservatief als `CRITICAL` genormaliseerd. Daardoor bepaalt de database-default nooit stilzwijgend het risico van een nieuwe legacy-import. Een bestaande revisie met een oudere fingerprint wordt niet automatisch herschreven; voor een inhoudelijk beoordeelde lagere classificatie is een expliciet `1.1`-correctiepakket nodig.
+
 PDF is in v1 het enige betrouwbare extractieformaat. `.doc` wordt alleen geïnventariseerd als `LEGACY_DOC` en `UNSUPPORTED_FOR_EXTRACTION`; het bestand wordt niet geopend of geconverteerd. De pipeline voert geen downloads, webscraping of automatische juridische beoordeling uit. Nieuwe bronnen worden toegevoegd via een manifestregel en conceptpakket, zonder nieuw Prisma-model.
 
 ## Lokaal manifest v2

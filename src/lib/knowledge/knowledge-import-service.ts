@@ -142,6 +142,7 @@ function snapshotPersistedVersion(version: ActiveSourceVersion): KnowledgeImport
       publicationStatus: claim.publicationStatus,
       confidenceLevel: claim.confidenceLevel,
       accessTier: claim.accessTier,
+      controlRisk: claim.controlRisk,
     })).sort((left, right) => left.key.localeCompare(right.key, 'en')),
     citations: version.citations.map((citation) => ({
       claimKey: citation.claim.externalKey,
@@ -211,6 +212,9 @@ export async function previewKnowledgeImport(fileName: string, options: { correc
     schemaVersion: data.schemaVersion,
     counts: validation.counts,
     conflicts: validation.conflicts,
+    claimRisks: data.claims
+      .map((claim) => ({ externalKey: claim.externalKey, controlRisk: claim.controlRisk }))
+      .sort((left, right) => left.externalKey.localeCompare(right.externalKey, 'en')),
     sourceType: data.source.sourceType,
     logicalSourcePath: getManifestLogicalPath(manifestSource),
     contentFingerprint: incomingFingerprint,
@@ -336,6 +340,7 @@ export async function importKnowledgePackage(fileName: string, options: ImportOp
           publicationStatus: claim.publicationStatus,
           confidenceLevel: claim.confidenceLevel,
           accessTier: claim.accessTier,
+          controlRisk: claim.controlRisk,
           sourceControlStatus: data.source.temporalStatus === 'CURRENT'
             ? (data.source.metadataStatus === 'COMPLETE' ? 'SOURCES_COLLECTED' : 'HUMAN_EXCEPTION_REQUIRED')
             : 'OUTDATED',
@@ -638,6 +643,7 @@ export async function correctKnowledgePackage(fileName: string, options: Correct
         publicationStatus: 'DRAFT',
         confidenceLevel: claim.confidenceLevel,
         accessTier: claim.accessTier,
+        controlRisk: claim.controlRisk,
         sourceControlStatus: data.source.temporalStatus === 'CURRENT'
           ? (data.source.metadataStatus === 'COMPLETE' ? 'SOURCES_COLLECTED' : 'HUMAN_EXCEPTION_REQUIRED')
           : 'OUTDATED',

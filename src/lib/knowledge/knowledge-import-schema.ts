@@ -185,6 +185,8 @@ const claimTypes = [
   'OTHER',
 ] as const
 
+const controlRisks = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as const
+
 const claimSchema = z
   .object({
     externalKey: key,
@@ -201,6 +203,7 @@ const claimSchema = z
     publicationStatus: z.literal('DRAFT'),
     confidenceLevel: z.enum(['UNKNOWN', 'LOW', 'MEDIUM', 'HIGH']),
     accessTier: z.enum(accessTiers).default('INTERNAL_REVIEWER'),
+    controlRisk: z.enum(controlRisks).optional(),
   })
   .strict()
 
@@ -387,7 +390,7 @@ const formTemplateSchema = z
 
 export const knowledgeImportPackageSchema = z
   .object({
-    schemaVersion: z.literal('1.0'),
+    schemaVersion: z.enum(['1.0', '1.1']),
     source: sourceSchema,
     sourceVersion: sourceVersionSchema,
     topics: z.array(topicSchema).max(100),
@@ -411,6 +414,26 @@ export const knowledgeImportPackageSchema = z
       .strict(),
   })
   .strict()
+  .superRefine((value, context) => {
+    if (value.schemaVersion !== '1.1') return
+    value.claims.forEach((claim, index) => {
+      if (claim.controlRisk !== undefined) return
+      context.addIssue({
+        code: 'custom',
+        path: ['claims', index, 'controlRisk'],
+        message: 'controlRisk is verplicht vanaf Knowledge-importcontract 1.1.',
+      })
+    })
+  })
+  .transform((value) => ({
+    ...value,
+    claims: value.claims.map((claim) => ({
+      ...claim,
+      // Legacy 1.0-pakketten blijven leesbaar, maar worden conservatief behandeld.
+      // Een expliciete 1.1-classificatie is vereist om een lager risico vast te leggen.
+      controlRisk: claim.controlRisk ?? 'CRITICAL' as const,
+    })),
+  }))
 
 export type KnowledgeImportPackage = z.infer<
   typeof knowledgeImportPackageSchema
