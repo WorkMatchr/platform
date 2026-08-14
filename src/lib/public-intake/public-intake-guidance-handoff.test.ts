@@ -51,6 +51,74 @@ function draft(
 }
 
 describe('Public Intake Guidance-handoff', () => {
+  it('presenteert een onbekende RI&E-onderzoeksstatus inhoudelijk herleidbaar', () => {
+    const handoff = buildPublicIntakeGuidanceHandoff(
+      'public-draft-fixture',
+      draft([
+        answer(
+          'context_existing_investigation',
+          'OPTION',
+          null,
+          'UNKNOWN',
+        ),
+      ]),
+    )
+
+    expect(handoff.contract.uncertainties).toEqual([
+      expect.objectContaining({
+        reason: 'UNKNOWN',
+        sourceQuestionKey: 'context_existing_investigation',
+        description:
+          'Het is niet bekend of deze situatie al is onderzocht of in de RI&E is opgenomen.',
+      }),
+    ])
+  })
+
+  it('behoudt de generieke onzekerheidstekst zonder catalogustekst', () => {
+    const handoff = buildPublicIntakeGuidanceHandoff(
+      'public-draft-fixture',
+      draft([
+        answer('context_affected_scope', 'OPTION', null, 'UNKNOWN'),
+      ]),
+    )
+
+    expect(handoff.contract.uncertainties[0]?.description).toBe(
+      'De bezoeker heeft aangegeven deze informatie niet te weten.',
+    )
+  })
+
+  it('laat bekende context en professioneel advies ongewijzigd', () => {
+    const known = buildPublicIntakeGuidanceHandoff(
+      'public-draft-fixture',
+      draft([
+        answer('context_existing_investigation', 'OPTION', 'Nee'),
+      ]),
+    )
+    const baseline = buildPublicIntakeGuidanceHandoff(
+      'public-draft-fixture',
+      draft([answer('rie_existing_status', 'OPTION', 'NONE')]),
+    )
+
+    expect(known.contract.uncertainties).toEqual([])
+    expect(known.contract.facts).toContainEqual(
+      expect.objectContaining({
+        key: 'PUBLIC_INTAKE_CONTEXT_EXISTING_INVESTIGATION',
+        value: 'Nee',
+        status: 'CONFIRMED',
+      }),
+    )
+    expect(known.outcome?.professionalAdvice.appliedRuleCode).toBe(
+      baseline.outcome?.professionalAdvice.appliedRuleCode,
+    )
+    expect(
+      known.outcome?.professionalAdvice.primaryProfessionalRequirement
+        ?.professionalType,
+    ).toBe(
+      baseline.outcome?.professionalAdvice.primaryProfessionalRequirement
+        ?.professionalType,
+    )
+  })
+
   it('bouwt een GuidanceContract uit uitsluitend bestaande draftgegevens', () => {
     const handoff = buildPublicIntakeGuidanceHandoff(
       'public-draft-fixture',

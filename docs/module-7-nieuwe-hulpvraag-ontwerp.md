@@ -16,6 +16,12 @@ Datum: 26 juli 2026
 
 ## 1. Executive summary
 
+Bevestigde onzekerheden behouden technisch de status `UNKNOWN`, maar
+worden waar mogelijk met een gecontroleerde vraaggebonden tekst getoond.
+De contextvraagcatalogus kan daarvoor `unknownText` vastleggen. Ontbreekt
+die tekst, dan blijft de generieke veilige formulering gelden. Bestaande
+Adviesdossiers en historische snapshots worden niet herschreven.
+
 Module 7 maakt van de bestaande publieke Advieswijzer een begeleide route waarin een bezoeker zonder account een hulpvraag kan starten, verduidelijken en controleren. Een account is pas nodig wanneer de bezoeker de hulpvraag definitief wil indienen.
 
 De kern van het ontwerp is een afzonderlijke, pseudonieme `PublicIntakeDraft`. Dit concept:

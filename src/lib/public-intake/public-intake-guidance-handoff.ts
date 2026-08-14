@@ -17,6 +17,7 @@ import type {
   Uncertainty,
 } from '@/lib/guidance/guidance-domain'
 import { buildSafeFallbackProfessionalAdvice } from '@/lib/guidance/professional-advice-rules'
+import { getAIContextQuestion } from '@/lib/ai-intake-classifier/ai-context-question-catalog'
 import {
   PUBLIC_INTAKE_COMPLETION_SCHEMA_VERSION,
   type PublicIntakeCompletion,
@@ -182,19 +183,21 @@ function toUncertainties(
 ): readonly Uncertainty[] {
   return answers
     .filter((answer) => answer.disposition !== 'ANSWERED')
-    .map((answer) =>
-      Object.freeze({
+    .map((answer) => {
+      const question = getAIContextQuestion(answer.questionKey)
+      return Object.freeze({
         key: uncertaintyKey(answer),
         reason:
           answer.disposition === 'SKIPPED' ? 'DEFERRED' : 'UNKNOWN',
         description:
           answer.disposition === 'SKIPPED'
             ? 'De bezoeker heeft deze informatie uitgesteld.'
-            : 'De bezoeker heeft aangegeven deze informatie niet te weten.',
+            : question?.unknownText ??
+              'De bezoeker heeft aangegeven deze informatie niet te weten.',
         sourceQuestionKey: answer.questionKey,
         provenance,
-      }),
-    )
+      })
+    })
 }
 
 const SAFE_FALLBACK_RULE_SET_VERSION =

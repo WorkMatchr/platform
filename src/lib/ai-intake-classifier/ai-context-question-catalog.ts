@@ -9,6 +9,7 @@ export type AIContextQuestion = Readonly<{
   answerType: 'OPTION'
   options: readonly string[]
   category: 'WORK' | 'EXPOSURE' | 'SCOPE' | 'EXISTING_CONTROL' | 'URGENCY'
+  unknownText?: string
 }>
 
 export const aiContextQuestionCatalog = Object.freeze([
@@ -31,6 +32,7 @@ export const aiContextQuestionCatalog = Object.freeze([
     questionKey: 'context_existing_investigation', subjectCodes: ['OCCUPATIONAL_HEALTH', 'RIE', 'INCIDENT'],
     text: 'Is deze situatie al onderzocht of opgenomen in een RI&E?', answerType: 'OPTION',
     options: ['Ja', 'Nee', 'Dat weet ik niet'], category: 'EXISTING_CONTROL',
+    unknownText: 'Het is niet bekend of deze situatie al is onderzocht of in de RI&E is opgenomen.',
   },
   {
     questionKey: 'context_urgency', subjectCodes: ['INCIDENT', 'HAZARDOUS_SUBSTANCES', 'EMERGENCY_RESPONSE'],
