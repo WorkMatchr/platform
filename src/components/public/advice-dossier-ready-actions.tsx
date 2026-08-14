@@ -1,12 +1,35 @@
 'use client'
 
 import { useRef, useState, useTransition, type FormEvent } from 'react'
-import { startAdviceDossierIntakeAction } from '@/app/adviesdossiers/actions'
+import { useRouter } from 'next/navigation'
+import {
+  prepareAdviceDossierIntakeAction,
+  type StartAdviceDossierIntakeActionResult,
+} from '@/app/adviesdossiers/actions'
 import { Button } from '@/components/ui/button'
 import { LinkButton } from '@/components/ui/link-button'
 
-const HANDOFF_ERROR =
+const HANDOFF_ERRORS = {
+  ACCESS_DENIED: 'U heeft geen toegang om vanuit dit Adviesdossier een opdracht te starten.',
+  NOT_ELIGIBLE: 'Vanuit dit Adviesdossier kan momenteel geen opdracht worden gestart.',
+  TEMPORARY_ERROR: 'De opdracht kan tijdelijk niet worden voorbereid. Probeer het later opnieuw.',
+} as const
+
+const HANDOFF_FALLBACK_ERROR =
   'De opdracht kon niet worden voorbereid. Uw Adviesdossier is bewaard. Probeer het opnieuw.'
+
+export async function prepareAdviceDossierAssignment(input: {
+  dossierId: string
+  action?: (dossierId: string) => Promise<StartAdviceDossierIntakeActionResult>
+  navigate: (href: string) => void
+}): Promise<string | null> {
+  const result = await (input.action ?? prepareAdviceDossierIntakeAction)(input.dossierId)
+  if (result.ok) {
+    input.navigate(result.href)
+    return null
+  }
+  return HANDOFF_ERRORS[result.code]
+}
 
 export function AdviceDossierAssignmentSubmitButton({
   isPending,
@@ -27,6 +50,7 @@ export function AdviceDossierAssignmentSubmitButton({
 export function AdviceDossierReadyActions({
   dossierId,
 }: Readonly<{ dossierId: string }>) {
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const submitStarted = useRef(false)
@@ -39,11 +63,15 @@ export function AdviceDossierReadyActions({
     setError(null)
     startTransition(async () => {
       try {
-        await startAdviceDossierIntakeAction(dossierId)
+        const message = await prepareAdviceDossierAssignment({
+          dossierId,
+          navigate: (href) => router.push(href),
+        })
         submitStarted.current = false
+        setError(message)
       } catch {
         submitStarted.current = false
-        setError(HANDOFF_ERROR)
+        setError(HANDOFF_FALLBACK_ERROR)
       }
     })
   }
@@ -77,9 +105,12 @@ export function AdviceDossierReadyActions({
           <AdviceDossierAssignmentSubmitButton isPending={isPending} />
         </form>
         {error ? (
-          <p className="mt-3 text-sm font-semibold text-error" role="alert">
+          <div
+            className="mt-3 rounded-control border border-error-border bg-error-subtle px-4 py-3 text-sm font-semibold text-brand-dark"
+            role="alert"
+          >
             {error}
-          </p>
+          </div>
         ) : null}
       </section>
     </div>
