@@ -3,6 +3,26 @@ import ai01 from '../../../data/knowledge/poc/AI-01.v1.json'
 import { validateKnowledgeImport } from './knowledge-import-validation'
 
 describe('Knowledge-importvalidatie', () => {
+  it.each([
+    ['AI-01', 'AI_SHEET'],
+    ['ARBOWET-2026', 'LEGISLATION'],
+    ['ARBOBESLUIT-2026', 'REGULATION'],
+    ['ARBOREGELING-2026', 'REGULATION'],
+    ['ARBOCAT-BOUW-2026', 'ARBOCATALOGUE'],
+    ['BELEIDSREGEL-2026', 'REGULATION'],
+    ['NLA-WERKINSTRUCTIE-2026', 'INSPECTORATE_GUIDANCE'],
+    ['TNO-RAPPORT-2026', 'RESEARCH'],
+  ] as const)('accepteert een conceptpakket voor %s', (code, sourceType) => {
+    const input = structuredClone(ai01) as Record<string, unknown>
+    const source = input.source as Record<string, unknown>
+    source.code = code
+    source.sourceType = sourceType
+    source.metadataStatus = 'COMPLETE'
+    source.applicabilityScope = 'Werkgevers en werknemers in Nederland'
+    const result = validateKnowledgeImport(input)
+    expect(result.valid).toBe(true)
+  })
+
   it('accepteert het historische AI-01-conceptpakket', () => {
     const result = validateKnowledgeImport(ai01)
     expect(result.valid).toBe(true)
@@ -24,12 +44,47 @@ describe('Knowledge-importvalidatie', () => {
     expect(result.issues).toContainEqual(expect.objectContaining({ code: 'HISTORICAL_AS_CURRENT' }))
   })
 
+  it('vereist expliciete onzekerheden voor onvolledige metadata', () => {
+    const input = structuredClone(ai01) as Record<string, unknown>
+    ;(input.source as Record<string, unknown>).metadataStatus = 'INCOMPLETE'
+    ;(input.importMetadata as Record<string, unknown>).uncertainties = []
+    const result = validateKnowledgeImport(input)
+    expect(result.issues).toContainEqual(expect.objectContaining({ code: 'METADATA_UNCERTAINTY_UNEXPLAINED' }))
+  })
+
+  it('vereist voor iedere conceptclaim een herleidbaar fragment met pagina of sectie', () => {
+    const input = structuredClone(ai01) as Record<string, unknown>
+    ;((input.citations as Array<Record<string, unknown>>)[0]).fragmentKey = undefined
+    const result = validateKnowledgeImport(input)
+    expect(result.issues).toContainEqual(expect.objectContaining({ code: 'UNKNOWN_FRAGMENT' }))
+  })
+
+  it('weigert een claim zonder concrete fragmentcitatie', () => {
+    const input = structuredClone(ai01) as Record<string, unknown>
+    ;(input.citations as Array<Record<string, unknown>>).splice(0, 1)
+    const result = validateKnowledgeImport(input)
+    expect(result.issues).toContainEqual(expect.objectContaining({ code: 'CLAIM_SOURCE_REQUIRED', path: 'ai-01:c1' }))
+  })
+
   it('weigert te lange interne fragmenten en onbekende citaties', () => {
     const input = structuredClone(ai01) as Record<string, unknown>
     ;((input.fragments as Array<Record<string, unknown>>)[0]).internalExcerpt = 'x'.repeat(501)
     ;((input.citations as Array<Record<string, unknown>>)[1]).fragmentKey = 'ai-01:onbekend'
     const result = validateKnowledgeImport(input)
     expect(result.valid).toBe(false)
+  })
+
+  it('weigert een fragmentfingerprint die niet bij het bronfragment hoort', () => {
+    const input = structuredClone(ai01) as Record<string, unknown>
+    Object.assign((input.fragments as Array<Record<string, unknown>>)[0], {
+      internalExcerpt: 'Controleerbaar bronfragment.',
+      excerptHash: '0'.repeat(64),
+    })
+    const result = validateKnowledgeImport(input)
+    expect(result.issues).toContainEqual(expect.objectContaining({
+      code: 'EXCERPT_HASH_MISMATCH',
+      path: 'ai-01:f1',
+    }))
   })
 
   it('detecteert dubbele claims en onveilige declaratieve sleutels', () => {

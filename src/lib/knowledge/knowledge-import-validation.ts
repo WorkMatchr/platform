@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { knowledgeImportPackageSchema, type KnowledgeImportPackage } from './knowledge-import-schema'
 
 export type KnowledgeImportIssue = { code: string; path: string; message: string }
@@ -49,6 +50,25 @@ export function validateKnowledgeImport(input: unknown): KnowledgeImportValidati
 
   const value = parsed.data
   const issues: KnowledgeImportIssue[] = []
+  if (value.source.metadataStatus === 'COMPLETE') {
+    const requiredMetadata = [
+      ['source.publisher', value.source.publisher],
+      ['source.edition', value.source.edition],
+      ['source.applicabilityScope', value.source.applicabilityScope],
+    ] as const
+    for (const [path, metadataValue] of requiredMetadata) {
+      if (!metadataValue) issues.push({ code: 'METADATA_INCOMPLETE', path, message: 'Deze metadata ontbreekt terwijl de bron als compleet is gemarkeerd.' })
+    }
+    if (!value.source.publicationDate && !value.source.sourceModifiedDate) {
+      issues.push({ code: 'METADATA_INCOMPLETE', path: 'source.publicationDate', message: 'Een complete bron vereist een publicatie- of wijzigingsdatum.' })
+    }
+  }
+  if (value.source.metadataStatus !== 'COMPLETE' && value.importMetadata.uncertainties.length === 0) {
+    issues.push({ code: 'METADATA_UNCERTAINTY_UNEXPLAINED', path: 'importMetadata.uncertainties', message: 'Leg vast welke bronmetadata ontbreekt of onzeker is.' })
+  }
+  if ((value.source.metadataStatus !== 'COMPLETE' || value.source.temporalStatus !== 'CURRENT') && value.sourceVersion.reviewStatus !== 'REVIEW_REQUIRED') {
+    issues.push({ code: 'EXCEPTION_CONTROL_REQUIRED', path: 'sourceVersion.reviewStatus', message: 'Een onzekere, historische of verouderde bron moet voor uitzonderingcontrole gemarkeerd blijven.' })
+  }
   const topicKeys = unique(value.topics.map((entry) => entry.externalKey), 'topics', issues)
   const fragmentKeys = unique(value.fragments.map((entry) => entry.externalKey), 'fragments', issues)
   const claimKeys = unique(value.claims.map((entry) => entry.externalKey), 'claims', issues)
@@ -63,16 +83,34 @@ export function validateKnowledgeImport(input: unknown): KnowledgeImportValidati
     statements.add(normalized)
     if (!topicKeys.has(claim.topicKey)) issues.push({ code: 'UNKNOWN_TOPIC', path: claim.externalKey, message: `Onbekend topic: ${claim.topicKey}.` })
     if (value.source.temporalStatus !== 'CURRENT' && claim.temporalStatus === 'CURRENT') issues.push({ code: 'HISTORICAL_AS_CURRENT', path: claim.externalKey, message: 'Een historische bron mag geen actuele claim opleveren.' })
+    if (value.source.metadataStatus !== 'COMPLETE' && claim.confidenceLevel === 'HIGH') issues.push({ code: 'UNCERTAIN_SOURCE_HIGH_CONFIDENCE', path: claim.externalKey, message: 'Onzekere bronmetadata mag geen claim met hoge zekerheid opleveren.' })
   }
 
   const versionKey = value.sourceVersion.externalKey
   for (const fragment of value.fragments) {
     if (fragment.sourceVersionKey !== versionKey) issues.push({ code: 'UNKNOWN_SOURCE_VERSION', path: fragment.externalKey, message: 'Fragment verwijst niet naar de pakketbronversie.' })
+    if (fragment.internalExcerpt && !fragment.excerptHash) {
+      issues.push({ code: 'EXCERPT_HASH_REQUIRED', path: fragment.externalKey, message: 'Een bronfragment vereist een SHA-256-fingerprint.' })
+    }
+    if (!fragment.internalExcerpt && fragment.excerptHash) {
+      issues.push({ code: 'EXCERPT_REQUIRED', path: fragment.externalKey, message: 'Een fragmentfingerprint vereist het bijbehorende bronfragment.' })
+    }
+    if (fragment.internalExcerpt && fragment.excerptHash) {
+      const expectedHash = createHash('sha256').update(fragment.internalExcerpt).digest('hex')
+      if (fragment.excerptHash !== expectedHash) {
+        issues.push({ code: 'EXCERPT_HASH_MISMATCH', path: fragment.externalKey, message: 'De fragmentfingerprint komt niet overeen met het bronfragment.' })
+      }
+    }
   }
   for (const citation of value.citations) {
     if (!claimKeys.has(citation.claimKey)) issues.push({ code: 'UNKNOWN_CLAIM', path: 'citations', message: `Onbekende claim: ${citation.claimKey}.` })
     if (citation.sourceVersionKey !== versionKey) issues.push({ code: 'UNKNOWN_SOURCE_VERSION', path: 'citations', message: 'Citatie verwijst niet naar de pakketbronversie.' })
     if (!citation.fragmentKey || !fragmentKeys.has(citation.fragmentKey)) issues.push({ code: 'UNKNOWN_FRAGMENT', path: 'citations', message: 'Iedere PoC-citatie vereist een bestaand fragment.' })
+  }
+  for (const claim of value.claims) {
+    if (!value.citations.some((citation) => citation.claimKey === claim.externalKey && citation.fragmentKey)) {
+      issues.push({ code: 'CLAIM_SOURCE_REQUIRED', path: claim.externalKey, message: 'Iedere claim vereist minimaal één concrete fragmentcitatie.' })
+    }
   }
   for (const relation of value.relations) {
     const valid = (endpoint: typeof relation.from) => endpoint.kind === 'TOPIC' ? topicKeys.has(endpoint.key) : claimKeys.has(endpoint.key)

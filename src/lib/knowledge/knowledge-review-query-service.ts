@@ -8,6 +8,7 @@ import type {
   KnowledgeValidationStatus,
 } from '@/generated/prisma/enums'
 import { getPrisma } from '@/lib/prisma'
+import { currentKnowledgeImportClaimWhere } from './knowledge-import-visibility'
 
 export type KnowledgeReviewFilters = {
   sourceCode?: string
@@ -34,6 +35,7 @@ export async function getKnowledgeReviewOverview(filters: KnowledgeReviewFilters
     ...(filters.status ? { status: filters.status } : { status: { in: activeReviewStatuses } }),
     ...(filters.priority ? { priority: filters.priority } : {}),
     claim: {
+      AND: [currentKnowledgeImportClaimWhere],
       ...(filters.claimType ? { claimType: filters.claimType } : {}),
       ...(filters.validationStatus ? { validationStatus: filters.validationStatus } : {}),
       ...(filters.publicationStatus ? { publicationStatus: filters.publicationStatus } : {}),
@@ -142,6 +144,7 @@ export async function getKnowledgeReviewTask(reviewTaskId: string) {
 
 export async function getKnowledgeSourceOptions() {
   return getPrisma().knowledgeSourceVersion.findMany({
+    where: { supersededByVersion: { is: null } },
     select: {
       id: true,
       versionLabel: true,

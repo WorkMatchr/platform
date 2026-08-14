@@ -1,5 +1,9 @@
 # Database WorkMatchr
 
+## Immutable Knowledge Engine-importcorrecties
+
+Migraties `20260808120000_add_knowledge_import_corrections` en `20260808121000_harden_knowledge_import_corrections` voegen een additieve, append-only revisieketen toe aan `KnowledgeSourceVersion`. Een correctie van dezelfde broneditie krijgt een oplopende `importRevision`, een gevalideerde canonieke `contentFingerprint` en een unieke verwijzing naar de voorafgaande revisie. De eerdere bronversie, claims, fragmenten, citaties en auditregels worden niet gewijzigd. Een rijvergrendeling op de bron, serializable transactie en unieke opvolgingsindex voorkomen vertakkingen, dubbele actieve kennis en gedeeltelijke correcties.
+
 ## Accounttypen
 
 Migratie `20260805100000_add_user_account_types` voegt additief `AccountType` en nullable `User.accountType` toe. Bestaande `CLIENT`-memberships worden `CLIENT`; bestaande `PROVIDER`- en `BOTH`-memberships worden `PROFESSIONAL`; `PLATFORM_OPERATOR` blijft null. Iedere backfill schrijft idempotent een bestaand append-only `MIGRATED_UNKNOWN`-provisioningevent met een expliciete accounttype-redencode. De membershiptrigger vult een ontbrekend type voor compatibele ontwikkel- of legacy-aanmaak aan en weigert een inhoudelijk conflicterende combinatie. Tabellen, memberships, opdrachten, providerprofielen en Knowledge Engine-data worden niet verwijderd of herschreven.
@@ -367,6 +371,10 @@ Een lokale database waarop SPECIALISM v1 al gepubliceerd was, kon migratie `2026
 # Knowledge Engine-migratie
 
 Migratie `20260802100000_add_knowledge_engine_foundation` is additief: zij voegt uitsluitend Knowledge Engine-enums, tabellen, indexen, constraints en beschermende triggers toe. Bestaande zakelijke tabellen worden niet hernoemd of verwijderd. Fragmenten, citaties, validaties en auditevents zijn append-only; reeds gepubliceerde claims zijn immutable. Test de migratie op een lege lokale database en via `prisma migrate deploy` vanaf de actuele HEAD-stand.
+
+Migratie `20260808100000_add_generic_knowledge_source_metadata` breidt `KnowledgeSource` additief uit met een aantoonbare bronwijzigingsdatum, sector/toepassingsgebied en `KnowledgeMetadataStatus`. Bestaande bronnen blijven behouden en krijgen fail-closed de standaardstatus `UNCERTAIN`; er wordt geen ontbrekende metadata verzonnen of terugwerkend gevalideerd.
+
+Migratie `20260808110000_add_structured_knowledge_sector_links` voegt uitsluitend `KnowledgeSectorApplicability` toe. De tabel koppelt de centrale `Sector`-taxonomie append-only aan exact één kennisonderwerp of claim. Partiële unieke indexen voorkomen dubbele koppelingen; `RESTRICT`-foreign keys en de bestaande historie-trigger beschermen bron- en kenniscontext. Bestaande kennis- en sectordata worden niet gewijzigd of terugwerkend geïnterpreteerd.
 
 ## Knowledge Review Workflow-migraties
 

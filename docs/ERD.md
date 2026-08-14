@@ -642,6 +642,7 @@ Een Pro-abonnement bewaart uitsluitend de Mollie customer-, mandate- en subscrip
 ```mermaid
 erDiagram
   KnowledgeSource ||--o{ KnowledgeSourceVersion : heeft
+  KnowledgeSourceVersion o|--o| KnowledgeSourceVersion : corrigeert_immutable
   KnowledgeSourceVersion ||--o{ KnowledgeFragment : bevat
   KnowledgeTopic ||--o{ KnowledgeClaim : ordent
   KnowledgeClaim ||--o{ KnowledgeCitation : onderbouwd-door
@@ -657,6 +658,13 @@ erDiagram
   KnowledgeClaim ||--o{ KnowledgeRelation : verbindt
   KnowledgeTopic ||--o{ KnowledgeChecklist : structureert
   KnowledgeTopic ||--o{ KnowledgeProcedure : structureert
+  Sector ||--o{ KnowledgeSectorApplicability : begrenst
+  KnowledgeTopic ||--o{ KnowledgeSectorApplicability : geldt-voor
+  KnowledgeClaim ||--o{ KnowledgeSectorApplicability : geldt-voor
   KnowledgeProcedure ||--o{ KnowledgeProcedureStep : bestaat-uit
   KnowledgeRole ||--o{ KnowledgeResponsibility : draagt
 ```
+
+`KnowledgeSource` bewaart alleen bronmetadata en een relatief logisch manifestpad. De generieke import voegt `sourceModifiedDate`, `applicabilityScope` en de fail-closed `metadataStatus` toe; de originele lokale bron blijft buiten database en Git. Iedere `KnowledgeClaim` blijft via `KnowledgeCitation` en `KnowledgeFragment` herleidbaar tot een bronversie en pagina of sectie. Een inhoudelijke importcorrectie schrijft een nieuwe `KnowledgeSourceVersion.importRevision` met `contentFingerprint` en een unieke `supersedesVersionId`; de eerdere revisie en haar kennisrecords blijven ongewijzigd aanwezig.
+
+`KnowledgeSectorApplicability` hergebruikt de centrale sectortaxonomie en koppelt een sector aan exact één onderwerp of claim. De koppeling is append-only; bestaande kennis, sectoren en historie worden niet herschreven.

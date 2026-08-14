@@ -724,6 +724,12 @@ enum KnowledgeSourceFormat {
   LEGACY_DOC
 }
 
+enum KnowledgeMetadataStatus {
+  COMPLETE
+  INCOMPLETE
+  UNCERTAIN
+}
+
 enum KnowledgeCopyrightClassification {
   PUBLIC_DOMAIN
   OPEN_LICENSE
@@ -1003,6 +1009,7 @@ enum KnowledgeAuditEventType {
   CONFLICT_DETECTED
   IMPORT_STARTED
   IMPORT_COMPLETED
+  IMPORT_CORRECTION_COMPLETED
   IMPORT_FAILED
   REVIEW_STARTED
   REVIEW_DRAFT_SAVED
@@ -1434,6 +1441,7 @@ model Sector {
   assignments               Assignment[]
   assignmentRevisions       AssignmentRevision[]
   providerSectorTaxonomyMap ProviderSectorTaxonomyMap?
+  knowledgeApplicabilities  KnowledgeSectorApplicability[]
 
   @@index([isActive])
 }
@@ -4305,7 +4313,10 @@ model KnowledgeSource {
   title                   String                           @db.VarChar(300)
   publisher               String?                          @db.VarChar(200)
   publicationDate         DateTime?                        @db.Date
+  sourceModifiedDate      DateTime?                        @db.Date
   edition                 String?                          @db.VarChar(120)
+  applicabilityScope      String?                          @db.VarChar(500)
+  metadataStatus          KnowledgeMetadataStatus          @default(UNCERTAIN)
   language                String                           @default("nl") @db.VarChar(12)
   jurisdiction            String                           @default("NL") @db.VarChar(40)
   sourceUrl               String?                          @db.VarChar(1000)
@@ -4324,6 +4335,7 @@ model KnowledgeSource {
   @@index([sourceType, temporalStatus])
   @@index([sourceFamily, independenceGroup])
   @@index([authorityLevel])
+  @@index([metadataStatus, temporalStatus])
 }
 
 model KnowledgeSourceVersion {
@@ -4334,17 +4346,23 @@ model KnowledgeSourceVersion {
   validFrom              DateTime?                        @db.Date
   validUntil             DateTime?                        @db.Date
   checksum               String?                          @db.VarChar(64)
+  importRevision         Int                              @default(1)
+  contentFingerprint     String?                          @db.VarChar(64)
+  supersedesVersionId    String?                          @unique @db.Uuid
   extractionStatus       KnowledgeExtractionStatus        @default(NOT_STARTED)
   reviewStatus           KnowledgeReviewStatus            @default(NOT_REVIEWED)
   importedAt             DateTime?                        @db.Timestamptz(3)
   createdAt              DateTime                         @default(now()) @db.Timestamptz(3)
   updatedAt              DateTime                         @updatedAt @db.Timestamptz(3)
   source                 KnowledgeSource                  @relation(fields: [sourceId], references: [id], onDelete: Restrict)
+  supersedesVersion      KnowledgeSourceVersion?          @relation("KnowledgeSourceVersionCorrections", fields: [supersedesVersionId], references: [id], onDelete: Restrict)
+  supersededByVersion    KnowledgeSourceVersion?          @relation("KnowledgeSourceVersionCorrections")
   fragments              KnowledgeFragment[]
   citations              KnowledgeCitation[]
   reviewSourceReferences KnowledgeReviewSourceReference[]
 
-  @@unique([sourceId, versionLabel])
+  @@unique([sourceId, versionLabel, importRevision])
+  @@index([sourceId, versionLabel, supersedesVersionId])
   @@index([checksum])
   @@index([extractionStatus, reviewStatus])
 }
@@ -4387,6 +4405,7 @@ model KnowledgeTopic {
   formTemplates KnowledgeFormTemplate[]
   relationsFrom KnowledgeRelation[]     @relation("KnowledgeRelationFromTopic")
   relationsTo   KnowledgeRelation[]     @relation("KnowledgeRelationToTopic")
+  sectorApplicabilities KnowledgeSectorApplicability[]
 
   @@index([domain, status])
   @@index([parentTopicId])
@@ -4432,11 +4451,29 @@ model KnowledgeClaim {
   reviewTasks             KnowledgeReviewTask[]
   reviewSourceReferences  KnowledgeReviewSourceReference[]
   improvementReports      KnowledgeImprovementReport[]
+  sectorApplicabilities   KnowledgeSectorApplicability[]
 
   @@index([topicId, claimType])
   @@index([publicationStatus, validationStatus, accessTier])
   @@index([temporalStatus, jurisdiction])
   @@index([normalizedStatement])
+}
+
+model KnowledgeSectorApplicability {
+  id          String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  externalKey String          @unique @db.VarChar(160)
+  sectorId    String          @db.Uuid
+  topicId     String?         @db.Uuid
+  claimId     String?         @db.Uuid
+  rationale   String?         @db.VarChar(1000)
+  createdAt   DateTime        @default(now()) @db.Timestamptz(3)
+  sector      Sector          @relation(fields: [sectorId], references: [id], onDelete: Restrict)
+  topic       KnowledgeTopic? @relation(fields: [topicId], references: [id], onDelete: Restrict)
+  claim       KnowledgeClaim? @relation(fields: [claimId], references: [id], onDelete: Restrict)
+
+  @@index([sectorId])
+  @@index([topicId])
+  @@index([claimId])
 }
 
 model KnowledgeCitation {

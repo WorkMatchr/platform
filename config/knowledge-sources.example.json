@@ -1,10 +1,12 @@
 {
-  "schemaVersion": "1.0",
+  "schemaVersion": "2.0",
   "sources": [
     {
       "code": "AI-01",
+      "sourceKind": "AI_SHEET",
+      "sourceType": "AI_SHEET",
       "format": "PDF",
-      "fileName": "<configureer-uitsluitend-in-het-lokale-manifest>",
+      "logicalPath": "ai-bladen/<configureer-uitsluitend-in-het-lokale-manifest>.pdf",
       "sha256": "<64-kleine-hexadecimale-tekens>"
     }
   ]

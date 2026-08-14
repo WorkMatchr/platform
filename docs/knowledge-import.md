@@ -1,13 +1,45 @@
 # Kennisimport
 
-Zet bronnen buiten Git in `local-sources/knowledge/`. Het genegeerde lokale manifest koppelt logische broncodes aan bestandsnamen en SHA-256-checksums. Absolute paden, lokale bestandsnamen en broninhoud komen niet in database of auditlog.
+Zet bronnen buiten Git in de bestaande categorieÃ«n onder `local-sources/`. Het genegeerde lokale manifest in `local-sources/knowledge/` koppelt logische broncodes aan paden relatief aan deze bronroot, bronsoorten en SHA-256-checksums. Absolute paden en broninhoud komen niet in database of auditlog. In de database staat alleen een logische `manifest:<relatief-pad>`-referentie.
+
+De generieke pipeline ondersteunt `ai-bladen`, `arbocatalogi`, `beleidsregels`, `inspectie`, `jurisprudentie`, `knowledge`, `normen`, `rivm`, `ser` en `tno`. `legislation` is de container voor `arbowet`, `arbobesluit` en `arboregeling`; een toekomstige submap blijft generiek `LEGISLATION` totdat een specifiekere mapping wordt toegevoegd. De bronsoort wordt expliciet in manifest en importpakket vastgelegd. De database gebruikt de bestaande brede typen `AI_SHEET`, `LEGISLATION`, `REGULATION`, `ARBOCATALOGUE`, `INSPECTORATE_GUIDANCE`, `CASE_LAW`, `STANDARD`, `PROFESSIONAL_GUIDANCE`, `OTHER` en `RESEARCH`; `sourceFamily` bewaart de specifieke bronfamilie.
 
 ```bash
 npm run knowledge:validate -- data/knowledge/poc/AI-01.v1.json
 npm run knowledge:preview -- data/knowledge/poc/AI-01.v1.json
 npm run knowledge:import -- data/knowledge/poc/AI-01.v1.json --confirm
+npm run knowledge:correct -- data/knowledge/poc/AI-01.v1.json --confirm --reason="Concrete reden voor de correctie"
 ```
 
-Zonder `--confirm` wordt niets geschreven. Validatie controleert schema, limieten, referenties, duplicaten, temporaliteit, veilige JSON en copyrightlimieten. Preview verifieert manifest, PDF-header en checksum. Import is één serializable transactie; elke fout rolt alles terug.
+Zonder `--confirm` wordt niets geschreven. Validatie controleert schema, metadata, limieten, referenties, duplicaten, temporaliteit, veilige JSON en copyrightlimieten. Preview verifieert manifest, PDF-header, checksum, bronsoort en databaseconflicten. Import is één serializable transactie; elke fout rolt alles terug. Een pakket wordt uitsluitend idempotent hergebruikt wanneer de canonieke inhoudsfingerprint overeenkomt. Daarin tellen bronidentificatie, claimtekst en -type, fragmenttekst of -hash, pagina, sectie en citatierelatie mee. Gelijke aantallen zijn nooit voldoende.
 
-PDF is in v1 het enige extractieformaat. `.doc` wordt alleen geïnventariseerd als `LEGACY_DOC` en `UNSUPPORTED_FOR_EXTRACTION`; het bestand wordt niet geopend of geconverteerd. Nieuwe broncodes vereisen geen nieuw Prisma-model.
+Een inhoudelijk afwijkende replay wordt fail-closed geweigerd. Het afzonderlijke `knowledge:correct`-commando is uitsluitend bedoeld voor een aantoonbaar foutieve, nog `DRAFT` en `UNVALIDATED` import van exact dezelfde broneditie en checksum. Het schrijft een nieuwe `importRevision`, koppelt die append-only aan de voorgaande revisie en maakt nieuwe conceptclaims, fragmenten en citaties. De oude revisie blijft ongewijzigd en auditbaar; actuele kennisqueries gebruiken alleen de bladrevisie. Een tweede identieke correctierun hergebruikt die revisie. Correcties van gepubliceerde of gevalideerde kennis blijven geweigerd.
+
+Per bron worden titel, uitgever, editie, publicatie- of wijzigingsdatum, sector/toepassingsgebied, checksum, logisch bronpad, temporaliteit en metadata-status vastgelegd voor zover aantoonbaar. Als alleen een jaar bekend is, blijft het datumveld leeg; de pipeline verzint geen 1 januari. Ontbrekende of conflicterende gegevens worden niet ingevuld: `metadataStatus` blijft dan `INCOMPLETE` of `UNCERTAIN`, de onzekerheid wordt expliciet beschreven en de bron blijft fail-closed. Historische of onzekere claims krijgen een broncontrolestatus, maar vormen zonder concrete publicatie- of gebruiksuitzondering geen algemene menselijke werkvoorraad.
+
+Iedere conceptclaim vereist een citatie naar een geïmporteerd fragment met minimaal een pagina of sectie. Alle claims blijven `DRAFT` en `UNVALIDATED`; import publiceert of keurt nooit kennis goed.
+
+PDF is in v1 het enige betrouwbare extractieformaat. `.doc` wordt alleen geïnventariseerd als `LEGACY_DOC` en `UNSUPPORTED_FOR_EXTRACTION`; het bestand wordt niet geopend of geconverteerd. De pipeline voert geen downloads, webscraping of automatische juridische beoordeling uit. Nieuwe bronnen worden toegevoegd via een manifestregel en conceptpakket, zonder nieuw Prisma-model.
+
+## Lokaal manifest v2
+
+Gebruik `config/knowledge-sources.example.json` als vormvoorbeeld. `logicalPath` is relatief aan `KNOWLEDGE_SOURCE_ROOT`. Toegestane `sourceKind`-waarden zijn:
+
+- `AI_SHEET`
+- `ARBO_WET`
+- `ARBO_DECREE`
+- `ARBO_REGULATION`
+- `ARBOCATALOGUE`
+- `POLICY_RULE`
+- `LABOUR_INSPECTORATE_PUBLICATION`
+- `TNO_PUBLICATION`
+- `JURISPRUDENCE`
+- `KNOWLEDGE`
+- `STANDARD`
+- `RIVM_PUBLICATION`
+- `SER_PUBLICATION`
+- `LEGISLATION` (generieke toekomstige wetgevingssubmap)
+
+Onbekende top-level mappen worden fail-closed geweigerd. Geneste paden binnen een bekende bronmap zijn toegestaan. De mapnaam bepaalt alleen de bronfamilie; metadata, actualiteit, gezag en publiceerbaarheid worden nog steeds afzonderlijk en expliciet gevalideerd. Import blijft altijd `DRAFT` en `UNVALIDATED` en publiceert niets automatisch.
+
+Manifest v1 met één lokale `fileName` blijft voor bestaande AI-PoC-bronnen ondersteund.
