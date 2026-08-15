@@ -9,7 +9,16 @@ npm run knowledge:validate -- data/knowledge/poc/AI-01.v1.json
 npm run knowledge:preview -- data/knowledge/poc/AI-01.v1.json
 npm run knowledge:import -- data/knowledge/poc/AI-01.v1.json --confirm
 npm run knowledge:correct -- data/knowledge/poc/AI-01.v1.json --confirm --reason="Concrete reden voor de correctie"
+npm run knowledge:batch -- data/knowledge/poc/AI-03.v1.json data/knowledge/poc/AI-04.v1.json
 ```
+
+## Veilige batchvoorbereiding
+
+`knowledge:batch` valideert maximaal tien importpakketten per run en schrijft nooit naar de database. De runner hergebruikt het bestaande manifest, contract 1.1, de bron-/checksumcontrole, fragmenthashvalidatie, fingerprinting en optioneel de bestaande read-only preview (`--preview`). Er bestaat bewust geen batch-importmodus.
+
+Stel voor lokale bronbestanden `KNOWLEDGE_SOURCE_ROOT` en `KNOWLEDGE_SOURCE_MANIFEST` in op de bestaande, genegeerde bronmap en het lokale manifest. Zonder `--preview` opent de runner geen databaseverbinding. Met `--preview` wordt uitsluitend de bestaande read-only preview per technisch geldige bron uitgevoerd.
+
+Het rapport toont per bron claim- en risicotellingen, technische status, inhoudelijke uitzonderingen en gereedheid voor een afzonderlijke Production-preflight. Legacy 1.0, ontbrekende expliciete risico's, niet-herleidbare passages, niet-directe citaties en onveilige statussen blokkeren fail-closed. HIGH/CRITICAL-, gezondheids- en normatieve claims blijven zichtbaar voor menselijke review; de runner verlaagt nooit risico's en neemt geen publicatie- of validatiebesluiten.
 
 Zonder `--confirm` wordt niets geschreven. Validatie controleert schema, metadata, limieten, referenties, duplicaten, temporaliteit, veilige JSON en copyrightlimieten. Preview verifieert manifest, PDF-header, checksum, bronsoort en databaseconflicten. Import is één serializable transactie; elke fout rolt alles terug. Een pakket wordt uitsluitend idempotent hergebruikt wanneer de canonieke inhoudsfingerprint overeenkomt. Daarin tellen bronidentificatie, claimtekst en -type, fragmenttekst of -hash, pagina, sectie en citatierelatie mee. Gelijke aantallen zijn nooit voldoende.
 
