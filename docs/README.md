@@ -82,6 +82,7 @@ Module 6C.2 — WOS Beheeracties & Communicatie is technisch opgeleverd en wacht
 - [Knowledge Engine](knowledge-engine.md)
 - [Kennismodel](knowledge-model.md)
 - [Kennisimport](knowledge-import.md)
+- [Volledige Knowledge-bronlaag — fase 1](knowledge-full-source-foundation.md)
 - [Kennisvalidatie en publicatie](knowledge-validation.md)
 - [Auteursrecht en kennisbronnen](knowledge-copyright.md)
 - [Toegangsniveaus kennis](knowledge-access-tiers.md)

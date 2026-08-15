@@ -1,5 +1,9 @@
 # Database WorkMatchr
 
+## Immutable volledige Knowledge-bronlaag
+
+Migratie `20260815100000_add_knowledge_full_source_foundation` voegt uitsluitend `KnowledgeExtractionRun`, `KnowledgeSourcePage`, `KnowledgeSourceBlock` en `KnowledgeFragmentBlock` toe. De tabellen zijn append-only; een nieuwe extractor- of configuratieversie schrijft een nieuwe run. Een Nederlandse `tsvector` met GIN-index ontsluit alleen interne bronblokken. Bestaande bronnen, versies, fragmenten, claims, citaties en validatiestatussen worden niet gewijzigd of teruggevuld.
+
 ## Immutable Knowledge Engine-importcorrecties
 
 Migraties `20260808120000_add_knowledge_import_corrections` en `20260808121000_harden_knowledge_import_corrections` voegen een additieve, append-only revisieketen toe aan `KnowledgeSourceVersion`. Een correctie van dezelfde broneditie krijgt een oplopende `importRevision`, een gevalideerde canonieke `contentFingerprint` en een unieke verwijzing naar de voorafgaande revisie. De eerdere bronversie, claims, fragmenten, citaties en auditregels worden niet gewijzigd. Een rijvergrendeling op de bron, serializable transactie en unieke opvolgingsindex voorkomen vertakkingen, dubbele actieve kennis en gedeeltelijke correcties.

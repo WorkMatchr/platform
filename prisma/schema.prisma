@@ -765,6 +765,28 @@ enum KnowledgeExtractionStatus {
   FAILED
 }
 
+enum KnowledgeFullExtractionRunStatus {
+  COMPLETED
+  FAILED
+}
+
+enum KnowledgeSourcePageStatus {
+  EXTRACTED
+  EMPTY
+  FAILED
+}
+
+enum KnowledgeSourceBlockType {
+  HEADING
+  PARAGRAPH
+  LIST_ITEM
+  TABLE
+  FOOTNOTE
+  CAPTION
+  EXAMPLE
+  HEADER_FOOTER
+}
+
 enum KnowledgeReviewStatus {
   NOT_REVIEWED
   REVIEW_REQUIRED
@@ -4360,6 +4382,7 @@ model KnowledgeSourceVersion {
   fragments              KnowledgeFragment[]
   citations              KnowledgeCitation[]
   reviewSourceReferences KnowledgeReviewSourceReference[]
+  extractionRuns         KnowledgeExtractionRun[]
 
   @@unique([sourceId, versionLabel, importRevision])
   @@index([sourceId, versionLabel, supersedesVersionId])
@@ -4382,9 +4405,91 @@ model KnowledgeFragment {
   createdAt        DateTime               @default(now()) @db.Timestamptz(3)
   sourceVersion    KnowledgeSourceVersion @relation(fields: [sourceVersionId], references: [id], onDelete: Restrict)
   citations        KnowledgeCitation[]
+  sourceBlocks     KnowledgeFragmentBlock[]
 
   @@index([sourceVersionId, pageFrom])
   @@index([requiresReview])
+}
+
+model KnowledgeExtractionRun {
+  id                    String                           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourceVersionId       String                           @db.Uuid
+  previousRunId         String?                          @unique @db.Uuid
+  extractorName         String                           @db.VarChar(120)
+  extractorVersion      String                           @db.VarChar(80)
+  configurationVersion  String                           @db.VarChar(80)
+  status                KnowledgeFullExtractionRunStatus
+  pageCount             Int
+  extractionFingerprint String                           @db.VarChar(64)
+  warningSummary        String?                          @db.VarChar(1000)
+  errorCategory         String?                          @db.VarChar(80)
+  startedAt             DateTime                         @db.Timestamptz(3)
+  completedAt           DateTime                         @db.Timestamptz(3)
+  createdAt             DateTime                         @default(now()) @db.Timestamptz(3)
+  sourceVersion         KnowledgeSourceVersion           @relation(fields: [sourceVersionId], references: [id], onDelete: Restrict)
+  previousRun           KnowledgeExtractionRun?          @relation("KnowledgeExtractionRunHistory", fields: [previousRunId], references: [id], onDelete: Restrict)
+  subsequentRuns        KnowledgeExtractionRun[]         @relation("KnowledgeExtractionRunHistory")
+  pages                 KnowledgeSourcePage[]
+
+  @@unique([sourceVersionId, extractionFingerprint])
+  @@index([sourceVersionId, createdAt])
+  @@index([status, createdAt])
+}
+
+model KnowledgeSourcePage {
+  id              String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  extractionRunId String                    @db.Uuid
+  pageNumber      Int
+  status          KnowledgeSourcePageStatus
+  textHash        String                    @db.VarChar(64)
+  ocrUsed         Boolean                   @default(false)
+  confidence      Decimal?                  @db.Decimal(5, 4)
+  createdAt       DateTime                  @default(now()) @db.Timestamptz(3)
+  extractionRun   KnowledgeExtractionRun    @relation(fields: [extractionRunId], references: [id], onDelete: Restrict)
+  blocks          KnowledgeSourceBlock[]
+
+  @@unique([extractionRunId, pageNumber])
+  @@unique([id, extractionRunId])
+  @@index([status, createdAt])
+}
+
+model KnowledgeSourceBlock {
+  id                   String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourcePageId         String                   @db.Uuid
+  extractionRunId      String                   @db.Uuid
+  globalSequence       Int
+  pageSequence         Int
+  sectionPath          String?                  @db.VarChar(500)
+  blockType            KnowledgeSourceBlockType
+  exactText            String                   @db.Text
+  normalizedSearchText String                   @db.Text
+  textHash             String                   @db.VarChar(64)
+  extractionMethod     String                   @db.VarChar(80)
+  confidence           Decimal?                 @db.Decimal(5, 4)
+  requiresReview       Boolean                  @default(false)
+  searchVector         Unsupported("tsvector")?
+  createdAt            DateTime                 @default(now()) @db.Timestamptz(3)
+  sourcePage           KnowledgeSourcePage      @relation(fields: [sourcePageId, extractionRunId], references: [id, extractionRunId], onDelete: Restrict)
+  fragments            KnowledgeFragmentBlock[]
+
+  @@unique([extractionRunId, globalSequence])
+  @@unique([sourcePageId, pageSequence])
+  @@index([sourcePageId, blockType])
+  @@index([extractionRunId, blockType])
+}
+
+model KnowledgeFragmentBlock {
+  id         String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  fragmentId String               @db.Uuid
+  blockId    String               @db.Uuid
+  sequence   Int
+  createdAt  DateTime             @default(now()) @db.Timestamptz(3)
+  fragment   KnowledgeFragment    @relation(fields: [fragmentId], references: [id], onDelete: Restrict)
+  block      KnowledgeSourceBlock @relation(fields: [blockId], references: [id], onDelete: Restrict)
+
+  @@unique([fragmentId, blockId])
+  @@unique([fragmentId, sequence])
+  @@index([blockId])
 }
 
 model KnowledgeTopic {

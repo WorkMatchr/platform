@@ -252,7 +252,7 @@ export async function verifyManifestSource(source: KnowledgeManifestSource) {
   const bytes = await readFile(filePath)
   if (bytes.subarray(0, 5).toString('ascii') !== '%PDF-') throw new KnowledgeSourceManifestError('SOURCE_INVALID', `De lokale bron voor ${source.code} is geen geldig PDF-bestand.`)
   if (createHash('sha256').update(bytes).digest('hex') !== source.sha256) throw new KnowledgeSourceManifestError('CHECKSUM_MISMATCH', `De lokale bron voor ${source.code} komt niet overeen met het manifest.`)
-  return { code: source.code, sourceKind: source.sourceKind ?? detectedKind, format: source.format, logicalPath, extractionStatus: 'READY' as const, checksum: source.sha256 }
+  return { code: source.code, sourceKind: source.sourceKind ?? detectedKind, format: source.format, logicalPath, filePath, extractionStatus: 'READY' as const, checksum: source.sha256 }
 }
 
 async function listFiles(rootPath: string, currentPath = rootPath): Promise<string[]> {

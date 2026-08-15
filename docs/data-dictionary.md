@@ -163,6 +163,13 @@ Alle IDs zijn UUID’s. `createdAt` en `updatedAt` zijn UTC-timestamps tenzij an
 
 De tabellen `KnowledgeSource`, `KnowledgeSourceVersion`, `KnowledgeFragment`, `KnowledgeTopic`, `KnowledgeClaim`, `KnowledgeCitation`, `KnowledgeValidation`, `KnowledgeRelation`, `KnowledgeRule`, `KnowledgeCalculation`, `KnowledgeChecklist`, `KnowledgeChecklistItem`, `KnowledgeProcedure`, `KnowledgeProcedureStep`, `KnowledgeRole`, `KnowledgeResponsibility`, `KnowledgeFormTemplate`, `KnowledgeReviewTask` en `KnowledgeAuditEvent` vormen de kennislaag. Bronbestanden blijven buiten de database; `localReference` bevat uitsluitend `manifest:<relatief-logisch-bronpad>`. `KnowledgeSource.sourceModifiedDate`, `applicabilityScope` en `metadataStatus` registreren aantoonbare wijzigingsdatum, sector/toepassingsgebied en de volledigheid van bronmetadata. `KnowledgeSourceVersion.importRevision`, `contentFingerprint` en `supersedesVersionId` vormen een immutable correctieketen binnen dezelfde broneditie; een unieke opvolgingsrelatie voorkomt concurrerende actieve revisies. Fragmenten zijn maximaal 500 tekens. Claims hebben onafhankelijke temporaliteits-, validatie-, publicatie- en toegangsstaten.
 
+| Model | Betekenis | Integriteit en toegang |
+|---|---|---|
+| `KnowledgeExtractionRun` | Immutable uitvoering van volledige documentextractie voor één bronversie, inclusief extractor/configuratie/fingerprint. | Uniek per bronversie en fingerprint; opvolgende configuratie maakt een nieuwe run; update/delete geblokkeerd. |
+| `KnowledgeSourcePage` | Paginasnapshot met status, teksthash, OCR-indicatie en confidence. | Uniek paginanummer per run; update/delete geblokkeerd. |
+| `KnowledgeSourceBlock` | Volledig intern tekstblok met leesvolgorde, sectie, bloktype, exacte tekst en zoekprojectie. | Unieke globale en pagina-interne volgorde; Nederlandse GIN full-textindex; uitsluitend interne toegang; update/delete geblokkeerd. |
+| `KnowledgeFragmentBlock` | Optionele bewijsrelatie van bestaand gecontroleerd fragment naar volledige bronblokken. | Wijzigt fragment of citatie niet; unieke geordende koppeling; update/delete geblokkeerd. |
+
 ### Knowledge Control Workflow
 
 | Model | Doel en constraints | Historie en gevoeligheid |

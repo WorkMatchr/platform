@@ -644,6 +644,12 @@ erDiagram
   KnowledgeSource ||--o{ KnowledgeSourceVersion : heeft
   KnowledgeSourceVersion o|--o| KnowledgeSourceVersion : corrigeert_immutable
   KnowledgeSourceVersion ||--o{ KnowledgeFragment : bevat
+  KnowledgeSourceVersion ||--o{ KnowledgeExtractionRun : extraheert
+  KnowledgeExtractionRun o|--o{ KnowledgeExtractionRun : volgt_op
+  KnowledgeExtractionRun ||--o{ KnowledgeSourcePage : bevat_paginas
+  KnowledgeSourcePage ||--o{ KnowledgeSourceBlock : bevat_blokken
+  KnowledgeFragment ||--o{ KnowledgeFragmentBlock : koppelt
+  KnowledgeSourceBlock ||--o{ KnowledgeFragmentBlock : onderbouwt
   KnowledgeTopic ||--o{ KnowledgeClaim : ordent
   KnowledgeClaim ||--o{ KnowledgeCitation : onderbouwd-door
   KnowledgeSourceVersion ||--o{ KnowledgeCitation : herkomst
@@ -666,5 +672,7 @@ erDiagram
 ```
 
 `KnowledgeSource` bewaart alleen bronmetadata en een relatief logisch manifestpad. De generieke import voegt `sourceModifiedDate`, `applicabilityScope` en de fail-closed `metadataStatus` toe; de originele lokale bron blijft buiten database en Git. Iedere `KnowledgeClaim` blijft via `KnowledgeCitation` en `KnowledgeFragment` herleidbaar tot een bronversie en pagina of sectie. Een inhoudelijke importcorrectie schrijft een nieuwe `KnowledgeSourceVersion.importRevision` met `contentFingerprint` en een unieke `supersedesVersionId`; de eerdere revisie en haar kennisrecords blijven ongewijzigd aanwezig.
+
+`KnowledgeExtractionRun`, `KnowledgeSourcePage`, `KnowledgeSourceBlock` en `KnowledgeFragmentBlock` vormen de aanvullende interne volledige bronlaag. Alle records zijn immutable. Een nieuwe extractorconfiguratie schrijft een opvolgende run; zij herschrijft nooit de bronversie, bestaande fragmenten, claims of citaties. De zoekprojectie op bronblokken is intern en verleent geen validatie- of publicatiestatus.
 
 `KnowledgeSectorApplicability` hergebruikt de centrale sectortaxonomie en koppelt een sector aan exact één onderwerp of claim. De koppeling is append-only; bestaande kennis, sectoren en historie worden niet herschreven.
