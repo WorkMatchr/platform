@@ -1,5 +1,9 @@
 # Database WorkMatchr
 
+## Immutable KnowledgeMethod-revisies
+
+Migratie `20260815110000_add_knowledge_method_foundation` voegt uitsluitend `KnowledgeMethod`, `KnowledgeMethodComponent`, `KnowledgeMethodEvidence` en de evidence-role-enum toe. Methoderevisies aggregeren bestaande gestructureerde Knowledge-objecten en verwijzen voor bewijs naar bestaande full-source-blokken. XOR-, evidence-, foreign-key- en veilige-statusconstraints werken fail-closed. Alle drie tabellen zijn databasebreed append-only; een inhoudelijke wijziging maakt een opvolgende revisie.
+
 ## Immutable volledige Knowledge-bronlaag
 
 Migratie `20260815100000_add_knowledge_full_source_foundation` voegt uitsluitend `KnowledgeExtractionRun`, `KnowledgeSourcePage`, `KnowledgeSourceBlock` en `KnowledgeFragmentBlock` toe. De tabellen zijn append-only; een nieuwe extractor- of configuratieversie schrijft een nieuwe run. Een Nederlandse `tsvector` met GIN-index ontsluit alleen interne bronblokken. Bestaande bronnen, versies, fragmenten, claims, citaties en validatiestatussen worden niet gewijzigd of teruggevuld.

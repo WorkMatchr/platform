@@ -32,6 +32,7 @@
     "test:db:knowledge:migration": "tsx scripts/test-knowledge-migration.ts",
     "test:db:knowledge:review": "tsx scripts/test-knowledge-review-database.ts",
     "test:db:knowledge:full-source": "tsx scripts/test-knowledge-full-source-database.ts",
+    "test:db:knowledge:method": "tsx scripts/test-knowledge-method-database.ts",
     "db:generate": "prisma generate",
     "db:format": "prisma format",
     "db:validate": "prisma validate",

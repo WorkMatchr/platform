@@ -1015,6 +1015,14 @@ enum KnowledgeReviewSourceReferenceAction {
   WITHDRAWN
 }
 
+enum KnowledgeMethodEvidenceRole {
+  BASIS
+  INPUT
+  STEP
+  OUTPUT
+  LIMITATION
+}
+
 enum KnowledgeAuditEventType {
   SOURCE_REGISTERED
   SOURCE_VERSION_ADDED
@@ -4471,6 +4479,7 @@ model KnowledgeSourceBlock {
   createdAt            DateTime                 @default(now()) @db.Timestamptz(3)
   sourcePage           KnowledgeSourcePage      @relation(fields: [sourcePageId, extractionRunId], references: [id, extractionRunId], onDelete: Restrict)
   fragments            KnowledgeFragmentBlock[]
+  methodEvidence       KnowledgeMethodEvidence[]
 
   @@unique([extractionRunId, globalSequence])
   @@unique([sourcePageId, pageSequence])
@@ -4660,6 +4669,7 @@ model KnowledgeRule {
   createdAt         DateTime                   @default(now()) @db.Timestamptz(3)
   updatedAt         DateTime                   @updatedAt @db.Timestamptz(3)
   procedureSteps    KnowledgeProcedureStep[]
+  methodComponents KnowledgeMethodComponent[]
 
   @@unique([code, ruleVersion])
   @@index([publicationStatus, validationStatus])
@@ -4682,6 +4692,7 @@ model KnowledgeCalculation {
   accessTier            KnowledgeAccessTier        @default(INTERNAL_REVIEWER)
   createdAt             DateTime                   @default(now()) @db.Timestamptz(3)
   updatedAt             DateTime                   @updatedAt @db.Timestamptz(3)
+  methodComponents      KnowledgeMethodComponent[]
 
   @@unique([code, calculationVersion])
   @@index([publicationStatus, validationStatus])
@@ -4702,6 +4713,7 @@ model KnowledgeChecklist {
   updatedAt         DateTime                   @updatedAt @db.Timestamptz(3)
   topic             KnowledgeTopic             @relation(fields: [topicId], references: [id], onDelete: Restrict)
   items             KnowledgeChecklistItem[]
+  methodComponents  KnowledgeMethodComponent[]
 
   @@unique([code, version])
   @@index([topicId, publicationStatus])
@@ -4742,6 +4754,7 @@ model KnowledgeProcedure {
   topic             KnowledgeTopic             @relation(fields: [topicId], references: [id], onDelete: Restrict)
   steps             KnowledgeProcedureStep[]
   responsibilities  KnowledgeResponsibility[]
+  methodComponents  KnowledgeMethodComponent[]
 
   @@unique([code, version])
   @@index([topicId, publicationStatus])
@@ -4815,9 +4828,86 @@ model KnowledgeFormTemplate {
   createdAt         DateTime                   @default(now()) @db.Timestamptz(3)
   updatedAt         DateTime                   @updatedAt @db.Timestamptz(3)
   topic             KnowledgeTopic             @relation(fields: [topicId], references: [id], onDelete: Restrict)
+  methodComponents  KnowledgeMethodComponent[]
 
   @@unique([code, schemaVersion])
   @@index([topicId, publicationStatus])
+}
+
+model KnowledgeMethod {
+  id                    String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code                  String                     @db.VarChar(120)
+  revision              Int
+  title                 String                     @db.VarChar(240)
+  purpose               String                     @db.VarChar(1500)
+  applicability         Json
+  inputContract         Json
+  outputContract        Json
+  limitations           String                     @db.VarChar(2000)
+  temporalStatus        KnowledgeTemporalStatus
+  validationStatus      KnowledgeValidationStatus  @default(UNVALIDATED)
+  publicationStatus     KnowledgePublicationStatus @default(DRAFT)
+  accessTier            KnowledgeAccessTier        @default(INTERNAL_REVIEWER)
+  contentFingerprint    String                     @db.VarChar(64)
+  supersedesMethodId    String?                    @unique @db.Uuid
+  createdByActor        String                     @db.VarChar(80)
+  createdAt             DateTime                   @default(now()) @db.Timestamptz(3)
+  supersedesMethod      KnowledgeMethod?           @relation("KnowledgeMethodRevisions", fields: [supersedesMethodId], references: [id], onDelete: Restrict)
+  supersededByMethod    KnowledgeMethod?           @relation("KnowledgeMethodRevisions")
+  components            KnowledgeMethodComponent[]
+  evidence              KnowledgeMethodEvidence[]
+
+  @@unique([code, revision])
+  @@unique([code, contentFingerprint])
+  @@index([code, supersedesMethodId])
+  @@index([publicationStatus, validationStatus, accessTier])
+}
+
+model KnowledgeMethodComponent {
+  id             String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  methodId       String                    @db.Uuid
+  sequence       Int
+  label          String                    @db.VarChar(240)
+  procedureId    String?                   @db.Uuid
+  checklistId    String?                   @db.Uuid
+  ruleId         String?                   @db.Uuid
+  calculationId  String?                   @db.Uuid
+  formTemplateId String?                   @db.Uuid
+  createdAt      DateTime                  @default(now()) @db.Timestamptz(3)
+  method         KnowledgeMethod           @relation(fields: [methodId], references: [id], onDelete: Restrict)
+  procedure      KnowledgeProcedure?       @relation(fields: [procedureId], references: [id], onDelete: Restrict)
+  checklist      KnowledgeChecklist?       @relation(fields: [checklistId], references: [id], onDelete: Restrict)
+  rule           KnowledgeRule?            @relation(fields: [ruleId], references: [id], onDelete: Restrict)
+  calculation    KnowledgeCalculation?     @relation(fields: [calculationId], references: [id], onDelete: Restrict)
+  formTemplate   KnowledgeFormTemplate?    @relation(fields: [formTemplateId], references: [id], onDelete: Restrict)
+  evidence       KnowledgeMethodEvidence[]
+
+  @@unique([id, methodId])
+  @@unique([methodId, sequence])
+  @@index([procedureId])
+  @@index([checklistId])
+  @@index([ruleId])
+  @@index([calculationId])
+  @@index([formTemplateId])
+}
+
+model KnowledgeMethodEvidence {
+  id            String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  methodId      String                      @db.Uuid
+  componentId   String?                     @db.Uuid
+  sourceBlockId String                      @db.Uuid
+  evidenceRole  KnowledgeMethodEvidenceRole
+  sequence      Int
+  rationale     String                      @db.VarChar(1000)
+  createdAt     DateTime                    @default(now()) @db.Timestamptz(3)
+  method        KnowledgeMethod             @relation(fields: [methodId], references: [id], onDelete: Restrict)
+  component     KnowledgeMethodComponent?   @relation(fields: [componentId, methodId], references: [id, methodId], onDelete: Restrict)
+  sourceBlock   KnowledgeSourceBlock        @relation(fields: [sourceBlockId], references: [id], onDelete: Restrict)
+
+  @@unique([methodId, sequence])
+  @@unique([methodId, sourceBlockId, componentId, evidenceRole])
+  @@index([componentId, sequence])
+  @@index([sourceBlockId])
 }
 
 model KnowledgeReviewTask {

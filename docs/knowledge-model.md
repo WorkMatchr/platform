@@ -4,6 +4,12 @@
 
 Regels, berekeningen, checklists, procedures, rollen, verantwoordelijkheden en formulieren modelleren toepassingen zonder willekeurige code. Reviewtaken en auditevents maken menselijke controle planbaar en herleidbaar. Historische bronnen mogen niet automatisch actuele claims opleveren. Gepubliceerde historie wordt niet in-place aangepast.
 
+## KnowledgeMethod
+
+`KnowledgeMethod` is een immutable, versioneerbaar aggregaat boven bestaande procedures, checklists, regels, berekeningen en formulieren. `KnowledgeMethodComponent` ordent precies één bestaand component per positie; de database bewaakt deze XOR-relatie. `KnowledgeMethodEvidence` herleidt de methode en ieder component rechtstreeks tot immutable `KnowledgeSourceBlock`-records. Een deferred databaseconstraint weigert een component zonder bewijs.
+
+Een inhoudelijke wijziging schrijft een nieuwe revisie via `supersedesMethodId`; eerdere revisies, componenten en evidence blijven append-only. Iedere revisie heeft een deterministische inhoudsfingerprint. Opslag forceert `DRAFT`, `UNVALIDATED` en `INTERNAL_REVIEWER`. De eerste acceptatiecasus `BHV_MAATGEVENDE_SCENARIOS` blijft historisch en bevat nadrukkelijk geen uitvoerbare 1-op-50-regel of exacte berekening van het aantal BHV'ers.
+
 
 ## Control-entiteiten
 

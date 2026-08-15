@@ -169,6 +169,9 @@ De tabellen `KnowledgeSource`, `KnowledgeSourceVersion`, `KnowledgeFragment`, `K
 | `KnowledgeSourcePage` | Paginasnapshot met status, teksthash, OCR-indicatie en confidence. | Uniek paginanummer per run; update/delete geblokkeerd. |
 | `KnowledgeSourceBlock` | Volledig intern tekstblok met leesvolgorde, sectie, bloktype, exacte tekst en zoekprojectie. | Unieke globale en pagina-interne volgorde; Nederlandse GIN full-textindex; uitsluitend interne toegang; update/delete geblokkeerd. |
 | `KnowledgeFragmentBlock` | Optionele bewijsrelatie van bestaand gecontroleerd fragment naar volledige bronblokken. | Wijzigt fragment of citatie niet; unieke geordende koppeling; update/delete geblokkeerd. |
+| `KnowledgeMethod` | Immutable revisie van een samenhangende vakmethodiek boven bestaande Knowledge-objecten. | Unieke code/revisie en fingerprint; veilige conceptstatus; lineaire supersession; update/delete geblokkeerd. |
+| `KnowledgeMethodComponent` | Geordende verwijzing naar precies één procedure, checklist, regel, berekening of formuliersjabloon. | Database-XOR en verplicht evidence vóór commit; update/delete geblokkeerd. |
+| `KnowledgeMethodEvidence` | Herleidt methode of component rechtstreeks tot een volledig bronblok. | Component en methode moeten overeenkomen; unieke volgorde; update/delete geblokkeerd. |
 
 ### Knowledge Control Workflow
 
