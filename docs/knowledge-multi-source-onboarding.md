@@ -16,6 +16,8 @@ Ondersteunde canonieke families zijn wetgeving, Arbeidsinspectie, overheidsguida
 - Officiële HTML-snapshots gebruiken `WORKMATCHR_HTML_TEXT`.
 - Gecontroleerde wetstekst gebruikt `WORKMATCHR_LEGAL_TEXT`.
 
+Officiële Nederlandse BWB-toestanden worden zonder netwerktoegang in de extractor deterministisch van de immutable XML-download naar geordende hoofdstuk-, paragraaf-, artikel-, lid- en onderdeelblokken vertaald. De officiële XML-checksum blijft de artifact- en versie-identiteit; `validFrom` en, waar aantoonbaar, `validUntil` worden afzonderlijk op `KnowledgeSourceVersion` opgeslagen. Een replay met dezelfde checksum maar afwijkende geldigheidsmetadata faalt gesloten.
+
 Alle extractoren leveren hetzelfde immutable `KnowledgeExtractionRun → KnowledgeSourcePage → KnowledgeSourceBlock`-contract. HTML en wetstekst krijgen een logische pagina 1; sectiekoppen en tekstblokken behouden volgorde en hashes. Een gewijzigde snapshot/checksum is een nieuwe bronversie, geen mutatie van historie.
 
 ## Actualiteit en review

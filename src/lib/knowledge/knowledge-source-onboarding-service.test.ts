@@ -36,4 +36,43 @@ describe('multi-source onboarding', () => {
     await expect(onboardKnowledgeSource({ ...base, source: { ...base.source, canonicalUrl: 'http://example.invalid' } }, database as never)).rejects.toMatchObject({ code: 'CANONICAL_URL_INVALID' })
     await expect(onboardKnowledgeSource({ ...base, artifact: { ...base.artifact, checksum: 'b'.repeat(64) } }, database as never)).rejects.toMatchObject({ code: 'ARTIFACT_CHECKSUM_INVALID' })
   })
+
+  it('weigert ongeldige geldigheidsdata en een omgekeerde periode vóór databasetoegang', async () => {
+    const database = { $transaction: vi.fn() }
+    await expect(onboardKnowledgeSource({ ...base, version: { ...base.version, validFrom: new Date('ongeldig') } }, database as never)).rejects.toMatchObject({ code: 'SOURCE_VERSION_DATE_INVALID' })
+    await expect(onboardKnowledgeSource({ ...base, version: { ...base.version, validFrom: new Date('2026-07-02'), validUntil: new Date('2026-07-01') } }, database as never)).rejects.toMatchObject({ code: 'SOURCE_VERSION_DATE_RANGE_INVALID' })
+    expect(database.$transaction).not.toHaveBeenCalled()
+  })
+
+  it('schrijft geldigheidsdata in het create-pad voor een nieuwe bron', async () => {
+    const create = vi.fn().mockResolvedValue({})
+    const transaction = { $executeRaw: vi.fn(), knowledgeSource: { findUnique: vi.fn().mockResolvedValue(null), create } }
+    const database = { $transaction: vi.fn(async (callback) => callback(transaction)) }
+    const validFrom = new Date('2026-07-01')
+    const validUntil = new Date('2026-12-31')
+    await onboardKnowledgeSource({ ...base, version: { ...base.version, validFrom, validUntil } }, database as never)
+    expect(create.mock.calls[0][0].data.versions.create).toMatchObject({ validFrom, validUntil })
+  })
+
+  it('schrijft geldigheidsdata ook voor een nieuwe versie van een bestaande bron', async () => {
+    const create = vi.fn().mockResolvedValue({})
+    const transaction = {
+      $executeRaw: vi.fn(),
+      knowledgeSource: { findUnique: vi.fn().mockResolvedValue({ ...base.source, sourceUrl: base.source.canonicalUrl, versions: [] }) },
+      knowledgeSourceVersion: { create },
+    }
+    const database = { $transaction: vi.fn(async (callback) => callback(transaction)) }
+    const validFrom = new Date('2026-07-01')
+    await onboardKnowledgeSource({ ...base, version: { ...base.version, validFrom } }, database as never)
+    expect(create.mock.calls[0][0].data).toMatchObject({ validFrom })
+  })
+
+  it('weigert dezelfde checksum met afwijkende geldigheidsmetadata', async () => {
+    const transaction = {
+      $executeRaw: vi.fn(),
+      knowledgeSource: { findUnique: vi.fn().mockResolvedValue({ ...base.source, sourceUrl: base.source.canonicalUrl, versions: [{ id: 'version-1', versionLabel: base.version.versionLabel, checksum: base.version.checksum, publicationDate: null, validFrom: new Date('2026-07-01'), validUntil: null, artifacts: [], applicabilityScopes: [] }] }) },
+    }
+    const database = { $transaction: vi.fn(async (callback) => callback(transaction)) }
+    await expect(onboardKnowledgeSource({ ...base, version: { ...base.version, validFrom: new Date('2026-07-02') } }, database as never)).rejects.toMatchObject({ code: 'SOURCE_VERSION_METADATA_CONFLICT' })
+  })
 })
