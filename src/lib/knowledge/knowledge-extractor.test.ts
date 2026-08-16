@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises'
 import { PDFDocument, StandardFonts } from 'pdf-lib'
 import { describe, expect, it } from 'vitest'
 import ai02Package from '../../../data/knowledge/poc/AI-02.v1.json'
-import { extractPdfFullSource, normalizeKnowledgeSourceText } from './knowledge-extractor'
+import { extractHtmlFullSource, extractPdfFullSource, extractStructuredTextFullSource, normalizeKnowledgeSourceText } from './knowledge-extractor'
 
 async function fixturePdf(pageCount = 3) {
   const document = await PDFDocument.create()
@@ -19,6 +19,17 @@ async function fixturePdf(pageCount = 3) {
 }
 
 describe('volledige Knowledge-bronextractie', () => {
+  it('zet officiële HTML en wetstekst deterministisch om naar dezelfde bronlaag', () => {
+    const html = '<html><script>niet opslaan</script><h1>Bedrijfshulpverlening</h1><p>De werkgever organiseert doeltreffende bijstand.</p><ul><li>Eerste hulp</li></ul></html>'
+    const first = extractHtmlFullSource(html)
+    const replay = extractHtmlFullSource(html)
+    const law = extractStructuredTextFullSource([{ heading: 'Artikel 15', paragraphs: ['De werkgever laat zich bijstaan door een of meer bedrijfshulpverleners.'] }])
+    expect(first.extractionFingerprint).toBe(replay.extractionFingerprint)
+    expect(first.pages[0].blocks.map((block) => block.blockType)).toEqual(['HEADING', 'PARAGRAPH', 'LIST_ITEM'])
+    expect(first.pages[0].blocks.some((block) => block.exactText.includes('niet opslaan'))).toBe(false)
+    expect(law.pages[0].blocks[0].sectionPath).toBe('Artikel 15')
+    expect(law.extractorName).toBe('WORKMATCHR_LEGAL_TEXT')
+  })
   it('extraheert pagina’s en blokken deterministisch zonder OCR', async () => {
     const bytes = await fixturePdf()
     const first = await extractPdfFullSource(bytes)

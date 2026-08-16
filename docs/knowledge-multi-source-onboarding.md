@@ -1,0 +1,27 @@
+# Multi-Source Knowledge Onboarding Foundation
+
+## Doel
+
+Deze foundation legt actuele officiële kruisbronnen vast zonder de bestaande claim-, full-source- of validatielaag te vervangen. Een canonieke officiële bron en een lokaal reproduceerbaar artifact zijn verschillende objecten: `KnowledgeSource.sourceUrl` blijft de gezaghebbende URL; `KnowledgeSourceArtifact` bewaart checksum, mediatype, locator en ophaalmoment van de immutable representatie.
+
+## Bronidentiteit en scope
+
+Nieuwe onboardings gebruiken een gecontroleerde `canonicalFamily` en `authorityStatus`. Legacybronnen blijven geldig met een lege canonieke familie. `KnowledgeSourceApplicability` legt jurisdictie en scope vast op precies één bron, bronversie of bronblok. `PGS 6` vereist in de servicelaag expliciet `NL / SEVESO / CONDITIONAL`; de bron mag daardoor nooit stilzwijgend als generieke Nederlandse wettelijke verplichting worden gebruikt.
+
+Ondersteunde canonieke families zijn wetgeving, Arbeidsinspectie, overheidsguidance, PGS, AI-bladen, arbocatalogi, TNO, SER, RIVM, normen en internationale guidance. Een buitenlandse bron behoudt haar eigen jurisdictie en kan zonder afzonderlijke Nederlandse onderbouwing geen Nederlandse verplichting dragen.
+
+## Representaties en volledige bronlaag
+
+- PDF gebruikt `WORKMATCHR_PDFJS_EMBEDDED_TEXT`.
+- Officiële HTML-snapshots gebruiken `WORKMATCHR_HTML_TEXT`.
+- Gecontroleerde wetstekst gebruikt `WORKMATCHR_LEGAL_TEXT`.
+
+Alle extractoren leveren hetzelfde immutable `KnowledgeExtractionRun → KnowledgeSourcePage → KnowledgeSourceBlock`-contract. HTML en wetstekst krijgen een logische pagina 1; sectiekoppen en tekstblokken behouden volgorde en hashes. Een gewijzigde snapshot/checksum is een nieuwe bronversie, geen mutatie van historie.
+
+## Actualiteit en review
+
+Artifact-`retrievedAt`, versie/checksum en de bestaande versiehistorie maken zichtbaar of dezelfde representatie opnieuw is gecontroleerd of een nieuwe versie nodig is. De canonieke identiteit wordt databasebreed tegen wijziging beschermd. Een bronwijziging valideert niets automatisch: afhankelijke claims, componenten en methoden moeten via hun evidence voor review worden geselecteerd. Full-source-tekst blijft intern en iedere import blijft `DRAFT` en `UNVALIDATED`.
+
+## BHV-vervolg
+
+De kleinste veilige productieroute is: afzonderlijke preflight/migratie; code deployen; daarna achtereenvolgens Arbowet, Arbeidsinspectie-BHV, Arboportaal-BHV en PGS 6 onboarden en full-source extraheren. Pas daarna kunnen evidence-onderbouwde versies 2 van checklist en procedure en een methode-revisie 2 worden voorbereid.

@@ -721,7 +721,44 @@ enum KnowledgeSourceType {
 
 enum KnowledgeSourceFormat {
   PDF
+  HTML
+  TEXT
   LEGACY_DOC
+}
+
+enum KnowledgeCanonicalSourceFamily {
+  LEGISLATION
+  LABOUR_INSPECTORATE
+  GOVERNMENT_GUIDANCE
+  PGS
+  AI_SHEET
+  ARBOCATALOGUE
+  TNO
+  SER
+  RIVM
+  STANDARD
+  INTERNATIONAL_GUIDANCE
+}
+
+enum KnowledgeSourceAuthorityStatus {
+  OFFICIAL_PRIMARY
+  OFFICIAL_GUIDANCE
+  AUTHORIZED_PUBLICATION
+  PROFESSIONAL_REFERENCE
+  UNKNOWN
+}
+
+enum KnowledgeSourceArtifactType {
+  OFFICIAL_DOWNLOAD
+  LOCAL_SNAPSHOT
+  BROWSER_RENDERED_SNAPSHOT
+  LEGAL_TEXT_SNAPSHOT
+}
+
+enum KnowledgeScopeEffect {
+  APPLIES
+  CONDITIONAL
+  EXCLUDES
 }
 
 enum KnowledgeMetadataStatus {
@@ -4355,15 +4392,19 @@ model KnowledgeSource {
   authorityLevel          KnowledgeAuthorityLevel
   temporalStatus          KnowledgeTemporalStatus          @default(UNKNOWN)
   sourceFamily            String                           @db.VarChar(120)
+  canonicalFamily         KnowledgeCanonicalSourceFamily?
+  authorityStatus         KnowledgeSourceAuthorityStatus   @default(UNKNOWN)
   independenceGroup       String                           @db.VarChar(120)
   isPrimarySource         Boolean                          @default(false)
   notes                   String?                          @db.VarChar(1000)
   createdAt               DateTime                         @default(now()) @db.Timestamptz(3)
   updatedAt               DateTime                         @updatedAt @db.Timestamptz(3)
   versions                KnowledgeSourceVersion[]
+  applicabilityScopes     KnowledgeSourceApplicability[]   @relation("KnowledgeSourceApplicabilitySource")
 
   @@index([sourceType, temporalStatus])
   @@index([sourceFamily, independenceGroup])
+  @@index([canonicalFamily, authorityStatus])
   @@index([authorityLevel])
   @@index([metadataStatus, temporalStatus])
 }
@@ -4391,6 +4432,8 @@ model KnowledgeSourceVersion {
   citations              KnowledgeCitation[]
   reviewSourceReferences KnowledgeReviewSourceReference[]
   extractionRuns         KnowledgeExtractionRun[]
+  artifacts              KnowledgeSourceArtifact[]
+  applicabilityScopes    KnowledgeSourceApplicability[]   @relation("KnowledgeSourceApplicabilityVersion")
 
   @@unique([sourceId, versionLabel, importRevision])
   @@index([sourceId, versionLabel, supersedesVersionId])
@@ -4481,11 +4524,47 @@ model KnowledgeSourceBlock {
   fragments            KnowledgeFragmentBlock[]
   methodEvidence       KnowledgeMethodEvidence[]
   structuredEvidence   KnowledgeStructuredComponentEvidence[]
+  applicabilityScopes  KnowledgeSourceApplicability[]         @relation("KnowledgeSourceApplicabilityBlock")
 
   @@unique([extractionRunId, globalSequence])
   @@unique([sourcePageId, pageSequence])
   @@index([sourcePageId, blockType])
   @@index([extractionRunId, blockType])
+}
+
+model KnowledgeSourceArtifact {
+  id              String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourceVersionId String                      @db.Uuid
+  artifactType    KnowledgeSourceArtifactType
+  mediaType       String                      @db.VarChar(120)
+  locator         String                      @db.VarChar(1000)
+  checksum        String                      @db.VarChar(64)
+  retrievedAt     DateTime                    @db.Timestamptz(3)
+  createdAt       DateTime                    @default(now()) @db.Timestamptz(3)
+  sourceVersion   KnowledgeSourceVersion      @relation(fields: [sourceVersionId], references: [id], onDelete: Restrict)
+
+  @@unique([sourceVersionId, artifactType, checksum])
+  @@index([sourceVersionId, retrievedAt])
+}
+
+model KnowledgeSourceApplicability {
+  id              String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourceId        String?                 @db.Uuid
+  sourceVersionId String?                 @db.Uuid
+  sourceBlockId   String?                 @db.Uuid
+  jurisdiction    String                  @db.VarChar(40)
+  scopeCode       String                  @db.VarChar(120)
+  effect          KnowledgeScopeEffect
+  rationale       String                  @db.VarChar(1000)
+  createdAt       DateTime                @default(now()) @db.Timestamptz(3)
+  source          KnowledgeSource?        @relation("KnowledgeSourceApplicabilitySource", fields: [sourceId], references: [id], onDelete: Restrict)
+  sourceVersion   KnowledgeSourceVersion? @relation("KnowledgeSourceApplicabilityVersion", fields: [sourceVersionId], references: [id], onDelete: Restrict)
+  sourceBlock     KnowledgeSourceBlock?   @relation("KnowledgeSourceApplicabilityBlock", fields: [sourceBlockId], references: [id], onDelete: Restrict)
+
+  @@unique([sourceId, jurisdiction, scopeCode, effect])
+  @@unique([sourceVersionId, jurisdiction, scopeCode, effect])
+  @@unique([sourceBlockId, jurisdiction, scopeCode, effect])
+  @@index([jurisdiction, scopeCode, effect])
 }
 
 model KnowledgeFragmentBlock {

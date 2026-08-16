@@ -1,5 +1,9 @@
 # ERD WorkMatchr
 
+## Multi-Source Knowledge-uitbreiding
+
+`KnowledgeSource` 1—N `KnowledgeSourceVersion` 1—N `KnowledgeSourceArtifact`. `KnowledgeSourceApplicability` verwijst via een database-XOR naar precies één `KnowledgeSource`, `KnowledgeSourceVersion` of `KnowledgeSourceBlock`. Bestaande structured-component- en methode-evidence blijven rechtstreeks naar immutable bronblokken verwijzen en erven daarmee canonieke identiteit, artifact en toepassingsscope.
+
 ## Marketplace Rules, credits en betrouwbaarheid
 
 ```mermaid

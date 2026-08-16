@@ -1,5 +1,9 @@
 # Database WorkMatchr
 
+## Multi-Source Knowledge-onboarding
+
+Migratie `20260816110000_add_multi_source_knowledge_onboarding` voegt gecontroleerde canonieke bronfamilies en autoriteitsstatus toe, plus immutable lokale artifacts en jurisdictie-/toepassingsscope op bron-, versie- of blokniveau. Bestaande Knowledge-records worden niet gebackfilld of gewijzigd. PDF, HTML en gecontroleerde wetstekst delen daarna dezelfde full-source-opslag. Een deferred databaseconstraint weigert een canonieke PGS-bron zonder uitsluitend `NL / SEVESO / CONDITIONAL` applicability, ook bij rechtstreekse database-invoer.
+
 ## Immutable evidence voor gestructureerde Knowledge-componenten
 
 Migratie `20260816100000_add_bhv_structured_component_evidence` voegt expliciete temporaliteit aan checklists en procedures toe en introduceert één append-only evidence-relatie van precies één checklistregel óf procedurestap naar een immutable full-source-blok. Deferred constraints weigeren een nieuwe regel of stap zonder evidence aan het einde van de transactie. Bestaande Knowledge-bronnen, claims, fragmenten, citaties en methoden worden niet teruggevuld of gewijzigd.

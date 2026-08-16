@@ -31,7 +31,7 @@ export type ExtractedSourceBlock = {
   exactText: string
   normalizedSearchText: string
   textHash: string
-  extractionMethod: 'PDFJS_EMBEDDED_TEXT'
+  extractionMethod: 'PDFJS_EMBEDDED_TEXT' | 'WORKMATCHR_HTML_TEXT' | 'WORKMATCHR_LEGAL_TEXT'
   confidence: number
   requiresReview: boolean
 }
@@ -225,6 +225,56 @@ function canonicalFingerprint(pages: ExtractedSourcePage[], descriptor: FullSour
       blocks: page.blocks.map(({ globalSequence, pageSequence, sectionPath, blockType, textHash }) => ({ globalSequence, pageSequence, sectionPath, blockType, textHash })),
     })),
   }))
+}
+
+export type StructuredSourceSection = { heading?: string; paragraphs: string[] }
+
+function decodeHtml(value: string) {
+  const entities: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' }
+  return value.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/giu, (_, entity: string) => {
+    if (entity.startsWith('#x')) return String.fromCodePoint(Number.parseInt(entity.slice(2), 16))
+    if (entity.startsWith('#')) return String.fromCodePoint(Number.parseInt(entity.slice(1), 10))
+    return entities[entity.toLowerCase()] ?? `&${entity};`
+  })
+}
+
+export function extractStructuredTextFullSource(
+  sections: StructuredSourceSection[],
+  descriptor: FullSourceExtractorDescriptor = { name: 'WORKMATCHR_LEGAL_TEXT', version: '1.0.0', configurationVersion: 'STRUCTURED_TEXT_V1' },
+): FullSourceExtraction {
+  let globalSequence = 0
+  const blocks = sections.flatMap((section) => {
+    const result: ExtractedSourceBlock[] = []
+    const heading = section.heading?.normalize('NFKC').replace(/\s+/g, ' ').trim()
+    if (heading) result.push({ globalSequence: ++globalSequence, pageSequence: globalSequence, sectionPath: heading, blockType: 'HEADING', exactText: heading, normalizedSearchText: normalizeKnowledgeSourceText(heading), textHash: sha256(heading), extractionMethod: descriptor.name === 'WORKMATCHR_HTML_TEXT' ? 'WORKMATCHR_HTML_TEXT' : 'WORKMATCHR_LEGAL_TEXT', confidence: 1, requiresReview: false })
+    for (const raw of section.paragraphs) {
+      const exactText = raw.normalize('NFKC').replace(/\s+/g, ' ').trim()
+      if (!exactText) continue
+      result.push({ globalSequence: ++globalSequence, pageSequence: globalSequence, sectionPath: heading ?? null, blockType: looksLikeList(exactText) ? 'LIST_ITEM' : 'PARAGRAPH', exactText, normalizedSearchText: normalizeKnowledgeSourceText(exactText), textHash: sha256(exactText), extractionMethod: descriptor.name === 'WORKMATCHR_HTML_TEXT' ? 'WORKMATCHR_HTML_TEXT' : 'WORKMATCHR_LEGAL_TEXT', confidence: 1, requiresReview: false })
+    }
+    return result
+  })
+  if (!blocks.length) throw new Error('KNOWLEDGE_FULL_SOURCE_EMPTY_STRUCTURED_TEXT')
+  const page: ExtractedSourcePage = { pageNumber: 1, status: 'EXTRACTED', textHash: sha256(blocks.map((block) => block.exactText).join('\n')), ocrUsed: false, confidence: 1, blocks }
+  return { extractorName: descriptor.name, extractorVersion: descriptor.version, configurationVersion: descriptor.configurationVersion, pageCount: 1, extractionFingerprint: canonicalFingerprint([page], descriptor), warningSummary: null, pages: [page] }
+}
+
+export function extractHtmlFullSource(html: string): FullSourceExtraction {
+  const safe = html.replace(/<!--[\s\S]*?-->/gu, '').replace(/<(script|style|noscript)\b[^>]*>[\s\S]*?<\/\1>/giu, '')
+  const tokenPattern = /<(h[1-6]|p|li|caption|figcaption|th|td)\b[^>]*>([\s\S]*?)<\/\1>/giu
+  const sections: StructuredSourceSection[] = []
+  let active: StructuredSourceSection = { paragraphs: [] }
+  for (const match of safe.matchAll(tokenPattern)) {
+    const tag = match[1].toLowerCase()
+    const text = decodeHtml(match[2].replace(/<br\s*\/?\s*>/giu, ' ').replace(/<[^>]+>/gu, ' ')).replace(/\s+/g, ' ').trim()
+    if (!text) continue
+    if (tag.startsWith('h')) {
+      if (active.heading || active.paragraphs.length) sections.push(active)
+      active = { heading: text, paragraphs: [] }
+    } else active.paragraphs.push(tag === 'li' ? `- ${text}` : text)
+  }
+  if (active.heading || active.paragraphs.length) sections.push(active)
+  return extractStructuredTextFullSource(sections, { name: 'WORKMATCHR_HTML_TEXT', version: '1.0.0', configurationVersion: 'HTML_TEXT_V1' })
 }
 
 export async function extractPdfFullSource(
