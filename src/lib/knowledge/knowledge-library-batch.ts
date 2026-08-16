@@ -11,24 +11,35 @@ export type KnowledgeLibraryFolder = (typeof supportedFolders)[number]
 export type KnowledgeLibraryStatus = 'READY' | 'NEEDS_METADATA_REVIEW' | 'POSSIBLE_DUPLICATE' | 'VERSION_CONFLICT' | 'SOURCE_IDENTITY_UNCERTAIN' | 'EXTRACTION_UNSUPPORTED'
 export type KnowledgeDocumentFamilyRole = 'PRIMARY_GUIDELINE' | 'BACKGROUND_EVIDENCE' | 'SUMMARY' | 'CHECKLIST' | 'APPENDIX' | 'TOOL'
 
-type MetadataOverride = {
+export type KnowledgeLibraryMetadataOverride = {
   relativePath: string
-  title?: string
-  publisher?: string
+  checksum: string
+  sourceCode: string
+  title: string
+  publisher: string
   versionLabel?: string
   publicationYear?: number
-  canonicalUrl?: string
-  canonicalIdentity?: string
-  jurisdiction?: string
-  scopeCode?: string
+  canonicalUrl: string
+  canonicalIdentity: string
+  authorityStatus: 'OFFICIAL_PRIMARY' | 'OFFICIAL_GUIDANCE' | 'AUTHORIZED_PUBLICATION' | 'PROFESSIONAL_REFERENCE' | 'UNKNOWN'
+  temporalStatus: 'UNKNOWN' | 'CURRENT' | 'HISTORICAL' | 'SUPERSEDED' | 'WITHDRAWN' | 'UNDER_REVIEW'
+  jurisdiction: string
+  applicabilityScope: string
+  scopeCode: string
+  scopeEffect: 'APPLIES' | 'CONDITIONAL' | 'EXCLUDES'
   familyCode?: string
   familyRole?: KnowledgeDocumentFamilyRole
+}
+
+export type KnowledgeLibraryMetadataManifest = {
+  schemaVersion: 1
+  documents: KnowledgeLibraryMetadataOverride[]
 }
 
 export type KnowledgeLibraryBatchOptions = {
   limit?: number
   fullExtractionLimit?: number
-  metadataOverrides?: MetadataOverride[]
+  metadataOverrides?: KnowledgeLibraryMetadataOverride[]
 }
 
 export type KnowledgeLibraryFileReport = {
@@ -49,6 +60,11 @@ export type KnowledgeLibraryFileReport = {
   scopeCode: string | null
   canonicalUrl: string | null
   canonicalIdentity: string | null
+  sourceCode: string | null
+  authorityStatus: KnowledgeLibraryMetadataOverride['authorityStatus'] | null
+  temporalStatus: KnowledgeLibraryMetadataOverride['temporalStatus'] | null
+  applicabilityScope: string | null
+  scopeEffect: KnowledgeLibraryMetadataOverride['scopeEffect'] | null
   pageCount: number | null
   estimatedBlocks: number | null
   extractionFingerprint: string | null
@@ -89,6 +105,36 @@ const normalizeTitle = (fileName: string) => path.basename(fileName, path.extnam
   .replace(/[_+]+/gu, ' ')
   .replace(/\s+/gu, ' ')
   .trim()
+
+const allowedAuthorityStatuses = new Set<KnowledgeLibraryMetadataOverride['authorityStatus']>(['OFFICIAL_PRIMARY', 'OFFICIAL_GUIDANCE', 'AUTHORIZED_PUBLICATION', 'PROFESSIONAL_REFERENCE', 'UNKNOWN'])
+const allowedScopeEffects = new Set<KnowledgeLibraryMetadataOverride['scopeEffect']>(['APPLIES', 'CONDITIONAL', 'EXCLUDES'])
+const allowedTemporalStatuses = new Set<KnowledgeLibraryMetadataOverride['temporalStatus']>(['UNKNOWN', 'CURRENT', 'HISTORICAL', 'SUPERSEDED', 'WITHDRAWN', 'UNDER_REVIEW'])
+
+export function parseKnowledgeLibraryMetadataManifest(value: unknown): KnowledgeLibraryMetadataOverride[] {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('KNOWLEDGE_LIBRARY_METADATA_MANIFEST_INVALID')
+  const manifest = value as Partial<KnowledgeLibraryMetadataManifest>
+  if (manifest.schemaVersion !== 1 || !Array.isArray(manifest.documents)) throw new Error('KNOWLEDGE_LIBRARY_METADATA_MANIFEST_INVALID')
+  const seen = new Set<string>()
+  return manifest.documents.map((candidate) => {
+    if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) throw new Error('KNOWLEDGE_LIBRARY_METADATA_ENTRY_INVALID')
+    const entry = candidate as Partial<KnowledgeLibraryMetadataOverride>
+    const relativePath = normalizePath(String(entry.relativePath ?? '')).replace(/^\.\//u, '')
+    if (!relativePath || path.isAbsolute(relativePath) || relativePath.split('/').includes('..') || seen.has(relativePath)) throw new Error('KNOWLEDGE_LIBRARY_METADATA_PATH_INVALID')
+    seen.add(relativePath)
+    if (!/^[0-9a-f]{64}$/u.test(String(entry.checksum ?? ''))) throw new Error('KNOWLEDGE_LIBRARY_METADATA_CHECKSUM_INVALID')
+    if (!/^[A-Z0-9][A-Z0-9._:-]{1,79}$/u.test(String(entry.sourceCode ?? ''))) throw new Error('KNOWLEDGE_LIBRARY_METADATA_SOURCE_CODE_INVALID')
+    let canonicalUrl: URL
+    try { canonicalUrl = new URL(String(entry.canonicalUrl ?? '')) } catch { throw new Error('KNOWLEDGE_LIBRARY_METADATA_CANONICAL_URL_INVALID') }
+    if (canonicalUrl.protocol !== 'https:') throw new Error('KNOWLEDGE_LIBRARY_METADATA_CANONICAL_URL_INVALID')
+    if (!String(entry.canonicalIdentity ?? '').trim() || !String(entry.jurisdiction ?? '').trim() || !String(entry.applicabilityScope ?? '').trim() || !String(entry.scopeCode ?? '').trim()) throw new Error('KNOWLEDGE_LIBRARY_METADATA_CANONICAL_FIELDS_REQUIRED')
+    if (!String(entry.title ?? '').trim() || !String(entry.publisher ?? '').trim() || (!String(entry.versionLabel ?? '').trim() && entry.publicationYear === undefined)) throw new Error('KNOWLEDGE_LIBRARY_METADATA_DESCRIPTIVE_FIELDS_REQUIRED')
+    if (!allowedAuthorityStatuses.has(entry.authorityStatus as KnowledgeLibraryMetadataOverride['authorityStatus'])) throw new Error('KNOWLEDGE_LIBRARY_METADATA_AUTHORITY_INVALID')
+    if (!allowedTemporalStatuses.has(entry.temporalStatus as KnowledgeLibraryMetadataOverride['temporalStatus'])) throw new Error('KNOWLEDGE_LIBRARY_METADATA_TEMPORAL_STATUS_INVALID')
+    if (!allowedScopeEffects.has(entry.scopeEffect as KnowledgeLibraryMetadataOverride['scopeEffect'])) throw new Error('KNOWLEDGE_LIBRARY_METADATA_SCOPE_EFFECT_INVALID')
+    if (entry.publicationYear !== undefined && (!Number.isInteger(entry.publicationYear) || entry.publicationYear < 1800 || entry.publicationYear > 2200)) throw new Error('KNOWLEDGE_LIBRARY_METADATA_YEAR_INVALID')
+    return { ...entry, relativePath, canonicalUrl: canonicalUrl.toString() } as KnowledgeLibraryMetadataOverride
+  })
+}
 
 function formatOf(fileName: string, bytes: Uint8Array): KnowledgeLibraryFileReport['format'] {
   const extension = path.extname(fileName).toLowerCase()
@@ -201,7 +247,7 @@ export async function inventoryKnowledgeLibrary(rootPath: string, options: Knowl
     let bytes: Uint8Array
     let fileStat: Awaited<ReturnType<typeof stat>>
     try { bytes = await readFile(filePath); fileStat = await stat(filePath) } catch {
-      files.push({ relativePath, status: 'EXTRACTION_UNSUPPORTED', reasons: ['FILE_READ_FAILED'], checksum: null, bytes: 0, format: 'UNSUPPORTED', canonicalFamily: config.canonicalFamily, publisher: config.publisher, title: normalizeTitle(filePath), documentType: null, topics: [], versionLabel: null, publicationYear: null, jurisdiction: config.jurisdiction, scopeCode: folder === 'pgs' ? 'SEVESO' : null, canonicalUrl: null, canonicalIdentity: null, pageCount: null, estimatedBlocks: null, extractionFingerprint: null, documentFamily: null })
+      files.push({ relativePath, status: 'EXTRACTION_UNSUPPORTED', reasons: ['FILE_READ_FAILED'], checksum: null, bytes: 0, format: 'UNSUPPORTED', canonicalFamily: config.canonicalFamily, publisher: config.publisher, title: normalizeTitle(filePath), documentType: null, topics: [], versionLabel: null, publicationYear: null, jurisdiction: config.jurisdiction, scopeCode: null, canonicalUrl: null, canonicalIdentity: null, sourceCode: null, authorityStatus: null, temporalStatus: null, applicabilityScope: null, scopeEffect: null, pageCount: null, estimatedBlocks: null, extractionFingerprint: null, documentFamily: null })
       continue
     }
     const checksum = sha256(bytes)
@@ -230,23 +276,36 @@ export async function inventoryKnowledgeLibrary(rootPath: string, options: Knowl
     const publicationYear = override?.publicationYear ?? explicitYear(title)
     const versionLabel = override?.versionLabel ?? explicitVersion(title)
     const jurisdiction = override?.jurisdiction ?? config.jurisdiction
-    const scopeCode = override?.scopeCode ?? (folder === 'pgs' ? 'SEVESO' : null)
+    const scopeCode = override?.scopeCode ?? null
     const canonicalIdentity = override?.canonicalIdentity ?? (folder === 'legislation' ? title.match(/BWBR\d+/iu)?.[0]?.toUpperCase() ?? null : null)
     const canonicalUrl = override?.canonicalUrl ?? null
+    const sourceCode = override?.sourceCode ?? null
+    const authorityStatus = override?.authorityStatus ?? null
+    const temporalStatus = override?.temporalStatus ?? null
+    const applicabilityScope = override?.applicabilityScope ?? null
+    const scopeEffect = override?.scopeEffect ?? null
     const publisher = override?.publisher ?? config.publisher
     const familyCode = override?.familyCode ?? (role && stem.length >= 8 ? `${config.canonicalFamily}-${stem}`.slice(0, 160) : null)
 
     if (format === 'UNSUPPORTED') reasons.push('EXTRACTION_UNSUPPORTED')
     if (!publisher) reasons.push('PUBLISHER_REVIEW_REQUIRED')
-    if (folder === 'legislation' && !canonicalIdentity) reasons.push('SOURCE_IDENTITY_UNCERTAIN')
-    if (folder === 'pgs' && !(jurisdiction === 'NL' && scopeCode === 'SEVESO')) reasons.push('PGS_SCOPE_INVALID')
+    if (!override) reasons.push('CANONICAL_METADATA_REVIEW_REQUIRED')
+    else if (override.checksum !== checksum) reasons.push('METADATA_CHECKSUM_MISMATCH')
+    if (override) {
+      let controlledUrl = false
+      try { controlledUrl = new URL(override.canonicalUrl).protocol === 'https:' } catch { controlledUrl = false }
+      if (!override.title.trim() || !override.publisher.trim() || (!override.versionLabel?.trim() && override.publicationYear === undefined) || !controlledUrl || !allowedTemporalStatuses.has(override.temporalStatus)) reasons.push('CONTROLLED_METADATA_INCOMPLETE')
+    }
+    if (!canonicalIdentity || !canonicalUrl || !sourceCode || !authorityStatus) reasons.push('SOURCE_IDENTITY_UNCERTAIN')
+    if (!jurisdiction || !applicabilityScope || !scopeCode || !scopeEffect) reasons.push('SOURCE_SCOPE_REQUIRED')
+    if (folder === 'pgs' && !(jurisdiction === 'NL' && scopeCode === 'SEVESO' && scopeEffect === 'CONDITIONAL')) reasons.push('PGS_SCOPE_INVALID')
     if (!publicationYear && !versionLabel) reasons.push('VERSION_METADATA_REVIEW_REQUIRED')
     if (format === 'BWB_XML' && !canonicalIdentity) reasons.push('BWB_ID_REQUIRED')
 
     files.push({
       relativePath, status: 'READY', reasons, checksum, bytes: fileStat.size, format,
       canonicalFamily: config.canonicalFamily, publisher, title, documentType: inferDocumentType(title), topics: inferTopics(title),
-      versionLabel, publicationYear, jurisdiction, scopeCode, canonicalUrl, canonicalIdentity, pageCount, estimatedBlocks, extractionFingerprint,
+      versionLabel, publicationYear, jurisdiction, scopeCode, canonicalUrl, canonicalIdentity, sourceCode, authorityStatus, temporalStatus, applicabilityScope, scopeEffect, pageCount, estimatedBlocks, extractionFingerprint,
       documentFamily: familyCode && role ? { code: familyCode, role } : null,
     })
   }
@@ -267,7 +326,7 @@ export async function inventoryKnowledgeLibrary(rootPath: string, options: Knowl
       file.status = 'VERSION_CONFLICT'; file.reasons.push('SAME_IDENTITY_VERSION_DIFFERENT_CONTENT'); continue
     }
     if (file.format === 'UNSUPPORTED' || file.reasons.includes('EXTRACTION_FAILED') || file.reasons.includes('PDF_PARSE_FAILED')) file.status = 'EXTRACTION_UNSUPPORTED'
-    else if (file.reasons.includes('SOURCE_IDENTITY_UNCERTAIN') || file.reasons.includes('PGS_SCOPE_INVALID') || file.reasons.includes('BWB_ID_REQUIRED')) file.status = 'SOURCE_IDENTITY_UNCERTAIN'
+    else if (file.reasons.includes('SOURCE_IDENTITY_UNCERTAIN') || file.reasons.includes('PGS_SCOPE_INVALID') || file.reasons.includes('BWB_ID_REQUIRED') || file.reasons.includes('METADATA_CHECKSUM_MISMATCH') || file.reasons.includes('CONTROLLED_METADATA_INCOMPLETE')) file.status = 'SOURCE_IDENTITY_UNCERTAIN'
     else if (file.reasons.length > 0) file.status = 'NEEDS_METADATA_REVIEW'
   }
 

@@ -4,6 +4,7 @@ import type { KnowledgeCanonicalSourceFamily, KnowledgeScopeEffect, KnowledgeSou
 import { getPrisma } from '@/lib/prisma'
 
 type DatabaseClient = ReturnType<typeof getPrisma>
+type TransactionClient = Prisma.TransactionClient
 export type KnowledgeOnboardingInput = {
   source: { code: string; title: string; publisher: string; sourceType: KnowledgeSourceType; sourceFormat: KnowledgeSourceFormat; canonicalFamily: KnowledgeCanonicalSourceFamily; authorityStatus: KnowledgeSourceAuthorityStatus; canonicalUrl: string; jurisdiction: string; applicabilityScope: string; temporalStatus: KnowledgeTemporalStatus; sourceFamily: string; independenceGroup: string; isPrimarySource: boolean }
   version: { versionLabel: string; publicationDate?: Date; validFrom?: Date; validUntil?: Date; checksum: string }
@@ -33,10 +34,9 @@ function validate(input: KnowledgeOnboardingInput) {
   }
 }
 
-export async function onboardKnowledgeSource(input: KnowledgeOnboardingInput, database: DatabaseClient = getPrisma()) {
+export async function onboardKnowledgeSourceInTransaction(input: KnowledgeOnboardingInput, tx: TransactionClient) {
   validate(input)
-  return database.$transaction(async (tx) => {
-    await tx.$executeRaw(Prisma.sql`SELECT pg_advisory_xact_lock(hashtext(${input.source.code}))`)
+  await tx.$executeRaw(Prisma.sql`SELECT pg_advisory_xact_lock(hashtext(${input.source.code}))`)
     const existing = await tx.knowledgeSource.findUnique({ where: { code: input.source.code }, include: { versions: { include: { artifacts: true, applicabilityScopes: true } }, applicabilityScopes: true } })
     if (existing) {
       const version = existing.versions.find((candidate) => candidate.checksum === input.version.checksum)
@@ -65,5 +65,9 @@ export async function onboardKnowledgeSource(input: KnowledgeOnboardingInput, da
       versions: { create: { id: sourceVersionId, versionLabel: input.version.versionLabel, publicationDate: input.version.publicationDate, validFrom: input.version.validFrom, validUntil: input.version.validUntil, checksum: input.version.checksum, extractionStatus: 'READY', reviewStatus: 'REVIEW_REQUIRED', artifacts: { create: { id: randomUUID(), artifactType: input.artifact.type, mediaType: input.artifact.mediaType, locator: input.artifact.locator, checksum: input.artifact.checksum, retrievedAt: input.artifact.retrievedAt } }, applicabilityScopes: { create: input.scopes.map((scope) => ({ id: randomUUID(), ...scope })) } } },
     } })
     return { sourceId, sourceVersionId, created: true }
-  }, { isolationLevel: 'Serializable' })
+}
+
+export async function onboardKnowledgeSource(input: KnowledgeOnboardingInput, database: DatabaseClient = getPrisma()) {
+  validate(input)
+  return database.$transaction((tx) => onboardKnowledgeSourceInTransaction(input, tx), { isolationLevel: 'Serializable' })
 }

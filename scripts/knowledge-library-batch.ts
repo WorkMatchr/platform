@@ -1,6 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { formatKnowledgeLibraryReport, inventoryKnowledgeLibrary, type KnowledgeLibraryBatchOptions } from '../src/lib/knowledge/knowledge-library-batch'
+import { formatKnowledgeLibraryReport, inventoryKnowledgeLibrary, parseKnowledgeLibraryMetadataManifest, type KnowledgeLibraryBatchOptions } from '../src/lib/knowledge/knowledge-library-batch'
 
 function option(args: string[], name: string) {
   const index = args.indexOf(name)
@@ -15,7 +15,7 @@ async function main() {
   const options: KnowledgeLibraryBatchOptions = {
     limit: Number(option(args, '--limit') ?? 100),
     fullExtractionLimit: Number(option(args, '--extract') ?? 0),
-    metadataOverrides: overridesFile ? JSON.parse(await readFile(path.resolve(overridesFile), 'utf8')) : undefined,
+    metadataOverrides: overridesFile ? parseKnowledgeLibraryMetadataManifest(JSON.parse(await readFile(path.resolve(overridesFile), 'utf8'))) : undefined,
   }
   const report = await inventoryKnowledgeLibrary(path.resolve(root), options)
   const output = args.includes('--json') ? JSON.stringify(report, null, 2) : formatKnowledgeLibraryReport(report)

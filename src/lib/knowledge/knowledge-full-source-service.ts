@@ -5,6 +5,7 @@ import type { FullSourceExtraction } from './knowledge-extractor'
 import { normalizeKnowledgeSourceText } from './knowledge-extractor'
 
 type DatabaseClient = ReturnType<typeof getPrisma>
+type TransactionClient = Prisma.TransactionClient
 
 export type StoreFullSourceResult = {
   extractionRunId: string
@@ -61,20 +62,18 @@ async function linkExistingFragments(
   return linkedFragmentCount
 }
 
-export async function storeKnowledgeFullSource(
+export async function storeKnowledgeFullSourceInTransaction(
   sourceVersionId: string,
   extraction: FullSourceExtraction,
-  database: DatabaseClient = getPrisma(),
+  tx: TransactionClient,
 ): Promise<StoreFullSourceResult> {
-  const existing = await database.knowledgeExtractionRun.findUnique({
+  const existing = await tx.knowledgeExtractionRun.findUnique({
     where: { sourceVersionId_extractionFingerprint: { sourceVersionId, extractionFingerprint: extraction.extractionFingerprint } },
     select: { id: true },
   })
   if (existing) return { extractionRunId: existing.id, created: false, linkedFragmentCount: 0 }
 
-  try {
-    return await database.$transaction(async (tx) => {
-      await tx.$queryRaw(Prisma.sql`SELECT "id" FROM "KnowledgeSourceVersion" WHERE "id" = ${sourceVersionId}::uuid FOR UPDATE`)
+  await tx.$queryRaw(Prisma.sql`SELECT "id" FROM "KnowledgeSourceVersion" WHERE "id" = ${sourceVersionId}::uuid FOR UPDATE`)
       const duplicate = await tx.knowledgeExtractionRun.findUnique({
         where: { sourceVersionId_extractionFingerprint: { sourceVersionId, extractionFingerprint: extraction.extractionFingerprint } },
         select: { id: true },
@@ -129,8 +128,16 @@ export async function storeKnowledgeFullSource(
         },
       })
       const linkedFragmentCount = await linkExistingFragments(tx, sourceVersionId, extractionRunId)
-      return { extractionRunId, created: true, linkedFragmentCount }
-    }, { isolationLevel: 'Serializable' })
+  return { extractionRunId, created: true, linkedFragmentCount }
+}
+
+export async function storeKnowledgeFullSource(
+  sourceVersionId: string,
+  extraction: FullSourceExtraction,
+  database: DatabaseClient = getPrisma(),
+): Promise<StoreFullSourceResult> {
+  try {
+    return await database.$transaction((tx) => storeKnowledgeFullSourceInTransaction(sourceVersionId, extraction, tx), { isolationLevel: 'Serializable' })
   } catch (error) {
     if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2002') {
       const concurrent = await database.knowledgeExtractionRun.findUniqueOrThrow({

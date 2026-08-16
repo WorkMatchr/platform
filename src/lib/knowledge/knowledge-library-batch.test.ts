@@ -1,9 +1,10 @@
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises'
+import { createHash } from 'node:crypto'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { PDFDocument, StandardFonts } from 'pdf-lib'
 import { afterEach, describe, expect, it } from 'vitest'
-import { inventoryKnowledgeLibrary } from './knowledge-library-batch'
+import { inventoryKnowledgeLibrary, parseKnowledgeLibraryMetadataManifest } from './knowledge-library-batch'
 
 const roots: string[] = []
 async function root() {
@@ -16,16 +17,47 @@ async function pdf(text: string) {
   const document = await PDFDocument.create(); const page = document.addPage(); const font = await document.embedFont(StandardFonts.Helvetica)
   page.drawText(text, { x: 40, y: 700, size: 12, font }); return document.save()
 }
+const checksum = (value: Uint8Array) => createHash('sha256').update(value).digest('hex')
+function metadata(relativePath: string, bytes: Uint8Array) {
+  return {
+    relativePath, checksum: checksum(bytes), sourceCode: 'NVAB-OVERGANG-WERK', canonicalUrl: 'https://nvab-online.nl/richtlijnen/overgang-en-werk',
+    canonicalIdentity: 'NVAB:OVERGANG-EN-WERK', authorityStatus: 'PROFESSIONAL_REFERENCE' as const, jurisdiction: 'NL',
+    temporalStatus: 'CURRENT' as const,
+    applicabilityScope: 'Nederlandse arbeidsgezondheidszorg', scopeCode: 'GENERAL', scopeEffect: 'APPLIES' as const,
+    publisher: 'NVAB', title: 'Richtlijn Overgang en werk', publicationYear: 2026,
+  }
+}
 afterEach(async () => { await Promise.all(roots.splice(0).map((value) => rm(value, { recursive: true, force: true }))) })
 
 describe('Knowledge Library batchinventarisatie', () => {
   it('classificeert betrouwbare bronfamilies en houdt onzekere metadata fail-closed', async () => {
     const directory = await root()
-    await writeFile(path.join(directory, 'nvab', '2026-NVAB_Richtlijn-Overgang-en-Werk.pdf'), await pdf('Richtlijn overgang en werk'))
+    const nvab = await pdf('Richtlijn overgang en werk')
+    await writeFile(path.join(directory, 'nvab', '2026-NVAB_Richtlijn-Overgang-en-Werk.pdf'), nvab)
     await writeFile(path.join(directory, 'arbocatalogi', 'onbekende-catalogus.pdf'), await pdf('Arbocatalogus'))
     const report = await inventoryKnowledgeLibrary(directory, { limit: 10, fullExtractionLimit: 2 })
-    expect(report.files.find((file) => file.canonicalFamily === 'NVAB')).toMatchObject({ status: 'READY', publisher: 'NVAB', publicationYear: 2026 })
-    expect(report.files.find((file) => file.canonicalFamily === 'ARBOCATALOGUE')).toMatchObject({ status: 'NEEDS_METADATA_REVIEW', publisher: null })
+    expect(report.files.find((file) => file.canonicalFamily === 'NVAB')).toMatchObject({ status: 'SOURCE_IDENTITY_UNCERTAIN', publisher: 'NVAB', publicationYear: 2026, reasons: expect.arrayContaining(['CANONICAL_METADATA_REVIEW_REQUIRED']) })
+    expect(report.files.find((file) => file.canonicalFamily === 'ARBOCATALOGUE')).toMatchObject({ status: 'SOURCE_IDENTITY_UNCERTAIN', publisher: null })
+  })
+
+  it('maakt een document alleen READY met checksum-gebonden gecontroleerde canonieke metadata', async () => {
+    const directory = await root(); const bytes = await pdf('Richtlijn overgang en werk')
+    const relativePath = 'nvab/2026-NVAB_Richtlijn-Overgang-en-Werk.pdf'
+    await writeFile(path.join(directory, ...relativePath.split('/')), bytes)
+    const withoutMetadata = await inventoryKnowledgeLibrary(directory)
+    expect(withoutMetadata.files[0].status).toBe('SOURCE_IDENTITY_UNCERTAIN')
+    const withMetadata = await inventoryKnowledgeLibrary(directory, { fullExtractionLimit: 1, metadataOverrides: [metadata(relativePath, bytes)] })
+    expect(withMetadata.files[0]).toMatchObject({ status: 'READY', sourceCode: 'NVAB-OVERGANG-WERK', canonicalIdentity: 'NVAB:OVERGANG-EN-WERK', authorityStatus: 'PROFESSIONAL_REFERENCE' })
+    const changed = await inventoryKnowledgeLibrary(directory, { metadataOverrides: [{ ...metadata(relativePath, bytes), checksum: 'a'.repeat(64) }] })
+    expect(changed.files[0]).toMatchObject({ status: 'SOURCE_IDENTITY_UNCERTAIN', reasons: expect.arrayContaining(['METADATA_CHECKSUM_MISMATCH']) })
+  })
+
+  it('valideert het herbruikbare reviewmanifest fail-closed', async () => {
+    const bytes = await pdf('Richtlijn')
+    const valid = { schemaVersion: 1, documents: [metadata('nvab/richtlijn.pdf', bytes)] }
+    expect(parseKnowledgeLibraryMetadataManifest(valid)).toHaveLength(1)
+    expect(() => parseKnowledgeLibraryMetadataManifest({ ...valid, documents: [{ ...valid.documents[0], canonicalUrl: 'http://example.invalid' }] })).toThrow('KNOWLEDGE_LIBRARY_METADATA_CANONICAL_URL_INVALID')
+    expect(() => parseKnowledgeLibraryMetadataManifest({ ...valid, documents: [{ ...valid.documents[0], relativePath: '../richtlijn.pdf' }] })).toThrow('KNOWLEDGE_LIBRARY_METADATA_PATH_INVALID')
   })
 
   it('detecteert identieke bestanden en versieconflicten zonder ingest', async () => {
