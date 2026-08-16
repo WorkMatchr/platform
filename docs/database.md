@@ -1,5 +1,9 @@
 # Database WorkMatchr
 
+## Immutable evidence voor gestructureerde Knowledge-componenten
+
+Migratie `20260816100000_add_bhv_structured_component_evidence` voegt expliciete temporaliteit aan checklists en procedures toe en introduceert één append-only evidence-relatie van precies één checklistregel óf procedurestap naar een immutable full-source-blok. Deferred constraints weigeren een nieuwe regel of stap zonder evidence aan het einde van de transactie. Bestaande Knowledge-bronnen, claims, fragmenten, citaties en methoden worden niet teruggevuld of gewijzigd.
+
 ## Immutable KnowledgeMethod-revisies
 
 Migratie `20260815110000_add_knowledge_method_foundation` voegt uitsluitend `KnowledgeMethod`, `KnowledgeMethodComponent`, `KnowledgeMethodEvidence` en de evidence-role-enum toe. Methoderevisies aggregeren bestaande gestructureerde Knowledge-objecten en verwijzen voor bewijs naar bestaande full-source-blokken. XOR-, evidence-, foreign-key- en veilige-statusconstraints werken fail-closed. Alle drie tabellen zijn databasebreed append-only; een inhoudelijke wijziging maakt een opvolgende revisie.

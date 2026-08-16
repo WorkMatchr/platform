@@ -4480,6 +4480,7 @@ model KnowledgeSourceBlock {
   sourcePage           KnowledgeSourcePage      @relation(fields: [sourcePageId, extractionRunId], references: [id, extractionRunId], onDelete: Restrict)
   fragments            KnowledgeFragmentBlock[]
   methodEvidence       KnowledgeMethodEvidence[]
+  structuredEvidence   KnowledgeStructuredComponentEvidence[]
 
   @@unique([extractionRunId, globalSequence])
   @@unique([sourcePageId, pageSequence])
@@ -4707,6 +4708,7 @@ model KnowledgeChecklist {
   topicId           String                     @db.Uuid
   audience          KnowledgeAccessTier
   scoringMethod     String                     @db.VarChar(80)
+  temporalStatus    KnowledgeTemporalStatus    @default(UNKNOWN)
   validationStatus  KnowledgeValidationStatus  @default(UNVALIDATED)
   publicationStatus KnowledgePublicationStatus @default(DRAFT)
   createdAt         DateTime                   @default(now()) @db.Timestamptz(3)
@@ -4733,6 +4735,7 @@ model KnowledgeChecklistItem {
   updatedAt          DateTime                     @updatedAt @db.Timestamptz(3)
   checklist          KnowledgeChecklist           @relation(fields: [checklistId], references: [id], onDelete: Restrict)
   explanationClaim   KnowledgeClaim?              @relation("KnowledgeChecklistExplanation", fields: [explanationClaimId], references: [id], onDelete: Restrict)
+  evidence           KnowledgeStructuredComponentEvidence[]
 
   @@unique([checklistId, order])
   @@index([explanationClaimId])
@@ -4747,6 +4750,7 @@ model KnowledgeProcedure {
   topicId           String                     @db.Uuid
   audience          KnowledgeAccessTier
   prerequisites     Json
+  temporalStatus    KnowledgeTemporalStatus    @default(UNKNOWN)
   validationStatus  KnowledgeValidationStatus  @default(UNVALIDATED)
   publicationStatus KnowledgePublicationStatus @default(DRAFT)
   createdAt         DateTime                   @default(now()) @db.Timestamptz(3)
@@ -4777,11 +4781,32 @@ model KnowledgeProcedureStep {
   responsibleRole   KnowledgeRole?            @relation(fields: [responsibleRoleId], references: [id], onDelete: Restrict)
   warningClaim      KnowledgeClaim?           @relation("KnowledgeProcedureWarning", fields: [warningClaimId], references: [id], onDelete: Restrict)
   responsibilities  KnowledgeResponsibility[]
+  evidence          KnowledgeStructuredComponentEvidence[]
 
   @@unique([procedureId, order])
   @@index([conditionRuleId])
   @@index([responsibleRoleId])
   @@index([warningClaimId])
+}
+
+model KnowledgeStructuredComponentEvidence {
+  id              String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  checklistItemId String?                     @db.Uuid
+  procedureStepId String?                     @db.Uuid
+  sourceBlockId   String                      @db.Uuid
+  evidenceRole    KnowledgeMethodEvidenceRole
+  sequence        Int
+  rationale       String                      @db.VarChar(1000)
+  createdAt       DateTime                    @default(now()) @db.Timestamptz(3)
+  checklistItem   KnowledgeChecklistItem?     @relation(fields: [checklistItemId], references: [id], onDelete: Restrict)
+  procedureStep   KnowledgeProcedureStep?     @relation(fields: [procedureStepId], references: [id], onDelete: Restrict)
+  sourceBlock     KnowledgeSourceBlock        @relation(fields: [sourceBlockId], references: [id], onDelete: Restrict)
+
+  @@unique([checklistItemId, sourceBlockId, evidenceRole])
+  @@unique([procedureStepId, sourceBlockId, evidenceRole])
+  @@index([checklistItemId, sequence])
+  @@index([procedureStepId, sequence])
+  @@index([sourceBlockId])
 }
 
 model KnowledgeRole {

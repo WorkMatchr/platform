@@ -21,3 +21,8 @@ Een inhoudelijke wijziging schrijft een nieuwe revisie via `supersedesMethodId`;
 De actuele taakstatus is een werkprojectie. Besluiten, bronhistorie, validaties en auditevents vormen de onveranderlijke herkomstketen.
 
 `KnowledgeClaim.controlRisk`, `sourceControlStatus` en `lastSourceCheckedAt` vormen de actuele broncontroleprojectie. Zij vervangen de append-only herkomstketen niet. `KnowledgeImprovementReport` bewaart een professionele melding, de gekoppelde claim en controletaak, de melder, status, optimistic-concurrencyversie en eventuele gemotiveerde afhandeling. Een melding verandert nooit rechtstreeks claimtekst, validatie of publicatie.
+# AI-10 BHV-componenten
+
+De historische methode `BHV_MAATGEVENDE_SCENARIOS` gebruikt twee afzonderlijke, immutable gestructureerde componenten: checklist `BHV_MAATGEVENDE_FACTOREN` en procedure `BHV_SCENARIO_BEOORDELING`. Iedere checklistregel en procedurestap vereist databasebreed minimaal één herleidbare evidence-relatie naar een immutable `KnowledgeSourceBlock`. Beide componenten blijven `HISTORICAL`, `DRAFT`, `UNVALIDATED` en `INTERNAL_REVIEWER` totdat een afzonderlijke actualiteits- en validatiebeslissing is genomen.
+
+De componenten nemen historische vaste aantalsnormen, cursusuren en oefenfrequenties niet over als uitvoerbare regels. Ze berekenen geen exact aantal BHV'ers en zijn nog niet beschikbaar voor Guidance of publicatie.
