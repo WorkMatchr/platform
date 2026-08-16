@@ -4,6 +4,8 @@
 
 `KnowledgeSource` 1—N `KnowledgeSourceVersion` 1—N `KnowledgeSourceArtifact`. `KnowledgeSourceApplicability` verwijst via een database-XOR naar precies één `KnowledgeSource`, `KnowledgeSourceVersion` of `KnowledgeSourceBlock`. Bestaande structured-component- en methode-evidence blijven rechtstreeks naar immutable bronblokken verwijzen en erven daarmee canonieke identiteit, artifact en toepassingsscope.
 
+`KnowledgeDocumentFamily` 1—N `KnowledgeDocumentFamilyMember` N—1 `KnowledgeSourceVersion` groepeert gerelateerde, immutable bronversies zonder broninhoud of evidence te dupliceren.
+
 ## Marketplace Rules, credits en betrouwbaarheid
 
 ```mermaid

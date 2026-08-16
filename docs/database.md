@@ -1,5 +1,9 @@
 # Database WorkMatchr
 
+## Knowledge Library-documentfamilies
+
+Migratie `20260816120000_add_knowledge_document_families` voegt uitsluitend een append-only groepering van reeds bestaande bronversies toe. Rollen onderscheiden primaire richtlijn, achtergrondbewijs, samenvatting, checklist, bijlage en tool. Bestaande bron-, claim-, evidence- en extractierecords worden niet teruggevuld of gewijzigd.
+
 ## Multi-Source Knowledge-onboarding
 
 Migratie `20260816110000_add_multi_source_knowledge_onboarding` voegt gecontroleerde canonieke bronfamilies en autoriteitsstatus toe, plus immutable lokale artifacts en jurisdictie-/toepassingsscope op bron-, versie- of blokniveau. Bestaande Knowledge-records worden niet gebackfilld of gewijzigd. PDF, HTML en gecontroleerde wetstekst delen daarna dezelfde full-source-opslag. Een deferred databaseconstraint weigert een canonieke PGS-bron zonder uitsluitend `NL / SEVESO / CONDITIONAL` applicability, ook bij rechtstreekse database-invoer.

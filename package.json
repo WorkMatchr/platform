@@ -53,6 +53,7 @@
     "knowledge:validate": "tsx scripts/knowledge-import.ts validate",
     "knowledge:preview": "tsx scripts/knowledge-import.ts preview",
     "knowledge:batch": "tsx scripts/knowledge-import-batch.ts",
+    "knowledge:library-batch": "tsx scripts/knowledge-library-batch.ts",
     "knowledge:import": "tsx scripts/knowledge-import.ts import",
     "knowledge:correct": "tsx scripts/knowledge-import.ts correct"
   },

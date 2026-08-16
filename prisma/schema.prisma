@@ -736,6 +736,7 @@ enum KnowledgeCanonicalSourceFamily {
   TNO
   SER
   RIVM
+  NVAB
   STANDARD
   INTERNATIONAL_GUIDANCE
 }
@@ -753,6 +754,15 @@ enum KnowledgeSourceArtifactType {
   LOCAL_SNAPSHOT
   BROWSER_RENDERED_SNAPSHOT
   LEGAL_TEXT_SNAPSHOT
+}
+
+enum KnowledgeDocumentFamilyRole {
+  PRIMARY_GUIDELINE
+  BACKGROUND_EVIDENCE
+  SUMMARY
+  CHECKLIST
+  APPENDIX
+  TOOL
 }
 
 enum KnowledgeScopeEffect {
@@ -4434,6 +4444,7 @@ model KnowledgeSourceVersion {
   extractionRuns         KnowledgeExtractionRun[]
   artifacts              KnowledgeSourceArtifact[]
   applicabilityScopes    KnowledgeSourceApplicability[]   @relation("KnowledgeSourceApplicabilityVersion")
+  documentFamilyMembers  KnowledgeDocumentFamilyMember[]
 
   @@unique([sourceId, versionLabel, importRevision])
   @@index([sourceId, versionLabel, supersedesVersionId])
@@ -4441,6 +4452,28 @@ model KnowledgeSourceVersion {
   @@index([extractionStatus, reviewStatus])
 }
 
+model KnowledgeDocumentFamily {
+  id        String                          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String                          @unique @db.VarChar(160)
+  title     String                          @db.VarChar(300)
+  createdAt DateTime                        @default(now()) @db.Timestamptz(3)
+  members   KnowledgeDocumentFamilyMember[]
+}
+
+model KnowledgeDocumentFamilyMember {
+  id               String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  documentFamilyId String                      @db.Uuid
+  sourceVersionId  String                      @db.Uuid
+  role             KnowledgeDocumentFamilyRole
+  sequence         Int
+  createdAt        DateTime                    @default(now()) @db.Timestamptz(3)
+  documentFamily   KnowledgeDocumentFamily     @relation(fields: [documentFamilyId], references: [id], onDelete: Restrict)
+  sourceVersion    KnowledgeSourceVersion      @relation(fields: [sourceVersionId], references: [id], onDelete: Restrict)
+
+  @@unique([documentFamilyId, sourceVersionId])
+  @@unique([documentFamilyId, sequence])
+  @@index([sourceVersionId, role])
+}
 model KnowledgeFragment {
   id               String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   externalKey      String                 @unique @db.VarChar(160)

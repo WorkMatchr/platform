@@ -2,6 +2,9 @@
 
 ## Multi-Source Knowledge
 
+- `KnowledgeDocumentFamily`: stabiele, immutable identiteit van een inhoudelijk samenhangende documentset.
+- `KnowledgeDocumentFamilyMember`: geordende append-only koppeling naar één `KnowledgeSourceVersion`, met een gecontroleerde documentrol.
+
 - `KnowledgeSource.canonicalFamily`: gecontroleerde functionele bronfamilie voor nieuwe onboardings; legacybronnen mogen null blijven.
 - `KnowledgeSource.authorityStatus`: expliciete officiële/geautoriseerde positie van de canonieke bron.
 - `KnowledgeSourceArtifact`: immutable lokale representatie van één bronversie, inclusief mediatype, locator, checksum en ophaalmoment.
