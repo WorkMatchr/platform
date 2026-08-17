@@ -5,6 +5,7 @@ import { getPrisma } from '../src/lib/prisma'
 import { storeKnowledgeDocumentFamily } from '../src/lib/knowledge/knowledge-document-family-service'
 import { extractStructuredTextFullSource } from '../src/lib/knowledge/knowledge-extractor'
 import { ingestKnowledgeLibraryDocument } from '../src/lib/knowledge/knowledge-library-ingest-service'
+import { searchKnowledgeFullSource } from '../src/lib/knowledge/knowledge-full-source-search'
 import type { KnowledgeOnboardingInput } from '../src/lib/knowledge/knowledge-source-onboarding-service'
 
 async function main() {
@@ -25,6 +26,42 @@ async function main() {
   assert.equal(firstIngest.sourceCreated, true); assert.equal(firstIngest.extractionCreated, true)
   assert.equal(ingestReplay.sourceId, firstIngest.sourceId); assert.equal(ingestReplay.sourceVersionId, firstIngest.sourceVersionId); assert.equal(ingestReplay.extractionRunId, firstIngest.extractionRunId)
   assert.equal(ingestReplay.sourceCreated, false); assert.equal(ingestReplay.extractionCreated, false)
+
+  const nulCode = testCode('NUL')
+  const nulExtraction = extractStructuredTextFullSource([{ heading: 'NUL-proef', paragraphs: ['Veilige\u0000 inhoud blijft volledig doorzoekbaar.'] }])
+  const nulIngest = await ingestKnowledgeLibraryDocument({ onboarding: onboarding(nulCode, '0'.repeat(64)), extract: async () => nulExtraction }, database)
+  const storedNulRun = await database.knowledgeExtractionRun.findUniqueOrThrow({ where: { id: nulIngest.extractionRunId }, include: { pages: { include: { blocks: true } } } })
+  assert.match(storedNulRun.warningSummary ?? '', /1 PostgreSQL-onveilige NUL-byte/u)
+  assert.equal(storedNulRun.pages[0].blocks[1].exactText, 'Veilige inhoud blijft volledig doorzoekbaar.')
+  assert.equal(storedNulRun.pages[0].blocks[1].exactText.includes('\u0000'), false)
+  const nulSearch = await searchKnowledgeFullSource({ query: 'volledig doorzoekbaar', sourceCode: nulCode, accessTiers: ['INTERNAL_REVIEWER'] })
+  assert.equal(nulSearch[0]?.exactText, 'Veilige inhoud blijft volledig doorzoekbaar.')
+
+  const largeCode = testCode('LARGE')
+  let globalSequence = 0
+  const largeExtraction = {
+    ...extraction,
+    pageCount: 120,
+    extractionFingerprint: 'f'.repeat(64),
+    pages: Array.from({ length: 120 }, (_, pageIndex) => ({
+      ...extraction.pages[0],
+      pageNumber: pageIndex + 1,
+      blocks: Array.from({ length: 30 }, (_, blockIndex) => ({
+        ...extraction.pages[0].blocks[1],
+        globalSequence: ++globalSequence,
+        pageSequence: blockIndex + 1,
+        exactText: `Pagina ${pageIndex + 1}, blok ${blockIndex + 1}: grote transactionele extractieproef.`,
+        normalizedSearchText: `pagina ${pageIndex + 1}, blok ${blockIndex + 1}: grote transactionele extractieproef.`,
+      })),
+    })),
+  }
+  const largeIngest = await ingestKnowledgeLibraryDocument({ onboarding: onboarding(largeCode, 'f'.repeat(64)), extract: async () => largeExtraction }, database)
+  assert.equal(await database.knowledgeSourcePage.count({ where: { extractionRunId: largeIngest.extractionRunId } }), 120)
+  assert.equal(await database.knowledgeSourceBlock.count({ where: { extractionRunId: largeIngest.extractionRunId } }), 3_600)
+  assert.equal(await database.knowledgeSourceBlock.count({ where: { extractionRunId: largeIngest.extractionRunId, sourcePage: { extractionRunId: largeIngest.extractionRunId } } }), 3_600)
+  const largeReplay = await ingestKnowledgeLibraryDocument({ onboarding: onboarding(largeCode, 'f'.repeat(64)), extract: async () => largeExtraction }, database)
+  assert.equal(largeReplay.extractionRunId, largeIngest.extractionRunId)
+  assert.equal(largeReplay.extractionCreated, false)
 
   const extractionFailureCode = testCode('EXTRACT')
   await assert.rejects(() => ingestKnowledgeLibraryDocument({ onboarding: onboarding(extractionFailureCode, 'd'.repeat(64)), extract: async () => { throw new Error('FORCED_EXTRACTION_FAILURE') } }, database), /FORCED_EXTRACTION_FAILURE/u)

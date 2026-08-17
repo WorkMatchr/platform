@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises'
 import { PDFDocument, StandardFonts } from 'pdf-lib'
 import { describe, expect, it } from 'vitest'
 import ai02Package from '../../../data/knowledge/poc/AI-02.v1.json'
-import { extractHtmlFullSource, extractPdfFullSource, extractStructuredTextFullSource, normalizeKnowledgeSourceText } from './knowledge-extractor'
+import { extractHtmlFullSource, extractPdfFullSource, extractStructuredTextFullSource, normalizeKnowledgeSourceText, removePostgresUnsafeNullBytes } from './knowledge-extractor'
 
 async function fixturePdf(pageCount = 3) {
   const document = await PDFDocument.create()
@@ -19,6 +19,18 @@ async function fixturePdf(pageCount = 3) {
 }
 
 describe('volledige Knowledge-bronextractie', () => {
+  it('normaliseert uitsluitend PostgreSQL-onveilige NUL-bytes vóór hashing', () => {
+    const unchanged = 'Tekst met accenten, tabs\ten emoji 🦺.'
+    expect(removePostgresUnsafeNullBytes(unchanged)).toBe(unchanged)
+
+    const first = extractStructuredTextFullSource([{ heading: 'Kop\u0000', paragraphs: ['veilige\u0000 tekst\u0000 blijft vindbaar'] }])
+    const replay = extractStructuredTextFullSource([{ heading: 'Kop\u0000', paragraphs: ['veilige\u0000 tekst\u0000 blijft vindbaar'] }])
+    expect(first.pages[0].blocks.map((block) => block.exactText)).toEqual(['Kop', 'veilige tekst blijft vindbaar'])
+    expect(first.pages[0].blocks.every((block) => !block.exactText.includes('\u0000') && !block.normalizedSearchText.includes('\u0000'))).toBe(true)
+    expect(first.warningSummary).toContain('3 PostgreSQL-onveilige NUL-byte(s)')
+    expect(first.extractionFingerprint).toBe(replay.extractionFingerprint)
+    expect(first.pages[0].blocks[1].normalizedSearchText).toContain('veilige tekst blijft vindbaar')
+  })
   it('zet officiële HTML en wetstekst deterministisch om naar dezelfde bronlaag', () => {
     const html = '<html><script>niet opslaan</script><h1>Bedrijfshulpverlening</h1><p>De werkgever organiseert doeltreffende bijstand.</p><ul><li>Eerste hulp</li></ul></html>'
     const first = extractHtmlFullSource(html)

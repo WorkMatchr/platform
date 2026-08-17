@@ -6,6 +6,7 @@ import { normalizeKnowledgeSourceText } from './knowledge-extractor'
 
 type DatabaseClient = ReturnType<typeof getPrisma>
 type TransactionClient = Prisma.TransactionClient
+const BLOCK_INSERT_BATCH_SIZE = 500
 
 export type StoreFullSourceResult = {
   extractionRunId: string
@@ -18,17 +19,15 @@ async function linkExistingFragments(
   sourceVersionId: string,
   extractionRunId: string,
 ) {
-  const [fragments, blocks] = await Promise.all([
-    tx.knowledgeFragment.findMany({
-      where: { sourceVersionId, internalExcerpt: { not: null } },
-      select: { id: true, pageFrom: true, pageTo: true, sectionPath: true, internalExcerpt: true },
-    }),
-    tx.knowledgeSourceBlock.findMany({
-      where: { extractionRunId },
-      select: { id: true, globalSequence: true, sectionPath: true, exactText: true, sourcePage: { select: { pageNumber: true } } },
-      orderBy: { globalSequence: 'asc' },
-    }),
-  ])
+  const fragments = await tx.knowledgeFragment.findMany({
+    where: { sourceVersionId, internalExcerpt: { not: null } },
+    select: { id: true, pageFrom: true, pageTo: true, sectionPath: true, internalExcerpt: true },
+  })
+  const blocks = await tx.knowledgeSourceBlock.findMany({
+    where: { extractionRunId },
+    select: { id: true, globalSequence: true, sectionPath: true, exactText: true, sourcePage: { select: { pageNumber: true } } },
+    orderBy: { globalSequence: 'asc' },
+  })
 
   let linkedFragmentCount = 0
   for (const fragment of fragments) {
@@ -101,32 +100,37 @@ export async function storeKnowledgeFullSourceInTransaction(
           warningSummary: extraction.warningSummary,
           startedAt,
           completedAt: new Date(),
-          pages: {
-            create: extraction.pages.map((page) => ({
-              id: randomUUID(),
-              pageNumber: page.pageNumber,
-              status: page.status,
-              textHash: page.textHash,
-              ocrUsed: page.ocrUsed,
-              confidence: page.confidence,
-              blocks: {
-                create: page.blocks.map((block) => ({
-                  globalSequence: block.globalSequence,
-                  pageSequence: block.pageSequence,
-                  sectionPath: block.sectionPath,
-                  blockType: block.blockType,
-                  exactText: block.exactText,
-                  normalizedSearchText: block.normalizedSearchText,
-                  textHash: block.textHash,
-                  extractionMethod: block.extractionMethod,
-                  confidence: block.confidence,
-                  requiresReview: block.requiresReview,
-                })),
-              },
-            })),
-          },
         },
       })
+      const pages = extraction.pages.map((page) => ({ page, id: randomUUID() }))
+      await tx.knowledgeSourcePage.createMany({
+        data: pages.map(({ page, id }) => ({
+          id,
+          extractionRunId,
+          pageNumber: page.pageNumber,
+          status: page.status,
+          textHash: page.textHash,
+          ocrUsed: page.ocrUsed,
+          confidence: page.confidence,
+        })),
+      })
+      const blocks = pages.flatMap(({ page, id: sourcePageId }) => page.blocks.map((block) => ({
+        sourcePageId,
+        extractionRunId,
+        globalSequence: block.globalSequence,
+        pageSequence: block.pageSequence,
+        sectionPath: block.sectionPath,
+        blockType: block.blockType,
+        exactText: block.exactText,
+        normalizedSearchText: block.normalizedSearchText,
+        textHash: block.textHash,
+        extractionMethod: block.extractionMethod,
+        confidence: block.confidence,
+        requiresReview: block.requiresReview,
+      })))
+      for (let offset = 0; offset < blocks.length; offset += BLOCK_INSERT_BATCH_SIZE) {
+        await tx.knowledgeSourceBlock.createMany({ data: blocks.slice(offset, offset + BLOCK_INSERT_BATCH_SIZE) })
+      }
       const linkedFragmentCount = await linkExistingFragments(tx, sourceVersionId, extractionRunId)
   return { extractionRunId, created: true, linkedFragmentCount }
 }

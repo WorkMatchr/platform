@@ -52,6 +52,8 @@ De inventarisatie is een deterministische scan. Een afgebroken batch kan met dez
 
 De Production-ingest gebruikt `ingestKnowledgeLibraryDocument`. Extractie wordt volledig afgerond vóór de eerste databasewrite; onboarding, bronversie, artifact, applicability, extraction run, pagina's en blokken worden daarna in één serializable Prisma-transactie geschreven. Een extractiefout schrijft niets en iedere databasefout rolt de volledige documentingest terug. De bestaande afzonderlijke onboarding- en full-source-services hergebruiken dezelfde transactionele kern. Een volledig opgeslagen document wordt bij identieke replay zonder duplicaten hergebruikt.
 
+Full-source tekst wordt vóór hashing en opslag uitsluitend ontdaan van PostgreSQL-onveilige `U+0000`-tekens. De extraction run registreert het aantal verwijderde NUL-bytes als waarschuwing; alle overige tekst blijft ongemoeid. Grote extracties schrijven binnen dezelfde transactie eerst de run, daarna de pagina's en vervolgens blokken in begrensde batches. De bestaande page/run-foreign keys blijven daarbij onverkort leidend.
+
 ## Retrieval (ontwerp, nog read-only)
 
 Latere retrieval blijft bovenop bestaande `KnowledgeSourceBlock`-search werken. Filters/ranking horen rekening te houden met `authorityStatus`, `temporalStatus`, jurisdictie, applicability, documenttype, canonieke bronfamilie, sector en evidence-/validatiestatus. Een documentfamilie mag aanvullende achtergrond of tools ophalen, maar nooit lagere autoriteit of verouderde inhoud stilzwijgend boven actuele primaire bronnen rangschikken. Er komt geen antwoordgenerator, embeddinglaag of tweede retrieval-engine bij.

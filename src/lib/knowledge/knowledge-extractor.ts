@@ -70,8 +70,16 @@ type PositionedLine = {
 
 const sha256 = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex')
 
+export function removePostgresUnsafeNullBytes(value: string) {
+  return value.replace(/\u0000/gu, '')
+}
+
+function countNullBytes(value: string) {
+  return value.match(/\u0000/gu)?.length ?? 0
+}
+
 export function normalizeKnowledgeSourceText(value: string) {
-  return value.normalize('NFKC').replace(/\s+/g, ' ').trim().toLocaleLowerCase('nl-NL')
+  return removePostgresUnsafeNullBytes(value).normalize('NFKC').replace(/\s+/g, ' ').trim().toLocaleLowerCase('nl-NL')
 }
 
 function stableRepeatedLine(value: string) {
@@ -88,7 +96,7 @@ function createLine(items: TextItem[], pageNumber: number, pageWidth: number, pa
     text += item.str
     previousEnd = x + item.width
   }
-  text = text.replace(/\s+/g, ' ').trim()
+  text = removePostgresUnsafeNullBytes(text).replace(/\s+/g, ' ').trim()
   if (!text) return null
   return {
     pageNumber,
@@ -135,12 +143,14 @@ async function extractLines(bytes: Uint8Array) {
   const loadingTask = getDocument({ data: bytes, disableFontFace: true, useSystemFonts: false, verbosity: 0 })
   const document = await loadingTask.promise
   const pages: PositionedLine[][] = []
+  let nulByteCount = 0
   try {
     for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
       const page = await document.getPage(pageNumber)
       const viewport = page.getViewport({ scale: 1 })
       const content = await page.getTextContent({ disableNormalization: false })
       const textItems = content.items.filter((item): item is TextItem => 'str' in item && item.str.trim().length > 0)
+      nulByteCount += textItems.reduce((total, item) => total + countNullBytes(item.str), 0)
       const rows: TextItem[][] = []
       for (const item of textItems) {
         const y = item.transform[5]
@@ -157,7 +167,7 @@ async function extractLines(bytes: Uint8Array) {
   } finally {
     await loadingTask.destroy()
   }
-  return pages
+  return { pages, nulByteCount }
 }
 
 function repeatedMargins(pages: PositionedLine[][]) {
@@ -243,12 +253,15 @@ export function extractStructuredTextFullSource(
   descriptor: FullSourceExtractorDescriptor = { name: 'WORKMATCHR_LEGAL_TEXT', version: '1.0.0', configurationVersion: 'STRUCTURED_TEXT_V1' },
 ): FullSourceExtraction {
   let globalSequence = 0
+  let nulByteCount = 0
   const blocks = sections.flatMap((section) => {
     const result: ExtractedSourceBlock[] = []
-    const heading = section.heading?.normalize('NFKC').replace(/\s+/g, ' ').trim()
+    nulByteCount += countNullBytes(section.heading ?? '')
+    const heading = removePostgresUnsafeNullBytes(section.heading ?? '').normalize('NFKC').replace(/\s+/g, ' ').trim() || undefined
     if (heading) result.push({ globalSequence: ++globalSequence, pageSequence: globalSequence, sectionPath: heading, blockType: 'HEADING', exactText: heading, normalizedSearchText: normalizeKnowledgeSourceText(heading), textHash: sha256(heading), extractionMethod: descriptor.name === 'WORKMATCHR_HTML_TEXT' ? 'WORKMATCHR_HTML_TEXT' : 'WORKMATCHR_LEGAL_TEXT', confidence: 1, requiresReview: false })
     for (const raw of section.paragraphs) {
-      const exactText = raw.normalize('NFKC').replace(/\s+/g, ' ').trim()
+      nulByteCount += countNullBytes(raw)
+      const exactText = removePostgresUnsafeNullBytes(raw).normalize('NFKC').replace(/\s+/g, ' ').trim()
       if (!exactText) continue
       result.push({ globalSequence: ++globalSequence, pageSequence: globalSequence, sectionPath: heading ?? null, blockType: looksLikeList(exactText) ? 'LIST_ITEM' : 'PARAGRAPH', exactText, normalizedSearchText: normalizeKnowledgeSourceText(exactText), textHash: sha256(exactText), extractionMethod: descriptor.name === 'WORKMATCHR_HTML_TEXT' ? 'WORKMATCHR_HTML_TEXT' : 'WORKMATCHR_LEGAL_TEXT', confidence: 1, requiresReview: false })
     }
@@ -256,7 +269,7 @@ export function extractStructuredTextFullSource(
   })
   if (!blocks.length) throw new Error('KNOWLEDGE_FULL_SOURCE_EMPTY_STRUCTURED_TEXT')
   const page: ExtractedSourcePage = { pageNumber: 1, status: 'EXTRACTED', textHash: sha256(blocks.map((block) => block.exactText).join('\n')), ocrUsed: false, confidence: 1, blocks }
-  return { extractorName: descriptor.name, extractorVersion: descriptor.version, configurationVersion: descriptor.configurationVersion, pageCount: 1, extractionFingerprint: canonicalFingerprint([page], descriptor), warningSummary: null, pages: [page] }
+  return { extractorName: descriptor.name, extractorVersion: descriptor.version, configurationVersion: descriptor.configurationVersion, pageCount: 1, extractionFingerprint: canonicalFingerprint([page], descriptor), warningSummary: nulByteCount > 0 ? `${nulByteCount} PostgreSQL-onveilige NUL-byte(s) deterministisch verwijderd.` : null, pages: [page] }
 }
 
 export function extractHtmlFullSource(html: string): FullSourceExtraction {
@@ -283,7 +296,7 @@ export async function extractPdfFullSource(
 ): Promise<FullSourceExtraction> {
   if (new TextDecoder('ascii').decode(bytes.subarray(0, 5)) !== '%PDF-') throw new Error('KNOWLEDGE_FULL_SOURCE_INVALID_PDF')
   // PDF.js may transfer/detach its input buffer; callers retain ownership of their bytes.
-  const linePages = await extractLines(Uint8Array.from(bytes))
+  const { pages: linePages, nulByteCount } = await extractLines(Uint8Array.from(bytes))
   const repeated = repeatedMargins(linePages)
   let globalSequence = 0
   let activeSection: string | null = null
@@ -334,7 +347,10 @@ export async function extractPdfFullSource(
     configurationVersion: descriptor.configurationVersion,
     pageCount: pages.length,
     extractionFingerprint: canonicalFingerprint(pages, descriptor),
-    warningSummary: pages.some((page) => page.status === 'EMPTY') ? 'Een of meer pagina\'s bevatten geen embedded tekst; OCR is in fase 1 uitgeschakeld.' : null,
+    warningSummary: [
+      pages.some((page) => page.status === 'EMPTY') ? 'Een of meer pagina\'s bevatten geen embedded tekst; OCR is in fase 1 uitgeschakeld.' : null,
+      nulByteCount > 0 ? `${nulByteCount} PostgreSQL-onveilige NUL-byte(s) deterministisch verwijderd.` : null,
+    ].filter(Boolean).join(' ') || null,
     pages,
   }
 }
