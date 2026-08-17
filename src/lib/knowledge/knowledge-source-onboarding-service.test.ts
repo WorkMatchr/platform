@@ -9,6 +9,7 @@ const base: KnowledgeOnboardingInput = {
 }
 
 describe('multi-source onboarding', () => {
+  const identityDelegate = () => ({ findUnique: vi.fn().mockResolvedValue(null), findFirst: vi.fn().mockResolvedValue(null) })
   it('staat uitsluitend NL / SEVESO / CONDITIONAL toe voor PGS', async () => {
     const allowedDatabase = { $transaction: vi.fn().mockResolvedValue({ created: true }) }
     await expect(onboardKnowledgeSource(base, allowedDatabase as never)).resolves.toEqual({ created: true })
@@ -46,7 +47,7 @@ describe('multi-source onboarding', () => {
 
   it('schrijft geldigheidsdata in het create-pad voor een nieuwe bron', async () => {
     const create = vi.fn().mockResolvedValue({})
-    const transaction = { $executeRaw: vi.fn(), knowledgeSource: { findUnique: vi.fn().mockResolvedValue(null), create } }
+    const transaction = { $executeRaw: vi.fn(), knowledgeSource: { findUnique: vi.fn().mockResolvedValue(null), create }, knowledgeSourceCanonicalIdentity: identityDelegate() }
     const database = { $transaction: vi.fn(async (callback) => callback(transaction)) }
     const validFrom = new Date('2026-07-01')
     const validUntil = new Date('2026-12-31')
@@ -59,6 +60,7 @@ describe('multi-source onboarding', () => {
     const transaction = {
       $executeRaw: vi.fn(),
       knowledgeSource: { findUnique: vi.fn().mockResolvedValue({ ...base.source, sourceUrl: base.source.canonicalUrl, versions: [] }) },
+      knowledgeSourceCanonicalIdentity: identityDelegate(),
       knowledgeSourceVersion: { create },
     }
     const database = { $transaction: vi.fn(async (callback) => callback(transaction)) }
@@ -71,8 +73,25 @@ describe('multi-source onboarding', () => {
     const transaction = {
       $executeRaw: vi.fn(),
       knowledgeSource: { findUnique: vi.fn().mockResolvedValue({ ...base.source, sourceUrl: base.source.canonicalUrl, versions: [{ id: 'version-1', versionLabel: base.version.versionLabel, checksum: base.version.checksum, publicationDate: null, validFrom: new Date('2026-07-01'), validUntil: null, artifacts: [], applicabilityScopes: [] }] }) },
+      knowledgeSourceCanonicalIdentity: identityDelegate(),
     }
     const database = { $transaction: vi.fn(async (callback) => callback(transaction)) }
     await expect(onboardKnowledgeSource({ ...base, version: { ...base.version, validFrom: new Date('2026-07-02') } }, database as never)).rejects.toMatchObject({ code: 'SOURCE_VERSION_METADATA_CONFLICT' })
+  })
+
+  it('schrijft een sterke bibliografische identiteit zonder canonieke URL', async () => {
+    const create = vi.fn().mockResolvedValue({})
+    const transaction = { $executeRaw: vi.fn(), knowledgeSource: { findUnique: vi.fn().mockResolvedValue(null), create }, knowledgeSourceCanonicalIdentity: identityDelegate() }
+    const database = { $transaction: vi.fn(async (callback) => callback(transaction)) }
+    const source = { ...base.source, code: 'AI-03', title: 'Asbest', publisher: 'Sdu Uitgevers', canonicalFamily: 'AI_SHEET' as const, sourceType: 'AI_SHEET' as const, temporalStatus: 'HISTORICAL' as const, authorityStatus: 'PROFESSIONAL_REFERENCE' as const, sourceFamily: 'SZW-AI-BLADEN', independenceGroup: 'SZW-AI-BLADEN', applicabilityScope: 'Historische Nederlandse arbo-informatie', canonicalUrl: undefined, canonicalIdentity: { type: 'BIBLIOGRAPHIC' as const, publisher: 'Sdu Uitgevers', series: 'Arbo-Informatiebladen', title: 'Asbest', publicationCode: 'AI-03', edition: 'Tweede herziene druk', publicationYear: 2001, isbn: '90-12-08941-7' } }
+    await onboardKnowledgeSource({ ...base, source }, database as never)
+    expect(create.mock.calls[0][0].data).toMatchObject({ sourceUrl: null, canonicalIdentity: { create: { identityType: 'BIBLIOGRAPHIC', bibliographicIsbn: '9012089417', bibliographicPublicationCode: 'AI-03' } } })
+  })
+
+  it('weigert bibliografische metadata die niet met de bron overeenkomt vóór databasewrite', async () => {
+    const database = { $transaction: vi.fn() }
+    const source = { ...base.source, canonicalUrl: undefined, canonicalIdentity: { type: 'BIBLIOGRAPHIC' as const, publisher: 'Andere uitgever', series: 'AI', title: base.source.title, publicationCode: 'AI-03', edition: 'Tweede druk', publicationYear: 2001 } }
+    await expect(onboardKnowledgeSource({ ...base, source }, database as never)).rejects.toMatchObject({ code: 'BIBLIOGRAPHIC_SOURCE_METADATA_CONFLICT' })
+    expect(database.$transaction).not.toHaveBeenCalled()
   })
 })

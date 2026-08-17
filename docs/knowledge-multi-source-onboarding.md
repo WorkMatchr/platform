@@ -2,7 +2,9 @@
 
 ## Doel
 
-Deze foundation legt actuele officiële kruisbronnen vast zonder de bestaande claim-, full-source- of validatielaag te vervangen. Een canonieke officiële bron en een lokaal reproduceerbaar artifact zijn verschillende objecten: `KnowledgeSource.sourceUrl` blijft de gezaghebbende URL; `KnowledgeSourceArtifact` bewaart checksum, mediatype, locator en ophaalmoment van de immutable representatie.
+Deze foundation legt actuele officiële kruisbronnen en historische vakpublicaties vast zonder de bestaande claim-, full-source- of validatielaag te vervangen. Een canonieke bron en een lokaal reproduceerbaar artifact zijn verschillende objecten. `KnowledgeSourceCanonicalIdentity` bewaart exact één immutable identiteit van type `URL` of `BIBLIOGRAPHIC`; `KnowledgeSourceArtifact` bewaart checksum, mediatype, locator en ophaalmoment van de immutable representatie.
+
+Een URL-identiteit blijft een unieke HTTPS-URL vereisen en moet exact gelijk zijn aan `KnowledgeSource.sourceUrl`. Een bibliografische identiteit gebruikt geen generieke productpagina, maar minimaal uitgever, reeks, titel en publicatiecode, aangevuld met editie/jaar en ISBN of editie. De service canonicaliseert deze velden deterministisch en bewaart een SHA-256-fingerprint. Alleen titel, alleen uitgever of alleen publicatiecode is onvoldoende. ISBN, jaartal en bronmetadata worden vóór de write gecontroleerd; conflicten falen gesloten.
 
 ## Bronidentiteit en scope
 
@@ -22,7 +24,7 @@ Alle extractoren leveren hetzelfde immutable `KnowledgeExtractionRun → Knowled
 
 ## Actualiteit en review
 
-Artifact-`retrievedAt`, versie/checksum en de bestaande versiehistorie maken zichtbaar of dezelfde representatie opnieuw is gecontroleerd of een nieuwe versie nodig is. De canonieke identiteit wordt databasebreed tegen wijziging beschermd. Een bronwijziging valideert niets automatisch: afhankelijke claims, componenten en methoden moeten via hun evidence voor review worden geselecteerd. Full-source-tekst blijft intern en iedere import blijft `DRAFT` en `UNVALIDATED`.
+Artifact-`retrievedAt`, versie/checksum en de bestaande versiehistorie maken zichtbaar of dezelfde representatie opnieuw is gecontroleerd of een nieuwe versie nodig is. De canonieke identiteit wordt databasebreed tegen `UPDATE` en `DELETE` beschermd. Een identiteitscorrectie maakt een nieuwe bronidentiteit met een lineaire `supersedesIdentityId`; zij muteert nooit de historische identiteit. Een bronwijziging valideert niets automatisch: afhankelijke claims, componenten en methoden moeten via hun evidence voor review worden geselecteerd. Full-source-tekst blijft intern en iedere import blijft `DRAFT` en `UNVALIDATED`.
 
 ## BHV-vervolg
 

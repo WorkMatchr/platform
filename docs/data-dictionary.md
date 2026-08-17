@@ -7,6 +7,8 @@
 
 - `KnowledgeSource.canonicalFamily`: gecontroleerde functionele bronfamilie voor nieuwe onboardings; legacybronnen mogen null blijven.
 - `KnowledgeSource.authorityStatus`: expliciete officiële/geautoriseerde positie van de canonieke bron.
+- `KnowledgeSourceCanonicalIdentity`: immutable, exact één-op-één identiteit van een nieuwe canonieke bron. Type `URL` vereist HTTPS en gelijkheid met `sourceUrl`; type `BIBLIOGRAPHIC` bewaart gecontroleerde bibliografische discriminatoren en hun deterministische SHA-256-fingerprint.
+- `KnowledgeSourceCanonicalIdentity.supersedesIdentityId`: unieke lineaire verwijzing van een gecorrigeerde nieuwe bronidentiteit naar haar voorganger; historische identiteit wordt niet gewijzigd.
 - `KnowledgeSourceArtifact`: immutable lokale representatie van één bronversie, inclusief mediatype, locator, checksum en ophaalmoment.
 - `KnowledgeSourceApplicability`: immutable jurisdictie- en toepassingsscope op precies één bron, bronversie of bronblok; `effect` is `APPLIES`, `CONDITIONAL` of `EXCLUDES`.
 

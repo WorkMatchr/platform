@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { getPrisma } from '../src/lib/prisma'
 import { storeKnowledgeDocumentFamily } from '../src/lib/knowledge/knowledge-document-family-service'
+import { resolveCanonicalIdentity } from '../src/lib/knowledge/knowledge-canonical-source-identity'
 import { extractStructuredTextFullSource } from '../src/lib/knowledge/knowledge-extractor'
 import { ingestKnowledgeLibraryDocument } from '../src/lib/knowledge/knowledge-library-ingest-service'
 import { searchKnowledgeFullSource } from '../src/lib/knowledge/knowledge-full-source-search'
@@ -77,10 +78,13 @@ async function main() {
   assert.equal(await database.knowledgeExtractionRun.count({ where: { sourceVersion: { source: { code: databaseFailureCode } } } }), 0)
 
   const sourceId = randomUUID(); const firstVersionId = randomUUID(); const secondVersionId = randomUUID()
+  const familyUrl = `https://example.invalid/knowledge/library-${sourceId}`
+  const familyIdentity = resolveCanonicalIdentity({ type: 'URL', url: familyUrl })
   await database.knowledgeSource.create({ data: {
     id: sourceId, code: `LIBRARY-${sourceId}`, title: 'Tijdelijke documentfamilie', sourceType: 'PROFESSIONAL_GUIDANCE', sourceFormat: 'PDF',
     metadataStatus: 'COMPLETE', copyrightClassification: 'INTERNAL', authorityLevel: 'PROFESSIONAL_GUIDANCE', temporalStatus: 'CURRENT', sourceFamily: 'NVAB',
-    canonicalFamily: 'NVAB', authorityStatus: 'PROFESSIONAL_REFERENCE', independenceGroup: 'NVAB', versions: { create: [
+    canonicalFamily: 'NVAB', authorityStatus: 'PROFESSIONAL_REFERENCE', sourceUrl: familyUrl, independenceGroup: 'NVAB',
+    canonicalIdentity: { create: familyIdentity }, versions: { create: [
       { id: firstVersionId, versionLabel: 'richtlijn-1', checksum: 'a'.repeat(64) },
       { id: secondVersionId, versionLabel: 'achtergrond-1', checksum: 'b'.repeat(64) },
     ] },

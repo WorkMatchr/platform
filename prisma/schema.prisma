@@ -765,6 +765,11 @@ enum KnowledgeDocumentFamilyRole {
   TOOL
 }
 
+enum KnowledgeCanonicalIdentityType {
+  URL
+  BIBLIOGRAPHIC
+}
+
 enum KnowledgeScopeEffect {
   APPLIES
   CONDITIONAL
@@ -4410,6 +4415,7 @@ model KnowledgeSource {
   createdAt               DateTime                         @default(now()) @db.Timestamptz(3)
   updatedAt               DateTime                         @updatedAt @db.Timestamptz(3)
   versions                KnowledgeSourceVersion[]
+  canonicalIdentity       KnowledgeSourceCanonicalIdentity?
   applicabilityScopes     KnowledgeSourceApplicability[]   @relation("KnowledgeSourceApplicabilitySource")
 
   @@index([sourceType, temporalStatus])
@@ -4458,6 +4464,29 @@ model KnowledgeDocumentFamily {
   title     String                          @db.VarChar(300)
   createdAt DateTime                        @default(now()) @db.Timestamptz(3)
   members   KnowledgeDocumentFamilyMember[]
+}
+
+model KnowledgeSourceCanonicalIdentity {
+  id                           String                            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourceId                     String                            @unique @db.Uuid
+  identityType                 KnowledgeCanonicalIdentityType
+  canonicalFingerprint         String                            @unique @db.VarChar(64)
+  canonicalUrl                 String?                           @db.VarChar(1000)
+  bibliographicPublisher       String?                           @db.VarChar(200)
+  bibliographicSeries          String?                           @db.VarChar(200)
+  bibliographicTitle           String?                           @db.VarChar(300)
+  bibliographicEdition         String?                           @db.VarChar(120)
+  bibliographicYear            Int?
+  bibliographicIsbn            String?                           @db.VarChar(13)
+  bibliographicPublicationCode String?                           @db.VarChar(120)
+  supersedesIdentityId         String?                           @unique @db.Uuid
+  createdAt                    DateTime                          @default(now()) @db.Timestamptz(3)
+  source                       KnowledgeSource                   @relation(fields: [sourceId], references: [id], onDelete: Restrict)
+  supersedesIdentity           KnowledgeSourceCanonicalIdentity? @relation("KnowledgeCanonicalIdentitySupersession", fields: [supersedesIdentityId], references: [id], onDelete: Restrict)
+  supersededByIdentity         KnowledgeSourceCanonicalIdentity? @relation("KnowledgeCanonicalIdentitySupersession")
+
+  @@index([identityType, bibliographicPublisher, bibliographicSeries])
+  @@index([bibliographicPublicationCode, bibliographicYear])
 }
 
 model KnowledgeDocumentFamilyMember {

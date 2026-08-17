@@ -49,6 +49,9 @@ async function expectDirectPgsRejected(pool: Pool, test: { jurisdiction: string;
     ) VALUES ($1,'PROFESSIONAL_GUIDANCE','PDF',$2,'Ongeldige directe PGS-proef','Test',$3,$4,
       'RESTRICTED_REFERENCE_ONLY','OFFICIAL_GUIDANCE','CURRENT','PGS','PGS','AUTHORIZED_PUBLICATION','PGS',false,now(),now())`,
       [sourceId, `PGS-INVALID-${randomUUID()}`, test.jurisdiction, `https://example.invalid/${sourceId}`])
+    await pool.query(`INSERT INTO "KnowledgeSourceCanonicalIdentity" (
+      "id","sourceId","identityType","canonicalFingerprint","canonicalUrl","createdAt"
+    ) VALUES ($1,$2,'URL',$3,$4,now())`, [randomUUID(), sourceId, sha(`identity:${sourceId}`), `https://example.invalid/${sourceId}`])
     if (test.scope) await pool.query(`INSERT INTO "KnowledgeSourceApplicability" (
       "sourceId","jurisdiction","scopeCode","effect","rationale"
     ) VALUES ($1,$2,$3,$4::"KnowledgeScopeEffect",'Negatieve databaseproef')`,
