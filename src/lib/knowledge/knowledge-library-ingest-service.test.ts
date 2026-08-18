@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ingestKnowledgeLibraryDocument } from './knowledge-library-ingest-service'
+import { ingestKnowledgeLibraryDocument, KNOWLEDGE_LIBRARY_INGEST_TRANSACTION_OPTIONS } from './knowledge-library-ingest-service'
 import { storeKnowledgeFullSourceInTransaction } from './knowledge-full-source-service'
 import { onboardKnowledgeSourceInTransaction } from './knowledge-source-onboarding-service'
 
@@ -27,6 +27,7 @@ describe('atomische Knowledge Library-ingest', () => {
     await expect(ingestKnowledgeLibraryDocument({ onboarding, extract: async () => extraction }, database as never)).resolves.toMatchObject({ sourceId: 'source', sourceVersionId: 'version', extractionRunId: 'run', created: true })
     expect(onboardKnowledgeSourceInTransaction).toHaveBeenCalledWith(onboarding, tx)
     expect(storeKnowledgeFullSourceInTransaction).toHaveBeenCalledWith('version', extraction, tx)
-    expect(database.$transaction).toHaveBeenCalledWith(expect.any(Function), { isolationLevel: 'Serializable' })
+    expect(database.$transaction).toHaveBeenCalledWith(expect.any(Function), KNOWLEDGE_LIBRARY_INGEST_TRANSACTION_OPTIONS)
+    expect(KNOWLEDGE_LIBRARY_INGEST_TRANSACTION_OPTIONS).toEqual({ isolationLevel: 'Serializable', maxWait: 10_000, timeout: 30_000 })
   })
 })

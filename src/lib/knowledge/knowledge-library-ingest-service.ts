@@ -10,6 +10,15 @@ import { onboardKnowledgeSourceInTransaction, type KnowledgeOnboardingInput } fr
 
 type DatabaseClient = ReturnType<typeof getPrisma>
 
+// Grote, reeds geëxtraheerde documenten schrijven duizenden immutable blokken in
+// batches binnen één transactie. De grens blijft bewust beperkt: voldoende voor
+// de 10.000-blokken-acceptatieproef, zonder vastgelopen writes minutenlang vast te houden.
+export const KNOWLEDGE_LIBRARY_INGEST_TRANSACTION_OPTIONS = {
+  isolationLevel: 'Serializable' as const,
+  maxWait: 10_000,
+  timeout: 30_000,
+}
+
 export type KnowledgeLibraryIngestInput = {
   onboarding: KnowledgeOnboardingInput
   extract: () => Promise<FullSourceExtraction>
@@ -82,5 +91,5 @@ export async function ingestKnowledgeLibraryDocument(
       extractionCreated: fullSource.created,
       linkedFragmentCount: fullSource.linkedFragmentCount,
     }
-  }, { isolationLevel: 'Serializable' })
+  }, KNOWLEDGE_LIBRARY_INGEST_TRANSACTION_OPTIONS)
 }

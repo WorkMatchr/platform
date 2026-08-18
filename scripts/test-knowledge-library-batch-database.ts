@@ -38,31 +38,82 @@ async function main() {
   const nulSearch = await searchKnowledgeFullSource({ query: 'volledig doorzoekbaar', sourceCode: nulCode, accessTiers: ['INTERNAL_REVIEWER'] })
   assert.equal(nulSearch[0]?.exactText, 'Veilige inhoud blijft volledig doorzoekbaar.')
 
-  const largeCode = testCode('LARGE')
-  let globalSequence = 0
-  const largeExtraction = {
-    ...extraction,
-    pageCount: 120,
-    extractionFingerprint: 'f'.repeat(64),
-    pages: Array.from({ length: 120 }, (_, pageIndex) => ({
-      ...extraction.pages[0],
-      pageNumber: pageIndex + 1,
-      blocks: Array.from({ length: 30 }, (_, blockIndex) => ({
-        ...extraction.pages[0].blocks[1],
-        globalSequence: ++globalSequence,
-        pageSequence: blockIndex + 1,
-        exactText: `Pagina ${pageIndex + 1}, blok ${blockIndex + 1}: grote transactionele extractieproef.`,
-        normalizedSearchText: `pagina ${pageIndex + 1}, blok ${blockIndex + 1}: grote transactionele extractieproef.`,
-      })),
-    })),
+  const largeExtraction = (blockCount: number, fingerprintCharacter: string, finalText?: string) => {
+    let globalSequence = 0
+    const blocksPerPage = 50
+    const pageCount = Math.ceil(blockCount / blocksPerPage)
+    return {
+      ...extraction,
+      pageCount,
+      extractionFingerprint: fingerprintCharacter.repeat(64),
+      pages: Array.from({ length: pageCount }, (_, pageIndex) => {
+        const blocksOnPage = Math.min(blocksPerPage, blockCount - pageIndex * blocksPerPage)
+        return {
+          ...extraction.pages[0],
+          pageNumber: pageIndex + 1,
+          blocks: Array.from({ length: blocksOnPage }, (_, blockIndex) => {
+            const sequence = ++globalSequence
+            const exactText = sequence === blockCount && finalText
+              ? finalText
+              : `Pagina ${pageIndex + 1}, blok ${blockIndex + 1}: grote transactionele extractieproef.`
+            return {
+              ...extraction.pages[0].blocks[1],
+              globalSequence: sequence,
+              pageSequence: blockIndex + 1,
+              exactText,
+              normalizedSearchText: exactText.toLowerCase(),
+            }
+          }),
+        }
+      }),
+    }
   }
-  const largeIngest = await ingestKnowledgeLibraryDocument({ onboarding: onboarding(largeCode, 'f'.repeat(64)), extract: async () => largeExtraction }, database)
-  assert.equal(await database.knowledgeSourcePage.count({ where: { extractionRunId: largeIngest.extractionRunId } }), 120)
-  assert.equal(await database.knowledgeSourceBlock.count({ where: { extractionRunId: largeIngest.extractionRunId } }), 3_600)
-  assert.equal(await database.knowledgeSourceBlock.count({ where: { extractionRunId: largeIngest.extractionRunId, sourcePage: { extractionRunId: largeIngest.extractionRunId } } }), 3_600)
-  const largeReplay = await ingestKnowledgeLibraryDocument({ onboarding: onboarding(largeCode, 'f'.repeat(64)), extract: async () => largeExtraction }, database)
-  assert.equal(largeReplay.extractionRunId, largeIngest.extractionRunId)
-  assert.equal(largeReplay.extractionCreated, false)
+
+  for (const [label, blockCount, fingerprintCharacter] of [['ARBOBESLUIT', 5_500, '5'], ['SAFETY', 10_000, 'a']] as const) {
+    const code = testCode(label)
+    const large = largeExtraction(blockCount, fingerprintCharacter)
+    const startedAt = Date.now()
+    const ingest = await ingestKnowledgeLibraryDocument({ onboarding: onboarding(code, fingerprintCharacter.repeat(64)), extract: async () => large }, database)
+    const elapsedMs = Date.now() - startedAt
+    assert.equal(await database.knowledgeSourceBlock.count({ where: { extractionRunId: ingest.extractionRunId } }), blockCount)
+    assert.equal(await database.knowledgeSourceBlock.count({ where: { extractionRunId: ingest.extractionRunId, sourcePage: { extractionRunId: ingest.extractionRunId } } }), blockCount)
+    const replay = await ingestKnowledgeLibraryDocument({ onboarding: onboarding(code, fingerprintCharacter.repeat(64)), extract: async () => large }, database)
+    assert.equal(replay.extractionRunId, ingest.extractionRunId)
+    assert.equal(replay.extractionCreated, false)
+    console.info(`${label}: ${blockCount} blokken atomisch opgeslagen in ${elapsedMs} ms.`)
+  }
+
+  const lateFailureCode = testCode('LATE-ROLLBACK')
+  await database.$executeRawUnsafe(`
+    CREATE OR REPLACE FUNCTION "knowledge_library_test_late_failure"() RETURNS trigger AS $$
+    BEGIN
+      IF NEW."exactText" = 'FORCED_LATE_TRANSACTION_FAILURE' THEN
+        RAISE EXCEPTION 'FORCED_LATE_TRANSACTION_FAILURE';
+      END IF;
+      RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql
+  `)
+  await database.$executeRawUnsafe(`
+    CREATE TRIGGER "knowledge_library_test_late_failure_trigger"
+      BEFORE INSERT ON "KnowledgeSourceBlock"
+      FOR EACH ROW EXECUTE FUNCTION "knowledge_library_test_late_failure"()
+  `)
+  try {
+    const lateFailureExtraction = largeExtraction(5_500, 'b', 'FORCED_LATE_TRANSACTION_FAILURE')
+    await assert.rejects(
+      () => ingestKnowledgeLibraryDocument({ onboarding: onboarding(lateFailureCode, 'b'.repeat(64)), extract: async () => lateFailureExtraction }, database),
+      /FORCED_LATE_TRANSACTION_FAILURE/u,
+    )
+  } finally {
+    await database.$executeRawUnsafe('DROP TRIGGER IF EXISTS "knowledge_library_test_late_failure_trigger" ON "KnowledgeSourceBlock"')
+    await database.$executeRawUnsafe('DROP FUNCTION IF EXISTS "knowledge_library_test_late_failure"()')
+  }
+  assert.equal(await database.knowledgeSource.count({ where: { code: lateFailureCode } }), 0)
+  assert.equal(await database.knowledgeSourceVersion.count({ where: { source: { code: lateFailureCode } } }), 0)
+  assert.equal(await database.knowledgeSourceArtifact.count({ where: { sourceVersion: { source: { code: lateFailureCode } } } }), 0)
+  assert.equal(await database.knowledgeSourceApplicability.count({ where: { sourceVersion: { source: { code: lateFailureCode } } } }), 0)
+  assert.equal(await database.knowledgeExtractionRun.count({ where: { sourceVersion: { source: { code: lateFailureCode } } } }), 0)
 
   const extractionFailureCode = testCode('EXTRACT')
   await assert.rejects(() => ingestKnowledgeLibraryDocument({ onboarding: onboarding(extractionFailureCode, 'd'.repeat(64)), extract: async () => { throw new Error('FORCED_EXTRACTION_FAILURE') } }, database), /FORCED_EXTRACTION_FAILURE/u)
