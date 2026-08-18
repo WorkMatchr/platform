@@ -1,5 +1,9 @@
 # Database WorkMatchr
 
+## Immutable Knowledge cross-validation
+
+Migratie `20260818100000_add_knowledge_cross_validation_assessments` voegt uitsluitend `KnowledgeCrossValidationAssessment`, `KnowledgeCrossValidationEvidence` en het analytische outcome-enum toe. De tabellen zijn append-only, gebruiken `ON DELETE RESTRICT`, vereisen deferred minimaal één evidenceblok en controleren de opgeslagen blockhash tegen het immutable `KnowledgeSourceBlock`. Er is geen backfill en bestaande claims, reviewtaken en validaties worden niet gewijzigd.
+
 ## Knowledge Library-documentfamilies
 
 Migratie `20260816120000_add_knowledge_document_families` voegt uitsluitend een append-only groepering van reeds bestaande bronversies toe. Rollen onderscheiden primaire richtlijn, achtergrondbewijs, samenvatting, checklist, bijlage en tool. Bestaande bron-, claim-, evidence- en extractierecords worden niet teruggevuld of gewijzigd.

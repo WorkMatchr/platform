@@ -9,6 +9,9 @@ import type {
   KnowledgeReviewTaskStatus,
 } from '@/generated/prisma/enums'
 import { getPrisma } from '@/lib/prisma'
+import { assertPlatformAdministrator } from './knowledge-review-authorization'
+export { KnowledgeReviewError } from './knowledge-review-service-errors'
+import { KnowledgeReviewError } from './knowledge-review-service-errors'
 
 type Transaction = Prisma.TransactionClient
 
@@ -77,33 +80,6 @@ export const knowledgeSupportingSourceSchema = z.object({
     context.addIssue({ code: 'custom', path: ['sourceFamily'], message: 'Vul de bronfamilie in.' })
   }
 })
-
-export class KnowledgeReviewError extends Error {
-  constructor(
-    public readonly code: 'NOT_AUTHORIZED' | 'NOT_FOUND' | 'CONFLICT' | 'INVALID_STATE' | 'INVALID_INPUT',
-    message: string,
-  ) {
-    super(message)
-    this.name = 'KnowledgeReviewError'
-  }
-}
-
-async function assertPlatformAdministrator(transaction: Transaction, actorUserId: string) {
-  const actor = await transaction.user.findFirst({
-    where: {
-      id: actorUserId,
-      status: 'ACTIVE',
-      platformRole: 'ADMIN',
-      memberships: { some: {
-        status: 'ACTIVE',
-        role: { in: ['OWNER', 'ADMIN'] },
-        organization: { status: 'ACTIVE', organizationType: 'PLATFORM_OPERATOR', systemKey: 'WORKMATCHR_PLATFORM' },
-      } },
-    },
-    select: { id: true },
-  })
-  if (!actor) throw new KnowledgeReviewError('NOT_AUTHORIZED', 'Deze kenniscontrole is niet beschikbaar.')
-}
 
 async function lockReviewTask(transaction: Transaction, reviewTaskId: string, expectedVersion: number, allowInactive = false) {
   await transaction.$queryRaw`SELECT "id" FROM "KnowledgeReviewTask" WHERE "id" = ${reviewTaskId}::uuid FOR UPDATE`

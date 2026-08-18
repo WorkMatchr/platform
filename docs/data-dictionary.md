@@ -1,5 +1,10 @@
 # Datawoordenboek WorkMatchr
 
+## Knowledge cross-validation
+
+- `KnowledgeCrossValidationAssessment`: immutable revisie van een analytische current-source-beoordeling van één `KnowledgeClaim`. `outcome` is uitsluitend `CONFIRMED`, `PARTIAL_CONDITIONAL`, `SUPERSEDED`, `CONFLICT` of `INSUFFICIENT_SUPPORT`. `contentFingerprint` borgt idempotentie; `supersedesAssessmentId` vormt een lineaire revisieketen. De rij is geen formeel validatiebesluit.
+- `KnowledgeCrossValidationEvidence`: append-only evidence bij één assessment. Verwijst met `ON DELETE RESTRICT` naar exact één `KnowledgeSourceBlock` en bewaart blockhash, supporttype, jurisdictie-, toepassingsscope- en independence-group-snapshot, volgorde en rationale. Iedere assessment vereist minimaal één evidence-record.
+
 ## Multi-Source Knowledge
 
 - `KnowledgeDocumentFamily`: stabiele, immutable identiteit van een inhoudelijk samenhangende documentset.

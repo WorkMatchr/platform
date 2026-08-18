@@ -31,6 +31,7 @@
     "test:db:knowledge": "tsx scripts/test-knowledge-engine-database.ts",
     "test:db:knowledge:migration": "tsx scripts/test-knowledge-migration.ts",
     "test:db:knowledge:review": "tsx scripts/test-knowledge-review-database.ts",
+    "test:db:knowledge:cross-validation": "tsx scripts/test-knowledge-cross-validation-database.ts",
     "test:db:knowledge:full-source": "tsx scripts/test-knowledge-full-source-database.ts",
     "test:db:knowledge:method": "tsx scripts/test-knowledge-method-database.ts",
     "test:db:knowledge:bhv-components": "tsx scripts/test-knowledge-bhv-components-database.ts",

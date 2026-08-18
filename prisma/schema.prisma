@@ -927,6 +927,14 @@ enum KnowledgeSupportType {
   HISTORICAL_ORIGIN
 }
 
+enum KnowledgeCrossValidationOutcome {
+  CONFIRMED
+  PARTIAL_CONDITIONAL
+  SUPERSEDED
+  CONFLICT
+  INSUFFICIENT_SUPPORT
+}
+
 enum KnowledgeValidationMethod {
   HUMAN_EXPERT_REVIEW
   CROSS_SOURCE_CHECK
@@ -1229,6 +1237,7 @@ model User {
   completedKnowledgeReviewTasks      KnowledgeReviewTask[]                  @relation("KnowledgeReviewTaskCompleter")
   knowledgeReviewDecisions           KnowledgeReviewDecision[]              @relation("KnowledgeReviewDecisionActor")
   knowledgeReviewSourceReferences    KnowledgeReviewSourceReference[]       @relation("KnowledgeReviewSourceReferenceActor")
+  crossValidationReviews             KnowledgeCrossValidationAssessment[]   @relation("KnowledgeCrossValidationReviewer")
   knowledgeAuditEvents               KnowledgeAuditEvent[]                  @relation("KnowledgeAuditActor")
   submittedKnowledgeImprovements     KnowledgeImprovementReport[]           @relation("KnowledgeImprovementReporter")
   handledKnowledgeImprovements       KnowledgeImprovementReport[]           @relation("KnowledgeImprovementHandler")
@@ -4586,6 +4595,7 @@ model KnowledgeSourceBlock {
   fragments            KnowledgeFragmentBlock[]
   methodEvidence       KnowledgeMethodEvidence[]
   structuredEvidence   KnowledgeStructuredComponentEvidence[]
+  crossValidations     KnowledgeCrossValidationEvidence[]
   applicabilityScopes  KnowledgeSourceApplicability[]         @relation("KnowledgeSourceApplicabilityBlock")
 
   @@unique([extractionRunId, globalSequence])
@@ -4707,6 +4717,7 @@ model KnowledgeClaim {
   reviewTasks             KnowledgeReviewTask[]
   reviewSourceReferences  KnowledgeReviewSourceReference[]
   improvementReports      KnowledgeImprovementReport[]
+  crossValidations         KnowledgeCrossValidationAssessment[]
   sectorApplicabilities   KnowledgeSectorApplicability[]
 
   @@index([topicId, claimType])
@@ -5115,6 +5126,7 @@ model KnowledgeReviewTask {
   sourceReferences        KnowledgeReviewSourceReference[]
   validations             KnowledgeValidation[]
   improvementReports      KnowledgeImprovementReport[]
+  crossValidations         KnowledgeCrossValidationAssessment[]
 
   @@index([status, priority, dueAt])
   @@index([requiresHumanAction, status, priority, dueAt])
@@ -5122,6 +5134,54 @@ model KnowledgeReviewTask {
   @@index([entityType, entityId])
   @@index([claimId, status])
   @@index([assignedToId, status])
+}
+
+model KnowledgeCrossValidationAssessment {
+  id                     String                              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  claimId                String                              @db.Uuid
+  reviewTaskId           String?                             @db.Uuid
+  revision               Int
+  outcome                KnowledgeCrossValidationOutcome
+  rationale              String                              @db.VarChar(1500)
+  checkedAt              DateTime                            @db.Timestamptz(3)
+  reviewerUserId         String                              @db.Uuid
+  contentFingerprint     String                              @db.VarChar(64)
+  supersedesAssessmentId String?                             @unique @db.Uuid
+  createdAt              DateTime                            @default(now()) @db.Timestamptz(3)
+  claim                  KnowledgeClaim                      @relation(fields: [claimId], references: [id], onDelete: Restrict)
+  reviewTask             KnowledgeReviewTask?                @relation(fields: [reviewTaskId], references: [id], onDelete: Restrict)
+  reviewer               User                                @relation("KnowledgeCrossValidationReviewer", fields: [reviewerUserId], references: [id], onDelete: Restrict)
+  supersedesAssessment   KnowledgeCrossValidationAssessment? @relation("KnowledgeCrossValidationSupersession", fields: [supersedesAssessmentId], references: [id], onDelete: Restrict)
+  supersededByAssessment KnowledgeCrossValidationAssessment? @relation("KnowledgeCrossValidationSupersession")
+  evidence               KnowledgeCrossValidationEvidence[]
+
+  @@unique([claimId, revision])
+  @@unique([claimId, contentFingerprint])
+  @@index([claimId, checkedAt])
+  @@index([reviewTaskId, checkedAt])
+  @@index([outcome, checkedAt])
+  @@index([reviewerUserId, checkedAt])
+}
+
+model KnowledgeCrossValidationEvidence {
+  id                         String                             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assessmentId               String                             @db.Uuid
+  sourceBlockId              String                             @db.Uuid
+  blockTextHash              String                             @db.VarChar(64)
+  supportType                KnowledgeSupportType
+  jurisdictionSnapshot       String                             @db.VarChar(80)
+  applicabilityScopeSnapshot String                             @db.VarChar(1000)
+  independenceGroupSnapshot  String                             @db.VarChar(160)
+  sequence                   Int
+  rationale                  String                             @db.VarChar(1500)
+  createdAt                  DateTime                           @default(now()) @db.Timestamptz(3)
+  assessment                 KnowledgeCrossValidationAssessment @relation(fields: [assessmentId], references: [id], onDelete: Restrict)
+  sourceBlock                KnowledgeSourceBlock               @relation(fields: [sourceBlockId], references: [id], onDelete: Restrict)
+
+  @@unique([assessmentId, sequence])
+  @@unique([assessmentId, sourceBlockId, supportType])
+  @@index([sourceBlockId])
+  @@index([independenceGroupSnapshot, supportType])
 }
 
 model KnowledgeReviewDecision {

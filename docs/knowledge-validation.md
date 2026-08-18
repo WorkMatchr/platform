@@ -21,6 +21,12 @@ Een platformbeheerder kan een controle als concept opslaan, later voortzetten, o
 
 `CONTENT_APPROVED` blijft de technische compatibiliteitswaarde voor een afgeronde broncontrole. Zij betekent niet dat een maatregel voor een concrete situatie is goedgekeurd en maakt het kennisitem nooit automatisch publiceerbaar of gepubliceerd. Intrekken voegt een nieuwe validatie en beslissing toe en heropent de controle.
 
+## Current-source cross-validation assessments
+
+`KnowledgeCrossValidationAssessment` legt append-only vast hoe een bestaande claim zich analytisch verhoudt tot actuele bronblokken: `CONFIRMED`, `PARTIAL_CONDITIONAL`, `SUPERSEDED`, `CONFLICT` of `INSUFFICIENT_SUPPORT`. Dit is nadrukkelijk geen `KnowledgeValidation` en muteert claimstatus, broncontrolestatus of publicatiestatus niet.
+
+Iedere assessmentrevisie vereist `KnowledgeCrossValidationEvidence` naar een exact immutable `KnowledgeSourceBlock`. De blockhash wordt bij opslag gecontroleerd; jurisdictie, toepassingsscope en `independenceGroup` worden als reviewsnapshot bevroren. Meerdere passages met dezelfde `independenceGroup` blijven daardoor herkenbaar als één bronbasis. Een gewijzigd oordeel maakt een lineaire nieuwe revisie; assessments en evidence zijn databasebreed append-only.
+
 ## Inhoudelijke verbeteringen door professionals
 
 Een professional met een actief providerprofiel kan bij reeds gepubliceerde en gevalideerde kennis melden dat informatie verouderd, onjuist, onvolledig, gewijzigd of onduidelijk toepasbaar is. De melding bevat een toelichting en optioneel een verbeteringsvoorstel of bronverwijzing. De bestaande claim blijft ongewijzigd. WorkMatchr koppelt de melding transactioneel aan één open of heropende controletaak. Alleen bevoegd platformbeheer kan een melding in onderzoek nemen, verwerken, afwijzen of als duplicaat sluiten.

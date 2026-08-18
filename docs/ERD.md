@@ -517,6 +517,10 @@ erDiagram
   KnowledgeClaim ||--o{ KnowledgeReviewTask : controlled_by
   KnowledgeReviewTask ||--o{ KnowledgeReviewDecision : records
   KnowledgeReviewTask ||--o{ KnowledgeReviewSourceReference : checks_sources
+  KnowledgeClaim ||--o{ KnowledgeCrossValidationAssessment : assessed_against_current_sources
+  KnowledgeReviewTask ||--o{ KnowledgeCrossValidationAssessment : optionally_coordinates
+  KnowledgeCrossValidationAssessment ||--|{ KnowledgeCrossValidationEvidence : requires
+  KnowledgeSourceBlock ||--o{ KnowledgeCrossValidationEvidence : proves
   KnowledgeClaim ||--o{ KnowledgeValidation : validated_by
   KnowledgeClaim ||--o{ KnowledgeImprovementReport : receives
   KnowledgeReviewTask ||--o{ KnowledgeImprovementReport : investigates

@@ -20,6 +20,8 @@ Een inhoudelijke wijziging schrijft een nieuwe revisie via `supersedesMethodId`;
 
 De actuele taakstatus is een werkprojectie. Besluiten, bronhistorie, validaties en auditevents vormen de onveranderlijke herkomstketen.
 
+`KnowledgeCrossValidationAssessment` hergebruikt deze reviewarchitectuur voor een afzonderlijk analytisch oordeel over actuele evidence. `KnowledgeCrossValidationEvidence` bewaart geordende relaties naar exacte full-source-blokken, inclusief gecontroleerde blockhash en contextsnapshots. De assessmentketen kan optioneel aan een bestaande `KnowledgeReviewTask` worden gekoppeld, maar leidt nooit automatisch tot `VALIDATED`, `CONTROL_COMPLETE` of publicatie.
+
 `KnowledgeClaim.controlRisk`, `sourceControlStatus` en `lastSourceCheckedAt` vormen de actuele broncontroleprojectie. Zij vervangen de append-only herkomstketen niet. `KnowledgeImprovementReport` bewaart een professionele melding, de gekoppelde claim en controletaak, de melder, status, optimistic-concurrencyversie en eventuele gemotiveerde afhandeling. Een melding verandert nooit rechtstreeks claimtekst, validatie of publicatie.
 # AI-10 BHV-componenten
 
