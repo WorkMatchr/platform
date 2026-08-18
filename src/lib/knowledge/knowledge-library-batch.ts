@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { readdir, readFile, stat } from 'node:fs/promises'
 import path from 'node:path'
-import { extractHtmlFullSource, extractPdfFullSource, extractStructuredTextFullSource, type FullSourceExtraction } from './knowledge-extractor'
+import { extractHtmlFullSource, extractLegacyDocFullSource, extractPdfFullSource, extractStructuredTextFullSource, type FullSourceExtraction } from './knowledge-extractor'
 
 export const KNOWLEDGE_LIBRARY_MAX_BATCH_SIZE = 100
 export const KNOWLEDGE_LIBRARY_FULL_EXTRACTION_LIMIT = 10
@@ -48,7 +48,7 @@ export type KnowledgeLibraryFileReport = {
   reasons: string[]
   checksum: string | null
   bytes: number
-  format: 'PDF' | 'HTML' | 'TEXT' | 'BWB_XML' | 'UNSUPPORTED'
+  format: 'PDF' | 'HTML' | 'TEXT' | 'BWB_XML' | 'LEGACY_DOC' | 'UNSUPPORTED'
   canonicalFamily: 'ARBOCATALOGUE' | 'SER' | 'TNO' | 'RIVM' | 'NVAB' | 'PGS' | 'LABOUR_INSPECTORATE' | 'LEGISLATION'
   publisher: string | null
   title: string
@@ -139,6 +139,7 @@ export function parseKnowledgeLibraryMetadataManifest(value: unknown): Knowledge
 function formatOf(fileName: string, bytes: Uint8Array): KnowledgeLibraryFileReport['format'] {
   const extension = path.extname(fileName).toLowerCase()
   if (extension === '.pdf') return new TextDecoder('ascii').decode(bytes.subarray(0, 5)) === '%PDF-' ? 'PDF' : 'UNSUPPORTED'
+  if (extension === '.doc') return Buffer.from(bytes.subarray(0, 8)).toString('hex') === 'd0cf11e0a1b11ae1' ? 'LEGACY_DOC' : 'UNSUPPORTED'
   if (extension === '.html' || extension === '.htm') return 'HTML'
   if (extension === '.txt') return 'TEXT'
   if (extension === '.xml' && /<\?xml|<toestand|<wetgeving/iu.test(new TextDecoder().decode(bytes.subarray(0, 1024)))) return 'BWB_XML'
@@ -224,6 +225,7 @@ async function listFiles(rootPath: string) {
 
 async function extractForInventory(format: KnowledgeLibraryFileReport['format'], bytes: Uint8Array): Promise<FullSourceExtraction | null> {
   if (format === 'PDF') return extractPdfFullSource(bytes)
+  if (format === 'LEGACY_DOC') return extractLegacyDocFullSource(bytes)
   const text = new TextDecoder().decode(bytes)
   if (format === 'HTML') return extractHtmlFullSource(text)
   if (format === 'TEXT') return extractStructuredTextFullSource([{ paragraphs: text.split(/\r?\n\r?\n/gu) }])

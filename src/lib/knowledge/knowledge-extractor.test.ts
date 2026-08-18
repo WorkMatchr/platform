@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises'
 import { PDFDocument, StandardFonts } from 'pdf-lib'
 import { describe, expect, it } from 'vitest'
 import ai02Package from '../../../data/knowledge/poc/AI-02.v1.json'
-import { extractHtmlFullSource, extractPdfFullSource, extractStructuredTextFullSource, normalizeKnowledgeSourceText, removePostgresUnsafeNullBytes } from './knowledge-extractor'
+import { extractHtmlFullSource, extractLegacyDocFullSource, extractLegacyDocPartsFullSource, extractPdfFullSource, extractStructuredTextFullSource, normalizeKnowledgeSourceText, removePostgresUnsafeNullBytes } from './knowledge-extractor'
 
 async function fixturePdf(pageCount = 3) {
   const document = await PDFDocument.create()
@@ -70,6 +70,38 @@ describe('volledige Knowledge-bronextractie', () => {
 
   it('weigert invoer die geen PDF is', async () => {
     await expect(extractPdfFullSource(new TextEncoder().encode('not-a-pdf'))).rejects.toThrow('KNOWLEDGE_FULL_SOURCE_INVALID_PDF')
+  })
+
+  it('structureert legacy DOC-tekst deterministisch zonder fysieke pagina’s te verzinnen', () => {
+    const parts = { body: '1 Introductie\rEerste alinea\u0000 met inhoud.\r- Controlepunt\rKolom A\tKolom B', footnotes: 'Voetnoottekst' }
+    const first = extractLegacyDocPartsFullSource(parts)
+    const replay = extractLegacyDocPartsFullSource(parts)
+    expect(first.pageCount).toBe(1)
+    expect(first.pages[0].blocks.map((block) => block.blockType)).toEqual(['HEADING', 'PARAGRAPH', 'LIST_ITEM', 'TABLE', 'FOOTNOTE'])
+    expect(first.pages[0].blocks.every((block) => !block.exactText.includes('\u0000'))).toBe(true)
+    expect(first.warningSummary).toContain('geen reproduceerbare fysieke paginagrenzen')
+    expect(first.warningSummary).toContain('1 PostgreSQL-onveilige NUL-byte')
+    expect(first.extractionFingerprint).toBe(replay.extractionFingerprint)
+    expect(first.pages).toEqual(replay.pages)
+  })
+
+  it('weigert bytes die geen legacy OLE/DOC-container zijn', async () => {
+    await expect(extractLegacyDocFullSource(new TextEncoder().encode('not-a-doc'))).rejects.toThrow('KNOWLEDGE_FULL_SOURCE_INVALID_LEGACY_DOC')
+  })
+})
+
+const aiLegacyDocPath = process.env.KNOWLEDGE_AI_LEGACY_DOC_TEST_FILE
+const describeAiLegacyDoc = aiLegacyDocPath ? describe : describe.skip
+describeAiLegacyDoc('AI legacy DOC volledige bronproef', () => {
+  it('extraheert een echt AI-blad deterministisch en doorzoekbaar', async () => {
+    const bytes = await readFile(aiLegacyDocPath!)
+    const first = await extractLegacyDocFullSource(bytes)
+    const replay = await extractLegacyDocFullSource(bytes)
+    expect(first.pages[0].blocks.length).toBeGreaterThan(100)
+    expect(first.pages[0].blocks.some((block) => block.blockType === 'HEADING')).toBe(true)
+    expect(first.pages[0].blocks.some((block) => block.blockType === 'TABLE')).toBe(true)
+    expect(first.pages[0].blocks.some((block) => block.normalizedSearchText.includes('elektromagnetische'))).toBe(true)
+    expect(replay.extractionFingerprint).toBe(first.extractionFingerprint)
   })
 })
 

@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { getPrisma } from '@/lib/prisma'
 import { extractBwbXmlFullSource } from './knowledge-bwb-xml-adapter'
-import { extractHtmlFullSource, extractPdfFullSource, extractStructuredTextFullSource, type FullSourceExtraction } from './knowledge-extractor'
+import { extractHtmlFullSource, extractLegacyDocFullSource, extractPdfFullSource, extractStructuredTextFullSource, type FullSourceExtraction } from './knowledge-extractor'
 import { storeKnowledgeFullSourceInTransaction } from './knowledge-full-source-service'
 import type { KnowledgeLibraryFileReport } from './knowledge-library-batch'
 import { onboardKnowledgeSourceInTransaction, type KnowledgeOnboardingInput } from './knowledge-source-onboarding-service'
@@ -29,12 +29,12 @@ function onboardingInput(file: KnowledgeLibraryFileReport, retrievedAt: Date): K
   return {
     source: {
       code: file.sourceCode!, title: file.title, publisher: file.publisher!, sourceType: sourceTypes[file.canonicalFamily],
-      sourceFormat: file.format === 'BWB_XML' ? 'TEXT' : file.format as 'PDF' | 'HTML' | 'TEXT', canonicalFamily: file.canonicalFamily,
+      sourceFormat: file.format === 'BWB_XML' ? 'TEXT' : file.format as 'PDF' | 'HTML' | 'TEXT' | 'LEGACY_DOC', canonicalFamily: file.canonicalFamily,
       authorityStatus: file.authorityStatus!, canonicalUrl: file.canonicalUrl!, jurisdiction: file.jurisdiction!, applicabilityScope: file.applicabilityScope!,
       temporalStatus: file.temporalStatus!, sourceFamily: file.canonicalFamily, independenceGroup: file.canonicalIdentity!, isPrimarySource: file.authorityStatus === 'OFFICIAL_PRIMARY',
     },
     version: { versionLabel: file.versionLabel ?? String(file.publicationYear), checksum: file.checksum! },
-    artifact: { type: 'LOCAL_SNAPSHOT', mediaType: file.format === 'PDF' ? 'application/pdf' : file.format === 'HTML' ? 'text/html' : file.format === 'BWB_XML' ? 'application/xml' : 'text/plain', locator: `manifest:${file.relativePath}`, checksum: file.checksum!, retrievedAt },
+    artifact: { type: 'LOCAL_SNAPSHOT', mediaType: file.format === 'PDF' ? 'application/pdf' : file.format === 'LEGACY_DOC' ? 'application/msword' : file.format === 'HTML' ? 'text/html' : file.format === 'BWB_XML' ? 'application/xml' : 'text/plain', locator: `manifest:${file.relativePath}`, checksum: file.checksum!, retrievedAt },
     scopes: [{ jurisdiction: file.jurisdiction!, scopeCode: file.scopeCode!, effect: file.scopeEffect!, rationale: 'Gecontroleerde scope uit het lokale Knowledge Library-reviewmanifest.' }],
   }
 }
@@ -51,6 +51,7 @@ export async function ingestKnowledgeLibraryFile(rootPath: string, file: Knowled
     onboarding: onboardingInput(file, retrievedAt),
     extract: async () => {
       if (file.format === 'PDF') return extractPdfFullSource(bytes)
+      if (file.format === 'LEGACY_DOC') return extractLegacyDocFullSource(bytes)
       const text = new TextDecoder().decode(bytes)
       if (file.format === 'HTML') return extractHtmlFullSource(text)
       if (file.format === 'BWB_XML') return extractBwbXmlFullSource(text)

@@ -54,6 +54,22 @@ De Production-ingest gebruikt `ingestKnowledgeLibraryDocument`. Extractie wordt 
 
 Full-source tekst wordt vóór hashing en opslag uitsluitend ontdaan van PostgreSQL-onveilige `U+0000`-tekens. De extraction run registreert het aantal verwijderde NUL-bytes als waarschuwing; alle overige tekst blijft ongemoeid. Grote extracties schrijven binnen dezelfde transactie eerst de run, daarna de pagina's en vervolgens blokken in begrensde batches. De bestaande page/run-foreign keys blijven daarbij onverkort leidend.
 
+## Legacy Word (`.doc`)
+
+De Full-Source-laag ondersteunt Word 97–2003/OLE-documenten rechtstreeks met
+`WORKMATCHR_LEGACY_DOC_BINARY_TEXT`. De extractor gebruikt geen Word- of
+LibreOffice-conversie en verwerkt bodytekst, kop-/voettekst, tekstvakken en
+voet-/eindnoten deterministisch. Alinea's, lijsten en tabgescheiden tabelregels
+worden als bestaande bronbloktypen opgeslagen; afgeleide kop- en tabeltypen
+blijven gemarkeerd voor review.
+
+Het binaire DOC-formaat bevat zonder layout-engine geen reproduceerbare fysieke
+paginagrenzen. Daarom wordt een DOC veilig als één logische documenteenheid
+opgeslagen en vermeldt de extraction run dit expliciet als waarschuwing.
+Embedded afbeeldingen en objecten worden niet als tekst geïnterpreteerd. Een
+technisch extraheerbaar DOC wordt hierdoor niet automatisch `READY`: canonieke
+of bibliografische bronidentiteit blijft een afzonderlijke fail-closed poort.
+
 ## Retrieval (ontwerp, nog read-only)
 
 Latere retrieval blijft bovenop bestaande `KnowledgeSourceBlock`-search werken. Filters/ranking horen rekening te houden met `authorityStatus`, `temporalStatus`, jurisdictie, applicability, documenttype, canonieke bronfamilie, sector en evidence-/validatiestatus. Een documentfamilie mag aanvullende achtergrond of tools ophalen, maar nooit lagere autoriteit of verouderde inhoud stilzwijgend boven actuele primaire bronnen rangschikken. Er komt geen antwoordgenerator, embeddinglaag of tweede retrieval-engine bij.

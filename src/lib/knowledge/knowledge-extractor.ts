@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import type { TextItem } from 'pdfjs-dist/types/src/display/api'
+import WordExtractor from 'word-extractor'
 import type { KnowledgeSourceBlockType, KnowledgeSourcePageStatus } from '@/generated/prisma/enums'
 import type { KnowledgeSourceManifest } from './knowledge-source-manifest'
 import { verifyManifestSource } from './knowledge-source-manifest'
@@ -31,7 +32,7 @@ export type ExtractedSourceBlock = {
   exactText: string
   normalizedSearchText: string
   textHash: string
-  extractionMethod: 'PDFJS_EMBEDDED_TEXT' | 'WORKMATCHR_HTML_TEXT' | 'WORKMATCHR_LEGAL_TEXT'
+  extractionMethod: 'PDFJS_EMBEDDED_TEXT' | 'WORKMATCHR_HTML_TEXT' | 'WORKMATCHR_LEGAL_TEXT' | 'WORKMATCHR_LEGACY_DOC_BINARY_TEXT'
   confidence: number
   requiresReview: boolean
 }
@@ -238,6 +239,99 @@ function canonicalFingerprint(pages: ExtractedSourcePage[], descriptor: FullSour
 }
 
 export type StructuredSourceSection = { heading?: string; paragraphs: string[] }
+
+export type LegacyDocExtractedParts = {
+  body: string
+  headers?: string
+  footers?: string
+  footnotes?: string
+  endnotes?: string
+  textboxes?: string
+}
+
+export const LEGACY_DOC_FULL_SOURCE_EXTRACTOR = {
+  name: 'WORKMATCHR_LEGACY_DOC_BINARY_TEXT',
+  version: '1.0.0',
+  configurationVersion: 'LEGACY_DOC_BINARY_TEXT_V1',
+} as const
+
+function legacyDocLines(value: string) {
+  return value.replace(/\r\n?/gu, '\n').split(/\n+/gu).map((line) => line.trim()).filter(Boolean)
+}
+
+function legacyDocBlockType(text: string, auxiliary: 'HEADER_FOOTER' | 'FOOTNOTE' | null): KnowledgeSourceBlockType {
+  if (auxiliary) return auxiliary
+  if (text.includes('\t')) return 'TABLE'
+  if (looksLikeList(text)) return 'LIST_ITEM'
+  if (looksLikeCaption(text)) return 'CAPTION'
+  if (looksLikeExample(text)) return 'EXAMPLE'
+  if (text.length <= 140 && (/^\d+(?:\.\d+)*[.)]?\s+\p{Lu}/u.test(text) || (!/[.!?;:]$/u.test(text) && text === text.toLocaleUpperCase('nl-NL')))) return 'HEADING'
+  return 'PARAGRAPH'
+}
+
+export function extractLegacyDocPartsFullSource(parts: LegacyDocExtractedParts): FullSourceExtraction {
+  let globalSequence = 0
+  let activeSection: string | null = null
+  let nulByteCount = 0
+  const groups: Array<{ text: string; auxiliary: 'HEADER_FOOTER' | 'FOOTNOTE' | null }> = [
+    ...legacyDocLines(parts.headers ?? '').map((text) => ({ text, auxiliary: 'HEADER_FOOTER' as const })),
+    ...legacyDocLines(parts.body).map((text) => ({ text, auxiliary: null })),
+    ...legacyDocLines(parts.textboxes ?? '').map((text) => ({ text, auxiliary: null })),
+    ...legacyDocLines(parts.footnotes ?? '').map((text) => ({ text, auxiliary: 'FOOTNOTE' as const })),
+    ...legacyDocLines(parts.endnotes ?? '').map((text) => ({ text, auxiliary: 'FOOTNOTE' as const })),
+    ...legacyDocLines(parts.footers ?? '').map((text) => ({ text, auxiliary: 'HEADER_FOOTER' as const })),
+  ]
+  const blocks = groups.flatMap(({ text, auxiliary }) => {
+    nulByteCount += countNullBytes(text)
+    const exactText = removePostgresUnsafeNullBytes(text)
+    if (!exactText) return []
+    const blockType = legacyDocBlockType(exactText, auxiliary)
+    if (blockType === 'HEADING') activeSection = exactText
+    globalSequence += 1
+    return [{
+      globalSequence,
+      pageSequence: globalSequence,
+      sectionPath: activeSection,
+      blockType,
+      exactText,
+      normalizedSearchText: normalizeKnowledgeSourceText(exactText),
+      textHash: sha256(exactText),
+      extractionMethod: 'WORKMATCHR_LEGACY_DOC_BINARY_TEXT' as const,
+      confidence: blockType === 'PARAGRAPH' || blockType === 'LIST_ITEM' ? 0.9 : 0.75,
+      requiresReview: blockType === 'TABLE' || blockType === 'HEADING',
+    }]
+  })
+  if (blocks.length === 0) throw new Error('KNOWLEDGE_FULL_SOURCE_EMPTY_LEGACY_DOC')
+  const pageText = blocks.filter((block) => block.blockType !== 'HEADER_FOOTER').map((block) => block.exactText).join('\n')
+  const page: ExtractedSourcePage = { pageNumber: 1, status: 'EXTRACTED', textHash: sha256(pageText), ocrUsed: false, confidence: 0.85, blocks }
+  const warnings = [
+    'Legacy DOC bevat geen reproduceerbare fysieke paginagrenzen; opgeslagen als één logische documenteenheid.',
+    'Embedded afbeeldingen en objecten zijn niet als tekst geëxtraheerd.',
+    nulByteCount > 0 ? `${nulByteCount} PostgreSQL-onveilige NUL-byte(s) deterministisch verwijderd.` : null,
+  ].filter(Boolean).join(' ')
+  return {
+    extractorName: LEGACY_DOC_FULL_SOURCE_EXTRACTOR.name,
+    extractorVersion: LEGACY_DOC_FULL_SOURCE_EXTRACTOR.version,
+    configurationVersion: LEGACY_DOC_FULL_SOURCE_EXTRACTOR.configurationVersion,
+    pageCount: 1,
+    extractionFingerprint: canonicalFingerprint([page], LEGACY_DOC_FULL_SOURCE_EXTRACTOR),
+    warningSummary: warnings,
+    pages: [page],
+  }
+}
+
+export async function extractLegacyDocFullSource(bytes: Uint8Array): Promise<FullSourceExtraction> {
+  if (Buffer.from(bytes.subarray(0, 8)).toString('hex') !== 'd0cf11e0a1b11ae1') throw new Error('KNOWLEDGE_FULL_SOURCE_INVALID_LEGACY_DOC')
+  const document = await new WordExtractor().extract(Buffer.from(bytes))
+  return extractLegacyDocPartsFullSource({
+    body: document.getBody(),
+    headers: document.getHeaders(),
+    footers: document.getFooters(),
+    footnotes: document.getFootnotes(),
+    endnotes: document.getEndnotes(),
+    textboxes: document.getTextboxes({ includeHeadersAndFooters: false, includeBody: true }),
+  })
+}
 
 function decodeHtml(value: string) {
   const entities: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' }
