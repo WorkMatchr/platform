@@ -101,6 +101,8 @@ export function validateKnowledgeImport(input: unknown): KnowledgeImportValidati
         issues.push({ code: 'EXCERPT_HASH_MISMATCH', path: fragment.externalKey, message: 'De fragmentfingerprint komt niet overeen met het bronfragment.' })
       }
     }
+    const evidenceKeys = (fragment.sourceBlockEvidence ?? []).map((evidence) => `${evidence.sourceVersionId}:${evidence.sourceBlockId}`)
+    unique(evidenceKeys, `${fragment.externalKey}.sourceBlockEvidence`, issues)
   }
   for (const citation of value.citations) {
     if (!claimKeys.has(citation.claimKey)) issues.push({ code: 'UNKNOWN_CLAIM', path: 'citations', message: `Onbekende claim: ${citation.claimKey}.` })

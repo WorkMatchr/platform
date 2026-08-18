@@ -30,7 +30,7 @@ function assertCorrectionScope(data: KnowledgeImportPackage) {
   }
 }
 
-async function readPackage(fileName: string) {
+export async function readKnowledgeImportPackage(fileName: string) {
   const filePath = path.resolve(fileName)
   const size = (await stat(filePath)).size
   if (size > KNOWLEDGE_IMPORT_MAX_BYTES) throw new KnowledgeImportError('PACKAGE_TOO_LARGE', 'Het importpakket is groter dan 5 MB.')
@@ -45,7 +45,7 @@ async function readPackage(fileName: string) {
   return { package: validation.package, validation }
 }
 
-async function verifyPackageSource(code: string, checksum: string) {
+export async function verifyKnowledgePackageSource(code: string, checksum: string) {
   const manifest = await loadKnowledgeSourceManifest()
   const source = manifest.sources.find((entry) => entry.code === code)
   if (!source) throw new KnowledgeImportError('SOURCE_NOT_CONFIGURED', `Bron ${code} staat niet in het lokale manifest.`)
@@ -63,7 +63,7 @@ function assertLocalCliAllowed() {
   if (!['localhost', '127.0.0.1', '::1'].includes(host)) throw new KnowledgeImportError('NOT_AUTHORIZED', 'Import zonder platformbeheerder mag uitsluitend op een lokale database.')
 }
 
-async function assertImportAuthorization(tx: Prisma.TransactionClient, actorUserId?: string) {
+export async function assertKnowledgeImportAuthorization(tx: Prisma.TransactionClient, actorUserId?: string) {
   if (!actorUserId) return assertLocalCliAllowed()
   const actor = await tx.user.findFirst({
     where: {
@@ -170,8 +170,8 @@ async function findActiveVersion(data: KnowledgeImportPackage) {
 }
 
 export async function previewKnowledgeImport(fileName: string, options: { correction?: boolean } = {}) {
-  const { package: data, validation } = await readPackage(fileName)
-  const manifestSource = await verifyPackageSource(data.source.code, data.sourceVersion.checksum)
+  const { package: data, validation } = await readKnowledgeImportPackage(fileName)
+  const manifestSource = await verifyKnowledgePackageSource(data.source.code, data.sourceVersion.checksum)
   if (manifestSource.sourceKind && mapSourceKindToType(manifestSource.sourceKind) !== data.source.sourceType) {
     throw new KnowledgeImportError('SOURCE_TYPE_MISMATCH', 'De bronsoort in het manifest en importpakket komen niet overeen.')
   }
@@ -236,12 +236,12 @@ export async function importKnowledgePackage(fileName: string, options: ImportOp
   const preview = await previewKnowledgeImport(fileName)
   if (preview.idempotentReplay && preview.existing) return { ...preview.existing, counts: preview.counts, reused: true }
   if (!preview.writable) throw new KnowledgeImportError('CONTENT_MISMATCH', 'Import geweigerd omdat de opgeslagen broninhoud niet inhoudelijk identiek is. Gebruik uitsluitend na beoordeling het expliciete correctiepad.')
-  const { package: data } = await readPackage(fileName)
-  const manifestSource = await verifyPackageSource(data.source.code, data.sourceVersion.checksum)
+  const { package: data } = await readKnowledgeImportPackage(fileName)
+  const manifestSource = await verifyKnowledgePackageSource(data.source.code, data.sourceVersion.checksum)
   const database = getPrisma()
 
   return database.$transaction(async (tx) => {
-    await assertImportAuthorization(tx, options.actorUserId)
+    await assertKnowledgeImportAuthorization(tx, options.actorUserId)
     const existingSource = await tx.knowledgeSource.findUnique({ where: { code: data.source.code } })
     const source = existingSource ?? await tx.knowledgeSource.create({ data: {
         sourceType: data.source.sourceType,
@@ -432,9 +432,9 @@ export async function correctKnowledgePackage(fileName: string, options: Correct
   if (!options.confirm) throw new KnowledgeImportError('CONFIRMATION_REQUIRED', 'Correctie vereist expliciet --confirm.')
   if (options.correctionReason.trim().length < 10) throw new KnowledgeImportError('CORRECTION_REASON_REQUIRED', 'Leg de reden voor de immutable correctie concreet vast.')
 
-  const { package: data, validation } = await readPackage(fileName)
+  const { package: data, validation } = await readKnowledgeImportPackage(fileName)
   assertCorrectionScope(data)
-  const manifestSource = await verifyPackageSource(data.source.code, data.sourceVersion.checksum)
+  const manifestSource = await verifyKnowledgePackageSource(data.source.code, data.sourceVersion.checksum)
   const preview = await previewKnowledgeImport(fileName, { correction: true })
   if (preview.idempotentReplay && preview.existing) return { ...preview.existing, counts: preview.counts, reused: true, corrected: false }
   if (!preview.correctionCandidate || !preview.current) {
@@ -445,7 +445,7 @@ export async function correctKnowledgePackage(fileName: string, options: Correct
   const incomingFingerprint = fingerprintKnowledgeImportPackage(data)
   const database = getPrisma()
   return database.$transaction(async (tx) => {
-    await assertImportAuthorization(tx, options.actorUserId)
+    await assertKnowledgeImportAuthorization(tx, options.actorUserId)
     const source = await tx.knowledgeSource.findUnique({ where: { code: data.source.code } })
     if (!source) throw new KnowledgeImportError('SOURCE_NOT_FOUND', 'De te corrigeren bron bestaat niet.')
     await tx.$queryRaw`SELECT "id" FROM "KnowledgeSource" WHERE "id" = ${source.id}::uuid FOR UPDATE`

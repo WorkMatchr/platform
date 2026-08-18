@@ -148,6 +148,12 @@ const fragmentSchema = z
     excerptHash: z.string().regex(/^[0-9a-f]{64}$/).optional(),
     extractionMethod: z.string().trim().min(1).max(80),
     requiresReview: z.boolean().default(true),
+    sourceBlockEvidence: z.array(z.object({
+      sourceVersionId: z.uuid(),
+      sourceBlockId: z.uuid(),
+      evidenceRole: z.enum(['DIRECT_SUPPORT', 'CONTEXT']),
+      blockTextHash: z.string().regex(/^[0-9a-f]{64}$/),
+    }).strict()).min(1).max(50).optional(),
   })
   .strict()
   .refine((value) => value.pageFrom !== undefined || value.sectionPath, {
@@ -438,5 +444,20 @@ export const knowledgeImportPackageSchema = z
 export type KnowledgeImportPackage = z.infer<
   typeof knowledgeImportPackageSchema
 >
+
+export const reviewedKnowledgeAttachmentPackageSchema = knowledgeImportPackageSchema.superRefine((value, context) => {
+  if (value.schemaVersion !== '1.1') {
+    context.addIssue({ code: 'custom', path: ['schemaVersion'], message: 'Reviewed attachment vereist contract 1.1.' })
+  }
+  value.fragments.forEach((fragment, index) => {
+    if (fragment.sourceBlockEvidence?.length) return
+    context.addIssue({ code: 'custom', path: ['fragments', index, 'sourceBlockEvidence'], message: 'Reviewed attachment vereist expliciete bronblokevidence.' })
+  })
+  if (value.rules.length || value.calculations.length || value.checklists.length || value.procedures.length || value.roles.length || value.formTemplates.length || value.relations.length) {
+    context.addIssue({ code: 'custom', path: [], message: 'Reviewed attachment ondersteunt uitsluitend topics, claims, fragmenten en citaties.' })
+  }
+})
+
+export type ReviewedKnowledgeAttachmentPackage = z.infer<typeof reviewedKnowledgeAttachmentPackageSchema>
 
 export const KNOWLEDGE_IMPORT_MAX_BYTES = 5 * 1024 * 1024

@@ -55,7 +55,9 @@
     "knowledge:batch": "tsx scripts/knowledge-import-batch.ts",
     "knowledge:library-batch": "tsx scripts/knowledge-library-batch.ts",
     "knowledge:import": "tsx scripts/knowledge-import.ts import",
-    "knowledge:correct": "tsx scripts/knowledge-import.ts correct"
+    "knowledge:correct": "tsx scripts/knowledge-import.ts correct",
+    "knowledge:attach-preview": "tsx scripts/knowledge-import.ts attach-preview",
+    "knowledge:attach": "tsx scripts/knowledge-import.ts attach"
   },
   "dependencies": {
     "@better-auth/prisma-adapter": "^1.6.23",

@@ -9,6 +9,7 @@ type FingerprintFragment = {
   fragmentType: string
   internalExcerpt: string | null
   excerptHash: string | null
+  sourceBlockEvidence?: Array<{ sourceVersionId: string; sourceBlockId: string; evidenceRole: string; blockTextHash: string }>
 }
 
 type FingerprintClaim = {
@@ -122,6 +123,7 @@ export function snapshotKnowledgeImportPackage(data: KnowledgeImportPackage): Kn
       fragmentType: fragment.fragmentType,
       internalExcerpt: fragment.internalExcerpt ?? null,
       excerptHash: fragment.excerptHash ?? null,
+      ...(fragment.sourceBlockEvidence ? { sourceBlockEvidence: sortByKey(fragment.sourceBlockEvidence, (evidence) => `${evidence.sourceBlockId}\u0000${evidence.evidenceRole}`) } : {}),
     })), (fragment) => fragment.key),
     claims: sortByKey(data.claims.map((claim) => ({
       key: claim.externalKey,

@@ -94,7 +94,20 @@
         "pageFrom": { "type": "integer", "minimum": 1 }, "pageTo": { "type": "integer", "minimum": 1 },
         "sectionPath": { "type": "string", "maxLength": 500 }, "fragmentType": { "type": "string", "maxLength": 80 },
         "internalExcerpt": { "type": "string", "maxLength": 500 }, "excerptHash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
-        "extractionMethod": { "type": "string", "maxLength": 80 }, "requiresReview": { "type": "boolean" }
+        "extractionMethod": { "type": "string", "maxLength": 80 }, "requiresReview": { "type": "boolean" },
+        "sourceBlockEvidence": {
+          "type": "array", "minItems": 1, "maxItems": 50,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["sourceVersionId", "sourceBlockId", "evidenceRole", "blockTextHash"],
+            "properties": {
+              "sourceVersionId": { "type": "string", "format": "uuid" },
+              "sourceBlockId": { "type": "string", "format": "uuid" },
+              "evidenceRole": { "enum": ["DIRECT_SUPPORT", "CONTEXT"] },
+              "blockTextHash": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+            }
+          }
+        }
       }
     },
     "claim": {

@@ -53,4 +53,19 @@ describe('Knowledge-importfingerprint', () => {
     ;((input.claims as Array<Record<string, unknown>>)[0]).controlRisk = 'MEDIUM'
     expect(fingerprintKnowledgeImportPackage(packageFrom(input))).not.toBe(high)
   })
+
+  it('neemt expliciete bronblokevidence op in de fingerprint zonder legacyfingerprints te wijzigen', () => {
+    const input = structuredClone(ai01) as Record<string, unknown>
+    const fragment = (input.fragments as Array<Record<string, unknown>>)[0]
+    fragment.sourceBlockEvidence = [{
+      sourceVersionId: '00000000-0000-4000-8000-000000000001',
+      sourceBlockId: '00000000-0000-4000-8000-000000000002',
+      evidenceRole: 'DIRECT_SUPPORT',
+      blockTextHash: 'a'.repeat(64),
+    }]
+    const withEvidence = fingerprintKnowledgeImportPackage(packageFrom(input))
+    expect(withEvidence).not.toBe(original)
+    ;((fragment.sourceBlockEvidence as Array<Record<string, unknown>>)[0]).blockTextHash = 'b'.repeat(64)
+    expect(fingerprintKnowledgeImportPackage(packageFrom(input))).not.toBe(withEvidence)
+  })
 })

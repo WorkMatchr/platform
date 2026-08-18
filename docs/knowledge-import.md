@@ -34,6 +34,14 @@ Knowledge-importcontract `1.1` vereist voor iedere claim een expliciete `control
 
 Legacy-pakketten met contract `1.0` blijven valideerbaar, maar een ontbrekend risico wordt uitsluitend conservatief als `CRITICAL` genormaliseerd. Daardoor bepaalt de database-default nooit stilzwijgend het risico van een nieuwe legacy-import. Een bestaande revisie met een oudere fingerprint wordt niet automatisch herschreven; voor een inhoudelijk beoordeelde lagere classificatie is een expliciet `1.1`-correctiepakket nodig.
 
+### Reviewed claims koppelen aan een bestaande Full-Source-versie
+
+Een reeds geregistreerde en volledig geëxtraheerde bronversie krijgt later gecontroleerde claims via `knowledge:attach-preview` en `knowledge:attach`. Deze route maakt geen nieuwe bronversie of extractierun. Ieder contract-1.1-fragment bevat daarvoor `sourceBlockEvidence` met de bestaande `sourceVersionId`, exacte `sourceBlockId`, evidence-rol en opgeslagen blokteksthash.
+
+De preview en transactionele attach controleren fail-closed dat ieder blok bestaat, bij exact dezelfde bronversie en een `COMPLETED` extractierun hoort, dat de blokhash gelijk is en dat de gecontroleerde passage letterlijk in het opgegeven blok staat. Er vindt tijdens de write geen fuzzy matching plaats. Claims, fragmenten, citaties en `KnowledgeFragmentBlock`-relaties worden atomair geschreven. Een identieke replay hergebruikt de attachment; hergebruikte codes met afwijkende inhoud of evidence worden geweigerd.
+
+Deze attachmentroute ondersteunt bewust alleen topics, claims, fragmenten en citaties. Zij wijzigt nooit `KnowledgeSource`, `KnowledgeSourceVersion`, artifacts, extraction runs, pagina's of bronblokken. Bestaande 1.0/1.1-importpakketten zonder block-evidence blijven compatibel met de bestaande import- en correctieroutes, maar zijn niet geldig voor `knowledge:attach`.
+
 PDF is in v1 het enige betrouwbare extractieformaat. `.doc` wordt alleen geïnventariseerd als `LEGACY_DOC` en `UNSUPPORTED_FOR_EXTRACTION`; het bestand wordt niet geopend of geconverteerd. De pipeline voert geen downloads, webscraping of automatische juridische beoordeling uit. Nieuwe bronnen worden toegevoegd via een manifestregel en conceptpakket, zonder nieuw Prisma-model.
 
 ## Lokaal manifest v2
