@@ -11,6 +11,7 @@ import { OpenAIAIClassifier } from './openai-ai-classifier'
 
 const DEFAULT_MODEL = 'gpt-5.6-sol'
 const DEFAULT_TIMEOUT_MS = 4_000
+export const AI_INTAKE_MAX_INPUT_CHARACTERS = 2_000
 
 function configuredTimeout(value: string | undefined): number {
   const parsed = Number(value)
@@ -56,7 +57,9 @@ export async function classifyAIIntakeSafely(
     : 'CONFIGURATION_MISSING'
   let providerStatusCode: number | null = null
 
-  if (classifier) {
+  if (helpRequest.length > AI_INTAKE_MAX_INPUT_CHARACTERS) {
+    fallbackReason = 'INPUT_REJECTED'
+  } else if (classifier) {
     try {
       const providerOutput = await classifier.classify({ helpRequest })
       try {

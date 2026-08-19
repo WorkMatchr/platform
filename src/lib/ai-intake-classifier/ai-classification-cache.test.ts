@@ -74,6 +74,8 @@ const successfulResult: SafeAIClassificationResult = {
   providerStatusCode: null,
 }
 
+const authorizeExternalCall = async () => ({ allowed: true as const })
+
 describe('AI Intake-classificatiecache', () => {
   it('bewaart het volledige gevalideerde begrip inclusief samenvatting', () => {
     expect(
@@ -106,6 +108,7 @@ describe('AI Intake-classificatiecache', () => {
       logger: vi.fn(),
       classifierVersion: 'classifier/1',
       model: 'model/1',
+      authorizeExternalCall,
     } as const
 
     const first = await classifyAIIntakeWithCache(
@@ -131,6 +134,7 @@ describe('AI Intake-classificatiecache', () => {
       logger: vi.fn(),
       classifierVersion: 'classifier/1',
       model: 'model/1',
+      authorizeExternalCall,
     } as const
     const helpRequest = 'Een fictieve medewerker is gevallen.'
 
@@ -152,6 +156,7 @@ describe('AI Intake-classificatiecache', () => {
       logger: vi.fn(),
       classifierVersion: 'classifier/1',
       model: 'model/1',
+      authorizeExternalCall,
     } as const
 
     await classifyAIIntakeWithCache('Een incident op locatie.', options)
@@ -175,6 +180,7 @@ describe('AI Intake-classificatiecache', () => {
       logger: vi.fn(),
       classifierVersion: 'classifier/1',
       model: 'model/1',
+      authorizeExternalCall,
     } as const
 
     const results = await Promise.all([
@@ -207,6 +213,7 @@ describe('AI Intake-classificatiecache', () => {
       logger: vi.fn(),
       classifierVersion: 'classifier/1',
       model: 'model/1',
+      authorizeExternalCall,
       now: () => 1_000,
     } as const
 
@@ -231,7 +238,7 @@ describe('AI Intake-classificatiecache', () => {
     const fingerprint = createAIClassificationFingerprint(helpRequest, 'classifier/1', 'model/1')
     records.set(fingerprint, { inputFingerprint: fingerprint, status: 'COMPLETED', classificationJson: null, fallbackReason: 'CONFIGURATION_MISSING', providerStatusCode: null, completedAt: new Date(1_000) })
     const classify = vi.fn().mockResolvedValue(successfulResult)
-    await expect(classifyAIIntakeWithCache(helpRequest, { repository, classify, logger: vi.fn(), classifierVersion: 'classifier/1', model: 'model/1', now: () => 2_000 })).resolves.toEqual(successfulResult)
+    await expect(classifyAIIntakeWithCache(helpRequest, { repository, classify, logger: vi.fn(), classifierVersion: 'classifier/1', model: 'model/1', now: () => 2_000, authorizeExternalCall })).resolves.toEqual(successfulResult)
     expect(classify).toHaveBeenCalledTimes(1)
   })
 
@@ -241,7 +248,7 @@ describe('AI Intake-classificatiecache', () => {
     const fingerprint = createAIClassificationFingerprint(helpRequest, 'classifier/1', 'model/1')
     records.set(fingerprint, { inputFingerprint: fingerprint, status: 'COMPLETED', classificationJson: null, fallbackReason: 'PROVIDER_UNAVAILABLE', providerStatusCode: 503, completedAt: new Date(1_000) })
     const classify = vi.fn(async () => { await new Promise((resolve) => setTimeout(resolve, 20)); return successfulResult })
-    const options = { repository, classify, logger: vi.fn(), classifierVersion: 'classifier/1', model: 'model/1', now: () => 1_000 + 5 * 60 * 1_000 } as const
+    const options = { repository, classify, logger: vi.fn(), classifierVersion: 'classifier/1', model: 'model/1', now: () => 1_000 + 5 * 60 * 1_000, authorizeExternalCall } as const
     await expect(Promise.all([classifyAIIntakeWithCache(helpRequest, options), classifyAIIntakeWithCache(helpRequest, options)])).resolves.toEqual([successfulResult, successfulResult])
     expect(classify).toHaveBeenCalledTimes(1)
   })
@@ -257,6 +264,7 @@ describe('AI Intake-classificatiecache', () => {
       logger,
       classifierVersion: 'classifier/1',
       model: 'model/1',
+      authorizeExternalCall,
     })
 
     const serializedLogs = JSON.stringify(logger.mock.calls)
@@ -265,5 +273,44 @@ describe('AI Intake-classificatiecache', () => {
     expect(logger).toHaveBeenCalledWith(
       expect.objectContaining({ event: 'EXTERNAL_CALL' }),
     )
+  })
+
+  it('blokkeert een cachemiss vóór de provider wanneer abusebescherming weigert', async () => {
+    const { repository, records } = createRepository()
+    const classify = vi.fn().mockResolvedValue(successfulResult)
+
+    await expect(classifyAIIntakeWithCache('Een unieke geblokkeerde hulpvraag.', {
+      repository,
+      classify,
+      logger: vi.fn(),
+      classifierVersion: 'classifier/1',
+      model: 'model/1',
+      authorizeExternalCall: async () => ({ allowed: false, reason: 'RATE_LIMITED' }),
+    })).resolves.toMatchObject({
+      classification: null,
+      fallbackReason: 'RATE_LIMITED',
+    })
+
+    expect(classify).not.toHaveBeenCalled()
+    expect(records.size).toBe(0)
+  })
+
+  it('faalt gesloten vóór de provider wanneer abusebescherming zelf uitvalt', async () => {
+    const { repository } = createRepository()
+    const classify = vi.fn().mockResolvedValue(successfulResult)
+
+    await expect(classifyAIIntakeWithCache('Een hulpvraag bij limiteruitval.', {
+      repository,
+      classify,
+      logger: vi.fn(),
+      classifierVersion: 'classifier/1',
+      model: 'model/1',
+      authorizeExternalCall: async () => { throw new Error('limiter unavailable') },
+    })).resolves.toMatchObject({
+      classification: null,
+      fallbackReason: 'ABUSE_PROTECTION_UNAVAILABLE',
+    })
+
+    expect(classify).not.toHaveBeenCalled()
   })
 })

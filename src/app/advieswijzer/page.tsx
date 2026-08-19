@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { Section } from '@/components/layout/section'
 import { PublicIntakePrototype } from '@/components/public/public-intake-prototype'
 import { PublicPageLayout } from '@/components/public/public-page-layout'
@@ -13,6 +13,10 @@ import { resumePublicIntakeDraft } from '@/lib/public-intake/public-intake-servi
 import type { PublicIntakeDraftView } from '@/lib/public-intake/public-intake-types'
 import { attachAdviceDossierForCurrentUser } from '@/lib/advice-dossiers/public-intake-advice-dossier-handoff'
 import { resolveActiveKnowledgeContext } from '@/content/knowledge/knowledge-contexts'
+import {
+  assertPublicIntakeRequestAllowed,
+  PublicIntakeAbuseProtectionError,
+} from '@/lib/public-intake/public-intake-abuse-protection'
 
 export const metadata: Metadata = {
   title: 'Advieswijzer | WorkMatchr',
@@ -28,21 +32,29 @@ export const metadata: Metadata = {
 async function loadDraft(): Promise<{
   draft: PublicIntakeDraftView | null
   invalidSession: boolean
+  temporarilyUnavailable: boolean
 }> {
   const token = (await cookies()).get(PUBLIC_INTAKE_COOKIE_NAME)?.value
-  if (!token) return { draft: null, invalidSession: false }
+  if (!token) return { draft: null, invalidSession: false, temporarilyUnavailable: false }
   try {
+    const abuseContext = { requestHeaders: await headers(), sessionToken: token }
+    await assertPublicIntakeRequestAllowed(abuseContext)
     return {
       draft: await attachAdviceDossierForCurrentUser(
         await enrichPublicIntakeDraftWithAIClassification(
           await resumePublicIntakeDraft(token),
+          { abuseContext },
         ),
       ),
       invalidSession: false,
+      temporarilyUnavailable: false,
     }
   } catch (error) {
+    if (error instanceof PublicIntakeAbuseProtectionError) {
+      return { draft: null, invalidSession: false, temporarilyUnavailable: true }
+    }
     if (error instanceof PublicIntakeServiceError && error.code === 'ACCESS_DENIED') {
-      return { draft: null, invalidSession: true }
+      return { draft: null, invalidSession: true, temporarilyUnavailable: false }
     }
     throw error
   }
@@ -53,7 +65,7 @@ export default async function AdviceGuidePage({
 }: {
   searchParams: Promise<{ context?: string | string[] }>
 }) {
-  const { draft, invalidSession } = await loadDraft()
+  const { draft, invalidSession, temporarilyUnavailable } = await loadDraft()
   const contextValue = (await searchParams).context
   const knowledgeContext = resolveActiveKnowledgeContext(
     Array.isArray(contextValue) ? contextValue[0] : contextValue,
@@ -68,7 +80,12 @@ export default async function AdviceGuidePage({
       compactHero
     >
       <Section containerSize="default" spacing="compact" className="!py-5 sm:!py-7">
-        <PublicIntakePrototype initialDraft={draft} invalidSession={invalidSession} knowledgeContext={knowledgeContext} />
+        <PublicIntakePrototype
+          initialDraft={draft}
+          invalidSession={invalidSession}
+          temporarilyUnavailable={temporarilyUnavailable}
+          knowledgeContext={knowledgeContext}
+        />
       </Section>
     </PublicPageLayout>
   )

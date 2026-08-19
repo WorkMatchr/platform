@@ -352,6 +352,12 @@ export function PublicIntakeWorkspace({
         <div className="min-w-0 space-y-3">
           <PublicIntakeMobileContext step={currentStep} />
 
+          {draft.aiClassificationProtection && (
+            <p role="status" className="rounded-control border border-border bg-surface-muted px-4 py-3 text-sm text-text-secondary">
+              Er zijn tijdelijk te veel aanvragen gedaan. U kunt het later opnieuw proberen of uw onderwerp zelf kiezen.
+            </p>
+          )}
+
         {showUnderstandingConfirmation && understanding && (
           <section
             ref={confirmationContainerRef}

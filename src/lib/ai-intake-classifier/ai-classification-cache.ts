@@ -44,7 +44,7 @@ export type AIClassificationCacheRepository = Readonly<{
 }>
 
 type AIClassificationCacheLogEntry = Readonly<{
-  event: 'CACHE_HIT' | 'CACHE_MISS' | 'EXTERNAL_CALL' | 'CACHE_UNAVAILABLE'
+  event: 'CACHE_HIT' | 'CACHE_MISS' | 'EXTERNAL_CALL' | 'EXTERNAL_CALL_BLOCKED' | 'CACHE_UNAVAILABLE'
   classifierVersion: string
   provider: string
   model: string
@@ -255,6 +255,10 @@ export async function classifyAIIntakeWithCache(
     classifierVersion?: string
     model?: string
     now?: () => number
+    authorizeExternalCall?: () => Promise<
+      | Readonly<{ allowed: true }>
+      | Readonly<{ allowed: false; reason: 'RATE_LIMITED' | 'PROTECTION_UNAVAILABLE' }>
+    >
   }> = {},
 ): Promise<SafeAIClassificationResult> {
   const repository =
@@ -275,11 +279,33 @@ export async function classifyAIIntakeWithCache(
     model,
   )
 
+  async function authorizeExternalCall(): Promise<SafeAIClassificationResult | null> {
+    if (!options.authorizeExternalCall) {
+      logger({ event: 'EXTERNAL_CALL_BLOCKED', classifierVersion, provider, model })
+      return safeFallback('ABUSE_PROTECTION_UNAVAILABLE')
+    }
+    try {
+      const allowance = await options.authorizeExternalCall()
+      if (allowance.allowed) return null
+      logger({ event: 'EXTERNAL_CALL_BLOCKED', classifierVersion, provider, model })
+      return safeFallback(
+        allowance.reason === 'RATE_LIMITED'
+          ? 'RATE_LIMITED'
+          : 'ABUSE_PROTECTION_UNAVAILABLE',
+      )
+    } catch {
+      logger({ event: 'EXTERNAL_CALL_BLOCKED', classifierVersion, provider, model })
+      return safeFallback('ABUSE_PROTECTION_UNAVAILABLE')
+    }
+  }
+
   try {
     const cached = await repository.find(inputFingerprint)
     if (cached?.status === 'COMPLETED') {
       const cachedResult = resultFromRecord(cached)
       if (shouldRetryTechnicalFallback(cached, cachedResult, now())) {
+        const denied = await authorizeExternalCall()
+        if (denied) return denied
         const reclaimed = await repository.reclaimTechnicalFallback({
           inputFingerprint,
           completedAt: cached.completedAt,
@@ -300,6 +326,9 @@ export async function classifyAIIntakeWithCache(
       logger({ event: 'CACHE_HIT', classifierVersion, provider, model })
       return waitForCompletion(repository, inputFingerprint)
     }
+
+    const denied = await authorizeExternalCall()
+    if (denied) return denied
 
     const claimed = await repository.claim({
       inputFingerprint,

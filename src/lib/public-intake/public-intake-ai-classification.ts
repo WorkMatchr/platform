@@ -7,6 +7,10 @@ import { resolveActiveKnowledgeContext } from '@/content/knowledge/knowledge-con
 import type { PublicIntakeDraftView } from './public-intake-types'
 import { buildPublicIntakeGuidanceHandoff } from './public-intake-guidance-handoff'
 import { ensurePublicIntakeAIContextQuestions } from './public-intake-context-question-service'
+import {
+  allowPublicIntakeAIClassification,
+  type PublicIntakeAbuseContext,
+} from './public-intake-abuse-protection'
 
 function withRefreshedGuidance(draft: PublicIntakeDraftView): PublicIntakeDraftView {
   if (!draft.id) return draft
@@ -73,6 +77,7 @@ async function withPersistedContextQuestions(
 
 export async function enrichPublicIntakeDraftWithAIClassification(
   draft: PublicIntakeDraftView,
+  options: Readonly<{ abuseContext?: PublicIntakeAbuseContext }> = {},
 ): Promise<PublicIntakeDraftView> {
   if (draft.entryPoint !== 'FREE_TEXT' || !draft.originalInput) return draft
 
@@ -96,7 +101,25 @@ export async function enrichPublicIntakeDraftWithAIClassification(
     }, classification))
   }
 
-  const result = await classifyAIIntakeWithCache(draft.originalInput!)
+  const result = await classifyAIIntakeWithCache(draft.originalInput!, {
+    authorizeExternalCall: options.abuseContext
+      ? () => allowPublicIntakeAIClassification(options.abuseContext!)
+      : undefined,
+  })
+
+  if (
+    result.fallbackReason === 'RATE_LIMITED' ||
+    result.fallbackReason === 'ABUSE_PROTECTION_UNAVAILABLE'
+  ) {
+    return {
+      ...draft,
+      aiClassification: null,
+      aiClassificationProtection:
+        result.fallbackReason === 'RATE_LIMITED'
+          ? 'RATE_LIMITED'
+          : 'PROTECTION_UNAVAILABLE',
+    }
+  }
 
   const classification = applyKnowledgeContextSupport(draft, result.classification)
   return withRefreshedGuidance(await withPersistedContextQuestions({

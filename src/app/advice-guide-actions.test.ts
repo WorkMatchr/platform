@@ -7,9 +7,12 @@ const mocks = vi.hoisted(() => ({
   getDraft: vi.fn(),
   record: vi.fn(),
   enrich: vi.fn(),
+  create: vi.fn(),
+  assertAllowed: vi.fn(),
 }))
 
 vi.mock('next/headers', () => ({
+  headers: vi.fn(async () => new Headers({ 'x-forwarded-for': '192.0.2.10' })),
   cookies: vi.fn(async () => ({
     get: mocks.cookieGet,
     set: mocks.cookieSet,
@@ -19,10 +22,16 @@ vi.mock('next/headers', () => ({
 vi.mock('@/lib/public-intake/public-intake-service', () => ({
   abandonPublicIntakeDraftByUser: mocks.abandon,
   changePublicIntakePhase: vi.fn(),
-  createPublicIntakeDraft: vi.fn(),
+  createPublicIntakeDraft: mocks.create,
   getPublicIntakeDraftForSession: mocks.getDraft,
   recordPublicIntakeAnswer: mocks.record,
   resumePublicIntakeDraft: vi.fn(),
+}))
+
+vi.mock('@/lib/public-intake/public-intake-abuse-protection', () => ({
+  assertPublicIntakeRequestAllowed: mocks.assertAllowed,
+  PUBLIC_INTAKE_RATE_LIMIT_MESSAGE: 'Er zijn tijdelijk te veel aanvragen gedaan. Probeer het later opnieuw.',
+  PublicIntakeAbuseProtectionError: class PublicIntakeAbuseProtectionError extends Error {},
 }))
 
 vi.mock(
@@ -49,6 +58,7 @@ describe('publieke conceptintake bewust beëindigen', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.cookieGet.mockReturnValue({ value: 'fictief-publiek-sessietoken' })
+    mocks.assertAllowed.mockResolvedValue(undefined)
   })
 
   it.each(['ABANDONED', 'ALREADY_ABANDONED'] as const)(
@@ -108,6 +118,7 @@ describe('AI-begripsbevestiging in de publieke intake', () => {
     mocks.getDraft.mockResolvedValue(classifiedDraft)
     mocks.enrich.mockResolvedValue(classifiedDraft)
     mocks.record.mockResolvedValue({ ...classifiedDraft, answers: [{}] })
+    mocks.assertAllowed.mockResolvedValue(undefined)
   })
 
   it('slaat een bevestigd AI-onderwerp server-side op zonder clientbron', async () => {
@@ -165,5 +176,20 @@ describe('AI-begripsbevestiging in de publieke intake', () => {
       input,
       { answerSource: 'FALLBACK_SELECTION' },
     )
+  })
+
+  it('blokkeert vóór intake-, database- en AI-werk wanneer de requestlimiet is bereikt', async () => {
+    const AbuseError = (await import('@/lib/public-intake/public-intake-abuse-protection'))
+      .PublicIntakeAbuseProtectionError
+    mocks.assertAllowed.mockRejectedValue(new AbuseError('RATE_LIMITED'))
+
+    await expect(confirmPublicIntakeAIClassificationAction()).resolves.toEqual({
+      ok: false,
+      message: 'Er zijn tijdelijk te veel aanvragen gedaan. Probeer het later opnieuw.',
+    })
+
+    expect(mocks.getDraft).not.toHaveBeenCalled()
+    expect(mocks.enrich).not.toHaveBeenCalled()
+    expect(mocks.record).not.toHaveBeenCalled()
   })
 })

@@ -150,6 +150,8 @@ Migratie `20260726190000_add_public_intake_user_abandonment` voegt additief de f
 
 Migratie `20260729100000_add_public_intake_ai_classification_cache` voegt additief `PublicIntakeAIClassificationCache` toe. De unieke fingerprint combineert genormaliseerde broninvoer, classifier-versie en model, maar de broninvoer zelf wordt niet in deze tabel opgeslagen. Een record doorloopt uitsluitend `PROCESSING → COMPLETED`; een completed record bevat óf gevalideerde structured output óf een getypeerde fallbackreden. Hierdoor veroorzaken reload, resume en vervolgstappen geen herhaalde externe classificatie.
 
+Migratie `20260819100000_add_public_ai_intake_abuse_protection` voegt additief `PublicIntakeAbuseBucket` toe. De tabel bevat uitsluitend environment, operationele bucketsoort, een domeingescheiden HMAC-sleutel, begrensde venstertijden en een teller. Ruwe IP-adressen, sessietokens, hulpvragen en providerinhoud worden niet opgeslagen. Een unieke bucketidentiteit en atomische `INSERT .. ON CONFLICT .. WHERE requestCount < limit` voorkomen overschrijding bij parallelle requests. Alle toepasselijke IP-, sessie- en globale buckets worden in één serializable transactie geconsumeerd; een weigering rolt de volledige consumptie terug. Verlopen records worden tijdens limitergebruik verwijderd.
+
 ## Module 7C — WorkMatchr Adviesdossier
 
 Migratie `20260729180000_add_advice_dossiers` voegt additief vier tabellen toe:

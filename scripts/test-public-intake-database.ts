@@ -60,14 +60,86 @@ async function main() {
     await admin.query(`CREATE DATABASE "${testDatabaseName}"`)
     deployMigrations()
     process.env.DATABASE_URL = testUrl.toString()
+    Reflect.set(process.env, 'NODE_ENV', 'test')
+    process.env.BETTER_AUTH_SECRET = 'database-test-secret-with-at-least-thirty-two-characters'
 
     const services = await import('../src/lib/public-intake/public-intake-service')
+    const abuseProtection = await import(
+      '../src/lib/public-intake/public-intake-abuse-protection'
+    )
     const classificationCache = await import(
       '../src/lib/ai-intake-classifier/ai-classification-cache'
     )
     const tokens = await import('../src/lib/public-intake/public-intake-token')
     const prismaModule = await import('../src/lib/prisma')
     prisma = prismaModule.getPrisma()
+
+    const abuseContext = {
+      requestHeaders: new Headers({ 'x-forwarded-for': '203.0.113.77' }),
+      sessionToken: 'database-test-public-intake-session',
+    }
+    const abuseAt = new Date('2026-08-20T00:00:00.000Z')
+    await abuseProtection.assertPublicIntakeRequestAllowed(abuseContext, { at: abuseAt })
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      assert.deepEqual(
+        await abuseProtection.allowPublicIntakeAIClassification(abuseContext, { at: abuseAt }),
+        { allowed: true },
+      )
+    }
+    const bucketCountBeforeBlockedAttempt = await prisma.publicIntakeAbuseBucket.aggregate({
+      _sum: { requestCount: true },
+      _count: true,
+    })
+    assert.deepEqual(
+      await abuseProtection.allowPublicIntakeAIClassification(abuseContext, { at: abuseAt }),
+      { allowed: false, reason: 'RATE_LIMITED' },
+    )
+    assert.deepEqual(
+      await prisma.publicIntakeAbuseBucket.aggregate({
+        _sum: { requestCount: true },
+        _count: true,
+      }),
+      bucketCountBeforeBlockedAttempt,
+      'Een geweigerde meervoudige limietconsumptie moet volledig terugrollen.',
+    )
+    const storedAbuseBuckets = await prisma.publicIntakeAbuseBucket.findMany()
+    assert.ok(storedAbuseBuckets.length > 0)
+    assert.equal(
+      storedAbuseBuckets.some((bucket) =>
+        bucket.subjectHash.includes('203.0.113.77') ||
+        bucket.subjectHash.includes('database-test-public-intake-session')
+      ),
+      false,
+      'Ruwe IP- en sessiewaarden mogen niet worden opgeslagen.',
+    )
+    const midnightAIBuckets = await prisma.publicIntakeAbuseBucket.groupBy({
+      by: ['subjectType'],
+      where: { operation: 'AI_CLASSIFICATION' },
+      _count: { _all: true },
+    })
+    assert.deepEqual(
+      midnightAIBuckets
+        .map((bucket) => [bucket.subjectType, bucket._count._all])
+        .sort(([left], [right]) => String(left).localeCompare(String(right))),
+      [['GLOBAL', 2], ['IP', 2], ['SESSION', 2]],
+      'Ieder subject moet om 00:00 UTC een aparte burst- en dagbucket behouden.',
+    )
+    const midnightAIWindows = await prisma.publicIntakeAbuseBucket.findMany({
+      where: { operation: 'AI_CLASSIFICATION' },
+      select: { windowStartedAt: true, windowEndsAt: true },
+      distinct: ['windowStartedAt', 'windowEndsAt'],
+      orderBy: { windowEndsAt: 'asc' },
+    })
+    assert.deepEqual(
+      midnightAIWindows.map((bucket) => [
+        bucket.windowStartedAt.toISOString(),
+        bucket.windowEndsAt.toISOString(),
+      ]),
+      [
+        ['2026-08-20T00:00:00.000Z', '2026-08-20T00:10:00.000Z'],
+        ['2026-08-20T00:00:00.000Z', '2026-08-21T00:00:00.000Z'],
+      ],
+    )
 
     const startedAt = new Date()
     const afterMinutes = (minutes: number) =>
@@ -485,7 +557,7 @@ async function main() {
     assert.deepEqual(counts[0], { users: 0, organizations: 0, memberships: 0 })
 
     console.info(
-      'Database-integriteit publieke conceptintake: tokens, revisies, events, bewuste beëindiging, lifecycle, concurrency en tenantafwezigheid geslaagd.',
+      'Database-integriteit publieke conceptintake: abusebegrenzing, tokens, revisies, events, bewuste beëindiging, lifecycle, concurrency en tenantafwezigheid geslaagd.',
     )
   } finally {
     if (prisma) await prisma.$disconnect()

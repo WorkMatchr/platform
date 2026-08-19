@@ -54,6 +54,7 @@ export type PublicIntakeDraftView = {
   contextQuestions?: readonly PublicIntakeContextQuestionView[]
   guidance: PublicIntakeGuidanceHandoff
   aiClassification?: AIClassifierOutput | null
+  aiClassificationProtection?: 'RATE_LIMITED' | 'PROTECTION_UNAVAILABLE'
   adviceDossier?: {
     id: string
     dossierCode: string

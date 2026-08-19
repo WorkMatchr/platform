@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { AIClassifier } from './ai-classifier-contract'
 import {
+  AI_INTAKE_MAX_INPUT_CHARACTERS,
   classifyAIIntakeSafely,
   createConfiguredAIClassifier,
 } from './ai-classifier-service'
@@ -102,5 +103,23 @@ describe('veilige AI Intake Classifier-service', () => {
     expect(JSON.stringify(logger.mock.calls)).not.toContain(
       fictionalHelpRequest,
     )
+  })
+
+  it('weigert oversized invoer vóór de provider wordt aangeroepen', async () => {
+    const classifier: AIClassifier = {
+      provider: 'fictieve-provider',
+      model: 'fictief-model',
+      classify: vi.fn(),
+    }
+
+    await expect(classifyAIIntakeSafely(
+      'x'.repeat(AI_INTAKE_MAX_INPUT_CHARACTERS + 1),
+      { classifier, logger: vi.fn() },
+    )).resolves.toMatchObject({
+      classification: null,
+      fallbackReason: 'INPUT_REJECTED',
+    })
+
+    expect(classifier.classify).not.toHaveBeenCalled()
   })
 })

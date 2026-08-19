@@ -2753,6 +2753,24 @@ model PublicIntakeAIClassificationCache {
   @@index([completedAt])
 }
 
+model PublicIntakeAbuseBucket {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  environment     String   @db.VarChar(20)
+  operation       String   @db.VarChar(30)
+  subjectType     String   @db.VarChar(20)
+  subjectHash     String   @db.Char(64)
+  windowStartedAt DateTime @db.Timestamptz(3)
+  windowEndsAt    DateTime @db.Timestamptz(3)
+  requestCount    Int      @default(1)
+  expiresAt       DateTime @db.Timestamptz(3)
+  createdAt       DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime @updatedAt @db.Timestamptz(3)
+
+  @@unique([environment, operation, subjectType, subjectHash, windowStartedAt, windowEndsAt])
+  @@index([expiresAt])
+  @@index([operation, windowEndsAt])
+}
+
 model AdviceDossierCounter {
   year       Int      @id
   nextNumber Int

@@ -75,6 +75,16 @@ worden vastgelegd.
 
 De standaardtimeout is vier seconden. De classifier wordt alleen aangeroepen voor een vrije hulpvraag waarvoor nog geen onderwerpantwoord is opgeslagen.
 
+## Abuse- en kostenbegrenzing
+
+Een cachemiss mag de provider uitsluitend bereiken nadat de persistente publieke-intakelimiter toestemming heeft gegeven. De limiter combineert een IP-, anonieme sessie- en globale begrenzing. Cachehits starten geen nieuwe kostencontrole en geen nieuwe providercall. Steeds wisselende invoer om de classificatiecache te omzeilen blijft daardoor begrensd op dezelfde gepseudonimiseerde IP- en sessiesleutels.
+
+Voor AI-classificatie gelden voor de MVP de volgende bovengrenzen: per sessie 3 pogingen per 10 minuten en 8 per dag, per IP 6 per 10 minuten en 20 per dag, en globaal 30 per 10 minuten en 300 per dag. De algemene publieke-intakeacties hebben ruimere burst- en daggrenzen zodat normaal menselijk gebruik niet merkbaar wordt gehinderd. Invoer blijft vóór de provider begrensd tot 2.000 tekens.
+
+De IP-sleutel gebruikt uitsluitend Vercels door het platform overschreven `x-forwarded-for`-header. In Production wordt een request buiten de aantoonbare Vercel-proxycontext geweigerd. Ruwe IP-adressen en sessietokens worden niet opgeslagen: een domeingescheiden HMAC met het server-side Better Auth-secret levert per environment een niet-omkeerbare sleutel. Production en Preview gebruiken daarnaast afzonderlijke databases en secrets en delen dus geen limiterstate.
+
+Een onbetrouwbare IP-context, ontbrekend secret of niet-beschikbare limiter faalt gesloten: er volgt geen OpenAI-call. De gebruiker krijgt alleen een rustige generieke melding; interne grenzen, sleutels en oorzaken blijven server-side.
+
 ## Configuratie
 
 Gebruik uitsluitend server-side omgevingsvariabelen:

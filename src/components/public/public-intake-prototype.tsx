@@ -11,10 +11,12 @@ import { PublicIntakeWorkspace } from './public-intake-workspace'
 export function PublicIntakePrototype({
   initialDraft,
   invalidSession = false,
+  temporarilyUnavailable = false,
   knowledgeContext = null,
 }: {
   initialDraft: PublicIntakeDraftView | null
   invalidSession?: boolean
+  temporarilyUnavailable?: boolean
   knowledgeContext?: KnowledgeContextDefinition | null
 }) {
   const [draft, setDraft] = useState(initialDraft)
@@ -61,6 +63,9 @@ export function PublicIntakePrototype({
       <PublicIntakeStart
         sessionNotice={
           sessionNotice ??
+          (temporarilyUnavailable
+            ? 'Er zijn tijdelijk te veel aanvragen gedaan. Probeer het later opnieuw.'
+            : undefined) ??
           (invalidSession
             ? 'Uw eerdere antwoorden konden niet meer worden hervat. U kunt hieronder opnieuw beginnen.'
             : undefined)

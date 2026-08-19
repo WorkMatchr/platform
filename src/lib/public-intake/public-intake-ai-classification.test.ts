@@ -46,7 +46,10 @@ describe('Public Intake AI-classificatiehandoff', () => {
   it('verrijkt alleen een vrije hulpvraag zonder bevestigde onderwerpkeuze', async () => {
     const result = await enrichPublicIntakeDraftWithAIClassification(draft)
 
-    expect(mocks.classify).toHaveBeenCalledWith(draft.originalInput)
+    expect(mocks.classify).toHaveBeenCalledWith(
+      draft.originalInput,
+      { authorizeExternalCall: undefined },
+    )
     expect(result.aiClassification?.primarySubject).toBe(
       'HAZARDOUS_SUBSTANCES',
     )
@@ -115,6 +118,22 @@ describe('Public Intake AI-classificatiehandoff', () => {
       aiClassification: null,
       entryPoint: 'FREE_TEXT',
       answers: [],
+    })
+  })
+
+  it('markeert een begrensde AI-call zonder technische details te tonen', async () => {
+    mocks.classify.mockResolvedValue({
+      classification: null,
+      fallbackUsed: true,
+      fallbackReason: 'RATE_LIMITED',
+      providerStatusCode: null,
+    })
+
+    await expect(
+      enrichPublicIntakeDraftWithAIClassification(draft),
+    ).resolves.toMatchObject({
+      aiClassification: null,
+      aiClassificationProtection: 'RATE_LIMITED',
     })
   })
 

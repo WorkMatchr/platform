@@ -4,6 +4,16 @@
 
 WorkMatchr gebruikt geen zelfgebouwde wachtwoordhashing, cookiecryptografie of JWT-logica. Better Auth 1.6.23 gebruikt voor standaard wachtwoorden `scrypt` en beheert sessietokens, HttpOnly-cookies, CSRF/origincontrole en tokenverificatie. Cookies zijn `Secure` in productie en tokens worden niet in `localStorage` opgeslagen.
 
+## Publieke AI-intake
+
+De publieke Advieswijzer gebruikt een persistente, fail-closed limiter vóór muterend intakewerk en vóór iedere externe AI-call. De limiter bewaart uitsluitend kortlevende HMAC-sleutels voor IP, anonieme sessie en globale buckets; nooit ruwe IP-adressen of sessietokens. Verlopen buckets worden tijdens normaal limitergebruik verwijderd en hebben maximaal twee dagen extra technische retentie na hun venster.
+
+Alle aantallen en tijdvensters staan server-side op één configuratiepunt in `public-intake-abuse-protection.ts`. Zonder configuratie gelden de gedocumenteerde veilige defaults. Een optionele volledige `PUBLIC_INTAKE_ABUSE_LIMITS_JSON`-configuratie wordt vóór gebruik gecontroleerd op integerwaarden, minimale vensterduur en harde maximumaantallen. Een onvolledige, ongeldige of te ruime configuratie faalt gesloten; er bestaat geen client- of beheerendpoint om deze waarden te lezen of wijzigen.
+
+Op Vercel wordt uitsluitend `x-forwarded-for` vertrouwd, omdat Vercel deze requestheader aan de platformgrens overschrijft. Een Production-request zonder aantoonbare Vercel-context of geldige enkelvoudige IP-waarde faalt gesloten. Client-aangeleverde alternatieve forwardingheaders zijn geen autorisatie- of limietbron.
+
+De AI-limiter staat vóór een cacheclaim en providercall. Daardoor kunnen unieke prompts de kostenbegrenzing niet omzeilen. Een globale circuitbreaker begrenst onverwacht totaalverkeer. Limiteruitval, ontbrekende pseudonimiseringsconfiguratie en te lange invoer leiden nooit tot een OpenAI-call of kostbaar vervolgwerk.
+
 ## Sessies en autorisatie
 
 - databasegebaseerde sessies verlopen na zeven dagen;

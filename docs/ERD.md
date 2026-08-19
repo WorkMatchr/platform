@@ -40,6 +40,17 @@ erDiagram
     json classificationJson
     string fallbackReason
   }
+  PublicIntakeAbuseBucket {
+    uuid id PK
+    string environment
+    string operation
+    string subjectType
+    char subjectHash
+    datetime windowStartedAt
+    datetime windowEndsAt
+    int requestCount
+    datetime expiresAt
+  }
   PublicIntakeDraft {
     uuid id PK
     PublicIntakePhase phase
@@ -82,7 +93,7 @@ erDiagram
   }
 ```
 
-Dit domein heeft bewust geen relatie naar User, Organization, membership, Intake of Assignment. Het volledige toegangstoken wordt nooit opgeslagen; alleen de hash staat in `PublicIntakeSession`. Een bewuste reset verwijdert geen records: de draft krijgt terminaal `ABANDONED_BY_USER`, de sessie krijgt `revokedAt` en het append-only event bewaart uitsluitend fasecontext en reden. De losstaande classificatiecache bevat uitsluitend een niet-omkeerbare fingerprint en gevalideerde structured output of een veilige fallback; de vrije hulpvraag wordt niet gedupliceerd.
+Dit domein heeft bewust geen relatie naar User, Organization, membership, Intake of Assignment. Het volledige toegangstoken wordt nooit opgeslagen; alleen de hash staat in `PublicIntakeSession`. Een bewuste reset verwijdert geen records: de draft krijgt terminaal `ABANDONED_BY_USER`, de sessie krijgt `revokedAt` en het append-only event bewaart uitsluitend fasecontext en reden. De losstaande classificatiecache bevat uitsluitend een niet-omkeerbare fingerprint en gevalideerde structured output of een veilige fallback; de vrije hulpvraag wordt niet gedupliceerd. `PublicIntakeAbuseBucket` staat eveneens los van inhoudelijke records en bewaart alleen kortlevende, per environment domeingescheiden HMAC-buckets voor IP, sessie en globale begrenzing.
 
 ## Adviesdossiers — Module 7C
 
