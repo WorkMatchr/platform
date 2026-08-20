@@ -16,3 +16,7 @@ Providerkwalificatie, readiness en selecteerbaarheid blijven afzonderlijke bronb
 ## Gevolgen
 
 De volledige marktketen is reproduceerbaar en concurrentieveilig. Meer tabellen en expliciete statusovergangen zijn noodzakelijk. Credits kopen, betaalintegratie, reviews, AI, publieke providerzoeking en algemene chat blijven buiten scope.
+
+## Productcorrectie augustus 2026
+
+Een nieuwe Assignment-deelname is voortaan een aankoop: na een beperkte server-side preview worden 25 credits direct definitief afgeschreven. Maximaal drie professionals kunnen kopen. Volledige opdrachtinformatie volgt pas na aankoop en offerte-indiening kost geen extra credits. Bestaande reservation-backed deelnames blijven historisch intact.

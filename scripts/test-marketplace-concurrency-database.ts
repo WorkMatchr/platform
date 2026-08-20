@@ -42,6 +42,7 @@ async function main() {
     process.env.DATABASE_URL = testUrl.toString()
     const { getPrisma } = await import('../src/lib/prisma')
     const { acceptProviderInvitation } = await import('../src/lib/marketplace/participation-service')
+    const { getProviderInvitationDetail } = await import('../src/lib/marketplace/dashboard-query-service')
     const { saveQuoteDraft, submitQuote } = await import('../src/lib/marketplace/quote-service')
     const { awardMarketplaceQuote } = await import('../src/lib/marketplace/award-service')
     const { correctMarketplaceCredits, grantMarketplaceCredits, reserveCreditsInTransaction } = await import('../src/lib/marketplace/credit-service')
@@ -51,10 +52,16 @@ async function main() {
     const clientOrganization = await prisma.organization.create({ data: { name: 'TEST-WM-Concurrentie Opdrachtgever', organizationType: 'CLIENT', status: 'ACTIVE' } })
     const providerOrganization = await prisma.organization.create({ data: { name: 'TEST-WM-Concurrentie Dienstverlener', organizationType: 'PROVIDER', status: 'ACTIVE' } })
     const secondProviderOrganization = await prisma.organization.create({ data: { name: 'TEST-WM-Concurrentie Dienstverlener Twee', organizationType: 'PROVIDER', status: 'ACTIVE' } })
+    const thirdProviderOrganization = await prisma.organization.create({ data: { name: 'TEST-WM-Concurrentie Dienstverlener Drie', organizationType: 'PROVIDER', status: 'ACTIVE' } })
+    const fourthProviderOrganization = await prisma.organization.create({ data: { name: 'TEST-WM-Concurrentie Dienstverlener Vier', organizationType: 'PROVIDER', status: 'ACTIVE' } })
+    const poorProviderOrganization = await prisma.organization.create({ data: { name: 'TEST-WM-Onvoldoende credits', organizationType: 'PROVIDER', status: 'ACTIVE' } })
     const platformOrganization = await prisma.organization.create({ data: { name: 'TEST-WM-Platform', organizationType: 'PLATFORM_OPERATOR', status: 'ACTIVE', systemKey: 'WORKMATCHR_PLATFORM' } })
     const clientUser = await prisma.user.create({ data: { email: `client-${randomUUID()}@example.invalid`, status: 'ACTIVE', accountType: 'CLIENT', emailVerified: true, memberships: { create: { organizationId: clientOrganization.id, role: 'OWNER', status: 'ACTIVE' } } } })
     const providerUser = await prisma.user.create({ data: { email: `provider-${randomUUID()}@example.invalid`, status: 'ACTIVE', accountType: 'PROFESSIONAL', emailVerified: true, memberships: { create: { organizationId: providerOrganization.id, role: 'OWNER', status: 'ACTIVE' } } } })
     const secondProviderUser = await prisma.user.create({ data: { email: `provider-two-${randomUUID()}@example.invalid`, status: 'ACTIVE', accountType: 'PROFESSIONAL', emailVerified: true, memberships: { create: { organizationId: secondProviderOrganization.id, role: 'OWNER', status: 'ACTIVE' } } } })
+    const thirdProviderUser = await prisma.user.create({ data: { email: `provider-three-${randomUUID()}@example.invalid`, status: 'ACTIVE', accountType: 'PROFESSIONAL', emailVerified: true, memberships: { create: { organizationId: thirdProviderOrganization.id, role: 'OWNER', status: 'ACTIVE' } } } })
+    const fourthProviderUser = await prisma.user.create({ data: { email: `provider-four-${randomUUID()}@example.invalid`, status: 'ACTIVE', accountType: 'PROFESSIONAL', emailVerified: true, memberships: { create: { organizationId: fourthProviderOrganization.id, role: 'OWNER', status: 'ACTIVE' } } } })
+    const poorProviderUser = await prisma.user.create({ data: { email: `provider-poor-${randomUUID()}@example.invalid`, status: 'ACTIVE', accountType: 'PROFESSIONAL', emailVerified: true, memberships: { create: { organizationId: poorProviderOrganization.id, role: 'OWNER', status: 'ACTIVE' } } } })
     const platformAdmin = await prisma.user.create({ data: { email: `admin-${randomUUID()}@example.invalid`, status: 'ACTIVE', emailVerified: true, platformRole: 'ADMIN', memberships: { create: { organizationId: platformOrganization.id, role: 'ADMIN', status: 'ACTIVE' } } } })
 
     async function createSelectableProvider(organizationId: string) {
@@ -67,10 +74,17 @@ async function main() {
 
     const provider = await createSelectableProvider(providerOrganization.id)
     const secondProvider = await createSelectableProvider(secondProviderOrganization.id)
+    const thirdProvider = await createSelectableProvider(thirdProviderOrganization.id)
+    const fourthProvider = await createSelectableProvider(fourthProviderOrganization.id)
+    const poorProvider = await createSelectableProvider(poorProviderOrganization.id)
     const providerCreditAccount = await prisma.creditAccount.create({ data: { organizationId: providerOrganization.id } })
     const secondProviderCreditAccount = await prisma.creditAccount.create({ data: { organizationId: secondProviderOrganization.id } })
+    const thirdProviderCreditAccount = await prisma.creditAccount.create({ data: { organizationId: thirdProviderOrganization.id } })
+    const fourthProviderCreditAccount = await prisma.creditAccount.create({ data: { organizationId: fourthProviderOrganization.id } })
     await prisma.creditTransaction.create({ data: { creditAccountId: providerCreditAccount.id, type: 'ADMIN_GRANT', amount: 100, totalDelta: 100, reservedDelta: 0, balanceAfter: 100, reason: 'Fictief beginsaldo voor de concurrencytest.', createdByUserId: providerUser.id, idempotencyKey: randomUUID() } })
     await prisma.creditTransaction.create({ data: { creditAccountId: secondProviderCreditAccount.id, type: 'ADMIN_GRANT', amount: 100, totalDelta: 100, reservedDelta: 0, balanceAfter: 100, reason: 'Fictief beginsaldo voor de concurrencytest.', createdByUserId: secondProviderUser.id, idempotencyKey: randomUUID() } })
+    await prisma.creditTransaction.create({ data: { creditAccountId: thirdProviderCreditAccount.id, type: 'ADMIN_GRANT', amount: 100, totalDelta: 100, reservedDelta: 0, balanceAfter: 100, reason: 'Fictief beginsaldo voor de concurrencytest.', createdByUserId: thirdProviderUser.id, idempotencyKey: randomUUID() } })
+    await prisma.creditTransaction.create({ data: { creditAccountId: fourthProviderCreditAccount.id, type: 'ADMIN_GRANT', amount: 100, totalDelta: 100, reservedDelta: 0, balanceAfter: 100, reason: 'Fictief beginsaldo voor de concurrencytest.', createdByUserId: fourthProviderUser.id, idempotencyKey: randomUUID() } })
 
     async function createInvitation(providerData: typeof provider, providerOrganizationId: string, assignmentId?: string) {
       let assignment = assignmentId
@@ -88,21 +102,27 @@ async function main() {
       const run = await prisma!.marketplaceMatchRun.create({ data: { assignmentId: assignment.id, assignmentVersion: assignment.version, engineVersion: 'test', modelVersion: 'test', ruleVersion: 'test', taxonomyVersion: 'test', startedByUserId: clientUser.id, idempotencyKey: randomUUID(), confidenceLevel: 'HOOG', confidenceReasons: [], assignmentSnapshot: {}, inputChecksum: randomUUID().replaceAll('-', '').padEnd(64, '3').slice(0, 64) } })
       const candidate = await prisma!.marketplaceMatchCandidate.create({ data: { matchRunId: run.id, providerProfileId: providerData.profile.id, projectionId: providerData.projection.id, status: 'SELECTED', rank: 1, scoreNumerator: 1, scoreDenominator: 1, normalizedScore: 10_000, exclusionReasons: [], explanation: {}, providerSnapshot: {}, snapshotChecksum: randomUUID().replaceAll('-', '').padEnd(64, '4').slice(0, 64) } })
       await prisma!.assignmentProviderSelection.create({ data: { assignmentId: assignment.id, providerProfileId: providerData.profile.id, source: 'AUTOMATIC', status: 'INVITED', selectedByUserId: clientUser.id } })
-      const invitation = await prisma!.providerInvitation.create({ data: { assignmentId: assignment.id, matchRunId: run.id, matchCandidateId: candidate.id, providerProfileId: providerData.profile.id, providerOrganizationId, creditCost: 10, deadlineAt: new Date(Date.now() + 86_400_000), snapshot: {}, snapshotChecksum: randomUUID().replaceAll('-', '').padEnd(64, '5').slice(0, 64), idempotencyKey: randomUUID() } })
+      const invitation = await prisma!.providerInvitation.create({ data: { assignmentId: assignment.id, matchRunId: run.id, matchCandidateId: candidate.id, providerProfileId: providerData.profile.id, providerOrganizationId, creditCost: 25, deadlineAt: new Date(Date.now() + 86_400_000), snapshot: {}, snapshotChecksum: randomUUID().replaceAll('-', '').padEnd(64, '5').slice(0, 64), idempotencyKey: randomUUID() } })
       return { assignment, invitation }
     }
 
     const acceptanceFixture = await createInvitation(provider, providerOrganization.id)
+    const previewOnly = await getProviderInvitationDetail(providerUser.id, providerOrganization.id, acceptanceFixture.invitation.id)
+    assert.equal(previewOnly.invitation.fullAssignment, null)
+    assert.equal('description' in previewOnly.invitation.preview, false)
+    assert.equal(previewOnly.invitation.preview.priceCredits, 25)
     const acceptanceRace = await Promise.allSettled([
       acceptProviderInvitation({ actorUserId: providerUser.id, providerOrganizationId: providerOrganization.id, invitationId: acceptanceFixture.invitation.id, idempotencyKey: randomUUID() }),
       acceptProviderInvitation({ actorUserId: providerUser.id, providerOrganizationId: providerOrganization.id, invitationId: acceptanceFixture.invitation.id, idempotencyKey: randomUUID() }),
     ])
     raceResult('Dubbele uitnodigingsacceptatie', acceptanceRace)
     const acceptedParticipation = await prisma.providerParticipation.findUniqueOrThrow({ where: { invitationId: acceptanceFixture.invitation.id }, include: { creditReservation: true } })
+    const fullAccess = await getProviderInvitationDetail(providerUser.id, providerOrganization.id, acceptanceFixture.invitation.id)
+    assert.equal(fullAccess.invitation.fullAssignment?.description, 'Volledig fictieve concurrencytest.')
     assert.equal(await prisma.providerParticipation.count({ where: { invitationId: acceptanceFixture.invitation.id } }), 1)
-    assert.equal(acceptedParticipation.creditReservation?.status, 'ACTIVE')
+    assert.equal(acceptedParticipation.creditReservation, null)
     assert.equal((await prisma.providerInvitation.findUniqueOrThrow({ where: { id: acceptanceFixture.invitation.id } })).status, 'ACCEPTED')
-    assert.equal(await prisma.creditTransaction.count({ where: { reservationId: acceptedParticipation.creditReservation!.id, type: 'RESERVATION' } }), 1)
+    assert.equal(await prisma.creditTransaction.count({ where: { referenceId: acceptedParticipation.id, type: 'PARTICIPATION_PAYMENT', amount: -25 } }), 1)
     assert.equal(await prisma.marketplaceMessageChannel.count({ where: { participationId: acceptedParticipation.id } }), 1)
     assert.equal(await prisma.marketplaceAuditEvent.count({ where: { action: 'INVITATION_ACCEPTED', entityId: acceptedParticipation.id } }), 1)
 
@@ -118,6 +138,17 @@ async function main() {
 
     const secondInvitation = await createInvitation(secondProvider, secondProviderOrganization.id, acceptanceFixture.assignment.id)
     const secondParticipation = await acceptProviderInvitation({ actorUserId: secondProviderUser.id, providerOrganizationId: secondProviderOrganization.id, invitationId: secondInvitation.invitation.id, idempotencyKey: randomUUID() })
+    const thirdInvitation = await createInvitation(thirdProvider, thirdProviderOrganization.id, acceptanceFixture.assignment.id)
+    const fourthInvitation = await createInvitation(fourthProvider, fourthProviderOrganization.id, acceptanceFixture.assignment.id)
+    await acceptProviderInvitation({ actorUserId: thirdProviderUser.id, providerOrganizationId: thirdProviderOrganization.id, invitationId: thirdInvitation.invitation.id, idempotencyKey: randomUUID() })
+    await assert.rejects(() => acceptProviderInvitation({ actorUserId: fourthProviderUser.id, providerOrganizationId: fourthProviderOrganization.id, invitationId: fourthInvitation.invitation.id, idempotencyKey: randomUUID() }), (error: unknown) => Boolean(error && typeof error === 'object' && 'code' in error && error.code === 'FULL'))
+    assert.equal((await prisma.creditAccount.findUniqueOrThrow({ where: { organizationId: fourthProviderOrganization.id } })).availableBalance, 100)
+    assert.equal(await prisma.providerParticipation.count({ where: { assignmentId: acceptanceFixture.assignment.id } }), 3)
+
+    const insufficientFixture = await createInvitation(poorProvider, poorProviderOrganization.id)
+    await assert.rejects(() => acceptProviderInvitation({ actorUserId: poorProviderUser.id, providerOrganizationId: poorProviderOrganization.id, invitationId: insufficientFixture.invitation.id, idempotencyKey: randomUUID() }), (error: unknown) => Boolean(error && typeof error === 'object' && 'code' in error && error.code === 'INSUFFICIENT_CREDITS'))
+    assert.equal(await prisma.providerParticipation.count({ where: { invitationId: insufficientFixture.invitation.id } }), 0)
+    assert.equal(await prisma.marketplaceMessageChannel.count({ where: { assignmentId: insufficientFixture.assignment.id } }), 0)
     const secondQuote = await saveQuoteDraft({ actorUserId: secondProviderUser.id, providerOrganizationId: secondProviderOrganization.id, participationId: secondParticipation.id, expectedQuoteVersion: 0, content: { priceCents: 30_000, priceExplanation: 'Een tweede transparante fictieve testprijs.', approach: 'Een tweede concrete en controleerbare aanpak voor de test.', planning: 'Uitvoering binnen zes weken.' } })
     const quote = await saveQuoteDraft({ actorUserId: providerUser.id, providerOrganizationId: providerOrganization.id, participationId: acceptedParticipation.id, expectedQuoteVersion: 0, content: { priceCents: 25_000, priceExplanation: 'Een transparante fictieve testprijs.', approach: 'Een concrete en controleerbare fictieve aanpak voor deze test.', planning: 'Uitvoering binnen vier weken.' } })
     const quoteKey = randomUUID()
@@ -128,8 +159,9 @@ async function main() {
     raceResult('Dubbele offerte-indiening en creditconsumptie', quoteRace)
     const submittedQuote = await prisma.quote.findUniqueOrThrow({ where: { id: quote.id }, include: { participation: { include: { creditReservation: true } } } })
     assert.equal(submittedQuote.status, 'SUBMITTED')
-    assert.equal(submittedQuote.participation.creditReservation?.status, 'CONSUMED')
-    assert.equal(await prisma.creditTransaction.count({ where: { reservationId: submittedQuote.participation.creditReservation!.id, type: 'CONSUMPTION' } }), 1)
+    assert.equal(submittedQuote.participation.creditReservation, null)
+    assert.equal(await prisma.creditTransaction.count({ where: { referenceId: submittedQuote.participation.id, type: 'PARTICIPATION_PAYMENT' } }), 1)
+    assert.equal(await prisma.creditTransaction.count({ where: { referenceId: submittedQuote.participation.id, type: 'CONSUMPTION' } }), 0)
     assert.equal(await prisma.marketplaceAuditEvent.count({ where: { action: 'QUOTE_SUBMITTED', entityId: quote.id } }), 1)
 
     await submitQuote({ actorUserId: secondProviderUser.id, providerOrganizationId: secondProviderOrganization.id, quoteId: secondQuote.id, expectedQuoteVersion: 1, idempotencyKey: randomUUID() })
@@ -187,7 +219,7 @@ async function main() {
       assert.equal(latestLedger?.reservedAfter, account.reservedBalance)
       assert.equal(latestLedger?.spentAfter, account.spentBalance)
     }
-    assert.equal(await prisma.providerParticipation.count({ where: { assignmentId: acceptanceFixture.assignment.id } }), 2)
+    assert.equal(await prisma.providerParticipation.count({ where: { assignmentId: acceptanceFixture.assignment.id } }), 3)
     assert.equal(await prisma.quote.count({ where: { assignmentId: acceptanceFixture.assignment.id } }), 2)
     console.log('Alle marketplace-races eindigen atomair, zonder negatieve saldi, gedeeltelijke records of dubbele auditgebeurtenissen.')
   } finally {

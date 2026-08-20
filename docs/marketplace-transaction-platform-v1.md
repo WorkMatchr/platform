@@ -14,9 +14,9 @@ Technisch opgeleverd op 20 juli 2026; integrale product-owneracceptatie staat op
 gekwalificeerde providerprojectie
 → expliciete selectie op gepubliceerde opdracht
 → maximaal drie uitnodigingen
-→ deelname + creditreservering
+→ gecontroleerde preview → opdracht kopen + directe afschrijving van 25 credits
 → offerteconcept en immutable versies
-→ indiening + creditconsumptie
+→ offerte indienen zonder extra creditafschrijving
 → één immutable gunning
 → geïsoleerde communicatie en notificaties
 ```

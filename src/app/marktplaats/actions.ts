@@ -11,6 +11,7 @@ import { applyMarketplaceMatchIntervention, runMarketplaceMatching } from '@/lib
 import { sendMarketplaceMessage } from '@/lib/marketplace/messaging-service'
 import { markMarketplaceNotificationRead } from '@/lib/marketplace/notification-service'
 import { acceptProviderInvitation, declineProviderInvitation } from '@/lib/marketplace/participation-service'
+import { MarketplaceServiceError } from '@/lib/marketplace/marketplace-errors'
 import { saveQuoteDraft, submitQuote } from '@/lib/marketplace/quote-service'
 
 const idSchema = z.uuid()
@@ -36,7 +37,15 @@ export async function acceptProviderInvitationAction(formData: FormData) {
   const invitationId = idSchema.parse(formData.get('invitationId'))
   const idempotencyKey = idempotencySchema.parse(formData.get('idempotencyKey'))
   const { user, organizationId } = await context(`/uitnodigingen/${invitationId}`)
-  const participation = await acceptProviderInvitation({ actorUserId: user.id, providerOrganizationId: organizationId, invitationId, idempotencyKey })
+  let participation
+  try {
+    participation = await acceptProviderInvitation({ actorUserId: user.id, providerOrganizationId: organizationId, invitationId, idempotencyKey })
+  } catch (error) {
+    if (error instanceof MarketplaceServiceError && ['INSUFFICIENT_CREDITS', 'FULL', 'INVALID_STATE', 'DEADLINE_PASSED'].includes(error.code)) {
+      redirect(`/uitnodigingen/${invitationId}?purchaseError=${error.code}`)
+    }
+    throw error
+  }
   revalidatePath('/dashboard')
   redirect(`/offertes/nieuw?deelname=${participation.id}`)
 }

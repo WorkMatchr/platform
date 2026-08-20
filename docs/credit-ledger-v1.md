@@ -33,11 +33,14 @@ Het algemene contract ondersteunt:
 | Reservering | `RESERVATION` | gereserveerd omhoog |
 | Vrijgave | `RESERVATION_RELEASE` | gereserveerd omlaag |
 | Definitieve afschrijving | `CONSUMPTION` | totaal en gereserveerd omlaag |
+| Opdracht kopen | `PARTICIPATION_PAYMENT` | totaal direct omlaag, geen reservering |
 | Terugbetaling | `REFUND` | totaal omhoog |
 | Bonus | `CONTRIBUTION_BONUS` | totaal omhoog |
 | Administratieve correctie | `ADMIN_CORRECTION` | totaal gecontroleerd omhoog of omlaag |
 
 Historische marketplace-ledgertypen blijven uitleesbaar. Correcties vervangen nooit een eerdere regel; zij voegen een nieuwe, herleidbare tegenmutatie toe.
+
+Nieuwe aankopen in de bestaande Assignment-marktplaats kosten 25 credits en gebruiken rechtstreeks `PARTICIPATION_PAYMENT`. Er ontstaat geen reservering; het niet indienen van een offerte geeft geen automatische refund. Historische reservation-backed deelnames blijven ongewijzigd.
 
 ## Integriteit en autorisatie
 

@@ -2,6 +2,7 @@ export type MarketplaceErrorCode =
   | 'ACCESS_DENIED'
   | 'CONFLICT'
   | 'DEADLINE_PASSED'
+  | 'FULL'
   | 'INSUFFICIENT_CREDITS'
   | 'INVALID_STATE'
   | 'NOT_FOUND'
@@ -12,7 +13,8 @@ const messages: Record<MarketplaceErrorCode, string> = {
   ACCESS_DENIED: 'U heeft geen toegang tot deze handeling.',
   CONFLICT: 'De gegevens zijn intussen gewijzigd. Vernieuw de pagina en probeer opnieuw.',
   DEADLINE_PASSED: 'De reactietermijn is verstreken.',
-  INSUFFICIENT_CREDITS: 'Er zijn onvoldoende beschikbare credits om deel te nemen.',
+  FULL: 'Deze opdracht is inmiddels door drie professionals gekocht.',
+  INSUFFICIENT_CREDITS: 'Uw creditsaldo is te laag om deze opdracht te kopen.',
   INVALID_STATE: 'Deze handeling is in de huidige status niet mogelijk.',
   NOT_FOUND: 'Deze gegevens zijn niet beschikbaar.',
   NOT_SELECTABLE: 'Uw organisatie is op dit moment niet selecteerbaar.',

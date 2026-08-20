@@ -12,3 +12,7 @@ Alle mutaties gebruiken idempotentiesleutels en transactionele versiecontrole. B
 ## Buiten scope
 
 Credits kopen, pakketten, prijzen, facturen, btw, refunds en Mollie/Stripe/webhooks zijn niet gebouwd.
+
+## Productcorrectie augustus 2026
+
+Nieuwe Assignment-aankopen reserveren niet. De aankoop schrijft 25 credits direct af met `PARTICIPATION_PAYMENT`; de offerte kost daarna niets extra. De reserveringsroute blijft uitsluitend bestaan voor ongewijzigde historische records.

@@ -56,6 +56,39 @@ export async function reserveCreditsInTransaction(
   return reservation
 }
 
+export async function purchaseAssignmentInTransaction(
+  transaction: Transaction,
+  input: { organizationId: string; participationId: string; amount: number; actorUserId: string },
+) {
+  const idempotencyKey = `ASSIGNMENT_PURCHASE:${input.participationId}`
+  const repeated = await transaction.creditTransaction.findUnique({ where: { idempotencyKey } })
+  if (repeated) return repeated
+  const account = await loadAccount(transaction, input.organizationId)
+  if (account.availableBalance < input.amount) throw new MarketplaceServiceError('INSUFFICIENT_CREDITS')
+  return transaction.creditTransaction.create({
+    data: {
+      creditAccountId: account.id,
+      type: 'PARTICIPATION_PAYMENT',
+      amount: -input.amount,
+      totalDelta: -input.amount,
+      reservedDelta: 0,
+      balanceBefore: account.availableBalance,
+      balanceAfter: account.availableBalance - input.amount,
+      availableBefore: account.availableBalance,
+      availableAfter: account.availableBalance - input.amount,
+      reservedBefore: account.reservedBalance,
+      reservedAfter: account.reservedBalance,
+      spentBefore: account.spentBalance,
+      spentAfter: account.spentBalance + input.amount,
+      referenceType: 'ProviderParticipation',
+      referenceId: input.participationId,
+      reason: '25 credits definitief afgeschreven voor aankoop van een opdracht.',
+      idempotencyKey,
+      createdByUserId: input.actorUserId,
+    },
+  })
+}
+
 export async function consumeCreditReservationInTransaction(
   transaction: Transaction,
   input: { reservationId: string; actorUserId: string; idempotencyKey: string },

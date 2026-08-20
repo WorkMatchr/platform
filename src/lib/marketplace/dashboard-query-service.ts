@@ -2,6 +2,7 @@ import { getPrisma } from '@/lib/prisma'
 import { hasValidPlatformActorFoundation } from '@/lib/account-architecture/platform-actor-policy'
 import { deriveCreditBalance } from '@/lib/credits/credit-ledger-contract'
 import { MarketplaceServiceError } from './marketplace-errors'
+import { toAssignmentPreview } from './assignment-purchase-preview'
 
 async function loadPlatformMetrics(actorPermissions: string[], canManageMarketplace: boolean) {
   const prisma = getPrisma()
@@ -187,12 +188,35 @@ export async function getProviderInvitationDetail(userId: string, organizationId
       status: true,
       creditCost: true,
       deadlineAt: true,
-      participation: { select: { id: true, status: true, version: true, quote: { select: { id: true, status: true, version: true } }, messageChannel: { select: { id: true } } } },
-      assignment: { select: { id: true, title: true, description: true, responseDeadline: true, allowsRemoteWork: true } },
+      participation: { select: { id: true, status: true, version: true, creditReservation: { select: { id: true } }, quote: { select: { id: true, status: true, version: true } }, messageChannel: { select: { id: true } } } },
+      assignment: { select: {
+        id: true, title: true, description: true, employeeCount: true, desiredStartDate: true, responseDeadline: true,
+        locationCity: true, locationProvince: true, locationRegion: true, locationCount: true, allowsRemoteWork: true,
+        locationName: true, locationAddressLine: true, locationPostalCode: true, locationCountryCode: true, locationDescription: true,
+        clientOrganization: { select: { name: true, generalEmail: true, phone: true } },
+        primarySpecialism: { select: { name: true } }, sector: { select: { name: true } },
+      } },
     },
   })
   if (!invitation) throw new MarketplaceServiceError('NOT_FOUND')
-  return { membership, invitation }
+  const [account, purchase] = await Promise.all([
+    getPrisma().creditAccount.findUnique({ where: { organizationId }, select: { availableBalance: true } }),
+    invitation.participation ? getPrisma().creditTransaction.findFirst({ where: { referenceType: 'ProviderParticipation', referenceId: invitation.participation.id, type: 'PARTICIPATION_PAYMENT' }, select: { id: true } }) : null,
+  ])
+  const preview = toAssignmentPreview(invitation.assignment)
+  const hasFullAccess = Boolean(invitation.participation && (invitation.participation.creditReservation || purchase))
+  return {
+    membership,
+    availableCredits: account?.availableBalance ?? 0,
+    invitation: {
+      id: invitation.id,
+      status: invitation.status,
+      deadlineAt: invitation.deadlineAt,
+      participation: invitation.participation,
+      preview,
+      fullAssignment: hasFullAccess ? invitation.assignment : null,
+    },
+  }
 }
 
 export async function getClientQuotes(userId: string, organizationId: string, assignmentId: string) {
@@ -236,9 +260,14 @@ export async function getProviderParticipationForQuote(userId: string, organizat
   if (!membership) throw new MarketplaceServiceError('ACCESS_DENIED')
   const participation = await getPrisma().providerParticipation.findFirst({
     where: { id: participationId, providerOrganizationId: organizationId, status: 'ACTIVE' },
-    select: { id: true, assignment: { select: { title: true } }, quote: { select: { id: true, version: true } }, invitation: { select: { deadlineAt: true } } },
+    select: { id: true, creditReservation: { select: { id: true } }, assignment: { select: { title: true } }, quote: { select: { id: true, version: true } }, invitation: { select: { deadlineAt: true } } },
   })
   if (!participation) throw new MarketplaceServiceError('NOT_FOUND')
+  const purchase = participation.creditReservation ? null : await getPrisma().creditTransaction.findFirst({
+    where: { referenceType: 'ProviderParticipation', referenceId: participation.id, type: 'PARTICIPATION_PAYMENT' },
+    select: { id: true },
+  })
+  if (!participation.creditReservation && !purchase) throw new MarketplaceServiceError('ACCESS_DENIED')
   return { membership, participation }
 }
 

@@ -39,6 +39,11 @@ export async function saveQuoteDraft(input: {
       },
     })
     if (!participation) throw new MarketplaceServiceError('NOT_FOUND')
+    const [legacyReservation, purchase] = await Promise.all([
+      transaction.creditReservation.findUnique({ where: { participationId: participation.id }, select: { id: true } }),
+      transaction.creditTransaction.findFirst({ where: { referenceType: 'ProviderParticipation', referenceId: participation.id, type: 'PARTICIPATION_PAYMENT' }, select: { id: true } }),
+    ])
+    if (!legacyReservation && !purchase) throw new MarketplaceServiceError('ACCESS_DENIED')
     const invitation = await transaction.providerInvitation.findUniqueOrThrow({ where: { id: participation.invitationId }, select: { deadlineAt: true } })
     const existingQuote = await transaction.quote.findUnique({ where: { participationId: participation.id } })
     if (invitation.deadlineAt <= new Date()) throw new MarketplaceServiceError('DEADLINE_PASSED')
@@ -107,18 +112,24 @@ export async function submitQuote(input: {
     const reservation = await transaction.creditReservation.findUnique({ where: { participationId: participation.id } })
     const invitation = await transaction.providerInvitation.findUniqueOrThrow({ where: { id: participation.invitationId }, select: { deadlineAt: true } })
     const assignment = await transaction.assignment.findUniqueOrThrow({ where: { id: participation.assignmentId }, select: { clientOrganizationId: true, status: true } })
-    if (!reservation) throw new MarketplaceServiceError('NOT_FOUND')
+    const purchase = reservation ? null : await transaction.creditTransaction.findFirst({
+      where: { referenceType: 'ProviderParticipation', referenceId: participation.id, type: 'PARTICIPATION_PAYMENT' },
+      select: { id: true },
+    })
+    if (!reservation && !purchase) throw new MarketplaceServiceError('NOT_FOUND')
     if (quote.status === 'SUBMITTED' && quote.submittedVersionId === quote.currentVersionId) return quote
     if (quote.status !== 'DRAFT' || quote.version !== input.expectedQuoteVersion || participation.status !== 'ACTIVE') {
       throw new MarketplaceServiceError('CONFLICT')
     }
     if (invitation.deadlineAt <= now) throw new MarketplaceServiceError('DEADLINE_PASSED')
     if (!['AWAITING_RESPONSES', 'IN_SELECTION'].includes(assignment.status)) throw new MarketplaceServiceError('INVALID_STATE')
-    await consumeCreditReservationInTransaction(transaction, {
-      reservationId: reservation.id,
-      actorUserId: input.actorUserId,
-      idempotencyKey: `CONSUME:${input.idempotencyKey}`,
-    })
+    if (reservation) {
+      await consumeCreditReservationInTransaction(transaction, {
+        reservationId: reservation.id,
+        actorUserId: input.actorUserId,
+        idempotencyKey: `CONSUME:${input.idempotencyKey}`,
+      })
+    }
     const updated = await transaction.quote.updateMany({
       where: { id: quote.id, status: 'DRAFT', version: input.expectedQuoteVersion, currentVersionId: currentVersion.id },
       data: { status: 'SUBMITTED', submittedAt: now, submittedVersionId: currentVersion.id, version: { increment: 1 } },
@@ -161,7 +172,7 @@ export async function submitQuote(input: {
       previousState: 'DRAFT',
       nextState: 'SUBMITTED',
       correlationKey: input.idempotencyKey,
-      metadata: { quoteVersionId: currentVersion.id, quoteVersion: currentVersion.version },
+      metadata: { quoteVersionId: currentVersion.id, quoteVersion: currentVersion.version, creditsChargedAtPurchase: Boolean(purchase) },
     })
     const submittedQuote = await transaction.quote.findUniqueOrThrow({ where: { id: quote.id } })
     const submittedVersion = await transaction.quoteVersion.findUniqueOrThrow({ where: { id: currentVersion.id } })

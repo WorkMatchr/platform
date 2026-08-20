@@ -1,6 +1,7 @@
 import { getPrisma } from '@/lib/prisma'
 import { requireProviderMarketplaceAccess } from './marketplace-authorization'
-import { reserveCreditsInTransaction, releaseCreditReservationInTransaction } from './credit-service'
+import { purchaseAssignmentInTransaction, releaseCreditReservationInTransaction } from './credit-service'
+import { ASSIGNMENT_MAX_PURCHASERS, ASSIGNMENT_PURCHASE_PRICE_CREDITS } from './assignment-purchase-preview'
 import { MarketplaceServiceError } from './marketplace-errors'
 import { activeOrganizationRecipients, createMarketplaceNotification, writeMarketplaceAudit } from './marketplace-events'
 
@@ -12,25 +13,36 @@ export async function acceptProviderInvitation(input: {
   now?: Date
 }) {
   const now = input.now ?? new Date()
-  return getPrisma().$transaction(async (transaction) => {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      return await getPrisma().$transaction(async (transaction) => {
     const repeated = await transaction.providerParticipation.findUnique({ where: { idempotencyKey: input.idempotencyKey }, include: { creditReservation: true } })
     if (repeated) return repeated
     const access = await requireProviderMarketplaceAccess(transaction, input.actorUserId, input.providerOrganizationId, true)
-    const invitation = await transaction.providerInvitation.findFirst({
+    const invitationIdentity = await transaction.providerInvitation.findFirst({
       where: {
         id: input.invitationId,
         providerOrganizationId: input.providerOrganizationId,
         providerProfileId: access.providerProfile.id,
-        status: 'INVITED',
       },
-      include: { assignment: { select: { clientOrganizationId: true, status: true } } },
+      select: { assignmentId: true },
+    })
+    if (!invitationIdentity) throw new MarketplaceServiceError('NOT_FOUND')
+    await transaction.$queryRaw`SELECT "id" FROM "Assignment" WHERE "id" = ${invitationIdentity.assignmentId}::uuid FOR UPDATE`
+    const invitation = await transaction.providerInvitation.findFirst({
+      where: { id: input.invitationId, providerOrganizationId: input.providerOrganizationId, providerProfileId: access.providerProfile.id },
+      include: { assignment: { select: { clientOrganizationId: true, status: true } }, participation: { include: { creditReservation: true } } },
     })
     if (!invitation) throw new MarketplaceServiceError('NOT_FOUND')
+    if (invitation.participation) return invitation.participation
+    if (invitation.status !== 'INVITED') throw new MarketplaceServiceError('INVALID_STATE')
     if (invitation.deadlineAt <= now) throw new MarketplaceServiceError('DEADLINE_PASSED')
     if (access.providerProfile.selectabilityStatus !== 'SELECTABLE' || access.providerProfile.lifecycleStatus !== 'QUALIFIED') {
       throw new MarketplaceServiceError('NOT_SELECTABLE')
     }
-    if (!['AWAITING_RESPONSES', 'MATCHING'].includes(invitation.assignment.status)) throw new MarketplaceServiceError('INVALID_STATE')
+    if (!['AWAITING_RESPONSES', 'MATCHING', 'IN_SELECTION'].includes(invitation.assignment.status)) throw new MarketplaceServiceError('INVALID_STATE')
+    const purchaserCount = await transaction.providerParticipation.count({ where: { assignmentId: invitation.assignmentId, status: 'ACTIVE' } })
+    if (purchaserCount >= ASSIGNMENT_MAX_PURCHASERS) throw new MarketplaceServiceError('FULL')
     const participation = await transaction.providerParticipation.create({
       data: {
         assignmentId: invitation.assignmentId,
@@ -42,11 +54,10 @@ export async function acceptProviderInvitation(input: {
         acceptedAt: now,
       },
     })
-    const reservation = await reserveCreditsInTransaction(transaction, {
+    const payment = await purchaseAssignmentInTransaction(transaction, {
       organizationId: input.providerOrganizationId,
       participationId: participation.id,
-      amount: invitation.creditCost,
-      idempotencyKey: `RESERVE:${participation.id}`,
+      amount: ASSIGNMENT_PURCHASE_PRICE_CREDITS,
       actorUserId: input.actorUserId,
     })
     await transaction.providerInvitation.update({
@@ -86,10 +97,20 @@ export async function acceptProviderInvitation(input: {
       previousState: 'INVITED',
       nextState: 'ACTIVE',
       correlationKey: input.idempotencyKey,
-      metadata: { invitationId: invitation.id, reservationId: reservation.id },
+      metadata: { invitationId: invitation.id, paymentId: payment.id, credits: ASSIGNMENT_PURCHASE_PRICE_CREDITS },
     })
-    return { ...participation, creditReservation: reservation }
-  }, { isolationLevel: 'Serializable' })
+    return { ...participation, creditReservation: null, purchaseTransaction: payment }
+      }, { isolationLevel: 'Serializable' })
+    } catch (error) {
+      if (!error || typeof error !== 'object' || !('code' in error) || error.code !== 'P2034') throw error
+    }
+  }
+  const existing = await getPrisma().providerParticipation.findFirst({
+    where: { invitationId: input.invitationId, providerOrganizationId: input.providerOrganizationId },
+    include: { creditReservation: true },
+  })
+  if (existing) return existing
+  throw new MarketplaceServiceError('CONFLICT')
 }
 
 export async function declineProviderInvitation(input: {

@@ -18,6 +18,7 @@ import {
   writeMarketplaceAudit,
 } from './marketplace-events'
 import { evaluateMatchingCandidate, rankMatchingCandidates, type MatchingProviderFacts } from './matching-rules'
+import { assignmentInvitationCopy, toAssignmentPreview } from './assignment-purchase-preview'
 
 type TrustedPayload = {
   capabilities: Array<{ serviceCode: string; specialismCode: string | null; deliveryModes: string[] }>
@@ -97,6 +98,14 @@ export async function runMarketplaceMatching(input: {
         responseDeadline: true,
         publishedVersion: true,
         location: { select: { province: true } },
+        employeeCount: true,
+        desiredStartDate: true,
+        locationCity: true,
+        locationProvince: true,
+        locationRegion: true,
+        locationCount: true,
+        primarySpecialism: { select: { name: true } },
+        sector: { select: { name: true } },
       },
     })
     if (!assignment) throw new MarketplaceServiceError('INVALID_STATE')
@@ -275,6 +284,8 @@ export async function runMarketplaceMatching(input: {
         update: {},
       })
       invitations.push(invitation)
+      const preview = toAssignmentPreview(assignment)
+      const invitationCopy = assignmentInvitationCopy(preview)
       const recipients = await activeOrganizationRecipients(transaction, invitation.providerOrganizationId)
       for (const recipientUserId of recipients) {
         const eventId = `INVITATION:${invitation.id}`
@@ -282,11 +293,11 @@ export async function runMarketplaceMatching(input: {
           recipientUserId,
           eventId,
           type: 'INVITATION_RECEIVED',
-          title: 'Nieuwe uitnodiging',
-          body: 'Uw organisatie is uitgenodigd om een offerte uit te brengen.',
+          title: invitationCopy.title,
+          body: invitationCopy.body,
           targetRoute: `/uitnodigingen/${invitation.id}`,
         })
-        await enqueueMarketplaceEmail(transaction, { eventId, recipientUserId, templateKey: 'MARKETPLACE_INVITATION', payload: { invitationId: invitation.id } })
+        await enqueueMarketplaceEmail(transaction, { eventId, recipientUserId, templateKey: 'MARKETPLACE_INVITATION', payload: { invitationId: invitation.id, preview, cta: invitationCopy.cta } })
       }
     }
     const report = {
@@ -360,7 +371,11 @@ export async function applyMarketplaceMatchIntervention(input: {
     const run = await transaction.marketplaceMatchRun.findFirst({
       where: { id: input.matchRunId, status: 'COMPLETED' },
       include: {
-        assignment: { select: { id: true, responseDeadline: true, status: true } },
+        assignment: { select: {
+          id: true, title: true, status: true, responseDeadline: true, employeeCount: true, desiredStartDate: true,
+          locationCity: true, locationProvince: true, locationRegion: true, locationCount: true, allowsRemoteWork: true,
+          primarySpecialism: { select: { name: true } }, sector: { select: { name: true } },
+        } },
         candidates: {
           where: { id: { in: input.candidateIds }, status: { in: ['ELIGIBLE', 'SELECTED'] } },
           include: { providerProfile: { select: { organizationId: true, selectabilityStatus: true, lifecycleStatus: true } } },
@@ -441,17 +456,19 @@ export async function applyMarketplaceMatchIntervention(input: {
         },
         update: { source: 'MANUAL_ADMIN', status: 'INVITED', removedAt: null, selectedByUserId: input.actorUserId },
       })
+      const preview = toAssignmentPreview(run.assignment)
+      const invitationCopy = assignmentInvitationCopy(preview)
       for (const recipientUserId of await activeOrganizationRecipients(transaction, candidate.providerProfile.organizationId)) {
         const eventId = `INVITATION:${invitation.id}`
         await createMarketplaceNotification(transaction, {
           recipientUserId,
           eventId,
           type: 'INVITATION_RECEIVED',
-          title: 'Nieuwe uitnodiging',
-          body: 'Uw organisatie is uitgenodigd om een offerte uit te brengen.',
+          title: invitationCopy.title,
+          body: invitationCopy.body,
           targetRoute: `/uitnodigingen/${invitation.id}`,
         })
-        await enqueueMarketplaceEmail(transaction, { eventId, recipientUserId, templateKey: 'MARKETPLACE_INVITATION', payload: { invitationId: invitation.id } })
+        await enqueueMarketplaceEmail(transaction, { eventId, recipientUserId, templateKey: 'MARKETPLACE_INVITATION', payload: { invitationId: invitation.id, preview, cta: invitationCopy.cta } })
       }
     }
     return writeMarketplaceAudit(transaction, {
