@@ -90,7 +90,7 @@ describe('publieke Advieswijzer', () => {
     expect(source).not.toContain("'LIMITED_ROUTE'")
   })
 
-  it('gebruikt een compacte hero en laat de intake direct aansluiten', () => {
+  it('gebruikt de gedeelde compacte Arbo-wijzerlayout', () => {
     const html = renderToStaticMarkup(
       <PublicPageHero
         eyebrow="Advieswijzer"
@@ -106,8 +106,9 @@ describe('publieke Advieswijzer', () => {
 
     expect(html).toContain('py-5 sm:py-7')
     expect(html).toContain('!text-[clamp(2.25rem,3.5vw,3rem)]')
-    expect(pageSource).toContain('compactHero')
-    expect(pageSource).toContain('className="!py-5 sm:!py-7"')
+    expect(pageSource).toContain('ArboGuidePageLayout')
+    expect(pageSource).toContain('currentLabel="Advieswijzer"')
+    expect(pageSource).not.toContain('<Section')
   })
 
   it('gebruikt een compacte responsieve 30/70-werkruimte zonder prototype-eindscherm', () => {

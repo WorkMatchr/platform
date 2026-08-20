@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   complianceResultLabels,
+  complianceStepScrollBehavior,
   evaluateComplianceGuide,
   initialComplianceGuideAnswers,
   normalizeComplianceGuideAnswers,
@@ -20,6 +21,8 @@ describe('Compliance-wijzer v1', () => {
     expect(results).toHaveLength(9)
     expect(summarizeComplianceResults(results)).toEqual({ order: 9, action: 0, check: 0, notApplicable: 0 })
     expect(JSON.stringify(results)).not.toMatch(/score|percentage|compliant/i)
+    expect(results.every((result) => result.relevance.length >= 150)).toBe(true)
+    expect(results.every((result) => result.nextStep.length >= 150)).toBe(true)
   })
 
   it('ondersteunt zowel 1–25 als meer dan 25 werknemers', () => {
@@ -51,5 +54,10 @@ describe('Compliance-wijzer v1', () => {
 
   it('gebruikt uitsluitend de vier afgesproken klantstatussen', () => {
     expect(Object.values(complianceResultLabels)).toEqual(['Op orde', 'Actie nodig', 'Controleren', 'Niet van toepassing'])
+  })
+
+  it('respecteert reduced-motion bij stapnavigatie', () => {
+    expect(complianceStepScrollBehavior(false)).toBe('smooth')
+    expect(complianceStepScrollBehavior(true)).toBe('auto')
   })
 })

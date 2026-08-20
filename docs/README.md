@@ -101,6 +101,7 @@ Module 6C.2 — WOS Beheeracties & Communicatie is technisch opgeleverd en wacht
 - [UX-principes](UX_PRINCIPLES.md)
 - [Schrijfstijl](VOICE_AND_TONE.md)
 - [Definition of Done](definition-of-done.md)
+- [WorkMatchr test-log](test-log.md)
 - [Bekende ideeën](known-ideas.md)
 - [Bekende risico’s](known-risks.md)
 - [Technical debt](technical-debt.md)

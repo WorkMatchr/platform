@@ -6,13 +6,14 @@ De Compliance-wijzer geeft werkgevers per algemeen arbo-onderwerp een indicatief
 
 ## Architectuur
 
-- `/wijzers` is het centrale overzicht voor bestaande en toekomstige wijzers.
+- `/wijzers` is het centrale overzicht voor de productfamilie **Arbo-wijzers**. De gedeelde paginaopbouw, contentbreedte, hero, breadcrumbs, spacing en overzichtskaarten staan in `ArboGuidePageLayout` en bijbehorende kleine patrooncomponenten.
 - `/wijzers/compliance` rendert een niet-persistente, adaptieve clientflow.
 - `src/lib/compliance-guide/compliance-guide.ts` bevat versie 1 van de centrale vragen-, bron- en beslisregels.
 - De vier uitkomsten zijn `Op orde`, `Actie nodig`, `Controleren` en `Niet van toepassing`.
 - Onbekende of gemanipuleerde waarden worden geneutraliseerd en leiden tot `Controleren`.
 - De vervolgactie gebruikt context-ID `COMPLIANCE` uit de bestaande versieerbare kenniscontextcatalogus en opent `/advieswijzer?context=COMPLIANCE`.
 - Antwoorden worden niet opgeslagen en niet in de URL opgenomen.
+- Na een stapwisseling scrolt de flow naar de wijzerkop en krijgt de nieuwe staptitel programmatisch focus. `prefers-reduced-motion` schakelt vloeiend scrollen uit.
 
 ## Onderwerpen
 
@@ -20,8 +21,14 @@ Versie 1 behandelt algemeen arbobeleid, RI&E en plan van aanpak, preventiemedewe
 
 ## Bronnen en actualiteit
 
-Bronmetadata wordt hergebruikt uit `src/content/public-sources.ts`. De raadplegingsregel vanaf 1 juli 2026 verwijst naar de officiële Arboportaalpublicatie van 29 juni 2026. Iedere zichtbare bron toont uitgever en de datum waarop WorkMatchr de inhoud controleerde.
+Bronmetadata wordt hergebruikt uit `src/content/public-sources.ts`. De raadplegingsregel vanaf 1 juli 2026 verwijst naar de officiële Arboportaalpublicatie van 29 juni 2026. De resultaatpagina verzamelt alle daadwerkelijk gebruikte bronnen, dedupliceert deze op de centrale bron-ID en toont ze na de advies-CTA met uitgever en controledatum. Dezelfde centrale bronnenverzameling voedt de PDF-rapportage; afzonderlijke resultaatkaarten herhalen de bronnen niet.
+
+## Rapportage
+
+Na afronding kan iedere gebruiker gratis een basis-PDF downloaden. De browser stuurt de genormaliseerde antwoorden uitsluitend in een begrensde JSON-POST naar de server; antwoorden staan niet in de URL en worden niet opgeslagen. Een organisatienaam komt, indien beschikbaar, uitsluitend uit de bestaande ingelogde organisatiecontext.
+
+De centrale rapportagestructuur kent `BASIC` en `EXTENDED`. Alleen `BASIC` is beschikbaar. `EXTENDED` reserveert capabilities voor een latere managementsamenvatting, antwoordbasis, juridische onderbouwing, acties, prioriteiten, historie/vergelijking en PDCA-opvolging. Er is geen betaalmuur of betaalintegratie toegevoegd en beide niveaus gebruiken dezelfde Compliance-evaluatie.
 
 ## Bewust uitgesteld
 
-Niet opgenomen zijn een RI&E-wijzer, Risicowijzer, sectorspecifieke modules, risicomodules voor stoffen of machines, verdiepende PAGO-regels, certificering, PDF-certificaten, percentages, dashboards, automatische acties en betaalde functies.
+Niet opgenomen zijn een RI&E-wijzer, Risicowijzer, sectorspecifieke modules, risicomodules voor stoffen of machines, verdiepende PAGO-regels, certificering, PDF-certificaten, percentages, dashboards, automatische acties en de betaal-/abonnementslaag voor de uitgebreide rapportage.

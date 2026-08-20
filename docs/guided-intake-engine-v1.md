@@ -6,6 +6,8 @@
 
 De Advieswijzer helpt een publieke bezoeker een arbo- of veiligheidsvraag te verduidelijken zonder vooraf een dienst of specialist te hoeven kiezen. Versie 1 ondersteunt één volledig werkende startflow: **Ik heb personeel in dienst**.
 
+De Advieswijzer behoort zichtbaar tot de productfamilie **Arbo-wijzers**. De route blijft `/advieswijzer`; de gedeelde Arbo-wijzerlayout bepaalt de compacte hero, breadcrumbs, contentbreedte en sectieafstand zonder de intake- of contextlogica te wijzigen.
+
 De engine geeft eerst inhoudelijk advies en toont pas daarna een mogelijke verwijzing naar dienstverlening. Het resultaat is algemene vraagverheldering en geen individueel juridisch of medisch oordeel.
 
 ## Architectuur

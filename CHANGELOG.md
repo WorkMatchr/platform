@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — Compliance-wijzer v1 en Arbo-wijzers
+
+- De Compliance-wijzer biedt een gratis BASIC PDF met dezelfde indicatieve uitkomst, aandachtspunten en gededupliceerde officiële bronnen als de resultaatpagina.
+- Stapwisselingen brengen de wijzer met passend scroll- en focusgedrag in beeld; `prefers-reduced-motion` blijft gerespecteerd.
+- De zichtbare productfamilie heet **Arbo-wijzers** en Compliance- en Advieswijzer delen een compacte, herbruikbare paginaopbouw zonder wijziging van hun beslis- of contextlogica.
+- Compliance-wijzer v1 staat op het WorkMatchr test-log voor een latere volledige inhoudelijke en functionele eindcontrole.
+
 ## 2026-08-09 — WorkMatchr Pro via iDEAL en terugkerende incasso
 
 - De eerste Pro-maand wordt als Mollie `first` payment aangeboden via iDEAL met kaart als ondersteund alternatief; prijs en btw blijven €49,00 exclusief en €59,29 inclusief btw.

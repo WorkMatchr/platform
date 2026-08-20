@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
 import { cookies, headers } from 'next/headers'
-import { Section } from '@/components/layout/section'
+import { ArboGuidePageLayout } from '@/components/public/arbo-guide-layout'
 import { PublicIntakePrototype } from '@/components/public/public-intake-prototype'
-import { PublicPageLayout } from '@/components/public/public-page-layout'
 import { publicRoutes } from '@/content/public-routes'
 import {
   PUBLIC_INTAKE_COOKIE_NAME,
@@ -72,21 +71,17 @@ export default async function AdviceGuidePage({
   )
 
   return (
-    <PublicPageLayout
-      breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Advieswijzer' }]}
-      eyebrow="Advieswijzer"
+    <ArboGuidePageLayout
+      currentLabel="Advieswijzer"
       title="Waar kunnen wij u vandaag mee helpen?"
       description="Beschrijf kort waar u binnen uw organisatie tegenaan loopt. U hoeft niet te weten welke deskundige of dienst u nodig heeft."
-      compactHero
     >
-      <Section containerSize="default" spacing="compact" className="!py-5 sm:!py-7">
-        <PublicIntakePrototype
-          initialDraft={draft}
-          invalidSession={invalidSession}
-          temporarilyUnavailable={temporarilyUnavailable}
-          knowledgeContext={knowledgeContext}
-        />
-      </Section>
-    </PublicPageLayout>
+      <PublicIntakePrototype
+        initialDraft={draft}
+        invalidSession={invalidSession}
+        temporarilyUnavailable={temporarilyUnavailable}
+        knowledgeContext={knowledgeContext}
+      />
+    </ArboGuidePageLayout>
   )
 }

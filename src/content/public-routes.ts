@@ -68,14 +68,14 @@ export const publicNavigationItems = [
   { label: 'Sectoren', href: publicRoutes.sectors, kind: 'standard' },
   { label: 'Diensten', href: publicRoutes.services, kind: 'standard' },
   { label: 'Wettelijke verplichtingen', href: publicRoutes.obligations, kind: 'standard' },
-  { label: 'Wijzers', href: publicRoutes.guides, kind: 'primary' },
+  { label: 'Arbo-wijzers', href: publicRoutes.guides, kind: 'primary' },
   { label: 'Inloggen', href: publicRoutes.login, kind: 'auth' },
 ] as const satisfies readonly PublicNavigationItem[]
 
 export const publicFooterGroups = [
   {
     title: 'Vind uw route',
-    links: publicNavigationItems.filter((item) => ['Wijzers', 'Diensten', 'Wettelijke verplichtingen', 'Sectoren', 'Kenniscentrum'].includes(item.label)),
+    links: publicNavigationItems.filter((item) => ['Arbo-wijzers', 'Diensten', 'Wettelijke verplichtingen', 'Sectoren', 'Kenniscentrum'].includes(item.label)),
   },
   {
     title: 'WorkMatchr',

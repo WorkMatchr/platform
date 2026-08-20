@@ -1,13 +1,14 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { LinkButton } from '@/components/ui/link-button'
-import { resolvePublicSources } from '@/content/public-sources'
 import { knowledgeContextHref, resolveKnowledgeContextByRoute } from '@/content/knowledge/knowledge-contexts'
+import { collectComplianceSources, type ComplianceReportSource } from '@/lib/compliance-guide/compliance-report'
 import {
   complianceAnswerValues,
+  complianceStepScrollBehavior,
   complianceResultLabels,
   evaluateComplianceGuide,
   initialComplianceGuideAnswers,
@@ -87,15 +88,61 @@ function AnswerQuestion({ question, value, onChange }: { question: Question; val
   )
 }
 
-function Results({ answers, onRestart }: { answers: ComplianceGuideAnswers; onRestart: () => void }) {
+export function ConsultedSources({ sources }: { sources: readonly ComplianceReportSource[] }) {
+  return (
+    <section className="rounded-card border border-border bg-surface p-6 text-center" aria-labelledby="consulted-sources-title">
+      <h2 id="consulted-sources-title" className="text-xl font-bold text-brand-dark">Geraadpleegde bronnen</h2>
+      <ul className="mx-auto mt-5 grid max-w-4xl grid-cols-1 gap-4 text-left md:grid-cols-2">
+        {sources.map((source) => (
+          <li key={source.id} className="rounded-control bg-surface-subtle p-4">
+            <a className="font-semibold text-brand-primary underline underline-offset-4" href={source.url} target="_blank" rel="noreferrer">
+              {source.title}<span className="sr-only"> (opent in een nieuw venster)</span>
+            </a>
+            <span className="mt-1 block text-sm text-text-secondary">
+              {source.publisher} · gecontroleerd op {new Intl.DateTimeFormat('nl-NL', { dateStyle: 'long' }).format(new Date(`${source.reviewedAt}T00:00:00Z`))}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
+function Results({ answers, onRestart, headingRef }: { answers: ComplianceGuideAnswers; onRestart: () => void; headingRef: RefObject<HTMLHeadingElement | null> }) {
   const results = useMemo(() => evaluateComplianceGuide(answers), [answers])
   const summary = summarizeComplianceResults(results)
+  const sources = useMemo(() => collectComplianceSources(results), [results])
   const context = resolveKnowledgeContextByRoute('/wijzers/compliance')
+  const [downloading, setDownloading] = useState(false)
+  const [downloadError, setDownloadError] = useState<string | null>(null)
+
+  async function downloadBasicReport() {
+    setDownloading(true)
+    setDownloadError(null)
+    try {
+      const response = await fetch('/wijzers/compliance/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tier: 'BASIC', answers }),
+      })
+      if (!response.ok) throw new Error('download failed')
+      const blobUrl = URL.createObjectURL(await response.blob())
+      const link = document.createElement('a')
+      link.href = blobUrl
+      link.download = `workmatchr-compliance-rapport-${new Date().toISOString().slice(0, 10)}.pdf`
+      link.click()
+      URL.revokeObjectURL(blobUrl)
+    } catch {
+      setDownloadError('Het rapport kon niet worden gemaakt. Probeer het opnieuw.')
+    } finally {
+      setDownloading(false)
+    }
+  }
 
   return (
     <div className="space-y-7">
       <section className="rounded-card border border-brand-primary/20 bg-brand-primary-subtle p-6" aria-labelledby="compliance-summary-title" role="status">
-        <h2 id="compliance-summary-title" className="text-xl font-bold text-brand-dark">Uw indicatieve overzicht</h2>
+        <h2 ref={headingRef} tabIndex={-1} id="compliance-summary-title" className="scroll-mt-28 text-xl font-bold text-brand-dark focus:outline-none">Uw indicatieve overzicht</h2>
         <ul className="mt-4 grid gap-2 sm:grid-cols-2">
           <li><strong>{summary.order}</strong> onderdelen op orde</li>
           <li><strong>{summary.action}</strong> onderdelen vragen actie</li>
@@ -106,9 +153,7 @@ function Results({ answers, onRestart }: { answers: ComplianceGuideAnswers; onRe
       </section>
 
       <div className="space-y-5">
-        {results.map((result) => {
-          const sources = resolvePublicSources(result.sourceIds)
-          return (
+        {results.map((result) => (
             <article key={result.id} className="rounded-card border border-border bg-surface p-6 shadow-card">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <h2 className="text-xl font-bold text-brand-dark">{result.title}</h2>
@@ -119,14 +164,9 @@ function Results({ answers, onRestart }: { answers: ComplianceGuideAnswers; onRe
               <p className="mt-1 text-text-secondary">{result.relevance}</p>
               <h3 className="mt-5 font-semibold text-brand-dark">Aanbevolen vervolgstap</h3>
               <p className="mt-1 text-text-secondary">{result.nextStep}</p>
-              <h3 className="mt-5 font-semibold text-brand-dark">Officiële bronnen</h3>
-              <ul className="mt-2 space-y-2">
-                {sources.map((source) => <li key={source.id}><a className="font-semibold text-brand-primary underline underline-offset-4" href={source.url} target="_blank" rel="noreferrer">{source.title}<span className="sr-only"> (opent in een nieuw venster)</span></a><span className="block text-sm text-text-secondary">{source.publisher} · gecontroleerd op {new Intl.DateTimeFormat('nl-NL', { dateStyle: 'long' }).format(new Date(`${source.reviewedAt}T00:00:00Z`))}</span></li>)}
-              </ul>
               {result.detailHref && <Link className="mt-5 inline-flex min-h-11 items-center font-semibold text-brand-primary underline underline-offset-4" href={result.detailHref}>Lees de inhoudelijke toelichting</Link>}
             </article>
-          )
-        })}
+        ))}
       </div>
 
       <section className="rounded-card bg-brand-dark p-6 text-text-on-dark">
@@ -137,6 +177,13 @@ function Results({ answers, onRestart }: { answers: ComplianceGuideAnswers; onRe
           <Button variant="outline" onClick={onRestart}>Opnieuw beginnen</Button>
         </div>
       </section>
+      <ConsultedSources sources={sources} />
+      <section className="rounded-card border border-border bg-surface p-6" aria-labelledby="compliance-report-title">
+        <h2 id="compliance-report-title" className="text-xl font-bold text-brand-dark">Download uw basisrapport</h2>
+        <p className="mt-2 text-text-secondary">Bewaar de samenvatting, aandachtspunten, belangrijkste acties en officiële bronnen als PDF. De volledige scan en dit basisrapport zijn gratis.</p>
+        <Button className="mt-5" onClick={downloadBasicReport} disabled={downloading}>{downloading ? 'Rapport wordt gemaakt…' : 'Download basisrapport (PDF)'}</Button>
+        {downloadError && <p className="mt-3 text-sm font-semibold text-error" role="alert">{downloadError}</p>}
+      </section>
     </div>
   )
 }
@@ -144,24 +191,42 @@ function Results({ answers, onRestart }: { answers: ComplianceGuideAnswers; onRe
 export function ComplianceGuide() {
   const [answers, setAnswers] = useState<ComplianceGuideAnswers>(initialComplianceGuideAnswers)
   const [stepIndex, setStepIndex] = useState(0)
+  const guideRef = useRef<HTMLDivElement>(null)
+  const contentHeadingRef = useRef<HTMLHeadingElement>(null)
+  const navigationStartedRef = useRef(false)
   const showingResults = stepIndex === steps.length
   const step = steps[Math.min(stepIndex, steps.length - 1)]
+
+  useEffect(() => {
+    if (!navigationStartedRef.current) return
+    const frame = requestAnimationFrame(() => {
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      guideRef.current?.scrollIntoView({ behavior: complianceStepScrollBehavior(reducedMotion), block: 'start' })
+      contentHeadingRef.current?.focus({ preventScroll: true })
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [stepIndex])
 
   function updateAnswer(key: AnswerKey, value: ComplianceAnswer) {
     setAnswers((current) => ({ ...current, [key]: value }))
   }
 
-  if (showingResults) return <Results answers={answers} onRestart={() => { setAnswers(initialComplianceGuideAnswers); setStepIndex(0) }} />
+  function navigateToStep(nextStep: number) {
+    navigationStartedRef.current = true
+    setStepIndex(Math.max(0, Math.min(steps.length, nextStep)))
+  }
+
+  if (showingResults) return <div ref={guideRef} className="scroll-mt-24"><Results answers={answers} headingRef={contentHeadingRef} onRestart={() => { setAnswers(initialComplianceGuideAnswers); navigateToStep(0) }} /></div>
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <div ref={guideRef} className="mx-auto max-w-4xl scroll-mt-24">
       <div className="mb-6 flex items-center justify-between gap-4 text-sm text-text-secondary">
         <span>Stap {stepIndex + 1} van {steps.length}</span>
         <span>{step.title}</span>
       </div>
       <div className="h-2 overflow-hidden rounded-pill bg-surface-subtle" aria-hidden="true"><div className="h-full bg-brand-primary" style={{ width: `${((stepIndex + 1) / steps.length) * 100}%` }} /></div>
       <section className="mt-7" aria-labelledby="compliance-step-title">
-        <h2 id="compliance-step-title" className="text-2xl font-bold text-brand-dark">{step.title}</h2>
+        <h2 ref={contentHeadingRef} tabIndex={-1} id="compliance-step-title" className="scroll-mt-28 text-2xl font-bold text-brand-dark focus:outline-none">{step.title}</h2>
         <p className="mt-2 text-text-secondary">{step.description}</p>
         <div className="mt-6 space-y-4">
           {step.questions.map((question) => <AnswerQuestion key={question.key} question={question} value={answers[question.key]} onChange={(value) => updateAnswer(question.key, value)} />)}
@@ -184,8 +249,8 @@ export function ComplianceGuide() {
         </div>
       </section>
       <div className="mt-7 flex flex-wrap justify-between gap-3">
-        <Button variant="outline" disabled={stepIndex === 0} onClick={() => setStepIndex((current) => Math.max(0, current - 1))}>Vorige</Button>
-        <Button onClick={() => setStepIndex((current) => Math.min(steps.length, current + 1))}>{stepIndex === steps.length - 1 ? 'Bekijk mijn overzicht' : 'Volgende'}</Button>
+        <Button variant="outline" disabled={stepIndex === 0} onClick={() => navigateToStep(stepIndex - 1)}>Vorige</Button>
+        <Button onClick={() => navigateToStep(stepIndex + 1)}>{stepIndex === steps.length - 1 ? 'Bekijk mijn overzicht' : 'Volgende'}</Button>
       </div>
       <p className="mt-6 text-sm text-text-secondary">Uw antwoorden blijven tijdens deze controle alleen in deze browserweergave en worden niet via de URL gedeeld. Vul geen namen, medische gegevens of ongevalsgegevens in.</p>
     </div>
