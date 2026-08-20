@@ -13,6 +13,7 @@ describe('knowledge context catalog', () => {
     expect(validateKnowledgeContextCatalog()).toEqual([])
     expect(new Set(knowledgeContexts.map((context) => context.id)).size).toBe(knowledgeContexts.length)
     expect(knowledgeArticles.every((article) => resolveKnowledgeContextByRoute(article.href))).toBe(true)
+    expect(resolveKnowledgeContextByRoute('/wijzers/compliance')?.id).toBe('COMPLIANCE')
   })
 
   it('accepteert uitsluitend bekende actieve contexten', () => {

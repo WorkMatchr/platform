@@ -39,6 +39,8 @@ export const publicRoutes = {
   incidentInvestigationQuestion: '/kenniscentrum/wanneer-incidentonderzoek-zinvol',
   about: '/over-workmatchr',
   contact: '/contact',
+  guides: '/wijzers',
+  complianceGuide: '/wijzers/compliance',
   adviceGuide: '/advieswijzer',
   directAssignment: '/hulpvragen/nieuw',
   privacy: '/privacy',
@@ -66,14 +68,14 @@ export const publicNavigationItems = [
   { label: 'Sectoren', href: publicRoutes.sectors, kind: 'standard' },
   { label: 'Diensten', href: publicRoutes.services, kind: 'standard' },
   { label: 'Wettelijke verplichtingen', href: publicRoutes.obligations, kind: 'standard' },
-  { label: 'Stel uw vraag', href: publicRoutes.adviceGuide, kind: 'primary' },
+  { label: 'Wijzers', href: publicRoutes.guides, kind: 'primary' },
   { label: 'Inloggen', href: publicRoutes.login, kind: 'auth' },
 ] as const satisfies readonly PublicNavigationItem[]
 
 export const publicFooterGroups = [
   {
     title: 'Vind uw route',
-    links: publicNavigationItems.filter((item) => ['Diensten', 'Wettelijke verplichtingen', 'Sectoren', 'Kenniscentrum'].includes(item.label)),
+    links: publicNavigationItems.filter((item) => ['Wijzers', 'Diensten', 'Wettelijke verplichtingen', 'Sectoren', 'Kenniscentrum'].includes(item.label)),
   },
   {
     title: 'WorkMatchr',
@@ -130,6 +132,8 @@ export const indexablePublicRoutes = [
   publicRoutes.accidentQuestion,
   publicRoutes.occupationalHygienistQuestion,
   publicRoutes.incidentInvestigationQuestion,
+  publicRoutes.guides,
+  publicRoutes.complianceGuide,
   publicRoutes.adviceGuide,
 ] as const satisfies readonly PublicRoute[]
 

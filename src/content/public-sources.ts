@@ -101,6 +101,16 @@ export const publicSources = {
     reviewedAt: '2026-07-19',
     note: 'Overzicht van wettelijke arbozorg, deskundigheid en preventieve instrumenten.',
   },
+  'arboportaal-werknemersraadpleging-2026': {
+    id: 'arboportaal-werknemersraadpleging-2026',
+    title: 'Regels voor raadpleging van werknemers aangepast per 1 juli 2026',
+    publisher: 'Arboportaal',
+    url: 'https://www.arboportaal.nl/actueel/nieuws/2026/06/29/regels-voor-raadpleging-van-werknemers-aangepast-per-1-juli-2026',
+    type: 'OFFICIAL_GUIDANCE',
+    evidenceLevel: 'AUTHORITATIVE',
+    reviewedAt: '2026-08-20',
+    note: 'Officiële uitleg over de vanaf 1 juli 2026 geldende raadpleging van werknemers over het arbobeleid.',
+  },
 } as const satisfies Record<string, PublicSource>
 
 export type PublicSourceId = keyof typeof publicSources
@@ -115,7 +125,7 @@ export function resolvePublicSources(sourceIds: readonly string[]): readonly Pub
 
 export function validatePublicSources(): string[] {
   const issues: string[] = []
-  const sources = Object.values(publicSources)
+  const sources: readonly PublicSource[] = Object.values(publicSources)
   if (new Set(sources.map((source) => source.id)).size !== sources.length) issues.push('Bron-ID’s moeten uniek zijn.')
   for (const source of sources) {
     if (!source.url.startsWith('https://')) issues.push(`${source.id} gebruikt geen veilige URL.`)

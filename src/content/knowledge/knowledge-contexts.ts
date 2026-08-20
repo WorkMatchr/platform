@@ -14,6 +14,7 @@ export const knowledgeContextIds = [
   'ACCIDENT_REPORTING',
   'OCCUPATIONAL_HYGIENE',
   'INCIDENT_INVESTIGATION',
+  'COMPLIANCE',
 ] as const
 
 export type KnowledgeContextId = (typeof knowledgeContextIds)[number]
@@ -97,6 +98,13 @@ export const knowledgeContexts: readonly KnowledgeContextDefinition[] = Object.f
     assignmentIntro: 'U wilt een opdracht starten over incidentonderzoek.',
     classificationSignals: ['incidentonderzoek', 'bijna-ongeval', 'oorzaakanalyse'], suggestedCategory: 'INCIDENT',
   },
+  {
+    id: 'COMPLIANCE', version: 1, status: 'ACTIVE', sourceRoutes: ['/wijzers/compliance'],
+    title: 'Algemene arboverplichtingen', shortLabel: 'Compliance-wijzer',
+    adviceIntro: 'Uw vraag komt voort uit de Compliance-wijzer en gaat over algemene arboverplichtingen.',
+    assignmentIntro: 'U wilt ondersteuning bij algemene arboverplichtingen.',
+    classificationSignals: ['arbobeleid', 'arboverplichtingen', 'naleving', 'compliance'],
+  },
 ])
 
 const contextsById = new Map<KnowledgeContextId, KnowledgeContextDefinition>(knowledgeContexts.map((context) => [context.id, context]))
@@ -121,7 +129,10 @@ export function knowledgeContextHref(base: '/advieswijzer' | '/hulpvragen/nieuw'
 
 export function validateKnowledgeContextCatalog(): readonly string[] {
   const issues: string[] = []
-  const activeArticles = new Set<string>(knowledgeArticles.map((article) => article.href))
+  const activeSourceRoutes = new Set<string>([
+    ...knowledgeArticles.map((article) => article.href),
+    '/wijzers/compliance',
+  ])
   const ids = knowledgeContexts.map((context) => context.id)
   const routes = knowledgeContexts.flatMap((context) => context.sourceRoutes)
   if (new Set(ids).size !== ids.length) issues.push('Kenniscontext-ID’s moeten uniek zijn.')
@@ -130,7 +141,7 @@ export function validateKnowledgeContextCatalog(): readonly string[] {
     if (!Number.isInteger(context.version) || context.version < 1) issues.push(`${context.id} heeft geen geldige versie.`)
     if (!context.title || !context.shortLabel || !context.adviceIntro || !context.assignmentIntro) issues.push(`${context.id} mist gebruikerscopy.`)
     if (context.classificationSignals.length === 0) issues.push(`${context.id} mist classificatiesignalen.`)
-    for (const route of context.sourceRoutes) if (!activeArticles.has(route)) issues.push(`${context.id} verwijst naar een onbekende kennispagina: ${route}.`)
+    for (const route of context.sourceRoutes) if (!activeSourceRoutes.has(route)) issues.push(`${context.id} verwijst naar een onbekende contextbron: ${route}.`)
   }
   return issues
 }

@@ -89,6 +89,7 @@ Module 6C.2 — WOS Beheeracties & Communicatie is technisch opgeleverd en wacht
 - [Auteursrecht en kennisbronnen](knowledge-copyright.md)
 - [Toegangsniveaus kennis](knowledge-access-tiers.md)
 - [Contextuele kennisroutes naar Advieswijzer en opdracht](knowledge-context-routing.md)
+- [Compliance-wijzer v1](compliance-guide-v1.md)
 - [Lokale broninventaris Knowledge Engine PoC](knowledge-source-inventory.md)
 
 ## Ontwerp en kwaliteit
