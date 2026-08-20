@@ -63,7 +63,8 @@ describe('publieke detailcontent', () => {
 
     expect(context).not.toBeNull()
     expect(html).toContain(`href="/advieswijzer?context=${context?.id}"`)
-    expect(html).toContain('Stel uw vraag')
+    expect(html).toContain('Schakel een adviseur in')
+    expect(html.match(/Schakel een adviseur in/g)).toHaveLength(1)
     expect(html).not.toContain(`href="/hulpvragen/nieuw?context=${context?.id}"`)
     expect(html).not.toContain('Start een opdracht')
     expect(html).not.toContain('Direct een opdracht plaatsen')

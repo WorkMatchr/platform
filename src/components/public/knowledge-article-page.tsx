@@ -23,16 +23,11 @@ export function KnowledgeArticlePage({
   const context = resolveKnowledgeContextByRoute(content.href)
   const cta = context ? {
     title: 'Heeft u na het lezen nog hulp nodig?',
-    description: 'Kies de vervolgstap die past bij uw situatie. U houdt zelf de regie over de richting.',
+    description: 'De Advieswijzer helpt u bepalen welke ondersteuning bij uw situatie past. U houdt zelf de regie over de richting.',
     primary: {
-      label: 'Start de Advieswijzer',
+      label: 'Schakel een adviseur in',
       href: knowledgeContextHref('/advieswijzer', context),
       description: 'WorkMatchr gebruikt deze pagina als uitgangspunt om uw situatie te verduidelijken.',
-    },
-    secondary: {
-      label: 'Start een opdracht',
-      href: knowledgeContextHref('/hulpvragen/nieuw', context),
-      description: 'WorkMatchr neemt het onderwerp van deze pagina mee als uitgangspunt voor uw opdracht.',
     },
   } : resolvePublicContentCta(content.id)
   return <PublicPageLayout breadcrumbs={[{ label: 'Home', href: publicRoutes.home }, { label: 'Kenniscentrum', href: publicRoutes.knowledge }, { label: content.title }]} eyebrow="Kennis" title={content.title} description={content.summary}><PublicDetailBody><PublicContentStatus content={content} /><KnowledgeSummary>{content.shortAnswer}</KnowledgeSummary><PublicTextSection id="relevant" title="Wanneer is dit relevant?"><Text>{content.relevantWhen}</Text></PublicTextSection><PublicTextSection id="context" title="Wat betekent dit in de praktijk?">{content.context.map((paragraph) => <Text key={paragraph}>{paragraph}</Text>)}</PublicTextSection><PublicTextSection id="praktijkvoorbeeld" title="Praktijkvoorbeeld"><Text>{content.practiceExample}</Text></PublicTextSection><PublicTextSection id="aandachtspunten" title="Praktische aandachtspunten"><PublicBulletList items={content.practicalPoints} /></PublicTextSection><PublicTextSection id="rie" title="Wat is de relatie met de RI&E?"><Text>{content.rieRelationship}</Text></PublicTextSection><PublicTextSection id="ondersteuning" title="Wanneer is ondersteuning verstandig?"><Text>{content.supportWhen}</Text></PublicTextSection><PublicTextSection id="vervolg" title="Wat kunt u nu doen?"><Text>{content.nextStep}</Text></PublicTextSection><PublicTextSection id="wettelijke-context" title="Wettelijke context"><Text>{content.legalContext}</Text></PublicTextSection><PublicFaqList faq={content.faq} /><PublicSourceList sources={resolvePublicSources(content.sourceIds)} /><KnowledgeInformationNotice reportHref={improvementReportHref} developmentTestMode={developmentImprovementTestMode} />{cta && <KnowledgeCallToAction content={cta} />}<RelatedTopics currentContentId={content.id} topics={resolveRelatedPublicContent(content.id)} /></PublicDetailBody></PublicPageLayout>

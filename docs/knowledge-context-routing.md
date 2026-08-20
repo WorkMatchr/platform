@@ -2,23 +2,23 @@
 
 ## Doel
 
-Een inhoudelijke kennispagina kan een veilige ingang zijn naar de Advieswijzer en de opdrachtintake. WorkMatchr draagt daarvoor uitsluitend een stabiele context-ID in de URL over. De server valideert deze ID tegen de centrale, getypeerde en versieerbare catalogus in `src/content/knowledge/knowledge-contexts.ts`.
+Een inhoudelijke kennispagina is via de primaire actie **Schakel een adviseur in** een veilige ingang naar de Advieswijzer. De Advieswijzer bepaalt als tussenstap welke ondersteuning passend is; kennisdetailpagina's bieden daarom geen concurrerende directe opdrachtactie. WorkMatchr draagt uitsluitend een stabiele context-ID in de URL over. De server valideert deze ID tegen de centrale, getypeerde en versieerbare catalogus in `src/content/knowledge/knowledge-contexts.ts`.
 
 De kenniscontext is provenance en een ondersteunend classificatiesignaal. Zij is geen gebruikersantwoord, geen definitieve categorie en geen autorisatiebron. De oorspronkelijke omschrijving van de gebruiker blijft leidend en een gebruiker kan een voorgestelde richting altijd corrigeren.
 
 ## Dekkingsmatrix
 
-| Kennispagina | Context-ID | Advieswijzer | Opdracht | Voorgestelde richting |
+| Kennispagina | Context-ID | Primaire vervolgroute | Latere opdrachtcontext | Voorgestelde richting |
 | --- | --- | --- | --- | --- |
-| Moet ik een RI&E hebben? | `RIE` | Ja | Ja | `RIE` |
-| Wat doet een preventiemedewerker? | `PREVENTION_OFFICER` | Ja | Ja | Geen geforceerde categorie |
-| Hoeveel BHV'ers heb ik nodig? | `BHV` | Ja | Ja | `BHV` |
-| Verschil tussen PMO en PAGO | `PMO_PAGO` | Ja | Ja | `OCCUPATIONAL_HEALTH` |
-| Wanneer een bedrijfsarts inschakelen? | `OCCUPATIONAL_PHYSICIAN` | Ja | Ja | `OCCUPATIONAL_HEALTH` |
-| Wat is psychosociale arbeidsbelasting? | `PSA` | Ja | Ja | `PSA` |
-| Wanneer een arbeidsongeval melden? | `ACCIDENT_REPORTING` | Ja | Ja | `INCIDENT` |
-| Wat doet een arbeidshygiënist? | `OCCUPATIONAL_HYGIENE` | Ja | Ja | Geen geforceerde categorie |
-| Wanneer is incidentonderzoek zinvol? | `INCIDENT_INVESTIGATION` | Ja | Ja | `INCIDENT` |
+| Moet ik een RI&E hebben? | `RIE` | Advieswijzer | Behouden | `RIE` |
+| Wat doet een preventiemedewerker? | `PREVENTION_OFFICER` | Advieswijzer | Behouden | Geen geforceerde categorie |
+| Hoeveel BHV'ers heb ik nodig? | `BHV` | Advieswijzer | Behouden | `BHV` |
+| Verschil tussen PMO en PAGO | `PMO_PAGO` | Advieswijzer | Behouden | `OCCUPATIONAL_HEALTH` |
+| Wanneer een bedrijfsarts inschakelen? | `OCCUPATIONAL_PHYSICIAN` | Advieswijzer | Behouden | `OCCUPATIONAL_HEALTH` |
+| Wat is psychosociale arbeidsbelasting? | `PSA` | Advieswijzer | Behouden | `PSA` |
+| Wanneer een arbeidsongeval melden? | `ACCIDENT_REPORTING` | Advieswijzer | Behouden | `INCIDENT` |
+| Wat doet een arbeidshygiënist? | `OCCUPATIONAL_HYGIENE` | Advieswijzer | Behouden | Geen geforceerde categorie |
+| Wanneer is incidentonderzoek zinvol? | `INCIDENT_INVESTIGATION` | Advieswijzer | Behouden | `INCIDENT` |
 
 Alle negen actuele kennisdetailpagina's zijn gekoppeld. Preventiemedewerker en arbeidshygiëne passen niet één-op-één op de bestaande intakecategorieën en blijven daarom uitsluitend context- en classificatiesignalen. Een nieuwe Product Owner-taxonomiekeuze is nodig voordat daarvoor een voorgestelde categorie wordt toegevoegd.
 
