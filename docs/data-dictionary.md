@@ -1,5 +1,13 @@
 # Datawoordenboek WorkMatchr
 
+## Arbo-wijzers
+
+- `ArboGuideRunCounter`: technische teller per `guideType` en UTC-jaar voor unieke leesbare rapportnummers; geen klantobject.
+- `ArboGuideRun`: tenantgebonden uitvoering van een Arbo-wijzer. Bevat type, afzonderlijke guide-/rapportversie, lifecycle, genormaliseerde antwoordsnapshot, historische rapportsnapshot, inhoudsfingerprint en actor. Alleen `IN_PROGRESS → COMPLETED` is toegestaan; een afgeronde run is immutable.
+- `ArboGuideRunResult`: genormaliseerde, geordende uitkomst per stabiele onderwerpcode. Ondersteunt latere privacyveilige aggregatie zonder vrije rapporttekst te parseren.
+- `ArboGuideType`: `COMPLIANCE`, `BHV`, `RIE`, `RISK`.
+- `ArboGuideResultStatus`: `ORDER`, `ACTION`, `CHECK`, `NOT_APPLICABLE`; de UI toont altijd de Nederlandse statusmapping.
+
 ## Knowledge cross-validation
 
 - `KnowledgeCrossValidationAssessment`: immutable revisie van een analytische current-source-beoordeling van één `KnowledgeClaim`. `outcome` is uitsluitend `CONFIRMED`, `PARTIAL_CONDITIONAL`, `SUPERSEDED`, `CONFLICT` of `INSUFFICIENT_SUPPORT`. `contentFingerprint` borgt idempotentie; `supersedesAssessmentId` vormt een lineaire revisieketen. De rij is geen formeel validatiebesluit.

@@ -419,6 +419,25 @@ enum AdviceDossierEventType {
   STATUS_CHANGED
 }
 
+enum ArboGuideType {
+  COMPLIANCE
+  BHV
+  RIE
+  RISK
+}
+
+enum ArboGuideRunStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum ArboGuideResultStatus {
+  ORDER
+  ACTION
+  CHECK
+  NOT_APPLICABLE
+}
+
 enum RequestStatus {
   DRAFT
   READY_TO_PUBLISH
@@ -1238,6 +1257,7 @@ model User {
   knowledgeReviewDecisions           KnowledgeReviewDecision[]              @relation("KnowledgeReviewDecisionActor")
   knowledgeReviewSourceReferences    KnowledgeReviewSourceReference[]       @relation("KnowledgeReviewSourceReferenceActor")
   crossValidationReviews             KnowledgeCrossValidationAssessment[]   @relation("KnowledgeCrossValidationReviewer")
+  arboGuideRuns                      ArboGuideRun[]                         @relation("ArboGuideRunActor")
   knowledgeAuditEvents               KnowledgeAuditEvent[]                  @relation("KnowledgeAuditActor")
   submittedKnowledgeImprovements     KnowledgeImprovementReport[]           @relation("KnowledgeImprovementReporter")
   handledKnowledgeImprovements       KnowledgeImprovementReport[]           @relation("KnowledgeImprovementHandler")
@@ -1377,6 +1397,7 @@ model Organization {
   marketplaceReliabilityEvents MarketplaceReliabilityEvent[]
   marketplaceContactRequests   MarketplaceContactRequest[]
   platformAdminInvitations     PlatformAdminInvitation[]
+  arboGuideRuns                ArboGuideRun[]
 
   @@index([organizationType])
   @@index([status])
@@ -2775,6 +2796,62 @@ model AdviceDossierCounter {
   year       Int      @id
   nextNumber Int
   updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+}
+
+model ArboGuideRunCounter {
+  guideType  ArboGuideType
+  year       Int
+  nextNumber Int
+  updatedAt  DateTime      @updatedAt @db.Timestamptz(3)
+
+  @@id([guideType, year])
+}
+
+model ArboGuideRun {
+  id                  String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reportNumber        String?            @unique @db.VarChar(32)
+  guideType           ArboGuideType
+  guideVersion        String             @db.VarChar(32)
+  reportVersion       String             @db.VarChar(32)
+  organizationId      String             @db.Uuid
+  completedByUserId   String             @db.Uuid
+  status              ArboGuideRunStatus @default(IN_PROGRESS)
+  idempotencyKey      String             @db.VarChar(160)
+  startedAt           DateTime           @default(now()) @db.Timestamptz(3)
+  completedAt         DateTime?          @db.Timestamptz(3)
+  answersSnapshot     Json               @db.JsonB
+  reportSnapshot      Json?              @db.JsonB
+  snapshotFingerprint String?            @db.VarChar(64)
+  createdAt           DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime           @updatedAt @db.Timestamptz(3)
+  organization        Organization       @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  completedByUser     User               @relation("ArboGuideRunActor", fields: [completedByUserId], references: [id], onDelete: Restrict)
+  results             ArboGuideRunResult[]
+
+  @@unique([organizationId, idempotencyKey])
+  @@index([organizationId, completedAt])
+  @@index([completedByUserId, completedAt])
+  @@index([guideType, guideVersion, completedAt])
+  @@index([status, createdAt])
+}
+
+model ArboGuideRunResult {
+  id                   String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  arboGuideRunId       String                @db.Uuid
+  position             Int
+  subjectCode          String                @db.VarChar(80)
+  title                String                @db.VarChar(200)
+  status               ArboGuideResultStatus
+  explanation          String                @db.Text
+  recommendedAction    String                @db.Text
+  sourceIdsSnapshot    Json                  @db.JsonB
+  createdAt            DateTime              @default(now()) @db.Timestamptz(3)
+  arboGuideRun         ArboGuideRun          @relation(fields: [arboGuideRunId], references: [id], onDelete: Restrict)
+
+  @@unique([arboGuideRunId, subjectCode])
+  @@unique([arboGuideRunId, position])
+  @@index([subjectCode, status])
+  @@index([status, createdAt])
 }
 
 model AdviceDossier {

@@ -7,12 +7,12 @@ De Compliance-wijzer geeft werkgevers per algemeen arbo-onderwerp een indicatief
 ## Architectuur
 
 - `/wijzers` is het centrale overzicht voor de productfamilie **Arbo-wijzers**. De gedeelde paginaopbouw, contentbreedte, hero, breadcrumbs, spacing en overzichtskaarten staan in `ArboGuidePageLayout` en bijbehorende kleine patrooncomponenten.
-- `/wijzers/compliance` rendert een niet-persistente, adaptieve clientflow.
+- `/wijzers/compliance` rendert een adaptieve clientflow. Een anonieme gebruiker kan de gratis basis-PDF blijven downloaden; voor een ingelogde organisatie wordt de afgeronde uitkomst daarnaast via het gedeelde `ArboGuideRun`-fundament bewaard.
 - `src/lib/compliance-guide/compliance-guide.ts` bevat versie 1 van de centrale vragen-, bron- en beslisregels.
 - De vier uitkomsten zijn `Op orde`, `Actie nodig`, `Controleren` en `Niet van toepassing`.
 - Onbekende of gemanipuleerde waarden worden geneutraliseerd en leiden tot `Controleren`.
 - De vervolgactie gebruikt context-ID `COMPLIANCE` uit de bestaande versieerbare kenniscontextcatalogus en opent `/advieswijzer?context=COMPLIANCE`.
-- Antwoorden worden niet opgeslagen en niet in de URL opgenomen.
+- Antwoorden worden nooit in de URL opgenomen. Alleen de vaste, genormaliseerde antwoordcodes worden voor een ingelogde organisatie in de immutable historische run bewaard; vrije tekst en bijzondere persoonsgegevens worden niet geaccepteerd.
 - Na een stapwisseling scrolt de flow naar de wijzerkop en krijgt de nieuwe staptitel programmatisch focus. `prefers-reduced-motion` schakelt vloeiend scrollen uit.
 
 ## Onderwerpen
@@ -25,7 +25,9 @@ Bronmetadata wordt hergebruikt uit `src/content/public-sources.ts`. De raadplegi
 
 ## Rapportage
 
-Na afronding kan iedere gebruiker gratis een basis-PDF downloaden. De browser stuurt de genormaliseerde antwoorden uitsluitend in een begrensde JSON-POST naar de server; antwoorden staan niet in de URL en worden niet opgeslagen. Een organisatienaam komt, indien beschikbaar, uitsluitend uit de bestaande ingelogde organisatiecontext.
+Na afronding kan iedere gebruiker gratis een basis-PDF downloaden. De browser stuurt de genormaliseerde antwoorden uitsluitend in een begrensde JSON-POST naar de server; antwoorden staan niet in de URL. Een organisatienaam komt, indien beschikbaar, uitsluitend uit de bestaande ingelogde organisatiecontext. Een ingelogde organisatie krijgt een rapportnummer en kan de opgeslagen uitkomst later via **Mijn Arbo-wijzers** bekijken en opnieuw downloaden. Die historische PDF gebruikt uitsluitend de vastgelegde rapportsnapshot en beoordeelt antwoorden niet opnieuw met actuele logica.
+
+De resultaatvolgorde is: inhoudelijke resultaten, bewaren/downloaden, de blauwe ondersteunings-CTA en daarna de gededupliceerde geraadpleegde bronnen.
 
 De centrale rapportagestructuur kent `BASIC` en `EXTENDED`. Alleen `BASIC` is beschikbaar. `EXTENDED` reserveert capabilities voor een latere managementsamenvatting, antwoordbasis, juridische onderbouwing, acties, prioriteiten, historie/vergelijking en PDCA-opvolging. Er is geen betaalmuur of betaalintegratie toegevoegd en beide niveaus gebruiken dezelfde Compliance-evaluatie.
 

@@ -45,6 +45,7 @@ describe('gedeelde headercontext', () => {
           { href: '/dashboard', label: 'Dashboard' },
           { href: '/opdrachten', label: 'Opdrachten' },
           { href: '/adviesdossiers', label: 'Adviesdossiers' },
+          { href: '/mijn-arbo-wijzers', label: 'Mijn Arbo-wijzers' },
         ],
       },
       {

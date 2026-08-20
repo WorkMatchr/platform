@@ -73,12 +73,19 @@ describe('Compliance-rapportage', () => {
     expect(text).toContain('Voorbeeld Organisatie')
     expect(text).toContain('20 augustus 2026')
     expect(text).toContain('Beoordelingsset: versie 1')
+    expect(text).toContain('Rapportstructuur: versie 1.0')
     expect(text).toContain('Status: Actie nodig')
     expect(text).toContain('Status: Controleren')
     expect(text).toContain('Arbeidsomstandighedenwet')
     expect(text).toContain(COMPLIANCE_REPORT_DISCLAIMER)
     expect(text).not.toContain('U voldoet aan de Arbowet')
     expect(text).not.toContain('Uw organisatie is compliant')
+  })
+
+  it('neemt een vast historisch rapportnummer op zonder de inhoud opnieuw te beoordelen', async () => {
+    const report = buildComplianceReportData({ answers: mixedAnswers, scannedAt: new Date('2026-08-20T10:00:00Z'), tier: 'BASIC' })
+    const text = await extractPdfText(await buildComplianceReportPdf(report, { reportNumber: 'CW-2026-000001' }))
+    expect(text).toContain('Rapportnummer: CW-2026-000001')
   })
 
   it('verdeelt uitzonderlijk lange resultaten zonder inhoud te verliezen', async () => {

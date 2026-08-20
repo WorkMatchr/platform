@@ -92,6 +92,13 @@ export default async function AccountPage() {
             {platformRequired ? <p className="mt-2 text-sm leading-6 text-text-secondary">Tweestapsverificatie blijft verplicht zolang dit account toegang heeft tot platformbeheer.</p> : null}
             <div className="mt-5 flex flex-col gap-3 sm:flex-row"><LinkButton href="/account/beveiliging" variant="outline">{twoFactorEnabled ? 'Tweestapsverificatie beheren' : 'Tweestapsverificatie instellen'}</LinkButton><LinkButton href="/wachtwoord-vergeten" variant="outline">Wachtwoord wijzigen</LinkButton></div>
           </section>
+          {hasOrganization ? (
+            <section aria-labelledby="arbo-wijzers-heading" className="rounded-card border border-border bg-surface p-5">
+              <h2 id="arbo-wijzers-heading" className="font-semibold text-brand-dark">Mijn Arbo-wijzers</h2>
+              <p className="mt-3 text-sm leading-6 text-text-secondary">Bekijk afgeronde wijzers van uw organisatie en download eerdere rapporten opnieuw.</p>
+              <div className="mt-5"><LinkButton href="/mijn-arbo-wijzers" variant="outline">Bekijk Mijn Arbo-wijzers</LinkButton></div>
+            </section>
+          ) : null}
           <div><LogoutButton /></div>
         </div>
       </div>

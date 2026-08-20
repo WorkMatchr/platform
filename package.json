@@ -36,6 +36,7 @@
     "test:db:knowledge:method": "tsx scripts/test-knowledge-method-database.ts",
     "test:db:knowledge:bhv-components": "tsx scripts/test-knowledge-bhv-components-database.ts",
     "test:db:knowledge:multi-source": "tsx scripts/test-knowledge-multi-source-database.ts",
+    "test:db:arbo-guides": "tsx scripts/test-arbo-guide-runs-database.ts",
     "db:generate": "prisma generate",
     "db:format": "prisma format",
     "db:validate": "prisma validate",

@@ -18,6 +18,10 @@
   --color-success: #18794e;
   --color-warning: #8a5a00;
   --color-error: #b42318;
+  --color-status-action: #9a3412;
+  --color-status-action-subtle: #fff7ed;
+  --color-status-check: #854d0e;
+  --color-status-check-subtle: #fefce8;
 
   --font-sans: "Inter", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
 

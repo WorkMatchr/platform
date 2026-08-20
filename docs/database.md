@@ -1,5 +1,9 @@
 # Database WorkMatchr
 
+## Arbo-wijzer runs
+
+Migratie `20260820100000_add_arbo_guide_runs` voegt uitsluitend de generieke typen, teller, `ArboGuideRun` en `ArboGuideRunResult` toe. Bestaande data wordt niet teruggevuld of gewijzigd. Rapportnummers worden concurrency-safe per type en jaar uitgegeven. Runs/resultaten zijn na afronding databasebreed append-only, gebruiken `ON DELETE RESTRICT` en een deferred constrainttrigger vereist minimaal één resultaat bij iedere afgeronde run.
+
 ## Immutable Knowledge cross-validation
 
 Migratie `20260818100000_add_knowledge_cross_validation_assessments` voegt uitsluitend `KnowledgeCrossValidationAssessment`, `KnowledgeCrossValidationEvidence` en het analytische outcome-enum toe. De tabellen zijn append-only, gebruiken `ON DELETE RESTRICT`, vereisen deferred minimaal één evidenceblok en controleren de opgeslagen blockhash tegen het immutable `KnowledgeSourceBlock`. Er is geen backfill en bestaande claims, reviewtaken en validaties worden niet gewijzigd.

@@ -47,7 +47,7 @@ function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): 
   })
 }
 
-export async function buildComplianceReportPdf(report: ComplianceReportData): Promise<Uint8Array> {
+export async function buildComplianceReportPdf(report: ComplianceReportData, options: { reportNumber?: string | null } = {}): Promise<Uint8Array> {
   if (report.tier !== 'BASIC') throw new Error('De uitgebreide rapportage is nog niet beschikbaar.')
 
   const document = await PDFDocument.create()
@@ -100,8 +100,10 @@ export async function buildComplianceReportPdf(report: ComplianceReportData): Pr
   text('Compliance-wijzer', { font: bold, size: 25, color: brandDark, gapAfter: 10 })
   text('Indicatief basisrapport', { font: bold, size: 13, color: brandBlue, gapAfter: 18 })
   if (report.organizationName) text(`Organisatie: ${report.organizationName}`, { font: bold, gapAfter: 3 })
+  if (options.reportNumber) text(`Rapportnummer: ${options.reportNumber}`, { font: bold, gapAfter: 3 })
   text(`Datum van de scan: ${scanDate}`, { color: muted, gapAfter: 3 })
   text(`Beoordelingsset: versie ${report.assessmentVersion}`, { color: muted, gapAfter: 18 })
+  text(`Rapportstructuur: versie ${report.reportVersion}`, { color: muted, gapAfter: 18 })
   text('Dit rapport vat de uitkomst van de gratis Compliance-wijzer samen. Het bevat geen algemene compliance-score en is geen certificaat.', { color: muted })
 
   heading('Samenvatting')

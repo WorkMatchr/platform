@@ -76,6 +76,7 @@ export function buildHeaderViewModel(
                 ? [
                     { href: '/opdrachten', label: 'Opdrachten' },
                     { href: '/adviesdossiers', label: 'Adviesdossiers' },
+                    { href: '/mijn-arbo-wijzers', label: 'Mijn Arbo-wijzers' },
                   ]
                 : []),
               ...(supportsProviderWork

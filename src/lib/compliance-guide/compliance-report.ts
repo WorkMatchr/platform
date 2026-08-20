@@ -11,6 +11,7 @@ import {
 
 export const complianceReportTiers = ['BASIC', 'EXTENDED'] as const
 export type ComplianceReportTier = (typeof complianceReportTiers)[number]
+export const COMPLIANCE_REPORT_VERSION = '1.0'
 
 export const COMPLIANCE_REPORT_DISCLAIMER =
   'De Compliance-wijzer geeft een indicatief overzicht op basis van de ingevoerde antwoorden. De uitkomst is geen formele juridische beoordeling, certificering of garantie dat aan alle toepasselijke wet- en regelgeving wordt voldaan.'
@@ -33,7 +34,7 @@ export type ComplianceReportResult = Readonly<{
   relevance: string
   sources: readonly ComplianceReportSource[]
   extended: Readonly<{
-    answerKeys: readonly (keyof ComplianceGuideAnswers)[]
+    answerKeys: readonly string[]
     legalBasisAvailable: boolean
     priority: 'HIGH' | 'NORMAL'
   }>
@@ -45,6 +46,7 @@ export type ComplianceReportData = Readonly<{
   organizationName: string | null
   scannedAt: string
   assessmentVersion: number
+  reportVersion: string
   summary: ReturnType<typeof summarizeComplianceResults>
   results: readonly ComplianceReportResult[]
   attentionItems: readonly ComplianceReportResult[]
@@ -125,6 +127,7 @@ export function buildComplianceReportData(input: Readonly<{
     organizationName: cleanOrganizationName(input.organizationName),
     scannedAt: input.scannedAt.toISOString(),
     assessmentVersion: COMPLIANCE_GUIDE_VERSION,
+    reportVersion: COMPLIANCE_REPORT_VERSION,
     summary: summarizeComplianceResults(evaluated),
     results,
     attentionItems: results.filter((result) => result.status === 'ACTION' || result.status === 'CHECK'),

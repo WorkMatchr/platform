@@ -4,12 +4,12 @@ import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { LinkButton } from '@/components/ui/link-button'
+import { ArboGuideStatus } from '@/components/arbo-guides/arbo-guide-status'
 import { knowledgeContextHref, resolveKnowledgeContextByRoute } from '@/content/knowledge/knowledge-contexts'
 import { collectComplianceSources, type ComplianceReportSource } from '@/lib/compliance-guide/compliance-report'
 import {
   complianceAnswerValues,
   complianceStepScrollBehavior,
-  complianceResultLabels,
   evaluateComplianceGuide,
   initialComplianceGuideAnswers,
   summarizeComplianceResults,
@@ -95,7 +95,7 @@ export function ConsultedSources({ sources }: { sources: readonly ComplianceRepo
       <ul className="mx-auto mt-5 grid max-w-4xl grid-cols-1 gap-4 text-left md:grid-cols-2">
         {sources.map((source) => (
           <li key={source.id} className="rounded-control bg-surface-subtle p-4">
-            <a className="font-semibold text-brand-primary underline underline-offset-4" href={source.url} target="_blank" rel="noreferrer">
+            <a className="font-semibold text-brand-primary-hover underline underline-offset-4" href={source.url} target="_blank" rel="noreferrer">
               {source.title}<span className="sr-only"> (opent in een nieuw venster)</span>
             </a>
             <span className="mt-1 block text-sm text-text-secondary">
@@ -108,23 +108,58 @@ export function ConsultedSources({ sources }: { sources: readonly ComplianceRepo
   )
 }
 
-function Results({ answers, onRestart, headingRef }: { answers: ComplianceGuideAnswers; onRestart: () => void; headingRef: RefObject<HTMLHeadingElement | null> }) {
+type SavedRun = Readonly<{ runId: string; reportNumber: string }>
+
+function Results({ answers, onRestart, headingRef, idempotencyKey, startedAt, completedAt }: {
+  answers: ComplianceGuideAnswers
+  onRestart: () => void
+  headingRef: RefObject<HTMLHeadingElement | null>
+  idempotencyKey: string
+  startedAt: string
+  completedAt: string
+}) {
   const results = useMemo(() => evaluateComplianceGuide(answers), [answers])
   const summary = summarizeComplianceResults(results)
   const sources = useMemo(() => collectComplianceSources(results), [results])
   const context = resolveKnowledgeContextByRoute('/wijzers/compliance')
   const [downloading, setDownloading] = useState(false)
   const [downloadError, setDownloadError] = useState<string | null>(null)
+  const [savedRun, setSavedRun] = useState<SavedRun | null>(null)
+  const [saveFailed, setSaveFailed] = useState(false)
+
+  useEffect(() => {
+    const controller = new AbortController()
+    async function saveAuthenticatedRun() {
+      try {
+        const response = await fetch('/wijzers/compliance/runs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ answers, idempotencyKey, startedAt, completedAt }),
+          signal: controller.signal,
+        })
+        if (response.status === 401) return
+        if (!response.ok) throw new Error('save failed')
+        const body = await response.json() as SavedRun & { saved: true }
+        setSavedRun({ runId: body.runId, reportNumber: body.reportNumber })
+      } catch (error) {
+        if (!(error instanceof DOMException && error.name === 'AbortError')) setSaveFailed(true)
+      }
+    }
+    void saveAuthenticatedRun()
+    return () => controller.abort()
+  }, [answers, completedAt, idempotencyKey, startedAt])
 
   async function downloadBasicReport() {
     setDownloading(true)
     setDownloadError(null)
     try {
-      const response = await fetch('/wijzers/compliance/pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tier: 'BASIC', answers }),
-      })
+      const response = savedRun
+        ? await fetch(`/mijn-arbo-wijzers/${savedRun.runId}/pdf`)
+        : await fetch('/wijzers/compliance/pdf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tier: 'BASIC', answers }),
+          })
       if (!response.ok) throw new Error('download failed')
       const blobUrl = URL.createObjectURL(await response.blob())
       const link = document.createElement('a')
@@ -157,7 +192,7 @@ function Results({ answers, onRestart, headingRef }: { answers: ComplianceGuideA
             <article key={result.id} className="rounded-card border border-border bg-surface p-6 shadow-card">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <h2 className="text-xl font-bold text-brand-dark">{result.title}</h2>
-                <span className="rounded-pill bg-surface-subtle px-3 py-1 text-sm font-semibold text-brand-dark">{complianceResultLabels[result.status]}</span>
+                <ArboGuideStatus status={result.status} />
               </div>
               <p className="mt-3 text-text-secondary">{result.explanation}</p>
               <h3 className="mt-5 font-semibold text-brand-dark">Waarom dit relevant is</h3>
@@ -169,6 +204,15 @@ function Results({ answers, onRestart, headingRef }: { answers: ComplianceGuideA
         ))}
       </div>
 
+      <section className="rounded-card border border-border bg-surface p-6" aria-labelledby="compliance-report-title">
+        <h2 id="compliance-report-title" className="text-xl font-bold text-brand-dark">Bewaar uw resultaat</h2>
+        <p className="mt-2 text-text-secondary">Download de samenvatting, aandachtspunten, belangrijkste acties en officiële bronnen als PDF. De volledige scan en dit basisrapport zijn gratis.</p>
+        {savedRun && <p className="mt-3 text-sm text-text-secondary">Rapportnummer: <strong>{savedRun.reportNumber}</strong>. U vindt dit rapport ook bij Mijn Arbo-wijzers.</p>}
+        {saveFailed && <p className="mt-3 text-sm text-warning" role="status">Uw resultaat kon niet in uw account worden bewaard. U kunt het basisrapport wel downloaden.</p>}
+        <Button className="mt-5" onClick={downloadBasicReport} disabled={downloading}>{downloading ? 'Rapport wordt gemaakt…' : 'Download rapport (PDF)'}</Button>
+        {downloadError && <p className="mt-3 text-sm font-semibold text-error" role="alert">{downloadError}</p>}
+      </section>
+
       <section className="rounded-card bg-brand-dark p-6 text-text-on-dark">
         <h2 className="text-xl font-bold">Wilt u uw situatie laten beoordelen?</h2>
         <p className="mt-2 text-text-on-dark-muted">De Advieswijzer helpt u bepalen welke ondersteuning passend is. Uw antwoorden uit deze wijzer worden niet in de URL meegestuurd.</p>
@@ -178,12 +222,6 @@ function Results({ answers, onRestart, headingRef }: { answers: ComplianceGuideA
         </div>
       </section>
       <ConsultedSources sources={sources} />
-      <section className="rounded-card border border-border bg-surface p-6" aria-labelledby="compliance-report-title">
-        <h2 id="compliance-report-title" className="text-xl font-bold text-brand-dark">Download uw basisrapport</h2>
-        <p className="mt-2 text-text-secondary">Bewaar de samenvatting, aandachtspunten, belangrijkste acties en officiële bronnen als PDF. De volledige scan en dit basisrapport zijn gratis.</p>
-        <Button className="mt-5" onClick={downloadBasicReport} disabled={downloading}>{downloading ? 'Rapport wordt gemaakt…' : 'Download basisrapport (PDF)'}</Button>
-        {downloadError && <p className="mt-3 text-sm font-semibold text-error" role="alert">{downloadError}</p>}
-      </section>
     </div>
   )
 }
@@ -194,6 +232,11 @@ export function ComplianceGuide() {
   const guideRef = useRef<HTMLDivElement>(null)
   const contentHeadingRef = useRef<HTMLHeadingElement>(null)
   const navigationStartedRef = useRef(false)
+  const [runIdentity, setRunIdentity] = useState(() => ({
+    idempotencyKey: crypto.randomUUID(),
+    startedAt: new Date().toISOString(),
+    completedAt: null as string | null,
+  }))
   const showingResults = stepIndex === steps.length
   const step = steps[Math.min(stepIndex, steps.length - 1)]
 
@@ -213,10 +256,13 @@ export function ComplianceGuide() {
 
   function navigateToStep(nextStep: number) {
     navigationStartedRef.current = true
+    if (nextStep === steps.length && !runIdentity.completedAt) {
+      setRunIdentity((current) => ({ ...current, completedAt: new Date().toISOString() }))
+    }
     setStepIndex(Math.max(0, Math.min(steps.length, nextStep)))
   }
 
-  if (showingResults) return <div ref={guideRef} className="scroll-mt-24"><Results answers={answers} headingRef={contentHeadingRef} onRestart={() => { setAnswers(initialComplianceGuideAnswers); navigateToStep(0) }} /></div>
+  if (showingResults && runIdentity.completedAt) return <div ref={guideRef} className="scroll-mt-24"><Results answers={answers} headingRef={contentHeadingRef} idempotencyKey={runIdentity.idempotencyKey} startedAt={runIdentity.startedAt} completedAt={runIdentity.completedAt} onRestart={() => { setAnswers(initialComplianceGuideAnswers); setRunIdentity({ idempotencyKey: crypto.randomUUID(), startedAt: new Date().toISOString(), completedAt: null }); navigateToStep(0) }} /></div>
 
   return (
     <div ref={guideRef} className="mx-auto max-w-4xl scroll-mt-24">
