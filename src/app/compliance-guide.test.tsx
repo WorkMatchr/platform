@@ -57,6 +57,8 @@ describe('publieke Arbo-wijzers', () => {
     const html = renderToStaticMarkup(<ConsultedSources sources={sources} />)
 
     expect(html).toContain('Geraadpleegde bronnen')
+    expect(html).toContain('Wetgeving')
+    expect(html).toContain('Richtlijn')
     expect(html.match(/Arbeidsomstandighedenwet/g)).toHaveLength(1)
     expect(html).toContain('grid-cols-1')
     expect(html).toContain('md:grid-cols-2')

@@ -78,7 +78,7 @@ export type BhvGuideResult = Readonly<{
   id: BhvResultCode; title: string; status: ComplianceResultStatus; explanation: string; relevance: string; nextStep: string
   sourceIds: readonly PublicSourceId[]; answerKeys: readonly (keyof BhvGuideAnswers)[]
 }>
-const sourceIds: readonly PublicSourceId[] = ['arbowet-current', 'arboportaal-bhv', 'arbeidsinspectie-bhv-2025']
+const sourceIds: readonly PublicSourceId[] = ['arbowet-current', 'arbeidsinspectie-bhv-2025', 'arboportaal-bhv', 'ai-10-bhv-2001']
 
 function aggregate(answers: BhvGuideAnswers, keys: readonly BhvBooleanKey[]): ComplianceResultStatus {
   const values = keys.map((key) => answers[key])

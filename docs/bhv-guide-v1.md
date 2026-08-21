@@ -29,7 +29,9 @@ Vragen over buitenuren en spreiding verschijnen alleen wanneer de eerdere contex
 
 ## Bronnen
 
-De publieke broncatalogus bevat de actuele Arbeidsomstandighedenwet, de officiële Arboportaal-uitleg over BHV en de werkinstructie bedrijfshulpverlening van de Nederlandse Arbeidsinspectie. Bronnen worden centraal en gededupliceerd getoond. De bronmetadata wordt in ieder opgeslagen rapport gesnapshot.
+De publieke broncatalogus bevat de actuele Arbeidsomstandighedenwet, officiële BHV-uitleg en de werkinstructie bedrijfshulpverlening van de Nederlandse Arbeidsinspectie. AI-10 Bedrijfshulpverlening (Sdu Uitgevers, 2001) is uitsluitend als historische aanvullende vakbron opgenomen en vervangt geen wettelijke grondslag. De gedeelde bronselectie toont alle gebruikte wetgeving, maximaal één rechtstreeks relevante richtlijn en maximaal één aanvullende bron. Bronnen worden op centrale bron-ID gededupliceerd en de geselecteerde bronmetadata, inclusief categorie, wordt in ieder nieuw opgeslagen rapport gesnapshot.
+
+De BASIC PDF gebruikt dezelfde bronselectie als het webresultaat en het centrale officiële WorkMatchr-logo. De eerste pagina bevat alleen rapportmetadata en samenvatting; de detailresultaten beginnen altijd op een nieuwe pagina. Bestaande immutable rapporten blijven hun eerder opgeslagen bronselectie behouden.
 
 ## Rapportage en historie
 

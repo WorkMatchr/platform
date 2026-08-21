@@ -1,5 +1,8 @@
+import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib'
 import type { ArboGuideReportSnapshot } from '@/lib/arbo-guides/arbo-guide-run-service'
+import { groupArboGuideSources, normalizeArboGuideReportSource } from '@/lib/arbo-guides/arbo-guide-sources'
 import type { ComplianceReportData } from './compliance-report'
 
 const PAGE_WIDTH = 595.28
@@ -10,9 +13,15 @@ const BOTTOM = 54
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN_X * 2
 const BODY_SIZE = 10
 const LINE_HEIGHT = 14
+export const WORKMATCHR_LOGO_WIDTH_PX = 1321
+export const WORKMATCHR_LOGO_HEIGHT_PX = 372
+export const WORKMATCHR_LOGO_ASPECT_RATIO = WORKMATCHR_LOGO_WIDTH_PX / WORKMATCHR_LOGO_HEIGHT_PX
+const PDF_LOGO_WIDTH = 230
+export const PDF_LOGO_HEIGHT = PDF_LOGO_WIDTH / WORKMATCHR_LOGO_ASPECT_RATIO
+const WORKMATCHR_LOGO_PATH = join(process.cwd(), 'public', 'branding', 'workmatchr-logo.png')
 
 function normalizePdfText(value: string): string {
-  return value.replaceAll('\u0000', '').replaceAll('\u2011', '-').replaceAll('\u202f', ' ').replaceAll('\u00a0', ' ').replaceAll('\u2192', '->')
+  return value.replaceAll('\u0000', '').replaceAll('\u2011', '-').replaceAll('\u2013', '-').replaceAll('\u2014', '-').replaceAll('\u202f', ' ').replaceAll('\u00a0', ' ').replaceAll('\u2192', '->')
 }
 
 function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
@@ -59,19 +68,27 @@ export async function buildComplianceReportPdf(report: ArboGuideReportSnapshot |
   document.setCreationDate(new Date(report.scannedAt))
   const regular = await document.embedFont(StandardFonts.Helvetica)
   const bold = await document.embedFont(StandardFonts.HelveticaBold)
+  const workmatchrLogo = await document.embedPng(await readFile(WORKMATCHR_LOGO_PATH))
   const brandDark = rgb(0.02, 0.17, 0.29)
   const brandBlue = rgb(0.05, 0.43, 0.64)
   const textColor = rgb(0.13, 0.2, 0.27)
   const muted = rgb(0.35, 0.4, 0.46)
   const border = rgb(0.82, 0.85, 0.88)
   let page: PDFPage = document.addPage([PAGE_WIDTH, PAGE_HEIGHT])
+  const coverPage = page
   let y = 0
 
-  function preparePage(): void {
+  function preparePage(cover = false): void {
     y = PAGE_HEIGHT - TOP
-    page.drawText('WorkMatchr', { x: MARGIN_X, y, size: 12, font: bold, color: brandDark })
-    page.drawLine({ start: { x: MARGIN_X, y: y - 10 }, end: { x: PAGE_WIDTH - MARGIN_X, y: y - 10 }, color: brandBlue, thickness: 1.2 })
-    y -= 34
+    if (cover) {
+      page.drawImage(workmatchrLogo, { x: MARGIN_X, y: y - PDF_LOGO_HEIGHT + 8, width: PDF_LOGO_WIDTH, height: PDF_LOGO_HEIGHT })
+      y -= PDF_LOGO_HEIGHT + 8
+    } else {
+      page.drawText('WorkMatchr', { x: MARGIN_X, y, size: 12, font: bold, color: brandDark })
+      y -= 18
+    }
+    page.drawLine({ start: { x: MARGIN_X, y }, end: { x: PAGE_WIDTH - MARGIN_X, y }, color: brandBlue, thickness: 1.2 })
+    y -= 24
   }
   function newPage(): void { page = document.addPage([PAGE_WIDTH, PAGE_HEIGHT]); preparePage() }
   function ensureSpace(height: number): void { if (y - height < BOTTOM) newPage() }
@@ -96,9 +113,30 @@ export async function buildComplianceReportPdf(report: ArboGuideReportSnapshot |
     page.drawLine({ start: { x: MARGIN_X, y }, end: { x: PAGE_WIDTH - MARGIN_X, y }, color: border, thickness: 0.7 })
     y -= 14
   }
+  function twoColumnList(values: readonly string[]): void {
+    const columnGap = 18
+    const columnWidth = (CONTENT_WIDTH - columnGap) / 2
+    const rows = Math.ceil(values.length / 2)
+    for (let row = 0; row < rows; row += 1) {
+      const left = values[row]
+      const right = values[row + rows]
+      const leftLines = left ? wrapText(`- ${left}`, regular, BODY_SIZE, columnWidth) : []
+      const rightLines = right ? wrapText(`- ${right}`, regular, BODY_SIZE, columnWidth) : []
+      const rowLines = Math.max(leftLines.length, rightLines.length)
+      ensureSpace(rowLines * LINE_HEIGHT)
+      leftLines.forEach((line, index) => page.drawText(line, { x: MARGIN_X, y: y - index * LINE_HEIGHT, size: BODY_SIZE, font: regular, color: textColor }))
+      rightLines.forEach((line, index) => page.drawText(line, { x: MARGIN_X + columnWidth + columnGap, y: y - index * LINE_HEIGHT, size: BODY_SIZE, font: regular, color: textColor }))
+      y -= rowLines * LINE_HEIGHT
+    }
+    y -= 4
+  }
+
+  function measuredTextHeight(value: string, font: PDFFont = regular, size = BODY_SIZE, width = CONTENT_WIDTH): number {
+    return wrapText(value, font, size, width).length * LINE_HEIGHT
+  }
 
   const scanDate = new Intl.DateTimeFormat('nl-NL', { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(report.scannedAt))
-  preparePage()
+  preparePage(true)
   text(guideTitle, { font: bold, size: 25, color: brandDark, gapAfter: 10 })
   text('Indicatief basisrapport', { font: bold, size: 13, color: brandBlue, gapAfter: 18 })
   if (report.organizationName) text(`Organisatie: ${report.organizationName}`, { font: bold, gapAfter: 3 })
@@ -116,7 +154,7 @@ export async function buildComplianceReportPdf(report: ArboGuideReportSnapshot |
   }
   if (scenarioLabels?.length) {
     heading('Relevante incidentscenario’s')
-    for (const scenario of scenarioLabels) text(`- ${scenario}`)
+    twoColumnList(scenarioLabels)
   }
 
   heading('Samenvatting')
@@ -125,9 +163,22 @@ export async function buildComplianceReportPdf(report: ArboGuideReportSnapshot |
   text(`${report.summary.check} onderdelen moeten worden gecontroleerd`)
   text(`${report.summary.notApplicable} onderdelen niet van toepassing`)
 
-  heading('Resultaten per onderwerp')
+  if (report.attentionItems.length > 0) {
+    heading('Belangrijkste aandachtspunten')
+    for (const result of report.attentionItems.slice(0, 5)) text(`- ${result.title}: ${result.statusLabel}`)
+  }
+
+  if (page !== coverPage) throw new Error('De samenvatting past niet volledig op de voorpagina.')
+
+  // Detailresultaten beginnen voor iedere Arbo-wijzer op een nieuwe pagina.
+  newPage()
+  text('Resultaten per onderwerp', { font: bold, size: 18, color: brandDark, gapAfter: 10 })
   for (const result of report.results) {
-    ensureSpace(75)
+    const estimatedHeight = 48
+      + measuredTextHeight(result.title, bold, 12)
+      + measuredTextHeight(result.explanation)
+      + measuredTextHeight(`Vervolgstap: ${result.nextStep}`)
+    ensureSpace(Math.min(estimatedHeight, PAGE_HEIGHT - TOP - BOTTOM))
     divider()
     text(result.title, { font: bold, size: 12, color: brandDark, gapAfter: 2 })
     text(`Status: ${result.statusLabel}`, { font: bold, color: brandBlue, gapAfter: 3 })
@@ -142,11 +193,15 @@ export async function buildComplianceReportPdf(report: ArboGuideReportSnapshot |
     text(result.nextStep, { indent: 8, gapAfter: 6 })
   }
 
-  heading('Officiële bronnen')
-  for (const source of report.sources) {
-    text(`${source.title} - ${source.publisher}`, { font: bold, gapAfter: 1 })
-    text(source.url, { color: brandBlue, gapAfter: 1 })
-    text(`Door WorkMatchr gecontroleerd op ${source.reviewedAt}`, { size: 8.5, color: muted, gapAfter: 6 })
+  heading('Geraadpleegde bronnen')
+  const sourceGroups = groupArboGuideSources(report.sources.map(normalizeArboGuideReportSource))
+  for (const group of sourceGroups) {
+    text(group.label, { font: bold, size: 11, color: brandDark, gapAfter: 3 })
+    for (const source of group.sources) {
+      text(`${source.title} - ${source.publisher}`, { font: bold, gapAfter: 1 })
+      text(source.url, { color: brandBlue, gapAfter: 1 })
+      text(`Door WorkMatchr gecontroleerd op ${source.reviewedAt}`, { size: 8.5, color: muted, gapAfter: 6 })
+    }
   }
 
   heading('Disclaimer')

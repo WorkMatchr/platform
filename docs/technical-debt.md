@@ -2,7 +2,7 @@
 
 | ID | Prioriteit | Reden | Geplande oplossing | Doelmodule |
 | --- | --- | --- | --- | --- |
-| TD-001 | Hoog | Het definitieve WorkMatchr-logo ontbreekt. | Definitief logo ontwerpen, valideren en als toegankelijke asset toevoegen. | Na ontvangst definitief logo |
+| TD-001 | Afgerond | Het officiële transparante WorkMatchr-logo is centraal opgenomen en wordt in Arbo-wijzer-PDF's gebruikt. | Bewaak het centrale asset en de vaste beeldverhouding met regressietests. | Arbo-wijzer PDF-foundation |
 | TD-002 | Hoog | De exacte primaire kleur uit het FSC-logo ontbreekt. | `brand-primary` vervangen door de definitieve logokleur en contrast opnieuw toetsen. | Na ontvangst definitieve kleur |
 | TD-003 | Middel | Tijdelijke ankerlinks bestaan nog. | Vervangen door definitieve routes zodra de betreffende pagina’s worden gebouwd. | Latere publieke module |
 | TD-004 | Middel | Privacy en algemene voorwaarden bevatten nog geen juridisch definitieve inhoud. | Juridische inhoud laten vaststellen en de bestaande pagina’s definitief opleveren. | Juridische module |

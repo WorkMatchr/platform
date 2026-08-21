@@ -4,7 +4,7 @@ export type PublicContentType = 'knowledge' | 'service' | 'obligation' | 'sector
 export type PublicContentStatus = 'PUBLISHED' | 'IN_REVIEW'
 export type ValidationStatus = 'VALIDATED' | 'CONTEXT_DEPENDENT'
 export type EvidenceLevel = 'PRIMARY' | 'AUTHORITATIVE'
-export type PublicSourceType = 'LAW' | 'OFFICIAL_GUIDANCE' | 'ENFORCEMENT_GUIDANCE' | 'OFFICIAL_RESEARCH'
+export type PublicSourceType = 'LAW' | 'OFFICIAL_GUIDANCE' | 'ENFORCEMENT_GUIDANCE' | 'OFFICIAL_RESEARCH' | 'PROFESSIONAL_REFERENCE'
 
 export type PublicSource = {
   id: string

@@ -1,9 +1,11 @@
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
-import { PDFDocument } from 'pdf-lib'
+import { join } from 'node:path'
+import { PDFDocument, PDFName, PDFNumber, PDFRawStream } from 'pdf-lib'
+import sharp from 'sharp'
 import { describe, expect, it } from 'vitest'
 import { initialComplianceGuideAnswers, type ComplianceGuideAnswers } from './compliance-guide'
 import { buildComplianceReportData, collectComplianceSources, COMPLIANCE_REPORT_DISCLAIMER } from './compliance-report'
-import { buildComplianceReportPdf } from './compliance-report-pdf'
+import { buildComplianceReportPdf, WORKMATCHR_LOGO_HEIGHT_PX, WORKMATCHR_LOGO_WIDTH_PX } from './compliance-report-pdf'
 
 const mixedAnswers: ComplianceGuideAnswers = {
   ...initialComplianceGuideAnswers,
@@ -34,7 +36,30 @@ async function extractPdfText(bytes: Uint8Array): Promise<string> {
   return pages.join('\n')
 }
 
+async function extractPdfPages(bytes: Uint8Array): Promise<string[]> {
+  const task = getDocument({ data: bytes, disableFontFace: true, useSystemFonts: false, verbosity: 0 })
+  const document = await task.promise
+  const pages: string[] = []
+  for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
+    const content = await (await document.getPage(pageNumber)).getTextContent()
+    pages.push(content.items.map((item) => 'str' in item ? item.str : '').join(' '))
+  }
+  await task.destroy()
+  return pages
+}
+
 describe('Compliance-rapportage', () => {
+  it('gebruikt het transparante officiële logo zonder de verhoudingen te wijzigen', async () => {
+    const metadata = await sharp(join(process.cwd(), 'public', 'branding', 'workmatchr-logo.png')).metadata()
+
+    expect(metadata).toMatchObject({
+      format: 'png',
+      width: WORKMATCHR_LOGO_WIDTH_PX,
+      height: WORKMATCHR_LOGO_HEIGHT_PX,
+      hasAlpha: true,
+    })
+  })
+
   it('dedupliceert uitsluitend daadwerkelijk gebruikte bronnen op de centrale bron-ID', () => {
     const multiple = collectComplianceSources([
       { sourceIds: ['arbowet-current', 'arboportaal-arbobeleid'] },
@@ -43,7 +68,7 @@ describe('Compliance-rapportage', () => {
     const single = collectComplianceSources([{ sourceIds: ['arbowet-current'] }])
 
     expect(multiple.map((source) => source.id)).toEqual([
-      'arbowet-current', 'arboportaal-arbobeleid', 'arbeidsinspectie-rie',
+      'arbowet-current', 'arboportaal-arbobeleid',
     ])
     expect(single).toHaveLength(1)
     expect(single[0]?.id).toBe('arbowet-current')
@@ -66,10 +91,18 @@ describe('Compliance-rapportage', () => {
     const report = buildComplianceReportData({ answers: mixedAnswers, organizationName: 'Voorbeeld Organisatie', scannedAt: new Date('2026-08-20T10:00:00Z'), tier: 'BASIC' })
     const bytes = await buildComplianceReportPdf(report)
     const pdf = await PDFDocument.load(bytes)
-    const text = await extractPdfText(bytes)
+    const text = await extractPdfText(new Uint8Array(bytes))
 
     expect(pdf.getTitle()).toBe('WorkMatchr Compliance-wijzer rapport')
     expect(pdf.getPageCount()).toBeGreaterThan(1)
+    const logo = [...pdf.context.enumerateIndirectObjects()].map(([, object]) => object).find((object) =>
+      object instanceof PDFRawStream
+      && object.dict.get(PDFName.of('Subtype'))?.toString() === '/Image'
+      && object.dict.get(PDFName.of('Width')) instanceof PDFNumber
+      && (object.dict.get(PDFName.of('Width')) as PDFNumber).asNumber() === WORKMATCHR_LOGO_WIDTH_PX,
+    ) as PDFRawStream | undefined
+    expect(logo).toBeDefined()
+    expect((logo?.dict.get(PDFName.of('Height')) as PDFNumber).asNumber()).toBe(WORKMATCHR_LOGO_HEIGHT_PX)
     expect(text).toContain('Voorbeeld Organisatie')
     expect(text).toContain('20 augustus 2026')
     expect(text).toContain('Beoordelingsset: versie 1')
@@ -78,6 +111,11 @@ describe('Compliance-rapportage', () => {
     expect(text).toContain('Status: Controleren')
     expect(text).toContain('Arbeidsomstandighedenwet')
     expect(text).toContain(COMPLIANCE_REPORT_DISCLAIMER)
+    const pages = await extractPdfPages(new Uint8Array(bytes))
+    expect(pages[0]).not.toContain('Resultaten per onderwerp')
+    expect(pages[1]).toContain('Resultaten per onderwerp')
+    expect(text).toContain('Geraadpleegde bronnen')
+    expect(text).toContain('Wetgeving')
     expect(text).not.toContain('U voldoet aan de Arbowet')
     expect(text).not.toContain('Uw organisatie is compliant')
   })

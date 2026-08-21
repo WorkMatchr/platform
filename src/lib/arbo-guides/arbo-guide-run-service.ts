@@ -13,6 +13,7 @@ const answerSnapshotSchema = z.record(z.string().min(1).max(80), scalar)
 const sourceSnapshotSchema = z.object({
   id: z.string().min(1).max(120), title: z.string().min(1).max(300), publisher: z.string().min(1).max(200),
   url: z.string().url().startsWith('https://'), reviewedAt: z.string().date(),
+  category: z.enum(['LEGISLATION', 'GUIDANCE', 'SUPPLEMENTARY']).optional(),
 })
 const reportResultSchema = z.object({
   id: z.string().min(1).max(80), title: z.string().min(1).max(200), status: z.enum(arboGuideResultStatuses),

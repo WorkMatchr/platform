@@ -44,6 +44,7 @@ const sourceTypeLabels = {
   OFFICIAL_GUIDANCE: 'Officiële toelichting',
   ENFORCEMENT_GUIDANCE: 'Toezicht en uitvoering',
   OFFICIAL_RESEARCH: 'Officieel onderzoek',
+  PROFESSIONAL_REFERENCE: 'Aanvullende vakbron',
 } as const
 
 export function PublicSourceList({ sources }: { sources: readonly PublicSource[] }) {

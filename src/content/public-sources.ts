@@ -131,6 +131,16 @@ export const publicSources = {
     reviewedAt: '2026-08-21',
     note: 'Actuele inspectiewerkwijze voor de beoordeling van een risicogerichte BHV-organisatie.',
   },
+  'ai-10-bhv-2001': {
+    id: 'ai-10-bhv-2001',
+    title: 'AI-10 — Bedrijfshulpverlening',
+    publisher: 'Sdu Uitgevers',
+    url: 'https://www.sdu.nl/shop/sdu-hse-online-arbo-praktijkinformatie-en-regelgeving.html',
+    type: 'PROFESSIONAL_REFERENCE',
+    evidenceLevel: 'AUTHORITATIVE',
+    reviewedAt: '2026-08-21',
+    note: 'Historische vakinhoudelijke bron uit 2001 voor scenario’s, organisatie, opleiding, oefenen en evalueren; geen actuele wettelijke grondslag.',
+  },
 } as const satisfies Record<string, PublicSource>
 
 export type PublicSourceId = keyof typeof publicSources

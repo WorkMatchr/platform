@@ -1,4 +1,5 @@
 import { resolvePublicSources, type PublicSourceId } from '@/content/public-sources'
+import { selectArboGuideSources, toArboGuideReportSource, type ArboGuideReportSource } from '@/lib/arbo-guides/arbo-guide-sources'
 import {
   COMPLIANCE_GUIDE_VERSION,
   complianceResultLabels,
@@ -16,13 +17,7 @@ export const COMPLIANCE_REPORT_VERSION = '1.0'
 export const COMPLIANCE_REPORT_DISCLAIMER =
   'De Compliance-wijzer geeft een indicatief overzicht op basis van de ingevoerde antwoorden. De uitkomst is geen formele juridische beoordeling, certificering of garantie dat aan alle toepasselijke wet- en regelgeving wordt voldaan.'
 
-export type ComplianceReportSource = Readonly<{
-  id: string
-  title: string
-  publisher: string
-  url: string
-  reviewedAt: string
-}>
+export type ComplianceReportSource = ArboGuideReportSource
 
 export type ComplianceReportResult = Readonly<{
   id: string
@@ -58,19 +53,7 @@ export type ComplianceReportData = Readonly<{
 type SourceBearingResult = Readonly<{ sourceIds: readonly PublicSourceId[] }>
 
 export function collectComplianceSources(results: readonly SourceBearingResult[]): readonly ComplianceReportSource[] {
-  return Array.from(
-    new Map(
-      results
-        .flatMap((result) => resolvePublicSources(result.sourceIds))
-        .map((source) => [source.id, {
-          id: source.id,
-          title: source.title,
-          publisher: source.publisher,
-          url: source.url,
-          reviewedAt: source.reviewedAt,
-        }]),
-    ).values(),
-  )
+  return selectArboGuideSources(results.flatMap((result) => resolvePublicSources(result.sourceIds).map(toArboGuideReportSource)))
 }
 
 const resultAnswerKeys: Record<string, readonly (keyof ComplianceGuideAnswers)[]> = {
@@ -106,13 +89,7 @@ export function buildComplianceReportData(input: Readonly<{
     explanation: result.explanation,
     nextStep: result.nextStep,
     relevance: result.relevance,
-    sources: resolvePublicSources(result.sourceIds).map((source) => ({
-      id: source.id,
-      title: source.title,
-      publisher: source.publisher,
-      url: source.url,
-      reviewedAt: source.reviewedAt,
-    })),
+    sources: resolvePublicSources(result.sourceIds).map(toArboGuideReportSource),
     extended: {
       answerKeys: resultAnswerKeys[result.id] ?? [],
       legalBasisAvailable: result.sourceIds.length > 0,

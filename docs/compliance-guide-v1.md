@@ -1,5 +1,7 @@
 # Compliance-wijzer v1
 
+De webweergave en BASIC PDF gebruiken de gedeelde Arbo-wijzer-bronselectie: gebruikte wetgeving blijft onbeperkt zichtbaar, waarna maximaal één richtlijn en één aanvullende vakbron volgen. De selectie wordt op centrale bron-ID gededupliceerd. Het officiële transparante WorkMatchr-logo uit `public/branding/workmatchr-logo.png` staat op de voorpagina. In de PDF blijft pagina 1 gereserveerd voor rapportmetadata en samenvatting; detailresultaten starten op pagina 2.
+
 ## Doel en begrenzing
 
 De Compliance-wijzer geeft werkgevers per algemeen arbo-onderwerp een indicatief overzicht op basis van hun eigen antwoorden. De uitkomst is geen juridische certificering, formele complianceverklaring of inhoudelijke RI&E-beoordeling. Er wordt bewust geen percentage of algemeen groen oordeel berekend.

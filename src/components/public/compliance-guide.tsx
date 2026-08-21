@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { LinkButton } from '@/components/ui/link-button'
 import { ArboGuideStatus } from '@/components/arbo-guides/arbo-guide-status'
 import { knowledgeContextHref, resolveKnowledgeContextByRoute } from '@/content/knowledge/knowledge-contexts'
-import { collectComplianceSources, type ComplianceReportSource } from '@/lib/compliance-guide/compliance-report'
+import { collectComplianceSources } from '@/lib/compliance-guide/compliance-report'
+import { groupArboGuideSources, normalizeArboGuideReportSource, type ArboGuideReportSource, type ArboGuideSourceCategory } from '@/lib/arbo-guides/arbo-guide-sources'
 import {
   complianceAnswerValues,
   complianceStepScrollBehavior,
@@ -88,22 +89,32 @@ function AnswerQuestion({ question, value, onChange }: { question: Question; val
   )
 }
 
-export function ConsultedSources({ sources }: { sources: readonly ComplianceReportSource[] }) {
+type DisplaySource = Omit<ArboGuideReportSource, 'category'> & { category?: ArboGuideSourceCategory }
+
+export function ConsultedSources({ sources }: { sources: readonly DisplaySource[] }) {
+  const groups = groupArboGuideSources(sources.map(normalizeArboGuideReportSource))
   return (
     <section className="rounded-card border border-border bg-surface p-6 text-center" aria-labelledby="consulted-sources-title">
       <h2 id="consulted-sources-title" className="text-xl font-bold text-brand-dark">Geraadpleegde bronnen</h2>
-      <ul className="mx-auto mt-5 grid max-w-4xl grid-cols-1 gap-4 text-left md:grid-cols-2">
-        {sources.map((source) => (
-          <li key={source.id} className="rounded-control bg-surface-subtle p-4">
-            <a className="font-semibold text-brand-primary-hover underline underline-offset-4" href={source.url} target="_blank" rel="noreferrer">
-              {source.title}<span className="sr-only"> (opent in een nieuw venster)</span>
-            </a>
-            <span className="mt-1 block text-sm text-text-secondary">
-              {source.publisher} · gecontroleerd op {new Intl.DateTimeFormat('nl-NL', { dateStyle: 'long' }).format(new Date(`${source.reviewedAt}T00:00:00Z`))}
-            </span>
-          </li>
+      <div className="mx-auto mt-5 max-w-4xl space-y-5 text-left">
+        {groups.map((group) => (
+          <section key={group.category} aria-labelledby={`source-category-${group.category.toLowerCase()}`}>
+            <h3 id={`source-category-${group.category.toLowerCase()}`} className="font-semibold text-brand-dark">{group.label}</h3>
+            <ul className="mt-2 grid grid-cols-1 gap-3 md:grid-cols-2">
+              {group.sources.map((source) => (
+                <li key={source.id} className="rounded-control bg-surface-subtle p-4">
+                  <a className="font-semibold text-brand-primary-hover underline underline-offset-4" href={source.url} target="_blank" rel="noreferrer">
+                    {source.title}<span className="sr-only"> (opent in een nieuw venster)</span>
+                  </a>
+                  <span className="mt-1 block text-sm text-text-secondary">
+                    {source.publisher} · gecontroleerd op {new Intl.DateTimeFormat('nl-NL', { dateStyle: 'long' }).format(new Date(`${source.reviewedAt}T00:00:00Z`))}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
         ))}
-      </ul>
+      </div>
     </section>
   )
 }
