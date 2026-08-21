@@ -12,7 +12,9 @@ export function ArboGuideReportView({ report }: { report: ArboGuideReportSnapsho
           <li><strong>{report.summary.check}</strong> onderdelen moeten worden gecontroleerd</li>
           <li><strong>{report.summary.notApplicable}</strong> onderdelen niet van toepassing</li>
         </ul>
+        {report.managementSummary && <p className="mt-4 text-text-secondary">{report.managementSummary}</p>}
       </section>
+      {report.scenarioLabels?.length ? <section className="rounded-card border border-border bg-surface p-6"><h2 className="text-xl font-bold text-brand-dark">Relevante incidentscenario’s</h2><ul className="mt-4 list-disc space-y-1 pl-5 text-text-secondary">{report.scenarioLabels.map((scenario) => <li key={scenario}>{scenario}</li>)}</ul></section> : null}
       {report.results.map((result) => (
         <article key={result.id} className="rounded-card border border-border bg-surface p-6 shadow-card">
           <div className="flex flex-wrap items-start justify-between gap-3">

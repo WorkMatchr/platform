@@ -14,6 +14,7 @@ export default function GuidesPage() {
       <div className="grid gap-6 md:grid-cols-2">
         <ArboGuideOverviewCard title="Advieswijzer" description="Beschrijf wat er speelt. WorkMatchr helpt uw hulpvraag verhelderen zonder dat u vooraf de juiste deskundige hoeft te kiezen." href={publicRoutes.adviceGuide} actionLabel="Start de Advieswijzer" />
         <ArboGuideOverviewCard title="Compliance-wijzer" description="Krijg een indicatief overzicht van algemene arboverplichtingen die op orde lijken, actie vragen of nog moeten worden gecontroleerd." href={publicRoutes.complianceGuide} actionLabel="Start de Compliance-wijzer" />
+        <ArboGuideOverviewCard title="BHV-wijzer" description="Beoordeel indicatief of uw BHV-organisatie aansluit op aanwezigen, locaties, geloofwaardige incidenten en de feitelijke bezetting." href={publicRoutes.bhvGuide} actionLabel="Start de BHV-wijzer" />
       </div>
     </ArboGuidePageLayout>
   )

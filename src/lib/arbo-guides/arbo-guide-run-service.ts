@@ -30,6 +30,9 @@ export const arboGuideReportSnapshotSchema = z.object({
   summary: z.object({ order: z.number().int().nonnegative(), action: z.number().int().nonnegative(), check: z.number().int().nonnegative(), notApplicable: z.number().int().nonnegative() }),
   results: z.array(reportResultSchema).min(1).max(100), attentionItems: z.array(reportResultSchema).max(100),
   sources: z.array(sourceSnapshotSchema).max(100), disclaimer: z.string().min(1).max(3_000), extendedCapabilities: z.array(z.string().max(80)).max(30),
+  managementSummary: z.string().min(1).max(3_000).optional(),
+  scenarioIds: z.array(z.string().min(1).max(80)).max(30).optional(),
+  scenarioLabels: z.array(z.string().min(1).max(200)).max(30).optional(),
 })
 
 const completionSchema = z.object({

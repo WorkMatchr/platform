@@ -10,12 +10,13 @@ export async function GET(_request: Request, { params }: { params: Promise<{ run
   try {
     const { runId } = await params
     const run = await getArboGuideRun({ userId: context.user.id, organizationId: context.activeMembership.organization.id }, runId)
-    const pdf = await buildComplianceReportPdf(run.reportSnapshot, { reportNumber: run.reportNumber })
+    const guideTitle = run.guideType === 'BHV' ? 'BHV-wijzer' : 'Compliance-wijzer'
+    const pdf = await buildComplianceReportPdf(run.reportSnapshot, { reportNumber: run.reportNumber, guideTitle })
     const body = pdf.buffer.slice(pdf.byteOffset, pdf.byteOffset + pdf.byteLength) as ArrayBuffer
     return new Response(body, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="workmatchr-compliance-rapport-${run.reportNumber}.pdf"`,
+        'Content-Disposition': `attachment; filename="workmatchr-${run.guideType === 'BHV' ? 'bhv' : 'compliance'}-rapport-${run.reportNumber}.pdf"`,
         'Cache-Control': 'private, no-store',
         'X-Robots-Tag': 'noindex, nofollow, noarchive',
       },

@@ -1,5 +1,13 @@
 # WorkMatchr test-log
 
+## 2026-08-21 — BHV-wijzer v1
+
+- Gerichte beslis-, scenario-, normalisatie-, bron-, rapport- en PDF-tests: groen.
+- Contextcatalogus- en bestaande Compliance-regressies: groen.
+- Typecheck en gerichte lint: groen.
+- Productiebuild: groen na achterwaarts compatibele uitbreiding van het rapport-snapshotcontract.
+- Geen Prisma-schemawijziging of migratie; `ArboGuideRun` en BHV-rapportnummering worden hergebruikt.
+
 Dit log bevat afgeronde functionaliteit waarvoor nog een afzonderlijke volledige inhoudelijke en functionele eindcontrole door de product owner is gepland.
 
 | Onderdeel | Status | Te controleren |

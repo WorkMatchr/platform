@@ -50,7 +50,7 @@ export const knowledgeContexts: readonly KnowledgeContextDefinition[] = Object.f
     classificationSignals: ['preventiemedewerker', 'interne deskundige', 'preventietaken'],
   },
   {
-    id: 'BHV', version: 1, status: 'ACTIVE', sourceRoutes: ['/kenniscentrum/hoeveel-bhvers-heb-ik-nodig'],
+    id: 'BHV', version: 1, status: 'ACTIVE', sourceRoutes: ['/kenniscentrum/hoeveel-bhvers-heb-ik-nodig', '/wijzers/bhv'],
     title: 'BHV-organisatie', shortLabel: 'BHV en ontruiming',
     adviceIntro: 'Uw vraag gaat over een doeltreffende BHV-organisatie.',
     assignmentIntro: 'U wilt een opdracht starten over BHV, ontruiming of noodorganisatie.',
@@ -132,6 +132,7 @@ export function validateKnowledgeContextCatalog(): readonly string[] {
   const activeSourceRoutes = new Set<string>([
     ...knowledgeArticles.map((article) => article.href),
     '/wijzers/compliance',
+    '/wijzers/bhv',
   ])
   const ids = knowledgeContexts.map((context) => context.id)
   const routes = knowledgeContexts.flatMap((context) => context.sourceRoutes)

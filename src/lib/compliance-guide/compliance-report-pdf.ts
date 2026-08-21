@@ -1,4 +1,5 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib'
+import type { ArboGuideReportSnapshot } from '@/lib/arbo-guides/arbo-guide-run-service'
 import type { ComplianceReportData } from './compliance-report'
 
 const PAGE_WIDTH = 595.28
@@ -47,13 +48,14 @@ function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): 
   })
 }
 
-export async function buildComplianceReportPdf(report: ComplianceReportData, options: { reportNumber?: string | null } = {}): Promise<Uint8Array> {
+export async function buildComplianceReportPdf(report: ArboGuideReportSnapshot | ComplianceReportData, options: { reportNumber?: string | null; guideTitle?: string } = {}): Promise<Uint8Array> {
   if (report.tier !== 'BASIC') throw new Error('De uitgebreide rapportage is nog niet beschikbaar.')
 
   const document = await PDFDocument.create()
-  document.setTitle('WorkMatchr Compliance-wijzer rapport')
+  const guideTitle = options.guideTitle ?? 'Compliance-wijzer'
+  document.setTitle(`WorkMatchr ${guideTitle} rapport`)
   document.setAuthor('WorkMatchr')
-  document.setSubject(`Indicatieve Compliance-wijzer, beoordelingsset versie ${report.assessmentVersion}`)
+  document.setSubject(`Indicatieve ${guideTitle}, beoordelingsset versie ${report.assessmentVersion}`)
   document.setCreationDate(new Date(report.scannedAt))
   const regular = await document.embedFont(StandardFonts.Helvetica)
   const bold = await document.embedFont(StandardFonts.HelveticaBold)
@@ -97,14 +99,25 @@ export async function buildComplianceReportPdf(report: ComplianceReportData, opt
 
   const scanDate = new Intl.DateTimeFormat('nl-NL', { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(report.scannedAt))
   preparePage()
-  text('Compliance-wijzer', { font: bold, size: 25, color: brandDark, gapAfter: 10 })
+  text(guideTitle, { font: bold, size: 25, color: brandDark, gapAfter: 10 })
   text('Indicatief basisrapport', { font: bold, size: 13, color: brandBlue, gapAfter: 18 })
   if (report.organizationName) text(`Organisatie: ${report.organizationName}`, { font: bold, gapAfter: 3 })
   if (options.reportNumber) text(`Rapportnummer: ${options.reportNumber}`, { font: bold, gapAfter: 3 })
   text(`Datum van de scan: ${scanDate}`, { color: muted, gapAfter: 3 })
   text(`Beoordelingsset: versie ${report.assessmentVersion}`, { color: muted, gapAfter: 18 })
   text(`Rapportstructuur: versie ${report.reportVersion}`, { color: muted, gapAfter: 18 })
-  text('Dit rapport vat de uitkomst van de gratis Compliance-wijzer samen. Het bevat geen algemene compliance-score en is geen certificaat.', { color: muted })
+  text(`Dit rapport vat de uitkomst van de gratis ${guideTitle} samen. Het bevat geen formele goedkeuring, score of certificaat.`, { color: muted })
+
+  const managementSummary = 'managementSummary' in report ? report.managementSummary : undefined
+  const scenarioLabels = 'scenarioLabels' in report ? report.scenarioLabels : undefined
+  if (managementSummary) {
+    heading('Managementsamenvatting')
+    text(managementSummary)
+  }
+  if (scenarioLabels?.length) {
+    heading('Relevante incidentscenario’s')
+    for (const scenario of scenarioLabels) text(`- ${scenario}`)
+  }
 
   heading('Samenvatting')
   text(`${report.summary.order} onderdelen op orde`)

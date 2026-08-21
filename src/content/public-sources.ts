@@ -111,6 +111,26 @@ export const publicSources = {
     reviewedAt: '2026-08-20',
     note: 'Officiële uitleg over de vanaf 1 juli 2026 geldende raadpleging van werknemers over het arbobeleid.',
   },
+  'arboportaal-bhv': {
+    id: 'arboportaal-bhv',
+    title: 'Wat zegt de wet over bedrijfshulpverlening?',
+    publisher: 'Arboportaal',
+    url: 'https://www.arboportaal.nl/onderwerpen/arbozorg/bedrijfshulpverlening/wat-zegt-de-wet-over-bedrijfshulpverlening',
+    type: 'OFFICIAL_GUIDANCE',
+    evidenceLevel: 'AUTHORITATIVE',
+    reviewedAt: '2026-08-21',
+    note: 'Officiële uitleg over risicogerichte organisatie, aantal en inzetbaarheid van bedrijfshulpverleners.',
+  },
+  'arbeidsinspectie-bhv-2025': {
+    id: 'arbeidsinspectie-bhv-2025',
+    title: 'Werkinstructie bedrijfshulpverlening',
+    publisher: 'Nederlandse Arbeidsinspectie',
+    url: 'https://www.nlarbeidsinspectie.nl/documenten/2025/07/03/werkinstructie-bedrijfshulpverlening',
+    type: 'ENFORCEMENT_GUIDANCE',
+    evidenceLevel: 'AUTHORITATIVE',
+    reviewedAt: '2026-08-21',
+    note: 'Actuele inspectiewerkwijze voor de beoordeling van een risicogerichte BHV-organisatie.',
+  },
 } as const satisfies Record<string, PublicSource>
 
 export type PublicSourceId = keyof typeof publicSources
