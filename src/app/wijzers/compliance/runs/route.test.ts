@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
-  getContext: vi.fn(),
+  getAccess: vi.fn(),
   complete: vi.fn(),
 }))
 
-vi.mock('@/lib/organizations/organization-authorization', () => ({ getOptionalActiveOrganizationContext: mocks.getContext }))
+vi.mock('@/lib/arbo-guides/arbo-guide-access', () => ({ getArboGuideApiAccess: mocks.getAccess }))
 vi.mock('@/lib/arbo-guides/arbo-guide-run-service', async () => {
   class ArboGuideRunError extends Error { constructor(public code: string) { super(code) } }
   return { completeArboGuideRun: mocks.complete, ArboGuideRunError }
@@ -22,9 +22,11 @@ function request(body: unknown) {
 describe('Compliance-runroute', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.getContext.mockResolvedValue({
-      user: { id: '00000000-0000-4000-8000-000000000001' },
-      activeMembership: { organization: { id: '00000000-0000-4000-8000-000000000002', name: 'Voorbeeld BV' } },
+    mocks.getAccess.mockResolvedValue({
+      authorized: true,
+      userId: '00000000-0000-4000-8000-000000000001',
+      organizationId: '00000000-0000-4000-8000-000000000002',
+      organizationName: 'Voorbeeld BV',
     })
     mocks.complete.mockResolvedValue({ id: 'run-1', reportNumber: 'CW-2026-000001', created: true })
   })
@@ -46,7 +48,7 @@ describe('Compliance-runroute', () => {
   })
 
   it('maakt voor een anonieme gebruiker geen run', async () => {
-    mocks.getContext.mockResolvedValue(null)
+    mocks.getAccess.mockResolvedValue({ authorized: false, status: 401 })
     const response = await POST(request({ idempotencyKey: 'browser-run-123', startedAt: new Date().toISOString(), completedAt: new Date().toISOString(), answers: {} }))
     expect(response.status).toBe(401)
     expect(mocks.complete).not.toHaveBeenCalled()

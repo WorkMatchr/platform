@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-21 — Arbo-wijzers account- en organisatiegebonden
+
+- Compliance- en BHV-uitleg blijven publiek, terwijl vragenflow, resultaten, historie en PDF server-side een actieve account- en organisatiecontext vereisen.
+- Veilige login-`returnTo`, tenantisolatie en historische PDF-download zijn generiek geborgd voor huidige en toekomstige Arbo-wijzers.
+- Resultaten worden pas getoond nadat de immutable run veilig is opgeslagen; anonieme PDF-generatie vanuit losse antwoorden is verwijderd.
+
 ## Unreleased — Compliance-wijzer v1 en Arbo-wijzers
 
 - De Compliance-wijzer biedt een gratis BASIC PDF met dezelfde indicatieve uitkomst, aandachtspunten en gededupliceerde officiële bronnen als de resultaatpagina.

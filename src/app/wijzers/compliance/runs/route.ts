@@ -1,4 +1,4 @@
-import { getOptionalActiveOrganizationContext } from '@/lib/organizations/organization-authorization'
+import { getArboGuideApiAccess } from '@/lib/arbo-guides/arbo-guide-access'
 import { COMPLIANCE_GUIDE_VERSION, normalizeComplianceGuideAnswers, type ComplianceGuideAnswers } from '@/lib/compliance-guide/compliance-guide'
 import { buildComplianceReportData, COMPLIANCE_REPORT_VERSION } from '@/lib/compliance-guide/compliance-report'
 import { ArboGuideRunError, completeArboGuideRun } from '@/lib/arbo-guides/arbo-guide-run-service'
@@ -22,8 +22,8 @@ export async function POST(request: Request) {
       startedAt?: unknown
       completedAt?: unknown
     }
-    const context = await getOptionalActiveOrganizationContext()
-    if (!context?.activeMembership) return Response.json({ saved: false }, { status: 401 })
+    const access = await getArboGuideApiAccess()
+    if (!access.authorized) return Response.json({ saved: false }, { status: access.status })
     if (typeof body.idempotencyKey !== 'string' || typeof body.startedAt !== 'string' || typeof body.completedAt !== 'string') {
       return Response.json({ message: 'Ongeldige aanvraag.' }, { status: 400 })
     }
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     const answers = normalizeComplianceGuideAnswers(body.answers ?? {})
     const report = buildComplianceReportData({
       answers,
-      organizationName: context.activeMembership.organization.name,
+      organizationName: access.organizationName,
       scannedAt: completedAt,
       tier: 'BASIC',
     })
@@ -46,8 +46,8 @@ export async function POST(request: Request) {
       guideType: 'COMPLIANCE',
       guideVersion: String(COMPLIANCE_GUIDE_VERSION),
       reportVersion: COMPLIANCE_REPORT_VERSION,
-      organizationId: context.activeMembership.organization.id,
-      completedByUserId: context.user.id,
+      organizationId: access.organizationId,
+      completedByUserId: access.userId,
       idempotencyKey: body.idempotencyKey,
       startedAt,
       completedAt,

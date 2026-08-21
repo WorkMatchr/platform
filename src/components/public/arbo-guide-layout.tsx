@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card'
 import { LinkButton } from '@/components/ui/link-button'
 import { PublicPageLayout } from '@/components/public/public-page-layout'
 import { publicRoutes, type PublicRoute } from '@/content/public-routes'
+import type { ArboGuidePageAccess } from '@/lib/arbo-guides/arbo-guide-access'
 
 type ArboGuidePageLayoutProps = Readonly<{
   currentLabel?: string
@@ -37,6 +38,29 @@ export function ArboGuideNotice({ children }: { children: ReactNode }) {
     <div className="mb-7 rounded-card border border-brand-primary/20 bg-brand-primary-subtle p-5 text-sm text-text-secondary">
       {children}
     </div>
+  )
+}
+
+export function ArboGuideStartGate({ access, guideName }: Readonly<{
+  access: Exclude<ArboGuidePageAccess, { status: 'AUTHORIZED' }>
+  guideName: string
+}>) {
+  const needsOrganization = access.status === 'ORGANIZATION_REQUIRED'
+  return (
+    <section className="rounded-card border border-border bg-surface p-6 shadow-card" aria-labelledby="arbo-guide-start-title">
+      <h2 id="arbo-guide-start-title" className="text-2xl font-bold text-brand-dark">Start de {guideName}</h2>
+      <p className="mt-3 max-w-3xl text-text-secondary">
+        {needsOrganization
+          ? 'Rond eerst uw organisatieprofiel af. Daarna wordt uw resultaat veilig bij uw organisatie opgeslagen en vindt u het terug in Mijn Arbo-wijzers.'
+          : 'De Arbo-wijzers zijn gratis. Log in of maak een gratis account aan om uw resultaat veilig op te slaan en later opnieuw te bekijken.'}
+      </p>
+      <div className="mt-6 flex flex-wrap gap-3">
+        <LinkButton href={needsOrganization ? access.organizationHref : access.loginHref}>
+          {needsOrganization ? 'Organisatie instellen' : `Inloggen en ${guideName} starten`}
+        </LinkButton>
+        {!needsOrganization && <LinkButton href="/registreren" variant="outline">Gratis account maken</LinkButton>}
+      </div>
+    </section>
   )
 }
 

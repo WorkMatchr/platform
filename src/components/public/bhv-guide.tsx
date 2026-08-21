@@ -60,6 +60,7 @@ export function BhvGuide() {
   const [stepIndex, setStepIndex] = useState(0)
   const [identity, setIdentity] = useState(() => ({ idempotencyKey: crypto.randomUUID(), startedAt: new Date().toISOString(), completedAt: null as string | null }))
   const [saved, setSaved] = useState<{ runId: string; reportNumber: string } | null>(null)
+  const [saveFailed, setSaveFailed] = useState(false)
   const guideRef = useRef<HTMLDivElement>(null)
   const headingRef = useRef<HTMLHeadingElement>(null)
   const moved = useRef(false)
@@ -71,20 +72,32 @@ export function BhvGuide() {
   useEffect(() => {
     if (!showingResults || !identity.completedAt) return
     const controller = new AbortController()
-    void fetch('/wijzers/bhv/runs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers, ...identity }), signal: controller.signal }).then(async (response) => { if (response.ok) setSaved(await response.json() as { runId: string; reportNumber: string }) }).catch(() => undefined)
+    void fetch('/wijzers/bhv/runs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers, ...identity }), signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('save failed')
+        setSaved(await response.json() as { runId: string; reportNumber: string })
+      })
+      .catch((error) => {
+        if (!(error instanceof DOMException && error.name === 'AbortError')) setSaveFailed(true)
+      })
     return () => controller.abort()
   }, [answers, identity, showingResults])
-  function navigate(next: number) { moved.current = true; if (next === steps.length && !identity.completedAt) setIdentity((current) => ({ ...current, completedAt: new Date().toISOString() })); setStepIndex(Math.max(0, Math.min(steps.length, next))) }
-  async function download() { const response = saved ? await fetch(`/mijn-arbo-wijzers/${saved.runId}/pdf`) : await fetch('/wijzers/bhv/pdf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tier: 'BASIC', answers }) }); if (!response.ok) return; const url = URL.createObjectURL(await response.blob()); const link = document.createElement('a'); link.href = url; link.download = `workmatchr-bhv-rapport-${new Date().toISOString().slice(0, 10)}.pdf`; link.click(); URL.revokeObjectURL(url) }
+  function navigate(next: number) { moved.current = true; if (next === steps.length && !identity.completedAt) { setSaveFailed(false); setIdentity((current) => ({ ...current, completedAt: new Date().toISOString() })) } setStepIndex(Math.max(0, Math.min(steps.length, next))) }
+  async function download() { if (!saved) return; const response = await fetch(`/mijn-arbo-wijzers/${saved.runId}/pdf`); if (!response.ok) return; const url = URL.createObjectURL(await response.blob()); const link = document.createElement('a'); link.href = url; link.download = `workmatchr-bhv-rapport-${saved.reportNumber}.pdf`; link.click(); URL.revokeObjectURL(url) }
 
-  if (showingResults) return <div ref={guideRef} className="space-y-7 scroll-mt-24">
+  if (showingResults && !saved) return <div ref={guideRef} className="scroll-mt-24"><section className="rounded-card border border-brand-primary/20 bg-brand-primary-subtle p-6" role={saveFailed ? 'alert' : 'status'}><h2 ref={headingRef} tabIndex={-1} className="scroll-mt-28 text-xl font-bold text-brand-dark focus:outline-none">{saveFailed ? 'Uw resultaat kon niet veilig worden opgeslagen' : 'Uw resultaat wordt veilig opgeslagen'}</h2><p className="mt-3 text-text-secondary">{saveFailed ? 'Er is geen rapport aangemaakt. Controleer uw sessie en probeer de wijzer opnieuw.' : 'Een ogenblik. We koppelen deze scan aan uw organisatie en maken het historische rapport gereed.'}</p>{saveFailed && <Button className="mt-5" onClick={() => { setAnswers(initialBhvGuideAnswers); setIdentity({ idempotencyKey: crypto.randomUUID(), startedAt: new Date().toISOString(), completedAt: null }); setSaved(null); setSaveFailed(false); navigate(0) }}>Opnieuw proberen</Button>}</section></div>
+
+  if (showingResults && saved) {
+    const savedRun = saved
+    return <div ref={guideRef} className="space-y-7 scroll-mt-24">
     <section className="rounded-card border border-brand-primary/20 bg-brand-primary-subtle p-6"><h2 ref={headingRef} tabIndex={-1} className="text-2xl font-bold text-brand-dark focus:outline-none">Uw BHV-overzicht</h2><p className="mt-3 text-text-secondary">{report.managementSummary}</p><ul className="mt-4 grid gap-2 sm:grid-cols-3"><li><strong>{report.summary.order}</strong> op orde</li><li><strong>{report.summary.action}</strong> actie nodig</li><li><strong>{report.summary.check}</strong> controleren</li></ul></section>
     <section className="rounded-card border border-border bg-surface p-6"><h2 className="text-xl font-bold text-brand-dark">Relevante incidentscenario’s</h2><ul className="mt-4 grid list-disc gap-2 pl-5 sm:grid-cols-2">{selectBhvScenarios(answers).map((scenario) => <li key={scenario.id}>{scenario.label}</li>)}</ul></section>
     <div className="space-y-5">{results.map((result) => <article key={result.id} className="rounded-card border border-border bg-surface p-6 shadow-card"><div className="flex flex-wrap items-start justify-between gap-3"><h2 className="text-xl font-bold text-brand-dark">{result.title}</h2><ArboGuideStatus status={result.status} /></div><p className="mt-3 text-text-secondary">{result.explanation}</p><h3 className="mt-5 font-semibold text-brand-dark">Waarom dit relevant is</h3><p className="mt-1 text-text-secondary">{result.relevance}</p><h3 className="mt-5 font-semibold text-brand-dark">Aanbevolen vervolgstap</h3><p className="mt-1 text-text-secondary">{result.nextStep}</p></article>)}</div>
-    <section className="rounded-card border border-border bg-surface p-6"><h2 className="text-xl font-bold text-brand-dark">Bewaar uw resultaat</h2><p className="mt-2 text-text-secondary">Download uw managementsamenvatting, scenario’s, resultaten, aandachtspunten en geraadpleegde bronnen.</p>{saved && <p className="mt-3 text-sm">Rapportnummer: <strong>{saved.reportNumber}</strong></p>}<Button className="mt-5" onClick={() => void download()}>Download rapport (PDF)</Button></section>
-    <section className="rounded-card bg-brand-dark p-6 text-text-on-dark"><h2 className="text-xl font-bold">Wilt u uw BHV-organisatie laten beoordelen?</h2><p className="mt-2 text-text-on-dark-muted">De Advieswijzer helpt u passende ondersteuning te kiezen. Uw antwoorden worden niet in de URL meegestuurd.</p><div className="mt-5 flex flex-wrap gap-3">{context && <LinkButton href={knowledgeContextHref('/advieswijzer', context)}>Schakel een adviseur in</LinkButton>}<Button variant="outline" onClick={() => { setAnswers(initialBhvGuideAnswers); setIdentity({ idempotencyKey: crypto.randomUUID(), startedAt: new Date().toISOString(), completedAt: null }); setSaved(null); navigate(0) }}>Opnieuw beginnen</Button></div></section>
+    <section className="rounded-card border border-border bg-surface p-6"><h2 className="text-xl font-bold text-brand-dark">Bewaar uw resultaat</h2><p className="mt-2 text-text-secondary">Download uw managementsamenvatting, scenario’s, resultaten, aandachtspunten en geraadpleegde bronnen.</p><p className="mt-3 text-sm">Rapportnummer: <strong>{savedRun.reportNumber}</strong>. U vindt dit rapport ook bij Mijn Arbo-wijzers.</p><Button className="mt-5" onClick={() => void download()}>Download rapport (PDF)</Button></section>
+    <section className="rounded-card bg-brand-dark p-6 text-text-on-dark"><h2 className="text-xl font-bold">Wilt u uw BHV-organisatie laten beoordelen?</h2><p className="mt-2 text-text-on-dark-muted">De Advieswijzer helpt u passende ondersteuning te kiezen. Uw antwoorden worden niet in de URL meegestuurd.</p><div className="mt-5 flex flex-wrap gap-3">{context && <LinkButton href={knowledgeContextHref('/advieswijzer', context)}>Schakel een adviseur in</LinkButton>}<Button variant="outline" onClick={() => { setAnswers(initialBhvGuideAnswers); setIdentity({ idempotencyKey: crypto.randomUUID(), startedAt: new Date().toISOString(), completedAt: null }); setSaved(null); setSaveFailed(false); navigate(0) }}>Opnieuw beginnen</Button></div></section>
     <ConsultedSources sources={report.sources} />
   </div>
+  }
 
   const step = steps[stepIndex]
   const visibleQuestions = step.questions.filter((question) => !question.when || question.when(answers))

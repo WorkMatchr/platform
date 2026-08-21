@@ -8,7 +8,7 @@ describe('Mijn Arbo-wijzers', () => {
   it('autoriseert overzicht, detail en PDF server-side op de actieve organisatie', () => {
     expect(source('src/app/mijn-arbo-wijzers/page.tsx')).toContain('requireOrganizationMembership')
     expect(source('src/app/mijn-arbo-wijzers/[runId]/page.tsx')).toContain('organizationId: activeMembership.organization.id')
-    expect(source('src/app/mijn-arbo-wijzers/[runId]/pdf/route.ts')).toContain('organizationId: context.activeMembership.organization.id')
+    expect(source('src/app/mijn-arbo-wijzers/[runId]/pdf/route.ts')).toContain('organizationId: access.organizationId')
     expect(source('src/lib/arbo-guides/arbo-guide-run-service.ts')).toContain('run.organizationId !== viewer.organizationId')
   })
 

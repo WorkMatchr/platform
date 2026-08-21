@@ -1,5 +1,7 @@
 # BHV-wijzer v1
 
+De uitleg over de BHV-wijzer is publiek. De vragenflow, afronding, resultaatweergave en rapportdownload vereisen een geldig WorkMatchr-account met actieve organisatiecontext. Iedere geslaagde afronding wordt immutable opgeslagen in Mijn Arbo-wijzers; PDF-hergeneratie gebruikt uitsluitend die historische snapshot.
+
 ## Doel en begrenzing
 
 De BHV-wijzer is een gratis, indicatieve Arbo-wijzer voor werkgevers. De wijzer helpt de samenhang beoordelen tussen RI&E/restrisico’s, geloofwaardige incidentscenario’s, taken, feitelijke inzetbaarheid, middelen, opleiding, oefenen en bijstellen. De uitkomst is geen formele toets, certificering of garantie.

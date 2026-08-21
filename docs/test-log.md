@@ -1,5 +1,15 @@
 # WorkMatchr test-log
 
+## 2026-08-21 — Accountgebonden Arbo-wijzers
+
+- Publieke overzichts- en uitlegpagina's blijven zonder account bereikbaar; de vragenflow rendert uitsluitend na server-side vastgestelde sessie en actieve tenantmembership.
+- Login gebruikt uitsluitend een door `getSafeReturnUrl` gevalideerde lokale `returnTo`; onbekende of externe bestemmingen vallen terug op `/wijzers`.
+- Compliance- en BHV-runs worden pas zichtbaar nadat de atomische organisatiegebonden afronding is geslaagd. Een mislukte afronding levert geen resultaat, PDF of orphan run op.
+- PDF-downloads gebruiken uitsluitend immutable historische snapshots van een tenantgeautoriseerde run; de anonieme raw-answer-PDF-fallback is verwijderd.
+- `Mijn Arbo-wijzers`, detailweergave en PDF blijven server-side op gebruiker, actieve membership, organisatie en run-tenant gecontroleerd.
+- De bestaande genormaliseerde onderwerp-, status- en scenariocodes blijven beschikbaar als privacyvriendelijke grondslag voor latere geaggregeerde trendanalyse; er is geen analyticsdashboard of extra vrije tekst toegevoegd.
+- Geen Prisma-schemawijziging of migratie: de bestaande `ArboGuideRun`-foundation wordt hergebruikt.
+
 ## 2026-08-21 — BHV-wijzer v1
 
 - Gerichte beslis-, scenario-, normalisatie-, bron-, rapport- en PDF-tests: groen.

@@ -1,5 +1,7 @@
 # Compliance-wijzer v1
 
+De uitleg over de Compliance-wijzer is publiek. De vragenflow, afronding, resultaatweergave en rapportdownload vereisen een geldig WorkMatchr-account met actieve organisatiecontext. Iedere geslaagde afronding wordt immutable opgeslagen in Mijn Arbo-wijzers; PDF-hergeneratie gebruikt uitsluitend die historische snapshot.
+
 De webweergave en BASIC PDF gebruiken de gedeelde Arbo-wijzer-bronselectie: gebruikte wetgeving blijft onbeperkt zichtbaar, waarna maximaal één richtlijn en één aanvullende vakbron volgen. De selectie wordt op centrale bron-ID gededupliceerd. Het officiële transparante WorkMatchr-logo uit `public/branding/workmatchr-logo.png` staat op de voorpagina. In de PDF blijft pagina 1 gereserveerd voor rapportmetadata en samenvatting; detailresultaten starten op pagina 2.
 
 ## Doel en begrenzing

@@ -148,7 +148,6 @@ function Results({ answers, onRestart, headingRef, idempotencyKey, startedAt, co
           body: JSON.stringify({ answers, idempotencyKey, startedAt, completedAt }),
           signal: controller.signal,
         })
-        if (response.status === 401) return
         if (!response.ok) throw new Error('save failed')
         const body = await response.json() as SavedRun & { saved: true }
         setSavedRun({ runId: body.runId, reportNumber: body.reportNumber })
@@ -164,13 +163,8 @@ function Results({ answers, onRestart, headingRef, idempotencyKey, startedAt, co
     setDownloading(true)
     setDownloadError(null)
     try {
-      const response = savedRun
-        ? await fetch(`/mijn-arbo-wijzers/${savedRun.runId}/pdf`)
-        : await fetch('/wijzers/compliance/pdf', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tier: 'BASIC', answers }),
-          })
+      if (!savedRun) throw new Error('run not saved')
+      const response = await fetch(`/mijn-arbo-wijzers/${savedRun.runId}/pdf`)
       if (!response.ok) throw new Error('download failed')
       const blobUrl = URL.createObjectURL(await response.blob())
       const link = document.createElement('a')
@@ -183,6 +177,22 @@ function Results({ answers, onRestart, headingRef, idempotencyKey, startedAt, co
     } finally {
       setDownloading(false)
     }
+  }
+
+  if (!savedRun) {
+    return (
+      <section className="rounded-card border border-brand-primary/20 bg-brand-primary-subtle p-6" role={saveFailed ? 'alert' : 'status'}>
+        <h2 ref={headingRef} tabIndex={-1} className="scroll-mt-28 text-xl font-bold text-brand-dark focus:outline-none">
+          {saveFailed ? 'Uw resultaat kon niet veilig worden opgeslagen' : 'Uw resultaat wordt veilig opgeslagen'}
+        </h2>
+        <p className="mt-3 text-text-secondary">
+          {saveFailed
+            ? 'Er is geen rapport aangemaakt. Controleer uw sessie en probeer de wijzer opnieuw.'
+            : 'Een ogenblik. We koppelen deze scan aan uw organisatie en maken het historische rapport gereed.'}
+        </p>
+        {saveFailed && <Button className="mt-5" onClick={onRestart}>Opnieuw proberen</Button>}
+      </section>
+    )
   }
 
   return (
@@ -218,8 +228,7 @@ function Results({ answers, onRestart, headingRef, idempotencyKey, startedAt, co
       <section className="rounded-card border border-border bg-surface p-6" aria-labelledby="compliance-report-title">
         <h2 id="compliance-report-title" className="text-xl font-bold text-brand-dark">Bewaar uw resultaat</h2>
         <p className="mt-2 text-text-secondary">Download de samenvatting, aandachtspunten, belangrijkste acties en officiële bronnen als PDF. De volledige scan en dit basisrapport zijn gratis.</p>
-        {savedRun && <p className="mt-3 text-sm text-text-secondary">Rapportnummer: <strong>{savedRun.reportNumber}</strong>. U vindt dit rapport ook bij Mijn Arbo-wijzers.</p>}
-        {saveFailed && <p className="mt-3 text-sm text-warning" role="status">Uw resultaat kon niet in uw account worden bewaard. U kunt het basisrapport wel downloaden.</p>}
+        <p className="mt-3 text-sm text-text-secondary">Rapportnummer: <strong>{savedRun.reportNumber}</strong>. U vindt dit rapport ook bij Mijn Arbo-wijzers.</p>
         <Button className="mt-5" onClick={downloadBasicReport} disabled={downloading}>{downloading ? 'Rapport wordt gemaakt…' : 'Download rapport (PDF)'}</Button>
         {downloadError && <p className="mt-3 text-sm font-semibold text-error" role="alert">{downloadError}</p>}
       </section>
