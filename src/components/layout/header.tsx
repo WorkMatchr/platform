@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { LogoutButton } from '@/components/auth/logout-button'
-import { WorkMatchrLogo } from '@/components/branding/workmatchr-logo'
 import { Container } from '@/components/layout/container'
 import { DisclosureMenu } from '@/components/ui/disclosure-menu'
 import { getOptionalActiveOrganizationContext } from '@/lib/organizations/organization-authorization'
@@ -11,24 +10,13 @@ import {
 import { organizationRoleLabels } from '@/lib/presentation/platform-labels'
 import { PublicNavigation } from './public-navigation'
 import { buildHeaderViewModel, type HeaderViewModel } from './header-model'
-
-function BrandLink() {
-  return (
-    <Link
-      href="/"
-      className="inline-flex min-h-11 shrink-0 items-center rounded-control focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
-      aria-label="WorkMatchr, naar de homepage"
-    >
-      <WorkMatchrLogo priority />
-    </Link>
-  )
-}
+import { HeaderBrandLink } from './header-brand-link'
 
 function PublicHeader() {
   return (
     <header className="border-b border-border bg-surface">
       <Container className="flex min-h-20 items-center justify-between gap-5 py-4">
-        <BrandLink />
+        <HeaderBrandLink />
         <PublicNavigation />
       </Container>
     </header>
@@ -39,7 +27,7 @@ function DashboardHeader({ model }: { model: HeaderViewModel }) {
   return (
     <header className="border-b border-border bg-surface">
       <Container className="flex min-h-20 items-center justify-between gap-5 py-4">
-        <BrandLink />
+        <HeaderBrandLink />
         <div className="flex min-w-0 items-center gap-2">
           {model.isPlatformAdministrator ? (
             <Link
