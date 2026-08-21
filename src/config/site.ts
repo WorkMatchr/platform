@@ -1,5 +1,5 @@
 export const siteConfig = {
   name: 'WorkMatchr',
-  url: 'https://workmatchr.nl',
+  url: 'https://www.workmatchr.nl',
   locale: 'nl_NL',
 } as const
