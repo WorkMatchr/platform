@@ -69,3 +69,5 @@ De tokens staan centraal in `src/app/globals.css` en zijn via Tailwind CSS besch
 ## Merkrelatie
 
 Het lichtblauw heeft een subtiele visuele relatie met Feenstra Safety Consulting. WorkMatchr blijft een volledig zelfstandig merk, met een eigen naam, productpositie en designsysteem.
+
+Het officiële transparante woord-/beeldmerk staat centraal in `public/branding/workmatchr-logo.png`. Webinterfaces gebruiken dit via de gedeelde `WorkMatchrLogo`-component; Arbo-wijzer-PDF's lezen dezelfde asset rechtstreeks in de server-side rapportgenerator. De oorspronkelijke verhouding van 1321 × 372 blijft altijd behouden. Het volledige horizontale logo wordt niet als favicon gebruikt; daarvoor is een afzonderlijk officieel compact beeldmerk nodig.

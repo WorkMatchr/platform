@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { LogoutButton } from '@/components/auth/logout-button'
+import { WorkMatchrLogo } from '@/components/branding/workmatchr-logo'
 import { getPlatformAdminNavigationGroups } from '@/lib/platform-admin/platform-admin-navigation'
 import type { PlatformMembershipRole } from '@/lib/platform-admin/platform-admin-policy'
 import type { TestAccountOption } from '@/lib/test-impersonation/test-impersonation-service'
@@ -27,9 +28,10 @@ export function PlatformAdminShell({
         <div className="mx-auto flex min-h-16 w-full max-w-[96rem] flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
           <Link
             href="/platformbeheer"
-            className="rounded-control font-bold tracking-tight text-brand-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+            className="inline-flex min-h-11 items-center gap-3 rounded-control text-brand-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+            aria-label="WorkMatchr Platformbeheer, naar het beheerdashboard"
           >
-            Work<span className="text-brand-primary">Matchr</span>{' '}
+            <WorkMatchrLogo size="compact" priority />
             <span className="font-semibold text-text-secondary">Platformbeheer</span>
           </Link>
           <div className="flex items-center gap-2">

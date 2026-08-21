@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { LogoutButton } from '@/components/auth/logout-button'
+import { WorkMatchrLogo } from '@/components/branding/workmatchr-logo'
 import { Container } from '@/components/layout/container'
 import { DisclosureMenu } from '@/components/ui/disclosure-menu'
 import { getOptionalActiveOrganizationContext } from '@/lib/organizations/organization-authorization'
@@ -15,10 +16,10 @@ function BrandLink() {
   return (
     <Link
       href="/"
-      className="rounded-control text-xl font-bold tracking-tight text-brand-dark"
+      className="inline-flex min-h-11 shrink-0 items-center rounded-control focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
       aria-label="WorkMatchr, naar de homepage"
     >
-      Work<span className="text-brand-primary">Matchr</span>
+      <WorkMatchrLogo priority />
     </Link>
   )
 }

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
+import { WorkMatchrLogo } from '@/components/branding/workmatchr-logo'
 import { Card } from '@/components/ui/card'
 import { Heading } from '@/components/ui/heading'
 import { Text } from '@/components/ui/text'
@@ -18,8 +19,8 @@ export function AuthShell({
   return (
     <main className="px-5 py-12 sm:px-8 sm:py-20">
       <Card className={`mx-auto w-full ${wide ? 'max-w-6xl' : 'max-w-lg'} p-6 sm:p-9`}>
-        <Link href="/" className="text-lg font-bold text-brand-dark" aria-label="WorkMatchr, naar de homepage">
-          Work<span className="text-brand-primary">Matchr</span>
+        <Link href="/" className="inline-flex rounded-control focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary" aria-label="WorkMatchr, naar de homepage">
+          <WorkMatchrLogo size="auth" priority />
         </Link>
         <Heading as="h1" size="h2" className="mt-7">{title}</Heading>
         <Text className="mt-3 text-text-secondary">{intro}</Text>
