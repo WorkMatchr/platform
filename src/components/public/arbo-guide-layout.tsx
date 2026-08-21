@@ -41,6 +41,10 @@ export function ArboGuideNotice({ children }: { children: ReactNode }) {
   )
 }
 
+export function ArboGuideResultGrid({ children }: { children: ReactNode }) {
+  return <div className="grid gap-5 lg:grid-cols-2">{children}</div>
+}
+
 export function ArboGuideStartGate({ access, guideName }: Readonly<{
   access: Exclude<ArboGuidePageAccess, { status: 'AUTHORIZED' }>
   guideName: string

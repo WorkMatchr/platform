@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { LinkButton } from '@/components/ui/link-button'
 import { ArboGuideStatus } from '@/components/arbo-guides/arbo-guide-status'
+import { ArboGuideResultGrid } from '@/components/public/arbo-guide-layout'
 import { knowledgeContextHref, resolveKnowledgeContextByRoute } from '@/content/knowledge/knowledge-contexts'
 import { collectComplianceSources } from '@/lib/compliance-guide/compliance-report'
 import { groupArboGuideSources, normalizeArboGuideReportSource, type ArboGuideReportSource, type ArboGuideSourceCategory } from '@/lib/arbo-guides/arbo-guide-sources'
@@ -208,7 +209,7 @@ function Results({ answers, onRestart, headingRef, idempotencyKey, startedAt, co
         <p className="mt-4 text-sm text-text-secondary">De Compliance-wijzer geeft een indicatief overzicht op basis van uw antwoorden. De uitkomst is geen formele juridische beoordeling of certificering.</p>
       </section>
 
-      <div className="space-y-5">
+      <ArboGuideResultGrid>
         {results.map((result) => (
             <article key={result.id} className="rounded-card border border-border bg-surface p-6 shadow-card">
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -223,7 +224,7 @@ function Results({ answers, onRestart, headingRef, idempotencyKey, startedAt, co
               {result.detailHref && <Link className="mt-5 inline-flex min-h-11 items-center font-semibold text-brand-primary underline underline-offset-4" href={result.detailHref}>Lees de inhoudelijke toelichting</Link>}
             </article>
         ))}
-      </div>
+      </ArboGuideResultGrid>
 
       <section className="rounded-card border border-border bg-surface p-6" aria-labelledby="compliance-report-title">
         <h2 id="compliance-report-title" className="text-xl font-bold text-brand-dark">Bewaar uw resultaat</h2>

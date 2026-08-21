@@ -1,4 +1,5 @@
 import { ArboGuideStatus } from './arbo-guide-status'
+import { ArboGuideResultGrid } from '@/components/public/arbo-guide-layout'
 import type { ArboGuideReportSnapshot } from '@/lib/arbo-guides/arbo-guide-run-service'
 
 export function ArboGuideReportView({ report }: { report: ArboGuideReportSnapshot }) {
@@ -15,19 +16,21 @@ export function ArboGuideReportView({ report }: { report: ArboGuideReportSnapsho
         {report.managementSummary && <p className="mt-4 text-text-secondary">{report.managementSummary}</p>}
       </section>
       {report.scenarioLabels?.length ? <section className="rounded-card border border-border bg-surface p-6"><h2 className="text-xl font-bold text-brand-dark">Relevante incidentscenario’s</h2><ul className="mt-4 list-disc space-y-1 pl-5 text-text-secondary">{report.scenarioLabels.map((scenario) => <li key={scenario}>{scenario}</li>)}</ul></section> : null}
-      {report.results.map((result) => (
-        <article key={result.id} className="rounded-card border border-border bg-surface p-6 shadow-card">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <h2 className="text-xl font-bold text-brand-dark">{result.title}</h2>
-            <ArboGuideStatus status={result.status} />
-          </div>
-          <p className="mt-3 text-text-secondary">{result.explanation}</p>
-          <h3 className="mt-5 font-semibold text-brand-dark">Waarom dit relevant is</h3>
-          <p className="mt-1 text-text-secondary">{result.relevance}</p>
-          <h3 className="mt-5 font-semibold text-brand-dark">Aanbevolen vervolgstap</h3>
-          <p className="mt-1 text-text-secondary">{result.nextStep}</p>
-        </article>
-      ))}
+      <ArboGuideResultGrid>
+        {report.results.map((result) => (
+          <article key={result.id} className="rounded-card border border-border bg-surface p-6 shadow-card">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <h2 className="text-xl font-bold text-brand-dark">{result.title}</h2>
+              <ArboGuideStatus status={result.status} />
+            </div>
+            <p className="mt-3 text-text-secondary">{result.explanation}</p>
+            <h3 className="mt-5 font-semibold text-brand-dark">Waarom dit relevant is</h3>
+            <p className="mt-1 text-text-secondary">{result.relevance}</p>
+            <h3 className="mt-5 font-semibold text-brand-dark">Aanbevolen vervolgstap</h3>
+            <p className="mt-1 text-text-secondary">{result.nextStep}</p>
+          </article>
+        ))}
+      </ArboGuideResultGrid>
       <p className="text-sm text-text-secondary">{report.disclaimer}</p>
     </div>
   )
