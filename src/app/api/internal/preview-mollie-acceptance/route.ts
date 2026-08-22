@@ -3,6 +3,7 @@ import { getPrisma } from '@/lib/prisma'
 import { createCreditPurchase, processMolliePayment } from '@/lib/finance/financial-purchase-service'
 import { appendAccountProvisioningEvent, appendOrganizationMembershipEvent } from '@/lib/account-architecture/account-history-service'
 import { createMollieGateway } from '@/lib/finance/mollie-gateway'
+import { MarketplaceServiceError } from '@/lib/marketplace/marketplace-errors'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,6 +23,8 @@ async function findTestPurchase() {
     select: {
       id: true,
       idempotencyKey: true,
+      organizationId: true,
+      createdByUserId: true,
       status: true,
       credits: true,
       amountExclVatCents: true,
@@ -33,6 +36,25 @@ async function findTestPurchase() {
       creditedTransactionId: true,
       paymentEvents: { select: { id: true } },
       invoice: { select: { id: true, pricingMode: true, amountInclVatCents: true, vatAmountCents: true } },
+    },
+  })
+}
+
+async function findTestPurchases() {
+  return getPrisma().financialPurchase.findMany({
+    where: { idempotencyKey: { startsWith: PURCHASE_IDEMPOTENCY_KEY } },
+    orderBy: { createdAt: 'desc' },
+    select: {
+      id: true,
+      organizationId: true,
+      createdByUserId: true,
+      status: true,
+      credits: true,
+      amountInclVatCents: true,
+      currency: true,
+      molliePaymentId: true,
+      creditedTransactionId: true,
+      paymentEvents: { select: { id: true } },
     },
   })
 }
@@ -151,6 +173,7 @@ export async function GET() {
 
   const purchase = await findTestPurchase()
   if (!purchase) return NextResponse.json({ fixtureReady: false }, { headers: { 'cache-control': 'no-store' } })
+  const allPurchases = await findTestPurchases()
   const molliePayment = purchase.molliePaymentId
     ? await createMollieGateway().getPayment(purchase.molliePaymentId)
     : null
@@ -165,14 +188,57 @@ export async function GET() {
       && purchase.invoice.amountInclVatCents === purchase.amountInclVatCents
       && purchase.invoice.vatAmountCents === purchase.vatAmountCents,
     paymentEventRecorded: purchase.paymentEvents.length > 0,
+    expiredPaymentDidNotCredit: allPurchases.some((item) => item.status === 'EXPIRED' && item.creditedTransactionId === null),
   }, { headers: { 'cache-control': 'no-store' } })
 }
 
 export async function PATCH() {
   if (!isAllowedPreviewRuntime()) return new Response(null, { status: 404 })
 
+  const purchases = await findTestPurchases()
+  const paymentIds = purchases.flatMap((purchase) => purchase.molliePaymentId ? [purchase.molliePaymentId] : [])
+  if (paymentIds.length === 0) return NextResponse.json({ replayProcessed: false }, { status: 409 })
+  for (const paymentId of paymentIds) await processMolliePayment(paymentId)
+  return NextResponse.json({ replayProcessed: true, terminalPaymentsProcessed: paymentIds.length > 1 }, { headers: { 'cache-control': 'no-store' } })
+}
+
+export async function PUT() {
+  if (!isAllowedPreviewRuntime()) return new Response(null, { status: 404 })
+
   const purchase = await findTestPurchase()
-  if (!purchase?.molliePaymentId) return NextResponse.json({ replayProcessed: false }, { status: 409 })
-  await processMolliePayment(purchase.molliePaymentId)
-  return NextResponse.json({ replayProcessed: true }, { headers: { 'cache-control': 'no-store' } })
+  if (!purchase?.molliePaymentId) return NextResponse.json({ manipulationRejected: false, crossTenantRejected: false }, { status: 409 })
+  const beforeCreditTransactionId = purchase.creditedTransactionId
+  let manipulationRejected = false
+  try {
+    await processMolliePayment(purchase.molliePaymentId, {
+      getPayment: async () => ({
+        id: purchase.molliePaymentId!, status: 'paid', amountValue: '0.01', currency: purchase.currency,
+        metadata: {}, paidAt: null, createdAt: null, checkoutUrl: null, subscriptionId: null, mandateId: null, method: null,
+      }),
+    } as never)
+  } catch {
+    manipulationRejected = true
+  }
+  const afterPurchase = await getPrisma().financialPurchase.findUniqueOrThrow({
+    where: { id: purchase.id }, select: { creditedTransactionId: true },
+  })
+  const otherOrganization = await getPrisma().organization.findFirst({
+    where: { id: { not: purchase.organizationId }, status: 'ACTIVE' }, select: { id: true },
+  })
+  let crossTenantRejected = otherOrganization === null
+  if (otherOrganization) {
+    try {
+      await createCreditPurchase({
+        actorUserId: purchase.createdByUserId, organizationId: otherOrganization.id, packageSku: 'CREDITS_25',
+        idempotencyKey: `${PURCHASE_IDEMPOTENCY_KEY}-cross-tenant-check`,
+        billingAddress: { organizationName: 'Preview test', addressLine: 'Teststraat 1', postalCode: '1000 AA', city: 'Preview', countryCode: 'NL' },
+      })
+    } catch (error) {
+      crossTenantRejected = error instanceof MarketplaceServiceError
+    }
+  }
+  return NextResponse.json({
+    manipulationRejected: manipulationRejected && afterPurchase.creditedTransactionId === beforeCreditTransactionId,
+    crossTenantRejected,
+  }, { headers: { 'cache-control': 'no-store' } })
 }
