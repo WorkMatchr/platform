@@ -1,7 +1,14 @@
 import { Resend } from 'resend'
 
 export type AuthEmail = {
-  kind: 'INVITATION' | 'VERIFICATION' | 'PASSWORD_RESET' | 'ROLE_CHANGE_NOTIFICATION' | 'TWO_FACTOR_RESET_NOTIFICATION' | 'ADMIN_MESSAGE'
+  kind:
+    | 'INVITATION'
+    | 'VERIFICATION'
+    | 'PASSWORD_RESET'
+    | 'ROLE_CHANGE_NOTIFICATION'
+    | 'TWO_FACTOR_RESET_NOTIFICATION'
+    | 'ADMIN_MESSAGE'
+    | 'FINANCIAL_INVOICE'
   to: string
   subject: string
   text: string
@@ -237,5 +244,23 @@ export function administrativeEmail(input: {
     subject: input.subject,
     text: `Beste ${input.recipientName},\n\n${input.message}\n\nMet vriendelijke groet,\n${input.senderName}\nWorkMatchr`,
     html: `<p>Beste ${safeName},</p><p>${safeMessage}</p><p>Met vriendelijke groet,<br />${safeSender}<br />WorkMatchr</p>`,
+  }
+}
+
+export function financialInvoiceEmail(input: {
+  to: string
+  recipientName: string
+  invoiceNumber: string
+  downloadUrl: string
+}): AuthEmail {
+  const safeName = escapeHtml(input.recipientName)
+  const safeInvoiceNumber = escapeHtml(input.invoiceNumber)
+  const safeDownloadUrl = escapeHtml(input.downloadUrl)
+  return {
+    kind: 'FINANCIAL_INVOICE',
+    to: input.to,
+    subject: `Uw WorkMatchr-factuur ${input.invoiceNumber}`,
+    text: `Beste ${input.recipientName},\n\nUw betaling is verwerkt. U kunt factuur ${input.invoiceNumber} veilig bekijken en downloaden via: ${input.downloadUrl}\n\nMet vriendelijke groet,\nWorkMatchr`,
+    html: `<p>Beste ${safeName},</p><p>Uw betaling is verwerkt. Uw factuur <strong>${safeInvoiceNumber}</strong> staat veilig voor u klaar.</p><p><a href="${safeDownloadUrl}">Factuur bekijken en downloaden</a></p><p>Met vriendelijke groet,<br />WorkMatchr</p>`,
   }
 }

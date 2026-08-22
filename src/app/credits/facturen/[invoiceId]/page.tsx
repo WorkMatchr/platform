@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
 import { Card } from '@/components/ui/card'
 import { Heading } from '@/components/ui/heading'
 import { Section } from '@/components/layout/section'
@@ -17,7 +18,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ invoic
   })
   if (!invoice) notFound()
   return <Section spacing="compact" className="max-w-4xl">
-    <div className="flex flex-wrap items-end justify-between gap-4"><div><Heading as="h1" size="h2">{invoice.documentType === 'CREDIT_NOTE' ? 'Creditnota' : 'Factuur'} {invoice.invoiceNumber}</Heading><p className="mt-2 text-text-secondary">Uitgegeven op {invoice.issuedAt.toLocaleDateString('nl-NL')}</p></div><span className="font-semibold">{formatEuro(invoice.amountInclVatCents)}</span></div>
+    <div className="flex flex-wrap items-end justify-between gap-4"><div><Heading as="h1" size="h2">{invoice.documentType === 'CREDIT_NOTE' ? 'Creditnota' : 'Factuur'} {invoice.invoiceNumber}</Heading><p className="mt-2 text-text-secondary">Uitgegeven op {invoice.issuedAt.toLocaleDateString('nl-NL')}</p></div><div className="flex items-center gap-4"><Link className="font-semibold underline" href={`/credits/facturen/${invoice.id}/pdf`}>Download pdf</Link><span className="font-semibold">{formatEuro(invoice.amountInclVatCents)}</span></div></div>
     <Card className="mt-6 grid gap-7">
       {invoice.pricingMode === 'MOLLIE_TEST_ACCEPTANCE' ? <p className="rounded-control border border-brand/30 bg-brand/5 p-3 text-sm"><strong>Mollie-sandboxacceptatie</strong><br />Deze factuur bevat de daadwerkelijk betaalde tijdelijke testprijs en niet de normale catalogusprijs.</p> : null}
       <div className="grid gap-5 sm:grid-cols-2"><address className="not-italic"><strong>{invoice.sellerTradeName}</strong><br />{invoice.sellerLegalName}<br />{invoice.sellerAddressLine}<br />{invoice.sellerPostalCode} {invoice.sellerCity}<br />KvK {invoice.sellerKvKNumber}<br />Btw {invoice.sellerVatId}</address><address className="not-italic"><strong>{invoice.customerOrganizationName}</strong><br />{invoice.customerAddressLine}<br />{invoice.customerPostalCode} {invoice.customerCity}<br />{invoice.customerCountryCode}{invoice.customerKvKNumber ? <><br />KvK {invoice.customerKvKNumber}</> : null}{invoice.customerVatId ? <><br />Btw {invoice.customerVatId}</> : null}</address></div>

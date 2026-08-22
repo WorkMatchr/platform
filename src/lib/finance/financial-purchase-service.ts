@@ -24,6 +24,7 @@ import {
   type MolliePaymentSnapshot,
 } from './mollie-gateway'
 import { issueInvoiceForPaidPurchase } from './invoice-service'
+import { deliverFinancialInvoiceEmail, recordFinancialInvoiceEmailFailure } from './financial-invoice-delivery-service'
 import { activateProAfterFirstPayment, processRecurringProPayment } from './subscription-service'
 import { runSerializableFinancialTransaction } from './financial-transaction'
 import { findEffectiveProSubscription } from './pro-entitlement-service'
@@ -400,6 +401,18 @@ export async function processMolliePayment(
     })
     if (!subscription) throw new Error('PRO_SUBSCRIPTION_MISSING')
     await activateProAfterFirstPayment(subscription.id, gateway, result.purchaseId)
+  }
+  if (result.status === 'PAID' && result.invoiceId) {
+    const purchaseForDelivery = await getPrisma().financialPurchase.findUnique({
+      where: { id: result.purchaseId },
+      select: { createdByUserId: true },
+    })
+    try {
+      await deliverFinancialInvoiceEmail(result.invoiceId)
+    } catch (error) {
+      await recordFinancialInvoiceEmailFailure(result.invoiceId, result.purchaseId, purchaseForDelivery?.createdByUserId ?? null)
+      throw error
+    }
   }
   return result
 }
