@@ -95,8 +95,13 @@ export async function POST() {
       fixtureReady: true,
       checkoutReady: Boolean(purchase.mollieCheckoutUrl && purchase.molliePaymentId),
     }, { headers: { 'cache-control': 'no-store' } })
-  } catch {
-    return NextResponse.json({ fixtureReady: false, checkoutReady: false, failureStage }, { status: 409, headers: { 'cache-control': 'no-store' } })
+  } catch (error) {
+    const failureCode = typeof (error as { code?: unknown })?.code === 'string'
+      ? (error as { code: string }).code
+      : error instanceof Error && error.name === 'MarketplaceServiceError'
+        ? 'MARKETPLACE_ACCESS'
+        : 'UNCLASSIFIED'
+    return NextResponse.json({ fixtureReady: false, checkoutReady: false, failureStage, failureCode }, { status: 409, headers: { 'cache-control': 'no-store' } })
   }
 }
 
