@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
 import { getPrisma } from '@/lib/prisma'
 import { createCreditPurchase, processMolliePayment } from '@/lib/finance/financial-purchase-service'
+import { appendAccountProvisioningEvent, appendOrganizationMembershipEvent } from '@/lib/account-architecture/account-history-service'
 
 export const dynamic = 'force-dynamic'
 
 const EXPECTED_PREVIEW_BRANCH = 'codex/mollie-credit-acceptance'
-const TEST_ORGANIZATION_KEY = 'PREVIEW_MOLLIE_ACCEPTANCE_20260822'
 const TEST_EMAIL = 'mollie-preview-acceptance@workmatchr.example.invalid'
 const PURCHASE_IDEMPOTENCY_KEY = 'preview-mollie-acceptance-credit-purchase-20260822'
 
@@ -53,31 +53,52 @@ export async function POST() {
       update: {},
       select: { id: true },
     })
+    failureStage = 'FIXTURE_MEMBERSHIP'
+    const existingMembership = await transaction.organizationMembership.findUnique({
+      where: { userId: user.id },
+      include: { organization: { select: { id: true, organizationType: true, status: true } } },
+    })
+
+    if (existingMembership) {
+      if (existingMembership.organization.organizationType !== 'PROVIDER' || existingMembership.organization.status !== 'ACTIVE') {
+        throw new Error('Preview fixture has an incompatible existing tenant.')
+      }
+      failureStage = 'FIXTURE_PROVIDER_PROFILE'
+      await transaction.providerProfile.upsert({
+        where: { organizationId: existingMembership.organization.id },
+        create: { organizationId: existingMembership.organization.id },
+        update: {},
+      })
+      return { userId: user.id, organizationId: existingMembership.organization.id }
+    }
+
     failureStage = 'FIXTURE_ORGANIZATION'
-    const organization = await transaction.organization.upsert({
-      where: { systemKey: TEST_ORGANIZATION_KEY },
-      create: {
-        systemKey: TEST_ORGANIZATION_KEY,
+    const organization = await transaction.organization.create({
+      data: {
         name: 'Preview Mollie acceptance organisatie',
         organizationType: 'PROVIDER',
         status: 'ACTIVE',
+        memberships: { create: { userId: user.id, role: 'OWNER', status: 'ACTIVE' } },
+        providerProfile: { create: { approvalStatus: 'DRAFT', isAvailable: false } },
       },
-      update: {},
-      select: { id: true },
+      select: { id: true, memberships: { select: { id: true } } },
     })
-    failureStage = 'FIXTURE_MEMBERSHIP'
-    await transaction.organizationMembership.upsert({
-      where: { userId: user.id },
-      create: { userId: user.id, organizationId: organization.id, role: 'OWNER', status: 'ACTIVE' },
-      update: {},
+    const membership = organization.memberships[0]
+    if (!membership) throw new Error('Preview fixture membership was not created.')
+    const correlationId = `preview-mollie-acceptance:${organization.id}`
+    failureStage = 'FIXTURE_AUDIT'
+    await appendOrganizationMembershipEvent(transaction, {
+      eventType: 'MEMBERSHIP_CREATED', membershipId: membership.id, userId: user.id, organizationId: organization.id,
+      actorUserId: user.id, previousStatus: null, newStatus: 'ACTIVE', previousRole: null, newRole: 'OWNER',
+      reasonCode: 'PREVIEW_MOLLIE_ACCEPTANCE_FIXTURE', correlationId,
+      idempotencyKey: `preview-mollie-acceptance:membership:${membership.id}`,
     })
-    failureStage = 'FIXTURE_PROVIDER_PROFILE'
-    await transaction.providerProfile.upsert({
-      where: { organizationId: organization.id },
-      create: { organizationId: organization.id },
-      update: {},
+    await appendAccountProvisioningEvent(transaction, {
+      eventType: 'ORGANIZATION_LINKED', subjectUserId: user.id, actorUserId: user.id,
+      organizationId: organization.id, membershipId: membership.id, reasonCode: 'PREVIEW_MOLLIE_ACCEPTANCE_FIXTURE', correlationId,
+      idempotencyKey: `preview-mollie-acceptance:account:${membership.id}`,
     })
-      return { userId: user.id, organizationId: organization.id }
+    return { userId: user.id, organizationId: organization.id }
     })
 
     failureStage = 'CHECKOUT'
