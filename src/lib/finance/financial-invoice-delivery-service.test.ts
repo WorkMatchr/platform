@@ -67,6 +67,6 @@ describe('factuurmailbezorging', () => {
     await expect(deliverFinancialInvoiceEmail(invoice.id, sender)).rejects.toThrow('PAID_PURCHASE_INVOICE_REQUIRED')
     expect(sender).not.toHaveBeenCalled()
     await recordFinancialInvoiceEmailFailure(invoice.id, invoice.purchaseId, invoice.purchase.createdByUserId)
-    expect(mocks.eventUpsert).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ eventType: 'INVOICE_EMAIL_FAILED', metadata: { retryable: true } }) }))
+    expect(mocks.eventUpsert).toHaveBeenCalledWith(expect.objectContaining({ create: expect.objectContaining({ eventType: 'INVOICE_EMAIL_FAILED', metadata: { retryable: true } }) }))
   })
 })

@@ -24,12 +24,13 @@ export async function deliverFinancialInvoiceEmail(invoiceId: string, sender: In
     if (!invoice?.purchase || invoice.purchase.status !== 'PAID') throw new Error('PAID_PURCHASE_INVOICE_REQUIRED')
     const recipient = invoice.purchase.createdByUser
     const downloadUrl = new URL(`/credits/facturen/${invoice.id}/pdf`, siteConfig.url).toString()
-    const delivery = await sender(financialInvoiceEmail({
+    const email = financialInvoiceEmail({
       to: recipient.email,
       recipientName: recipient.name,
       invoiceNumber: invoice.invoiceNumber,
       downloadUrl,
-    }))
+    })
+    const delivery = await sender({ ...email, idempotencyKey: `invoice-email:${invoice.id}` })
     await transaction.financialEvent.create({
       data: {
         actorUserId: invoice.purchase.createdByUserId,
