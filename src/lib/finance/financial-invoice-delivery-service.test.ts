@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('server-only', () => ({}))
 
@@ -32,11 +32,17 @@ const invoice = {
 
 describe('factuurmailbezorging', () => {
   beforeEach(() => {
+    vi.stubEnv('VERCEL_ENV', 'preview')
+    vi.stubEnv('NEXT_PUBLIC_APP_URL', 'https://platform-finance-preview-workmatchrs-projects.vercel.app')
     vi.clearAllMocks()
     mocks.eventFind.mockResolvedValue(null)
     mocks.invoiceFind.mockResolvedValue(invoice)
     mocks.eventCreate.mockResolvedValue({ id: 'event-id' })
     mocks.eventUpsert.mockResolvedValue({ id: 'failure-event' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
   })
 
   it('verstuurt één beveiligde factuurlink na een betaalde aankoop en schrijft audit', async () => {
@@ -47,7 +53,7 @@ describe('factuurmailbezorging', () => {
       kind: 'FINANCIAL_INVOICE',
       to: 'finance@example.invalid',
       idempotencyKey: `invoice-email:${invoice.id}`,
-      html: expect.stringContaining(`/credits/facturen/${invoice.id}/pdf`),
+      html: expect.stringContaining(`https://platform-finance-preview-workmatchrs-projects.vercel.app/credits/facturen/${invoice.id}/pdf`),
     }))
     expect(mocks.eventCreate).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ eventType: 'INVOICE_EMAIL_SENT', invoiceId: invoice.id }) }))
   })
