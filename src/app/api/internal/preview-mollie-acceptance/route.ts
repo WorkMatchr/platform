@@ -36,8 +36,10 @@ async function findTestPurchase() {
 export async function POST() {
   if (!isAllowedPreviewRuntime()) return new Response(null, { status: 404 })
 
-  const prisma = getPrisma()
-  const fixture = await prisma.$transaction(async (transaction) => {
+  let failureStage = 'FIXTURE'
+  try {
+    const prisma = getPrisma()
+    const fixture = await prisma.$transaction(async (transaction) => {
     const user = await transaction.user.upsert({
       where: { email: TEST_EMAIL },
       create: {
@@ -71,10 +73,11 @@ export async function POST() {
       create: { organizationId: organization.id },
       update: {},
     })
-    return { userId: user.id, organizationId: organization.id }
-  })
+      return { userId: user.id, organizationId: organization.id }
+    })
 
-  const purchase = await createCreditPurchase({
+    failureStage = 'CHECKOUT'
+    const purchase = await createCreditPurchase({
     actorUserId: fixture.userId,
     organizationId: fixture.organizationId,
     packageSku: 'CREDITS_25',
@@ -86,12 +89,15 @@ export async function POST() {
       city: 'Preview',
       countryCode: 'NL',
     },
-  })
+    })
 
-  return NextResponse.json({
-    fixtureReady: true,
-    checkoutReady: Boolean(purchase.mollieCheckoutUrl && purchase.molliePaymentId),
-  }, { headers: { 'cache-control': 'no-store' } })
+    return NextResponse.json({
+      fixtureReady: true,
+      checkoutReady: Boolean(purchase.mollieCheckoutUrl && purchase.molliePaymentId),
+    }, { headers: { 'cache-control': 'no-store' } })
+  } catch {
+    return NextResponse.json({ fixtureReady: false, checkoutReady: false, failureStage }, { status: 409, headers: { 'cache-control': 'no-store' } })
+  }
 }
 
 export async function GET() {
