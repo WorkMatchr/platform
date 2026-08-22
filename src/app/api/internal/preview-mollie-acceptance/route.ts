@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getPrisma } from '@/lib/prisma'
 import { createCreditPurchase, processMolliePayment } from '@/lib/finance/financial-purchase-service'
 import { appendAccountProvisioningEvent, appendOrganizationMembershipEvent } from '@/lib/account-architecture/account-history-service'
+import { createMollieGateway } from '@/lib/finance/mollie-gateway'
 
 export const dynamic = 'force-dynamic'
 
@@ -135,10 +136,14 @@ export async function GET() {
 
   const purchase = await findTestPurchase()
   if (!purchase) return NextResponse.json({ fixtureReady: false }, { headers: { 'cache-control': 'no-store' } })
+  const molliePayment = purchase.molliePaymentId
+    ? await createMollieGateway().getPayment(purchase.molliePaymentId)
+    : null
 
   return NextResponse.json({
     fixtureReady: true,
     paymentIsPaid: purchase.status === 'PAID',
+    molliePaymentStatus: molliePayment?.status ?? null,
     checkoutReady: Boolean(purchase.mollieCheckoutUrl && purchase.molliePaymentId),
     exactlyOneCredit: purchase.creditedTransactionId !== null,
     invoiceSnapshotMatches: purchase.invoice?.pricingMode === 'MOLLIE_TEST_ACCEPTANCE'
