@@ -9,6 +9,7 @@ export const dynamic = 'force-dynamic'
 const EXPECTED_PREVIEW_BRANCH = 'codex/mollie-credit-acceptance'
 const TEST_EMAIL = 'mollie-preview-acceptance@workmatchr.example.invalid'
 const PURCHASE_IDEMPOTENCY_KEY = 'preview-mollie-acceptance-credit-purchase-20260822'
+const RETRY_PURCHASE_IDEMPOTENCY_KEY = `${PURCHASE_IDEMPOTENCY_KEY}-retry-1`
 
 function isAllowedPreviewRuntime() {
   return process.env.VERCEL_ENV === 'preview' && process.env.VERCEL_GIT_COMMIT_REF === EXPECTED_PREVIEW_BRANCH
@@ -16,9 +17,11 @@ function isAllowedPreviewRuntime() {
 
 async function findTestPurchase() {
   return getPrisma().financialPurchase.findFirst({
-    where: { idempotencyKey: PURCHASE_IDEMPOTENCY_KEY },
+    where: { idempotencyKey: { startsWith: PURCHASE_IDEMPOTENCY_KEY } },
+    orderBy: { createdAt: 'desc' },
     select: {
       id: true,
+      idempotencyKey: true,
       status: true,
       credits: true,
       amountExclVatCents: true,
@@ -103,11 +106,23 @@ export async function POST() {
     })
 
     failureStage = 'CHECKOUT'
+    const currentPurchase = await findTestPurchase()
+    const currentMolliePayment = currentPurchase?.molliePaymentId
+      ? await createMollieGateway().getPayment(currentPurchase.molliePaymentId)
+      : null
+    const currentPaymentIsTerminal = currentMolliePayment !== null
+      && ['failed', 'canceled', 'expired'].includes(currentMolliePayment.status)
+    if (currentPaymentIsTerminal && currentPurchase?.idempotencyKey === RETRY_PURCHASE_IDEMPOTENCY_KEY) {
+      return NextResponse.json({ fixtureReady: true, checkoutReady: false }, { headers: { 'cache-control': 'no-store' } })
+    }
+    const idempotencyKey = currentPaymentIsTerminal
+      ? RETRY_PURCHASE_IDEMPOTENCY_KEY
+      : PURCHASE_IDEMPOTENCY_KEY
     const purchase = await createCreditPurchase({
     actorUserId: fixture.userId,
     organizationId: fixture.organizationId,
     packageSku: 'CREDITS_25',
-    idempotencyKey: PURCHASE_IDEMPOTENCY_KEY,
+    idempotencyKey,
     billingAddress: {
       organizationName: 'Preview Mollie acceptance organisatie',
       addressLine: 'Teststraat 1',

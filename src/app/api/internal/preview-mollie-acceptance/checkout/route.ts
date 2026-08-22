@@ -10,8 +10,9 @@ export async function GET() {
     return new Response(null, { status: 404 })
   }
 
-  const purchase = await getPrisma().financialPurchase.findUnique({
-    where: { idempotencyKey: PURCHASE_IDEMPOTENCY_KEY },
+  const purchase = await getPrisma().financialPurchase.findFirst({
+    where: { idempotencyKey: { startsWith: PURCHASE_IDEMPOTENCY_KEY } },
+    orderBy: { createdAt: 'desc' },
     select: { mollieCheckoutUrl: true, status: true },
   })
   if (!purchase?.mollieCheckoutUrl || purchase.status !== 'PAYMENT_PENDING') return new Response(null, { status: 404 })
