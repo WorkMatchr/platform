@@ -1,9 +1,9 @@
 import 'server-only'
 
 import { Prisma } from '@/generated/prisma/client'
-import { siteConfig } from '@/config/site'
 import { financialInvoiceEmail, sendAuthEmail, type AuthEmailDeliveryResult } from '@/lib/email'
 import { getPrisma } from '@/lib/prisma'
+import { getPublicAppBaseUrl } from '@/lib/public-app-url'
 import { runSerializableFinancialTransaction } from './financial-transaction'
 
 type InvoiceEmailSender = (email: ReturnType<typeof financialInvoiceEmail>) => Promise<AuthEmailDeliveryResult>
@@ -23,7 +23,7 @@ export async function deliverFinancialInvoiceEmail(invoiceId: string, sender: In
     })
     if (!invoice?.purchase || invoice.purchase.status !== 'PAID') throw new Error('PAID_PURCHASE_INVOICE_REQUIRED')
     const recipient = invoice.purchase.createdByUser
-    const downloadUrl = new URL(`/credits/facturen/${invoice.id}/pdf`, siteConfig.url).toString()
+    const downloadUrl = new URL(`/credits/facturen/${invoice.id}/pdf`, getPublicAppBaseUrl()).toString()
     const email = financialInvoiceEmail({
       to: recipient.email,
       recipientName: recipient.displayName?.trim() || 'gebruiker',
