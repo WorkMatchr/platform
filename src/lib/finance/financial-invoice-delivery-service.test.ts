@@ -46,7 +46,7 @@ describe('factuurmailbezorging', () => {
   })
 
   it('verstuurt één beveiligde factuurlink na een betaalde aankoop en schrijft audit', async () => {
-    const sender = vi.fn().mockResolvedValue({ accepted: true, transport: 'RESEND', status: 'ACCEPTED', messageId: 'message-id' })
+    const sender = vi.fn().mockResolvedValue({ accepted: true, transport: 'RESEND', status: 'ACCEPTED', messageId: 'message-id', previewRecipientOverrideUsed: true })
     const { deliverFinancialInvoiceEmail } = await import('./financial-invoice-delivery-service')
     await expect(deliverFinancialInvoiceEmail(invoice.id, sender)).resolves.toEqual({ delivered: true, idempotent: false })
     expect(sender).toHaveBeenCalledWith(expect.objectContaining({
@@ -55,7 +55,11 @@ describe('factuurmailbezorging', () => {
       idempotencyKey: `invoice-email:${invoice.id}`,
       html: expect.stringContaining(`https://platform-finance-preview-workmatchrs-projects.vercel.app/credits/facturen/${invoice.id}/pdf`),
     }))
-    expect(mocks.eventCreate).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ eventType: 'INVOICE_EMAIL_SENT', invoiceId: invoice.id }) }))
+    expect(mocks.eventCreate).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({
+      eventType: 'INVOICE_EMAIL_SENT',
+      invoiceId: invoice.id,
+      metadata: expect.objectContaining({ previewRecipientOverrideUsed: true }),
+    }) }))
   })
 
   it('herhaalt een al bezorgde factuurmail niet', async () => {

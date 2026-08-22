@@ -39,7 +39,12 @@ export async function deliverFinancialInvoiceEmail(invoiceId: string, sender: In
         eventType: 'INVOICE_EMAIL_SENT',
         result: 'SUCCEEDED',
         idempotencyKey: deliveryKey(invoice.id),
-        metadata: { transport: delivery.transport, status: delivery.status, invoiceNumber: invoice.invoiceNumber },
+        metadata: {
+          transport: delivery.transport,
+          status: delivery.status,
+          invoiceNumber: invoice.invoiceNumber,
+          previewRecipientOverrideUsed: delivery.previewRecipientOverrideUsed === true,
+        },
       },
     })
     return { delivered: true, idempotent: false }
