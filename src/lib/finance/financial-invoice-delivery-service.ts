@@ -19,14 +19,14 @@ export async function deliverFinancialInvoiceEmail(invoiceId: string, sender: In
     if (delivered) return { delivered: true, idempotent: true }
     const invoice = await transaction.financialInvoice.findUnique({
       where: { id: invoiceId },
-      include: { purchase: { include: { createdByUser: { select: { email: true, name: true } } } } },
+      include: { purchase: { include: { createdByUser: { select: { email: true, displayName: true } } } } },
     })
     if (!invoice?.purchase || invoice.purchase.status !== 'PAID') throw new Error('PAID_PURCHASE_INVOICE_REQUIRED')
     const recipient = invoice.purchase.createdByUser
     const downloadUrl = new URL(`/credits/facturen/${invoice.id}/pdf`, siteConfig.url).toString()
     const email = financialInvoiceEmail({
       to: recipient.email,
-      recipientName: recipient.name,
+      recipientName: recipient.displayName?.trim() || 'gebruiker',
       invoiceNumber: invoice.invoiceNumber,
       downloadUrl,
     })

@@ -26,7 +26,7 @@ const invoice = {
   purchase: {
     status: 'PAID',
     createdByUserId: '40000000-0000-4000-8000-000000000001',
-    createdByUser: { email: 'finance@example.invalid', name: 'Factuurgebruiker' },
+    createdByUser: { email: 'finance@example.invalid', displayName: 'Factuurgebruiker' },
   },
 }
 
