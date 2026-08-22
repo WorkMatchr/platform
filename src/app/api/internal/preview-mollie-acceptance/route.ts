@@ -36,10 +36,11 @@ async function findTestPurchase() {
 export async function POST() {
   if (!isAllowedPreviewRuntime()) return new Response(null, { status: 404 })
 
-  let failureStage = 'FIXTURE'
+  let failureStage = 'FIXTURE_USER'
   try {
     const prisma = getPrisma()
     const fixture = await prisma.$transaction(async (transaction) => {
+    failureStage = 'FIXTURE_USER'
     const user = await transaction.user.upsert({
       where: { email: TEST_EMAIL },
       create: {
@@ -52,6 +53,7 @@ export async function POST() {
       update: {},
       select: { id: true },
     })
+    failureStage = 'FIXTURE_ORGANIZATION'
     const organization = await transaction.organization.upsert({
       where: { systemKey: TEST_ORGANIZATION_KEY },
       create: {
@@ -63,11 +65,13 @@ export async function POST() {
       update: {},
       select: { id: true },
     })
+    failureStage = 'FIXTURE_MEMBERSHIP'
     await transaction.organizationMembership.upsert({
       where: { userId: user.id },
       create: { userId: user.id, organizationId: organization.id, role: 'OWNER', status: 'ACTIVE' },
       update: {},
     })
+    failureStage = 'FIXTURE_PROVIDER_PROFILE'
     await transaction.providerProfile.upsert({
       where: { organizationId: organization.id },
       create: { organizationId: organization.id },
