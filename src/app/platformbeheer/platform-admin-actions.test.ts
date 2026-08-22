@@ -23,14 +23,12 @@ describe('platformbeheeracties en communicatie', () => {
     expect(page).toContain('PlatformAdminEmailForm')
     expect(page).toContain('PlatformUserAccessActions')
     expect(page).toContain('PlatformAdminNoteForm')
-    expect(page).toContain('PlatformTwoFactorResetForm')
     expect(actions).toContain('Activatiemail opnieuw versturen')
     expect(actions).toContain('Verificatiemail opnieuw versturen')
     expect(actions).toContain('Wachtwoordreset versturen')
     expect(actions).toContain('Interne beheernotitie')
-    expect(actions).toContain('Tweestapsverificatie resetten')
-    expect(actions).toContain('name="reason"')
-    expect(actions).toContain('name="confirmed"')
+    expect(page).not.toContain('Tweestapsverificatie')
+    expect(actions).not.toContain('Tweestapsverificatie')
   })
 
   it('biedt organisatie-, opdracht-, reviewer- en approveracties zonder vier-ogenregel te wijzigen', () => {

@@ -1,5 +1,12 @@
 # WorkMatchr test-log
 
+## 2026-08-22 — Verwijdering actieve 2FA-flow
+
+- Een bestaand account, inclusief een account met historisch ingestelde 2FA, gebruikt na de verwijdering uitsluitend de e-mail- en wachtwoordroute; historische factorrecords zijn inert.
+- Platform-OWNER, -ADMIN en -MEMBER behouden hun server-side rol- en membershipautorisatie zonder 2FA-voorwaarde.
+- Wachtwoordreset, centrale wachtwoordregels en HIBP-controle, sessie-intrekking na reset en auth-rate-limiting blijven ongewijzigd actief.
+- De 2FA-challenge-, setup- en beheerresetroutes zijn verwijderd; de accountbeveiligingspagina biedt uitsluitend wachtwoordbeheer.
+
 ## 2026-08-21 — Accountgebonden Arbo-wijzers
 
 - Publieke overzichts- en uitlegpagina's blijven zonder account bereikbaar; de vragenflow rendert uitsluitend na server-side vastgestelde sessie en actieve tenantmembership.

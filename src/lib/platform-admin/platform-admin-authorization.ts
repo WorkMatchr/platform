@@ -3,7 +3,6 @@ import 'server-only'
 import { redirect } from 'next/navigation'
 import { requireUser } from '@/lib/authorization'
 import { getPrisma } from '@/lib/prisma'
-import { getSafeReturnUrl } from '@/lib/safe-redirect'
 import {
   hasPlatformAdministratorIdentity,
   isPlatformAuditorMembershipRole,
@@ -17,13 +16,6 @@ export class PlatformAdminAccessError extends Error {
   constructor() {
     super('Platformbeheer is niet beschikbaar.')
     this.name = 'PlatformAdminAccessError'
-  }
-}
-
-export class PlatformTwoFactorRequiredError extends Error {
-  constructor() {
-    super('Tweestapsverificatie is vereist voor toegang tot platformbeheer.')
-    this.name = 'PlatformTwoFactorRequiredError'
   }
 }
 
@@ -49,12 +41,6 @@ export async function getPlatformContext(userId: string) {
       id: true,
       displayName: true,
       email: true,
-      twoFactorEnabled: true,
-      twoFactors: {
-        where: { verified: true },
-        select: { id: true },
-        take: 1,
-      },
       providerPermissionSubjects: {
         where: {
           validFrom: { lte: now },
@@ -88,7 +74,6 @@ export async function getPlatformContext(userId: string) {
     platformRole: 'ADMIN' as const,
     platformOrganizationId: platformMembership.organization.id,
     membershipRole: platformMembership.role as PlatformMembershipRole,
-    hasVerifiedTwoFactor: administrator.twoFactorEnabled && (administrator.twoFactors?.length ?? 0) === 1,
     platformMembership,
     permissions: administrator.providerPermissionSubjects.map((grant) => grant.permission),
   }
@@ -97,14 +82,12 @@ export async function getPlatformContext(userId: string) {
 export async function getPlatformOperatorContext(userId: string) {
   const context = await getPlatformContext(userId)
   if (!isPlatformOperatorMembershipRole(context.membershipRole)) throw new PlatformAdminAccessError()
-  assertPlatformTwoFactor(context)
   return context
 }
 
 export async function getPlatformOwnerContext(userId: string) {
   const context = await getPlatformContext(userId)
   if (context.membershipRole !== 'OWNER') throw new PlatformAdminAccessError()
-  assertPlatformTwoFactor(context)
   return context
 }
 
@@ -113,7 +96,6 @@ export async function getPlatformAuditorContext(userId: string) {
   if (!isPlatformAuditorMembershipRole(context.membershipRole) && !isPlatformOperatorMembershipRole(context.membershipRole)) {
     throw new PlatformAdminAccessError()
   }
-  assertPlatformTwoFactor(context)
   return context
 }
 
@@ -122,7 +104,6 @@ export async function requirePlatformOperator(returnTo = '/platformbeheer') {
   try {
     return await getPlatformOperatorContext(user.id)
   } catch (error) {
-    if (error instanceof PlatformTwoFactorRequiredError) redirectToTwoFactorEnrollment(returnTo)
     if (error instanceof PlatformAdminAccessError) redirect('/account')
     throw error
   }
@@ -133,7 +114,6 @@ export async function requirePlatformOwner(returnTo = '/platformbeheer') {
   try {
     return await getPlatformOwnerContext(user.id)
   } catch (error) {
-    if (error instanceof PlatformTwoFactorRequiredError) redirectToTwoFactorEnrollment(returnTo)
     if (error instanceof PlatformAdminAccessError) redirect('/account')
     throw error
   }
@@ -144,20 +124,9 @@ export async function requirePlatformAuditor(returnTo = '/platformbeheer/auditor
   try {
     return await getPlatformAuditorContext(user.id)
   } catch (error) {
-    if (error instanceof PlatformTwoFactorRequiredError) redirectToTwoFactorEnrollment(returnTo)
     if (error instanceof PlatformAdminAccessError) redirect('/account')
     throw error
   }
-}
-
-function assertPlatformTwoFactor(context: { hasVerifiedTwoFactor: boolean }): void {
-  if (!context.hasVerifiedTwoFactor) {
-    throw new PlatformTwoFactorRequiredError()
-  }
-}
-
-function redirectToTwoFactorEnrollment(returnTo: string): never {
-  return redirect(`/account/beveiliging?returnTo=${encodeURIComponent(getSafeReturnUrl(returnTo, '/platformbeheer'))}`)
 }
 
 /** @deprecated Use getPlatformOperatorContext for operational platform access. */

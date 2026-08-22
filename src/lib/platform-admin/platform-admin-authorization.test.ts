@@ -25,13 +25,11 @@ import {
 const { redirect } = await import('next/navigation')
 const { requireUser } = await import('@/lib/authorization')
 
-function platformUser(role: 'OWNER' | 'ADMIN' | 'MEMBER', twoFactor: 'verified' | 'disabled' | 'pending' = 'verified') {
+function platformUser(role: 'OWNER' | 'ADMIN' | 'MEMBER') {
   return {
     id: 'platform-user',
     displayName: 'Platformgebruiker',
     email: 'platform@example.invalid',
-    twoFactorEnabled: twoFactor !== 'disabled',
-    twoFactors: twoFactor === 'verified' ? [{ id: 'two-factor-1' }] : [],
     providerPermissionSubjects: [],
     memberships: [{
       id: 'membership-1',
@@ -81,46 +79,14 @@ describe('centrale platformguards', () => {
     expect(redirect).toHaveBeenCalledWith('/account')
   })
 
-  it('stuurt een platformaccount zonder volledig geverifieerde 2FA server-side naar beveiliging', async () => {
-    const redirectSignal = new Error('NEXT_REDIRECT')
-    vi.mocked(requireUser).mockResolvedValue({ id: 'platform-user' } as never)
-    mocks.findFirst.mockResolvedValue(platformUser('MEMBER', 'disabled'))
-    vi.mocked(redirect).mockImplementation(() => { throw redirectSignal })
-
-    await expect(requirePlatformAuditor('/platformbeheer/auditor')).rejects.toBe(redirectSignal)
-    expect(redirect).toHaveBeenCalledWith('/account/beveiliging?returnTo=%2Fplatformbeheer%2Fauditor')
-  })
-
   it.each([
     ['OWNER', requirePlatformOwner],
     ['ADMIN', requirePlatformOperator],
     ['MEMBER', requirePlatformAuditor],
-  ] as const)('vereist geverifieerde 2FA voor %s', async (role, guard) => {
-    const redirectSignal = new Error('NEXT_REDIRECT')
+  ] as const)('laat een actieve platform-%s zonder 2FA door', async (role, guard) => {
     vi.mocked(requireUser).mockResolvedValue({ id: 'platform-user' } as never)
-    mocks.findFirst.mockResolvedValue(platformUser(role, 'disabled'))
-    vi.mocked(redirect).mockImplementation(() => { throw redirectSignal })
+    mocks.findFirst.mockResolvedValue(platformUser(role))
 
-    await expect(guard('/platformbeheer')).rejects.toBe(redirectSignal)
-    expect(redirect).toHaveBeenCalledWith('/account/beveiliging?returnTo=%2Fplatformbeheer')
-  })
-
-  it('laat een platformaccount met geverifieerde 2FA door', async () => {
-    vi.mocked(requireUser).mockResolvedValue({ id: 'platform-user' } as never)
-    mocks.findFirst.mockResolvedValue(platformUser('MEMBER', 'verified'))
-
-    await expect(requirePlatformAuditor('/platformbeheer/auditor')).resolves.toMatchObject({
-      hasVerifiedTwoFactor: true,
-    })
-  })
-
-  it('weigert een half-afgeronde enrollment zonder geverifieerd TwoFactor-record', async () => {
-    const redirectSignal = new Error('NEXT_REDIRECT')
-    vi.mocked(requireUser).mockResolvedValue({ id: 'platform-user' } as never)
-    mocks.findFirst.mockResolvedValue(platformUser('MEMBER', 'pending'))
-    vi.mocked(redirect).mockImplementation(() => { throw redirectSignal })
-
-    await expect(requirePlatformAuditor('/platformbeheer/auditor')).rejects.toBe(redirectSignal)
-    expect(redirect).toHaveBeenCalledWith('/account/beveiliging?returnTo=%2Fplatformbeheer%2Fauditor')
+    await expect(guard('/platformbeheer')).resolves.toMatchObject({ membershipRole: role })
   })
 })

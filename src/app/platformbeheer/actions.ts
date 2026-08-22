@@ -15,7 +15,6 @@ import {
   updatePlatformSignalStatus,
 } from '@/lib/platform-admin/platform-admin-action-service'
 import { requirePlatformAdministrator } from '@/lib/platform-admin/platform-admin-authorization'
-import { resetUserTwoFactor, PlatformTwoFactorResetError } from '@/lib/platform-admin/platform-two-factor-reset-service'
 import { setPlatformOrganizationBlocked } from '@/lib/platform-admin/platform-organization-lifecycle-service'
 import { createMarketplaceRuleSet } from '@/lib/marketplace/marketplace-rules-service'
 import { mutateMarketplaceCredits } from '@/lib/marketplace/marketplace-credit-admin-service'
@@ -42,40 +41,6 @@ function redirectWithResult(path: string, key: 'resultaat' | 'fout', value: stri
   const url = new URL(path, 'https://workmatchr.invalid')
   url.searchParams.set(key, value)
   redirect(`${url.pathname}${url.search}${url.hash}`)
-}
-
-const twoFactorResetSchema = z.object({
-  subjectUserId: z.string().uuid(),
-  reason: z.string().trim().min(10).max(500),
-  confirmed: z.literal('on'),
-})
-
-export async function resetPlatformUserTwoFactorAction(formData: FormData) {
-  const returnTo = safeReturnTo(formData.get('returnTo'), '/platformbeheer/gebruikers')
-  const administrator = await requirePlatformAdministrator(returnTo)
-  const parsed = twoFactorResetSchema.safeParse(Object.fromEntries(formData))
-  if (!parsed.success) redirectWithResult(returnTo, 'fout', 'ongeldige-tweestapsreset')
-  try {
-    const reset = await resetUserTwoFactor({
-      actorUserId: administrator.id,
-      targetUserId: parsed.data.subjectUserId,
-      reason: parsed.data.reason,
-      confirmed: true,
-      idempotencyKey: crypto.randomUUID(),
-    })
-    revalidatePath(returnTo)
-    revalidatePath('/platformbeheer')
-    redirectWithResult(
-      returnTo,
-      'resultaat',
-      reset.notification === 'SENT' ? 'tweestapsverificatie-gereset' : 'tweestapsverificatie-gereset-notificatie-mislukt',
-    )
-  } catch (error) {
-    if (error instanceof PlatformTwoFactorResetError) {
-      redirectWithResult(returnTo, 'fout', error.code.toLowerCase())
-    }
-    throw error
-  }
 }
 
 const organizationActionSchema = z.object({

@@ -217,7 +217,7 @@ erDiagram
   User ||--o{ Session : authenticates_with
   User ||--o{ Session : may_be_effective_test_user
   User ||--o{ Account : owns
-  User ||--o{ TwoFactor : secures
+  User ||--o{ TwoFactor : historical_inert_record
   Organization ||--o{ OrganizationMembership : has
   Organization ||--o{ OrganizationLocation : owns
   Organization ||--o{ OrganizationSector : classified_as

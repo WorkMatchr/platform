@@ -104,9 +104,7 @@ Alle operationele routes onder `/platformbeheer`, inclusief de CSV-export, verei
 
 Daarboven vereist operationeel beheer een membershiprol `OWNER` of `ADMIN`. Een membershiprol `MEMBER` kan uitsluitend de aparte read-only route `/platformbeheer/auditor` openen. Deze route toont alleen geminimaliseerde, pseudonieme auditstatus en gebeurtenistypen; zij toont geen gebruikers-, organisatie-, financiële-, inhouds- of authenticatiegegevens.
 
-Alle drie de actieve `WORKMATCHR_PLATFORM`-membershiprollen (`OWNER`, `ADMIN` en `MEMBER`) vereisen bovendien een ingeschakeld gebruikerskenmerk `twoFactorEnabled` en een geverifieerd `TwoFactor`-record. De centrale `requirePlatformOperator`, `requirePlatformOwner` en `requirePlatformAuditor` controleren dit server-side voordat beschermde inhoud rendert. Bij een ontbrekende of onvoltooide enrollment volgt uitsluitend een redirect naar `/account/beveiliging`; zonder geldige platformcontext blijft de bestaande redirect naar `/account` gelden.
-
-Het resetten van tweestapsverificatie is een afzonderlijke mutatie die alleen de centrale operatorguard (`OWNER` of `ADMIN`) toelaat. De serveraction vertrouwt niet op de zichtbaarheid van het formulier: zij valideert de actor, reden, bevestiging, doelaccount en eventuele last-owner-invariant opnieuw in de service. `MEMBER`/platformauditoren kunnen de actie noch via de UI noch via een directe serveraction uitvoeren.
+Actieve `WORKMATCHR_PLATFORM`-membershiprollen (`OWNER`, `ADMIN` en `MEMBER`) worden uitsluitend gecontroleerd op actieve gebruikersstatus, platformrol, membershiprol en actuele organisatiecontext. Tweestapsverificatie maakt geen deel uit van deze autorisatiecontrole.
 
 Een tenantrol `OWNER`, `ADMIN` of `MEMBER` geeft geen toegang. Een losse platformrol zonder geldige systeemmembership evenmin. Reviewer en approver blijven afzonderlijke permissions: platformbeheer toont de wachtrijstatus, maar opent operationele dossieracties alleen wanneer de betreffende permission werkelijk actief is.
 

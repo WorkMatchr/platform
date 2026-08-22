@@ -4,21 +4,13 @@ import { describe, expect, it } from 'vitest'
 
 const read = (path: string) => readFileSync(join(process.cwd(), path), 'utf8')
 
-describe('2FA-loginnavigatie', () => {
-  it('stuurt een Better Auth 2FA-respons eerst naar de challenge en niet naar de normale successroute', () => {
+describe('loginnavigatie zonder 2FA', () => {
+  it('gaat na een succesvolle e-mail- en wachtwoordlogin direct naar de veilige bestemming', () => {
     const source = read('src/components/auth/login-form.tsx')
 
-    expect(source).toContain('getTwoFactorRedirectResponse(response.data)')
-    expect(source).toContain("twoFactorRedirect?.twoFactorMethods.includes('totp')")
-    expect(source).toContain('`/tweestapsverificatie?returnTo=${encodeURIComponent(destination)}`')
-    expect(source.indexOf('twoFactorRedirect?.twoFactorMethods.includes')).toBeLessThan(source.lastIndexOf('window.location.assign(destination)'))
-  })
-
-  it('behoudt de veilige terugkeerroute na TOTP of herstelcode', () => {
-    const source = read('src/components/auth/two-factor-challenge-form.tsx')
-
-    expect(source).toContain("getSafeReturnUrl(returnTo, '/dashboard')")
-    expect(source).toContain('authClient.twoFactor.verifyTotp')
-    expect(source).toContain('authClient.twoFactor.verifyBackupCode')
+    expect(source).toContain('authClient.signIn.email')
+    expect(source).toContain("getSafeReturnUrl(result.data.returnTo, '/dashboard')")
+    expect(source).toContain('window.location.assign(destination)')
+    expect(source).not.toMatch(/twoFactor|tweestapsverificatie|totp|backupcode/i)
   })
 })

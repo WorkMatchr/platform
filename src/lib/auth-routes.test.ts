@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { AUTH_BASE_PATH } from '@/lib/auth-config'
@@ -6,14 +6,27 @@ import { AUTH_BASE_PATH } from '@/lib/auth-config'
 const root = process.cwd()
 
 describe('Better Auth-routes', () => {
-  it('legt de server- en client-basePath expliciet en gelijk vast met de native 2FA-clientplugin', () => {
+  it('legt de server- en client-basePath expliciet en gelijk vast zonder 2FA-clientplugin', () => {
     const server = readFileSync(join(root, 'src', 'lib', 'auth.ts'), 'utf8')
     const client = readFileSync(join(root, 'src', 'lib', 'auth-client.ts'), 'utf8')
     expect(AUTH_BASE_PATH).toBe('/api/auth')
     expect(server).toContain('basePath: AUTH_BASE_PATH')
     expect(client).toContain('createAuthClient({')
     expect(client).toContain('basePath: AUTH_BASE_PATH')
-    expect(client).toContain("plugins: [twoFactorClient({ twoFactorPage: '/tweestapsverificatie' })]")
+    expect(client).not.toContain('twoFactorClient')
+    expect(server).not.toContain('twoFactor(')
+  })
+
+  it('behoudt voor historische 2FA-records geen actieve challenge- of setuproute', () => {
+    const server = readFileSync(join(root, 'src', 'lib', 'auth.ts'), 'utf8')
+    const platformAuthorization = readFileSync(join(root, 'src', 'lib', 'platform-admin', 'platform-admin-authorization.ts'), 'utf8')
+    const securityPage = readFileSync(join(root, 'src', 'app', 'account', 'beveiliging', 'page.tsx'), 'utf8')
+
+    expect(existsSync(join(root, 'src', 'app', 'tweestapsverificatie', 'page.tsx'))).toBe(false)
+    expect(server).not.toMatch(/twoFactor|two-factor|totp/i)
+    expect(platformAuthorization).not.toMatch(/twoFactor|two-factor|totp/i)
+    expect(securityPage).not.toMatch(/tweestapsverificatie|totp|herstelcode/i)
+    expect(securityPage).toContain('/wachtwoord-vergeten')
   })
 
   it('gebruikt voor verificatie de officiële Better Auth-clientroute', () => {

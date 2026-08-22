@@ -2,7 +2,6 @@ import type { PlatformActionStatus } from '@/lib/platform-admin/platform-admin-a
 import { platformActionStatusLabels, platformActionStatuses } from '@/lib/platform-admin/platform-admin-action-center'
 import {
   addPlatformAdminNoteAction,
-  resetPlatformUserTwoFactorAction,
   sendPlatformAdminEmailAction,
   sendPlatformUserAccessEmailAction,
   updatePlatformSignalStatusAction,
@@ -100,26 +99,6 @@ export function PlatformUserAccessActions({
         </form>
       ))}
     </div>
-  )
-}
-
-export function PlatformTwoFactorResetForm({ userId, returnTo, enabled }: { userId: string; returnTo: string; enabled: boolean }) {
-  return (
-    <details className="rounded-card border border-border bg-surface p-4">
-      <summary className="cursor-pointer font-semibold text-brand-dark">Tweestapsverificatie resetten</summary>
-      <p className="mt-3 text-sm leading-6 text-text-secondary">
-        Status: <strong>{enabled ? 'Ingeschakeld' : 'Niet ingesteld of niet volledig afgerond'}</strong>. Een reset verwijdert uitsluitend de ingestelde tweede factor en beëindigt alle actieve sessies van dit account.
-      </p>
-      {enabled ? (
-        <form action={resetPlatformUserTwoFactorAction} className="mt-4 grid gap-3">
-          <input type="hidden" name="subjectUserId" value={userId} />
-          <input type="hidden" name="returnTo" value={returnTo} />
-          <label className="grid gap-1 text-sm font-semibold">Reden<textarea className={`${fieldClass} min-h-24 py-3`} name="reason" required minLength={10} maxLength={500} /></label>
-          <label className="flex items-start gap-2 text-sm leading-6"><input className="mt-1" type="checkbox" name="confirmed" required />Ik bevestig dat de identiteit van de gebruiker is gecontroleerd en dat alle bestaande sessies worden beëindigd.</label>
-          <button className={`${buttonClass} justify-self-start`} type="submit">Tweestapsverificatie resetten</button>
-        </form>
-      ) : <p className="mt-3 text-sm text-text-secondary">Er is geen actieve tweestapsverificatie om te resetten.</p>}
-    </details>
   )
 }
 

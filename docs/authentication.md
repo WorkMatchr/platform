@@ -19,8 +19,8 @@ Module 4A levert persoonlijke accounts met Better Auth 1.6.23: registratie, verp
 - Sessies staan in `Session`; credentials staan gehasht in `Account`.
 - `Verification` bewaart kortlevende verificatie- en resettokens.
 - `RateLimit` bewaart gedeelde databasecounters voor authendpoints.
-- Tweestapsverificatie gebruikt de native Better Auth 1.6.23-TOTP-plugin. Gebruikers beheren dit vrijwillig via **Account > Beveiliging**; recovery codes worden slechts bij enrollment in de browser getoond en versleuteld opgeslagen. Trusted devices zijn technisch niet bruikbaar (`trustDeviceMaxAge: 0`). Een actief account met een `WORKMATCHR_PLATFORM`-membership als `OWNER`, `ADMIN` of `MEMBER` moet de verificatie afronden vóór server-side toegang tot platformbeheer. Platformaccounts kunnen 2FA niet zelf uitschakelen.
-- Een actieve platform-`OWNER` of -`ADMIN` kan na identiteitscontrole de 2FA van een gebruiker resetten vanuit het gebruikersdetail. De reset vereist een reden en expliciete bevestiging, trekt factorrecords, sessies, 2FA-challenges en eventuele trusted-deviceverificaties in en schrijft append-only `TWO_FACTOR_RESET`- en beheeraudits. Secrets, QR-data, herstelcodes en challengecodes zijn nooit zichtbaar of auditeerbaar. De actie is per beheerder begrensd en de laatste actieve platformeigenaar kan haar niet op zichzelf uitvoeren.
+- WorkMatchr gebruikt uitsluitend e-mail en wachtwoord voor aanmelding. Tweestapsverificatie, TOTP, herstelcodes en trusted devices maken geen deel uit van de actieve authenticatie- of platformbeheerflow.
+- Historische `TwoFactor`-records en bijbehorende provisioningevents blijven uitsluitend als historische auditdata in de database staan. De Better Auth-plugin is verwijderd; deze records en eventuele bestaande `twoFactorEnabled`-waarden hebben geen effect op login, sessies of autorisatie.
 - `getCurrentUser` is de request-scoped, server-side bron voor de gevalideerde Better Auth-gebruiker; `requireUser`, organisatiecontext, layouts, headers en beschermde Server Components bouwen op deze bron voort.
 - De rootheader kiest server-side tussen de publieke header en dashboardheader. Daardoor kan een ingelogde gebruiker tijdens hydratatie of navigatie nooit tijdelijk de loginactie zien.
 
@@ -48,7 +48,7 @@ Registratie normaliseert e-mail naar lowercase en valideert server-side accountt
 
 ### Login en logout
 
-Login vereist een geverifieerd, actief account. Fouten zijn generiek om accountenumeratie te voorkomen. Een lokale return-URL moet met `/` beginnen en mag geen externe of ambigue URL zijn. Beveiligde routes kunnen zo na login veilig terugkeren naar de bedoelde lokale pagina, waaronder de hulpvraagflow. Bij een Better Auth-respons met `twoFactorRedirect=true` gaat de browser eerst naar `/tweestapsverificatie`; de tijdelijke Better Auth-challenge blijft daarbij intact en de normale successredirect volgt pas na een geldige TOTP- of herstelcode. Logout gebruikt Better Auths POST-endpoint en trekt de sessie in.
+Login vereist een geverifieerd, actief account. Fouten zijn generiek om accountenumeratie te voorkomen. Een lokale return-URL moet met `/` beginnen en mag geen externe of ambigue URL zijn. Beveiligde routes kunnen zo na login veilig terugkeren naar de bedoelde lokale pagina, waaronder de hulpvraagflow. Na een succesvolle e-mail- en wachtwoordlogin volgt direct de normale successredirect. Logout gebruikt Better Auths POST-endpoint en trekt de sessie in.
 
 De dashboardheader toont de actuele gebruiker en actieve organisatie uit dezelfde servercontext als de pagina. Het accountmenu bevat `Mijn account`, `Mijn organisatie`, voor een actieve dienstverlenersorganisatie `Dienstverlenersprofiel`, en `Uitloggen`. Na logout volgt een volledige navigatie naar de publieke homepage; na een organisatiekeuze wordt de rootlayout opnieuw opgebouwd.
 

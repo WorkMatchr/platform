@@ -1,7 +1,6 @@
 import { AuthShell, StatusMessage } from '@/components/auth/auth-shell'
 import { LogoutButton } from '@/components/auth/logout-button'
 import { LinkButton } from '@/components/ui/link-button'
-import { getPrisma } from '@/lib/prisma'
 import { getActiveOrganizationContext } from '@/lib/organizations/organization-authorization'
 import { canManageOrganization } from '@/lib/organizations/organization-policy'
 import {
@@ -34,12 +33,6 @@ export default async function AccountPage() {
   }
   const model = buildAccountViewModel(context, isPlatformAdministrator)
   const hasOrganization = model.organizationCount > 0
-  const twoFactor = await getPrisma().user.findUnique({
-    where: { id: context.user.id },
-    select: { twoFactorEnabled: true, twoFactors: { where: { verified: true }, select: { id: true }, take: 1 } },
-  })
-  const twoFactorEnabled = Boolean(twoFactor?.twoFactorEnabled && twoFactor.twoFactors.length)
-  const platformRequired = isPlatformAdministrator
   const manageableOrganization = Boolean(
     context.activeMembership && canManageOrganization(
       context.activeMembership.role,
@@ -88,9 +81,8 @@ export default async function AccountPage() {
 
           <section aria-labelledby="accountbeveiliging-heading" className="rounded-card border border-border bg-surface p-5">
             <h2 id="accountbeveiliging-heading" className="font-semibold text-brand-dark">Beveiliging</h2>
-            <p className="mt-3 text-sm leading-6 text-text-secondary">Tweestapsverificatie: <strong>{twoFactorEnabled ? 'ingeschakeld' : 'niet ingesteld of niet volledig afgerond'}</strong>.</p>
-            {platformRequired ? <p className="mt-2 text-sm leading-6 text-text-secondary">Tweestapsverificatie blijft verplicht zolang dit account toegang heeft tot platformbeheer.</p> : null}
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row"><LinkButton href="/account/beveiliging" variant="outline">{twoFactorEnabled ? 'Tweestapsverificatie beheren' : 'Tweestapsverificatie instellen'}</LinkButton><LinkButton href="/wachtwoord-vergeten" variant="outline">Wachtwoord wijzigen</LinkButton></div>
+            <p className="mt-3 text-sm leading-6 text-text-secondary">Beheer uw wachtwoord en hersteltoegang voor uw persoonlijke account.</p>
+            <div className="mt-5"><LinkButton href="/account/beveiliging" variant="outline">Accountbeveiliging</LinkButton></div>
           </section>
           {hasOrganization ? (
             <section aria-labelledby="arbo-wijzers-heading" className="rounded-card border border-border bg-surface p-5">

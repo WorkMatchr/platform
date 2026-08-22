@@ -1,7 +1,6 @@
 import { betterAuth } from 'better-auth'
 import { APIError, createAuthMiddleware, getSessionFromCtx } from 'better-auth/api'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
-import { twoFactor } from 'better-auth/plugins'
 import { haveIBeenPwned } from 'better-auth/plugins/haveibeenpwned'
 import { nextCookies } from 'better-auth/next-js'
 import { invitationActivationEmail, passwordResetEmail, sendAuthEmail, verificationEmail } from '@/lib/email'
@@ -15,7 +14,6 @@ import {
   isPendingOrganizationInvitation,
 } from '@/lib/account-architecture/invitation-acceptance-service'
 import { AUTH_BASE_PATH } from '@/lib/auth-config'
-import { appendTwoFactorAuditEvent } from '@/lib/auth-two-factor-audit'
 import {
   getPasswordPolicyViolation,
   passwordPolicyMessage,
@@ -167,31 +165,6 @@ export const auth = betterAuth({
         }
       }
 
-      if (ctx.path === '/two-factor/disable') {
-        const session = await getSessionFromCtx(ctx)
-        const userId = session?.user.id
-        if (!userId) throw new APIError('UNAUTHORIZED', { message: GENERIC_SIGN_IN_ERROR })
-
-        const platformMembership = await getPrisma().organizationMembership.findFirst({
-          where: {
-            userId,
-            status: 'ACTIVE',
-            role: { in: ['OWNER', 'ADMIN', 'MEMBER'] },
-            organization: {
-              status: 'ACTIVE',
-              organizationType: 'PLATFORM_OPERATOR',
-              systemKey: 'WORKMATCHR_PLATFORM',
-            },
-          },
-          select: { id: true },
-        })
-        if (platformMembership) {
-          throw new APIError('FORBIDDEN', {
-            message: 'Tweestapsverificatie is vereist voor toegang tot platformbeheer.',
-          })
-        }
-      }
-
       if (ctx.path === '/sign-in/email') {
         const email = typeof ctx.body?.email === 'string' ? normalizeEmail(ctx.body.email) : ''
         const user = email
@@ -242,32 +215,6 @@ export const auth = betterAuth({
       ctx.body.name = result.data.name
       ctx.body.accountType = result.data.accountType
     }),
-    after: createAuthMiddleware(async (ctx) => {
-      if (ctx.path !== '/two-factor/verify-totp') return
-
-      // This also covers a direct native Better Auth API call, not only the UI.
-      const session = ctx.context.session ?? await getSessionFromCtx(ctx)
-      const userId = session?.user.id
-      if (!userId) return
-
-      const prisma = getPrisma()
-      const [user, factor] = await Promise.all([
-        prisma.user.findUnique({ where: { id: userId }, select: { twoFactorEnabled: true } }),
-        prisma.twoFactor.findFirst({ where: { userId, verified: true }, select: { id: true } }),
-      ])
-      if (!user?.twoFactorEnabled || !factor) return
-
-      await prisma.$transaction(async (transaction) => {
-        await appendTwoFactorAuditEvent(transaction, {
-          eventType: 'TWO_FACTOR_ENROLLED',
-          subjectUserId: userId,
-          actorUserId: userId,
-          reasonCode: 'SELF_SERVICE_TOTP_ENROLLMENT',
-          correlationId: factor.id,
-          idempotencyKey: `two-factor-enrollment:${factor.id}`,
-        })
-      })
-    }),
   },
   databaseHooks: {
     user: {
@@ -300,12 +247,6 @@ export const auth = betterAuth({
       paths: ['/sign-up/email', '/reset-password', '/change-password', '/set-password'],
     }),
     passwordBreachCheckFailureAudit(),
-    twoFactor({
-      issuer: 'WorkMatchr',
-      // A zero max age prevents trusted-device verification records from being usable.
-      trustDeviceMaxAge: 0,
-      backupCodeOptions: { storeBackupCodes: 'encrypted' },
-    }),
     nextCookies(),
   ],
 })

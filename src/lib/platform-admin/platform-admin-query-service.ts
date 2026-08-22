@@ -704,8 +704,6 @@ export async function getPlatformUserDetail(actorUserId: string, userId: string)
       emailVerified: true,
       status: true,
       platformRole: true,
-      twoFactorEnabled: true,
-      twoFactors: { select: { id: true, verified: true }, take: 1 },
       createdAt: true,
       updatedAt: true,
       blockedAt: true,

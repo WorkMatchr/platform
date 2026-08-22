@@ -25,13 +25,9 @@ De AI-limiter staat vóór een cacheclaim en providercall. Daardoor kunnen uniek
 - wachtwoordreset trekt bestaande sessies in;
 - platformrollen worden uitsluitend server-side gecontroleerd.
 
-## Technisch 2FA-fundament
+## Geen actieve tweestapsverificatie
 
-De native Better Auth 1.6.23-TOTP-plugin gebruikt versleutelde recovery codes. Gewone gebruikers kiezen zelf of zij 2FA inschakelen. Actieve `WORKMATCHR_PLATFORM`-members met rol `OWNER`, `ADMIN` of `MEMBER` worden server-side naar **Account > Beveiliging** geleid zolang `twoFactorEnabled` en een geverifieerd `TwoFactor`-record niet beide aanwezig zijn. Trusted devices zijn niet beschikbaar: iedere verificatie gebruikt `trustDevice: false` en de configuratie geeft hun verificatiestate direct een verlopen geldigheid. Het 2FA-auditfundament registreert uitsluitend eventtype, interne identifiers, reden en policyversie; TOTP-secrets, QR/otpauth-URI's, recovery codes, challengecodes, wachtwoorden en sessietokens worden niet geaccepteerd of gelogd. Platformaccounts kunnen 2FA niet zelfstandig uitschakelen.
-
-Voor verlies van authenticator of herstelcodes bestaat uitsluitend voor actieve platform-`OWNER` en -`ADMIN` een server-side herstelactie. Deze controleert actor en doel opnieuw in een serialiseerbare transactie, vereist een identiteitscontroleredelijke reden en expliciete bevestiging, en trekt vervolgens alle sessies plus resterende 2FA-/trusted-deviceverificaties van het doel in. De actie is maximaal vijf keer per vijftien minuten per actor uitvoerbaar. `MEMBER`/auditoren en gewone gebruikers worden server-side geweigerd. Een reset van de laatste actieve platformeigenaar op zichzelf faalt gesloten.
-
-Na een geslaagde beheerderreset volgt buiten de resettransactie een tokenloze securitymail. Mislukte bezorging draait de reset niet terug: `TWO_FACTOR_RESET_NOTIFICATION_SENT` of `TWO_FACTOR_RESET_NOTIFICATION_FAILED` legt uitsluitend mailtype, moment, transport, provider-message-ID en veilige foutstatus vast. De inhoud, resetreden, e-mailadres, secrets, codes en tokens worden niet in `AdminCommunication` of deze delivery-audit opgeslagen.
+WorkMatchr gebruikt voorlopig geen tweestapsverificatie, TOTP, herstelcodes of trusted devices. Aanmelding bestaat uit e-mail en wachtwoord; platformrollen en memberships blijven daarbij uitsluitend server-side gecontroleerd. Historische 2FA-factorrecords, challengegegevens en auditgebeurtenissen zijn niet actief en worden niet door de applicatie gelezen of gemuteerd.
 
 ### Testaccountwisselaar buiten productie
 

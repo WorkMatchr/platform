@@ -3,7 +3,6 @@ import { changePlatformUserStatusAction } from '@/app/platformbeheer/actions'
 import {
   PlatformAdminEmailForm,
   PlatformAdminNoteForm,
-  PlatformTwoFactorResetForm,
   PlatformUserAccessActions,
 } from '@/components/platform-admin/platform-admin-actions'
 import { AdminPageHeader, AdminSection, AdminTable, StatusPill } from '@/components/platform-admin/platform-admin-ui'
@@ -29,7 +28,6 @@ export default async function PlatformUserDetailPage({
   ])
   if (!user) notFound()
   const membership = user.memberships[0]
-  const hasVerifiedTwoFactor = user.twoFactorEnabled && user.twoFactors.some((factor) => factor.verified)
   const manageable = membership && !membership.organization.systemKey && (user.status === 'ACTIVE' || user.status === 'BLOCKED')
   const events = [
     ...user.provisioningEventsAsSubject.map((event) => ({ id: `account-${event.id}`, source: 'Account', action: event.eventType, reason: event.reasonCode, at: event.occurredAt })),
@@ -38,13 +36,12 @@ export default async function PlatformUserDetailPage({
   return (
     <>
       <AdminPageHeader title={user.displayName ?? 'Naam niet ingevuld'} description={user.email} action={<StatusPill tone={user.status === 'ACTIVE' ? 'good' : user.status === 'BLOCKED' ? 'bad' : 'warning'}>{userStatusLabels[user.status]}</StatusPill>} />
-      {query.resultaat ? <p className={`rounded-control border px-4 py-3 text-sm ${query.resultaat === 'tweestapsverificatie-gereset-notificatie-mislukt' ? 'border-warning/40 bg-warning/10' : 'border-success-border bg-success-subtle'}`}>{query.resultaat === 'tweestapsverificatie-gereset-notificatie-mislukt' ? 'Tweestapsverificatie is gereset. De beveiligingsmelding kon mogelijk niet worden verzonden.' : 'De beheeractie is uitgevoerd en vastgelegd.'}</p> : null}
+      {query.resultaat ? <p className="rounded-control border border-success-border bg-success-subtle px-4 py-3 text-sm">De beheeractie is uitgevoerd en vastgelegd.</p> : null}
       {query.fout ? <p className="rounded-control border border-danger-border bg-danger-subtle px-4 py-3 text-sm">De beheeractie is niet uitgevoerd. Er zijn geen wijzigingen doorgevoerd. Controleer de gegevens en uw bevoegdheid en probeer het opnieuw.</p> : null}
       <AdminSection title="Beheeracties" description="Communicatie, toegang en notities blijven afzonderlijk en auditbaar.">
         <div className="grid gap-3 xl:grid-cols-2">
           <PlatformAdminEmailForm targetType="USER" targetId={user.id} returnTo={returnTo} />
           <PlatformAdminNoteForm targetType="USER" targetId={user.id} returnTo={returnTo} category="Gebruikers" />
-          <PlatformTwoFactorResetForm userId={user.id} returnTo={returnTo} enabled={user.twoFactorEnabled || user.twoFactors.length > 0} />
         </div>
         <div className="mt-3">
           <PlatformUserAccessActions
@@ -71,7 +68,6 @@ export default async function PlatformUserDetailPage({
           <div><dt className="text-xs text-text-secondary">Organisatie</dt><dd className="font-semibold">{membership?.organization.name ?? 'Geen organisatie'}</dd></div>
           <div><dt className="text-xs text-text-secondary">Organisatierol</dt><dd className="font-semibold">{membership ? organizationRoleLabels[membership.role] : 'Niet van toepassing'}</dd></div>
           <div><dt className="text-xs text-text-secondary">E-mail geverifieerd</dt><dd className="font-semibold">{user.emailVerified ? 'Ja' : 'Nee'}</dd></div>
-          <div><dt className="text-xs text-text-secondary">Tweestapsverificatie</dt><dd className="font-semibold">{hasVerifiedTwoFactor ? 'Ingeschakeld' : 'Niet ingesteld of niet volledig afgerond'}</dd></div>
         </dl>
       </AdminSection>
       <AdminSection title="Levenscyclus"><AdminTable headers={['Bron', 'Gebeurtenis', 'Reden', 'Moment']}>{events.map((event) => <tr key={event.id}><td className="px-4 py-3">{event.source}</td><td className="px-4 py-3 font-semibold">{event.action}</td><td className="px-4 py-3">{event.reason ?? '—'}</td><td className="px-4 py-3">{event.at.toLocaleString('nl-NL')}</td></tr>)}</AdminTable></AdminSection>
