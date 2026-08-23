@@ -34,7 +34,7 @@ function privateBlobClient() {
   return { operations: { put, get, head }, objects }
 }
 
-const options = { storeId: 'preview-store-123', environment: 'preview' as const, runtimeEnvironment: 'preview', oidcAvailable: true }
+const options = { storeId: 'preview-store-123', environment: 'preview' as const, runtimeEnvironment: 'preview' }
 
 describe('private Knowledge Source Upload-opslag', () => {
   it('schrijft en leest uitsluitend private, checksumgebonden blobs zonder URL bloot te stellen', async () => {
@@ -66,15 +66,14 @@ describe('private Knowledge Source Upload-opslag', () => {
     await expect(storage.read(key)).rejects.toThrow('STORAGE_UNAVAILABLE')
   })
 
-  it('weigert ontbrekende OIDC en iedere Preview/Production-mismatch', () => {
-    expect(() => new VercelBlobKnowledgeSourceUploadStorage({ ...options, oidcAvailable: false })).toThrow(KnowledgeSourceUploadStorageUnavailableError)
+  it('laat OIDC-validatie aan de Blob SDK en weigert iedere Preview/Production-mismatch', () => {
     expect(() => new VercelBlobKnowledgeSourceUploadStorage({ ...options, runtimeEnvironment: 'production' })).toThrow(KnowledgeSourceUploadStorageUnavailableError)
   })
 
   it('houdt Preview en Production aantoonbaar op verschillende store-identiteiten', async () => {
     const preview = new VercelBlobKnowledgeSourceUploadStorage(options, privateBlobClient().operations as never)
     const productionClient = privateBlobClient()
-    const production = new VercelBlobKnowledgeSourceUploadStorage({ storeId: 'production-store-987', environment: 'production', runtimeEnvironment: 'production', oidcAvailable: true }, productionClient.operations as never)
+    const production = new VercelBlobKnowledgeSourceUploadStorage({ storeId: 'production-store-987', environment: 'production', runtimeEnvironment: 'production' }, productionClient.operations as never)
     const previewStored = await preview.save(bytes, { checksum, mediaType: 'application/pdf' })
     // De testclient verwacht de Preview-store; pas voor Production alleen de verwachte storecheck aan.
     productionClient.operations.put.mockImplementationOnce(async (pathname, body) => {

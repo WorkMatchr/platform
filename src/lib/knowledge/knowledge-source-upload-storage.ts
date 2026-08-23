@@ -58,7 +58,6 @@ type VercelBlobStorageOptions = {
   storeId: string
   environment: 'preview' | 'production'
   runtimeEnvironment: string | undefined
-  oidcAvailable: boolean
 }
 
 const blobOperations: BlobOperations = { put, get, head }
@@ -71,8 +70,7 @@ function assertStorageKey(storageKey: string) {
 
 function assertBlobConfiguration(options: VercelBlobStorageOptions) {
   if (!/^[A-Za-z0-9_-]{8,128}$/u.test(options.storeId)
-    || options.runtimeEnvironment !== options.environment
-    || !options.oidcAvailable) throw new KnowledgeSourceUploadStorageUnavailableError()
+    || options.runtimeEnvironment !== options.environment) throw new KnowledgeSourceUploadStorageUnavailableError()
 }
 
 export class VercelBlobKnowledgeSourceUploadStorage implements KnowledgeSourceUploadStorage {
@@ -142,7 +140,6 @@ export function getKnowledgeSourceUploadStorage(): KnowledgeSourceUploadStorage 
       environment,
       storeId,
       runtimeEnvironment: process.env.VERCEL_ENV,
-      oidcAvailable: Boolean(process.env.VERCEL_OIDC_TOKEN),
     })
   }
   return new UnavailableKnowledgeSourceUploadStorage()
