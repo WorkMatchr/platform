@@ -43,7 +43,7 @@ function isAuthorizedPreviewRequest(request: Request): boolean {
   return expectedBuffer.length === suppliedBuffer.length && timingSafeEqual(expectedBuffer, suppliedBuffer)
 }
 
-export async function OPTIONS(request: Request) {
+export async function PUT(request: Request) {
   if (!isAuthorizedPreviewRequest(request)) return new Response(null, { status: 404 })
 
   return Response.json({
