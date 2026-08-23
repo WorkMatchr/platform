@@ -37,6 +37,10 @@ export async function GET() {
   const payment = await getPayment(apiKey)
   if (payment.id !== PAYMENT_ID || payment.mode !== 'test') return new Response(null, { status: 404 })
   const checkoutUrl = payment._links?.checkout?.href
+  const purchase = await getPrisma().financialPurchase.findUnique({
+    where: { molliePaymentId: PAYMENT_ID },
+    include: { creditedTransaction: true, invoice: true, paymentEvents: true, events: true },
+  })
   return Response.json({
     id: payment.id,
     status: payment.status,
@@ -44,6 +48,16 @@ export async function GET() {
     method: payment.method ?? null,
     paidAtPresent: Boolean(payment.paidAt),
     checkoutUrl: checkoutUrl?.startsWith('https://www.mollie.com/checkout/') ? checkoutUrl : null,
+    workmatchr: purchase ? {
+      status: purchase.status,
+      creditedExactlyOnce: Boolean(purchase.creditedTransactionId)
+        && purchase.creditedTransaction?.type === 'PURCHASE'
+        && purchase.creditedTransaction.amount === purchase.credits,
+      invoiceCreated: Boolean(purchase.invoice),
+      paymentEventCount: purchase.paymentEvents.length,
+      invoiceMailSentCount: purchase.events.filter((event) => event.eventType === 'INVOICE_EMAIL_SENT').length,
+      invoiceMailFailedCount: purchase.events.filter((event) => event.eventType === 'INVOICE_EMAIL_FAILED').length,
+    } : null,
   })
 }
 
