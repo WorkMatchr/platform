@@ -2,6 +2,7 @@ import { randomUUID, timingSafeEqual } from 'node:crypto'
 
 import { Prisma } from '@/generated/prisma/client'
 import { appendAccountProvisioningEvent, appendOrganizationMembershipEvent } from '@/lib/account-architecture/account-history-service'
+import { changeOrganizationUserRole } from '@/lib/account-architecture/owner-management-service'
 import { assertCanCreateTenantMembership } from '@/lib/account-architecture/tenant-membership-policy'
 import { auth } from '@/lib/auth'
 import { getPrisma } from '@/lib/prisma'
@@ -47,8 +48,51 @@ export async function POST(request: Request) {
     throw new Error('PREVIEW_INVOICE_E2E_FIXTURE_ORGANIZATION_UNAVAILABLE')
   }
 
-  const existing = await prisma.user.findUnique({ where: { email: FIXTURE_EMAIL }, select: { id: true } })
-  if (existing) throw new Error('PREVIEW_INVOICE_E2E_FIXTURE_CONFLICT')
+  const existing = await prisma.user.findUnique({
+    where: { email: FIXTURE_EMAIL },
+    select: {
+      id: true,
+      status: true,
+      emailVerified: true,
+      accountType: true,
+      memberships: {
+        where: { organizationId: purchase.organizationId },
+        select: { role: true, status: true },
+      },
+    },
+  })
+  if (existing) {
+    const membership = existing.memberships[0]
+    if (
+      existing.status !== 'ACTIVE'
+      || !existing.emailVerified
+      || existing.accountType !== 'PROFESSIONAL'
+      || existing.memberships.length !== 1
+      || membership?.status !== 'ACTIVE'
+      || !['MEMBER', 'ADMIN'].includes(membership.role)
+    ) {
+      throw new Error('PREVIEW_INVOICE_E2E_FIXTURE_CONFLICT')
+    }
+    if (membership.role === 'MEMBER') {
+      await changeOrganizationUserRole({
+        actorUserId: purchase.createdByUserId,
+        successorUserId: existing.id,
+        reasonCode: 'TENANT_ROLE_CHANGED',
+        organizationId: purchase.organizationId,
+        expectedRole: 'MEMBER',
+        newRole: 'ADMIN',
+        idempotencyKey: 'preview-invoice-e2e-fixture-admin-role',
+      }, {
+        sendNotification: async () => ({
+          accepted: true,
+          transport: 'DEVELOPMENT_LOG',
+          status: 'DEVELOPMENT_ONLY',
+          messageId: 'preview-invoice-fixture-only',
+        }),
+      })
+    }
+    return Response.json({ fixtureReady: true, created: false, role: 'ADMIN' })
+  }
 
   const signUpBody = {
     email: FIXTURE_EMAIL,
@@ -137,5 +181,22 @@ export async function POST(request: Request) {
     return { created: true }
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 10_000 })
 
-  return Response.json({ fixtureReady: true, created: result.created })
+  await changeOrganizationUserRole({
+    actorUserId: purchase.createdByUserId,
+    successorUserId: user.id,
+    reasonCode: 'TENANT_ROLE_CHANGED',
+    organizationId: purchase.organizationId,
+    expectedRole: 'MEMBER',
+    newRole: 'ADMIN',
+    idempotencyKey: 'preview-invoice-e2e-fixture-admin-role',
+  }, {
+    sendNotification: async () => ({
+      accepted: true,
+      transport: 'DEVELOPMENT_LOG',
+      status: 'DEVELOPMENT_ONLY',
+      messageId: 'preview-invoice-fixture-only',
+    }),
+  })
+
+  return Response.json({ fixtureReady: true, created: result.created, role: 'ADMIN' })
 }
