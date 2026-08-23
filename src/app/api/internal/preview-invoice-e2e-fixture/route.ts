@@ -5,12 +5,15 @@ import { appendAccountProvisioningEvent, appendOrganizationMembershipEvent } fro
 import { changeOrganizationUserRole } from '@/lib/account-architecture/owner-management-service'
 import { assertCanCreateTenantMembership } from '@/lib/account-architecture/tenant-membership-policy'
 import { auth } from '@/lib/auth'
+import { processMolliePayment } from '@/lib/finance/financial-purchase-service'
 import { getPrisma } from '@/lib/prisma'
+import { getPublicAppBaseUrl } from '@/lib/public-app-url'
 
 export const dynamic = 'force-dynamic'
 
 const FIXTURE_EMAIL = 'preview-invoice-e2e-member-20260823@workmatchr.example.invalid'
 const FIXTURE_PURCHASE_KEY_PREFIX = 'preview-mollie-acceptance-credit-purchase-'
+const EXPECTED_PREVIEW_ORIGIN = 'https://platform-mollie-acceptance-preview-workmatchrs-projects.vercel.app'
 
 async function authenticatedFixtureResponse(
   password: string,
@@ -210,4 +213,136 @@ export async function POST(request: Request) {
   })
 
   return authenticatedFixtureResponse(password, { fixtureReady: true, created: result.created, role: 'ADMIN' })
+}
+
+async function getLatestFixturePurchase() {
+  const prisma = getPrisma()
+  const user = await prisma.user.findUnique({ where: { email: FIXTURE_EMAIL }, select: { id: true } })
+  if (!user) throw new Error('PREVIEW_INVOICE_E2E_FIXTURE_USER_UNAVAILABLE')
+
+  const purchase = await prisma.financialPurchase.findFirst({
+    where: { createdByUserId: user.id, pricingMode: 'MOLLIE_TEST_ACCEPTANCE' },
+    orderBy: { createdAt: 'desc' },
+    include: {
+      creditedTransaction: true,
+      invoice: true,
+      paymentEvents: true,
+      events: true,
+    },
+  })
+  if (!purchase?.molliePaymentId) throw new Error('PREVIEW_INVOICE_E2E_PURCHASE_UNAVAILABLE')
+  return purchase
+}
+
+export async function GET(request: Request) {
+  if (!isAuthorizedPreviewRequest(request)) return new Response(null, { status: 404 })
+
+  const purchase = await getLatestFixturePurchase()
+  const invoiceMailEvents = purchase.events.filter((event) => event.eventType === 'INVOICE_EMAIL_SENT')
+  const failedOrExpired = await getPrisma().financialPurchase.findMany({
+    where: {
+      organizationId: purchase.organizationId,
+      status: { in: ['FAILED', 'EXPIRED'] },
+    },
+    select: { creditedTransactionId: true, invoice: { select: { id: true } }, events: { select: { eventType: true } } },
+  })
+  const otherOrganization = await getPrisma().organization.findFirst({
+    where: { id: { not: purchase.organizationId }, status: 'ACTIVE' },
+    select: { id: true },
+  })
+  const crossTenantInvoice = purchase.invoice && otherOrganization
+    ? await getPrisma().financialInvoice.findFirst({
+      where: { id: purchase.invoice.id, organizationId: otherOrganization.id },
+      select: { id: true },
+    })
+    : null
+  const invoice = purchase.invoice
+  const expectedAmounts = invoice
+    ? invoice.amountExclVatCents === 100
+      && invoice.vatRateBps === 2100
+      && invoice.vatAmountCents === 21
+      && invoice.amountInclVatCents === 121
+      && invoice.currency === 'EUR'
+    : false
+  const mailMetadata = invoiceMailEvents[0]?.metadata
+  const previewOverrideUsed = typeof mailMetadata === 'object'
+    && mailMetadata !== null
+    && !Array.isArray(mailMetadata)
+    && mailMetadata.previewRecipientOverrideUsed === true
+
+  return Response.json({
+    status: purchase.status,
+    paid: purchase.status === 'PAID',
+    paymentEventCount: purchase.paymentEvents.length,
+    creditedExactlyOnce: Boolean(purchase.creditedTransactionId)
+      && purchase.creditedTransaction?.type === 'PURCHASE'
+      && purchase.creditedTransaction.amount === purchase.credits,
+    invoiceCreated: Boolean(invoice),
+    invoiceSnapshotCorrect: expectedAmounts,
+    invoiceMailCount: invoiceMailEvents.length,
+    previewMailOverrideUsed: previewOverrideUsed,
+    invoiceLinkUsesPreview: getPublicAppBaseUrl() === EXPECTED_PREVIEW_ORIGIN,
+    invoiceId: invoice?.id ?? null,
+    failedExpiredCount: failedOrExpired.length,
+    failedExpiredWithoutCreditInvoiceOrMail: failedOrExpired.length > 0 && failedOrExpired.every((item) =>
+      item.creditedTransactionId === null
+      && item.invoice === null
+      && item.events.every((event) => event.eventType !== 'INVOICE_EMAIL_SENT')),
+    crossTenantInvoiceDenied: Boolean(otherOrganization) && crossTenantInvoice === null,
+  })
+}
+
+export async function PATCH(request: Request) {
+  if (!isAuthorizedPreviewRequest(request)) return new Response(null, { status: 404 })
+
+  const before = await getLatestFixturePurchase()
+  const result = await processMolliePayment(before.molliePaymentId!)
+  const after = await getLatestFixturePurchase()
+  return Response.json({
+    replayStatus: result.status,
+    creditUnchanged: before.creditedTransactionId === after.creditedTransactionId,
+    invoiceUnchanged: before.invoice?.id === after.invoice?.id,
+    paymentEventCountUnchanged: before.paymentEvents.length === after.paymentEvents.length,
+    invoiceMailCountUnchanged:
+      before.events.filter((event) => event.eventType === 'INVOICE_EMAIL_SENT').length
+      === after.events.filter((event) => event.eventType === 'INVOICE_EMAIL_SENT').length,
+  })
+}
+
+export async function DELETE(request: Request) {
+  if (!isAuthorizedPreviewRequest(request)) return new Response(null, { status: 404 })
+
+  const prisma = getPrisma()
+  const user = await prisma.user.findUnique({
+    where: { email: FIXTURE_EMAIL },
+    select: { id: true, memberships: { where: { status: 'ACTIVE' }, select: { organizationId: true, role: true } } },
+  })
+  const membership = user?.memberships[0]
+  if (!user || !membership || membership.role !== 'ADMIN') {
+    throw new Error('PREVIEW_INVOICE_E2E_ADMIN_FIXTURE_UNAVAILABLE')
+  }
+  const fixturePurchase = await prisma.financialPurchase.findFirst({
+    where: { organizationId: membership.organizationId, idempotencyKey: { startsWith: FIXTURE_PURCHASE_KEY_PREFIX } },
+    orderBy: { createdAt: 'asc' },
+    select: { createdByUserId: true },
+  })
+  if (!fixturePurchase) throw new Error('PREVIEW_INVOICE_E2E_FIXTURE_ORGANIZATION_UNAVAILABLE')
+
+  await changeOrganizationUserRole({
+    actorUserId: fixturePurchase.createdByUserId,
+    successorUserId: user.id,
+    reasonCode: 'TENANT_ROLE_CHANGED',
+    organizationId: membership.organizationId,
+    expectedRole: 'ADMIN',
+    newRole: 'MEMBER',
+    idempotencyKey: 'preview-invoice-e2e-fixture-member-role',
+  }, {
+    sendNotification: async () => ({
+      accepted: true,
+      transport: 'DEVELOPMENT_LOG',
+      status: 'DEVELOPMENT_ONLY',
+      messageId: 'preview-invoice-fixture-only',
+    }),
+  })
+  return Response.json({ role: 'MEMBER', auditRecorded: true })
 }
