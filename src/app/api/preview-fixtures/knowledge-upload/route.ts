@@ -119,6 +119,7 @@ export async function PUT(request: Request) {
       ok: false,
       stage,
       errorName: error instanceof Error ? error.name : 'Error',
+      errorCode: error instanceof Error && 'code' in error && typeof error.code === 'string' ? error.code : null,
       storageConfig: {
         vercelPreview: process.env.VERCEL_ENV === 'preview',
         blobPreview: process.env.KNOWLEDGE_UPLOAD_BLOB_ENVIRONMENT === 'preview',
