@@ -22,4 +22,11 @@ describe('Knowledge Source Upload beheerinterface', () => {
     expect(source('src/lib/knowledge/knowledge-source-upload-storage.ts')).toContain('KnowledgeSourceUploadStorageUnavailableError')
     expect(source('src/app/platformbeheer/kennisbank/bronnen/uploaden/page.tsx')).toContain('Upload nog niet geactiveerd')
   })
+
+  it('levert private broninhoud alleen via een geautoriseerde serverroute', () => {
+    const route = source('src/app/platformbeheer/kennisbank/bronnen/[sourceVersionId]/origineel/route.ts')
+    expect(route).toContain('requirePlatformAdministrator')
+    expect(route).toContain("'Cache-Control': 'private, no-store'")
+    expect(route).not.toContain('downloadUrl')
+  })
 })

@@ -14,11 +14,11 @@ Lokale schijf is niet geschikt voor Vercel-productie. Zonder geconfigureerde toe
 
 ### Knowledge-bronbestanden
 
-Knowledge Source Upload v1 gebruikt een afzonderlijke `KnowledgeSourceUploadStorage`-adapter omdat bron-PDF's private, immutable artifacts zijn. Tests gebruiken uitsluitend een in-memory adapter. Zolang geen private duurzame provider is gekozen, faalt de runtime-adapter gesloten en blijft uploaden in de beheerinterface uitgeschakeld.
+Knowledge Source Upload v1 gebruikt een afzonderlijke `KnowledgeSourceUploadStorage`-adapter omdat bron-PDF's private, immutable artifacts zijn. De productieadapter gebruikt Vercel Private Blob met OIDC; tests gebruiken uitsluitend een in-memory adapter. Het originele document blijft private en wordt alleen server-side gelezen na platformbeheer-autorisatie.
 
-Activering vereist minimaal private `save/read/delete`-semantiek, server-only credentials per omgeving, een immutable artifactlocator, checksumcontrole, Preview/Production-isolatie, retentie/herstel en een Preview-acceptatietest. Broninhoud wordt niet gelogd en PDF's worden niet als base64 in normale databasevelden opgeslagen.
+Object keys zijn deterministisch en checksumgebonden: `knowledge-source-uploads/v1/sha256/<prefix>/<sha256>.pdf`. De adapter gebruikt `access: private`, schakelt overschrijven en willekeurige suffixen uit en verifieert bij iedere read opnieuw contenttype, grootte en SHA-256. Een identieke herupload hergebruikt hetzelfde object; afwijkende bytes onder dezelfde identiteit falen gesloten. In PostgreSQL staat uitsluitend de interne locator en de immutable bronmetadata, nooit een publieke of private Blob-URL.
 
-Bij vervangen wordt eerst het nieuwe bestand gevalideerd en opgeslagen, daarna de database bijgewerkt en vervolgens het oude bestand verwijderd. Bij databasefout wordt het nieuwe bestand opgeruimd. Bij verwijderen worden eerst metadata gewist en daarna het bestand verwijderd. Object storage kan later asynchrone orphan-cleanup, back-ups en lifecyclebeleid toevoegen.
+Preview en Production moeten ieder een eigen private Blob-store hebben. De runtime vereist `KNOWLEDGE_UPLOAD_BLOB_STORE_ID`, `KNOWLEDGE_UPLOAD_BLOB_ENVIRONMENT` en een door Vercel verstrekt `VERCEL_OIDC_TOKEN`; een omgevingsmismatch of ontbrekende configuratie schakelt uploaden fail-closed uit. De stores worden alleen aan hun eigen Vercel-environment gekoppeld. Er is in v1 bewust geen deletefunctie: bronartifacts blijven immutable en retentie/verwijdering vereist een afzonderlijk besluit.
 
 ## Private providerbewijzen
 

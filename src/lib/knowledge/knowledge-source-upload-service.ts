@@ -20,7 +20,6 @@ type Database = Pick<ReturnType<typeof getPrisma>, 'knowledgeSourceVersion'>
 
 export type KnowledgeSourceUploadPreview = {
   storageKey: string
-  storageLocator: string
   fileName: string
   checksum: string
   bytes: number
@@ -98,7 +97,6 @@ export async function analyzeKnowledgeSourceUpload(input: {
     : await input.storage.save(input.bytes, { checksum: artifactChecksum, mediaType: 'application/pdf' })
   return {
     storageKey: stored.storageKey,
-    storageLocator: stored.locator,
     fileName: cleanText(path.basename(input.fileName), 255),
     checksum: artifactChecksum,
     bytes: input.bytes.length,

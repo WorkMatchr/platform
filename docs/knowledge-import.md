@@ -8,7 +8,9 @@ De volgorde is bewust fail-closed: controle van extensie, MIME, PDF-magic bytes 
 
 De ingest legt actor, checksum, aantallen en uploadorigin vast in de append-only Knowledge-audittrail. Een identieke checksum volgt de bestaande idempotentie- en conflictregels.
 
-De repository bevat nog geen gekozen private, duurzame object-storageprovider voor bronartifacts. Daarom zijn alleen de adapter en in-memory testimplementatie aanwezig en blijft uploaden runtimebreed uitgeschakeld. Activering vereist een private provideradapter, beperkte servicecredentials, Preview/Production-isolatie, retentie/herstel en een Preview-acceptatietest. Lokale Vercel-filesystemopslag en base64 in normale databasevelden zijn niet toegestaan.
+De duurzame provider voor bronartifacts is Vercel Private Blob via de bestaande `KnowledgeSourceUploadStorage`-adapter. De runtime gebruikt Vercel OIDC en een expliciete store-ID; Preview en Production hebben afzonderlijke private stores en een omgevingsmismatch faalt gesloten. Uploaden is alleen beschikbaar wanneer de eigen environment volledig is gekoppeld. Lokale Vercel-filesystemopslag, publieke Blob-URLs en base64 in normale databasevelden zijn niet toegestaan.
+
+De adapter bewaart het originele PDF-bestand onder een immutable SHA-256-key en overschrijft nooit. Een checksumduplicate wordt idempotent hergebruikt. Platformbeheer leest het origineel uitsluitend via de geautoriseerde serverroute `/platformbeheer/kennisbank/bronnen/<sourceVersionId>/origineel`; de interne Blob-locator en provider-URL worden niet aan de browser verstrekt. V1 heeft bewust geen deletepad.
 
 Zet bronnen buiten Git in de bestaande categorieÃ«n onder `local-sources/`. Het genegeerde lokale manifest in `local-sources/knowledge/` koppelt logische broncodes aan paden relatief aan deze bronroot, bronsoorten en SHA-256-checksums. Absolute paden en broninhoud komen niet in database of auditlog. In de database staat alleen een logische `manifest:<relatief-pad>`-referentie.
 

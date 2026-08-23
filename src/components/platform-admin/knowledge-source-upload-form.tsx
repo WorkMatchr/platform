@@ -53,6 +53,7 @@ export function KnowledgeSourceUploadForm({ storageConfigured }: { storageConfig
       <h2 className="font-bold text-brand-dark">Bron als concept verwerkt</h2>
       <p className="mt-2 text-sm text-text-secondary">De volledige brontekst is opgeslagen. De bron blijft in menselijke review en is niet gepubliceerd.</p>
       <p className="mt-2 text-xs text-text-secondary">Bronversie: {result.sourceVersionId}</p>
+      <a className="mt-4 inline-flex min-h-11 items-center rounded-control border border-brand-primary px-4 text-sm font-semibold text-brand-primary" href={`/platformbeheer/kennisbank/bronnen/${result.sourceVersionId}/origineel`}>Originele PDF downloaden</a>
     </div>
   )
 
