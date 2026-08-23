@@ -55,6 +55,12 @@ function isDevelopmentTestRecipient(email: AuthEmail): boolean {
   return process.env.NODE_ENV !== 'production' && email.to.toLowerCase().endsWith('@example.invalid')
 }
 
+function isPreviewInvoiceFixtureVerification(email: AuthEmail): boolean {
+  return process.env.VERCEL_ENV === 'preview'
+    && email.kind === 'VERIFICATION'
+    && email.to === 'preview-invoice-e2e-member-20260823@workmatchr.example.invalid'
+}
+
 function resolvePreviewInvoiceRecipientOverride(email: AuthEmail) {
   const configuredRecipient = process.env.PREVIEW_EMAIL_RECIPIENT_OVERRIDE?.trim()
   if (!configuredRecipient || email.kind !== 'FINANCIAL_INVOICE') {
@@ -124,6 +130,15 @@ export async function sendAuthEmail(email: AuthEmail): Promise<AuthEmailDelivery
   const from = process.env.AUTH_EMAIL_FROM
 
   logDevelopmentAuthLink(deliveryEmail)
+
+  if (isPreviewInvoiceFixtureVerification(deliveryEmail)) {
+    return {
+      accepted: true,
+      transport: 'DEVELOPMENT_LOG',
+      status: 'DEVELOPMENT_ONLY',
+      messageId: 'preview-invoice-fixture-only',
+    }
+  }
 
   if (!apiKey || !from) {
     if (isDevelopmentTestRecipient(deliveryEmail)) {

@@ -8,7 +8,7 @@ import { getPrisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
-const FIXTURE_EMAIL = 'preview-invoice-e2e-member@workmatchr.example.invalid'
+const FIXTURE_EMAIL = 'preview-invoice-e2e-member-20260823@workmatchr.example.invalid'
 const FIXTURE_PURCHASE_KEY_PREFIX = 'preview-mollie-acceptance-credit-purchase-'
 
 function isAuthorizedPreviewRequest(request: Request): boolean {
@@ -29,11 +29,8 @@ export async function POST(request: Request) {
   const password = process.env.PREVIEW_INVOICE_E2E_PASSWORD
   if (!password || password.length < 15) return new Response(null, { status: 404 })
 
-  const context = await auth.$context
-  const passwordHash = await context.password.hash(password)
-
-  const result = await getPrisma().$transaction(async (transaction) => {
-    const purchase = await transaction.financialPurchase.findFirst({
+  const prisma = getPrisma()
+  const purchase = await prisma.financialPurchase.findFirst({
       where: { idempotencyKey: { startsWith: FIXTURE_PURCHASE_KEY_PREFIX } },
       orderBy: { createdAt: 'asc' },
       select: {
@@ -42,70 +39,40 @@ export async function POST(request: Request) {
         organization: { select: { status: true, organizationType: true } },
       },
     })
-    if (
-      !purchase
-      || purchase.organization.status !== 'ACTIVE'
-      || !['PROVIDER', 'BOTH'].includes(purchase.organization.organizationType)
-    ) {
-      throw new Error('PREVIEW_INVOICE_E2E_FIXTURE_ORGANIZATION_UNAVAILABLE')
-    }
+  if (
+    !purchase
+    || purchase.organization.status !== 'ACTIVE'
+    || !['PROVIDER', 'BOTH'].includes(purchase.organization.organizationType)
+  ) {
+    throw new Error('PREVIEW_INVOICE_E2E_FIXTURE_ORGANIZATION_UNAVAILABLE')
+  }
 
-    const existing = await transaction.user.findUnique({
-      where: { email: FIXTURE_EMAIL },
-      include: {
-        accounts: {
-          where: { providerId: 'credential' },
-          select: { accountId: true, password: true },
-        },
-        memberships: {
-          select: { id: true, organizationId: true, role: true, status: true },
-        },
-      },
-    })
+  const existing = await prisma.user.findUnique({ where: { email: FIXTURE_EMAIL }, select: { id: true } })
+  if (existing) throw new Error('PREVIEW_INVOICE_E2E_FIXTURE_CONFLICT')
 
-    if (existing) {
-      const membership = existing.memberships.find((candidate) => candidate.organizationId === purchase.organizationId)
-      const isExpected = existing.status === 'ACTIVE'
-        && existing.emailVerified
-        && existing.accountType === 'PROFESSIONAL'
-        && existing.platformRole === 'USER'
-        && existing.memberships.length === 1
-        && membership?.status === 'ACTIVE'
-        && membership.role === 'MEMBER'
-        && existing.accounts.some((account) => account.accountId === existing.id && Boolean(account.password))
-      if (!isExpected || !membership) throw new Error('PREVIEW_INVOICE_E2E_FIXTURE_CONFLICT')
-      await transaction.account.update({
-        where: {
-          providerId_accountId: {
-            providerId: 'credential',
-            accountId: existing.id,
-          },
-        },
-        data: { password: passwordHash },
-      })
-      return { created: false, credentialRefreshed: true }
-    }
+  await auth.api.signUpEmail({
+    body: {
+      email: FIXTURE_EMAIL,
+      password,
+      name: 'Preview invoice E2E testlid',
+      accountType: 'PROFESSIONAL',
+      passwordConfirmation: password,
+      acceptedTerms: true,
+    },
+  })
 
-    const userId = randomUUID()
+  const user = await prisma.user.findUnique({ where: { email: FIXTURE_EMAIL }, select: { id: true } })
+  if (!user) throw new Error('PREVIEW_INVOICE_E2E_BETTER_AUTH_PROVISIONING_FAILED')
+
+  const result = await prisma.$transaction(async (transaction) => {
+    const userId = user.id
     const membershipId = randomUUID()
-    await transaction.user.create({
+    await transaction.user.update({
+      where: { id: userId },
       data: {
-        id: userId,
-        email: FIXTURE_EMAIL,
-        displayName: 'Preview invoice E2E testlid',
         emailVerified: true,
-        platformRole: 'USER',
-        accountType: 'PROFESSIONAL',
         status: 'ACTIVE',
         createdByUserId: purchase.createdByUserId,
-        accounts: {
-          create: {
-            id: randomUUID(),
-            accountId: userId,
-            providerId: 'credential',
-            password: passwordHash,
-          },
-        },
       },
     })
     await assertCanCreateTenantMembership(transaction, userId, purchase.organizationId)
@@ -168,8 +135,8 @@ export async function POST(request: Request) {
       idempotencyKey: `${correlationId}:membership`,
       metadata: { environment: 'preview', fixture: 'financial-invoice-e2e' },
     })
-    return { created: true, credentialRefreshed: false }
+    return { created: true }
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 10_000 })
 
-  return Response.json({ fixtureReady: true, created: result.created, credentialRefreshed: result.credentialRefreshed })
+  return Response.json({ fixtureReady: true, created: result.created })
 }
