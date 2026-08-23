@@ -9,7 +9,7 @@ export function Footer() {
       <Container className="grid gap-10 py-12 text-sm text-text-secondary lg:grid-cols-[1.2fr_2fr]">
         <div>
           <Link href="/" aria-label="WorkMatchr, naar de homepage" className="inline-flex min-h-11 items-center rounded-control focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary">
-            <WorkMatchrLogo size="footer" />
+            <WorkMatchrLogo size="header" />
           </Link>
           <p className="mt-3 max-w-sm leading-6">Onafhankelijke digitale begeleiding bij arbo- en veiligheidsvragen.</p>
           <p className="mt-5 max-w-lg text-xs leading-5">

@@ -2,7 +2,7 @@ import Image from 'next/image'
 
 const logoSizeClasses = {
   header: 'w-36 sm:w-48',
-  homepageHeader: 'w-[9.9rem] sm:w-[13.2rem]',
+  homepageHeader: 'w-36 sm:w-48',
   auth: 'w-52 max-w-full',
   footer: 'w-48 max-w-full',
   compact: 'w-32 sm:w-40',

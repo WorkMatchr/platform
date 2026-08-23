@@ -20,7 +20,7 @@ export function AuthShell({
     <main className="px-5 py-12 sm:px-8 sm:py-20">
       <Card className={`mx-auto w-full ${wide ? 'max-w-6xl' : 'max-w-lg'} p-6 sm:p-9`}>
         <Link href="/" className="inline-flex rounded-control focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary" aria-label="WorkMatchr, naar de homepage">
-          <WorkMatchrLogo size="auth" priority />
+          <WorkMatchrLogo size="header" priority />
         </Link>
         <Heading as="h1" size="h2" className="mt-7">{title}</Heading>
         <Text className="mt-3 text-text-secondary">{intro}</Text>

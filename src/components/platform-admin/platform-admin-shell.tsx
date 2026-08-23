@@ -31,7 +31,7 @@ export function PlatformAdminShell({
             className="inline-flex min-h-11 items-center gap-3 rounded-control text-brand-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
             aria-label="WorkMatchr Platformbeheer, naar het beheerdashboard"
           >
-            <WorkMatchrLogo size="compact" priority />
+            <WorkMatchrLogo size="header" priority />
             <span className="font-semibold text-text-secondary">Platformbeheer</span>
           </Link>
           <div className="flex items-center gap-2">
@@ -90,7 +90,10 @@ export function PlatformAdminShell({
       </div>
       <footer className="shrink-0 border-t border-border bg-surface">
         <div className="mx-auto flex w-full max-w-[96rem] flex-wrap items-center justify-between gap-3 px-4 py-4 text-sm text-text-secondary sm:px-6 lg:px-8">
-          <span className="font-semibold text-brand-dark">WorkMatchr Platformbeheer</span>
+          <span className="flex items-center gap-2 text-brand-dark">
+            <WorkMatchrLogo size="header" />
+            <span className="font-semibold text-text-secondary">Platformbeheer</span>
+          </span>
           <div className="flex flex-wrap items-center gap-4">
             <Link className="rounded-control hover:text-brand-primary-hover" href="/privacy">
               Privacy
