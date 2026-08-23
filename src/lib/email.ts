@@ -58,7 +58,10 @@ function isDevelopmentTestRecipient(email: AuthEmail): boolean {
 function isPreviewInvoiceFixtureVerification(email: AuthEmail): boolean {
   return process.env.VERCEL_ENV === 'preview'
     && email.kind === 'VERIFICATION'
-    && email.to === 'preview-invoice-e2e-member-20260823@workmatchr.example.invalid'
+    && [
+      'preview-invoice-e2e-member-20260823@workmatchr.example.invalid',
+      'preview-invoice-e2e-mail-20260823@workmatchr.example.invalid',
+    ].includes(email.to)
 }
 
 function resolvePreviewInvoiceRecipientOverride(email: AuthEmail) {
