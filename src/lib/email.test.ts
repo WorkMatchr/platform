@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   AuthEmailDeliveryError,
+  financialInvoiceEmail,
   invitationActivationEmail,
   passwordResetEmail,
   roleChangeNotificationEmail,
@@ -159,6 +160,56 @@ describe('authenticatie-e-mails', () => {
       messageId: 'resend-message-123',
     })
     expect(output).not.toHaveBeenCalled()
+  })
+  it('bezorgt een factuurmail alleen in Preview naar de expliciete testontvanger', async () => {
+    vi.stubEnv('VERCEL_ENV', 'preview')
+    vi.stubEnv('PREVIEW_EMAIL_RECIPIENT_OVERRIDE', 'info@workmatchr.nl')
+    vi.stubEnv('RESEND_API_KEY', 'test-resend-key')
+    vi.stubEnv('AUTH_EMAIL_FROM', 'WorkMatchr <account@workmatchr.nl>')
+    resendMocks.send.mockResolvedValue({ data: { id: 'resend-preview-invoice' }, error: null })
+    const original = financialInvoiceEmail({
+      to: 'mollie-preview-acceptance@workmatchr.example.invalid',
+      recipientName: 'Previewgebruiker',
+      invoiceNumber: 'WM-26085001',
+      downloadUrl: 'https://platform-finance-preview-workmatchrs-projects.vercel.app/credits/facturen/invoice-id/pdf',
+    })
+
+    await expect(sendAuthEmail(original)).resolves.toMatchObject({
+      transport: 'RESEND',
+      previewRecipientOverrideUsed: true,
+    })
+    expect(resendMocks.send).toHaveBeenCalledWith(expect.objectContaining({
+      to: 'info@workmatchr.nl',
+      subject: '[PREVIEW TEST] Uw WorkMatchr-factuur WM-26085001',
+    }), undefined)
+    expect(original.to).toBe('mollie-preview-acceptance@workmatchr.example.invalid')
+  })
+  it('weigert een Preview-factuurmailoverride buiten Preview zonder provider-aanroep', async () => {
+    vi.stubEnv('VERCEL_ENV', 'production')
+    vi.stubEnv('PREVIEW_EMAIL_RECIPIENT_OVERRIDE', 'info@workmatchr.nl')
+    vi.stubEnv('RESEND_API_KEY', 'test-resend-key')
+    vi.stubEnv('AUTH_EMAIL_FROM', 'WorkMatchr <account@workmatchr.nl>')
+
+    await expect(sendAuthEmail(financialInvoiceEmail({
+      to: 'mollie-preview-acceptance@workmatchr.example.invalid',
+      recipientName: 'Previewgebruiker',
+      invoiceNumber: 'WM-26085001',
+      downloadUrl: 'https://platform-finance-preview-workmatchrs-projects.vercel.app/credits/facturen/invoice-id/pdf',
+    }))).rejects.toMatchObject({ code: 'PREVIEW_EMAIL_OVERRIDE_FORBIDDEN' } satisfies Partial<AuthEmailDeliveryError>)
+    expect(resendMocks.send).not.toHaveBeenCalled()
+  })
+  it('laat andere e-mailsoorten ongemoeid in Preview', async () => {
+    vi.stubEnv('VERCEL_ENV', 'preview')
+    vi.stubEnv('PREVIEW_EMAIL_RECIPIENT_OVERRIDE', 'info@workmatchr.nl')
+    vi.stubEnv('RESEND_API_KEY', 'test-resend-key')
+    vi.stubEnv('AUTH_EMAIL_FROM', 'WorkMatchr <account@workmatchr.nl>')
+    resendMocks.send.mockResolvedValue({ data: { id: 'resend-password-reset' }, error: null })
+
+    await sendAuthEmail(passwordResetEmail('reset@example.invalid', 'Test', 'https://preview.example.invalid/reset'))
+    expect(resendMocks.send).toHaveBeenCalledWith(expect.objectContaining({
+      to: 'reset@example.invalid',
+      subject: 'Herstel uw WorkMatchr-wachtwoord',
+    }), undefined)
   })
   it('behoudt de Resend-statuscode bij een providerafwijzing', async () => {
     vi.stubEnv('RESEND_API_KEY', 'test-resend-key')

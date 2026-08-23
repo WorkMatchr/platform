@@ -1,7 +1,14 @@
 import { Resend } from 'resend'
 
 export type AuthEmail = {
-  kind: 'INVITATION' | 'VERIFICATION' | 'PASSWORD_RESET' | 'ROLE_CHANGE_NOTIFICATION' | 'ADMIN_MESSAGE'
+  kind:
+    | 'INVITATION'
+    | 'VERIFICATION'
+    | 'PASSWORD_RESET'
+    | 'ROLE_CHANGE_NOTIFICATION'
+    | 'TWO_FACTOR_RESET_NOTIFICATION'
+    | 'ADMIN_MESSAGE'
+    | 'FINANCIAL_INVOICE'
   to: string
   subject: string
   text: string
@@ -15,6 +22,7 @@ export type AuthEmailDeliveryResult = {
   transport: 'RESEND' | 'DEVELOPMENT_LOG'
   status: 'ACCEPTED' | 'DEVELOPMENT_ONLY'
   messageId: string
+  previewRecipientOverrideUsed?: boolean
 }
 
 export type AuthEmailDeliveryErrorCode =
@@ -22,6 +30,8 @@ export type AuthEmailDeliveryErrorCode =
   | 'EMAIL_PROVIDER_REJECTED'
   | 'EMAIL_PROVIDER_RESPONSE_INVALID'
   | 'EMAIL_PROVIDER_UNAVAILABLE'
+  | 'PREVIEW_EMAIL_OVERRIDE_FORBIDDEN'
+  | 'PREVIEW_EMAIL_OVERRIDE_INVALID'
 
 export class AuthEmailDeliveryError extends Error {
   constructor(
@@ -43,6 +53,42 @@ function escapeHtml(value: string): string {
 
 function isDevelopmentTestRecipient(email: AuthEmail): boolean {
   return process.env.NODE_ENV !== 'production' && email.to.toLowerCase().endsWith('@example.invalid')
+}
+
+function isPreviewInvoiceFixtureVerification(email: AuthEmail): boolean {
+  return process.env.VERCEL_ENV === 'preview'
+    && email.kind === 'VERIFICATION'
+    && email.to === 'preview-invoice-e2e-member-20260823@workmatchr.example.invalid'
+}
+
+function resolvePreviewInvoiceRecipientOverride(email: AuthEmail) {
+  const configuredRecipient = process.env.PREVIEW_EMAIL_RECIPIENT_OVERRIDE?.trim()
+  if (!configuredRecipient || email.kind !== 'FINANCIAL_INVOICE') {
+    return { email, previewRecipientOverrideUsed: false }
+  }
+
+  if (process.env.VERCEL_ENV !== 'preview') {
+    throw new AuthEmailDeliveryError(
+      'PREVIEW_EMAIL_OVERRIDE_FORBIDDEN',
+      'De Preview-factuurmailoverride is buiten Preview niet toegestaan.',
+    )
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(configuredRecipient)) {
+    throw new AuthEmailDeliveryError(
+      'PREVIEW_EMAIL_OVERRIDE_INVALID',
+      'De Preview-factuurmailoverride is ongeldig geconfigureerd.',
+    )
+  }
+
+  return {
+    email: {
+      ...email,
+      to: configuredRecipient,
+      subject: `[PREVIEW TEST] ${email.subject}`,
+    },
+    previewRecipientOverrideUsed: true,
+  }
 }
 
 function logDevelopmentAuthLink(email: AuthEmail): void {
@@ -78,21 +124,33 @@ export function getAuthEmailConfigurationStatus() {
 }
 
 export async function sendAuthEmail(email: AuthEmail): Promise<AuthEmailDeliveryResult> {
+  const resolved = resolvePreviewInvoiceRecipientOverride(email)
+  const deliveryEmail = resolved.email
   const apiKey = process.env.RESEND_API_KEY
   const from = process.env.AUTH_EMAIL_FROM
 
-  logDevelopmentAuthLink(email)
+  logDevelopmentAuthLink(deliveryEmail)
+
+  if (isPreviewInvoiceFixtureVerification(deliveryEmail)) {
+    return {
+      accepted: true,
+      transport: 'DEVELOPMENT_LOG',
+      status: 'DEVELOPMENT_ONLY',
+      messageId: 'preview-invoice-fixture-only',
+    }
+  }
 
   if (!apiKey || !from) {
-    if (isDevelopmentTestRecipient(email)) {
-      if (!email.developmentUrl) {
-        console.info(`[DEVELOPMENT-ONLY AUTH EMAIL] ${email.subject}`)
+    if (isDevelopmentTestRecipient(deliveryEmail)) {
+      if (!deliveryEmail.developmentUrl) {
+        console.info(`[DEVELOPMENT-ONLY AUTH EMAIL] ${deliveryEmail.subject}`)
       }
       return {
         accepted: true,
         transport: 'DEVELOPMENT_LOG',
         status: 'DEVELOPMENT_ONLY',
         messageId: 'development-only',
+        ...(resolved.previewRecipientOverrideUsed ? { previewRecipientOverrideUsed: true } : {}),
       }
     }
 
@@ -105,8 +163,8 @@ export async function sendAuthEmail(email: AuthEmail): Promise<AuthEmailDelivery
   let result
   try {
     result = await new Resend(apiKey).emails.send(
-      { from, to: email.to, subject: email.subject, text: email.text, html: email.html },
-      email.idempotencyKey ? { headers: { 'Idempotency-Key': email.idempotencyKey } } : undefined,
+      { from, to: deliveryEmail.to, subject: deliveryEmail.subject, text: deliveryEmail.text, html: deliveryEmail.html },
+      deliveryEmail.idempotencyKey ? { headers: { 'Idempotency-Key': deliveryEmail.idempotencyKey } } : undefined,
     )
   } catch {
     throw new AuthEmailDeliveryError('EMAIL_PROVIDER_UNAVAILABLE', 'De e-mailprovider kon niet worden bereikt.')
@@ -124,7 +182,13 @@ export async function sendAuthEmail(email: AuthEmail): Promise<AuthEmailDelivery
       'De e-mailprovider gaf geen geldig bericht-ID terug.',
     )
   }
-  return { accepted: true, transport: 'RESEND', status: 'ACCEPTED', messageId: result.data.id }
+  return {
+    accepted: true,
+    transport: 'RESEND',
+    status: 'ACCEPTED',
+    messageId: result.data.id,
+    ...(resolved.previewRecipientOverrideUsed ? { previewRecipientOverrideUsed: true } : {}),
+  }
 }
 
 export function verificationEmail(to: string, name: string, url: string): AuthEmail {
@@ -213,5 +277,23 @@ export function administrativeEmail(input: {
     subject: input.subject,
     text: `Beste ${input.recipientName},\n\n${input.message}\n\nMet vriendelijke groet,\n${input.senderName}\nWorkMatchr`,
     html: `<p>Beste ${safeName},</p><p>${safeMessage}</p><p>Met vriendelijke groet,<br />${safeSender}<br />WorkMatchr</p>`,
+  }
+}
+
+export function financialInvoiceEmail(input: {
+  to: string
+  recipientName: string
+  invoiceNumber: string
+  downloadUrl: string
+}): AuthEmail {
+  const safeName = escapeHtml(input.recipientName)
+  const safeInvoiceNumber = escapeHtml(input.invoiceNumber)
+  const safeDownloadUrl = escapeHtml(input.downloadUrl)
+  return {
+    kind: 'FINANCIAL_INVOICE',
+    to: input.to,
+    subject: `Uw WorkMatchr-factuur ${input.invoiceNumber}`,
+    text: `Beste ${input.recipientName},\n\nUw betaling is verwerkt. U kunt factuur ${input.invoiceNumber} veilig bekijken en downloaden via: ${input.downloadUrl}\n\nMet vriendelijke groet,\nWorkMatchr`,
+    html: `<p>Beste ${safeName},</p><p>Uw betaling is verwerkt. Uw factuur <strong>${safeInvoiceNumber}</strong> staat veilig voor u klaar.</p><p><a href="${safeDownloadUrl}">Factuur bekijken en downloaden</a></p><p>Met vriendelijke groet,<br />WorkMatchr</p>`,
   }
 }
