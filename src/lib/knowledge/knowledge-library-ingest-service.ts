@@ -22,6 +22,7 @@ export const KNOWLEDGE_LIBRARY_INGEST_TRANSACTION_OPTIONS = {
 export type KnowledgeLibraryIngestInput = {
   onboarding: KnowledgeOnboardingInput
   extract: () => Promise<FullSourceExtraction>
+  audit?: { actorUserId: string; checksum: string; origin: 'PLATFORM_UPLOAD'; topics?: string[] }
 }
 
 const sourceTypes: Record<KnowledgeLibraryFileReport['canonicalFamily'], KnowledgeOnboardingInput['source']['sourceType']> = {
@@ -78,18 +79,37 @@ export async function ingestKnowledgeLibraryDocument(
   input: KnowledgeLibraryIngestInput,
   database: DatabaseClient = getPrisma(),
 ) {
-  const extraction = await input.extract()
-  return database.$transaction(async (tx) => {
-    const onboarding = await onboardKnowledgeSourceInTransaction(input.onboarding, tx)
-    const fullSource = await storeKnowledgeFullSourceInTransaction(onboarding.sourceVersionId, extraction, tx)
-    return {
-      sourceId: onboarding.sourceId,
-      sourceVersionId: onboarding.sourceVersionId,
-      extractionRunId: fullSource.extractionRunId,
-      created: onboarding.created || fullSource.created,
-      sourceCreated: onboarding.created,
-      extractionCreated: fullSource.created,
-      linkedFragmentCount: fullSource.linkedFragmentCount,
+  try {
+    const extraction = await input.extract()
+    return await database.$transaction(async (tx) => {
+      const onboarding = await onboardKnowledgeSourceInTransaction(input.onboarding, tx)
+      const fullSource = await storeKnowledgeFullSourceInTransaction(onboarding.sourceVersionId, extraction, tx)
+      if (input.audit) {
+        await tx.knowledgeAuditEvent.create({ data: {
+          eventType: 'IMPORT_COMPLETED', entityType: 'KnowledgeSourceVersion', entityId: onboarding.sourceVersionId,
+          actorUserId: input.audit.actorUserId, actorType: 'PLATFORM_ADMIN', result: 'SUCCESS',
+          metadata: { origin: input.audit.origin, checksum: input.audit.checksum, topics: input.audit.topics ?? [], pageCount: extraction.pageCount, blockCount: extraction.pages.reduce((total, page) => total + page.blocks.length, 0) },
+        } })
+      }
+      return {
+        sourceId: onboarding.sourceId,
+        sourceVersionId: onboarding.sourceVersionId,
+        extractionRunId: fullSource.extractionRunId,
+        created: onboarding.created || fullSource.created,
+        sourceCreated: onboarding.created,
+        extractionCreated: fullSource.created,
+        linkedFragmentCount: fullSource.linkedFragmentCount,
+      }
+    }, KNOWLEDGE_LIBRARY_INGEST_TRANSACTION_OPTIONS)
+  } catch (error) {
+    if (input.audit) {
+      await database.knowledgeAuditEvent.create({ data: {
+        eventType: 'IMPORT_FAILED', entityType: 'KnowledgeSourceVersion', entityId: null,
+        actorUserId: input.audit.actorUserId, actorType: 'PLATFORM_ADMIN', result: 'FAILED',
+        reason: error instanceof Error ? error.name.slice(0, 1000) : 'UNKNOWN_ERROR',
+        metadata: { origin: input.audit.origin, checksum: input.audit.checksum },
+      } })
     }
-  }, KNOWLEDGE_LIBRARY_INGEST_TRANSACTION_OPTIONS)
+    throw error
+  }
 }

@@ -12,6 +12,12 @@ Versie 1 accepteert PNG, JPEG en WebP tot 2 MB. SVG is uitgesloten wegens actiev
 
 Lokale schijf is niet geschikt voor Vercel-productie. Zonder geconfigureerde toekomstige object-storageprovider weigert productie de opslag veilig en logt alleen een configuratiefout. Er is nog geen vendor gekozen. Lokale ontwikkellogo’s hoeven niet te worden gemigreerd.
 
+### Knowledge-bronbestanden
+
+Knowledge Source Upload v1 gebruikt een afzonderlijke `KnowledgeSourceUploadStorage`-adapter omdat bron-PDF's private, immutable artifacts zijn. Tests gebruiken uitsluitend een in-memory adapter. Zolang geen private duurzame provider is gekozen, faalt de runtime-adapter gesloten en blijft uploaden in de beheerinterface uitgeschakeld.
+
+Activering vereist minimaal private `save/read/delete`-semantiek, server-only credentials per omgeving, een immutable artifactlocator, checksumcontrole, Preview/Production-isolatie, retentie/herstel en een Preview-acceptatietest. Broninhoud wordt niet gelogd en PDF's worden niet als base64 in normale databasevelden opgeslagen.
+
 Bij vervangen wordt eerst het nieuwe bestand gevalideerd en opgeslagen, daarna de database bijgewerkt en vervolgens het oude bestand verwijderd. Bij databasefout wordt het nieuwe bestand opgeruimd. Bij verwijderen worden eerst metadata gewist en daarna het bestand verwijderd. Object storage kan later asynchrone orphan-cleanup, back-ups en lifecyclebeleid toevoegen.
 
 ## Private providerbewijzen

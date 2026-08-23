@@ -2,6 +2,7 @@
 
 | ID | Prioriteit | Reden | Geplande oplossing | Doelmodule |
 | --- | --- | --- | --- | --- |
+| TD-048 | Hoog | Knowledge Source Upload v1 mist nog een gekozen private duurzame object-storageprovider; uploaden blijft daarom fail-closed. | Kies een provider, implementeer de bestaande adapter, isoleer Preview/Production en voer een Preview-acceptatietest uit. | Knowledge Source Upload v1 |
 | TD-001 | Afgerond | Het officiële transparante WorkMatchr-logo is centraal opgenomen en wordt in Arbo-wijzer-PDF's gebruikt. | Bewaak het centrale asset en de vaste beeldverhouding met regressietests. | Arbo-wijzer PDF-foundation |
 | TD-002 | Hoog | De exacte primaire kleur uit het FSC-logo ontbreekt. | `brand-primary` vervangen door de definitieve logokleur en contrast opnieuw toetsen. | Na ontvangst definitieve kleur |
 | TD-003 | Middel | Tijdelijke ankerlinks bestaan nog. | Vervangen door definitieve routes zodra de betreffende pagina’s worden gebouwd. | Latere publieke module |
