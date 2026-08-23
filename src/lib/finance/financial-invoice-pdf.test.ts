@@ -37,7 +37,7 @@ describe('financiële factuur-pdf', () => {
     const loaded = await PDFDocument.load(pdf)
     expect(loaded.getPageCount()).toBeGreaterThan(0)
     expect(loaded.getTitle()).toBe('WorkMatchr factuur WM-26085001')
-    expect(loaded.getCreationDate().toISOString()).toBe(invoice.issuedAt.toISOString())
+    expect(loaded.getCreationDate()?.toISOString()).toBe(invoice.issuedAt.toISOString())
   })
 
   it('is reproduceerbaar voor dezelfde historische snapshot en bestandsnaam', async () => {
