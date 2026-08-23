@@ -115,6 +115,16 @@ export async function PUT(request: Request) {
     && duplicate.status === 'POSSIBLE_DUPLICATE' && deltas[6] === 0 && deltas[7] === 0
   return NextResponse.json({ ok, sourceVersionId: result.sourceVersionId, reviewRequired: version.reviewStatus === 'REVIEW_REQUIRED', extractionCompleted: version.extractionRuns.every((run) => run.status === 'COMPLETED'), originalReadable: original?.bytes.length === bytes.length, duplicateIdempotent: duplicate.status === 'POSSIBLE_DUPLICATE', noClaims: deltas[6] === 0 && deltas[7] === 0, deltas: deltas.slice(0, 6) })
   } catch (error) {
-    return NextResponse.json({ ok: false, stage, errorName: error instanceof Error ? error.name : 'Error' }, { status: 500 })
+    return NextResponse.json({
+      ok: false,
+      stage,
+      errorName: error instanceof Error ? error.name : 'Error',
+      storageConfig: {
+        vercelPreview: process.env.VERCEL_ENV === 'preview',
+        blobPreview: process.env.KNOWLEDGE_UPLOAD_BLOB_ENVIRONMENT === 'preview',
+        storeIdPresent: Boolean(process.env.KNOWLEDGE_UPLOAD_BLOB_STORE_ID),
+        oidcPresent: Boolean(process.env.VERCEL_OIDC_TOKEN),
+      },
+    }, { status: 500 })
   }
 }
