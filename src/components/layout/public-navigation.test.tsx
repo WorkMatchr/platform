@@ -39,6 +39,16 @@ describe('publieke navigatie', () => {
     expect(html).toContain('Mobiele hoofdnavigatie')
   })
 
+  it('toont de publieke desktopnavigatie vanaf lg en bewaart extra ruimte in de ingelogde header', () => {
+    const publicHtml = renderToStaticMarkup(<PublicNavigation />)
+    const authenticatedHtml = renderToStaticMarkup(<PublicNavigation authenticated />)
+
+    expect(publicHtml).toContain('hidden items-center gap-5 lg:flex')
+    expect(publicHtml).toContain('relative lg:hidden')
+    expect(authenticatedHtml).toContain('hidden items-center gap-5 xl:flex')
+    expect(authenticatedHtml).toContain('relative xl:hidden')
+  })
+
   it('normaliseert geneste routes, trailing slashes, querystrings en hashes', () => {
     expect(isPublicNavigationItemActive('/diensten/rie', publicRoutes.services)).toBe(true)
     expect(isPublicNavigationItemActive('/diensten/rie/?bron=menu#inhoud', publicRoutes.services)).toBe(true)

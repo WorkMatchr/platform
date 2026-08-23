@@ -1,11 +1,11 @@
 import Image from 'next/image'
 
 const logoSizeClasses = {
-  header: 'w-36 sm:w-48',
-  homepageHeader: 'w-36 sm:w-48',
-  auth: 'w-52 max-w-full',
-  footer: 'w-48 max-w-full',
-  compact: 'w-32 sm:w-40',
+  header: 'w-[10.8rem] sm:w-[14.4rem]',
+  homepageHeader: 'w-[10.8rem] sm:w-[14.4rem]',
+  auth: 'w-[10.8rem] max-w-full sm:w-[14.4rem]',
+  footer: 'w-[10.8rem] max-w-full sm:w-[14.4rem]',
+  compact: 'w-[10.8rem] sm:w-[14.4rem]',
 } as const
 
 export function WorkMatchrLogo({
@@ -22,13 +22,7 @@ export function WorkMatchrLogo({
       width={1321}
       height={372}
       priority={priority}
-      sizes={
-        size === 'header'
-          ? '(min-width: 640px) 192px, 144px'
-          : size === 'homepageHeader'
-            ? '(min-width: 640px) 211.2px, 158.4px'
-            : undefined
-      }
+      sizes="(min-width: 640px) 230.4px, 172.8px"
       className={`h-auto shrink-0 ${logoSizeClasses[size]}`}
     />
   )

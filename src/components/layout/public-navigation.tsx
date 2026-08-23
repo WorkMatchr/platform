@@ -50,10 +50,14 @@ export function PublicNavigation({
   const authItems = authenticated
     ? []
     : publicNavigationItems.filter((item) => item.kind === 'auth')
+  const desktopNavigationClass = authenticated
+    ? 'hidden items-center gap-5 xl:flex'
+    : 'hidden items-center gap-5 lg:flex'
+  const mobileNavigationClass = authenticated ? 'relative xl:hidden' : 'relative lg:hidden'
 
   return (
     <>
-      <div className="hidden items-center gap-5 xl:flex">
+      <div className={desktopNavigationClass}>
         <nav aria-label="Hoofdnavigatie">
           <ul className="flex items-center gap-3 text-sm font-medium text-text-secondary">
             {standardItems.map((item) => <li key={item.href}><NavigationLink {...item} pathname={pathname} /></li>)}
@@ -64,7 +68,7 @@ export function PublicNavigation({
       </div>
       <DisclosureMenu
         ariaLabel="Hoofdnavigatie openen of sluiten"
-        className="relative xl:hidden"
+        className={mobileNavigationClass}
         buttonClassName="flex min-h-11 items-center rounded-control border border-border bg-surface px-4 text-sm font-semibold text-brand-dark"
         panelClassName="absolute right-0 z-30 mt-3 max-h-[calc(100vh-7rem)] w-[min(22rem,calc(100vw-2.5rem))] overflow-y-auto rounded-card border border-border bg-surface p-4 shadow-card"
         trigger={<>Menu<span aria-hidden="true" className="ml-2">&#9662;</span></>}

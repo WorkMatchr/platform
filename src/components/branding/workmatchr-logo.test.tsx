@@ -13,10 +13,11 @@ describe('WorkMatchrLogo', () => {
     expect(html).toContain('h-auto')
   })
 
-  it('ondersteunt een compacte responsieve variant zonder de verhouding te forceren', () => {
+  it('gebruikt voor normale UI-varianten dezelfde responsieve schaal', () => {
     const html = renderToStaticMarkup(<WorkMatchrLogo size="compact" />)
 
-    expect(html).toContain('w-32 sm:w-40')
+    expect(html).toContain('w-[10.8rem] sm:w-[14.4rem]')
+    expect(html).toContain('(min-width: 640px) 230.4px, 172.8px')
     expect(html).toContain('h-auto')
   })
 })

@@ -11,20 +11,19 @@ describe('HeaderBrandLink', () => {
     mocks.pathname = '/'
   })
 
-  it('renders the homepage logo at exactly 110% of the default header width', () => {
+  it('gebruikt op de homepage de centrale grotere UI-logobreedte', () => {
     const html = renderToStaticMarkup(<HeaderBrandLink />)
 
-    expect(html).toContain('w-[9.9rem]')
-    expect(html).toContain('sm:w-[13.2rem]')
-    expect(html).toContain('(min-width: 640px) 211.2px, 158.4px')
+    expect(html).toContain('w-[10.8rem]')
+    expect(html).toContain('sm:w-[14.4rem]')
+    expect(html).toContain('(min-width: 640px) 230.4px, 172.8px')
   })
 
-  it('keeps the default logo size on other routes', () => {
+  it('gebruikt op andere routes dezelfde centrale UI-logobreedte', () => {
     mocks.pathname = '/kenniscentrum'
 
     const html = renderToStaticMarkup(<HeaderBrandLink />)
 
-    expect(html).toContain('w-36 sm:w-48')
-    expect(html).not.toContain('w-[9.9rem]')
+    expect(html).toContain('w-[10.8rem] sm:w-[14.4rem]')
   })
 })
