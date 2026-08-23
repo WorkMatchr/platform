@@ -50,16 +50,15 @@ export async function POST(request: Request) {
   const existing = await prisma.user.findUnique({ where: { email: FIXTURE_EMAIL }, select: { id: true } })
   if (existing) throw new Error('PREVIEW_INVOICE_E2E_FIXTURE_CONFLICT')
 
-  await auth.api.signUpEmail({
-    body: {
-      email: FIXTURE_EMAIL,
-      password,
-      name: 'Preview invoice E2E testlid',
-      accountType: 'PROFESSIONAL',
-      passwordConfirmation: password,
-      acceptedTerms: true,
-    },
-  })
+  const signUpBody = {
+    email: FIXTURE_EMAIL,
+    password,
+    name: 'Preview invoice E2E testlid',
+    accountType: 'PROFESSIONAL' as const,
+    passwordConfirmation: password,
+    acceptedTerms: true,
+  }
+  await auth.api.signUpEmail({ body: signUpBody })
 
   const user = await prisma.user.findUnique({ where: { email: FIXTURE_EMAIL }, select: { id: true } })
   if (!user) throw new Error('PREVIEW_INVOICE_E2E_BETTER_AUTH_PROVISIONING_FAILED')
