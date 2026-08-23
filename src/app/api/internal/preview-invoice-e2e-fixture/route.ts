@@ -11,7 +11,7 @@ import { getPublicAppBaseUrl } from '@/lib/public-app-url'
 
 export const dynamic = 'force-dynamic'
 
-const FIXTURE_EMAIL = 'preview-invoice-e2e-mail-20260823@workmatchr.example.invalid'
+const FIXTURE_EMAIL = 'preview-invoice-e2e-mail2-20260823@workmatchr.example.invalid'
 const FIXTURE_PURCHASE_KEY_PREFIX = 'preview-mollie-acceptance-credit-purchase-'
 const FIXTURE_PAYMENT_ID = 'tr_xxNfEhXRqSrrGoUSQGmVJ'
 const EXPECTED_PREVIEW_ORIGIN = 'https://platform-mollie-acceptance-preview-workmatchrs-projects.vercel.app'
@@ -129,7 +129,7 @@ export async function POST(request: Request) {
       },
     })
 
-    const correlationId = 'preview-invoice-e2e-authenticated-fixture'
+    const correlationId = `preview-invoice-e2e-authenticated-fixture:${userId}`
     await appendAccountProvisioningEvent(transaction, {
       eventType: 'ACCOUNT_CREATED',
       subjectUserId: userId,
