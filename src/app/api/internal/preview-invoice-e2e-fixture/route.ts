@@ -35,7 +35,7 @@ function isAuthorizedPreviewRequest(request: Request): boolean {
   ) return false
 
   const expected = process.env.PREVIEW_INVOICE_E2E_HARNESS_SECRET
-  const supplied = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '')
+  const supplied = request.headers.get('x-preview-acceptance-secret')
   if (!expected || !supplied) return false
 
   const expectedBuffer = Buffer.from(expected)
