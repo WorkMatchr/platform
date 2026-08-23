@@ -103,5 +103,8 @@
     "find-my-way": "9.7.0",
     "postcss": "8.5.22",
     "sharp": "$sharp"
+  },
+  "optionalDependencies": {
+    "@napi-rs/canvas-linux-x64-gnu": "^1.0.6"
   }
 }
