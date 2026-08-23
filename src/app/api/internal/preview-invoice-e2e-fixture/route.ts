@@ -12,6 +12,17 @@ export const dynamic = 'force-dynamic'
 const FIXTURE_EMAIL = 'preview-invoice-e2e-member-20260823@workmatchr.example.invalid'
 const FIXTURE_PURCHASE_KEY_PREFIX = 'preview-mollie-acceptance-credit-purchase-'
 
+async function authenticatedFixtureResponse(
+  password: string,
+  payload: { fixtureReady: true; created: boolean; role: 'ADMIN' },
+) {
+  const signIn = await auth.api.signInEmail({
+    body: { email: FIXTURE_EMAIL, password },
+    returnHeaders: true,
+  })
+  return Response.json(payload, { headers: signIn.headers })
+}
+
 function isAuthorizedPreviewRequest(request: Request): boolean {
   if (process.env.VERCEL_ENV !== 'preview') return false
 
@@ -91,7 +102,7 @@ export async function POST(request: Request) {
         }),
       })
     }
-    return Response.json({ fixtureReady: true, created: false, role: 'ADMIN' })
+    return authenticatedFixtureResponse(password, { fixtureReady: true, created: false, role: 'ADMIN' })
   }
 
   const signUpBody = {
@@ -198,5 +209,5 @@ export async function POST(request: Request) {
     }),
   })
 
-  return Response.json({ fixtureReady: true, created: result.created, role: 'ADMIN' })
+  return authenticatedFixtureResponse(password, { fixtureReady: true, created: result.created, role: 'ADMIN' })
 }
