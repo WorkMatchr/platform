@@ -78,7 +78,16 @@ export async function POST(request: Request) {
         && membership.role === 'MEMBER'
         && existing.accounts.some((account) => account.accountId === existing.id && Boolean(account.password))
       if (!isExpected || !membership) throw new Error('PREVIEW_INVOICE_E2E_FIXTURE_CONFLICT')
-      return { created: false }
+      await transaction.account.update({
+        where: {
+          providerId_accountId: {
+            providerId: 'credential',
+            accountId: existing.id,
+          },
+        },
+        data: { password: passwordHash },
+      })
+      return { created: false, credentialRefreshed: true }
     }
 
     const userId = randomUUID()
@@ -163,8 +172,8 @@ export async function POST(request: Request) {
       idempotencyKey: `${correlationId}:membership`,
       metadata: { environment: 'preview', fixture: 'financial-invoice-e2e' },
     })
-    return { created: true }
+    return { created: true, credentialRefreshed: false }
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 10_000 })
 
-  return Response.json({ fixtureReady: true, created: result.created })
+  return Response.json({ fixtureReady: true, created: result.created, credentialRefreshed: result.credentialRefreshed })
 }
