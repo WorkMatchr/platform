@@ -43,6 +43,19 @@ function isAuthorizedPreviewRequest(request: Request): boolean {
   return expectedBuffer.length === suppliedBuffer.length && timingSafeEqual(expectedBuffer, suppliedBuffer)
 }
 
+export async function OPTIONS(request: Request) {
+  if (!isAuthorizedPreviewRequest(request)) return new Response(null, { status: 404 })
+
+  return Response.json({
+    preview: process.env.VERCEL_ENV === 'preview',
+    resendConfigured: Boolean(process.env.RESEND_API_KEY?.trim()),
+    senderConfigured: Boolean(process.env.AUTH_EMAIL_FROM?.trim()),
+    invoiceRecipientOverrideConfigured:
+      process.env.PREVIEW_EMAIL_RECIPIENT_OVERRIDE?.trim().toLowerCase() === 'info@workmatchr.nl',
+    invoiceLinksUsePreview: getPublicAppBaseUrl() === EXPECTED_PREVIEW_ORIGIN,
+  })
+}
+
 export async function POST(request: Request) {
   if (!isAuthorizedPreviewRequest(request)) return new Response(null, { status: 404 })
 
