@@ -18,6 +18,8 @@ Knowledge Source Upload v1 gebruikt een afzonderlijke `KnowledgeSourceUploadStor
 
 Object keys zijn deterministisch en checksumgebonden: `knowledge-source-uploads/v1/sha256/<prefix>/<sha256>.pdf`. De adapter gebruikt `access: private`, schakelt overschrijven en willekeurige suffixen uit en verifieert bij iedere read opnieuw contenttype, grootte en SHA-256. Een identieke herupload hergebruikt hetzelfde object; afwijkende bytes onder dezelfde identiteit falen gesloten. In PostgreSQL staat uitsluitend de interne locator en de immutable bronmetadata, nooit een publieke of private Blob-URL.
 
+De Vercel serverbundle houdt `pdfjs-dist` en de noodzakelijke native `@napi-rs/canvas`-runtime extern en neemt die runtime expliciet mee voor de uploadroute. Daardoor gebruikt Preview dezelfde bestaande deterministische PDF-extractor als lokale en database-ingests.
+
 Preview en Production moeten ieder een eigen private Blob-store hebben. De runtime vereist `KNOWLEDGE_UPLOAD_BLOB_STORE_ID`, `KNOWLEDGE_UPLOAD_BLOB_ENVIRONMENT` en een door Vercel verstrekt `VERCEL_OIDC_TOKEN`; een omgevingsmismatch of ontbrekende configuratie schakelt uploaden fail-closed uit. De stores worden alleen aan hun eigen Vercel-environment gekoppeld. Er is in v1 bewust geen deletefunctie: bronartifacts blijven immutable en retentie/verwijdering vereist een afzonderlijk besluit.
 
 ## Private providerbewijzen
