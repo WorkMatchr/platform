@@ -8,6 +8,7 @@ import { getPrisma } from '@/lib/prisma'
 import { getPlatformContext } from '@/lib/platform-admin/platform-admin-authorization'
 import { analyzeKnowledgeSourceUpload, confirmKnowledgeSourceUpload } from '@/lib/knowledge/knowledge-source-upload-service'
 import { getKnowledgeSourceUploadStorage } from '@/lib/knowledge/knowledge-source-upload-storage'
+import { extractPdfFullSource } from '@/lib/knowledge/knowledge-extractor'
 
 const expectedBranch = 'codex/knowledge-source-upload-v1'
 
@@ -84,6 +85,8 @@ export async function PUT(request: Request) {
   pdfPage.drawText('Deze inhoud blijft REVIEW_REQUIRED en wordt niet automatisch gepubliceerd.', { x: 60, y: 720, size: 11, font })
   pdfPage.drawText('Unieke passage: private Blob checksum, menselijke metadatareview en audittrail.', { x: 60, y: 680, size: 11, font })
   const bytes = new Uint8Array(await pdf.save()); const sourceCode = `PREVIEW-BLOB-${Date.now()}`
+  stage = 'EXTRACTION_PROBE'
+  await extractPdfFullSource(bytes)
   stage = 'ANALYZE_AND_STORE'
   const preview = await analyzeKnowledgeSourceUpload({ bytes, fileName: `${sourceCode}.pdf`, mediaType: 'application/pdf', storage, database })
   if (preview.duplicate || preview.status !== 'NEEDS_METADATA_REVIEW') throw new Error('PREVIEW_ANALYSIS_INVALID')
@@ -120,6 +123,7 @@ export async function PUT(request: Request) {
       stage,
       errorName: error instanceof Error ? error.name : 'Error',
       errorCode: error instanceof Error && 'code' in error && typeof error.code === 'string' ? error.code : null,
+      errorMessage: stage === 'EXTRACTION_PROBE' && error instanceof Error ? error.message.slice(0, 300) : null,
       storageConfig: {
         vercelPreview: process.env.VERCEL_ENV === 'preview',
         blobPreview: process.env.KNOWLEDGE_UPLOAD_BLOB_ENVIRONMENT === 'preview',
