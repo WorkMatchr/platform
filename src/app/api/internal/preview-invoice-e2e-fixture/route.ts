@@ -2,7 +2,6 @@ import { randomBytes, randomUUID, timingSafeEqual } from 'node:crypto'
 
 import { Prisma } from '@/generated/prisma/client'
 import { appendAccountProvisioningEvent, appendOrganizationMembershipEvent } from '@/lib/account-architecture/account-history-service'
-import { changeOrganizationUserRole } from '@/lib/account-architecture/owner-management-service'
 import { assertCanCreateTenantMembership } from '@/lib/account-architecture/tenant-membership-policy'
 import { auth } from '@/lib/auth'
 import { processMolliePayment } from '@/lib/finance/financial-purchase-service'
@@ -11,14 +10,14 @@ import { getPublicAppBaseUrl } from '@/lib/public-app-url'
 
 export const dynamic = 'force-dynamic'
 
-const FIXTURE_EMAIL = 'preview-invoice-e2e-mail2-20260823@workmatchr.example.invalid'
+const FIXTURE_EMAIL = 'preview-invoice-e2e-mail3-20260823@workmatchr.example.invalid'
 const FIXTURE_PURCHASE_KEY_PREFIX = 'preview-mollie-acceptance-credit-purchase-'
 const FIXTURE_PAYMENT_ID = 'tr_xxNfEhXRqSrrGoUSQGmVJ'
 const EXPECTED_PREVIEW_ORIGIN = 'https://platform-mollie-acceptance-preview-workmatchrs-projects.vercel.app'
 
 async function authenticatedFixtureResponse(
   password: string,
-  payload: { fixtureReady: true; created: boolean; role: 'ADMIN' },
+  payload: { fixtureReady: true; created: boolean; role: 'MEMBER' },
 ) {
   const signIn = await auth.api.signInEmail({
     body: { email: FIXTURE_EMAIL, password },
@@ -181,24 +180,7 @@ export async function POST(request: Request) {
     return { created: true }
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 10_000 })
 
-  await changeOrganizationUserRole({
-    actorUserId: purchase.createdByUserId,
-    successorUserId: user.id,
-    reasonCode: 'TENANT_ROLE_CHANGED',
-    organizationId: purchase.organizationId,
-    expectedRole: 'MEMBER',
-    newRole: 'ADMIN',
-    idempotencyKey: 'preview-invoice-e2e-fixture-admin-role',
-  }, {
-    sendNotification: async () => ({
-      accepted: true,
-      transport: 'DEVELOPMENT_LOG',
-      status: 'DEVELOPMENT_ONLY',
-      messageId: 'preview-invoice-fixture-only',
-    }),
-  })
-
-  return authenticatedFixtureResponse(password, { fixtureReady: true, created: result.created, role: 'ADMIN' })
+  return authenticatedFixtureResponse(password, { fixtureReady: true, created: result.created, role: 'MEMBER' })
 }
 
 async function getLatestFixturePurchase() {
@@ -300,42 +282,4 @@ export async function PATCH(request: Request) {
       before.events.filter((event) => event.eventType === 'INVOICE_EMAIL_SENT').length
       === after.events.filter((event) => event.eventType === 'INVOICE_EMAIL_SENT').length,
   })
-}
-
-export async function DELETE(request: Request) {
-  if (!isAuthorizedPreviewRequest(request)) return new Response(null, { status: 404 })
-
-  const prisma = getPrisma()
-  const user = await prisma.user.findUnique({
-    where: { email: FIXTURE_EMAIL },
-    select: { id: true, memberships: { where: { status: 'ACTIVE' }, select: { organizationId: true, role: true } } },
-  })
-  const membership = user?.memberships[0]
-  if (!user || !membership || membership.role !== 'ADMIN') {
-    throw new Error('PREVIEW_INVOICE_E2E_ADMIN_FIXTURE_UNAVAILABLE')
-  }
-  const fixturePurchase = await prisma.financialPurchase.findFirst({
-    where: { organizationId: membership.organizationId, idempotencyKey: { startsWith: FIXTURE_PURCHASE_KEY_PREFIX } },
-    orderBy: { createdAt: 'asc' },
-    select: { createdByUserId: true },
-  })
-  if (!fixturePurchase) throw new Error('PREVIEW_INVOICE_E2E_FIXTURE_ORGANIZATION_UNAVAILABLE')
-
-  await changeOrganizationUserRole({
-    actorUserId: fixturePurchase.createdByUserId,
-    successorUserId: user.id,
-    reasonCode: 'TENANT_ROLE_CHANGED',
-    organizationId: membership.organizationId,
-    expectedRole: 'ADMIN',
-    newRole: 'MEMBER',
-    idempotencyKey: 'preview-invoice-e2e-fixture-member-role',
-  }, {
-    sendNotification: async () => ({
-      accepted: true,
-      transport: 'DEVELOPMENT_LOG',
-      status: 'DEVELOPMENT_ONLY',
-      messageId: 'preview-invoice-fixture-only',
-    }),
-  })
-  return Response.json({ role: 'MEMBER', auditRecorded: true })
 }

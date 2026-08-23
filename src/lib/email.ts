@@ -62,6 +62,7 @@ function isPreviewInvoiceFixtureVerification(email: AuthEmail): boolean {
       'preview-invoice-e2e-member-20260823@workmatchr.example.invalid',
       'preview-invoice-e2e-mail-20260823@workmatchr.example.invalid',
       'preview-invoice-e2e-mail2-20260823@workmatchr.example.invalid',
+      'preview-invoice-e2e-mail3-20260823@workmatchr.example.invalid',
     ].includes(email.to)
 }
 
