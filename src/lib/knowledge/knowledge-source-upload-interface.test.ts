@@ -21,6 +21,9 @@ describe('Knowledge Source Upload beheerinterface', () => {
     expect(form).toContain('KNOWLEDGE_SOURCE_UPLOAD_CONCURRENCY')
     expect(form).toContain('Gezamenlijke analyse')
     expect(form).toContain('Geavanceerde brongegevens')
+    expect(form).toContain('Geen openbare URL beschikbaar')
+    expect(form).toContain('Koppelen als achtergronddocument')
+    expect(form).toContain('Toch als zelfstandige bron')
   })
 
   it('blijft zonder duurzame object storage fail-closed', () => {

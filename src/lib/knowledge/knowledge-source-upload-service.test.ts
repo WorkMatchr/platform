@@ -110,8 +110,20 @@ describe('Knowledge Source Upload v2', () => {
   it('markeert een botsende voorgestelde broncode met een andere titel als conflict', async () => {
     const storage = new InMemoryKnowledgeSourceUploadStorage()
     const initial = await analyzeKnowledgeSourceUpload({ bytes: pdf, fileName: 'bron.pdf', mediaType: 'application/pdf', storage, database: database() as never })
-    const conflict = await analyzeKnowledgeSourceUpload({ bytes: pdf, fileName: 'bron.pdf', mediaType: 'application/pdf', storage, database: database(null, [{ id: 'existing', code: initial.proposal.sourceCode.value, title: 'Andere titel', publisher: 'Andere uitgever' }]) as never })
+    const conflict = await analyzeKnowledgeSourceUpload({ bytes: pdf, fileName: 'bron.pdf', mediaType: 'application/pdf', storage, database: database(null, [{ id: 'existing', code: initial.proposal.sourceCode.value, title: 'Andere titel', publisher: 'Andere uitgever', versions: [{ id: 'existing-version' }] }]) as never })
     expect(conflict.status).toBe('CONFLICT')
     expect(conflict.existingRelations).toHaveLength(1)
+  })
+
+  it('weigert een onveilige openbare URL en een onvoldoende bibliografische identiteit', async () => {
+    const storage = new InMemoryKnowledgeSourceUploadStorage()
+    const preview = await analyzeKnowledgeSourceUpload({ bytes: pdf, fileName: 'bron.pdf', mediaType: 'application/pdf', storage, database: database() as never })
+    await expect(confirmKnowledgeSourceUpload({ preview, metadata: { ...metadata, canonicalUrl: 'http://example.org/bron.pdf' }, explicitlyConfirmed: true, relationshipReviewed: true, actorUserId: 'actor', storage, database: {} as never })).rejects.toMatchObject({ code: 'CANONICAL_URL_INVALID' })
+    await expect(confirmKnowledgeSourceUpload({ preview, metadata: { ...metadata, canonicalUrl: '', series: '' }, explicitlyConfirmed: true, relationshipReviewed: true, actorUserId: 'actor', storage, database: {} as never })).rejects.toMatchObject({ code: 'METADATA_REQUIRED' })
+  })
+
+  it('herkent een AI-bladcode zonder een synthetische openbare URL voor te stellen', async () => {
+    const preview = await analyzeKnowledgeSourceUpload({ bytes: pdf, fileName: 'AI-1.pdf', mediaType: 'application/pdf', storage: new InMemoryKnowledgeSourceUploadStorage(), database: database() as never })
+    expect(preview.proposal).toMatchObject({ publicationCode: { value: 'AI-1' }, canonicalFamily: { value: 'AI_SHEET' }, sourceCode: { value: 'AI-1' } })
   })
 })

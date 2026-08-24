@@ -66,6 +66,7 @@ export async function confirmKnowledgeSourceUploadAction(input: {
   metadata: KnowledgeSourceUploadMetadata
   explicitlyConfirmed: boolean
   relationshipReviewed: boolean
+  relationship?: { existingSourceVersionId: string; existingSourceCode: string; existingSourceTitle: string; role: 'BACKGROUND_EVIDENCE' | 'APPENDIX' | 'SUMMARY' }
 }) {
   const administrator = await requirePlatformAdministrator(returnTo)
   try {
@@ -75,7 +76,15 @@ export async function confirmKnowledgeSourceUploadAction(input: {
       storage: getKnowledgeSourceUploadStorage(),
       database: getPrisma(),
     })
-    return { ok: true as const, result }
+    const familyResult = input.relationship ? await storeKnowledgeDocumentFamily({
+      code: `RELATED-${input.relationship.existingSourceCode}-${input.metadata.sourceCode}`.toUpperCase().replace(/[^A-Z0-9-]+/gu, '-').slice(0, 160),
+      title: `${input.relationship.existingSourceTitle} — documentfamilie`.slice(0, 300),
+      members: [
+        { sourceVersionId: input.relationship.existingSourceVersionId, role: 'PRIMARY_GUIDELINE', sequence: 1 },
+        { sourceVersionId: result.sourceVersionId, role: input.relationship.role, sequence: 2 },
+      ],
+    }, getPrisma()) : null
+    return { ok: true as const, result, familyResult }
   } catch (error) {
     return { ok: false as const, message: message(error) }
   }

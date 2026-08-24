@@ -34,7 +34,7 @@ export type KnowledgeSourceUploadPreview = {
   status: KnowledgeSourceUploadStatus
   warnings: string[]
   duplicate: { sourceId: string; sourceCode: string; sourceTitle: string; versionLabel: string } | null
-  existingRelations: Array<{ sourceId: string; sourceCode: string; sourceTitle: string; relationship: 'POSSIBLE_NEW_VERSION' | 'POSSIBLE_RELATED_SOURCE'; rationale: string }>
+  existingRelations: Array<{ sourceId: string; sourceVersionId: string; sourceCode: string; sourceTitle: string; relationship: 'POSSIBLE_NEW_VERSION' | 'POSSIBLE_RELATED_SOURCE'; rationale: string }>
 }
 
 export type KnowledgeSourceUploadMetadata = {
@@ -124,13 +124,15 @@ async function analyzeBytes(input: {
   const existing = input.database.knowledgeSource && (proposedCode || proposedTitle)
     ? await input.database.knowledgeSource.findMany({
       where: { OR: [...(proposedCode ? [{ code: proposedCode }] : []), ...(proposedTitle ? [{ title: { contains: proposedTitle.slice(0, 80), mode: 'insensitive' as const } }] : [])] },
-      select: { id: true, code: true, title: true, publisher: true }, take: 10,
+      select: { id: true, code: true, title: true, publisher: true, versions: { select: { id: true }, orderBy: { createdAt: 'desc' }, take: 1 } }, take: 10,
     }) : []
   const sourceCodeConflict = Boolean(proposedCode && existing.some((source) => source.code === proposedCode && source.title.localeCompare(proposedTitle ?? '', 'nl-NL', { sensitivity: 'base' }) !== 0))
-  const existingRelations = existing.map((source) => {
+  const existingRelations = existing.flatMap((source) => {
+    const sourceVersionId = source.versions[0]?.id
+    if (!sourceVersionId) return []
     const sameTitle = source.title.localeCompare(proposedTitle ?? '', 'nl-NL', { sensitivity: 'base' }) === 0
     const samePublisher = Boolean(source.publisher && proposals.metadata.publisher.value && source.publisher.localeCompare(proposals.metadata.publisher.value, 'nl-NL', { sensitivity: 'base' }) === 0)
-    return { sourceId: source.id, sourceCode: source.code, sourceTitle: source.title, relationship: sameTitle && samePublisher ? 'POSSIBLE_NEW_VERSION' as const : 'POSSIBLE_RELATED_SOURCE' as const, rationale: sameTitle && samePublisher ? 'Titel en uitgever komen overeen; controleer of dit een nieuwe versie is.' : 'Broncode of titel vertoont overeenkomst; controleer de relatie.' }
+    return [{ sourceId: source.id, sourceVersionId, sourceCode: source.code, sourceTitle: source.title, relationship: sameTitle && samePublisher ? 'POSSIBLE_NEW_VERSION' as const : 'POSSIBLE_RELATED_SOURCE' as const, rationale: sameTitle && samePublisher ? 'Titel en uitgever komen overeen; controleer of dit een nieuwe versie is.' : 'Broncode of titel vertoont overeenkomst; controleer de relatie.' }]
   })
   return {
     storageKey: stored.storageKey,
