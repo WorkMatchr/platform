@@ -4,11 +4,14 @@ import { getPrisma } from '@/lib/prisma'
 import { requirePlatformAdministrator } from '@/lib/platform-admin/platform-admin-authorization'
 import {
   analyzeKnowledgeSourceUpload,
+  analyzeKnowledgeSourceUploadPreviews,
+  analyzeStoredKnowledgeSourceUpload,
   confirmKnowledgeSourceUpload,
   KnowledgeSourceUploadError,
   type KnowledgeSourceUploadMetadata,
   type KnowledgeSourceUploadPreview,
 } from '@/lib/knowledge/knowledge-source-upload-service'
+import { storeKnowledgeDocumentFamily, type KnowledgeDocumentFamilyInput } from '@/lib/knowledge/knowledge-document-family-service'
 import {
   getKnowledgeSourceUploadStorage,
   KnowledgeSourceUploadStorageUnavailableError,
@@ -39,10 +42,30 @@ export async function analyzeKnowledgeSourceUploadAction(formData: FormData) {
   }
 }
 
+export async function analyzeStoredKnowledgeSourceUploadAction(input: { storageKey: string; fileName: string; mediaType: string }) {
+  await requirePlatformAdministrator(returnTo)
+  try {
+    const preview = await analyzeStoredKnowledgeSourceUpload({ ...input, storage: getKnowledgeSourceUploadStorage(), database: getPrisma() })
+    return { ok: true as const, preview }
+  } catch (error) {
+    return { ok: false as const, message: message(error) }
+  }
+}
+
+export async function analyzeKnowledgeSourceUploadBatchAction(input: { previews: KnowledgeSourceUploadPreview[] }) {
+  await requirePlatformAdministrator(returnTo)
+  try {
+    return { ok: true as const, analysis: analyzeKnowledgeSourceUploadPreviews(input.previews) }
+  } catch {
+    return { ok: false as const, message: 'De gezamenlijke analyse kon niet veilig worden uitgevoerd.' }
+  }
+}
+
 export async function confirmKnowledgeSourceUploadAction(input: {
   preview: KnowledgeSourceUploadPreview
   metadata: KnowledgeSourceUploadMetadata
   explicitlyConfirmed: boolean
+  relationshipReviewed: boolean
 }) {
   const administrator = await requirePlatformAdministrator(returnTo)
   try {
@@ -55,5 +78,14 @@ export async function confirmKnowledgeSourceUploadAction(input: {
     return { ok: true as const, result }
   } catch (error) {
     return { ok: false as const, message: message(error) }
+  }
+}
+
+export async function confirmKnowledgeDocumentFamilyAction(input: KnowledgeDocumentFamilyInput) {
+  await requirePlatformAdministrator(returnTo)
+  try {
+    return { ok: true as const, result: await storeKnowledgeDocumentFamily(input, getPrisma()) }
+  } catch {
+    return { ok: false as const, message: 'De documentfamilie kon niet veilig worden vastgelegd.' }
   }
 }

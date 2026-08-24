@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { BlobNotFoundError, get, head, put } from '@vercel/blob'
+import { BlobNotFoundError, get, head, issueSignedToken, presignUrl, put } from '@vercel/blob'
 
 export type StoredKnowledgeSourceUpload = {
   storageKey: string
@@ -23,7 +23,7 @@ export class InMemoryKnowledgeSourceUploadStorage implements KnowledgeSourceUplo
   private readonly uploads = new Map<string, { bytes: Uint8Array; locator: string; checksum: string; mediaType: 'application/pdf' }>()
 
   async save(bytes: Uint8Array, metadata: { checksum: string; mediaType: 'application/pdf' }) {
-    const storageKey = objectKey(metadata.checksum)
+    const storageKey = knowledgeSourceUploadStorageKey(metadata.checksum)
     const existing = this.uploads.get(storageKey)
     if (existing) {
       if (sha256(existing.bytes) !== metadata.checksum) throw new KnowledgeSourceUploadStorageUnavailableError()
@@ -62,7 +62,10 @@ type VercelBlobStorageOptions = {
 
 const blobOperations: BlobOperations = { put, get, head }
 const sha256 = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex')
-const objectKey = (checksum: string) => `knowledge-source-uploads/v1/sha256/${checksum.slice(0, 2)}/${checksum}.pdf`
+export const knowledgeSourceUploadStorageKey = (checksum: string) => {
+  if (!/^[0-9a-f]{64}$/u.test(checksum)) throw new KnowledgeSourceUploadStorageUnavailableError()
+  return `knowledge-source-uploads/v1/sha256/${checksum.slice(0, 2)}/${checksum}.pdf`
+}
 
 function assertStorageKey(storageKey: string) {
   if (!/^knowledge-source-uploads\/v1\/sha256\/[0-9a-f]{2}\/[0-9a-f]{64}\.pdf$/u.test(storageKey)) throw new KnowledgeSourceUploadStorageUnavailableError()
@@ -107,7 +110,7 @@ export class VercelBlobKnowledgeSourceUploadStorage implements KnowledgeSourceUp
 
   async save(bytes: Uint8Array, metadata: { checksum: string; mediaType: 'application/pdf' }) {
     if (sha256(bytes) !== metadata.checksum) throw new KnowledgeSourceUploadStorageUnavailableError()
-    const storageKey = objectKey(metadata.checksum)
+    const storageKey = knowledgeSourceUploadStorageKey(metadata.checksum)
     const existing = await this.read(storageKey)
     if (existing) return { storageKey, locator: existing.locator }
     try {
@@ -133,12 +136,11 @@ export class VercelBlobKnowledgeSourceUploadStorage implements KnowledgeSourceUp
  * object-storageadapter expliciet is gekozen en aangesloten.
  */
 export function getKnowledgeSourceUploadStorage(): KnowledgeSourceUploadStorage {
-  const environment = process.env.KNOWLEDGE_UPLOAD_BLOB_ENVIRONMENT
-  const storeId = process.env.KNOWLEDGE_UPLOAD_BLOB_STORE_ID
-  if ((environment === 'preview' || environment === 'production') && storeId) {
+  const configuration = getKnowledgeSourceUploadStorageConfiguration()
+  if (configuration) {
     return new VercelBlobKnowledgeSourceUploadStorage({
-      environment,
-      storeId,
+      environment: configuration.environment,
+      storeId: configuration.storeId,
       runtimeEnvironment: process.env.VERCEL_ENV,
     })
   }
@@ -146,7 +148,33 @@ export function getKnowledgeSourceUploadStorage(): KnowledgeSourceUploadStorage 
 }
 
 export function isKnowledgeSourceUploadStorageConfigured() {
-  try { getKnowledgeSourceUploadStorage(); return Boolean(process.env.KNOWLEDGE_UPLOAD_BLOB_STORE_ID) } catch { return false }
+  try { getKnowledgeSourceUploadStorage(); return Boolean(getKnowledgeSourceUploadStorageConfiguration() && process.env.VERCEL_OIDC_TOKEN) } catch { return false }
+}
+
+export function getKnowledgeSourceUploadStorageConfiguration(): { environment: 'preview' | 'production'; storeId: string } | null {
+  const environment = process.env.KNOWLEDGE_UPLOAD_BLOB_ENVIRONMENT
+  const storeId = process.env.KNOWLEDGE_UPLOAD_BLOB_STORE_ID
+  if ((environment === 'preview' || environment === 'production') && storeId) return { environment, storeId }
+  return null
+}
+
+export async function createKnowledgeSourceUploadTarget(input: { checksum: string; bytes: number }, dependencies: { issueSignedToken: typeof issueSignedToken; presignUrl: typeof presignUrl; storage?: KnowledgeSourceUploadStorage } = { issueSignedToken, presignUrl }) {
+  if (input.bytes < 1 || input.bytes > 10 * 1024 * 1024) throw new KnowledgeSourceUploadStorageUnavailableError()
+  const configuration = getKnowledgeSourceUploadStorageConfiguration()
+  if (!configuration || configuration.environment !== process.env.VERCEL_ENV || !process.env.VERCEL_OIDC_TOKEN) throw new KnowledgeSourceUploadStorageUnavailableError()
+  const storage = dependencies.storage ?? getKnowledgeSourceUploadStorage()
+  const storageKey = knowledgeSourceUploadStorageKey(input.checksum)
+  if (await storage.exists(storageKey)) return { storageKey, alreadyStored: true as const, uploadUrl: null }
+  const validUntil = Date.now() + 10 * 60 * 1000
+  const token = await dependencies.issueSignedToken({
+    storeId: configuration.storeId, pathname: storageKey, operations: ['put'],
+    allowedContentTypes: ['application/pdf'], maximumSizeInBytes: 10 * 1024 * 1024, validUntil,
+  })
+  const target = await dependencies.presignUrl(token, {
+    access: 'private', operation: 'put', pathname: storageKey, allowedContentTypes: ['application/pdf'],
+    maximumSizeInBytes: 10 * 1024 * 1024, validUntil, addRandomSuffix: false, allowOverwrite: false,
+  })
+  return { storageKey, alreadyStored: false as const, uploadUrl: target.presignedUrl }
 }
 
 export function knowledgeSourceUploadStorageKeyFromLocator(locator: string) {

@@ -12,6 +12,14 @@ De duurzame provider voor bronartifacts is Vercel Private Blob via de bestaande 
 
 De adapter bewaart het originele PDF-bestand onder een immutable SHA-256-key en overschrijft nooit. Een checksumduplicate wordt idempotent hergebruikt. Platformbeheer leest het origineel uitsluitend via de geautoriseerde serverroute `/platformbeheer/kennisbank/bronnen/<sourceVersionId>/origineel`; de interne Blob-locator en provider-URL worden niet aan de browser verstrekt. V1 heeft bewust geen deletepad.
 
+## Knowledge Upload UX v2
+
+Platformbeheer kan één tot tien PDF's gezamenlijk analyseren. Iedere PDF behoudt een eigen checksum, immutable artifact, extractiepreview, status en atomische import. Een ongeldig, conflicterend of dubbel document blokkeert de overige documenten niet. De batchlimiet is 50 MB, de documentlimiet 10 MB en de extractieconcurrency is twee.
+
+Metadata wordt deterministisch voorgesteld uit de geëxtraheerde PDF-inhoud met `HIGH_CONFIDENCE`, `REVIEW` of `UNKNOWN`. Onbekende waarden worden niet gegokt. Een canonical HTTPS-URL is optioneel: zonder URL gebruikt onboarding uitsluitend de bestaande fail-closed `BIBLIOGRAPHIC`-identiteit met voldoende uitgever-, reeks-, titel-, publicatiecode- en editie/jaar/ISBN-discriminatoren. De beheerder controleert metadata, duplicaten, conflicten en relaties altijd vóór import.
+
+De gezamenlijke analyse vergelijkt titel, uitgever, jaar, bronfamilie, publicatiecode, termen en expliciete documentverwijzingen. Zij kan een corrigeerbare documentfamilie voorstellen, maar schrijft die pas nadat alle gekozen leden individueel atomisch zijn geïmporteerd. Gedeelde metadata wordt alleen voorgesteld wanneer die voor alle succesvol geanalyseerde documenten gelijk is. Iedere nieuwe bron blijft `DRAFT`, `UNVALIDATED` en `REVIEW_REQUIRED`; uploaden publiceert of valideert niets.
+
 Zet bronnen buiten Git in de bestaande categorieÃ«n onder `local-sources/`. Het genegeerde lokale manifest in `local-sources/knowledge/` koppelt logische broncodes aan paden relatief aan deze bronroot, bronsoorten en SHA-256-checksums. Absolute paden en broninhoud komen niet in database of auditlog. In de database staat alleen een logische `manifest:<relatief-pad>`-referentie.
 
 De generieke pipeline ondersteunt `ai-bladen`, `arbocatalogi`, `beleidsregels`, `inspectie`, `jurisprudentie`, `knowledge`, `normen`, `rivm`, `ser` en `tno`. `legislation` is de container voor `arbowet`, `arbobesluit` en `arboregeling`; een toekomstige submap blijft generiek `LEGISLATION` totdat een specifiekere mapping wordt toegevoegd. De bronsoort wordt expliciet in manifest en importpakket vastgelegd. De database gebruikt de bestaande brede typen `AI_SHEET`, `LEGISLATION`, `REGULATION`, `ARBOCATALOGUE`, `INSPECTORATE_GUIDANCE`, `CASE_LAW`, `STANDARD`, `PROFESSIONAL_GUIDANCE`, `OTHER` en `RESEARCH`; `sourceFamily` bewaart de specifieke bronfamilie.

@@ -16,6 +16,8 @@ Lokale schijf is niet geschikt voor Vercel-productie. Zonder geconfigureerde toe
 
 Knowledge Source Upload v1 gebruikt een afzonderlijke `KnowledgeSourceUploadStorage`-adapter omdat bron-PDF's private, immutable artifacts zijn. De productieadapter gebruikt Vercel Private Blob met OIDC; tests gebruiken uitsluitend een in-memory adapter. Het originele document blijft private en wordt alleen server-side gelezen na platformbeheer-autorisatie.
 
+Knowledge Upload UX v2 gebruikt voor batches van één tot tien PDF's een kortlevende, request-scoped OIDC-presign per deterministische checksumkey. De browser schrijft ieder document rechtstreeks naar de private Blob-store; de applicatieruntime buffert daardoor geen volledige batch. De limieten zijn 10 MB per document en 50 MB per batch. Analyse draait met maximaal twee documenten tegelijk. Een checksum die al in de batch of store voorkomt maakt nooit een tweede Blob-object.
+
 Object keys zijn deterministisch en checksumgebonden: `knowledge-source-uploads/v1/sha256/<prefix>/<sha256>.pdf`. De adapter gebruikt `access: private`, schakelt overschrijven en willekeurige suffixen uit en verifieert bij iedere read opnieuw contenttype, grootte en SHA-256. Een identieke herupload hergebruikt hetzelfde object; afwijkende bytes onder dezelfde identiteit falen gesloten. In PostgreSQL staat uitsluitend de interne locator en de immutable bronmetadata, nooit een publieke of private Blob-URL.
 
 De Vercel serverbundle houdt `pdfjs-dist` en de noodzakelijke native `@napi-rs/canvas`-runtime extern en neemt die runtime expliciet mee voor de uploadroute. Daardoor gebruikt Preview dezelfde bestaande deterministische PDF-extractor als lokale en database-ingests.

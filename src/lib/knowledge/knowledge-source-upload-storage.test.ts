@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto'
 import { describe, expect, it, vi } from 'vitest'
 import {
+  createKnowledgeSourceUploadTarget,
   InMemoryKnowledgeSourceUploadStorage,
   KnowledgeSourceUploadStorageUnavailableError,
   VercelBlobKnowledgeSourceUploadStorage,
@@ -88,5 +89,20 @@ describe('private Knowledge Source Upload-opslag', () => {
   it('maakt ook de in-memory testadapter idempotent per checksum', async () => {
     const storage = new InMemoryKnowledgeSourceUploadStorage()
     expect(await storage.save(bytes, { checksum, mediaType: 'application/pdf' })).toEqual(await storage.save(bytes, { checksum, mediaType: 'application/pdf' }))
+  })
+
+  it('maakt een korte private, checksumgebonden direct-upload en begrenst bestandsgrootte', async () => {
+    const previous = { env: process.env.VERCEL_ENV, environment: process.env.KNOWLEDGE_UPLOAD_BLOB_ENVIRONMENT, store: process.env.KNOWLEDGE_UPLOAD_BLOB_STORE_ID, oidc: process.env.VERCEL_OIDC_TOKEN }
+    process.env.VERCEL_ENV = 'preview'; process.env.KNOWLEDGE_UPLOAD_BLOB_ENVIRONMENT = 'preview'; process.env.KNOWLEDGE_UPLOAD_BLOB_STORE_ID = 'preview-store-123'; process.env.VERCEL_OIDC_TOKEN = 'test-oidc'
+    const issueSignedToken = vi.fn(async () => 'signed-token')
+    const presignUrl = vi.fn(async () => ({ presignedUrl: 'https://upload.invalid/signed' }))
+    try {
+      const result = await createKnowledgeSourceUploadTarget({ checksum, bytes: bytes.length }, { issueSignedToken, presignUrl, storage: new InMemoryKnowledgeSourceUploadStorage() } as never)
+      expect(result).toMatchObject({ storageKey: key, alreadyStored: false, uploadUrl: 'https://upload.invalid/signed' })
+      expect(issueSignedToken).toHaveBeenCalledWith(expect.objectContaining({ storeId: 'preview-store-123', pathname: key, operations: ['put'], maximumSizeInBytes: 10 * 1024 * 1024 }))
+      await expect(createKnowledgeSourceUploadTarget({ checksum, bytes: 10 * 1024 * 1024 + 1 }, { issueSignedToken, presignUrl, storage: new InMemoryKnowledgeSourceUploadStorage() } as never)).rejects.toBeInstanceOf(KnowledgeSourceUploadStorageUnavailableError)
+    } finally {
+      process.env.VERCEL_ENV = previous.env; process.env.KNOWLEDGE_UPLOAD_BLOB_ENVIRONMENT = previous.environment; process.env.KNOWLEDGE_UPLOAD_BLOB_STORE_ID = previous.store; process.env.VERCEL_OIDC_TOKEN = previous.oidc
+    }
   })
 })
