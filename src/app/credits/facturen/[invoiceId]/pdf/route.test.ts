@@ -17,7 +17,7 @@ describe('factuur-PDF-route', () => {
     const { GET } = await import('./route')
     const response = await GET(new Request('https://workmatchr.invalid/credits/facturen/invoice-a/pdf'), { params: Promise.resolve({ invoiceId: 'invoice-a' }) })
     expect(response.status).toBe(200)
-    expect(vi.mocked(getPrisma)().financialInvoice.findFirst).toHaveBeenCalledWith({ where: { id: 'invoice-a', organizationId: 'organization-a' } })
+    expect(vi.mocked(getPrisma)().financialInvoice.findFirst).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 'invoice-a', organizationId: 'organization-a' } }))
     expect(response.headers.get('Cache-Control')).toBe('private, no-store')
   })
 

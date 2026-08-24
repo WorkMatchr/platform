@@ -56,7 +56,7 @@ export function ProSubscriptionCheckout({
           <legend className="px-1 text-sm font-bold uppercase tracking-wide text-text-secondary">Uw gegevens</legend>
           <p className="mt-2 text-sm text-text-secondary">Controleer de gegevens die op uw factuur komen. U kunt deze hier zo nodig corrigeren.</p>
           <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-            <label className="grid gap-2 font-semibold sm:col-span-2 lg:col-span-1 xl:col-span-2">Organisatienaam<input className={inputClassName} name="organizationName" defaultValue={billingDetails.organizationName} required /></label>
+            <label className="grid gap-2 font-semibold sm:col-span-2 lg:col-span-1 xl:col-span-2">Volledige juridische naam of geregistreerde handelsnaam<input className={inputClassName} name="organizationName" defaultValue={billingDetails.organizationName} required /></label>
             <label className="grid gap-2 font-semibold sm:col-span-2 lg:col-span-1 xl:col-span-2">Adres<input className={inputClassName} name="addressLine" defaultValue={billingDetails.addressLine} required /></label>
             <label className="grid gap-2 font-semibold">Postcode<input className={inputClassName} name="postalCode" defaultValue={billingDetails.postalCode} required /></label>
             <label className="grid gap-2 font-semibold">Plaats<input className={inputClassName} name="city" defaultValue={billingDetails.city} required /></label>

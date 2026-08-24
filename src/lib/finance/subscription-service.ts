@@ -483,6 +483,8 @@ export async function processRecurringProPayment(payment: MolliePaymentSnapshot)
   return runSerializableFinancialTransaction(async (transaction) => {
     await lock(transaction, subscription.organizationId)
     const fingerprint = await import('node:crypto').then(({ createHash }) => createHash('sha256').update(JSON.stringify({ id: payment.id, status: payment.status, amount: payment.amountValue, currency: payment.currency, subscriptionId: payment.subscriptionId, mandateId: payment.mandateId, method: payment.method })).digest('hex'))
+    const paidPeriodStart = payment.status === 'paid' ? (payment.paidAt ? new Date(payment.paidAt) : new Date()) : null
+    const paidPeriodEnd = paidPeriodStart ? addUtcMonth(paidPeriodStart) : null
     const paymentRecord = await transaction.professionalSubscriptionPayment.upsert({
       where: { idempotencyKey: `pro-payment:${payment.id}:${payment.status}:${fingerprint}` },
       create: {
@@ -494,17 +496,19 @@ export async function processRecurringProPayment(payment: MolliePaymentSnapshot)
         vatAmountCents: subscription.vatAmountCents,
         amountInclVatCents: subscription.amountInclVatCents,
         currency: subscription.currency,
+        periodStart: paidPeriodStart,
+        periodEnd: paidPeriodEnd,
         payloadFingerprint: fingerprint,
         idempotencyKey: `pro-payment:${payment.id}:${payment.status}:${fingerprint}`,
       },
       update: {},
     })
     if (payment.status === 'paid') {
-      const now = new Date()
-      const periodEnd = new Date(now)
-      periodEnd.setUTCMonth(periodEnd.getUTCMonth() + 1)
-      const updated = await transaction.professionalSubscription.update({ where: { id: subscription.id }, data: { status: 'ACTIVE', currentPeriodStart: now, currentPeriodEnd: periodEnd, pastDueAt: null, retryCount: 0 } })
-      await issueInvoiceForPaidSubscriptionPayment(transaction, paymentRecord.id, now)
+      const periodStart = paymentRecord.periodStart ?? paidPeriodStart
+      const periodEnd = paymentRecord.periodEnd ?? paidPeriodEnd
+      if (!periodStart || !periodEnd) throw new Error('PRO_PAYMENT_PERIOD_REQUIRED')
+      const updated = await transaction.professionalSubscription.update({ where: { id: subscription.id }, data: { status: 'ACTIVE', currentPeriodStart: periodStart, currentPeriodEnd: periodEnd, pastDueAt: null, retryCount: 0 } })
+      await issueInvoiceForPaidSubscriptionPayment(transaction, paymentRecord.id, periodStart)
       return updated
     }
     if (['failed', 'canceled', 'expired'].includes(payment.status)) {

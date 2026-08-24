@@ -249,6 +249,50 @@ async function main() {
     assert.equal(identityRace.filter((item) => item.status === 'fulfilled' && item.value.grant).length, 1)
     assert.equal(await prisma.starterBenefitGrant.count({ where: { organizationId: { in: [identityOrganizationA.id, identityOrganizationB.id] } } }), 1)
     assert.equal(await prisma.creditTransaction.count({ where: { referenceType: 'StarterBenefitGrant', creditAccount: { organizationId: { in: [identityOrganizationA.id, identityOrganizationB.id] } } } }), 1)
+
+    const v2Purchase = await prisma.financialPurchase.create({ data: {
+      organizationId: organization.id, createdByUserId: user.id, status: 'PAID', kind: 'CREDIT_PACKAGE', packageSku: 'CREDITS_100',
+      packageLabel: '100 credits', credits: 100, baseAmountCents: 10_000, packageDiscountCents: 500,
+      amountExclVatCents: 9_500, vatRateBps: 2_100, vatAmountCents: 1_995, amountInclVatCents: 11_495,
+      currency: 'EUR', billingOrganizationName: organization.name, billingAddressLine: 'Een zeer lange teststraatnaam 123 toevoeging',
+      billingPostalCode: '9405 LC', billingCity: 'Assen', billingCountryCode: 'NL', molliePaymentId: `tr_v2_${randomUUID()}`,
+      idempotencyKey: `finance-v2-${randomUUID()}`, paidAt: new Date('2026-08-24T09:00:00Z'), terminalAt: new Date('2026-08-24T09:00:00Z'),
+    } })
+    const v2InvoiceId = randomUUID()
+    await prisma.$transaction(async (transaction) => {
+      await transaction.financialInvoice.create({ data: {
+        id: v2InvoiceId, snapshotVersion: 2, invoiceNumber: `WM-V2-${randomUUID()}`.slice(0, 40), sequenceNumber: 900_001,
+        purchaseId: v2Purchase.id, organizationId: organization.id, issuedAt: new Date('2026-08-24T09:01:00Z'), supplyDate: new Date('2026-08-24T09:00:30Z'),
+        sellerLegalName: 'Feenstra Safety Consulting', sellerTradeName: 'WorkMatchr', sellerAddressLine: 'Kennemerland 71', sellerPostalCode: '9405 LC', sellerCity: 'Assen', sellerCountryCode: 'NL', sellerKvKNumber: '57788863', sellerVatId: 'NL002107278B11',
+        customerOrganizationName: organization.name, customerAddressLine: 'Een zeer lange teststraatnaam 123 toevoeging', customerPostalCode: '9405 LC', customerCity: 'Assen', customerCountryCode: 'NL',
+        packageSku: 'CREDITS_100', packageLabel: '100 credits', credits: 100, baseAmountCents: 10_000, packageDiscountCents: 500, proDiscountCents: 0, discountCodeDiscountCents: 0,
+        amountExclVatCents: 9_500, vatRateBps: 2_100, vatAmountCents: 1_995, amountInclVatCents: 11_495, currency: 'EUR', molliePaymentId: v2Purchase.molliePaymentId,
+      } })
+      await transaction.financialInvoiceLine.create({ data: { invoiceId: v2InvoiceId, position: 1, description: '100 WorkMatchr credits', quantity: 100, unit: 'credit', unitPriceExclVatCents: 100, grossAmountExclVatCents: 10_000, discountAmountCents: 500, netAmountExclVatCents: 9_500, vatRateBps: 2_100, vatAmountCents: 1_995, amountInclVatCents: 11_495 } })
+      await transaction.financialInvoiceVatSummary.create({ data: { invoiceId: v2InvoiceId, vatRateBps: 2_100, taxableAmountExclVatCents: 9_500, vatAmountCents: 1_995, amountInclVatCents: 11_495 } })
+    })
+    const v2Invoice = await prisma.financialInvoice.findUniqueOrThrow({ where: { id: v2InvoiceId }, include: { lines: true, vatSummaries: true } })
+    assert.equal(v2Invoice.snapshotVersion, 2)
+    assert.equal(v2Invoice.lines.length, 1)
+    assert.equal(v2Invoice.vatSummaries.length, 1)
+    await assert.rejects(prisma.financialInvoiceLine.update({ where: { id: v2Invoice.lines[0]!.id }, data: { description: 'Niet toegestaan' } }))
+
+    const incompletePurchase = await prisma.financialPurchase.create({ data: {
+      organizationId: organization.id, createdByUserId: user.id, status: 'PAID', packageSku: 'CREDITS_25', packageLabel: '25 credits', credits: 25,
+      baseAmountCents: 2_500, amountExclVatCents: 2_500, vatRateBps: 2_100, vatAmountCents: 525, amountInclVatCents: 3_025, currency: 'EUR',
+      billingOrganizationName: organization.name, billingAddressLine: 'Teststraat 1', billingPostalCode: '9405 LC', billingCity: 'Assen', billingCountryCode: 'NL',
+      molliePaymentId: `tr_incomplete_${randomUUID()}`, idempotencyKey: `finance-v2-incomplete-${randomUUID()}`, paidAt: new Date(), terminalAt: new Date(),
+    } })
+    await assert.rejects(prisma.$transaction((transaction) => transaction.financialInvoice.create({ data: {
+      snapshotVersion: 2, invoiceNumber: `WM-BAD-${randomUUID()}`.slice(0, 40), sequenceNumber: 900_002, purchaseId: incompletePurchase.id,
+      organizationId: organization.id, issuedAt: new Date(), supplyDate: new Date(), sellerLegalName: 'Feenstra Safety Consulting', sellerTradeName: 'WorkMatchr',
+      sellerAddressLine: 'Kennemerland 71', sellerPostalCode: '9405 LC', sellerCity: 'Assen', sellerCountryCode: 'NL', sellerKvKNumber: '57788863', sellerVatId: 'NL002107278B11',
+      customerOrganizationName: organization.name, customerAddressLine: 'Teststraat 1', customerPostalCode: '9405 LC', customerCity: 'Assen', customerCountryCode: 'NL',
+      packageSku: 'CREDITS_25', packageLabel: '25 credits', credits: 25, baseAmountCents: 2_500, packageDiscountCents: 0, proDiscountCents: 0, discountCodeDiscountCents: 0, amountExclVatCents: 2_500,
+      vatRateBps: 2_100, vatAmountCents: 525, amountInclVatCents: 3_025, currency: 'EUR', molliePaymentId: incompletePurchase.molliePaymentId,
+    } })))
+    assert.equal(await prisma.financialInvoice.count({ where: { purchaseId: incompletePurchase.id } }), 0)
+    console.log('FinancialInvoice snapshot v2 totaliteit, rollback en immutability zijn geslaagd.')
     console.log('Kortingscode- en startersvoordeelconcurrency zijn transactioneel geslaagd.')
   } finally {
     if (prisma) await prisma.$disconnect()

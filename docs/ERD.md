@@ -646,6 +646,8 @@ erDiagram
   Organization ||--o{ FinancialPurchase : koopt
   FinancialPurchase ||--o{ FinancialPaymentEvent : ontvangt_status
   FinancialPurchase ||--o| FinancialInvoice : factureert
+  FinancialInvoice ||--|{ FinancialInvoiceLine : bevat_fiscale_regels
+  FinancialInvoice ||--|{ FinancialInvoiceVatSummary : groepeert_btw
   FinancialPurchase ||--o{ FinancialRefund : corrigeert
   FinancialRefund ||--o| FinancialInvoice : crediteert
   FinancialRefund ||--o{ FinancialEvent : auditeert

@@ -20,7 +20,7 @@ describe('platformbeheer factuur-PDF-route', () => {
 
     expect(response.status).toBe(200)
     expect(requirePlatformAdministrator).toHaveBeenCalledWith('/platformbeheer/financien/facturen/invoice-a/pdf')
-    expect(vi.mocked(getPrisma)().financialInvoice.findUnique).toHaveBeenCalledWith({ where: { id: 'invoice-a' } })
+    expect(vi.mocked(getPrisma)().financialInvoice.findUnique).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 'invoice-a' } }))
     expect(response.headers.get('Cache-Control')).toBe('private, no-store')
   })
 

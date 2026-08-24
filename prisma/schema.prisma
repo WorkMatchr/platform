@@ -1541,13 +1541,13 @@ model OrganizationLocation {
 }
 
 model Sector {
-  id                        String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                        String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name                      String
-  slug                      String                     @unique
+  slug                      String                         @unique
   description               String?
-  isActive                  Boolean                    @default(true)
-  createdAt                 DateTime                   @default(now()) @db.Timestamptz(3)
-  updatedAt                 DateTime                   @updatedAt @db.Timestamptz(3)
+  isActive                  Boolean                        @default(true)
+  createdAt                 DateTime                       @default(now()) @db.Timestamptz(3)
+  updatedAt                 DateTime                       @updatedAt @db.Timestamptz(3)
   organizations             OrganizationSector[]
   providers                 ProviderSector[]
   assignments               Assignment[]
@@ -2620,25 +2620,25 @@ model ProviderMigrationAudit {
 }
 
 model PublicIntakeDraft {
-  id                         String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  phase                      PublicIntakePhase            @default(STARTED)
+  id                         String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  phase                      PublicIntakePhase             @default(STARTED)
   entryPoint                 PublicIntakeEntryPoint
-  originalInput              String?                      @db.Text
-  selectedRequestKey         String?                      @db.VarChar(100)
-  knowledgeContextId         String?                      @db.VarChar(100)
+  originalInput              String?                       @db.Text
+  selectedRequestKey         String?                       @db.VarChar(100)
+  knowledgeContextId         String?                       @db.VarChar(100)
   knowledgeContextVersion    Int?
-  knowledgeSourceRoute       String?                      @db.VarChar(300)
-  knowledgeSuggestedCategory String?                      @db.VarChar(100)
-  flowVersion                String                       @db.VarChar(50)
-  currentStep                String?                      @db.VarChar(100)
-  version                    Int                          @default(1)
-  startedAt                  DateTime                     @default(now()) @db.Timestamptz(3)
-  lastInteractionAt          DateTime                     @default(now()) @db.Timestamptz(3)
-  expiresAt                  DateTime                     @db.Timestamptz(3)
-  submittedAt                DateTime?                    @db.Timestamptz(3)
-  linkedAt                   DateTime?                    @db.Timestamptz(3)
-  createdAt                  DateTime                     @default(now()) @db.Timestamptz(3)
-  updatedAt                  DateTime                     @updatedAt @db.Timestamptz(3)
+  knowledgeSourceRoute       String?                       @db.VarChar(300)
+  knowledgeSuggestedCategory String?                       @db.VarChar(100)
+  flowVersion                String                        @db.VarChar(50)
+  currentStep                String?                       @db.VarChar(100)
+  version                    Int                           @default(1)
+  startedAt                  DateTime                      @default(now()) @db.Timestamptz(3)
+  lastInteractionAt          DateTime                      @default(now()) @db.Timestamptz(3)
+  expiresAt                  DateTime                      @db.Timestamptz(3)
+  submittedAt                DateTime?                     @db.Timestamptz(3)
+  linkedAt                   DateTime?                     @db.Timestamptz(3)
+  createdAt                  DateTime                      @default(now()) @db.Timestamptz(3)
+  updatedAt                  DateTime                      @updatedAt @db.Timestamptz(3)
   session                    PublicIntakeSession?
   answers                    PublicIntakeAnswer[]
   contextQuestions           PublicIntakeContextQuestion[]
@@ -2808,24 +2808,24 @@ model ArboGuideRunCounter {
 }
 
 model ArboGuideRun {
-  id                  String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  reportNumber        String?            @unique @db.VarChar(32)
+  id                  String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reportNumber        String?              @unique @db.VarChar(32)
   guideType           ArboGuideType
-  guideVersion        String             @db.VarChar(32)
-  reportVersion       String             @db.VarChar(32)
-  organizationId      String             @db.Uuid
-  completedByUserId   String             @db.Uuid
-  status              ArboGuideRunStatus @default(IN_PROGRESS)
-  idempotencyKey      String             @db.VarChar(160)
-  startedAt           DateTime           @default(now()) @db.Timestamptz(3)
-  completedAt         DateTime?          @db.Timestamptz(3)
-  answersSnapshot     Json               @db.JsonB
-  reportSnapshot      Json?              @db.JsonB
-  snapshotFingerprint String?            @db.VarChar(64)
-  createdAt           DateTime           @default(now()) @db.Timestamptz(3)
-  updatedAt           DateTime           @updatedAt @db.Timestamptz(3)
-  organization        Organization       @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  completedByUser     User               @relation("ArboGuideRunActor", fields: [completedByUserId], references: [id], onDelete: Restrict)
+  guideVersion        String               @db.VarChar(32)
+  reportVersion       String               @db.VarChar(32)
+  organizationId      String               @db.Uuid
+  completedByUserId   String               @db.Uuid
+  status              ArboGuideRunStatus   @default(IN_PROGRESS)
+  idempotencyKey      String               @db.VarChar(160)
+  startedAt           DateTime             @default(now()) @db.Timestamptz(3)
+  completedAt         DateTime?            @db.Timestamptz(3)
+  answersSnapshot     Json                 @db.JsonB
+  reportSnapshot      Json?                @db.JsonB
+  snapshotFingerprint String?              @db.VarChar(64)
+  createdAt           DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime             @updatedAt @db.Timestamptz(3)
+  organization        Organization         @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  completedByUser     User                 @relation("ArboGuideRunActor", fields: [completedByUserId], references: [id], onDelete: Restrict)
   results             ArboGuideRunResult[]
 
   @@unique([organizationId, idempotencyKey])
@@ -2836,17 +2836,17 @@ model ArboGuideRun {
 }
 
 model ArboGuideRunResult {
-  id                   String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  arboGuideRunId       String                @db.Uuid
-  position             Int
-  subjectCode          String                @db.VarChar(80)
-  title                String                @db.VarChar(200)
-  status               ArboGuideResultStatus
-  explanation          String                @db.Text
-  recommendedAction    String                @db.Text
-  sourceIdsSnapshot    Json                  @db.JsonB
-  createdAt            DateTime              @default(now()) @db.Timestamptz(3)
-  arboGuideRun         ArboGuideRun          @relation(fields: [arboGuideRunId], references: [id], onDelete: Restrict)
+  id                String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  arboGuideRunId    String                @db.Uuid
+  position          Int
+  subjectCode       String                @db.VarChar(80)
+  title             String                @db.VarChar(200)
+  status            ArboGuideResultStatus
+  explanation       String                @db.Text
+  recommendedAction String                @db.Text
+  sourceIdsSnapshot Json                  @db.JsonB
+  createdAt         DateTime              @default(now()) @db.Timestamptz(3)
+  arboGuideRun      ArboGuideRun          @relation(fields: [arboGuideRunId], references: [id], onDelete: Restrict)
 
   @@unique([arboGuideRunId, subjectCode])
   @@unique([arboGuideRunId, position])
@@ -2884,29 +2884,29 @@ model AdviceDossier {
 }
 
 model AdviceDossierVersion {
-  id                                         String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  adviceDossierId                            String             @db.Uuid
+  id                                         String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  adviceDossierId                            String                      @db.Uuid
   versionNumber                              Int
-  sourcePublicIntakeDraftId                  String?            @db.Uuid
+  sourcePublicIntakeDraftId                  String?                     @db.Uuid
   sourceDraftVersion                         Int?
-  originalHelpRequest                        String             @db.Text
-  situationSummary                           String             @db.Text
-  subject                                    String             @db.VarChar(200)
-  adviceTitle                                String             @db.VarChar(300)
-  adviceBody                                 String             @db.Text
-  adviceReasons                              Json               @db.JsonB
-  selfActions                                Json               @db.JsonB
-  primaryProfessionalRequirementSnapshot     Json?              @db.JsonB
-  additionalProfessionalRequirementsSnapshot Json               @db.JsonB
-  knowledgeReferencesSnapshot                Json               @db.JsonB
-  sourceReferencesSnapshot                   Json               @db.JsonB
-  uncertaintiesSnapshot                      Json               @db.JsonB
-  disclaimer                                 String             @db.Text
-  outcomeSpecificity                         String             @db.VarChar(50)
-  completionStatus                           String             @db.VarChar(50)
-  createdAt                                  DateTime           @default(now()) @db.Timestamptz(3)
-  adviceDossier                              AdviceDossier      @relation(fields: [adviceDossierId], references: [id], onDelete: Restrict)
-  sourcePublicIntakeDraft                    PublicIntakeDraft? @relation(fields: [sourcePublicIntakeDraftId], references: [id], onDelete: Restrict)
+  originalHelpRequest                        String                      @db.Text
+  situationSummary                           String                      @db.Text
+  subject                                    String                      @db.VarChar(200)
+  adviceTitle                                String                      @db.VarChar(300)
+  adviceBody                                 String                      @db.Text
+  adviceReasons                              Json                        @db.JsonB
+  selfActions                                Json                        @db.JsonB
+  primaryProfessionalRequirementSnapshot     Json?                       @db.JsonB
+  additionalProfessionalRequirementsSnapshot Json                        @db.JsonB
+  knowledgeReferencesSnapshot                Json                        @db.JsonB
+  sourceReferencesSnapshot                   Json                        @db.JsonB
+  uncertaintiesSnapshot                      Json                        @db.JsonB
+  disclaimer                                 String                      @db.Text
+  outcomeSpecificity                         String                      @db.VarChar(50)
+  completionStatus                           String                      @db.VarChar(50)
+  createdAt                                  DateTime                    @default(now()) @db.Timestamptz(3)
+  adviceDossier                              AdviceDossier               @relation(fields: [adviceDossierId], references: [id], onDelete: Restrict)
+  sourcePublicIntakeDraft                    PublicIntakeDraft?          @relation(fields: [sourcePublicIntakeDraftId], references: [id], onDelete: Restrict)
   intakeHandoff                              AdviceDossierIntakeHandoff?
 
   @@unique([adviceDossierId, versionNumber])
@@ -3223,29 +3223,29 @@ model IntakeQuestionOption {
 }
 
 model Intake {
-  id                         String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  clientOrganizationId       String                     @db.Uuid
-  createdByUserId            String                     @db.Uuid
-  questionnaireVersionId     String                     @db.Uuid
+  id                         String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clientOrganizationId       String                      @db.Uuid
+  createdByUserId            String                      @db.Uuid
+  questionnaireVersionId     String                      @db.Uuid
   freeText                   String
-  knowledgeContextId         String?                    @db.VarChar(100)
+  knowledgeContextId         String?                     @db.VarChar(100)
   knowledgeContextVersion    Int?
-  knowledgeSourceRoute       String?                    @db.VarChar(300)
-  knowledgeSuggestedCategory String?                    @db.VarChar(100)
-  status                     IntakeStatus               @default(DRAFT)
-  version                    Int                        @default(1)
-  detectedSpecialismId       String?                    @db.Uuid
-  createdAt                  DateTime                   @default(now()) @db.Timestamptz(3)
-  updatedAt                  DateTime                   @updatedAt @db.Timestamptz(3)
-  submittedAt                DateTime?                  @db.Timestamptz(3)
-  submittedByUserId          String?                    @db.Uuid
-  convertedAt                DateTime?                  @db.Timestamptz(3)
-  archivedAt                 DateTime?                  @db.Timestamptz(3)
-  clientOrganization         Organization               @relation(fields: [clientOrganizationId], references: [id], onDelete: Restrict)
-  createdByUser              User                       @relation("IntakeCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
-  submittedByUser            User?                      @relation("IntakeSubmitter", fields: [submittedByUserId], references: [id], onDelete: Restrict)
-  questionnaireVersion       IntakeQuestionnaireVersion @relation(fields: [questionnaireVersionId], references: [id], onDelete: Restrict)
-  detectedSpecialism         Specialism?                @relation("DetectedIntakeSpecialism", fields: [detectedSpecialismId], references: [id], onDelete: Restrict)
+  knowledgeSourceRoute       String?                     @db.VarChar(300)
+  knowledgeSuggestedCategory String?                     @db.VarChar(100)
+  status                     IntakeStatus                @default(DRAFT)
+  version                    Int                         @default(1)
+  detectedSpecialismId       String?                     @db.Uuid
+  createdAt                  DateTime                    @default(now()) @db.Timestamptz(3)
+  updatedAt                  DateTime                    @updatedAt @db.Timestamptz(3)
+  submittedAt                DateTime?                   @db.Timestamptz(3)
+  submittedByUserId          String?                     @db.Uuid
+  convertedAt                DateTime?                   @db.Timestamptz(3)
+  archivedAt                 DateTime?                   @db.Timestamptz(3)
+  clientOrganization         Organization                @relation(fields: [clientOrganizationId], references: [id], onDelete: Restrict)
+  createdByUser              User                        @relation("IntakeCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  submittedByUser            User?                       @relation("IntakeSubmitter", fields: [submittedByUserId], references: [id], onDelete: Restrict)
+  questionnaireVersion       IntakeQuestionnaireVersion  @relation(fields: [questionnaireVersionId], references: [id], onDelete: Restrict)
+  detectedSpecialism         Specialism?                 @relation("DetectedIntakeSpecialism", fields: [detectedSpecialismId], references: [id], onDelete: Restrict)
   answers                    IntakeAnswer[]
   statusHistory              IntakeStatusHistory[]
   assignment                 Assignment?
@@ -3694,53 +3694,53 @@ model CreditTransaction {
 }
 
 model FinancialPurchase {
-  id                        String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizationId            String                    @db.Uuid
-  createdByUserId           String                    @db.Uuid
-  kind                      FinancialPurchaseKind     @default(CREDIT_PACKAGE)
-  status                    FinancialPurchaseStatus   @default(CREATED)
-  pricingMode               FinancialPricingMode      @default(STANDARD)
-  packageSku                String                    @db.VarChar(40)
-  packageLabel              String                    @db.VarChar(120)
-  credits                   Int
-  baseAmountCents           Int
-  packageDiscountCents      Int                       @default(0)
-  proDiscountCents          Int                       @default(0)
-  discountCodeDiscountCents Int                       @default(0)
-  amountExclVatCents        Int
-  vatRateBps                Int
-  vatAmountCents            Int
-  amountInclVatCents        Int
-  currency                  String                    @db.Char(3)
-  discountCodeId            String?                   @db.Uuid
-  discountCodeSnapshot      Json?                     @db.JsonB
-  billingOrganizationName   String                    @db.VarChar(200)
-  billingAddressLine        String                    @db.VarChar(200)
-  billingPostalCode         String                    @db.VarChar(20)
-  billingCity               String                    @db.VarChar(120)
-  billingCountryCode        String                    @db.Char(2)
-  billingKvKNumber          String?                   @db.VarChar(20)
-  billingVatId              String?                   @db.VarChar(40)
-  molliePaymentId           String?                   @unique @db.VarChar(80)
-  mollieCheckoutUrl         String?                   @db.VarChar(500)
-  creditedTransactionId     String?                   @unique @db.Uuid
-  idempotencyKey            String                    @unique @db.VarChar(160)
-  paymentCreatedAt          DateTime?                 @db.Timestamptz(3)
-  paidAt                    DateTime?                 @db.Timestamptz(3)
-  terminalAt                DateTime?                 @db.Timestamptz(3)
-  createdAt                 DateTime                  @default(now()) @db.Timestamptz(3)
-  updatedAt                 DateTime                  @updatedAt @db.Timestamptz(3)
-  organization              Organization              @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  createdByUser             User                      @relation("FinancialPurchaseActor", fields: [createdByUserId], references: [id], onDelete: Restrict)
-  discountCode              DiscountCode?             @relation(fields: [discountCodeId], references: [id], onDelete: Restrict)
-  creditedTransaction       CreditTransaction?        @relation("FinancialPurchaseCredit", fields: [creditedTransactionId], references: [id], onDelete: Restrict)
-  paymentEvents             FinancialPaymentEvent[]
-  refunds                   FinancialRefund[]
-  invoice                   FinancialInvoice?
-  discountRedemption        DiscountRedemption?
-  subscriptionFirstPayment  ProfessionalSubscription?
+  id                               String                                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId                   String                                        @db.Uuid
+  createdByUserId                  String                                        @db.Uuid
+  kind                             FinancialPurchaseKind                         @default(CREDIT_PACKAGE)
+  status                           FinancialPurchaseStatus                       @default(CREATED)
+  pricingMode                      FinancialPricingMode                          @default(STANDARD)
+  packageSku                       String                                        @db.VarChar(40)
+  packageLabel                     String                                        @db.VarChar(120)
+  credits                          Int
+  baseAmountCents                  Int
+  packageDiscountCents             Int                                           @default(0)
+  proDiscountCents                 Int                                           @default(0)
+  discountCodeDiscountCents        Int                                           @default(0)
+  amountExclVatCents               Int
+  vatRateBps                       Int
+  vatAmountCents                   Int
+  amountInclVatCents               Int
+  currency                         String                                        @db.Char(3)
+  discountCodeId                   String?                                       @db.Uuid
+  discountCodeSnapshot             Json?                                         @db.JsonB
+  billingOrganizationName          String                                        @db.VarChar(200)
+  billingAddressLine               String                                        @db.VarChar(200)
+  billingPostalCode                String                                        @db.VarChar(20)
+  billingCity                      String                                        @db.VarChar(120)
+  billingCountryCode               String                                        @db.Char(2)
+  billingKvKNumber                 String?                                       @db.VarChar(20)
+  billingVatId                     String?                                       @db.VarChar(40)
+  molliePaymentId                  String?                                       @unique @db.VarChar(80)
+  mollieCheckoutUrl                String?                                       @db.VarChar(500)
+  creditedTransactionId            String?                                       @unique @db.Uuid
+  idempotencyKey                   String                                        @unique @db.VarChar(160)
+  paymentCreatedAt                 DateTime?                                     @db.Timestamptz(3)
+  paidAt                           DateTime?                                     @db.Timestamptz(3)
+  terminalAt                       DateTime?                                     @db.Timestamptz(3)
+  createdAt                        DateTime                                      @default(now()) @db.Timestamptz(3)
+  updatedAt                        DateTime                                      @updatedAt @db.Timestamptz(3)
+  organization                     Organization                                  @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  createdByUser                    User                                          @relation("FinancialPurchaseActor", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  discountCode                     DiscountCode?                                 @relation(fields: [discountCodeId], references: [id], onDelete: Restrict)
+  creditedTransaction              CreditTransaction?                            @relation("FinancialPurchaseCredit", fields: [creditedTransactionId], references: [id], onDelete: Restrict)
+  paymentEvents                    FinancialPaymentEvent[]
+  refunds                          FinancialRefund[]
+  invoice                          FinancialInvoice?
+  discountRedemption               DiscountRedemption?
+  subscriptionFirstPayment         ProfessionalSubscription?
   subscriptionFirstPaymentAttempts ProfessionalSubscriptionFirstPaymentAttempt[]
-  events                    FinancialEvent[]
+  events                           FinancialEvent[]
 
   @@index([organizationId, createdAt])
   @@index([status, createdAt])
@@ -3805,6 +3805,11 @@ model FinancialInvoice {
   originalInvoiceId         String?                          @db.Uuid
   organizationId            String                           @db.Uuid
   issuedAt                  DateTime                         @db.Timestamptz(3)
+  snapshotVersion           Int                              @default(1)
+  supplyDate                DateTime?                        @db.Timestamptz(3)
+  advancePaymentDate        DateTime?                        @db.Timestamptz(3)
+  servicePeriodStart        DateTime?                        @db.Timestamptz(3)
+  servicePeriodEnd          DateTime?                        @db.Timestamptz(3)
   sellerLegalName           String                           @db.VarChar(200)
   sellerTradeName           String                           @db.VarChar(200)
   sellerAddressLine         String                           @db.VarChar(200)
@@ -3842,10 +3847,49 @@ model FinancialInvoice {
   corrections               FinancialInvoice[]               @relation("FinancialInvoiceCorrection")
   jorttSync                 FinancialJorttSync?
   events                    FinancialEvent[]
+  lines                     FinancialInvoiceLine[]
+  vatSummaries              FinancialInvoiceVatSummary[]
 
   @@index([organizationId, issuedAt])
   @@index([documentType, issuedAt])
   @@index([originalInvoiceId])
+}
+
+model FinancialInvoiceLine {
+  id                      String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoiceId               String           @db.Uuid
+  position                Int
+  description             String           @db.VarChar(500)
+  quantity                Int
+  unit                    String           @db.VarChar(40)
+  unitPriceExclVatCents   Int
+  grossAmountExclVatCents Int
+  discountAmountCents     Int
+  netAmountExclVatCents   Int
+  vatRateBps              Int
+  vatAmountCents          Int
+  amountInclVatCents      Int
+  servicePeriodStart      DateTime?        @db.Timestamptz(3)
+  servicePeriodEnd        DateTime?        @db.Timestamptz(3)
+  createdAt               DateTime         @default(now()) @db.Timestamptz(3)
+  invoice                 FinancialInvoice @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+
+  @@unique([invoiceId, position])
+  @@index([invoiceId])
+}
+
+model FinancialInvoiceVatSummary {
+  id                        String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoiceId                 String           @db.Uuid
+  vatRateBps                Int
+  taxableAmountExclVatCents Int
+  vatAmountCents            Int
+  amountInclVatCents        Int
+  createdAt                 DateTime         @default(now()) @db.Timestamptz(3)
+  invoice                   FinancialInvoice @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+
+  @@unique([invoiceId, vatRateBps])
+  @@index([invoiceId])
 }
 
 model FinancialJorttSync {
@@ -3965,37 +4009,37 @@ model StarterBenefitGrant {
 }
 
 model ProfessionalSubscription {
-  id                      String                            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizationId          String                            @unique @db.Uuid
-  status                  ProfessionalSubscriptionStatus    @default(PENDING_MANDATE)
-  planCode                String                            @db.VarChar(40)
-  planLabel               String                            @db.VarChar(120)
+  id                      String                                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId          String                                        @unique @db.Uuid
+  status                  ProfessionalSubscriptionStatus                @default(PENDING_MANDATE)
+  planCode                String                                        @db.VarChar(40)
+  planLabel               String                                        @db.VarChar(120)
   amountExclVatCents      Int
   vatRateBps              Int
   vatAmountCents          Int
   amountInclVatCents      Int
-  currency                String                            @db.Char(3)
-  mollieCustomerId        String?                           @unique @db.VarChar(80)
-  mollieMandateId         String?                           @db.VarChar(80)
-  mollieMandateStatus     String?                           @db.VarChar(20)
-  mollieMandateMethod     String?                           @db.VarChar(30)
-  mollieMandateVerifiedAt DateTime?                         @db.Timestamptz(3)
-  mollieSubscriptionId    String?                           @unique @db.VarChar(80)
-  firstPaymentPurchaseId  String?                           @unique @db.Uuid
-  currentPeriodStart      DateTime?                         @db.Timestamptz(3)
-  currentPeriodEnd        DateTime?                         @db.Timestamptz(3)
-  cancelAtPeriodEnd       Boolean                           @default(false)
-  cancellationRequestedAt DateTime?                         @db.Timestamptz(3)
-  cancellationEffectiveAt DateTime?                         @db.Timestamptz(3)
-  pastDueAt               DateTime?                         @db.Timestamptz(3)
-  retryCount              Int                               @default(0)
-  activatedAt             DateTime?                         @db.Timestamptz(3)
-  suspendedAt             DateTime?                         @db.Timestamptz(3)
-  canceledAt              DateTime?                         @db.Timestamptz(3)
-  createdAt               DateTime                          @default(now()) @db.Timestamptz(3)
-  updatedAt               DateTime                          @updatedAt @db.Timestamptz(3)
-  organization            Organization                      @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  firstPaymentPurchase    FinancialPurchase?                @relation(fields: [firstPaymentPurchaseId], references: [id], onDelete: Restrict)
+  currency                String                                        @db.Char(3)
+  mollieCustomerId        String?                                       @unique @db.VarChar(80)
+  mollieMandateId         String?                                       @db.VarChar(80)
+  mollieMandateStatus     String?                                       @db.VarChar(20)
+  mollieMandateMethod     String?                                       @db.VarChar(30)
+  mollieMandateVerifiedAt DateTime?                                     @db.Timestamptz(3)
+  mollieSubscriptionId    String?                                       @unique @db.VarChar(80)
+  firstPaymentPurchaseId  String?                                       @unique @db.Uuid
+  currentPeriodStart      DateTime?                                     @db.Timestamptz(3)
+  currentPeriodEnd        DateTime?                                     @db.Timestamptz(3)
+  cancelAtPeriodEnd       Boolean                                       @default(false)
+  cancellationRequestedAt DateTime?                                     @db.Timestamptz(3)
+  cancellationEffectiveAt DateTime?                                     @db.Timestamptz(3)
+  pastDueAt               DateTime?                                     @db.Timestamptz(3)
+  retryCount              Int                                           @default(0)
+  activatedAt             DateTime?                                     @db.Timestamptz(3)
+  suspendedAt             DateTime?                                     @db.Timestamptz(3)
+  canceledAt              DateTime?                                     @db.Timestamptz(3)
+  createdAt               DateTime                                      @default(now()) @db.Timestamptz(3)
+  updatedAt               DateTime                                      @updatedAt @db.Timestamptz(3)
+  organization            Organization                                  @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  firstPaymentPurchase    FinancialPurchase?                            @relation(fields: [firstPaymentPurchaseId], references: [id], onDelete: Restrict)
   firstPaymentAttempts    ProfessionalSubscriptionFirstPaymentAttempt[]
   payments                ProfessionalSubscriptionPayment[]
   events                  FinancialEvent[]
@@ -4492,35 +4536,35 @@ model PlatformAdminInvitation {
 }
 
 model KnowledgeSource {
-  id                      String                           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                      String                            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sourceType              KnowledgeSourceType
   sourceFormat            KnowledgeSourceFormat
-  code                    String                           @unique @db.VarChar(80)
-  title                   String                           @db.VarChar(300)
-  publisher               String?                          @db.VarChar(200)
-  publicationDate         DateTime?                        @db.Date
-  sourceModifiedDate      DateTime?                        @db.Date
-  edition                 String?                          @db.VarChar(120)
-  applicabilityScope      String?                          @db.VarChar(500)
-  metadataStatus          KnowledgeMetadataStatus          @default(UNCERTAIN)
-  language                String                           @default("nl") @db.VarChar(12)
-  jurisdiction            String                           @default("NL") @db.VarChar(40)
-  sourceUrl               String?                          @db.VarChar(1000)
-  localReference          String?                          @db.VarChar(200)
+  code                    String                            @unique @db.VarChar(80)
+  title                   String                            @db.VarChar(300)
+  publisher               String?                           @db.VarChar(200)
+  publicationDate         DateTime?                         @db.Date
+  sourceModifiedDate      DateTime?                         @db.Date
+  edition                 String?                           @db.VarChar(120)
+  applicabilityScope      String?                           @db.VarChar(500)
+  metadataStatus          KnowledgeMetadataStatus           @default(UNCERTAIN)
+  language                String                            @default("nl") @db.VarChar(12)
+  jurisdiction            String                            @default("NL") @db.VarChar(40)
+  sourceUrl               String?                           @db.VarChar(1000)
+  localReference          String?                           @db.VarChar(200)
   copyrightClassification KnowledgeCopyrightClassification
   authorityLevel          KnowledgeAuthorityLevel
-  temporalStatus          KnowledgeTemporalStatus          @default(UNKNOWN)
-  sourceFamily            String                           @db.VarChar(120)
+  temporalStatus          KnowledgeTemporalStatus           @default(UNKNOWN)
+  sourceFamily            String                            @db.VarChar(120)
   canonicalFamily         KnowledgeCanonicalSourceFamily?
-  authorityStatus         KnowledgeSourceAuthorityStatus   @default(UNKNOWN)
-  independenceGroup       String                           @db.VarChar(120)
-  isPrimarySource         Boolean                          @default(false)
-  notes                   String?                          @db.VarChar(1000)
-  createdAt               DateTime                         @default(now()) @db.Timestamptz(3)
-  updatedAt               DateTime                         @updatedAt @db.Timestamptz(3)
+  authorityStatus         KnowledgeSourceAuthorityStatus    @default(UNKNOWN)
+  independenceGroup       String                            @db.VarChar(120)
+  isPrimarySource         Boolean                           @default(false)
+  notes                   String?                           @db.VarChar(1000)
+  createdAt               DateTime                          @default(now()) @db.Timestamptz(3)
+  updatedAt               DateTime                          @updatedAt @db.Timestamptz(3)
   versions                KnowledgeSourceVersion[]
   canonicalIdentity       KnowledgeSourceCanonicalIdentity?
-  applicabilityScopes     KnowledgeSourceApplicability[]   @relation("KnowledgeSourceApplicabilitySource")
+  applicabilityScopes     KnowledgeSourceApplicability[]    @relation("KnowledgeSourceApplicabilitySource")
 
   @@index([sourceType, temporalStatus])
   @@index([sourceFamily, independenceGroup])
@@ -4607,20 +4651,21 @@ model KnowledgeDocumentFamilyMember {
   @@unique([documentFamilyId, sequence])
   @@index([sourceVersionId, role])
 }
+
 model KnowledgeFragment {
-  id               String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  externalKey      String                 @unique @db.VarChar(160)
-  sourceVersionId  String                 @db.Uuid
+  id               String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  externalKey      String                   @unique @db.VarChar(160)
+  sourceVersionId  String                   @db.Uuid
   pageFrom         Int?
   pageTo           Int?
-  sectionPath      String?                @db.VarChar(500)
-  fragmentType     String                 @db.VarChar(80)
-  internalExcerpt  String?                @db.VarChar(500)
-  excerptHash      String?                @db.VarChar(64)
-  extractionMethod String                 @db.VarChar(80)
-  requiresReview   Boolean                @default(true)
-  createdAt        DateTime               @default(now()) @db.Timestamptz(3)
-  sourceVersion    KnowledgeSourceVersion @relation(fields: [sourceVersionId], references: [id], onDelete: Restrict)
+  sectionPath      String?                  @db.VarChar(500)
+  fragmentType     String                   @db.VarChar(80)
+  internalExcerpt  String?                  @db.VarChar(500)
+  excerptHash      String?                  @db.VarChar(64)
+  extractionMethod String                   @db.VarChar(80)
+  requiresReview   Boolean                  @default(true)
+  createdAt        DateTime                 @default(now()) @db.Timestamptz(3)
+  sourceVersion    KnowledgeSourceVersion   @relation(fields: [sourceVersionId], references: [id], onDelete: Restrict)
   citations        KnowledgeCitation[]
   sourceBlocks     KnowledgeFragmentBlock[]
 
@@ -4671,22 +4716,22 @@ model KnowledgeSourcePage {
 }
 
 model KnowledgeSourceBlock {
-  id                   String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sourcePageId         String                   @db.Uuid
-  extractionRunId      String                   @db.Uuid
+  id                   String                                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourcePageId         String                                 @db.Uuid
+  extractionRunId      String                                 @db.Uuid
   globalSequence       Int
   pageSequence         Int
-  sectionPath          String?                  @db.VarChar(500)
+  sectionPath          String?                                @db.VarChar(500)
   blockType            KnowledgeSourceBlockType
-  exactText            String                   @db.Text
-  normalizedSearchText String                   @db.Text
-  textHash             String                   @db.VarChar(64)
-  extractionMethod     String                   @db.VarChar(80)
-  confidence           Decimal?                 @db.Decimal(5, 4)
-  requiresReview       Boolean                  @default(false)
+  exactText            String                                 @db.Text
+  normalizedSearchText String                                 @db.Text
+  textHash             String                                 @db.VarChar(64)
+  extractionMethod     String                                 @db.VarChar(80)
+  confidence           Decimal?                               @db.Decimal(5, 4)
+  requiresReview       Boolean                                @default(false)
   searchVector         Unsupported("tsvector")?
-  createdAt            DateTime                 @default(now()) @db.Timestamptz(3)
-  sourcePage           KnowledgeSourcePage      @relation(fields: [sourcePageId, extractionRunId], references: [id, extractionRunId], onDelete: Restrict)
+  createdAt            DateTime                               @default(now()) @db.Timestamptz(3)
+  sourcePage           KnowledgeSourcePage                    @relation(fields: [sourcePageId, extractionRunId], references: [id, extractionRunId], onDelete: Restrict)
   fragments            KnowledgeFragmentBlock[]
   methodEvidence       KnowledgeMethodEvidence[]
   structuredEvidence   KnowledgeStructuredComponentEvidence[]
@@ -4749,23 +4794,23 @@ model KnowledgeFragmentBlock {
 }
 
 model KnowledgeTopic {
-  id            String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  slug          String                  @unique @db.VarChar(160)
-  title         String                  @db.VarChar(240)
-  description   String                  @db.VarChar(1000)
-  domain        KnowledgeDomain
-  parentTopicId String?                 @db.Uuid
-  status        KnowledgeTopicStatus    @default(DRAFT)
-  createdAt     DateTime                @default(now()) @db.Timestamptz(3)
-  updatedAt     DateTime                @updatedAt @db.Timestamptz(3)
-  parentTopic   KnowledgeTopic?         @relation("KnowledgeTopicTree", fields: [parentTopicId], references: [id], onDelete: Restrict)
-  childTopics   KnowledgeTopic[]        @relation("KnowledgeTopicTree")
-  claims        KnowledgeClaim[]
-  checklists    KnowledgeChecklist[]
-  procedures    KnowledgeProcedure[]
-  formTemplates KnowledgeFormTemplate[]
-  relationsFrom KnowledgeRelation[]     @relation("KnowledgeRelationFromTopic")
-  relationsTo   KnowledgeRelation[]     @relation("KnowledgeRelationToTopic")
+  id                    String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug                  String                         @unique @db.VarChar(160)
+  title                 String                         @db.VarChar(240)
+  description           String                         @db.VarChar(1000)
+  domain                KnowledgeDomain
+  parentTopicId         String?                        @db.Uuid
+  status                KnowledgeTopicStatus           @default(DRAFT)
+  createdAt             DateTime                       @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime                       @updatedAt @db.Timestamptz(3)
+  parentTopic           KnowledgeTopic?                @relation("KnowledgeTopicTree", fields: [parentTopicId], references: [id], onDelete: Restrict)
+  childTopics           KnowledgeTopic[]               @relation("KnowledgeTopicTree")
+  claims                KnowledgeClaim[]
+  checklists            KnowledgeChecklist[]
+  procedures            KnowledgeProcedure[]
+  formTemplates         KnowledgeFormTemplate[]
+  relationsFrom         KnowledgeRelation[]            @relation("KnowledgeRelationFromTopic")
+  relationsTo           KnowledgeRelation[]            @relation("KnowledgeRelationToTopic")
   sectorApplicabilities KnowledgeSectorApplicability[]
 
   @@index([domain, status])
@@ -4773,46 +4818,46 @@ model KnowledgeTopic {
 }
 
 model KnowledgeClaim {
-  id                      String                           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  externalKey             String                           @unique @db.VarChar(160)
-  topicId                 String                           @db.Uuid
+  id                      String                               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  externalKey             String                               @unique @db.VarChar(160)
+  topicId                 String                               @db.Uuid
   claimType               KnowledgeClaimType
-  statement               String                           @db.VarChar(1500)
-  normalizedStatement     String?                          @db.VarChar(1500)
-  applicability           String                           @db.VarChar(1000)
-  jurisdiction            String                           @default("NL") @db.VarChar(40)
-  validFrom               DateTime?                        @db.Date
-  validUntil              DateTime?                        @db.Date
-  temporalStatus          KnowledgeTemporalStatus          @default(UNKNOWN)
-  validationStatus        KnowledgeValidationStatus        @default(UNVALIDATED)
-  publicationStatus       KnowledgePublicationStatus       @default(DRAFT)
-  confidenceLevel         KnowledgeConfidenceLevel         @default(UNKNOWN)
-  accessTier              KnowledgeAccessTier              @default(INTERNAL_REVIEWER)
-  copyrightCheckPassed    Boolean                          @default(false)
-  nextReviewAt            DateTime?                        @db.Timestamptz(3)
-  controlRisk             KnowledgeControlRisk             @default(MEDIUM)
-  sourceControlStatus     KnowledgeSourceControlStatus     @default(NOT_STARTED)
-  lastSourceCheckedAt     DateTime?                        @db.Timestamptz(3)
-  createdByActor          String                           @db.VarChar(80)
-  createdByUserId         String?                          @db.Uuid
-  reviewedByUserId        String?                          @db.Uuid
-  reviewedAt              DateTime?                        @db.Timestamptz(3)
-  createdAt               DateTime                         @default(now()) @db.Timestamptz(3)
-  updatedAt               DateTime                         @updatedAt @db.Timestamptz(3)
-  topic                   KnowledgeTopic                   @relation(fields: [topicId], references: [id], onDelete: Restrict)
-  createdByUser           User?                            @relation("KnowledgeClaimCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
-  reviewedByUser          User?                            @relation("KnowledgeClaimReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+  statement               String                               @db.VarChar(1500)
+  normalizedStatement     String?                              @db.VarChar(1500)
+  applicability           String                               @db.VarChar(1000)
+  jurisdiction            String                               @default("NL") @db.VarChar(40)
+  validFrom               DateTime?                            @db.Date
+  validUntil              DateTime?                            @db.Date
+  temporalStatus          KnowledgeTemporalStatus              @default(UNKNOWN)
+  validationStatus        KnowledgeValidationStatus            @default(UNVALIDATED)
+  publicationStatus       KnowledgePublicationStatus           @default(DRAFT)
+  confidenceLevel         KnowledgeConfidenceLevel             @default(UNKNOWN)
+  accessTier              KnowledgeAccessTier                  @default(INTERNAL_REVIEWER)
+  copyrightCheckPassed    Boolean                              @default(false)
+  nextReviewAt            DateTime?                            @db.Timestamptz(3)
+  controlRisk             KnowledgeControlRisk                 @default(MEDIUM)
+  sourceControlStatus     KnowledgeSourceControlStatus         @default(NOT_STARTED)
+  lastSourceCheckedAt     DateTime?                            @db.Timestamptz(3)
+  createdByActor          String                               @db.VarChar(80)
+  createdByUserId         String?                              @db.Uuid
+  reviewedByUserId        String?                              @db.Uuid
+  reviewedAt              DateTime?                            @db.Timestamptz(3)
+  createdAt               DateTime                             @default(now()) @db.Timestamptz(3)
+  updatedAt               DateTime                             @updatedAt @db.Timestamptz(3)
+  topic                   KnowledgeTopic                       @relation(fields: [topicId], references: [id], onDelete: Restrict)
+  createdByUser           User?                                @relation("KnowledgeClaimCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  reviewedByUser          User?                                @relation("KnowledgeClaimReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
   citations               KnowledgeCitation[]
   validations             KnowledgeValidation[]
-  relationsFrom           KnowledgeRelation[]              @relation("KnowledgeRelationFromClaim")
-  relationsTo             KnowledgeRelation[]              @relation("KnowledgeRelationToClaim")
-  explainedChecklistItems KnowledgeChecklistItem[]         @relation("KnowledgeChecklistExplanation")
-  warningProcedureSteps   KnowledgeProcedureStep[]         @relation("KnowledgeProcedureWarning")
+  relationsFrom           KnowledgeRelation[]                  @relation("KnowledgeRelationFromClaim")
+  relationsTo             KnowledgeRelation[]                  @relation("KnowledgeRelationToClaim")
+  explainedChecklistItems KnowledgeChecklistItem[]             @relation("KnowledgeChecklistExplanation")
+  warningProcedureSteps   KnowledgeProcedureStep[]             @relation("KnowledgeProcedureWarning")
   responsibilities        KnowledgeResponsibility[]
   reviewTasks             KnowledgeReviewTask[]
   reviewSourceReferences  KnowledgeReviewSourceReference[]
   improvementReports      KnowledgeImprovementReport[]
-  crossValidations         KnowledgeCrossValidationAssessment[]
+  crossValidations        KnowledgeCrossValidationAssessment[]
   sectorApplicabilities   KnowledgeSectorApplicability[]
 
   @@index([topicId, claimType])
@@ -4917,7 +4962,7 @@ model KnowledgeRule {
   createdAt         DateTime                   @default(now()) @db.Timestamptz(3)
   updatedAt         DateTime                   @updatedAt @db.Timestamptz(3)
   procedureSteps    KnowledgeProcedureStep[]
-  methodComponents KnowledgeMethodComponent[]
+  methodComponents  KnowledgeMethodComponent[]
 
   @@unique([code, ruleVersion])
   @@index([publicationStatus, validationStatus])
@@ -4969,19 +5014,19 @@ model KnowledgeChecklist {
 }
 
 model KnowledgeChecklistItem {
-  id                 String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  checklistId        String                       @db.Uuid
+  id                 String                                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  checklistId        String                                 @db.Uuid
   order              Int
-  question           String                       @db.VarChar(1000)
+  question           String                                 @db.VarChar(1000)
   answerType         KnowledgeChecklistAnswerType
   answerOptions      Json?
   scoreRules         Json?
-  explanationClaimId String?                      @db.Uuid
-  required           Boolean                      @default(true)
-  createdAt          DateTime                     @default(now()) @db.Timestamptz(3)
-  updatedAt          DateTime                     @updatedAt @db.Timestamptz(3)
-  checklist          KnowledgeChecklist           @relation(fields: [checklistId], references: [id], onDelete: Restrict)
-  explanationClaim   KnowledgeClaim?              @relation("KnowledgeChecklistExplanation", fields: [explanationClaimId], references: [id], onDelete: Restrict)
+  explanationClaimId String?                                @db.Uuid
+  required           Boolean                                @default(true)
+  createdAt          DateTime                               @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime                               @updatedAt @db.Timestamptz(3)
+  checklist          KnowledgeChecklist                     @relation(fields: [checklistId], references: [id], onDelete: Restrict)
+  explanationClaim   KnowledgeClaim?                        @relation("KnowledgeChecklistExplanation", fields: [explanationClaimId], references: [id], onDelete: Restrict)
   evidence           KnowledgeStructuredComponentEvidence[]
 
   @@unique([checklistId, order])
@@ -5012,21 +5057,21 @@ model KnowledgeProcedure {
 }
 
 model KnowledgeProcedureStep {
-  id                String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  procedureId       String                    @db.Uuid
+  id                String                                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  procedureId       String                                 @db.Uuid
   order             Int
-  title             String                    @db.VarChar(240)
-  instruction       String                    @db.VarChar(1500)
-  conditionRuleId   String?                   @db.Uuid
-  responsibleRoleId String?                   @db.Uuid
-  evidenceRequired  String?                   @db.VarChar(500)
-  warningClaimId    String?                   @db.Uuid
-  createdAt         DateTime                  @default(now()) @db.Timestamptz(3)
-  updatedAt         DateTime                  @updatedAt @db.Timestamptz(3)
-  procedure         KnowledgeProcedure        @relation(fields: [procedureId], references: [id], onDelete: Restrict)
-  conditionRule     KnowledgeRule?            @relation(fields: [conditionRuleId], references: [id], onDelete: Restrict)
-  responsibleRole   KnowledgeRole?            @relation(fields: [responsibleRoleId], references: [id], onDelete: Restrict)
-  warningClaim      KnowledgeClaim?           @relation("KnowledgeProcedureWarning", fields: [warningClaimId], references: [id], onDelete: Restrict)
+  title             String                                 @db.VarChar(240)
+  instruction       String                                 @db.VarChar(1500)
+  conditionRuleId   String?                                @db.Uuid
+  responsibleRoleId String?                                @db.Uuid
+  evidenceRequired  String?                                @db.VarChar(500)
+  warningClaimId    String?                                @db.Uuid
+  createdAt         DateTime                               @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime                               @updatedAt @db.Timestamptz(3)
+  procedure         KnowledgeProcedure                     @relation(fields: [procedureId], references: [id], onDelete: Restrict)
+  conditionRule     KnowledgeRule?                         @relation(fields: [conditionRuleId], references: [id], onDelete: Restrict)
+  responsibleRole   KnowledgeRole?                         @relation(fields: [responsibleRoleId], references: [id], onDelete: Restrict)
+  warningClaim      KnowledgeClaim?                        @relation("KnowledgeProcedureWarning", fields: [warningClaimId], references: [id], onDelete: Restrict)
   responsibilities  KnowledgeResponsibility[]
   evidence          KnowledgeStructuredComponentEvidence[]
 
@@ -5107,27 +5152,27 @@ model KnowledgeFormTemplate {
 }
 
 model KnowledgeMethod {
-  id                    String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  code                  String                     @db.VarChar(120)
-  revision              Int
-  title                 String                     @db.VarChar(240)
-  purpose               String                     @db.VarChar(1500)
-  applicability         Json
-  inputContract         Json
-  outputContract        Json
-  limitations           String                     @db.VarChar(2000)
-  temporalStatus        KnowledgeTemporalStatus
-  validationStatus      KnowledgeValidationStatus  @default(UNVALIDATED)
-  publicationStatus     KnowledgePublicationStatus @default(DRAFT)
-  accessTier            KnowledgeAccessTier        @default(INTERNAL_REVIEWER)
-  contentFingerprint    String                     @db.VarChar(64)
-  supersedesMethodId    String?                    @unique @db.Uuid
-  createdByActor        String                     @db.VarChar(80)
-  createdAt             DateTime                   @default(now()) @db.Timestamptz(3)
-  supersedesMethod      KnowledgeMethod?           @relation("KnowledgeMethodRevisions", fields: [supersedesMethodId], references: [id], onDelete: Restrict)
-  supersededByMethod    KnowledgeMethod?           @relation("KnowledgeMethodRevisions")
-  components            KnowledgeMethodComponent[]
-  evidence              KnowledgeMethodEvidence[]
+  id                 String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code               String                     @db.VarChar(120)
+  revision           Int
+  title              String                     @db.VarChar(240)
+  purpose            String                     @db.VarChar(1500)
+  applicability      Json
+  inputContract      Json
+  outputContract     Json
+  limitations        String                     @db.VarChar(2000)
+  temporalStatus     KnowledgeTemporalStatus
+  validationStatus   KnowledgeValidationStatus  @default(UNVALIDATED)
+  publicationStatus  KnowledgePublicationStatus @default(DRAFT)
+  accessTier         KnowledgeAccessTier        @default(INTERNAL_REVIEWER)
+  contentFingerprint String                     @db.VarChar(64)
+  supersedesMethodId String?                    @unique @db.Uuid
+  createdByActor     String                     @db.VarChar(80)
+  createdAt          DateTime                   @default(now()) @db.Timestamptz(3)
+  supersedesMethod   KnowledgeMethod?           @relation("KnowledgeMethodRevisions", fields: [supersedesMethodId], references: [id], onDelete: Restrict)
+  supersededByMethod KnowledgeMethod?           @relation("KnowledgeMethodRevisions")
+  components         KnowledgeMethodComponent[]
+  evidence           KnowledgeMethodEvidence[]
 
   @@unique([code, revision])
   @@unique([code, contentFingerprint])
@@ -5183,45 +5228,45 @@ model KnowledgeMethodEvidence {
 }
 
 model KnowledgeReviewTask {
-  id                      String                           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  entityType              String                           @db.VarChar(80)
-  entityId                String                           @db.Uuid
-  claimId                 String                           @db.Uuid
-  reviewReason            String                           @db.VarChar(1000)
-  priority                KnowledgeReviewPriority          @default(NORMAL)
-  status                  KnowledgeReviewTaskStatus        @default(OPEN)
-  requiresHumanAction     Boolean                          @default(false)
+  id                      String                               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  entityType              String                               @db.VarChar(80)
+  entityId                String                               @db.Uuid
+  claimId                 String                               @db.Uuid
+  reviewReason            String                               @db.VarChar(1000)
+  priority                KnowledgeReviewPriority              @default(NORMAL)
+  status                  KnowledgeReviewTaskStatus            @default(OPEN)
+  requiresHumanAction     Boolean                              @default(false)
   controlExceptionType    KnowledgeControlExceptionType?
-  controlExceptionReason  String?                          @db.VarChar(1000)
-  activatedAt             DateTime?                        @db.Timestamptz(3)
-  deactivatedAt           DateTime?                        @db.Timestamptz(3)
-  version                 Int                              @default(1)
-  proposedStatement       String?                          @db.VarChar(1500)
-  substantiveNotes        String?                          @db.VarChar(1500)
-  practicalNuance         String?                          @db.VarChar(1500)
-  applicabilityConditions String?                          @db.VarChar(1500)
-  exceptions              String?                          @db.VarChar(1500)
-  editorialNote           String?                          @db.VarChar(1500)
+  controlExceptionReason  String?                              @db.VarChar(1000)
+  activatedAt             DateTime?                            @db.Timestamptz(3)
+  deactivatedAt           DateTime?                            @db.Timestamptz(3)
+  version                 Int                                  @default(1)
+  proposedStatement       String?                              @db.VarChar(1500)
+  substantiveNotes        String?                              @db.VarChar(1500)
+  practicalNuance         String?                              @db.VarChar(1500)
+  applicabilityConditions String?                              @db.VarChar(1500)
+  exceptions              String?                              @db.VarChar(1500)
+  editorialNote           String?                              @db.VarChar(1500)
   proposedAccessTier      KnowledgeAccessTier?
-  assignedToId            String?                          @db.Uuid
-  lastEditedById          String?                          @db.Uuid
-  completedById           String?                          @db.Uuid
-  dueAt                   DateTime?                        @db.Timestamptz(3)
-  deferredUntil           DateTime?                        @db.Timestamptz(3)
-  nextReviewAt            DateTime?                        @db.Timestamptz(3)
-  startedAt               DateTime?                        @db.Timestamptz(3)
-  completedAt             DateTime?                        @db.Timestamptz(3)
-  createdAt               DateTime                         @default(now()) @db.Timestamptz(3)
-  updatedAt               DateTime                         @updatedAt @db.Timestamptz(3)
-  claim                   KnowledgeClaim                   @relation(fields: [claimId], references: [id], onDelete: Restrict)
-  assignedTo              User?                            @relation("KnowledgeReviewTaskAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
-  lastEditedBy            User?                            @relation("KnowledgeReviewTaskEditor", fields: [lastEditedById], references: [id], onDelete: SetNull)
-  completedBy             User?                            @relation("KnowledgeReviewTaskCompleter", fields: [completedById], references: [id], onDelete: SetNull)
+  assignedToId            String?                              @db.Uuid
+  lastEditedById          String?                              @db.Uuid
+  completedById           String?                              @db.Uuid
+  dueAt                   DateTime?                            @db.Timestamptz(3)
+  deferredUntil           DateTime?                            @db.Timestamptz(3)
+  nextReviewAt            DateTime?                            @db.Timestamptz(3)
+  startedAt               DateTime?                            @db.Timestamptz(3)
+  completedAt             DateTime?                            @db.Timestamptz(3)
+  createdAt               DateTime                             @default(now()) @db.Timestamptz(3)
+  updatedAt               DateTime                             @updatedAt @db.Timestamptz(3)
+  claim                   KnowledgeClaim                       @relation(fields: [claimId], references: [id], onDelete: Restrict)
+  assignedTo              User?                                @relation("KnowledgeReviewTaskAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  lastEditedBy            User?                                @relation("KnowledgeReviewTaskEditor", fields: [lastEditedById], references: [id], onDelete: SetNull)
+  completedBy             User?                                @relation("KnowledgeReviewTaskCompleter", fields: [completedById], references: [id], onDelete: SetNull)
   decisions               KnowledgeReviewDecision[]
   sourceReferences        KnowledgeReviewSourceReference[]
   validations             KnowledgeValidation[]
   improvementReports      KnowledgeImprovementReport[]
-  crossValidations         KnowledgeCrossValidationAssessment[]
+  crossValidations        KnowledgeCrossValidationAssessment[]
 
   @@index([status, priority, dueAt])
   @@index([requiresHumanAction, status, priority, dueAt])

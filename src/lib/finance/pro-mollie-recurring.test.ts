@@ -451,7 +451,8 @@ describe('WorkMatchr Pro via first payment en recurring mandate', () => {
 
     expect(current).toMatchObject({ status: 'ACTIVE', pastDueAt: null, retryCount: 0 })
     expect(mocks.paymentUpsert).toHaveBeenCalledWith(expect.objectContaining({
-      create: expect.objectContaining({ amountInclVatCents: 5_929, status: 'PAID' }),
+      create: expect.objectContaining({ amountInclVatCents: 5_929, status: 'PAID',
+        periodStart: new Date('2026-09-09T12:00:00Z'), periodEnd: new Date('2026-10-09T12:00:00Z') }),
     }))
     expect(mocks.invoice).toHaveBeenCalledWith(transaction, '50000000-0000-4000-8000-000000000001', expect.any(Date))
   })

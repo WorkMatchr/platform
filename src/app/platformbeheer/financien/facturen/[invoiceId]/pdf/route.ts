@@ -7,7 +7,10 @@ export const runtime = 'nodejs'
 export async function GET(_request: Request, { params }: { params: Promise<{ invoiceId: string }> }) {
   const { invoiceId } = await params
   await requirePlatformAdministrator(`/platformbeheer/financien/facturen/${invoiceId}/pdf`)
-  const invoice = await getPrisma().financialInvoice.findUnique({ where: { id: invoiceId } })
+  const invoice = await getPrisma().financialInvoice.findUnique({
+    where: { id: invoiceId },
+    include: { lines: { orderBy: { position: 'asc' } }, vatSummaries: { orderBy: { vatRateBps: 'asc' } } },
+  })
   if (!invoice) return new Response('Niet gevonden', { status: 404 })
 
   const pdf = await buildFinancialInvoicePdf(invoice)

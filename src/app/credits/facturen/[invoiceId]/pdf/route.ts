@@ -9,6 +9,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ inv
   const { activeMembership } = await requireOrganizationMembership(undefined, `/credits/facturen/${invoiceId}/pdf`)
   const invoice = await getPrisma().financialInvoice.findFirst({
     where: { id: invoiceId, organizationId: activeMembership.organization.id },
+    include: { lines: { orderBy: { position: 'asc' } }, vatSummaries: { orderBy: { vatRateBps: 'asc' } } },
   })
   if (!invoice) return new Response('Niet gevonden', { status: 404 })
   const pdf = await buildFinancialInvoicePdf(invoice)

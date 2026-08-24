@@ -3,7 +3,7 @@ import 'server-only'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib'
-import type { FinancialInvoice } from '@/generated/prisma/client'
+import type { FinancialInvoice, FinancialInvoiceLine, FinancialInvoiceVatSummary } from '@/generated/prisma/client'
 import { formatEuro } from './financial-contract'
 
 const PAGE_WIDTH = 595.28
@@ -22,6 +22,11 @@ export type FinancialInvoicePdfSnapshot = Pick<FinancialInvoice,
   | 'documentType'
   | 'invoiceNumber'
   | 'issuedAt'
+  | 'snapshotVersion'
+  | 'supplyDate'
+  | 'advancePaymentDate'
+  | 'servicePeriodStart'
+  | 'servicePeriodEnd'
   | 'sellerLegalName'
   | 'sellerTradeName'
   | 'sellerAddressLine'
@@ -43,7 +48,7 @@ export type FinancialInvoicePdfSnapshot = Pick<FinancialInvoice,
   | 'vatRateBps'
   | 'vatAmountCents'
   | 'amountInclVatCents'
->
+> & { lines?: FinancialInvoiceLine[]; vatSummaries?: FinancialInvoiceVatSummary[] }
 
 function normalize(value: string) {
   return value.replaceAll('\u0000', '').replaceAll('\u00a0', ' ').replaceAll('\u2011', '-').replaceAll('\u2013', '-')
@@ -105,10 +110,12 @@ export async function buildFinancialInvoicePdf(invoice: FinancialInvoicePdfSnaps
   const text = (value: string, options: { font?: PDFFont; size?: number; color?: ReturnType<typeof rgb>; gapAfter?: number } = {}) => {
     const font = options.font ?? regular
     const size = options.size ?? BODY_SIZE
-    for (const line of wrapText(value, font, size, CONTENT_WIDTH)) {
-      ensureSpace(LINE_HEIGHT)
-      page.drawText(line, { x: MARGIN_X, y, size, font, color: options.color ?? textColor })
-      y -= LINE_HEIGHT
+    for (const paragraph of normalize(value).split('\n')) {
+      for (const line of wrapText(paragraph, font, size, CONTENT_WIDTH)) {
+        ensureSpace(LINE_HEIGHT)
+        page.drawText(line, { x: MARGIN_X, y, size, font, color: options.color ?? textColor })
+        y -= LINE_HEIGHT
+      }
     }
     y -= options.gapAfter ?? 4
   }
@@ -125,17 +132,41 @@ export async function buildFinancialInvoicePdf(invoice: FinancialInvoicePdfSnaps
   text(invoice.documentType === 'CREDIT_NOTE' ? 'Creditnota' : 'Factuur', { font: bold, size: 24, color: brandDark, gapAfter: 8 })
   text(`Factuurnummer: ${invoice.invoiceNumber}`, { font: bold, color: brandBlue, gapAfter: 2 })
   text(`Factuurdatum: ${formatInvoiceDate(invoice.issuedAt)}`, { color: muted, gapAfter: 16 })
+  if (invoice.snapshotVersion === 2) {
+    if (!invoice.supplyDate || !invoice.lines?.length || !invoice.vatSummaries?.length) throw new Error('INVOICE_V2_PDF_SNAPSHOT_INCOMPLETE')
+    text(`Lever-/prestatiedatum: ${formatInvoiceDate(invoice.supplyDate)}`, { color: muted, gapAfter: 2 })
+    if (invoice.advancePaymentDate) text(`Vooruitbetalingsdatum: ${formatInvoiceDate(invoice.advancePaymentDate)}`, { color: muted, gapAfter: 2 })
+    if (invoice.servicePeriodStart && invoice.servicePeriodEnd) {
+      text(`Dienstperiode: ${formatInvoiceDate(invoice.servicePeriodStart)} t/m ${formatInvoiceDate(invoice.servicePeriodEnd)}`, { color: muted, gapAfter: 12 })
+    }
+  }
 
   heading('Leverancier')
   text(`${invoice.sellerTradeName}\n${invoice.sellerLegalName}\n${invoice.sellerAddressLine}\n${invoice.sellerPostalCode} ${invoice.sellerCity}\n${invoice.sellerCountryCode}\nKvK ${invoice.sellerKvKNumber}\nBtw ${invoice.sellerVatId}`, { gapAfter: 10 })
   heading('Klant')
   text(`${invoice.customerOrganizationName}\n${invoice.customerAddressLine}\n${invoice.customerPostalCode} ${invoice.customerCity}\n${invoice.customerCountryCode}${invoice.customerKvKNumber ? `\nKvK ${invoice.customerKvKNumber}` : ''}${invoice.customerVatId ? `\nBtw ${invoice.customerVatId}` : ''}`, { gapAfter: 10 })
-  heading('Omschrijving')
-  text(invoice.packageLabel, { font: bold, gapAfter: 2 })
-  if (invoice.credits !== 0) text(`${invoice.credits} credits`, { color: muted, gapAfter: 10 })
+  heading(invoice.snapshotVersion === 2 ? 'Factuurregels' : 'Omschrijving')
+  if (invoice.snapshotVersion === 2 && invoice.lines) {
+    for (const line of invoice.lines) {
+      ensureSpace(104)
+      text(line.description, { font: bold, color: brandDark, gapAfter: 2 })
+      text(`${line.quantity} ${line.unit} x ${formatEuro(line.unitPriceExclVatCents)} excl. btw`, { gapAfter: 2 })
+      if (line.servicePeriodStart && line.servicePeriodEnd) text(`Periode: ${formatInvoiceDate(line.servicePeriodStart)} t/m ${formatInvoiceDate(line.servicePeriodEnd)}`, { color: muted, gapAfter: 2 })
+      if (line.discountAmountCents > 0) text(`Korting: -${formatEuro(line.discountAmountCents)}`, { color: muted, gapAfter: 2 })
+      text(`Netto excl. btw: ${formatEuro(line.netAmountExclVatCents)} | Btw ${line.vatRateBps / 100}%: ${formatEuro(line.vatAmountCents)} | Incl. btw: ${formatEuro(line.amountInclVatCents)}`, { gapAfter: 10 })
+      page.drawLine({ start: { x: MARGIN_X, y }, end: { x: PAGE_WIDTH - MARGIN_X, y }, color: rgb(0.82, 0.88, 0.92), thickness: 0.7 })
+      y -= 10
+    }
+  } else {
+    text(invoice.packageLabel, { font: bold, gapAfter: 2 })
+    if (invoice.credits !== 0) text(`${invoice.credits} credits`, { color: muted, gapAfter: 10 })
+  }
   heading('Bedragen')
   text(`Bedrag excl. btw: ${formatEuro(invoice.amountExclVatCents)}`, { gapAfter: 2 })
-  text(`Btw (${invoice.vatRateBps / 100}%): ${formatEuro(invoice.vatAmountCents)}`, { gapAfter: 2 })
+  if (invoice.snapshotVersion === 2 && invoice.vatSummaries) {
+    for (const summary of invoice.vatSummaries) text(`Btw ${summary.vatRateBps / 100}% over ${formatEuro(summary.taxableAmountExclVatCents)}: ${formatEuro(summary.vatAmountCents)}`, { gapAfter: 2 })
+    text(`Totaal btw: ${formatEuro(invoice.vatAmountCents)}`, { gapAfter: 2 })
+  } else text(`Btw (${invoice.vatRateBps / 100}%): ${formatEuro(invoice.vatAmountCents)}`, { gapAfter: 2 })
   text(`Totaal incl. btw: ${formatEuro(invoice.amountInclVatCents)}`, { font: bold, size: 12, color: brandDark, gapAfter: 0 })
 
   const pages = document.getPages()
