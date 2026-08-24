@@ -47,6 +47,60 @@ export async function listPlatformFinancialPayments(actorUserId: string, filters
   return paginated(filters.page, () => prisma.financialPurchase.count({ where }), (skip) => prisma.financialPurchase.findMany({ where, select, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], skip, take: PAGE_SIZE }))
 }
 
+export async function getPlatformFinancialPaymentDetail(actorUserId: string, purchaseId: string) {
+  await getPlatformAdministratorContext(actorUserId)
+  const prisma = getPrisma()
+  const purchase = await prisma.financialPurchase.findUnique({
+    where: { id: purchaseId },
+    select: {
+      id: true,
+      createdAt: true,
+      paidAt: true,
+      kind: true,
+      status: true,
+      packageLabel: true,
+      credits: true,
+      molliePaymentId: true,
+      amountExclVatCents: true,
+      vatRateBps: true,
+      vatAmountCents: true,
+      amountInclVatCents: true,
+      organization: { select: { id: true, name: true } },
+      invoice: { select: { id: true, invoiceNumber: true } },
+      refunds: {
+        orderBy: { requestedAt: 'desc' },
+        select: {
+          id: true,
+          status: true,
+          requestedAt: true,
+          completedAt: true,
+          mollieRefundId: true,
+          creditNote: { select: { id: true, invoiceNumber: true } },
+        },
+      },
+      creditedTransaction: {
+        select: {
+          creditAccountId: true,
+          createdAt: true,
+          creditAccount: { select: { availableBalance: true, reservedBalance: true, spentBalance: true } },
+        },
+      },
+    },
+  })
+  if (!purchase) return null
+  const creditsUsedAfterPurchase = purchase.creditedTransaction
+    ? Boolean(await prisma.creditTransaction.findFirst({
+        where: {
+          creditAccountId: purchase.creditedTransaction.creditAccountId,
+          createdAt: { gt: purchase.creditedTransaction.createdAt },
+          totalDelta: { lt: 0 },
+        },
+        select: { id: true },
+      }))
+    : false
+  return { ...purchase, creditsUsedAfterPurchase }
+}
+
 export async function listPlatformFinancialInvoices(actorUserId: string, filters: FinancialInvoiceFilters = {}) {
   await getPlatformAdministratorContext(actorUserId)
   const prisma = getPrisma()
@@ -74,8 +128,8 @@ export async function listPlatformFinancialRefunds(actorUserId: string, filters:
       : undefined,
   }
   const select = {
-    id: true, status: true, amountCents: true, requestedAt: true, completedAt: true,
-    purchase: { select: { id: true, molliePaymentId: true, organization: { select: { id: true, name: true } }, invoice: { select: { id: true, invoiceNumber: true } } } },
+    id: true, status: true, amountCents: true, requestedAt: true, completedAt: true, mollieRefundId: true,
+    purchase: { select: { id: true, status: true, molliePaymentId: true, organization: { select: { id: true, name: true } }, invoice: { select: { id: true, invoiceNumber: true } } } },
     creditNote: { select: { id: true, invoiceNumber: true } },
   } satisfies Prisma.FinancialRefundSelect
   return paginated(filters.page, () => prisma.financialRefund.count({ where }), (skip) => prisma.financialRefund.findMany({ where, select, orderBy: [{ requestedAt: 'desc' }, { id: 'desc' }], skip, take: PAGE_SIZE }))

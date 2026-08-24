@@ -9,13 +9,15 @@ describe('platformbeheernavigatie', () => {
       'Dagelijks beheer', 'Beoordelingen', 'Inzicht', 'Financieel', 'Systeem',
     ])
     expect(platformAdminNavigation.map((item) => item.label)).toEqual([
-      'Dashboard', 'Actiecentrum', 'Organisaties', 'Gebruikers', 'Dienstverleners', 'Opdrachten',
+      'Dashboard', 'Actiecentrum', 'Organisaties', 'Dienstverleners', 'Opdrachten',
       'Reviews', 'Goedkeuringen', 'Audit',
-      'Marketplace', 'Bedrijfsregels', 'Betrouwbaarheid', 'Trends', 'Rapportages',
-      'Kennisbeheer',
-      'Overzicht', 'Betalingen', 'Facturen', 'Terugbetalingen',
-      'Platformbeheerders', 'Instellingen',
+      'Betrouwbaarheid', 'Trends', 'Rapportages', 'Kennisbeheer',
+      'Overzicht', 'Betalingen', 'Facturen', 'Terugbetalingen', 'Marketplace',
+      'Platformbeheerders', 'Instellingen', 'Bedrijfsregels',
     ])
+    expect(platformAdminNavigation.map((item) => item.label)).not.toContain('Gebruikers')
+    expect(platformAdminNavigationGroups.find((group) => group.label === 'Financieel')?.items.map((item) => item.label)).toContain('Marketplace')
+    expect(platformAdminNavigationGroups.find((group) => group.label === 'Systeem')?.items.map((item) => item.label)).toContain('Bedrijfsregels')
   })
 
   it('verwijst uitsluitend naar bestaande beveiligde pagina’s', () => {
@@ -29,17 +31,24 @@ describe('platformbeheernavigatie', () => {
 
   it('beperkt de navigatie voor een platformauditor tot audit', () => {
     expect(getPlatformAdminNavigationGroups('MEMBER')).toEqual([
-      { label: 'Controle', items: [{ href: '/platformbeheer/auditor', label: 'Audit' }] },
+      { label: 'Controle', tone: 'reviews', items: [{ href: '/platformbeheer/auditor', label: 'Audit' }] },
     ])
     expect(getPlatformAdminNavigationGroups('ADMIN')).toEqual(platformAdminNavigationGroups)
     expect(getPlatformAdminNavigationGroups('OWNER')).toEqual(platformAdminNavigationGroups)
   })
 
   it('behoudt een logische mobiele en toetsenbordvolgorde met native links', () => {
-    const shell = readFileSync(join(process.cwd(), 'src/components/platform-admin/platform-admin-shell.tsx'), 'utf8')
-    expect(shell).toContain('<nav')
-    expect(shell).toContain('<Link')
-    expect(shell).toContain('navigationGroups.map')
-    expect(shell).not.toContain('tabIndex={-1}')
+    const menu = readFileSync(join(process.cwd(), 'src/components/platform-admin/platform-admin-navigation-menu.tsx'), 'utf8')
+    expect(menu).toContain('<nav')
+    expect(menu).toContain('<details')
+    expect(menu).toContain('<summary')
+    expect(menu).toContain('aria-current')
+    expect(menu).not.toContain('tabIndex={-1}')
+  })
+
+  it('biedt gebruikersbeheer vanuit iedere organisatiecontext aan', () => {
+    const route = join(process.cwd(), 'src/app/platformbeheer/organisaties/[organizationId]/gebruikers/page.tsx')
+    expect(existsSync(route)).toBe(true)
+    expect(readFileSync(route, 'utf8')).toContain('PlatformOrganizationUsers')
   })
 })

@@ -136,11 +136,17 @@ export async function refundWorkmatchrError(input: unknown, gateway: MollieGatew
   const values = inputSchema.parse(input)
   const prepared = await runSerializableFinancialTransaction(async (transaction) => {
     await requireMarketplacePlatformAdmin(transaction, values.actorUserId)
-    await lock(transaction, values.idempotencyKey)
+    await lock(transaction, values.purchaseId)
     const existing = await transaction.financialRefund.findUnique({ where: { idempotencyKey: values.idempotencyKey }, include: { purchase: true, creditNote: true } })
     if (existing) return { refund: existing, reviewRequired: existing.purchase.status === 'REFUND_REVIEW_REQUIRED' }
+    const existingForPurchase = await transaction.financialRefund.findFirst({
+      where: { purchaseId: values.purchaseId },
+      orderBy: { requestedAt: 'desc' },
+      include: { purchase: true, creditNote: true },
+    })
+    if (existingForPurchase) return { refund: existingForPurchase, reviewRequired: existingForPurchase.purchase.status === 'REFUND_REVIEW_REQUIRED' }
     const purchase = await transaction.financialPurchase.findUnique({ where: { id: values.purchaseId }, include: { creditedTransaction: true } })
-    if (!purchase || purchase.status !== 'PAID' || !purchase.molliePaymentId || !purchase.creditedTransaction) throw new Error('PAID_CREDIT_PURCHASE_REQUIRED')
+    if (!purchase || purchase.kind !== 'CREDIT_PACKAGE' || purchase.status !== 'PAID' || !purchase.molliePaymentId || !purchase.creditedTransaction) throw new Error('PAID_CREDIT_PURCHASE_REQUIRED')
     const laterUsage = await transaction.creditTransaction.findFirst({
       where: { creditAccountId: purchase.creditedTransaction.creditAccountId, createdAt: { gt: purchase.creditedTransaction.createdAt }, totalDelta: { lt: 0 } },
       select: { id: true },
@@ -152,6 +158,19 @@ export async function refundWorkmatchrError(input: unknown, gateway: MollieGatew
         include: { purchase: true },
       })
       await transaction.financialPurchase.update({ where: { id: purchase.id }, data: { status: 'REFUND_REVIEW_REQUIRED' } })
+      await transaction.financialEvent.upsert({
+        where: { idempotencyKey: `workmatchr-refund-review:${refund.id}` },
+        create: {
+          actorUserId: values.actorUserId,
+          purchaseId: purchase.id,
+          refundId: refund.id,
+          eventType: 'WORKMATCHR_REFUND_REVIEW_REQUIRED',
+          result: 'PENDING',
+          idempotencyKey: `workmatchr-refund-review:${refund.id}`,
+          metadata: { reasonCode: values.reasonCode },
+        },
+        update: {},
+      })
       return { refund, reviewRequired: true }
     }
     const refund = await transaction.financialRefund.create({
@@ -159,6 +178,19 @@ export async function refundWorkmatchrError(input: unknown, gateway: MollieGatew
       include: { purchase: true },
     })
     await recordFinancialRefundCreditPhaseInTransaction(transaction, { refundId, organizationId: purchase.organizationId, actorUserId: values.actorUserId, credits: purchase.credits, phase: 'RESERVE', reason: 'Credits gereserveerd voor goedgekeurde WorkMatchr-terugbetaling.' })
+    await transaction.financialEvent.upsert({
+      where: { idempotencyKey: `workmatchr-refund-requested:${refund.id}` },
+      create: {
+        actorUserId: values.actorUserId,
+        purchaseId: purchase.id,
+        refundId: refund.id,
+        eventType: 'WORKMATCHR_REFUND_REQUESTED',
+        result: 'PENDING',
+        idempotencyKey: `workmatchr-refund-requested:${refund.id}`,
+        metadata: { reasonCode: values.reasonCode },
+      },
+      update: {},
+    })
     return { refund, reviewRequired: false }
   })
   if (prepared.reviewRequired) return prepared

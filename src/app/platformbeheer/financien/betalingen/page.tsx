@@ -31,7 +31,7 @@ export default async function PlatformFinancialPaymentsPage({ searchParams }: { 
   })
 
   return <>
-    <AdminPageHeader title="Betalingen" description="Read-only overzicht van individuele creditaankopen en eerste Pro-betalingen." />
+    <AdminPageHeader title="Betalingen" description="Overzicht van individuele creditaankopen en eerste Pro-betalingen. Open een betaling voor details en beschikbare beheeracties." />
     <FilterForm>
       <FilterField name="status" label="Status"><select className="min-h-10 rounded-control border border-border bg-surface px-3 text-sm" name="status" defaultValue={statusValue ?? ''}><option value="">Alle statussen</option>{Object.values(FinancialPurchaseStatus).map((status) => <option key={status} value={status}>{financialPurchaseStatusLabels[status]}</option>)}</select></FilterField>
       <FilterField name="kind" label="Type"><select className="min-h-10 rounded-control border border-border bg-surface px-3 text-sm" name="kind" defaultValue={kindValue ?? ''}><option value="">Credits en Pro</option>{Object.values(FinancialPurchaseKind).map((kind) => <option key={kind} value={kind}>{financialPurchaseKindLabels[kind]}</option>)}</select></FilterField>
@@ -40,7 +40,7 @@ export default async function PlatformFinancialPaymentsPage({ searchParams }: { 
       <FilterField name="through" label="Tot en met"><input className="min-h-10 rounded-control border border-border bg-surface px-3 text-sm" type="date" name="through" defaultValue={through} /></FilterField>
     </FilterForm>
     <AdminSection title={`${data.total} betalingen`} description="Mollie-identificatie wordt alleen binnen beveiligd platformbeheer getoond.">
-      {data.items.length === 0 ? <EmptyState>Geen betalingen gevonden met deze filters.</EmptyState> : <AdminTable headers={['Datum', 'Organisatie / klant', 'Type', 'Mollie payment-id', 'Incl. btw', 'Status', 'Factuur']}>
+      {data.items.length === 0 ? <EmptyState>Geen betalingen gevonden met deze filters.</EmptyState> : <AdminTable headers={['Datum', 'Organisatie / klant', 'Type', 'Mollie payment-id', 'Incl. btw', 'Status', 'Factuur', 'Actie']}>
         {data.items.map((payment) => <tr key={payment.id}>
           <td className="whitespace-nowrap px-4 py-3">{formatPlatformDate(payment.createdAt)}</td>
           <td className="px-4 py-3 font-medium text-brand-dark">{payment.organization.name}</td>
@@ -49,6 +49,7 @@ export default async function PlatformFinancialPaymentsPage({ searchParams }: { 
           <td className="whitespace-nowrap px-4 py-3">{formatEuro(payment.amountInclVatCents)}</td>
           <td className="px-4 py-3"><StatusPill tone={financialStatusTone(payment.status)}>{financialPurchaseStatusLabels[payment.status]}</StatusPill></td>
           <td className="px-4 py-3">{payment.invoice ? <Link className="font-semibold text-brand-primary hover:underline" href={`/platformbeheer/financien/facturen/${payment.invoice.id}/pdf`}>{payment.invoice.invoiceNumber}</Link> : '—'}</td>
+          <td className="px-4 py-3"><Link className="font-semibold text-brand-primary hover:underline" href={`/platformbeheer/financien/betalingen/${payment.id}`}>Openen</Link></td>
         </tr>)}
       </AdminTable>}
       <AdminPagination page={data.page} pageCount={data.pageCount} previousHref={data.page > 1 ? paginationHref(pathname, params, data.page - 1) : null} nextHref={data.page < data.pageCount ? paginationHref(pathname, params, data.page + 1) : null} />

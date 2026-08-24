@@ -9,6 +9,10 @@ vi.mock('@/app/platformbeheer/test-account-actions', () => ({
   startTestImpersonationAction: vi.fn(),
 }))
 
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/platformbeheer',
+}))
+
 import { PlatformAdminShell } from './platform-admin-shell'
 
 describe('platformbeheershell', () => {
@@ -33,6 +37,10 @@ describe('platformbeheershell', () => {
     expect(html).toContain('Privacy')
     expect(html).toContain('Beveiliging')
     expect(html).toContain('Testen als')
+    expect(html).toContain('open=""')
+    expect(html).toContain('Dagelijks beheer')
+    expect(html).toContain('Financieel')
+    expect(html).not.toContain('>Gebruikers<')
     expect(html).not.toContain('Stel uw vraag')
     expect(html).not.toContain('Maak Uw organisatie aan')
     expect(html).not.toContain('Er is nog geen actieve organisatie')

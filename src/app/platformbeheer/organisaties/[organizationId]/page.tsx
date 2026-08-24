@@ -1,13 +1,13 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { addPlatformOrganizationOwnerAction, changePlatformOrganizationStatusAction, changePlatformUserStatusAction } from '@/app/platformbeheer/actions'
+import { changePlatformOrganizationStatusAction } from '@/app/platformbeheer/actions'
 import { PlatformAdminEmailForm, PlatformAdminNoteForm } from '@/components/platform-admin/platform-admin-actions'
 import { AdminPageHeader, AdminSection, AdminTable, StatusPill } from '@/components/platform-admin/platform-admin-ui'
 import { PlatformAdminAuditRow } from '@/components/platform-admin/platform-admin-audit-row'
 import { requirePlatformAdministrator } from '@/lib/platform-admin/platform-admin-authorization'
 import { getPlatformAdminObjectActivity, getPlatformOrganizationDetail } from '@/lib/platform-admin/platform-admin-query-service'
 import { assignmentStatusLabels } from '@/lib/assignments/assignment-presentation'
-import { membershipStatusLabels, organizationRoleLabels, organizationStatusLabels, userStatusLabels } from '@/lib/presentation/platform-labels'
+import { organizationStatusLabels } from '@/lib/presentation/platform-labels'
 
 export default async function PlatformOrganizationDetailPage({
   params,
@@ -46,30 +46,10 @@ export default async function PlatformOrganizationDetailPage({
           <button className="min-h-10 rounded-control border border-border px-4 text-sm font-semibold text-brand-dark" type="submit">{organization.status === 'ACTIVE' ? 'Organisatie blokkeren' : 'Organisatie deblokkeren'}</button>
         </form>
       ) : null}
-      {organization.status === 'ACTIVE' && !organization.memberships.some((membership) => membership.role === 'OWNER' && membership.status === 'ACTIVE' && membership.user.status === 'ACTIVE') ? (
-        <form action={addPlatformOrganizationOwnerAction} className="grid gap-3 rounded-card border border-warning-border bg-warning-subtle p-4 sm:grid-cols-[minmax(12rem,0.7fr)_minmax(14rem,1fr)_auto] sm:items-end">
-          <input type="hidden" name="organizationId" value={organization.id} />
-          <input type="hidden" name="returnTo" value={returnTo} />
-          <label className="grid gap-1 text-sm font-semibold">Nieuwe actieve eigenaar
-            <select className="min-h-10 rounded-control border border-border bg-surface px-3" name="successorUserId" required>
-              <option value="">Kies een gebruiker</option>
-              {organization.memberships.filter((membership) => membership.status === 'ACTIVE' && membership.user.status === 'ACTIVE' && membership.role !== 'OWNER').map((membership) => (
-                <option key={membership.id} value={membership.user.id}>{membership.user.displayName ?? membership.user.email}</option>
-              ))}
-            </select>
-          </label>
-          <label className="grid gap-1 text-sm font-semibold">Reden<input className="min-h-10 rounded-control border border-border bg-surface px-3" name="reasonNote" minLength={5} maxLength={500} required /></label>
-          <button className="min-h-10 rounded-control bg-brand-primary px-4 text-sm font-semibold text-white" type="submit">Eigenaar aanwijzen</button>
-        </form>
-      ) : null}
-      <AdminSection title="Gebruikers">
-        <AdminTable headers={['Gebruiker', 'Rol', 'Membership', 'Account', 'Beheeractie']}>
-          {organization.memberships.map((membership) => <tr key={membership.id}>
-            <td className="px-4 py-3"><span className="block font-semibold">{membership.user.displayName ?? 'Naam niet ingevuld'}</span><span className="break-all text-xs text-text-secondary">{membership.user.email}</span></td>
-            <td className="px-4 py-3">{organizationRoleLabels[membership.role]}</td><td className="px-4 py-3">{membershipStatusLabels[membership.status]}</td><td className="px-4 py-3">{userStatusLabels[membership.user.status]}</td>
-            <td className="px-4 py-3">{membership.user.status === 'ACTIVE' || membership.user.status === 'BLOCKED' ? <form action={changePlatformUserStatusAction} className="flex min-w-72 gap-2"><input type="hidden" name="organizationId" value={organization.id} /><input type="hidden" name="subjectUserId" value={membership.user.id} /><input type="hidden" name="operation" value={membership.user.status === 'ACTIVE' ? 'block' : 'unblock'} /><input aria-label="Reden accountactie" className="min-h-9 min-w-0 rounded-control border border-border px-2 text-xs" name="reasonNote" required minLength={5} maxLength={500} /><button className="min-h-9 rounded-control border border-border px-2 text-xs font-semibold" type="submit">{membership.user.status === 'ACTIVE' ? 'Blokkeren' : 'Deblokkeren'}</button></form> : 'Niet beschikbaar'}</td>
-          </tr>)}
-        </AdminTable>
+      <AdminSection title="Gebruikers" description={`${organization.memberships.length} gebruiker${organization.memberships.length === 1 ? '' : 's'} gekoppeld aan deze organisatie.`}>
+        <Link className="inline-flex min-h-10 items-center rounded-control bg-brand-primary px-4 text-sm font-semibold text-white hover:bg-brand-primary-hover" href={`/platformbeheer/organisaties/${organization.id}/gebruikers`}>
+          Gebruikers beheren
+        </Link>
       </AdminSection>
       <AdminSection title="Recente opdrachten"><AdminTable headers={['Opdracht', 'Status', 'Bijgewerkt']}>{organization.clientAssignments.map((assignment) => <tr key={assignment.id}><td className="px-4 py-3"><Link className="font-semibold text-brand-primary underline" href={`/platformbeheer/opdrachten/${assignment.id}`}>{assignment.title}</Link></td><td className="px-4 py-3">{assignmentStatusLabels[assignment.status]}</td><td className="px-4 py-3">{assignment.updatedAt.toLocaleString('nl-NL')}</td></tr>)}</AdminTable></AdminSection>
       <AdminSection title="Audit"><AdminTable headers={['Bron', 'Actie', 'Reden', 'Moment']}>{organization.membershipEvents.map((event) => <tr key={event.id}><td className="px-4 py-3">Membership</td><td className="px-4 py-3">{event.eventType}</td><td className="px-4 py-3">{event.reasonCode}</td><td className="px-4 py-3">{event.occurredAt.toLocaleString('nl-NL')}</td></tr>)}{organization.marketplaceAuditEvents.map((event) => <tr key={event.id}><td className="px-4 py-3">Marketplace</td><td className="px-4 py-3">{event.action}</td><td className="px-4 py-3">{event.entityType}</td><td className="px-4 py-3">{event.createdAt.toLocaleString('nl-NL')}</td></tr>)}</AdminTable></AdminSection>

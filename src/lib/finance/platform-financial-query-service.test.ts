@@ -3,9 +3,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 vi.mock('server-only', () => ({}))
 
 const prisma = {
-  financialPurchase: { count: vi.fn(), findMany: vi.fn() },
+  financialPurchase: { count: vi.fn(), findMany: vi.fn(), findUnique: vi.fn() },
   financialInvoice: { count: vi.fn(), findMany: vi.fn() },
   financialRefund: { count: vi.fn(), findMany: vi.fn() },
+  creditTransaction: { findFirst: vi.fn() },
 }
 const authorize = vi.fn().mockResolvedValue({})
 
@@ -17,10 +18,26 @@ describe('platform financiële queryservice', () => {
     vi.clearAllMocks()
     prisma.financialPurchase.count.mockResolvedValue(60)
     prisma.financialPurchase.findMany.mockResolvedValue([])
+    prisma.financialPurchase.findUnique.mockResolvedValue(null)
     prisma.financialInvoice.count.mockResolvedValue(0)
     prisma.financialInvoice.findMany.mockResolvedValue([])
     prisma.financialRefund.count.mockResolvedValue(0)
     prisma.financialRefund.findMany.mockResolvedValue([])
+  })
+
+  it('leest een betaling en later creditgebruik alleen na platformautorisatie', async () => {
+    prisma.financialPurchase.findUnique.mockResolvedValue({
+      id: 'purchase',
+      creditedTransaction: { creditAccountId: 'account', createdAt: new Date('2026-08-01T00:00:00Z') },
+    })
+    prisma.creditTransaction.findFirst.mockResolvedValue({ id: 'usage' })
+    const { getPlatformFinancialPaymentDetail } = await import('./platform-financial-query-service')
+    const result = await getPlatformFinancialPaymentDetail('platform-admin', 'purchase')
+    expect(authorize).toHaveBeenCalledWith('platform-admin')
+    expect(result).toMatchObject({ creditsUsedAfterPurchase: true })
+    expect(prisma.creditTransaction.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ creditAccountId: 'account', totalDelta: { lt: 0 } }),
+    }))
   })
 
   it('autoriseert server-side en pagineert betalingen in vaste batches', async () => {

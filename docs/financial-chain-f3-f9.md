@@ -30,6 +30,8 @@ Een factuur-PDF wordt server-side uitsluitend uit de immutable factuursnapshot o
 
 Een door Mollie aangemaakte refund blijft lokaal `PENDING` zolang de provider `queued`, `pending` of `processing` meldt. De credits blijven dan gereserveerd en er ontstaat nog geen creditnota. Alleen `refunded` voltooit de ledgercorrectie, aankoopstatus en creditnota transactioneel. `failed` en `canceled` geven de reservering append-only vrij zonder creditnota. `reconcilePendingMollieRefunds()` haalt niet-definitieve statussen uitsluitend server-side opnieuw op; status-events verwijzen via `FinancialEvent.refundId` expliciet naar de refund.
 
+Een bevoegde platformbeheerder start een volledige refund van een betaalde creditaankoop via **Financieel → Betalingen → betaling openen**. De actie vereist een gecontroleerde redencode, vrije toelichting en expliciete bevestiging en hergebruikt `refundWorkmatchrError`. Dezelfde idempotente service verzorgt Mollie, creditreservering/-correctie, creditnota en `FinancialEvent`-audit. Is na de aankoop creditgebruik gevonden, dan wordt de aankoop `REFUND_REVIEW_REQUIRED` en volgt geen Mollie-aanroep voordat de bestaande review is afgerond. Gedeeltelijke refunds en handmatige statusmutaties zijn niet beschikbaar.
+
 `FinancialJorttSync` en immutable pogingen vormen een downstream adaptergrens. Een Jortt-storing verandert betaling, factuur of credits niet. Zolang een geverifieerd Jortt API-contract en beheerde credentials ontbreken, blijft de echte externe synchronisatie bewust geblokkeerd met een veilige foutcode.
 
 ## Kortingen, startersvoordeel en Pro

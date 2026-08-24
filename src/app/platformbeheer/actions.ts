@@ -72,7 +72,8 @@ const userActionSchema = z.object({
 })
 
 export async function changePlatformUserStatusAction(formData: FormData) {
-  const administrator = await requirePlatformAdministrator('/platformbeheer/gebruikers')
+  const returnTo = safeReturnTo(formData.get('returnTo'), '/platformbeheer/gebruikers')
+  const administrator = await requirePlatformAdministrator(returnTo)
   const parsed = userActionSchema.safeParse(Object.fromEntries(formData))
   if (!parsed.success) redirect('/platformbeheer/gebruikers?fout=ongeldige-actie')
   const idempotencyKey = `platform-admin:${parsed.data.operation}:${crypto.randomUUID()}`
@@ -88,7 +89,8 @@ export async function changePlatformUserStatusAction(formData: FormData) {
   else await unblockAccount(input)
   revalidatePath('/platformbeheer')
   revalidatePath('/platformbeheer/gebruikers')
-  redirect('/platformbeheer/gebruikers?resultaat=accountstatus-gewijzigd')
+  revalidatePath(returnTo)
+  redirectWithResult(returnTo, 'resultaat', 'accountstatus-gewijzigd')
 }
 
 const adminEmailSchema = z.object({

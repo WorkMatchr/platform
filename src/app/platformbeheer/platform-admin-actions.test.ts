@@ -33,11 +33,12 @@ describe('platformbeheeracties en communicatie', () => {
 
   it('biedt organisatie-, opdracht-, reviewer- en approveracties zonder vier-ogenregel te wijzigen', () => {
     const organization = read('src/app/platformbeheer/organisaties/[organizationId]/page.tsx')
+    const organizationUsers = read('src/components/platform-admin/platform-organization-users.tsx')
     const assignment = read('src/app/platformbeheer/opdrachten/[assignmentId]/page.tsx')
     const workload = read('src/components/platform-admin/platform-role-workload.tsx')
 
     expect(organization).toContain('Organisatie mailen')
-    expect(organization).toContain('Eigenaar aanwijzen')
+    expect(organizationUsers).toContain('Eigenaar aanwijzen')
     expect(assignment).toContain('Opdrachtgever mailen')
     expect(assignment).toContain('Dienstverlener mailen')
     expect(assignment).toContain('Signaal markeren als onderzocht')

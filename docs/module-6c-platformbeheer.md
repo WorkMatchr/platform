@@ -84,12 +84,15 @@ De eerste regelset signaleert onder meer:
 
 ## Navigatie
 
-De zichtbare navigatie is taakgericht gegroepeerd:
+De zichtbare navigatie is taakgericht gegroepeerd in vijf inklapbare hoofdgroepen. De actieve groep opent automatisch; andere groepen blijven compact totdat de beheerder ze opent:
 
-- **Dagelijks beheer:** Dashboard, Organisaties, Gebruikers, Dienstverleners, Opdrachten;
+- **Dagelijks beheer:** Dashboard, Actiecentrum, Organisaties, Dienstverleners, Opdrachten;
 - **Beoordelingen:** Reviews, Goedkeuringen, Audit;
-- **Inzicht:** Marketplace, Trends, Rapportages;
-- **Systeem:** Instellingen.
+- **Inzicht:** Betrouwbaarheid, Trends, Rapportages, Kennisbeheer;
+- **Financieel:** Overzicht, Betalingen, Facturen, Terugbetalingen, Marketplace;
+- **Systeem:** Platformbeheerders, Instellingen, Bedrijfsregels.
+
+Gebruikersbeheer is geen los hoofdnavigatie-item meer. Het staat binnen de betreffende organisatiecontext op `/platformbeheer/organisaties/[organizationId]/gebruikers`; de bestaande algemene gebruikersroute blijft voor backwards compatibility bereikbaar.
 
 Technische actorbenamingen zoals Reviewer, Approver en Auditor zijn niet langer de primaire navigatielabels.
 

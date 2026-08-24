@@ -2,10 +2,10 @@ import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { LogoutButton } from '@/components/auth/logout-button'
 import { WorkMatchrLogo } from '@/components/branding/workmatchr-logo'
-import { getPlatformAdminNavigationGroups } from '@/lib/platform-admin/platform-admin-navigation'
 import type { PlatformMembershipRole } from '@/lib/platform-admin/platform-admin-policy'
 import type { TestAccountOption } from '@/lib/test-impersonation/test-impersonation-service'
 import { TestAccountSwitcher } from './test-account-switcher'
+import { PlatformAdminNavigationMenu } from './platform-admin-navigation-menu'
 
 export function PlatformAdminShell({
   children,
@@ -21,7 +21,6 @@ export function PlatformAdminShell({
     unavailableReason: string | null
   } | null
 }) {
-  const navigationGroups = getPlatformAdminNavigationGroups(membershipRole)
   return (
     <div className="flex min-h-screen flex-col bg-background lg:h-full lg:min-h-0 lg:overflow-hidden">
       <header className="shrink-0 border-b border-border bg-surface">
@@ -57,32 +56,7 @@ export function PlatformAdminShell({
               unavailableReason={testAccountSwitcher.unavailableReason}
             />
           ) : null}
-          <nav className="mt-3" aria-label="Platformbeheer">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-              {navigationGroups.map((group) => (
-                <section aria-labelledby={`navigation-${group.label.replaceAll(' ', '-').toLowerCase()}`} key={group.label}>
-                  <h2
-                    className="px-3 text-xs font-semibold uppercase tracking-wide text-text-secondary"
-                    id={`navigation-${group.label.replaceAll(' ', '-').toLowerCase()}`}
-                  >
-                    {group.label}
-                  </h2>
-                  <ul className="mt-1 grid gap-1">
-                    {group.items.map((item) => (
-                      <li key={item.href}>
-                        <Link
-                          href={item.href}
-                          className="flex min-h-10 items-center rounded-control px-3 text-sm font-semibold text-brand-dark hover:bg-brand-primary-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
-                        >
-                          {item.label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              ))}
-            </div>
-          </nav>
+          <PlatformAdminNavigationMenu membershipRole={membershipRole} />
         </aside>
         <div className="min-w-0 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
           {children}
