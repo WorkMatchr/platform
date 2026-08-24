@@ -28,7 +28,7 @@ export default async function KnowledgeAdminPage() {
         eyebrow="Knowledge Engine"
         title="Kennisbeheer"
         description="Bewaak bronnen, actualiteit, conflicten en gerichte uitzonderingen. Een afgeronde broncontrole publiceert niets automatisch."
-        action={<div className="flex flex-wrap gap-2"><Link className="inline-flex min-h-10 items-center rounded-control bg-brand-primary px-4 text-sm font-semibold text-white hover:bg-brand-dark" href="/platformbeheer/kennisbank/beoordelingen">Open uitzonderingen</Link><Link className="inline-flex min-h-10 items-center rounded-control border border-brand-primary px-4 text-sm font-semibold text-brand-primary hover:bg-brand-primary-subtle" href="/platformbeheer/kennisbank/meldingen">Open meldingen</Link></div>}
+        action={<div className="flex flex-wrap gap-2"><Link className="inline-flex min-h-10 items-center rounded-control bg-brand-primary px-4 text-sm font-semibold text-white hover:bg-brand-dark" href="/platformbeheer/kennisbank/bronnen/uploaden">Bron uploaden</Link><Link className="inline-flex min-h-10 items-center rounded-control border border-brand-primary px-4 text-sm font-semibold text-brand-primary hover:bg-brand-primary-subtle" href="/platformbeheer/kennisbank/beoordelingen">Open uitzonderingen</Link><Link className="inline-flex min-h-10 items-center rounded-control border border-brand-primary px-4 text-sm font-semibold text-brand-primary hover:bg-brand-primary-subtle" href="/platformbeheer/kennisbank/meldingen">Open meldingen</Link></div>}
       />
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-5">
         <MetricCard

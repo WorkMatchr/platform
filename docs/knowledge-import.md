@@ -1,5 +1,17 @@
 # Kennisimport
 
+## Platformbeheer-upload v1
+
+De beheerroute `/platformbeheer/kennisbank/bronnen/uploaden` vormt een dunne laag boven de bestaande atomische Knowledge Library-ingest. De route is uitsluitend toegankelijk voor actieve platform-OWNER/ADMIN en ondersteunt in v1 alleen PDF tot 10 MB.
+
+De volgorde is bewust fail-closed: controle van extensie, MIME, PDF-magic bytes en grootte; SHA-256 en deterministische extractie; een preview met voorstellen en mogelijke checksumduplicate; menselijke controle van canonieke identiteit, bronfamilie, autoriteit, temporaliteit en scope; daarna pas expliciete bevestiging. De bestaande atomische ingest schrijft bron, versie, artifact, applicability, extraction run, pagina's en bronblokken. De versie blijft `REVIEW_REQUIRED`; uploaden valideert of publiceert nooit automatisch.
+
+De ingest legt actor, checksum, aantallen en uploadorigin vast in de append-only Knowledge-audittrail. Een identieke checksum volgt de bestaande idempotentie- en conflictregels.
+
+De duurzame provider voor bronartifacts is Vercel Private Blob via de bestaande `KnowledgeSourceUploadStorage`-adapter. De runtime gebruikt Vercel OIDC en een expliciete store-ID; Preview en Production hebben afzonderlijke private stores en een omgevingsmismatch faalt gesloten. Uploaden is alleen beschikbaar wanneer de eigen environment volledig is gekoppeld. Lokale Vercel-filesystemopslag, publieke Blob-URLs en base64 in normale databasevelden zijn niet toegestaan.
+
+De adapter bewaart het originele PDF-bestand onder een immutable SHA-256-key en overschrijft nooit. Een checksumduplicate wordt idempotent hergebruikt. Platformbeheer leest het origineel uitsluitend via de geautoriseerde serverroute `/platformbeheer/kennisbank/bronnen/<sourceVersionId>/origineel`; de interne Blob-locator en provider-URL worden niet aan de browser verstrekt. V1 heeft bewust geen deletepad.
+
 Zet bronnen buiten Git in de bestaande categorieÃ«n onder `local-sources/`. Het genegeerde lokale manifest in `local-sources/knowledge/` koppelt logische broncodes aan paden relatief aan deze bronroot, bronsoorten en SHA-256-checksums. Absolute paden en broninhoud komen niet in database of auditlog. In de database staat alleen een logische `manifest:<relatief-pad>`-referentie.
 
 De generieke pipeline ondersteunt `ai-bladen`, `arbocatalogi`, `beleidsregels`, `inspectie`, `jurisprudentie`, `knowledge`, `normen`, `rivm`, `ser` en `tno`. `legislation` is de container voor `arbowet`, `arbobesluit` en `arboregeling`; een toekomstige submap blijft generiek `LEGISLATION` totdat een specifiekere mapping wordt toegevoegd. De bronsoort wordt expliciet in manifest en importpakket vastgelegd. De database gebruikt de bestaande brede typen `AI_SHEET`, `LEGISLATION`, `REGULATION`, `ARBOCATALOGUE`, `INSPECTORATE_GUIDANCE`, `CASE_LAW`, `STANDARD`, `PROFESSIONAL_GUIDANCE`, `OTHER` en `RESEARCH`; `sourceFamily` bewaart de specifieke bronfamilie.
