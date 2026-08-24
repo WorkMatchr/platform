@@ -22,8 +22,8 @@ export type HeaderViewModel = {
   displayName: string
   activeOrganization: { id: string; name: string; role: OrganizationMembershipRole } | null
   navigationGroups: Array<{
-    key: 'work' | 'organization' | 'financial' | 'personal'
-    label: 'WERK' | 'ORGANISATIE' | 'FINANCIEEL' | 'PERSOONLIJK'
+    key: 'work' | 'organization' | 'personal'
+    label: 'Werk' | 'Organisatie' | 'Persoonlijk'
     links: Array<{ href: string; label: string }>
   }>
 }
@@ -63,13 +63,13 @@ export function buildHeaderViewModel(
         : null,
     navigationGroups: isPlatformAdministrator
       ? [
-          { key: 'work', label: 'WERK', links: [{ href: '/platformbeheer', label: 'Platformbeheer' }] },
-          { key: 'personal', label: 'PERSOONLIJK', links: [{ href: '/account', label: 'Account' }] },
+          { key: 'work', label: 'Werk', links: [{ href: '/platformbeheer', label: 'Platformbeheer' }] },
+          { key: 'personal', label: 'Persoonlijk', links: [{ href: '/account', label: 'Account' }] },
         ]
       : [
           {
             key: 'work',
-            label: 'WERK',
+            label: 'Werk',
             links: [
               ...(organization ? [{ href: '/dashboard', label: 'Dashboard' }] : []),
               ...(supportsClientWork
@@ -85,11 +85,17 @@ export function buildHeaderViewModel(
                     { href: '/uitnodigingen', label: 'Uitnodigingen' },
                   ]
                 : []),
+              ...(supportsProfessionalFinance
+                ? [
+                    { href: '/credits', label: 'Credits & facturen' },
+                    { href: '/credits/pro', label: 'WorkMatchr Pro' },
+                  ]
+                : []),
             ],
           },
           {
             key: 'organization',
-            label: 'ORGANISATIE',
+            label: 'Organisatie',
             links: [
               { href: organization ? '/organisatie' : '/organisatie/nieuw', label: 'Organisatie' },
               ...(supportsProviderWork
@@ -100,19 +106,9 @@ export function buildHeaderViewModel(
                 : []),
             ],
           },
-          ...(supportsProfessionalFinance
-            ? [{
-                key: 'financial' as const,
-                label: 'FINANCIEEL' as const,
-                links: [
-                  { href: '/credits', label: 'Credits & facturen' },
-                  { href: '/credits/pro', label: 'WorkMatchr Pro' },
-                ],
-              }]
-            : []),
           {
             key: 'personal',
-            label: 'PERSOONLIJK',
+            label: 'Persoonlijk',
             links: [
               { href: '/account', label: 'Account' },
               ...(organization ? [{ href: '/notificaties', label: 'Notificaties' }] : []),

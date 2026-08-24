@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { ApplicationChrome } from '@/components/layout/application-chrome'
 import { Footer } from '@/components/layout/footer'
-import { Header } from '@/components/layout/header'
+import { getHeaderViewModel, Header } from '@/components/layout/header'
 import { TestImpersonationBanner } from '@/components/layout/test-impersonation-banner'
 import { siteConfig } from '@/config/site'
 import './globals.css'
@@ -23,7 +23,8 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const headerModel = await getHeaderViewModel()
   return (
     <html lang="nl" data-scroll-behavior="smooth">
       <body className="min-h-screen bg-background text-text-primary antialiased">
@@ -31,7 +32,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           Ga naar de hoofdinhoud
         </a>
         <ApplicationChrome
-          header={<Header />}
+          header={<Header model={headerModel} />}
+          headerModel={headerModel}
           banner={<TestImpersonationBanner />}
           footer={<Footer />}
         >
