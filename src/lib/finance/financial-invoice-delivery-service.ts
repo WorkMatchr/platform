@@ -22,12 +22,15 @@ export async function deliverFinancialInvoiceEmail(invoiceId: string, sender: In
       include: { purchase: { include: { createdByUser: { select: { email: true, displayName: true } } } } },
     })
     if (!invoice?.purchase || invoice.purchase.status !== 'PAID') throw new Error('PAID_PURCHASE_INVOICE_REQUIRED')
+    if (!invoice.purchase.paidAt) throw new Error('PAID_PURCHASE_INVOICE_REQUIRED')
     const recipient = invoice.purchase.createdByUser
     const downloadUrl = new URL(`/credits/facturen/${invoice.id}/pdf`, getPublicAppBaseUrl()).toString()
     const email = financialInvoiceEmail({
       to: recipient.email,
       recipientName: recipient.displayName?.trim() || 'gebruiker',
       invoiceNumber: invoice.invoiceNumber,
+      paidAmountInclVatCents: invoice.amountInclVatCents,
+      paidAt: invoice.purchase.paidAt,
       downloadUrl,
     })
     const delivery = await sender({ ...email, idempotencyKey: `invoice-email:${invoice.id}` })

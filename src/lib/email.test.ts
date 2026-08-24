@@ -23,6 +23,26 @@ afterEach(() => {
 })
 
 describe('authenticatie-e-mails', () => {
+  it('maakt een responsive factuurmail met consistente HTML en plain-text fallback', () => {
+    const email = financialInvoiceEmail({
+      to: 'factuur@example.invalid',
+      recipientName: 'Voorbeeldklant',
+      invoiceNumber: 'WM-26085001',
+      paidAmountInclVatCents: 3_025,
+      paidAt: new Date('2026-08-09T12:30:00.000Z'),
+      downloadUrl: 'https://www.workmatchr.nl/credits/facturen/invoice-id/pdf',
+    })
+    expect(email.subject).toBe('Uw betaling is ontvangen - factuur WM-26085001')
+    expect(email.html).toContain('Uw betaling is ontvangen')
+    expect(email.html).toContain('/branding/workmatchr-logo.png')
+    expect(email.html).toContain('Factuur bekijken')
+    expect(email.html).toContain('https://www.workmatchr.nl/credits/facturen/invoice-id/pdf')
+    expect(email.html).toContain('30,25')
+    expect(email.text).toContain('Factuurnummer: WM-26085001')
+    expect(email.text).toContain('30,25')
+    expect(email.text).toContain('Factuur bekijken: https://www.workmatchr.nl/credits/facturen/invoice-id/pdf')
+  })
+
   it('maakt een Nederlandstalige verificatiemail met veilige HTML', () => { const email = verificationEmail('test@example.invalid', '<Test>', 'https://workmatchr.invalid/verifieer?token=test'); expect(email.subject).toContain('Bevestig'); expect(email.html).toContain('&lt;Test&gt;') })
   it('maakt een uitnodigingsmail met één duidelijke accountactivatie', () => {
     const email = invitationActivationEmail(
@@ -171,6 +191,8 @@ describe('authenticatie-e-mails', () => {
       to: 'mollie-preview-acceptance@workmatchr.example.invalid',
       recipientName: 'Previewgebruiker',
       invoiceNumber: 'WM-26085001',
+      paidAmountInclVatCents: 3_025,
+      paidAt: new Date('2026-08-09T12:30:00.000Z'),
       downloadUrl: 'https://platform-finance-preview-workmatchrs-projects.vercel.app/credits/facturen/invoice-id/pdf',
     })
 
@@ -180,7 +202,7 @@ describe('authenticatie-e-mails', () => {
     })
     expect(resendMocks.send).toHaveBeenCalledWith(expect.objectContaining({
       to: 'info@workmatchr.nl',
-      subject: '[PREVIEW TEST] Uw WorkMatchr-factuur WM-26085001',
+      subject: '[PREVIEW TEST] Uw betaling is ontvangen - factuur WM-26085001',
     }), undefined)
     expect(original.to).toBe('mollie-preview-acceptance@workmatchr.example.invalid')
   })
@@ -194,6 +216,8 @@ describe('authenticatie-e-mails', () => {
       to: 'mollie-preview-acceptance@workmatchr.example.invalid',
       recipientName: 'Previewgebruiker',
       invoiceNumber: 'WM-26085001',
+      paidAmountInclVatCents: 3_025,
+      paidAt: new Date('2026-08-09T12:30:00.000Z'),
       downloadUrl: 'https://platform-finance-preview-workmatchrs-projects.vercel.app/credits/facturen/invoice-id/pdf',
     }))).rejects.toMatchObject({ code: 'PREVIEW_EMAIL_OVERRIDE_FORBIDDEN' } satisfies Partial<AuthEmailDeliveryError>)
     expect(resendMocks.send).not.toHaveBeenCalled()
