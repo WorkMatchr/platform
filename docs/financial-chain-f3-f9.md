@@ -1,5 +1,9 @@
 # Financiële keten F3-F9
 
+## Platformbeheer
+
+Platformoperators hebben onder `/platformbeheer/financien` een uitsluitend-lezen financieel overzicht. De onderliggende aankopen, factuursnapshots en terugbetalingen blijven de enige bron; de beheerpagina's vormen geen tweede administratie. Betalingen, facturen en terugbetalingen zijn afzonderlijk filterbaar en gepagineerd. Factuur-PDF's zijn via een platformbeheer-geautoriseerde route beschikbaar. De beheerinterface biedt bewust geen verwijder- of mutatieacties.
+
 ## Verantwoordelijkheden
 
 De financiële keten bouwt voort op het append-only creditgrootboek. Een `FinancialPurchase` bewaart vóór contact met Mollie een immutable prijs-, btw-, kortings- en klantadres-snapshot. Mollie is uitsluitend betaalprovider: alleen een server-side opnieuw opgehaalde betaling waarvan ID, organisatie, valuta, bedrag en status overeenkomen mag credits of Pro activeren.

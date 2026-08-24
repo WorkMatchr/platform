@@ -32,6 +32,15 @@ const operatorNavigationGroups = [
     ],
   },
   {
+    label: 'Financieel',
+    items: [
+      { href: '/platformbeheer/financien', label: 'Overzicht' },
+      { href: '/platformbeheer/financien/betalingen', label: 'Betalingen' },
+      { href: '/platformbeheer/financien/facturen', label: 'Facturen' },
+      { href: '/platformbeheer/financien/terugbetalingen', label: 'Terugbetalingen' },
+    ],
+  },
+  {
     label: 'Systeem',
     items: [
       { href: '/platformbeheer/platformbeheerders', label: 'Platformbeheerders' },
@@ -58,6 +67,7 @@ export const platformAdminNavigation = [
   ...operatorNavigationGroups[1].items,
   ...operatorNavigationGroups[2].items,
   ...operatorNavigationGroups[3].items,
+  ...operatorNavigationGroups[4].items,
 ] as const
 
 export type PlatformAdminRoute = (typeof platformAdminNavigation)[number]['href']

@@ -131,3 +131,25 @@ export function FilterField({
     </label>
   )
 }
+
+export function AdminPagination({
+  page,
+  pageCount,
+  previousHref,
+  nextHref,
+}: {
+  page: number
+  pageCount: number
+  previousHref: string | null
+  nextHref: string | null
+}) {
+  if (pageCount <= 1) return null
+  const linkClass = 'inline-flex min-h-10 items-center rounded-control border border-border px-3 text-sm font-semibold text-brand-primary hover:border-brand-primary'
+  return (
+    <nav className="mt-4 flex items-center justify-between gap-3" aria-label="Paginering">
+      {previousHref ? <Link className={linkClass} href={previousHref}>Vorige</Link> : <span />}
+      <span className="text-sm text-text-secondary">Pagina {page} van {pageCount}</span>
+      {nextHref ? <Link className={linkClass} href={nextHref}>Volgende</Link> : <span />}
+    </nav>
+  )
+}
