@@ -68,8 +68,14 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   if (process.env.VERCEL_ENV !== 'preview' || process.env.VERCEL_GIT_COMMIT_REF !== 'codex/financial-document-email-branding' || !authorized(request)) return notFound()
+  const configuredFrom = process.env.AUTH_EMAIL_FROM?.trim().toLowerCase() ?? ''
   const candidateCount = await getPrisma().financialInvoice.count({
     where: { purchase: { status: 'PAID', paidAt: { not: null }, createdByUser: { email: { endsWith: '.example.invalid' } } }, events: { none: { idempotencyKey: { startsWith: 'invoice-email-sent:' } } } },
   })
-  return Response.json({ candidateCount, exactlyOneCandidate: candidateCount === 1 }, { headers: { 'Cache-Control': 'private, no-store' } })
+  return Response.json({
+    candidateCount,
+    exactlyOneCandidate: candidateCount === 1,
+    mailFromConfigured: configuredFrom.length > 0,
+    mailFromUsesWorkmatchrDomain: configuredFrom.endsWith('@workmatchr.nl>') || configuredFrom.endsWith('@workmatchr.nl'),
+  }, { headers: { 'Cache-Control': 'private, no-store' } })
 }
