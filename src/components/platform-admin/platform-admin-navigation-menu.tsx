@@ -1,3 +1,5 @@
+'use client'
+
 import { AccordionNavigation } from '@/components/layout/accordion-navigation'
 import { getPlatformAdminNavigationGroups } from '@/lib/platform-admin/platform-admin-navigation'
 import type { PlatformMembershipRole } from '@/lib/platform-admin/platform-admin-policy'
