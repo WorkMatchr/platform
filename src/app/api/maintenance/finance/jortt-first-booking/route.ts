@@ -53,6 +53,32 @@ function amount(value: unknown) {
     : null
 }
 
+export async function GET(request: NextRequest) {
+  if (!authorized(request)) return new NextResponse(null, { status: 404 })
+  try {
+    const prisma = getPrisma()
+    const invoice = await prisma.financialInvoice.findUniqueOrThrow({ where: { id: INVOICE_ID }, include: { jorttSync: { include: { attempts: true } } } })
+    if (!invoice.jorttSync || invoice.invoiceNumber !== INVOICE_NUMBER) throw new Error('JORTT_READ_PRECONDITION_FAILED')
+    const token = await accessToken()
+    const matches = exact((await get(`/invoices?query=${encodeURIComponent(INVOICE_NUMBER)}`, token)).data, INVOICE_NUMBER)
+    const detail = matches.length === 1 && typeof matches[0].id === 'string' ? await get(`/invoices/${encodeURIComponent(matches[0].id)}`, token) : null
+    const remote = detail ? (Array.isArray(detail.data) ? detail.data[0] : detail.data) : null
+    return NextResponse.json({
+      syncStatus: invoice.jorttSync.status,
+      attemptCount: invoice.jorttSync.attemptCount,
+      remoteInvoiceCount: matches.length,
+      remoteId: remote?.id ?? null,
+      remoteInvoiceNumber: remote?.invoice_number ?? null,
+      remoteStatus: remote?.invoice_status ?? null,
+      sendMethod: remote?.send_method ?? null,
+      possibleActions: detail && Array.isArray((detail as unknown as RecordValue).possible_actions) ? (detail as unknown as RecordValue).possible_actions : [],
+    })
+  } catch (error) {
+    const safeErrorCode = error instanceof Error && /^[A-Z0-9_]{3,100}$/.test(error.message) ? error.message : 'JORTT_READ_FAILED'
+    return NextResponse.json({ status: 'FAILED', safeErrorCode }, { status: 500 })
+  }
+}
+
 export async function POST(request: NextRequest) {
   if (!authorized(request)) return new NextResponse(null, { status: 404 })
   try {
