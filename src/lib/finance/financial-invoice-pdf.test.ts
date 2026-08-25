@@ -77,6 +77,35 @@ describe('financiële factuur-pdf', () => {
     expect((await PDFDocument.load(pdf)).getPageCount()).toBeGreaterThan(0)
   })
 
+  it('rendert een Pro-factuur met immutable dienstperiode', async () => {
+    const periodStart = new Date('2026-08-01T00:00:00.000Z')
+    const periodEnd = new Date('2026-08-31T23:59:59.000Z')
+    const line = {
+      id: 'line-pro', invoiceId: 'invoice-pro', position: 1, description: 'WorkMatchr Pro',
+      quantity: 1, unit: 'maand', unitPriceExclVatCents: 4_900, grossAmountExclVatCents: 4_900,
+      discountAmountCents: 0, netAmountExclVatCents: 4_900, vatRateBps: 2_100,
+      vatAmountCents: 1_029, amountInclVatCents: 5_929, servicePeriodStart: periodStart,
+      servicePeriodEnd: periodEnd, createdAt: invoice.issuedAt,
+    }
+    const summary = {
+      id: 'vat-pro', invoiceId: 'invoice-pro', vatRateBps: 2_100, taxableAmountExclVatCents: 4_900,
+      vatAmountCents: 1_029, amountInclVatCents: 5_929, createdAt: invoice.issuedAt,
+    }
+    const pdf = await buildFinancialInvoicePdf({
+      ...invoice,
+      snapshotVersion: 2,
+      supplyDate: periodStart,
+      servicePeriodStart: periodStart,
+      servicePeriodEnd: periodEnd,
+      amountExclVatCents: 4_900,
+      vatAmountCents: 1_029,
+      amountInclVatCents: 5_929,
+      lines: [line],
+      vatSummaries: [summary],
+    })
+    expect((await PDFDocument.load(pdf)).getPageCount()).toBe(1)
+  })
+
   it('faalt gesloten bij een onvolledige v2-snapshot', async () => {
     await expect(buildFinancialInvoicePdf({ ...invoice, snapshotVersion: 2 })).rejects.toThrow('INVOICE_V2_PDF_SNAPSHOT_INCOMPLETE')
   })

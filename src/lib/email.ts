@@ -284,16 +284,23 @@ export function financialInvoiceEmail(input: {
   to: string
   recipientName: string
   invoiceNumber: string
+  paidAmountInclVatCents: number
+  paidAt: Date
   downloadUrl: string
 }): AuthEmail {
   const safeName = escapeHtml(input.recipientName)
   const safeInvoiceNumber = escapeHtml(input.invoiceNumber)
   const safeDownloadUrl = escapeHtml(input.downloadUrl)
+  const paidAmount = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(input.paidAmountInclVatCents / 100)
+  const paidDate = new Intl.DateTimeFormat('nl-NL', { dateStyle: 'long', timeZone: 'Europe/Amsterdam' }).format(input.paidAt)
+  const safePaidAmount = escapeHtml(paidAmount)
+  const safePaidDate = escapeHtml(paidDate)
+  const logoUrl = 'https://www.workmatchr.nl/branding/workmatchr-logo.png'
   return {
     kind: 'FINANCIAL_INVOICE',
     to: input.to,
-    subject: `Uw WorkMatchr-factuur ${input.invoiceNumber}`,
-    text: `Beste ${input.recipientName},\n\nUw betaling is verwerkt. U kunt factuur ${input.invoiceNumber} veilig bekijken en downloaden via: ${input.downloadUrl}\n\nMet vriendelijke groet,\nWorkMatchr`,
-    html: `<p>Beste ${safeName},</p><p>Uw betaling is verwerkt. Uw factuur <strong>${safeInvoiceNumber}</strong> staat veilig voor u klaar.</p><p><a href="${safeDownloadUrl}">Factuur bekijken en downloaden</a></p><p>Met vriendelijke groet,<br />WorkMatchr</p>`,
+    subject: `Uw betaling is ontvangen - factuur ${input.invoiceNumber}`,
+    text: `Beste ${input.recipientName},\n\nUw betaling is ontvangen.\n\nFactuurnummer: ${input.invoiceNumber}\nBetaald bedrag: ${paidAmount}\nBetaaldatum: ${paidDate}\n\nFactuur bekijken: ${input.downloadUrl}\n\nUw factuur blijft ook beschikbaar in uw WorkMatchr-account.\n\nMet vriendelijke groet,\nWorkMatchr\nwww.workmatchr.nl`,
+    html: `<!doctype html><html lang="nl"><head><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></head><body style="margin:0;padding:0;background:#f3f8fb;color:#123044;font-family:Arial,Helvetica,sans-serif;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background:#f3f8fb;"><tr><td align="center" style="padding:24px 12px;"><table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:600px;background:#ffffff;border:1px solid #d8e6ee;border-radius:14px;overflow:hidden;"><tr><td style="padding:30px 34px 22px;border-bottom:3px solid #0d6e9e;"><img src="${logoUrl}" width="210" alt="WorkMatchr" style="display:block;width:210px;max-width:100%;height:auto;border:0;"></td></tr><tr><td style="padding:34px;"><h1 style="margin:0 0 14px;font-size:28px;line-height:1.25;color:#07304a;">Uw betaling is ontvangen</h1><p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:#314f61;">Beste ${safeName},<br><br>Bedankt. Uw betaling is verwerkt en de factuur staat veilig voor u klaar.</p><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background:#eef7fb;border:1px solid #cce2ed;border-radius:10px;"><tr><td style="padding:22px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td style="padding:0 0 10px;color:#5b7483;font-size:13px;">Factuurnummer</td><td align="right" style="padding:0 0 10px;color:#07304a;font-size:14px;font-weight:bold;">${safeInvoiceNumber}</td></tr><tr><td style="padding:10px 0;border-top:1px solid #d5e7ef;color:#5b7483;font-size:13px;">Betaald bedrag</td><td align="right" style="padding:10px 0;border-top:1px solid #d5e7ef;color:#07304a;font-size:17px;font-weight:bold;">${safePaidAmount}</td></tr><tr><td style="padding:10px 0 0;border-top:1px solid #d5e7ef;color:#5b7483;font-size:13px;">Betaaldatum</td><td align="right" style="padding:10px 0 0;border-top:1px solid #d5e7ef;color:#07304a;font-size:14px;">${safePaidDate}</td></tr></table></td></tr></table><table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:26px 0 20px;"><tr><td bgcolor="#0d6e9e" style="border-radius:8px;"><a href="${safeDownloadUrl}" style="display:inline-block;padding:14px 24px;color:#ffffff;text-decoration:none;font-size:16px;font-weight:bold;">Factuur bekijken</a></td></tr></table><p style="margin:0;font-size:14px;line-height:1.6;color:#5b7483;">De factuur blijft ook beschikbaar in uw WorkMatchr-account.</p></td></tr><tr><td style="padding:22px 34px;background:#07304a;color:#dcebf2;font-size:12px;line-height:1.6;">Met vriendelijke groet,<br><strong style="color:#ffffff;">WorkMatchr</strong><br><a href="https://www.workmatchr.nl" style="color:#9dd5ed;text-decoration:none;">www.workmatchr.nl</a><br><a href="https://www.workmatchr.nl/contact" style="color:#9dd5ed;text-decoration:none;">Neem contact met ons op</a></td></tr></table></td></tr></table></body></html>`,
   }
 }

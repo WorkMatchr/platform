@@ -22,9 +22,11 @@ vi.mock('./financial-transaction', () => ({ runSerializableFinancialTransaction:
 const invoice = {
   id: '60000000-0000-4000-8000-000000000001',
   invoiceNumber: 'WM-26085001',
+  amountInclVatCents: 3_025,
   purchaseId: '50000000-0000-4000-8000-000000000001',
   purchase: {
     status: 'PAID',
+    paidAt: new Date('2026-08-09T12:30:00.000Z'),
     createdByUserId: '40000000-0000-4000-8000-000000000001',
     createdByUser: { email: 'finance@example.invalid', displayName: 'Factuurgebruiker' },
   },
@@ -54,6 +56,7 @@ describe('factuurmailbezorging', () => {
       to: 'finance@example.invalid',
       idempotencyKey: `invoice-email:${invoice.id}`,
       html: expect.stringContaining(`https://platform-finance-preview-workmatchrs-projects.vercel.app/credits/facturen/${invoice.id}/pdf`),
+      text: expect.stringContaining('30,25'),
     }))
     expect(mocks.eventCreate).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({
       eventType: 'INVOICE_EMAIL_SENT',
