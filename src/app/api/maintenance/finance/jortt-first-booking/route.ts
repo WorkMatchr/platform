@@ -2,7 +2,7 @@ import { timingSafeEqual } from 'node:crypto'
 
 import { NextRequest, NextResponse } from 'next/server'
 
-import { createJorttGateway } from '@/lib/finance/jortt-api-gateway'
+import { JorttApiGateway } from '@/lib/finance/jortt-api-gateway'
 import { syncFinancialInvoiceToJortt } from '@/lib/finance/jortt-sync-service'
 import { getPrisma } from '@/lib/prisma'
 
@@ -81,6 +81,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   if (!authorized(request)) return new NextResponse(null, { status: 404 })
+  let providerDiagnostic: { status: number; key: string | null; details: Array<{ param: string | null; key: string | null }> } | null = null
   try {
     const prisma = getPrisma()
     const invoice = await prisma.financialInvoice.findUnique({
@@ -89,8 +90,8 @@ export async function POST(request: NextRequest) {
     })
     if (!invoice?.jorttSync || invoice.invoiceNumber !== INVOICE_NUMBER || invoice.snapshotVersion !== 2 || invoice.credits !== 50
       || invoice.amountExclVatCents !== 5_000 || invoice.vatAmountCents !== 1_050 || invoice.amountInclVatCents !== 6_050
-      || invoice.jorttSync.status !== 'RETRY_REQUIRED' || invoice.jorttSync.attemptCount !== 5
-      || invoice.jorttSync.attempts.length !== 5 || invoice.jorttSync.attempts.some((item) => item.status !== 'FAILED')) {
+      || invoice.jorttSync.status !== 'RETRY_REQUIRED' || invoice.jorttSync.attemptCount !== 6
+      || invoice.jorttSync.attempts.length !== 6 || invoice.jorttSync.attempts.some((item) => item.status !== 'FAILED')) {
       throw new Error('JORTT_RETRY_PRECONDITION_FAILED')
     }
 
@@ -100,8 +101,23 @@ export async function POST(request: NextRequest) {
     const invoicesBefore = exact((await get(`/invoices?query=${encodeURIComponent(INVOICE_NUMBER)}`, token)).data, INVOICE_NUMBER)
     if (customersBefore.length !== 1 || invoicesBefore.length !== 1) throw new Error('JORTT_REMOTE_PRECONDITION_FAILED')
 
-    const first = await syncFinancialInvoiceToJortt(INVOICE_ID, createJorttGateway())
-    const replay = await syncFinancialInvoiceToJortt(INVOICE_ID, createJorttGateway())
+    const diagnosticFetcher: typeof fetch = async (input, init) => {
+      const response = await fetch(input, init)
+      if (!response.ok) {
+        const body = await response.clone().json().catch(() => null) as { error?: { key?: unknown; details?: Array<{ param?: unknown; key?: unknown }> } } | null
+        providerDiagnostic = {
+          status: response.status,
+          key: typeof body?.error?.key === 'string' ? body.error.key : null,
+          details: Array.isArray(body?.error?.details) ? body.error.details.map((detail) => ({
+            param: typeof detail.param === 'string' ? detail.param : null,
+            key: typeof detail.key === 'string' ? detail.key : null,
+          })) : [],
+        }
+      }
+      return response
+    }
+    const first = await syncFinancialInvoiceToJortt(INVOICE_ID, new JorttApiGateway(diagnosticFetcher))
+    const replay = await syncFinancialInvoiceToJortt(INVOICE_ID, new JorttApiGateway(diagnosticFetcher))
     const stored = await prisma.financialJorttSync.findUniqueOrThrow({ where: { invoiceId: INVOICE_ID }, include: { attempts: { orderBy: { attemptNumber: 'asc' } } } })
     if (stored.status !== 'SYNCED' || !stored.externalReference || !stored.remoteInvoiceNumber) throw new Error('JORTT_RETRY_NOT_SYNCED')
 
@@ -136,10 +152,10 @@ export async function POST(request: NextRequest) {
       attemptStatuses: stored.attempts.map((item) => item.status),
       firstStatus: first.status,
       replayStatus: replay.status,
-      replayIdempotent: stored.attemptCount === 6 && stored.attempts.length === 6,
+      replayIdempotent: stored.attemptCount === 7 && stored.attempts.length === 7,
     })
   } catch (error) {
     const safeErrorCode = error instanceof Error && /^[A-Z0-9_]{3,100}$/.test(error.message) ? error.message : 'JORTT_RETRY_FAILED'
-    return NextResponse.json({ status: 'FAILED', safeErrorCode }, { status: 500 })
+    return NextResponse.json({ status: 'FAILED', safeErrorCode, providerDiagnostic }, { status: 500 })
   }
 }
