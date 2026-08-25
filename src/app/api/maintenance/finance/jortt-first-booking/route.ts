@@ -2,7 +2,7 @@ import { timingSafeEqual } from 'node:crypto'
 
 import { NextRequest, NextResponse } from 'next/server'
 
-import { createJorttGateway } from '@/lib/finance/jortt-api-gateway'
+import { JorttApiGateway } from '@/lib/finance/jortt-api-gateway'
 import { syncFinancialInvoiceToJortt } from '@/lib/finance/jortt-sync-service'
 import { getPrisma } from '@/lib/prisma'
 
@@ -114,6 +114,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   if (!authorized(request)) return unavailable()
+  let providerDiagnostic: { status: number; key: string | null; details: Array<{ param: string | null; key: string | null }> } | null = null
   try {
     const prisma = getPrisma()
     const invoice = await prisma.financialInvoice.findUnique({
@@ -130,10 +131,9 @@ export async function POST(request: NextRequest) {
       || invoice.vatAmountCents !== 1_050
       || invoice.amountInclVatCents !== 6_050
       || invoice.jorttSync.status !== 'RETRY_REQUIRED'
-      || invoice.jorttSync.attemptCount !== 1
-      || invoice.jorttSync.attempts.length !== 1
-      || invoice.jorttSync.attempts[0]?.status !== 'FAILED'
-      || invoice.jorttSync.attempts[0]?.errorCode !== 'JORTT_PROVIDER_REJECTED') {
+      || invoice.jorttSync.attemptCount !== 2
+      || invoice.jorttSync.attempts.length !== 2
+      || invoice.jorttSync.attempts.some((attempt) => attempt.status !== 'FAILED' || attempt.errorCode !== 'JORTT_PROVIDER_REJECTED')) {
       throw new Error('JORTT_FIRST_BOOKING_INVOICE_PRECONDITION_FAILED')
     }
 
@@ -143,8 +143,23 @@ export async function POST(request: NextRequest) {
     const invoicesBefore = exact((await get(`/invoices?query=${encodeURIComponent(INVOICE_NUMBER)}`, accessToken)).data, INVOICE_NUMBER)
     if (customersBefore.length > 1 || invoicesBefore.length > 0) throw new Error('JORTT_FIRST_BOOKING_REMOTE_PRECONDITION_FAILED')
 
-    const first = await syncFinancialInvoiceToJortt(INVOICE_ID, createJorttGateway())
-    const replay = await syncFinancialInvoiceToJortt(INVOICE_ID, createJorttGateway())
+    const diagnosticFetcher: typeof fetch = async (input, init) => {
+      const response = await fetch(input, init)
+      if (!response.ok) {
+        const body = await response.clone().json().catch(() => null) as { error?: { key?: unknown; details?: Array<{ param?: unknown; key?: unknown }> } } | null
+        providerDiagnostic = {
+          status: response.status,
+          key: typeof body?.error?.key === 'string' ? body.error.key : null,
+          details: Array.isArray(body?.error?.details) ? body.error.details.map((detail) => ({
+            param: typeof detail.param === 'string' ? detail.param : null,
+            key: typeof detail.key === 'string' ? detail.key : null,
+          })) : [],
+        }
+      }
+      return response
+    }
+    const first = await syncFinancialInvoiceToJortt(INVOICE_ID, new JorttApiGateway(diagnosticFetcher))
+    const replay = await syncFinancialInvoiceToJortt(INVOICE_ID, new JorttApiGateway(diagnosticFetcher))
 
     const stored = await prisma.financialJorttSync.findUniqueOrThrow({
       where: { invoiceId: INVOICE_ID },
@@ -198,12 +213,12 @@ export async function POST(request: NextRequest) {
       attemptStatuses: stored.attempts.map((attempt) => attempt.status),
       firstStatus: first.status,
       replayStatus: replay.status,
-      replayIdempotent: stored.attemptCount === 2 && stored.attempts.length === 2,
+      replayIdempotent: stored.attemptCount === 3 && stored.attempts.length === 3,
     })
   } catch (error) {
     const code = error instanceof Error && /^[A-Z0-9_]{3,100}$/.test(error.message)
       ? error.message
       : 'JORTT_FIRST_BOOKING_FAILED'
-    return NextResponse.json({ status: 'FAILED', safeErrorCode: code }, { status: 500 })
+    return NextResponse.json({ status: 'FAILED', safeErrorCode: code, providerDiagnostic }, { status: 500 })
   }
 }
