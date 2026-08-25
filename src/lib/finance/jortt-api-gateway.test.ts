@@ -47,7 +47,7 @@ describe('Jortt API gateway', () => {
     const result = await new JorttApiGateway(fetcher as typeof fetch).submitInvoice(payload(), 'jortt:WM-2026-000001')
     expect(result).toEqual({ externalReference: 'invoice-1', remoteInvoiceNumber: 'J2026-42' })
     const invoiceBody = calls.find((call) => call.url.endsWith('/invoices'))?.body as Record<string, unknown>
-    expect(invoiceBody).toMatchObject({ reference: 'WM-2026-000001', payment_method: 'already_paid', net_amounts: true })
+    expect(invoiceBody).toMatchObject({ reference: 'WM-2026-000001', payment_method: 'already_paid', net_amounts: false })
     expect(invoiceBody).not.toHaveProperty('send_method')
     expect(calls.find((call) => call.url.endsWith('/invoices/invoice-1/send'))?.body).toEqual({ send_method: 'self' })
     expect(JSON.stringify(invoiceBody)).not.toMatch(/email|peppol/i)
@@ -55,6 +55,53 @@ describe('Jortt API gateway', () => {
       expect.objectContaining({ quantity: '100', amount: { amount: '1.00', currency: 'EUR' }, vat: { value: '0.21', category: null } }),
       expect.objectContaining({ quantity: '1', amount: { amount: '-5.00', currency: 'EUR' }, vat: { value: '0.21', category: null } }),
     ]))
+  })
+
+  it('stuurt € 50,00 exclusief btw als netto prijs zodat Jortt € 60,50 inclusief btw boekt', async () => {
+    let invoiceBody: Record<string, unknown> | null = null
+    const fetcher = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input)
+      if (url.includes('/oauth/token')) return response({ access_token: 'token' })
+      if (url.includes('/invoices?') || url.includes('/customers?')) return response({ data: [] })
+      if (url.endsWith('/customers')) return response({ data: { id: 'customer-50' } }, 201)
+      if (url.endsWith('/invoices')) {
+        invoiceBody = JSON.parse(String(init?.body)) as Record<string, unknown>
+        return response({ data: { id: 'invoice-50' } }, 201)
+      }
+      if (url.endsWith('/invoices/invoice-50/send')) return new Response(null, { status: 200 })
+      if (url.endsWith('/invoices/invoice-50')) return response({ data: { id: 'invoice-50', reference: 'WM-2026-000050', invoice_number: 'J2026-50' } })
+      return response({}, 404)
+    })
+    const fiftyCredits = payload({
+      invoiceNumber: 'WM-2026-000050', amountExclVatCents: 5_000, vatAmountCents: 1_050, amountInclVatCents: 6_050,
+      lines: [{ description: '50 WorkMatchr-credits', quantity: 50, unit: 'credit', unitPriceExclVatCents: 100, discountAmountCents: 0, netAmountExclVatCents: 5_000, vatRateBps: 2_100, vatAmountCents: 1_050 }],
+    })
+    await new JorttApiGateway(fetcher as typeof fetch).submitInvoice(fiftyCredits, 'fifty-credits')
+    expect(invoiceBody).toMatchObject({
+      net_amounts: false,
+      line_items: [{ quantity: '50', amount: { amount: '1.00', currency: 'EUR' }, vat: { value: '0.21', category: null } }],
+    })
+    expect(fiftyCredits.amountExclVatCents + fiftyCredits.vatAmountCents).toBe(fiftyCredits.amountInclVatCents)
+  })
+
+  it('gebruikt voor Pro dezelfde netto-bedragsemantiek en de immutable serviceperiode', async () => {
+    let invoiceBody: Record<string, unknown> | null = null
+    const fetcher = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input)
+      if (url.includes('/oauth/token')) return response({ access_token: 'token' })
+      if (url.includes('/invoices?') || url.includes('/customers?')) return response({ data: [] })
+      if (url.endsWith('/customers')) return response({ data: { id: 'customer-pro' } }, 201)
+      if (url.endsWith('/invoices')) { invoiceBody = JSON.parse(String(init?.body)) as Record<string, unknown>; return response({ data: { id: 'invoice-pro' } }, 201) }
+      if (url.endsWith('/invoices/invoice-pro/send')) return new Response(null, { status: 200 })
+      if (url.endsWith('/invoices/invoice-pro')) return response({ data: { id: 'invoice-pro', reference: 'WM-PRO-2026-1', invoice_number: 'JPRO-1' } })
+      return response({}, 404)
+    })
+    await new JorttApiGateway(fetcher as typeof fetch).submitInvoice(payload({
+      invoiceNumber: 'WM-PRO-2026-1', servicePeriodStart: '2026-09-01T00:00:00.000Z', servicePeriodEnd: '2026-09-30T00:00:00.000Z',
+      amountExclVatCents: 4_900, vatAmountCents: 1_029, amountInclVatCents: 5_929,
+      lines: [{ description: 'WorkMatchr Pro', quantity: 1, unit: 'maand', unitPriceExclVatCents: 4_900, discountAmountCents: 0, netAmountExclVatCents: 4_900, vatRateBps: 2_100, vatAmountCents: 1_029 }],
+    }), 'pro-invoice')
+    expect(invoiceBody).toMatchObject({ net_amounts: false, delivery_period: '2026-09-01', delivery_period_end: '2026-09-30' })
   })
 
   it('hergebruikt een bestaande debiteur en factuur bij replay', async () => {
@@ -106,6 +153,7 @@ describe('Jortt API gateway', () => {
     expect(result.remoteInvoiceNumber).toBe('J2026-C42')
     expect(calls.find((call) => call.url.endsWith('/credit-1/send'))?.body).toEqual({ send_method: 'self' })
     expect(JSON.stringify(calls)).not.toMatch(/peppol|send_method":"email/i)
+    expect(calls.some((call) => call.url.endsWith('/invoices') && call.body !== null)).toBe(false)
   })
 
   it('blijft fail-closed zonder acceptatieconfiguratie en in Production zonder write-gate', () => {
