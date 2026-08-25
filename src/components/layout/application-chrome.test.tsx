@@ -23,6 +23,7 @@ function renderChrome() {
     <ApplicationChrome
       header={<div>Publieke header met Stel uw vraag</div>}
       banner={<div>Testmodusbanner</div>}
+      compactFooter={<div>Compacte workspacefooter</div>}
       footer={<div>Publieke footer</div>}
       headerModel={anonymousModel}
     >
@@ -77,6 +78,7 @@ describe('routebewuste applicatiechrome', () => {
       <ApplicationChrome
         header={<div>Ingelogde header</div>}
         banner={<div>Testmodusbanner</div>}
+        compactFooter={<div>Compacte workspacefooter</div>}
         footer={<div>Publieke footer</div>}
         headerModel={{
           authenticated: true,
@@ -95,5 +97,7 @@ describe('routebewuste applicatiechrome', () => {
     expect(html).toContain('Organisatie BV')
     expect(html).toContain('aria-current="page"')
     expect(html).toContain('lg:overflow-y-auto')
+    expect(html).toContain('Compacte workspacefooter')
+    expect(html).not.toContain('Publieke footer')
   })
 })

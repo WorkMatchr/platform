@@ -34,12 +34,14 @@ export function usesAuthenticatedWorkspace(pathname: string) {
 export function ApplicationChrome({
   banner,
   children,
+  compactFooter,
   footer,
   header,
   headerModel,
 }: {
   banner: ReactNode
   children: ReactNode
+  compactFooter: ReactNode
   footer: ReactNode
   header: ReactNode
   headerModel: HeaderViewModel
@@ -78,7 +80,7 @@ export function ApplicationChrome({
             {children}
           </div>
         </main>
-        <div className="shrink-0">{footer}</div>
+        <div className="shrink-0">{compactFooter}</div>
       </div>
     )
   }

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { ApplicationChrome } from '@/components/layout/application-chrome'
-import { Footer } from '@/components/layout/footer'
+import { CompactFooter, Footer } from '@/components/layout/footer'
 import { getHeaderViewModel, Header } from '@/components/layout/header'
 import { TestImpersonationBanner } from '@/components/layout/test-impersonation-banner'
 import { siteConfig } from '@/config/site'
@@ -35,6 +35,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           header={<Header model={headerModel} />}
           headerModel={headerModel}
           banner={<TestImpersonationBanner />}
+          compactFooter={<CompactFooter />}
           footer={<Footer />}
         >
           {children}

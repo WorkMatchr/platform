@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import { Footer } from '@/components/layout/footer'
+import { CompactFooter, Footer } from '@/components/layout/footer'
 import { siteConfig } from '@/config/site'
 import {
   indexablePublicRoutes,
@@ -63,6 +63,20 @@ describe('publieke informatiearchitectuur', () => {
     expect(html).toContain('href="/algemene-voorwaarden"')
     expect(html).toContain('href="/inloggen"')
     expect(html).not.toContain('href="#"')
+  })
+
+  it('rendert een compacte workspacefooter zonder publieke marketingkolommen', () => {
+    const html = renderToStaticMarkup(<CompactFooter />)
+    expect(html).toContain('WorkMatchr ©')
+    expect(html).toContain('href="/privacy"')
+    expect(html).toContain('href="/cookies"')
+    expect(html).toContain('href="/algemene-voorwaarden"')
+    expect(html).not.toContain('Vind uw route')
+    expect(html).not.toContain('Onafhankelijke digitale begeleiding')
+    expect(html).not.toContain('grid-cols')
+    expect(html).not.toContain('<img')
+    expect(html).toContain('flex-wrap')
+    expect(html).toContain('lg:justify-between')
   })
 
   it('legt de RI&E-content getypeerd en met stabiele identiteiten vast', () => {
