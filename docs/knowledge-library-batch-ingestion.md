@@ -8,7 +8,7 @@ De Knowledge Library batchfoundation inventariseert lokale bronbibliotheken vó�
 - Maximaal 100 bestanden worden technisch geïnventariseerd; maximaal 10 bestanden kunnen per proef volledig worden geëxtraheerd met `--extract 10`.
 - Alleen `READY` is later kandidaat voor onboarding. Alle andere statussen vereisen review of herstel.
 - De runner schrijft niet naar een database, valideert geen inhoud en publiceert niets.
-- Een mapnaam of bestandsnaam is nooit voldoende voor `READY`. Daarvoor zijn checksum-gebonden, gecontroleerde canonieke metadata vereist: broncode en -identiteit, HTTPS-URL, autoriteitsstatus, jurisdictie, toepassingsscope en versie/jaar.
+- Een mapnaam of bestandsnaam is nooit voldoende voor `READY`. Daarvoor zijn checksum-gebonden, gecontroleerde canonieke metadata vereist: broncode en exact één sterke URL- of bibliografische identiteit, autoriteitsstatus, jurisdictie, toepassingsscope en versie/jaar. URL-identiteit behoudt de bestaande HTTPS-eis; een sterke bibliografische identiteit heeft geen synthetische URL nodig.
 - `--metadata <json>` leest een lokaal reviewmanifest met `schemaVersion: 1` en een `documents`-array. Iedere regel is gebonden aan relatief pad én SHA-256. Het manifest blijft buiten Git naast de lokale bronbibliotheek en is daardoor bij replay deterministisch herbruikbaar zonder eenmalige hardcoding in scripts.
 - Een ontbrekende regel, gewijzigde checksum, ongeldige HTTPS-URL of incomplete scope blijft fail-closed en kan nooit `READY` worden.
 
@@ -37,6 +37,36 @@ Een manifestregel bevat minimaal het gecontroleerde relatieve pad, checksum, bro
   ]
 }
 ```
+
+## IMA Online RI&E-deelrapporten (2016)
+
+`npm run knowledge:rie -- prepare --root <local-sources/rie>` maakt voor de 33
+gecontroleerde IMA Online-deelrapporten een deterministische, privacyveilige
+afgeleide PDF en een redactionrapport met uitsluitend categorie-aantallen. De
+originelen blijven ongewijzigd; alleen de afgeleide artifactchecksum mag later
+worden geïmporteerd. OOCL, Jistarc, CLAS en Defensie zijn dossiercontext en
+worden nooit publisher, authority of independence group.
+
+De set gebruikt bestaande semantiek: `PROFESSIONAL_GUIDANCE`,
+`PROFESSIONAL_REFERENCE`, `HISTORICAL`, vrije bronfamilie `IMA_RIE` en
+independence group `IMA_ONLINE_RIE_2016`. De canonieke identiteit is
+`BIBLIOGRAPHIC`; `canonicalUrl` blijft leeg. De additieve enumwaarde
+`IMA_ONLINE` is nodig omdat de database iedere canonical identity bewust aan
+een expliciete canonical family bindt. Alle nieuwe versies blijven
+`REVIEW_REQUIRED` en ongepubliceerd.
+
+Databasepreflight en de drie-documentenproef zijn alleen toegestaan als
+`KNOWLEDGE_IMPORT_TARGET=preview` staat en de SHA-256 van de daadwerkelijke
+databasehost exact overeenkomt met
+`KNOWLEDGE_IMPORT_EXPECTED_DATABASE_HOST_HASH`. Zonder deze expliciete binding
+faalt de runner vóór databasegebruik. De acceptatieselectie is vast begrensd op
+01 Arbobeleid, 09.2 Werkplekinrichting beeldschermwerk en 30 Werken op hoogte.
+
+Commerciële normen/boeken blijven `RIGHTS_REVIEW_REQUIRED`; de Toetsing-brief
+blijft `NOT_GENERIC_KNOWLEDGE_SOURCE`; DOCX blijft
+`UNSUPPORTED_FORMAT_PENDING`; het ZIP-bestand met byte-identieke PDF's blijft
+`DUPLICATE_CONTAINER`. Geen van deze categorieën wordt door de RI&E-runner
+geïmporteerd.
 
 ## Statussen
 

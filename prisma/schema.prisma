@@ -758,6 +758,7 @@ enum KnowledgeCanonicalSourceFamily {
   NVAB
   STANDARD
   INTERNATIONAL_GUIDANCE
+  IMA_ONLINE
 }
 
 enum KnowledgeSourceAuthorityStatus {

@@ -88,6 +88,27 @@ describe('multi-source onboarding', () => {
     expect(create.mock.calls[0][0].data).toMatchObject({ sourceUrl: null, canonicalIdentity: { create: { identityType: 'BIBLIOGRAPHIC', bibliographicIsbn: '9012089417', bibliographicPublicationCode: 'AI-03' } } })
   })
 
+  it('ondersteunt professionele bibliografische bronnen met een eigen canonieke bronfamilie', async () => {
+    const create = vi.fn().mockResolvedValue({})
+    const transaction = { $executeRaw: vi.fn(), knowledgeSource: { findUnique: vi.fn().mockResolvedValue(null), create }, knowledgeSourceCanonicalIdentity: identityDelegate() }
+    const database = { $transaction: vi.fn(async (callback) => callback(transaction)) }
+    const source = {
+      ...base.source,
+      code: 'IMA-RIE-2016-01',
+      title: 'Arbobeleid',
+      publisher: 'IMA Online',
+      canonicalFamily: 'IMA_ONLINE' as const,
+      canonicalUrl: undefined,
+      authorityStatus: 'PROFESSIONAL_REFERENCE' as const,
+      temporalStatus: 'HISTORICAL' as const,
+      sourceFamily: 'IMA_RIE',
+      independenceGroup: 'IMA_ONLINE_RIE_2016',
+      canonicalIdentity: { type: 'BIBLIOGRAPHIC' as const, publisher: 'IMA Online', series: 'IMA Online RI&E-deelrapporten', title: 'Arbobeleid', publicationCode: 'IMA-RIE-01', edition: 'IMA-A', publicationYear: 2016 },
+    }
+    await onboardKnowledgeSource({ ...base, source }, database as never)
+    expect(create.mock.calls[0][0].data).toMatchObject({ canonicalFamily: 'IMA_ONLINE', authorityLevel: 'PROFESSIONAL_GUIDANCE', sourceUrl: null })
+  })
+
   it('weigert bibliografische metadata die niet met de bron overeenkomt vóór databasewrite', async () => {
     const database = { $transaction: vi.fn() }
     const source = { ...base.source, canonicalUrl: undefined, canonicalIdentity: { type: 'BIBLIOGRAPHIC' as const, publisher: 'Andere uitgever', series: 'AI', title: base.source.title, publicationCode: 'AI-03', edition: 'Tweede druk', publicationYear: 2001 } }

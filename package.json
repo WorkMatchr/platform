@@ -56,6 +56,7 @@
     "knowledge:preview": "tsx scripts/knowledge-import.ts preview",
     "knowledge:batch": "tsx scripts/knowledge-import-batch.ts",
     "knowledge:library-batch": "tsx scripts/knowledge-library-batch.ts",
+    "knowledge:rie": "tsx scripts/knowledge-rie-import.ts",
     "knowledge:import": "tsx scripts/knowledge-import.ts import",
     "knowledge:correct": "tsx scripts/knowledge-import.ts correct",
     "knowledge:attach-preview": "tsx scripts/knowledge-import.ts attach-preview",

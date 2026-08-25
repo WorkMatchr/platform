@@ -429,3 +429,5 @@ Migratie `20260809100000_add_financial_chain_f3_f9` is additief en introduceert 
 Migratie `20260809120000_harden_financial_refund_lifecycle` voegt uitsluitend de optionele `FinancialEvent.refundId`-relatie, index en `RESTRICT`-foreign key toe. Daarmee blijven refundstatuswisselingen append-only herleidbaar zonder bestaande financiële records te herschrijven.
 
 Migratie `20260809130000_add_mollie_test_acceptance_pricing` voegt additief `FinancialPricingMode` toe aan aankoop- en factuursnapshots. Bestaande records worden `STANDARD`. Een databasecheck staat `MOLLIE_TEST_ACCEPTANCE` uitsluitend toe voor 25 credits met exact €1,00 exclusief btw, €0,21 btw, €1,21 inclusief btw en zonder kortingen. De prijsmodus valt onder de bestaande immutable aankoopbescherming.
+
+Migratie `20260825100000_add_ima_online_knowledge_source_family` voegt uitsluitend de enumwaarde `IMA_ONLINE` toe aan `KnowledgeCanonicalSourceFamily`. Er is geen backfill of recordmutatie. De waarde maakt een expliciete canonical family mogelijk voor bibliografisch geïdentificeerde IMA Online-publicaties zonder hun professionele, historische autoriteitsstatus te verhogen.

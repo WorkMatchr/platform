@@ -84,7 +84,7 @@ export async function onboardKnowledgeSourceInTransaction(input: KnowledgeOnboar
     authorityStatus: input.source.authorityStatus, sourceUrl: canonicalIdentity.canonicalUrl, jurisdiction: input.source.jurisdiction,
     applicabilityScope: input.source.applicabilityScope, temporalStatus: input.source.temporalStatus, sourceFamily: input.source.sourceFamily,
     independenceGroup: input.source.independenceGroup, isPrimarySource: input.source.isPrimarySource,
-    metadataStatus: 'COMPLETE', copyrightClassification: 'RESTRICTED_REFERENCE_ONLY', authorityLevel: input.source.authorityStatus === 'OFFICIAL_PRIMARY' ? 'PRIMARY_LEGAL' : 'OFFICIAL_GUIDANCE',
+    metadataStatus: 'COMPLETE', copyrightClassification: 'RESTRICTED_REFERENCE_ONLY', authorityLevel: input.source.authorityStatus === 'OFFICIAL_PRIMARY' ? 'PRIMARY_LEGAL' : input.source.authorityStatus === 'PROFESSIONAL_REFERENCE' ? 'PROFESSIONAL_GUIDANCE' : 'OFFICIAL_GUIDANCE',
     canonicalIdentity: { create: { id: randomUUID(), ...canonicalIdentity } },
     versions: { create: { id: sourceVersionId, versionLabel: input.version.versionLabel, publicationDate: input.version.publicationDate, validFrom: input.version.validFrom, validUntil: input.version.validUntil, checksum: input.version.checksum, extractionStatus: 'READY', reviewStatus: 'REVIEW_REQUIRED', artifacts: { create: { id: randomUUID(), artifactType: input.artifact.type, mediaType: input.artifact.mediaType, locator: input.artifact.locator, checksum: input.artifact.checksum, retrievedAt: input.artifact.retrievedAt } }, applicabilityScopes: { create: input.scopes.map((scope) => ({ id: randomUUID(), ...scope })) } } },
   } })

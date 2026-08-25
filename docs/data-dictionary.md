@@ -18,7 +18,7 @@
 - `KnowledgeDocumentFamily`: stabiele, immutable identiteit van een inhoudelijk samenhangende documentset.
 - `KnowledgeDocumentFamilyMember`: geordende append-only koppeling naar één `KnowledgeSourceVersion`, met een gecontroleerde documentrol.
 
-- `KnowledgeSource.canonicalFamily`: gecontroleerde functionele bronfamilie voor nieuwe onboardings; legacybronnen mogen null blijven.
+- `KnowledgeSource.canonicalFamily`: gecontroleerde functionele bronfamilie voor nieuwe onboardings; legacybronnen mogen null blijven. `IMA_ONLINE` identificeert gecontroleerde IMA Online-publicaties en impliceert geen officiële of actuele autoriteitsstatus.
 - `KnowledgeSource.authorityStatus`: expliciete officiële/geautoriseerde positie van de canonieke bron.
 - `KnowledgeSourceCanonicalIdentity`: immutable, exact één-op-één identiteit van een nieuwe canonieke bron. Type `URL` vereist HTTPS en gelijkheid met `sourceUrl`; type `BIBLIOGRAPHIC` bewaart gecontroleerde bibliografische discriminatoren en hun deterministische SHA-256-fingerprint.
 - `KnowledgeSourceCanonicalIdentity.supersedesIdentityId`: unieke lineaire verwijzing van een gecorrigeerde nieuwe bronidentiteit naar haar voorganger; historische identiteit wordt niet gewijzigd.
