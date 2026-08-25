@@ -45,6 +45,27 @@ function paymentSnapshot(input: {
   })
 }
 
+export async function GET(request: NextRequest) {
+  if (!authorized(request)) return unavailable()
+  const purchase = await getPrisma().financialPurchase.findUnique({
+    where: { idempotencyKey: IDEMPOTENCY_KEY },
+    include: { invoice: { include: { jorttSync: true } }, creditedTransaction: true, paymentEvents: true },
+  })
+  return NextResponse.json({
+    purchaseExists: Boolean(purchase),
+    purchaseId: purchase?.id ?? null,
+    purchaseStatus: purchase?.status ?? null,
+    molliePaymentIdPresent: Boolean(purchase?.molliePaymentId),
+    creditTransactionCount: purchase?.creditedTransaction ? 1 : 0,
+    invoiceCount: purchase?.invoice ? 1 : 0,
+    invoiceId: purchase?.invoice?.id ?? null,
+    invoiceNumber: purchase?.invoice?.invoiceNumber ?? null,
+    snapshotVersion: purchase?.invoice?.snapshotVersion ?? null,
+    jorttSyncStatus: purchase?.invoice?.jorttSync?.status ?? null,
+    paymentEventCount: purchase?.paymentEvents.length ?? 0,
+  })
+}
+
 export async function POST(request: NextRequest) {
   if (!authorized(request)) return unavailable()
   try {
