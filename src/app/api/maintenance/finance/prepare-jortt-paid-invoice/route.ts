@@ -68,8 +68,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   if (!authorized(request)) return unavailable()
+  let failureStage = 'START'
   try {
     const prisma = getPrisma()
+    failureStage = 'MEMBERSHIP_LOOKUP'
     const membership = await prisma.organizationMembership.findFirst({
       where: {
         status: 'ACTIVE',
@@ -134,6 +136,7 @@ export async function POST(request: NextRequest) {
       },
     } satisfies Pick<MollieGateway, 'createPayment' | 'getPayment'>
 
+    failureStage = 'PURCHASE_RESUME'
     const purchase = await createCreditPurchase({
       actorUserId: membership.user.id,
       organizationId: membership.organization.id,
@@ -152,6 +155,7 @@ export async function POST(request: NextRequest) {
     let mailSuppressedByMissingPreviewProvider = false
     for (let replay = 0; replay < 2; replay += 1) {
       try {
+        failureStage = replay === 0 ? 'PAYMENT_FINALIZATION' : 'PAYMENT_REPLAY'
         await processMolliePayment(purchase.molliePaymentId!, gateway as MollieGateway)
       } catch (error) {
         if (error instanceof AuthEmailDeliveryError && error.code === 'EMAIL_DELIVERY_NOT_CONFIGURED') {
@@ -162,6 +166,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    failureStage = 'RESULT_VERIFICATION'
     const result = await prisma.financialPurchase.findUniqueOrThrow({
       where: { id: purchase.id },
       include: {
@@ -200,6 +205,6 @@ export async function POST(request: NextRequest) {
     const code = error instanceof Error && /^[A-Z0-9_]{3,100}$/.test(error.message)
       ? error.message
       : 'PAID_PREVIEW_INVOICE_PREPARATION_FAILED'
-    return NextResponse.json({ status: 'FAILED', safeErrorCode: code }, { status: 500 })
+    return NextResponse.json({ status: 'FAILED', failureStage, safeErrorCode: code }, { status: 500 })
   }
 }
