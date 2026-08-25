@@ -53,13 +53,12 @@ export async function POST(request: NextRequest) {
       where: {
         status: 'ACTIVE',
         role: { in: ['OWNER', 'ADMIN'] },
-        user: { status: 'ACTIVE', accountType: 'PROFESSIONAL', email: { endsWith: '@example.invalid' } },
+        user: { status: 'ACTIVE', accountType: 'PROFESSIONAL', email: { endsWith: '.example.invalid' } },
         organization: {
           status: 'ACTIVE',
           organizationType: { in: ['PROVIDER', 'BOTH'] },
           systemKey: null,
           providerProfile: { isNot: null },
-          locations: { some: { archivedAt: null } },
         },
       },
       include: {
@@ -70,8 +69,13 @@ export async function POST(request: NextRequest) {
       },
       orderBy: { createdAt: 'asc' },
     })
-    const location = membership?.organization.locations[0]
-    if (!membership || !location) throw new Error('PREVIEW_FINANCIAL_FIXTURE_NOT_FOUND')
+    if (!membership) throw new Error('PREVIEW_FINANCIAL_FIXTURE_NOT_FOUND')
+    const location = membership.organization.locations[0] ?? {
+      addressLine: 'Teststraat 1',
+      postalCode: '1234 AB',
+      city: 'Teststad',
+      countryCode: 'NL',
+    }
 
     let createdPayment: MolliePaymentSnapshot | null = null
     const gateway = {
