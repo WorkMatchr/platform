@@ -212,6 +212,12 @@ export async function POST(request: NextRequest) {
     const code = error instanceof Error && /^[A-Z0-9_]{3,100}$/.test(error.message)
       ? error.message
       : 'PAID_PREVIEW_INVOICE_PREPARATION_FAILED'
+    console.error('JORTT_FIXTURE_SAFE_DIAGNOSTIC', {
+      failureStage,
+      diagnosticType: error instanceof Error ? error.name : 'UNKNOWN',
+      diagnosticCode,
+      diagnosticTokens,
+    })
     return NextResponse.json({
       status: 'FAILED',
       failureStage,
