@@ -74,6 +74,41 @@ function lineRecords(record: JorttRecord) {
   return Array.isArray(value) ? value.filter((item): item is JorttRecord => Boolean(item) && typeof item === 'object') : []
 }
 
+export async function GET(request: NextRequest) {
+  if (!authorized(request)) return unavailable()
+  const candidates = await getPrisma().financialInvoice.findMany({
+    where: {
+      snapshotVersion: 2,
+      documentType: 'INVOICE',
+      pricingMode: 'MOLLIE_TEST_ACCEPTANCE',
+      purchase: { is: { kind: 'CREDIT_PACKAGE', status: 'PAID' } },
+    },
+    select: {
+      invoiceNumber: true,
+      issuedAt: true,
+      amountExclVatCents: true,
+      vatAmountCents: true,
+      amountInclVatCents: true,
+      jorttSync: { select: { status: true, attemptCount: true, lastErrorCode: true } },
+    },
+    orderBy: [{ issuedAt: 'desc' }, { id: 'desc' }],
+    take: 20,
+  })
+  return NextResponse.json({
+    count: candidates.length,
+    candidates: candidates.map((item) => ({
+      invoiceNumber: item.invoiceNumber,
+      issuedAt: item.issuedAt.toISOString(),
+      amountExclVatCents: item.amountExclVatCents,
+      vatAmountCents: item.vatAmountCents,
+      amountInclVatCents: item.amountInclVatCents,
+      syncStatus: item.jorttSync?.status ?? null,
+      attemptCount: item.jorttSync?.attemptCount ?? null,
+      lastErrorCode: item.jorttSync?.lastErrorCode ?? null,
+    })),
+  })
+}
+
 export async function POST(request: NextRequest) {
   if (!authorized(request)) return unavailable()
 
