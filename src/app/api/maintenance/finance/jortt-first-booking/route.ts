@@ -80,6 +80,38 @@ function lines(record: JorttRecord) {
   return Array.isArray(current) ? current.filter((item): item is JorttRecord => Boolean(item) && typeof item === 'object') : []
 }
 
+export async function GET(request: NextRequest) {
+  if (!authorized(request)) return unavailable()
+  try {
+    const prisma = getPrisma()
+    const invoice = await prisma.financialInvoice.findUniqueOrThrow({
+      where: { id: INVOICE_ID },
+      include: { jorttSync: { include: { attempts: { orderBy: { attemptNumber: 'asc' } } } } },
+    })
+    if (!invoice.jorttSync || invoice.invoiceNumber !== INVOICE_NUMBER) {
+      throw new Error('JORTT_FIRST_BOOKING_INVOICE_PRECONDITION_FAILED')
+    }
+    const accessToken = await token()
+    const customerReference = `workmatchr-org:${invoice.organizationId}`
+    const customers = exact((await get(`/customers?query=${encodeURIComponent(customerReference)}`, accessToken)).data, customerReference)
+    const invoices = exact((await get(`/invoices?query=${encodeURIComponent(INVOICE_NUMBER)}`, accessToken)).data, INVOICE_NUMBER)
+    return NextResponse.json({
+      syncStatus: invoice.jorttSync.status,
+      syncAttemptCount: invoice.jorttSync.attemptCount,
+      attemptHistoryCount: invoice.jorttSync.attempts.length,
+      attemptStatuses: invoice.jorttSync.attempts.map((attempt) => attempt.status),
+      safeErrorCodes: invoice.jorttSync.attempts.map((attempt) => attempt.errorCode),
+      customerCount: customers.length,
+      invoiceCount: invoices.length,
+    })
+  } catch (error) {
+    const code = error instanceof Error && /^[A-Z0-9_]{3,100}$/.test(error.message)
+      ? error.message
+      : 'JORTT_FIRST_BOOKING_DIAGNOSTIC_FAILED'
+    return NextResponse.json({ status: 'FAILED', safeErrorCode: code }, { status: 500 })
+  }
+}
+
 export async function POST(request: NextRequest) {
   if (!authorized(request)) return unavailable()
   try {
