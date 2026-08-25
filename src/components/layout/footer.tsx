@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { WorkMatchrLogo } from '@/components/branding/workmatchr-logo'
 import { Container } from '@/components/layout/container'
-import { publicFooterGroups } from '@/content/public-routes'
+import { publicFooterGroups, publicRoutes } from '@/content/public-routes'
 
 export function Footer() {
   return (
@@ -33,6 +33,23 @@ export function Footer() {
       </Container>
       <div className="border-t border-border">
         <Container className="py-5 text-sm text-text-secondary">WorkMatchr © {new Date().getFullYear()}</Container>
+      </div>
+    </footer>
+  )
+}
+
+export function CompactFooter() {
+  return (
+    <footer className="border-t border-border bg-surface text-sm text-text-secondary">
+      <div className="mx-auto flex w-full max-w-[96rem] flex-wrap items-center justify-center gap-x-5 px-4 py-1 sm:px-6 lg:justify-between lg:px-8">
+        <p className="shrink-0 py-2">WorkMatchr © {new Date().getFullYear()}</p>
+        <nav aria-label="Juridische links in de voettekst">
+          <ul className="flex flex-wrap items-center justify-center gap-x-4 sm:gap-x-5">
+            <li><Link href={publicRoutes.privacy} className="inline-flex min-h-11 items-center rounded-control hover:text-brand-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary">Privacy</Link></li>
+            <li><Link href={publicRoutes.cookies} className="inline-flex min-h-11 items-center rounded-control hover:text-brand-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary">Cookies</Link></li>
+            <li><Link href={publicRoutes.terms} className="inline-flex min-h-11 items-center rounded-control hover:text-brand-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary">Algemene voorwaarden</Link></li>
+          </ul>
+        </nav>
       </div>
     </footer>
   )

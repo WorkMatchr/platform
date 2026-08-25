@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { LogoutButton } from '@/components/auth/logout-button'
+import { AccountNavigationMenu } from '@/components/layout/account-navigation-menu'
 import { Container } from '@/components/layout/container'
 import { DisclosureMenu } from '@/components/ui/disclosure-menu'
 import { getOptionalActiveOrganizationContext } from '@/lib/organizations/organization-authorization'
@@ -39,9 +39,10 @@ function DashboardHeader({ model }: { model: HeaderViewModel }) {
           ) : (
             <PublicNavigation authenticated />
           )}
-          <DisclosureMenu
-            ariaLabel="Gebruikersmenu openen of sluiten"
-            className="relative shrink-0"
+          {!model.isPlatformAdministrator && (
+            <DisclosureMenu
+            ariaLabel="Accountmenu openen of sluiten"
+            className="relative shrink-0 lg:hidden"
             buttonClassName="flex min-h-11 items-center rounded-control border border-border bg-surface px-3 text-sm font-semibold text-brand-dark sm:px-4"
             panelClassName="absolute right-0 z-30 mt-3 max-h-[calc(100vh-7rem)] w-[min(18rem,calc(100vw-2.5rem))] overflow-y-auto rounded-card border border-border bg-surface p-3 shadow-card"
             trigger={
@@ -66,46 +67,32 @@ function DashboardHeader({ model }: { model: HeaderViewModel }) {
                 {organizationRoleLabels[model.activeOrganization.role]}
               </p>
             )}
-            <div className="mt-1 divide-y divide-border">
-              {model.navigationGroups.map((group) => {
-                const headingId = `user-navigation-${group.key}`
-                return (
-                  <nav className="py-2" aria-labelledby={headingId} key={group.key}>
-                    <h2
-                      className="px-3 pb-1 text-xs font-semibold tracking-wide text-text-secondary"
-                      id={headingId}
-                    >
-                      {group.label}
-                    </h2>
-                    <ul className="space-y-1">
-                      {group.links.map((item) => (
-                        <li key={item.href}>
-                          <Link
-                            href={item.href}
-                            className="flex min-h-11 items-center rounded-control px-3 text-sm font-semibold text-brand-dark hover:bg-brand-primary-subtle"
-                          >
-                            {item.label}
-                          </Link>
-                        </li>
-                      ))}
-                      {group.key === 'personal' && (
-                        <li>
-                          <LogoutButton className="w-full justify-start px-3" variant="ghost" />
-                        </li>
-                      )}
-                    </ul>
-                  </nav>
-                )
-              })}
-            </div>
+            <AccountNavigationMenu groups={model.navigationGroups} />
           </DisclosureMenu>
+          )}
+          {!model.isPlatformAdministrator && (
+            <Link
+              href="/dashboard"
+              className="hidden min-h-11 items-center rounded-control px-3 text-sm font-semibold text-brand-dark hover:bg-brand-primary-subtle lg:inline-flex"
+            >
+              Mijn omgeving
+            </Link>
+          )}
+          {model.isPlatformAdministrator && (
+            <Link
+              href="/account"
+              className="inline-flex min-h-11 items-center rounded-control px-3 text-sm font-semibold text-brand-dark hover:bg-brand-primary-subtle"
+            >
+              Account
+            </Link>
+          )}
         </div>
       </Container>
     </header>
   )
 }
 
-export async function Header() {
+export async function getHeaderViewModel() {
   const context = await getOptionalActiveOrganizationContext()
   let isPlatformAdministrator = false
   if (context?.user.platformRole === 'ADMIN') {
@@ -116,6 +103,10 @@ export async function Header() {
       if (!(error instanceof PlatformAdminAccessError)) throw error
     }
   }
-  const model = buildHeaderViewModel(context, isPlatformAdministrator)
-  return model.authenticated ? <DashboardHeader model={model} /> : <PublicHeader />
+  return buildHeaderViewModel(context, isPlatformAdministrator)
+}
+
+export async function Header({ model }: { model?: HeaderViewModel } = {}) {
+  const resolvedModel = model ?? await getHeaderViewModel()
+  return resolvedModel.authenticated ? <DashboardHeader model={resolvedModel} /> : <PublicHeader />
 }

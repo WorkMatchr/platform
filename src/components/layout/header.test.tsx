@@ -12,6 +12,10 @@ vi.mock('@/lib/organizations/organization-authorization', () => ({
   getOptionalActiveOrganizationContext: mocks.getContext,
 }))
 
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/dashboard',
+}))
+
 vi.mock('@/components/auth/logout-button', () => ({
   LogoutButton: () => <button type="button">Uitloggen</button>,
 }))
@@ -45,7 +49,7 @@ describe('headerweergave per sessiecontext', () => {
     expect(html).toContain('Kenniscentrum')
     expect(html).not.toContain('Over WorkMatchr')
     expect(html).not.toContain('>Contact<')
-    expect(html).toContain('Stel uw vraag')
+    expect(html).toContain('Arbo-wijzers')
     expect(html).not.toContain('PERSOONLIJK')
   })
 
@@ -72,10 +76,10 @@ describe('headerweergave per sessiecontext', () => {
     expect(html).toContain('Kenniscentrum')
     expect(html).not.toContain('Over WorkMatchr')
     expect(html).not.toContain('>Contact<')
-    expect(html).toContain('Stel uw vraag')
-    expect(html).toContain('WERK')
-    expect(html).toContain('ORGANISATIE')
-    expect(html).toContain('PERSOONLIJK')
+    expect(html).toContain('Arbo-wijzers')
+    expect(html).toContain('Werk')
+    expect(html).toContain('Organisatie')
+    expect(html).toContain('Persoonlijk')
     expect(html).toContain('Account')
     expect(html).toContain('Organisatie')
     expect(html).not.toContain('Mijn account')
@@ -83,7 +87,7 @@ describe('headerweergave per sessiecontext', () => {
     expect(html).not.toContain('Mijn adviesdossiers')
     expect(html).toContain('Eigenaar')
     expect(html).not.toContain('Dienstverlenersprofiel')
-    expect(html).not.toContain('FINANCIEEL')
+    expect(html).not.toContain('Credits &amp; facturen')
     expect(html).not.toContain('Credits &amp; facturen')
     expect(html).not.toContain('WorkMatchr Pro')
   })
@@ -109,15 +113,14 @@ describe('headerweergave per sessiecontext', () => {
     expect(html).toContain('Beheerder')
     expect(html).toContain('Diensten')
     expect(html).toContain('Kenniscentrum')
-    expect(html).toContain('Stel uw vraag')
+    expect(html).toContain('Arbo-wijzers')
     expect(html).toContain('Dienstverlenersprofiel')
-    expect(html).toContain('FINANCIEEL')
     expect(html).toContain('href="/credits"')
     expect(html).toContain('Credits &amp; facturen')
     expect(html).toContain('href="/credits/pro"')
     expect(html).toContain('WorkMatchr Pro')
-    expect(html.indexOf('ORGANISATIE')).toBeLessThan(html.indexOf('FINANCIEEL'))
-    expect(html.indexOf('FINANCIEEL')).toBeLessThan(html.indexOf('PERSOONLIJK'))
+    expect(html.indexOf('Werk')).toBeLessThan(html.indexOf('Organisatie'))
+    expect(html.indexOf('Organisatie')).toBeLessThan(html.indexOf('Persoonlijk'))
     expect(html).not.toMatch(/Aanbiedersdossier|Providerdossier|Mijn providerdossier/)
     expect(html).toContain('Uitloggen')
   })
@@ -153,7 +156,7 @@ describe('headerweergave per sessiecontext', () => {
     expect(html).toContain('Account')
     expect(html).not.toContain('Stel uw vraag')
     expect(html).not.toContain('Organisatie</a>')
-    expect(html).not.toContain('FINANCIEEL')
+    expect(html).not.toContain('Credits &amp; facturen')
   })
 
   it('houdt publieke en accountacties bereikbaar in de mobiele header', async () => {
@@ -178,7 +181,9 @@ describe('headerweergave per sessiecontext', () => {
 
     expect(html).toContain('Mobiele hoofdnavigatie')
     expect(html).toContain('Hoofdnavigatie openen of sluiten')
-    expect(html).toContain('Gebruikersmenu openen of sluiten')
+    expect(html).toContain('Accountmenu openen of sluiten')
+    expect(html).toContain('relative shrink-0 lg:hidden')
+    expect(html).toContain('Mijn omgeving')
     expect(html).toContain('Account')
     expect(html).toContain('Dashboard')
   })
