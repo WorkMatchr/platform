@@ -129,8 +129,11 @@ export async function POST(request: NextRequest) {
       || invoice.vatRateBps !== 2_100
       || invoice.vatAmountCents !== 1_050
       || invoice.amountInclVatCents !== 6_050
-      || invoice.jorttSync.status !== 'PENDING'
-      || invoice.jorttSync.attempts.length !== 0) {
+      || invoice.jorttSync.status !== 'RETRY_REQUIRED'
+      || invoice.jorttSync.attemptCount !== 1
+      || invoice.jorttSync.attempts.length !== 1
+      || invoice.jorttSync.attempts[0]?.status !== 'FAILED'
+      || invoice.jorttSync.attempts[0]?.errorCode !== 'JORTT_PROVIDER_REJECTED') {
       throw new Error('JORTT_FIRST_BOOKING_INVOICE_PRECONDITION_FAILED')
     }
 
@@ -195,7 +198,7 @@ export async function POST(request: NextRequest) {
       attemptStatuses: stored.attempts.map((attempt) => attempt.status),
       firstStatus: first.status,
       replayStatus: replay.status,
-      replayIdempotent: stored.attemptCount === 1 && stored.attempts.length === 1,
+      replayIdempotent: stored.attemptCount === 2 && stored.attempts.length === 2,
     })
   } catch (error) {
     const code = error instanceof Error && /^[A-Z0-9_]{3,100}$/.test(error.message)

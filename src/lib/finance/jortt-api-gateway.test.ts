@@ -49,8 +49,8 @@ describe('Jortt API gateway', () => {
     expect(invoiceBody).toMatchObject({ reference: 'WM-2026-000001', send_method: 'self', payment_method: 'already_paid', net_amounts: true })
     expect(JSON.stringify(invoiceBody)).not.toMatch(/email|peppol/i)
     expect(invoiceBody.line_items).toEqual(expect.arrayContaining([
-      expect.objectContaining({ quantity: '100', amount: { amount: '1.00', currency: 'EUR' } }),
-      expect.objectContaining({ quantity: '1', amount: { amount: '-5.00', currency: 'EUR' } }),
+      expect.objectContaining({ quantity: '100', amount: { amount: '1.00', currency: 'EUR' }, vat: { value: '0.21', category: null } }),
+      expect.objectContaining({ quantity: '1', amount: { amount: '-5.00', currency: 'EUR' }, vat: { value: '0.21', category: null } }),
     ]))
   })
 
