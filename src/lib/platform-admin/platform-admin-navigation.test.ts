@@ -39,11 +39,22 @@ describe('platformbeheernavigatie', () => {
 
   it('behoudt een logische mobiele en toetsenbordvolgorde met native links', () => {
     const menu = readFileSync(join(process.cwd(), 'src/components/platform-admin/platform-admin-navigation-menu.tsx'), 'utf8')
-    expect(menu).toContain('<nav')
-    expect(menu).toContain('<details')
-    expect(menu).toContain('<summary')
-    expect(menu).toContain('aria-current')
+    const accordion = readFileSync(join(process.cwd(), 'src/components/layout/accordion-navigation.tsx'), 'utf8')
+    expect(accordion).toContain('<nav')
+    expect(accordion).toContain('<details')
+    expect(accordion).toContain('<summary')
+    expect(accordion).toContain('aria-current')
     expect(menu).not.toContain('tabIndex={-1}')
+  })
+
+  it('houdt de platformmatcher binnen de clientgrens', () => {
+    const menu = readFileSync(join(process.cwd(), 'src/components/platform-admin/platform-admin-navigation-menu.tsx'), 'utf8')
+    const shell = readFileSync(join(process.cwd(), 'src/components/platform-admin/platform-admin-shell.tsx'), 'utf8')
+
+    expect(menu.trimStart().startsWith("'use client'")).toBe(true)
+    expect(menu).toContain('isRouteActive={isPlatformAdminRouteActive}')
+    expect(shell).not.toContain('isRouteActive=')
+    expect(shell).toContain('<PlatformAdminNavigationMenu membershipRole={membershipRole} />')
   })
 
   it('biedt gebruikersbeheer vanuit iedere organisatiecontext aan', () => {

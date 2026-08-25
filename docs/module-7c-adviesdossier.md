@@ -103,7 +103,7 @@ De datamodel-, service-, interface-, PDF-, audit- en integriteitstests zijn tech
 
 ### M7C.1 — Header Navigation and Anonymous Save UX
 
-De publieke hoofdnavigatie blijft op publieke en beschermde pagina’s beschikbaar, ongeacht de sessiestatus. Bij een ingelogde gebruiker verdwijnt uitsluitend de loginlink en blijft het bestaande accountmenu als afzonderlijke accountnavigatie beschikbaar.
+De publieke hoofdnavigatie blijft op publieke pagina’s beschikbaar, ongeacht de sessiestatus. Binnen de ingelogde werkruimte gebruikt een opdrachtgever of professional op desktop de gedeelde linker accountnavigatie; mobiel blijft dezelfde gegroepeerde accountnavigatie via een compacte trigger bereikbaar. De veilige dossier-, intake- en `returnTo`-routes veranderen hierdoor niet.
 
 Een afgeronde anonieme intake toont een bewaarblok met:
 

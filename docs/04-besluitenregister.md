@@ -326,3 +326,9 @@ Zie [ADR-022](adr/ADR-022-matchen-op-vakdiscipline.md) voor concrete, aantoonbar
 | B-235 | Vakdiscipline volgt uit risicodomein, dominante context en expliciete deterministische regels. | Precies één primaire discipline; aanvullende en mogelijke disciplines worden ontdubbeld en begrensd. |
 | B-236 | Eligibility vereist het concrete gecontroleerde specialisme in de Trusted Provider Projection. | Een generieke dienst of vrije profieltekst maakt een provider niet geschikt voor bijvoorbeeld ergonomie. |
 | B-237 | Bestaande dossiers, aanvragen en projecties worden niet herschreven. | Alleen nieuwe adviezen en snapshots gebruiken ruleset 1.2.0 en SPECIALISM-taxonomie v2. |
+
+## 24 augustus 2026 — Gedeelde accountnavigatie
+
+| ID | Besluit | Toelichting |
+| --- | --- | --- |
+| B-238 | De ingelogde klant- en professionalwerkruimte gebruikt op desktop een linkerzijbalk en op mobiel dezelfde navigatie in een compact menu. | De drie taakgroepen `Werk`, `Organisatie` en `Persoonlijk` worden server-side rolgebonden samengesteld; bestaande provider- en financiële routes blijven behouden. Platformbeheer en de accountwerkruimte hergebruiken één accordionpatroon met afwisselend de vaste kleurstijlen A en B. |

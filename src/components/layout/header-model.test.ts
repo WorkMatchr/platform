@@ -40,7 +40,7 @@ describe('gedeelde headercontext', () => {
     expect(model.navigationGroups).toEqual([
       {
         key: 'work',
-        label: 'WERK',
+        label: 'Werk',
         links: [
           { href: '/dashboard', label: 'Dashboard' },
           { href: '/opdrachten', label: 'Opdrachten' },
@@ -50,12 +50,12 @@ describe('gedeelde headercontext', () => {
       },
       {
         key: 'organization',
-        label: 'ORGANISATIE',
+        label: 'Organisatie',
         links: [{ href: '/organisatie', label: 'Organisatie' }],
       },
       {
         key: 'personal',
-        label: 'PERSOONLIJK',
+        label: 'Persoonlijk',
         links: [
           { href: '/account', label: 'Account' },
           { href: '/notificaties', label: 'Notificaties' },
@@ -74,14 +74,10 @@ describe('gedeelde headercontext', () => {
       { href: '/aanbiedersdossier', label: 'Dienstverlenersprofiel' },
       { href: '/aanbiedersdossier/professionals', label: 'Professionals' },
     ])
-    expect(model.navigationGroups.find((group) => group.key === 'financial')).toEqual({
-      key: 'financial',
-      label: 'FINANCIEEL',
-      links: [
-        { href: '/credits', label: 'Credits & facturen' },
-        { href: '/credits/pro', label: 'WorkMatchr Pro' },
-      ],
-    })
+    expect(model.navigationGroups.find((group) => group.key === 'work')?.links).toEqual(expect.arrayContaining([
+      { href: '/credits', label: 'Credits & facturen' },
+      { href: '/credits/pro', label: 'WorkMatchr Pro' },
+    ]))
     expect(model.navigationGroups.flatMap((group) => group.links)).not.toContainEqual({ href: '/hulpvragen', label: 'Opdrachten' })
   })
 
@@ -141,8 +137,8 @@ describe('gedeelde headercontext', () => {
       },
     }, true)
     expect(platformAdministrator.navigationGroups).toEqual([
-      { key: 'work', label: 'WERK', links: [{ href: '/platformbeheer', label: 'Platformbeheer' }] },
-      { key: 'personal', label: 'PERSOONLIJK', links: [{ href: '/account', label: 'Account' }] },
+      { key: 'work', label: 'Werk', links: [{ href: '/platformbeheer', label: 'Platformbeheer' }] },
+      { key: 'personal', label: 'Persoonlijk', links: [{ href: '/account', label: 'Account' }] },
     ])
     expect(platformAdministrator.activeOrganization).toBeNull()
     expect(buildHeaderViewModel(clientContext).navigationGroups.flatMap((group) => group.links).some((item) => item.href === '/platformbeheer')).toBe(false)
