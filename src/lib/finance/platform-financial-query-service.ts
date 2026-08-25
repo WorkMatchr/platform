@@ -113,6 +113,7 @@ export async function listPlatformFinancialInvoices(actorUserId: string, filters
     id: true, invoiceNumber: true, issuedAt: true, documentType: true, amountExclVatCents: true, vatAmountCents: true, amountInclVatCents: true,
     organization: { select: { id: true, name: true } }, purchase: { select: { status: true } },
     subscriptionPayment: { select: { status: true } }, refund: { select: { status: true } },
+    jorttSync: { select: { status: true, remoteInvoiceNumber: true, lastErrorCode: true, updatedAt: true, syncedAt: true } },
   } satisfies Prisma.FinancialInvoiceSelect
   return paginated(filters.page, () => prisma.financialInvoice.count({ where }), (skip) => prisma.financialInvoice.findMany({ where, select, orderBy: [{ issuedAt: 'desc' }, { id: 'desc' }], skip, take: PAGE_SIZE }))
 }

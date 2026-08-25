@@ -3,9 +3,10 @@ import { FinancialDocumentType } from '@/generated/prisma/client'
 import { AdminPageHeader, AdminPagination, AdminSection, AdminTable, EmptyState, FilterField, FilterForm, StatusPill } from '@/components/platform-admin/platform-admin-ui'
 import { formatEuro } from '@/lib/finance/financial-contract'
 import { formatPlatformDate, paginationHref, parseDateBoundary, parsePage, singleParam, type FinancialSearchParams } from '@/lib/finance/platform-financial-filters'
-import { financialDocumentTypeLabels, financialPaymentStatusLabels, financialPurchaseStatusLabels, financialStatusTone } from '@/lib/finance/platform-financial-presentation'
+import { financialDocumentTypeLabels, financialPaymentStatusLabels, financialPurchaseStatusLabels, financialStatusTone, financialSyncStatusLabels, financialSyncStatusTone } from '@/lib/finance/platform-financial-presentation'
 import { listPlatformFinancialInvoices } from '@/lib/finance/platform-financial-query-service'
 import { requirePlatformAdministrator } from '@/lib/platform-admin/platform-admin-authorization'
+import { retryPlatformJorttSyncAction } from '../actions'
 
 const pathname = '/platformbeheer/financien/facturen'
 
@@ -28,7 +29,7 @@ export default async function PlatformFinancialInvoicesPage({ searchParams }: { 
       <FilterField name="through" label="Tot en met"><input className="min-h-10 rounded-control border border-border bg-surface px-3 text-sm" type="date" name="through" defaultValue={through} /></FilterField>
     </FilterForm>
     <AdminSection title={`${data.total} factuurdocumenten`}>
-      {data.items.length === 0 ? <EmptyState>Geen facturen gevonden met deze filters.</EmptyState> : <AdminTable headers={['Factuurnummer', 'Datum', 'Organisatie', 'Excl. btw', 'Btw', 'Totaal', 'Betaalstatus', 'PDF']}>
+      {data.items.length === 0 ? <EmptyState>Geen facturen gevonden met deze filters.</EmptyState> : <AdminTable headers={['Factuurnummer', 'Datum', 'Organisatie', 'Excl. btw', 'Btw', 'Totaal', 'Betaalstatus', 'Jortt', 'PDF']}>
         {data.items.map((invoice) => {
           const status = invoice.purchase?.status ?? invoice.subscriptionPayment?.status ?? invoice.refund?.status
           const statusLabel = invoice.purchase
@@ -46,6 +47,17 @@ export default async function PlatformFinancialInvoicesPage({ searchParams }: { 
             <td className="whitespace-nowrap px-4 py-3">{formatEuro(invoice.vatAmountCents)}</td>
             <td className="whitespace-nowrap px-4 py-3 font-semibold">{formatEuro(invoice.amountInclVatCents)}</td>
             <td className="px-4 py-3">{status ? <StatusPill tone={financialStatusTone(status)}>{statusLabel}</StatusPill> : statusLabel}</td>
+            <td className="px-4 py-3">
+              {invoice.jorttSync ? <div className="flex min-w-36 flex-col items-start gap-1.5">
+                <StatusPill tone={financialSyncStatusTone(invoice.jorttSync.status)}>{financialSyncStatusLabels[invoice.jorttSync.status]}</StatusPill>
+                {invoice.jorttSync.remoteInvoiceNumber ? <span className="text-xs text-text-muted">Jortt {invoice.jorttSync.remoteInvoiceNumber}</span> : null}
+                {invoice.jorttSync.lastErrorCode ? <span className="text-xs text-red-700">Foutcode: {invoice.jorttSync.lastErrorCode}</span> : null}
+                {['FAILED', 'RETRY_REQUIRED'].includes(invoice.jorttSync.status) ? <form action={retryPlatformJorttSyncAction}>
+                  <input type="hidden" name="invoiceId" value={invoice.id} />
+                  <button type="submit" className="text-xs font-semibold text-brand-primary hover:underline">Opnieuw synchroniseren</button>
+                </form> : null}
+              </div> : <span className="text-xs text-text-muted">Niet gepland</span>}
+            </td>
             <td className="px-4 py-3"><Link className="font-semibold text-brand-primary hover:underline" href={`${pathname}/${invoice.id}/pdf`}>Bekijken / downloaden</Link></td>
           </tr>
         })}

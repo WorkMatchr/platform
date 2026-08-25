@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { refundWorkmatchrError } from '@/lib/finance/refund-service'
+import { createJorttGateway } from '@/lib/finance/jortt-api-gateway'
+import { syncFinancialInvoiceToJortt } from '@/lib/finance/jortt-sync-service'
 import { requirePlatformAdministrator } from '@/lib/platform-admin/platform-admin-authorization'
 
 const refundSchema = z.object({
@@ -47,4 +49,20 @@ export async function startPlatformFinancialRefundAction(formData: FormData) {
   revalidatePath('/platformbeheer/financien/terugbetalingen')
   revalidatePath(returnTo)
   redirect(`${returnTo}?resultaat=${reviewRequired ? 'controle-nodig' : 'terugbetaling-gestart'}`)
+}
+
+export async function retryPlatformJorttSyncAction(formData: FormData) {
+  const parsed = z.object({ invoiceId: z.string().uuid() }).safeParse(Object.fromEntries(formData))
+  const returnTo = '/platformbeheer/financien/facturen'
+  await requirePlatformAdministrator(returnTo)
+  if (!parsed.success) redirect(`${returnTo}?fout=ongeldige-jortt-sync`)
+  try {
+    await syncFinancialInvoiceToJortt(parsed.data.invoiceId, createJorttGateway())
+  } catch {
+    revalidatePath(returnTo)
+    redirect(`${returnTo}?fout=jortt-sync-mislukt`)
+  }
+  revalidatePath('/platformbeheer/financien')
+  revalidatePath(returnTo)
+  redirect(`${returnTo}?resultaat=jortt-gesynchroniseerd`)
 }

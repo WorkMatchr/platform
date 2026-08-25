@@ -32,7 +32,13 @@ Een door Mollie aangemaakte refund blijft lokaal `PENDING` zolang de provider `q
 
 Een bevoegde platformbeheerder start een volledige refund van een betaalde creditaankoop via **Financieel → Betalingen → betaling openen**. De actie vereist een gecontroleerde redencode, vrije toelichting en expliciete bevestiging en hergebruikt `refundWorkmatchrError`. Dezelfde idempotente service verzorgt Mollie, creditreservering/-correctie, creditnota en `FinancialEvent`-audit. Is na de aankoop creditgebruik gevonden, dan wordt de aankoop `REFUND_REVIEW_REQUIRED` en volgt geen Mollie-aanroep voordat de bestaande review is afgerond. Gedeeltelijke refunds en handmatige statusmutaties zijn niet beschikbaar.
 
-`FinancialJorttSync` en immutable pogingen vormen een downstream adaptergrens. Een Jortt-storing verandert betaling, factuur of credits niet. Zolang een geverifieerd Jortt API-contract en beheerde credentials ontbreken, blijft de echte externe synchronisatie bewust geblokkeerd met een veilige foutcode.
+`FinancialJorttSync` en immutable pogingen vormen een downstream adaptergrens. Een Jortt-storing verandert betaling, factuur of credits niet. De synchronisatie gebruikt uitsluitend immutable factuursnapshots en registreert iedere poging herleidbaar.
+
+Jortt mag een eigen administratief `invoice_number` genereren. Het immutable WorkMatchr-factuurnummer (`WM-...`) blijft het officiële klantfactuurnummer en wordt exact als Jortt `reference` vastgelegd. Zowel de Jortt remote ID als het gegenereerde nummer worden in `FinancialJorttSync` bewaard. WorkMatchr verstuurt de klantfactuur; de adapter gebruikt uitsluitend Jortt `send_method: self` en nooit `email` of `peppol`.
+
+Configuratie is server-only via `JORTT_CLIENT_ID`, `JORTT_CLIENT_SECRET` en `JORTT_SYNC_ENVIRONMENT`. Preview vereist een afzonderlijke Jortt-acceptatieadministratie met waarde `acceptance`. Production vereist daarnaast zowel `JORTT_SYNC_ENVIRONMENT=production` als de expliciete tweede write-gate `JORTT_PRODUCTION_WRITES_ENABLED=true`. Zonder volledige configuratie blijft de adapter fail-closed. Jortt kent geen afzonderlijke sandbox; echte acceptatieboekingen horen daarom uitsluitend in een afgescheiden testadministratie.
+
+Een providerfout resulteert in `RETRY_REQUIRED` met begrensde back-off. Het onderhoudsproces en de bevoegde platformbeheerder kunnen veilig herhalen. Een stabiele WorkMatchr-reference, een korte `PROCESSING`-lease, database-advisory locks en find-before-create bij Jortt voorkomen dubbele boekingen bij replay of herstel na een onderbreking.
 
 ## Kortingen, startersvoordeel en Pro
 
@@ -67,5 +73,9 @@ Alle waarden staan uitsluitend in beheerde omgevingsconfiguratie:
 - `MOLLIE_WEBHOOK_BASE_URL`
 - `MOLLIE_REDIRECT_BASE_URL`
 - `FINANCIAL_MAINTENANCE_SECRET` (minimaal 32 willekeurige tekens; uitsluitend voor de server-side onderhoudsroute)
+- `JORTT_CLIENT_ID` en `JORTT_CLIENT_SECRET` (uitsluitend server-side OAuth-clientcredentials)
+- `JORTT_SYNC_ENVIRONMENT` (`acceptance` voor Preview, `production` voor Production)
+- `JORTT_TRADENAME_ID` en `JORTT_REVENUE_LEDGER_ACCOUNT_ID` (optionele administratieve mapping)
+- `JORTT_PRODUCTION_WRITES_ENABLED` (expliciete tweede Production-write-gate; standaard `false`)
 
 Sleutels, volledige providerresponses en persoonsgegevens worden niet gelogd of gedocumenteerd.
