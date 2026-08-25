@@ -40,13 +40,16 @@ describe('Jortt API gateway', () => {
       if (url.includes('/customers?')) return response({ data: [] })
       if (url.endsWith('/customers')) return response({ data: { id: 'customer-1' } }, 201)
       if (url.endsWith('/invoices')) return response({ data: { id: 'invoice-1' } }, 201)
+      if (url.endsWith('/invoices/invoice-1/send')) return new Response(null, { status: 200 })
       if (url.endsWith('/invoices/invoice-1')) return response({ data: { id: 'invoice-1', reference: 'WM-2026-000001', invoice_number: 'J2026-42' } })
       return response({}, 404)
     })
     const result = await new JorttApiGateway(fetcher as typeof fetch).submitInvoice(payload(), 'jortt:WM-2026-000001')
     expect(result).toEqual({ externalReference: 'invoice-1', remoteInvoiceNumber: 'J2026-42' })
     const invoiceBody = calls.find((call) => call.url.endsWith('/invoices'))?.body as Record<string, unknown>
-    expect(invoiceBody).toMatchObject({ reference: 'WM-2026-000001', send_method: 'self', payment_method: 'already_paid', net_amounts: true })
+    expect(invoiceBody).toMatchObject({ reference: 'WM-2026-000001', payment_method: 'already_paid', net_amounts: true })
+    expect(invoiceBody).not.toHaveProperty('send_method')
+    expect(calls.find((call) => call.url.endsWith('/invoices/invoice-1/send'))?.body).toEqual({ send_method: 'self' })
     expect(JSON.stringify(invoiceBody)).not.toMatch(/email|peppol/i)
     expect(invoiceBody.line_items).toEqual(expect.arrayContaining([
       expect.objectContaining({ quantity: '100', amount: { amount: '1.00', currency: 'EUR' }, vat: { value: '0.21', category: null } }),
@@ -67,16 +70,21 @@ describe('Jortt API gateway', () => {
     expect(fetcher).toHaveBeenCalledTimes(3)
   })
 
-  it('maakt geen duplicaat wanneer een bestaande Jortt-factuur nog wordt afgerond', async () => {
+  it('finaliseert een bestaande draft via self zonder een tweede factuur te maken', async () => {
+    let detailCalls = 0
     const fetcher = vi.fn(async (input: string | URL | Request) => {
       const url = String(input)
       if (url.includes('/oauth/token')) return response({ access_token: 'token' })
       if (url.includes('/invoices?')) return response({ data: [{ id: 'invoice-pending', reference: 'WM-2026-000001', invoice_number: null }] })
-      if (url.endsWith('/invoices/invoice-pending')) return response({ data: { id: 'invoice-pending', reference: 'WM-2026-000001', invoice_number: null } })
+      if (url.endsWith('/invoices/invoice-pending/send')) return new Response(null, { status: 200 })
+      if (url.endsWith('/invoices/invoice-pending')) {
+        detailCalls += 1
+        return response({ data: { id: 'invoice-pending', reference: 'WM-2026-000001', invoice_status: detailCalls === 1 ? 'draft' : 'sent', invoice_number: detailCalls === 1 ? null : 'J2026-43' } })
+      }
       return response({}, 500)
     })
-    await expect(new JorttApiGateway(fetcher as typeof fetch).submitInvoice(payload(), 'retry')).rejects.toThrow('JORTT_REMOTE_INVOICE_PENDING')
-    expect(fetcher).toHaveBeenCalledTimes(3)
+    await expect(new JorttApiGateway(fetcher as typeof fetch).submitInvoice(payload(), 'retry')).resolves.toEqual({ externalReference: 'invoice-pending', remoteInvoiceNumber: 'J2026-43' })
+    expect(fetcher.mock.calls.some(([input]) => String(input).endsWith('/invoices'))).toBe(false)
   })
 
   it('maakt een creditnota tegen de oorspronkelijke remote factuur en verzendt niet naar de klant', async () => {

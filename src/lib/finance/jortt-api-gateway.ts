@@ -3,7 +3,7 @@ import 'server-only'
 import type { JorttGateway, JorttInvoicePayload } from './jortt-sync-service'
 
 type Fetcher = typeof fetch
-type JorttRecord = { id: string; reference?: string | null; invoice_number?: string | null }
+type JorttRecord = { id: string; reference?: string | null; invoice_number?: string | null; invoice_status?: string | null; send_method?: string | null }
 
 const API_BASE = 'https://api.jortt.nl/v3'
 const TOKEN_URL = 'https://app.jortt.nl/oauth-provider/oauth/token'
@@ -57,6 +57,26 @@ export class JorttApiGateway implements JorttGateway {
     return matches[0] ?? null
   }
 
+  private async sendSelf(invoiceId: string, accessToken: string) {
+    const response = await this.fetcher(`${API_BASE}/invoices/${invoiceId}/send`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ send_method: 'self' }),
+      signal: AbortSignal.timeout(15_000),
+    })
+    if (!response.ok) await json(response)
+  }
+
+  private async waitForFinalInvoice(invoiceId: string, invoiceNumber: string, accessToken: string) {
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const remote = await this.request<{ data: JorttRecord }>(`/invoices/${invoiceId}`, accessToken)
+      if (remote.data.reference !== invoiceNumber) throw new Error('JORTT_REFERENCE_CONFLICT')
+      if (remote.data.invoice_number) return remote.data
+      await new Promise((resolve) => setTimeout(resolve, 500))
+    }
+    throw new Error('JORTT_REMOTE_INVOICE_PENDING')
+  }
+
   async submitInvoice(payload: JorttInvoicePayload, _idempotencyKey: string) {
     void _idempotencyKey
     if (payload.documentType === 'INVOICE') {
@@ -71,8 +91,10 @@ export class JorttApiGateway implements JorttGateway {
     if (existing) {
       const remote = await this.request<{ data: JorttRecord }>(`/invoices/${existing.id}`, accessToken)
       if (remote.data.reference !== payload.invoiceNumber) throw new Error('JORTT_REFERENCE_CONFLICT')
-      if (!remote.data.invoice_number) throw new Error('JORTT_REMOTE_INVOICE_PENDING')
-      return { externalReference: remote.data.id, remoteInvoiceNumber: remote.data.invoice_number }
+      if (remote.data.invoice_number) return { externalReference: remote.data.id, remoteInvoiceNumber: remote.data.invoice_number }
+      if (remote.data.invoice_status === 'draft') await this.sendSelf(remote.data.id, accessToken)
+      const finalized = await this.waitForFinalInvoice(remote.data.id, payload.invoiceNumber, accessToken)
+      return { externalReference: finalized.id, remoteInvoiceNumber: finalized.invoice_number! }
     }
 
     let remoteId: string
@@ -81,7 +103,7 @@ export class JorttApiGateway implements JorttGateway {
       const created = await this.request<{ data: { id: string } }>(`/invoices/${payload.originalInvoiceExternalReference}/credit`, accessToken, { method: 'POST', body: JSON.stringify({}) })
       remoteId = created.data.id
       await this.request(`/invoices/${remoteId}`, accessToken, { method: 'PUT', body: JSON.stringify({ reference: payload.invoiceNumber, remarks: `WorkMatchr creditnota ${payload.invoiceNumber}` }) })
-      await this.request(`/invoices/${remoteId}/send`, accessToken, { method: 'POST', body: JSON.stringify({ send_method: 'self' }) })
+      await this.sendSelf(remoteId, accessToken)
     } else {
       const customerReference = `workmatchr-org:${payload.organizationId}`
       let customer = await this.findExact('customers', customerReference, accessToken)
@@ -93,12 +115,12 @@ export class JorttApiGateway implements JorttGateway {
         { description: `${line.description} (${line.unit})`, quantity: String(line.quantity), amount: { amount: money(line.unitPriceExclVatCents), currency: payload.currency }, vat: { value: String(line.vatRateBps / 10_000), category: null }, ledger_account_id: config.ledgerAccountId },
         ...(line.discountAmountCents > 0 ? [{ description: `Korting op ${line.description}`, quantity: '1', amount: { amount: money(-line.discountAmountCents), currency: payload.currency }, vat: { value: String(line.vatRateBps / 10_000), category: null }, ledger_account_id: config.ledgerAccountId }] : []),
       ])
-      const created = await this.request<{ data: { id: string } }>('/invoices', accessToken, { method: 'POST', body: JSON.stringify({ customer_id: customer.id, invoice_date: date(payload.issuedAt), delivery_period: payload.servicePeriodStart ? date(payload.servicePeriodStart) : payload.supplyDate ? date(payload.supplyDate) : date(payload.issuedAt), delivery_period_end: payload.servicePeriodEnd ? date(payload.servicePeriodEnd) : undefined, tradename_id: config.tradenameId, net_amounts: true, send_method: 'self', payment_method: 'already_paid', reference: payload.invoiceNumber, remarks: payload.paymentReference ? `WorkMatchr ${payload.invoiceNumber}; Mollie ${payload.paymentReference}` : `WorkMatchr ${payload.invoiceNumber}`, line_items: lineItems }) })
+      const created = await this.request<{ data: { id: string } }>('/invoices', accessToken, { method: 'POST', body: JSON.stringify({ customer_id: customer.id, invoice_date: date(payload.issuedAt), delivery_period: payload.servicePeriodStart ? date(payload.servicePeriodStart) : payload.supplyDate ? date(payload.supplyDate) : date(payload.issuedAt), delivery_period_end: payload.servicePeriodEnd ? date(payload.servicePeriodEnd) : undefined, tradename_id: config.tradenameId, net_amounts: true, payment_method: 'already_paid', reference: payload.invoiceNumber, remarks: payload.paymentReference ? `WorkMatchr ${payload.invoiceNumber}; Mollie ${payload.paymentReference}` : `WorkMatchr ${payload.invoiceNumber}`, line_items: lineItems }) })
       remoteId = created.data.id
+      await this.sendSelf(remoteId, accessToken)
     }
-    const remote = await this.request<{ data: JorttRecord }>(`/invoices/${remoteId}`, accessToken)
-    if (!remote.data.invoice_number || remote.data.reference !== payload.invoiceNumber) throw new Error('JORTT_REMOTE_INVOICE_NOT_FINAL')
-    return { externalReference: remote.data.id, remoteInvoiceNumber: remote.data.invoice_number }
+    const remote = await this.waitForFinalInvoice(remoteId, payload.invoiceNumber, accessToken)
+    return { externalReference: remote.id, remoteInvoiceNumber: remote.invoice_number! }
   }
 }
 

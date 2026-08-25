@@ -89,8 +89,8 @@ export async function POST(request: NextRequest) {
     })
     if (!invoice?.jorttSync || invoice.invoiceNumber !== INVOICE_NUMBER || invoice.snapshotVersion !== 2 || invoice.credits !== 50
       || invoice.amountExclVatCents !== 5_000 || invoice.vatAmountCents !== 1_050 || invoice.amountInclVatCents !== 6_050
-      || invoice.jorttSync.status !== 'RETRY_REQUIRED' || invoice.jorttSync.attemptCount !== 4
-      || invoice.jorttSync.attempts.length !== 4 || invoice.jorttSync.attempts.some((item) => item.status !== 'FAILED')) {
+      || invoice.jorttSync.status !== 'RETRY_REQUIRED' || invoice.jorttSync.attemptCount !== 5
+      || invoice.jorttSync.attempts.length !== 5 || invoice.jorttSync.attempts.some((item) => item.status !== 'FAILED')) {
       throw new Error('JORTT_RETRY_PRECONDITION_FAILED')
     }
 
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
       attemptStatuses: stored.attempts.map((item) => item.status),
       firstStatus: first.status,
       replayStatus: replay.status,
-      replayIdempotent: stored.attemptCount === 5 && stored.attempts.length === 5,
+      replayIdempotent: stored.attemptCount === 6 && stored.attempts.length === 6,
     })
   } catch (error) {
     const safeErrorCode = error instanceof Error && /^[A-Z0-9_]{3,100}$/.test(error.message) ? error.message : 'JORTT_RETRY_FAILED'
