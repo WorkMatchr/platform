@@ -80,7 +80,6 @@ export async function GET(request: NextRequest) {
     where: {
       snapshotVersion: 2,
       documentType: 'INVOICE',
-      pricingMode: 'MOLLIE_TEST_ACCEPTANCE',
       purchase: { is: { kind: 'CREDIT_PACKAGE', status: 'PAID' } },
     },
     select: {
@@ -118,9 +117,8 @@ export async function POST(request: NextRequest) {
       where: {
         snapshotVersion: 2,
         documentType: 'INVOICE',
-        pricingMode: 'MOLLIE_TEST_ACCEPTANCE',
         purchase: { is: { kind: 'CREDIT_PACKAGE', status: 'PAID' } },
-        jorttSync: { is: { status: 'PENDING' } },
+        jorttSync: { is: { status: { in: ['PENDING', 'FAILED', 'RETRY_REQUIRED'] } } },
       },
       include: {
         lines: { orderBy: { position: 'asc' } },
