@@ -9,6 +9,7 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 const expectedRecipient = 'info@workmatchr.nl'
+const acceptanceRunStartedAt = new Date('2026-08-25T04:25:00.000Z')
 const notFound = () => new Response('Not found', { status: 404 })
 
 function authorized(request: Request) {
@@ -35,9 +36,9 @@ export async function POST(request: Request) {
     const deliveredInvoices = await prisma.financialInvoice.findMany({
       where: {
         purchase: { status: 'PAID', paidAt: { not: null }, createdByUser: { email: { endsWith: '.example.invalid' } } },
-        events: { some: { idempotencyKey: { startsWith: 'invoice-email-sent:' } } },
+        events: { some: { idempotencyKey: { startsWith: 'invoice-email-sent:' }, createdAt: { gte: acceptanceRunStartedAt } } },
       },
-      include: { purchase: { include: { createdByUser: { select: { displayName: true } } } }, events: { where: { idempotencyKey: { startsWith: 'invoice-email-sent:' } } } },
+      include: { purchase: { include: { createdByUser: { select: { displayName: true } } } }, events: { where: { idempotencyKey: { startsWith: 'invoice-email-sent:' }, createdAt: { gte: acceptanceRunStartedAt } } } },
       orderBy: { issuedAt: 'desc' },
       take: 2,
     })
