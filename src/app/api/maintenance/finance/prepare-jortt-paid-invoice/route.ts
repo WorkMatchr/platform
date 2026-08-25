@@ -202,9 +202,23 @@ export async function POST(request: NextRequest) {
       mailSuppressedByMissingPreviewProvider,
     })
   } catch (error) {
+    const errorRecord = error && typeof error === 'object' ? error as { code?: unknown } : null
+    const diagnosticCode = typeof errorRecord?.code === 'string' && /^[A-Z0-9_-]{2,40}$/.test(errorRecord.code)
+      ? errorRecord.code
+      : null
+    const diagnosticTokens = error instanceof Error
+      ? [...new Set(error.message.match(/\b[A-Z][A-Z0-9_]{2,99}\b/g) ?? [])].slice(0, 5)
+      : []
     const code = error instanceof Error && /^[A-Z0-9_]{3,100}$/.test(error.message)
       ? error.message
       : 'PAID_PREVIEW_INVOICE_PREPARATION_FAILED'
-    return NextResponse.json({ status: 'FAILED', failureStage, safeErrorCode: code }, { status: 500 })
+    return NextResponse.json({
+      status: 'FAILED',
+      failureStage,
+      safeErrorCode: code,
+      diagnosticType: error instanceof Error ? error.name : 'UNKNOWN',
+      diagnosticCode,
+      diagnosticTokens,
+    }, { status: 500 })
   }
 }
