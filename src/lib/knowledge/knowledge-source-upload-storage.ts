@@ -153,7 +153,10 @@ export function hasKnowledgeSourceUploadOidcToken(getToken: () => string = getVe
 }
 
 export function isKnowledgeSourceUploadStorageConfigured() {
-  try { getKnowledgeSourceUploadStorage(); return Boolean(getKnowledgeSourceUploadStorageConfiguration() && hasKnowledgeSourceUploadOidcToken()) } catch { return false }
+  // Render-time availability is based on the environment/store binding. The
+  // request-scoped OIDC token is deliberately verified later, immediately
+  // before issuing a private direct-upload target.
+  try { getKnowledgeSourceUploadStorage(); return Boolean(getKnowledgeSourceUploadStorageConfiguration()) } catch { return false }
 }
 
 export function getKnowledgeSourceUploadStorageConfiguration(): { environment: 'preview' | 'production'; storeId: string } | null {

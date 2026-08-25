@@ -4,6 +4,7 @@ import {
   createKnowledgeSourceUploadTarget,
   hasKnowledgeSourceUploadOidcToken,
   InMemoryKnowledgeSourceUploadStorage,
+  isKnowledgeSourceUploadStorageConfigured,
   KnowledgeSourceUploadStorageUnavailableError,
   VercelBlobKnowledgeSourceUploadStorage,
 } from './knowledge-source-upload-storage'
@@ -110,5 +111,18 @@ describe('private Knowledge Source Upload-opslag', () => {
   it('accepteert request-scoped Vercel OIDC en faalt gesloten wanneer die ontbreekt', () => {
     expect(hasKnowledgeSourceUploadOidcToken(() => 'request-scoped-oidc')).toBe(true)
     expect(hasKnowledgeSourceUploadOidcToken(() => { throw new Error('missing') })).toBe(false)
+  })
+
+  it('toont de upload-UI bij een geldige storebinding maar controleert OIDC pas vóór de uploadrequest', () => {
+    const previous = { env: process.env.VERCEL_ENV, environment: process.env.KNOWLEDGE_UPLOAD_BLOB_ENVIRONMENT, store: process.env.KNOWLEDGE_UPLOAD_BLOB_STORE_ID, oidc: process.env.VERCEL_OIDC_TOKEN }
+    process.env.VERCEL_ENV = 'production'
+    process.env.KNOWLEDGE_UPLOAD_BLOB_ENVIRONMENT = 'production'
+    process.env.KNOWLEDGE_UPLOAD_BLOB_STORE_ID = 'production-store-123'
+    delete process.env.VERCEL_OIDC_TOKEN
+    try {
+      expect(isKnowledgeSourceUploadStorageConfigured()).toBe(true)
+    } finally {
+      process.env.VERCEL_ENV = previous.env; process.env.KNOWLEDGE_UPLOAD_BLOB_ENVIRONMENT = previous.environment; process.env.KNOWLEDGE_UPLOAD_BLOB_STORE_ID = previous.store; process.env.VERCEL_OIDC_TOKEN = previous.oidc
+    }
   })
 })
