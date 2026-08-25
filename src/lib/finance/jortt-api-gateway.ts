@@ -58,6 +58,7 @@ export class JorttApiGateway implements JorttGateway {
   }
 
   async submitInvoice(payload: JorttInvoicePayload, _idempotencyKey: string) {
+    void _idempotencyKey
     if (payload.documentType === 'INVOICE') {
       const lineExclVat = payload.lines.reduce((total, line) => total + line.netAmountExclVatCents, 0)
       const lineVat = payload.lines.reduce((total, line) => total + line.vatAmountCents, 0)

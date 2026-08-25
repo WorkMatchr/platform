@@ -3,6 +3,7 @@ import { timingSafeEqual } from 'node:crypto'
 import { NextRequest, NextResponse } from 'next/server'
 
 import { createJorttGateway } from '@/lib/finance/jortt-api-gateway'
+import { issueInvoiceForPaidPurchase } from '@/lib/finance/invoice-service'
 import { syncFinancialInvoiceToJortt } from '@/lib/finance/jortt-sync-service'
 import { getPrisma } from '@/lib/prisma'
 
@@ -76,7 +77,8 @@ function lineRecords(record: JorttRecord) {
 
 export async function GET(request: NextRequest) {
   if (!authorized(request)) return unavailable()
-  const candidates = await getPrisma().financialInvoice.findMany({
+  const prisma = getPrisma()
+  const [candidates, paidPurchasesWithoutInvoice] = await Promise.all([prisma.financialInvoice.findMany({
     where: {
       snapshotVersion: 2,
       documentType: 'INVOICE',
@@ -92,9 +94,12 @@ export async function GET(request: NextRequest) {
     },
     orderBy: [{ issuedAt: 'desc' }, { id: 'desc' }],
     take: 20,
-  })
+  }), prisma.financialPurchase.count({
+    where: { kind: 'CREDIT_PACKAGE', status: 'PAID', invoice: { is: null } },
+  })])
   return NextResponse.json({
     count: candidates.length,
+    paidPurchasesWithoutInvoice,
     candidates: candidates.map((item) => ({
       invoiceNumber: item.invoiceNumber,
       issuedAt: item.issuedAt.toISOString(),
@@ -113,7 +118,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const prisma = getPrisma()
-    const invoice = await prisma.financialInvoice.findFirst({
+    let invoice = await prisma.financialInvoice.findFirst({
       where: {
         snapshotVersion: 2,
         documentType: 'INVOICE',
@@ -127,6 +132,26 @@ export async function POST(request: NextRequest) {
       },
       orderBy: [{ issuedAt: 'desc' }, { id: 'desc' }],
     })
+    if (!invoice) {
+      const purchase = await prisma.financialPurchase.findFirst({
+        where: { kind: 'CREDIT_PACKAGE', status: 'PAID', invoice: { is: null } },
+        select: { id: true },
+        orderBy: [{ paidAt: 'desc' }, { id: 'desc' }],
+      })
+      if (purchase) {
+        await prisma.$transaction((transaction) => issueInvoiceForPaidPurchase(transaction, purchase.id), {
+          isolationLevel: 'Serializable',
+        })
+        invoice = await prisma.financialInvoice.findUnique({
+          where: { purchaseId: purchase.id },
+          include: {
+            lines: { orderBy: { position: 'asc' } },
+            vatSummaries: true,
+            jorttSync: true,
+          },
+        })
+      }
+    }
     if (!invoice?.jorttSync) throw new Error('JORTT_ACCEPTANCE_INVOICE_NOT_FOUND')
 
     const token = await jorttToken()
