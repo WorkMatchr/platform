@@ -63,8 +63,8 @@ export async function POST(request: NextRequest) {
     })
     if (!invoice?.jorttSync || invoice.invoiceNumber !== INVOICE_NUMBER || invoice.snapshotVersion !== 2 || invoice.credits !== 50
       || invoice.amountExclVatCents !== 5_000 || invoice.vatAmountCents !== 1_050 || invoice.amountInclVatCents !== 6_050
-      || invoice.jorttSync.status !== 'RETRY_REQUIRED' || invoice.jorttSync.attemptCount !== 3
-      || invoice.jorttSync.attempts.length !== 3 || invoice.jorttSync.attempts.some((item) => item.status !== 'FAILED')) {
+      || invoice.jorttSync.status !== 'RETRY_REQUIRED' || invoice.jorttSync.attemptCount !== 4
+      || invoice.jorttSync.attempts.length !== 4 || invoice.jorttSync.attempts.some((item) => item.status !== 'FAILED')) {
       throw new Error('JORTT_RETRY_PRECONDITION_FAILED')
     }
 
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     const customerReference = `workmatchr-org:${invoice.organizationId}`
     const customersBefore = exact((await get(`/customers?query=${encodeURIComponent(customerReference)}`, token)).data, customerReference)
     const invoicesBefore = exact((await get(`/invoices?query=${encodeURIComponent(INVOICE_NUMBER)}`, token)).data, INVOICE_NUMBER)
-    if (customersBefore.length !== 1 || invoicesBefore.length !== 0) throw new Error('JORTT_REMOTE_PRECONDITION_FAILED')
+    if (customersBefore.length !== 1 || invoicesBefore.length !== 1) throw new Error('JORTT_REMOTE_PRECONDITION_FAILED')
 
     const first = await syncFinancialInvoiceToJortt(INVOICE_ID, createJorttGateway())
     const replay = await syncFinancialInvoiceToJortt(INVOICE_ID, createJorttGateway())
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
       attemptStatuses: stored.attempts.map((item) => item.status),
       firstStatus: first.status,
       replayStatus: replay.status,
-      replayIdempotent: stored.attemptCount === 4 && stored.attempts.length === 4,
+      replayIdempotent: stored.attemptCount === 5 && stored.attempts.length === 5,
     })
   } catch (error) {
     const safeErrorCode = error instanceof Error && /^[A-Z0-9_]{3,100}$/.test(error.message) ? error.message : 'JORTT_RETRY_FAILED'
