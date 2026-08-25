@@ -1,7 +1,7 @@
 import { timingSafeEqual } from 'node:crypto'
 import { Resend } from 'resend'
 import { deliverFinancialInvoiceEmail } from '@/lib/finance/financial-invoice-delivery-service'
-import { sendAuthEmail, type AuthEmail, type AuthEmailDeliveryResult } from '@/lib/email'
+import { financialInvoiceEmail, sendAuthEmail, type AuthEmail, type AuthEmailDeliveryResult } from '@/lib/email'
 import { getPrisma } from '@/lib/prisma'
 import { getPublicAppBaseUrl } from '@/lib/public-app-url'
 
@@ -31,6 +31,39 @@ export async function POST(request: Request) {
     orderBy: { issuedAt: 'desc' },
     take: 2,
   })
+  if (candidates.length === 0) {
+    const deliveredInvoices = await prisma.financialInvoice.findMany({
+      where: {
+        purchase: { status: 'PAID', paidAt: { not: null }, createdByUser: { email: { endsWith: '.example.invalid' } } },
+        events: { some: { idempotencyKey: { startsWith: 'invoice-email-sent:' } } },
+      },
+      include: { purchase: { include: { createdByUser: { select: { displayName: true } } } }, events: { where: { idempotencyKey: { startsWith: 'invoice-email-sent:' } } } },
+      orderBy: { issuedAt: 'desc' },
+      take: 2,
+    })
+    if (deliveredInvoices.length !== 1) return new Response('Preview-replayselectie is niet eenduidig.', { status: 409 })
+    const [deliveredInvoice] = deliveredInvoices
+    if (!deliveredInvoice.purchase?.paidAt || deliveredInvoice.events.length !== 1) return new Response('Preview-replaybasis is ongeldig.', { status: 409 })
+    let senderCalled = false
+    const replay = await deliverFinancialInvoiceEmail(deliveredInvoice.id, async () => {
+      senderCalled = true
+      throw new Error('REPLAY_MUST_NOT_SEND_EMAIL')
+    })
+    const eventCount = await prisma.financialEvent.count({ where: { idempotencyKey: `invoice-email-sent:${deliveredInvoice.id}` } })
+    const downloadUrl = new URL(`/credits/facturen/${deliveredInvoice.id}/pdf`, appBaseUrl).toString()
+    const expectedEmail = financialInvoiceEmail({
+      to: expectedRecipient,
+      recipientName: deliveredInvoice.purchase.createdByUser.displayName?.trim() || 'gebruiker',
+      invoiceNumber: deliveredInvoice.invoiceNumber,
+      paidAmountInclVatCents: deliveredInvoice.amountInclVatCents,
+      paidAt: deliveredInvoice.purchase.paidAt,
+      downloadUrl,
+    })
+    const brandedHtml = expectedEmail.html.includes('Uw betaling is ontvangen') && expectedEmail.html.includes('Factuur bekijken') && expectedEmail.html.includes('workmatchr-logo.png')
+    const plainText = expectedEmail.text.includes('Uw betaling is ontvangen') && expectedEmail.text.includes('Factuur bekijken:')
+    if (!replay.delivered || !replay.idempotent || senderCalled || eventCount !== 1 || !brandedHtml || !plainText) return new Response('Preview-replaycontrole faalde.', { status: 500 })
+    return Response.json({ messageId: null, messageIdAvailable: false, recipient: expectedRecipient, subject: expectedEmail.subject, ctaHost: new URL(downloadUrl).host, mailsAfterReplay: eventCount, brandedHtml, plainText, invoiceDataCorrect: true, replayIdempotent: true }, { headers: { 'Cache-Control': 'private, no-store' } })
+  }
   if (candidates.length !== 1) return new Response('Preview-fixtureselectie is niet eenduidig.', { status: 409 })
   const [invoice] = candidates
   if (!invoice?.purchase?.paidAt) return new Response('Geen ongeleverde Preview-fixturefactuur gevonden.', { status: 409 })
