@@ -112,7 +112,17 @@ export async function POST(request: NextRequest) {
         return createdPayment
       },
       async getPayment(paymentId) {
-        if (!createdPayment || createdPayment.id !== paymentId) throw new Error('PREVIEW_PAYMENT_FIXTURE_MISMATCH')
+        if (!createdPayment || createdPayment.id !== paymentId) {
+          const storedPurchase = await prisma.financialPurchase.findFirst({ where: { molliePaymentId: paymentId } })
+          if (!storedPurchase || storedPurchase.idempotencyKey !== IDEMPOTENCY_KEY) throw new Error('PREVIEW_PAYMENT_FIXTURE_MISMATCH')
+          createdPayment = paymentSnapshot({
+            id: paymentId,
+            status: 'open',
+            amountValue: (storedPurchase.amountInclVatCents / 100).toFixed(2),
+            organizationId: storedPurchase.organizationId,
+            purchaseId: storedPurchase.id,
+          })
+        }
         return paymentSnapshot({
           id: createdPayment.id,
           status: 'paid',
