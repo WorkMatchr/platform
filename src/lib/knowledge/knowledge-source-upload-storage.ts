@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import { BlobNotFoundError, get, head, issueSignedToken, presignUrl, put } from '@vercel/blob'
+import { getVercelOidcTokenSync } from '@vercel/oidc'
 
 export type StoredKnowledgeSourceUpload = {
   storageKey: string
@@ -147,8 +148,12 @@ export function getKnowledgeSourceUploadStorage(): KnowledgeSourceUploadStorage 
   return new UnavailableKnowledgeSourceUploadStorage()
 }
 
+export function hasKnowledgeSourceUploadOidcToken(getToken: () => string = getVercelOidcTokenSync) {
+  try { return Boolean(getToken()) } catch { return false }
+}
+
 export function isKnowledgeSourceUploadStorageConfigured() {
-  try { getKnowledgeSourceUploadStorage(); return Boolean(getKnowledgeSourceUploadStorageConfiguration() && process.env.VERCEL_OIDC_TOKEN) } catch { return false }
+  try { getKnowledgeSourceUploadStorage(); return Boolean(getKnowledgeSourceUploadStorageConfiguration() && hasKnowledgeSourceUploadOidcToken()) } catch { return false }
 }
 
 export function getKnowledgeSourceUploadStorageConfiguration(): { environment: 'preview' | 'production'; storeId: string } | null {
@@ -161,7 +166,7 @@ export function getKnowledgeSourceUploadStorageConfiguration(): { environment: '
 export async function createKnowledgeSourceUploadTarget(input: { checksum: string; bytes: number }, dependencies: { issueSignedToken: typeof issueSignedToken; presignUrl: typeof presignUrl; storage?: KnowledgeSourceUploadStorage } = { issueSignedToken, presignUrl }) {
   if (input.bytes < 1 || input.bytes > 10 * 1024 * 1024) throw new KnowledgeSourceUploadStorageUnavailableError()
   const configuration = getKnowledgeSourceUploadStorageConfiguration()
-  if (!configuration || configuration.environment !== process.env.VERCEL_ENV || !process.env.VERCEL_OIDC_TOKEN) throw new KnowledgeSourceUploadStorageUnavailableError()
+  if (!configuration || configuration.environment !== process.env.VERCEL_ENV || !hasKnowledgeSourceUploadOidcToken()) throw new KnowledgeSourceUploadStorageUnavailableError()
   const storage = dependencies.storage ?? getKnowledgeSourceUploadStorage()
   const storageKey = knowledgeSourceUploadStorageKey(input.checksum)
   if (await storage.exists(storageKey)) return { storageKey, alreadyStored: true as const, uploadUrl: null }

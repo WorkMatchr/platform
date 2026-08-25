@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import { describe, expect, it, vi } from 'vitest'
 import {
   createKnowledgeSourceUploadTarget,
+  hasKnowledgeSourceUploadOidcToken,
   InMemoryKnowledgeSourceUploadStorage,
   KnowledgeSourceUploadStorageUnavailableError,
   VercelBlobKnowledgeSourceUploadStorage,
@@ -104,5 +105,10 @@ describe('private Knowledge Source Upload-opslag', () => {
     } finally {
       process.env.VERCEL_ENV = previous.env; process.env.KNOWLEDGE_UPLOAD_BLOB_ENVIRONMENT = previous.environment; process.env.KNOWLEDGE_UPLOAD_BLOB_STORE_ID = previous.store; process.env.VERCEL_OIDC_TOKEN = previous.oidc
     }
+  })
+
+  it('accepteert request-scoped Vercel OIDC en faalt gesloten wanneer die ontbreekt', () => {
+    expect(hasKnowledgeSourceUploadOidcToken(() => 'request-scoped-oidc')).toBe(true)
+    expect(hasKnowledgeSourceUploadOidcToken(() => { throw new Error('missing') })).toBe(false)
   })
 })
