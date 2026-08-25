@@ -277,6 +277,29 @@ async function main() {
     assert.equal(v2Invoice.vatSummaries.length, 1)
     await assert.rejects(prisma.financialInvoiceLine.update({ where: { id: v2Invoice.lines[0]!.id }, data: { description: 'Niet toegestaan' } }))
 
+    const secondV2Purchase = await prisma.financialPurchase.create({ data: {
+      organizationId: organization.id, createdByUserId: user.id, status: 'PAID', kind: 'CREDIT_PACKAGE', packageSku: 'CREDITS_50',
+      packageLabel: '50 credits', credits: 50, baseAmountCents: 5_000, amountExclVatCents: 5_000, vatRateBps: 2_100,
+      vatAmountCents: 1_050, amountInclVatCents: 6_050, currency: 'EUR', billingOrganizationName: organization.name,
+      billingAddressLine: 'Tweede Teststraat 2', billingPostalCode: '9405 LC', billingCity: 'Assen', billingCountryCode: 'NL',
+      molliePaymentId: `tr_v2_second_${randomUUID()}`, idempotencyKey: `finance-v2-second-${randomUUID()}`,
+      paidAt: new Date('2026-08-24T10:00:00Z'), terminalAt: new Date('2026-08-24T10:00:00Z'),
+    } })
+    const secondV2InvoiceId = randomUUID()
+    await prisma.$transaction(async (transaction) => {
+      await transaction.financialInvoice.create({ data: {
+        id: secondV2InvoiceId, snapshotVersion: 2, invoiceNumber: `WM-V2B-${randomUUID()}`.slice(0, 40), sequenceNumber: 900_002,
+        purchaseId: secondV2Purchase.id, organizationId: organization.id, issuedAt: new Date('2026-08-24T10:01:00Z'), supplyDate: new Date('2026-08-24T10:00:30Z'),
+        sellerLegalName: 'Feenstra Safety Consulting', sellerTradeName: 'WorkMatchr', sellerAddressLine: 'Kennemerland 71', sellerPostalCode: '9405 LC', sellerCity: 'Assen', sellerCountryCode: 'NL', sellerKvKNumber: '57788863', sellerVatId: 'NL002107278B11',
+        customerOrganizationName: organization.name, customerAddressLine: 'Tweede Teststraat 2', customerPostalCode: '9405 LC', customerCity: 'Assen', customerCountryCode: 'NL',
+        packageSku: 'CREDITS_50', packageLabel: '50 credits', credits: 50, baseAmountCents: 5_000, packageDiscountCents: 0, proDiscountCents: 0, discountCodeDiscountCents: 0,
+        amountExclVatCents: 5_000, vatRateBps: 2_100, vatAmountCents: 1_050, amountInclVatCents: 6_050, currency: 'EUR', molliePaymentId: secondV2Purchase.molliePaymentId,
+      } })
+      await transaction.financialInvoiceLine.create({ data: { invoiceId: secondV2InvoiceId, position: 1, description: '50 WorkMatchr credits', quantity: 50, unit: 'credit', unitPriceExclVatCents: 100, grossAmountExclVatCents: 5_000, discountAmountCents: 0, netAmountExclVatCents: 5_000, vatRateBps: 2_100, vatAmountCents: 1_050, amountInclVatCents: 6_050 } })
+      await transaction.financialInvoiceVatSummary.create({ data: { invoiceId: secondV2InvoiceId, vatRateBps: 2_100, taxableAmountExclVatCents: 5_000, vatAmountCents: 1_050, amountInclVatCents: 6_050 } })
+    })
+    assert.equal(await prisma.financialInvoice.count({ where: { id: { in: [v2InvoiceId, secondV2InvoiceId] } } }), 2)
+
     const incompletePurchase = await prisma.financialPurchase.create({ data: {
       organizationId: organization.id, createdByUserId: user.id, status: 'PAID', packageSku: 'CREDITS_25', packageLabel: '25 credits', credits: 25,
       baseAmountCents: 2_500, amountExclVatCents: 2_500, vatRateBps: 2_100, vatAmountCents: 525, amountInclVatCents: 3_025, currency: 'EUR',
@@ -284,7 +307,7 @@ async function main() {
       molliePaymentId: `tr_incomplete_${randomUUID()}`, idempotencyKey: `finance-v2-incomplete-${randomUUID()}`, paidAt: new Date(), terminalAt: new Date(),
     } })
     await assert.rejects(prisma.$transaction((transaction) => transaction.financialInvoice.create({ data: {
-      snapshotVersion: 2, invoiceNumber: `WM-BAD-${randomUUID()}`.slice(0, 40), sequenceNumber: 900_002, purchaseId: incompletePurchase.id,
+      snapshotVersion: 2, invoiceNumber: `WM-BAD-${randomUUID()}`.slice(0, 40), sequenceNumber: 900_003, purchaseId: incompletePurchase.id,
       organizationId: organization.id, issuedAt: new Date(), supplyDate: new Date(), sellerLegalName: 'Feenstra Safety Consulting', sellerTradeName: 'WorkMatchr',
       sellerAddressLine: 'Kennemerland 71', sellerPostalCode: '9405 LC', sellerCity: 'Assen', sellerCountryCode: 'NL', sellerKvKNumber: '57788863', sellerVatId: 'NL002107278B11',
       customerOrganizationName: organization.name, customerAddressLine: 'Teststraat 1', customerPostalCode: '9405 LC', customerCity: 'Assen', customerCountryCode: 'NL',

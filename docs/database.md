@@ -1,5 +1,9 @@
 # Database WorkMatchr
 
+## FinancialInvoice Snapshot v2-validatie
+
+Migratie `20260825150000_scope_financial_invoice_vat_validation` corrigeert uitsluitend de bestaande deferred validatiefunctie: btw-regels en btw-samenvattingen worden per `FinancialInvoice` vergeleken. Andere facturen kunnen daardoor een nieuwe geldige Snapshot-v2-factuur niet meer blokkeren. De totaliteits-, immutable- en fail-closed controles blijven ongewijzigd actief; bestaande facturen worden niet gemuteerd of teruggevuld.
+
 ## Arbo-wijzer runs
 
 Migratie `20260820100000_add_arbo_guide_runs` voegt uitsluitend de generieke typen, teller, `ArboGuideRun` en `ArboGuideRunResult` toe. Bestaande data wordt niet teruggevuld of gewijzigd. Rapportnummers worden concurrency-safe per type en jaar uitgegeven. Runs/resultaten zijn na afronding databasebreed append-only, gebruiken `ON DELETE RESTRICT` en een deferred constrainttrigger vereist minimaal één resultaat bij iedere afgeronde run.
