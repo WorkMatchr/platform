@@ -8,7 +8,6 @@ import { getPublicAppBaseUrl } from '@/lib/public-app-url'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-const fixtureRecipient = 'preview-invoice-e2e-member-20260823@workmatchr.example.invalid'
 const expectedRecipient = 'info@workmatchr.nl'
 const notFound = () => new Response('Not found', { status: 404 })
 
@@ -26,11 +25,14 @@ export async function POST(request: Request) {
   if (!appBaseUrl.endsWith('.vercel.app') || appBaseUrl.includes('www.workmatchr.nl')) return new Response('Preview URL is niet veilig geconfigureerd.', { status: 503 })
 
   const prisma = getPrisma()
-  const invoice = await prisma.financialInvoice.findFirst({
-    where: { purchase: { status: 'PAID', paidAt: { not: null }, createdByUser: { email: fixtureRecipient } }, events: { none: { idempotencyKey: { startsWith: 'invoice-email-sent:' } } } },
+  const candidates = await prisma.financialInvoice.findMany({
+    where: { purchase: { status: 'PAID', paidAt: { not: null }, createdByUser: { email: { endsWith: '.example.invalid' } } }, events: { none: { idempotencyKey: { startsWith: 'invoice-email-sent:' } } } },
     include: { purchase: true },
     orderBy: { issuedAt: 'desc' },
+    take: 2,
   })
+  if (candidates.length !== 1) return new Response('Preview-fixtureselectie is niet eenduidig.', { status: 409 })
+  const [invoice] = candidates
   if (!invoice?.purchase?.paidAt) return new Response('Geen ongeleverde Preview-fixturefactuur gevonden.', { status: 409 })
 
   let email: AuthEmail | null = null
@@ -62,4 +64,12 @@ export async function POST(request: Request) {
   if (!first.delivered || first.idempotent || !replay.delivered || !replay.idempotent || afterFirst !== 1 || afterReplay !== 1) return new Response('Replaycontrole faalde.', { status: 500 })
 
   return Response.json({ messageId: sentDelivery.messageId, recipient: expectedRecipient, subject: providerData.subject, ctaHost: new URL(appBaseUrl).host, mailsAfterReplay: afterReplay, brandedHtml, plainText, invoiceDataCorrect, replayIdempotent: true }, { headers: { 'Cache-Control': 'private, no-store' } })
+}
+
+export async function GET(request: Request) {
+  if (process.env.VERCEL_ENV !== 'preview' || process.env.VERCEL_GIT_COMMIT_REF !== 'codex/financial-document-email-branding' || !authorized(request)) return notFound()
+  const candidateCount = await getPrisma().financialInvoice.count({
+    where: { purchase: { status: 'PAID', paidAt: { not: null }, createdByUser: { email: { endsWith: '.example.invalid' } } }, events: { none: { idempotencyKey: { startsWith: 'invoice-email-sent:' } } } },
+  })
+  return Response.json({ candidateCount, exactlyOneCandidate: candidateCount === 1 }, { headers: { 'Cache-Control': 'private, no-store' } })
 }
