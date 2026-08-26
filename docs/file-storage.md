@@ -6,7 +6,7 @@ Versie 1 accepteert PNG, JPEG en WebP tot 2 MB. SVG is uitgesloten wegens actiev
 
 ## Lokale ontwikkeling
 
-`OrganizationLogoStorage` abstraheert `save`, `delete`, `read` en de publieke URL. De lokale adapter gebruikt willekeurige UUID-v4-sleutels onder `.local-storage/organization-logos`. Git negeert `.local-storage`. `/media/organization-logos/[storageKey]` accepteert alleen geldige storage keys, geeft uitsluitend WebP terug en voorkomt directory traversal en absolute-padlekken.
+`OrganizationLogoStorage` abstraheert `save`, `delete`, `read` en de publieke URL. De lokale adapter gebruikt willekeurige UUID-v4-sleutels onder `.local-storage/organization-logos`. Git negeert `.local-storage`. `/media/organization-logos/[storageKey]` accepteert alleen geldige storage keys, geeft uitsluitend WebP terug en voorkomt directory traversal en absolute-padlekken. De server laadt Sharp pas wanneer daadwerkelijk een logo wordt verwerkt. De Vercel-build houdt Sharp extern en neemt de bijbehorende Linux-libvips-runtime expliciet op in de organisatiefuncties; gewone organisatieroutes laden daardoor geen native beeldverwerking.
 
 ## Productie
 

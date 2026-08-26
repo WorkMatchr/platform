@@ -1,4 +1,3 @@
-import sharp from 'sharp'
 import { logLogoDevelopment, logoErrorDetails } from './logo-development-log'
 
 export const MAX_LOGO_SIZE_BYTES = 2 * 1024 * 1024
@@ -31,6 +30,7 @@ export async function processOrganizationLogo(data: Buffer, declaredMimeType: st
   }
 
   try {
+    const { default: sharp } = await import('sharp')
     logLogoDevelopment('processing', 'sharp-started')
     const image = sharp(data, { failOn: 'error', limitInputPixels: MAX_LOGO_DIMENSION * MAX_LOGO_DIMENSION })
     const metadata = await image.metadata()
