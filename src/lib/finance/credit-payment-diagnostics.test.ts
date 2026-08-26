@@ -29,7 +29,8 @@ describe('creditpaymentdiagnostiek', () => {
           type: 'request',
           field: 'amount.value',
           title: 'Unprocessable Entity',
-          detail: 'The amount must be at least € 1.00.',
+          message: 'The amount must be at least € 1.00.',
+          getDocumentationUrl: () => 'https://docs.mollie.com/errors/amount?source=secret',
           apiKey: 'test_secret',
           email: 'persoon@example.invalid',
           address: 'Teststraat 1',
@@ -45,6 +46,7 @@ describe('creditpaymentdiagnostiek', () => {
         mollieErrorField: 'amount.value',
         mollieErrorTitle: 'Unprocessable Entity',
         mollieErrorDetail: 'The amount must be at least € 1.00.',
+        mollieDocumentation: { host: 'docs.mollie.com', path: '/errors/amount' },
         redirectUrl: { host: 'www.vkam-adviseur.nl', path: '/credits/betaling/purchase-intern' },
         webhookUrl: { host: 'www.vkam-adviseur.nl', path: '/api/payments/mollie/webhook' },
       })
@@ -70,7 +72,8 @@ describe('creditpaymentdiagnostiek', () => {
           statusCode: 422,
           field: 'redirectUrl',
           title: 'Unprocessable Entity',
-          detail: 'Use https://example.invalid?token=secret for customer@example.invalid',
+          message: 'Use https://example.invalid?token=secret for customer@example.invalid',
+          getDocumentationUrl: () => 'https://evil.example.invalid/error?token=secret',
         },
       })
       expect(errorSpy).toHaveBeenCalledWith('credit_payment_failure', expect.objectContaining({
@@ -80,6 +83,28 @@ describe('creditpaymentdiagnostiek', () => {
       const output = JSON.stringify(errorSpy.mock.calls)
       expect(output).not.toContain('mollieErrorDetail')
       expect(output).not.toContain('customer@example.invalid')
+      expect(output).not.toContain('token=secret')
+    } finally {
+      errorSpy.mockRestore()
+    }
+  })
+
+  it('weigert een onveilige of falende Mollie-documentatielink', () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    try {
+      logCreditPaymentFailure({
+        category: 'MOLLIE_CREDIT_PAYMENT_REJECTED',
+        step: 'payment_create',
+        purchaseId: 'purchase-intern',
+        error: {
+          statusCode: 422,
+          message: 'Payment method unavailable.',
+          getDocumentationUrl: () => { throw new Error('token=secret') },
+        },
+      })
+      const output = JSON.stringify(errorSpy.mock.calls)
+      expect(output).toContain('Payment method unavailable.')
+      expect(output).not.toContain('mollieDocumentation')
       expect(output).not.toContain('token=secret')
     } finally {
       errorSpy.mockRestore()

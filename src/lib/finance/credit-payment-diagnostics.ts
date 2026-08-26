@@ -13,6 +13,7 @@ type SafeMollieError = Readonly<{
   mollieErrorField?: string
   mollieErrorTitle?: string
   mollieErrorDetail?: string
+  mollieDocumentation?: Readonly<{ host: string; path: string }>
 }>
 
 type MollieUrlConfigurationFailure = Readonly<{
@@ -36,9 +37,17 @@ function safeMollieText(value: unknown) {
   return /^[\p{L}\p{N}\s.,:;()€%+\-/]+$/u.test(normalized) ? normalized : undefined
 }
 
-function safeMollieError(error: unknown): SafeMollieError {
+export function getSafeMollieErrorDetails(error: unknown): SafeMollieError {
   if (!error || typeof error !== 'object') return {}
-  const candidate = error as Record<string, unknown>
+  const candidate = error as Record<string, unknown> & {
+    getDocumentationUrl?: () => unknown
+  }
+  let documentationUrl: unknown
+  try {
+    documentationUrl = candidate.getDocumentationUrl?.call(error)
+  } catch {
+    documentationUrl = undefined
+  }
   return {
     httpStatus: typeof candidate.statusCode === 'number'
       ? candidate.statusCode
@@ -49,7 +58,19 @@ function safeMollieError(error: unknown): SafeMollieError {
     mollieErrorType: safeErrorValue(candidate.type) ?? safeErrorValue(candidate.title),
     mollieErrorField: safeErrorValue(candidate.field),
     mollieErrorTitle: safeMollieText(candidate.title),
-    mollieErrorDetail: safeMollieText(candidate.detail),
+    mollieErrorDetail: safeMollieText(candidate.message),
+    mollieDocumentation: safeDocumentationLocation(documentationUrl),
+  }
+}
+
+function safeDocumentationLocation(value: unknown) {
+  if (typeof value !== 'string') return undefined
+  try {
+    const url = new URL(value)
+    if (url.protocol !== 'https:' || url.hostname !== 'docs.mollie.com') return undefined
+    return Object.freeze({ host: url.host, path: url.pathname })
+  } catch {
+    return undefined
   }
 }
 
@@ -69,7 +90,7 @@ export function classifyCreditPaymentFailure(step: 'url_configuration' | 'paymen
   if (error instanceof Error && error.message === 'MOLLIE_CONFIGURATION_MISSING') {
     return 'MOLLIE_CREDIT_CONFIGURATION_ERROR'
   }
-  const { httpStatus } = safeMollieError(error)
+  const { httpStatus } = getSafeMollieErrorDetails(error)
   return step === 'payment_create' && httpStatus !== undefined && httpStatus >= 400 && httpStatus < 500
     ? 'MOLLIE_CREDIT_PAYMENT_REJECTED'
     : 'MOLLIE_CREDIT_PAYMENT_CREATE_FAILED'
@@ -83,7 +104,7 @@ export function logCreditPaymentFailure(input: Readonly<{
   webhookUrl?: string
   error?: unknown
 }>) {
-  const details = safeMollieError(input.error)
+  const details = getSafeMollieErrorDetails(input.error)
   console.error('credit_payment_failure', {
     category: input.category,
     step: input.step,

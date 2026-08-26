@@ -26,6 +26,7 @@ export type MolliePaymentSnapshot = Readonly<{
 }>
 
 export type MollieFirstPaymentMethod = 'ideal' | 'creditcard'
+export type MollieAvailablePaymentMethod = Readonly<{ id: string; name: string }>
 export type MollieMandateMethod = 'directdebit' | 'creditcard'
 export type MollieMandateSnapshot = Readonly<{
   id: string
@@ -76,6 +77,7 @@ export interface MollieGateway {
   getRefund(input: { paymentId: string; refundId: string }): Promise<MollieRefundSnapshot>
   createCustomer(input: { name: string; email: string; organizationId: string; idempotencyKey: string }): Promise<{ id: string }>
   listFirstPaymentMethods(amountValue: string): Promise<readonly MollieFirstPaymentMethod[]>
+  listOneoffPaymentMethods(amountValue: string): Promise<readonly MollieAvailablePaymentMethod[]>
   listCustomerMandates(customerId: string): Promise<readonly MollieMandateSnapshot[]>
   createSubscription(input: {
     customerId: string
@@ -189,6 +191,13 @@ export function getMollieUrls() {
   return { webhookBaseUrl, redirectBaseUrl }
 }
 
+export function getMollieApiMode(): 'live' | 'test' | 'unknown' {
+  const apiKey = process.env.MOLLIE_API_KEY?.trim()
+  if (apiKey?.startsWith('live_')) return 'live'
+  if (apiKey?.startsWith('test_')) return 'test'
+  return 'unknown'
+}
+
 export function createMollieGateway(): MollieGateway {
   const { client } = requireMollieConfiguration()
   return {
@@ -246,6 +255,21 @@ export function createMollieGateway(): MollieGateway {
         .filter((method): method is PaymentMethod.ideal | PaymentMethod.creditcard => (
           method === PaymentMethod.ideal || method === PaymentMethod.creditcard
         ))
+    },
+    async listOneoffPaymentMethods(amountValue) {
+      const methods = await client.methods.list({
+        sequenceType: SequenceType.oneoff,
+        amount: { value: amountValue, currency: 'EUR' },
+      })
+      return methods.flatMap((method) => {
+        const id = typeof method.id === 'string' && /^[a-z0-9_-]{1,80}$/u.test(method.id)
+          ? method.id
+          : null
+        const name = typeof method.description === 'string'
+          ? method.description.trim().slice(0, 120)
+          : null
+        return id && name ? [Object.freeze({ id, name })] : []
+      })
     },
     async listCustomerMandates(customerId) {
       const mandates = await client.customerMandates.page({ customerId })

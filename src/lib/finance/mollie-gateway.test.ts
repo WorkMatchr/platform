@@ -56,7 +56,11 @@ describe('Mollie-bedragconversie', () => {
     })
     mocks.createSubscription.mockResolvedValue(remoteSubscription())
     mocks.listMandates.mockResolvedValue([])
-    mocks.listMethods.mockResolvedValue([{ id: 'ideal' }, { id: 'creditcard' }, { id: 'paypal' }])
+    mocks.listMethods.mockResolvedValue([
+      { id: 'ideal', description: 'iDEAL' },
+      { id: 'creditcard', description: 'Creditcard' },
+      { id: 'paypal', description: 'PayPal' },
+    ])
     mocks.iterateSubscriptions.mockReturnValue((async function* () {})())
   })
 
@@ -109,6 +113,21 @@ describe('Mollie-bedragconversie', () => {
       sequenceType: 'first',
       amount: { value: '59.29', currency: 'EUR' },
     }))
+  })
+
+  it('leest beschikbare eenmalige betaalmethoden zonder een payment aan te maken', async () => {
+    const methods = await createMollieGateway().listOneoffPaymentMethods('30.25')
+
+    expect(methods).toEqual([
+      { id: 'ideal', name: 'iDEAL' },
+      { id: 'creditcard', name: 'Creditcard' },
+      { id: 'paypal', name: 'PayPal' },
+    ])
+    expect(mocks.listMethods).toHaveBeenCalledWith({
+      sequenceType: 'oneoff',
+      amount: { value: '30.25', currency: 'EUR' },
+    })
+    expect(mocks.createPayment).not.toHaveBeenCalled()
   })
 
   it('leest uitsluitend veilige mandatevelden uit Mollie', async () => {
