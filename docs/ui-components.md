@@ -16,7 +16,7 @@ Combineert semantische `<section>`-markup met `Container`. Ondersteunt standaard
 
 ### `Button`
 
-Varianten: `primary`, `secondary`, `outline` en `ghost`. Ondersteunt `disabled` en `loading`; loading maakt de knop niet-interactief en zet `aria-busy`.
+Varianten: `primary`, `secondary`, `outline`, `ghost` en `destructive`. Gebruik `destructive` uitsluitend voor onomkeerbare of financieel corrigerende acties. Ondersteunt `disabled` en `loading`; loading maakt de knop niet-interactief en zet `aria-busy`.
 
 ### `LinkButton`
 

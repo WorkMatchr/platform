@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes } from 'react'
 
-export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost'
+export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive'
 
 export const buttonBaseStyles =
   'inline-flex min-h-11 items-center justify-center gap-2 rounded-control px-5 py-2.5 text-center text-sm font-semibold transition-colors duration-normal disabled:cursor-not-allowed disabled:opacity-55'
@@ -10,6 +10,7 @@ export const buttonVariantStyles: Record<ButtonVariant, string> = {
   secondary: 'bg-brand-dark text-text-on-dark hover:bg-text-primary',
   outline: 'border border-border bg-surface text-brand-dark hover:border-brand-primary hover:bg-brand-primary-subtle',
   ghost: 'bg-transparent text-brand-dark hover:bg-brand-primary-subtle',
+  destructive: 'bg-error text-text-on-dark hover:bg-error/90',
 }
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {

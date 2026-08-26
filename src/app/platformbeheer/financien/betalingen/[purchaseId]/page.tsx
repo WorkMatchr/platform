@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { startPlatformFinancialRefundAction } from '@/app/platformbeheer/financien/actions'
 import { AdminPageHeader, AdminSection, StatusPill } from '@/components/platform-admin/platform-admin-ui'
+import { Button } from '@/components/ui/button'
 import { formatEuro } from '@/lib/finance/financial-contract'
 import { financialPaymentStatusLabels, financialPurchaseKindLabels, financialPurchaseStatusLabels, financialStatusTone } from '@/lib/finance/platform-financial-presentation'
 import { getPlatformFinancialPaymentDetail } from '@/lib/finance/platform-financial-query-service'
@@ -81,7 +82,7 @@ export default async function PlatformFinancialPaymentDetailPage({ params, searc
               <input className="mt-1 size-4" type="checkbox" name="confirmed" required />
               <span>Ik bevestig dat WorkMatchr deze volledige terugbetaling heeft goedgekeurd en dat ik de gevolgen voor betaling, credits en creditnota heb gecontroleerd.</span>
             </label>
-            <button className="min-h-11 justify-self-start rounded-control bg-danger px-5 font-semibold text-white hover:opacity-90" type="submit">Volledig terugbetalen</button>
+            <Button className="justify-self-start" type="submit" variant="destructive">Volledig terugbetalen</Button>
           </form>
         </AdminSection>
       ) : (
