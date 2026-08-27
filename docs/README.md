@@ -71,6 +71,7 @@ Module 6C.2 — WOS Beheeracties & Communicatie is technisch opgeleverd en wacht
 - [Creditledger v1](credit-ledger-v1.md)
 - [Financiële keten F3-F9](financial-chain-f3-f9.md)
 - [Marketplace Rules, credits en betrouwbaarheid](marketplace-rules-credit-reliability.md)
+- [Assignment Extra Quote Slots v1 — Fase 1](assignment-extra-quote-slots-v1.md)
 - [Marketplace Rules, credits en betrouwbaarheid](marketplace-rules-credit-reliability.md)
 - [Marktplaatsdashboards v1](marketplace-dashboards-v1.md)
 - [Berichten en notificaties v1](messaging-and-notifications-v1.md)

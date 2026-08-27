@@ -13,6 +13,7 @@ import {
   type AssignmentReasonTransitionInput,
   type AssignmentTransitionInput,
 } from './assignment-validation'
+import { BASE_SELECTIONS } from '@/lib/marketplace/assignment-quote-slots'
 
 type ManagedAssignment = Awaited<ReturnType<typeof requireAssignmentManager>>
 
@@ -363,6 +364,12 @@ export async function publishAssignmentInTransaction(
           )
         }
         if (hasAnyPublicationMetadata(assignment)) throw publicationIntegrityError()
+
+        if (assignment.maxSelections !== BASE_SELECTIONS) {
+          throw publicationValidationError({
+            maxSelections: ['Betaling voor extra offerteplaatsen is nog niet beschikbaar.'],
+          })
+        }
 
         assertAssignmentVersion(assignment.version, input.expectedAssignmentVersion)
         await validatePublicationRequirements(transaction, assignment)

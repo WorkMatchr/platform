@@ -10,6 +10,7 @@ import { archiveUnpublishedAssignment, cancelAssignment, markAssignmentReadyForR
 import { publishAssignment, withdrawPublishedAssignment } from '@/lib/assignments/assignment-publication-service'
 import { assignmentEditSchema, assignmentReasonTransitionSchema, assignmentTransitionSchema } from '@/lib/assignments/assignment-validation'
 import type { IntakeAssignmentReadinessIssue } from '@/lib/assignments/intake-assignment-readiness'
+import { BASE_SELECTIONS, MAX_SELECTIONS } from '@/lib/marketplace/assignment-quote-slots'
 
 export type AssignmentActionState = {
   message?: string
@@ -22,12 +23,14 @@ export type PublishIntakeActionState = AssignmentActionState
 const submitSchema = z.object({
   intakeId: z.uuid(),
   expectedIntakeVersion: z.coerce.number().int().positive(),
+  maxSelections: z.coerce.number().int().min(BASE_SELECTIONS).max(MAX_SELECTIONS),
 })
 const cancelActionSchema = assignmentReasonTransitionSchema.extend({
   confirmed: z.literal('on', { error: 'Bevestig dat u de opdracht wilt annuleren.' }),
 })
 const publishActionSchema = assignmentTransitionSchema.extend({
   confirmed: z.literal('on', { error: 'Bevestig dat u de opdracht definitief wilt publiceren.' }),
+  maxSelections: z.coerce.number().int().min(BASE_SELECTIONS).max(MAX_SELECTIONS),
 })
 const withdrawActionSchema = assignmentReasonTransitionSchema.extend({
   confirmed: z.literal('on', { error: 'Bevestig dat u de publicatie wilt intrekken.' }),
@@ -70,8 +73,15 @@ export async function publishIntakeAction(
   const parsed = submitSchema.safeParse({
     intakeId: formData.get('intakeId'),
     expectedIntakeVersion: formData.get('expectedIntakeVersion'),
+    maxSelections: formData.get('maxSelections') ?? BASE_SELECTIONS,
   })
   if (!parsed.success) return { message: 'De publicatiegegevens zijn niet meer geldig. Vernieuw de pagina en probeer het opnieuw.', errors: parsed.error.flatten().fieldErrors }
+  if (parsed.data.maxSelections !== BASE_SELECTIONS) {
+    return {
+      message: 'Betaling voor extra offerteplaatsen wordt binnenkort beschikbaar.',
+      values: { maxSelections: String(parsed.data.maxSelections) },
+    }
+  }
 
   const { user, activeMembership } = await requireOrganizationMembership(undefined, '/hulpvragen')
   const organizationId = activeMembership.organization.id
@@ -226,12 +236,19 @@ export async function publishAssignmentAction(
     assignmentId: String(formData.get('assignmentId') ?? ''),
     expectedAssignmentVersion: String(formData.get('expectedAssignmentVersion') ?? ''),
     confirmed: String(formData.get('confirmed') ?? ''),
+    maxSelections: String(formData.get('maxSelections') ?? BASE_SELECTIONS),
   }
   const parsed = publishActionSchema.safeParse(values)
   if (!parsed.success) {
     return {
       message: 'Bevestig de publicatie voordat u verdergaat.',
       errors: parsed.error.flatten().fieldErrors,
+      values,
+    }
+  }
+  if (parsed.data.maxSelections !== BASE_SELECTIONS) {
+    return {
+      message: 'Betaling voor extra offerteplaatsen wordt binnenkort beschikbaar.',
       values,
     }
   }

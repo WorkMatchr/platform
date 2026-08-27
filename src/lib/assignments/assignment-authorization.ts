@@ -105,6 +105,7 @@ export async function requireAssignmentManager(
         orderBy: { position: 'asc' },
       },
       allowsRemoteWork: true,
+      maxSelections: true,
       publishedAt: true,
       publishedByUserId: true,
       publishedVersion: true,

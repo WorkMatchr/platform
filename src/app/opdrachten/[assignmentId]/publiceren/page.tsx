@@ -132,6 +132,7 @@ export default async function AssignmentPublishPage({
               action={publishAssignmentAction}
               assignmentId={assignment.id}
               version={assignment.version}
+              maxSelections={assignment.maxSelections}
             />
           </div>
         </Card>

@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef } from 'react'
 import type { AssignmentActionState } from '@/app/opdrachten/actions'
 import { FieldError, StatusMessage, fieldClassName } from '@/components/auth/auth-shell'
 import { Button } from '@/components/ui/button'
+import { AssignmentQuoteSlotsField } from './assignment-quote-slots-field'
 
 type Action = (
   state: AssignmentActionState,
@@ -28,10 +29,12 @@ export function AssignmentPublishForm({
   action,
   assignmentId,
   version,
+  maxSelections = 3,
 }: {
   action: Action
   assignmentId: string
   version: number
+  maxSelections?: number
 }) {
   const [state, formAction, pending] = useActionState(action, {})
   const formRef = useFirstInvalidField(state)
@@ -42,6 +45,7 @@ export function AssignmentPublishForm({
       <input type="hidden" name="assignmentId" value={assignmentId} />
       <input type="hidden" name="expectedAssignmentVersion" value={version} />
       {state.message && <StatusMessage error>{state.message}</StatusMessage>}
+      <AssignmentQuoteSlotsField defaultValue={Number(state.values?.maxSelections ?? maxSelections)} />
       <div>
         <label
           className={`flex items-start gap-3 rounded-control border p-4 ${confirmError ? 'border-error ring-1 ring-error/30' : 'border-border'}`}

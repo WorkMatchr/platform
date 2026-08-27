@@ -86,7 +86,7 @@ export default async function MarketplaceAdminPage() {
             <p className="mt-2 text-sm text-text-secondary">Kwaliteitsinschatting: {presentMatchConfidence(run.confidenceLevel)}</p>
             <form action={applyMarketplaceMatchInterventionAction} className="mt-5 grid gap-4">
               <fieldset className="grid gap-3">
-                <legend className="font-semibold">Kies maximaal drie geschikte dienstverleners</legend>
+                <legend className="font-semibold">Kies maximaal {run.assignment.maxSelections} geschikte dienstverleners</legend>
                 {run.candidates.map((candidate) => (
                   <label key={candidate.id} className="flex items-start gap-3">
                     <input type="checkbox" name="candidateIds" value={candidate.id} defaultChecked={candidate.status === 'SELECTED'} className="mt-1" />

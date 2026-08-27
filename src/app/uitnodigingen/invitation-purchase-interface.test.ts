@@ -9,7 +9,7 @@ describe('opdracht kopen-interface', () => {
     const page = readFileSync(join(root, 'src', 'app', 'uitnodigingen', '[invitationId]', 'page.tsx'), 'utf8')
     expect(page).toContain('Opdracht kopen — 25 credits')
     expect(page).toContain('direct en definitief afgeschreven')
-    expect(page).toContain('Maximaal 3 professionals')
+    expect(page).toContain('Maximaal {preview.maximumPurchasers} professionals')
     expect(page).toContain('Volledige opdrachtinformatie')
     expect(page).not.toContain('credits reserveren')
   })

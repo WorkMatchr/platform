@@ -16,7 +16,7 @@ async function loadPlatformMetrics(actorPermissions: string[], canManageMarketpl
       where: { status: 'COMPLETED', assignment: { status: { in: ['MATCHING', 'AWAITING_RESPONSES'] } }, invitations: { none: { status: 'ACCEPTED' } } },
       orderBy: { completedAt: 'desc' },
       take: 10,
-      select: { id: true, confidenceLevel: true, assignment: { select: { title: true } }, candidates: { where: { status: { in: ['ELIGIBLE', 'SELECTED'] } }, orderBy: { rank: 'asc' }, select: { id: true, status: true, rank: true, providerProfile: { select: { organization: { select: { name: true } } } } } } },
+      select: { id: true, confidenceLevel: true, assignment: { select: { title: true, maxSelections: true } }, candidates: { where: { status: { in: ['ELIGIBLE', 'SELECTED'] } }, orderBy: { rank: 'asc' }, select: { id: true, status: true, rank: true, providerProfile: { select: { organization: { select: { name: true } } } } } } },
     }),
   ])
   return { kind: 'PLATFORM' as const, actorPermissions, canManageMarketplace, providerReviews, activeAssignments, failedOutbox, recentCorrections, providerOrganizations, openMatchRuns }
@@ -191,7 +191,7 @@ export async function getProviderInvitationDetail(userId: string, organizationId
       participation: { select: { id: true, status: true, version: true, creditReservation: { select: { id: true } }, quote: { select: { id: true, status: true, version: true } }, messageChannel: { select: { id: true } } } },
       assignment: { select: {
         id: true, title: true, description: true, employeeCount: true, desiredStartDate: true, responseDeadline: true,
-        locationCity: true, locationProvince: true, locationRegion: true, locationCount: true, allowsRemoteWork: true,
+        locationCity: true, locationProvince: true, locationRegion: true, locationCount: true, allowsRemoteWork: true, maxSelections: true,
         locationName: true, locationAddressLine: true, locationPostalCode: true, locationCountryCode: true, locationDescription: true,
         clientOrganization: { select: { name: true, generalEmail: true, phone: true } },
         primarySpecialism: { select: { name: true } }, sector: { select: { name: true } },
@@ -232,6 +232,7 @@ export async function getClientQuotes(userId: string, organizationId: string, as
       title: true,
       status: true,
       version: true,
+      maxSelections: true,
       responseDeadline: true,
       awardDecision: { select: { id: true, quoteId: true, motivation: true, decidedAt: true } },
       marketplaceQuotes: {
@@ -305,6 +306,7 @@ export async function getAssignmentSelectionView(userId: string, organizationId:
       title: true,
       status: true,
       version: true,
+      maxSelections: true,
       responseDeadline: true,
       marketplaceMatchRuns: {
         where: { status: 'COMPLETED' },

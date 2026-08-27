@@ -7,7 +7,7 @@ describe('AssignmentPreview', () => {
       id: 'assignment-1', title: 'Onderzoek naar fysieke belasting', primarySpecialism: { name: 'Ergonomie' },
       sector: { name: 'Logistiek' }, employeeCount: 80, desiredStartDate: new Date('2026-09-01'),
       responseDeadline: new Date('2026-08-25'), locationCity: 'Utrecht', locationProvince: 'Utrecht',
-      locationRegion: 'Midden-Nederland', locationCount: 2, allowsRemoteWork: false,
+      locationRegion: 'Midden-Nederland', locationCount: 2, allowsRemoteWork: false, maxSelections: 3,
     })
     expect(preview).toMatchObject({ safeSummary: 'Onderzoek naar fysieke belasting', expertise: 'Ergonomie', region: 'Midden-Nederland', priceCredits: 25, maximumPurchasers: 3 })
     expect(preview).not.toHaveProperty('description')
