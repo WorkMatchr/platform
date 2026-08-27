@@ -15,13 +15,14 @@ type PublicIntakeStartProps = {
   sessionNotice?: string
   onCreated: (draft: PublicIntakeDraftView) => void
   knowledgeContext?: KnowledgeContextDefinition | null
+  experience?: 'ADVICE_GUIDE' | 'HELP_REQUEST_V2'
 }
 
 function resultMessage(result: PublicIntakeActionResult): string | null {
   return result.ok ? null : result.message
 }
 
-export function PublicIntakeStart({ sessionNotice, onCreated, knowledgeContext }: PublicIntakeStartProps) {
+export function PublicIntakeStart({ sessionNotice, onCreated, knowledgeContext, experience = 'ADVICE_GUIDE' }: PublicIntakeStartProps) {
   const [description, setDescription] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [pendingSituation, setPendingSituation] = useState<RecognizableRequestKey | null>(
@@ -46,6 +47,7 @@ export function PublicIntakeStart({ sessionNotice, onCreated, knowledgeContext }
       void createPublicIntakeDraftAction({
         entryPoint: 'FREE_TEXT',
         originalInput: description,
+        experience,
         ...(knowledgeContext ? { knowledgeContextId: knowledgeContext.id } : {}),
       }).then(finish)
     })
@@ -91,7 +93,7 @@ export function PublicIntakeStart({ sessionNotice, onCreated, knowledgeContext }
           Vermeld nog geen namen, medische gegevens of andere gevoelige persoonsgegevens.
         </p>
         <label htmlFor="public-intake-description" className="sr-only">
-          Beschrijf kort uw situatie
+          {experience === 'HELP_REQUEST_V2' ? 'Waarbij heeft uw organisatie hulp nodig?' : 'Beschrijf kort uw situatie'}
         </label>
         <textarea
           id="public-intake-description"
@@ -100,7 +102,7 @@ export function PublicIntakeStart({ sessionNotice, onCreated, knowledgeContext }
             setDescription(event.target.value)
             setError(null)
           }}
-          placeholder="Beschrijf kort uw situatie..."
+          placeholder={experience === 'HELP_REQUEST_V2' ? 'Bijvoorbeeld: Wij hebben een RI&E nodig voor ons bedrijf.' : 'Beschrijf kort uw situatie...'}
           minLength={20}
           maxLength={2000}
           rows={5}
@@ -114,7 +116,7 @@ export function PublicIntakeStart({ sessionNotice, onCreated, knowledgeContext }
             disabled={isPending}
             loading={isPending && pendingSituation === null}
           >
-            Help mij verder
+            {experience === 'HELP_REQUEST_V2' ? 'Analyseer mijn hulpvraag' : 'Help mij verder'}
           </Button>
           <span className="text-sm text-text-secondary">
             {description.length.toLocaleString('nl-NL')} / 2.000 tekens
@@ -122,7 +124,7 @@ export function PublicIntakeStart({ sessionNotice, onCreated, knowledgeContext }
         </div>
       </form>
 
-      <div className="my-7 flex items-center gap-4" aria-hidden="true">
+      {experience === 'ADVICE_GUIDE' && <><div className="my-7 flex items-center gap-4" aria-hidden="true">
         <span className="h-px flex-1 bg-border" />
         <span className="text-sm text-text-secondary">of</span>
         <span className="h-px flex-1 bg-border" />
@@ -146,7 +148,7 @@ export function PublicIntakeStart({ sessionNotice, onCreated, knowledgeContext }
             </button>
           ))}
         </div>
-      </fieldset>
+      </fieldset></>}
 
       {error && (
         <p id="public-intake-error" role="alert" className="mt-4 text-sm font-semibold text-error">

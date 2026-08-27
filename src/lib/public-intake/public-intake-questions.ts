@@ -74,6 +74,10 @@ export const publicIntakeQuestions = [
     },
   },
   ...([
+    ['context_rie_status', ['Een nieuwe RI&E', 'Een bestaande RI&E actualiseren', 'Een bestaande RI&E controleren', 'Dat weet ik nog niet']],
+    ['context_employee_count', ['1 tot en met 10 medewerkers', '11 tot en met 50 medewerkers', '51 tot en met 250 medewerkers', 'Meer dan 250 medewerkers']],
+    ['context_location_count', ['Eén locatie', 'Twee tot en met vijf locaties', 'Meer dan vijf locaties']],
+    ['context_preferred_start', ['Zo snel mogelijk', 'Binnen vier weken', 'Binnen drie maanden', 'Ik oriënteer mij nog']],
     ['context_work_activity', ['Vooral lichamelijk werk', 'Vooral beeldscherm- of kantoorwerk', 'Een combinatie', 'Iets anders']],
     ['context_physical_load', ['Tillen of dragen', 'Duwen of trekken', 'Repeterend werk', 'Langdurig zitten of staan', 'Iets anders']],
     ['context_affected_scope', ['Bij één medewerker', 'Bij meerdere medewerkers', 'Dat weet ik niet']],

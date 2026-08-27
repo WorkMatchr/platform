@@ -11,4 +11,11 @@ describe('AI context-question planner', () => {
     expect(() => parseAIContextQuestionPlannerOutput({ questionKeys: ['context_work_activity', 'context_work_activity'] })).toThrow()
   })
   it('blijft binnen eerste batch en budget', () => expect(selectSafeAIContextQuestions({ originalInput: 'Rugklachten bij medewerkers.', classification, answeredQuestionKeys: [], askedQuestionKeys: [], remainingQuestionBudget: 1 })).toHaveLength(1))
+  it('vraagt bij een duidelijke RI&E-hulpvraag niet opnieuw naar het bekende doel en kiest alleen ontbrekende context', () => {
+    const rie = { summary: 'De organisatie heeft een nieuwe RI&E nodig.', primarySubject: 'RIE', secondarySubjects: [], confidence: 'HIGH', alternatives: [] } as const
+    const questions = selectSafeAIContextQuestions({ originalInput: 'Wij hebben een RI&E nodig voor ons bedrijf.', classification: rie, answeredQuestionKeys: [], askedQuestionKeys: [], remainingQuestionBudget: 5 })
+    expect(questions.map((question) => question.questionKey)).toEqual(['context_employee_count', 'context_location_count', 'context_preferred_start'])
+    expect(questions).toHaveLength(3)
+    expect(questions.map((question) => question.text).join(' ')).not.toContain('gewenste resultaat')
+  })
 })

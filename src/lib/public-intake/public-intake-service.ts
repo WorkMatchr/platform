@@ -7,6 +7,7 @@ import type {
 import { getPrisma } from '@/lib/prisma'
 import {
   PUBLIC_INTAKE_FLOW_VERSION,
+  PUBLIC_HELP_REQUEST_INTAKE_V2_FLOW_VERSION,
   publicIntakeExpiryFrom,
 } from './public-intake-config'
 import { PublicIntakeServiceError } from './public-intake-errors'
@@ -305,7 +306,9 @@ export async function createPublicIntakeDraft(
           knowledgeContextVersion: knowledgeContext?.version ?? null,
           knowledgeSourceRoute: knowledgeContext?.sourceRoutes[0] ?? null,
           knowledgeSuggestedCategory: knowledgeContext?.suggestedCategory ?? null,
-          flowVersion: PUBLIC_INTAKE_FLOW_VERSION,
+          flowVersion: input.experience === 'HELP_REQUEST_V2'
+            ? PUBLIC_HELP_REQUEST_INTAKE_V2_FLOW_VERSION
+            : PUBLIC_INTAKE_FLOW_VERSION,
           currentStep: 'start',
           startedAt: at,
           lastInteractionAt: at,
@@ -325,7 +328,9 @@ export async function createPublicIntakeDraft(
         draftId: created.id,
         type: 'DRAFT_CREATED',
         occurredAt: at,
-        detailCode: PUBLIC_INTAKE_FLOW_VERSION,
+        detailCode: input.experience === 'HELP_REQUEST_V2'
+          ? PUBLIC_HELP_REQUEST_INTAKE_V2_FLOW_VERSION
+          : PUBLIC_INTAKE_FLOW_VERSION,
       })
       await appendEvent(transaction, {
         draftId: created.id,

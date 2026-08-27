@@ -13,11 +13,13 @@ export function PublicIntakePrototype({
   invalidSession = false,
   temporarilyUnavailable = false,
   knowledgeContext = null,
+  experience = 'ADVICE_GUIDE',
 }: {
   initialDraft: PublicIntakeDraftView | null
   invalidSession?: boolean
   temporarilyUnavailable?: boolean
   knowledgeContext?: KnowledgeContextDefinition | null
+  experience?: 'ADVICE_GUIDE' | 'HELP_REQUEST_V2'
 }) {
   const [draft, setDraft] = useState(initialDraft)
   const [activeKnowledgeContext, setActiveKnowledgeContext] = useState(knowledgeContext)
@@ -72,6 +74,7 @@ export function PublicIntakePrototype({
         }
         onCreated={setDraft}
         knowledgeContext={activeKnowledgeContext}
+        experience={experience}
       />
     )
   }
@@ -79,6 +82,7 @@ export function PublicIntakePrototype({
   return (
     <PublicIntakeWorkspace
       initialDraft={draft}
+      experience={experience}
       onRestart={() => {
         setDraft(null)
         setSessionNotice('U kunt hieronder een nieuwe hulpvraag starten.')

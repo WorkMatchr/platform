@@ -18,11 +18,13 @@ import type { PublicIntakeDraftView } from '@/lib/public-intake/public-intake-ty
 import type { GuidanceOutcome } from '@/lib/guidance/guidance-domain'
 import {
   PublicIntakeDesktopContext,
+  PublicHelpRequestProgress,
   PublicIntakeMobileContext,
 } from './public-intake-context'
 import { PublicIntakeRestartDialog } from './public-intake-restart-dialog'
 import { ProfessionalRequirementList } from '@/components/advice-dossiers/professional-requirement-list'
 import { AdviceDossierReadyActions } from './advice-dossier-ready-actions'
+import { authClient } from '@/lib/auth-client'
 
 type PendingAnswer = {
   disposition: 'ANSWERED' | 'UNKNOWN' | 'SKIPPED'
@@ -198,7 +200,9 @@ export function PublicIntakeGuidanceResult({
   )
 }
 
-export function AnonymousAdviceSavePanel() {
+export function AnonymousAdviceSavePanel({ experience = 'ADVICE_GUIDE' }: { experience?: 'ADVICE_GUIDE' | 'HELP_REQUEST_V2' }) {
+  const { data: session } = authClient.useSession()
+  const returnTo = experience === 'HELP_REQUEST_V2' ? '/hulpvragen/start' : '/advieswijzer'
   return (
     <section
       className="rounded-card border border-border bg-surface-subtle p-5 sm:p-6"
@@ -208,19 +212,22 @@ export function AnonymousAdviceSavePanel() {
         id="anonymous-advice-save-title"
         className="text-lg font-bold text-brand-dark"
       >
-        Wilt u dit advies bewaren?
+        {experience === 'HELP_REQUEST_V2' ? 'Doorgaan met mijn aanvraag' : 'Wilt u dit advies bewaren?'}
       </h2>
       <p className="mt-2 max-w-2xl text-sm leading-relaxed text-text-secondary">
-        Log in met een opdrachtgeveraccount om dit advies op te slaan in Mijn
-        adviesdossiers.
+        {experience === 'HELP_REQUEST_V2'
+          ? 'Log in of maak een opdrachtgeveraccount aan. Uw ingevulde hulpvraag blijft op dit apparaat bewaard.'
+          : 'Log in met een opdrachtgeveraccount om dit advies op te slaan in Mijn adviesdossiers.'}
       </p>
       <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-        <LinkButton href="/inloggen?returnTo=%2Fadvieswijzer">
-          Inloggen
-        </LinkButton>
-        <LinkButton href="/registreren" variant="outline">
-          Account aanmaken
-        </LinkButton>
+        {session ? (
+          <LinkButton href={`/organisatie/nieuw?returnTo=${encodeURIComponent(returnTo)}`}>Organisatie aanmaken en doorgaan</LinkButton>
+        ) : (
+          <>
+            <LinkButton href={`/inloggen?returnTo=${encodeURIComponent(returnTo)}`}>Inloggen en doorgaan</LinkButton>
+            <LinkButton href={`/registreren?returnTo=${encodeURIComponent(returnTo)}`} variant="outline">Account aanmaken</LinkButton>
+          </>
+        )}
       </div>
     </section>
   )
@@ -229,13 +236,16 @@ export function AnonymousAdviceSavePanel() {
 export function PublicIntakeWorkspace({
   initialDraft,
   onRestart,
+  experience = 'ADVICE_GUIDE',
 }: {
   initialDraft: PublicIntakeDraftView
   onRestart: () => void
+  experience?: 'ADVICE_GUIDE' | 'HELP_REQUEST_V2'
 }) {
   const [draft, setDraft] = useState(initialDraft)
   const [pendingAnswer, setPendingAnswer] = useState<PendingAnswer | null>(null)
   const [numberAnswer, setNumberAnswer] = useState('')
+  const [editingQuestionKey, setEditingQuestionKey] = useState<string | null>(null)
   const [showTopicCorrection, setShowTopicCorrection] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saveMessage, setSaveMessage] = useState(
@@ -254,6 +264,10 @@ export function PublicIntakeWorkspace({
     !nextContextQuestion &&
     (draft.guidance.completion.status === 'COMPLETED_WITH_GUIDANCE' ||
       draft.guidance.completion.status === 'COMPLETED_WITH_SAFE_FALLBACK')
+  const isHelpRequestV2 = experience === 'HELP_REQUEST_V2'
+  const unansweredContextQuestions = (draft.contextQuestions ?? []).filter(
+    (contextQuestion) => !draft.answers.some((answer) => answer.questionKey === contextQuestion.questionKey),
+  ).length
   const baseQuestion = getPublicIntakePrototypeQuestion(nextQuestionKey)
   const understanding =
     nextQuestionKey === 'guidance_topic'
@@ -277,6 +291,18 @@ export function PublicIntakeWorkspace({
     () => draft.answers.filter((answer) => getPublicIntakePrototypeQuestion(answer.questionKey)),
     [draft.answers],
   )
+  const editingBaseQuestion = editingQuestionKey
+    ? getPublicIntakePrototypeQuestion(editingQuestionKey)
+    : null
+  const editingContextQuestion = editingQuestionKey
+    ? draft.contextQuestions?.find((item) => item.questionKey === editingQuestionKey)
+    : null
+  const editingQuestion = editingBaseQuestion
+    ? {
+        ...editingBaseQuestion,
+        ...(editingContextQuestion ? { legend: editingContextQuestion.textSnapshot } : {}),
+      }
+    : null
 
   useEffect(() => {
     if (showUnderstandingConfirmation) {
@@ -288,19 +314,19 @@ export function PublicIntakeWorkspace({
     if (nextQuestionKey) firstQuestionControlRef.current?.focus()
   }, [nextQuestionKey, showUnderstandingConfirmation])
 
-  function saveAnswer(answer: PendingAnswer) {
-    if (!question || isPending) return
+  function saveAnswer(answer: PendingAnswer, targetQuestion = question) {
+    if (!targetQuestion || isPending) return
     setPendingAnswer(answer)
     setSaveError(null)
     setSaveMessage('Uw antwoord wordt opgeslagen…')
     startTransition(() => {
       const action =
-        question.questionKey === 'guidance_topic'
+        targetQuestion.questionKey === 'guidance_topic'
           ? recordPublicIntakeTopicSelectionAction
           : recordPublicIntakeAnswerAction
       void action({
-        questionKey: question.questionKey,
-        questionVersion: question.questionVersion,
+        questionKey: targetQuestion.questionKey,
+        questionVersion: targetQuestion.questionVersion,
         disposition: answer.disposition,
         ...(answer.value !== undefined ? { value: answer.value } : {}),
       }).then((result) => {
@@ -310,12 +336,13 @@ export function PublicIntakeWorkspace({
           return
         }
         setDraft(result.draft)
+        setEditingQuestionKey(null)
         setPendingAnswer(null)
         setNumberAnswer('')
         setSaveError(null)
         setSaveMessage(
-          answer.disposition === 'SKIPPED' && question.skipMessage
-            ? question.skipMessage
+          answer.disposition === 'SKIPPED' && targetQuestion.skipMessage
+            ? targetQuestion.skipMessage
             : 'Uw antwoord is opgeslagen.',
         )
       })
@@ -346,11 +373,19 @@ export function PublicIntakeWorkspace({
       <div className="mb-3 flex justify-end">
         <PublicIntakeRestartDialog onAbandoned={onRestart} />
       </div>
-      <div className="grid gap-4 lg:grid-cols-[minmax(15rem,3fr)_minmax(0,7fr)] lg:items-start">
-        <PublicIntakeDesktopContext step={currentStep} />
+      {isHelpRequestV2 && (
+        <div className="mb-4">
+          <PublicHelpRequestProgress
+            step={isReadyForSummary ? 'REVIEW' : draft.originalInput ? 'QUESTIONS' : 'HELP_REQUEST'}
+            remainingQuestions={unansweredContextQuestions || (question ? 1 : 0)}
+          />
+        </div>
+      )}
+      <div className={isHelpRequestV2 ? 'grid gap-4' : 'grid gap-4 lg:grid-cols-[minmax(15rem,3fr)_minmax(0,7fr)] lg:items-start'}>
+        {!isHelpRequestV2 && <PublicIntakeDesktopContext step={currentStep} />}
 
         <div className="min-w-0 space-y-3">
-          <PublicIntakeMobileContext step={currentStep} />
+          {!isHelpRequestV2 && <PublicIntakeMobileContext step={currentStep} />}
 
           {draft.aiClassificationProtection && (
             <p role="status" className="rounded-control border border-border bg-surface-muted px-4 py-3 text-sm text-text-secondary">
@@ -531,7 +566,47 @@ export function PublicIntakeWorkspace({
           </section>
         )}
 
-        {isReadyForSummary && draft.guidance.outcome && (
+        {isReadyForSummary && isHelpRequestV2 && (
+          <section className="rounded-card border border-brand-primary/25 bg-brand-primary-subtle p-5 sm:p-6" aria-labelledby="help-request-summary-title">
+            <p className="text-sm font-semibold text-brand-primary">Controle</p>
+            <h2 id="help-request-summary-title" className="mt-1 text-2xl font-bold text-brand-dark">Dit hebben wij van uw vraag begrepen</h2>
+            <dl className="mt-5 space-y-4">
+              <div><dt className="text-sm font-semibold text-text-secondary">Uw oorspronkelijke hulpvraag</dt><dd className="mt-1 break-words text-brand-dark">{draft.originalInput}</dd></div>
+              {getAIIntakeUnderstanding(draft.aiClassification) && <div><dt className="text-sm font-semibold text-text-secondary">Voorgestelde richting</dt><dd className="mt-1 font-semibold text-brand-dark">{getAIIntakeUnderstanding(draft.aiClassification)?.subjectLabel}</dd></div>}
+            </dl>
+            <p className="mt-4 text-sm text-text-secondary">Controleer uw antwoorden hieronder. De analyse is adviserend; u bevestigt zelf welke informatie bij uw aanvraag hoort.</p>
+          </section>
+        )}
+
+        {isReadyForSummary && isHelpRequestV2 && editingQuestion && (
+          <section className="rounded-card border border-border bg-surface p-5 sm:p-6" aria-labelledby="help-request-edit-title">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-brand-primary">Antwoord aanpassen</p>
+                <h2 id="help-request-edit-title" className="mt-1 text-xl font-bold text-brand-dark">{editingQuestion.legend}</h2>
+              </div>
+              <Button type="button" variant="outline" onClick={() => setEditingQuestionKey(null)}>Annuleren</Button>
+            </div>
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              {(editingQuestion.options ?? []).map((option) => (
+                <Button
+                  key={`${option.disposition}:${option.value ?? ''}`}
+                  type="button"
+                  variant="outline"
+                  disabled={isPending}
+                  onClick={() => saveAnswer({
+                    disposition: option.disposition,
+                    ...(option.value !== undefined ? { value: option.value } : {}),
+                  }, editingQuestion)}
+                >
+                  {option.label}
+                </Button>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {isReadyForSummary && draft.guidance.outcome && !isHelpRequestV2 && (
           <PublicIntakeGuidanceResult outcome={draft.guidance.outcome} />
         )}
 
@@ -560,7 +635,7 @@ export function PublicIntakeWorkspace({
         )}
 
         {isReadyForSummary && draft.adviceDossier === null && (
-          <AnonymousAdviceSavePanel />
+          <AnonymousAdviceSavePanel experience={experience} />
         )}
 
         {answeredQuestions.length > 0 && (
@@ -573,13 +648,23 @@ export function PublicIntakeWorkspace({
             </h2>
             <dl className="mt-2 grid gap-2 sm:grid-cols-2">
               {answeredQuestions.map((answer) => (
-                <div key={answer.questionKey} className="min-w-0">
+                <div key={answer.questionKey} className="min-w-0 rounded-control border border-transparent p-2">
                   <dt className="text-xs text-text-secondary">
                     {getPublicIntakePrototypeQuestion(answer.questionKey)?.legend}
                   </dt>
                   <dd className="mt-1 break-words text-sm font-semibold text-brand-dark">
                     {getPublicIntakeAnswerLabel(answer)}
                   </dd>
+                  {isHelpRequestV2 && (getPublicIntakePrototypeQuestion(answer.questionKey)?.options?.length ?? 0) > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="mt-2"
+                      onClick={() => setEditingQuestionKey(answer.questionKey)}
+                    >
+                      Wijzigen
+                    </Button>
+                  )}
                 </div>
               ))}
             </dl>

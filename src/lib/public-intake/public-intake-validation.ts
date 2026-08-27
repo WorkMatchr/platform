@@ -28,6 +28,7 @@ const createDraftSchema = z
       .enum(recognizableRequestKeys, { error: 'Kies een geldige hulpvraag.' })
       .optional(),
     knowledgeContextId: z.enum(knowledgeContextIds).optional(),
+    experience: z.enum(['ADVICE_GUIDE', 'HELP_REQUEST_V2']).optional(),
   })
   .strict()
   .superRefine((value, context) => {
@@ -44,6 +45,7 @@ export type CreatePublicIntakeDraftInput = {
   originalInput?: string
   selectedRequestKey?: RecognizableRequestKey
   knowledgeContextId?: KnowledgeContextId
+  experience?: 'ADVICE_GUIDE' | 'HELP_REQUEST_V2'
 }
 
 export type NormalizedPublicIntakeAnswer = {

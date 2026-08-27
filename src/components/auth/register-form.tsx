@@ -11,8 +11,9 @@ import {
   registrationSchema,
 } from '@/lib/auth-validation'
 import { PASSWORD_CHECK_UNAVAILABLE_MESSAGE, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, PASSWORD_REJECTED_MESSAGE } from '@/lib/password-policy'
+import { getSafeReturnUrl } from '@/lib/safe-redirect'
 
-export function RegisterForm() {
+export function RegisterForm({ returnTo = '/dashboard' }: { returnTo?: string }) {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string>()
   const [errors, setErrors] = useState<Record<string, string[] | undefined>>({})
@@ -29,6 +30,8 @@ export function RegisterForm() {
 
     setErrors({})
     setLoading(true)
+    const safeReturnTo = getSafeReturnUrl(returnTo, '/dashboard')
+    const verificationCallback = `/verifieer-email?status=geslaagd&returnTo=${encodeURIComponent(safeReturnTo)}`
     const requestResult = await runNewPasswordRegistrationRequest(() => fetch('/api/auth/sign-up/email', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -39,7 +42,7 @@ export function RegisterForm() {
         password: result.data.password,
         passwordConfirmation: result.data.passwordConfirmation,
         acceptedTerms: true,
-        callbackURL: '/verifieer-email?status=geslaagd',
+        callbackURL: verificationCallback,
       }),
     }))
     setLoading(false)
@@ -48,7 +51,7 @@ export function RegisterForm() {
     if (requestResult === 'password_rejected') return setMessage(PASSWORD_REJECTED_MESSAGE)
     if (requestResult === 'password_check_unavailable') return setMessage(PASSWORD_CHECK_UNAVAILABLE_MESSAGE)
     if (requestResult === 'technical_error') return setMessage(GENERIC_AUTH_REQUEST_ERROR)
-    window.location.assign('/registreren/controleer-email')
+    window.location.assign(`/registreren/controleer-email?returnTo=${encodeURIComponent(safeReturnTo)}`)
   }
 
   return (
@@ -78,7 +81,7 @@ export function RegisterForm() {
       <div><label htmlFor="passwordConfirmation" className="font-semibold">Wachtwoord bevestigen</label><input id="passwordConfirmation" name="passwordConfirmation" type="password" autoComplete="new-password" minLength={PASSWORD_MIN_LENGTH} maxLength={PASSWORD_MAX_LENGTH} required className={fieldClassName} aria-describedby={errors.passwordConfirmation ? 'password-confirmation-error' : undefined} /><FieldError id="password-confirmation-error" message={errors.passwordConfirmation?.[0]} /></div>
       <div><label className="flex items-start gap-3"><input name="acceptedTerms" type="checkbox" className="mt-1 size-5" required /><span>Ik ga akkoord met de tijdelijke <Link className="underline" href="/privacy">privacy-informatie</Link> en <Link className="underline" href="/algemene-voorwaarden">algemene voorwaarden</Link>. Deze juridische pagina’s worden nog definitief opgesteld.</span></label><FieldError id="accepted-terms-error" message={errors.acceptedTerms?.[0]} /></div>
       <Button type="submit" loading={loading} className="w-full">Account registreren</Button>
-      <p className="text-center text-sm text-text-secondary">Al een account? <Link className="font-semibold text-brand-primary-hover underline" href="/inloggen">Inloggen</Link></p>
+      <p className="text-center text-sm text-text-secondary">Al een account? <Link className="font-semibold text-brand-primary-hover underline" href={`/inloggen?returnTo=${encodeURIComponent(getSafeReturnUrl(returnTo, '/dashboard'))}`}>Inloggen</Link></p>
     </form>
   )
 }

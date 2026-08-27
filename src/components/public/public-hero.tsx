@@ -20,7 +20,7 @@ export function PublicHero({ hero }: PublicHeroProps) {
         <Text size="lg" className="mt-6 max-w-2xl text-text-secondary">{hero.description}</Text>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           <LinkButton href={hero.primaryAction.href}>{hero.primaryAction.label}</LinkButton>
-          <LinkButton href={hero.secondaryAction.href} variant="outline">{hero.secondaryAction.label}</LinkButton>
+          <LinkButton href={hero.secondaryAction.href} variant="outline" className="whitespace-nowrap">{hero.secondaryAction.label}</LinkButton>
         </div>
       </div>
 

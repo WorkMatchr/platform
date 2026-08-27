@@ -13,7 +13,7 @@ import {
   GENERIC_VERIFICATION_CONFIRMATION,
 } from '@/lib/auth-validation'
 
-export function EmailRequestForm({ mode }: { mode: 'reset' | 'verification' }) {
+export function EmailRequestForm({ mode, verificationReturnTo = '/dashboard' }: { mode: 'reset' | 'verification'; verificationReturnTo?: string }) {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string>()
   const [hasError, setHasError] = useState(false)
@@ -30,7 +30,7 @@ export function EmailRequestForm({ mode }: { mode: 'reset' | 'verification' }) {
     setLoading(true)
     const requestResult = await runAuthClientRequest(() => mode === 'reset'
       ? authClient.requestPasswordReset({ email: result.data.email, redirectTo: '/wachtwoord-herstellen' })
-      : authClient.sendVerificationEmail({ email: result.data.email, callbackURL: '/verifieer-email?status=geslaagd' }))
+      : authClient.sendVerificationEmail({ email: result.data.email, callbackURL: `/verifieer-email?status=geslaagd&returnTo=${encodeURIComponent(verificationReturnTo)}` }))
     setLoading(false)
 
     if (requestResult === 'rate_limited') {

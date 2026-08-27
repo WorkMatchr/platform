@@ -32,6 +32,7 @@ type OrganizationFormProps = {
   mode: 'create' | 'edit'
   sectors: SectorOption[]
   fixedOrganizationType?: Extract<OrganizationType, 'CLIENT' | 'PROVIDER'>
+  returnTo?: string
 }
 
 const organizationTypes = [
@@ -40,7 +41,7 @@ const organizationTypes = [
   { value: 'BOTH', label: 'Opdrachtgever en aanbieder' },
 ] as const
 
-export function OrganizationForm({ action, initialValues = {}, mode, sectors, fixedOrganizationType }: OrganizationFormProps) {
+export function OrganizationForm({ action, initialValues = {}, mode, sectors, fixedOrganizationType, returnTo }: OrganizationFormProps) {
   const [state, formAction, pending] = useActionState(action, {})
   const formRef = useRef<HTMLFormElement>(null)
   const submittedValues = state.values
@@ -68,6 +69,7 @@ export function OrganizationForm({ action, initialValues = {}, mode, sectors, fi
   return (
     <form ref={formRef} key={formKey} action={formAction} className="space-y-9" noValidate>
       {initialValues.id && <input type="hidden" name="organizationId" value={initialValues.id} />}
+      {mode === 'create' && returnTo && <input type="hidden" name="returnTo" value={returnTo} />}
       {state.message && <StatusMessage error>{state.message}</StatusMessage>}
 
       <fieldset className="space-y-5">

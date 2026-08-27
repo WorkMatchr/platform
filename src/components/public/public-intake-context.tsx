@@ -117,3 +117,34 @@ export function PublicIntakeMobileContext({
     </details>
   )
 }
+
+export function PublicHelpRequestProgress({
+  step,
+  remainingQuestions,
+}: {
+  step: 'HELP_REQUEST' | 'QUESTIONS' | 'REVIEW'
+  remainingQuestions?: number
+}) {
+  const items = [
+    { key: 'HELP_REQUEST', label: 'Uw hulpvraag' },
+    { key: 'QUESTIONS', label: 'Aanvullende vragen' },
+    { key: 'REVIEW', label: 'Controle' },
+  ] as const
+  const currentIndex = items.findIndex((item) => item.key === step)
+  return (
+    <section className="rounded-card border border-border bg-surface-subtle p-4 sm:p-5" aria-labelledby="help-request-progress-title">
+      <h2 id="help-request-progress-title" className="sr-only">Voortgang</h2>
+      <ol className="grid gap-3 sm:grid-cols-3">
+        {items.map((item, index) => (
+          <li key={item.key} aria-current={index === currentIndex ? 'step' : undefined} className={`rounded-control border px-4 py-3 ${index === currentIndex ? 'border-brand-primary bg-brand-primary-subtle' : 'border-border bg-surface'}`}>
+            <span className="block text-xs font-semibold text-text-secondary">{index + 1}</span>
+            <span className="block font-semibold text-brand-dark">{item.label}</span>
+          </li>
+        ))}
+      </ol>
+      {step === 'QUESTIONS' && typeof remainingQuestions === 'number' && remainingQuestions > 0 && (
+        <p className="mt-3 text-sm font-medium text-text-secondary">Nog {remainingQuestions} korte {remainingQuestions === 1 ? 'vraag' : 'vragen'}</p>
+      )}
+    </section>
+  )
+}

@@ -15,7 +15,11 @@ export function parseAIContextQuestionPlannerOutput(value: unknown): AIContextQu
 
 function containsKnownFact(input: string, key: string): boolean {
   const text = input.toLocaleLowerCase('nl-NL')
-  return (key === 'context_affected_scope' && /(meerdere|verschillende|veel) medewerkers/.test(text))
+  return (key === 'context_rie_status' && /(nieuwe?\s+ri&e|ri&e\s+(nodig|opstellen|actualiseren|controleren|toetsen))/.test(text))
+    || (key === 'context_employee_count' && /\b\d+\s+(medewerkers|werknemers)\b/.test(text))
+    || (key === 'context_location_count' && /\b\d+\s+(locaties|vestigingen)\b/.test(text))
+    || (key === 'context_preferred_start' && /(zo snel mogelijk|binnen (vier|\d+) weken|binnen (drie|\d+) maanden)/.test(text))
+    || (key === 'context_affected_scope' && /(meerdere|verschillende|veel) medewerkers/.test(text))
     || (key === 'context_existing_investigation' && /(ri&e|onderzoek).{0,30}(uitgevoerd|gedaan|opgenomen)/.test(text))
 }
 

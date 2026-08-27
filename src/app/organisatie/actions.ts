@@ -8,6 +8,7 @@ import { removeOrganizationLogo, replaceOrganizationLogo } from '@/lib/organizat
 import { logLogoDevelopment, logoErrorDetails } from '@/lib/organizations/logo-development-log'
 import { createOrganization, OrganizationServiceError, updateOrganization } from '@/lib/organizations/organization-service'
 import { createOrganizationSchema, organizationFormData, organizationProfileSchema, type OrganizationFormValues } from '@/lib/organizations/organization-validation'
+import { getSafeReturnUrl } from '@/lib/safe-redirect'
 
 export type OrganizationActionState = {
   message?: string
@@ -29,7 +30,7 @@ export async function createOrganizationAction(_state: OrganizationActionState, 
   }
 
   revalidatePath('/', 'layout')
-  redirect('/organisatie?aangemaakt=1')
+  redirect(getSafeReturnUrl(String(formData.get('returnTo') ?? ''), '/organisatie?aangemaakt=1'))
 }
 
 export async function updateOrganizationAction(_state: OrganizationActionState, formData: FormData): Promise<OrganizationActionState> {

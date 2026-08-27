@@ -2,23 +2,25 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { AuthShell, StatusMessage } from '@/components/auth/auth-shell'
 import { EmailRequestForm } from '@/components/auth/email-request-form'
+import { getSafeReturnUrl } from '@/lib/safe-redirect'
 
 export const metadata: Metadata = { title: 'E-mailadres verifiëren | WorkMatchr' }
 
-export default async function VerifyEmailPage({ searchParams }: { searchParams: Promise<{ status?: string; error?: string }> }) {
+export default async function VerifyEmailPage({ searchParams }: { searchParams: Promise<{ status?: string; error?: string; returnTo?: string }> }) {
   const params = await searchParams
+  const returnTo = getSafeReturnUrl(params.returnTo, '/dashboard')
   return (
     <AuthShell title="E-mailadres bevestigen" intro="Een bevestigd e-mailadres is verplicht om in te loggen.">
       {params.status === 'geslaagd' ? (
         <>
           <StatusMessage>Uw e-mailadres is bevestigd. U kunt nu inloggen.</StatusMessage>
-          <Link className="mt-5 inline-block font-semibold underline" href="/inloggen">
+          <Link className="mt-5 inline-block font-semibold underline" href={`/inloggen?returnTo=${encodeURIComponent(returnTo)}`}>
             Naar inloggen
           </Link>
         </>
       ) : (
         <>
-          <EmailRequestForm mode="verification" />
+          <EmailRequestForm mode="verification" verificationReturnTo={returnTo} />
           {params.error && <p className="mt-4 text-sm text-error">De verificatielink is ongeldig of verlopen.</p>}
         </>
       )}

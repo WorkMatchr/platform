@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { PublicIntakeAnswerView } from './public-intake-types'
 import { buildPublicIntakeGuidanceHandoff } from './public-intake-guidance-handoff'
+import { PUBLIC_HELP_REQUEST_INTAKE_V2_FLOW_VERSION } from './public-intake-config'
 
 const startedAt = new Date('2026-07-27T12:00:00.000Z')
 
@@ -27,6 +28,7 @@ function draft(
     entryPoint: 'FREE_TEXT' | 'RECOGNIZABLE_REQUEST'
     originalInput: string | null
     selectedRequestKey: string | null
+    flowVersion: string
   }> = {},
 ) {
   return {
@@ -40,7 +42,7 @@ function draft(
       'selectedRequestKey' in overrides
         ? (overrides.selectedRequestKey ?? null)
         : 'rie_needed',
-    flowVersion: 'public-intake/1.0.0',
+    flowVersion: overrides.flowVersion ?? 'public-intake/1.0.0',
     currentStep: 'rie_existing_status',
     version: 4,
     startedAt,
@@ -51,6 +53,33 @@ function draft(
 }
 
 describe('Public Intake Guidance-handoff', () => {
+  it('rondt Hulpvraag Intake v2 na maximaal vijf antwoorden veilig af', () => {
+    const handoff = buildPublicIntakeGuidanceHandoff(
+      'public-draft-fixture',
+      draft(
+        [
+          answer('context_employee_count', 'NUMBER', 18),
+          answer('context_location_count', 'NUMBER', 2),
+          answer('context_preferred_start', 'TEXT', 'Binnen drie maanden'),
+          answer('context_rie_status', 'OPTION', 'NEW'),
+          answer('context_affected_scope', 'OPTION', 'ORGANIZATION_WIDE'),
+        ],
+        {
+          entryPoint: 'FREE_TEXT',
+          originalInput: 'Wij hebben een RI&E nodig voor ons bedrijf.',
+          selectedRequestKey: null,
+          flowVersion: PUBLIC_HELP_REQUEST_INTAKE_V2_FLOW_VERSION,
+        },
+      ),
+    )
+
+    expect(handoff.clarification).toMatchObject({
+      isComplete: true,
+      nextQuestion: null,
+      completionReason: 'QUESTION_BUDGET_EXHAUSTED',
+    })
+  })
+
   it('presenteert een onbekende RI&E-onderzoeksstatus inhoudelijk herleidbaar', () => {
     const handoff = buildPublicIntakeGuidanceHandoff(
       'public-draft-fixture',

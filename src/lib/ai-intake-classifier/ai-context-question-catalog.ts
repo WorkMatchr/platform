@@ -14,7 +14,27 @@ export type AIContextQuestion = Readonly<{
 
 export const aiContextQuestionCatalog = Object.freeze([
   {
-    questionKey: 'context_work_activity', subjectCodes: ['OCCUPATIONAL_HEALTH', 'RIE'],
+    questionKey: 'context_rie_status', subjectCodes: ['RIE'],
+    text: 'Gaat het om een nieuwe RI&E of om een bestaande RI&E?', answerType: 'OPTION',
+    options: ['Een nieuwe RI&E', 'Een bestaande RI&E actualiseren', 'Een bestaande RI&E controleren', 'Dat weet ik nog niet'], category: 'EXISTING_CONTROL',
+  },
+  {
+    questionKey: 'context_employee_count', subjectCodes: ['RIE'],
+    text: 'Hoe groot is uw organisatie ongeveer?', answerType: 'OPTION',
+    options: ['1 tot en met 10 medewerkers', '11 tot en met 50 medewerkers', '51 tot en met 250 medewerkers', 'Meer dan 250 medewerkers'], category: 'SCOPE',
+  },
+  {
+    questionKey: 'context_location_count', subjectCodes: ['RIE'],
+    text: 'Voor hoeveel locaties heeft u ondersteuning nodig?', answerType: 'OPTION',
+    options: ['Eén locatie', 'Twee tot en met vijf locaties', 'Meer dan vijf locaties'], category: 'SCOPE',
+  },
+  {
+    questionKey: 'context_preferred_start', subjectCodes: ['RIE'],
+    text: 'Wanneer wilt u bij voorkeur starten?', answerType: 'OPTION',
+    options: ['Zo snel mogelijk', 'Binnen vier weken', 'Binnen drie maanden', 'Ik oriënteer mij nog'], category: 'URGENCY',
+  },
+  {
+    questionKey: 'context_work_activity', subjectCodes: ['OCCUPATIONAL_HEALTH'],
     text: 'Om wat voor werkzaamheden gaat het vooral?', answerType: 'OPTION',
     options: ['Vooral lichamelijk werk', 'Vooral beeldscherm- of kantoorwerk', 'Een combinatie', 'Iets anders'], category: 'WORK',
   },

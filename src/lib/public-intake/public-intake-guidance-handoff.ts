@@ -27,6 +27,10 @@ import type {
   PublicIntakeAnswerView,
   PublicIntakeDraftView,
 } from './public-intake-types'
+import {
+  PUBLIC_HELP_REQUEST_INTAKE_V2_FLOW_VERSION,
+  PUBLIC_HELP_REQUEST_INTAKE_V2_QUESTION_LIMIT,
+} from './public-intake-config'
 
 export type PublicIntakeGuidanceHandoff = Readonly<{
   contract: GuidanceContract
@@ -344,7 +348,18 @@ export function buildPublicIntakeGuidanceHandoff(
     ),
     createdAt: draft.startedAt.toISOString(),
   })
-  const clarification = clarificationEngine.evaluate(contract, helpRequest)
+  const evaluatedClarification = clarificationEngine.evaluate(contract, helpRequest)
+  const clarification = draft.flowVersion === PUBLIC_HELP_REQUEST_INTAKE_V2_FLOW_VERSION &&
+    draft.answers.length >= PUBLIC_HELP_REQUEST_INTAKE_V2_QUESTION_LIMIT &&
+    !evaluatedClarification.isComplete
+    ? Object.freeze({
+        ...evaluatedClarification,
+        isComplete: true,
+        nextQuestion: null,
+        completionReason: 'QUESTION_BUDGET_EXHAUSTED' as const,
+        remainingQuestionBudget: 0,
+      })
+    : evaluatedClarification
   const intakeCompletion = completion(draft, clarification)
   const outcome =
     intakeCompletion.status === 'COMPLETED_WITH_GUIDANCE'
