@@ -4,6 +4,7 @@ import {
   PUBLIC_INTAKE_COOKIE_NAME,
   PUBLIC_INTAKE_RESUME_DAYS,
   publicIntakeCookieOptions,
+  publicIntakeLegacyCookieRemovalOptions,
   publicIntakeCookieRemovalOptions,
   publicIntakeExpiryFrom,
 } from './public-intake-config'
@@ -194,13 +195,18 @@ describe('publieke conceptintakefundering', () => {
     expect(publicIntakeTokenMatches(second, hash)).toBe(false)
   })
 
-  it('configureert een beperkte HttpOnly-cookie zonder clienttoegang', () => {
+  it('configureert één route-overstijgende HttpOnly-cookie zonder clienttoegang', () => {
     const options = publicIntakeCookieOptions()
     expect(PUBLIC_INTAKE_COOKIE_NAME).toBe('wm_public_intake')
-    expect(options).toMatchObject({ httpOnly: true, sameSite: 'lax', path: '/advieswijzer' })
+    expect(options).toMatchObject({ httpOnly: true, sameSite: 'lax', path: '/' })
     expect(options.maxAge).toBe(PUBLIC_INTAKE_RESUME_DAYS * 24 * 60 * 60)
     expect(publicIntakeCookieRemovalOptions()).toMatchObject({
       httpOnly: true,
+      path: '/',
+      maxAge: 0,
+      expires: new Date(0),
+    })
+    expect(publicIntakeLegacyCookieRemovalOptions()).toMatchObject({
       path: '/advieswijzer',
       maxAge: 0,
       expires: new Date(0),

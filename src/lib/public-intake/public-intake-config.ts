@@ -6,6 +6,7 @@ export const PUBLIC_INTAKE_ABANDONMENT_DAYS = 30
 export const PUBLIC_INTAKE_RESUME_DAYS = 90
 export const PUBLIC_INTAKE_RESUME_EVENT_INTERVAL_MINUTES = 15
 export const PUBLIC_INTAKE_COOKIE_NAME = 'wm_public_intake'
+export const PUBLIC_INTAKE_LEGACY_COOKIE_PATH = '/advieswijzer'
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000
 
@@ -18,8 +19,15 @@ export function publicIntakeCookieOptions() {
     httpOnly: true,
     sameSite: 'lax' as const,
     secure: process.env.NODE_ENV === 'production',
-    path: '/advieswijzer',
+    path: '/',
     maxAge: PUBLIC_INTAKE_RESUME_DAYS * 24 * 60 * 60,
+  }
+}
+
+export function publicIntakeLegacyCookieRemovalOptions() {
+  return {
+    ...publicIntakeCookieRemovalOptions(),
+    path: PUBLIC_INTAKE_LEGACY_COOKIE_PATH,
   }
 }
 

@@ -5,6 +5,7 @@ import type { PublicIntakePhase } from '@/generated/prisma/client'
 import {
   PUBLIC_INTAKE_COOKIE_NAME,
   publicIntakeCookieOptions,
+  publicIntakeLegacyCookieRemovalOptions,
   publicIntakeCookieRemovalOptions,
 } from '@/lib/public-intake/public-intake-config'
 import {
@@ -95,6 +96,11 @@ export async function createPublicIntakeDraftAction(
     await assertPublicIntakeRequestAllowed(requestContext)
     const result = await createPublicIntakeDraft(input)
     const cookieStore = await cookies()
+    cookieStore.set(
+      PUBLIC_INTAKE_COOKIE_NAME,
+      '',
+      publicIntakeLegacyCookieRemovalOptions(),
+    )
     cookieStore.set(
       PUBLIC_INTAKE_COOKIE_NAME,
       result.sessionToken,

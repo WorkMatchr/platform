@@ -51,6 +51,7 @@ vi.mock(
 import {
   abandonPublicIntakeDraftAction,
   confirmPublicIntakeAIClassificationAction,
+  createPublicIntakeDraftAction,
   recordPublicIntakeTopicSelectionAction,
 } from './advieswijzer/actions'
 
@@ -59,6 +60,35 @@ describe('publieke conceptintake bewust beëindigen', () => {
     vi.clearAllMocks()
     mocks.cookieGet.mockReturnValue({ value: 'fictief-publiek-sessietoken' })
     mocks.assertAllowed.mockResolvedValue(undefined)
+  })
+
+  it('vervangt een legacy path-cookie door exact één route-overstijgende conceptsessie', async () => {
+    const draft = { id: 'public-draft-fixture' }
+    mocks.create.mockResolvedValue({
+      sessionToken: 'nieuw-fictief-sessietoken',
+      draft,
+    })
+    mocks.enrich.mockResolvedValue(draft)
+
+    await expect(createPublicIntakeDraftAction({
+      entryPoint: 'FREE_TEXT',
+      originalInput: 'Wij hebben een RI&E nodig voor ons bedrijf.',
+      experience: 'HELP_REQUEST_V2',
+    })).resolves.toEqual({ ok: true, draft })
+
+    expect(mocks.cookieSet).toHaveBeenNthCalledWith(
+      1,
+      'wm_public_intake',
+      '',
+      expect.objectContaining({ path: '/advieswijzer', maxAge: 0 }),
+    )
+    expect(mocks.cookieSet).toHaveBeenNthCalledWith(
+      2,
+      'wm_public_intake',
+      'nieuw-fictief-sessietoken',
+      expect.objectContaining({ path: '/', httpOnly: true, sameSite: 'lax' }),
+    )
+    expect(mocks.cookieSet).toHaveBeenCalledTimes(2)
   })
 
   it.each(['ABANDONED', 'ALREADY_ABANDONED'] as const)(
@@ -73,11 +103,12 @@ describe('publieke conceptintake bewust beëindigen', () => {
         '',
         expect.objectContaining({
           httpOnly: true,
-          path: '/advieswijzer',
+          path: '/',
           maxAge: 0,
           expires: new Date(0),
         }),
       )
+      expect(mocks.cookieSet).toHaveBeenCalledTimes(1)
     },
   )
 
