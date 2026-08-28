@@ -169,7 +169,13 @@ function toFacts(
         provenance,
       }) satisfies ContextFact
 
-      if (answer.questionKey !== 'context_employee_count') {
+      const confirmsEmployees =
+        answer.questionKey === 'context_employee_count' ||
+        (answer.questionKey === 'context_affected_scope' &&
+          (answer.value === 'Bij één medewerker' ||
+            answer.value === 'Bij meerdere medewerkers'))
+
+      if (!confirmsEmployees) {
         return [answerFact]
       }
 

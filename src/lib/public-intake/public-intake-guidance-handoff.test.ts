@@ -267,6 +267,34 @@ describe('Public Intake Guidance-handoff', () => {
     })
   })
 
+  it('leidt personeel semantisch af wanneer het risico meerdere medewerkers raakt', () => {
+    const handoff = buildPublicIntakeGuidanceHandoff(
+      'public-draft-fixture',
+      draft([
+        answer('context_affected_scope', 'OPTION', 'Bij meerdere medewerkers'),
+      ]),
+    )
+
+    expect(handoff.contract.facts).toContainEqual(
+      expect.objectContaining({
+        key: 'PUBLIC_INTAKE_CONTEXT_AFFECTED_SCOPE',
+        value: 'Bij meerdere medewerkers',
+      }),
+    )
+    expect(handoff.contract.facts).toContainEqual(
+      expect.objectContaining({
+        key: 'HAS_EMPLOYEES',
+        valueType: 'BOOLEAN',
+        value: true,
+      }),
+    )
+    expect(handoff.clarification).toMatchObject({
+      isComplete: true,
+      nextQuestion: null,
+      completionReason: 'REQUIRED_INFORMATION_AVAILABLE',
+    })
+  })
+
   it('behoudt onbekende informatie en rondt zonder dubbele vraag veilig af', () => {
     const handoff = buildPublicIntakeGuidanceHandoff(
       'public-draft-fixture',
