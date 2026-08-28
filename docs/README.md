@@ -53,6 +53,7 @@ Module 6C.2 — WOS Beheeracties & Communicatie is technisch opgeleverd en wacht
 30. [Module 7D.3 — Offerteplaats claimen](module-7d3-offerteplaats-claimen.md)
 31. [AI Intake Classifier v1 — ADR-021 Implementatiefase H](ai-intake-classifier-v1.md)
 32. [AI Hulpvraag Intake v2 — publieke hulpvraag vóór login](ai-help-request-intake-v2.md)
+33. [Knowledge-Grounded Context Question Engine v1](knowledge-grounded-context-question-engine-v1.md)
 
 - [Icebox — geparkeerde productideeën](ICEBOX.md)
 

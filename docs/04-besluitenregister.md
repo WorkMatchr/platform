@@ -332,3 +332,11 @@ Zie [ADR-022](adr/ADR-022-matchen-op-vakdiscipline.md) voor concrete, aantoonbar
 | ID | Besluit | Toelichting |
 | --- | --- | --- |
 | B-238 | De ingelogde klant- en professionalwerkruimte gebruikt op desktop een linkerzijbalk en op mobiel dezelfde navigatie in een compact menu. | De drie taakgroepen `Werk`, `Organisatie` en `Persoonlijk` worden server-side rolgebonden samengesteld; bestaande provider- en financiële routes blijven behouden. Platformbeheer en de accountwerkruimte hergebruiken één accordionpatroon met afwisselend de vaste kleurstijlen A en B. |
+
+## 28 augustus 2026 — Knowledge-Grounded Context Question Engine v1
+
+| ID | Besluit | Toelichting |
+| --- | --- | --- |
+| B-239 | `/advieswijzer` en `/hulpvragen/start` gebruiken één kennisgestuurde contextvragen-engine met respectievelijk `DISCOVERY`- en `DIRECT_REQUEST`-modus. | De modus beïnvloedt prioriteit, maar facts, Knowledge Engine-retrieval, Context Goals, applicability, ranking, deduplicatie, readiness en handoff zijn gedeeld. |
+| B-240 | AI bepaalt geen arbologica; vakspecifieke Context Goals vereisen gepubliceerde, gevalideerde en actuele Knowledge Engine-provenance. | Niet-herleidbare regels vallen fail-closed af. De bestaande vaste catalogus blijft tijdelijk als expliciete compatibilityprovider voor parity en historische drafts. |
+| B-241 | Iedere nieuw geplande contextvraag bevriest haar semantische doel, score-uitleg, knowledge-ID's en antwoordcodes. | Hierdoor blijven vraagselectie en downstream handoff uitlegbaar en machineleesbaar zonder vrije hulpvraag of medische details naar runtime-logs te kopiëren. |

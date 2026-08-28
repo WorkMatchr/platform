@@ -1,5 +1,16 @@
 # Database WorkMatchr
 
+## Knowledge-Grounded publieke contextvragen
+
+Migratie `20260828190000_add_public_intake_context_goal_provenance` voegt
+additief de immutable `contextGoalCode` en `planningSnapshot` toe aan
+`PublicIntakeContextQuestion`. Tevens ondersteunt het bestaande getypeerde
+antwoordmodel `MULTI_OPTION` via een beheerde codelijst op actueel antwoord en
+append-only revisie. De bestaande databasefunctie blijft exact één passende
+waarde per `ANSWERED`-record afdwingen. Bestaande drafts en antwoorden krijgen
+geen backfill; een lege codelijst is compatibel met alle historische typen.
+Production wordt binnen deze featureworkset niet gemigreerd.
+
 ## Arbo-wijzer runs
 
 Migratie `20260820100000_add_arbo_guide_runs` voegt uitsluitend de generieke typen, teller, `ArboGuideRun` en `ArboGuideRunResult` toe. Bestaande data wordt niet teruggevuld of gewijzigd. Rapportnummers worden concurrency-safe per type en jaar uitgegeven. Runs/resultaten zijn na afronding databasebreed append-only, gebruiken `ON DELETE RESTRICT` en een deferred constrainttrigger vereist minimaal één resultaat bij iedere afgeronde run.

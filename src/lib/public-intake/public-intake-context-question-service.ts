@@ -1,20 +1,22 @@
 import type { AIClassifierOutput } from '@/lib/ai-intake-classifier/ai-classifier-contract'
-import type { PublicIntakeAnswerType } from '@/generated/prisma/client'
-import {
-  AI_CONTEXT_QUESTION_CATALOG_VERSION,
-} from '@/lib/ai-intake-classifier/ai-context-question-catalog'
-import {
-  AI_CONTEXT_QUESTION_LIMIT,
-  selectSafeAIContextQuestions,
-} from '@/lib/ai-intake-classifier/ai-context-question-planner'
+import type { Prisma, PublicIntakeAnswerType } from '@/generated/prisma/client'
 import { getPrisma } from '@/lib/prisma'
-import type { PublicIntakeContextQuestionView } from './public-intake-types'
+import type { PublicIntakeAnswerView, PublicIntakeContextQuestionView } from './public-intake-types'
 import {
   getSharedSectorOptions,
   inferSharedSectorCode,
   SHARED_CONTEXT_SECTOR_QUESTION_KEY,
   type SharedSectorOption,
 } from './shared-assignment-context'
+import { deriveKnowledgeConceptCandidates, extractPublicIntakeFacts } from './context-fact-extractor'
+import { loadKnowledgeGroundedContextGoals } from './knowledge-context-goal-provider'
+import { planNextContextQuestion } from './context-question-engine'
+import {
+  KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION,
+  parsePersistedContextQuestionPlan,
+  type IntakeMode,
+  type PersistedContextQuestionPlan,
+} from './context-question-engine-types'
 
 export const PUBLIC_INTAKE_CONTEXT_QUESTION_TOTAL_LIMIT = 5 as const
 
@@ -27,16 +29,23 @@ export function toPublicIntakeContextQuestionView(question: {
   sequence: number
   source: string
   createdAt: Date
+  contextGoalCode?: string | null
+  planningSnapshot?: unknown
 }, sectorOptions: readonly SharedSectorOption[] = []): PublicIntakeContextQuestionView {
   if (question.source !== 'AI_CONTEXT_PLANNER') {
     throw new Error('PUBLIC_INTAKE_CONTEXT_QUESTION_SOURCE_INVARIANT')
   }
+  const planning = parsePersistedContextQuestionPlan(question.planningSnapshot)
   return {
     ...question,
     source: 'AI_CONTEXT_PLANNER',
     ...(question.questionKey === SHARED_CONTEXT_SECTOR_QUESTION_KEY
       ? { options: sectorOptions.map((option) => ({ label: option.label, value: option.code })) }
-      : {}),
+      : planning
+        ? { options: planning.options.map((option) => ({ label: option.label, value: option.code })) }
+        : {}),
+    contextGoalCode: question.contextGoalCode ?? null,
+    planning,
   }
 }
 
@@ -48,8 +57,9 @@ export async function ensurePublicIntakeAIContextQuestions(input: {
   draftId: string
   originalInput: string
   classification: AIClassifierOutput | null
-  answeredQuestionKeys: readonly string[]
+  answers: readonly PublicIntakeAnswerView[]
   fallbackQuestionWasAsked: boolean
+  mode: IntakeMode
 }): Promise<readonly PublicIntakeContextQuestionView[]> {
   if (!input.classification || input.classification.confidence === 'LOW') return []
 
@@ -68,36 +78,97 @@ export async function ensurePublicIntakeAIContextQuestions(input: {
         sequence: true,
         source: true,
         createdAt: true,
+        contextGoalCode: true,
+        planningSnapshot: true,
       },
     })
     const usedBudget = existing.length + (input.fallbackQuestionWasAsked ? 1 : 0)
     const remaining = PUBLIC_INTAKE_CONTEXT_QUESTION_TOTAL_LIMIT - usedBudget
     if (remaining <= 0) return existing.map((question) => toPublicIntakeContextQuestionView(question, sectorOptions))
 
-    const selected = selectSafeAIContextQuestions({
+    const answeredQuestionKeys = input.answers.map((answer) => answer.questionKey)
+    const unansweredExisting = existing.some((question) => !answeredQuestionKeys.includes(question.questionKey))
+    if (unansweredExisting) return existing.map((question) => toPublicIntakeContextQuestionView(question, sectorOptions))
+    const facts = [...extractPublicIntakeFacts({ originalInput: input.originalInput, answers: input.answers })]
+    const inferredSector = inferSharedSectorCode(input.originalInput, sectorOptions)
+    if (inferredSector && !facts.some((fact) => fact.code === 'SECTOR')) {
+      facts.push(Object.freeze({ code: 'SECTOR', value: inferredSector, status: 'RELIABLE_EXTRACTION' as const, confidence: 0.95 }))
+    }
+    const initialConcepts = deriveKnowledgeConceptCandidates({ originalInput: input.originalInput, classification: input.classification, facts })
+    const grounded = await loadKnowledgeGroundedContextGoals({
+      database: transaction,
+      concepts: initialConcepts,
       originalInput: input.originalInput,
-      classification: input.classification,
-      answeredQuestionKeys: input.answeredQuestionKeys,
+    })
+    const concepts = [...new Map(
+      [...initialConcepts, ...grounded.knowledgeConcepts].map((concept) => [concept.code, concept]),
+    ).values()]
+    const goalByQuestionKey = new Map(grounded.goals.map((goal) => [goal.questionKey, goal]))
+    for (const answer of input.answers) {
+      if (answer.disposition !== 'ANSWERED' || answer.value === null) continue
+      const goal = goalByQuestionKey.get(answer.questionKey)
+      if (!goal) continue
+      for (const factCode of goal.satisfiesFactCodes) {
+        if (!facts.some((fact) => fact.code === factCode)) {
+          facts.push(Object.freeze({
+            code: factCode,
+            value: answer.value,
+            status: 'USER_CONFIRMED' as const,
+            confidence: 1,
+            sourceQuestionKey: answer.questionKey,
+          }))
+        }
+      }
+    }
+    const plan = planNextContextQuestion({
+      mode: input.mode,
+      facts,
+      concepts,
+      goals: grounded.goals,
+      evidenceByGoalCode: grounded.evidenceByGoalCode,
+      answeredQuestionKeys,
       askedQuestionKeys: existing.map((question) => question.questionKey),
-      remainingQuestionBudget: remaining,
-      knownSharedContextQuestionKeys: inferSharedSectorCode(input.originalInput, sectorOptions)
-        ? [SHARED_CONTEXT_SECTOR_QUESTION_KEY]
-        : [],
-    }).slice(0, Math.min(AI_CONTEXT_QUESTION_LIMIT, remaining))
-
-    if (selected.length === 0) return existing.map((question) => toPublicIntakeContextQuestionView(question, sectorOptions))
+      questionBudgetRemaining: remaining,
+    })
+    const selected = plan.selected
+    console.info('[public-intake-context-engine]', {
+      engineVersion: plan.engineVersion,
+      intakeMode: plan.mode,
+      candidateGoalCount: plan.candidates.length,
+      selectedGoal: selected?.goal.code ?? null,
+      selectionReason: selected?.applicability.reasonCode ?? plan.readiness.reasonCode,
+      knowledgeGroundingPresent: selected?.applicability.evidence.some((evidence) => evidence.source !== 'LEGACY_COMPATIBILITY') ?? false,
+      deduplicatedGoalCount: plan.deduplicatedGoalCount,
+      questionBudgetRemaining: plan.questionBudgetRemaining,
+      readinessResult: plan.readiness.status,
+    })
+    if (!selected) return existing.map((question) => toPublicIntakeContextQuestionView(question, sectorOptions))
+    const planningSnapshot: PersistedContextQuestionPlan = Object.freeze({
+      engineVersion: KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION,
+      mode: input.mode,
+      contextGoalCode: selected.goal.code,
+      reasonCode: selected.applicability.reasonCode,
+      mandatory: selected.goal.mandatory,
+      score: selected.score,
+      relevantConceptCodes: Object.freeze([...selected.goal.relevantConceptCodes]),
+      supportingKnowledgeIds: Object.freeze(selected.applicability.evidence.map((evidence) => evidence.knowledgeId)),
+      skippedByFactCodes: Object.freeze([...selected.applicability.skippedByFactCodes]),
+      options: Object.freeze([...selected.goal.options]),
+    })
 
     await transaction.publicIntakeContextQuestion.createMany({
-      data: selected.map((question, index) => ({
+      data: [{
         draftId: input.draftId,
-        questionKey: question.questionKey,
-        catalogVersion: AI_CONTEXT_QUESTION_CATALOG_VERSION,
-        textSnapshot: question.text,
-        answerType: question.answerType,
-        category: question.category,
-        sequence: existing.length + index + 1,
+        questionKey: selected.goal.questionKey,
+        catalogVersion: KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION,
+        textSnapshot: selected.goal.text,
+        answerType: selected.goal.answerType,
+        category: selected.goal.category,
+        sequence: existing.length + 1,
         source: 'AI_CONTEXT_PLANNER',
-      })),
+        contextGoalCode: selected.goal.code,
+        planningSnapshot: planningSnapshot as Prisma.InputJsonValue,
+      }],
       skipDuplicates: true,
     })
 
@@ -113,6 +184,8 @@ export async function ensurePublicIntakeAIContextQuestions(input: {
         sequence: true,
         source: true,
         createdAt: true,
+        contextGoalCode: true,
+        planningSnapshot: true,
       },
     })
     return stored.map((question) => toPublicIntakeContextQuestionView(question, sectorOptions))

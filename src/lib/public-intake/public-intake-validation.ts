@@ -6,6 +6,7 @@ import type {
 } from '@/generated/prisma/client'
 import { PublicIntakeServiceError } from './public-intake-errors'
 import { getPublicIntakeQuestion } from './public-intake-questions'
+import type { PublicIntakeQuestionDefinition } from './public-intake-questions'
 import { knowledgeContextIds, type KnowledgeContextId } from '@/content/knowledge/knowledge-contexts'
 
 export const recognizableRequestKeys = [
@@ -55,6 +56,7 @@ export type NormalizedPublicIntakeAnswer = {
   disposition: PublicIntakeAnswerDisposition
   textValue: string | null
   optionValue: string | null
+  multiOptionValues: readonly string[]
   numberValue: number | null
   booleanValue: boolean | null
   dateValue: Date | null
@@ -93,6 +95,7 @@ function emptyAnswer(
     disposition,
     textValue: null,
     optionValue: null,
+    multiOptionValues: [],
     numberValue: null,
     booleanValue: null,
     dateValue: null,
@@ -102,8 +105,9 @@ function emptyAnswer(
 
 export function normalizePublicIntakeAnswer(
   input: RecordPublicIntakeAnswerInput,
+  managedQuestion?: PublicIntakeQuestionDefinition | null,
 ): NormalizedPublicIntakeAnswer {
-  const question = getPublicIntakeQuestion(input.questionKey)
+  const question = managedQuestion ?? getPublicIntakeQuestion(input.questionKey)
   if (!question || question.version !== input.questionVersion) validationError('Deze vraag is niet beschikbaar.')
   if (!['ANSWERED', 'UNKNOWN', 'SKIPPED'].includes(input.disposition)) validationError()
 
@@ -144,6 +148,18 @@ export function normalizePublicIntakeAnswer(
       return question.answerType === 'OPTION'
         ? { ...normalized, optionValue: input.value }
         : { ...normalized, periodValue: input.value }
+    }
+    case 'MULTI_OPTION': {
+      if (!Array.isArray(input.value) || input.value.length === 0 || input.value.length > 20) {
+        validationError('Kies minimaal één geldige optie.')
+      }
+      const values = [...new Set(input.value)]
+      if (values.length !== input.value.length || values.some((value) =>
+        typeof value !== 'string' || !question.validation.options?.includes(value)
+      )) {
+        validationError('Kies geldige opties.')
+      }
+      return { ...normalized, multiOptionValues: values as string[] }
     }
     case 'NUMBER': {
       const value =

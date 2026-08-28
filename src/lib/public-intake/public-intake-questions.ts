@@ -2,6 +2,7 @@ import type {
   PublicIntakeAnswerType,
   PublicIntakeQuestionPurpose,
 } from '@/generated/prisma/client'
+import { getCompatibilityContextGoal } from './context-goal-catalog'
 
 export type PublicIntakeQuestionDefinition = {
   questionKey: string
@@ -430,5 +431,36 @@ const questionsByKey = new Map<string, PublicIntakeQuestionDefinition>(
 export function getPublicIntakeQuestion(
   questionKey: string,
 ): PublicIntakeQuestionDefinition | null {
+  const contextGoal = getCompatibilityContextGoal(questionKey)
+  if (contextGoal) {
+    return {
+      questionKey: contextGoal.questionKey,
+      version: 1,
+      purpose: contextGoal.matchingValue >= contextGoal.informationGain ? 'MATCHING' : 'CLARIFICATION',
+      answerType: contextGoal.answerType,
+      requiredForSubmission: false,
+      canSkip: !contextGoal.mandatory,
+      decisionPurpose: contextGoal.purpose,
+      validation: {
+        options: contextGoal.options.length > 0
+          ? [...new Set(contextGoal.options.flatMap((option) => [option.code, option.label]))]
+          : undefined,
+      },
+      decision: {
+        enabled: false,
+        required: contextGoal.mandatory,
+        optional: !contextGoal.mandatory,
+        dependsOn: [],
+        visibleWhen: [],
+        repeatIfUnknown: contextGoal.mandatory,
+        category: contextGoal.category === 'ORGANIZATION' || contextGoal.category === 'SCOPE'
+          ? 'ORGANIZATION'
+          : contextGoal.category === 'URGENCY'
+            ? 'PLANNING'
+            : 'SITUATION',
+        order: 100,
+      },
+    }
+  }
   return questionsByKey.get(questionKey) ?? null
 }

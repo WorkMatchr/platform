@@ -131,6 +131,24 @@ describe('publieke conceptintakefundering', () => {
     ).toBe(false)
   })
 
+  it('valideert kennisgestuurde meerkeuze tegen beheerde semantische codes', () => {
+    const managedQuestion = {
+      questionKey: 'context_relevant_risks', version: 1, purpose: 'CLARIFICATION' as const,
+      answerType: 'MULTI_OPTION' as const, requiredForSubmission: false, canSkip: true,
+      decisionPurpose: 'Meerdere relevante contexten gecontroleerd vastleggen.',
+      validation: { options: ['NOISE', 'EXPOSURE', 'WORK_PRESSURE'] },
+      decision: { enabled: false, required: false, optional: true, dependsOn: [], visibleWhen: [], repeatIfUnknown: false, category: 'SITUATION' as const, order: 100 },
+    }
+    expect(normalizePublicIntakeAnswer({
+      questionKey: managedQuestion.questionKey, questionVersion: 1, disposition: 'ANSWERED',
+      value: ['NOISE', 'EXPOSURE'],
+    }, managedQuestion).multiOptionValues).toEqual(['NOISE', 'EXPOSURE'])
+    expect(() => normalizePublicIntakeAnswer({
+      questionKey: managedQuestion.questionKey, questionVersion: 1, disposition: 'ANSWERED',
+      value: ['NOISE', 'UNMANAGED'],
+    }, managedQuestion)).toThrow('Kies geldige opties.')
+  })
+
   it('valideert de expliciete onderwerpkeuze zonder vrije-tekstclassificatie', () => {
     expect(
       normalizePublicIntakeAnswer({

@@ -31,6 +31,7 @@ import {
   PUBLIC_HELP_REQUEST_INTAKE_V2_FLOW_VERSION,
   PUBLIC_HELP_REQUEST_INTAKE_V2_QUESTION_LIMIT,
 } from './public-intake-config'
+import { KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION } from './context-question-engine-types'
 
 export type PublicIntakeGuidanceHandoff = Readonly<{
   contract: GuidanceContract
@@ -113,7 +114,10 @@ function directProvenance(
   })
 }
 
-function answerFactKey(answer: PublicIntakeAnswerView): string {
+function answerFactKey(
+  answer: PublicIntakeAnswerView,
+  contextQuestions: PublicIntakeDraftSnapshot['contextQuestions'],
+): string {
   const clarificationFactKeys: Readonly<Record<string, string>> =
     Object.freeze({
       guidance_topic: 'GUIDANCE_TOPIC',
@@ -127,6 +131,10 @@ function answerFactKey(answer: PublicIntakeAnswerView): string {
   const clarificationFactKey = clarificationFactKeys[answer.questionKey]
 
   if (clarificationFactKey) return clarificationFactKey
+  const contextGoalCode = contextQuestions?.find(
+    (question) => question.questionKey === answer.questionKey,
+  )?.contextGoalCode
+  if (contextGoalCode) return `PUBLIC_INTAKE_CONTEXT_GOAL_${contextGoalCode}`
 
   return `PUBLIC_INTAKE_${answer.questionKey
     .toUpperCase()
@@ -148,6 +156,8 @@ function factValueType(
     case 'OPTION':
     case 'PERIOD':
       return 'CODE'
+    case 'MULTI_OPTION':
+      return 'CODE_LIST'
   }
 }
 
@@ -155,6 +165,7 @@ function toFacts(
   answers: readonly PublicIntakeAnswerView[],
   provenance: GuidanceProvenance,
   sharedContext: PublicIntakeDraftSnapshot['sharedAssignmentContext'],
+  contextQuestions: PublicIntakeDraftSnapshot['contextQuestions'],
 ): readonly ContextFact[] {
   const answerFacts = answers
     .filter(
@@ -163,9 +174,9 @@ function toFacts(
     )
     .flatMap((answer) => {
       const answerFact = Object.freeze({
-        key: answerFactKey(answer),
+        key: answerFactKey(answer, contextQuestions),
         valueType: factValueType(answer),
-        value: answer.value as string | number | boolean,
+        value: answer.value as string | number | boolean | readonly string[],
         status: 'CONFIRMED',
         provenance,
       }) satisfies ContextFact
@@ -173,7 +184,8 @@ function toFacts(
       const confirmsEmployees =
         answer.questionKey === 'context_employee_count' ||
         (answer.questionKey === 'context_affected_scope' &&
-          (answer.value === 'Bij één medewerker' ||
+          (answer.value === 'ONE' || answer.value === 'MULTIPLE' ||
+            answer.value === 'Bij één medewerker' ||
             answer.value === 'Bij meerdere medewerkers'))
 
       if (!confirmsEmployees) {
@@ -205,12 +217,15 @@ function toFacts(
   ]
 }
 
-function uncertaintyKey(answer: PublicIntakeAnswerView): string {
+function uncertaintyKey(
+  answer: PublicIntakeAnswerView,
+  contextQuestions: PublicIntakeDraftSnapshot['contextQuestions'],
+): string {
   if (answer.questionKey === 'rie_has_employees') {
     return 'HAS_EMPLOYEES_UNKNOWN'
   }
 
-  return `${answerFactKey(answer)}_${
+  return `${answerFactKey(answer, contextQuestions)}_${
     answer.disposition === 'SKIPPED' ? 'DEFERRED' : 'UNKNOWN'
   }`
 }
@@ -218,13 +233,14 @@ function uncertaintyKey(answer: PublicIntakeAnswerView): string {
 function toUncertainties(
   answers: readonly PublicIntakeAnswerView[],
   provenance: GuidanceProvenance,
+  contextQuestions: PublicIntakeDraftSnapshot['contextQuestions'],
 ): readonly Uncertainty[] {
   return answers
     .filter((answer) => answer.disposition !== 'ANSWERED')
     .map((answer) => {
       const question = getAIContextQuestion(answer.questionKey)
       return Object.freeze({
-        key: uncertaintyKey(answer),
+        key: uncertaintyKey(answer, contextQuestions),
         reason:
           answer.disposition === 'SKIPPED' ? 'DEFERRED' : 'UNKNOWN',
         description:
@@ -376,24 +392,47 @@ export function buildPublicIntakeGuidanceHandoff(
       provenance,
     }),
     helpRequest,
-    facts: Object.freeze(toFacts(draft.answers, provenance, draft.sharedAssignmentContext)),
+    facts: Object.freeze(toFacts(
+      draft.answers,
+      provenance,
+      draft.sharedAssignmentContext,
+      draft.contextQuestions,
+    )),
     uncertainties: Object.freeze(
-      toUncertainties(draft.answers, provenance),
+      toUncertainties(draft.answers, provenance, draft.contextQuestions),
     ),
     createdAt: draft.startedAt.toISOString(),
   })
   const evaluatedClarification = clarificationEngine.evaluate(contract, helpRequest)
-  const clarification = draft.flowVersion === PUBLIC_HELP_REQUEST_INTAKE_V2_FLOW_VERSION &&
-    draft.answers.length >= PUBLIC_HELP_REQUEST_INTAKE_V2_QUESTION_LIMIT &&
-    !evaluatedClarification.isComplete
-    ? Object.freeze({
-        ...evaluatedClarification,
-        isComplete: true,
-        nextQuestion: null,
-        completionReason: 'QUESTION_BUDGET_EXHAUSTED' as const,
-        remainingQuestionBudget: 0,
-      })
-    : evaluatedClarification
+  const engineQuestions = draft.contextQuestions?.filter(
+    (question) => question.catalogVersion === KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION,
+  ) ?? []
+  const unansweredEngineQuestion = engineQuestions.some(
+    (question) => !draft.answers.some((answer) => answer.questionKey === question.questionKey),
+  )
+  const budgetExhausted = draft.answers.length >= PUBLIC_HELP_REQUEST_INTAKE_V2_QUESTION_LIMIT
+  const clarification = engineQuestions.length > 0
+    ? unansweredEngineQuestion
+      ? Object.freeze({ ...evaluatedClarification, isComplete: false, nextQuestion: null })
+      : Object.freeze({
+          ...evaluatedClarification,
+          isComplete: true,
+          nextQuestion: null,
+          completionReason: budgetExhausted
+            ? 'QUESTION_BUDGET_EXHAUSTED' as const
+            : 'REQUIRED_INFORMATION_AVAILABLE' as const,
+          remainingQuestionBudget: Math.max(0, PUBLIC_HELP_REQUEST_INTAKE_V2_QUESTION_LIMIT - draft.answers.length),
+        })
+    : draft.flowVersion === PUBLIC_HELP_REQUEST_INTAKE_V2_FLOW_VERSION &&
+        budgetExhausted && !evaluatedClarification.isComplete
+      ? Object.freeze({
+          ...evaluatedClarification,
+          isComplete: true,
+          nextQuestion: null,
+          completionReason: 'QUESTION_BUDGET_EXHAUSTED' as const,
+          remainingQuestionBudget: 0,
+        })
+      : evaluatedClarification
   const intakeCompletion = completion(draft, clarification)
   const outcome =
     intakeCompletion.status === 'COMPLETED_WITH_GUIDANCE'

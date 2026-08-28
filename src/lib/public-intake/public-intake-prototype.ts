@@ -21,7 +21,7 @@ export type PublicIntakePrototypeQuestion = {
   legend: string
   explanation: string
   decisionPurpose: string
-  inputKind: 'OPTIONS' | 'NUMBER'
+  inputKind: 'OPTIONS' | 'MULTI_OPTIONS' | 'NUMBER' | 'TEXT'
   options?: readonly PublicIntakePrototypeOption[]
   numberLabel?: string
   numberPlaceholder?: string

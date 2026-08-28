@@ -11,6 +11,7 @@ import {
   allowPublicIntakeAIClassification,
   type PublicIntakeAbuseContext,
 } from './public-intake-abuse-protection'
+import { PUBLIC_HELP_REQUEST_INTAKE_V2_FLOW_VERSION } from './public-intake-config'
 
 function withRefreshedGuidance(draft: PublicIntakeDraftView): PublicIntakeDraftView {
   if (!draft.id) return draft
@@ -96,8 +97,11 @@ async function withPersistedContextQuestions(
     draftId: draft.id,
     originalInput: draft.originalInput,
     classification,
-    answeredQuestionKeys: draft.answers.map((answer) => answer.questionKey),
+    answers: draft.answers,
     fallbackQuestionWasAsked: draft.answers.some((answer) => answer.questionKey === 'guidance_topic'),
+    mode: draft.flowVersion === PUBLIC_HELP_REQUEST_INTAKE_V2_FLOW_VERSION
+      ? 'DIRECT_REQUEST'
+      : 'DISCOVERY',
   })
   return { ...draft, contextQuestions }
 }

@@ -8,6 +8,7 @@ import type {
 import type { AIClassifierOutput } from '@/lib/ai-intake-classifier/ai-classifier-contract'
 import type { PublicIntakeGuidanceHandoff } from './public-intake-guidance-handoff'
 import type { KnowledgeContextId } from '@/content/knowledge/knowledge-contexts'
+import type { PersistedContextQuestionPlan } from './context-question-engine-types'
 
 export type PublicIntakeAnswerView = {
   questionKey: string
@@ -16,7 +17,7 @@ export type PublicIntakeAnswerView = {
   disposition: PublicIntakeAnswerDisposition
   source: PublicIntakeAnswerSource
   version: number
-  value: string | number | boolean | null
+  value: string | number | boolean | readonly string[] | null
 }
 
 export type PublicIntakeContextQuestionView = {
@@ -29,6 +30,8 @@ export type PublicIntakeContextQuestionView = {
   source: 'AI_CONTEXT_PLANNER'
   createdAt: Date
   options?: readonly Readonly<{ label: string; value: string }>[]
+  contextGoalCode?: string | null
+  planning?: PersistedContextQuestionPlan | null
 }
 
 export type PublicIntakeSharedAssignmentContextView = Readonly<{

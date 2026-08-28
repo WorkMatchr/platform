@@ -11,6 +11,7 @@ import {
 import {
   getPublicIntakeAnswerLabel,
   getPublicIntakePrototypeQuestion,
+  type PublicIntakePrototypeQuestion,
 } from '@/lib/public-intake/public-intake-prototype'
 import { getAIIntakeUnderstanding } from '@/lib/public-intake/public-intake-ai-presentation'
 import { presentPublicIntakeGuidance } from '@/lib/public-intake/public-intake-guidance-presentation'
@@ -28,7 +29,49 @@ import { authClient } from '@/lib/auth-client'
 
 type PendingAnswer = {
   disposition: 'ANSWERED' | 'UNKNOWN' | 'SKIPPED'
-  value?: string | number | boolean
+  value?: string | number | boolean | readonly string[]
+}
+
+function getManagedContextPrototypeQuestion(
+  contextQuestion: NonNullable<PublicIntakeDraftView['contextQuestions']>[number] | undefined,
+): PublicIntakePrototypeQuestion | null {
+  if (!contextQuestion) return null
+  const options = contextQuestion.answerType === 'BOOLEAN'
+    ? [
+        { label: 'Ja', value: true, disposition: 'ANSWERED' as const },
+        { label: 'Nee', value: false, disposition: 'ANSWERED' as const },
+        { label: 'Dat weet ik niet', disposition: 'UNKNOWN' as const },
+      ]
+    : [
+        ...(contextQuestion.options ?? []).map((option) => ({
+          ...option,
+          disposition: 'ANSWERED' as const,
+        })),
+        { label: 'Dat weet ik niet', disposition: 'UNKNOWN' as const },
+      ]
+  if (!['OPTION', 'MULTI_OPTION', 'BOOLEAN', 'NUMBER', 'TEXT', 'PERIOD'].includes(contextQuestion.answerType)) return null
+  return {
+    questionKey: contextQuestion.questionKey,
+    questionVersion: 1,
+    legend: contextQuestion.textSnapshot,
+    explanation: 'Deze informatie helpt om uw situatie beter te begrijpen.',
+    decisionPurpose: 'Aanvullende feitelijke context voor uw hulpvraag.',
+    inputKind: contextQuestion.answerType === 'MULTI_OPTION'
+      ? 'MULTI_OPTIONS'
+      : contextQuestion.answerType === 'NUMBER'
+      ? 'NUMBER'
+      : contextQuestion.answerType === 'TEXT' || contextQuestion.answerType === 'PERIOD'
+        ? 'TEXT'
+        : 'OPTIONS',
+    ...(contextQuestion.answerType === 'NUMBER'
+      ? { numberLabel: 'Aantal', numberPlaceholder: 'Vul een geheel getal in' }
+      : contextQuestion.answerType === 'TEXT' || contextQuestion.answerType === 'PERIOD'
+        ? {
+            numberLabel: contextQuestion.answerType === 'PERIOD' ? 'Periode' : 'Uw antwoord',
+            numberPlaceholder: contextQuestion.answerType === 'PERIOD' ? 'Bijvoorbeeld: binnen drie maanden' : 'Geef een kort antwoord',
+          }
+      : { options }),
+  }
 }
 
 export function PublicIntakeGuidanceResult({
@@ -245,6 +288,7 @@ export function PublicIntakeWorkspace({
   const [draft, setDraft] = useState(initialDraft)
   const [pendingAnswer, setPendingAnswer] = useState<PendingAnswer | null>(null)
   const [numberAnswer, setNumberAnswer] = useState('')
+  const [multiAnswer, setMultiAnswer] = useState<readonly string[]>([])
   const [editingQuestionKey, setEditingQuestionKey] = useState<string | null>(null)
   const [showTopicCorrection, setShowTopicCorrection] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -268,7 +312,9 @@ export function PublicIntakeWorkspace({
   const unansweredContextQuestions = (draft.contextQuestions ?? []).filter(
     (contextQuestion) => !draft.answers.some((answer) => answer.questionKey === contextQuestion.questionKey),
   ).length
-  const baseQuestion = getPublicIntakePrototypeQuestion(nextQuestionKey)
+  const baseQuestion =
+    getManagedContextPrototypeQuestion(nextContextQuestion) ??
+    getPublicIntakePrototypeQuestion(nextQuestionKey)
   const understanding =
     nextQuestionKey === 'guidance_topic'
       ? getAIIntakeUnderstanding(draft.aiClassification)
@@ -294,20 +340,29 @@ export function PublicIntakeWorkspace({
         : baseQuestion
 
   const answeredQuestions = useMemo(
-    () => draft.answers.filter((answer) => getPublicIntakePrototypeQuestion(answer.questionKey)),
-    [draft.answers],
+    () => draft.answers.filter((answer) =>
+      getPublicIntakePrototypeQuestion(answer.questionKey) ||
+      draft.contextQuestions?.some((question) => question.questionKey === answer.questionKey),
+    ),
+    [draft.answers, draft.contextQuestions],
   )
   const answerLabel = (answer: PublicIntakeAnswerView) => {
-    const managedOption = draft.contextQuestions
+    const managedQuestion = draft.contextQuestions
       ?.find((item) => item.questionKey === answer.questionKey)
-      ?.options?.find((option) => option.value === answer.value)
+    if (Array.isArray(answer.value)) {
+      return answer.value.map((value) =>
+        managedQuestion?.options?.find((option) => option.value === value)?.label ?? value,
+      ).join(', ')
+    }
+    const managedOption = managedQuestion?.options?.find((option) => option.value === answer.value)
     return managedOption?.label ?? getPublicIntakeAnswerLabel(answer)
   }
-  const editingBaseQuestion = editingQuestionKey
-    ? getPublicIntakePrototypeQuestion(editingQuestionKey)
-    : null
   const editingContextQuestion = editingQuestionKey
     ? draft.contextQuestions?.find((item) => item.questionKey === editingQuestionKey)
+    : null
+  const editingBaseQuestion = editingQuestionKey
+    ? getManagedContextPrototypeQuestion(editingContextQuestion ?? undefined) ??
+      getPublicIntakePrototypeQuestion(editingQuestionKey)
     : null
   const editingQuestion = editingBaseQuestion
     ? {
@@ -358,6 +413,7 @@ export function PublicIntakeWorkspace({
         setEditingQuestionKey(null)
         setPendingAnswer(null)
         setNumberAnswer('')
+        setMultiAnswer([])
         setSaveError(null)
         setSaveMessage(
           answer.disposition === 'SKIPPED' && targetQuestion.skipMessage
@@ -480,7 +536,7 @@ export function PublicIntakeWorkspace({
             <form
               onSubmit={(event) => {
                 event.preventDefault()
-                if (question.inputKind === 'NUMBER' && numberAnswer.trim()) {
+                if ((question.inputKind === 'NUMBER' || question.inputKind === 'TEXT') && numberAnswer.trim()) {
                   saveAnswer({ disposition: 'ANSWERED', value: numberAnswer })
                 }
               }}
@@ -500,7 +556,7 @@ export function PublicIntakeWorkspace({
                 <p id="public-intake-question-help" className="mt-2 text-text-secondary">
                   {question.explanation}
                 </p>
-                {question.inputKind === 'NUMBER' && (
+                {(question.inputKind === 'NUMBER' || question.inputKind === 'TEXT') && (
                   <div className="mt-4 max-w-sm">
                     <label
                       htmlFor={question.questionKey}
@@ -513,10 +569,10 @@ export function PublicIntakeWorkspace({
                         ref={firstQuestionControlRef}
                         id={question.questionKey}
                         name={question.questionKey}
-                        type="number"
-                        min={1}
-                        max={1000}
-                        inputMode="numeric"
+                        type={question.inputKind === 'NUMBER' ? 'number' : 'text'}
+                        {...(question.inputKind === 'NUMBER'
+                          ? { min: 1, max: 1000, inputMode: 'numeric' as const }
+                          : { maxLength: 500 })}
                         value={numberAnswer}
                         placeholder={question.numberPlaceholder}
                         onChange={(event) => setNumberAnswer(event.target.value)}
@@ -545,17 +601,23 @@ export function PublicIntakeWorkspace({
                       >
                         <input
                           ref={optionIndex === 0 ? firstQuestionControlRef : undefined}
-                          type="radio"
+                          type={question.inputKind === 'MULTI_OPTIONS' ? 'checkbox' : 'radio'}
                           name={question.questionKey}
-                          checked={selectedKey === optionKey}
-                          onChange={() =>
+                          checked={question.inputKind === 'MULTI_OPTIONS' && typeof option.value === 'string'
+                            ? multiAnswer.includes(option.value)
+                            : selectedKey === optionKey}
+                          onChange={() => {
+                            if (question.inputKind === 'MULTI_OPTIONS' && typeof option.value === 'string') {
+                              setMultiAnswer((current) => current.includes(option.value as string)
+                                ? current.filter((value) => value !== option.value)
+                                : [...current, option.value as string])
+                              return
+                            }
                             saveAnswer({
                               disposition: option.disposition,
-                              ...(option.value !== undefined
-                                ? { value: option.value }
-                                : {}),
+                              ...(option.value !== undefined ? { value: option.value } : {}),
                             })
-                          }
+                          }}
                           className="size-4 shrink-0 accent-brand-primary focus-visible:outline-none"
                         />
                         <span>{option.label}</span>
@@ -563,6 +625,16 @@ export function PublicIntakeWorkspace({
                     )
                   })}
                 </div>
+                {question.inputKind === 'MULTI_OPTIONS' && (
+                  <Button
+                    type="button"
+                    className="mt-4"
+                    disabled={multiAnswer.length === 0}
+                    onClick={() => saveAnswer({ disposition: 'ANSWERED', value: multiAnswer })}
+                  >
+                    Antwoord opslaan
+                  </Button>
+                )}
               </fieldset>
 
               {saveError && (
@@ -607,22 +679,66 @@ export function PublicIntakeWorkspace({
               </div>
               <Button type="button" variant="outline" onClick={() => setEditingQuestionKey(null)}>Annuleren</Button>
             </div>
-            <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              {(editingQuestion.options ?? []).map((option) => (
+            {editingQuestion.inputKind === 'MULTI_OPTIONS' ? (
+              <>
+                <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                  {(editingQuestion.options ?? []).map((option) => (
+                    typeof option.value === 'string' ? (
+                      <label
+                        key={option.value}
+                        className="flex min-h-11 cursor-pointer items-center gap-3 rounded-control border border-border bg-surface px-4 py-2.5 text-sm font-medium text-brand-dark transition-colors hover:border-brand-primary focus-within:ring-2 focus-within:ring-focus/25"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={multiAnswer.includes(option.value)}
+                          disabled={isPending}
+                          onChange={() => setMultiAnswer((current) => current.includes(option.value as string)
+                            ? current.filter((value) => value !== option.value)
+                            : [...current, option.value as string])}
+                          className="size-4 shrink-0 accent-brand-primary focus-visible:outline-none"
+                        />
+                        <span>{option.label}</span>
+                      </label>
+                    ) : (
+                      <Button
+                        key={`${option.disposition}:unknown`}
+                        type="button"
+                        variant="outline"
+                        disabled={isPending}
+                        onClick={() => saveAnswer({ disposition: option.disposition }, editingQuestion)}
+                      >
+                        {option.label}
+                      </Button>
+                    )
+                  ))}
+                </div>
                 <Button
-                  key={`${option.disposition}:${option.value ?? ''}`}
                   type="button"
-                  variant="outline"
-                  disabled={isPending}
-                  onClick={() => saveAnswer({
-                    disposition: option.disposition,
-                    ...(option.value !== undefined ? { value: option.value } : {}),
-                  }, editingQuestion)}
+                  className="mt-4"
+                  disabled={isPending || multiAnswer.length === 0}
+                  onClick={() => saveAnswer({ disposition: 'ANSWERED', value: multiAnswer }, editingQuestion)}
                 >
-                  {option.label}
+                  Wijziging opslaan
                 </Button>
-              ))}
-            </div>
+              </>
+            ) : (
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                {(editingQuestion.options ?? []).map((option) => (
+                  <Button
+                    key={`${option.disposition}:${option.value ?? ''}`}
+                    type="button"
+                    variant="outline"
+                    disabled={isPending}
+                    onClick={() => saveAnswer({
+                      disposition: option.disposition,
+                      ...(option.value !== undefined ? { value: option.value } : {}),
+                    }, editingQuestion)}
+                  >
+                    {option.label}
+                  </Button>
+                ))}
+              </div>
+            )}
           </section>
         )}
 
@@ -670,7 +786,8 @@ export function PublicIntakeWorkspace({
               {answeredQuestions.map((answer) => (
                 <div key={answer.questionKey} className="min-w-0 rounded-control border border-transparent p-2">
                   <dt className="text-xs text-text-secondary">
-                    {getPublicIntakePrototypeQuestion(answer.questionKey)?.legend}
+                    {draft.contextQuestions?.find((item) => item.questionKey === answer.questionKey)?.textSnapshot ??
+                      getPublicIntakePrototypeQuestion(answer.questionKey)?.legend}
                   </dt>
                   <dd className="mt-1 break-words text-sm font-semibold text-brand-dark">
                     {answerLabel(answer)}
@@ -683,7 +800,10 @@ export function PublicIntakeWorkspace({
                       type="button"
                       variant="outline"
                       className="mt-2"
-                      onClick={() => setEditingQuestionKey(answer.questionKey)}
+                      onClick={() => {
+                        setEditingQuestionKey(answer.questionKey)
+                        setMultiAnswer(Array.isArray(answer.value) ? answer.value : [])
+                      }}
                     >
                       Wijzigen
                     </Button>

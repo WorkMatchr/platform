@@ -31,8 +31,9 @@ import {
   parseCreatePublicIntakeDraftInput,
   type RecordPublicIntakeAnswerInput,
 } from './public-intake-validation'
+import type { PublicIntakeQuestionDefinition } from './public-intake-questions'
+import { parsePersistedContextQuestionPlan } from './context-question-engine-types'
 import { resolveActiveKnowledgeContext } from '@/content/knowledge/knowledge-contexts'
-import { getAIContextQuestion } from '@/lib/ai-intake-classifier/ai-context-question-catalog'
 import { toPublicIntakeContextQuestionView } from './public-intake-context-question-service'
 import {
   getSharedSectorOptions,
@@ -79,6 +80,7 @@ const publicDraftSelect = {
       version: true,
       textValue: true,
       optionValue: true,
+      multiOptionValues: true,
       numberValue: true,
       booleanValue: true,
       dateValue: true,
@@ -96,6 +98,8 @@ const publicDraftSelect = {
       sequence: true,
       source: true,
       createdAt: true,
+      contextGoalCode: true,
+      planningSnapshot: true,
     },
   },
 } satisfies Prisma.PublicIntakeDraftSelect
@@ -230,14 +234,16 @@ function requireAccess(result: AccessResult): asserts result is Extract<AccessRe
 function answerValue(answer: {
   textValue: string | null
   optionValue: string | null
+  multiOptionValues: readonly string[]
   numberValue: { toNumber(): number } | null
   booleanValue: boolean | null
   dateValue: Date | null
   periodValue: string | null
-}): string | number | boolean | null {
+}): string | number | boolean | readonly string[] | null {
   return (
     answer.textValue ??
     answer.optionValue ??
+    (answer.multiOptionValues.length > 0 ? answer.multiOptionValues : null) ??
     answer.numberValue?.toNumber() ??
     answer.booleanValue ??
     answer.dateValue?.toISOString().slice(0, 10) ??
@@ -429,6 +435,7 @@ function valuesEqual(
     source: PublicIntakeAnswerSource
     textValue: string | null
     optionValue: string | null
+    multiOptionValues: readonly string[]
     numberValue: { toString(): string } | null
     booleanValue: boolean | null
     dateValue: Date | null
@@ -442,6 +449,8 @@ function valuesEqual(
     current.source === source &&
     current.textValue === next.textValue &&
     current.optionValue === next.optionValue &&
+    current.multiOptionValues.length === next.multiOptionValues.length &&
+    current.multiOptionValues.every((value, index) => value === next.multiOptionValues[index]) &&
     (current.numberValue?.toString() ?? null) ===
       (next.numberValue === null ? null : String(next.numberValue)) &&
     current.booleanValue === next.booleanValue &&
@@ -459,7 +468,6 @@ export async function recordPublicIntakeAnswer(
     answerSource?: PublicIntakeAnswerSource
   } = {},
 ): Promise<PublicIntakeDraftView> {
-  const answer = normalizePublicIntakeAnswer(rawInput)
   const at = options.at ?? new Date()
   const requestedAnswerSource = options.answerSource ?? 'USER_INPUT'
 
@@ -476,14 +484,46 @@ export async function recordPublicIntakeAnswer(
           where: {
             draftId_questionKey: {
               draftId: access.session.draftId,
-              questionKey: answer.questionKey,
+              questionKey: rawInput.questionKey,
             },
           },
-          select: { questionKey: true },
+          select: {
+            questionKey: true,
+            answerType: true,
+            textSnapshot: true,
+            planningSnapshot: true,
+          },
         })
-        if (getAIContextQuestion(answer.questionKey) && !plannedContextQuestion) {
+        if (rawInput.questionKey.startsWith('context_') && !plannedContextQuestion) {
           throw new PublicIntakeServiceError('VALIDATION_ERROR')
         }
+        const plan = parsePersistedContextQuestionPlan(plannedContextQuestion?.planningSnapshot)
+        const managedQuestion: PublicIntakeQuestionDefinition | null = plannedContextQuestion && plan
+          ? {
+              questionKey: plannedContextQuestion.questionKey,
+              version: 1,
+              purpose: 'CLARIFICATION',
+              answerType: plannedContextQuestion.answerType,
+              requiredForSubmission: false,
+              canSkip: !plan.mandatory,
+              decisionPurpose: plannedContextQuestion.textSnapshot,
+              validation: {
+                options: plan?.options.flatMap((option) => [option.code, option.label]),
+                ...(plannedContextQuestion.answerType === 'TEXT' ? { maxLength: 500 } : {}),
+              },
+              decision: {
+                enabled: false,
+                required: false,
+                optional: true,
+                dependsOn: [],
+                visibleWhen: [],
+                repeatIfUnknown: false,
+                category: 'SITUATION',
+                order: 100,
+              },
+            }
+          : null
+        const answer = normalizePublicIntakeAnswer(rawInput, managedQuestion)
         if (
           answer.questionKey === SHARED_CONTEXT_SECTOR_QUESTION_KEY &&
           answer.disposition === 'ANSWERED'
@@ -517,6 +557,7 @@ export async function recordPublicIntakeAnswer(
           source: answerSource,
           textValue: answer.textValue,
           optionValue: answer.optionValue,
+          multiOptionValues: [...answer.multiOptionValues],
           numberValue: answer.numberValue,
           booleanValue: answer.booleanValue,
           dateValue: answer.dateValue,

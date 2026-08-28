@@ -34,6 +34,7 @@ De ERD is per domein gesplitst voor leesbaarheid. Velden zijn beperkt tot primai
 erDiagram
   PublicIntakeDraft ||--o| PublicIntakeSession : secured_by
   PublicIntakeDraft ||--o{ PublicIntakeAnswer : contains
+  PublicIntakeDraft ||--o{ PublicIntakeContextQuestion : plans
   PublicIntakeDraft ||--o{ PublicIntakeAnswerRevision : histories
   PublicIntakeDraft ||--o{ PublicIntakeEvent : records
   PublicIntakeAnswer ||--o{ PublicIntakeAnswerRevision : versions
@@ -82,6 +83,14 @@ erDiagram
     PublicIntakeAnswerType answerType
     PublicIntakeAnswerSource source
   }
+  PublicIntakeContextQuestion {
+    uuid id PK
+    uuid draftId FK
+    string questionKey
+    string contextGoalCode
+    json planningSnapshot
+    int sequence
+  }
   PublicIntakeAnswerRevision {
     uuid id PK
     uuid draftId FK
@@ -97,7 +106,7 @@ erDiagram
   }
 ```
 
-Dit domein heeft bewust geen relatie naar User, Organization, membership, Intake of Assignment. Het volledige toegangstoken wordt nooit opgeslagen; alleen de hash staat in `PublicIntakeSession`. Een bewuste reset verwijdert geen records: de draft krijgt terminaal `ABANDONED_BY_USER`, de sessie krijgt `revokedAt` en het append-only event bewaart uitsluitend fasecontext en reden. De losstaande classificatiecache bevat uitsluitend een niet-omkeerbare fingerprint en gevalideerde structured output of een veilige fallback; de vrije hulpvraag wordt niet gedupliceerd. `PublicIntakeAbuseBucket` staat eveneens los van inhoudelijke records en bewaart alleen kortlevende, per environment domeingescheiden HMAC-buckets voor IP, sessie en globale begrenzing.
+Dit domein heeft bewust geen relatie naar User, Organization, membership, Intake of Assignment. Het volledige toegangstoken wordt nooit opgeslagen; alleen de hash staat in `PublicIntakeSession`. Een bewuste reset verwijdert geen records: de draft krijgt terminaal `ABANDONED_BY_USER`, de sessie krijgt `revokedAt` en het append-only event bewaart uitsluitend fasecontext en reden. De losstaande classificatiecache bevat uitsluitend een niet-omkeerbare fingerprint en gevalideerde structured output of een veilige fallback; de vrije hulpvraag wordt niet gedupliceerd. `PublicIntakeContextQuestion` bevriest per geselecteerde vraag het Context Goal, score-uitleg en Knowledge-provenance; de vraag blijft immutable en bevat geen volledige hulpvraag. `PublicIntakeAbuseBucket` staat eveneens los van inhoudelijke records en bewaart alleen kortlevende, per environment domeingescheiden HMAC-buckets voor IP, sessie en globale begrenzing.
 
 ## Adviesdossiers — Module 7C
 

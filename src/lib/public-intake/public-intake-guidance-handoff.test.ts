@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { PublicIntakeAnswerView } from './public-intake-types'
+import type { PublicIntakeAnswerView, PublicIntakeContextQuestionView } from './public-intake-types'
 import { buildPublicIntakeGuidanceHandoff } from './public-intake-guidance-handoff'
 import { PUBLIC_HELP_REQUEST_INTAKE_V2_FLOW_VERSION } from './public-intake-config'
 
@@ -29,6 +29,7 @@ function draft(
     originalInput: string | null
     selectedRequestKey: string | null
     flowVersion: string
+    contextQuestions: readonly PublicIntakeContextQuestionView[]
   }> = {},
 ) {
   return {
@@ -49,10 +50,34 @@ function draft(
     lastInteractionAt: startedAt,
     expiresAt: new Date('2026-10-25T12:00:00.000Z'),
     answers: [...answers],
+    contextQuestions: overrides.contextQuestions ?? [],
   }
 }
 
 describe('Public Intake Guidance-handoff', () => {
+  it('gebruikt het stabiele Context Goal als machineleesbare handoff en stopt zonder legacy-vragen', () => {
+    const contextQuestion: PublicIntakeContextQuestionView = {
+      questionKey: 'context_dynamic_noise_pattern',
+      catalogVersion: 'knowledge-grounded-context-engine/1.0.0',
+      textSnapshot: 'Tijdens welke werkzaamheden speelt het geluid vooral?',
+      answerType: 'OPTION', category: 'WORK', sequence: 1,
+      source: 'AI_CONTEXT_PLANNER', createdAt: startedAt,
+      contextGoalCode: 'NOISE_WORK_PATTERN',
+    }
+    const handoff = buildPublicIntakeGuidanceHandoff(
+      'public-draft-fixture',
+      draft([answer(contextQuestion.questionKey, 'OPTION', 'MACHINE_USE')], {
+        entryPoint: 'FREE_TEXT', originalInput: 'In de werkplaats is veel geluid.',
+        selectedRequestKey: null, flowVersion: PUBLIC_HELP_REQUEST_INTAKE_V2_FLOW_VERSION,
+        contextQuestions: [contextQuestion],
+      }),
+    )
+    expect(handoff.contract.facts).toContainEqual(expect.objectContaining({
+      key: 'PUBLIC_INTAKE_CONTEXT_GOAL_NOISE_WORK_PATTERN', value: 'MACHINE_USE', status: 'CONFIRMED',
+    }))
+    expect(handoff.clarification).toMatchObject({ isComplete: true, nextQuestion: null })
+  })
+
   it('rondt Hulpvraag Intake v2 na maximaal vijf antwoorden veilig af', () => {
     const handoff = buildPublicIntakeGuidanceHandoff(
       'public-draft-fixture',

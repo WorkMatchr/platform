@@ -359,6 +359,7 @@ enum PublicIntakeQuestionPurpose {
 enum PublicIntakeAnswerType {
   TEXT
   OPTION
+  MULTI_OPTION
   NUMBER
   BOOLEAN
   DATE
@@ -2662,6 +2663,8 @@ model PublicIntakeContextQuestion {
   category       String                 @db.VarChar(50)
   sequence       Int
   source         String                 @default("AI_CONTEXT_PLANNER") @db.VarChar(50)
+  contextGoalCode String?                @db.VarChar(120)
+  planningSnapshot Json?
   createdAt      DateTime               @default(now()) @db.Timestamptz(3)
   draft          PublicIntakeDraft      @relation(fields: [draftId], references: [id], onDelete: Restrict)
 
@@ -2697,6 +2700,7 @@ model PublicIntakeAnswer {
   version         Int                           @default(1)
   textValue       String?                       @db.Text
   optionValue     String?                       @db.VarChar(100)
+  multiOptionValues String[]                    @default([]) @db.VarChar(100)
   numberValue     Decimal?                      @db.Decimal(12, 2)
   booleanValue    Boolean?
   dateValue       DateTime?                     @db.Date
@@ -2724,6 +2728,7 @@ model PublicIntakeAnswerRevision {
   source          PublicIntakeAnswerSource      @default(USER_INPUT)
   textValue       String?                       @db.Text
   optionValue     String?                       @db.VarChar(100)
+  multiOptionValues String[]                    @default([]) @db.VarChar(100)
   numberValue     Decimal?                      @db.Decimal(12, 2)
   booleanValue    Boolean?
   dateValue       DateTime?                     @db.Date

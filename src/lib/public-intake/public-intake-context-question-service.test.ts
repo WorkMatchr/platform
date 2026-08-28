@@ -1,27 +1,30 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
-  findMany: vi.fn(),
-  createMany: vi.fn(),
-  findSectorMappings: vi.fn(),
-  transaction: vi.fn(),
+  findQuestions: vi.fn(), createQuestions: vi.fn(), findSectorMappings: vi.fn(),
+  findClaims: vi.fn(), findRules: vi.fn(), transaction: vi.fn(),
 }))
 
-vi.mock('@/lib/prisma', () => ({
-  getPrisma: () => ({
-    $transaction: mocks.transaction,
-  }),
-}))
+vi.mock('@/lib/prisma', () => ({ getPrisma: () => ({ $transaction: mocks.transaction }) }))
 
 import { ensurePublicIntakeAIContextQuestions, toPublicIntakeContextQuestionView } from './public-intake-context-question-service'
-import { AI_CONTEXT_QUESTION_CATALOG_VERSION } from '@/lib/ai-intake-classifier/ai-context-question-catalog'
+import { KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION } from './context-question-engine-types'
 
 const classification = {
-  summary: 'Rugklachten tijdens het werk.',
-  primarySubject: 'OCCUPATIONAL_HEALTH',
-  secondarySubjects: [],
-  confidence: 'HIGH',
-  alternatives: [],
+  summary: 'Rugklachten tijdens het werk.', primarySubject: 'OCCUPATIONAL_HEALTH',
+  secondarySubjects: [], confidence: 'HIGH', alternatives: [],
+} as const
+
+const storedQuestion = {
+  questionKey: 'context_sector', catalogVersion: KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION,
+  textSnapshot: 'In welke sector is uw organisatie actief?', answerType: 'OPTION' as const,
+  category: 'ORGANIZATION', sequence: 1, source: 'AI_CONTEXT_PLANNER', createdAt: new Date(),
+  contextGoalCode: 'SECTOR', planningSnapshot: {
+    engineVersion: KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION, mode: 'DIRECT_REQUEST',
+    contextGoalCode: 'SECTOR', reasonCode: 'MANDATORY_CONTEXT',
+    score: { relevance: 1, informationGain: 0.9, matchingValue: 1, evidenceConfidence: 1, userBurden: 0.2, total: 101 },
+    relevantConceptCodes: [], supportingKnowledgeIds: ['legacy:SECTOR'], skippedByFactCodes: [], options: [],
+  },
 } as const
 
 describe('public intake context-question persistence', () => {
@@ -31,138 +34,66 @@ describe('public intake context-question persistence', () => {
       { sector: { slug: 'industrie' }, term: { label: 'Industrie', sortOrder: 1 } },
       { sector: { slug: 'logistiek' }, term: { label: 'Logistiek', sortOrder: 2 } },
     ])
+    mocks.findClaims.mockResolvedValue([])
+    mocks.findRules.mockResolvedValue([])
     mocks.transaction.mockImplementation(async (callback: (transaction: unknown) => unknown) => callback({
-      publicIntakeContextQuestion: {
-        findMany: mocks.findMany,
-        createMany: mocks.createMany,
-      },
+      publicIntakeContextQuestion: { findMany: mocks.findQuestions, createMany: mocks.createQuestions },
       providerSectorTaxonomyMap: { findMany: mocks.findSectorMappings },
+      knowledgeClaim: { findMany: mocks.findClaims }, knowledgeRule: { findMany: mocks.findRules },
     }))
   })
 
-  it('maps a valid Prisma-shaped planner record to the stable view', () => {
-    expect(toPublicIntakeContextQuestionView({
-      questionKey: 'context_work_activity', catalogVersion: 'ai-context-questions/1.0.0',
-      textSnapshot: 'Om wat voor werkzaamheden gaat het vooral?', answerType: 'OPTION',
-      category: 'WORK', sequence: 1, source: 'AI_CONTEXT_PLANNER', createdAt: new Date(),
-    }).source).toBe('AI_CONTEXT_PLANNER')
+  it('maps planning provenance and managed sector options to the stable view', () => {
+    expect(toPublicIntakeContextQuestionView(storedQuestion, [{ code: 'industrie', label: 'Industrie' }])).toMatchObject({
+      source: 'AI_CONTEXT_PLANNER', contextGoalCode: 'SECTOR',
+      options: [{ label: 'Industrie', value: 'industrie' }],
+      planning: { engineVersion: KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION },
+    })
   })
 
-  it('stores immutable catalog snapshots once with version, order and planner source', async () => {
-    const stored = [{
-      questionKey: 'context_work_activity', catalogVersion: AI_CONTEXT_QUESTION_CATALOG_VERSION,
-      textSnapshot: 'Om wat voor werkzaamheden gaat het vooral?', answerType: 'OPTION',
-      category: 'WORK', sequence: 1, source: 'AI_CONTEXT_PLANNER', createdAt: new Date(),
-    }]
-    mocks.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce(stored)
-
+  it('persists only the highest-ranked next question and replans after an answer', async () => {
+    mocks.findQuestions.mockResolvedValueOnce([]).mockResolvedValueOnce([storedQuestion])
     await expect(ensurePublicIntakeAIContextQuestions({
       draftId: '00000000-0000-0000-0000-000000000001', originalInput: 'Rugklachten tijdens het werk.',
-      classification, answeredQuestionKeys: [], fallbackQuestionWasAsked: false,
-    })).resolves.toEqual(stored)
-
-    expect(mocks.createMany).toHaveBeenCalledWith(expect.objectContaining({
-      skipDuplicates: true,
-      data: expect.arrayContaining([expect.objectContaining({
-        catalogVersion: AI_CONTEXT_QUESTION_CATALOG_VERSION,
-        source: 'AI_CONTEXT_PLANNER', sequence: 1,
-      })]),
+      classification, answers: [], fallbackQuestionWasAsked: false, mode: 'DIRECT_REQUEST',
+    })).resolves.toMatchObject([{ questionKey: 'context_sector' }])
+    expect(mocks.createQuestions).toHaveBeenCalledWith(expect.objectContaining({
+      skipDuplicates: true, data: [expect.objectContaining({
+        contextGoalCode: 'SECTOR', catalogVersion: KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION, sequence: 1,
+      })],
     }))
   })
 
-  it('reuses existing snapshots without rewriting them', async () => {
-    const existing = Array.from({ length: 5 }, (_, index) => ({
-      questionKey: 'context_work_activity', catalogVersion: 'ai-context-questions/old',
-      textSnapshot: 'Historische vraagtekst', answerType: 'OPTION', category: 'WORK',
-      sequence: index + 1, source: 'AI_CONTEXT_PLANNER', createdAt: new Date(),
-    }))
-    mocks.findMany.mockResolvedValueOnce(existing).mockResolvedValueOnce(existing)
-
+  it('does not append a second question while the current planned question is unanswered', async () => {
+    mocks.findQuestions.mockResolvedValue([storedQuestion])
     const result = await ensurePublicIntakeAIContextQuestions({
       draftId: '00000000-0000-0000-0000-000000000001', originalInput: 'Rugklachten tijdens het werk.',
-      classification, answeredQuestionKeys: [], fallbackQuestionWasAsked: false,
+      classification, answers: [], fallbackQuestionWasAsked: false, mode: 'DISCOVERY',
     })
-
-    expect(result[0]?.textSnapshot).toBe('Historische vraagtekst')
-    expect(mocks.createMany).not.toHaveBeenCalled()
+    expect(result).toHaveLength(1)
+    expect(mocks.createQuestions).not.toHaveBeenCalled()
   })
 
-  it('stopt fail-safe wanneer de totale contextvraagbegroting van vijf is bereikt', async () => {
-    const existing = Array.from({ length: 4 }, (_, index) => ({
-      questionKey: `context_${index}`, catalogVersion: 'ai-context-questions/1.1.0',
-      textSnapshot: 'Historische vraagtekst', answerType: 'OPTION', category: 'SCOPE',
-      sequence: index + 1, source: 'AI_CONTEXT_PLANNER', createdAt: new Date(),
-    }))
-    mocks.findMany.mockResolvedValue(existing)
-
+  it('stops fail-safe when the total five-answer budget is exhausted', async () => {
+    mocks.findQuestions.mockResolvedValue(Array.from({ length: 4 }, (_, index) => ({
+      ...storedQuestion, questionKey: `context_${index}`, sequence: index + 1, planningSnapshot: null,
+    })))
     await expect(ensurePublicIntakeAIContextQuestions({
       draftId: '00000000-0000-0000-0000-000000000001', originalInput: 'Wij hebben een RI&E nodig.',
-      classification: { ...classification, primarySubject: 'RIE' },
-      answeredQuestionKeys: ['guidance_topic'], fallbackQuestionWasAsked: true,
-    })).resolves.toEqual(existing)
-
-    expect(mocks.createMany).not.toHaveBeenCalled()
-  })
-
-  it('plant na een fallbackkeuze RI&E de beheerde vragen voor een bestaand risico', async () => {
-    const stored = [
-      {
-        questionKey: 'context_sector', catalogVersion: AI_CONTEXT_QUESTION_CATALOG_VERSION,
-        textSnapshot: 'In welke sector is uw organisatie actief?', answerType: 'OPTION',
-        category: 'ORGANIZATION', sequence: 1, source: 'AI_CONTEXT_PLANNER', createdAt: new Date(),
-      },
-      {
-        questionKey: 'context_existing_investigation', catalogVersion: AI_CONTEXT_QUESTION_CATALOG_VERSION,
-        textSnapshot: 'Is deze situatie al onderzocht of opgenomen in een RI&E?', answerType: 'OPTION',
-        category: 'EXISTING_CONTROL', sequence: 2, source: 'AI_CONTEXT_PLANNER', createdAt: new Date(),
-      },
-      {
-        questionKey: 'context_affected_scope', catalogVersion: AI_CONTEXT_QUESTION_CATALOG_VERSION,
-        textSnapshot: 'Bij hoeveel medewerkers speelt dit?', answerType: 'OPTION',
-        category: 'SCOPE', sequence: 3, source: 'AI_CONTEXT_PLANNER', createdAt: new Date(),
-      },
-    ]
-    mocks.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce(stored)
-
-    await expect(ensurePublicIntakeAIContextQuestions({
-      draftId: '00000000-0000-0000-0000-000000000002',
-      originalInput: 'Wij hebben veel lawaai in onze werkplaats en weten niet of dit goed in onze RI&E staat.',
-      classification: {
-        summary: 'Handmatig gekozen RI&E-richting.',
-        primarySubject: 'RIE',
-        secondarySubjects: [],
-        confidence: 'MEDIUM',
-        alternatives: [],
-      },
-      answeredQuestionKeys: ['guidance_topic'],
-      fallbackQuestionWasAsked: true,
-    })).resolves.toEqual([
-      { ...stored[0], options: [
-        { label: 'Industrie', value: 'industrie' },
-        { label: 'Logistiek', value: 'logistiek' },
-      ] },
-      stored[1],
-      stored[2],
-    ])
-
-    expect(mocks.createMany).toHaveBeenCalledWith(expect.objectContaining({
-      data: stored.map((question) => expect.objectContaining({
-        questionKey: question.questionKey,
-      })),
-    }))
+      classification: { ...classification, primarySubject: 'RIE' }, answers: [],
+      fallbackQuestionWasAsked: true, mode: 'DIRECT_REQUEST',
+    })).resolves.toHaveLength(4)
+    expect(mocks.createQuestions).not.toHaveBeenCalled()
   })
 
   it('fails closed for an unexpected persisted source value', async () => {
-    const existing = Array.from({ length: 5 }, (_, index) => ({
-      questionKey: `context_${index}`, catalogVersion: 'ai-context-questions/1.0.0',
-      textSnapshot: 'Historische vraagtekst', answerType: 'OPTION', category: 'WORK',
-      sequence: index + 1, source: index === 0 ? 'UNEXPECTED_SOURCE' : 'AI_CONTEXT_PLANNER', createdAt: new Date(),
-    }))
-    mocks.findMany.mockResolvedValue(existing)
-
+    mocks.findQuestions.mockResolvedValue(Array.from({ length: 5 }, (_, index) => ({
+      ...storedQuestion, questionKey: `context_${index}`, sequence: index + 1,
+      source: index === 0 ? 'UNEXPECTED_SOURCE' : 'AI_CONTEXT_PLANNER',
+    })))
     await expect(ensurePublicIntakeAIContextQuestions({
       draftId: '00000000-0000-0000-0000-000000000001', originalInput: 'Rugklachten tijdens het werk.',
-      classification, answeredQuestionKeys: [], fallbackQuestionWasAsked: false,
+      classification, answers: [], fallbackQuestionWasAsked: false, mode: 'DIRECT_REQUEST',
     })).rejects.toThrow('PUBLIC_INTAKE_CONTEXT_QUESTION_SOURCE_INVARIANT')
   })
 })
