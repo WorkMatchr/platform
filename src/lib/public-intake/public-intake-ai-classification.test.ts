@@ -153,7 +153,46 @@ describe('Public Intake AI-classificatiehandoff', () => {
     expect(mocks.classify).not.toHaveBeenCalled()
   })
 
-  it('activeert geen RI&E-profiel voor een andere handmatige fallbackkeuze', async () => {
+  it('activeert na een veilige fallbackkeuze gezondheid dezelfde gedeelde contextplanner', async () => {
+    const fallbackDraft = {
+      ...draft,
+      id: 'public-intake-health-fallback-fixture',
+      phase: 'CLARIFYING',
+      selectedRequestKey: null,
+      flowVersion: 'PUBLIC-HELP-REQUEST-2',
+      currentStep: 'guidance_topic',
+      version: 2,
+      startedAt: new Date('2026-08-28T12:00:00.000Z'),
+      lastInteractionAt: new Date('2026-08-28T12:01:00.000Z'),
+      expiresAt: new Date('2026-11-26T12:00:00.000Z'),
+      contextQuestions: [],
+      answers: [{
+        questionKey: 'guidance_topic',
+        questionVersion: 1,
+        answerType: 'OPTION',
+        disposition: 'ANSWERED',
+        source: 'FALLBACK_SELECTION',
+        version: 1,
+        value: 'OCCUPATIONAL_HEALTH',
+      }],
+    } as PublicIntakeDraftView
+
+    await enrichPublicIntakeDraftWithAIClassification(fallbackDraft)
+
+    expect(mocks.ensureContextQuestions).toHaveBeenCalledWith(
+      expect.objectContaining({
+        draftId: 'public-intake-health-fallback-fixture',
+        classification: expect.objectContaining({
+          primarySubject: 'OCCUPATIONAL_HEALTH',
+          confidence: 'MEDIUM',
+        }),
+        fallbackQuestionWasAsked: true,
+      }),
+    )
+    expect(mocks.classify).not.toHaveBeenCalled()
+  })
+
+  it('activeert geen contextprofiel voor de niet-ondersteunde fallbackkeuze anders', async () => {
     const result = await enrichPublicIntakeDraftWithAIClassification({
       ...draft,
       id: 'public-intake-other-fixture',

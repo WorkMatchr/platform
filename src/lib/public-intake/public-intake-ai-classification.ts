@@ -60,15 +60,27 @@ function selectedTopic(draft: PublicIntakeDraftView) {
   )
 }
 
-function selectedRIEContextClassification(
+const fallbackTopicSubjects: Readonly<Record<string, AIIntakeSubjectCode>> = Object.freeze({
+  HAZARDOUS_SUBSTANCES: 'HAZARDOUS_SUBSTANCES',
+  INCIDENT: 'INCIDENT',
+  RIE: 'RIE',
+  HEALTH_WORKLOAD: 'OCCUPATIONAL_HEALTH',
+  OCCUPATIONAL_HEALTH: 'OCCUPATIONAL_HEALTH',
+  EMERGENCY_RESPONSE: 'EMERGENCY_RESPONSE',
+})
+
+function selectedTopicContextClassification(
   draft: PublicIntakeDraftView,
 ): AIClassifierOutput | null {
   const topic = selectedTopic(draft)
-  if (topic?.value !== 'RIE' || !draft.originalInput) return null
+  const subject = typeof topic?.value === 'string'
+    ? fallbackTopicSubjects[topic.value]
+    : null
+  if (!subject || !draft.originalInput) return null
 
   return Object.freeze({
     summary: draft.originalInput,
-    primarySubject: 'RIE',
+    primarySubject: subject,
     secondarySubjects: Object.freeze([]),
     confidence: 'MEDIUM',
     alternatives: Object.freeze([]),
@@ -99,7 +111,7 @@ export async function enrichPublicIntakeDraftWithAIClassification(
   const topic = selectedTopic(draft)
   if (topic) {
     if (topic.source !== 'AI_CONFIRMED') {
-      const selectedClassification = selectedRIEContextClassification(draft)
+      const selectedClassification = selectedTopicContextClassification(draft)
       if (!selectedClassification) return draft
 
       return withRefreshedGuidance(
