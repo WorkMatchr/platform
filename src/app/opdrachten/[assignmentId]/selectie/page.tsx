@@ -23,7 +23,7 @@ export default async function AssignmentSelectionPage({ params }: { params: Prom
     <Section spacing="compact">
       <Heading as="h1" size="h2">Dienstverleners selecteren</Heading>
       <p className="mt-3 text-text-secondary">
-        Start de uitlegbare selectie bewust voor {result.assignment.title}. WorkMatchr selecteert maximaal drie geschikte dienstverleners.
+        Start de uitlegbare selectie bewust voor {result.assignment.title}. WorkMatchr selecteert maximaal {result.assignment.maxSelections} geschikte dienstverleners.
       </p>
       <Card className="mt-8">
         {latestRun ? (

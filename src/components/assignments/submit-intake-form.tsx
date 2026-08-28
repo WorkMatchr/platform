@@ -6,6 +6,7 @@ import { StatusMessage } from '@/components/auth/auth-shell'
 import { Button } from '@/components/ui/button'
 import type { IntakeAssignmentReadiness } from '@/lib/assignments/intake-assignment-readiness'
 import Link from 'next/link'
+import { AssignmentQuoteSlotsField } from './assignment-quote-slots-field'
 
 export function PublishIntakeForm({
   action,
@@ -45,6 +46,9 @@ export function PublishIntakeForm({
           {validationMessages.map((message) => <li key={message}>{message}</li>)}
         </ul>
       )}
+      <div className="mt-5">
+        <AssignmentQuoteSlotsField defaultValue={Number(state.values?.maxSelections ?? 3)} />
+      </div>
       <Button type="submit" loading={pending} disabled={!readiness.isReady} className="mt-5 w-full sm:w-auto">
         Opdracht publiceren
       </Button>

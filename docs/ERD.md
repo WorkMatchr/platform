@@ -462,6 +462,7 @@ erDiagram
     string locationCity
     string locationRegion
     int locationCount
+    int maxSelections "default 3, check 3..5"
     string knowledgeContextId
     int knowledgeContextVersion
     string knowledgeSourceRoute

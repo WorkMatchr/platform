@@ -5,11 +5,11 @@ import { requireClientMarketplaceManager, requireMarketplacePlatformAdmin } from
 import {
   MARKETPLACE_CREDIT_COST,
   MARKETPLACE_ENGINE_VERSION,
-  MARKETPLACE_MAX_SELECTIONS,
   MARKETPLACE_MODEL_VERSION,
   MARKETPLACE_RULE_VERSION,
   MARKETPLACE_TAXONOMY_CONTRACT,
 } from './marketplace-config'
+import { MAX_SELECTIONS } from './assignment-quote-slots'
 import { MarketplaceServiceError } from './marketplace-errors'
 import {
   activeOrganizationRecipients,
@@ -104,6 +104,7 @@ export async function runMarketplaceMatching(input: {
         locationProvince: true,
         locationRegion: true,
         locationCount: true,
+        maxSelections: true,
         primarySpecialism: { select: { name: true } },
         sector: { select: { name: true } },
       },
@@ -130,6 +131,7 @@ export async function runMarketplaceMatching(input: {
       regionCode: normalizeRegion(assignment.location?.province),
       allowsRemoteWork: assignment.allowsRemoteWork,
       responseDeadline: assignment.responseDeadline.toISOString(),
+      maxSelections: assignment.maxSelections,
     }
     const inputChecksum = hashProviderJson(asCanonical(assignmentSnapshot)).sha256
     const projections = await transaction.trustedProviderProjection.findMany({
@@ -186,7 +188,7 @@ export async function runMarketplaceMatching(input: {
       })
     }
     const ranked = rankMatchingCandidates(evaluated)
-    const selectedIds = new Set(ranked.slice(0, MARKETPLACE_MAX_SELECTIONS).map((candidate) => candidate.providerProfileId))
+    const selectedIds = new Set(ranked.slice(0, assignment.maxSelections).map((candidate) => candidate.providerProfileId))
     const confidenceReasons = []
     if (evaluated.length < 3) confidenceReasons.push('BEPERKT_KANDIDAATVOLUME')
     if (evaluated.length === 0) confidenceReasons.push('GEEN_GELDIGE_PROVIDERPROJECTIES')
@@ -359,7 +361,7 @@ export async function applyMarketplaceMatchIntervention(input: {
   idempotencyKey: string
   now?: Date
 }) {
-  if (input.reason.trim().length < 10 || input.candidateIds.length < 1 || input.candidateIds.length > MARKETPLACE_MAX_SELECTIONS) {
+  if (input.reason.trim().length < 10 || input.candidateIds.length < 1 || input.candidateIds.length > MAX_SELECTIONS) {
     throw new MarketplaceServiceError('VALIDATION_ERROR')
   }
   if (new Set(input.candidateIds).size !== input.candidateIds.length) throw new MarketplaceServiceError('VALIDATION_ERROR')
@@ -372,7 +374,7 @@ export async function applyMarketplaceMatchIntervention(input: {
       where: { id: input.matchRunId, status: 'COMPLETED' },
       include: {
         assignment: { select: {
-          id: true, title: true, status: true, responseDeadline: true, employeeCount: true, desiredStartDate: true,
+          id: true, title: true, status: true, responseDeadline: true, employeeCount: true, desiredStartDate: true, maxSelections: true,
           locationCity: true, locationProvince: true, locationRegion: true, locationCount: true, allowsRemoteWork: true,
           primarySpecialism: { select: { name: true } }, sector: { select: { name: true } },
         } },
@@ -384,6 +386,7 @@ export async function applyMarketplaceMatchIntervention(input: {
       },
     })
     if (!run || run.candidates.length !== input.candidateIds.length) throw new MarketplaceServiceError('NOT_FOUND')
+    if (input.candidateIds.length > run.assignment.maxSelections) throw new MarketplaceServiceError('VALIDATION_ERROR')
     if (!run.assignment.responseDeadline || run.assignment.responseDeadline <= now || !['MATCHING', 'AWAITING_RESPONSES'].includes(run.assignment.status)) {
       throw new MarketplaceServiceError('INVALID_STATE')
     }

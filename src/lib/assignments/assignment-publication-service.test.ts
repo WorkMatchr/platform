@@ -83,6 +83,7 @@ function assignment(
     locationDescription: null,
     locationCount: null,
     allowsRemoteWork: false,
+    maxSelections: 3,
     knowledgeContextId: 'OCCUPATIONAL_PHYSICIAN',
     knowledgeContextVersion: 1,
     knowledgeSourceRoute: '/kenniscentrum/wanneer-bedrijfsarts-inschakelen',
@@ -161,6 +162,20 @@ beforeEach(() => {
 })
 
 describe('opdrachtpublicatie', () => {
+  it.each([4, 5])('activeert %s offerteplaatsen niet zonder betaalbewijs', async (maxSelections) => {
+    mocks.requireManager.mockResolvedValue({ ...assignment(), maxSelections })
+
+    await expect(
+      publishAssignment(userId, organizationId, publicationInput()),
+    ).rejects.toMatchObject({
+      code: 'VALIDATION_ERROR',
+      fieldErrors: { maxSelections: ['Betaling voor extra offerteplaatsen is nog niet beschikbaar.'] },
+    })
+
+    expect(mocks.assignmentUpdateMany).not.toHaveBeenCalled()
+    expect(mocks.revisionCreate).not.toHaveBeenCalled()
+  })
+
   it('maakt een concept bij expliciete publicatie intern gereed en schrijft precies één snapshot', async () => {
     mocks.requireManager.mockResolvedValue(assignment('DRAFT'))
 

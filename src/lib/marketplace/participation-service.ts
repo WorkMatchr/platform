@@ -1,9 +1,10 @@
 import { getPrisma } from '@/lib/prisma'
 import { requireProviderMarketplaceAccess } from './marketplace-authorization'
 import { purchaseAssignmentInTransaction, releaseCreditReservationInTransaction } from './credit-service'
-import { ASSIGNMENT_MAX_PURCHASERS, ASSIGNMENT_PURCHASE_PRICE_CREDITS } from './assignment-purchase-preview'
+import { ASSIGNMENT_PURCHASE_PRICE_CREDITS } from './assignment-purchase-preview'
 import { MarketplaceServiceError } from './marketplace-errors'
 import { activeOrganizationRecipients, createMarketplaceNotification, writeMarketplaceAudit } from './marketplace-events'
+import { hasAvailableAssignmentSelection } from './assignment-quote-slots'
 
 export async function acceptProviderInvitation(input: {
   actorUserId: string
@@ -31,7 +32,7 @@ export async function acceptProviderInvitation(input: {
     await transaction.$queryRaw`SELECT "id" FROM "Assignment" WHERE "id" = ${invitationIdentity.assignmentId}::uuid FOR UPDATE`
     const invitation = await transaction.providerInvitation.findFirst({
       where: { id: input.invitationId, providerOrganizationId: input.providerOrganizationId, providerProfileId: access.providerProfile.id },
-      include: { assignment: { select: { clientOrganizationId: true, status: true } }, participation: { include: { creditReservation: true } } },
+      include: { assignment: { select: { clientOrganizationId: true, status: true, maxSelections: true } }, participation: { include: { creditReservation: true } } },
     })
     if (!invitation) throw new MarketplaceServiceError('NOT_FOUND')
     if (invitation.participation) return invitation.participation
@@ -42,7 +43,7 @@ export async function acceptProviderInvitation(input: {
     }
     if (!['AWAITING_RESPONSES', 'MATCHING', 'IN_SELECTION'].includes(invitation.assignment.status)) throw new MarketplaceServiceError('INVALID_STATE')
     const purchaserCount = await transaction.providerParticipation.count({ where: { assignmentId: invitation.assignmentId, status: 'ACTIVE' } })
-    if (purchaserCount >= ASSIGNMENT_MAX_PURCHASERS) throw new MarketplaceServiceError('FULL')
+    if (!hasAvailableAssignmentSelection(purchaserCount, invitation.assignment.maxSelections)) throw new MarketplaceServiceError('FULL')
     const participation = await transaction.providerParticipation.create({
       data: {
         assignmentId: invitation.assignmentId,

@@ -267,6 +267,8 @@ Migratie `20260801102000_add_assignment_location_items` maakt de geordende tabel
 
 Actieve statussen zijn `SELECTED`, `INVITED`, `VIEWED`, `RESPONDED` en `AWARDED`. Een latere service vergrendelt de Assignment-rij, telt actieve selecties en schrijft alleen binnen dezelfde database-transactie wanneer het maximum niet wordt overschreden.
 
+De actuele marktplaats gebruikt vanaf Assignment Extra Quote Slots v1 een effectieve limiet per `Assignment`. `maxSelections` is verplicht, default `3` en wordt door een checkconstraint begrensd tot `3..5`. Bestaande opdrachten blijven daardoor op drie. Matching, interventies en deelname tellen tegen dezelfde opdrachtgebonden limiet; Fase 1 publiceert fail-closed uitsluitend de gratis limiet van drie.
+
 ### Primaire vestiging
 
 De organisatieservice bewaakt transactioneel dat bij onboarding en profielwijziging precies één niet-gearchiveerde locatie `isPrimary = true` heeft. Een aanvullende databasebrede partiële unieke index blijft als hardeningpunt geregistreerd.

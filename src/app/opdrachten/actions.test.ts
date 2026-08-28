@@ -96,6 +96,7 @@ describe('opdrachtpublicatie-Server Actions', () => {
     data.set('assignmentId', assignmentId)
     data.set('expectedAssignmentVersion', '3')
     data.set('organizationId', '00000000-0000-4000-8000-000000000099')
+    data.set('maxSelections', '3')
     if (confirmed) data.set('confirmed', 'on')
     return data
   }
@@ -114,6 +115,15 @@ describe('opdrachtpublicatie-Server Actions', () => {
   it('publiceert niet zonder expliciete bevestiging', async () => {
     const result = await publishAssignmentAction({}, publicationFormData(false))
     expect(result.errors?.confirmed).toBeDefined()
+    expect(mocks.publish).not.toHaveBeenCalled()
+  })
+
+  it.each(['4', '5'])('blokkeert %s offerteplaatsen vóór de publicatieservice', async (maxSelections) => {
+    const data = publicationFormData()
+    data.set('maxSelections', maxSelections)
+    const result = await publishAssignmentAction({}, data)
+    expect(result.message).toBe('Betaling voor extra offerteplaatsen wordt binnenkort beschikbaar.')
+    expect(result.values?.maxSelections).toBe(maxSelections)
     expect(mocks.publish).not.toHaveBeenCalled()
   })
 
@@ -211,6 +221,14 @@ describe('opdrachtpublicatie vanuit de intake', () => {
       expectedIntakeVersion: 7,
     })
     expect(mocks.redirect).toHaveBeenCalledWith(`/opdrachten/${assignmentId}?status=gepubliceerd`)
+  })
+
+  it.each(['4', '5'])('blokkeert %s offerteplaatsen vóór conversie of publicatie', async (maxSelections) => {
+    const data = formData()
+    data.set('maxSelections', maxSelections)
+    const result = await publishIntakeAction({}, data)
+    expect(result.message).toBe('Betaling voor extra offerteplaatsen wordt binnenkort beschikbaar.')
+    expect(mocks.publishIntake).not.toHaveBeenCalled()
   })
 
   it.each(['niet ingelogd', 'BLOCKED', 'ARCHIVED'])('stopt wanneer de accountcontext %s is', async () => {

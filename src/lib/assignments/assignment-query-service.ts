@@ -30,6 +30,7 @@ export type AssignmentDetailView = AssignmentListItem & {
   locationDescription: string | null
   locationItems: string[]
   allowsRemoteWork: boolean
+  maxSelections: number
   publishedAt: string | null
   publishedByName: string | null
   publishedVersion: number | null
@@ -170,6 +171,7 @@ export async function getAssignmentDetail(
         locationCount: true,
         locationItems: { select: { placeOrRegion: true }, orderBy: { position: 'asc' } },
         allowsRemoteWork: true,
+        maxSelections: true,
         publishedAt: true,
         publishedVersion: true,
         createdAt: true,
@@ -205,6 +207,7 @@ export async function getAssignmentDetail(
       locationDescription: assignment.locationDescription,
       locationItems: (assignment.locationItems ?? []).map((item) => item.placeOrRegion),
       allowsRemoteWork: assignment.allowsRemoteWork,
+      maxSelections: assignment.maxSelections,
       publishedAt: assignment.publishedAt?.toISOString() ?? null,
       publishedByName: assignment.publishedByUser?.displayName ?? null,
       publishedVersion: assignment.publishedVersion,
