@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { ContextGoal, ExtractedFact, KnowledgeConceptCandidate, KnowledgeEvidence } from './context-question-engine-types'
 import { planNextContextQuestion } from './context-question-engine'
+import { compatibilityContextGoals } from './context-goal-catalog'
 
 const concept = (code: string): KnowledgeConceptCandidate => ({
   code, confidence: 1, source: 'KNOWLEDGE_TOPIC', supportingKnowledgeIds: ['claim-1'],
@@ -93,5 +94,30 @@ describe('knowledge-grounded context question ranking', () => {
     const discovery = plan({ goals, mode: 'DISCOVERY' })
     expect(direct.candidates.map((item) => item.goal.code).sort())
       .toEqual(discovery.candidates.map((item) => item.goal.code).sort())
+  })
+
+  it('vraagt bij een nieuwe RI&E niet naar de omvang van een concrete klacht of incident', () => {
+    const result = planNextContextQuestion({
+      mode: 'DIRECT_REQUEST',
+      facts: [
+        { code: 'SECTOR', value: 'industrie', status: 'USER_CONFIRMED', confidence: 1 },
+        { code: 'RIE_INTENT', value: 'NEW_RIE', status: 'RELIABLE_EXTRACTION', confidence: 1 },
+      ],
+      concepts: [concept('RIE')],
+      goals: compatibilityContextGoals,
+      evidenceByGoalCode: new Map(compatibilityContextGoals.map((item) => [item.code, [{
+        knowledgeId: `legacy:${item.code}`,
+        topicCode: 'legacy-context-catalog',
+        confidence: 0.65,
+        source: 'LEGACY_COMPATIBILITY' as const,
+      }]])),
+      answeredQuestionKeys: ['context_sector'],
+      askedQuestionKeys: ['context_sector'],
+      questionBudgetRemaining: 4,
+    })
+
+    expect(result.candidates.map((item) => item.goal.code)).not.toContain('AFFECTED_SCOPE')
+    expect(result.candidates.map((item) => item.goal.code)).toContain('ORGANIZATION_SIZE')
+    expect(result.selected?.goal.code).not.toBe('AFFECTED_SCOPE')
   })
 })

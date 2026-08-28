@@ -66,7 +66,7 @@ export const compatibilityContextGoals = Object.freeze([
   {
     code: 'AFFECTED_SCOPE', questionKey: 'context_affected_scope', purpose: 'De globale reikwijdte vastleggen zonder persoonsgegevens.', text: 'Bij hoeveel medewerkers speelt dit?', answerType: 'OPTION',
     options: options(['ONE', 'Bij één medewerker'], ['MULTIPLE', 'Bij meerdere medewerkers'], ['UNKNOWN', 'Dat weet ik niet']), category: 'SCOPE',
-    relevantConceptCodes: ['HEALTH_COMPLAINT', 'INCIDENT', 'RIE'], satisfiesFactCodes: ['AFFECTED_SCOPE', 'AFFECTED_COUNT'], equivalentGoalCodes: [], mandatory: false, universal: true,
+    relevantConceptCodes: ['HEALTH_COMPLAINT', 'INCIDENT'], satisfiesFactCodes: ['AFFECTED_SCOPE', 'AFFECTED_COUNT'], equivalentGoalCodes: [], mandatory: false, universal: true,
     baseRelevance: 0.75, informationGain: 0.65, matchingValue: 0.65, userBurden: 0.15,
   },
   {
