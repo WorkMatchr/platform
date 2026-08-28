@@ -239,6 +239,34 @@ describe('Public Intake Guidance-handoff', () => {
     },
   )
 
+  it('leidt personeel semantisch af uit een bevestigde organisatieomvang', () => {
+    const handoff = buildPublicIntakeGuidanceHandoff(
+      'public-draft-fixture',
+      draft([
+        answer('context_employee_count', 'OPTION', '11 tot en met 50 medewerkers'),
+      ]),
+    )
+
+    expect(handoff.contract.facts).toContainEqual(
+      expect.objectContaining({
+        key: 'PUBLIC_INTAKE_CONTEXT_EMPLOYEE_COUNT',
+        value: '11 tot en met 50 medewerkers',
+      }),
+    )
+    expect(handoff.contract.facts).toContainEqual(
+      expect.objectContaining({
+        key: 'HAS_EMPLOYEES',
+        valueType: 'BOOLEAN',
+        value: true,
+      }),
+    )
+    expect(handoff.clarification).toMatchObject({
+      isComplete: true,
+      nextQuestion: null,
+      completionReason: 'REQUIRED_INFORMATION_AVAILABLE',
+    })
+  })
+
   it('behoudt onbekende informatie en rondt zonder dubbele vraag veilig af', () => {
     const handoff = buildPublicIntakeGuidanceHandoff(
       'public-draft-fixture',

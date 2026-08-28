@@ -24,6 +24,25 @@ function containsKnownFact(input: string, key: string): boolean {
     || (key === 'context_existing_investigation' && /(ri&e|onderzoek).{0,30}(uitgevoerd|gedaan|opgenomen)/.test(text))
 }
 
+const semanticQuestionGoals = Object.freeze({
+  EMPLOYEE_PRESENCE_OR_COUNT: Object.freeze([
+    'context_employee_count',
+    'rie_has_employees',
+  ]),
+})
+
+function unavailableSemanticQuestionKeys(
+  questionKeys: readonly string[],
+): ReadonlySet<string> {
+  const unavailable = new Set(questionKeys)
+  for (const equivalentKeys of Object.values(semanticQuestionGoals)) {
+    if (equivalentKeys.some((key) => unavailable.has(key))) {
+      for (const key of equivalentKeys) unavailable.add(key)
+    }
+  }
+  return unavailable
+}
+
 export function selectSafeAIContextQuestions(input: {
   originalInput: string
   classification: AIClassifierOutput | null
@@ -40,7 +59,10 @@ export function selectSafeAIContextQuestions(input: {
       .filter((q) => (q.subjectCodes as readonly AIIntakeSubjectCode[]).includes(subject))
       .map((q) => q.questionKey)
   const allowed = new Set(configuredQuestionKeys)
-  const unavailable = new Set([...input.answeredQuestionKeys, ...input.askedQuestionKeys])
+  const unavailable = unavailableSemanticQuestionKeys([
+    ...input.answeredQuestionKeys,
+    ...input.askedQuestionKeys,
+  ])
   const candidates = subject === 'RIE'
     ? configuredQuestionKeys.map(getAIContextQuestion).filter((question): question is AIContextQuestion => question !== null)
     : aiContextQuestionCatalog

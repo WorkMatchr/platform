@@ -58,6 +58,20 @@ describe('AI context-question planner', () => {
       'context_preferred_start',
     ])
   })
+  it('vraagt geen organisatieomvang nadat personeel al semantisch is bevestigd', () => {
+    const rie = { summary: 'De organisatie heeft een nieuwe RI&E nodig.', primarySubject: 'RIE', secondarySubjects: [], confidence: 'HIGH', alternatives: [] } as const
+    const questions = selectSafeAIContextQuestions({
+      originalInput: 'Wij hebben een RI&E nodig voor ons bedrijf.',
+      classification: rie,
+      answeredQuestionKeys: ['guidance_topic', 'rie_has_employees'],
+      askedQuestionKeys: [],
+      remainingQuestionBudget: 3,
+    })
+    expect(questions.map((question) => question.questionKey)).toEqual([
+      'context_location_count',
+      'context_preferred_start',
+    ])
+  })
   it('behoudt de veilige fallback zonder contextvragen bij lage zekerheid', () => {
     const rie = { summary: 'RI&E genoemd.', primarySubject: 'RIE', secondarySubjects: [], confidence: 'LOW', alternatives: [] } as const
     expect(selectSafeAIContextQuestions({ originalInput: 'Een vraag over RI&E.', classification: rie, answeredQuestionKeys: [], askedQuestionKeys: [], remainingQuestionBudget: 5 })).toEqual([])

@@ -60,6 +60,21 @@ function selectedTopic(draft: PublicIntakeDraftView) {
   )
 }
 
+function selectedRIEContextClassification(
+  draft: PublicIntakeDraftView,
+): AIClassifierOutput | null {
+  const topic = selectedTopic(draft)
+  if (topic?.value !== 'RIE' || !draft.originalInput) return null
+
+  return Object.freeze({
+    summary: draft.originalInput,
+    primarySubject: 'RIE',
+    secondarySubjects: Object.freeze([]),
+    confidence: 'MEDIUM',
+    alternatives: Object.freeze([]),
+  })
+}
+
 async function withPersistedContextQuestions(
   draft: PublicIntakeDraftView,
   classification: AIClassifierOutput | null,
@@ -83,7 +98,14 @@ export async function enrichPublicIntakeDraftWithAIClassification(
 
   const topic = selectedTopic(draft)
   if (topic) {
-    if (topic.source !== 'AI_CONFIRMED') return draft
+    if (topic.source !== 'AI_CONFIRMED') {
+      const selectedClassification = selectedRIEContextClassification(draft)
+      if (!selectedClassification) return draft
+
+      return withRefreshedGuidance(
+        await withPersistedContextQuestions(draft, selectedClassification),
+      )
+    }
 
     const classification = await readCachedAIClassification(
       draft.originalInput,

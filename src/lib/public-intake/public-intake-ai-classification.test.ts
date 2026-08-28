@@ -4,6 +4,7 @@ import type { PublicIntakeDraftView } from './public-intake-types'
 const mocks = vi.hoisted(() => ({
   classify: vi.fn(),
   readCached: vi.fn(),
+  ensureContextQuestions: vi.fn(),
 }))
 
 vi.mock(
@@ -13,6 +14,10 @@ vi.mock(
     readCachedAIClassification: mocks.readCached,
   }),
 )
+
+vi.mock('./public-intake-context-question-service', () => ({
+  ensurePublicIntakeAIContextQuestions: mocks.ensureContextQuestions,
+}))
 
 import { enrichPublicIntakeDraftWithAIClassification } from './public-intake-ai-classification'
 import { getAIIntakeUnderstanding } from './public-intake-ai-presentation'
@@ -28,6 +33,7 @@ describe('Public Intake AI-classificatiehandoff', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.readCached.mockResolvedValue(null)
+    mocks.ensureContextQuestions.mockResolvedValue([])
     mocks.classify.mockResolvedValue({
       classification: {
         summary:
@@ -102,6 +108,67 @@ describe('Public Intake AI-classificatiehandoff', () => {
     expect(result.aiClassification).toBeUndefined()
     expect(mocks.readCached).not.toHaveBeenCalled()
     expect(mocks.classify).not.toHaveBeenCalled()
+  })
+
+  it('activeert na een veilige fallbackkeuze RI&E alsnog de beheerde contextplanner', async () => {
+    const fallbackDraft = {
+      ...draft,
+      id: 'public-intake-fallback-fixture',
+      phase: 'CLARIFYING',
+      selectedRequestKey: null,
+      flowVersion: 'PUBLIC-HELP-REQUEST-2',
+      currentStep: 'guidance_topic',
+      version: 2,
+      startedAt: new Date('2026-08-28T12:00:00.000Z'),
+      lastInteractionAt: new Date('2026-08-28T12:01:00.000Z'),
+      expiresAt: new Date('2026-11-26T12:00:00.000Z'),
+      contextQuestions: [],
+      answers: [
+        {
+          questionKey: 'guidance_topic',
+          questionVersion: 1,
+          answerType: 'OPTION',
+          disposition: 'ANSWERED',
+          source: 'FALLBACK_SELECTION',
+          version: 1,
+          value: 'RIE',
+        },
+      ],
+    } as PublicIntakeDraftView
+
+    const result = await enrichPublicIntakeDraftWithAIClassification(fallbackDraft)
+
+    expect(mocks.ensureContextQuestions).toHaveBeenCalledWith(
+      expect.objectContaining({
+        draftId: 'public-intake-fallback-fixture',
+        originalInput: draft.originalInput,
+        fallbackQuestionWasAsked: true,
+        classification: expect.objectContaining({
+          primarySubject: 'RIE',
+          confidence: 'MEDIUM',
+        }),
+      }),
+    )
+    expect(result.aiClassification).toBeUndefined()
+    expect(mocks.classify).not.toHaveBeenCalled()
+  })
+
+  it('activeert geen RI&E-profiel voor een andere handmatige fallbackkeuze', async () => {
+    const result = await enrichPublicIntakeDraftWithAIClassification({
+      ...draft,
+      id: 'public-intake-other-fixture',
+      answers: [
+        {
+          questionKey: 'guidance_topic',
+          disposition: 'ANSWERED',
+          source: 'FALLBACK_SELECTION',
+          value: 'OTHER',
+        },
+      ],
+    } as PublicIntakeDraftView)
+
+    expect(mocks.ensureContextQuestions).not.toHaveBeenCalled()
+    expect(result.aiClassification).toBeUndefined()
   })
 
   it('laat bij providerfouten de bestaande draft ongewijzigd bruikbaar', async () => {

@@ -98,6 +98,47 @@ describe('public intake context-question persistence', () => {
     expect(mocks.createMany).not.toHaveBeenCalled()
   })
 
+  it('plant na een fallbackkeuze RI&E de beheerde vragen voor een bestaand risico', async () => {
+    const stored = [
+      {
+        questionKey: 'context_existing_investigation', catalogVersion: AI_CONTEXT_QUESTION_CATALOG_VERSION,
+        textSnapshot: 'Is deze situatie al onderzocht of opgenomen in een RI&E?', answerType: 'OPTION',
+        category: 'EXISTING_CONTROL', sequence: 1, source: 'AI_CONTEXT_PLANNER', createdAt: new Date(),
+      },
+      {
+        questionKey: 'context_affected_scope', catalogVersion: AI_CONTEXT_QUESTION_CATALOG_VERSION,
+        textSnapshot: 'Bij hoeveel medewerkers speelt dit?', answerType: 'OPTION',
+        category: 'SCOPE', sequence: 2, source: 'AI_CONTEXT_PLANNER', createdAt: new Date(),
+      },
+      {
+        questionKey: 'context_preferred_start', catalogVersion: AI_CONTEXT_QUESTION_CATALOG_VERSION,
+        textSnapshot: 'Wanneer wilt u bij voorkeur starten?', answerType: 'OPTION',
+        category: 'URGENCY', sequence: 3, source: 'AI_CONTEXT_PLANNER', createdAt: new Date(),
+      },
+    ]
+    mocks.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce(stored)
+
+    await expect(ensurePublicIntakeAIContextQuestions({
+      draftId: '00000000-0000-0000-0000-000000000002',
+      originalInput: 'Wij hebben veel lawaai in onze werkplaats en weten niet of dit goed in onze RI&E staat.',
+      classification: {
+        summary: 'Handmatig gekozen RI&E-richting.',
+        primarySubject: 'RIE',
+        secondarySubjects: [],
+        confidence: 'MEDIUM',
+        alternatives: [],
+      },
+      answeredQuestionKeys: ['guidance_topic'],
+      fallbackQuestionWasAsked: true,
+    })).resolves.toEqual(stored)
+
+    expect(mocks.createMany).toHaveBeenCalledWith(expect.objectContaining({
+      data: stored.map((question) => expect.objectContaining({
+        questionKey: question.questionKey,
+      })),
+    }))
+  })
+
   it('fails closed for an unexpected persisted source value', async () => {
     const existing = Array.from({ length: 5 }, (_, index) => ({
       questionKey: `context_${index}`, catalogVersion: 'ai-context-questions/1.0.0',

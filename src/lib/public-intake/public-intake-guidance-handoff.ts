@@ -160,15 +160,30 @@ function toFacts(
       (answer) =>
         answer.disposition === 'ANSWERED' && answer.value !== null,
     )
-    .map((answer) =>
-      Object.freeze({
+    .flatMap((answer) => {
+      const answerFact = Object.freeze({
         key: answerFactKey(answer),
         valueType: factValueType(answer),
         value: answer.value as string | number | boolean,
         status: 'CONFIRMED',
         provenance,
-      }),
-    )
+      }) satisfies ContextFact
+
+      if (answer.questionKey !== 'context_employee_count') {
+        return [answerFact]
+      }
+
+      return [
+        answerFact,
+        Object.freeze({
+          key: 'HAS_EMPLOYEES',
+          valueType: 'BOOLEAN',
+          value: true,
+          status: 'CONFIRMED',
+          provenance,
+        }) satisfies ContextFact,
+      ]
+    })
 }
 
 function uncertaintyKey(answer: PublicIntakeAnswerView): string {
