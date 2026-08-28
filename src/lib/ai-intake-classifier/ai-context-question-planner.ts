@@ -20,7 +20,7 @@ function containsKnownFact(input: string, key: string): boolean {
     || (key === 'context_employee_count' && /\b\d+\s+(medewerkers|werknemers)\b/.test(text))
     || (key === 'context_location_count' && /\b\d+\s+(locaties|vestigingen)\b/.test(text))
     || (key === 'context_preferred_start' && /(zo snel mogelijk|binnen (vier|\d+) weken|binnen (drie|\d+) maanden)/.test(text))
-    || (key === 'context_affected_scope' && /(meerdere|verschillende|veel) medewerkers/.test(text))
+    || (key === 'context_affected_scope' && /\b(?:één|een|meerdere|verschillende|veel|\d+)\s+(?:medewerkers|werknemers|personen|chauffeurs)\b/.test(text))
     || (key === 'context_existing_investigation' && /(ri&e|onderzoek).{0,30}(uitgevoerd|gedaan|opgenomen)/.test(text))
 }
 
@@ -50,21 +50,27 @@ export function selectSafeAIContextQuestions(input: {
   askedQuestionKeys: readonly string[]
   remainingQuestionBudget: number
   proposedQuestionKeys?: readonly string[]
+  knownSharedContextQuestionKeys?: readonly string[]
 }): readonly AIContextQuestion[] {
   if (!input.classification || input.classification.confidence === 'LOW' || input.classification.primarySubject === 'UNKNOWN') return Object.freeze([])
   const subject = input.classification.primarySubject as AIIntakeSubjectCode
-  const configuredQuestionKeys = subject === 'RIE'
+  const domainQuestionKeys = subject === 'RIE'
     ? selectRIEContextQuestionKeys(input.originalInput)
     : input.proposedQuestionKeys ?? aiContextQuestionCatalog
       .filter((q) => (q.subjectCodes as readonly AIIntakeSubjectCode[]).includes(subject))
+      .filter((q) => q.questionKey !== 'context_sector')
       .map((q) => q.questionKey)
+  const configuredQuestionKeys = [
+    ...(input.knownSharedContextQuestionKeys?.includes('context_sector') ? [] : ['context_sector']),
+    ...domainQuestionKeys,
+  ]
   const allowed = new Set(configuredQuestionKeys)
   const unavailable = unavailableSemanticQuestionKeys([
     ...input.answeredQuestionKeys,
     ...input.askedQuestionKeys,
   ])
-  const candidates = subject === 'RIE'
-    ? configuredQuestionKeys.map(getAIContextQuestion).filter((question): question is AIContextQuestion => question !== null)
-    : aiContextQuestionCatalog
+  const candidates = configuredQuestionKeys
+    .map(getAIContextQuestion)
+    .filter((question): question is AIContextQuestion => question !== null)
   return Object.freeze(candidates.filter((question) => allowed.has(question.questionKey) && (question.subjectCodes as readonly AIIntakeSubjectCode[]).includes(subject) && !unavailable.has(question.questionKey) && !containsKnownFact(input.originalInput, question.questionKey)).slice(0, Math.min(AI_CONTEXT_QUESTION_LIMIT, Math.max(0, input.remainingQuestionBudget))))
 }

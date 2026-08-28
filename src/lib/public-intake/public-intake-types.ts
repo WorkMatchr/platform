@@ -28,7 +28,17 @@ export type PublicIntakeContextQuestionView = {
   sequence: number
   source: 'AI_CONTEXT_PLANNER'
   createdAt: Date
+  options?: readonly Readonly<{ label: string; value: string }>[]
 }
+
+export type PublicIntakeSharedAssignmentContextView = Readonly<{
+  version: string
+  sector: Readonly<{
+    code: string
+    label: string
+    source: 'ORIGINAL_INPUT' | 'USER_ANSWER'
+  }> | null
+}>
 
 export type PublicIntakeDraftView = {
   id?: string
@@ -52,6 +62,7 @@ export type PublicIntakeDraftView = {
   expiresAt: Date
   answers: PublicIntakeAnswerView[]
   contextQuestions?: readonly PublicIntakeContextQuestionView[]
+  sharedAssignmentContext?: PublicIntakeSharedAssignmentContextView
   guidance: PublicIntakeGuidanceHandoff
   aiClassification?: AIClassifierOutput | null
   aiClassificationProtection?: 'RATE_LIMITED' | 'PROTECTION_UNAVAILABLE'

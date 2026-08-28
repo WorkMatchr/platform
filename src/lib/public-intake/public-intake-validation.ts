@@ -131,7 +131,14 @@ export function normalizePublicIntakeAnswer(
     }
     case 'OPTION':
     case 'PERIOD': {
-      if (typeof input.value !== 'string' || !question.validation.options?.includes(input.value)) {
+      const isManagedSectorCode =
+        question.questionKey === 'context_sector' &&
+        typeof input.value === 'string' &&
+        /^[a-z0-9-]{1,80}$/.test(input.value)
+      if (
+        typeof input.value !== 'string' ||
+        (!isManagedSectorCode && !question.validation.options?.includes(input.value))
+      ) {
         validationError('Kies een geldige optie.')
       }
       return question.answerType === 'OPTION'

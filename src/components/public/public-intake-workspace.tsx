@@ -14,7 +14,7 @@ import {
 } from '@/lib/public-intake/public-intake-prototype'
 import { getAIIntakeUnderstanding } from '@/lib/public-intake/public-intake-ai-presentation'
 import { presentPublicIntakeGuidance } from '@/lib/public-intake/public-intake-guidance-presentation'
-import type { PublicIntakeDraftView } from '@/lib/public-intake/public-intake-types'
+import type { PublicIntakeAnswerView, PublicIntakeDraftView } from '@/lib/public-intake/public-intake-types'
 import type { GuidanceOutcome } from '@/lib/guidance/guidance-domain'
 import {
   PublicIntakeDesktopContext,
@@ -284,13 +284,25 @@ export function PublicIntakeWorkspace({
             'Kies het onderwerp dat het beste bij uw vraag past. Uw keuze vervangt ons voorstel.',
         }
       : baseQuestion && nextContextQuestion
-        ? { ...baseQuestion, legend: nextContextQuestion.textSnapshot }
+        ? {
+            ...baseQuestion,
+            legend: nextContextQuestion.textSnapshot,
+            ...(nextContextQuestion.options
+              ? { options: nextContextQuestion.options.map((option) => ({ ...option, disposition: 'ANSWERED' as const })) }
+              : {}),
+          }
         : baseQuestion
 
   const answeredQuestions = useMemo(
     () => draft.answers.filter((answer) => getPublicIntakePrototypeQuestion(answer.questionKey)),
     [draft.answers],
   )
+  const answerLabel = (answer: PublicIntakeAnswerView) => {
+    const managedOption = draft.contextQuestions
+      ?.find((item) => item.questionKey === answer.questionKey)
+      ?.options?.find((option) => option.value === answer.value)
+    return managedOption?.label ?? getPublicIntakeAnswerLabel(answer)
+  }
   const editingBaseQuestion = editingQuestionKey
     ? getPublicIntakePrototypeQuestion(editingQuestionKey)
     : null
@@ -300,7 +312,14 @@ export function PublicIntakeWorkspace({
   const editingQuestion = editingBaseQuestion
     ? {
         ...editingBaseQuestion,
-        ...(editingContextQuestion ? { legend: editingContextQuestion.textSnapshot } : {}),
+        ...(editingContextQuestion
+          ? {
+              legend: editingContextQuestion.textSnapshot,
+              ...(editingContextQuestion.options
+                ? { options: editingContextQuestion.options.map((option) => ({ ...option, disposition: 'ANSWERED' as const })) }
+                : {}),
+            }
+          : {}),
       }
     : null
 
@@ -573,6 +592,7 @@ export function PublicIntakeWorkspace({
             <dl className="mt-5 space-y-4">
               <div><dt className="text-sm font-semibold text-text-secondary">Uw oorspronkelijke hulpvraag</dt><dd className="mt-1 break-words text-brand-dark">{draft.originalInput}</dd></div>
               {getAIIntakeUnderstanding(draft.aiClassification) && <div><dt className="text-sm font-semibold text-text-secondary">Voorgestelde richting</dt><dd className="mt-1 font-semibold text-brand-dark">{getAIIntakeUnderstanding(draft.aiClassification)?.subjectLabel}</dd></div>}
+              {draft.sharedAssignmentContext?.sector && <div><dt className="text-sm font-semibold text-text-secondary">Sector</dt><dd className="mt-1 font-semibold text-brand-dark">{draft.sharedAssignmentContext.sector.label}</dd></div>}
             </dl>
             <p className="mt-4 text-sm text-text-secondary">Controleer uw antwoorden hieronder. De analyse is adviserend; u bevestigt zelf welke informatie bij uw aanvraag hoort.</p>
           </section>
@@ -653,9 +673,12 @@ export function PublicIntakeWorkspace({
                     {getPublicIntakePrototypeQuestion(answer.questionKey)?.legend}
                   </dt>
                   <dd className="mt-1 break-words text-sm font-semibold text-brand-dark">
-                    {getPublicIntakeAnswerLabel(answer)}
+                    {answerLabel(answer)}
                   </dd>
-                  {isHelpRequestV2 && (getPublicIntakePrototypeQuestion(answer.questionKey)?.options?.length ?? 0) > 0 && (
+                  {isHelpRequestV2 && (
+                    (draft.contextQuestions?.find((item) => item.questionKey === answer.questionKey)?.options?.length ?? 0) > 0 ||
+                    (getPublicIntakePrototypeQuestion(answer.questionKey)?.options?.length ?? 0) > 0
+                  ) && (
                     <Button
                       type="button"
                       variant="outline"

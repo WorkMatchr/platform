@@ -154,8 +154,9 @@ function factValueType(
 function toFacts(
   answers: readonly PublicIntakeAnswerView[],
   provenance: GuidanceProvenance,
+  sharedContext: PublicIntakeDraftSnapshot['sharedAssignmentContext'],
 ): readonly ContextFact[] {
-  return answers
+  const answerFacts = answers
     .filter(
       (answer) =>
         answer.disposition === 'ANSWERED' && answer.value !== null,
@@ -190,6 +191,18 @@ function toFacts(
         }) satisfies ContextFact,
       ]
     })
+  if (!sharedContext?.sector) return answerFacts
+  if (answers.some((answer) => answer.questionKey === 'context_sector')) return answerFacts
+  return [
+    ...answerFacts,
+    Object.freeze({
+      key: 'PUBLIC_INTAKE_CONTEXT_SECTOR',
+      valueType: 'CODE',
+      value: sharedContext.sector.code,
+      status: 'CONFIRMED',
+      provenance,
+    }) satisfies ContextFact,
+  ]
 }
 
 function uncertaintyKey(answer: PublicIntakeAnswerView): string {
@@ -363,7 +376,7 @@ export function buildPublicIntakeGuidanceHandoff(
       provenance,
     }),
     helpRequest,
-    facts: Object.freeze(toFacts(draft.answers, provenance)),
+    facts: Object.freeze(toFacts(draft.answers, provenance, draft.sharedAssignmentContext)),
     uncertainties: Object.freeze(
       toUncertainties(draft.answers, provenance),
     ),

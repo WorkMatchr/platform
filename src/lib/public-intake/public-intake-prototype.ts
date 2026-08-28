@@ -110,7 +110,9 @@ export const publicIntakePrototypeQuestions = [
     explanation: 'Deze informatie helpt om uw situatie beter te begrijpen.',
     decisionPurpose: 'Aanvullende feitelijke context voor uw hulpvraag.',
     inputKind: 'OPTIONS' as const,
-    options: [...question.options.map((value) => ({ label: value, value, disposition: 'ANSWERED' as const })), { label: 'Dat weet ik niet', disposition: 'UNKNOWN' as const }],
+    options: question.questionKey === 'context_sector'
+      ? []
+      : [...question.options.map((value) => ({ label: value, value, disposition: 'ANSWERED' as const })), { label: 'Dat weet ik niet', disposition: 'UNKNOWN' as const }],
   })),
   {
     questionKey: 'rie_has_employees',

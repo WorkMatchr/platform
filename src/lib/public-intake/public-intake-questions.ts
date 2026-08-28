@@ -74,6 +74,7 @@ export const publicIntakeQuestions = [
     },
   },
   ...([
+    ['context_sector', []],
     ['context_rie_status', ['Een nieuwe RI&E', 'Een bestaande RI&E actualiseren', 'Een bestaande RI&E controleren', 'Dat weet ik nog niet']],
     ['context_employee_count', ['1 tot en met 10 medewerkers', '11 tot en met 50 medewerkers', '51 tot en met 250 medewerkers', 'Meer dan 250 medewerkers']],
     ['context_location_count', ['Eén locatie', 'Twee tot en met vijf locaties', 'Meer dan vijf locaties']],
@@ -89,7 +90,7 @@ export const publicIntakeQuestions = [
     purpose: 'CLARIFICATION' as const,
     answerType: 'OPTION' as const,
     requiredForSubmission: false,
-    canSkip: true,
+    canSkip: questionKey !== 'context_sector',
     decisionPurpose: 'Alleen aanvullende feitelijke context voor de bestaande adviesregels vastleggen.',
     validation: { options },
     decision: { enabled: false, required: false, optional: true, dependsOn: [], visibleWhen: [], repeatIfUnknown: false, category: 'SITUATION' as const, order: 2 + index },

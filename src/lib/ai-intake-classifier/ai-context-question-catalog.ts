@@ -1,6 +1,6 @@
 import type { AIIntakeSubjectCode } from './ai-classifier-contract'
 
-export const AI_CONTEXT_QUESTION_CATALOG_VERSION = 'ai-context-questions/1.1.0' as const
+export const AI_CONTEXT_QUESTION_CATALOG_VERSION = 'ai-context-questions/1.2.0' as const
 
 export type AIContextQuestion = Readonly<{
   questionKey: string
@@ -8,11 +8,16 @@ export type AIContextQuestion = Readonly<{
   text: string
   answerType: 'OPTION'
   options: readonly string[]
-  category: 'WORK' | 'EXPOSURE' | 'SCOPE' | 'EXISTING_CONTROL' | 'URGENCY'
+  category: 'ORGANIZATION' | 'WORK' | 'EXPOSURE' | 'SCOPE' | 'EXISTING_CONTROL' | 'URGENCY'
   unknownText?: string
 }>
 
 export const aiContextQuestionCatalog = Object.freeze([
+  {
+    questionKey: 'context_sector', subjectCodes: ['HAZARDOUS_SUBSTANCES', 'INCIDENT', 'RIE', 'OCCUPATIONAL_HEALTH', 'EMERGENCY_RESPONSE'],
+    text: 'In welke sector is uw organisatie actief?', answerType: 'OPTION',
+    options: [], category: 'ORGANIZATION',
+  },
   {
     questionKey: 'context_rie_status', subjectCodes: ['RIE'],
     text: 'Gaat het om een nieuwe RI&E of om een bestaande RI&E?', answerType: 'OPTION',

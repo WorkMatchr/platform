@@ -34,6 +34,11 @@ import {
 import { resolveActiveKnowledgeContext } from '@/content/knowledge/knowledge-contexts'
 import { getAIContextQuestion } from '@/lib/ai-intake-classifier/ai-context-question-catalog'
 import { toPublicIntakeContextQuestionView } from './public-intake-context-question-service'
+import {
+  getSharedSectorOptions,
+  resolveSharedAssignmentContext,
+  SHARED_CONTEXT_SECTOR_QUESTION_KEY,
+} from './shared-assignment-context'
 
 type Transaction = Prisma.TransactionClient
 
@@ -251,6 +256,9 @@ async function loadPublicView(
   })
   const { id, answers, contextQuestions, knowledgeContextId, knowledgeContextVersion, knowledgeSourceRoute, knowledgeSuggestedCategory, ...draftView } = draft
   const currentContext = resolveActiveKnowledgeContext(knowledgeContextId)
+  const sectorOptions = draftView.flowVersion === PUBLIC_HELP_REQUEST_INTAKE_V2_FLOW_VERSION
+    ? await getSharedSectorOptions(transaction)
+    : []
   const view = {
     ...draftView,
     knowledgeContext: currentContext && knowledgeContextVersion && knowledgeSourceRoute
@@ -272,13 +280,22 @@ async function loadPublicView(
       version: answer.version,
       value: answerValue(answer),
     })),
-    contextQuestions: contextQuestions.map(toPublicIntakeContextQuestionView),
+    contextQuestions: contextQuestions.map((question) =>
+      toPublicIntakeContextQuestionView(question, sectorOptions),
+    ),
   }
+
+  const sharedAssignmentContext = resolveSharedAssignmentContext({
+    originalInput: view.originalInput,
+    answers: view.answers,
+    sectorOptions,
+  })
 
   return {
     id,
     ...view,
-    guidance: buildPublicIntakeGuidanceHandoff(id, view),
+    sharedAssignmentContext,
+    guidance: buildPublicIntakeGuidanceHandoff(id, { ...view, sharedAssignmentContext }),
   }
 }
 
@@ -466,6 +483,15 @@ export async function recordPublicIntakeAnswer(
         })
         if (getAIContextQuestion(answer.questionKey) && !plannedContextQuestion) {
           throw new PublicIntakeServiceError('VALIDATION_ERROR')
+        }
+        if (
+          answer.questionKey === SHARED_CONTEXT_SECTOR_QUESTION_KEY &&
+          answer.disposition === 'ANSWERED'
+        ) {
+          const sectors = await getSharedSectorOptions(transaction)
+          if (!sectors.some((sector) => sector.code === answer.optionValue)) {
+            throw new PublicIntakeServiceError('VALIDATION_ERROR')
+          }
         }
         const answerSource = plannedContextQuestion
           ? 'AI_CONTEXT_PLANNER'

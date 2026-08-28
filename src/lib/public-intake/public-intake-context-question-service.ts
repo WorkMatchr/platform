@@ -9,6 +9,12 @@ import {
 } from '@/lib/ai-intake-classifier/ai-context-question-planner'
 import { getPrisma } from '@/lib/prisma'
 import type { PublicIntakeContextQuestionView } from './public-intake-types'
+import {
+  getSharedSectorOptions,
+  inferSharedSectorCode,
+  SHARED_CONTEXT_SECTOR_QUESTION_KEY,
+  type SharedSectorOption,
+} from './shared-assignment-context'
 
 export const PUBLIC_INTAKE_CONTEXT_QUESTION_TOTAL_LIMIT = 5 as const
 
@@ -21,11 +27,17 @@ export function toPublicIntakeContextQuestionView(question: {
   sequence: number
   source: string
   createdAt: Date
-}): PublicIntakeContextQuestionView {
+}, sectorOptions: readonly SharedSectorOption[] = []): PublicIntakeContextQuestionView {
   if (question.source !== 'AI_CONTEXT_PLANNER') {
     throw new Error('PUBLIC_INTAKE_CONTEXT_QUESTION_SOURCE_INVARIANT')
   }
-  return { ...question, source: 'AI_CONTEXT_PLANNER' }
+  return {
+    ...question,
+    source: 'AI_CONTEXT_PLANNER',
+    ...(question.questionKey === SHARED_CONTEXT_SECTOR_QUESTION_KEY
+      ? { options: sectorOptions.map((option) => ({ label: option.label, value: option.code })) }
+      : {}),
+  }
 }
 
 /**
@@ -42,6 +54,8 @@ export async function ensurePublicIntakeAIContextQuestions(input: {
   if (!input.classification || input.classification.confidence === 'LOW') return []
 
   return getPrisma().$transaction(async (transaction) => {
+    const sectorOptions = await getSharedSectorOptions(transaction)
+    if (sectorOptions.length === 0) throw new Error('SHARED_ASSIGNMENT_CONTEXT_TAXONOMY_UNAVAILABLE')
     const existing = await transaction.publicIntakeContextQuestion.findMany({
       where: { draftId: input.draftId },
       orderBy: { sequence: 'asc' },
@@ -58,7 +72,7 @@ export async function ensurePublicIntakeAIContextQuestions(input: {
     })
     const usedBudget = existing.length + (input.fallbackQuestionWasAsked ? 1 : 0)
     const remaining = PUBLIC_INTAKE_CONTEXT_QUESTION_TOTAL_LIMIT - usedBudget
-    if (remaining <= 0) return existing.map(toPublicIntakeContextQuestionView)
+    if (remaining <= 0) return existing.map((question) => toPublicIntakeContextQuestionView(question, sectorOptions))
 
     const selected = selectSafeAIContextQuestions({
       originalInput: input.originalInput,
@@ -66,9 +80,12 @@ export async function ensurePublicIntakeAIContextQuestions(input: {
       answeredQuestionKeys: input.answeredQuestionKeys,
       askedQuestionKeys: existing.map((question) => question.questionKey),
       remainingQuestionBudget: remaining,
+      knownSharedContextQuestionKeys: inferSharedSectorCode(input.originalInput, sectorOptions)
+        ? [SHARED_CONTEXT_SECTOR_QUESTION_KEY]
+        : [],
     }).slice(0, Math.min(AI_CONTEXT_QUESTION_LIMIT, remaining))
 
-    if (selected.length === 0) return existing.map(toPublicIntakeContextQuestionView)
+    if (selected.length === 0) return existing.map((question) => toPublicIntakeContextQuestionView(question, sectorOptions))
 
     await transaction.publicIntakeContextQuestion.createMany({
       data: selected.map((question, index) => ({
@@ -98,6 +115,6 @@ export async function ensurePublicIntakeAIContextQuestions(input: {
         createdAt: true,
       },
     })
-    return stored.map(toPublicIntakeContextQuestionView)
+    return stored.map((question) => toPublicIntakeContextQuestionView(question, sectorOptions))
   }, { isolationLevel: 'Serializable' })
 }

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => ({
   findMany: vi.fn(),
   createMany: vi.fn(),
+  findSectorMappings: vi.fn(),
   transaction: vi.fn(),
 }))
 
@@ -26,11 +27,16 @@ const classification = {
 describe('public intake context-question persistence', () => {
   beforeEach(() => {
     vi.resetAllMocks()
+    mocks.findSectorMappings.mockResolvedValue([
+      { sector: { slug: 'industrie' }, term: { label: 'Industrie', sortOrder: 1 } },
+      { sector: { slug: 'logistiek' }, term: { label: 'Logistiek', sortOrder: 2 } },
+    ])
     mocks.transaction.mockImplementation(async (callback: (transaction: unknown) => unknown) => callback({
       publicIntakeContextQuestion: {
         findMany: mocks.findMany,
         createMany: mocks.createMany,
       },
+      providerSectorTaxonomyMap: { findMany: mocks.findSectorMappings },
     }))
   })
 
@@ -101,19 +107,19 @@ describe('public intake context-question persistence', () => {
   it('plant na een fallbackkeuze RI&E de beheerde vragen voor een bestaand risico', async () => {
     const stored = [
       {
+        questionKey: 'context_sector', catalogVersion: AI_CONTEXT_QUESTION_CATALOG_VERSION,
+        textSnapshot: 'In welke sector is uw organisatie actief?', answerType: 'OPTION',
+        category: 'ORGANIZATION', sequence: 1, source: 'AI_CONTEXT_PLANNER', createdAt: new Date(),
+      },
+      {
         questionKey: 'context_existing_investigation', catalogVersion: AI_CONTEXT_QUESTION_CATALOG_VERSION,
         textSnapshot: 'Is deze situatie al onderzocht of opgenomen in een RI&E?', answerType: 'OPTION',
-        category: 'EXISTING_CONTROL', sequence: 1, source: 'AI_CONTEXT_PLANNER', createdAt: new Date(),
+        category: 'EXISTING_CONTROL', sequence: 2, source: 'AI_CONTEXT_PLANNER', createdAt: new Date(),
       },
       {
         questionKey: 'context_affected_scope', catalogVersion: AI_CONTEXT_QUESTION_CATALOG_VERSION,
         textSnapshot: 'Bij hoeveel medewerkers speelt dit?', answerType: 'OPTION',
-        category: 'SCOPE', sequence: 2, source: 'AI_CONTEXT_PLANNER', createdAt: new Date(),
-      },
-      {
-        questionKey: 'context_preferred_start', catalogVersion: AI_CONTEXT_QUESTION_CATALOG_VERSION,
-        textSnapshot: 'Wanneer wilt u bij voorkeur starten?', answerType: 'OPTION',
-        category: 'URGENCY', sequence: 3, source: 'AI_CONTEXT_PLANNER', createdAt: new Date(),
+        category: 'SCOPE', sequence: 3, source: 'AI_CONTEXT_PLANNER', createdAt: new Date(),
       },
     ]
     mocks.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce(stored)
@@ -130,7 +136,14 @@ describe('public intake context-question persistence', () => {
       },
       answeredQuestionKeys: ['guidance_topic'],
       fallbackQuestionWasAsked: true,
-    })).resolves.toEqual(stored)
+    })).resolves.toEqual([
+      { ...stored[0], options: [
+        { label: 'Industrie', value: 'industrie' },
+        { label: 'Logistiek', value: 'logistiek' },
+      ] },
+      stored[1],
+      stored[2],
+    ])
 
     expect(mocks.createMany).toHaveBeenCalledWith(expect.objectContaining({
       data: stored.map((question) => expect.objectContaining({
