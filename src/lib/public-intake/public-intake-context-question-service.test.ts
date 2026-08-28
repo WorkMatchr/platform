@@ -25,7 +25,7 @@ const classification = {
 
 describe('public intake context-question persistence', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.resetAllMocks()
     mocks.transaction.mockImplementation(async (callback: (transaction: unknown) => unknown) => callback({
       publicIntakeContextQuestion: {
         findMany: mocks.findMany,
@@ -78,6 +78,23 @@ describe('public intake context-question persistence', () => {
     })
 
     expect(result[0]?.textSnapshot).toBe('Historische vraagtekst')
+    expect(mocks.createMany).not.toHaveBeenCalled()
+  })
+
+  it('stopt fail-safe wanneer de totale contextvraagbegroting van vijf is bereikt', async () => {
+    const existing = Array.from({ length: 4 }, (_, index) => ({
+      questionKey: `context_${index}`, catalogVersion: 'ai-context-questions/1.1.0',
+      textSnapshot: 'Historische vraagtekst', answerType: 'OPTION', category: 'SCOPE',
+      sequence: index + 1, source: 'AI_CONTEXT_PLANNER', createdAt: new Date(),
+    }))
+    mocks.findMany.mockResolvedValue(existing)
+
+    await expect(ensurePublicIntakeAIContextQuestions({
+      draftId: '00000000-0000-0000-0000-000000000001', originalInput: 'Wij hebben een RI&E nodig.',
+      classification: { ...classification, primarySubject: 'RIE' },
+      answeredQuestionKeys: ['guidance_topic'], fallbackQuestionWasAsked: true,
+    })).resolves.toEqual(existing)
+
     expect(mocks.createMany).not.toHaveBeenCalled()
   })
 

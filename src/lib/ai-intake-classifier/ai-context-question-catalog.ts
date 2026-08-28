@@ -1,6 +1,6 @@
 import type { AIIntakeSubjectCode } from './ai-classifier-contract'
 
-export const AI_CONTEXT_QUESTION_CATALOG_VERSION = 'ai-context-questions/1.0.0' as const
+export const AI_CONTEXT_QUESTION_CATALOG_VERSION = 'ai-context-questions/1.1.0' as const
 
 export type AIContextQuestion = Readonly<{
   questionKey: string
@@ -44,7 +44,7 @@ export const aiContextQuestionCatalog = Object.freeze([
     options: ['Tillen of dragen', 'Duwen of trekken', 'Repeterend werk', 'Langdurig zitten of staan', 'Iets anders'], category: 'EXPOSURE',
   },
   {
-    questionKey: 'context_affected_scope', subjectCodes: ['OCCUPATIONAL_HEALTH', 'INCIDENT'],
+    questionKey: 'context_affected_scope', subjectCodes: ['OCCUPATIONAL_HEALTH', 'INCIDENT', 'RIE'],
     text: 'Bij hoeveel medewerkers speelt dit?', answerType: 'OPTION',
     options: ['Bij één medewerker', 'Bij meerdere medewerkers', 'Dat weet ik niet'], category: 'SCOPE',
   },

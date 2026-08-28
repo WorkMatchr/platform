@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import type { AIClassifierOutput, AIIntakeSubjectCode } from './ai-classifier-contract'
 import { aiContextQuestionCatalog, getAIContextQuestion, type AIContextQuestion } from './ai-context-question-catalog'
+import { selectRIEContextQuestionKeys } from './rie-context-profile'
 
 export const AI_CONTEXT_QUESTION_LIMIT = 3 as const
 const schema = z.object({ questionKeys: z.array(z.string()).max(AI_CONTEXT_QUESTION_LIMIT) }).strict()
@@ -33,7 +34,15 @@ export function selectSafeAIContextQuestions(input: {
 }): readonly AIContextQuestion[] {
   if (!input.classification || input.classification.confidence === 'LOW' || input.classification.primarySubject === 'UNKNOWN') return Object.freeze([])
   const subject = input.classification.primarySubject as AIIntakeSubjectCode
-  const allowed = new Set(input.proposedQuestionKeys ?? aiContextQuestionCatalog.filter((q) => (q.subjectCodes as readonly AIIntakeSubjectCode[]).includes(subject)).map((q) => q.questionKey))
+  const configuredQuestionKeys = subject === 'RIE'
+    ? selectRIEContextQuestionKeys(input.originalInput)
+    : input.proposedQuestionKeys ?? aiContextQuestionCatalog
+      .filter((q) => (q.subjectCodes as readonly AIIntakeSubjectCode[]).includes(subject))
+      .map((q) => q.questionKey)
+  const allowed = new Set(configuredQuestionKeys)
   const unavailable = new Set([...input.answeredQuestionKeys, ...input.askedQuestionKeys])
-  return Object.freeze(aiContextQuestionCatalog.filter((question) => allowed.has(question.questionKey) && (question.subjectCodes as readonly AIIntakeSubjectCode[]).includes(subject) && !unavailable.has(question.questionKey) && !containsKnownFact(input.originalInput, question.questionKey)).slice(0, Math.min(AI_CONTEXT_QUESTION_LIMIT, Math.max(0, input.remainingQuestionBudget))))
+  const candidates = subject === 'RIE'
+    ? configuredQuestionKeys.map(getAIContextQuestion).filter((question): question is AIContextQuestion => question !== null)
+    : aiContextQuestionCatalog
+  return Object.freeze(candidates.filter((question) => allowed.has(question.questionKey) && (question.subjectCodes as readonly AIIntakeSubjectCode[]).includes(subject) && !unavailable.has(question.questionKey) && !containsKnownFact(input.originalInput, question.questionKey)).slice(0, Math.min(AI_CONTEXT_QUESTION_LIMIT, Math.max(0, input.remainingQuestionBudget))))
 }
