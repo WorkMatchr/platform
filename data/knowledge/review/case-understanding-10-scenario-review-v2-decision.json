@@ -1,0 +1,44 @@
+{
+  "decisionVersion": "1.0",
+  "packageId": "CASE_UNDERSTANDING_10_SCENARIOS_REVIEW_V2",
+  "decidedAt": "2026-08-29",
+  "usageScope": "INTAKE_ROUTING_KNOWLEDGE",
+  "scenarioDecisions": [
+    { "number": 1, "decision": "APPROVED" },
+    { "number": 2, "decision": "APPROVED" },
+    { "number": 3, "decision": "APPROVED" },
+    { "number": 4, "decision": "APPROVED" },
+    { "number": 5, "decision": "APPROVED" },
+    { "number": 6, "decision": "APPROVED" },
+    { "number": 7, "decision": "APPROVED" },
+    { "number": 8, "decision": "APPROVED" },
+    { "number": 9, "decision": "APPROVED_WITH_SCOPE_GUARDRAIL" },
+    { "number": 10, "decision": "APPROVED_WITH_SCOPE_GUARDRAIL" }
+  ],
+  "contextGoals": "APPROVED_WITH_DECLARATIVE_APPLICABILITY_AND_MAXIMUM_FIVE",
+  "questionExamples": "APPROVED_AS_EXAMPLES_NOT_TOPIC_WIZARD",
+  "specialism": {
+    "code": "PROCESS_SAFETY_MAJOR_HAZARDS",
+    "decision": "APPROVED_CROSS_DISCIPLINE",
+    "guardrail": "Een passende professionele achtergrond, het specialisme en aantoonbare relevante ervaring zijn samen vereist; HVK alleen is niet voldoende."
+  },
+  "permittedUses": [
+    "CONTEXT_RECOGNITION",
+    "MISSING_CONTEXT_SELECTION",
+    "CONTEXT_GOAL_SELECTION",
+    "EXPERT_ROUTING",
+    "MATCHING_CRITERIA",
+    "NEUTRAL_ASSIGNMENT_SUMMARY"
+  ],
+  "prohibitedUses": [
+    "DIAGNOSIS",
+    "MEDICAL_CAUSALITY",
+    "LEGAL_ADVICE",
+    "COMPLIANCE_DECISION",
+    "CE_CONCLUSION",
+    "EXPOSURE_LIMIT_CONCLUSION",
+    "SAFE_UNSAFE_DECLARATION",
+    "SEVESO_COMPLIANCE_CONCLUSION",
+    "PRESCRIBED_MEDICAL_CAPACITY"
+  ]
+}

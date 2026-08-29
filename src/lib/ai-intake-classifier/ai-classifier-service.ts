@@ -10,7 +10,7 @@ import { parseAIClassifierOutput } from './ai-classifier-validation'
 import { OpenAIAIClassifier } from './openai-ai-classifier'
 
 const DEFAULT_MODEL = 'gpt-5.6-sol'
-const DEFAULT_TIMEOUT_MS = 4_000
+const DEFAULT_TIMEOUT_MS = 12_000
 export const AI_INTAKE_MAX_INPUT_CHARACTERS = 2_000
 
 function configuredTimeout(value: string | undefined): number {

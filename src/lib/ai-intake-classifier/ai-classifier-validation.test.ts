@@ -3,6 +3,7 @@ import {
   AI_CLASSIFIER_OUTPUT_JSON_SCHEMA,
   parseAIClassifierOutput,
 } from './ai-classifier-validation'
+import { emptyCaseUnderstanding } from './case-understanding-contract'
 
 describe('AI Intake Classifier-outputvalidatie', () => {
   it('accepteert uitsluitend het vaste structured-outputcontract', () => {
@@ -75,6 +76,28 @@ describe('AI Intake Classifier-outputvalidatie', () => {
     expect(AI_CLASSIFIER_OUTPUT_JSON_SCHEMA.properties.summary).toEqual({
       type: 'string',
     })
+    expect(AI_CLASSIFIER_OUTPUT_JSON_SCHEMA.required).toContain('caseUnderstanding')
+    expect(AI_CLASSIFIER_OUTPUT_JSON_SCHEMA.properties.caseUnderstanding).toMatchObject({
+      type: 'object',
+      additionalProperties: false,
+    })
+  })
+
+  it('behoudt hypotheses expliciet en promoveert ze niet tot feiten', () => {
+    const output = parseAIClassifierOutput({
+      summary: 'U wilt weten welke ondersteuning past bij een gemeld signaal.',
+      primarySubject: 'UNKNOWN', secondarySubjects: [], confidence: 'MEDIUM', alternatives: [],
+      caseUnderstanding: {
+        ...emptyCaseUnderstanding(),
+        recentChanges: {
+          value: ['De installatieveroudering veroorzaakt de lekkage'],
+          evidence: ['De technische dienst vermoedt veroudering'],
+          confidence: 0.55,
+          status: 'HYPOTHESIS',
+        },
+      },
+    })
+    expect(output.caseUnderstanding?.recentChanges.status).toBe('HYPOTHESIS')
   })
 
   it('weigert een ontbrekende, lege of te lange samenvatting server-side', () => {

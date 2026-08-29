@@ -129,6 +129,7 @@ export function serializeAIClassifierOutput(
     secondarySubjects: [...classification.secondarySubjects],
     confidence: classification.confidence,
     alternatives: [...classification.alternatives],
+    ...(classification.caseUnderstanding ? { caseUnderstanding: classification.caseUnderstanding } : {}),
   }
 }
 

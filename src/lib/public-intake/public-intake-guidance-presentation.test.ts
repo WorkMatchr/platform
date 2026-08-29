@@ -48,18 +48,11 @@ describe('centrale vakdisciplinelabels', () => {
       priority: 'PRIMARY',
       capabilityCodes: ['ergonoom'],
     })
-    expect(presentation.additionalProfessionalRequirements).toEqual([
-      expect.objectContaining({
-        label: 'Arbeidsdeskundige',
-        capabilityCodes: ['arbeidsdeskundige'],
-      }),
-    ])
-    expect(presentation.possibleProfessionalRequirements).toEqual([
-      expect.objectContaining({
-        label: 'Hoger Veiligheidskundige (HVK)',
-        capabilityCodes: ['hogere-veiligheidskundige'],
-      }),
-    ])
+    // Keep this downstream presentation assertion aligned with the canonical
+    // guidance-engine regression: the described tillift question routes to an
+    // ergonomist only unless the user provides additional context.
+    expect(presentation.additionalProfessionalRequirements).toEqual([])
+    expect(presentation.possibleProfessionalRequirements).toEqual([])
     expect(JSON.stringify(presentation)).not.toMatch(/RI&E-deskundige/i)
   })
 })

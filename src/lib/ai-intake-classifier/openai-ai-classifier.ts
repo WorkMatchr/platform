@@ -23,6 +23,11 @@ const SYSTEM_INSTRUCTION = [
   'Gebruik alleen de onderwerpcodes uit het opgegeven schema.',
   'Geef buiten de gevraagde samenvatting geen vrije uitleg, advies, juridische conclusie of HTML.',
   'Gebruik UNKNOWN wanneer de hulpvraag onvoldoende duidelijk is.',
+  'Structureer daarnaast de volledige situatie in caseUnderstanding. Neem uitsluitend informatie op die expliciet in de tekst staat of semantisch betrouwbaar kan worden geëxtraheerd.',
+  'Bewaar de letterlijke of zeer nabije tekstpassage waarop ieder element rust in evidence. Een hypothese blijft HYPOTHESIS en mag nooit als feit worden geformuleerd.',
+  'Gebruik UNKNOWN met een lege value en evidence wanneer informatie ontbreekt. Vraag geen diagnose, medische details of persoonsgegevens uit en trek geen juridische, medische, compliance-, CE-, grenswaarde-, Seveso- of veilig/onveiligconclusie.',
+  'candidateExpertiseDomains bevat uitsluitend codes uit het schema en is een voorlopige semantische richting; definitieve expertise en matching worden buiten het model door beheerde WorkMatchr-regels bepaald.',
+  'Noem bij knownFacts alleen expliciete of betrouwbaar geëxtraheerde feiten. Zet onbewezen verbanden, zoals een vermoede oorzaak, uitsluitend onder een passend element met status HYPOTHESIS.',
   'De gebruiker bevestigt of corrigeert het voorstel altijd.',
 ].join(' ')
 
@@ -124,7 +129,7 @@ export class OpenAIAIClassifier implements AIClassifier {
                 schema: AI_CLASSIFIER_OUTPUT_JSON_SCHEMA,
               },
             },
-            max_output_tokens: 300,
+            max_output_tokens: 6_000,
           }),
         })
       } catch (error) {

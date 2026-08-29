@@ -720,3 +720,5 @@ erDiagram
 `KnowledgeMethod` aggregeert bestaande gestructureerde kennisobjecten via geordende XOR-componenten. Methode-, component- en evidencerecords zijn immutable; evidence verwijst rechtstreeks naar full-source-blokken en iedere component moet bij transactiesluiting bewijs hebben.
 
 `KnowledgeSectorApplicability` hergebruikt de centrale sectortaxonomie en koppelt een sector aan exact één onderwerp of claim. De koppeling is append-only; bestaande kennis, sectoren en historie worden niet herschreven.
+
+`PublicIntakeDraft` bewaart voor nieuwe classificaties een versiegestuurde Case Understanding-snapshot en het daaruit afgeleide matching-ready profiel. Beide zijn tenantloze conceptprojecties voor de publieke intake, worden server-side gevalideerd en bevatten uitsluitend beheerde matchingcodes. Claims en regels die deze projecties sturen moeten expliciet de gebruiksscope `INTAKE_ROUTING_KNOWLEDGE` dragen.

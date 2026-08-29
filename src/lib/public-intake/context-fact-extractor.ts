@@ -1,6 +1,8 @@
 import type { AIClassifierOutput } from '@/lib/ai-intake-classifier/ai-classifier-contract'
 import type { PublicIntakeAnswerView } from './public-intake-types'
 import type { ExtractedFact, KnowledgeConceptCandidate } from './context-question-engine-types'
+import { caseUnderstandingFacts } from './case-understanding'
+import type { CaseUnderstanding } from '@/lib/ai-intake-classifier/case-understanding-contract'
 
 function normalized(input: string) {
   return input.trim().toLocaleLowerCase('nl-NL')
@@ -18,9 +20,10 @@ function uniqueFacts(facts: readonly ExtractedFact[]) {
 export function extractPublicIntakeFacts(input: {
   originalInput: string
   answers: readonly PublicIntakeAnswerView[]
+  caseUnderstanding?: CaseUnderstanding | null
 }): readonly ExtractedFact[] {
   const text = normalized(input.originalInput)
-  const facts: ExtractedFact[] = []
+  const facts: ExtractedFact[] = [...caseUnderstandingFacts(input.caseUnderstanding ?? null)]
   const count = text.match(/\b(\d{1,6})\s+(?:medewerkers|werknemers|personen|chauffeurs)\b/)
   if (count) {
     const countIsAffected = /(?:last|klacht|hoofdpijn|rug|betrokken|blootgesteld|ongeval)/.test(text)
@@ -98,6 +101,15 @@ export function deriveKnowledgeConceptCandidates(input: {
   facts: readonly ExtractedFact[]
 }): readonly KnowledgeConceptCandidate[] {
   const concepts: KnowledgeConceptCandidate[] = []
+  for (const domain of input.classification?.caseUnderstanding?.candidateExpertiseDomains.value ?? []) {
+    if (domain === 'UNKNOWN') continue
+    concepts.push(Object.freeze({
+      code: domain,
+      confidence: input.classification?.caseUnderstanding?.candidateExpertiseDomains.confidence ?? 0,
+      source: 'CLASSIFIER',
+      supportingKnowledgeIds: Object.freeze([]),
+    }))
+  }
   if (input.classification && input.classification.primarySubject !== 'UNKNOWN') {
     concepts.push(Object.freeze({ code: input.classification.primarySubject, confidence: input.classification.confidence === 'HIGH' ? 1 : 0.75, source: 'CLASSIFIER', supportingKnowledgeIds: Object.freeze([]) }))
   }

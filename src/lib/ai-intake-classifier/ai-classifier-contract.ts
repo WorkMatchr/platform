@@ -1,3 +1,5 @@
+import type { CaseUnderstanding } from './case-understanding-contract'
+
 export const AI_INTAKE_SUBJECT_CODES = [
   'RIE',
   'INCIDENT',
@@ -27,7 +29,7 @@ export const AI_CLASSIFIER_FALLBACK_REASONS = [
 ] as const
 
 export const AI_INTAKE_CLASSIFIER_VERSION =
-  'ai-intake-classifier/1.1.1' as const
+  'ai-intake-classifier/2.0.0' as const
 
 export type AIIntakeSubjectCode =
   (typeof AI_INTAKE_SUBJECT_CODES)[number]
@@ -48,6 +50,7 @@ export type AIClassifierOutput = Readonly<{
   secondarySubjects: readonly AIIntakeSubjectCode[]
   confidence: AIIntakeConfidence
   alternatives: readonly AIIntakeSubjectCode[]
+  caseUnderstanding?: CaseUnderstanding
 }>
 
 export interface AIClassifier {

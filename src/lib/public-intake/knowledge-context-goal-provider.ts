@@ -7,11 +7,13 @@ import type {
   KnowledgeConceptCandidate,
   KnowledgeEvidence,
 } from './context-question-engine-types'
+import { INTAKE_ROUTING_KNOWLEDGE_SCOPE } from './case-understanding'
 
 type KnowledgeGroundingReader = Pick<Prisma.TransactionClient, 'knowledgeClaim' | 'knowledgeRule'>
 
 const ruleGoalSchema = z.object({
   kind: z.literal('CONTEXT_GOAL'),
+  scope: z.literal(INTAKE_ROUTING_KNOWLEDGE_SCOPE),
   code: z.string().regex(/^[A-Z0-9_]{2,120}$/),
   questionKey: z.string().regex(/^context_[a-z0-9_]{2,90}$/),
   purpose: z.string().min(10).max(500),
@@ -90,6 +92,7 @@ export async function loadKnowledgeGroundedContextGoals(input: {
       temporalStatus: 'CURRENT',
       sourceControlStatus: 'CONTROL_COMPLETE',
       accessTier: 'PUBLIC_BASIC',
+      usageScopes: { has: INTAKE_ROUTING_KNOWLEDGE_SCOPE },
       topic: { status: 'ACTIVE' },
       citations: { some: { supportType: { in: ['DIRECT_SUPPORT', 'PARTIAL_SUPPORT', 'CONTEXT'] } } },
     },
@@ -114,6 +117,7 @@ export async function loadKnowledgeGroundedContextGoals(input: {
       publicationStatus: 'PUBLISHED',
       validationStatus: 'VALIDATED',
       accessTier: 'PUBLIC_BASIC',
+      usageScopes: { has: INTAKE_ROUTING_KNOWLEDGE_SCOPE },
     },
     select: { id: true, outputSchema: true },
     take: 50,

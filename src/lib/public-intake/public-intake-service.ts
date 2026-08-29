@@ -40,6 +40,7 @@ import {
   resolveSharedAssignmentContext,
   SHARED_CONTEXT_SECTOR_QUESTION_KEY,
 } from './shared-assignment-context'
+import { matchingReadyProfileSchema, parseCaseUnderstanding } from './case-understanding'
 
 type Transaction = Prisma.TransactionClient
 
@@ -69,6 +70,8 @@ const publicDraftSelect = {
   startedAt: true,
   lastInteractionAt: true,
   expiresAt: true,
+  caseUnderstandingJson: true,
+  matchingProfileJson: true,
   answers: {
     orderBy: { createdAt: 'asc' as const },
     select: {
@@ -260,7 +263,11 @@ async function loadPublicView(
     where: { id: draftId },
     select: publicDraftSelect,
   })
-  const { id, answers, contextQuestions, knowledgeContextId, knowledgeContextVersion, knowledgeSourceRoute, knowledgeSuggestedCategory, ...draftView } = draft
+  const {
+    id, answers, contextQuestions, knowledgeContextId, knowledgeContextVersion,
+    knowledgeSourceRoute, knowledgeSuggestedCategory, caseUnderstandingJson,
+    matchingProfileJson, ...draftView
+  } = draft
   const currentContext = resolveActiveKnowledgeContext(knowledgeContextId)
   const sectorOptions = draftView.flowVersion === PUBLIC_HELP_REQUEST_INTAKE_V2_FLOW_VERSION
     ? await getSharedSectorOptions(transaction)
@@ -289,6 +296,8 @@ async function loadPublicView(
     contextQuestions: contextQuestions.map((question) =>
       toPublicIntakeContextQuestionView(question, sectorOptions),
     ),
+    caseUnderstanding: caseUnderstandingJson ? parseCaseUnderstanding(caseUnderstandingJson) : null,
+    matchingProfile: matchingProfileJson ? matchingReadyProfileSchema.parse(matchingProfileJson) : null,
   }
 
   const sharedAssignmentContext = resolveSharedAssignmentContext({

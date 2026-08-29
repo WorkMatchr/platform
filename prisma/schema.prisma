@@ -2640,6 +2640,10 @@ model PublicIntakeDraft {
   linkedAt                   DateTime?                     @db.Timestamptz(3)
   createdAt                  DateTime                      @default(now()) @db.Timestamptz(3)
   updatedAt                  DateTime                      @updatedAt @db.Timestamptz(3)
+  caseUnderstandingVersion   String?                       @db.VarChar(100)
+  caseUnderstandingJson      Json?
+  matchingProfileJson        Json?
+  caseUnderstandingUpdatedAt DateTime?                     @db.Timestamptz(3)
   session                    PublicIntakeSession?
   answers                    PublicIntakeAnswer[]
   contextQuestions           PublicIntakeContextQuestion[]
@@ -4839,6 +4843,7 @@ model KnowledgeClaim {
   publicationStatus       KnowledgePublicationStatus           @default(DRAFT)
   confidenceLevel         KnowledgeConfidenceLevel             @default(UNKNOWN)
   accessTier              KnowledgeAccessTier                  @default(INTERNAL_REVIEWER)
+  usageScopes             String[]                             @default([]) @db.VarChar(120)
   copyrightCheckPassed    Boolean                              @default(false)
   nextReviewAt            DateTime?                            @db.Timestamptz(3)
   controlRisk             KnowledgeControlRisk                 @default(MEDIUM)
@@ -4965,6 +4970,7 @@ model KnowledgeRule {
   validationStatus  KnowledgeValidationStatus  @default(UNVALIDATED)
   publicationStatus KnowledgePublicationStatus @default(DRAFT)
   accessTier        KnowledgeAccessTier        @default(INTERNAL_REVIEWER)
+  usageScopes       String[]                   @default([]) @db.VarChar(120)
   createdAt         DateTime                   @default(now()) @db.Timestamptz(3)
   updatedAt         DateTime                   @updatedAt @db.Timestamptz(3)
   procedureSteps    KnowledgeProcedureStep[]

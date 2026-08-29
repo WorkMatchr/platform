@@ -9,6 +9,8 @@ import type { AIClassifierOutput } from '@/lib/ai-intake-classifier/ai-classifie
 import type { PublicIntakeGuidanceHandoff } from './public-intake-guidance-handoff'
 import type { KnowledgeContextId } from '@/content/knowledge/knowledge-contexts'
 import type { PersistedContextQuestionPlan } from './context-question-engine-types'
+import type { CaseUnderstanding } from '@/lib/ai-intake-classifier/case-understanding-contract'
+import type { MatchingReadyProfile } from './case-understanding'
 
 export type PublicIntakeAnswerView = {
   questionKey: string
@@ -69,6 +71,8 @@ export type PublicIntakeDraftView = {
   guidance: PublicIntakeGuidanceHandoff
   aiClassification?: AIClassifierOutput | null
   aiClassificationProtection?: 'RATE_LIMITED' | 'PROTECTION_UNAVAILABLE'
+  caseUnderstanding?: CaseUnderstanding | null
+  matchingProfile?: MatchingReadyProfile | null
   adviceDossier?: {
     id: string
     dossierCode: string

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { classifyAIIntakeSafely } from './ai-classifier-service'
+import { emptyCaseUnderstanding } from './case-understanding-contract'
 import { OpenAIAIClassifier } from './openai-ai-classifier'
 
 const fictionalHelpRequest =
@@ -57,6 +58,15 @@ describe('OpenAI AI Intake Classifier', () => {
             secondarySubjects: [],
             confidence,
             alternatives: confidence === 'MEDIUM' ? ['INCIDENT'] : [],
+            caseUnderstanding: {
+              ...emptyCaseUnderstanding(),
+              userGoal: {
+                value: ['Veilig werken met brandstof organiseren'],
+                evidence: [fictionalHelpRequest],
+                confidence: 1,
+                status: 'EXPLICIT_INPUT',
+              },
+            },
           })
         },
       )
@@ -66,6 +76,7 @@ describe('OpenAI AI Intake Classifier', () => {
       })
 
       expect(result.confidence).toBe(confidence)
+      expect(result.caseUnderstanding?.userGoal.status).toBe('EXPLICIT_INPUT')
       expect(fetchImplementation).toHaveBeenCalledOnce()
 
       const request = fetchImplementation.mock.calls[0]?.[1]
@@ -82,6 +93,8 @@ describe('OpenAI AI Intake Classifier', () => {
         'Begin de samenvatting rechtstreeks met "U wilt weten"',
       )
       expect(body.input[0]?.content).toContain('maximaal twee zinnen')
+      expect(body.input[0]?.content).toContain('volledige situatie in caseUnderstanding')
+      expect(body.input[0]?.content).toContain('Een hypothese blijft HYPOTHESIS')
       expect(body.input[0]?.content).toContain(
         'laat bijzaken weg wanneer die niet nodig zijn om de kern te begrijpen',
       )

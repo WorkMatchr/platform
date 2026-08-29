@@ -159,3 +159,34 @@ dezelfde generieke provider verwerkt.
 
 De schema-uitbreiding is additief. Production wordt in deze workset niet
 gemigreerd of gewijzigd.
+
+## Case Understanding en expert-routing v1
+
+De menselijke beoordeling van pakket
+`CASE_UNDERSTANDING_10_SCENARIOS_REVIEW_V2` is uitsluitend goedgekeurd voor de
+expliciete gebruiksscope `INTAKE_ROUTING_KNOWLEDGE`. Claims en regels met deze
+scope mogen context herkennen, ontbrekende informatie selecteren, een neutrale
+opdrachtsamenvatting vormen en beheerde expertise-/matchingcriteria bepalen.
+Zij mogen niet worden gebruikt voor diagnose, medische causaliteit, juridisch
+advies, compliance- of CE-besluiten, grenswaardeconclusies, veilig/onveilig-
+verklaringen, Seveso-compliance of medische belastbaarheidsvoorschriften.
+
+De bestaande ene begrensde OpenAI-classificatiecall levert daarnaast een
+structured Case Understanding. Ieder element bevat `value`, `evidence`,
+`confidence` en een status die expliciete invoer, betrouwbare extractie,
+gebruikersbevestiging, hypothese en onbekend onderscheidt. Hypothesen lossen
+nooit een Context Goal op en sturen nooit rechtstreeks matching.
+
+Na semantische structurering selecteert de Knowledge Engine declaratief nul tot
+vijf ontbrekende Context Goals. Alleen beheerde, gepubliceerde en gevalideerde
+regels en claims met dezelfde gebruiksscope kunnen daarna een
+`matching-ready-profile/1.0.0` leveren. AI-vrije tekst kan geen definitieve
+taxonomiecode creëren. Het profiel bevat primaire en conditionele expertise,
+vereiste specialismen, opdrachttype, sectorervaring, risico-, locatie- en
+urgentiecontext, multidisciplinariteit, beheerde matchingcodes en volledige
+knowledgeprovenance.
+
+`PROCESS_SAFETY_MAJOR_HAZARDS` is een cross-discipline specialisme zonder
+automatische koppeling aan HVK. Voor majeure-gevarencasuïstiek zijn een passende
+professionele achtergrond, dit specialisme én aantoonbare relevante ervaring
+samen vereist.

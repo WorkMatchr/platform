@@ -14,11 +14,12 @@ describe('Knowledge Engine Context Goal provider', () => {
     })
     expect(findClaims).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({
       publicationStatus: 'PUBLISHED', validationStatus: 'VALIDATED', temporalStatus: 'CURRENT',
-      sourceControlStatus: 'CONTROL_COMPLETE', accessTier: 'PUBLIC_BASIC',
+      sourceControlStatus: 'CONTROL_COMPLETE', accessTier: 'PUBLIC_BASIC', usageScopes: { has: 'INTAKE_ROUTING_KNOWLEDGE' },
     }) }))
-    expect(findRules).toHaveBeenCalledWith(expect.objectContaining({ where: {
+    expect(findRules).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({
       ruleType: 'ROUTING_RULE', publicationStatus: 'PUBLISHED', validationStatus: 'VALIDATED', accessTier: 'PUBLIC_BASIC',
-    } }))
+      usageScopes: { has: 'INTAKE_ROUTING_KNOWLEDGE' },
+    }) }))
   })
 
   it('maakt een nieuw Context Goal data-gedreven beschikbaar zonder topic-codepad', async () => {
@@ -28,7 +29,7 @@ describe('Knowledge Engine Context Goal provider', () => {
         knowledgeRule: { findMany: vi.fn().mockResolvedValue([{
           id: '11111111-1111-4111-8111-111111111201',
           outputSchema: {
-            kind: 'CONTEXT_GOAL', code: 'NOISE_WORK_PATTERN', questionKey: 'context_noise_work_pattern',
+            kind: 'CONTEXT_GOAL', scope: 'INTAKE_ROUTING_KNOWLEDGE', code: 'NOISE_WORK_PATTERN', questionKey: 'context_noise_work_pattern',
             purpose: 'Het relevante werkpatroon bij geluid onderscheiden.',
             text: 'Tijdens welke werkzaamheden speelt het geluid vooral?', answerType: 'OPTION',
             options: [{ code: 'MACHINE_USE', label: 'Tijdens machinegebruik' }, { code: 'OTHER', label: 'Tijdens ander werk' }],
@@ -56,7 +57,7 @@ describe('Knowledge Engine Context Goal provider', () => {
         knowledgeRule: { findMany: vi.fn().mockResolvedValue([{
           id: '11111111-1111-4111-8111-111111111201',
           outputSchema: {
-            kind: 'CONTEXT_GOAL', code: 'UNSUPPORTED', questionKey: 'context_unsupported',
+            kind: 'CONTEXT_GOAL', scope: 'INTAKE_ROUTING_KNOWLEDGE', code: 'UNSUPPORTED', questionKey: 'context_unsupported',
             purpose: 'Deze vraag mist geldige actuele kennisgronding.', text: 'Deze vraag mag niet worden gesteld.',
             answerType: 'OPTION', options: [{ code: 'YES', label: 'Ja' }], category: 'WORK',
             relevantConceptCodes: ['NOISE'], satisfiesFactCodes: ['UNSUPPORTED'], equivalentGoalCodes: [],

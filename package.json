@@ -59,7 +59,8 @@
     "knowledge:import": "tsx scripts/knowledge-import.ts import",
     "knowledge:correct": "tsx scripts/knowledge-import.ts correct",
     "knowledge:attach-preview": "tsx scripts/knowledge-import.ts attach-preview",
-    "knowledge:attach": "tsx scripts/knowledge-import.ts attach"
+    "knowledge:attach": "tsx scripts/knowledge-import.ts attach",
+    "knowledge:publish-case-understanding:preview": "tsx scripts/publish-case-understanding-knowledge-preview.ts"
   },
   "dependencies": {
     "@better-auth/prisma-adapter": "^1.6.23",

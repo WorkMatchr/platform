@@ -4,6 +4,10 @@ import {
   AI_INTAKE_SUBJECT_CODES,
   type AIClassifierOutput,
 } from './ai-classifier-contract'
+import {
+  CASE_UNDERSTANDING_JSON_SCHEMA,
+  caseUnderstandingSchema,
+} from './case-understanding-contract'
 
 const subjectCodeSchema = z.enum(AI_INTAKE_SUBJECT_CODES)
 
@@ -14,6 +18,7 @@ const aiClassifierOutputSchema = z
     secondarySubjects: z.array(subjectCodeSchema).max(5),
     confidence: z.enum(AI_INTAKE_CONFIDENCE_LEVELS),
     alternatives: z.array(subjectCodeSchema).max(5),
+    caseUnderstanding: caseUnderstandingSchema.optional(),
   })
   .strict()
   .superRefine((value, context) => {
@@ -62,6 +67,7 @@ export const AI_CLASSIFIER_OUTPUT_JSON_SCHEMA = Object.freeze({
       },
       maxItems: 5,
     },
+    caseUnderstanding: CASE_UNDERSTANDING_JSON_SCHEMA,
   },
   required: [
     'summary',
@@ -69,6 +75,7 @@ export const AI_CLASSIFIER_OUTPUT_JSON_SCHEMA = Object.freeze({
     'secondarySubjects',
     'confidence',
     'alternatives',
+    'caseUnderstanding',
   ],
 } as const)
 
@@ -83,5 +90,6 @@ export function parseAIClassifierOutput(
     secondarySubjects: Object.freeze([...parsed.secondarySubjects]),
     confidence: parsed.confidence,
     alternatives: Object.freeze([...parsed.alternatives]),
+    ...(parsed.caseUnderstanding ? { caseUnderstanding: Object.freeze(parsed.caseUnderstanding) } : {}),
   })
 }

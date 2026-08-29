@@ -1,5 +1,5 @@
 import type { AIClassifierOutput } from '@/lib/ai-intake-classifier/ai-classifier-contract'
-import type { Prisma, PublicIntakeAnswerType } from '@/generated/prisma/client'
+import { Prisma, type PublicIntakeAnswerType } from '@/generated/prisma/client'
 import { getPrisma } from '@/lib/prisma'
 import type { PublicIntakeAnswerView, PublicIntakeContextQuestionView } from './public-intake-types'
 import {
@@ -11,6 +11,9 @@ import {
 import { deriveKnowledgeConceptCandidates, extractPublicIntakeFacts } from './context-fact-extractor'
 import { loadKnowledgeGroundedContextGoals } from './knowledge-context-goal-provider'
 import { planNextContextQuestion } from './context-question-engine'
+import { buildKnowledgeGroundedMatchingProfile } from './knowledge-expert-routing-provider'
+import { CASE_UNDERSTANDING_VERSION } from './case-understanding'
+import { emptyCaseUnderstanding } from '@/lib/ai-intake-classifier/case-understanding-contract'
 import {
   KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION,
   parsePersistedContextQuestionPlan,
@@ -50,8 +53,9 @@ export function toPublicIntakeContextQuestionView(question: {
 }
 
 /**
- * Persists only catalog-backed question snapshots. It never stores prompts or
- * model output, and is safe to repeat after a concurrent request or refresh.
+ * Persists catalog-backed question snapshots plus the strictly validated
+ * semantic understanding and managed matching profile. It never stores a
+ * prompt or unvalidated free model response and is safe to repeat.
  */
 export async function ensurePublicIntakeAIContextQuestions(input: {
   draftId: string
@@ -62,6 +66,8 @@ export async function ensurePublicIntakeAIContextQuestions(input: {
   mode: IntakeMode
 }): Promise<readonly PublicIntakeContextQuestionView[]> {
   if (!input.classification || input.classification.confidence === 'LOW') return []
+  const classification = input.classification
+  const understanding = classification.caseUnderstanding ?? emptyCaseUnderstanding()
 
   return getPrisma().$transaction(async (transaction) => {
     const sectorOptions = await getSharedSectorOptions(transaction)
@@ -89,12 +95,16 @@ export async function ensurePublicIntakeAIContextQuestions(input: {
     const answeredQuestionKeys = input.answers.map((answer) => answer.questionKey)
     const unansweredExisting = existing.some((question) => !answeredQuestionKeys.includes(question.questionKey))
     if (unansweredExisting) return existing.map((question) => toPublicIntakeContextQuestionView(question, sectorOptions))
-    const facts = [...extractPublicIntakeFacts({ originalInput: input.originalInput, answers: input.answers })]
+    const facts = [...extractPublicIntakeFacts({
+      originalInput: input.originalInput,
+      answers: input.answers,
+      caseUnderstanding: understanding,
+    })]
     const inferredSector = inferSharedSectorCode(input.originalInput, sectorOptions)
     if (inferredSector && !facts.some((fact) => fact.code === 'SECTOR')) {
       facts.push(Object.freeze({ code: 'SECTOR', value: inferredSector, status: 'RELIABLE_EXTRACTION' as const, confidence: 0.95 }))
     }
-    const initialConcepts = deriveKnowledgeConceptCandidates({ originalInput: input.originalInput, classification: input.classification, facts })
+    const initialConcepts = deriveKnowledgeConceptCandidates({ originalInput: input.originalInput, classification, facts })
     const grounded = await loadKnowledgeGroundedContextGoals({
       database: transaction,
       concepts: initialConcepts,
@@ -119,6 +129,25 @@ export async function ensurePublicIntakeAIContextQuestions(input: {
           }))
         }
       }
+    }
+    if (classification.caseUnderstanding) {
+      const matchingProfile = await buildKnowledgeGroundedMatchingProfile({
+        database: transaction,
+        understanding,
+        facts,
+        concepts,
+      })
+      await transaction.publicIntakeDraft.update({
+        where: { id: input.draftId },
+        data: {
+          caseUnderstandingVersion: CASE_UNDERSTANDING_VERSION,
+          caseUnderstandingJson: JSON.parse(JSON.stringify(understanding)) as Prisma.InputJsonValue,
+          matchingProfileJson: matchingProfile
+            ? JSON.parse(JSON.stringify(matchingProfile)) as Prisma.InputJsonValue
+            : Prisma.DbNull,
+          caseUnderstandingUpdatedAt: new Date(),
+        },
+      })
     }
     const plan = planNextContextQuestion({
       mode: input.mode,

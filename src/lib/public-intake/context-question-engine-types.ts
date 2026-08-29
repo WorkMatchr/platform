@@ -21,6 +21,7 @@ export type ExtractedFact = Readonly<{
   status: ExtractedFactStatus
   confidence: number
   sourceQuestionKey?: string
+  evidence?: readonly string[]
 }>
 
 export type KnowledgeConceptCandidate = Readonly<{
