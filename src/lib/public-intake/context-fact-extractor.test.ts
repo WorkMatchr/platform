@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { emptyCaseUnderstanding } from '@/lib/ai-intake-classifier/case-understanding-contract'
 import { deriveKnowledgeConceptCandidates, extractPublicIntakeFacts } from './context-fact-extractor'
 
 const codes = (input: string) => extractPublicIntakeFacts({ originalInput: input, answers: [] })
@@ -45,5 +46,20 @@ describe('public intake fact extraction', () => {
     const concepts = deriveKnowledgeConceptCandidates({ originalInput: '', classification: null, facts })
     expect(concepts.map((item) => item.code)).toEqual(expect.arrayContaining(['HEALTH_COMPLAINT', 'WORK_EQUIPMENT', 'EXPOSURE']))
     expect(concepts.map((item) => item.code)).not.toContain('DIAGNOSIS')
+  })
+
+  it('activeert de RI&E-vraagroute niet op alleen een classifierlabel zonder expliciete RI&E-context', () => {
+    const classification = {
+      summary: 'Een gerichte machineveiligheidsbeoordeling.',
+      primarySubject: 'RIE' as const,
+      secondarySubjects: [],
+      confidence: 'HIGH' as const,
+      alternatives: [],
+      caseUnderstanding: emptyCaseUnderstanding(),
+    }
+    const facts = codes('Wie kan onze aangepaste productiemachine beoordelen?')
+
+    expect(deriveKnowledgeConceptCandidates({ originalInput: '', classification, facts }).map((item) => item.code))
+      .not.toContain('RIE')
   })
 })

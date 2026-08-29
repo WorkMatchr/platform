@@ -101,6 +101,7 @@ export function deriveKnowledgeConceptCandidates(input: {
   facts: readonly ExtractedFact[]
 }): readonly KnowledgeConceptCandidate[] {
   const concepts: KnowledgeConceptCandidate[] = []
+  const fact = (code: string) => input.facts.find((item) => item.code === code)
   for (const domain of input.classification?.caseUnderstanding?.candidateExpertiseDomains.value ?? []) {
     if (domain === 'UNKNOWN') continue
     concepts.push(Object.freeze({
@@ -110,10 +111,13 @@ export function deriveKnowledgeConceptCandidates(input: {
       supportingKnowledgeIds: Object.freeze([]),
     }))
   }
-  if (input.classification && input.classification.primarySubject !== 'UNKNOWN') {
+  if (
+    input.classification
+    && input.classification.primarySubject !== 'UNKNOWN'
+    && (input.classification.primarySubject !== 'RIE' || fact('RIE_MENTIONED'))
+  ) {
     concepts.push(Object.freeze({ code: input.classification.primarySubject, confidence: input.classification.confidence === 'HIGH' ? 1 : 0.75, source: 'CLASSIFIER', supportingKnowledgeIds: Object.freeze([]) }))
   }
-  const fact = (code: string) => input.facts.find((item) => item.code === code)
   if (fact('HEALTH_COMPLAINT')) concepts.push(Object.freeze({ code: 'HEALTH_COMPLAINT', confidence: 0.95, source: 'EXPLICIT_INPUT', supportingKnowledgeIds: Object.freeze([]) }))
   if (fact('EQUIPMENT')) concepts.push(Object.freeze({ code: 'WORK_EQUIPMENT', confidence: 0.95, source: 'EXPLICIT_INPUT', supportingKnowledgeIds: Object.freeze([]) }))
   if (fact('EXPOSURE_SIGNAL') || fact('EQUIPMENT')) concepts.push(Object.freeze({ code: 'EXPOSURE', confidence: 0.8, source: 'EXPLICIT_INPUT', supportingKnowledgeIds: Object.freeze([]) }))
