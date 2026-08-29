@@ -8,11 +8,12 @@ describe('neutrale matching-ready opdrachtsamenvatting', () => {
       ...emptyCaseUnderstanding(),
       activities: { value: ['Lassen en slijpen.'], evidence: ['Bij het lassen en slijpen'], confidence: 1, status: 'EXPLICIT_INPUT' as const },
       peopleAffected: { value: ['Meerdere medewerkers.'], evidence: ['medewerkers'], confidence: 1, status: 'EXPLICIT_INPUT' as const },
+      locationContext: { value: ['In de werkplaats.'], evidence: ['in onze werkplaats'], confidence: 1, status: 'EXPLICIT_INPUT' as const },
       timePattern: { value: ['Regelmatig.'], evidence: ['regelmatig'], confidence: 1, status: 'EXPLICIT_INPUT' as const },
     }
 
     expect(caseUnderstandingFacts(understanding).map((fact) => fact.code)).toEqual(expect.arrayContaining([
-      'WORK_ACTIVITY', 'AFFECTED_SCOPE', 'DURATION_FREQUENCY',
+      'WORK_ACTIVITY', 'AFFECTED_SCOPE', 'LOCATION_PATTERN', 'DURATION_FREQUENCY',
     ]))
   })
 

@@ -50,6 +50,7 @@ const factCodeByElement: Readonly<Record<(typeof CASE_UNDERSTANDING_ELEMENT_KEYS
 const sharedGoalFactCodeByElement: Partial<Readonly<Record<(typeof CASE_UNDERSTANDING_ELEMENT_KEYS)[number], string>>> = {
   activities: 'WORK_ACTIVITY',
   peopleAffected: 'AFFECTED_SCOPE',
+  locationContext: 'LOCATION_PATTERN',
   timePattern: 'DURATION_FREQUENCY',
   recentChanges: 'WORK_ENVIRONMENT_CHANGE',
 }
