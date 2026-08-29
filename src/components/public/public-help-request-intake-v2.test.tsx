@@ -52,7 +52,7 @@ describe('AI Hulpvraag Intake v2', () => {
       { questionKey: 'context_employee_count', value: '11 tot en met 50 medewerkers' },
       { questionKey: 'context_location_count', value: 'Eén locatie' },
       { questionKey: 'context_preferred_start', value: 'Binnen drie maanden' },
-      { questionKey: 'context_affected_scope', value: 'Bij meerdere medewerkers' },
+      { questionKey: 'context_existing_investigation', value: 'Nee' },
     ].map(({ questionKey, value }) => ({
       questionKey, questionVersion: 1, answerType: 'OPTION' as const,
       disposition: 'ANSWERED' as const, source: 'AI_CONTEXT_PLANNER' as const,
