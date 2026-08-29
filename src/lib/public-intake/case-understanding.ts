@@ -47,6 +47,13 @@ const factCodeByElement: Readonly<Record<(typeof CASE_UNDERSTANDING_ELEMENT_KEYS
   candidateExpertiseDomains: 'CANDIDATE_EXPERTISE_DOMAINS',
 }
 
+const sharedGoalFactCodeByElement: Partial<Readonly<Record<(typeof CASE_UNDERSTANDING_ELEMENT_KEYS)[number], string>>> = {
+  activities: 'WORK_ACTIVITY',
+  peopleAffected: 'AFFECTED_SCOPE',
+  timePattern: 'DURATION_FREQUENCY',
+  recentChanges: 'WORK_ENVIRONMENT_CHANGE',
+}
+
 export function parseCaseUnderstanding(value: unknown): CaseUnderstanding {
   return caseUnderstandingSchema.parse(value)
 }
@@ -65,6 +72,16 @@ export function caseUnderstandingFacts(understanding: CaseUnderstanding | null):
       confidence: element.confidence,
       evidence: Object.freeze([...element.evidence]),
     }))
+    const sharedGoalFactCode = sharedGoalFactCodeByElement[key]
+    if (sharedGoalFactCode) {
+      facts.push(Object.freeze({
+        code: sharedGoalFactCode,
+        value: Object.freeze([...element.value]),
+        status,
+        confidence: element.confidence,
+        evidence: Object.freeze([...element.evidence]),
+      }))
+    }
     if (key === 'candidateExpertiseDomains') {
       for (const domain of element.value) {
         facts.push(Object.freeze({
