@@ -23,6 +23,15 @@ import {
 
 export const PUBLIC_INTAKE_CONTEXT_QUESTION_TOTAL_LIMIT = 5 as const
 
+export function selectQuestionPlanningConcepts(input: {
+  initialConcepts: readonly import('./context-question-engine-types').KnowledgeConceptCandidate[]
+  knowledgeConcepts: readonly import('./context-question-engine-types').KnowledgeConceptCandidate[]
+}) {
+  // Published rules may advertise the domains in which they can be used, but
+  // that metadata is not evidence that those domains apply to this case.
+  return Object.freeze([...input.initialConcepts])
+}
+
 export function toPublicIntakeContextQuestionView(question: {
   questionKey: string
   catalogVersion: string
@@ -110,9 +119,10 @@ export async function ensurePublicIntakeAIContextQuestions(input: {
       concepts: initialConcepts,
       originalInput: input.originalInput,
     })
-    const concepts = [...new Map(
-      [...initialConcepts, ...grounded.knowledgeConcepts].map((concept) => [concept.code, concept]),
-    ).values()]
+    const concepts = selectQuestionPlanningConcepts({
+      initialConcepts,
+      knowledgeConcepts: grounded.knowledgeConcepts,
+    })
     const goalByQuestionKey = new Map(grounded.goals.map((goal) => [goal.questionKey, goal]))
     for (const answer of input.answers) {
       if (answer.disposition !== 'ANSWERED' || answer.value === null) continue

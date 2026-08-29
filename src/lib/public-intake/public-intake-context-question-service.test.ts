@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@/lib/prisma', () => ({ getPrisma: () => ({ $transaction: mocks.transaction }) }))
 
-import { ensurePublicIntakeAIContextQuestions, toPublicIntakeContextQuestionView } from './public-intake-context-question-service'
+import { ensurePublicIntakeAIContextQuestions, selectQuestionPlanningConcepts, toPublicIntakeContextQuestionView } from './public-intake-context-question-service'
 import { KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION } from './context-question-engine-types'
 
 const classification = {
@@ -41,6 +41,15 @@ describe('public intake context-question persistence', () => {
       providerSectorTaxonomyMap: { findMany: mocks.findSectorMappings },
       knowledgeClaim: { findMany: mocks.findClaims }, knowledgeRule: { findMany: mocks.findRules },
     }))
+  })
+
+  it('behandelt domeinconcepten uit andere gepubliceerde regels niet als casusevidence', () => {
+    const concepts = selectQuestionPlanningConcepts({
+      initialConcepts: [{ code: 'MACHINE_SAFETY', confidence: 1, source: 'EXPLICIT_INPUT', supportingKnowledgeIds: [] }],
+      knowledgeConcepts: [{ code: 'PROCESS_INTEGRITY', confidence: 1, source: 'KNOWLEDGE_TOPIC', supportingKnowledgeIds: ['rule-from-another-domain'] }],
+    })
+
+    expect(concepts.map((concept) => concept.code)).toEqual(['MACHINE_SAFETY'])
   })
 
   it('maps planning provenance and managed sector options to the stable view', () => {
