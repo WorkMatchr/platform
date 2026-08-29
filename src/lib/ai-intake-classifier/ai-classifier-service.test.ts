@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { AIClassifier } from './ai-classifier-contract'
 import {
   AI_INTAKE_MAX_INPUT_CHARACTERS,
+  DEFAULT_AI_INTAKE_TIMEOUT_MS,
+  MAX_AI_INTAKE_TIMEOUT_MS,
   classifyAIIntakeSafely,
   createConfiguredAIClassifier,
 } from './ai-classifier-service'
@@ -14,6 +16,11 @@ afterEach(() => {
 })
 
 describe('veilige AI Intake Classifier-service', () => {
+  it('geeft gestructureerde case-understanding begrensd meer tijd dan de legacy classificatie', () => {
+    expect(DEFAULT_AI_INTAKE_TIMEOUT_MS).toBe(30_000)
+    expect(MAX_AI_INTAKE_TIMEOUT_MS).toBe(45_000)
+  })
+
   it('valt zonder configuratie terug op de deterministische flow', async () => {
     vi.stubEnv('OPENAI_API_KEY', '')
     const logger = vi.fn()

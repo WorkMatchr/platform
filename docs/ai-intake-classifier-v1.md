@@ -92,7 +92,7 @@ Gebruik uitsluitend server-side omgevingsvariabelen:
 ```text
 OPENAI_API_KEY=
 OPENAI_AI_INTAKE_MODEL=gpt-5.6-sol
-OPENAI_AI_INTAKE_TIMEOUT_MS=4000
+OPENAI_AI_INTAKE_TIMEOUT_MS=30000
 ```
 
 `OPENAI_API_KEY` is optioneel voor functionele beschikbaarheid: zonder sleutel blijft de deterministische fallback actief. Zet nooit een sleutel in Git, documentatie, clientcode of logs.
