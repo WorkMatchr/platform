@@ -13,6 +13,9 @@ const mocks = vi.hoisted(() => ({
   specialismFind: vi.fn(),
   assignmentSpecialismFind: vi.fn(),
   intakeFind: vi.fn(),
+  availabilityCreate: vi.fn(),
+  availabilityProcess: vi.fn(),
+  availabilityUpdateMany: vi.fn(),
 }))
 
 vi.mock('@/lib/prisma', () => ({
@@ -20,6 +23,10 @@ vi.mock('@/lib/prisma', () => ({
 }))
 vi.mock('./assignment-authorization', () => ({
   requireAssignmentManager: mocks.requireManager,
+}))
+vi.mock('@/lib/marketplace/assignment-availability-service', () => ({
+  createAssignmentAvailabilityEvent: mocks.availabilityCreate,
+  processAssignmentAvailabilityFailSafe: mocks.availabilityProcess,
 }))
 
 import { AssignmentServiceError } from './assignment-errors'
@@ -50,6 +57,9 @@ const transactionClient = {
   specialism: { findFirst: mocks.specialismFind },
   assignmentSpecialism: { findFirst: mocks.assignmentSpecialismFind },
   intake: { findFirst: mocks.intakeFind },
+  marketplaceAssignmentAvailability: {
+    updateMany: mocks.availabilityUpdateMany,
+  },
 }
 
 function assignment(
@@ -159,6 +169,9 @@ beforeEach(() => {
   mocks.specialismFind.mockResolvedValue({ id: 'specialism' })
   mocks.assignmentSpecialismFind.mockResolvedValue(null)
   mocks.intakeFind.mockResolvedValue({ id: intakeId })
+  mocks.availabilityCreate.mockResolvedValue({ id: 'availability-event' })
+  mocks.availabilityProcess.mockResolvedValue(null)
+  mocks.availabilityUpdateMany.mockResolvedValue({ count: 1 })
 })
 
 describe('opdrachtpublicatie', () => {
@@ -288,6 +301,14 @@ describe('opdrachtpublicatie', () => {
         changedByUserId: userId,
       }),
     })
+    expect(mocks.availabilityCreate).toHaveBeenCalledWith(
+      transactionClient,
+      expect.objectContaining({
+        assignmentId,
+        publishedVersion: 4,
+      }),
+    )
+    expect(mocks.availabilityProcess).toHaveBeenCalledWith(assignmentId)
   })
 
   it.each(['OWNER', 'ADMIN'] as const)('laat publicatie door wanneer de policy %s autoriseert', async () => {
@@ -392,6 +413,7 @@ describe('opdrachtpublicatie', () => {
     expect(mocks.assignmentUpdateMany).not.toHaveBeenCalled()
     expect(mocks.revisionCreate).not.toHaveBeenCalled()
     expect(mocks.historyCreate).not.toHaveBeenCalled()
+    expect(mocks.availabilityCreate).not.toHaveBeenCalled()
   })
 
   it('accepteert een inconsistente OPEN-toestand niet als idempotent succes', async () => {

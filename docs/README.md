@@ -63,6 +63,7 @@ Module 6C.2 — WOS Beheeracties & Communicatie is technisch opgeleverd en wacht
 - [Publieke contentrelaties en SEO-clusters — Module P1.7](public-content-relations.md)
 - [Public Content Platform v1 — Modules P1.8–P1.12](public-content-platform-v1.md)
 - [Marketplace Transaction Platform v1 — Fase 3](marketplace-transaction-platform-v1.md)
+- [Marketplace Assignment Eligibility v1](marketplace-assignment-eligibility-v1.md)
 - [Provider onboarding v1](provider-onboarding-v1.md)
 - [Providerkwalificatie v1](provider-qualification-v1.md)
 - [Matching Engine v1](matching-engine-v1.md)

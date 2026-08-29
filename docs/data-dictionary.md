@@ -160,6 +160,7 @@ Alle IDs zijn UUID’s. `createdAt` en `updatedAt` zijn UTC-timestamps tenzij an
 | Model | Doel en constraints | Historie en gevoeligheid |
 | --- | --- | --- |
 | `MarketplaceMatchRun` | Versieerbare selectieronde met opdrachtsnapshot, engine/model/regels, Confidence Check en Decision Report. | Finalisatie verandert alleen `RUNNING` naar een terminale status; afgeronde context blijft auditbaar. |
+| `MarketplaceAssignmentAvailability` | Duurzaam en retrybaar publicatie-/availabilityevent per nieuwe gepubliceerde Assignment. | Uniek per opdracht en businesssleutel; koppelt na voltooiing exact één brede matchrun en bewaart alleen status, aantallen, pogingen en veilige foutcode. |
 | `MarketplaceMatchCandidate` | Eén providerprojectie-uitkomst per run met uitsluiting of score/rang. | Append-only; bevat geen PII, bewijs, credits of betaling. |
 | `MarketplaceMatchIntervention` | Originele en vervangende selectie plus actor en reden. | Append-only; harde uitsluiting blijft bindend. |
 | `ProviderInvitation` | Unieke uitnodiging per opdracht/provider met deadline, creditkosten en snapshot. | Provider ziet alleen eigen uitnodiging; idempotent. |

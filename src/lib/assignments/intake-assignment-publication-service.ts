@@ -4,6 +4,7 @@ import type { IntakeVersionInput } from '@/lib/intakes/intake-types'
 import { convertIntakeToAssignmentInTransaction } from './assignment-conversion-service'
 import { AssignmentServiceError } from './assignment-errors'
 import { publishAssignmentInTransaction } from './assignment-publication-service'
+import { processAssignmentAvailabilityFailSafe } from '@/lib/marketplace/assignment-availability-service'
 
 function isPrismaErrorWithCode(error: unknown, code: string): boolean {
   return Boolean(error && typeof error === 'object' && 'code' in error && error.code === code)
@@ -32,7 +33,7 @@ export async function publishIntakeAsAssignment(
   input: IntakeVersionInput,
 ) {
   try {
-    return await getPrisma().$transaction(
+    const published = await getPrisma().$transaction(
       async (transaction) => {
         const assignment = await convertIntakeToAssignmentInTransaction(
           transaction,
@@ -48,6 +49,8 @@ export async function publishIntakeAsAssignment(
       },
       { isolationLevel: 'Serializable' },
     )
+    await processAssignmentAvailabilityFailSafe(published.id)
+    return published
   } catch (error) {
     logPublicationFailure(error)
     if (error instanceof AssignmentServiceError) throw error

@@ -14,6 +14,10 @@ import {
   type AssignmentTransitionInput,
 } from './assignment-validation'
 import { BASE_SELECTIONS } from '@/lib/marketplace/assignment-quote-slots'
+import {
+  createAssignmentAvailabilityEvent,
+  processAssignmentAvailabilityFailSafe,
+} from '@/lib/marketplace/assignment-availability-service'
 
 type ManagedAssignment = Awaited<ReturnType<typeof requireAssignmentManager>>
 
@@ -455,6 +459,12 @@ export async function publishAssignmentInTransaction(
           },
         })
 
+        await createAssignmentAvailabilityEvent(transaction, {
+          assignmentId: assignment.id,
+          publishedVersion,
+          createdAt: publishedAt,
+        })
+
         return {
           id: assignment.id,
           status: 'OPEN' as const,
@@ -472,7 +482,7 @@ export async function publishAssignment(
   rawInput: AssignmentTransitionInput,
 ) {
   try {
-    return await getPrisma().$transaction(
+    const published = await getPrisma().$transaction(
       (transaction) => publishAssignmentInTransaction(
         transaction,
         userId,
@@ -481,6 +491,8 @@ export async function publishAssignment(
       ),
       { isolationLevel: 'Serializable' },
     )
+    await processAssignmentAvailabilityFailSafe(published.id)
+    return published
   } catch (error) {
     return mapPublicationError(error, 'publish')
   }
@@ -554,6 +566,18 @@ export async function withdrawPublishedAssignment(
             toStatus: 'CANCELLED',
             changedByUserId: userId,
             reason: input.reason,
+          },
+        })
+
+        await transaction.marketplaceAssignmentAvailability.updateMany({
+          where: {
+            assignmentId: assignment.id,
+            status: { in: ['PENDING', 'PROCESSING', 'FAILED', 'COMPLETED'] },
+          },
+          data: {
+            status: 'CANCELLED',
+            completedAt: new Date(),
+            lastErrorCode: null,
           },
         })
 

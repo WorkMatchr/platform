@@ -620,6 +620,8 @@ erDiagram
 
 ```mermaid
 erDiagram
+  Assignment ||--o| MarketplaceAssignmentAvailability : publishes_for_marketplace
+  MarketplaceAssignmentAvailability ||--o| MarketplaceMatchRun : evaluates_once
   Assignment ||--o{ MarketplaceMatchRun : selected_in
   MarketplaceMatchRun ||--o{ MarketplaceMatchCandidate : evaluates
   TrustedProviderProjection ||--o{ MarketplaceMatchCandidate : freezes
@@ -639,6 +641,12 @@ erDiagram
 ```
 
 Kandidaten, interventies, offerteversies, gunningen, ledgerregels en marktaudit zijn append-only. Unieke relaties voorkomen dubbele uitnodiging, deelname, offerte, reservering en gunning.
+
+Nieuwe Assignment-publicaties gebruiken `MarketplaceAssignmentAvailability` als
+duurzame businessidentiteit en de gekoppelde matchrun/candidates als canonieke
+brede eligibilitybron. Historische handmatige selectie en invitations blijven
+ongewijzigd. `maxSelections` begrenst de latere reactiecapaciteit, niet de nieuwe
+eligibilityset.
 
 ## Financiële keten F3-F9
 

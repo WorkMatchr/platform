@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   transaction: vi.fn(),
   convert: vi.fn(),
   publish: vi.fn(),
+  processAvailability: vi.fn(),
 }))
 
 const transactionClient = { marker: 'shared-transaction' }
@@ -16,6 +17,9 @@ vi.mock('./assignment-conversion-service', () => ({
 }))
 vi.mock('./assignment-publication-service', () => ({
   publishAssignmentInTransaction: mocks.publish,
+}))
+vi.mock('@/lib/marketplace/assignment-availability-service', () => ({
+  processAssignmentAvailabilityFailSafe: mocks.processAvailability,
 }))
 
 import { AssignmentServiceError } from './assignment-errors'
@@ -44,6 +48,7 @@ beforeEach(() => {
     publishedVersion: 3,
     idempotent: false,
   })
+  mocks.processAvailability.mockResolvedValue(null)
 })
 
 describe('transactionele intakepublicatie', () => {
@@ -63,6 +68,7 @@ describe('transactionele intakepublicatie', () => {
       assignmentId,
       expectedAssignmentVersion: 1,
     })
+    expect(mocks.processAvailability).toHaveBeenCalledWith(assignmentId)
   })
 
   it('gebruikt bij herhaling dezelfde reeds gepubliceerde opdracht zonder duplicaten', async () => {

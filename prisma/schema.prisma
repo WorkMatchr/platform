@@ -634,6 +634,14 @@ enum MarketplaceMatchCandidateStatus {
   SELECTED
 }
 
+enum MarketplaceAssignmentAvailabilityStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
 enum ProviderInvitationStatus {
   INVITED
   ACCEPTED
@@ -3351,57 +3359,58 @@ model IntakeStatusHistory {
 }
 
 model Assignment {
-  id                         String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  intakeId                   String?                       @unique @db.Uuid
-  clientOrganizationId       String                        @db.Uuid
-  createdByUserId            String                        @db.Uuid
+  id                         String                             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  intakeId                   String?                            @unique @db.Uuid
+  clientOrganizationId       String                             @db.Uuid
+  createdByUserId            String                             @db.Uuid
   title                      String
   description                String
-  knowledgeContextId         String?                       @db.VarChar(100)
+  knowledgeContextId         String?                            @db.VarChar(100)
   knowledgeContextVersion    Int?
-  knowledgeSourceRoute       String?                       @db.VarChar(300)
-  knowledgeSuggestedCategory String?                       @db.VarChar(100)
-  status                     AssignmentStatus              @default(DRAFT)
-  version                    Int                           @default(1)
-  primarySpecialismId        String?                       @db.Uuid
-  sectorId                   String?                       @db.Uuid
+  knowledgeSourceRoute       String?                            @db.VarChar(300)
+  knowledgeSuggestedCategory String?                            @db.VarChar(100)
+  status                     AssignmentStatus                   @default(DRAFT)
+  version                    Int                                @default(1)
+  primarySpecialismId        String?                            @db.Uuid
+  sectorId                   String?                            @db.Uuid
   employeeCount              Int?
-  desiredStartDate           DateTime?                     @db.Date
-  responseDeadline           DateTime?                     @db.Timestamptz(3)
-  locationType               AssignmentLocationType        @default(UNKNOWN)
-  locationId                 String?                       @db.Uuid
+  desiredStartDate           DateTime?                          @db.Date
+  responseDeadline           DateTime?                          @db.Timestamptz(3)
+  locationType               AssignmentLocationType             @default(UNKNOWN)
+  locationId                 String?                            @db.Uuid
   locationName               String?
   locationAddressLine        String?
   locationPostalCode         String?
   locationCity               String?
   locationProvince           String?
-  locationCountryCode        String?                       @db.Char(2)
+  locationCountryCode        String?                            @db.Char(2)
   locationRegion             String?
   locationDescription        String?
   locationCount              Int?
-  allowsRemoteWork           Boolean                       @default(false)
-  createdAt                  DateTime                      @default(now()) @db.Timestamptz(3)
-  updatedAt                  DateTime                      @updatedAt @db.Timestamptz(3)
-  maxSelections              Int                           @default(3)
-  publishedAt                DateTime?                     @db.Timestamptz(3)
-  publishedByUserId          String?                       @db.Uuid
+  allowsRemoteWork           Boolean                            @default(false)
+  createdAt                  DateTime                           @default(now()) @db.Timestamptz(3)
+  updatedAt                  DateTime                           @updatedAt @db.Timestamptz(3)
+  maxSelections              Int                                @default(3)
+  publishedAt                DateTime?                          @db.Timestamptz(3)
+  publishedByUserId          String?                            @db.Uuid
   publishedVersion           Int?
-  closedAt                   DateTime?                     @db.Timestamptz(3)
-  archivedAt                 DateTime?                     @db.Timestamptz(3)
-  intake                     Intake?                       @relation(fields: [intakeId], references: [id], onDelete: Restrict)
-  clientOrganization         Organization                  @relation(fields: [clientOrganizationId], references: [id], onDelete: Restrict)
-  createdByUser              User                          @relation("AssignmentCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
-  publishedByUser            User?                         @relation("AssignmentPublisher", fields: [publishedByUserId], references: [id], onDelete: Restrict)
-  publishedRevision          AssignmentRevision?           @relation("AssignmentPublishedRevision", fields: [id, publishedVersion], references: [assignmentId, version], onDelete: Restrict, map: "Assignment_published_revision_fkey")
-  primarySpecialism          Specialism?                   @relation("PrimaryAssignmentSpecialism", fields: [primarySpecialismId], references: [id], onDelete: Restrict)
-  sector                     Sector?                       @relation(fields: [sectorId], references: [id], onDelete: Restrict)
-  location                   OrganizationLocation?         @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  closedAt                   DateTime?                          @db.Timestamptz(3)
+  archivedAt                 DateTime?                          @db.Timestamptz(3)
+  intake                     Intake?                            @relation(fields: [intakeId], references: [id], onDelete: Restrict)
+  clientOrganization         Organization                       @relation(fields: [clientOrganizationId], references: [id], onDelete: Restrict)
+  createdByUser              User                               @relation("AssignmentCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  publishedByUser            User?                              @relation("AssignmentPublisher", fields: [publishedByUserId], references: [id], onDelete: Restrict)
+  publishedRevision          AssignmentRevision?                @relation("AssignmentPublishedRevision", fields: [id, publishedVersion], references: [assignmentId, version], onDelete: Restrict, map: "Assignment_published_revision_fkey")
+  primarySpecialism          Specialism?                        @relation("PrimaryAssignmentSpecialism", fields: [primarySpecialismId], references: [id], onDelete: Restrict)
+  sector                     Sector?                            @relation(fields: [sectorId], references: [id], onDelete: Restrict)
+  location                   OrganizationLocation?              @relation(fields: [locationId], references: [id], onDelete: Restrict)
   specialisms                AssignmentSpecialism[]
   providerSelections         AssignmentProviderSelection[]
   resolution                 AssignmentResolution?
   statusHistory              AssignmentStatusHistory[]
   revisions                  AssignmentRevision[]
   marketplaceMatchRuns       MarketplaceMatchRun[]
+  marketplaceAvailability    MarketplaceAssignmentAvailability?
   marketplaceInvitations     ProviderInvitation[]
   marketplaceParticipations  ProviderParticipation[]
   marketplaceQuotes          Quote[]
@@ -4112,32 +4121,56 @@ model FinancialEvent {
 }
 
 model MarketplaceMatchRun {
-  id                 String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  assignmentId       String                         @db.Uuid
+  id                 String                             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assignmentId       String                             @db.Uuid
   assignmentVersion  Int
-  status             MarketplaceMatchRunStatus      @default(RUNNING)
-  engineVersion      String                         @db.VarChar(40)
-  modelVersion       String                         @db.VarChar(40)
-  ruleVersion        String                         @db.VarChar(40)
-  taxonomyVersion    String                         @db.VarChar(80)
-  startedByUserId    String                         @db.Uuid
-  idempotencyKey     String                         @unique @db.VarChar(120)
-  confidenceLevel    String                         @db.VarChar(20)
+  status             MarketplaceMatchRunStatus          @default(RUNNING)
+  engineVersion      String                             @db.VarChar(40)
+  modelVersion       String                             @db.VarChar(40)
+  ruleVersion        String                             @db.VarChar(40)
+  taxonomyVersion    String                             @db.VarChar(80)
+  startedByUserId    String                             @db.Uuid
+  idempotencyKey     String                             @unique @db.VarChar(120)
+  confidenceLevel    String                             @db.VarChar(20)
   confidenceReasons  String[]
   assignmentSnapshot Json
-  inputChecksum      String                         @db.Char(64)
+  inputChecksum      String                             @db.Char(64)
   decisionReport     Json?
-  decisionChecksum   String?                        @db.Char(64)
-  startedAt          DateTime                       @default(now()) @db.Timestamptz(3)
-  completedAt        DateTime?                      @db.Timestamptz(3)
-  assignment         Assignment                     @relation(fields: [assignmentId], references: [id], onDelete: Restrict)
-  startedByUser      User                           @relation("MarketplaceMatchRunActor", fields: [startedByUserId], references: [id], onDelete: Restrict)
+  decisionChecksum   String?                            @db.Char(64)
+  startedAt          DateTime                           @default(now()) @db.Timestamptz(3)
+  completedAt        DateTime?                          @db.Timestamptz(3)
+  assignment         Assignment                         @relation(fields: [assignmentId], references: [id], onDelete: Restrict)
+  startedByUser      User                               @relation("MarketplaceMatchRunActor", fields: [startedByUserId], references: [id], onDelete: Restrict)
   candidates         MarketplaceMatchCandidate[]
   interventions      MarketplaceMatchIntervention[]
   invitations        ProviderInvitation[]
+  availabilityEvent  MarketplaceAssignmentAvailability?
 
   @@index([assignmentId, startedAt])
   @@index([status])
+}
+
+model MarketplaceAssignmentAvailability {
+  id                  String                                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assignmentId        String                                  @unique @db.Uuid
+  publishedVersion    Int
+  status              MarketplaceAssignmentAvailabilityStatus @default(PENDING)
+  flowVersion         String                                  @db.VarChar(40)
+  idempotencyKey      String                                  @unique @db.VarChar(120)
+  matchRunId          String?                                 @unique @db.Uuid
+  candidatesEvaluated Int                                     @default(0)
+  eligibleCount       Int                                     @default(0)
+  notEligibleCount    Int                                     @default(0)
+  attemptCount        Int                                     @default(0)
+  lastErrorCode       String?                                 @db.VarChar(80)
+  createdAt           DateTime                                @default(now()) @db.Timestamptz(3)
+  processingStartedAt DateTime?                               @db.Timestamptz(3)
+  completedAt         DateTime?                               @db.Timestamptz(3)
+  updatedAt           DateTime                                @updatedAt @db.Timestamptz(3)
+  assignment          Assignment                              @relation(fields: [assignmentId], references: [id], onDelete: Restrict)
+  matchRun            MarketplaceMatchRun?                    @relation(fields: [matchRunId], references: [id], onDelete: Restrict)
+
+  @@index([status, createdAt])
 }
 
 model MarketplaceMatchCandidate {

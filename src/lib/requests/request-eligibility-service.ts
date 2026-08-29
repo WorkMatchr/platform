@@ -1,18 +1,9 @@
 import type { Prisma } from '@/generated/prisma/client'
 import { evaluateMatchingCandidate } from '@/lib/marketplace/matching-rules'
 import { MARKETPLACE_RULE_VERSION } from '@/lib/marketplace/marketplace-config'
+import { readTrustedProviderPayload } from '@/lib/marketplace/assignment-availability-service'
 
 type Transaction = Prisma.TransactionClient
-
-type TrustedPayload = Readonly<{
-  capabilities: Array<{
-    serviceCode: string
-    specialismCode: string | null
-    deliveryModes: string[]
-  }>
-  sectors: Array<{ sectorCode: string }>
-  workAreas: Array<{ regionCode: string }>
-}>
 
 type ExpertiseTier = Readonly<{
   tier: 'PRIMARY' | 'ADDITIONAL' | 'POSSIBLE'
@@ -31,55 +22,6 @@ type EligibilityRequest = Readonly<{
   additionalExpertiseCodes: readonly string[]
   possibleExpertiseCodes: readonly string[]
 }>
-
-function readTrustedPayload(
-  value: Prisma.JsonValue,
-): TrustedPayload | null {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return null
-  }
-  const source = value as Record<string, unknown>
-  if (
-    !Array.isArray(source.capabilities) ||
-    !Array.isArray(source.sectors) ||
-    !Array.isArray(source.workAreas)
-  ) {
-    return null
-  }
-  const capabilities = source.capabilities.flatMap((item) => {
-    if (!item || typeof item !== 'object' || Array.isArray(item)) return []
-    const record = item as Record<string, unknown>
-    if (
-      typeof record.serviceCode !== 'string' ||
-      !Array.isArray(record.deliveryModes)
-    ) {
-      return []
-    }
-    return [{
-      serviceCode: record.serviceCode,
-      specialismCode:
-        typeof record.specialismCode === 'string'
-          ? record.specialismCode
-          : null,
-      deliveryModes: record.deliveryModes.filter(
-        (mode): mode is string => typeof mode === 'string',
-      ),
-    }]
-  })
-  const sectors = source.sectors.flatMap((item) => {
-    if (!item || typeof item !== 'object' || Array.isArray(item)) return []
-    const sectorCode = (item as Record<string, unknown>).sectorCode
-    return typeof sectorCode === 'string' ? [{ sectorCode }] : []
-  })
-  const workAreas = source.workAreas.flatMap((item) => {
-    if (!item || typeof item !== 'object' || Array.isArray(item)) return []
-    const regionCode = (item as Record<string, unknown>).regionCode
-    return typeof regionCode === 'string' ? [{ regionCode }] : []
-  })
-  return capabilities.length > 0 && workAreas.length > 0
-    ? { capabilities, sectors, workAreas }
-    : null
-}
 
 function expertiseTiers(request: EligibilityRequest): ExpertiseTier[] {
   return [
@@ -156,7 +98,7 @@ export async function createRequestEligibilitySnapshot(
 
   let eligibleCount = 0
   for (const projection of latestByProvider.values()) {
-    const payload = readTrustedPayload(projection.payload)
+    const payload = readTrustedProviderPayload(projection.payload)
     if (!payload) continue
     const workAreaMatches =
       request.regionCode === null ||

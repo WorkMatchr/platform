@@ -320,6 +320,14 @@ Schema-validatie voor deze JSON-structuren wordt in een latere servicelaag verpl
 
 ## Marketplace Transaction Platform v1
 
+Migratie `20260829100000_add_marketplace_assignment_availability` voegt
+uitsluitend het duurzame, retrybare `MarketplaceAssignmentAvailability`-event
+en zijn status-enum toe. Nieuwe Assignment-publicaties schrijven exact één event
+in de publicatietransactie. De afzonderlijke eligibilityverwerking koppelt één
+`MarketplaceMatchRun` en bewaart alle geëvalueerde providerprojecties als
+immutable candidates. Bestaande opdrachten, invitations, participations,
+credits en offertes worden niet teruggevuld of gewijzigd.
+
 Migratie `20260720150000_add_marketplace_transaction_platform` is additief en introduceert:
 
 - `MarketplaceMatchRun`, `MarketplaceMatchCandidate` en `MarketplaceMatchIntervention`;

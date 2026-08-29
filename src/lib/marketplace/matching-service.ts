@@ -19,47 +19,15 @@ import {
 } from './marketplace-events'
 import { evaluateMatchingCandidate, rankMatchingCandidates, type MatchingProviderFacts } from './matching-rules'
 import { assignmentInvitationCopy, toAssignmentPreview } from './assignment-purchase-preview'
-
-type TrustedPayload = {
-  capabilities: Array<{ serviceCode: string; specialismCode: string | null; deliveryModes: string[] }>
-  sectors: Array<{ sectorCode: string }>
-  workAreas: Array<{ regionCode: string }>
-}
+import {
+  normalizeMarketplaceRegion,
+  readTrustedProviderPayload,
+} from './assignment-availability-service'
 
 function asCanonical(value: unknown): CanonicalValue {
   return JSON.parse(JSON.stringify(value)) as CanonicalValue
 }
 
-function readTrustedPayload(value: Prisma.JsonValue): TrustedPayload | null {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null
-  const source = value as Record<string, unknown>
-  if (!Array.isArray(source.capabilities) || !Array.isArray(source.sectors) || !Array.isArray(source.workAreas)) return null
-  const capabilities = source.capabilities.flatMap((item) => {
-    if (!item || typeof item !== 'object' || Array.isArray(item)) return []
-    const record = item as Record<string, unknown>
-    if (typeof record.serviceCode !== 'string' || !Array.isArray(record.deliveryModes)) return []
-    return [{
-      serviceCode: record.serviceCode,
-      specialismCode: typeof record.specialismCode === 'string' ? record.specialismCode : null,
-      deliveryModes: record.deliveryModes.filter((mode): mode is string => typeof mode === 'string'),
-    }]
-  })
-  const sectors = source.sectors.flatMap((item) => {
-    if (!item || typeof item !== 'object' || Array.isArray(item)) return []
-    const sectorCode = (item as Record<string, unknown>).sectorCode
-    return typeof sectorCode === 'string' ? [{ sectorCode }] : []
-  })
-  const workAreas = source.workAreas.flatMap((item) => {
-    if (!item || typeof item !== 'object' || Array.isArray(item)) return []
-    const regionCode = (item as Record<string, unknown>).regionCode
-    return typeof regionCode === 'string' ? [{ regionCode }] : []
-  })
-  return capabilities.length > 0 && workAreas.length > 0 ? { capabilities, sectors, workAreas } : null
-}
-
-function normalizeRegion(province: string | null | undefined) {
-  return province?.trim().toUpperCase().replaceAll('-', '_').replaceAll(' ', '_') ?? null
-}
 
 export async function runMarketplaceMatching(input: {
   actorUserId: string
@@ -128,7 +96,7 @@ export async function runMarketplaceMatching(input: {
       publishedVersion: assignment.publishedVersion,
       capabilityCode: specialismMapping.term.code,
       sectorCode: sectorMapping?.term.code ?? null,
-      regionCode: normalizeRegion(assignment.location?.province),
+      regionCode: normalizeMarketplaceRegion(assignment.location?.province),
       allowsRemoteWork: assignment.allowsRemoteWork,
       responseDeadline: assignment.responseDeadline.toISOString(),
       maxSelections: assignment.maxSelections,
@@ -171,7 +139,7 @@ export async function runMarketplaceMatching(input: {
       result: ReturnType<typeof evaluateMatchingCandidate>
     }> = []
     for (const projection of latestByProvider.values()) {
-      const payload = readTrustedPayload(projection.payload)
+      const payload = readTrustedProviderPayload(projection.payload)
       if (!payload) continue
       const provider = { providerProfileId: projection.providerProfileId, ...payload }
       evaluated.push({
@@ -182,7 +150,7 @@ export async function runMarketplaceMatching(input: {
           assignmentId: assignment.id,
           capabilityCode: specialismMapping.term.code,
           sectorCode: sectorMapping?.term.code ?? null,
-          regionCode: normalizeRegion(assignment.location?.province),
+          regionCode: normalizeMarketplaceRegion(assignment.location?.province),
           allowsRemoteWork: assignment.allowsRemoteWork,
         }, provider),
       })

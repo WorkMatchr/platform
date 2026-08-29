@@ -27,6 +27,7 @@
     "test:db:credits": "tsx scripts/test-credit-wallet-database.ts",
     "test:db:finance": "tsx scripts/test-financial-chain-database.ts",
     "test:db:marketplace": "tsx scripts/test-marketplace-database.ts",
+    "test:db:marketplace-eligibility": "tsx scripts/test-marketplace-eligibility-database.ts",
     "test:db:marketplace-concurrency": "tsx scripts/test-marketplace-concurrency-database.ts",
     "test:db:knowledge": "tsx scripts/test-knowledge-engine-database.ts",
     "test:db:knowledge:migration": "tsx scripts/test-knowledge-migration.ts",
