@@ -135,7 +135,11 @@ export async function ensurePublicIntakeAIContextQuestions(input: {
         database: transaction,
         understanding,
         facts,
-        concepts,
+        // Context-goal rules may contribute concepts for question selection,
+        // but they are not evidence that their domain applies to this case.
+        // Expert routing therefore uses only semantic/deterministic concepts
+        // derived from the user's own input.
+        concepts: initialConcepts,
       })
       await transaction.publicIntakeDraft.update({
         where: { id: input.draftId },
