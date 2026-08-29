@@ -10,10 +10,11 @@ const review = parseCaseUnderstandingKnowledgeReview(JSON.parse(await readFile(i
 
 const list = (values: readonly string[]) => values.length > 0 ? values.map((value) => `- ${value}`).join('\n') : '- Geen.'
 const inline = (values: readonly string[]) => values.length > 0 ? values.map((value) => `\`${value}\``).join(', ') : 'Geen'
+const sourceLocator = (locator: string) => locator.startsWith('https://') ? `[Open officiële bron](${locator})` : `\`${locator}\``
 const decision = '**Menselijke beslissing:** [ ] APPROVE  [ ] CHANGE: ____________________  [ ] REJECT\n\n**Reviewer notes:** ________________________________________________'
 
 const lines: string[] = [
-  '# Case Understanding — reviewpakket voor 10 scenario’s v1',
+  '# Case Understanding — definitief menselijk reviewpakket v2',
   '',
   '> Status: **PENDING_HUMAN_REVIEW**. Dit document bevat uitsluitend kandidaten. Niets hierin is inhoudelijk gevalideerd, goedgekeurd of gepubliceerd.',
   '',
@@ -23,16 +24,18 @@ const lines: string[] = [
   '',
   '## Bronnenaudit',
   '',
-  '| Source ID | Titel | Type | Datum/versie | Governance | Onderwerpen | Bruikbaarheid / beperking | Locator |',
-  '|---|---|---|---|---|---|---|---|',
-  ...review.sources.map((source) => `| \`${source.sourceId}\` | ${source.title} | ${source.documentType} | ${source.dateOrVersion ?? 'Onbekend'} | ${source.governanceStatus} | ${source.topics.join(', ')} | ${source.suitability} | \`${source.locator}\` |`),
+  '| Source ID | Titel | Authority | Publicatie/versie | Actualiteit | Scope | Scenario’s | Claims ondersteund | Claims NIET ondersteund | Bron | Review |',
+  '|---|---|---|---|---|---|---|---|---|---|---|',
+  ...review.sources.map((source) => `| \`${source.sourceId}\` | ${source.title} | ${source.authority} | ${source.publicationDate} | ${source.currentness} | ${source.scope} | ${source.applicableScenarios.join(', ') || '—'} | ${source.claimsSupported.join('; ') || 'Nog geen'} | ${source.claimsNotSupported.join('; ')} | ${sourceLocator(source.locator)} | ${source.reviewStatus} |`),
   '',
   '## Herbruikbare Context Goals',
   '',
-  '| Code | Informatiebehoefte | Toepassen wanneer | Niet toepassen wanneer | Opgelost door feiten |',
-  '|---|---|---|---|---|',
-  ...review.contextGoals.map((goal) => `| \`${goal.code}\` | ${goal.informationNeed} | ${goal.appliesWhen.join('; ')} | ${goal.doNotApplyWhen.join('; ')} | ${goal.resolvesWithFactCodes.join(', ')} |`),
+  '| Code | Informatiebehoefte | Toepassen wanneer | Niet toepassen wanneer | Opgelost door feiten | Review |',
+  '|---|---|---|---|---|---|',
+  ...review.contextGoals.map((goal) => `| \`${goal.code}\` | ${goal.informationNeed} | ${goal.appliesWhen.join('; ')} | ${goal.doNotApplyWhen.join('; ')} | ${goal.resolvesWithFactCodes.join(', ')} | ${goal.reviewStatus} |`),
   '',
+  '### Menselijke beslissing per Context Goal', '',
+  ...review.contextGoals.flatMap((goal) => [`**${goal.code}**`, '', decision, '']),
   '## Kandidaatclaims',
   '',
 ]
@@ -65,10 +68,11 @@ for (const rule of review.routingRules) {
     '',
     `- Scenario’s: ${rule.scenarioCoverage.join(', ')}`,
     `- Routingintentie: ${rule.routingIntent}`,
-    `- Primaire discipline: \`${rule.primaryDiscipline}\``,
+    `- Primaire expertise: \`${rule.primaryExpertise}\` (${rule.primaryExpertiseKind})`,
     `- Secundaire disciplines: ${inline(rule.secondaryDisciplines)}`,
     `- Vereiste specialismen: ${inline(rule.requiredSpecialisms)}`,
-    `- Multidisciplinair: ${rule.multidisciplinary ? 'Ja' : 'Nee'}`,
+    `- Multidisciplinair: ${rule.multidisciplinary}`,
+    `- Conditionele expertise: ${rule.conditionalExpertise.length > 0 ? rule.conditionalExpertise.map((item) => `${item.discipline} indien ${item.when}`).join('; ') : 'Geen'}`,
     `- Ondersteunende claims: ${inline(rule.supportingClaimIds)}`,
     '', '**Toepassen wanneer**', '', list(rule.appliesWhen), '',
     '**Niet toepassen wanneer**', '', list(rule.doNotApplyWhen), '',
@@ -81,6 +85,11 @@ lines.push(
   `### ${review.specialismProposal.code} — ${review.specialismProposal.label}`, '',
   `- Type: ${review.specialismProposal.kind}`,
   `- Bovenliggende discipline: ${inline(review.specialismProposal.parentDisciplines)}`,
+  `- Passende professionele achtergronden: ${review.specialismProposal.compatibleProfessionalBackgrounds.join('; ')}`,
+  `- Aanbevolen model: ${review.specialismProposal.recommendedModel}`,
+  `- Huidige beperking: ${review.specialismProposal.currentLimitation}`,
+  `- Migratie-impact: ${review.specialismProposal.migrationImpact}`,
+  `- Matchingimpact: ${review.specialismProposal.matchingImpact}`,
   `- Betekenis: ${review.specialismProposal.meaning}`,
   `- Reden: ${review.specialismProposal.rationale}`,
   '', '**Inclusies**', '', list(review.specialismProposal.inclusions), '',
@@ -113,22 +122,40 @@ for (const scenario of review.scenarios) {
     '', `**L. Primaire expertise:** \`${scenario.primaryExpertise}\``, '',
     `**M. Secundaire expertise:** ${inline(scenario.secondaryExpertise)}`, '',
     `**N. Vereiste specialismen:** ${inline(scenario.requiredSpecialisms)}`, '',
-    `**O. Multidisciplinair:** ${scenario.multidisciplinary ? 'Ja' : 'Nee'} — ${scenario.multidisciplinaryReason}`, '',
+    `**O. Multidisciplinair:** ${scenario.multidisciplinary} — ${scenario.multidisciplinaryReason}`, '',
+    `**Conditionele expertise:** ${scenario.conditionalExpertise.length > 0 ? scenario.conditionalExpertise.map((item) => `${item.discipline} indien ${item.when}`).join('; ') : 'Geen'}`, '',
     '**P. Mogelijke routingregels**', '',
     ...rules.map((rule) => `- \`${rule.candidateId}\` — ${rule.routingIntent}`),
     '', '**Q. Kennishiaten**', '', list(scenario.knowledgeGaps), '',
+    '**Voorbeeldvragen voor menselijke review**', '',
+    ...scenario.questionExamples.flatMap((example) => [
+      `#### ${example.contextGoal}`,
+      '',
+      `- Type: \`${example.type}\``,
+      `- Voorbeeldvraag: “${example.question}”`,
+      `- Waarom deze vraag: ${example.whyThisQuestion}`,
+      `- Welke beslissing verandert: ${example.whatDecisionItChanges}`,
+      `- Onderdrukken wanneer: ${example.whatExistingFactWouldSuppressIt}`,
+      '', decision, '',
+    ]),
     '**R. HUMAN REVIEW DECISION**', '', decision, '',
   )
 }
 
 lines.push(
   '## Coverage-matrix', '',
-  '| Scenario | Concepts | Claims proposed | Claims source-backed | Context Goals | Primair | Secundair | Kennishiaten | Klaar voor menselijke goedkeuring |',
-  '|---:|---|---:|---:|---:|---|---|---|---|',
+  '| Scenario | Facts understood | Claims | Source confidence | Missing Context Goals | Primary expertise | Conditional expertise | Multidisciplinary | Remaining knowledge gaps | Human-review ready |',
+  '|---:|---|---:|---|---|---|---|---|---|---|',
   ...review.scenarios.map((scenario) => {
     const claims = scenario.candidateClaimIds.map((id) => review.candidateClaims.find((claim) => claim.candidateId === id)!)
     const sourceBacked = claims.filter((claim) => claim.authorityStatus !== 'INSUFFICIENT').length
-    return `| ${scenario.number} | ${scenario.conceptCodes.join(', ')} | ${claims.length} | ${sourceBacked} | ${scenario.contextGoals.length} | ${scenario.primaryExpertise} | ${scenario.secondaryExpertise.join(', ') || '—'} | ${scenario.knowledgeGaps.join('; ') || 'Geen expliciet'} | Ja, als reviewpakket; inhoud nog niet goedgekeurd |`
+    const confidence = claims.every((claim) => claim.authorityStatus === 'AUTHORITATIVE_CANDIDATE')
+      ? 'Hoog als kandidaat; review vereist'
+      : sourceBacked === claims.length
+        ? 'Gemengd maar brongedragen; review vereist'
+        : 'Onvoldoende voor deelclaim; hiaat expliciet'
+    const reviewReady = scenario.questionExamples.length === scenario.contextGoals.length && claims.every((claim) => claim.applicability.length > 0 && claim.exclusions.length > 0)
+    return `| ${scenario.number} | ${scenario.explicitFacts.length} expliciete feiten; ${scenario.goalsAlreadyResolvedByFacts.length} goals satisfied | ${claims.length} | ${confidence} | ${scenario.contextGoals.join(', ') || 'Geen'} | ${scenario.primaryExpertise} | ${scenario.conditionalExpertise.map((item) => `${item.discipline}: ${item.when}`).join('; ') || 'Geen'} | ${scenario.multidisciplinary} | ${scenario.knowledgeGaps.join('; ') || 'Geen expliciet'} | ${reviewReady ? 'YES' : 'NO'} |`
   }),
   '',
   '## Publicatiegrens', '',

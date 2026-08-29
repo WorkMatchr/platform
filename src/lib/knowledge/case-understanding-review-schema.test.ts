@@ -25,24 +25,35 @@ describe('Case Understanding knowledge-reviewpakket', () => {
   })
 
   it('houdt alle inhoud en beslissingen voor menselijke review open', () => {
+    expect(parsed.schemaVersion).toBe('2.0')
     expect(parsed.reviewStatus).toBe('PENDING_HUMAN_REVIEW')
     expect(parsed.candidateClaims.every((claim) => claim.reviewStatus === 'PENDING_HUMAN_REVIEW')).toBe(true)
     expect(parsed.routingRules.every((rule) => rule.reviewStatus === 'PENDING_HUMAN_REVIEW')).toBe(true)
     expect(parsed.scenarios.every((scenario) => scenario.humanReviewDecision === null)).toBe(true)
     expect(parsed.specialismProposal.reviewStatus).toBe('PENDING_HUMAN_REVIEW')
+    expect(parsed.sources.every((source) => source.reviewStatus === 'PENDING_HUMAN_REVIEW')).toBe(true)
+    expect(parsed.contextGoals.every((goal) => goal.reviewStatus === 'PENDING_HUMAN_REVIEW')).toBe(true)
+    expect(parsed.scenarios.flatMap((scenario) => scenario.questionExamples).every((example) => example.reviewStatus === 'PENDING_HUMAN_REVIEW')).toBe(true)
   })
 
   it('gebruikt herbruikbare Context Goals en geen onderwerpflows', () => {
     const prohibited = /(?:HEADACHE|BHV|BRZO)_FLOW/
     expect(parsed.contextGoals.some((goal) => prohibited.test(goal.code))).toBe(false)
-    expect(parsed.contextGoals.length).toBe(19)
+    expect(parsed.contextGoals.length).toBe(25)
+    expect(parsed.contextGoals.map((goal) => goal.code)).toContain('WORK_ENVIRONMENT_FACTORS')
+    expect(parsed.scenarios[0].contextGoals).not.toContain('EXPOSURE_SOURCE')
+    expect(parsed.scenarios[0].contextGoals).toContain('WORK_ENVIRONMENT_FACTORS')
   })
 
   it('scheidt medische privacy, procesveiligheid en causaliteit expliciet', () => {
     expect(parsed.scenarios[5].primaryExpertise).toBe('BEDRIJFSARTS')
     expect(parsed.scenarios[6].primaryExpertise).toBe('BEDRIJFSARTS')
-    expect(parsed.scenarios[8].requiredSpecialisms).toContain('PROCESS_SAFETY_MAJOR_HAZARDS')
-    expect(parsed.scenarios[9].requiredSpecialisms).toContain('PROCESS_SAFETY_MAJOR_HAZARDS')
+    expect(parsed.scenarios[6].multidisciplinary).toBe('CONDITIONAL')
+    expect(parsed.scenarios[6].conditionalExpertise).toEqual([
+      expect.objectContaining({ discipline: 'ARBEIDSDESKUNDIGE' }),
+    ])
+    expect(parsed.scenarios[8].primaryExpertise).toBe('PROCESS_SAFETY_MAJOR_HAZARDS')
+    expect(parsed.scenarios[9].primaryExpertise).toBe('PROCESS_SAFETY_MAJOR_HAZARDS')
     expect(parsed.scenarios[0].prohibitedAssumptions.join(' ')).toMatch(/oorzaak|veroorzaakt/i)
     expect(parsed.scenarios[9].prohibitedAssumptions.join(' ')).toMatch(/oorzaak|veroorzaakt/i)
   })
@@ -50,7 +61,21 @@ describe('Case Understanding knowledge-reviewpakket', () => {
   it('markeert de ontbrekende procesveiligheidsbron als kennishiaat', () => {
     const source = parsed.sources.find((item) => item.sourceId === 'process-safety-source-gap')
     expect(source?.governanceStatus).toBe('INSUFFICIENTLY_TRACEABLE')
+    expect(parsed.sources).toHaveLength(24)
     expect(parsed.routingRules).toHaveLength(10)
     expect(parsed.candidateClaims).toHaveLength(13)
+  })
+
+  it('levert voor ieder resterend Context Goal precies één reviewvraag', () => {
+    for (const scenario of parsed.scenarios) {
+      expect(scenario.questionExamples.map((example) => example.contextGoal)).toEqual(scenario.contextGoals)
+      expect(scenario.questionExamples.every((example) => example.type === 'QUESTION_EXAMPLE_FOR_REVIEW')).toBe(true)
+    }
+  })
+
+  it('modelleert procesveiligheid als cross-discipline specialisme zonder verplichte HVK-parent', () => {
+    expect(parsed.specialismProposal.parentDisciplines).toEqual([])
+    expect(parsed.specialismProposal.recommendedModel).toMatch(/cross-discipline/i)
+    expect(parsed.specialismProposal.matchingImpact).toMatch(/HVK/i)
   })
 })

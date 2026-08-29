@@ -24,6 +24,14 @@ const sourceSchema = z.object({
   topics: z.array(code).min(1),
   suitability: z.string().min(10),
   locator: z.string().min(2),
+  authority: code,
+  publicationDate: z.string().min(2),
+  currentness: code,
+  scope: z.string().min(10),
+  applicableScenarios: z.array(z.number().int().min(1).max(10)),
+  claimsSupported: z.array(z.string().min(10)),
+  claimsNotSupported: z.array(z.string().min(10)).min(1),
+  reviewStatus: z.literal('PENDING_HUMAN_REVIEW'),
 }).strict()
 
 const contextGoalSchema = z.object({
@@ -32,6 +40,24 @@ const contextGoalSchema = z.object({
   appliesWhen: z.array(z.string().min(3)).min(1),
   doNotApplyWhen: z.array(z.string().min(3)).min(1),
   resolvesWithFactCodes: z.array(code).min(1),
+  reviewStatus: z.literal('PENDING_HUMAN_REVIEW'),
+  reviewerNotes: z.string(),
+}).strict()
+
+const conditionalExpertiseSchema = z.object({
+  discipline: code,
+  when: z.string().min(10),
+}).strict()
+
+const questionExampleSchema = z.object({
+  contextGoal: code,
+  type: z.literal('QUESTION_EXAMPLE_FOR_REVIEW'),
+  question: z.string().min(10),
+  whyThisQuestion: z.string().min(10),
+  whatDecisionItChanges: z.string().min(10),
+  whatExistingFactWouldSuppressIt: z.string().min(10),
+  reviewStatus: z.literal('PENDING_HUMAN_REVIEW'),
+  reviewerNotes: z.string(),
 }).strict()
 
 const candidateClaimSchema = z.object({
@@ -59,10 +85,12 @@ const routingRuleSchema = z.object({
   routingIntent: z.string().min(10),
   appliesWhen: z.array(z.string().min(3)).min(1),
   doNotApplyWhen: z.array(z.string().min(3)).min(1),
-  primaryDiscipline: code,
+  primaryExpertise: code,
+  primaryExpertiseKind: z.enum(['DISCIPLINE', 'SPECIALISM']),
   secondaryDisciplines: z.array(code),
   requiredSpecialisms: z.array(code),
-  multidisciplinary: z.boolean(),
+  multidisciplinary: z.enum(['NO', 'YES', 'CONDITIONAL']),
+  conditionalExpertise: z.array(conditionalExpertiseSchema),
   supportingClaimIds: z.array(code).min(1),
   reviewStatus,
   reviewerNotes: z.string(),
@@ -82,16 +110,18 @@ const scenarioSchema = z.object({
   primaryExpertise: code,
   secondaryExpertise: z.array(code),
   requiredSpecialisms: z.array(code),
-  multidisciplinary: z.boolean(),
+  multidisciplinary: z.enum(['NO', 'YES', 'CONDITIONAL']),
   multidisciplinaryReason: z.string().min(5),
+  conditionalExpertise: z.array(conditionalExpertiseSchema),
   routingRuleIds: z.array(code).min(1),
   knowledgeGaps: z.array(z.string().min(3)),
+  questionExamples: z.array(questionExampleSchema),
   humanReviewDecision: z.null(),
 }).strict()
 
 export const caseUnderstandingKnowledgeReviewSchema = z.object({
-  schemaVersion: z.literal('1.0'),
-  packageId: z.literal('CASE_UNDERSTANDING_10_SCENARIOS_V1'),
+  schemaVersion: z.literal('2.0'),
+  packageId: z.literal('CASE_UNDERSTANDING_10_SCENARIOS_REVIEW_V2'),
   reviewStatus: z.literal('PENDING_HUMAN_REVIEW'),
   sources: z.array(sourceSchema).min(1),
   contextGoals: z.array(contextGoalSchema).min(1),
@@ -101,7 +131,12 @@ export const caseUnderstandingKnowledgeReviewSchema = z.object({
     code,
     label: z.string().min(2),
     kind: z.literal('SPECIALISM'),
-    parentDisciplines: z.array(code).min(1),
+    parentDisciplines: z.array(code),
+    compatibleProfessionalBackgrounds: z.array(z.string().min(10)).min(2),
+    recommendedModel: z.string().min(20),
+    currentLimitation: z.string().min(20),
+    migrationImpact: z.string().min(20),
+    matchingImpact: z.string().min(20),
     meaning: z.string().min(20),
     inclusions: z.array(z.string().min(3)).min(1),
     exclusions: z.array(z.string().min(3)).min(1),
@@ -155,6 +190,21 @@ export function parseCaseUnderstandingKnowledgeReview(
     }
     if (scenario.contextGoals.some((id) => !goalCodes.has(id))) {
       throw new Error(`Scenario ${scenario.number} verwijst naar een onbekend Context Goal.`)
+    }
+    if (scenario.goalsAlreadyResolvedByFacts.some((id) => !goalCodes.has(id))) {
+      throw new Error(`Scenario ${scenario.number} markeert een onbekend Context Goal als SATISFIED.`)
+    }
+    if (scenario.contextGoals.some((id) => scenario.goalsAlreadyResolvedByFacts.includes(id))) {
+      throw new Error(`Scenario ${scenario.number} markeert een Context Goal tegelijk als ontbrekend en SATISFIED.`)
+    }
+    if (scenario.questionExamples.some((item) => !scenario.contextGoals.includes(item.contextGoal))) {
+      throw new Error(`Scenario ${scenario.number} bevat een voorbeeldvraag zonder resterend Context Goal.`)
+    }
+    if (new Set(scenario.questionExamples.map((item) => item.contextGoal)).size !== scenario.questionExamples.length) {
+      throw new Error(`Scenario ${scenario.number} bevat dubbele voorbeeldvragen voor een Context Goal.`)
+    }
+    if (scenario.contextGoals.some((id) => !scenario.questionExamples.some((item) => item.contextGoal === id))) {
+      throw new Error(`Scenario ${scenario.number} mist een voorbeeldvraag voor een resterend Context Goal.`)
     }
     if (scenario.routingRuleIds.some((id) => !ruleIds.has(id))) {
       throw new Error(`Scenario ${scenario.number} verwijst naar een onbekende routingregel.`)
