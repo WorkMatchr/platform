@@ -33,4 +33,28 @@ describe('neutrale matching-ready opdrachtsamenvatting', () => {
     expect(summary).toContain('Wanneer of hoe vaak doet de situatie zich tijdens het werk voor? Regelmatig of herhaald.')
     expect(summary).not.toMatch(/\bNO\b|\bREPEATED\b/)
   })
+
+  it('onderdrukt de medische-privacyvraag alleen wanneer de gebruiker die grens al bevestigt', () => {
+    const confirmedBoundary = {
+      ...emptyCaseUnderstanding(),
+      legalOrComplianceContext: {
+        value: ['De werkgever wil geen medische informatie opvragen.'],
+        evidence: ['Wij willen geen medische informatie opvragen'],
+        confidence: 1,
+        status: 'EXPLICIT_INPUT' as const,
+      },
+    }
+    const diagnosisRequest = {
+      ...emptyCaseUnderstanding(),
+      legalOrComplianceContext: {
+        value: ['De leidinggevende wil weten wat de medewerker precies mankeert.'],
+        evidence: ['wil graag weten wat de medewerker precies mankeert'],
+        confidence: 1,
+        status: 'EXPLICIT_INPUT' as const,
+      },
+    }
+
+    expect(caseUnderstandingFacts(confirmedBoundary).map((fact) => fact.code)).toContain('MEDICAL_PRIVACY_BOUNDARY')
+    expect(caseUnderstandingFacts(diagnosisRequest).map((fact) => fact.code)).not.toContain('MEDICAL_PRIVACY_BOUNDARY')
+  })
 })

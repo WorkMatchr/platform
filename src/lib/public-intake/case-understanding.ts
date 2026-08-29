@@ -55,6 +55,30 @@ const sharedGoalFactCodeByElement: Partial<Readonly<Record<(typeof CASE_UNDERSTA
   recentChanges: 'WORK_ENVIRONMENT_CHANGE',
 }
 
+const medicalPrivacyBoundaryPattern = /(?:geen|zonder)\s+(?:onnodige\s+)?(?:medische\s+(?:informatie|gegevens|details)|diagnosegegevens)(?:\s+opvragen|\s+nodig)?/i
+
+function confirmedMedicalPrivacyBoundary(understanding: CaseUnderstanding): ExtractedFact | null {
+  const candidateElements = [
+    understanding.userGoal,
+    understanding.knownFacts,
+    understanding.requestedInvestigation,
+    understanding.legalOrComplianceContext,
+  ] as const
+  const matchedElement = candidateElements.find((element) =>
+    element.status !== 'HYPOTHESIS' &&
+    element.status !== 'UNKNOWN' &&
+    [...element.value, ...element.evidence].some((text) => medicalPrivacyBoundaryPattern.test(text)))
+
+  if (!matchedElement) return null
+  return Object.freeze({
+    code: 'MEDICAL_PRIVACY_BOUNDARY',
+    value: Object.freeze([...matchedElement.value]),
+    status: statusMap[matchedElement.status] as ExtractedFactStatus,
+    confidence: matchedElement.confidence,
+    evidence: Object.freeze([...matchedElement.evidence]),
+  })
+}
+
 export function parseCaseUnderstanding(value: unknown): CaseUnderstanding {
   return caseUnderstandingSchema.parse(value)
 }
@@ -95,6 +119,8 @@ export function caseUnderstandingFacts(understanding: CaseUnderstanding | null):
       }
     }
   }
+  const medicalPrivacyBoundary = confirmedMedicalPrivacyBoundary(understanding)
+  if (medicalPrivacyBoundary) facts.push(medicalPrivacyBoundary)
   return Object.freeze(facts)
 }
 
