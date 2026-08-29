@@ -5,6 +5,7 @@ import {
   type CaseUnderstanding,
 } from '@/lib/ai-intake-classifier/case-understanding-contract'
 import type { ExtractedFact, ExtractedFactStatus } from './context-question-engine-types'
+import { compatibilityContextGoals } from './context-goal-catalog'
 
 export const CASE_UNDERSTANDING_VERSION = 'case-understanding/1.0.0' as const
 export const INTAKE_ROUTING_KNOWLEDGE_SCOPE = 'INTAKE_ROUTING_KNOWLEDGE' as const
@@ -101,15 +102,26 @@ export const matchingReadyProfileSchema = z.object({
 
 export type MatchingReadyProfile = z.infer<typeof matchingReadyProfileSchema>
 
+function confirmedFactSummary(fact: ExtractedFact): string[] {
+  const values = Array.isArray(fact.value) ? fact.value : [fact.value]
+  if (fact.code === 'SECTOR') {
+    return values.map((value) => `Sector: ${String(value).replace(/-/g, ' ')}.`)
+  }
+  const goal = compatibilityContextGoals.find((candidate) =>
+    (candidate.satisfiesFactCodes as readonly string[]).includes(fact.code))
+  return values.map((value) => {
+    const label = goal?.options.find((option) => option.code === String(value))?.label ?? String(value)
+    return goal ? `${goal.text} ${label}.` : label
+  })
+}
+
 export function buildNeutralAssignmentSummary(
   understanding: CaseUnderstanding,
   facts: readonly ExtractedFact[] = [],
 ): string {
   const confirmedContext = facts
     .filter((fact) => fact.status === 'USER_CONFIRMED')
-    .flatMap((fact) => Array.isArray(fact.value) ? fact.value : [fact.value])
-    .filter((value): value is string | number | boolean => ['string', 'number', 'boolean'].includes(typeof value))
-    .map(String)
+    .flatMap(confirmedFactSummary)
   const parts = [
     ...understanding.userGoal.value,
     ...understanding.workContext.value,
