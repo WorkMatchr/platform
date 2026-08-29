@@ -63,6 +63,30 @@ describe('public intake fact extraction', () => {
       .not.toContain('RIE')
   })
 
+  it('activeert geen RI&E-vragen voor een voorlopige secundaire RI&E-kandidaat zonder RI&E-vermelding', () => {
+    const understanding = {
+      ...emptyCaseUnderstanding(),
+      candidateExpertiseDomains: {
+        value: ['RIE', 'PROCESS_SAFETY_MAJOR_HAZARDS'],
+        evidence: ['BRZO/Seveso-locatie met gelijktijdige onderhoudswerkzaamheden'],
+        confidence: 0.98,
+        status: 'RELIABLE_EXTRACTION' as const,
+      },
+    }
+    const classification = {
+      summary: 'Een integrale procesveiligheidsbeoordeling tijdens een onderhoudsstop.',
+      primarySubject: 'RIE' as const,
+      secondarySubjects: [],
+      confidence: 'HIGH' as const,
+      alternatives: [],
+      caseUnderstanding: understanding,
+    }
+    const facts = codes('Wie kan de integrale risico’s op onze BRZO/Seveso-locatie tijdens de onderhoudsstop beoordelen?')
+
+    expect(deriveKnowledgeConceptCandidates({ originalInput: '', classification, facts }).map((item) => item.code))
+      .toEqual(['PROCESS_SAFETY_MAJOR_HAZARDS'])
+  })
+
   it('gebruikt een brede legacy hoofdcategorie niet naast specifiekere semantische domeinen', () => {
     const understanding = {
       ...emptyCaseUnderstanding(),

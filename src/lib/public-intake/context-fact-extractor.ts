@@ -105,6 +105,7 @@ export function deriveKnowledgeConceptCandidates(input: {
   const semanticDomains = input.classification?.caseUnderstanding?.candidateExpertiseDomains.value ?? []
   for (const domain of semanticDomains) {
     if (domain === 'UNKNOWN') continue
+    if (domain === 'RIE' && !fact('RIE_MENTIONED')) continue
     concepts.push(Object.freeze({
       code: domain,
       confidence: input.classification?.caseUnderstanding?.candidateExpertiseDomains.confidence ?? 0,
