@@ -12,6 +12,7 @@ import type {
 import { KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION } from './context-question-engine-types'
 
 const round = (value: number) => Math.round(value * 10000) / 10000
+const MINIMUM_HIGH_VALUE_INFORMATION_GAIN = 0.4
 
 function factCodes(facts: readonly ExtractedFact[]) {
   return new Set(facts.filter((fact) => fact.status !== 'HYPOTHESIS' && fact.status !== 'SUGGESTED_DIRECTION').map((fact) => fact.code))
@@ -20,6 +21,28 @@ function factCodes(facts: readonly ExtractedFact[]) {
 function conceptsMatch(goal: ContextGoal, concepts: readonly KnowledgeConceptCandidate[]) {
   if (goal.relevantConceptCodes.length === 0) return true
   return concepts.some((concept) => goal.relevantConceptCodes.includes(concept.code))
+}
+
+function hasValidKnowledgeGrounding(evidence: readonly KnowledgeEvidence[]) {
+  return evidence.some((item) => item.source === 'PUBLISHED_ROUTING_RULE')
+    && evidence.some((item) => item.source === 'PUBLISHED_CLAIM')
+}
+
+function hasValidApplicability(input: {
+  goal: ContextGoal
+  concepts: readonly KnowledgeConceptCandidate[]
+  facts: readonly ExtractedFact[]
+  knownFacts: ReadonlySet<string>
+}) {
+  if (!conceptsMatch(input.goal, input.concepts)) return false
+  if (!input.goal.applicability.requiredFactCodes.every((code) => input.knownFacts.has(code))) return false
+  if (input.goal.applicability.requiredAnyFactCodes.length > 0
+    && !input.goal.applicability.requiredAnyFactCodes.some((code) => input.knownFacts.has(code))) return false
+  return !input.goal.applicability.excludedFactValues.some((excluded) => input.facts.some((fact) =>
+    fact.code === excluded.code
+      && !['HYPOTHESIS', 'SUGGESTED_DIRECTION'].includes(fact.status)
+      && excluded.values.includes(fact.value as string | number | boolean),
+  ))
 }
 
 function isGoalResolved(goal: ContextGoal, knownFacts: ReadonlySet<string>) {
@@ -52,10 +75,16 @@ function scoreGoal(input: {
 function readiness(input: {
   selected: ContextGoalCandidate | null
   remainingBudget: number
-  hadGroundedCandidates: boolean
+  hadApplicableContext: boolean
+  knowledgeCoverageInsufficient: boolean
 }): AssignmentReadiness {
   if (input.remainingBudget <= 0) return Object.freeze({ status: 'MAX_QUESTION_BUDGET_REACHED', reasonCode: 'QUESTION_BUDGET_EXHAUSTED' })
-  if (!input.selected) return Object.freeze({ status: input.hadGroundedCandidates ? 'COMPLETE' : 'SAFE_FALLBACK', reasonCode: input.hadGroundedCandidates ? 'NO_UNRESOLVED_HIGH_VALUE_GOAL' : 'KNOWLEDGE_COVERAGE_INSUFFICIENT' })
+  if (!input.selected) return Object.freeze({
+    status: input.knowledgeCoverageInsufficient && !input.hadApplicableContext ? 'SAFE_FALLBACK' : 'COMPLETE',
+    reasonCode: input.knowledgeCoverageInsufficient && !input.hadApplicableContext
+      ? 'KNOWLEDGE_COVERAGE_INSUFFICIENT'
+      : 'NO_UNRESOLVED_HIGH_VALUE_GOAL',
+  })
   if (input.selected.goal.mandatory) return Object.freeze({ status: 'NEEDS_ESSENTIAL_CONTEXT', reasonCode: 'MANDATORY_GOAL_MISSING' })
   return Object.freeze({ status: 'CAN_ASK_HIGH_VALUE_CONTEXT', reasonCode: 'HIGH_VALUE_GOAL_AVAILABLE' })
 }
@@ -81,22 +110,35 @@ export function planNextContextQuestion(input: {
   }
   const candidates: ContextGoalCandidate[] = []
   let deduplicatedGoalCount = 0
+  let hadApplicableContext = false
+  let knowledgeCoverageInsufficient = false
   for (const goal of input.goals) {
     if (unavailableQuestions.has(goal.questionKey) || unavailableGoalCodes.has(goal.code) || isGoalResolved(goal, knownFacts)) {
       deduplicatedGoalCount += 1
       continue
     }
-    const relevant = conceptsMatch(goal, input.concepts)
-    if (!relevant) continue
-    if (goal.code === 'PHYSICAL_LOAD' && !knownFacts.has('PHYSICAL_LOAD_RELEVANT')) continue
-    if (goal.code === 'RIE_STATUS' && knownFacts.has('RIE_INTENT')) continue
-    if (['ORGANIZATION_SIZE', 'WORKSITE_COUNT', 'START_WINDOW'].includes(goal.code) && !input.concepts.some((concept) => concept.code === 'RIE')) continue
+    const applicable = hasValidApplicability({ goal, concepts: input.concepts, facts: input.facts, knownFacts })
+    if (!applicable) continue
     const evidence = input.evidenceByGoalCode.get(goal.code) ?? Object.freeze([])
-    if (!goal.universal && evidence.length === 0) continue
+    if (goal.groundingPolicy === 'DOMAIN_SPECIFIC' && !hasValidKnowledgeGrounding(evidence)) {
+      knowledgeCoverageInsufficient = true
+      continue
+    }
+    hadApplicableContext = true
+    if (!goal.mandatory && goal.informationGain < MINIMUM_HIGH_VALUE_INFORMATION_GAIN) continue
     const skippedByFactCodes = goal.satisfiesFactCodes.filter((code) => knownFacts.has(code))
     candidates.push(Object.freeze({
       goal,
-      applicability: Object.freeze({ applicable: true, reasonCode: goal.mandatory ? 'MANDATORY_CONTEXT' : relevant ? 'CONCEPT_RELEVANT' : 'UNIVERSAL_CONTEXT', evidence, skippedByFactCodes: Object.freeze(skippedByFactCodes) }),
+      applicability: Object.freeze({
+        applicable: true,
+        reasonCode: goal.mandatory
+          ? 'MANDATORY_CONTEXT'
+          : goal.groundingPolicy === 'DOMAIN_SPECIFIC'
+            ? 'VALID_APPLICABILITY_AND_KNOWLEDGE_GROUNDING'
+            : 'SAFE_SHARED_CONTEXT',
+        evidence,
+        skippedByFactCodes: Object.freeze(skippedByFactCodes),
+      }),
       score: scoreGoal({ goal, evidence, concepts: input.concepts, mode: input.mode }),
     }))
   }
@@ -107,7 +149,7 @@ export function planNextContextQuestion(input: {
     mode: input.mode,
     selected,
     candidates: Object.freeze(candidates),
-    readiness: readiness({ selected, remainingBudget: input.questionBudgetRemaining, hadGroundedCandidates: candidates.some((candidate) => candidate.applicability.evidence.some((evidence) => evidence.source !== 'LEGACY_COMPATIBILITY')) }),
+    readiness: readiness({ selected, remainingBudget: input.questionBudgetRemaining, hadApplicableContext, knowledgeCoverageInsufficient }),
     deduplicatedGoalCount,
     questionBudgetRemaining: Math.max(0, input.questionBudgetRemaining),
   })

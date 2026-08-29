@@ -6,9 +6,10 @@ import { compatibilityContextGoals } from './context-goal-catalog'
 const concept = (code: string): KnowledgeConceptCandidate => ({
   code, confidence: 1, source: 'KNOWLEDGE_TOPIC', supportingKnowledgeIds: ['claim-1'],
 })
-const evidence = (goalCode: string): readonly KnowledgeEvidence[] => [{
-  knowledgeId: `claim:${goalCode}`, topicCode: 'test-topic', confidence: 1, source: 'PUBLISHED_CLAIM',
-}]
+const evidence = (goalCode: string): readonly KnowledgeEvidence[] => [
+  { knowledgeId: `claim:${goalCode}`, topicCode: 'test-topic', confidence: 1, source: 'PUBLISHED_CLAIM' },
+  { knowledgeId: `rule:${goalCode}`, topicCode: 'context-goal-routing-rule', confidence: 1, source: 'PUBLISHED_ROUTING_RULE' },
+]
 const goal = (overrides: Partial<ContextGoal> & Pick<ContextGoal, 'code'>): ContextGoal => ({
   questionKey: `context_${overrides.code.toLocaleLowerCase('nl-NL')}`,
   purpose: 'Een professioneel relevant contextdoel onderscheiden.',
@@ -17,6 +18,8 @@ const goal = (overrides: Partial<ContextGoal> & Pick<ContextGoal, 'code'>): Cont
   options: [{ code: 'YES', label: 'Ja' }, { code: 'NO', label: 'Nee' }],
   category: 'WORK', relevantConceptCodes: ['TEST_CONCEPT'],
   satisfiesFactCodes: [overrides.code], equivalentGoalCodes: [], mandatory: false,
+  groundingPolicy: 'DOMAIN_SPECIFIC',
+  applicability: { requiredFactCodes: [], requiredAnyFactCodes: [], excludedFactValues: [] },
   universal: false, baseRelevance: 0.8, informationGain: 0.8, matchingValue: 0.8,
   userBurden: 0.2, ...overrides,
 })
@@ -75,6 +78,44 @@ describe('knowledge-grounded context question ranking', () => {
     expect(result.candidates.map((item) => item.goal.code)).not.toContain('UNGROUNDED')
   })
 
+  it('accepteert legacy alleen voor veilige shared context', () => {
+    const legacyEvidence: readonly KnowledgeEvidence[] = [{
+      knowledgeId: 'legacy:goal', topicCode: 'legacy-context-catalog', confidence: 0.65,
+      source: 'LEGACY_COMPATIBILITY',
+    }]
+    const shared = goal({ code: 'SHARED', groundingPolicy: 'SHARED_CONTEXT' })
+    const domain = goal({ code: 'DOMAIN', informationGain: 1 })
+    const result = plan({
+      goals: [domain, shared],
+      evidenceByGoalCode: new Map([['DOMAIN', legacyEvidence], ['SHARED', legacyEvidence]]),
+    })
+    expect(result.selected?.goal.code).toBe('SHARED')
+    expect(result.candidates.map((item) => item.goal.code)).not.toContain('DOMAIN')
+  })
+
+  it('vereist voor een vakspecifiek doel zowel een gevalideerde regel als claim', () => {
+    const domain = goal({ code: 'DOMAIN' })
+    const onlyClaim = plan({ goals: [domain], evidenceByGoalCode: new Map([['DOMAIN', [{
+      knowledgeId: 'claim:DOMAIN', topicCode: 'test-topic', confidence: 1, source: 'PUBLISHED_CLAIM',
+    }]]]) })
+    expect(onlyClaim.selected).toBeNull()
+    expect(onlyClaim.readiness).toEqual({ status: 'SAFE_FALLBACK', reasonCode: 'KNOWLEDGE_COVERAGE_INSUFFICIENT' })
+
+    const completeEvidence: readonly KnowledgeEvidence[] = [
+      ...evidence('DOMAIN'),
+      { knowledgeId: 'rule:domain', topicCode: 'context-goal-routing-rule', confidence: 1, source: 'PUBLISHED_ROUTING_RULE' },
+    ]
+    expect(plan({ goals: [domain], evidenceByGoalCode: new Map([['DOMAIN', completeEvidence]]) }).selected?.goal.code)
+      .toBe('DOMAIN')
+  })
+
+  it('stopt wanneer alleen doelen met te lage informatiewaarde overblijven', () => {
+    const lowValue = goal({ code: 'LOW_VALUE', groundingPolicy: 'SHARED_CONTEXT', informationGain: 0.2 })
+    const result = plan({ goals: [lowValue], evidenceByGoalCode: new Map() })
+    expect(result.selected).toBeNull()
+    expect(result.readiness).toEqual({ status: 'COMPLETE', reasonCode: 'NO_UNRESOLVED_HIGH_VALUE_GOAL' })
+  })
+
   it('is deterministisch voor dezelfde facts en kandidaten', () => {
     const goals = [goal({ code: 'B' }), goal({ code: 'A' })]
     expect(plan({ goals }).candidates.map((item) => item.goal.code))
@@ -117,6 +158,7 @@ describe('knowledge-grounded context question ranking', () => {
     })
 
     expect(result.candidates.map((item) => item.goal.code)).not.toContain('AFFECTED_SCOPE')
+    expect(result.candidates.map((item) => item.goal.code)).not.toContain('EXISTING_ASSESSMENT')
     expect(result.candidates.map((item) => item.goal.code)).toContain('ORGANIZATION_SIZE')
     expect(result.selected?.goal.code).not.toBe('AFFECTED_SCOPE')
   })

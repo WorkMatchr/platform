@@ -38,6 +38,8 @@ function dynamicGoal(code: string, concept: string): ContextGoal {
     purpose: 'Gevalideerde onderscheidende context verzamelen.', text: 'Welke situatie is van toepassing?',
     answerType: 'OPTION', options: [{ code: 'KNOWN', label: 'Bekend' }], category: 'WORK',
     relevantConceptCodes: [concept], satisfiesFactCodes: [code], equivalentGoalCodes: [],
+    groundingPolicy: 'DOMAIN_SPECIFIC',
+    applicability: { requiredFactCodes: [], requiredAnyFactCodes: [], excludedFactValues: [] },
     mandatory: code === 'URGENCY', universal: false, baseRelevance: 1, informationGain: 1,
     matchingValue: 1, userBurden: 0.2,
   }
@@ -47,10 +49,10 @@ describe('Golden Intake Scenario Suite', () => {
   it.each(scenarios)('$name kiest een kennisgedreven informatiedoel zonder topic-branch', (scenario) => {
     const goalCodes = [scenario.expectedGoal, ...(scenario.forbiddenGoals ?? [])]
     const goals = goalCodes.map((code) => dynamicGoal(code, scenario.concept))
-    const evidenceByGoalCode = new Map<string, readonly KnowledgeEvidence[]>(goalCodes.map((code) => [code, [{
-      knowledgeId: `knowledge:${scenario.concept}:${code}`, topicCode: scenario.concept,
-      confidence: 1, source: 'PUBLISHED_CLAIM',
-    }]]))
+    const evidenceByGoalCode = new Map<string, readonly KnowledgeEvidence[]>(goalCodes.map((code) => [code, [
+      { knowledgeId: `knowledge:${scenario.concept}:${code}`, topicCode: scenario.concept, confidence: 1, source: 'PUBLISHED_CLAIM' },
+      { knowledgeId: `rule:${scenario.concept}:${code}`, topicCode: 'context-goal-routing-rule', confidence: 1, source: 'PUBLISHED_ROUTING_RULE' },
+    ]]))
     // A forbidden goal receives no applicability prerequisite in this generic
     // fixture. Its lower evidence confidence ensures the scenario still tests
     // ranking without adding a topic-specific branch to the engine.

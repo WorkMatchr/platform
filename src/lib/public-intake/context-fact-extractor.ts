@@ -31,7 +31,7 @@ export function extractPublicIntakeFacts(input: {
       confidence: countIsAffected ? 0.98 : 0.9,
     }))
   }
-  if (/\b(?:meerdere|verschillende|enkele|een paar|veel)\s+(?:medewerkers|werknemers|collega'?s|personen)\b/.test(text)) {
+  if (/\b(?:meerdere|verschillende|enkele|een paar|veel|twee|drie|vier|vijf|zes|zeven|acht|negen|tien)\s+(?:medewerkers|werknemers|collega[’']?s|personen|chauffeurs)\b/.test(text)) {
     facts.push(Object.freeze({ code: 'AFFECTED_SCOPE', value: 'MULTIPLE', status: 'RELIABLE_EXTRACTION', confidence: 0.9 }))
   }
   const occupations = [
@@ -55,9 +55,13 @@ export function extractPublicIntakeFacts(input: {
       confidence: 0.96,
     }))
   }
-  if (/\b(?:verhuisd|nieuw kantoor|nieuwe werkplek|verbouwd|gewijzigd)\b/.test(text)) facts.push(Object.freeze({ code: 'WORK_ENVIRONMENT_CHANGED', value: true, status: 'RELIABLE_EXTRACTION', confidence: 0.9 }))
+  if (/\b(?:verhuisd|verhuizing|nieuw kantoor|nieuwe werkplek|verbouwd|gewijzigd)\b/.test(text)) facts.push(Object.freeze({ code: 'WORK_ENVIRONMENT_CHANGE', value: true, status: 'RELIABLE_EXTRACTION', confidence: 0.9 }))
   if (/\bheftrucks?\b/.test(text)) facts.push(Object.freeze({ code: 'EQUIPMENT', value: 'FORKLIFT', status: 'RELIABLE_EXTRACTION', confidence: 0.98 }))
   if (/\b(?:dampen?|gassen?|geuren?|stof|rook|emissie)\b/.test(text)) facts.push(Object.freeze({ code: 'EXPOSURE_SIGNAL', value: true, status: 'RELIABLE_EXTRACTION', confidence: 0.85 }))
+  if (/\b(?:tillen|dragen|duwen|trekken|repeterend werk|lichamelijke belasting)\b/.test(text)) facts.push(Object.freeze({ code: 'PHYSICAL_LOAD_RELEVANT', value: true, status: 'RELIABLE_EXTRACTION', confidence: 0.9 }))
+  if (/\b(?:na (?:een )?(?:hele )?(?:werk)?dag werken|na (?:de )?werkdag|tijdens (?:het )?werk|aan het einde van (?:de )?werkdag)\b/.test(text)) facts.push(Object.freeze({ code: 'DURATION_FREQUENCY', value: 'WORKDAY_PATTERN', status: 'RELIABLE_EXTRACTION', confidence: 0.9 }))
+  if (/\b(?:ploegendienst|ploegendiensten|nachtdienst|nachtdiensten)\b/.test(text)) facts.push(Object.freeze({ code: 'SHIFT_WORK', value: true, status: 'RELIABLE_EXTRACTION', confidence: 0.95 }))
+  if (/\b(?:zo snel mogelijk|per direct|binnen (?:vier|\d+) weken|binnen (?:drie|\d+) maanden|volgende maand)\b/.test(text)) facts.push(Object.freeze({ code: 'START_WINDOW', value: 'MENTIONED', status: 'RELIABLE_EXTRACTION', confidence: 0.9 }))
   if (/\b(?:ri&e|risico-inventarisatie)\b/.test(text)) facts.push(Object.freeze({ code: 'RIE_MENTIONED', value: true, status: 'EXPLICIT_INPUT', confidence: 1 }))
   if (/\b(?:voor het eerst|nieuwe? ri&e|ri&e nodig|ri&e laten uitvoeren)\b/.test(text)) facts.push(Object.freeze({ code: 'RIE_INTENT', value: 'NEW', status: 'RELIABLE_EXTRACTION', confidence: 0.95 }))
   if (/\b(?:actualiseren|bijwerken|verouderd|jaar oud)\b/.test(text) && /ri&e/.test(text)) facts.push(Object.freeze({ code: 'RIE_INTENT', value: 'UPDATE', status: 'RELIABLE_EXTRACTION', confidence: 0.95 }))
@@ -101,6 +105,21 @@ export function deriveKnowledgeConceptCandidates(input: {
   if (fact('HEALTH_COMPLAINT')) concepts.push(Object.freeze({ code: 'HEALTH_COMPLAINT', confidence: 0.95, source: 'EXPLICIT_INPUT', supportingKnowledgeIds: Object.freeze([]) }))
   if (fact('EQUIPMENT')) concepts.push(Object.freeze({ code: 'WORK_EQUIPMENT', confidence: 0.95, source: 'EXPLICIT_INPUT', supportingKnowledgeIds: Object.freeze([]) }))
   if (fact('EXPOSURE_SIGNAL') || fact('EQUIPMENT')) concepts.push(Object.freeze({ code: 'EXPOSURE', confidence: 0.8, source: 'EXPLICIT_INPUT', supportingKnowledgeIds: Object.freeze([]) }))
-  if (fact('WORK_ENVIRONMENT_CHANGED')) concepts.push(Object.freeze({ code: 'WORK_ENVIRONMENT_CHANGE', confidence: 0.9, source: 'EXPLICIT_INPUT', supportingKnowledgeIds: Object.freeze([]) }))
+  if (fact('WORK_ENVIRONMENT_CHANGE')) concepts.push(Object.freeze({ code: 'WORK_ENVIRONMENT_CHANGE', confidence: 0.9, source: 'EXPLICIT_INPUT', supportingKnowledgeIds: Object.freeze([]) }))
+  const text = normalized(input.originalInput)
+  const explicitConceptSignals = [
+    ['NOISE', /\b(?:geluid|lawaai|lawaaiig)\b/],
+    ['PSA', /\b(?:werkdruk|psychosociale arbeidsbelasting|ongewenst gedrag|sociale veiligheid)\b/],
+    ['MACHINE_SAFETY', /\b(?:machineveiligheid|machine|arbeidsmiddel)\b/],
+    ['EMERGENCY_RESPONSE', /\b(?:bhv|bedrijfshulpverlening|ontruiming)\b/],
+    ['DISPLAY_SCREEN_WORK', /\b(?:beeldschermwerk|beeldscherm|computerwerk)\b/],
+    ['INDOOR_CLIMATE', /\b(?:binnenklimaat|ventilatie|luchtkwaliteit)\b/],
+    ['WORK_AT_HEIGHT', /\b(?:werken op hoogte|valgevaar|dakwerk)\b/],
+  ] as const
+  for (const [code, pattern] of explicitConceptSignals) {
+    if (pattern.test(text) && !concepts.some((concept) => concept.code === code)) {
+      concepts.push(Object.freeze({ code, confidence: 0.9, source: 'EXPLICIT_INPUT', supportingKnowledgeIds: Object.freeze([]) }))
+    }
+  }
   return Object.freeze(concepts)
 }

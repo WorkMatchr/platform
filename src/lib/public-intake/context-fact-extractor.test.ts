@@ -15,11 +15,21 @@ describe('public intake fact extraction', () => {
   })
 
   it('herkent organisatieomvang en locaties zonder ze opnieuw te laten vragen', () => {
-    const facts = codes('Wij zijn een metaalbewerkingsbedrijf met 85 medewerkers op twee locaties en willen voor het eerst een RI&E laten uitvoeren.')
+    const facts = codes('Wij zijn een metaalbewerkingsbedrijf met 85 medewerkers op twee locaties en willen volgende maand voor het eerst een RI&E laten uitvoeren.')
     expect(facts).toEqual(expect.arrayContaining([
       expect.objectContaining({ code: 'ORGANIZATION_SIZE', value: 85 }),
       expect.objectContaining({ code: 'WORKSITE_COUNT', value: 2 }),
       expect.objectContaining({ code: 'RIE_INTENT', value: 'NEW' }),
+      expect.objectContaining({ code: 'START_WINDOW' }),
+    ]))
+  })
+
+  it('herkent een genoemd tijdspatroon en verandering zonder die opnieuw te vragen', () => {
+    const facts = codes('Sinds de verhuizing hebben enkele collega’s hoofdpijn na een dag werken.')
+    expect(facts).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: 'WORK_ENVIRONMENT_CHANGE' }),
+      expect.objectContaining({ code: 'DURATION_FREQUENCY' }),
+      expect.objectContaining({ code: 'AFFECTED_SCOPE', value: 'MULTIPLE' }),
     ]))
   })
 

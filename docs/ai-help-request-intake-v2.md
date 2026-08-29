@@ -24,3 +24,15 @@ Na de controle kiest de gebruiker voor login of registratie. De lokale `returnTo
 - `createIntake`, `saveIntakeStep`, intakevraagset v1/v2, opdrachtvorming en bestaande draft-/opdrachtroutes zijn niet verwijderd.
 
 De oude negen categorieën blijven nodig voor bestaande `Intake`-records, antwoordrevisies, controlepagina’s, opdrachtvorming en publicatie. Uitfasering is pas veilig nadat alle actieve drafts zijn geconverteerd of afgerond en een afzonderlijk migratie-/retentieplan is goedgekeurd.
+
+## Strict grounding voor nieuwe drafts
+
+Nieuwe contextvragen gebruiken engineversie `knowledge-grounded-context-engine/1.1.0`.
+Veilige gedeelde opdrachtcontext mag uit de compatibilitycatalogus komen. Een
+vakspecifiek informatiedoel vereist centraal zowel geldige declaratieve
+applicability als een gepubliceerde routingregel met actuele, gepubliceerde en
+gevalideerde claimprovenance. Legacy kan zo geen gezondheidsklacht naar
+lichamelijke belasting ombuigen en een nieuwe RI&E activeert geen vraag naar
+een bestaande beoordeling. De vijf-vragengrens is geen doel: bij voldoende
+context, lage resterende informatiewaarde of ontbrekende kennisgronding stopt de
+engine eerder. Historische `1.0.0`-planningssnapshots blijven leesbaar.

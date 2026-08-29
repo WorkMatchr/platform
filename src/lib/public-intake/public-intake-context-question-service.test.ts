@@ -51,6 +51,19 @@ describe('public intake context-question persistence', () => {
     })
   })
 
+  it('blijft een historische 1.0-planningssnapshot hervatbaar weergeven', () => {
+    const historical = {
+      ...storedQuestion,
+      planningSnapshot: {
+        ...storedQuestion.planningSnapshot,
+        engineVersion: 'knowledge-grounded-context-engine/1.0.0',
+      },
+    }
+    expect(toPublicIntakeContextQuestionView(historical)).toMatchObject({
+      planning: { engineVersion: 'knowledge-grounded-context-engine/1.0.0' },
+    })
+  })
+
   it('persists only the highest-ranked next question and replans after an answer', async () => {
     mocks.findQuestions.mockResolvedValueOnce([]).mockResolvedValueOnce([storedQuestion])
     await expect(ensurePublicIntakeAIContextQuestions({

@@ -83,10 +83,13 @@ server-side gebruikt voor validatie.
 ## Compatibility
 
 De bestaande RI&E- en contextcatalogus blijft tijdelijk als expliciete
-`LEGACY_COMPATIBILITY`-provider bestaan. Deze levert parity voor bestaande
-flows en drafts terwijl gepubliceerde KnowledgeRules geleidelijk de inhoudelijke
-contextdoelen overnemen. Legacy drafts zonder nieuwe planningssnapshot blijven
-hervatbaar via hun historische cataloguscontract.
+`LEGACY_COMPATIBILITY`-provider bestaan. Voor nieuwe drafts mag deze provider
+alleen veilige `SHARED_CONTEXT` leveren. Een `DOMAIN_SPECIFIC` doel komt alleen
+in aanmerking wanneer één gepubliceerde routingregel én minimaal één door die
+regel genoemde actuele, gepubliceerde en gevalideerde claim in dezelfde
+retrievalset aanwezig zijn. Legacy is dus nooit zelfstandig vakinhoudelijk
+bewijs. Historische 1.0-planningssnapshots blijven parseerbaar en hervatbaar via
+hun bevroren vraag- en antwoordcontract.
 
 De compatibilitycatalogus is als volgt geclassificeerd:
 
@@ -97,9 +100,51 @@ De compatibilitycatalogus is als volgt geclassificeerd:
 | `DOMAIN_KNOWLEDGE_CONTEXT` | RI&E-status, blootstellingsbron, lichamelijke belasting |
 | `REMOVE_AFTER_PARITY` | oude vooraf samengestelde topic-questionplanner |
 
-Lichamelijke belasting is alleen applicable wanneer die richting eerst als
-relevante context is bevestigd; een gezondheidsklacht alleen is daarvoor nooit
-voldoende.
+De centrale policy is:
+
+```text
+DOMAIN_SPECIFIC_GOAL
+  requires VALID_APPLICABILITY
+  and VALID_KNOWLEDGE_GROUNDING
+```
+
+Applicabilityvoorwaarden staan declaratief bij het Context Goal en niet in
+topic-specifieke enginebranches. Lichamelijke belasting vereist bijvoorbeeld
+een expliciet belastingssignaal; een gezondheidsklacht alleen is nooit
+voldoende. `EXISTING_ASSESSMENT` valt bij `RIE_INTENT=NEW` af. Bekende facts,
+inclusief semantisch equivalente facts, lossen het doel vóór ranking op.
+
+De engineversie `1.1.0` plant geen optionele doelen met te lage
+informatiewaarde. Het maximum van vijf is uitsluitend een harde bovengrens en
+geen streefgetal. Als alleen lage-waardedoelen resteren is de intake `COMPLETE`;
+als vakspecifieke dekking ontbreekt en geen veilige shared context resteert is
+de uitkomst `SAFE_FALLBACK / KNOWLEDGE_COVERAGE_INSUFFICIENT`.
+
+## Preview knowledge coverage audit — 29 augustus 2026
+
+De afzonderlijke Preview-database bevatte tijdens de audit geen
+`KnowledgeClaim`-records en geen `KnowledgeRule`-records. Daardoor kan de
+provider momenteel uitsluitend veilige shared context leveren; geen van de
+onderstaande domeinen heeft al een geldig vakspecifiek Context Goal.
+
+| Domein | Beschikbare gevalideerde concepten/claims | Bruikbare regels | Context Goals | Kennishiaat |
+| --- | ---: | ---: | --- | --- |
+| RI&E | 0 | 0 | shared: sector, omvang, locaties, start en RI&E-intentie | actuele claims plus gevalideerde routingregels voor inhoudelijke RI&E-verdieping |
+| BHV | 0 | 0 | shared: sector, start en urgentie | actuele BHV-claims en een Context Goal-regel voor ontbrekende organisatiecontext |
+| Gezondheidsklachten | 0 | 0 | shared: werkzaamheden, locatiepatroon, verandering, omvang, tijdspatroon en bestaande beoordeling | actuele claims en rules per gerechtvaardigd onderzoeksdoel |
+| Fysieke belasting | 0 | 0 | geen vakspecifiek doel | actuele ergonomieclaims plus routingregel en expliciete applicability |
+| Beeldschermwerk | 0 | 0 | geen vakspecifiek doel | actuele claims en routingregel |
+| Binnenklimaat/ventilatie | 0 | 0 | veilige locatie-/veranderingscontext waar toepasselijk | actuele claims en routingregel |
+| Geluid | 0 | 0 | geen vakspecifiek doel | actuele claims en routingregel |
+| Gevaarlijke stoffen/blootstelling | 0 | 0 | shared: urgentie, werkzaamheden, locatie en tijdspatroon | actuele claims en routingregel voor bron/blootstellingscontext |
+| PSA/werkdruk | 0 | 0 | geen vakspecifiek doel | actuele claims en routingregel |
+| Machineveiligheid | 0 | 0 | shared context waar veilig | actuele claims en routingregel |
+| Incidenten | 0 | 0 | shared: urgentie, omvang, werkzaamheden, tijdspatroon en bestaande beoordeling | actuele claims en routingregel voor inhoudelijke incidentcontext |
+| Werken op hoogte | 0 | 0 | geen vakspecifiek doel | actuele claims en routingregel |
+
+Er zijn bewust geen claims of regels uit legacycopy afgeleid en geen nieuwe
+topic-wizards toegevoegd. Nieuwe gevalideerde `CONTEXT_GOAL`-regels worden door
+dezelfde generieke provider verwerkt.
 
 ## Veiligheid en performance
 

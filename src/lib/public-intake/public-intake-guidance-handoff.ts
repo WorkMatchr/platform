@@ -31,7 +31,10 @@ import {
   PUBLIC_HELP_REQUEST_INTAKE_V2_FLOW_VERSION,
   PUBLIC_HELP_REQUEST_INTAKE_V2_QUESTION_LIMIT,
 } from './public-intake-config'
-import { KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION } from './context-question-engine-types'
+import {
+  KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION,
+  LEGACY_KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION,
+} from './context-question-engine-types'
 
 export type PublicIntakeGuidanceHandoff = Readonly<{
   contract: GuidanceContract
@@ -405,7 +408,8 @@ export function buildPublicIntakeGuidanceHandoff(
   })
   const evaluatedClarification = clarificationEngine.evaluate(contract, helpRequest)
   const engineQuestions = draft.contextQuestions?.filter(
-    (question) => question.catalogVersion === KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION,
+    (question) => question.catalogVersion === KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION
+      || question.catalogVersion === LEGACY_KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION,
   ) ?? []
   const unansweredEngineQuestion = engineQuestions.some(
     (question) => !draft.answers.some((answer) => answer.questionKey === question.questionKey),
