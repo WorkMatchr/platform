@@ -71,15 +71,18 @@ describe('Case Understanding en expert-routing — tien exacte reviewsituaties',
         { knowledgeId: `00000000-0000-4000-8000-${String(scenario.number).padStart(4, '0')}${String(index).padStart(8, '0')}`, topicCode: goal.code, confidence: 1, source: 'PUBLISHED_CLAIM' as const },
         { knowledgeId: `10000000-0000-4000-8000-${String(scenario.number).padStart(4, '0')}${String(index).padStart(8, '0')}`, topicCode: goal.code, confidence: 1, source: 'PUBLISHED_ROUTING_RULE' as const },
       ]]))
+      const unresolvedGoals = goals.filter((goal) =>
+        !goal.satisfiesFactCodes.some((code) => facts.some((fact) => fact.code === code)),
+      )
       const asked: string[] = []
-      for (let questionIndex = 0; questionIndex < goals.length; questionIndex += 1) {
-        const plan = planNextContextQuestion({ mode: 'DIRECT_REQUEST', facts, concepts, goals, evidenceByGoalCode: evidence, answeredQuestionKeys: asked, askedQuestionKeys: asked, questionBudgetRemaining: 5 - asked.length })
+      for (let questionIndex = 0; questionIndex < unresolvedGoals.length; questionIndex += 1) {
+        const plan = planNextContextQuestion({ mode: 'DIRECT_REQUEST', facts, concepts, goals: unresolvedGoals, evidenceByGoalCode: evidence, answeredQuestionKeys: asked, askedQuestionKeys: asked, questionBudgetRemaining: 5 - asked.length })
         expect(plan.selected).not.toBeNull()
         const selected = plan.selected!.goal
         asked.push(selected.questionKey)
         facts.push({ code: selected.satisfiesFactCodes[0], value: 'USER_ANSWER', status: 'USER_CONFIRMED', confidence: 1, sourceQuestionKey: selected.questionKey })
       }
-      expect(asked).toHaveLength(Math.min(5, goals.length))
+      expect(asked).toHaveLength(Math.min(5, unresolvedGoals.length))
       expect(new Set(asked).size).toBe(asked.length)
 
       const claimIds = scenario.candidateClaimIds.map((_, index) => `20000000-0000-4000-8000-${String(scenario.number).padStart(4, '0')}${String(index).padStart(8, '0')}`)
