@@ -40,6 +40,28 @@ function plan(input: {
 }
 
 describe('knowledge-grounded context question ranking', () => {
+  it('vraagt alleen naar procesintegriteit wanneer een technisch veranderingssignaal aanwezig is', () => {
+    const processIntegrityGoal = goal({
+      code: 'PROCESS_INTEGRITY_SIGNAL',
+      relevantConceptCodes: ['PROCESS_SAFETY_MAJOR_HAZARDS'],
+      satisfiesFactCodes: ['PROCESS_INTEGRITY_SIGNAL'],
+    })
+    const base = {
+      mode: 'DIRECT_REQUEST' as const,
+      concepts: [concept('PROCESS_SAFETY_MAJOR_HAZARDS')],
+      goals: [processIntegrityGoal],
+      evidenceByGoalCode: new Map([['PROCESS_INTEGRITY_SIGNAL', evidence('PROCESS_INTEGRITY_SIGNAL')]]),
+      answeredQuestionKeys: [],
+      askedQuestionKeys: [],
+      questionBudgetRemaining: 5,
+    }
+
+    expect(planNextContextQuestion({ ...base, facts: [] }).selected).toBeNull()
+    expect(planNextContextQuestion({ ...base, facts: [{
+      code: 'RECENT_CHANGES', value: ['Vermoeden van veroudering'], status: 'HYPOTHESIS', confidence: 0.6,
+    }] }).selected?.goal.code).toBe('PROCESS_INTEGRITY_SIGNAL')
+  })
+
   it('geeft ontbrekende essentiële context voorrang', () => {
     const result = plan({ goals: [goal({ code: 'OPTIONAL' }), goal({ code: 'ESSENTIAL', mandatory: true, informationGain: 0.1 })] })
     expect(result.selected?.goal.code).toBe('ESSENTIAL')

@@ -14,6 +14,10 @@ import { KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION } from './context-question-en
 const round = (value: number) => Math.round(value * 10000) / 10000
 const MINIMUM_HIGH_VALUE_INFORMATION_GAIN = 0.4
 
+const managedApplicabilityPrerequisites: Readonly<Record<string, readonly string[]>> = Object.freeze({
+  PROCESS_INTEGRITY_SIGNAL: Object.freeze(['RECENT_CHANGES']),
+})
+
 function factCodes(facts: readonly ExtractedFact[]) {
   return new Set(facts.filter((fact) => fact.status !== 'HYPOTHESIS' && fact.status !== 'SUGGESTED_DIRECTION').map((fact) => fact.code))
 }
@@ -35,6 +39,12 @@ function hasValidApplicability(input: {
   knownFacts: ReadonlySet<string>
 }) {
   if (!conceptsMatch(input.goal, input.concepts)) return false
+  const applicabilityFacts = new Set(input.facts
+    .filter((fact) => fact.status !== 'SUGGESTED_DIRECTION')
+    .map((fact) => fact.code))
+  const managedPrerequisites = managedApplicabilityPrerequisites[input.goal.code] ?? []
+  if (managedPrerequisites.length > 0
+    && !managedPrerequisites.some((code) => applicabilityFacts.has(code))) return false
   if (!input.goal.applicability.requiredFactCodes.every((code) => input.knownFacts.has(code))) return false
   if (input.goal.applicability.requiredAnyFactCodes.length > 0
     && !input.goal.applicability.requiredAnyFactCodes.some((code) => input.knownFacts.has(code))) return false

@@ -38,6 +38,9 @@ function understanding(number: number): CaseUnderstanding {
     hazards: scenario.explicitFacts.some((fact) => /brandbare|toxische|heetwerk|rook|machine|lekkage/i.test(fact))
       ? { value: scenario.explicitFacts.filter((fact) => /brandbare|toxische|heetwerk|rook|machine|lekkage/i.test(fact)), evidence: [scenario.originalInput], confidence: 1, status: 'EXPLICIT_INPUT' }
       : base.hazards,
+    recentChanges: scenario.explicitFacts.some((fact) => /verouder/i.test(fact))
+      ? { value: scenario.explicitFacts.filter((fact) => /verouder/i.test(fact)), evidence: [scenario.originalInput], confidence: 0.6, status: 'HYPOTHESIS' }
+      : base.recentChanges,
   }
 }
 
