@@ -415,6 +415,9 @@ export function buildPublicIntakeGuidanceHandoff(
     (question) => !draft.answers.some((answer) => answer.questionKey === question.questionKey),
   )
   const budgetExhausted = draft.answers.length >= PUBLIC_HELP_REQUEST_INTAKE_V2_QUESTION_LIMIT
+  const knowledgeEngineEvaluated =
+    draft.flowVersion === PUBLIC_HELP_REQUEST_INTAKE_V2_FLOW_VERSION &&
+    Boolean(draft.aiClassification?.caseUnderstanding)
   const clarification = engineQuestions.length > 0
     ? unansweredEngineQuestion
       ? Object.freeze({ ...evaluatedClarification, isComplete: false, nextQuestion: null })
@@ -427,7 +430,17 @@ export function buildPublicIntakeGuidanceHandoff(
             : 'REQUIRED_INFORMATION_AVAILABLE' as const,
           remainingQuestionBudget: Math.max(0, PUBLIC_HELP_REQUEST_INTAKE_V2_QUESTION_LIMIT - draft.answers.length),
         })
-    : draft.flowVersion === PUBLIC_HELP_REQUEST_INTAKE_V2_FLOW_VERSION &&
+    : knowledgeEngineEvaluated
+      ? Object.freeze({
+          ...evaluatedClarification,
+          isComplete: true,
+          nextQuestion: null,
+          completionReason: budgetExhausted
+            ? 'QUESTION_BUDGET_EXHAUSTED' as const
+            : 'REQUIRED_INFORMATION_AVAILABLE' as const,
+          remainingQuestionBudget: Math.max(0, PUBLIC_HELP_REQUEST_INTAKE_V2_QUESTION_LIMIT - draft.answers.length),
+        })
+      : draft.flowVersion === PUBLIC_HELP_REQUEST_INTAKE_V2_FLOW_VERSION &&
         budgetExhausted && !evaluatedClarification.isComplete
       ? Object.freeze({
           ...evaluatedClarification,

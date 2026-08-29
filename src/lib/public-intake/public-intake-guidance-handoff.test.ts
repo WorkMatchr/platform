@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { PublicIntakeAnswerView, PublicIntakeContextQuestionView } from './public-intake-types'
+import type { PublicIntakeAnswerView, PublicIntakeContextQuestionView, PublicIntakeDraftView } from './public-intake-types'
+import { emptyCaseUnderstanding } from '@/lib/ai-intake-classifier/case-understanding-contract'
 import { buildPublicIntakeGuidanceHandoff } from './public-intake-guidance-handoff'
 import { PUBLIC_HELP_REQUEST_INTAKE_V2_FLOW_VERSION } from './public-intake-config'
 
@@ -30,6 +31,7 @@ function draft(
     selectedRequestKey: string | null
     flowVersion: string
     contextQuestions: readonly PublicIntakeContextQuestionView[]
+    aiClassification: PublicIntakeDraftView['aiClassification']
   }> = {},
 ) {
   return {
@@ -51,10 +53,39 @@ function draft(
     expiresAt: new Date('2026-10-25T12:00:00.000Z'),
     answers: [...answers],
     contextQuestions: overrides.contextQuestions ?? [],
+    aiClassification: overrides.aiClassification,
   }
 }
 
 describe('Public Intake Guidance-handoff', () => {
+  it('heropent na een afgeronde knowledge-engine-evaluatie geen legacy RI&E-vraag', () => {
+    const handoff = buildPublicIntakeGuidanceHandoff(
+      'public-draft-fixture',
+      draft([], {
+        entryPoint: 'FREE_TEXT',
+        originalInput: 'Op een Seveso-locatie werken aannemers gelijktijdig aan actieve installaties.',
+        selectedRequestKey: null,
+        flowVersion: PUBLIC_HELP_REQUEST_INTAKE_V2_FLOW_VERSION,
+        contextQuestions: [],
+        aiClassification: {
+          summary: 'Integrale beoordeling van gelijktijdige werkzaamheden op een Seveso-locatie.',
+          primarySubject: 'RIE',
+          secondarySubjects: [],
+          confidence: 'HIGH',
+          alternatives: [],
+          caseUnderstanding: emptyCaseUnderstanding(),
+        },
+      }),
+    )
+
+    expect(handoff.clarification).toMatchObject({
+      isComplete: true,
+      nextQuestion: null,
+      completionReason: 'REQUIRED_INFORMATION_AVAILABLE',
+    })
+    expect(handoff.clarification.nextQuestion?.key).not.toBe('rie_has_employees')
+  })
+
   it('gebruikt het stabiele Context Goal als machineleesbare handoff en stopt zonder legacy-vragen', () => {
     const contextQuestion: PublicIntakeContextQuestionView = {
       questionKey: 'context_dynamic_noise_pattern',
