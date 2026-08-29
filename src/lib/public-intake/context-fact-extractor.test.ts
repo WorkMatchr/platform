@@ -62,4 +62,20 @@ describe('public intake fact extraction', () => {
     expect(deriveKnowledgeConceptCandidates({ originalInput: '', classification, facts }).map((item) => item.code))
       .not.toContain('RIE')
   })
+
+  it('gebruikt een brede legacy hoofdcategorie niet naast specifiekere semantische domeinen', () => {
+    const understanding = {
+      ...emptyCaseUnderstanding(),
+      candidateExpertiseDomains: {
+        value: ['PSA', 'WORK_ORGANIZATION'], evidence: ['werkdruk en spanningen'], confidence: 0.98, status: 'RELIABLE_EXTRACTION' as const,
+      },
+    }
+    const classification = {
+      summary: 'Organisatiegerichte onderzoeksvraag.', primarySubject: 'OCCUPATIONAL_HEALTH' as const,
+      secondarySubjects: [], confidence: 'HIGH' as const, alternatives: [], caseUnderstanding: understanding,
+    }
+
+    expect(deriveKnowledgeConceptCandidates({ originalInput: '', classification, facts: [] }).map((item) => item.code))
+      .toEqual(['PSA', 'WORK_ORGANIZATION'])
+  })
 })
