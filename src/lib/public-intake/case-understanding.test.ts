@@ -17,6 +17,23 @@ describe('neutrale matching-ready opdrachtsamenvatting', () => {
     ]))
   })
 
+  it('beschouwt betrouwbare procescontext als voldoende werkcontext voor routing', () => {
+    const understanding = {
+      ...emptyCaseUnderstanding(),
+      workContext: {
+        value: ['Werkomgeving met procesinstallaties.'],
+        evidence: ['chemische fabriek met procesinstallaties'],
+        confidence: 0.95,
+        status: 'RELIABLE_EXTRACTION' as const,
+      },
+    }
+
+    expect(caseUnderstandingFacts(understanding)).toContainEqual(expect.objectContaining({
+      code: 'WORK_ACTIVITY',
+      status: 'RELIABLE_EXTRACTION',
+    }))
+  })
+
   it('vertaalt beheerde antwoordcodes naar leesbare bevestigde context', () => {
     const understanding = {
       ...emptyCaseUnderstanding(),
