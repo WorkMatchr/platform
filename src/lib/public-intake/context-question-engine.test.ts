@@ -115,6 +115,23 @@ describe('knowledge-grounded context question ranking', () => {
     expect(result.candidates.map((item) => item.goal.variantKey)).toEqual(['MACHINE:EXISTING_MEASURES'])
   })
 
+  it('activeert een variant niet via alleen een breed gedeeld nevenconcept', () => {
+    const processVariant = goal({
+      variantKey: 'PROCESS:EXISTING_MEASUREMENTS', code: 'EXISTING_MEASUREMENTS',
+      relevantConceptCodes: ['PROCESS_SAFETY_MAJOR_HAZARDS', 'OCCUPATIONAL_HEALTH'],
+      applicability: {
+        requiredAnyConceptCodes: ['PROCESS_SAFETY_MAJOR_HAZARDS', 'EXPOSURE_ASSESSMENT'],
+        requiredFactCodes: [], requiredAnyFactCodes: [], excludedFactValues: [],
+      },
+    })
+    const result = planNextContextQuestion({
+      mode: 'DIRECT_REQUEST', facts: [], concepts: [concept('OCCUPATIONAL_HEALTH')], goals: [processVariant],
+      evidenceByGoalCode: new Map([['PROCESS:EXISTING_MEASUREMENTS', evidence('PROCESS')]]),
+      answeredQuestionKeys: [], askedQuestionKeys: [], questionBudgetRemaining: 5,
+    })
+    expect(result.selected).toBeNull()
+  })
+
   it('laat informatiewaarde en gebruikerslast afzonderlijk meewegen', () => {
     const result = plan({ goals: [
       goal({ code: 'LOW_VALUE', informationGain: 0.2, userBurden: 0.2 }),

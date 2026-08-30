@@ -35,6 +35,9 @@ function hasValidApplicability(input: {
   knownFacts: ReadonlySet<string>
 }) {
   if (!conceptsMatch(input.goal, input.concepts)) return false
+  const requiredAnyConceptCodes = input.goal.applicability.requiredAnyConceptCodes ?? []
+  if (requiredAnyConceptCodes.length > 0
+    && !input.concepts.some((concept) => requiredAnyConceptCodes.includes(concept.code))) return false
   const applicabilityFacts = new Set(input.facts
     .filter((fact) => fact.status !== 'SUGGESTED_DIRECTION')
     .map((fact) => fact.code))

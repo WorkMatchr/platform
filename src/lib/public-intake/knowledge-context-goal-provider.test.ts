@@ -107,6 +107,37 @@ describe('Knowledge Engine Context Goal provider', () => {
     ]))
   })
 
+  it('laadt een domeinvariant niet via alleen een breed gedeeld nevenconcept', async () => {
+    const findClaims = vi.fn().mockResolvedValue([])
+    const result = await loadKnowledgeGroundedContextGoals({
+      database: {
+        knowledgeClaim: { findMany: findClaims },
+        knowledgeRule: { findMany: vi.fn().mockResolvedValue([{
+          id: '11111111-1111-4111-8111-111111111201', code: 'CASE_GOAL_PROCESS_MEASUREMENTS', ruleVersion: 2,
+          outputSchema: {
+            kind: 'CONTEXT_GOAL', scope: 'INTAKE_ROUTING_KNOWLEDGE', code: 'EXISTING_MEASUREMENTS',
+            variantKey: 'PROCESS:EXISTING_MEASUREMENTS', questionKey: 'context_process_existing_measurements',
+            purpose: 'Procesmetingen in relatie tot lekkages beoordelen.',
+            text: 'Wanneer en onder welke procescondities zijn de metingen uitgevoerd?', answerType: 'TEXT', options: [],
+            category: 'EXISTING_CONTROL', relevantConceptCodes: ['PROCESS_SAFETY_MAJOR_HAZARDS', 'OCCUPATIONAL_HEALTH'],
+            satisfiesFactCodes: ['CONTEXT_ANSWERED_PROCESS_EXISTING_MEASUREMENTS'], equivalentGoalCodes: [],
+            applicability: {
+              requiredAnyConceptCodes: ['PROCESS_SAFETY_MAJOR_HAZARDS', 'EXPOSURE_ASSESSMENT'],
+              requiredFactCodes: [], requiredAnyFactCodes: [], excludedFactValues: [],
+            },
+            mandatory: false, universal: false,
+            weights: { relevance: 1, informationGain: 1, matchingValue: 1, userBurden: 0.2 },
+            supportingKnowledgeIds: [claimId],
+          },
+        }]) },
+      } as never,
+      concepts: [{ code: 'OCCUPATIONAL_HEALTH', confidence: 1, source: 'CLASSIFIER', supportingKnowledgeIds: [] }],
+      originalInput: 'Meerdere medewerkers hebben klachten in een nieuw kantoor.',
+    })
+    expect(result.goals).not.toContainEqual(expect.objectContaining({ variantKey: 'PROCESS:EXISTING_MEASUREMENTS' }))
+    expect(findClaims).toHaveBeenCalledTimes(1)
+  })
+
   it('laat gevalideerde dynamische evidence niet overschrijven door legacy evidence', async () => {
     const result = await loadKnowledgeGroundedContextGoals({
       database: {

@@ -59,6 +59,7 @@ export type ContextGoal = Readonly<{
   equivalentGoalCodes: readonly string[]
   groundingPolicy: 'SHARED_CONTEXT' | 'DOMAIN_SPECIFIC'
   applicability: Readonly<{
+    requiredAnyConceptCodes?: readonly string[]
     requiredFactCodes: readonly string[]
     requiredAnyFactCodes: readonly string[]
     excludedFactValues: readonly Readonly<{

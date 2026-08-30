@@ -30,13 +30,14 @@ const ruleGoalSchema = z.object({
   equivalentGoalCodes: z.array(z.string().regex(/^[A-Z0-9_]{2,120}$/)).max(20).default([]),
   groundingPolicy: z.enum(['SHARED_CONTEXT', 'DOMAIN_SPECIFIC']).default('DOMAIN_SPECIFIC'),
   applicability: z.object({
+    requiredAnyConceptCodes: z.array(z.string().regex(/^[A-Z0-9_-]{2,160}$/)).max(30).default([]),
     requiredFactCodes: z.array(z.string().regex(/^[A-Z0-9_]{2,120}$/)).max(20).default([]),
     requiredAnyFactCodes: z.array(z.string().regex(/^[A-Z0-9_]{2,120}$/)).max(20).default([]),
     excludedFactValues: z.array(z.object({
       code: z.string().regex(/^[A-Z0-9_]{2,120}$/),
       values: z.array(z.union([z.string(), z.number(), z.boolean()])).min(1).max(20),
     }).strict()).max(20).default([]),
-  }).strict().default({ requiredFactCodes: [], requiredAnyFactCodes: [], excludedFactValues: [] }),
+  }).strict().default({ requiredAnyConceptCodes: [], requiredFactCodes: [], requiredAnyFactCodes: [], excludedFactValues: [] }),
   mandatory: z.boolean().default(false),
   universal: z.boolean().default(false),
   weights: z.object({
@@ -129,8 +130,11 @@ export async function loadKnowledgeGroundedContextGoals(input: {
   const parsedRules = rules.flatMap((rule) => {
     const parsed = ruleGoalSchema.safeParse(rule.outputSchema)
     if (!parsed.success) return []
-    const applies = parsed.data.relevantConceptCodes.length === 0
-      || input.concepts.some((concept) => parsed.data.relevantConceptCodes.includes(concept.code))
+    const conceptGate = parsed.data.applicability.requiredAnyConceptCodes.length > 0
+      ? parsed.data.applicability.requiredAnyConceptCodes
+      : parsed.data.relevantConceptCodes
+    const applies = conceptGate.length === 0
+      || input.concepts.some((concept) => conceptGate.includes(concept.code))
     return applies ? [{ rule, data: parsed.data }] : []
   })
   const referencedIds = [...new Set(parsedRules.flatMap(({ data }) => data.supportingKnowledgeIds))]
@@ -172,6 +176,7 @@ export async function loadKnowledgeGroundedContextGoals(input: {
       equivalentGoalCodes: Object.freeze(data.equivalentGoalCodes),
       groundingPolicy: data.groundingPolicy,
       applicability: Object.freeze({
+        requiredAnyConceptCodes: Object.freeze(data.applicability.requiredAnyConceptCodes),
         requiredFactCodes: Object.freeze(data.applicability.requiredFactCodes),
         requiredAnyFactCodes: Object.freeze(data.applicability.requiredAnyFactCodes),
         excludedFactValues: Object.freeze(data.applicability.excludedFactValues.map((item) => Object.freeze({

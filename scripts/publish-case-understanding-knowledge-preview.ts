@@ -260,11 +260,11 @@ async function main() {
         const variantCode = `CASE_GOAL_${goal.code}_S${scenario.number}`.slice(0, 120)
         const variantKey = `CASE:S${scenario.number}:${goal.code}`
         await transaction.knowledgeRule.upsert({
-          where: { code_ruleVersion: { code: variantCode, ruleVersion: 1 } },
+          where: { code_ruleVersion: { code: variantCode, ruleVersion: 2 } },
           create: {
             code: variantCode, title: goal.informationNeed.slice(0, 240),
             description: `Domeinvariant met afzonderlijke provenance voor ${INTAKE_ROUTING_KNOWLEDGE_SCOPE}.`,
-            ruleType: 'ROUTING_RULE', ruleVersion: 1,
+            ruleType: 'ROUTING_RULE', ruleVersion: 2,
             inputSchema: { scope: INTAKE_ROUTING_KNOWLEDGE_SCOPE },
             expression: { appliesWhen: goal.appliesWhen, exclusions: goal.doNotApplyWhen },
             outputSchema: {
@@ -282,7 +282,14 @@ async function main() {
               // need is complete. Only an answer to this variant resolves it.
               satisfiesFactCodes: [`CONTEXT_ANSWERED_S${scenario.number}_${goal.code}`.slice(0, 120)],
               equivalentGoalCodes: [], groundingPolicy: 'DOMAIN_SPECIFIC',
-              applicability: { requiredFactCodes: [], requiredAnyFactCodes: [], excludedFactValues: [] },
+              applicability: {
+                requiredAnyConceptCodes: [...new Set([
+                  ...candidates.map((claim) => claim.conceptCode),
+                  scenario.primaryExpertise,
+                  ...scenario.requiredSpecialisms,
+                ])],
+                requiredFactCodes: [], requiredAnyFactCodes: [], excludedFactValues: [],
+              },
               mandatory: false, universal: false,
               weights: { relevance: 0.9, informationGain: 0.85, matchingValue: 0.9, userBurden: 0.35 },
               supportingKnowledgeIds: supportIds,
