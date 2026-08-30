@@ -13,6 +13,10 @@ import { loadKnowledgeGroundedContextGoals } from './knowledge-context-goal-prov
 import { planNextContextQuestion } from './context-question-engine'
 import { buildKnowledgeGroundedMatchingProfile } from './knowledge-expert-routing-provider'
 import { CASE_UNDERSTANDING_VERSION } from './case-understanding'
+import { assessContextQuestionGrounding } from './context-question-grounding'
+import { contextQuestionInputDigest, formulateContextQuestion, type ContextQuestionFormulationInput } from './context-question-formulator'
+import { createContextQuestionOpenAITransport } from './context-question-openai-transport'
+import { allowPublicIntakeAIClassification, type PublicIntakeAbuseContext } from './public-intake-abuse-protection'
 import { emptyCaseUnderstanding } from '@/lib/ai-intake-classifier/case-understanding-contract'
 import {
   KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION,
@@ -73,11 +77,16 @@ export async function ensurePublicIntakeAIContextQuestions(input: {
   answers: readonly PublicIntakeAnswerView[]
   fallbackQuestionWasAsked: boolean
   mode: IntakeMode
+  abuseContext?: PublicIntakeAbuseContext
 }): Promise<readonly PublicIntakeContextQuestionView[]> {
   if (!input.classification || input.classification.confidence === 'LOW') return []
   const classification = input.classification
   const understanding = classification.caseUnderstanding ?? emptyCaseUnderstanding()
 
+  type Formulation = Awaited<ReturnType<typeof formulateContextQuestion>>
+  async function planAndPersist(prepared?: { digest: string; formulation: Formulation }): Promise<
+    readonly PublicIntakeContextQuestionView[] | { formulationInput: ContextQuestionFormulationInput }
+  > {
   return getPrisma().$transaction(async (transaction) => {
     const sectorOptions = await getSharedSectorOptions(transaction)
     if (sectorOptions.length === 0) throw new Error('SHARED_ASSIGNMENT_CONTEXT_TAXONOMY_UNAVAILABLE')
@@ -174,19 +183,49 @@ export async function ensurePublicIntakeAIContextQuestions(input: {
       questionBudgetRemaining: remaining,
     })
     const selected = plan.selected
+    const formulationInput = selected?.goal.questionGeneration ? {
+      goal: selected.goal, originalInput: input.originalInput, facts,
+      evidence: selected.applicability.evidence,
+    } : null
+    if (formulationInput && !prepared) return { formulationInput }
+    if (prepared && (!formulationInput || prepared.digest !== contextQuestionInputDigest(formulationInput))) {
+      // Governance or case context changed during generation. Never attach
+      // an earlier variant's wording to the newly selected rule.
+      return existing.map((question) => toPublicIntakeContextQuestionView(question, sectorOptions))
+    }
+    const grounding = selected ? assessContextQuestionGrounding({
+      goal: selected.goal, facts, concepts, evidence: selected.applicability.evidence,
+      formulation: prepared?.formulation,
+    }) : null
     console.info('[public-intake-context-engine]', {
       engineVersion: plan.engineVersion,
       intakeMode: plan.mode,
       candidateGoalCount: plan.candidates.length,
       selectedGoal: selected?.goal.code ?? null,
+      selectedContextRuleId: selected?.goal.selectedContextRuleId ?? null,
+      ruleVersion: selected?.goal.ruleVersion ?? null,
+      variantKey: selected?.goal.variantKey ?? null,
       selectionReason: selected?.applicability.reasonCode ?? plan.readiness.reasonCode,
-      knowledgeGroundingPresent: selected?.applicability.evidence.some((evidence) => evidence.source !== 'LEGACY_COMPATIBILITY') ?? false,
+      knowledgeGroundingPresent: grounding?.knowledgeGroundingPresent ?? false,
+      knowledgeGroundingApplicableToCase: grounding?.knowledgeGroundingApplicableToCase ?? false,
+      applicabilityResult: grounding?.applicabilityResult ?? false,
       deduplicatedGoalCount: plan.deduplicatedGoalCount,
       questionBudgetRemaining: plan.questionBudgetRemaining,
       readinessResult: plan.readiness.status,
     })
     if (!selected) return existing.map((question) => toPublicIntakeContextQuestionView(question, sectorOptions))
     const planningSnapshot: PersistedContextQuestionPlan = Object.freeze({
+      ...(selected.goal.selectedContextRuleId ? {
+        selectedContextRuleId: selected.goal.selectedContextRuleId,
+        ruleVersion: selected.goal.ruleVersion,
+        variantKey: selected.goal.variantKey,
+      } : {}),
+      applicableConcepts: Object.freeze(concepts.filter((concept) => concept.confidence >= 0.8
+        && selected.goal.relevantConceptCodes.includes(concept.code)).map((concept) => concept.code)),
+      knowledgeGroundingPresent: grounding!.knowledgeGroundingPresent,
+      knowledgeGroundingApplicableToCase: grounding!.knowledgeGroundingApplicableToCase,
+      applicabilityResult: grounding!.applicabilityResult,
+      questionGenerationProvenance: grounding!.questionGenerationProvenance,
       engineVersion: KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION,
       mode: input.mode,
       contextGoalCode: selected.goal.code,
@@ -194,7 +233,7 @@ export async function ensurePublicIntakeAIContextQuestions(input: {
       mandatory: selected.goal.mandatory,
       score: selected.score,
       relevantConceptCodes: Object.freeze([...selected.goal.relevantConceptCodes]),
-      supportingKnowledgeIds: Object.freeze(selected.applicability.evidence.map((evidence) => evidence.knowledgeId)),
+      supportingKnowledgeIds: grounding!.supportingKnowledgeIds,
       skippedByFactCodes: Object.freeze([...selected.applicability.skippedByFactCodes]),
       options: Object.freeze([...selected.goal.options]),
     })
@@ -204,7 +243,7 @@ export async function ensurePublicIntakeAIContextQuestions(input: {
         draftId: input.draftId,
         questionKey: selected.goal.questionKey,
         catalogVersion: KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION,
-        textSnapshot: selected.goal.text,
+        textSnapshot: prepared?.formulation.text ?? selected.goal.text,
         answerType: selected.goal.answerType,
         category: selected.goal.category,
         sequence: existing.length + 1,
@@ -233,4 +272,19 @@ export async function ensurePublicIntakeAIContextQuestions(input: {
     })
     return stored.map((question) => toPublicIntakeContextQuestionView(question, sectorOptions))
   }, { isolationLevel: 'Serializable' })
+  }
+
+  const planned = await planAndPersist()
+  if (!('formulationInput' in planned)) return planned
+  const formulation = await formulateContextQuestion(planned.formulationInput, {
+    transport: input.abuseContext ? createContextQuestionOpenAITransport() : null,
+    authorizeExternalCall: async () => input.abuseContext
+      ? (await allowPublicIntakeAIClassification(input.abuseContext)).allowed
+      : false,
+  })
+  const persisted = await planAndPersist({
+    digest: contextQuestionInputDigest(planned.formulationInput), formulation,
+  })
+  if ('formulationInput' in persisted) throw new Error('CONTEXT_QUESTION_PERSISTENCE_INVARIANT')
+  return persisted
 }

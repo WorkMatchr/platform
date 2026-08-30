@@ -1,7 +1,21 @@
 import { describe, expect, it } from 'vitest'
-import { getAIIntakeUnderstanding } from './public-intake-ai-presentation'
+import { getAIIntakeUnderstanding, getPublicIntakeDirection } from './public-intake-ai-presentation'
+import type { MatchingReadyProfile } from './case-understanding'
 
 describe('AI-begripsvoorstel in Public Intake', () => {
+  const legacy = { summary: 'U wilt de gewijzigde machine laten beoordelen.', primarySubject: 'RIE', secondarySubjects: [], confidence: 'HIGH', alternatives: [] } as const
+  it('toont geautoriseerde machineveiligheid in plaats van legacy RI&E', () => {
+    const profile = { primaryExpertise: 'MACHINEVEILIGHEIDSDESKUNDIGE' } as MatchingReadyProfile
+    expect(getPublicIntakeDirection(legacy, profile)).toEqual({
+      code: 'MACHINEVEILIGHEIDSDESKUNDIGE', label: 'Machineveiligheidsdeskundige', source: 'EXPERT_ROUTING',
+    })
+  })
+  it('gebruikt legacy uitsluitend bij afwezig routingprofiel', () => {
+    expect(getPublicIntakeDirection(legacy, null)?.source).toBe('LEGACY_COMPATIBILITY')
+    expect(getPublicIntakeDirection(legacy, { primaryExpertise: 'FUTURE_DISCIPLINE' } as MatchingReadyProfile)).toMatchObject({
+      code: 'FUTURE_DISCIPLINE', source: 'EXPERT_ROUTING', label: 'Deskundigheidsrichting wordt gecontroleerd',
+    })
+  })
   it('bouwt bij hoge confidence één controleerbaar voorstel', () => {
     expect(
       getAIIntakeUnderstanding({

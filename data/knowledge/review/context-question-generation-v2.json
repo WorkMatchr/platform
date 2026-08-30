@@ -1,0 +1,31 @@
+{
+  "contractVersion": 2,
+  "runtimeQuestionInstructions": "Formuleer alleen de nog ontbrekende informatie uit informationNeed als één begrijpelijke Nederlandse vraag. Sluit aan bij betrouwbare feiten uit de actuele hulpvraag en bevestigde antwoorden. Vraag niet opnieuw wat al bekend is. Neem geen bestaan, aantallen, activiteiten, locaties of oorzakelijke verbanden aan. Vraag bij onbekende beschikbaarheid eerst of de informatie beschikbaar is. Vraag geen diagnose, persoonsgegevens, juridisch oordeel of keuze van een deskundige.",
+  "neutralFallbackQuestions": {
+    "LOCATION_PATTERN": "Is bekend of de beschreven signalen verschillen tussen werkplekken, en zo ja, welke verschillen zijn opgevallen?",
+    "WORK_ACTIVITY": "Welke werkzaamheden zijn van belang voor het onderzoek naar uw hulpvraag?",
+    "EXPOSURE_SOURCE": "Is bekend welke bron of factor mogelijk onderzocht moet worden, zonder daarmee een oorzaak vast te stellen?",
+    "EXPOSURE_DURATION": "Wat is bekend over de duur en frequentie van de mogelijke blootstelling?",
+    "EXISTING_MEASURES": "Welke maatregelen of relevante documentatie zijn beschikbaar voor de beschreven situatie?",
+    "CHANGE_EVENT": "Zijn er relevante veranderingen geweest en zo ja, wat is veranderd?",
+    "AFFECTED_SCOPE": "Wat is bekend over wie of welke werkzaamheden met de beschreven situatie te maken hebben?",
+    "TIME_PATTERN": "Wat is bekend over wanneer de beschreven signalen optreden en hoe vaak ze terugkeren?",
+    "WORK_ORGANIZATION": "Welke werkafspraken, ondersteuning of organisatorische maatregelen zijn er voor de beschreven situatie?",
+    "OCCUPANCY_PATTERN": "Hoe is de aanwezigheid van mensen verdeeld over de relevante locaties en tijdstippen?",
+    "SHIFT_COVERAGE": "Welke hulpverleningsdekking is beschikbaar tijdens de relevante werktijden?",
+    "CONTRACTOR_INTERFACE": "Hoe worden de verantwoordelijkheden en werkzaamheden tussen de betrokken partijen afgestemd?",
+    "SIMULTANEOUS_OPERATIONS": "Welke werkzaamheden kunnen tegelijk plaatsvinden en hoe wordt hun onderlinge afstemming geregeld?",
+    "LIVE_PROCESS_INTERFACE": "Blijven tijdens de werkzaamheden installatieonderdelen in bedrijf en zo ja, welke?",
+    "INCIDENT_PATTERN": "Wat is bekend over de aard en het verloop van de gemelde incidenten?",
+    "EXISTING_MEASUREMENTS": "Zijn er relevante metingen beschikbaar en zo ja, wat is onder welke omstandigheden onderzocht?",
+    "PROCESS_INTEGRITY_SIGNAL": "Zijn er technische bevindingen of onderhoudsgegevens beschikbaar die helpen om de onderzoeksvraag af te bakenen?",
+    "MEDICAL_PRIVACY_BOUNDARY": "Welke functionele informatie over het werk wilt u laten beoordelen, zonder medische details te delen?",
+    "REQUESTED_INVESTIGATION": "Wat wilt u met het onderzoek duidelijk krijgen?",
+    "WORK_ENVIRONMENT_FACTORS": "Welke kenmerken van het werk of de werkomgeving kunnen van belang zijn om uw onderzoeksvraag af te bakenen?",
+    "TASK_DEMAND_PATTERN": "Welke informatie over de taken, werkduur en werkomstandigheden is beschikbaar voor het onderzoek?",
+    "RISK_CONTEXT": "Voor welke situaties moet de ondersteuning of hulpverlening worden georganiseerd?",
+    "RESPONSE_COVERAGE": "Wat is bekend over de beschikbaarheid, alarmering en opkomst van hulpverlening?",
+    "WORK_ADAPTATION_SCOPE": "Wilt u ook laten onderzoeken hoe functionele mogelijkheden kunnen worden vertaald naar passende werkzaamheden?",
+    "CONTROL_COORDINATION": "Hoe worden werkzaamheden, maatregelen en veranderingen tussen de betrokken partijen afgestemd?"
+  }
+}

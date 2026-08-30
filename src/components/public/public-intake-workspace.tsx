@@ -13,7 +13,7 @@ import {
   getPublicIntakePrototypeQuestion,
   type PublicIntakePrototypeQuestion,
 } from '@/lib/public-intake/public-intake-prototype'
-import { getAIIntakeUnderstanding } from '@/lib/public-intake/public-intake-ai-presentation'
+import { getAIIntakeUnderstanding, getPublicIntakeDirection } from '@/lib/public-intake/public-intake-ai-presentation'
 import { presentPublicIntakeGuidance } from '@/lib/public-intake/public-intake-guidance-presentation'
 import type { PublicIntakeAnswerView, PublicIntakeDraftView } from '@/lib/public-intake/public-intake-types'
 import type { GuidanceOutcome } from '@/lib/guidance/guidance-domain'
@@ -496,7 +496,7 @@ export function PublicIntakeWorkspace({
                 Dit lijkt ons het belangrijkste onderwerp van uw vraag:
               </p>
               <p className="mt-1 font-semibold text-brand-dark">
-                {understanding.subjectLabel}
+                {getPublicIntakeDirection(draft.aiClassification, draft.matchingProfile)?.label ?? understanding.subjectLabel}
               </p>
             </div>
 
@@ -663,7 +663,7 @@ export function PublicIntakeWorkspace({
             <h2 id="help-request-summary-title" className="mt-1 text-2xl font-bold text-brand-dark">Dit hebben wij van uw vraag begrepen</h2>
             <dl className="mt-5 space-y-4">
               <div><dt className="text-sm font-semibold text-text-secondary">Uw oorspronkelijke hulpvraag</dt><dd className="mt-1 break-words text-brand-dark">{draft.originalInput}</dd></div>
-              {getAIIntakeUnderstanding(draft.aiClassification) && <div><dt className="text-sm font-semibold text-text-secondary">Voorgestelde richting</dt><dd className="mt-1 font-semibold text-brand-dark">{getAIIntakeUnderstanding(draft.aiClassification)?.subjectLabel}</dd></div>}
+              {getPublicIntakeDirection(draft.aiClassification, draft.matchingProfile) && <div><dt className="text-sm font-semibold text-text-secondary">Voorgestelde richting</dt><dd className="mt-1 font-semibold text-brand-dark">{getPublicIntakeDirection(draft.aiClassification, draft.matchingProfile)?.label}</dd></div>}
               {draft.sharedAssignmentContext?.sector && <div><dt className="text-sm font-semibold text-text-secondary">Sector</dt><dd className="mt-1 font-semibold text-brand-dark">{draft.sharedAssignmentContext.sector.label}</dd></div>}
             </dl>
             <p className="mt-4 text-sm text-text-secondary">Controleer uw antwoorden hieronder. De analyse is adviserend; u bevestigt zelf welke informatie bij uw aanvraag hoort.</p>

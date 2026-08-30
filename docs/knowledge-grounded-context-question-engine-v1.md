@@ -1,5 +1,54 @@
 # Knowledge-Grounded Context Question Engine v1
 
+## Lokale tussenstand — contextvariantreparatie, 30 augustus 2026
+
+Deze **nog niet vrijgegeven** wijziging op `codex/ai-help-request-intake-v2`
+voegt expliciete `requiredAllConceptCodes` en `excludedFactCodes` toe aan het
+applicabilitycontract. AND-groepen moeten allemaal slagen; alternatieven gelden
+alleen binnen de betreffende OR-groep. Hypothesen, onzekere en negatieve feiten
+bewijzen geen positieve vraagvoorwaarde. Gelijke ranks hebben een stabiele
+variant-tiebreaker; essentiële context blijft vooraan, daarna dynamische
+knowledge-doelen vóór shared/legacy-context.
+
+Dynamische planningssnapshots bewaren aanvullend regel-ID, regelversie,
+variantkey, toepasselijke concepten en aanwezige grounding. Historische
+snapshots blijven leesbaar. De zichtbare reviewrichting gebruikt een aanwezig
+server-side routingprofiel; de classifiercategorie is alleen fallback wanneer
+dat profiel ontbreekt. De bestaande centrale disciplinelabels worden hergebruikt.
+
+De lokale reparatie bevat nu het vraagcontract v2: `informationNeed`,
+`runtimeQuestionInstructions` en een neutrale fallback worden gescheiden van
+`exampleQuestionForReview`. Dat redactionele voorbeeld gaat niet naar het model.
+De bestaande OpenAI-configuratie formuleert één vraag en controleert die in een
+afzonderlijk verzoek op informatiedoel, casusevidence en onbewezen aannames.
+Beide verzoeken gebruiken de bestaande limiter; grenzen en beveiliging blijven
+ongewijzigd. Een geweigerde of mislukte generatie/verificatie geeft de beheerde
+neutrale fallback en nooit `knowledgeGroundingApplicableToCase=true`.
+
+Generatie vindt buiten de databasetransactie plaats. Een tweede planning
+controleert vóór opslag opnieuw de regelvariant en de hash van de generatie-input.
+De snapshot bewaart de beide groundingbooleans, applicability, regelidentiteit,
+claim-ID's, generatieversie, eindteksthash en verificatieprovenance. Semantische
+AI-verificatie is geen formeel bewijs: echte browseracceptatie blijft vereist.
+
+`scripts/publish-context-goal-v2-preview.ts` bereidt uitsluitend additieve
+regelversies 3 met contract v2 voor, plus één audit-event bij nieuwe versies.
+Replay vergelijkt bestaande versies en schrijft deze nooit over. De runner vereist
+een onafhankelijk geverifieerde Preview-databasehostfingerprint vóór verbinding.
+De nieuwe versie vereist de beoordeelde domeinankers; aannemercontext vereist
+daarnaast het positieve concept `CONTRACTOR_INTERFACE`.
+
+**Release nog geblokkeerd:** deze governanceversies zijn niet gepubliceerd en
+de acht browsercasussen zijn niet opnieuw uitgevoerd. Striktere domeinankers
+kunnen ontbrekende kennisdekking zichtbaar maken; dat mag niet als PASS worden
+weggeboekt. De eerdere acht inhoudelijke failures zijn niet opgelost verklaard.
+
+Lokale controles: 288 gerichte tests (32 bestanden), typecheck, lint en volledige productiebuild
+geslaagd. De build gebruikte uitsluitend lokale voorbeeldconfiguratie en een
+tijdelijk procesgebonden authsecret, geen Production-configuratie. Geen database
+benaderd. De extra formulering/verificatie gebruikt limiterbudget; quota mogen
+voor de browseracceptatie niet worden verruimd of omzeild.
+
 ## Besluit
 
 De publieke routes `/advieswijzer` (`DISCOVERY`) en `/hulpvragen/start`

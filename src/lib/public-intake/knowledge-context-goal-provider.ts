@@ -8,6 +8,7 @@ import type {
   KnowledgeEvidence,
 } from './context-question-engine-types'
 import { INTAKE_ROUTING_KNOWLEDGE_SCOPE } from './case-understanding'
+import { contextQuestionGenerationInstructionsSchema } from './context-question-generation-contract'
 
 type KnowledgeGroundingReader = Pick<Prisma.TransactionClient, 'knowledgeClaim' | 'knowledgeRule'>
 
@@ -30,14 +31,16 @@ const ruleGoalSchema = z.object({
   equivalentGoalCodes: z.array(z.string().regex(/^[A-Z0-9_]{2,120}$/)).max(20).default([]),
   groundingPolicy: z.enum(['SHARED_CONTEXT', 'DOMAIN_SPECIFIC']).default('DOMAIN_SPECIFIC'),
   applicability: z.object({
+    requiredAllConceptCodes: z.array(z.string().regex(/^[A-Z0-9_-]{2,160}$/)).max(30).default([]),
     requiredAnyConceptCodes: z.array(z.string().regex(/^[A-Z0-9_-]{2,160}$/)).max(30).default([]),
     requiredFactCodes: z.array(z.string().regex(/^[A-Z0-9_]{2,120}$/)).max(20).default([]),
     requiredAnyFactCodes: z.array(z.string().regex(/^[A-Z0-9_]{2,120}$/)).max(20).default([]),
+    excludedFactCodes: z.array(z.string().regex(/^[A-Z0-9_]{2,120}$/)).max(20).default([]),
     excludedFactValues: z.array(z.object({
       code: z.string().regex(/^[A-Z0-9_]{2,120}$/),
       values: z.array(z.union([z.string(), z.number(), z.boolean()])).min(1).max(20),
     }).strict()).max(20).default([]),
-  }).strict().default({ requiredAnyConceptCodes: [], requiredFactCodes: [], requiredAnyFactCodes: [], excludedFactValues: [] }),
+  }).strict().default({ requiredAllConceptCodes: [], requiredAnyConceptCodes: [], requiredFactCodes: [], requiredAnyFactCodes: [], excludedFactCodes: [], excludedFactValues: [] }),
   mandatory: z.boolean().default(false),
   universal: z.boolean().default(false),
   weights: z.object({
@@ -48,6 +51,37 @@ const ruleGoalSchema = z.object({
   }).strict(),
   supportingKnowledgeIds: z.array(z.string().uuid()).min(1).max(30),
 }).strict()
+
+// v1 remains readable. A v2 runtime projection deliberately drops the
+// editorial example instead of letting a goal-code lookup retrieve it later.
+const ruleGoalV2Schema = ruleGoalSchema.omit({ purpose: true, text: true }).extend({
+  contractVersion: z.literal(2),
+  informationNeed: contextQuestionGenerationInstructionsSchema.shape.informationNeed,
+  runtimeQuestionInstructions: contextQuestionGenerationInstructionsSchema.shape.runtimeQuestionInstructions,
+  neutralFallbackQuestion: contextQuestionGenerationInstructionsSchema.shape.neutralFallbackQuestion,
+  exampleQuestionForReview: z.string().min(10).max(1000),
+}).strict()
+
+function parseRuntimeGoal(value: unknown) {
+  const v2 = ruleGoalV2Schema.safeParse(value)
+  if (v2.success) {
+    const { exampleQuestionForReview: _example, ...data } = v2.data
+    void _example
+    return {
+      ...data,
+      purpose: data.informationNeed,
+      text: data.neutralFallbackQuestion,
+      questionGeneration: contextQuestionGenerationInstructionsSchema.parse({
+        contractVersion: data.contractVersion,
+        informationNeed: data.informationNeed,
+        runtimeQuestionInstructions: data.runtimeQuestionInstructions,
+        neutralFallbackQuestion: data.neutralFallbackQuestion,
+      }),
+    }
+  }
+  const legacy = ruleGoalSchema.safeParse(value)
+  return legacy.success ? { ...legacy.data, questionGeneration: undefined } : null
+}
 
 function conceptSearchTerms(concepts: readonly KnowledgeConceptCandidate[]) {
   return [...new Set(concepts.flatMap((concept) => concept.code.toLocaleLowerCase('nl-NL').split(/[_-]/)).filter((term) => term.length >= 3))]
@@ -114,6 +148,7 @@ export async function loadKnowledgeGroundedContextGoals(input: {
     select: {
       id: true,
       confidenceLevel: true,
+      normalizedStatement: true,
       topic: { select: { slug: true } },
     },
     take: 30,
@@ -128,14 +163,15 @@ export async function loadKnowledgeGroundedContextGoals(input: {
     take: 200,
   }))
   const parsedRules = rules.flatMap((rule) => {
-    const parsed = ruleGoalSchema.safeParse(rule.outputSchema)
-    if (!parsed.success) return []
-    const conceptGate = parsed.data.applicability.requiredAnyConceptCodes.length > 0
-      ? parsed.data.applicability.requiredAnyConceptCodes
-      : parsed.data.relevantConceptCodes
-    const applies = conceptGate.length === 0
-      || input.concepts.some((concept) => conceptGate.includes(concept.code))
-    return applies ? [{ rule, data: parsed.data }] : []
+    const data = parseRuntimeGoal(rule.outputSchema)
+    if (!data) return []
+    const conceptGate = data.applicability.requiredAnyConceptCodes.length > 0
+      ? data.applicability.requiredAnyConceptCodes
+      : data.relevantConceptCodes
+    const reliableConcepts = input.concepts.filter((concept) => concept.confidence >= 0.8)
+    const applies = data.applicability.requiredAllConceptCodes.every((code) => reliableConcepts.some((concept) => concept.code === code))
+      && (conceptGate.length === 0 || reliableConcepts.some((concept) => conceptGate.includes(concept.code)))
+    return applies ? [{ rule, data }] : []
   })
   const referencedIds = [...new Set(parsedRules.flatMap(({ data }) => data.supportingKnowledgeIds))]
   const hydratedClaims = referencedIds.length === 0 ? [] : await input.database.knowledgeClaim.findMany({
@@ -146,12 +182,13 @@ export async function loadKnowledgeGroundedContextGoals(input: {
       usageScopes: { has: INTAKE_ROUTING_KNOWLEDGE_SCOPE }, topic: { status: 'ACTIVE' },
       citations: { some: { supportType: { in: ['DIRECT_SUPPORT', 'PARTIAL_SUPPORT', 'CONTEXT'] } } },
     },
-    select: { id: true, confidenceLevel: true, topic: { select: { slug: true } } },
+    select: { id: true, confidenceLevel: true, normalizedStatement: true, topic: { select: { slug: true } } },
   })
   const claimsById = new Map([...discoveredClaims, ...hydratedClaims].map((claim) => [claim.id, claim]))
   const claims = [...claimsById.values()]
   const publishedEvidence = claims.map((claim): KnowledgeEvidence => Object.freeze({
     knowledgeId: claim.id,
+    statement: claim.normalizedStatement ?? undefined,
     topicCode: claim.topic.slug,
     confidence: claim.confidenceLevel === 'HIGH' ? 1 : claim.confidenceLevel === 'MEDIUM' ? 0.8 : 0.65,
     source: 'PUBLISHED_CLAIM',
@@ -163,6 +200,10 @@ export async function loadKnowledgeGroundedContextGoals(input: {
     if (data.supportingKnowledgeIds.some((id) => !eligibleClaimIds.has(id))) continue
     const variantKey = data.variantKey ?? data.code
     dynamicGoals.push(Object.freeze({
+      selectedContextRuleId: rule.id,
+      supportingKnowledgeIds: Object.freeze([...data.supportingKnowledgeIds]),
+      ...(data.questionGeneration ? { questionGeneration: data.questionGeneration } : {}),
+      ruleVersion: rule.ruleVersion,
       variantKey,
       code: data.code,
       questionKey: data.questionKey,
@@ -176,9 +217,11 @@ export async function loadKnowledgeGroundedContextGoals(input: {
       equivalentGoalCodes: Object.freeze(data.equivalentGoalCodes),
       groundingPolicy: data.groundingPolicy,
       applicability: Object.freeze({
+        requiredAllConceptCodes: Object.freeze(data.applicability.requiredAllConceptCodes),
         requiredAnyConceptCodes: Object.freeze(data.applicability.requiredAnyConceptCodes),
         requiredFactCodes: Object.freeze(data.applicability.requiredFactCodes),
         requiredAnyFactCodes: Object.freeze(data.applicability.requiredAnyFactCodes),
+        excludedFactCodes: Object.freeze(data.applicability.excludedFactCodes),
         excludedFactValues: Object.freeze(data.applicability.excludedFactValues.map((item) => Object.freeze({
           code: item.code,
           values: Object.freeze(item.values),

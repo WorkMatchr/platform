@@ -113,7 +113,9 @@ export function deriveKnowledgeConceptCandidates(input: {
 }): readonly KnowledgeConceptCandidate[] {
   const concepts: KnowledgeConceptCandidate[] = []
   const fact = (code: string) => input.facts.find((item) => item.code === code)
-  const semanticDomains = input.classification?.caseUnderstanding?.candidateExpertiseDomains.value ?? []
+  const domainElement = input.classification?.caseUnderstanding?.candidateExpertiseDomains
+  const semanticDomains = domainElement && ['EXPLICIT_INPUT', 'RELIABLE_EXTRACTION', 'USER_CONFIRMED'].includes(domainElement.status)
+    && domainElement.confidence >= 0.8 ? domainElement.value : []
   for (const domain of semanticDomains) {
     if (domain === 'UNKNOWN') continue
     if (domain === 'RIE' && !fact('RIE_MENTIONED')) continue

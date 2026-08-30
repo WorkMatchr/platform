@@ -60,7 +60,7 @@ describe('knowledge-grounded context question ranking', () => {
     expect(planNextContextQuestion({ ...base, facts: [] }).selected).toBeNull()
     expect(planNextContextQuestion({ ...base, facts: [{
       code: 'RECENT_CHANGES', value: ['Vermoeden van veroudering'], status: 'HYPOTHESIS', confidence: 0.6,
-    }] }).selected?.goal.code).toBe('PROCESS_INTEGRITY_SIGNAL')
+    }] }).selected).toBeNull()
   })
 
   it('geeft ontbrekende essentiële context voorrang', () => {

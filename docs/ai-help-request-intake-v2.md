@@ -6,6 +6,22 @@
 
 ## Architectuur
 
+### Lokale aanvulling: Context Goal-vraagcontract v2 (nog niet geaccepteerd)
+
+Voor nieuwe dynamische regels met `contractVersion=2` geldt aanvullend op de
+onderstaande catalogusarchitectuur: AI mag uitsluitend de formulering van het
+geselecteerde, beheerde informatiedoel maken, niet zelf een doel of vakregel
+toevoegen. Redactionele voorbeeldvragen blijven buiten de modelinput. Een
+afzonderlijke semantische controle beoordeelt de eindvraag; bij fout, timeout of
+onvoldoende limiterbudget volgt de beheerde neutrale fallback met niet-bewezen
+casusgrounding. Generatie en controle gebruiken elk de bestaande AI-begrenzing.
+
+Presence van kennis en toepasbaarheid van de uiteindelijke vraag zijn afzonderlijke
+snapshotvelden. Regel-ID/versie/variant, claim-ID's, teksthash en verificatieprovenance
+blijven gekoppeld. Bestaande opgeslagen vragen worden niet herschreven. Zie
+[het contract en de actuele validatiestatus](knowledge-grounded-context-question-engine-v1.md).
+De nieuwe governanceversies en acht browsercasussen zijn nog niet geaccepteerd.
+
 De homepage-CTA **Vraag ondersteuning aan** opent de publieke v2-route. De route hergebruikt de bestaande Public Intake-infrastructuur: een tijdelijk `PublicIntakeDraft`, een onleesbare sessietoken in een Secure/HttpOnly-cookie, de AI Intake Classifier, de context-question catalog/planner en de centrale abuse protection. Vóór authenticatie ontstaan geen `Intake`- of `Assignment`-records.
 
 De oorspronkelijke hulpvraag is begrensd op 2.000 tekens. De classifier wordt vóór externe verwerking door de bestaande IP-, sessie- en globale begrenzing beschermd. Alleen catalogusvragen kunnen zichtbaar worden. De planner levert maximaal drie vragen per batch; de v2-flow stopt na maximaal vijf beantwoorde vervolg-/bevestigingsvragen in totaal. Bij een lage confidence of providerfout blijft de bestaande veilige handmatige onderwerpkeuze beschikbaar. Een handmatige keuze voor RI&E activeert daarna hetzelfde beheerde RI&E-contextprofiel als de AI-successroute; de oorspronkelijke vrije tekst blijft leidend voor de intentie.

@@ -10,6 +10,7 @@ import type {
   KnowledgeEvidence,
 } from './context-question-engine-types'
 import { KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION } from './context-question-engine-types'
+import { contextGoalApplies } from './context-goal-applicability'
 
 const round = (value: number) => Math.round(value * 10000) / 10000
 const MINIMUM_HIGH_VALUE_INFORMATION_GAIN = 0.4
@@ -18,37 +19,9 @@ function factCodes(facts: readonly ExtractedFact[]) {
   return new Set(facts.filter((fact) => fact.status !== 'HYPOTHESIS' && fact.status !== 'SUGGESTED_DIRECTION').map((fact) => fact.code))
 }
 
-function conceptsMatch(goal: ContextGoal, concepts: readonly KnowledgeConceptCandidate[]) {
-  if (goal.relevantConceptCodes.length === 0) return true
-  return concepts.some((concept) => goal.relevantConceptCodes.includes(concept.code))
-}
-
 function hasValidKnowledgeGrounding(evidence: readonly KnowledgeEvidence[]) {
   return evidence.some((item) => item.source === 'PUBLISHED_ROUTING_RULE')
     && evidence.some((item) => item.source === 'PUBLISHED_CLAIM')
-}
-
-function hasValidApplicability(input: {
-  goal: ContextGoal
-  concepts: readonly KnowledgeConceptCandidate[]
-  facts: readonly ExtractedFact[]
-  knownFacts: ReadonlySet<string>
-}) {
-  if (!conceptsMatch(input.goal, input.concepts)) return false
-  const requiredAnyConceptCodes = input.goal.applicability.requiredAnyConceptCodes ?? []
-  if (requiredAnyConceptCodes.length > 0
-    && !input.concepts.some((concept) => requiredAnyConceptCodes.includes(concept.code))) return false
-  const applicabilityFacts = new Set(input.facts
-    .filter((fact) => fact.status !== 'SUGGESTED_DIRECTION')
-    .map((fact) => fact.code))
-  if (!input.goal.applicability.requiredFactCodes.every((code) => input.knownFacts.has(code))) return false
-  if (input.goal.applicability.requiredAnyFactCodes.length > 0
-    && !input.goal.applicability.requiredAnyFactCodes.some((code) => applicabilityFacts.has(code))) return false
-  return !input.goal.applicability.excludedFactValues.some((excluded) => input.facts.some((fact) =>
-    fact.code === excluded.code
-      && !['HYPOTHESIS', 'SUGGESTED_DIRECTION'].includes(fact.status)
-      && excluded.values.includes(fact.value as string | number | boolean),
-  ))
 }
 
 function goalIdentity(goal: ContextGoal) {
@@ -131,7 +104,7 @@ export function planNextContextQuestion(input: {
       deduplicatedGoalCount += 1
       continue
     }
-    const applicable = hasValidApplicability({ goal, concepts: input.concepts, facts: input.facts, knownFacts })
+    const applicable = contextGoalApplies({ goal, concepts: input.concepts, facts: input.facts })
     if (!applicable) continue
     const evidence = input.evidenceByGoalCode.get(goalIdentity(goal)) ?? Object.freeze([])
     if (goal.groundingPolicy === 'DOMAIN_SPECIFIC' && !hasValidKnowledgeGrounding(evidence)) {
@@ -156,7 +129,12 @@ export function planNextContextQuestion(input: {
       score: scoreGoal({ goal, evidence, concepts: input.concepts, mode: input.mode }),
     }))
   }
-  candidates.sort((left, right) => right.score.total - left.score.total || left.goal.code.localeCompare(right.goal.code))
+  const tier = (candidate: ContextGoalCandidate) => candidate.goal.mandatory ? 3
+    : hasValidKnowledgeGrounding(candidate.applicability.evidence) ? 2
+      : candidate.goal.groundingPolicy === 'SHARED_CONTEXT' ? 1 : 0
+  candidates.sort((left, right) => tier(right) - tier(left)
+    || right.score.total - left.score.total
+    || goalIdentity(left.goal).localeCompare(goalIdentity(right.goal)))
   const selected = input.questionBudgetRemaining > 0 ? candidates[0] ?? null : null
   return Object.freeze({
     engineVersion: KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION,

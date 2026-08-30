@@ -48,7 +48,7 @@ type OpenAIResponseBody = {
   output?: unknown
 }
 
-function outputText(response: OpenAIResponseBody): string {
+export function readOpenAIResponseOutputText(response: OpenAIResponseBody): string {
   if (typeof response.output_text === 'string') {
     return response.output_text
   }
@@ -154,7 +154,7 @@ export class OpenAIAIClassifier implements AIClassifier {
       try {
         const responseBody = (await response.json()) as OpenAIResponseBody
         const structuredOutput = JSON.parse(
-          outputText(responseBody),
+          readOpenAIResponseOutputText(responseBody),
         ) as unknown
         return parseAIClassifierOutput(structuredOutput)
       } catch {

@@ -91,12 +91,14 @@ function selectedTopicContextClassification(
 async function withPersistedContextQuestions(
   draft: PublicIntakeDraftView,
   classification: AIClassifierOutput | null,
+  abuseContext?: PublicIntakeAbuseContext,
 ): Promise<PublicIntakeDraftView> {
   if (!draft.id || !draft.originalInput || !classification) return draft
   const contextQuestions = await ensurePublicIntakeAIContextQuestions({
     draftId: draft.id,
     originalInput: draft.originalInput,
     classification,
+    abuseContext,
     answers: draft.answers,
     fallbackQuestionWasAsked: draft.answers.some((answer) => answer.questionKey === 'guidance_topic'),
     mode: draft.flowVersion === PUBLIC_HELP_REQUEST_INTAKE_V2_FLOW_VERSION
@@ -119,7 +121,7 @@ export async function enrichPublicIntakeDraftWithAIClassification(
       if (!selectedClassification) return draft
 
       return withRefreshedGuidance(
-        await withPersistedContextQuestions(draft, selectedClassification),
+        await withPersistedContextQuestions(draft, selectedClassification, options.abuseContext),
       )
     }
 
@@ -136,7 +138,7 @@ export async function enrichPublicIntakeDraftWithAIClassification(
     return withRefreshedGuidance(await withPersistedContextQuestions({
       ...draft,
       aiClassification: classification,
-    }, classification))
+    }, classification, options.abuseContext))
   }
 
   const result = await classifyAIIntakeWithCache(draft.originalInput!, {
@@ -163,5 +165,5 @@ export async function enrichPublicIntakeDraftWithAIClassification(
   return withRefreshedGuidance(await withPersistedContextQuestions({
     ...draft,
     aiClassification: classification,
-  }, classification))
+  }, classification, options.abuseContext))
 }

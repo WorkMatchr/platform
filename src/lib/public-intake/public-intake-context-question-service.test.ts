@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@/lib/prisma', () => ({ getPrisma: () => ({ $transaction: mocks.transaction }) }))
+vi.mock('./context-question-openai-transport', () => ({ createContextQuestionOpenAITransport: () => null }))
 
 import { ensurePublicIntakeAIContextQuestions, selectQuestionPlanningConcepts, toPublicIntakeContextQuestionView } from './public-intake-context-question-service'
 import { KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION } from './context-question-engine-types'

@@ -1,5 +1,6 @@
 import type { PublicIntakeAnswerType } from '@/generated/prisma/client'
 import { z } from 'zod'
+import { contextQuestionGenerationProvenanceSchema, type ContextQuestionGenerationInstructions, type ContextQuestionGenerationProvenance } from './context-question-generation-contract'
 
 export const KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION =
   'knowledge-grounded-context-engine/1.2.0' as const
@@ -39,6 +40,10 @@ export type ContextGoalAnswerOption = Readonly<{
 }>
 
 export type ContextGoal = Readonly<{
+  questionGeneration?: ContextQuestionGenerationInstructions
+  supportingKnowledgeIds?: readonly string[]
+  selectedContextRuleId?: string
+  ruleVersion?: number
   /** Stable internal identity. Multiple domain variants may share `code`. */
   variantKey?: string
   code: string
@@ -59,9 +64,11 @@ export type ContextGoal = Readonly<{
   equivalentGoalCodes: readonly string[]
   groundingPolicy: 'SHARED_CONTEXT' | 'DOMAIN_SPECIFIC'
   applicability: Readonly<{
+    requiredAllConceptCodes?: readonly string[]
     requiredAnyConceptCodes?: readonly string[]
     requiredFactCodes: readonly string[]
     requiredAnyFactCodes: readonly string[]
+    excludedFactCodes?: readonly string[]
     excludedFactValues: readonly Readonly<{
       code: string
       values: readonly (string | number | boolean)[]
@@ -76,6 +83,7 @@ export type ContextGoal = Readonly<{
 }>
 
 export type KnowledgeEvidence = Readonly<{
+  statement?: string
   knowledgeId: string
   topicCode: string
   confidence: number
@@ -125,6 +133,14 @@ export type ContextQuestionPlan = Readonly<{
 }>
 
 export type PersistedContextQuestionPlan = Readonly<{
+  selectedContextRuleId?: string
+  ruleVersion?: number
+  variantKey?: string
+  applicableConcepts?: readonly string[]
+  knowledgeGroundingPresent?: boolean
+  knowledgeGroundingApplicableToCase?: boolean
+  applicabilityResult?: boolean
+  questionGenerationProvenance?: ContextQuestionGenerationProvenance
   engineVersion:
     | typeof KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION
     | typeof PREVIOUS_KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION
@@ -141,6 +157,14 @@ export type PersistedContextQuestionPlan = Readonly<{
 }>
 
 const persistedPlanSchema = z.object({
+  selectedContextRuleId: z.string().uuid().optional(),
+  ruleVersion: z.number().int().positive().optional(),
+  variantKey: z.string().optional(),
+  applicableConcepts: z.array(z.string()).optional(),
+  knowledgeGroundingPresent: z.boolean().optional(),
+  knowledgeGroundingApplicableToCase: z.boolean().optional(),
+  applicabilityResult: z.boolean().optional(),
+  questionGenerationProvenance: contextQuestionGenerationProvenanceSchema.optional(),
   engineVersion: z.enum([
     KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION,
     PREVIOUS_KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION,
