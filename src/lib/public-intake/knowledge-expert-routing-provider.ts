@@ -8,13 +8,15 @@ import {
   type MatchingReadyProfile,
 } from './case-understanding'
 import type { ExtractedFact, KnowledgeConceptCandidate } from './context-question-engine-types'
+import { isDiscoverableConcept, isReliableConcept, isReliablePresentFact } from './context-goal-applicability'
 
 type RoutingReader = Pick<Prisma.TransactionClient, 'knowledgeClaim' | 'knowledgeRule'>
 
 const ruleSchema = z.object({
   kind: z.literal('EXPERT_ROUTING'),
   scope: z.literal(INTAKE_ROUTING_KNOWLEDGE_SCOPE),
-  requiredConceptCodes: z.array(z.string().regex(/^[A-Z0-9_]{2,120}$/)).min(1).max(20),
+  requiredConceptCodes: z.array(z.string().regex(/^[A-Z0-9_]{2,120}$/)).max(20),
+  discoveryConceptCodes: z.array(z.string().regex(/^[A-Z0-9_]{2,120}$/)).max(20).default([]),
   requiredFactCodes: z.array(z.string().regex(/^[A-Z0-9_]{2,120}$/)).max(20).default([]),
   excludedFactCodes: z.array(z.string().regex(/^[A-Z0-9_]{2,120}$/)).max(20).default([]),
   primaryExpertise: z.string().regex(/^[A-Z0-9_]{2,120}$/),
@@ -55,8 +57,9 @@ export async function buildKnowledgeGroundedMatchingProfile(input: {
     select: { code: true, ruleVersion: true, outputSchema: true },
     take: 100,
   })
-  const factCodes = new Set(input.facts.filter((fact) => fact.status !== 'HYPOTHESIS').map((fact) => fact.code))
-  const conceptCodes = new Set(input.concepts.map((concept) => concept.code))
+  const factCodes = new Set(input.facts.filter(isReliablePresentFact).map((fact) => fact.code))
+  const conceptCodes = new Set(input.concepts.filter(isReliableConcept).map((concept) => concept.code))
+  const discoveryCodes = new Set(input.concepts.filter(isDiscoverableConcept).map((concept) => concept.code))
   const latestRules = new Map<string, (typeof rules)[number]>()
   for (const rule of rules) {
     const current = latestRules.get(rule.code)
@@ -66,6 +69,9 @@ export async function buildKnowledgeGroundedMatchingProfile(input: {
     .map((rule) => ruleSchema.safeParse(rule.outputSchema))
     .filter((result): result is z.ZodSafeParseSuccess<z.infer<typeof ruleSchema>> => result.success)
     .map((result) => result.data)
+    .filter((rule) => rule.requiredConceptCodes.length > 0 || rule.requiredFactCodes.length > 0)
+    .filter((rule) => rule.discoveryConceptCodes.every((code) => discoveryCodes.has(code)))
+    .filter((rule) => rule.discoveryConceptCodes.length === 0 || rule.requiredFactCodes.length > 0)
     .filter((rule) => rule.requiredConceptCodes.every((code) => conceptCodes.has(code)))
     .filter((rule) => rule.requiredFactCodes.every((code) => factCodes.has(code)))
     .filter((rule) => rule.excludedFactCodes.every((code) => !factCodes.has(code)))

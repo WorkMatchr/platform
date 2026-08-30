@@ -10,7 +10,7 @@ import type {
   KnowledgeEvidence,
 } from './context-question-engine-types'
 import { KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION } from './context-question-engine-types'
-import { contextGoalApplies } from './context-goal-applicability'
+import { contextGoalApplies, isDiscoverableConcept } from './context-goal-applicability'
 
 const round = (value: number) => Math.round(value * 10000) / 10000
 const MINIMUM_HIGH_VALUE_INFORMATION_GAIN = 0.4
@@ -38,7 +38,9 @@ function scoreGoal(input: {
   concepts: readonly KnowledgeConceptCandidate[]
   mode: IntakeMode
 }): ContextGoalScore {
-  const conceptConfidence = Math.max(0.5, ...input.concepts.filter((concept) => input.goal.relevantConceptCodes.includes(concept.code)).map((concept) => concept.confidence))
+  // Ranking a candidate family does not establish applicability or causality.
+  const rankingCodes = [...input.goal.relevantConceptCodes, ...(input.goal.discoveryConceptCodes ?? [])]
+  const conceptConfidence = Math.max(0.5, ...input.concepts.filter((concept) => isDiscoverableConcept(concept) && rankingCodes.includes(concept.code)).map((concept) => concept.confidence))
   const evidenceConfidence = input.goal.universal ? 1 : Math.max(0, ...input.evidence.map((evidence) => evidence.confidence))
   const modeWeight = input.mode === 'DISCOVERY' && ['WORK_ACTIVITY', 'LOCATION_PATTERN', 'DURATION_FREQUENCY'].includes(input.goal.code) ? 1.1 : 1
   const relevance = Math.min(1, input.goal.baseRelevance * conceptConfidence * modeWeight)

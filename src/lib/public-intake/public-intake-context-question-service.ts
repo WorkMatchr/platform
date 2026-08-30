@@ -14,6 +14,7 @@ import { planNextContextQuestion } from './context-question-engine'
 import { buildKnowledgeGroundedMatchingProfile } from './knowledge-expert-routing-provider'
 import { CASE_UNDERSTANDING_VERSION } from './case-understanding'
 import { assessContextQuestionGrounding } from './context-question-grounding'
+import { isReliableConcept } from './context-goal-applicability'
 import { contextQuestionInputDigest, formulateContextQuestion, type ContextQuestionFormulationInput } from './context-question-formulator'
 import { createContextQuestionOpenAITransport } from './context-question-openai-transport'
 import { allowPublicIntakeAIClassification, type PublicIntakeAbuseContext } from './public-intake-abuse-protection'
@@ -220,7 +221,7 @@ export async function ensurePublicIntakeAIContextQuestions(input: {
         ruleVersion: selected.goal.ruleVersion,
         variantKey: selected.goal.variantKey,
       } : {}),
-      applicableConcepts: Object.freeze(concepts.filter((concept) => concept.confidence >= 0.8
+      applicableConcepts: Object.freeze(concepts.filter((concept) => isReliableConcept(concept)
         && selected.goal.relevantConceptCodes.includes(concept.code)).map((concept) => concept.code)),
       knowledgeGroundingPresent: grounding!.knowledgeGroundingPresent,
       knowledgeGroundingApplicableToCase: grounding!.knowledgeGroundingApplicableToCase,

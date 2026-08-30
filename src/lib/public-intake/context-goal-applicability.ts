@@ -1,5 +1,14 @@
 import type { ContextGoal, ExtractedFact, KnowledgeConceptCandidate } from './context-question-engine-types'
 
+export function isDiscoverableConcept(concept: KnowledgeConceptCandidate): boolean {
+  return concept.code !== 'UNKNOWN' && concept.status !== 'UNKNOWN' && concept.confidence >= 0.8
+}
+
+export function isReliableConcept(concept: KnowledgeConceptCandidate): boolean {
+  return isDiscoverableConcept(concept)
+    && (concept.status === undefined || ['EXPLICIT_INPUT', 'RELIABLE_EXTRACTION', 'USER_CONFIRMED'].includes(concept.status))
+}
+
 /** Hypotheses, uncertainty and negative facts cannot prove a presupposition. */
 export function isReliablePresentFact(fact: ExtractedFact): boolean {
   if (!['EXPLICIT_INPUT', 'RELIABLE_EXTRACTION', 'USER_CONFIRMED'].includes(fact.status)) return false
@@ -16,9 +25,15 @@ export function contextGoalApplies(input: {
   facts: readonly ExtractedFact[]
 }): boolean {
   const { goal } = input
-  const concepts = new Set(input.concepts.filter((item) => item.confidence >= 0.8).map((item) => item.code))
+  const concepts = new Set(input.concepts.filter(isReliableConcept).map((item) => item.code))
   const facts = new Set(input.facts.filter(isReliablePresentFact).map((item) => item.code))
   const rule = goal.applicability
+  if (goal.discoveryConceptCodes?.length) {
+    const discovery = new Set(input.concepts.filter(isDiscoverableConcept).map((item) => item.code))
+    if (!goal.discoveryConceptCodes.every((code) => discovery.has(code))) return false
+    // Discovery may narrow a family, but cannot alone prove that its question applies.
+    if (rule.requiredFactCodes.length === 0 && rule.requiredAnyFactCodes.length === 0) return false
+  }
   if (goal.relevantConceptCodes.length && !goal.relevantConceptCodes.some((code) => concepts.has(code))) return false
   if (!(rule.requiredAllConceptCodes ?? []).every((code) => concepts.has(code))) return false
   if (rule.requiredAnyConceptCodes?.length && !rule.requiredAnyConceptCodes.some((code) => concepts.has(code))) return false

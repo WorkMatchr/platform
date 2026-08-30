@@ -29,6 +29,8 @@ export type ExtractedFact = Readonly<{
 
 export type KnowledgeConceptCandidate = Readonly<{
   code: string
+  /** Absent only for legacy callers; new semantic candidates preserve epistemic status. */
+  status?: ExtractedFactStatus | 'UNKNOWN'
   confidence: number
   source: 'CLASSIFIER' | 'EXPLICIT_INPUT' | 'KNOWLEDGE_TOPIC'
   supportingKnowledgeIds: readonly string[]
@@ -60,6 +62,8 @@ export type ContextGoal = Readonly<{
     | 'EXISTING_CONTROL'
     | 'URGENCY'
   relevantConceptCodes: readonly string[]
+  /** Discovery anchors are not applicability evidence. Requires independent fact gates. */
+  discoveryConceptCodes?: readonly string[]
   satisfiesFactCodes: readonly string[]
   equivalentGoalCodes: readonly string[]
   groundingPolicy: 'SHARED_CONTEXT' | 'DOMAIN_SPECIFIC'

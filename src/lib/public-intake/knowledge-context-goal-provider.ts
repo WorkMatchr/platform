@@ -9,6 +9,7 @@ import type {
 } from './context-question-engine-types'
 import { INTAKE_ROUTING_KNOWLEDGE_SCOPE } from './case-understanding'
 import { contextQuestionGenerationInstructionsSchema } from './context-question-generation-contract'
+import { isDiscoverableConcept } from './context-goal-applicability'
 
 type KnowledgeGroundingReader = Pick<Prisma.TransactionClient, 'knowledgeClaim' | 'knowledgeRule'>
 
@@ -27,6 +28,7 @@ const ruleGoalSchema = z.object({
   options: z.array(z.object({ code: z.string().min(1).max(120), label: z.string().min(1).max(200) }).strict()).max(20),
   category: z.enum(['ORGANIZATION', 'WORK', 'EXPOSURE', 'SCOPE', 'EXISTING_CONTROL', 'URGENCY']),
   relevantConceptCodes: z.array(z.string().regex(/^[A-Z0-9_-]{2,160}$/)).max(20),
+  discoveryConceptCodes: z.array(z.string().regex(/^[A-Z0-9_-]{2,160}$/)).max(20).default([]),
   satisfiesFactCodes: z.array(z.string().regex(/^[A-Z0-9_]{2,120}$/)).min(1).max(20),
   equivalentGoalCodes: z.array(z.string().regex(/^[A-Z0-9_]{2,120}$/)).max(20).default([]),
   groundingPolicy: z.enum(['SHARED_CONTEXT', 'DOMAIN_SPECIFIC']).default('DOMAIN_SPECIFIC'),
@@ -84,7 +86,7 @@ function parseRuntimeGoal(value: unknown) {
 }
 
 function conceptSearchTerms(concepts: readonly KnowledgeConceptCandidate[]) {
-  return [...new Set(concepts.flatMap((concept) => concept.code.toLocaleLowerCase('nl-NL').split(/[_-]/)).filter((term) => term.length >= 3))]
+  return [...new Set(concepts.filter(isDiscoverableConcept).flatMap((concept) => concept.code.toLocaleLowerCase('nl-NL').split(/[_-]/)).filter((term) => term.length >= 3))]
 }
 
 const KNOWLEDGE_SEARCH_STOP_WORDS = new Set([
@@ -168,10 +170,11 @@ export async function loadKnowledgeGroundedContextGoals(input: {
     const conceptGate = data.applicability.requiredAnyConceptCodes.length > 0
       ? data.applicability.requiredAnyConceptCodes
       : data.relevantConceptCodes
-    const reliableConcepts = input.concepts.filter((concept) => concept.confidence >= 0.8)
+    // Candidate hydration is discovery only. contextGoalApplies separately proves applicability.
+    const reliableConcepts = input.concepts.filter(isDiscoverableConcept)
     const applies = data.applicability.requiredAllConceptCodes.every((code) => reliableConcepts.some((concept) => concept.code === code))
       && (conceptGate.length === 0 || reliableConcepts.some((concept) => conceptGate.includes(concept.code)))
-    return applies ? [{ rule, data }] : []
+    return applies && data.discoveryConceptCodes.every((code) => reliableConcepts.some((concept) => concept.code === code)) ? [{ rule, data }] : []
   })
   const referencedIds = [...new Set(parsedRules.flatMap(({ data }) => data.supportingKnowledgeIds))]
   const hydratedClaims = referencedIds.length === 0 ? [] : await input.database.knowledgeClaim.findMany({
@@ -213,6 +216,7 @@ export async function loadKnowledgeGroundedContextGoals(input: {
       options: Object.freeze(data.options.map((option) => Object.freeze(option))),
       category: data.category,
       relevantConceptCodes: Object.freeze(data.relevantConceptCodes),
+      discoveryConceptCodes: Object.freeze(data.discoveryConceptCodes),
       satisfiesFactCodes: Object.freeze(data.satisfiesFactCodes),
       equivalentGoalCodes: Object.freeze(data.equivalentGoalCodes),
       groundingPolicy: data.groundingPolicy,

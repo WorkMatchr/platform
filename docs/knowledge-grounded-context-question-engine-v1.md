@@ -226,6 +226,23 @@ structured Case Understanding. Ieder element bevat `value`, `evidence`,
 gebruikersbevestiging, hypothese en onbekend onderscheidt. Hypothesen lossen
 nooit een Context Goal op en sturen nooit rechtstreeks matching.
 
+### Hypothese versus kennisverkenning
+
+Semantische conceptkandidaten behouden hun epistemische status. Een voldoende
+zekere `HYPOTHESIS` kan claims en kandidaatregels ontsluiten, maar bewijst geen
+`requiredConceptCodes`, fact of vraagpresuppositie. `UNKNOWN` levert geen
+positieve evidence. `discoveryConceptCodes` is een afzonderlijk declaratief
+zoekanker: regels die dit gebruiken vereisen daarnaast onafhankelijke,
+betrouwbare case-facts. De definitieve vraag houdt de bestaande afzonderlijke
+presuppositieverificatie en rule-/variantprovenance.
+
+Voor binnenmilieuonderzoek worden alleen additieve Preview-opvolgers voorbereid
+van de twee betrokken Context Goals en de bestaande expertregel. Zij vereisen
+naast de kandidaatfamilie feitelijke werklocatie, gezondheidsklachten,
+werkomgevingsverandering en groepssignalen. Dit rechtvaardigt onderzoek, niet de
+conclusie dat het binnenklimaat de klachten veroorzaakt. Gepubliceerde
+voorgangers worden niet gewijzigd. Browseracceptatie blijft verplicht.
+
 Na semantische structurering selecteert de Knowledge Engine declaratief nul tot
 vijf ontbrekende Context Goals. Alleen beheerde, gepubliceerde en gevalideerde
 regels en claims met dezelfde gebruiksscope kunnen daarna een

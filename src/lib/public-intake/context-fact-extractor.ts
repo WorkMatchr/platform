@@ -3,6 +3,7 @@ import type { PublicIntakeAnswerView } from './public-intake-types'
 import type { ExtractedFact, KnowledgeConceptCandidate } from './context-question-engine-types'
 import { caseUnderstandingFacts } from './case-understanding'
 import type { CaseUnderstanding } from '@/lib/ai-intake-classifier/case-understanding-contract'
+import { isReliablePresentFact } from './context-goal-applicability'
 
 function normalized(input: string) {
   return input.trim().toLocaleLowerCase('nl-NL')
@@ -112,15 +113,16 @@ export function deriveKnowledgeConceptCandidates(input: {
   facts: readonly ExtractedFact[]
 }): readonly KnowledgeConceptCandidate[] {
   const concepts: KnowledgeConceptCandidate[] = []
-  const fact = (code: string) => input.facts.find((item) => item.code === code)
+  const fact = (code: string) => input.facts.find((item) => item.code === code && isReliablePresentFact(item))
   const domainElement = input.classification?.caseUnderstanding?.candidateExpertiseDomains
-  const semanticDomains = domainElement && ['EXPLICIT_INPUT', 'RELIABLE_EXTRACTION', 'USER_CONFIRMED'].includes(domainElement.status)
+  const semanticDomains = domainElement && ['EXPLICIT_INPUT', 'RELIABLE_EXTRACTION', 'USER_CONFIRMED', 'HYPOTHESIS'].includes(domainElement.status)
     && domainElement.confidence >= 0.8 ? domainElement.value : []
   for (const domain of semanticDomains) {
     if (domain === 'UNKNOWN') continue
     if (domain === 'RIE' && !fact('RIE_MENTIONED')) continue
     concepts.push(Object.freeze({
       code: domain,
+      status: domainElement!.status,
       confidence: input.classification?.caseUnderstanding?.candidateExpertiseDomains.confidence ?? 0,
       source: 'CLASSIFIER',
       supportingKnowledgeIds: Object.freeze([]),
