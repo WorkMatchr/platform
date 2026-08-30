@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { isReliablePresentFact } from './context-goal-applicability'
 import type { ContextGoal, ExtractedFact, KnowledgeEvidence } from './context-question-engine-types'
 import type { ContextQuestionGenerationProvenance } from './context-question-generation-contract'
+import { tracePreviewQuestionVerification } from './context-question-preview-diagnostics'
 
 export const CONTEXT_QUESTION_FORMULATOR_VERSION = 'context-question-formulator/2.0.0'
 
@@ -100,7 +101,10 @@ export async function formulateContextQuestion(input: ContextQuestionFormulation
     // An independent request reviews the actual wording, not the generator's
     // self-reported intent. It receives neither governance examples nor the
     // generator's explanation. Structural checks remain deterministic.
-    if (!await options.authorizeExternalCall()) return fallback('VERIFICATION_NOT_AUTHORIZED')
+    if (!await options.authorizeExternalCall()) {
+      tracePreviewQuestionVerification(input, generated.question, null)
+      return fallback('VERIFICATION_NOT_AUTHORIZED')
+    }
     const verified = verificationSchema.parse(await options.transport({
       phase: 'VERIFY',
       system: `Beoordeel streng de ene voorgestelde vraag. ${safetyInstructions} Rapporteer iedere onbewezen veronderstelling, ook impliciete. Citeer alleen letterlijke casusevidence; verzin geen bewijs. Bij twijfel afkeuren met OTHER.`,
@@ -110,6 +114,7 @@ export async function formulateContextQuestion(input: ContextQuestionFormulation
     const sourceTexts = [input.originalInput,
       ...knownFacts.filter((fact) => fact.status === 'USER_CONFIRMED').flatMap((fact) =>
         Array.isArray(fact.value) ? fact.value : [String(fact.value)])]
+    tracePreviewQuestionVerification(input, generated.question, verified)
     if (!verified.informationNeedPreserved || !verified.oneDutchQuestion
       || verified.unsupportedPresuppositions.length > 0
       || verified.supportingFactCodes.some((code) => !knownCodes.has(code))
