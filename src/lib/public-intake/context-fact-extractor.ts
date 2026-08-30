@@ -62,7 +62,10 @@ export function extractPublicIntakeFacts(input: {
     /\b(?:verhuisd|verhuizing|nieuw kantoor|nieuwe werkplek|verbouwd)\b/.test(text)
     || /\b(?:werkplek|werkomgeving|kantoor|werkruimte)\b.{0,40}\b(?:gewijzigd|veranderd|aangepast)\b/.test(text)
     || /\b(?:gewijzigd|veranderd|aangepast)\b.{0,40}\b(?:werkplek|werkomgeving|kantoor|werkruimte)\b/.test(text)
-  ) facts.push(Object.freeze({ code: 'WORK_ENVIRONMENT_CHANGE', value: true, status: 'RELIABLE_EXTRACTION', confidence: 0.9 }))
+  ) {
+    facts.push(Object.freeze({ code: 'WORK_ENVIRONMENT_CHANGE', value: true, status: 'RELIABLE_EXTRACTION', confidence: 0.9 }))
+    facts.push(Object.freeze({ code: 'WORK_ENVIRONMENT_CHANGE_SIGNAL', value: true, status: 'RELIABLE_EXTRACTION', confidence: 0.9 }))
+  }
   if (/\bheftrucks?\b/.test(text)) facts.push(Object.freeze({ code: 'EQUIPMENT', value: 'FORKLIFT', status: 'RELIABLE_EXTRACTION', confidence: 0.98 }))
   if (/\b(?:dampen?|gassen?|geuren?|stof|rook|emissie)\b/.test(text)) facts.push(Object.freeze({ code: 'EXPOSURE_SIGNAL', value: true, status: 'RELIABLE_EXTRACTION', confidence: 0.85 }))
   if (/\b(?:tillen|dragen|duwen|trekken|repeterend werk|lichamelijke belasting)\b/.test(text)) facts.push(Object.freeze({ code: 'PHYSICAL_LOAD_RELEVANT', value: true, status: 'RELIABLE_EXTRACTION', confidence: 0.9 }))
@@ -128,7 +131,7 @@ export function deriveKnowledgeConceptCandidates(input: {
   if (fact('HEALTH_COMPLAINT')) concepts.push(Object.freeze({ code: 'HEALTH_COMPLAINT', confidence: 0.95, source: 'EXPLICIT_INPUT', supportingKnowledgeIds: Object.freeze([]) }))
   if (fact('EQUIPMENT')) concepts.push(Object.freeze({ code: 'WORK_EQUIPMENT', confidence: 0.95, source: 'EXPLICIT_INPUT', supportingKnowledgeIds: Object.freeze([]) }))
   if (fact('EXPOSURE_SIGNAL') || fact('EQUIPMENT')) concepts.push(Object.freeze({ code: 'EXPOSURE', confidence: 0.8, source: 'EXPLICIT_INPUT', supportingKnowledgeIds: Object.freeze([]) }))
-  if (fact('WORK_ENVIRONMENT_CHANGE')) concepts.push(Object.freeze({ code: 'WORK_ENVIRONMENT_CHANGE', confidence: 0.9, source: 'EXPLICIT_INPUT', supportingKnowledgeIds: Object.freeze([]) }))
+  if (fact('WORK_ENVIRONMENT_CHANGE_SIGNAL')) concepts.push(Object.freeze({ code: 'WORK_ENVIRONMENT_CHANGE', confidence: 0.9, source: 'EXPLICIT_INPUT', supportingKnowledgeIds: Object.freeze([]) }))
   const text = normalized(input.originalInput)
   const explicitConceptSignals = [
     ['NOISE', /\b(?:geluid|lawaai|lawaaiig)\b/],

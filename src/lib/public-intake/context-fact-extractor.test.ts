@@ -23,7 +23,31 @@ describe('public intake fact extraction', () => {
     })
 
     expect(facts.some((fact) => fact.code === 'RECENT_CHANGES')).toBe(true)
-    expect(facts.some((fact) => fact.code === 'WORK_ENVIRONMENT_CHANGE')).toBe(false)
+    expect(facts.some((fact) => fact.code === 'WORK_ENVIRONMENT_CHANGE')).toBe(true)
+    expect(facts.some((fact) => fact.code === 'WORK_ENVIRONMENT_CHANGE_SIGNAL')).toBe(false)
+    expect(deriveKnowledgeConceptCandidates({ originalInput, classification: null, facts }).map((concept) => concept.code))
+      .not.toContain('WORK_ENVIRONMENT_CHANGE')
+  })
+
+  it('gebruikt procesveroudering alleen om een beantwoorde veranderingsvraag te onderdrukken', () => {
+    const originalInput = 'De technische dienst vermoedt verouderende procesinstallaties.'
+    const understanding = emptyCaseUnderstanding()
+    const facts = extractPublicIntakeFacts({
+      originalInput,
+      answers: [],
+      caseUnderstanding: {
+        ...understanding,
+        recentChanges: {
+          value: ['verouderende procesinstallaties'],
+          evidence: ['De technische dienst vermoedt verouderende procesinstallaties.'],
+          confidence: 0.95,
+          status: 'RELIABLE_EXTRACTION',
+        },
+      },
+    })
+
+    expect(facts.some((fact) => fact.code === 'WORK_ENVIRONMENT_CHANGE')).toBe(true)
+    expect(facts.some((fact) => fact.code === 'WORK_ENVIRONMENT_CHANGE_SIGNAL')).toBe(false)
     expect(deriveKnowledgeConceptCandidates({ originalInput, classification: null, facts }).map((concept) => concept.code))
       .not.toContain('WORK_ENVIRONMENT_CHANGE')
   })

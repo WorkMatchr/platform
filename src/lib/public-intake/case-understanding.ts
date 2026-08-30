@@ -53,6 +53,7 @@ const sharedGoalFactCodeByElement: Partial<Readonly<Record<(typeof CASE_UNDERSTA
   peopleAffected: 'AFFECTED_SCOPE',
   locationContext: 'LOCATION_PATTERN',
   timePattern: 'DURATION_FREQUENCY',
+  recentChanges: 'WORK_ENVIRONMENT_CHANGE',
 }
 
 const medicalPrivacyBoundaryPattern = /(?:geen|zonder)\s+(?:onnodige\s+)?(?:medische\s+(?:informatie|gegevens|details)|diagnosegegevens)(?:\s+opvragen|\s+nodig)?/i
