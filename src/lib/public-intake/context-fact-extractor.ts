@@ -58,7 +58,11 @@ export function extractPublicIntakeFacts(input: {
       confidence: 0.96,
     }))
   }
-  if (/\b(?:verhuisd|verhuizing|nieuw kantoor|nieuwe werkplek|verbouwd|gewijzigd)\b/.test(text)) facts.push(Object.freeze({ code: 'WORK_ENVIRONMENT_CHANGE', value: true, status: 'RELIABLE_EXTRACTION', confidence: 0.9 }))
+  if (
+    /\b(?:verhuisd|verhuizing|nieuw kantoor|nieuwe werkplek|verbouwd)\b/.test(text)
+    || /\b(?:werkplek|werkomgeving|kantoor|werkruimte)\b.{0,40}\b(?:gewijzigd|veranderd|aangepast)\b/.test(text)
+    || /\b(?:gewijzigd|veranderd|aangepast)\b.{0,40}\b(?:werkplek|werkomgeving|kantoor|werkruimte)\b/.test(text)
+  ) facts.push(Object.freeze({ code: 'WORK_ENVIRONMENT_CHANGE', value: true, status: 'RELIABLE_EXTRACTION', confidence: 0.9 }))
   if (/\bheftrucks?\b/.test(text)) facts.push(Object.freeze({ code: 'EQUIPMENT', value: 'FORKLIFT', status: 'RELIABLE_EXTRACTION', confidence: 0.98 }))
   if (/\b(?:dampen?|gassen?|geuren?|stof|rook|emissie)\b/.test(text)) facts.push(Object.freeze({ code: 'EXPOSURE_SIGNAL', value: true, status: 'RELIABLE_EXTRACTION', confidence: 0.85 }))
   if (/\b(?:tillen|dragen|duwen|trekken|repeterend werk|lichamelijke belasting)\b/.test(text)) facts.push(Object.freeze({ code: 'PHYSICAL_LOAD_RELEVANT', value: true, status: 'RELIABLE_EXTRACTION', confidence: 0.9 }))

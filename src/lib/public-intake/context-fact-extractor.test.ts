@@ -5,6 +5,29 @@ import { deriveKnowledgeConceptCandidates, extractPublicIntakeFacts } from './co
 const codes = (input: string) => extractPublicIntakeFacts({ originalInput: input, answers: [] })
 
 describe('public intake fact extraction', () => {
+  it('interpreteert een machinewijziging niet als een wijziging van de werkomgeving', () => {
+    const originalInput = 'We hebben een productiemachine aangepast. De besturing en afscherming zijn veranderd.'
+    const understanding = emptyCaseUnderstanding()
+    const facts = extractPublicIntakeFacts({
+      originalInput,
+      answers: [],
+      caseUnderstanding: {
+        ...understanding,
+        recentChanges: {
+          value: ['besturing en afscherming van de machine zijn veranderd'],
+          evidence: ['De besturing en afscherming zijn veranderd.'],
+          confidence: 0.95,
+          status: 'RELIABLE_EXTRACTION',
+        },
+      },
+    })
+
+    expect(facts.some((fact) => fact.code === 'RECENT_CHANGES')).toBe(true)
+    expect(facts.some((fact) => fact.code === 'WORK_ENVIRONMENT_CHANGE')).toBe(false)
+    expect(deriveKnowledgeConceptCandidates({ originalInput, classification: null, facts }).map((concept) => concept.code))
+      .not.toContain('WORK_ENVIRONMENT_CHANGE')
+  })
+
   it('scheidt expliciete arbeidscontext van een niet-bewezen oorzaak', () => {
     const facts = codes('Bij ons transportbedrijf hebben 6 chauffeurs last van hun rug.')
     expect(facts).toEqual(expect.arrayContaining([
