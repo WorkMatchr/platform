@@ -45,6 +45,7 @@ describe('knowledge-grounded context question ranking', () => {
       code: 'PROCESS_INTEGRITY_SIGNAL',
       relevantConceptCodes: ['PROCESS_SAFETY_MAJOR_HAZARDS'],
       satisfiesFactCodes: ['PROCESS_INTEGRITY_SIGNAL'],
+      applicability: { requiredFactCodes: [], requiredAnyFactCodes: ['RECENT_CHANGES'], excludedFactValues: [] },
     })
     const base = {
       mode: 'DIRECT_REQUEST' as const,
@@ -79,6 +80,39 @@ describe('knowledge-grounded context question ranking', () => {
     })
     expect(result.candidates.map((item) => item.goal.code)).toEqual(['WORK_ACTIVITY'])
     expect(result.deduplicatedGoalCount).toBe(2)
+  })
+
+  it.each([
+    ['LOCATION_PATTERN', 'Nieuw kantoor'],
+    ['EXPOSURE_SOURCE', 'onbekende stof'],
+    ['EXISTING_MEASUREMENTS', 'metingen waren onder de grenswaarde'],
+  ])('behandelt een grove %s-fact niet als antwoord op een specifieke variant', (code, value) => {
+    const variant = goal({
+      variantKey: `DOMAIN:${code}`,
+      code,
+      questionKey: `context_domain_${code.toLowerCase()}`,
+      satisfiesFactCodes: [`CONTEXT_ANSWERED_DOMAIN_${code}`],
+    })
+    const result = planNextContextQuestion({
+      mode: 'DIRECT_REQUEST',
+      facts: [{ code, value, status: 'RELIABLE_EXTRACTION', confidence: 1 }],
+      concepts: [concept('TEST_CONCEPT')], goals: [variant],
+      evidenceByGoalCode: new Map([[`DOMAIN:${code}`, evidence(code)]]),
+      answeredQuestionKeys: [], askedQuestionKeys: [], questionBudgetRemaining: 5,
+    })
+    expect(result.selected?.goal.variantKey).toBe(`DOMAIN:${code}`)
+  })
+
+  it('houdt domeinvarianten met dezelfde generieke goalcode afzonderlijk', () => {
+    const machine = goal({ variantKey: 'MACHINE:EXISTING_MEASURES', code: 'EXISTING_MEASURES', questionKey: 'context_machine_measures', relevantConceptCodes: ['MACHINE_SAFETY'] })
+    const welding = goal({ variantKey: 'WELDING:EXISTING_MEASURES', code: 'EXISTING_MEASURES', questionKey: 'context_welding_measures', relevantConceptCodes: ['WELDING_FUMES'] })
+    const result = planNextContextQuestion({
+      mode: 'DIRECT_REQUEST', facts: [], concepts: [concept('MACHINE_SAFETY')], goals: [machine, welding],
+      evidenceByGoalCode: new Map([
+        ['MACHINE:EXISTING_MEASURES', evidence('MACHINE')], ['WELDING:EXISTING_MEASURES', evidence('WELDING')],
+      ]), answeredQuestionKeys: [], askedQuestionKeys: [], questionBudgetRemaining: 5,
+    })
+    expect(result.candidates.map((item) => item.goal.variantKey)).toEqual(['MACHINE:EXISTING_MEASURES'])
   })
 
   it('laat informatiewaarde en gebruikerslast afzonderlijk meewegen', () => {

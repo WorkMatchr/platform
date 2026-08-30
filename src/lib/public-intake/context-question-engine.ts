@@ -14,10 +14,6 @@ import { KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION } from './context-question-en
 const round = (value: number) => Math.round(value * 10000) / 10000
 const MINIMUM_HIGH_VALUE_INFORMATION_GAIN = 0.4
 
-const managedApplicabilityPrerequisites: Readonly<Record<string, readonly string[]>> = Object.freeze({
-  PROCESS_INTEGRITY_SIGNAL: Object.freeze(['RECENT_CHANGES']),
-})
-
 function factCodes(facts: readonly ExtractedFact[]) {
   return new Set(facts.filter((fact) => fact.status !== 'HYPOTHESIS' && fact.status !== 'SUGGESTED_DIRECTION').map((fact) => fact.code))
 }
@@ -42,17 +38,18 @@ function hasValidApplicability(input: {
   const applicabilityFacts = new Set(input.facts
     .filter((fact) => fact.status !== 'SUGGESTED_DIRECTION')
     .map((fact) => fact.code))
-  const managedPrerequisites = managedApplicabilityPrerequisites[input.goal.code] ?? []
-  if (managedPrerequisites.length > 0
-    && !managedPrerequisites.some((code) => applicabilityFacts.has(code))) return false
   if (!input.goal.applicability.requiredFactCodes.every((code) => input.knownFacts.has(code))) return false
   if (input.goal.applicability.requiredAnyFactCodes.length > 0
-    && !input.goal.applicability.requiredAnyFactCodes.some((code) => input.knownFacts.has(code))) return false
+    && !input.goal.applicability.requiredAnyFactCodes.some((code) => applicabilityFacts.has(code))) return false
   return !input.goal.applicability.excludedFactValues.some((excluded) => input.facts.some((fact) =>
     fact.code === excluded.code
       && !['HYPOTHESIS', 'SUGGESTED_DIRECTION'].includes(fact.status)
       && excluded.values.includes(fact.value as string | number | boolean),
   ))
+}
+
+function goalIdentity(goal: ContextGoal) {
+  return goal.variantKey ?? goal.code
 }
 
 function isGoalResolved(goal: ContextGoal, knownFacts: ReadonlySet<string>) {
@@ -111,11 +108,12 @@ export function planNextContextQuestion(input: {
 }): ContextQuestionPlan {
   const knownFacts = factCodes(input.facts)
   const unavailableQuestions = new Set([...input.answeredQuestionKeys, ...input.askedQuestionKeys])
-  const unavailableGoalCodes = new Set<string>()
+  const unavailableGoalIdentities = new Set<string>()
+  const unavailableEquivalentGoalCodes = new Set<string>()
   for (const goal of input.goals) {
     if (unavailableQuestions.has(goal.questionKey) || isGoalResolved(goal, knownFacts)) {
-      unavailableGoalCodes.add(goal.code)
-      goal.equivalentGoalCodes.forEach((code) => unavailableGoalCodes.add(code))
+      unavailableGoalIdentities.add(goalIdentity(goal))
+      goal.equivalentGoalCodes.forEach((code) => unavailableEquivalentGoalCodes.add(code))
     }
   }
   const candidates: ContextGoalCandidate[] = []
@@ -123,13 +121,16 @@ export function planNextContextQuestion(input: {
   let hadApplicableContext = false
   let knowledgeCoverageInsufficient = false
   for (const goal of input.goals) {
-    if (unavailableQuestions.has(goal.questionKey) || unavailableGoalCodes.has(goal.code) || isGoalResolved(goal, knownFacts)) {
+    if (unavailableQuestions.has(goal.questionKey)
+      || unavailableGoalIdentities.has(goalIdentity(goal))
+      || unavailableEquivalentGoalCodes.has(goal.code)
+      || isGoalResolved(goal, knownFacts)) {
       deduplicatedGoalCount += 1
       continue
     }
     const applicable = hasValidApplicability({ goal, concepts: input.concepts, facts: input.facts, knownFacts })
     if (!applicable) continue
-    const evidence = input.evidenceByGoalCode.get(goal.code) ?? Object.freeze([])
+    const evidence = input.evidenceByGoalCode.get(goalIdentity(goal)) ?? Object.freeze([])
     if (goal.groundingPolicy === 'DOMAIN_SPECIFIC' && !hasValidKnowledgeGrounding(evidence)) {
       knowledgeCoverageInsufficient = true
       continue

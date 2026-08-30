@@ -27,7 +27,7 @@ De oude negen categorieën blijven nodig voor bestaande `Intake`-records, antwoo
 
 ## Strict grounding voor nieuwe drafts
 
-Nieuwe contextvragen gebruiken engineversie `knowledge-grounded-context-engine/1.1.0`.
+Nieuwe contextvragen gebruiken engineversie `knowledge-grounded-context-engine/1.2.0`.
 Veilige gedeelde opdrachtcontext mag uit de compatibilitycatalogus komen. Een
 vakspecifiek informatiedoel vereist centraal zowel geldige declaratieve
 applicability als een gepubliceerde routingregel met actuele, gepubliceerde en
@@ -35,4 +35,9 @@ gevalideerde claimprovenance. Legacy kan zo geen gezondheidsklacht naar
 lichamelijke belasting ombuigen en een nieuwe RI&E activeert geen vraag naar
 een bestaande beoordeling. De vijf-vragengrens is geen doel: bij voldoende
 context, lage resterende informatiewaarde of ontbrekende kennisgronding stopt de
-engine eerder. Historische `1.0.0`-planningssnapshots blijven leesbaar.
+engine eerder. Toepasselijke declaratieve regels hydrateren hun gevalideerde
+supporting claims rechtstreeks op ID; tekstsearch blijft alleen discovery.
+Domeinvarianten met dezelfde zichtbare information-need behouden afzonderlijke
+applicability, vraagformulering en provenance. Een brede geëxtraheerde fact
+beantwoordt daardoor niet langer automatisch een specifiekere knowledge-vraag.
+Historische `1.0.0`- en `1.1.0`-planningssnapshots blijven leesbaar.

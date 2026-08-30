@@ -17,6 +17,18 @@
   ],
   "contextGoals": "APPROVED_WITH_DECLARATIVE_APPLICABILITY_AND_MAXIMUM_FIVE",
   "questionExamples": "APPROVED_AS_EXAMPLES_NOT_TOPIC_WIZARD",
+  "routingAmendments": [
+    {
+      "routingRuleId": "ROUTE_CHEMICAL_LEAK_MULTIDISCIPLINARY",
+      "conditionalExpertise": [
+        {
+          "code": "BEDRIJFSARTS",
+          "when": "Alleen wanneer een afzonderlijke arbeidsgezondheidskundige of geneeskundige beoordeling van klachten of inzetbaarheid nodig is."
+        }
+      ],
+      "removeFromMatchingCodes": ["BEDRIJFSARTS"]
+    }
+  ],
   "specialism": {
     "code": "PROCESS_SAFETY_MAJOR_HAZARDS",
     "decision": "APPROVED_CROSS_DISCIPLINE",

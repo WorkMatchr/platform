@@ -15,6 +15,7 @@ const ruleGoalSchema = z.object({
   kind: z.literal('CONTEXT_GOAL'),
   scope: z.literal(INTAKE_ROUTING_KNOWLEDGE_SCOPE),
   code: z.string().regex(/^[A-Z0-9_]{2,120}$/),
+  variantKey: z.string().regex(/^[A-Z0-9_:.-]{2,160}$/).optional(),
   questionKey: z.string().regex(/^context_[a-z0-9_]{2,90}$/),
   purpose: z.string().min(10).max(500),
   text: z.string().min(10).max(500),
@@ -64,7 +65,20 @@ function inputSearchTerms(originalInput: string) {
     .replace(/[^a-z0-9&\s-]/g, ' ')
     .split(/\s+/)
     .filter((term) => term.length >= 4 && !KNOWLEDGE_SEARCH_STOP_WORDS.has(term)))]
-    .slice(0, 12)
+    .slice(0, 24)
+}
+
+function goalIdentity(goal: ContextGoal) {
+  return goal.variantKey ?? goal.code
+}
+
+function latestRulesByCode<T extends { code: string; ruleVersion: number }>(rules: readonly T[]) {
+  const latest = new Map<string, T>()
+  for (const rule of rules) {
+    const current = latest.get(rule.code)
+    if (!current || rule.ruleVersion > current.ruleVersion) latest.set(rule.code, rule)
+  }
+  return [...latest.values()]
 }
 
 export async function loadKnowledgeGroundedContextGoals(input: {
@@ -76,8 +90,8 @@ export async function loadKnowledgeGroundedContextGoals(input: {
   evidenceByGoalCode: ReadonlyMap<string, readonly KnowledgeEvidence[]>
   knowledgeConcepts: readonly KnowledgeConceptCandidate[]
 }>> {
-  const terms = [...new Set([...conceptSearchTerms(input.concepts), ...inputSearchTerms(input.originalInput)])].slice(0, 16)
-  const claims = terms.length === 0 ? [] : await input.database.knowledgeClaim.findMany({
+  const terms = [...new Set([...conceptSearchTerms(input.concepts), ...inputSearchTerms(input.originalInput)])].slice(0, 48)
+  const discoveredClaims = terms.length === 0 ? [] : await input.database.knowledgeClaim.findMany({
     where: {
       AND: [
         currentKnowledgeImportClaimWhere,
@@ -104,31 +118,48 @@ export async function loadKnowledgeGroundedContextGoals(input: {
     take: 30,
   })
 
+  const rules = latestRulesByCode(await input.database.knowledgeRule.findMany({
+    where: {
+      ruleType: 'ROUTING_RULE', publicationStatus: 'PUBLISHED', validationStatus: 'VALIDATED',
+      accessTier: 'PUBLIC_BASIC', usageScopes: { has: INTAKE_ROUTING_KNOWLEDGE_SCOPE },
+    },
+    select: { id: true, code: true, ruleVersion: true, outputSchema: true },
+    take: 200,
+  }))
+  const parsedRules = rules.flatMap((rule) => {
+    const parsed = ruleGoalSchema.safeParse(rule.outputSchema)
+    if (!parsed.success) return []
+    const applies = parsed.data.relevantConceptCodes.length === 0
+      || input.concepts.some((concept) => parsed.data.relevantConceptCodes.includes(concept.code))
+    return applies ? [{ rule, data: parsed.data }] : []
+  })
+  const referencedIds = [...new Set(parsedRules.flatMap(({ data }) => data.supportingKnowledgeIds))]
+  const hydratedClaims = referencedIds.length === 0 ? [] : await input.database.knowledgeClaim.findMany({
+    where: {
+      AND: [currentKnowledgeImportClaimWhere, { id: { in: referencedIds } }],
+      publicationStatus: 'PUBLISHED', validationStatus: 'VALIDATED', temporalStatus: 'CURRENT',
+      sourceControlStatus: 'CONTROL_COMPLETE', accessTier: 'PUBLIC_BASIC',
+      usageScopes: { has: INTAKE_ROUTING_KNOWLEDGE_SCOPE }, topic: { status: 'ACTIVE' },
+      citations: { some: { supportType: { in: ['DIRECT_SUPPORT', 'PARTIAL_SUPPORT', 'CONTEXT'] } } },
+    },
+    select: { id: true, confidenceLevel: true, topic: { select: { slug: true } } },
+  })
+  const claimsById = new Map([...discoveredClaims, ...hydratedClaims].map((claim) => [claim.id, claim]))
+  const claims = [...claimsById.values()]
   const publishedEvidence = claims.map((claim): KnowledgeEvidence => Object.freeze({
     knowledgeId: claim.id,
     topicCode: claim.topic.slug,
     confidence: claim.confidenceLevel === 'HIGH' ? 1 : claim.confidenceLevel === 'MEDIUM' ? 0.8 : 0.65,
     source: 'PUBLISHED_CLAIM',
   }))
-  const eligibleClaimIds = new Set(claims.map((claim) => claim.id))
-  const rules = await input.database.knowledgeRule.findMany({
-    where: {
-      ruleType: 'ROUTING_RULE',
-      publicationStatus: 'PUBLISHED',
-      validationStatus: 'VALIDATED',
-      accessTier: 'PUBLIC_BASIC',
-      usageScopes: { has: INTAKE_ROUTING_KNOWLEDGE_SCOPE },
-    },
-    select: { id: true, outputSchema: true },
-    take: 50,
-  })
+  const eligibleClaimIds = new Set(hydratedClaims.map((claim) => claim.id))
   const dynamicGoals: ContextGoal[] = []
   const dynamicEvidence = new Map<string, readonly KnowledgeEvidence[]>()
-  for (const rule of rules) {
-    const parsed = ruleGoalSchema.safeParse(rule.outputSchema)
-    if (!parsed.success || parsed.data.supportingKnowledgeIds.some((id) => !eligibleClaimIds.has(id))) continue
-    const data = parsed.data
+  for (const { rule, data } of parsedRules) {
+    if (data.supportingKnowledgeIds.some((id) => !eligibleClaimIds.has(id))) continue
+    const variantKey = data.variantKey ?? data.code
     dynamicGoals.push(Object.freeze({
+      variantKey,
       code: data.code,
       questionKey: data.questionKey,
       purpose: data.purpose,
@@ -155,7 +186,7 @@ export async function loadKnowledgeGroundedContextGoals(input: {
       matchingValue: data.weights.matchingValue,
       userBurden: data.weights.userBurden,
     }))
-    dynamicEvidence.set(data.code, Object.freeze([
+    dynamicEvidence.set(variantKey, Object.freeze([
       Object.freeze({ knowledgeId: rule.id, topicCode: 'context-goal-routing-rule', confidence: 1, source: 'PUBLISHED_ROUTING_RULE' }),
       ...publishedEvidence.filter((evidence) => data.supportingKnowledgeIds.includes(evidence.knowledgeId)),
     ]))
@@ -167,13 +198,14 @@ export async function loadKnowledgeGroundedContextGoals(input: {
     const matchingEvidence = publishedEvidence.filter((evidence) =>
       [...goalTerms].some((term) => term.length >= 3 && evidence.topicCode.toLocaleLowerCase('nl-NL').includes(term)),
     )
-    evidenceByGoalCode.set(goal.code, matchingEvidence.length > 0
+    if ([...dynamicGoals].some((candidate) => candidate.code === goal.code)) continue
+    evidenceByGoalCode.set(goalIdentity(goal), matchingEvidence.length > 0
       ? Object.freeze(matchingEvidence)
       : Object.freeze([Object.freeze({ knowledgeId: `legacy:${goal.code}`, topicCode: 'legacy-context-catalog', confidence: 0.65, source: 'LEGACY_COMPATIBILITY' })]))
   }
-  const byCode = new Map<string, ContextGoal>()
-  for (const goal of compatibilityContextGoals) byCode.set(goal.code, goal)
-  for (const goal of dynamicGoals) byCode.set(goal.code, goal)
+  const byIdentity = new Map<string, ContextGoal>()
+  for (const goal of compatibilityContextGoals) byIdentity.set(goalIdentity(goal), goal)
+  for (const goal of dynamicGoals) byIdentity.set(goalIdentity(goal), goal)
   const knowledgeConcepts = new Map<string, KnowledgeConceptCandidate>()
   for (const claim of claims) {
     knowledgeConcepts.set(claim.topic.slug.toLocaleUpperCase('nl-NL').replace(/-/g, '_'), Object.freeze({
@@ -184,7 +216,7 @@ export async function loadKnowledgeGroundedContextGoals(input: {
     }))
   }
   for (const goal of dynamicGoals) {
-    const evidence = dynamicEvidence.get(goal.code) ?? []
+    const evidence = dynamicEvidence.get(goalIdentity(goal)) ?? []
     if (evidence.length === 0) continue
     for (const code of goal.relevantConceptCodes) {
       knowledgeConcepts.set(code, Object.freeze({
@@ -196,7 +228,7 @@ export async function loadKnowledgeGroundedContextGoals(input: {
     }
   }
   return Object.freeze({
-    goals: Object.freeze([...byCode.values()]),
+    goals: Object.freeze([...byIdentity.values()]),
     evidenceByGoalCode,
     knowledgeConcepts: Object.freeze([...knowledgeConcepts.values()]),
   })

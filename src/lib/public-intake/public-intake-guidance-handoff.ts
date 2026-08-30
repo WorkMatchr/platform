@@ -33,6 +33,7 @@ import {
 } from './public-intake-config'
 import {
   KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION,
+  PREVIOUS_KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION,
   LEGACY_KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION,
 } from './context-question-engine-types'
 
@@ -409,6 +410,7 @@ export function buildPublicIntakeGuidanceHandoff(
   const evaluatedClarification = clarificationEngine.evaluate(contract, helpRequest)
   const engineQuestions = draft.contextQuestions?.filter(
     (question) => question.catalogVersion === KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION
+      || question.catalogVersion === PREVIOUS_KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION
       || question.catalogVersion === LEGACY_KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION,
   ) ?? []
   const unansweredEngineQuestion = engineQuestions.some(

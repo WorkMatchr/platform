@@ -75,6 +75,11 @@ async function main() {
     packageId?: string
     usageScope?: string
     scenarioDecisions?: Array<{ number: number; decision: string }>
+    routingAmendments?: Array<{
+      routingRuleId: string
+      conditionalExpertise: Array<{ code: string; when: string }>
+      removeFromMatchingCodes: string[]
+    }>
   }
   if (
     decision.packageId !== review.packageId
@@ -214,55 +219,27 @@ async function main() {
       })
     }
 
-    const exampleByGoal = new Map<string, string>()
-    for (const scenario of review.scenarios) {
-      for (const example of scenario.questionExamples) if (!exampleByGoal.has(example.contextGoal)) exampleByGoal.set(example.contextGoal, example.question)
-    }
-    const domainByScenario = new Map(review.scenarios.map((scenario) => [scenario.number, scenario.requiredSpecialisms[0] ?? scenario.primaryExpertise]))
     let goalRuleCount = 0
+    // Supersede the old cross-domain aggregate rules without mutating their
+    // immutable history. The latest generic rule becomes non-askable; the
+    // reviewed domain variants below carry their own wording and provenance.
     for (const goal of review.contextGoals) {
-      const text = exampleByGoal.get(goal.code)
-      const scenarios = review.scenarios.filter((scenario) => scenario.contextGoals.includes(goal.code))
-      const concepts = [...new Set(scenarios.map((scenario) => domainByScenario.get(scenario.number)).filter((value): value is string => Boolean(value)))]
-      const directSupportIds = [...new Set(review.candidateClaims
-        .filter((claim) => claim.contextGoals.includes(goal.code))
-        .map((claim) => claimIds.get(claim.candidateId))
-        .filter((value): value is string => Boolean(value)))]
-      const supportIds = directSupportIds.length > 0 ? directSupportIds : [...new Set(scenarios
-        .flatMap((scenario) => scenario.candidateClaimIds)
-        .map((candidateId) => claimIds.get(candidateId))
-        .filter((value): value is string => Boolean(value)))]
-      if (text && (supportIds.length === 0 || concepts.length === 0)) continue
       await transaction.knowledgeRule.upsert({
-        where: { code_ruleVersion: { code: `CASE_GOAL_${goal.code}`.slice(0, 120), ruleVersion: 1 } },
+        where: { code_ruleVersion: { code: `CASE_GOAL_${goal.code}`.slice(0, 120), ruleVersion: 2 } },
         create: {
           code: `CASE_GOAL_${goal.code}`.slice(0, 120),
           title: goal.informationNeed.slice(0, 240),
           description: `Declaratief Context Goal voor ${INTAKE_ROUTING_KNOWLEDGE_SCOPE}.`,
           ruleType: 'ROUTING_RULE',
-          ruleVersion: 1,
+          ruleVersion: 2,
           inputSchema: { scope: INTAKE_ROUTING_KNOWLEDGE_SCOPE },
           expression: { appliesWhen: goal.appliesWhen, exclusions: goal.doNotApplyWhen },
-          outputSchema: text ? {
-            kind: 'CONTEXT_GOAL', scope: INTAKE_ROUTING_KNOWLEDGE_SCOPE,
-            code: goal.code, questionKey: `context_${goal.code.toLowerCase()}`.slice(0, 100),
-            purpose: goal.informationNeed, text, answerType: 'TEXT', options: [], category: category(goal.code),
-            relevantConceptCodes: concepts, satisfiesFactCodes: goal.resolvesWithFactCodes,
-            equivalentGoalCodes: [], groundingPolicy: 'DOMAIN_SPECIFIC',
-            applicability: { requiredFactCodes: [], requiredAnyFactCodes: [], excludedFactValues: [] },
-            mandatory: false, universal: false,
-            weights: { relevance: 0.9, informationGain: 0.85, matchingValue: 0.9, userBurden: 0.35 },
-            supportingKnowledgeIds: supportIds,
-          } : {
-            // The goal itself is approved and governed, but there is no
-            // reviewed formulation example yet. Publishing it as a
-            // non-askable definition preserves the review decision without
-            // inventing wording or silently turning it into a topic wizard.
+          outputSchema: {
             kind: 'CONTEXT_GOAL_DEFINITION', scope: INTAKE_ROUTING_KNOWLEDGE_SCOPE,
             code: goal.code, purpose: goal.informationNeed,
             appliesWhen: goal.appliesWhen, exclusions: goal.doNotApplyWhen,
             satisfiesFactCodes: goal.resolvesWithFactCodes,
-            askable: false, supportingKnowledgeIds: supportIds,
+            askable: false,
           },
           validationStatus: 'VALIDATED', publicationStatus: 'PUBLISHED', accessTier: 'PUBLIC_BASIC',
           usageScopes: [INTAKE_ROUTING_KNOWLEDGE_SCOPE],
@@ -271,33 +248,84 @@ async function main() {
       })
       goalRuleCount += 1
     }
+    for (const scenario of review.scenarios) {
+      for (const example of scenario.questionExamples) {
+        const goal = review.contextGoals.find((item) => item.code === example.contextGoal)!
+        const scenarioClaims = review.candidateClaims.filter((claim) =>
+          scenario.candidateClaimIds.includes(claim.candidateId) && claim.contextGoals.includes(goal.code))
+        const candidates = scenarioClaims.length > 0 ? scenarioClaims : review.candidateClaims.filter((claim) =>
+          scenario.candidateClaimIds.includes(claim.candidateId))
+        const supportIds = [...new Set(candidates.map((claim) => claimIds.get(claim.candidateId)).filter((id): id is string => Boolean(id)))]
+        if (supportIds.length === 0) continue
+        const variantCode = `CASE_GOAL_${goal.code}_S${scenario.number}`.slice(0, 120)
+        const variantKey = `CASE:S${scenario.number}:${goal.code}`
+        await transaction.knowledgeRule.upsert({
+          where: { code_ruleVersion: { code: variantCode, ruleVersion: 1 } },
+          create: {
+            code: variantCode, title: goal.informationNeed.slice(0, 240),
+            description: `Domeinvariant met afzonderlijke provenance voor ${INTAKE_ROUTING_KNOWLEDGE_SCOPE}.`,
+            ruleType: 'ROUTING_RULE', ruleVersion: 1,
+            inputSchema: { scope: INTAKE_ROUTING_KNOWLEDGE_SCOPE },
+            expression: { appliesWhen: goal.appliesWhen, exclusions: goal.doNotApplyWhen },
+            outputSchema: {
+              kind: 'CONTEXT_GOAL', scope: INTAKE_ROUTING_KNOWLEDGE_SCOPE,
+              code: goal.code, variantKey,
+              questionKey: `context_s${scenario.number}_${goal.code.toLowerCase()}`.slice(0, 100),
+              purpose: goal.informationNeed, text: example.question, answerType: 'TEXT', options: [], category: category(goal.code),
+              relevantConceptCodes: [...new Set([
+                ...scenario.conceptCodes,
+                scenario.primaryExpertise,
+                ...scenario.requiredSpecialisms,
+                ...candidates.map((claim) => claim.conceptCode),
+              ])],
+              // A broad extracted fact cannot prove that this exact information
+              // need is complete. Only an answer to this variant resolves it.
+              satisfiesFactCodes: [`CONTEXT_ANSWERED_S${scenario.number}_${goal.code}`.slice(0, 120)],
+              equivalentGoalCodes: [], groundingPolicy: 'DOMAIN_SPECIFIC',
+              applicability: { requiredFactCodes: [], requiredAnyFactCodes: [], excludedFactValues: [] },
+              mandatory: false, universal: false,
+              weights: { relevance: 0.9, informationGain: 0.85, matchingValue: 0.9, userBurden: 0.35 },
+              supportingKnowledgeIds: supportIds,
+            },
+            validationStatus: 'VALIDATED', publicationStatus: 'PUBLISHED', accessTier: 'PUBLIC_BASIC',
+            usageScopes: [INTAKE_ROUTING_KNOWLEDGE_SCOPE],
+          },
+          update: {},
+        })
+        goalRuleCount += 1
+      }
+    }
 
     let routingRuleCount = 0
     for (const rule of review.routingRules) {
       const scenario = review.scenarios.find((item) => item.routingRuleIds.includes(rule.candidateId))!
+      const amendment = decision.routingAmendments?.find((item) => item.routingRuleId === rule.candidateId)
+      const conditionalExpertise = amendment?.conditionalExpertise ?? rule.conditionalExpertise.map((item) => ({ code: item.discipline, when: item.when }))
+      const removedMatchingCodes = new Set(amendment?.removeFromMatchingCodes ?? [])
       const supportingKnowledgeIds = rule.supportingClaimIds.map((id) => claimIds.get(id)).filter((id): id is string => Boolean(id))
       const requiredConceptCodes = rule.candidateId === 'ROUTE_CHEMICAL_LEAK_MULTIDISCIPLINARY'
         ? ['PROCESS_SAFETY_MAJOR_HAZARDS', 'EXPOSURE_ASSESSMENT']
         : [scenario.requiredSpecialisms[0] ?? scenario.primaryExpertise]
       await transaction.knowledgeRule.upsert({
-        where: { code_ruleVersion: { code: rule.candidateId, ruleVersion: 1 } },
+        where: { code_ruleVersion: { code: rule.candidateId, ruleVersion: 2 } },
         create: {
           code: rule.candidateId, title: rule.routingIntent.slice(0, 240), description: rule.routingIntent.slice(0, 1000),
-          ruleType: 'ROUTING_RULE', ruleVersion: 1,
+          ruleType: 'ROUTING_RULE', ruleVersion: 2,
           inputSchema: { scope: INTAKE_ROUTING_KNOWLEDGE_SCOPE },
           expression: { appliesWhen: rule.appliesWhen, exclusions: rule.doNotApplyWhen },
           outputSchema: {
             kind: 'EXPERT_ROUTING', scope: INTAKE_ROUTING_KNOWLEDGE_SCOPE,
             requiredConceptCodes, requiredFactCodes: [], excludedFactCodes: [],
             primaryExpertise: rule.primaryExpertise,
-            conditionalExpertise: rule.conditionalExpertise.map((item) => ({ code: item.discipline, when: item.when })),
+            conditionalExpertise,
             requiredSpecialisms: rule.requiredSpecialisms,
             assignmentType: 'INVESTIGATION_AND_ADVICE',
             relevantSectorExperience: rule.primaryExpertise === 'PROCESS_SAFETY_MAJOR_HAZARDS'
               ? ['Aantoonbare ervaring met procesveiligheid en majeure-gevarensituaties in een vergelijkbare industriële context.']
               : [],
             multidisciplinary: rule.multidisciplinary !== 'NO',
-            matchingCodes: [rule.primaryExpertise, ...rule.requiredSpecialisms, ...rule.secondaryDisciplines],
+            matchingCodes: [rule.primaryExpertise, ...rule.requiredSpecialisms, ...rule.secondaryDisciplines]
+              .filter((code) => !removedMatchingCodes.has(code)),
             supportingKnowledgeIds, priority: rule.candidateId === 'ROUTE_CHEMICAL_LEAK_MULTIDISCIPLINARY' ? 100 : 80,
           },
           validationStatus: 'VALIDATED', publicationStatus: 'PUBLISHED', accessTier: 'PUBLIC_BASIC',

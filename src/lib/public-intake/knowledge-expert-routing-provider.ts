@@ -52,12 +52,17 @@ export async function buildKnowledgeGroundedMatchingProfile(input: {
       accessTier: 'PUBLIC_BASIC',
       usageScopes: { has: INTAKE_ROUTING_KNOWLEDGE_SCOPE },
     },
-    select: { outputSchema: true },
+    select: { code: true, ruleVersion: true, outputSchema: true },
     take: 100,
   })
   const factCodes = new Set(input.facts.filter((fact) => fact.status !== 'HYPOTHESIS').map((fact) => fact.code))
   const conceptCodes = new Set(input.concepts.map((concept) => concept.code))
-  const eligible = rules
+  const latestRules = new Map<string, (typeof rules)[number]>()
+  for (const rule of rules) {
+    const current = latestRules.get(rule.code)
+    if (!current || rule.ruleVersion > current.ruleVersion) latestRules.set(rule.code, rule)
+  }
+  const eligible = [...latestRules.values()]
     .map((rule) => ruleSchema.safeParse(rule.outputSchema))
     .filter((result): result is z.ZodSafeParseSuccess<z.infer<typeof ruleSchema>> => result.success)
     .map((result) => result.data)

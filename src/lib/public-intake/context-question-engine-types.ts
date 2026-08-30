@@ -2,6 +2,8 @@ import type { PublicIntakeAnswerType } from '@/generated/prisma/client'
 import { z } from 'zod'
 
 export const KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION =
+  'knowledge-grounded-context-engine/1.2.0' as const
+export const PREVIOUS_KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION =
   'knowledge-grounded-context-engine/1.1.0' as const
 export const LEGACY_KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION =
   'knowledge-grounded-context-engine/1.0.0' as const
@@ -37,6 +39,8 @@ export type ContextGoalAnswerOption = Readonly<{
 }>
 
 export type ContextGoal = Readonly<{
+  /** Stable internal identity. Multiple domain variants may share `code`. */
+  variantKey?: string
   code: string
   questionKey: string
   purpose: string
@@ -122,6 +126,7 @@ export type ContextQuestionPlan = Readonly<{
 export type PersistedContextQuestionPlan = Readonly<{
   engineVersion:
     | typeof KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION
+    | typeof PREVIOUS_KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION
     | typeof LEGACY_KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION
   mode: IntakeMode
   contextGoalCode: string
@@ -137,6 +142,7 @@ export type PersistedContextQuestionPlan = Readonly<{
 const persistedPlanSchema = z.object({
   engineVersion: z.enum([
     KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION,
+    PREVIOUS_KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION,
     LEGACY_KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION,
   ]),
   mode: z.enum(['DISCOVERY', 'DIRECT_REQUEST']),

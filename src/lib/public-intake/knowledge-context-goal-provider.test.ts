@@ -28,6 +28,7 @@ describe('Knowledge Engine Context Goal provider', () => {
         knowledgeClaim: { findMany: vi.fn().mockResolvedValue([{ id: claimId, confidenceLevel: 'HIGH', topic: { slug: 'geluid' } }]) },
         knowledgeRule: { findMany: vi.fn().mockResolvedValue([{
           id: '11111111-1111-4111-8111-111111111201',
+          code: 'CASE_GOAL_NOISE_WORK_PATTERN', ruleVersion: 2,
           outputSchema: {
             kind: 'CONTEXT_GOAL', scope: 'INTAKE_ROUTING_KNOWLEDGE', code: 'NOISE_WORK_PATTERN', questionKey: 'context_noise_work_pattern',
             purpose: 'Het relevante werkpatroon bij geluid onderscheiden.',
@@ -40,7 +41,8 @@ describe('Knowledge Engine Context Goal provider', () => {
           },
         }]) },
       } as never,
-      concepts: [], originalInput: 'In de werkplaats is veel geluid tijdens het werk.',
+      concepts: [{ code: 'NOISE', confidence: 1, source: 'CLASSIFIER', supportingKnowledgeIds: [] }],
+      originalInput: 'In de werkplaats is veel geluid tijdens het werk.',
     })
     expect(result.goals).toContainEqual(expect.objectContaining({ code: 'NOISE_WORK_PATTERN' }))
     expect(result.knowledgeConcepts).toContainEqual(expect.objectContaining({ code: 'NOISE' }))
@@ -55,7 +57,7 @@ describe('Knowledge Engine Context Goal provider', () => {
       database: {
         knowledgeClaim: { findMany: vi.fn().mockResolvedValue([]) },
         knowledgeRule: { findMany: vi.fn().mockResolvedValue([{
-          id: '11111111-1111-4111-8111-111111111201',
+          id: '11111111-1111-4111-8111-111111111201', code: 'CASE_GOAL_UNSUPPORTED', ruleVersion: 2,
           outputSchema: {
             kind: 'CONTEXT_GOAL', scope: 'INTAKE_ROUTING_KNOWLEDGE', code: 'UNSUPPORTED', questionKey: 'context_unsupported',
             purpose: 'Deze vraag mist geldige actuele kennisgronding.', text: 'Deze vraag mag niet worden gesteld.',
@@ -67,8 +69,65 @@ describe('Knowledge Engine Context Goal provider', () => {
           },
         }]) },
       } as never,
-      concepts: [], originalInput: 'Geluid in de werkplaats.',
+      concepts: [{ code: 'NOISE', confidence: 1, source: 'CLASSIFIER', supportingKnowledgeIds: [] }],
+      originalInput: 'Geluid in de werkplaats.',
     })
     expect(result.goals.map((goal) => goal.code)).not.toContain('UNSUPPORTED')
+  })
+
+  it('hydrateert supporting claims rechtstreeks op ID buiten de tekstuele discoveryset', async () => {
+    const discovered = { id: '11111111-1111-4111-8111-111111111102', confidenceLevel: 'HIGH', topic: { slug: 'algemeen' } }
+    const supported = { id: claimId, confidenceLevel: 'HIGH', topic: { slug: 'machine-safety' } }
+    const findMany = vi.fn().mockResolvedValueOnce([discovered]).mockResolvedValueOnce([supported])
+    const result = await loadKnowledgeGroundedContextGoals({
+      database: {
+        knowledgeClaim: { findMany },
+        knowledgeRule: { findMany: vi.fn().mockResolvedValue([{
+          id: '11111111-1111-4111-8111-111111111201', code: 'CASE_GOAL_MACHINE_DOCUMENTATION', ruleVersion: 2,
+          outputSchema: {
+            kind: 'CONTEXT_GOAL', scope: 'INTAKE_ROUTING_KNOWLEDGE', code: 'EXISTING_MEASURES', variantKey: 'MACHINE:EXISTING_MEASURES',
+            questionKey: 'context_machine_existing_measures', purpose: 'Vaststellen welke machinebeoordeling en documentatie beschikbaar zijn.',
+            text: 'Welke risicobeoordeling en technische documentatie zijn na de wijziging bijgewerkt?', answerType: 'TEXT', options: [],
+            category: 'EXISTING_CONTROL', relevantConceptCodes: ['MACHINE_SAFETY'],
+            satisfiesFactCodes: ['CONTEXT_ANSWERED_MACHINE_EXISTING_MEASURES'], equivalentGoalCodes: [],
+            mandatory: false, universal: false, weights: { relevance: 1, informationGain: 1, matchingValue: 1, userBurden: 0.2 },
+            supportingKnowledgeIds: [claimId],
+          },
+        }]) },
+      } as never,
+      concepts: [{ code: 'MACHINE_SAFETY', confidence: 1, source: 'CLASSIFIER', supportingKnowledgeIds: [] }],
+      originalInput: 'Een gewijzigde installatie vraagt aandacht.',
+    })
+    expect(findMany).toHaveBeenNthCalledWith(2, expect.objectContaining({ where: expect.objectContaining({ AND: expect.arrayContaining([
+      expect.objectContaining({ id: { in: [claimId] } }),
+    ]) }) }))
+    expect(result.goals).toContainEqual(expect.objectContaining({ variantKey: 'MACHINE:EXISTING_MEASURES' }))
+    expect(result.evidenceByGoalCode.get('MACHINE:EXISTING_MEASURES')).toEqual(expect.arrayContaining([
+      expect.objectContaining({ knowledgeId: claimId, source: 'PUBLISHED_CLAIM' }),
+    ]))
+  })
+
+  it('laat gevalideerde dynamische evidence niet overschrijven door legacy evidence', async () => {
+    const result = await loadKnowledgeGroundedContextGoals({
+      database: {
+        knowledgeClaim: { findMany: vi.fn().mockResolvedValue([{ id: claimId, confidenceLevel: 'HIGH', topic: { slug: 'location-pattern' } }]) },
+        knowledgeRule: { findMany: vi.fn().mockResolvedValue([{
+          id: '11111111-1111-4111-8111-111111111201', code: 'CASE_GOAL_LOCATION_PATTERN_OFFICE', ruleVersion: 1,
+          outputSchema: {
+            kind: 'CONTEXT_GOAL', scope: 'INTAKE_ROUTING_KNOWLEDGE', code: 'LOCATION_PATTERN', variantKey: 'OFFICE:LOCATION_PATTERN',
+            questionKey: 'context_office_location_pattern', purpose: 'Het klachtenpatroon per ruimte feitelijk onderscheiden.',
+            text: 'In welke ruimtes treden de klachten op en waar juist niet?', answerType: 'TEXT', options: [], category: 'SCOPE',
+            relevantConceptCodes: ['INDOOR_CLIMATE'], satisfiesFactCodes: ['CONTEXT_ANSWERED_OFFICE_LOCATION_PATTERN'], equivalentGoalCodes: [],
+            mandatory: false, universal: false, weights: { relevance: 1, informationGain: 1, matchingValue: 1, userBurden: 0.2 },
+            supportingKnowledgeIds: [claimId],
+          },
+        }]) },
+      } as never,
+      concepts: [{ code: 'INDOOR_CLIMATE', confidence: 1, source: 'CLASSIFIER', supportingKnowledgeIds: [] }], originalInput: 'Klachten in een nieuw kantoor.',
+    })
+    expect(result.evidenceByGoalCode.get('OFFICE:LOCATION_PATTERN')?.map((item) => item.source)).toEqual([
+      'PUBLISHED_ROUTING_RULE', 'PUBLISHED_CLAIM',
+    ])
+    expect(result.goals.filter((goal) => goal.code === 'LOCATION_PATTERN')).toHaveLength(2)
   })
 })
