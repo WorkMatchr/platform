@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { compatibilityContextGoals } from './context-goal-catalog'
-import { tracePreviewQuestionVerification } from './context-question-preview-diagnostics'
+import { tracePreviewQuestionAuthorization, tracePreviewQuestionVerification } from './context-question-preview-diagnostics'
 import { formulateContextQuestion, type ContextQuestionFormulationInput } from './context-question-formulator'
 
 const input: ContextQuestionFormulationInput = {
@@ -23,6 +23,28 @@ function preview() {
 afterEach(() => { vi.unstubAllEnvs(); vi.restoreAllMocks() })
 
 describe('temporary Preview verifier diagnostics', () => {
+  it.each(['RATE_LIMITED', 'PROTECTION_UNAVAILABLE', 'ABUSE_CONTEXT_MISSING', null] as const)('observes authorization reason %s', (reason) => {
+    preview()
+    const log = vi.spyOn(console, 'info').mockImplementation(() => {})
+    tracePreviewQuestionAuthorization(input, reason)
+    expect(JSON.parse(String(log.mock.calls[0][0]))).toEqual({
+      event: 'PREVIEW_SYNTHETIC_QUESTION_AUTHORIZATION', check: 'allowPublicIntakeAIClassification',
+      allowed: reason === null, reason: reason === 'PROTECTION_UNAVAILABLE' ? 'SECURITY_CHECK_UNAVAILABLE' : reason,
+    })
+  })
+  it('authorization diagnostics are Preview/case scoped and cannot throw', () => {
+    preview()
+    const log = vi.spyOn(console, 'info').mockImplementation(() => {})
+    tracePreviewQuestionAuthorization({ ...input, originalInput: 'private' }, 'RATE_LIMITED')
+    vi.stubEnv('VERCEL_ENV', 'production')
+    tracePreviewQuestionAuthorization(input, 'RATE_LIMITED')
+    expect(log).not.toHaveBeenCalled()
+    preview(); vi.stubEnv('VERCEL_GIT_COMMIT_REF', 'main')
+    tracePreviewQuestionAuthorization(input, 'RATE_LIMITED')
+    expect(log).not.toHaveBeenCalled()
+    preview(); log.mockImplementation(() => { throw new Error('logger') })
+    expect(() => tracePreviewQuestionAuthorization(input, 'RATE_LIMITED')).not.toThrow()
+  })
   it.each(['production', 'development', ''])('logs nothing in %s', (environment) => {
     preview(); vi.stubEnv('VERCEL_ENV', environment)
     const log = vi.spyOn(console, 'info').mockImplementation(() => {})

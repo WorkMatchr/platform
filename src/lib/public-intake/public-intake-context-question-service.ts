@@ -17,6 +17,7 @@ import { assessContextQuestionGrounding } from './context-question-grounding'
 import { isReliableConcept } from './context-goal-applicability'
 import { contextQuestionInputDigest, formulateContextQuestion, type ContextQuestionFormulationInput } from './context-question-formulator'
 import { createContextQuestionOpenAITransport } from './context-question-openai-transport'
+import { tracePreviewQuestionAuthorization } from './context-question-preview-diagnostics'
 import { allowPublicIntakeAIClassification, type PublicIntakeAbuseContext } from './public-intake-abuse-protection'
 import { emptyCaseUnderstanding } from '@/lib/ai-intake-classifier/case-understanding-contract'
 import {
@@ -279,9 +280,15 @@ export async function ensurePublicIntakeAIContextQuestions(input: {
   if (!('formulationInput' in planned)) return planned
   const formulation = await formulateContextQuestion(planned.formulationInput, {
     transport: input.abuseContext ? createContextQuestionOpenAITransport() : null,
-    authorizeExternalCall: async () => input.abuseContext
-      ? (await allowPublicIntakeAIClassification(input.abuseContext)).allowed
-      : false,
+    authorizeExternalCall: async () => {
+      if (!input.abuseContext) {
+        tracePreviewQuestionAuthorization(planned.formulationInput, 'ABUSE_CONTEXT_MISSING')
+        return false
+      }
+      const allowance = await allowPublicIntakeAIClassification(input.abuseContext)
+      tracePreviewQuestionAuthorization(planned.formulationInput, allowance.allowed ? null : allowance.reason)
+      return allowance.allowed
+    },
   })
   const persisted = await planAndPersist({
     digest: contextQuestionInputDigest(planned.formulationInput), formulation,

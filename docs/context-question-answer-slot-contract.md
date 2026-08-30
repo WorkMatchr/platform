@@ -22,3 +22,8 @@ hypotheses, presupposities, grounding en oplossen na beantwoording.
 Producttoets: onbekende informatie mag neutraal worden uitgevraagd (PC-025/026),
 maar mag niet als reeds vaststaand of causaal worden gepresenteerd (PC-048/070).
 Technische tests vervangen de verplichte Preview-browseracceptatie niet.
+
+Tijdelijke diagnostiek voor uitsluitend de bekende fictieve Preview-casus toont
+de bestaande AI-autorisatiereden: RATE_LIMITED, SECURITY_CHECK_UNAVAILABLE
+(bestaande PROTECTION_UNAVAILABLE) of ABUSE_CONTEXT_MISSING. Geen extra
+limiter-aanroep, geen gewijzigde beslissing, geen tokens of gebruikersinhoud.

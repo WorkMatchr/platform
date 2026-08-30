@@ -5,6 +5,20 @@ import type { ContextQuestionFormulationInput } from './context-question-formula
 
 const syntheticInputDigest = 'c4f5b271757e3cedeb42ac1fc4a5e690f40fb3be922bb07c686a76bd0239b286'
 const branch = 'codex/ai-help-request-intake-v2'
+/** Observation only: never changes the existing allowance or consumes another bucket. */
+export function tracePreviewQuestionAuthorization(input: ContextQuestionFormulationInput,
+  reason: 'RATE_LIMITED' | 'PROTECTION_UNAVAILABLE' | 'ABUSE_CONTEXT_MISSING' | null): void {
+  if (process.env.VERCEL_ENV !== 'preview' || process.env.VERCEL_GIT_COMMIT_REF !== branch) return
+  if (createHash('sha256').update(input.originalInput).digest('hex') !== syntheticInputDigest) return
+  try {
+    console.info(JSON.stringify({
+      event: 'PREVIEW_SYNTHETIC_QUESTION_AUTHORIZATION',
+      check: 'allowPublicIntakeAIClassification',
+      allowed: reason === null,
+      reason: reason === 'PROTECTION_UNAVAILABLE' ? 'SECURITY_CHECK_UNAVAILABLE' : reason,
+    }))
+  } catch { /* Observability must not affect authorization. */ }
+}
 // Temporary diagnostic vocabulary, never used for selection or verification.
 // Unknown words are redacted, rather than logging arbitrary model/user text.
 const safeWords = new Set(`sinds we drie maanden geleden naar een nieuw kantoor zijn verhuisd hebben meerdere medewerkers aan het einde van de middag last hoofdpijn droge ogen en vermoeidheid weten niet waar door komt kan iemand dit onderzoeken
