@@ -4,8 +4,9 @@ import { isReliablePresentFact } from './context-goal-applicability'
 import type { ContextGoal, ExtractedFact, KnowledgeEvidence } from './context-question-engine-types'
 import type { ContextQuestionGenerationProvenance } from './context-question-generation-contract'
 import { tracePreviewQuestionVerification } from './context-question-preview-diagnostics'
+import { applicabilitySupportCodes, questionEvidenceContract } from './context-question-evidence-contract'
 
-export const CONTEXT_QUESTION_FORMULATOR_VERSION = 'context-question-formulator/2.0.0'
+export const CONTEXT_QUESTION_FORMULATOR_VERSION = 'context-question-formulator/2.0.1'
 
 export type ContextQuestionFormulationInput = Readonly<{
   goal: ContextGoal
@@ -46,6 +47,9 @@ const safetyInstructions = [
   'Claims onderbouwen de relevantie van een vraag, maar bewijzen geen feiten in deze casus.',
   'Neem geen causaliteit, uitgevoerde metingen, organisatieafdelingen, aantallen, personen of activiteiten aan.',
   'Hypothesen en onbekende informatie zijn geen bewezen feiten.',
+  'applicabilityEvidence bevat reeds bekende betrouwbare feiten; targetAnswerSlots zijn de informatie die deze vraag juist probeert te verkrijgen.',
+  'Een targetAnswerSlot hoeft nog niet beantwoord te zijn. Gebruik het nooit als bewezen feit, supportingFactCode of rechtvaardiging voor een presuppositie.',
+  'supportingFactCodes mogen uitsluitend codes uit applicabilityEvidence bevatten. Een neutrale vraag mag naar onbekende informatie vragen zonder die informatie als bestaand aan te nemen.',
   'Vraag geen persoonsgegevens, diagnose, juridisch oordeel of vereiste deskundige.',
   'Introduceer geen ander informatiedoel en vraag niet opnieuw wat al betrouwbaar bekend is.',
 ].join(' ')
@@ -73,6 +77,7 @@ export async function formulateContextQuestion(input: ContextQuestionFormulation
   })
   if (!options.transport) return fallback('GENERATOR_UNAVAILABLE')
   const knownFacts = input.facts.filter(isReliablePresentFact)
+  const { applicabilityEvidence, targetAnswerSlots } = questionEvidenceContract(input.goal, input.facts)
   const data = {
     originalInput: input.originalInput,
     selectedContextRuleId: input.goal.selectedContextRuleId,
@@ -81,9 +86,9 @@ export async function formulateContextQuestion(input: ContextQuestionFormulation
     goalCode: input.goal.code,
     informationNeed: instructions.informationNeed,
     runtimeQuestionInstructions: instructions.runtimeQuestionInstructions,
-    knownFacts,
+    applicabilityEvidence,
     uncertainOrUnknownFacts: input.facts.filter((fact) => !isReliablePresentFact(fact)),
-    missingFactCodes: input.goal.satisfiesFactCodes,
+    targetAnswerSlots: [...targetAnswerSlots],
     supportingClaims: input.evidence.filter((item) => item.source === 'PUBLISHED_CLAIM'),
   }
   if (JSON.stringify(data).length > 24_000) return fallback('GENERATION_INPUT_BUDGET_EXCEEDED')
@@ -110,14 +115,15 @@ export async function formulateContextQuestion(input: ContextQuestionFormulation
       system: `Beoordeel streng de ene voorgestelde vraag. ${safetyInstructions} Rapporteer iedere onbewezen veronderstelling, ook impliciete. Citeer alleen letterlijke casusevidence; verzin geen bewijs. Bij twijfel afkeuren met OTHER.`,
       data: { ...data, question: generated.question }, schema: z.toJSONSchema(verificationSchema),
     }))
-    const knownCodes = new Set(knownFacts.map((fact) => fact.code))
+    const knownCodes = new Set(applicabilityEvidence.map((fact) => fact.code))
+    const evidenceFactCodes = applicabilitySupportCodes(verified.supportingFactCodes, targetAnswerSlots)
     const sourceTexts = [input.originalInput,
       ...knownFacts.filter((fact) => fact.status === 'USER_CONFIRMED').flatMap((fact) =>
         Array.isArray(fact.value) ? fact.value : [String(fact.value)])]
     tracePreviewQuestionVerification(input, generated.question, verified)
     if (!verified.informationNeedPreserved || !verified.oneDutchQuestion
       || verified.unsupportedPresuppositions.length > 0
-      || verified.supportingFactCodes.some((code) => !knownCodes.has(code))
+      || evidenceFactCodes.some((code) => !knownCodes.has(code))
       || verified.evidenceQuotes.some((quote) => !sourceTexts.some((text) => text.includes(quote)))) {
       return fallback('QUESTION_VERIFICATION_REJECTED')
     }
@@ -127,7 +133,7 @@ export async function formulateContextQuestion(input: ContextQuestionFormulation
         status: 'VERIFIED' as const, reasonCode: 'INDEPENDENT_SEMANTIC_REVIEW_PASSED',
         generatorVersion: CONTEXT_QUESTION_FORMULATOR_VERSION,
         questionDigest: createHash('sha256').update(generated.question).digest('hex'),
-        factsSupportingQuestion: verified.supportingFactCodes,
+        factsSupportingQuestion: evidenceFactCodes,
         unsupportedPresuppositions: verified.unsupportedPresuppositions,
       }),
     })

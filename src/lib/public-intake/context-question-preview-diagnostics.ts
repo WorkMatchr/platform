@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import { isReliablePresentFact } from './context-goal-applicability'
+import { applicabilitySupportCodes, questionEvidenceContract } from './context-question-evidence-contract'
 import type { ContextQuestionFormulationInput } from './context-question-formulator'
 
 const syntheticInputDigest = 'c4f5b271757e3cedeb42ac1fc4a5e690f40fb3be922bb07c686a76bd0239b286'
@@ -32,14 +33,15 @@ export function tracePreviewQuestionVerification(input: ContextQuestionFormulati
   if (createHash('sha256').update(input.originalInput).digest('hex') !== syntheticInputDigest) return
   try {
     const known = input.facts.filter(isReliablePresentFact)
-    const codes = new Set(known.map((fact) => fact.code))
+    const { applicabilityEvidence, targetAnswerSlots } = questionEvidenceContract(input.goal, input.facts)
+    const codes = new Set(applicabilityEvidence.map((fact) => fact.code))
     const sources = [input.originalInput, ...known.filter((fact) => fact.status === 'USER_CONFIRMED')
       .flatMap((fact) => Array.isArray(fact.value) ? fact.value : [String(fact.value)])]
     const checks = verdict ? {
       informationNeedPreserved: verdict.informationNeedPreserved,
       oneDutchQuestion: verdict.oneDutchQuestion,
       noUnsupportedPresuppositions: verdict.unsupportedPresuppositions.length === 0,
-      supportingFactCodesKnown: verdict.supportingFactCodes.every((code) => codes.has(code)),
+      supportingFactCodesKnown: applicabilitySupportCodes(verdict.supportingFactCodes, targetAnswerSlots).every((code) => codes.has(code)),
       evidenceQuotesLiteral: verdict.evidenceQuotes.every((quote) => sources.some((source) => source.includes(quote))),
     } : null
     const safeCode = (code: string) => /^[A-Z][A-Z0-9_:]{0,119}$/.test(code) ? code : '[REDACTED]'
@@ -48,6 +50,7 @@ export function tracePreviewQuestionVerification(input: ContextQuestionFormulati
       event: 'PREVIEW_SYNTHETIC_QUESTION_VERIFIER',
       selectedContextRuleId: safeId(input.goal.selectedContextRuleId), ruleVersion: input.goal.ruleVersion,
       goalCode: safeCode(input.goal.code), variantKey: safeCode(input.goal.variantKey ?? ''),
+      targetAnswerSlots: [...targetAnswerSlots].map(safeCode),
       generatedQuestion: safeQuestion(question), questionTextRedacted: safeQuestion(question) !== question,
       verifiedCaseFacts: known.map((fact) => ({ code: safeCode(fact.code), status: fact.status })),
       hypotheses: input.facts.filter((fact) => fact.status === 'HYPOTHESIS').map((fact) => safeCode(fact.code)),
@@ -55,7 +58,7 @@ export function tracePreviewQuestionVerification(input: ContextQuestionFormulati
       checks,
       rejectedChecks: checks ? Object.entries(checks).filter(([, passed]) => !passed).map(([name]) => name) : ['VERIFICATION_NOT_AUTHORIZED'],
       presuppositionChecks: verdict?.unsupportedPresuppositions.map(safeCode),
-      supportingFactChecks: verdict?.supportingFactCodes.map((code) => ({ code: safeCode(code), known: codes.has(code) })),
+      supportingFactChecks: verdict?.supportingFactCodes.map((code) => ({ code: safeCode(code), known: codes.has(code), targetAnswerSlot: targetAnswerSlots.has(code) })),
       quoteChecks: verdict?.evidenceQuotes.map((quote) => ({
         literal: sources.some((source) => source.includes(quote)),
         caseInsensitive: sources.some((source) => source.toLowerCase().includes(quote.toLowerCase())),
