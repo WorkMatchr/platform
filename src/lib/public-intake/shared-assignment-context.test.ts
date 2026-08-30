@@ -28,6 +28,17 @@ describe('Shared Assignment Context', () => {
     expect(inferSharedSectorCode('Een school en zorginstelling delen één locatie.', sectors)).toBeNull()
   })
 
+  it('leidt Bouw niet af uit aannemerswerk binnen een expliciete BRZO/Seveso-industriecontext', () => {
+    const availableSectors: readonly SharedSectorOption[] = [
+      ...sectors,
+      { code: 'bouw', label: 'Bouw' },
+    ]
+    const input =
+      'Wij zijn een BRZO/Seveso-bedrijf en bereiden een onderhoudsstop voor. Tijdens de stop werken medewerkers van 12 verschillende aannemers tegelijk op het terrein. Er wordt gewerkt aan procesinstallaties met brandbare en toxische stoffen. Iedere aannemer heeft eigen veiligheidsdocumenten.'
+
+    expect(inferSharedSectorCode(input, availableSectors)).toBe('industrie')
+  })
+
   it('gebruikt een bevestigd sectorkeuze boven tekstinferentie', () => {
     const context = resolveSharedAssignmentContext({
       originalInput: 'Wij zijn een metaalbewerkingsbedrijf.',

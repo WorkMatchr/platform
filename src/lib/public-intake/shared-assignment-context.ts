@@ -25,6 +25,9 @@ const sectorSignals: Readonly<Record<string, readonly RegExp[]>> = Object.freeze
     /\bmetaal(?:bewerking|bewerkingsbedrijf)?\b/,
     /\bproductie(?:bedrijf|omgeving)?\b/,
     /\bfabriek\b/,
+    /\bbrzo(?:-bedrijf)?\b/,
+    /\bseveso(?:-bedrijf)?\b/,
+    /\bprocesinstallaties?\b/,
   ]),
   logistiek: Object.freeze([
     /\btransport(?:bedrijf)?\b/,
@@ -43,7 +46,6 @@ const sectorSignals: Readonly<Record<string, readonly RegExp[]>> = Object.freeze
   ]),
   bouw: Object.freeze([
     /\bbouw(?:bedrijf|plaats)?\b/,
-    /\baannemer\b/,
   ]),
   horeca: Object.freeze([/\bhoreca\b/, /\brestaurant\b/, /\bhotel\b/]),
   detailhandel: Object.freeze([/\bwinkel\b/, /\bdetailhandel\b/]),
