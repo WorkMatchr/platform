@@ -66,6 +66,10 @@ export function extractPublicIntakeFacts(input: {
     facts.push(Object.freeze({ code: 'WORK_ENVIRONMENT_CHANGE', value: true, status: 'RELIABLE_EXTRACTION', confidence: 0.9 }))
     facts.push(Object.freeze({ code: 'WORK_ENVIRONMENT_CHANGE_SIGNAL', value: true, status: 'RELIABLE_EXTRACTION', confidence: 0.9 }))
   }
+  if (
+    /\b(?:machine|procesinstallatie|installatie|besturing|afscherming)\w*\b.{0,80}\b(?:aangepast|veranderd|gewijzigd|verouder\w*)\b/.test(text)
+    || /\b(?:aangepast|veranderd|gewijzigd|verouder\w*)\b.{0,80}\b(?:machine|procesinstallatie|installatie|besturing|afscherming)\w*\b/.test(text)
+  ) facts.push(Object.freeze({ code: 'WORK_ENVIRONMENT_CHANGE', value: 'TECHNICAL_CHANGE_MENTIONED', status: 'RELIABLE_EXTRACTION', confidence: 0.9 }))
   if (/\bheftrucks?\b/.test(text)) facts.push(Object.freeze({ code: 'EQUIPMENT', value: 'FORKLIFT', status: 'RELIABLE_EXTRACTION', confidence: 0.98 }))
   if (/\b(?:dampen?|gassen?|geuren?|stof|rook|emissie)\b/.test(text)) facts.push(Object.freeze({ code: 'EXPOSURE_SIGNAL', value: true, status: 'RELIABLE_EXTRACTION', confidence: 0.85 }))
   if (/\b(?:tillen|dragen|duwen|trekken|repeterend werk|lichamelijke belasting)\b/.test(text)) facts.push(Object.freeze({ code: 'PHYSICAL_LOAD_RELEVANT', value: true, status: 'RELIABLE_EXTRACTION', confidence: 0.9 }))

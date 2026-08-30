@@ -52,6 +52,19 @@ describe('public intake fact extraction', () => {
       .not.toContain('WORK_ENVIRONMENT_CHANGE')
   })
 
+  it('onderdrukt de algemene veranderingsvraag bij expliciete technische veroudering zonder classifiercontext', () => {
+    const originalInput = 'De lekkages hangen mogelijk samen met verouderende procesinstallaties.'
+    const facts = extractPublicIntakeFacts({ originalInput, answers: [] })
+
+    expect(facts).toContainEqual(expect.objectContaining({
+      code: 'WORK_ENVIRONMENT_CHANGE',
+      value: 'TECHNICAL_CHANGE_MENTIONED',
+    }))
+    expect(facts.some((fact) => fact.code === 'WORK_ENVIRONMENT_CHANGE_SIGNAL')).toBe(false)
+    expect(deriveKnowledgeConceptCandidates({ originalInput, classification: null, facts }).map((concept) => concept.code))
+      .not.toContain('WORK_ENVIRONMENT_CHANGE')
+  })
+
   it('scheidt expliciete arbeidscontext van een niet-bewezen oorzaak', () => {
     const facts = codes('Bij ons transportbedrijf hebben 6 chauffeurs last van hun rug.')
     expect(facts).toEqual(expect.arrayContaining([
