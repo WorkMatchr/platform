@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
   requirePlatformAdministrator: vi.fn(),
@@ -18,10 +18,14 @@ import { GET } from './route'
 
 describe('Mollie-methodenpreflight', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.resetAllMocks()
+    vi.stubEnv('MOLLIE_REDIRECT_BASE_URL', 'https://www.workmatchr.nl')
+    vi.stubEnv('MOLLIE_WEBHOOK_BASE_URL', 'https://www.workmatchr.nl')
     mocks.getMollieApiMode.mockReturnValue('live')
     mocks.listOneoffPaymentMethods.mockResolvedValue([{ id: 'ideal', name: 'iDEAL' }])
   })
+
+  afterEach(() => vi.unstubAllEnvs())
 
   it('autoriseert platformbeheer voordat Mollie read-only wordt bevraagd', async () => {
     const response = await GET()
@@ -31,10 +35,44 @@ describe('Mollie-methodenpreflight', () => {
     expect(await response.json()).toEqual({
       ok: true,
       mode: 'live',
+      redirectBaseUrlMatchesProduction: true,
+      webhookBaseUrlMatchesProduction: true,
       amount: { value: '30.25', currency: 'EUR' },
       sequenceType: 'oneoff',
       methods: [{ id: 'ideal', name: 'iDEAL' }],
     })
+    expect(response.headers.get('Cache-Control')).toBe('private, no-store')
+  })
+
+  it.each([
+    undefined,
+    '',
+    'https://www.workmatchr.nl/',
+    'https://workmatchr.nl',
+    'http://www.workmatchr.nl',
+    ' https://www.workmatchr.nl',
+    'https://www.workmatchr.nl?secret=not-for-output',
+    'https://preview.example.invalid',
+    'not-a-url',
+  ])('geeft alleen false bij een niet exact gelijke URL (%s)', async (value) => {
+    vi.stubEnv('MOLLIE_REDIRECT_BASE_URL', value)
+    const redirectBody = await (await GET()).json()
+    expect(redirectBody.redirectBaseUrlMatchesProduction).toBe(false)
+    expect(redirectBody.webhookBaseUrlMatchesProduction).toBe(true)
+    vi.stubEnv('MOLLIE_REDIRECT_BASE_URL', 'https://www.workmatchr.nl')
+    vi.stubEnv('MOLLIE_WEBHOOK_BASE_URL', value)
+    const webhookBody = await (await GET()).json()
+    expect(webhookBody.redirectBaseUrlMatchesProduction).toBe(true)
+    expect(webhookBody.webhookBaseUrlMatchesProduction).toBe(false)
+    expect(JSON.stringify([redirectBody, webhookBody])).not.toContain('https://')
+    expect(JSON.stringify([redirectBody, webhookBody])).not.toContain('not-for-output')
+  })
+
+  it('stopt vóór configuratiecontrole en Mollie bij geweigerde autorisatie', async () => {
+    mocks.requirePlatformAdministrator.mockRejectedValue(new Error('FORBIDDEN'))
+    await expect(GET()).rejects.toThrow('FORBIDDEN')
+    expect(mocks.getMollieApiMode).not.toHaveBeenCalled()
+    expect(mocks.listOneoffPaymentMethods).not.toHaveBeenCalled()
   })
 
   it('faalt gesloten bij een onbekende keymodus zonder Mollie-call', async () => {
@@ -43,6 +81,7 @@ describe('Mollie-methodenpreflight', () => {
     const response = await GET()
 
     expect(response.status).toBe(503)
+    expect(await response.json()).toMatchObject({ redirectBaseUrlMatchesProduction: true, webhookBaseUrlMatchesProduction: true })
     expect(mocks.listOneoffPaymentMethods).not.toHaveBeenCalled()
   })
 
@@ -56,6 +95,7 @@ describe('Mollie-methodenpreflight', () => {
     const body = await response.json()
 
     expect(response.status).toBe(502)
+    expect(body).toMatchObject({ redirectBaseUrlMatchesProduction: true, webhookBaseUrlMatchesProduction: true })
     expect(body.error).toEqual(expect.objectContaining({
       httpStatus: 422,
       mollieErrorField: 'method',

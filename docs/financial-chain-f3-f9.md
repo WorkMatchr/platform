@@ -61,6 +61,8 @@ Het platformdashboard rapporteert bruto omzet uit succesvolle creditaankopen, ee
 
 ## Configuratie
 
+De bestaande platformbeheer-beveiligde `GET /api/platformbeheer/financien/mollie/methoden-preflight` rapporteert naast de read-only methodencontrole uitsluitend twee aanvullende configuratiebooleans: `redirectBaseUrlMatchesProduction` en `webhookBaseUrlMatchesProduction`. Deze vergelijken de ongewijzigde runtimewaarden exact met `https://www.workmatchr.nl`; ontbrekende waarden, andere hosts, whitespace en een trailing slash geven `false`. De onderliggende URL-waarden worden niet teruggegeven of gelogd. `ok` blijft het resultaat van de bestaande methodencontrole; voor Production-acceptatie moeten daarnaast beide URL-booleans `true` zijn. Autorisatie blijft vóór iedere controle staan en antwoorden blijven `private, no-store`. Deze route maakt geen payment of financiële records aan.
+
 Alle waarden staan uitsluitend in beheerde omgevingsconfiguratie:
 
 - `MOLLIE_API_KEY`
