@@ -25,6 +25,8 @@ export type ExtractedFact = Readonly<{
   confidence: number
   sourceQuestionKey?: string
   evidence?: readonly string[]
+  /** Explicit unqualified absence: answer resolution only, never presence evidence. */
+  resolution?: 'CASE_WIDE_ABSENCE'
 }>
 
 export type KnowledgeConceptCandidate = Readonly<{

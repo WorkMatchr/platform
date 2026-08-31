@@ -11,12 +11,13 @@ import type {
 } from './context-question-engine-types'
 import { KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION } from './context-question-engine-types'
 import { contextGoalApplies, isDiscoverableConcept } from './context-goal-applicability'
+import { isKnownAnswerFact } from './negative-answer-resolution'
 
 const round = (value: number) => Math.round(value * 10000) / 10000
 const MINIMUM_HIGH_VALUE_INFORMATION_GAIN = 0.4
 
 function factCodes(facts: readonly ExtractedFact[]) {
-  return new Set(facts.filter((fact) => fact.status !== 'HYPOTHESIS' && fact.status !== 'SUGGESTED_DIRECTION').map((fact) => fact.code))
+  return new Set(facts.filter(isKnownAnswerFact).map((fact) => fact.code))
 }
 
 function hasValidKnowledgeGrounding(evidence: readonly KnowledgeEvidence[]) {
@@ -28,8 +29,8 @@ function goalIdentity(goal: ContextGoal) {
   return goal.variantKey ?? goal.code
 }
 
-function isGoalResolved(goal: ContextGoal, knownFacts: ReadonlySet<string>) {
-  return goal.satisfiesFactCodes.some((code) => knownFacts.has(code))
+function isGoalResolved(goal: ContextGoal, knownFacts: ReadonlySet<string>, absentFacts: ReadonlySet<string>) {
+  return goal.satisfiesFactCodes.some((code) => knownFacts.has(code)) || absentFacts.has(goal.code)
 }
 
 function scoreGoal(input: {
@@ -85,13 +86,15 @@ export function planNextContextQuestion(input: {
   questionBudgetRemaining: number
 }): ContextQuestionPlan {
   const knownFacts = factCodes(input.facts)
+  const absentFacts = new Set(input.facts.filter((fact) => isKnownAnswerFact(fact)
+    && fact.value === false && fact.resolution === 'CASE_WIDE_ABSENCE').map((fact) => fact.code))
   const unavailableQuestions = new Set([...input.answeredQuestionKeys, ...input.askedQuestionKeys])
   const unavailableGoalIdentities = new Set<string>()
   const unavailableEquivalentGoalCodes = new Set<string>()
   for (const goal of input.goals) {
-    if (unavailableQuestions.has(goal.questionKey) || isGoalResolved(goal, knownFacts)) {
+    if (unavailableQuestions.has(goal.questionKey) || isGoalResolved(goal, knownFacts, absentFacts)) {
       unavailableGoalIdentities.add(goalIdentity(goal))
-      goal.equivalentGoalCodes.forEach((code) => unavailableEquivalentGoalCodes.add(code))
+      if (isGoalResolved(goal, knownFacts, absentFacts)) goal.equivalentGoalCodes.forEach((code) => unavailableEquivalentGoalCodes.add(code))
     }
   }
   const candidates: ContextGoalCandidate[] = []
@@ -102,7 +105,7 @@ export function planNextContextQuestion(input: {
     if (unavailableQuestions.has(goal.questionKey)
       || unavailableGoalIdentities.has(goalIdentity(goal))
       || unavailableEquivalentGoalCodes.has(goal.code)
-      || isGoalResolved(goal, knownFacts)) {
+      || isGoalResolved(goal, knownFacts, absentFacts)) {
       deduplicatedGoalCount += 1
       continue
     }

@@ -18,6 +18,7 @@ import { isReliableConcept } from './context-goal-applicability'
 import { contextQuestionInputDigest, formulateContextQuestion, type ContextQuestionFormulationInput } from './context-question-formulator'
 import { createContextQuestionOpenAITransport } from './context-question-openai-transport'
 import { tracePreviewQuestionAuthorization } from './context-question-preview-diagnostics'
+import { isKnownAnswerValue } from './negative-answer-resolution'
 import { allowPublicIntakeAIClassification, type PublicIntakeAbuseContext } from './public-intake-abuse-protection'
 import { emptyCaseUnderstanding } from '@/lib/ai-intake-classifier/case-understanding-contract'
 import {
@@ -136,7 +137,7 @@ export async function ensurePublicIntakeAIContextQuestions(input: {
     })
     const goalByQuestionKey = new Map(grounded.goals.map((goal) => [goal.questionKey, goal]))
     for (const answer of input.answers) {
-      if (answer.disposition !== 'ANSWERED' || answer.value === null) continue
+      if (answer.disposition !== 'ANSWERED' || answer.value === null || !isKnownAnswerValue(answer.value)) continue
       const goal = goalByQuestionKey.get(answer.questionKey)
       if (!goal) continue
       for (const factCode of goal.satisfiesFactCodes) {

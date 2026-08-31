@@ -4,6 +4,7 @@ import type { ExtractedFact, KnowledgeConceptCandidate } from './context-questio
 import { caseUnderstandingFacts } from './case-understanding'
 import type { CaseUnderstanding } from '@/lib/ai-intake-classifier/case-understanding-contract'
 import { isReliablePresentFact } from './context-goal-applicability'
+import { extractNegativeAnswerFacts } from './negative-answer-resolution'
 
 function normalized(input: string) {
   return input.trim().toLocaleLowerCase('nl-NL')
@@ -104,7 +105,7 @@ export function extractPublicIntakeFacts(input: {
     const code = answerFactCodes[answer.questionKey]
     if (code) facts.push(Object.freeze({ code, value: answer.value, status: 'USER_CONFIRMED', confidence: 1, sourceQuestionKey: answer.questionKey }))
   }
-  return uniqueFacts(facts)
+  return uniqueFacts([...facts, ...extractNegativeAnswerFacts(input.answers)])
 }
 
 export function deriveKnowledgeConceptCandidates(input: {
