@@ -3,7 +3,7 @@ import 'server-only'
 import type { JorttGateway, JorttInvoicePayload } from './jortt-sync-service'
 
 type Fetcher = typeof fetch
-type JorttRecord = { id: string; reference?: string | null; invoice_number?: string | null; invoice_status?: string | null; send_method?: string | null }
+type JorttRecord = { id: string; reference?: string | null; remarks?: string | null; invoice_number?: string | null; invoice_status?: string | null; send_method?: string | null }
 
 const API_BASE = 'https://api.jortt.nl/v3'
 const TOKEN_URL = 'https://app.jortt.nl/oauth-provider/oauth/token'
@@ -50,11 +50,40 @@ export class JorttApiGateway implements JorttGateway {
     return json<T>(await this.fetcher(`${API_BASE}${path}`, { ...init, headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json', ...(init.body ? { 'Content-Type': 'application/json' } : {}) }, signal: AbortSignal.timeout(15_000) }))
   }
 
-  private async findExact(path: 'customers' | 'invoices', reference: string, accessToken: string) {
+  private async findExact(path: 'customers', reference: string, accessToken: string) {
     const result = await this.request<{ data: JorttRecord[] }>(`/${path}?query=${encodeURIComponent(reference)}`, accessToken)
     const matches = result.data.filter((item) => item.reference === reference)
     if (matches.length > 1) throw new Error('JORTT_REFERENCE_CONFLICT')
     return matches[0] ?? null
+  }
+
+  private async findTechnicalInvoice(technicalReference: string, accessToken: string) {
+    const result = await this.request<{ data: JorttRecord[] }>(`/invoices?query=${encodeURIComponent(technicalReference)}`, accessToken)
+    const matches = [...new Map(result.data
+      .filter((item) => item.remarks?.includes(technicalReference))
+      .map((item) => [item.id, item])).values()]
+    if (matches.length > 1) throw new Error('JORTT_TECHNICAL_IDENTITY_CONFLICT')
+    return matches[0] ?? null
+  }
+
+  private async findByHumanReferenceFallback(payload: JorttInvoicePayload, accessToken: string) {
+    const result = await this.request<{ data: JorttRecord[] }>(`/invoices?query=${encodeURIComponent(payload.invoiceNumber)}`, accessToken)
+    const matches = [...new Map(result.data
+      .filter((item) => item.reference === payload.invoiceNumber)
+      .map((item) => [item.id, item])).values()]
+    const technicalMatches = matches.filter((item) => item.remarks?.includes(payload.technicalReference))
+    if (technicalMatches.length > 1) throw new Error('JORTT_TECHNICAL_IDENTITY_CONFLICT')
+    if (technicalMatches.length === 1) return technicalMatches[0]
+    if (matches.some((item) => !item.remarks?.includes('workmatchr-invoice:'))) {
+      throw new Error('JORTT_LEGACY_IDENTITY_AMBIGUOUS')
+    }
+    return null
+  }
+
+  private validateIdentity(remote: JorttRecord, payload: JorttInvoicePayload, allowLegacyWithoutMarker = false) {
+    if (remote.reference !== payload.invoiceNumber) throw new Error('JORTT_REFERENCE_CONFLICT')
+    const hasMarker = remote.remarks?.includes(payload.technicalReference) ?? false
+    if (!hasMarker && !allowLegacyWithoutMarker) throw new Error('JORTT_TECHNICAL_IDENTITY_CONFLICT')
   }
 
   private async sendSelf(invoiceId: string, accessToken: string) {
@@ -67,10 +96,10 @@ export class JorttApiGateway implements JorttGateway {
     if (!response.ok) await json(response)
   }
 
-  private async waitForFinalInvoice(invoiceId: string, invoiceNumber: string, accessToken: string) {
+  private async waitForFinalInvoice(invoiceId: string, payload: JorttInvoicePayload, accessToken: string) {
     for (let attempt = 0; attempt < 8; attempt += 1) {
       const remote = await this.request<{ data: JorttRecord }>(`/invoices/${invoiceId}`, accessToken)
-      if (remote.data.reference !== invoiceNumber) throw new Error('JORTT_REFERENCE_CONFLICT')
+      this.validateIdentity(remote.data, payload)
       if (remote.data.invoice_number) return remote.data
       await new Promise((resolve) => setTimeout(resolve, 500))
     }
@@ -87,22 +116,34 @@ export class JorttApiGateway implements JorttGateway {
       }
     }
     const { accessToken, config } = await this.token()
-    const existing = await this.findExact('invoices', payload.invoiceNumber, accessToken)
-    if (existing) {
-      const remote = await this.request<{ data: JorttRecord }>(`/invoices/${existing.id}`, accessToken)
-      if (remote.data.reference !== payload.invoiceNumber) throw new Error('JORTT_REFERENCE_CONFLICT')
-      if (remote.data.invoice_number) return { externalReference: remote.data.id, remoteInvoiceNumber: remote.data.invoice_number }
-      if (remote.data.invoice_status === 'draft') await this.sendSelf(remote.data.id, accessToken)
-      const finalized = await this.waitForFinalInvoice(remote.data.id, payload.invoiceNumber, accessToken)
+    if (payload.knownExternalReference) {
+      const known = await this.request<{ data: JorttRecord }>(`/invoices/${payload.knownExternalReference}`, accessToken)
+      this.validateIdentity(known.data, payload, true)
+      if (known.data.invoice_number) return { externalReference: known.data.id, remoteInvoiceNumber: known.data.invoice_number }
+      if (known.data.invoice_status === 'draft') {
+        const remarks = [known.data.remarks, payload.technicalReference].filter(Boolean).join('; ')
+        await this.request(`/invoices/${known.data.id}`, accessToken, { method: 'PUT', body: JSON.stringify({ reference: payload.invoiceNumber, remarks }) })
+        await this.sendSelf(known.data.id, accessToken)
+      }
+      const finalized = await this.waitForFinalInvoice(known.data.id, payload, accessToken)
       return { externalReference: finalized.id, remoteInvoiceNumber: finalized.invoice_number! }
     }
-
+    const existing = await this.findTechnicalInvoice(payload.technicalReference, accessToken)
+      ?? await this.findByHumanReferenceFallback(payload, accessToken)
+    if (existing) {
+      const remote = await this.request<{ data: JorttRecord }>(`/invoices/${existing.id}`, accessToken)
+      this.validateIdentity(remote.data, payload)
+      if (remote.data.invoice_number) return { externalReference: remote.data.id, remoteInvoiceNumber: remote.data.invoice_number }
+      if (remote.data.invoice_status === 'draft') await this.sendSelf(remote.data.id, accessToken)
+      const finalized = await this.waitForFinalInvoice(remote.data.id, payload, accessToken)
+      return { externalReference: finalized.id, remoteInvoiceNumber: finalized.invoice_number! }
+    }
     let remoteId: string
     if (payload.documentType === 'CREDIT_NOTE') {
       if (!payload.originalInvoiceExternalReference) throw new Error('JORTT_ORIGINAL_INVOICE_NOT_SYNCED')
       const created = await this.request<{ data: { id: string } }>(`/invoices/${payload.originalInvoiceExternalReference}/credit`, accessToken, { method: 'POST', body: JSON.stringify({}) })
       remoteId = created.data.id
-      await this.request(`/invoices/${remoteId}`, accessToken, { method: 'PUT', body: JSON.stringify({ reference: payload.invoiceNumber, remarks: `WorkMatchr creditnota ${payload.invoiceNumber}` }) })
+      await this.request(`/invoices/${remoteId}`, accessToken, { method: 'PUT', body: JSON.stringify({ reference: payload.invoiceNumber, remarks: `WorkMatchr creditnota ${payload.invoiceNumber}; ${payload.technicalReference}` }) })
       await this.sendSelf(remoteId, accessToken)
     } else {
       const customerReference = `workmatchr-org:${payload.organizationId}`
@@ -115,11 +156,11 @@ export class JorttApiGateway implements JorttGateway {
         { description: `${line.description} (${line.unit})`, quantity: String(line.quantity), amount: { amount: money(line.unitPriceExclVatCents), currency: payload.currency }, vat: { value: String(line.vatRateBps / 10_000), category: null }, ledger_account_id: config.ledgerAccountId },
         ...(line.discountAmountCents > 0 ? [{ description: `Korting op ${line.description}`, quantity: '1', amount: { amount: money(-line.discountAmountCents), currency: payload.currency }, vat: { value: String(line.vatRateBps / 10_000), category: null }, ledger_account_id: config.ledgerAccountId }] : []),
       ])
-      const created = await this.request<{ data: { id: string } }>('/invoices', accessToken, { method: 'POST', body: JSON.stringify({ customer_id: customer.id, invoice_date: date(payload.issuedAt), delivery_period: payload.servicePeriodStart ? date(payload.servicePeriodStart) : payload.supplyDate ? date(payload.supplyDate) : date(payload.issuedAt), delivery_period_end: payload.servicePeriodEnd ? date(payload.servicePeriodEnd) : undefined, tradename_id: config.tradenameId, net_amounts: false, payment_method: 'already_paid', reference: payload.invoiceNumber, remarks: payload.paymentReference ? `WorkMatchr ${payload.invoiceNumber}; Mollie ${payload.paymentReference}` : `WorkMatchr ${payload.invoiceNumber}`, line_items: lineItems }) })
+      const created = await this.request<{ data: { id: string } }>('/invoices', accessToken, { method: 'POST', body: JSON.stringify({ customer_id: customer.id, invoice_date: date(payload.issuedAt), delivery_period: payload.servicePeriodStart ? date(payload.servicePeriodStart) : payload.supplyDate ? date(payload.supplyDate) : date(payload.issuedAt), delivery_period_end: payload.servicePeriodEnd ? date(payload.servicePeriodEnd) : undefined, tradename_id: config.tradenameId, net_amounts: false, payment_method: 'already_paid', reference: payload.invoiceNumber, remarks: payload.paymentReference ? `WorkMatchr ${payload.invoiceNumber}; ${payload.technicalReference}; Mollie ${payload.paymentReference}` : `WorkMatchr ${payload.invoiceNumber}; ${payload.technicalReference}`, line_items: lineItems }) })
       remoteId = created.data.id
       await this.sendSelf(remoteId, accessToken)
     }
-    const remote = await this.waitForFinalInvoice(remoteId, payload.invoiceNumber, accessToken)
+    const remote = await this.waitForFinalInvoice(remoteId, payload, accessToken)
     return { externalReference: remote.id, remoteInvoiceNumber: remote.invoice_number! }
   }
 }

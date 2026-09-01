@@ -27,7 +27,7 @@ function invoice(status = 'PENDING', updatedAt = new Date('2026-08-25T10:00:00Z'
     sellerLegalName: 'WorkMatchr', sellerKvKNumber: '12345678', sellerVatId: 'NL123456789B01', customerOrganizationName: 'Test B.V.', customerAddressLine: 'Teststraat 1', customerPostalCode: '1234 AB', customerCity: 'Utrecht', customerCountryCode: 'NL', customerKvKNumber: null, customerVatId: null,
     amountExclVatCents: 10_000, vatRateBps: 2_100, vatAmountCents: 2_100, amountInclVatCents: 12_100, currency: 'EUR', molliePaymentId: 'tr_test', originalInvoice: null,
     lines: [{ description: 'Credits', quantity: 100, unit: 'credit', unitPriceExclVatCents: 100, discountAmountCents: 0, netAmountExclVatCents: 10_000, vatRateBps: 2_100, vatAmountCents: 2_100 }],
-    jorttSync: { id: 'sync-id', status, attemptCount: 0, updatedAt, externalReference: null, remoteInvoiceNumber: null },
+    jorttSync: { id: 'sync-id', status, attemptCount: 0, updatedAt, externalReference: null, remoteInvoiceNumber: null, technicalReference: null },
   }
 }
 
@@ -49,7 +49,11 @@ describe('Jortt synchronisatieservice', () => {
   it('slaat remote ID en Jortt-nummer op zonder de WorkMatchr-factuur te wijzigen', async () => {
     const gateway: JorttGateway = { submitInvoice: vi.fn().mockResolvedValue({ externalReference: 'remote-id', remoteInvoiceNumber: 'J2026-42' }) }
     await syncFinancialInvoiceToJortt('invoice-id', gateway)
-    expect(gateway.submitInvoice).toHaveBeenCalledWith(expect.objectContaining({ invoiceNumber: 'WM-2026-000001' }), 'jortt:WM-2026-000001')
+    expect(gateway.submitInvoice).toHaveBeenCalledWith(expect.objectContaining({
+      invoiceId: 'invoice-id',
+      invoiceNumber: 'WM-2026-000001',
+      technicalReference: 'workmatchr-invoice:invoice-id',
+    }), 'jortt:invoice:invoice-id')
     expect(mocks.syncUpdate).toHaveBeenLastCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: 'SYNCED', externalReference: 'remote-id', remoteInvoiceNumber: 'J2026-42' }) }))
     expect(mocks.invoiceFind).toHaveBeenCalledTimes(1)
   })

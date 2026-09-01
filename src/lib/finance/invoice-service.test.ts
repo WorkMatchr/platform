@@ -55,6 +55,9 @@ describe('financiële documentnummering', () => {
         amountInclVatCents: 121,
       }),
     }) })
+    expect(transaction.financialJorttSync.create).toHaveBeenCalledWith({
+      data: { invoiceId: 'invoice-id', technicalReference: 'workmatchr-invoice:invoice-id' },
+    })
   })
 
   it('berekent bruto, korting, netto en btw voor een creditregel deterministisch', () => {

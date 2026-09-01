@@ -6,6 +6,9 @@ import { getPrisma } from '@/lib/prisma'
 const PROCESSING_LEASE_MS = 5 * 60 * 1000
 
 export type JorttInvoicePayload = Readonly<{
+  invoiceId: string
+  technicalReference: string
+  knownExternalReference: string | null
   organizationId: string
   invoiceNumber: string
   documentType: 'INVOICE' | 'CREDIT_NOTE'
@@ -59,6 +62,7 @@ function safeErrorCode(error: unknown) {
 }
 
 function buildPayload(invoice: {
+  id: string
   organizationId: string
   invoiceNumber: string
   documentType: 'INVOICE' | 'CREDIT_NOTE'
@@ -84,9 +88,13 @@ function buildPayload(invoice: {
   currency: string
   molliePaymentId: string | null
   lines: Array<{ description: string; quantity: number; unit: string; unitPriceExclVatCents: number; discountAmountCents: number; netAmountExclVatCents: number; vatRateBps: number; vatAmountCents: number }>
+  jorttSync: { externalReference: string | null; technicalReference: string | null } | null
   originalInvoice: { jorttSync: { externalReference: string | null } | null } | null
 }): JorttInvoicePayload {
   return Object.freeze({
+    invoiceId: invoice.id,
+    technicalReference: invoice.jorttSync?.technicalReference ?? `workmatchr-invoice:${invoice.id}`,
+    knownExternalReference: invoice.jorttSync?.externalReference ?? null,
     organizationId: invoice.organizationId,
     invoiceNumber: invoice.invoiceNumber,
     documentType: invoice.documentType,
@@ -135,13 +143,18 @@ export async function syncFinancialInvoiceToJortt(
     ) throw new Error('JORTT_SYNC_IN_PROGRESS')
     const sync = await transaction.financialJorttSync.update({
       where: { id: invoice.jorttSync.id },
-      data: { status: 'PROCESSING', attemptCount: { increment: 1 }, lastErrorCode: null },
+      data: {
+        status: 'PROCESSING',
+        attemptCount: { increment: 1 },
+        lastErrorCode: null,
+        technicalReference: invoice.jorttSync.technicalReference ?? `workmatchr-invoice:${invoice.id}`,
+      },
     })
     return { invoice, sync, idempotent: false }
   }, { isolationLevel: 'Serializable' })
   if (claimed.idempotent) return claimed.sync
   const attemptNumber = claimed.sync.attemptCount
-  const idempotencyKey = `jortt:${claimed.invoice.invoiceNumber}`
+  const idempotencyKey = `jortt:invoice:${claimed.invoice.id}`
   try {
     const result = await gateway.submitInvoice(buildPayload(claimed.invoice), idempotencyKey)
     return getPrisma().$transaction(async (transaction) => {
