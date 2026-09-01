@@ -29,6 +29,14 @@ function goalIdentity(goal: ContextGoal) {
   return goal.variantKey ?? goal.code
 }
 
+function isRequiredBeforeCompletion(goal: ContextGoal) {
+  return goal.requiredBeforeCompletion ?? goal.mandatory
+}
+
+function mustBeNextQuestion(goal: ContextGoal) {
+  return goal.mustBeNextQuestion ?? false
+}
+
 function isGoalResolved(goal: ContextGoal, knownFacts: ReadonlySet<string>, absentFacts: ReadonlySet<string>) {
   return goal.satisfiesFactCodes.some((code) => knownFacts.has(code)) || absentFacts.has(goal.code)
 }
@@ -45,9 +53,7 @@ function scoreGoal(input: {
   const evidenceConfidence = input.goal.universal ? 1 : Math.max(0, ...input.evidence.map((evidence) => evidence.confidence))
   const modeWeight = input.mode === 'DISCOVERY' && ['WORK_ACTIVITY', 'LOCATION_PATTERN', 'DURATION_FREQUENCY'].includes(input.goal.code) ? 1.1 : 1
   const relevance = Math.min(1, input.goal.baseRelevance * conceptConfidence * modeWeight)
-  const total = input.goal.mandatory
-    ? 100 + relevance
-    : (relevance * input.goal.informationGain * input.goal.matchingValue * evidenceConfidence) / input.goal.userBurden
+  const total = (relevance * input.goal.informationGain * input.goal.matchingValue * evidenceConfidence) / input.goal.userBurden
   return Object.freeze({
     relevance: round(relevance),
     informationGain: input.goal.informationGain,
@@ -71,7 +77,7 @@ function readiness(input: {
       ? 'KNOWLEDGE_COVERAGE_INSUFFICIENT'
       : 'NO_UNRESOLVED_HIGH_VALUE_GOAL',
   })
-  if (input.selected.goal.mandatory) return Object.freeze({ status: 'NEEDS_ESSENTIAL_CONTEXT', reasonCode: 'MANDATORY_GOAL_MISSING' })
+  if (isRequiredBeforeCompletion(input.selected.goal)) return Object.freeze({ status: 'NEEDS_ESSENTIAL_CONTEXT', reasonCode: 'MANDATORY_GOAL_MISSING' })
   return Object.freeze({ status: 'CAN_ASK_HIGH_VALUE_CONTEXT', reasonCode: 'HIGH_VALUE_GOAL_AVAILABLE' })
 }
 
@@ -123,7 +129,7 @@ export function planNextContextQuestion(input: {
       goal,
       applicability: Object.freeze({
         applicable: true,
-        reasonCode: goal.mandatory
+        reasonCode: isRequiredBeforeCompletion(goal)
           ? 'MANDATORY_CONTEXT'
           : goal.groundingPolicy === 'DOMAIN_SPECIFIC'
             ? 'VALID_APPLICABILITY_AND_KNOWLEDGE_GROUNDING'
@@ -134,9 +140,13 @@ export function planNextContextQuestion(input: {
       score: scoreGoal({ goal, evidence, concepts: input.concepts, mode: input.mode }),
     }))
   }
-  const tier = (candidate: ContextGoalCandidate) => candidate.goal.mandatory ? 3
-    : hasValidKnowledgeGrounding(candidate.applicability.evidence) ? 2
-      : candidate.goal.groundingPolicy === 'SHARED_CONTEXT' ? 1 : 0
+  const requiredBeforeCompletionCount = candidates.filter((candidate) => isRequiredBeforeCompletion(candidate.goal)).length
+  const completionBudgetIsCritical = input.questionBudgetRemaining <= requiredBeforeCompletionCount
+  const tier = (candidate: ContextGoalCandidate) => mustBeNextQuestion(candidate.goal) ? 4
+    : completionBudgetIsCritical && isRequiredBeforeCompletion(candidate.goal) ? 3
+      : hasValidKnowledgeGrounding(candidate.applicability.evidence) ? 2
+        : isRequiredBeforeCompletion(candidate.goal) ? 1
+          : candidate.goal.groundingPolicy === 'SHARED_CONTEXT' ? 0 : -1
   candidates.sort((left, right) => tier(right) - tier(left)
     || right.score.total - left.score.total
     || goalIdentity(left.goal).localeCompare(goalIdentity(right.goal)))

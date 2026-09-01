@@ -63,10 +63,96 @@ describe('knowledge-grounded context question ranking', () => {
     }] }).selected).toBeNull()
   })
 
-  it('geeft ontbrekende essentiële context voorrang', () => {
-    const result = plan({ goals: [goal({ code: 'OPTIONAL' }), goal({ code: 'ESSENTIAL', mandatory: true, informationGain: 0.1 })] })
+  it('geeft een bewezen blokkerende dependency absolute voorrang', () => {
+    const result = plan({ goals: [
+      goal({ code: 'OPTIONAL' }),
+      goal({ code: 'ESSENTIAL', mandatory: true, requiredBeforeCompletion: true, mustBeNextQuestion: true, informationGain: 0.1 }),
+    ] })
     expect(result.selected?.goal.code).toBe('ESSENTIAL')
     expect(result.readiness.status).toBe('NEEDS_ESSENTIAL_CONTEXT')
+  })
+
+  it('stelt een volledig gegrond high-value doel vóór algemene verplichte completion-context', () => {
+    const sector = goal({
+      code: 'SECTOR', relevantConceptCodes: [], groundingPolicy: 'SHARED_CONTEXT',
+      mandatory: true, requiredBeforeCompletion: true, mustBeNextQuestion: false,
+    })
+    const knowledge = goal({ code: 'WORK_ADAPTATION_SCOPE', informationGain: 0.95, matchingValue: 0.95 })
+    const result = plan({ goals: [sector, knowledge] })
+
+    expect(result.candidates.map((item) => item.goal.code)).toEqual(['WORK_ADAPTATION_SCOPE', 'SECTOR'])
+    expect(result.selected?.goal.code).toBe('WORK_ADAPTATION_SCOPE')
+    expect(result.candidates.find((item) => item.goal.code === 'SECTOR')?.goal.requiredBeforeCompletion).toBe(true)
+  })
+
+  it('vraagt verplichte completion-context wanneer die als enige kandidaat overblijft', () => {
+    const sector = goal({
+      code: 'SECTOR', relevantConceptCodes: [], groundingPolicy: 'SHARED_CONTEXT',
+      mandatory: true, requiredBeforeCompletion: true,
+    })
+    expect(plan({ goals: [sector] }).selected?.goal.code).toBe('SECTOR')
+  })
+
+  it('vraagt een completion-dependency voordat het afhankelijke knowledge-doel applicable wordt', () => {
+    const sector = goal({
+      code: 'SECTOR', relevantConceptCodes: [], groundingPolicy: 'SHARED_CONTEXT',
+      mandatory: true, requiredBeforeCompletion: true,
+    })
+    const sectorSpecific = goal({
+      code: 'SECTOR_SPECIFIC_CONTEXT',
+      applicability: { requiredFactCodes: ['SECTOR'], requiredAnyFactCodes: [], excludedFactValues: [] },
+    })
+    const result = plan({ goals: [sector, sectorSpecific] })
+
+    expect(result.candidates.map((item) => item.goal.code)).toEqual(['SECTOR'])
+    expect(result.selected?.goal.code).toBe('SECTOR')
+  })
+
+  it('laat completion-context winnen wanneer het knowledge-doel niet applicable is', () => {
+    const sector = goal({
+      code: 'SECTOR', relevantConceptCodes: [], groundingPolicy: 'SHARED_CONTEXT',
+      mandatory: true, requiredBeforeCompletion: true,
+    })
+    const unrelated = goal({ code: 'UNRELATED', relevantConceptCodes: ['OTHER_CONCEPT'] })
+    expect(plan({ goals: [sector, unrelated] }).selected?.goal.code).toBe('SECTOR')
+  })
+
+  it('valt veilig terug op completion-context wanneer knowledge-grounding ontbreekt', () => {
+    const sector = goal({
+      code: 'SECTOR', relevantConceptCodes: [], groundingPolicy: 'SHARED_CONTEXT',
+      mandatory: true, requiredBeforeCompletion: true,
+    })
+    const ungrounded = goal({ code: 'UNGROUNDED' })
+    const result = plan({ goals: [sector, ungrounded], evidenceByGoalCode: new Map() })
+
+    expect(result.selected?.goal.code).toBe('SECTOR')
+    expect(result.candidates.map((item) => item.goal.code)).not.toContain('UNGROUNDED')
+  })
+
+  it('reserveert het laatste beschikbare antwoord voor verplichte completion-context', () => {
+    const sector = goal({
+      code: 'SECTOR', relevantConceptCodes: [], groundingPolicy: 'SHARED_CONTEXT',
+      mandatory: true, requiredBeforeCompletion: true,
+    })
+    const knowledge = goal({ code: 'HIGH_VALUE' })
+    const result = plan({ goals: [sector, knowledge], remaining: 1 })
+
+    expect(result.selected?.goal.code).toBe('SECTOR')
+  })
+
+  it('vraagt bekende sector niet opnieuw en behoudt het knowledge-doel', () => {
+    const sector = goal({
+      code: 'SECTOR', relevantConceptCodes: [], groundingPolicy: 'SHARED_CONTEXT',
+      mandatory: true, requiredBeforeCompletion: true, satisfiesFactCodes: ['SECTOR'],
+    })
+    const knowledge = goal({ code: 'HIGH_VALUE' })
+    const result = plan({
+      goals: [sector, knowledge],
+      facts: [{ code: 'SECTOR', value: 'industrie', status: 'USER_CONFIRMED', confidence: 1 }],
+    })
+
+    expect(result.candidates.map((item) => item.goal.code)).toEqual(['HIGH_VALUE'])
+    expect(result.selected?.goal.code).toBe('HIGH_VALUE')
   })
 
   it('filtert bekende feiten en semantisch equivalente doelen', () => {

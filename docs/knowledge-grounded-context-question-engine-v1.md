@@ -115,8 +115,19 @@ Niet-verplichte doelen gebruiken een uitlegbare variant van:
 relevance * informationGain * matchingValue * evidenceConfidence / userBurden
 ```
 
-Essentiële ontbrekende doelen krijgen voorrang. Bekende facts, eerder gestelde
-vragen en semantisch equivalente doelen vallen vóór ranking af. De uitkomst is
+Een completion requirement en een next-question dependency zijn afzonderlijke
+eigenschappen. `requiredBeforeCompletion` bewaakt dat noodzakelijke context vóór
+afronding wordt gevraagd en reserveert het resterende vraagbudget wanneer dit
+kritiek wordt. `mustBeNextQuestion` is uitsluitend bedoeld voor een aantoonbare
+dependency die veilige voortgang blokkeert. Een algemene completion requirement
+zoals sector verdringt daardoor niet automatisch een toepasselijk, volledig
+knowledge-grounded high-value doel. Ontbrekende grounding of applicability laat
+de veilige completion/shared-context wel gewoon winnen.
+
+Historische en beheerde doelen met alleen `mandatory` blijven compatibel:
+`requiredBeforeCompletion` valt terug op die waarde; `mustBeNextQuestion` valt
+standaard terug op `false`. Bekende facts, eerder gestelde vragen en semantisch
+equivalente doelen vallen vóór ranking af. De uitkomst is
 `COMPLETE`, `NEEDS_ESSENTIAL_CONTEXT`, `CAN_ASK_HIGH_VALUE_CONTEXT`,
 `MAX_QUESTION_BUDGET_REACHED` of `SAFE_FALLBACK`.
 

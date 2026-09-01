@@ -250,6 +250,8 @@ export async function ensurePublicIntakeAIContextQuestions(input: {
       contextGoalCode: selected.goal.code,
       reasonCode: selected.applicability.reasonCode,
       mandatory: selected.goal.mandatory,
+      requiredBeforeCompletion: selected.goal.requiredBeforeCompletion ?? selected.goal.mandatory,
+      mustBeNextQuestion: selected.goal.mustBeNextQuestion ?? false,
       score: selected.score,
       relevantConceptCodes: Object.freeze([...selected.goal.relevantConceptCodes]),
       supportingKnowledgeIds: grounding!.supportingKnowledgeIds,

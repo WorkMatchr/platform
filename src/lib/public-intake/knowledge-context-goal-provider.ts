@@ -44,6 +44,8 @@ const ruleGoalSchema = z.object({
     }).strict()).max(20).default([]),
   }).strict().default({ requiredAllConceptCodes: [], requiredAnyConceptCodes: [], requiredFactCodes: [], requiredAnyFactCodes: [], excludedFactCodes: [], excludedFactValues: [] }),
   mandatory: z.boolean().default(false),
+  requiredBeforeCompletion: z.boolean().optional(),
+  mustBeNextQuestion: z.boolean().default(false),
   universal: z.boolean().default(false),
   weights: z.object({
     relevance: z.number().min(0).max(1),
@@ -232,6 +234,8 @@ export async function loadKnowledgeGroundedContextGoals(input: {
         }))),
       }),
       mandatory: data.mandatory,
+      requiredBeforeCompletion: data.requiredBeforeCompletion ?? data.mandatory,
+      mustBeNextQuestion: data.mustBeNextQuestion,
       universal: data.universal,
       baseRelevance: data.weights.relevance,
       informationGain: data.weights.informationGain,

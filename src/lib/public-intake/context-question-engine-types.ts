@@ -3,8 +3,10 @@ import { z } from 'zod'
 import { contextQuestionGenerationProvenanceSchema, type ContextQuestionGenerationInstructions, type ContextQuestionGenerationProvenance } from './context-question-generation-contract'
 
 export const KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION =
-  'knowledge-grounded-context-engine/1.2.0' as const
+  'knowledge-grounded-context-engine/1.3.0' as const
 export const PREVIOUS_KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION =
+  'knowledge-grounded-context-engine/1.2.0' as const
+export const INTERMEDIATE_KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION =
   'knowledge-grounded-context-engine/1.1.0' as const
 export const LEGACY_KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION =
   'knowledge-grounded-context-engine/1.0.0' as const
@@ -81,6 +83,10 @@ export type ContextGoal = Readonly<{
     }>[]
   }>
   mandatory: boolean
+  /** Must be answered before the intake can complete, but need not be next. */
+  requiredBeforeCompletion?: boolean
+  /** Reserved for a proven dependency that blocks safe continuation. */
+  mustBeNextQuestion?: boolean
   universal: boolean
   baseRelevance: number
   informationGain: number
@@ -150,11 +156,14 @@ export type PersistedContextQuestionPlan = Readonly<{
   engineVersion:
     | typeof KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION
     | typeof PREVIOUS_KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION
+    | typeof INTERMEDIATE_KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION
     | typeof LEGACY_KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION
   mode: IntakeMode
   contextGoalCode: string
   reasonCode: string
   mandatory: boolean
+  requiredBeforeCompletion?: boolean
+  mustBeNextQuestion?: boolean
   score: ContextGoalScore
   relevantConceptCodes: readonly string[]
   supportingKnowledgeIds: readonly string[]
@@ -174,12 +183,15 @@ const persistedPlanSchema = z.object({
   engineVersion: z.enum([
     KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION,
     PREVIOUS_KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION,
+    INTERMEDIATE_KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION,
     LEGACY_KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION,
   ]),
   mode: z.enum(['DISCOVERY', 'DIRECT_REQUEST']),
   contextGoalCode: z.string(),
   reasonCode: z.string(),
   mandatory: z.boolean().default(false),
+  requiredBeforeCompletion: z.boolean().optional(),
+  mustBeNextQuestion: z.boolean().optional(),
   score: z.object({
     relevance: z.number(),
     informationGain: z.number(),

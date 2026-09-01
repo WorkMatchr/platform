@@ -16,13 +16,13 @@ const applicability = (input: {
 export const compatibilityContextGoals = Object.freeze([
   {
     code: 'SECTOR', questionKey: 'context_sector', purpose: 'De beheerde sector vaststellen voor opdrachtcontext en matching.', text: 'In welke sector is uw organisatie actief?', answerType: 'OPTION', options: [], category: 'ORGANIZATION',
-    relevantConceptCodes: [], satisfiesFactCodes: ['SECTOR'], equivalentGoalCodes: [], groundingPolicy: 'SHARED_CONTEXT', applicability: applicability(), mandatory: true, universal: true,
+    relevantConceptCodes: [], satisfiesFactCodes: ['SECTOR'], equivalentGoalCodes: [], groundingPolicy: 'SHARED_CONTEXT', applicability: applicability(), mandatory: true, requiredBeforeCompletion: true, mustBeNextQuestion: false, universal: true,
     baseRelevance: 1, informationGain: 0.9, matchingValue: 1, userBurden: 0.2,
   },
   {
     code: 'RIE_STATUS', questionKey: 'context_rie_status', purpose: 'Onderscheiden of een RI&E nieuw, te actualiseren of te controleren is.', text: 'Gaat het om een nieuwe RI&E of om een bestaande RI&E?', answerType: 'OPTION',
     options: options(['NEW', 'Een nieuwe RI&E'], ['UPDATE', 'Een bestaande RI&E actualiseren'], ['CHECK', 'Een bestaande RI&E controleren'], ['UNKNOWN', 'Dat weet ik nog niet']), category: 'EXISTING_CONTROL',
-    relevantConceptCodes: ['RIE'], satisfiesFactCodes: ['RIE_INTENT'], equivalentGoalCodes: [], groundingPolicy: 'SHARED_CONTEXT', applicability: applicability(), mandatory: true, universal: false,
+    relevantConceptCodes: ['RIE'], satisfiesFactCodes: ['RIE_INTENT'], equivalentGoalCodes: [], groundingPolicy: 'SHARED_CONTEXT', applicability: applicability(), mandatory: true, requiredBeforeCompletion: true, mustBeNextQuestion: false, universal: false,
     baseRelevance: 1, informationGain: 1, matchingValue: 0.8, userBurden: 0.2,
   },
   {
@@ -94,7 +94,7 @@ export const compatibilityContextGoals = Object.freeze([
   {
     code: 'URGENCY', questionKey: 'context_urgency', purpose: 'Acute onveiligheid onderscheiden zonder noodrespons te suggereren.', text: 'Is er nu sprake van een acute onveilige situatie?', answerType: 'OPTION',
     options: options(['YES', 'Ja'], ['NO', 'Nee'], ['UNKNOWN', 'Dat weet ik niet']), category: 'URGENCY',
-    relevantConceptCodes: ['INCIDENT', 'HAZARDOUS_SUBSTANCES', 'EMERGENCY_RESPONSE'], satisfiesFactCodes: ['URGENCY'], equivalentGoalCodes: [], groundingPolicy: 'SHARED_CONTEXT', applicability: applicability(), mandatory: true, universal: true,
+    relevantConceptCodes: ['INCIDENT', 'HAZARDOUS_SUBSTANCES', 'EMERGENCY_RESPONSE'], satisfiesFactCodes: ['URGENCY'], equivalentGoalCodes: [], groundingPolicy: 'SHARED_CONTEXT', applicability: applicability(), mandatory: true, requiredBeforeCompletion: true, mustBeNextQuestion: false, universal: true,
     baseRelevance: 1, informationGain: 1, matchingValue: 0.4, userBurden: 0.1,
   },
 ] as const satisfies readonly ContextGoal[])
