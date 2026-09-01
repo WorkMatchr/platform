@@ -15,6 +15,39 @@ const SUBJECT_LABELS: Readonly<
   EMERGENCY_RESPONSE: 'Bedrijfshulpverlening of een noodsituatie',
 })
 
+const SPECIALISM_LABELS: Readonly<Record<string, string>> = Object.freeze({
+  INDOOR_ENVIRONMENT: 'binnenmilieu',
+  PHYSICAL_WORKLOAD: 'fysieke belasting',
+  WELDING_FUMES: 'lasrook',
+  MACHINE_SAFETY: 'machineveiligheid',
+  CE_MARKING: 'CE-markering',
+  PSYCHOSOCIAL_WORKLOAD: 'psychosociale arbeidsbelasting',
+  OCCUPATIONAL_HEALTH_PRIVACY: 'arbeidsgezondheid en privacy',
+  WORK_ABILITY_REINTEGRATION: 'inzetbaarheid en re-integratie',
+  EMERGENCY_RESPONSE_ORGANIZATION: 'BHV-organisatie',
+  PROCESS_SAFETY_MAJOR_HAZARDS: 'procesveiligheid en majeure gevaren',
+  CONTRACTOR_INTERFACE: 'afstemming met contractors',
+  CONTRACTOR_SAFETY: 'veilig werken met contractors',
+  SIMULTANEOUS_OPERATIONS: 'gelijktijdige werkzaamheden',
+  EXPOSURE_ASSESSMENT: 'blootstellingsbeoordeling',
+})
+
+function getPrimaryExpertiseLabel(code: string): string {
+  return Object.hasOwn(professionalDisciplines, code)
+    ? professionalDisciplines[code as ProfessionalDisciplineCode].label
+    : code === 'PROCESS_SAFETY_MAJOR_HAZARDS'
+      ? 'Deskundige procesveiligheid en majeure gevaren'
+      : 'Deskundigheidsrichting wordt gecontroleerd'
+}
+
+function getRequiredSpecialismLabels(profile: MatchingReadyProfile): readonly string[] {
+  const labels = profile.requiredSpecialisms
+    .filter((code) => code !== profile.primaryExpertise)
+    .map((code) => SPECIALISM_LABELS[code] ?? 'specialisme wordt gecontroleerd')
+
+  return Object.freeze([...new Set(labels)])
+}
+
 /** Consumes the server-authorized routing snapshot, never client-chosen expertise. */
 export function getPublicIntakeDirection(
   classification: AIClassifierOutput | null | undefined,
@@ -22,11 +55,7 @@ export function getPublicIntakeDirection(
 ): Readonly<{ code: string; label: string; source: 'EXPERT_ROUTING' | 'LEGACY_COMPATIBILITY' }> | null {
   if (matchingProfile) {
     const code = matchingProfile.primaryExpertise
-    const label = Object.hasOwn(professionalDisciplines, code)
-      ? professionalDisciplines[code as ProfessionalDisciplineCode].label
-      : code === 'PROCESS_SAFETY_MAJOR_HAZARDS'
-        ? 'Deskundige procesveiligheid en majeure gevaren'
-        : 'Deskundigheidsrichting wordt gecontroleerd'
+    const label = [getPrimaryExpertiseLabel(code), ...getRequiredSpecialismLabels(matchingProfile)].join(' / ')
     return Object.freeze({ code, label, source: 'EXPERT_ROUTING' })
   }
   const legacy = getAIIntakeUnderstanding(classification)

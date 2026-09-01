@@ -4,15 +4,38 @@ import type { MatchingReadyProfile } from './case-understanding'
 
 describe('AI-begripsvoorstel in Public Intake', () => {
   const legacy = { summary: 'U wilt de gewijzigde machine laten beoordelen.', primarySubject: 'RIE', secondarySubjects: [], confidence: 'HIGH', alternatives: [] } as const
-  it('toont geautoriseerde machineveiligheid in plaats van legacy RI&E', () => {
-    const profile = { primaryExpertise: 'MACHINEVEILIGHEIDSDESKUNDIGE' } as MatchingReadyProfile
+  it('toont primaire expertise zonder specialisme in plaats van legacy RI&E', () => {
+    const profile = { primaryExpertise: 'MACHINEVEILIGHEIDSDESKUNDIGE', requiredSpecialisms: [] } as unknown as MatchingReadyProfile
     expect(getPublicIntakeDirection(legacy, profile)).toEqual({
       code: 'MACHINEVEILIGHEIDSDESKUNDIGE', label: 'Machineveiligheidsdeskundige', source: 'EXPERT_ROUTING',
     })
   })
-  it('gebruikt legacy uitsluitend bij afwezig routingprofiel', () => {
+
+  it('combineert primaire expertise met één vereist specialisme', () => {
+    const profile = {
+      primaryExpertise: 'ARBEIDSHYGIENIST',
+      requiredSpecialisms: ['INDOOR_ENVIRONMENT'],
+    } as unknown as MatchingReadyProfile
+    expect(getPublicIntakeDirection(legacy, profile)).toEqual({
+      code: 'ARBEIDSHYGIENIST', label: 'Arbeidshygiënist / binnenmilieu', source: 'EXPERT_ROUTING',
+    })
+  })
+
+  it('combineert meerdere vereiste specialismen in een leesbare vaste volgorde', () => {
+    const profile = {
+      primaryExpertise: 'MACHINEVEILIGHEIDSDESKUNDIGE',
+      requiredSpecialisms: ['MACHINE_SAFETY', 'CE_MARKING'],
+    } as unknown as MatchingReadyProfile
+    expect(getPublicIntakeDirection(legacy, profile)).toEqual({
+      code: 'MACHINEVEILIGHEIDSDESKUNDIGE',
+      label: 'Machineveiligheidsdeskundige / machineveiligheid / CE-markering',
+      source: 'EXPERT_ROUTING',
+    })
+  })
+
+  it('gebruikt legacy uitsluitend bij een ontbrekend routingprofiel', () => {
     expect(getPublicIntakeDirection(legacy, null)?.source).toBe('LEGACY_COMPATIBILITY')
-    expect(getPublicIntakeDirection(legacy, { primaryExpertise: 'FUTURE_DISCIPLINE' } as MatchingReadyProfile)).toMatchObject({
+    expect(getPublicIntakeDirection(legacy, { primaryExpertise: 'FUTURE_DISCIPLINE', requiredSpecialisms: [] } as unknown as MatchingReadyProfile)).toMatchObject({
       code: 'FUTURE_DISCIPLINE', source: 'EXPERT_ROUTING', label: 'Deskundigheidsrichting wordt gecontroleerd',
     })
   })
