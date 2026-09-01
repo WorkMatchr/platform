@@ -193,7 +193,7 @@ export async function issueInvoiceForPaidPurchase(
     },
   })
   await createInvoiceV2Details(transaction, invoice.id, line)
-  await transaction.financialJorttSync.create({ data: { invoiceId: invoice.id } })
+  await transaction.financialJorttSync.create({ data: { invoiceId: invoice.id, technicalReference: `workmatchr-invoice:${invoice.id}` } })
   await transaction.financialEvent.create({
     data: {
       actorUserId: purchase.createdByUserId,
@@ -275,7 +275,7 @@ export async function issueCreditNoteForCompletedRefund(
       molliePaymentId: original.molliePaymentId,
     },
   })
-  await transaction.financialJorttSync.create({ data: { invoiceId: invoice.id } })
+  await transaction.financialJorttSync.create({ data: { invoiceId: invoice.id, technicalReference: `workmatchr-invoice:${invoice.id}` } })
   return invoice
 }
 
@@ -351,7 +351,7 @@ export async function issueInvoiceForPaidSubscriptionPayment(
     },
   })
   await createInvoiceV2Details(transaction, invoice.id, line)
-  await transaction.financialJorttSync.create({ data: { invoiceId: invoice.id } })
+  await transaction.financialJorttSync.create({ data: { invoiceId: invoice.id, technicalReference: `workmatchr-invoice:${invoice.id}` } })
   await transaction.financialEvent.create({
     data: {
       subscriptionId: payment.subscriptionId,

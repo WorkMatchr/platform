@@ -3900,6 +3900,7 @@ model FinancialJorttSync {
   status              FinancialSyncStatus         @default(PENDING)
   externalReference   String?                     @unique @db.VarChar(160)
   remoteInvoiceNumber String?                     @db.VarChar(80)
+  technicalReference  String?                     @unique @db.VarChar(80)
   attemptCount        Int                         @default(0)
   nextAttemptAt       DateTime?                   @db.Timestamptz(3)
   lastErrorCode       String?                     @db.VarChar(80)
