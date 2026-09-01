@@ -252,6 +252,14 @@ vereiste specialismen, opdrachttype, sectorervaring, risico-, locatie- en
 urgentiecontext, multidisciplinariteit, beheerde matchingcodes en volledige
 knowledgeprovenance.
 
+Expert-routing selecteert de hoogste gepubliceerde, gevalideerde versie per
+logische regelcode binnen PUBLIC_BASIC/INTAKE_ROUTING_KNOWLEDGE, zonder vooraf
+historische rijen af te kappen. Daarna volgen contractvalidatie en applicability.
+Een niet-toepasselijke of onleesbare actuele versie veroorzaakt geen terugval
+naar een oudere versie. KnowledgeRule heeft geen afzonderlijk runtimeStatus-veld;
+de bestaande publicatie-, validatie-, type-, toegang- en scopefilters bepalen
+runtimebeschikbaarheid.
+
 `PROCESS_SAFETY_MAJOR_HAZARDS` is een cross-discipline specialisme zonder
 automatische koppeling aan HVK. Voor majeure-gevarencasuïstiek zijn een passende
 professionele achtergrond, dit specialisme én aantoonbare relevante ervaring

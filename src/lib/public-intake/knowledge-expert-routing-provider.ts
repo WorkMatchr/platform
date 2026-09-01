@@ -55,7 +55,10 @@ export async function buildKnowledgeGroundedMatchingProfile(input: {
       usageScopes: { has: INTAKE_ROUTING_KNOWLEDGE_SCOPE },
     },
     select: { code: true, ruleVersion: true, outputSchema: true },
-    take: 100,
+    // Resolve the latest eligible version per logical rule before budgeting.
+    // Limiting historical rows can hide published successors.
+    distinct: ['code'],
+    orderBy: [{ code: 'asc' }, { ruleVersion: 'desc' }],
   })
   const factCodes = new Set(input.facts.filter(isReliablePresentFact).map((fact) => fact.code))
   const conceptCodes = new Set(input.concepts.filter(isReliableConcept).map((concept) => concept.code))
