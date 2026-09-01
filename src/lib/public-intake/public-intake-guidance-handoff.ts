@@ -14,8 +14,19 @@ import type {
   GuidanceOutcome,
   GuidanceProvenance,
   HelpRequest,
+  ProfessionalAdvice,
+  ProfessionalAdvicePriority,
+  ProfessionalRequirement,
   Uncertainty,
 } from '@/lib/guidance/guidance-domain'
+import {
+  PROFESSIONAL_ADVICE_SCHEMA_VERSION,
+  PROFESSIONAL_REQUIREMENT_SCHEMA_VERSION,
+} from '@/lib/guidance/guidance-domain'
+import {
+  professionalDisciplines,
+  type ProfessionalDisciplineCode,
+} from '@/lib/guidance/professional-disciplines'
 import { buildSafeFallbackProfessionalAdvice } from '@/lib/guidance/professional-advice-rules'
 import { getAIContextQuestion } from '@/lib/ai-intake-classifier/ai-context-question-catalog'
 import {
@@ -36,6 +47,11 @@ import {
   PREVIOUS_KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION,
   LEGACY_KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION,
 } from './context-question-engine-types'
+import type { MatchingReadyProfile } from './case-understanding'
+import {
+  getPrimaryExpertiseLabel,
+  getRequiredSpecialismLabels,
+} from './public-intake-ai-presentation'
 
 export type PublicIntakeGuidanceHandoff = Readonly<{
   contract: GuidanceContract
@@ -261,6 +277,110 @@ function toUncertainties(
 const SAFE_FALLBACK_RULE_SET_VERSION =
   'public-intake-safe-fallback/1.0.0' as const
 
+const MATCHING_PROFILE_ADVICE_RULE_SET_VERSION =
+  'matching-profile-professional-advice/1.0.0' as const
+
+function knownDisciplineCode(
+  code: string,
+): code is ProfessionalDisciplineCode {
+  return Object.hasOwn(professionalDisciplines, code)
+}
+
+function matchingProfileRequirement(
+  outcome: GuidanceOutcome,
+  code: ProfessionalDisciplineCode,
+  priority: ProfessionalAdvicePriority,
+  reason: string,
+  expertise: readonly string[],
+  index: number,
+): ProfessionalRequirement {
+  const discipline = professionalDisciplines[code]
+
+  return Object.freeze({
+    schemaVersion: PROFESSIONAL_REQUIREMENT_SCHEMA_VERSION,
+    id: `professional-requirement:${outcome.id}:${priority.toLocaleLowerCase('en-US')}:${index}`,
+    version: 1,
+    guidanceOutcomeId: outcome.id,
+    professionalSupportNeedId: outcome.professionalSupportNeed.id,
+    status: 'DRAFT',
+    professionalType: code,
+    priority,
+    reason,
+    expertise: Object.freeze([...expertise]),
+    matchingTags: Object.freeze([...discipline.matchingTags]),
+    criteria: Object.freeze([
+      Object.freeze({
+        code: `CAPABILITY_${code}`,
+        kind: 'CAPABILITY',
+        priority: 'REQUIRED',
+        valueCodes: Object.freeze([...discipline.capabilityCodes]),
+        provenance: outcome.professionalSupportNeed.provenance,
+      }),
+    ]),
+    createdAt: outcome.createdAt,
+    confirmation: Object.freeze({ status: 'UNCONFIRMED' }),
+    checksum: null,
+  })
+}
+
+function professionalAdviceFromMatchingProfile(
+  outcome: GuidanceOutcome,
+  profile: MatchingReadyProfile,
+): GuidanceOutcome {
+  if (!knownDisciplineCode(profile.primaryExpertise)) return outcome
+
+  const primaryLabel = getPrimaryExpertiseLabel(profile.primaryExpertise)
+  const specialismLabels = getRequiredSpecialismLabels(profile)
+  const primary = matchingProfileRequirement(
+    outcome,
+    profile.primaryExpertise,
+    'PRIMARY',
+    'Deze deskundigheid sluit aan op de informatie die u in uw hulpvraag en antwoorden heeft bevestigd.',
+    specialismLabels,
+    0,
+  )
+  const conditional = profile.conditionalExpertise
+    .filter((candidate): candidate is typeof candidate & {
+      code: ProfessionalDisciplineCode
+    } => knownDisciplineCode(candidate.code))
+    .map((candidate, index) => matchingProfileRequirement(
+      outcome,
+      candidate.code,
+      'POSSIBLE',
+      `Conditioneel: ${candidate.when}`,
+      [],
+      index,
+    ))
+  const specialismText = specialismLabels.length > 0
+    ? ` De relevante richting is ${specialismLabels.join(' en ')}.`
+    : ''
+  const advice: ProfessionalAdvice = Object.freeze({
+    ...outcome.professionalAdvice,
+    schemaVersion: PROFESSIONAL_ADVICE_SCHEMA_VERSION,
+    ruleSetVersion: MATCHING_PROFILE_ADVICE_RULE_SET_VERSION,
+    appliedRuleCode: 'MATCHING_PROFILE_AUTHORITATIVE_ROUTING',
+    situationSummary: profile.assignmentSummary,
+    adviceTitle: `Passende deskundigheid: ${primaryLabel}`,
+    adviceBody: `Op basis van de bevestigde informatie past ${primaryLabel} als primaire deskundigheid.${specialismText}`,
+    adviceReasons: Object.freeze([
+      'Deze richting volgt uit de bevestigde informatie in uw hulpvraag en antwoorden.',
+    ]),
+    primaryProfessionalRequirement: primary,
+    additionalProfessionalRequirements: Object.freeze([]),
+    possibleProfessionalRequirements: Object.freeze(conditional),
+    outcomeSpecificity: 'SPECIFIC',
+  })
+
+  const candidate = Object.freeze({
+    ...outcome,
+    professionalRequirements: Object.freeze([primary, ...conditional]),
+    professionalAdvice: advice,
+  })
+  const validation = validateGuidanceOutcome(candidate)
+
+  return validation.success ? validation.data : outcome
+}
+
 function createSafeFallbackOutcome(
   contract: GuidanceContract,
 ): GuidanceOutcome {
@@ -453,12 +573,15 @@ export function buildPublicIntakeGuidanceHandoff(
         })
       : evaluatedClarification
   const intakeCompletion = completion(draft, clarification)
-  const outcome =
+  const legacyOutcome =
     intakeCompletion.status === 'COMPLETED_WITH_GUIDANCE'
       ? guidanceEngine.evaluate(contract)
       : intakeCompletion.status === 'COMPLETED_WITH_SAFE_FALLBACK'
         ? createSafeFallbackOutcome(contract)
         : null
+  const outcome = legacyOutcome && draft.matchingProfile
+    ? professionalAdviceFromMatchingProfile(legacyOutcome, draft.matchingProfile)
+    : legacyOutcome
 
   return Object.freeze({
     contract,

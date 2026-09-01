@@ -32,7 +32,7 @@ const SPECIALISM_LABELS: Readonly<Record<string, string>> = Object.freeze({
   EXPOSURE_ASSESSMENT: 'blootstellingsbeoordeling',
 })
 
-function getPrimaryExpertiseLabel(code: string): string {
+export function getPrimaryExpertiseLabel(code: string): string {
   return Object.hasOwn(professionalDisciplines, code)
     ? professionalDisciplines[code as ProfessionalDisciplineCode].label
     : code === 'PROCESS_SAFETY_MAJOR_HAZARDS'
@@ -40,7 +40,7 @@ function getPrimaryExpertiseLabel(code: string): string {
       : 'Deskundigheidsrichting wordt gecontroleerd'
 }
 
-function getRequiredSpecialismLabels(profile: MatchingReadyProfile): readonly string[] {
+export function getRequiredSpecialismLabels(profile: MatchingReadyProfile): readonly string[] {
   const labels = profile.requiredSpecialisms
     .filter((code) => code !== profile.primaryExpertise)
     .map((code) => SPECIALISM_LABELS[code] ?? 'specialisme wordt gecontroleerd')

@@ -14,7 +14,10 @@ Dynamische planningssnapshots bewaren aanvullend regel-ID, regelversie,
 variantkey, toepasselijke concepten en aanwezige grounding. Historische
 snapshots blijven leesbaar. De zichtbare reviewrichting gebruikt een aanwezig
 server-side routingprofiel; de classifiercategorie is alleen fallback wanneer
-dat profiel ontbreekt. De bestaande centrale disciplinelabels worden hergebruikt.
+dat profiel ontbreekt. Ook de finale professionele Guidance-presentatie gebruikt
+dit gevalideerde, persistente profiel als autoritatieve routingbron; alleen zonder
+profiel blijft de bestaande veilige Guidance-fallback gelden. De bestaande
+centrale discipline- en specialismelabels worden hergebruikt.
 
 De lokale reparatie bevat nu het vraagcontract v2: `informationNeed`,
 `runtimeQuestionInstructions` en een neutrale fallback worden gescheiden van

@@ -3,6 +3,8 @@ import type { PublicIntakeAnswerView, PublicIntakeContextQuestionView, PublicInt
 import { emptyCaseUnderstanding } from '@/lib/ai-intake-classifier/case-understanding-contract'
 import { buildPublicIntakeGuidanceHandoff } from './public-intake-guidance-handoff'
 import { PUBLIC_HELP_REQUEST_INTAKE_V2_FLOW_VERSION } from './public-intake-config'
+import type { MatchingReadyProfile } from './case-understanding'
+import { presentPublicIntakeGuidance } from './public-intake-guidance-presentation'
 
 const startedAt = new Date('2026-07-27T12:00:00.000Z')
 
@@ -32,6 +34,7 @@ function draft(
     flowVersion: string
     contextQuestions: readonly PublicIntakeContextQuestionView[]
     aiClassification: PublicIntakeDraftView['aiClassification']
+    matchingProfile: MatchingReadyProfile | null
   }> = {},
 ) {
   return {
@@ -54,10 +57,156 @@ function draft(
     answers: [...answers],
     contextQuestions: overrides.contextQuestions ?? [],
     aiClassification: overrides.aiClassification,
+    matchingProfile: overrides.matchingProfile ?? null,
   }
 }
 
+const workAbilityProfile: MatchingReadyProfile = {
+  version: 'matching-ready-profile/1.0.0',
+  scope: 'INTAKE_ROUTING_KNOWLEDGE',
+  assignmentSummary: 'Ondersteuning gevraagd bij inzetbaarheid en re-integratie.',
+  primaryExpertise: 'BEDRIJFSARTS',
+  conditionalExpertise: [{
+    code: 'ARBEIDSDESKUNDIGE',
+    when: 'Belastbaarheid moet worden vertaald naar passende werkzaamheden.',
+  }],
+  requiredSpecialisms: ['WORK_ABILITY_REINTEGRATION'],
+  assignmentType: 'INVESTIGATION_AND_ADVICE',
+  relevantSectorExperience: [], riskContext: [], locationContext: [], urgency: [],
+  multidisciplinary: true,
+  matchingCodes: ['BEDRIJFSARTS', 'WORK_ABILITY_REINTEGRATION'],
+  supportingKnowledgeIds: ['e6ac03fe-b625-4fc5-b010-f9cbe0c59b28'],
+}
+
+const completedWorkAbilityQuestion: PublicIntakeContextQuestionView = {
+  questionKey: 'context_work_ability_scope',
+  catalogVersion: 'knowledge-grounded-context-engine/1.3.0',
+  textSnapshot: 'Welke ondersteuning is nodig rond de inzetbaarheid?',
+  answerType: 'TEXT', category: 'WORK', sequence: 1,
+  source: 'AI_CONTEXT_PLANNER', createdAt: startedAt,
+  contextGoalCode: 'WORK_ADAPTATION_SCOPE',
+}
+
+const completedWorkAbilityAnswer = answer(
+  completedWorkAbilityQuestion.questionKey,
+  'TEXT',
+  'Beoordeling van de belastbaarheid en daarna vertaling naar passend werk.',
+)
+
 describe('Public Intake Guidance-handoff', () => {
+  it('gebruikt bij technische classifieruitval het gevalideerde matchingprofiel als professionele bron', () => {
+    const snapshot = draft([completedWorkAbilityAnswer], {
+      entryPoint: 'FREE_TEXT',
+      originalInput: 'Een medewerker hervat het werk en er is onduidelijkheid over de belastbaarheid.',
+      selectedRequestKey: null,
+      matchingProfile: workAbilityProfile,
+      aiClassification: null,
+      contextQuestions: [completedWorkAbilityQuestion],
+    })
+    const baseline = buildPublicIntakeGuidanceHandoff('profile-comparison', {
+      ...snapshot,
+      matchingProfile: null,
+    })
+    const handoff = buildPublicIntakeGuidanceHandoff('profile-comparison', snapshot)
+
+    expect(handoff.outcome).toMatchObject({
+      professionalAdvice: {
+        appliedRuleCode: 'MATCHING_PROFILE_AUTHORITATIVE_ROUTING',
+        outcomeSpecificity: 'SPECIFIC',
+        adviceTitle: 'Passende deskundigheid: Bedrijfsarts',
+        primaryProfessionalRequirement: {
+          professionalType: 'BEDRIJFSARTS',
+          priority: 'PRIMARY',
+          expertise: ['inzetbaarheid en re-integratie'],
+        },
+        possibleProfessionalRequirements: [{
+          professionalType: 'ARBEIDSDESKUNDIGE',
+          priority: 'POSSIBLE',
+          reason: expect.stringContaining('Conditioneel:'),
+        }],
+      },
+    })
+    expect(handoff.outcome?.professionalAdvice.adviceTitle).not.toBe(
+      'Breng uw situatie eerst verder in kaart',
+    )
+    expect(handoff.outcome?.facts).toEqual(baseline.outcome?.facts)
+    expect(handoff.outcome?.solutionDirections).toEqual(baseline.outcome?.solutionDirections)
+    expect(handoff.outcome?.professionalAdvice.selfActions).toEqual(
+      baseline.outcome?.professionalAdvice.selfActions,
+    )
+  })
+
+  it('laat een matchingprofiel voorgaan op een legacy classificatie en presenteert conditionele expertise', () => {
+    const handoff = buildPublicIntakeGuidanceHandoff(
+      'profile-over-legacy',
+      draft([completedWorkAbilityAnswer], {
+        entryPoint: 'FREE_TEXT',
+        originalInput: 'Een medewerker hervat het werk na uitval.',
+        selectedRequestKey: null,
+        matchingProfile: workAbilityProfile,
+        contextQuestions: [completedWorkAbilityQuestion],
+        aiClassification: {
+          summary: 'De organisatie vraagt om een beoordeling van de werksituatie.',
+          primarySubject: 'RIE', secondarySubjects: [], confidence: 'HIGH', alternatives: [],
+        },
+      }),
+    )
+    const presentation = presentPublicIntakeGuidance(handoff.outcome!)
+
+    expect(presentation.primaryProfessionalRequirement).toMatchObject({
+      label: 'Bedrijfsarts',
+      expertise: ['inzetbaarheid en re-integratie'],
+    })
+    expect(presentation.possibleProfessionalRequirements).toContainEqual(
+      expect.objectContaining({
+        label: 'Arbeidsdeskundige',
+        priority: 'POSSIBLE',
+        reason: expect.stringContaining('Conditioneel:'),
+      }),
+    )
+  })
+
+  it('vervangt bij een UNCLASSIFIED classificatie met geldig profiel niet door de generieke fallback', () => {
+    const handoff = buildPublicIntakeGuidanceHandoff(
+      'profile-over-unclassified',
+      draft([completedWorkAbilityAnswer], {
+        entryPoint: 'FREE_TEXT',
+        originalInput: 'Een medewerker hervat het werk na uitval.',
+        selectedRequestKey: null,
+        matchingProfile: workAbilityProfile,
+        contextQuestions: [completedWorkAbilityQuestion],
+        aiClassification: {
+          summary: 'De hulpvraag kon niet inhoudelijk worden geclassificeerd.',
+          primarySubject: 'UNKNOWN', secondarySubjects: [], confidence: 'LOW', alternatives: [],
+        },
+      }),
+    )
+
+    expect(handoff.contract.situation.code).toBe('UNCLASSIFIED')
+    expect(handoff.outcome?.professionalAdvice).toMatchObject({
+      appliedRuleCode: 'MATCHING_PROFILE_AUTHORITATIVE_ROUTING',
+      outcomeSpecificity: 'SPECIFIC',
+      primaryProfessionalRequirement: { professionalType: 'BEDRIJFSARTS' },
+    })
+  })
+
+  it('behoudt zonder matchingprofiel de bestaande veilige Guidance-fallback', () => {
+    const handoff = buildPublicIntakeGuidanceHandoff(
+      'no-profile',
+      draft([completedWorkAbilityAnswer], {
+        entryPoint: 'FREE_TEXT', originalInput: 'Een nog onduidelijke werksituatie.',
+        selectedRequestKey: null, matchingProfile: null, aiClassification: null,
+        contextQuestions: [completedWorkAbilityQuestion],
+      }),
+    )
+
+    expect(handoff.outcome?.professionalAdvice).toMatchObject({
+      appliedRuleCode: 'PROFESSIONAL_ADVICE_SAFE_FALLBACK',
+      outcomeSpecificity: 'SAFE_FALLBACK',
+      primaryProfessionalRequirement: null,
+    })
+  })
+
   it('heropent na een afgeronde knowledge-engine-evaluatie geen legacy RI&E-vraag', () => {
     const handoff = buildPublicIntakeGuidanceHandoff(
       'public-draft-fixture',
