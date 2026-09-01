@@ -587,6 +587,7 @@ enum FinancialSyncStatus {
   PROCESSING
   SYNCED
   FAILED
+  RETRY_REQUIRED
 }
 
 enum DiscountCodeStatus {
@@ -3894,20 +3895,22 @@ model FinancialInvoiceVatSummary {
 }
 
 model FinancialJorttSync {
-  id                String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  invoiceId         String                      @unique @db.Uuid
-  status            FinancialSyncStatus         @default(PENDING)
-  externalReference String?                     @unique @db.VarChar(160)
-  attemptCount      Int                         @default(0)
-  nextAttemptAt     DateTime?                   @db.Timestamptz(3)
-  lastErrorCode     String?                     @db.VarChar(80)
-  syncedAt          DateTime?                   @db.Timestamptz(3)
-  createdAt         DateTime                    @default(now()) @db.Timestamptz(3)
-  updatedAt         DateTime                    @updatedAt @db.Timestamptz(3)
-  invoice           FinancialInvoice            @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
-  attempts          FinancialJorttSyncAttempt[]
+  id                  String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoiceId           String                      @unique @db.Uuid
+  status              FinancialSyncStatus         @default(PENDING)
+  externalReference   String?                     @unique @db.VarChar(160)
+  remoteInvoiceNumber String?                     @db.VarChar(80)
+  attemptCount        Int                         @default(0)
+  nextAttemptAt       DateTime?                   @db.Timestamptz(3)
+  lastErrorCode       String?                     @db.VarChar(80)
+  syncedAt            DateTime?                   @db.Timestamptz(3)
+  createdAt           DateTime                    @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime                    @updatedAt @db.Timestamptz(3)
+  invoice             FinancialInvoice            @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  attempts            FinancialJorttSyncAttempt[]
 
   @@index([status, nextAttemptAt])
+  @@index([remoteInvoiceNumber])
 }
 
 model FinancialJorttSyncAttempt {

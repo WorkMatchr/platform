@@ -1,4 +1,4 @@
-import type { FinancialDocumentType, FinancialPaymentStatus, FinancialPurchaseKind, FinancialPurchaseStatus } from '@/generated/prisma/client'
+import type { FinancialDocumentType, FinancialPaymentStatus, FinancialPurchaseKind, FinancialPurchaseStatus, FinancialSyncStatus } from '@/generated/prisma/client'
 
 export const financialPurchaseStatusLabels: Record<FinancialPurchaseStatus, string> = {
   CREATED: 'Aangemaakt',
@@ -31,6 +31,20 @@ export const financialPurchaseKindLabels: Record<FinancialPurchaseKind, string> 
 export const financialDocumentTypeLabels: Record<FinancialDocumentType, string> = {
   INVOICE: 'Factuur',
   CREDIT_NOTE: 'Creditnota',
+}
+
+export const financialSyncStatusLabels: Record<FinancialSyncStatus, string> = {
+  PENDING: 'In behandeling',
+  PROCESSING: 'Wordt gesynchroniseerd',
+  SYNCED: 'Gesynchroniseerd',
+  FAILED: 'Mislukt',
+  RETRY_REQUIRED: 'Opnieuw proberen',
+}
+
+export function financialSyncStatusTone(status: FinancialSyncStatus) {
+  if (status === 'SYNCED') return 'good' as const
+  if (status === 'FAILED' || status === 'RETRY_REQUIRED') return 'bad' as const
+  return 'warning' as const
 }
 
 export function financialStatusTone(status: FinancialPurchaseStatus | FinancialPaymentStatus) {
