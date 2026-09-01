@@ -162,4 +162,56 @@ describe('public intake fact extraction', () => {
     expect(deriveKnowledgeConceptCandidates({ originalInput: '', classification, facts: [] }).map((item) => item.code))
       .toEqual(['PSA', 'WORK_ORGANIZATION'])
   })
+
+  it('herkent gedeeltelijke werkhervatting als generieke re-integratiecontext', () => {
+    const originalInput = 'Na langdurige uitval hervat een werknemer het werk gedeeltelijk.'
+    const facts = codes(originalInput)
+    const concepts = deriveKnowledgeConceptCandidates({ originalInput, classification: null, facts })
+
+    expect(facts).toContainEqual(expect.objectContaining({ code: 'REINTEGRATION_CONTEXT', value: true }))
+    expect(concepts.map((item) => item.code)).toEqual(expect.arrayContaining(['REINTEGRATION', 'WORK_ABILITY_REINTEGRATION']))
+  })
+
+  it('herkent een verschil over inzetbare werkduur zonder een urenadvies af te leiden', () => {
+    const originalInput = 'De werknemer noemt drie uur per dag, terwijl de werkgever denkt dat vijf uur mogelijk is.'
+    const facts = codes(originalInput)
+    const concepts = deriveKnowledgeConceptCandidates({ originalInput, classification: null, facts })
+
+    expect(facts).toContainEqual(expect.objectContaining({
+      code: 'WORK_ABILITY_DISAGREEMENT', value: 'WORK_DURATION_OR_CAPACITY_UNCLEAR',
+    }))
+    expect(concepts.map((item) => item.code)).toEqual(expect.arrayContaining(['WORK_ABILITY', 'WORK_ABILITY_REINTEGRATION']))
+    expect(JSON.stringify(facts)).not.toMatch(/medisch juist|verantwoord aantal|diagnose/i)
+  })
+
+  it('combineert re-integratie en een expliciete medische privacygrens voor discovery', () => {
+    const originalInput = 'Bij de re-integratie willen wij geen medische informatie opvragen, maar wel de functionele inzetbaarheid laten beoordelen.'
+    const facts = codes(originalInput)
+    const concepts = deriveKnowledgeConceptCandidates({ originalInput, classification: null, facts })
+
+    expect(facts.map((item) => item.code)).toEqual(expect.arrayContaining([
+      'REINTEGRATION_CONTEXT', 'WORK_ABILITY_CONTEXT', 'MEDICAL_PRIVACY_BOUNDARY',
+    ]))
+    expect(concepts.map((item) => item.code)).toEqual(expect.arrayContaining([
+      'REINTEGRATION', 'WORK_ABILITY', 'WORK_ABILITY_REINTEGRATION', 'MEDICAL_PRIVACY',
+    ]))
+  })
+
+  it('leidt uit een los genoemd aantal uren geen werkvermogen af', () => {
+    const originalInput = 'De training duurt zes uur en begint morgen.'
+    const facts = codes(originalInput)
+    const concepts = deriveKnowledgeConceptCandidates({ originalInput, classification: null, facts })
+
+    expect(facts.map((item) => item.code)).not.toContain('WORK_ABILITY_CONTEXT')
+    expect(concepts.map((item) => item.code)).not.toContain('WORK_ABILITY')
+  })
+
+  it('leidt uit alleen het woord medisch geen privacygrens af', () => {
+    const originalInput = 'Wij organiseren een medisch symposium.'
+    const facts = codes(originalInput)
+    const concepts = deriveKnowledgeConceptCandidates({ originalInput, classification: null, facts })
+
+    expect(facts.map((item) => item.code)).not.toContain('MEDICAL_PRIVACY_BOUNDARY')
+    expect(concepts.map((item) => item.code)).not.toContain('MEDICAL_PRIVACY')
+  })
 })

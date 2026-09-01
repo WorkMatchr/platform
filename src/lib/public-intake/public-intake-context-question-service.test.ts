@@ -105,6 +105,23 @@ describe('public intake context-question persistence', () => {
     }))
   })
 
+  it('start de bestaande engine bij technische uitval op expliciete re-integratiecontext', async () => {
+    mocks.findQuestions.mockResolvedValueOnce([]).mockResolvedValueOnce([storedQuestion])
+
+    await expect(ensurePublicIntakeAIContextQuestions({
+      draftId: '00000000-0000-0000-0000-000000000007',
+      originalInput: 'Een werknemer hervat het werk gedeeltelijk; er is verschil over de inzetbare uren en wij vragen geen medische informatie op.',
+      classification: null,
+      classifierAvailability: 'TECHNICALLY_UNAVAILABLE',
+      answers: [], fallbackQuestionWasAsked: false, mode: 'DIRECT_REQUEST',
+    })).resolves.toMatchObject([{ questionKey: 'context_sector' }])
+
+    expect(mocks.transaction).toHaveBeenCalledTimes(1)
+    expect(mocks.updateDraft).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: '00000000-0000-0000-0000-000000000007' },
+    }))
+  })
+
   it('houdt zonder betrouwbaar expliciet bewijs de generieke fallback intact', async () => {
     await expect(ensurePublicIntakeAIContextQuestions({
       draftId: '00000000-0000-0000-0000-000000000006',

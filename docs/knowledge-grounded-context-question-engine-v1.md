@@ -87,6 +87,13 @@ bewijzen geen applicability; claims bewijzen geen casusfeit; alle bestaande
 grounding-, presuppositie- en expert-routingguards blijven van toepassing. Zonder
 bruikbaar expliciet concept blijft de generieke veilige fallback behouden.
 
+De generieke deterministische continuity herkent ook expliciete re-integratie- en
+werkvermogenscontext: werkhervatting, onduidelijkheid of verschil over inzetbare
+werkduur en een expliciete medische-privacygrens. Deze signalen openen uitsluitend
+discovery. Zij geven geen diagnose, urenadvies of oordeel over wie gelijk heeft;
+applicability, grounding, verificatie en expert-routing blijven afzonderlijk
+fail-closed.
+
 ## Context Goal-contract
 
 Een contextdoel bevat een stabiele code, vraagkey, doel, neutrale formulering,

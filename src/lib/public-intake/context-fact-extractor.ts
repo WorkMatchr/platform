@@ -10,6 +10,30 @@ function normalized(input: string) {
   return input.trim().toLocaleLowerCase('nl-NL')
 }
 
+function hasReintegrationContext(text: string) {
+  return /\b(?:re-?integrat\w*|werkhervat\w*|werk\s+hervat\w*|hervat\w*.{0,30}\bwerk|(?:weer|terug|gedeeltelijk)\s+(?:aan\s+het\s+)?werk)\b/.test(text)
+}
+
+function hasWorkAbilityContext(text: string) {
+  return /\b(?:belastbaar\w*|inzetbaar\w*|werkvermogen|mogelijkheden\s+en\s+beperkingen)\b/.test(text)
+}
+
+function hasWorkDurationDisagreement(text: string) {
+  const workContext = /\b(?:medewerker|werknemer|leidinggevende|werkgever|werk|re-?integrat\w*|werkhervat\w*)\b/.test(text)
+  const disagreement = /\b(?:verschil(?:\s+van\s+inzicht)?|discussie|oneens|onduidelijk|twijfel|terwijl)\b/.test(text)
+  const hourMentions = text.match(/\b(?:\d+(?:[.,]\d+)?|een|twee|drie|vier|vijf|zes|zeven|acht|negen|tien)\s*uur\b/g) ?? []
+  const hoursInDispute = /\b(?:verschil(?:\s+van\s+inzicht)?|discussie|oneens|onduidelijk|twijfel)\b.{0,80}\b(?:uren?|werktijd|inzetbaarheid)\b/.test(text)
+    || /\b(?:uren?|werktijd|inzetbaarheid)\b.{0,80}\b(?:verschil(?:\s+van\s+inzicht)?|discussie|oneens|onduidelijk|twijfel)\b/.test(text)
+  return workContext && (hoursInDispute || (disagreement && hourMentions.length >= 2))
+}
+
+function hasExplicitMedicalPrivacyBoundary(text: string) {
+  const workContext = /\b(?:medewerker|werknemer|leidinggevende|werkgever|werk|re-?integrat\w*|werkhervat\w*)\b/.test(text)
+  const privacyBoundary = /\b(?:geen|zonder|niet)\b.{0,45}\bmedische\s+(?:informatie|gegevens|details)\b/.test(text)
+    || /\bmedische\s+(?:informatie|gegevens|details)\b.{0,45}\b(?:niet\s+(?:opvragen|delen|nodig|beschikbaar)|ontbreekt|ontbreken)\b/.test(text)
+  return workContext && privacyBoundary
+}
+
 function uniqueFacts(facts: readonly ExtractedFact[]) {
   const byCode = new Map<string, ExtractedFact>()
   for (const fact of facts) {
@@ -83,6 +107,23 @@ export function extractPublicIntakeFacts(input: {
   if (/\b(?:actualiseren|bijwerken|verouderd|jaar oud)\b/.test(text) && /ri&e/.test(text)) facts.push(Object.freeze({ code: 'RIE_INTENT', value: 'UPDATE', status: 'RELIABLE_EXTRACTION', confidence: 0.95 }))
   if (/\b(?:bestaande|onze)\s+ri&e\b/.test(text) && /\b(?:risico|opgenomen|staat|controleren)\b/.test(text)) facts.push(Object.freeze({ code: 'RIE_INTENT', value: 'RISK_IN_EXISTING', status: 'RELIABLE_EXTRACTION', confidence: 0.9 }))
   if (/\bbedrijfsarts\b/.test(text)) facts.push(Object.freeze({ code: 'REQUESTED_DIRECTION', value: 'OCCUPATIONAL_PHYSICIAN', status: 'SUGGESTED_DIRECTION', confidence: 1 }))
+  const reintegrationContext = hasReintegrationContext(text)
+  const workAbilityContext = hasWorkAbilityContext(text)
+  const workDurationDisagreement = hasWorkDurationDisagreement(text)
+  if (reintegrationContext) facts.push(Object.freeze({ code: 'REINTEGRATION_CONTEXT', value: true, status: 'EXPLICIT_INPUT', confidence: 0.95 }))
+  if (workAbilityContext || workDurationDisagreement) facts.push(Object.freeze({ code: 'WORK_ABILITY_CONTEXT', value: true, status: 'EXPLICIT_INPUT', confidence: 0.95 }))
+  if (workDurationDisagreement) facts.push(Object.freeze({
+    code: 'WORK_ABILITY_DISAGREEMENT',
+    value: 'WORK_DURATION_OR_CAPACITY_UNCLEAR',
+    status: 'RELIABLE_EXTRACTION',
+    confidence: 0.9,
+  }))
+  if (hasExplicitMedicalPrivacyBoundary(text)) facts.push(Object.freeze({
+    code: 'MEDICAL_PRIVACY_BOUNDARY',
+    value: 'FUNCTIONAL_INFORMATION_ONLY',
+    status: 'EXPLICIT_INPUT',
+    confidence: 1,
+  }))
 
   for (const answer of input.answers) {
     if (answer.disposition !== 'ANSWERED' || answer.value === null) continue
@@ -141,6 +182,12 @@ export function deriveKnowledgeConceptCandidates(input: {
   if (fact('EQUIPMENT')) concepts.push(Object.freeze({ code: 'WORK_EQUIPMENT', confidence: 0.95, source: 'EXPLICIT_INPUT', supportingKnowledgeIds: Object.freeze([]) }))
   if (fact('EXPOSURE_SIGNAL') || fact('EQUIPMENT')) concepts.push(Object.freeze({ code: 'EXPOSURE', confidence: 0.8, source: 'EXPLICIT_INPUT', supportingKnowledgeIds: Object.freeze([]) }))
   if (fact('WORK_ENVIRONMENT_CHANGE_SIGNAL')) concepts.push(Object.freeze({ code: 'WORK_ENVIRONMENT_CHANGE', confidence: 0.9, source: 'EXPLICIT_INPUT', supportingKnowledgeIds: Object.freeze([]) }))
+  if (fact('REINTEGRATION_CONTEXT')) concepts.push(Object.freeze({ code: 'REINTEGRATION', confidence: 0.95, source: 'EXPLICIT_INPUT', supportingKnowledgeIds: Object.freeze([]) }))
+  if (fact('WORK_ABILITY_CONTEXT')) concepts.push(Object.freeze({ code: 'WORK_ABILITY', confidence: 0.95, source: 'EXPLICIT_INPUT', supportingKnowledgeIds: Object.freeze([]) }))
+  if ((fact('REINTEGRATION_CONTEXT') || fact('WORK_ABILITY_CONTEXT')) && !concepts.some((concept) => concept.code === 'WORK_ABILITY_REINTEGRATION')) {
+    concepts.push(Object.freeze({ code: 'WORK_ABILITY_REINTEGRATION', confidence: 0.9, source: 'EXPLICIT_INPUT', supportingKnowledgeIds: Object.freeze([]) }))
+  }
+  if (fact('MEDICAL_PRIVACY_BOUNDARY')) concepts.push(Object.freeze({ code: 'MEDICAL_PRIVACY', confidence: 1, source: 'EXPLICIT_INPUT', supportingKnowledgeIds: Object.freeze([]) }))
   const text = normalized(input.originalInput)
   const explicitConceptSignals = [
     ['NOISE', /\b(?:geluid|lawaai|lawaaiig)\b/],
