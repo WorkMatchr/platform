@@ -12,6 +12,7 @@ import {
   type PublicIntakeAbuseContext,
 } from './public-intake-abuse-protection'
 import { PUBLIC_HELP_REQUEST_INTAKE_V2_FLOW_VERSION } from './public-intake-config'
+import { isTechnicalClassifierFallback } from './classifier-fallback-continuity'
 
 function withRefreshedGuidance(draft: PublicIntakeDraftView): PublicIntakeDraftView {
   if (!draft.id) return draft
@@ -92,12 +93,18 @@ async function withPersistedContextQuestions(
   draft: PublicIntakeDraftView,
   classification: AIClassifierOutput | null,
   abuseContext?: PublicIntakeAbuseContext,
+  classifierAvailability: 'AVAILABLE' | 'TECHNICALLY_UNAVAILABLE' = 'AVAILABLE',
 ): Promise<PublicIntakeDraftView> {
-  if (!draft.id || !draft.originalInput || !classification) return draft
+  if (
+    !draft.id
+    || !draft.originalInput
+    || (!classification && classifierAvailability !== 'TECHNICALLY_UNAVAILABLE')
+  ) return draft
   const contextQuestions = await ensurePublicIntakeAIContextQuestions({
     draftId: draft.id,
     originalInput: draft.originalInput,
     classification,
+    classifierAvailability,
     abuseContext,
     answers: draft.answers,
     fallbackQuestionWasAsked: draft.answers.some((answer) => answer.questionKey === 'guidance_topic'),
@@ -162,8 +169,11 @@ export async function enrichPublicIntakeDraftWithAIClassification(
   }
 
   const classification = applyKnowledgeContextSupport(draft, result.classification)
+  const classifierAvailability = isTechnicalClassifierFallback(result.fallbackReason)
+    ? 'TECHNICALLY_UNAVAILABLE'
+    : 'AVAILABLE'
   return withRefreshedGuidance(await withPersistedContextQuestions({
     ...draft,
     aiClassification: classification,
-  }, classification, options.abuseContext))
+  }, classification, options.abuseContext, classifierAvailability))
 }

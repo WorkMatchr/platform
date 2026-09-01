@@ -131,8 +131,12 @@ gecachete resultaat en schrijft `AI_CONFIRMED`; er volgt geen tweede
 onderwerpvraag en geen nieuw providerrequest.
 
 `Nee, ik bedoel iets anders` opent de bestaande handmatige onderwerpkeuze. De
-keuze wordt als `USER_CORRECTED` vastgelegd. Bij `LOW`, `UNKNOWN`, een
-onbruikbare samenvatting of een technische fallback verschijnt die veilige
-keuze direct en krijgt het antwoord `FALLBACK_SELECTION`. De client kan deze
-broncodes niet zelf toekennen. De additieve antwoordbronmigratie wijzigt geen
-Guidance-, Clarification-, matching- of opdrachtmodel.
+keuze wordt als `USER_CORRECTED` vastgelegd. Bij `LOW`, `UNKNOWN` of een
+onbruikbare samenvatting verschijnt die veilige keuze direct en krijgt het
+antwoord `FALLBACK_SELECTION`. Bij uitsluitend een technische classifierfallback
+mag de bestaande contextengine wel doorgaan op betrouwbare deterministische
+concepten uit expliciete invoer. Ontbreekt zulke evidence, dan blijft dezelfde
+veilige onderwerpkeuze zichtbaar. Limiter-, abuse- en inputweigeringen activeren
+deze continuiteit nooit. De client kan broncodes niet zelf toekennen. De
+additieve antwoordbronmigratie wijzigt geen Guidance-, Clarification-, matching-
+of opdrachtmodel.

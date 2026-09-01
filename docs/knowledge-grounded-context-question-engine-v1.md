@@ -80,6 +80,13 @@ KnowledgeRule verwijst naar claims die in dezelfde actuele retrievalset geldig
 en herleidbaar zijn. Ontbrekende kennis leidt tot universele context,
 onderwerpkeuze of een veilige fallback; nooit tot geïmproviseerde vakvragen.
 
+Een technische classifierstoring is afzonderlijk van inhoudelijke lage
+confidence. Bij technische onbeschikbaarheid kan de engine uitsluitend met de
+bestaande betrouwbare deterministische facts en concepten verdergaan. Hypothesen
+bewijzen geen applicability; claims bewijzen geen casusfeit; alle bestaande
+grounding-, presuppositie- en expert-routingguards blijven van toepassing. Zonder
+bruikbaar expliciet concept blijft de generieke veilige fallback behouden.
+
 ## Context Goal-contract
 
 Een contextdoel bevat een stabiele code, vraagkey, doel, neutrale formulering,

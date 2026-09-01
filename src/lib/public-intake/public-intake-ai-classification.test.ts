@@ -227,6 +227,71 @@ describe('Public Intake AI-classificatiehandoff', () => {
     })
   })
 
+  it('laat een technische timeout met expliciete evidence door naar de contextengine', async () => {
+    mocks.classify.mockResolvedValue({
+      classification: null,
+      fallbackUsed: true,
+      fallbackReason: 'PROVIDER_TIMEOUT',
+      providerStatusCode: null,
+    })
+
+    const result = await enrichPublicIntakeDraftWithAIClassification({
+      ...draft,
+      id: 'public-intake-technical-fallback-fixture',
+      originalInput: 'Medewerkers noemen hoge werkdruk en onderlinge spanningen.',
+      flowVersion: 'PUBLIC-HELP-REQUEST-2',
+      phase: 'CLARIFYING',
+      selectedRequestKey: null,
+      currentStep: null,
+      version: 1,
+      startedAt: new Date('2026-09-01T12:00:00.000Z'),
+      lastInteractionAt: new Date('2026-09-01T12:00:00.000Z'),
+      expiresAt: new Date('2026-11-30T12:00:00.000Z'),
+      contextQuestions: [],
+    } as PublicIntakeDraftView)
+
+    expect(mocks.ensureContextQuestions).toHaveBeenCalledWith(expect.objectContaining({
+      classification: null,
+      classifierAvailability: 'TECHNICALLY_UNAVAILABLE',
+      mode: 'DIRECT_REQUEST',
+    }))
+    expect(result.aiClassification).toBeNull()
+  })
+
+  it('behandelt inhoudelijke LOW confidence niet als technische uitval', async () => {
+    mocks.classify.mockResolvedValue({
+      classification: {
+        summary: 'De hulpvraag is nog onvoldoende duidelijk.',
+        primarySubject: 'UNKNOWN',
+        secondarySubjects: [],
+        confidence: 'LOW',
+        alternatives: [],
+      },
+      fallbackUsed: false,
+      fallbackReason: null,
+      providerStatusCode: null,
+    })
+
+    await enrichPublicIntakeDraftWithAIClassification({
+      ...draft,
+      id: 'public-intake-low-confidence-fixture',
+      phase: 'CLARIFYING',
+      selectedRequestKey: null,
+      flowVersion: 'PUBLIC-HELP-REQUEST-2',
+      currentStep: null,
+      version: 1,
+      startedAt: new Date('2026-09-01T12:00:00.000Z'),
+      lastInteractionAt: new Date('2026-09-01T12:00:00.000Z'),
+      expiresAt: new Date('2026-11-30T12:00:00.000Z'),
+      contextQuestions: [],
+    } as PublicIntakeDraftView)
+
+    expect(mocks.ensureContextQuestions).toHaveBeenCalledWith(expect.objectContaining({
+      classifierAvailability: 'AVAILABLE',
+      classification: expect.objectContaining({ confidence: 'LOW' }),
+    }))
+  })
+
   it('markeert een begrensde AI-call zonder technische details te tonen', async () => {
     mocks.classify.mockResolvedValue({
       classification: null,

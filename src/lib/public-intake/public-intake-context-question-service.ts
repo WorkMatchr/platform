@@ -27,6 +27,7 @@ import {
   type IntakeMode,
   type PersistedContextQuestionPlan,
 } from './context-question-engine-types'
+import { hasReliableDeterministicContinuityEvidence } from './classifier-fallback-continuity'
 
 export const PUBLIC_INTAKE_CONTEXT_QUESTION_TOTAL_LIMIT = 5 as const
 
@@ -77,14 +78,29 @@ export async function ensurePublicIntakeAIContextQuestions(input: {
   draftId: string
   originalInput: string
   classification: AIClassifierOutput | null
+  classifierAvailability?: 'AVAILABLE' | 'TECHNICALLY_UNAVAILABLE'
   answers: readonly PublicIntakeAnswerView[]
   fallbackQuestionWasAsked: boolean
   mode: IntakeMode
   abuseContext?: PublicIntakeAbuseContext
 }): Promise<readonly PublicIntakeContextQuestionView[]> {
-  if (!input.classification || input.classification.confidence === 'LOW') return []
+  const technicalContinuity = input.classifierAvailability === 'TECHNICALLY_UNAVAILABLE'
+  if ((!input.classification && !technicalContinuity) || input.classification?.confidence === 'LOW') return []
   const classification = input.classification
-  const understanding = classification.caseUnderstanding ?? emptyCaseUnderstanding()
+  const understanding = classification?.caseUnderstanding ?? emptyCaseUnderstanding()
+  if (technicalContinuity) {
+    const deterministicFacts = extractPublicIntakeFacts({
+      originalInput: input.originalInput,
+      answers: input.answers,
+      caseUnderstanding: understanding,
+    })
+    const deterministicConcepts = deriveKnowledgeConceptCandidates({
+      originalInput: input.originalInput,
+      classification: null,
+      facts: deterministicFacts,
+    })
+    if (!hasReliableDeterministicContinuityEvidence(deterministicConcepts)) return []
+  }
 
   type Formulation = Awaited<ReturnType<typeof formulateContextQuestion>>
   async function planAndPersist(prepared?: { digest: string; formulation: Formulation }): Promise<
@@ -152,7 +168,7 @@ export async function ensurePublicIntakeAIContextQuestions(input: {
         }
       }
     }
-    if (classification.caseUnderstanding) {
+    if (classification?.caseUnderstanding || technicalContinuity) {
       const matchingProfile = await buildKnowledgeGroundedMatchingProfile({
         database: transaction,
         understanding,

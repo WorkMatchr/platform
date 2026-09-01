@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
   findQuestions: vi.fn(), createQuestions: vi.fn(), findSectorMappings: vi.fn(),
-  findClaims: vi.fn(), findRules: vi.fn(), transaction: vi.fn(),
+  findClaims: vi.fn(), findRules: vi.fn(), updateDraft: vi.fn(), transaction: vi.fn(),
 }))
 
 vi.mock('@/lib/prisma', () => ({ getPrisma: () => ({ $transaction: mocks.transaction }) }))
@@ -39,6 +39,7 @@ describe('public intake context-question persistence', () => {
     mocks.findRules.mockResolvedValue([])
     mocks.transaction.mockImplementation(async (callback: (transaction: unknown) => unknown) => callback({
       publicIntakeContextQuestion: { findMany: mocks.findQuestions, createMany: mocks.createQuestions },
+      publicIntakeDraft: { update: mocks.updateDraft },
       providerSectorTaxonomyMap: { findMany: mocks.findSectorMappings },
       knowledgeClaim: { findMany: mocks.findClaims }, knowledgeRule: { findMany: mocks.findRules },
     }))
@@ -85,6 +86,35 @@ describe('public intake context-question persistence', () => {
         contextGoalCode: 'SECTOR', catalogVersion: KNOWLEDGE_GROUNDED_CONTEXT_ENGINE_VERSION, sequence: 1,
       })],
     }))
+  })
+
+  it('start bij technische uitval de bestaande engine op expliciet deterministisch bewijs', async () => {
+    mocks.findQuestions.mockResolvedValueOnce([]).mockResolvedValueOnce([storedQuestion])
+
+    await expect(ensurePublicIntakeAIContextQuestions({
+      draftId: '00000000-0000-0000-0000-000000000005',
+      originalInput: 'Medewerkers noemen hoge werkdruk en onderlinge spanningen.',
+      classification: null,
+      classifierAvailability: 'TECHNICALLY_UNAVAILABLE',
+      answers: [], fallbackQuestionWasAsked: false, mode: 'DIRECT_REQUEST',
+    })).resolves.toMatchObject([{ questionKey: 'context_sector' }])
+
+    expect(mocks.transaction).toHaveBeenCalledTimes(1)
+    expect(mocks.updateDraft).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: '00000000-0000-0000-0000-000000000005' },
+    }))
+  })
+
+  it('houdt zonder betrouwbaar expliciet bewijs de generieke fallback intact', async () => {
+    await expect(ensurePublicIntakeAIContextQuestions({
+      draftId: '00000000-0000-0000-0000-000000000006',
+      originalInput: 'Wij willen graag ondersteuning.',
+      classification: null,
+      classifierAvailability: 'TECHNICALLY_UNAVAILABLE',
+      answers: [], fallbackQuestionWasAsked: false, mode: 'DIRECT_REQUEST',
+    })).resolves.toEqual([])
+
+    expect(mocks.transaction).not.toHaveBeenCalled()
   })
 
   it('does not append a second question while the current planned question is unanswered', async () => {
