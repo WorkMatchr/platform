@@ -109,9 +109,36 @@ const LIMIT_KEYS = [
   'ipBurst', 'ipDaily', 'sessionBurst', 'sessionDaily', 'globalBurst', 'globalDaily',
 ] as const
 
+const MAX_PREVIEW_E2E_AI_LIMIT = 100
+
+function withPreviewE2eAiLimit(configured: PublicIntakeAbuseLimits): PublicIntakeAbuseLimits {
+  if (process.env.VERCEL_ENV !== 'preview' || process.env.VERCEL !== '1') return configured
+
+  const serialized = process.env.PUBLIC_INTAKE_AI_E2E_PREVIEW_LIMIT?.trim()
+  if (!serialized) return configured
+
+  const limit = Number(serialized)
+  if (!Number.isInteger(limit) || limit < 1 || limit > MAX_PREVIEW_E2E_AI_LIMIT) {
+    throw new PublicIntakeAbuseProtectionError('PROTECTION_UNAVAILABLE')
+  }
+
+  return Object.freeze({
+    ...configured,
+    ai: Object.freeze(Object.fromEntries(
+      LIMIT_KEYS.map((key) => [
+        key,
+        Object.freeze({
+          ...configured.ai[key],
+          limit: Math.max(configured.ai[key].limit, limit),
+        }),
+      ]),
+    ) as unknown as OperationLimits),
+  })
+}
+
 export function configuredPublicIntakeAbuseLimits(): PublicIntakeAbuseLimits {
   const serialized = process.env.PUBLIC_INTAKE_ABUSE_LIMITS_JSON?.trim()
-  if (!serialized) return DEFAULT_PUBLIC_INTAKE_ABUSE_LIMITS
+  if (!serialized) return withPreviewE2eAiLimit(DEFAULT_PUBLIC_INTAKE_ABUSE_LIMITS)
 
   let candidate: unknown
   try {
@@ -144,7 +171,7 @@ export function configuredPublicIntakeAbuseLimits(): PublicIntakeAbuseLimits {
       }
     }
   }
-  return candidate as PublicIntakeAbuseLimits
+  return withPreviewE2eAiLimit(candidate as PublicIntakeAbuseLimits)
 }
 
 function environment(): PublicIntakeEnvironment {

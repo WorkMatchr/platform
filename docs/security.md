@@ -10,6 +10,8 @@ De publieke Advieswijzer gebruikt een persistente, fail-closed limiter vóór mu
 
 Alle aantallen en tijdvensters staan server-side op één configuratiepunt in `public-intake-abuse-protection.ts`. Zonder configuratie gelden de gedocumenteerde veilige defaults. Een optionele volledige `PUBLIC_INTAKE_ABUSE_LIMITS_JSON`-configuratie wordt vóór gebruik gecontroleerd op integerwaarden, minimale vensterduur en harde maximumaantallen. Een onvolledige, ongeldige of te ruime configuratie faalt gesloten; er bestaat geen client- of beheerendpoint om deze waarden te lezen of wijzigen.
 
+Voor geautomatiseerde browseracceptatie kan uitsluitend op een echte Vercel Preview-deployment expliciet `PUBLIC_INTAKE_AI_E2E_PREVIEW_LIMIT` worden ingesteld. Deze server-side testconfiguratie verruimt alleen de bestaande AI-bucketaantallen tot maximaal 100 en behoudt alle IP-, sessie-, globale, HMAC-, retentie- en fail-closed controles. Zonder de variabele geldt de normale limiter; Production negeert deze Preview-override altijd.
+
 Op Vercel wordt uitsluitend `x-forwarded-for` vertrouwd, omdat Vercel deze requestheader aan de platformgrens overschrijft. Een Production-request zonder aantoonbare Vercel-context of geldige enkelvoudige IP-waarde faalt gesloten. Client-aangeleverde alternatieve forwardingheaders zijn geen autorisatie- of limietbron.
 
 De AI-limiter staat vóór een cacheclaim en providercall. Daardoor kunnen unieke prompts de kostenbegrenzing niet omzeilen. Een globale circuitbreaker begrenst onverwacht totaalverkeer. Limiteruitval, ontbrekende pseudonimiseringsconfiguratie en te lange invoer leiden nooit tot een OpenAI-call of kostbaar vervolgwerk.

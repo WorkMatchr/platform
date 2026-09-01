@@ -99,6 +99,73 @@ describe('publieke AI-intake abusebescherming', () => {
     })
   })
 
+  it('behoudt in Production exact de bestaande limiter, ook met een Preview-override', () => {
+    vi.stubEnv('VERCEL', '1')
+    vi.stubEnv('VERCEL_ENV', 'production')
+    vi.stubEnv('PUBLIC_INTAKE_AI_E2E_PREVIEW_LIMIT', '100')
+
+    expect(configuredPublicIntakeAbuseLimits()).toBe(DEFAULT_PUBLIC_INTAKE_ABUSE_LIMITS)
+  })
+
+  it('behoudt in Preview zonder expliciete override exact de bestaande limiter', () => {
+    vi.stubEnv('VERCEL', '1')
+    vi.stubEnv('VERCEL_ENV', 'preview')
+
+    expect(configuredPublicIntakeAbuseLimits()).toBe(DEFAULT_PUBLIC_INTAKE_ABUSE_LIMITS)
+  })
+
+  it('verruimt uitsluitend in Vercel Preview expliciet de bestaande AI-buckets', () => {
+    vi.stubEnv('VERCEL', '1')
+    vi.stubEnv('VERCEL_ENV', 'preview')
+    vi.stubEnv('PUBLIC_INTAKE_AI_E2E_PREVIEW_LIMIT', '100')
+
+    const configured = configuredPublicIntakeAbuseLimits()
+    expect(configured.request).toBe(DEFAULT_PUBLIC_INTAKE_ABUSE_LIMITS.request)
+    expect(configured.ai).toEqual({
+      ipBurst: { ...DEFAULT_PUBLIC_INTAKE_ABUSE_LIMITS.ai.ipBurst, limit: 100 },
+      ipDaily: { ...DEFAULT_PUBLIC_INTAKE_ABUSE_LIMITS.ai.ipDaily, limit: 100 },
+      sessionBurst: { ...DEFAULT_PUBLIC_INTAKE_ABUSE_LIMITS.ai.sessionBurst, limit: 100 },
+      sessionDaily: { ...DEFAULT_PUBLIC_INTAKE_ABUSE_LIMITS.ai.sessionDaily, limit: 100 },
+      globalBurst: { ...DEFAULT_PUBLIC_INTAKE_ABUSE_LIMITS.ai.globalBurst, limit: 100 },
+      globalDaily: DEFAULT_PUBLIC_INTAKE_ABUSE_LIMITS.ai.globalDaily,
+    })
+  })
+
+  it('houdt onder de Preview E2E-limiet alle beveiligingschecks fail-closed actief', async () => {
+    vi.stubEnv('VERCEL', '1')
+    vi.stubEnv('VERCEL_ENV', 'preview')
+    vi.stubEnv('PUBLIC_INTAKE_AI_E2E_PREVIEW_LIMIT', '100')
+
+    await expect(allowPublicIntakeAIClassification({
+      requestHeaders: requestHeaders(),
+    }, { repository: memoryRepository().repository })).resolves.toEqual({
+      allowed: false,
+      reason: 'PROTECTION_UNAVAILABLE',
+    })
+
+    await expect(allowPublicIntakeAIClassification({
+      requestHeaders: new Headers({ 'x-forwarded-for': 'ongeldig-ip' }),
+      sessionToken: 'preview-e2e-sessie',
+    }, { repository: memoryRepository().repository })).resolves.toEqual({
+      allowed: false,
+      reason: 'PROTECTION_UNAVAILABLE',
+    })
+  })
+
+  it('faalt gesloten bij een te ruime Preview E2E-override', async () => {
+    vi.stubEnv('VERCEL', '1')
+    vi.stubEnv('VERCEL_ENV', 'preview')
+    vi.stubEnv('PUBLIC_INTAKE_AI_E2E_PREVIEW_LIMIT', '101')
+
+    await expect(allowPublicIntakeAIClassification({
+      requestHeaders: requestHeaders(),
+      sessionToken: 'preview-e2e-sessie',
+    }, { repository: memoryRepository().repository })).resolves.toEqual({
+      allowed: false,
+      reason: 'PROTECTION_UNAVAILABLE',
+    })
+  })
+
   it('faalt gesloten bij ongeldige configuratie of overschrijding van harde veiligheidsgrenzen', async () => {
     vi.stubEnv('PUBLIC_INTAKE_ABUSE_LIMITS_JSON', '{ongeldig')
     await expect(allowPublicIntakeAIClassification({
