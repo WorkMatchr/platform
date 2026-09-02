@@ -39,7 +39,7 @@ export class JorttApiGateway implements JorttGateway {
 
   private async token() {
     const config = configuration()
-    const body = new URLSearchParams({ grant_type: 'client_credentials', scope: 'customers:read customers:write invoices:read invoices:write' })
+    const body = new URLSearchParams({ grant_type: 'client_credentials', scope: 'customers:read customers:write invoices:read invoices:write organizations:read' })
     const response = await this.fetcher(TOKEN_URL, { method: 'POST', headers: { Authorization: `Basic ${Buffer.from(`${config.clientId}:${config.clientSecret}`).toString('base64')}`, 'Content-Type': 'application/x-www-form-urlencoded' }, body, signal: AbortSignal.timeout(10_000) })
     const result = await json<{ access_token?: string }>(response)
     if (!result.access_token) throw new Error('JORTT_AUTHENTICATION_FAILED')

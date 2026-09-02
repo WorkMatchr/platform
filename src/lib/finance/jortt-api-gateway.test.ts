@@ -32,6 +32,24 @@ describe('Jortt API gateway', () => {
 
   afterEach(() => vi.unstubAllEnvs())
 
+  it('vraagt uitsluitend de noodzakelijke klant-, factuur- en administratiescopes aan', async () => {
+    let requestedScope: string | null = null
+    const fetcher = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input)
+      if (url.includes('/oauth/token')) {
+        requestedScope = new URLSearchParams(String(init?.body)).get('scope')
+        return response({ access_token: 'token' })
+      }
+      if (url.includes('/invoices?')) return response({ data: [{ id: 'invoice-1', reference: payload().invoiceNumber, remarks: payload().technicalReference, invoice_number: 'J2026-42' }] })
+      if (url.endsWith('/invoices/invoice-1')) return response({ data: { id: 'invoice-1', reference: payload().invoiceNumber, remarks: payload().technicalReference, invoice_number: 'J2026-42' } })
+      return response({}, 404)
+    })
+
+    await new JorttApiGateway(fetcher as typeof fetch).submitInvoice(payload(), 'scope-check')
+
+    expect(requestedScope).toBe('customers:read customers:write invoices:read invoices:write organizations:read')
+  })
+
   it('boekt een factuur met WorkMatchr-reference, Jortt-nummer en uitsluitend self', async () => {
     const calls: Array<{ url: string; body: unknown }> = []
     const fetcher = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
