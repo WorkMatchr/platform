@@ -8,6 +8,8 @@ Migratie `20260825150000_scope_financial_invoice_vat_validation` corrigeert uits
 
 Migratie `20260901100000_harden_jortt_invoice_identity` voegt uitsluitend de nullable, unieke kolom `FinancialJorttSync.technicalReference` toe. Nieuwe synchronisaties gebruiken `workmatchr-invoice:<FinancialInvoice.id>`. Er vindt bewust geen backfill plaats: bestaande lokale syncstatussen en reeds verzonden Jortt-facturen of creditfacturen worden niet gewijzigd. Een toekomstige expliciete retry kan de deterministisch afgeleide lokale waarde veilig vastleggen; een reeds bekende remote Jortt-ID blijft leidend.
 
+Migratie `20260903100000_add_financial_maintenance_runs` voegt de operationele tabel `FinancialMaintenanceRun` toe. De tabel bevat geen financiële snapshots, providerpayloads, secrets of persoonsgegevens. Een gedeeltelijke unieke index voorkomt meer dan één rij met status `RUNNING`; de applicatie gebruikt een begrensde lease om na een afgebroken uitvoering veilig opnieuw te kunnen starten.
+
 ## Arbo-wijzer runs
 
 Migratie `20260820100000_add_arbo_guide_runs` voegt uitsluitend de generieke typen, teller, `ArboGuideRun` en `ArboGuideRunResult` toe. Bestaande data wordt niet teruggevuld of gewijzigd. Rapportnummers worden concurrency-safe per type en jaar uitgegeven. Runs/resultaten zijn na afronding databasebreed append-only, gebruiken `ON DELETE RESTRICT` en een deferred constrainttrigger vereist minimaal één resultaat bij iedere afgeronde run.

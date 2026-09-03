@@ -95,3 +95,45 @@ export async function getPlatformFinancialDashboard(actorUserId: string) {
     jortt,
   }
 }
+
+const MAINTENANCE_LATE_MS = 3 * 60 * 60 * 1000
+const REFUND_AGING_MS = 2 * 60 * 60 * 1000
+const JORTT_AGING_MS = 2 * 60 * 60 * 1000
+
+export async function getPlatformFinancialMaintenanceOverview(actorUserId: string, at = new Date()) {
+  await getPlatformAdministratorContext(actorUserId)
+  const prisma = getPrisma()
+  const refundThreshold = new Date(at.getTime() - REFUND_AGING_MS)
+  const jorttThreshold = new Date(at.getTime() - JORTT_AGING_MS)
+  const overdueThreshold = new Date(at)
+  overdueThreshold.setUTCMonth(overdueThreshold.getUTCMonth() - 1)
+
+  const [latestRun, lastSuccessfulRun, lastFailedRun, pendingRefunds, agedPendingRefunds, pendingCancellations, overdueCancellations, overduePro, jorttRetryRequired, jorttFailed, agedJortt] = await Promise.all([
+    prisma.financialMaintenanceRun.findFirst({ orderBy: { startedAt: 'desc' } }),
+    prisma.financialMaintenanceRun.findFirst({ where: { status: 'SUCCEEDED' }, orderBy: { finishedAt: 'desc' } }),
+    prisma.financialMaintenanceRun.findFirst({ where: { status: { in: ['FAILED', 'PARTIAL_FAILURE'] } }, orderBy: { finishedAt: 'desc' } }),
+    prisma.financialRefund.count({ where: { status: 'PENDING' } }),
+    prisma.financialRefund.count({ where: { status: 'PENDING', requestedAt: { lt: refundThreshold } } }),
+    prisma.professionalSubscription.count({ where: { cancelAtPeriodEnd: true, status: { in: ['ACTIVE', 'PAST_DUE'] } } }),
+    prisma.professionalSubscription.count({ where: { cancelAtPeriodEnd: true, cancellationEffectiveAt: { lte: at }, status: { in: ['ACTIVE', 'PAST_DUE'] } } }),
+    prisma.professionalSubscription.count({ where: { status: 'PAST_DUE', cancelAtPeriodEnd: false, pastDueAt: { lte: overdueThreshold } } }),
+    prisma.financialJorttSync.count({ where: { status: 'RETRY_REQUIRED' } }),
+    prisma.financialJorttSync.count({ where: { status: 'FAILED' } }),
+    prisma.financialJorttSync.count({ where: { status: { in: ['PENDING', 'RETRY_REQUIRED'] }, updatedAt: { lt: jorttThreshold }, OR: [{ nextAttemptAt: null }, { nextAttemptAt: { lte: at } }] } }),
+  ])
+
+  return {
+    latestRun,
+    lastSuccessfulRun,
+    lastFailedRun,
+    pendingRefunds,
+    agedPendingRefunds,
+    pendingCancellations,
+    overdueCancellations,
+    overduePro,
+    jorttRetryRequired,
+    jorttFailed,
+    agedJortt,
+    maintenanceLate: !lastSuccessfulRun?.finishedAt || lastSuccessfulRun.finishedAt.getTime() < at.getTime() - MAINTENANCE_LATE_MS,
+  }
+}

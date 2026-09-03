@@ -54,7 +54,9 @@ Een nieuw Pro-abonnement gebruikt een Mollie `first` payment van €59,29 inclus
 
 Een bevoegde eigenaar of beheerder kan een `ACTIVE` of `PAST_DUE` Pro-abonnement opzeggen tegen het einde van de actuele betaalperiode. `cancelAtPeriodEnd`, `cancellationRequestedAt` en `cancellationEffectiveAt` leggen deze planning vast zonder de actuele betaalstatus voortijdig te wijzigen. Mollie wordt met een vaste idempotentiesleutel geannuleerd, zodat geen nieuwe verlenging wordt gestart. Een `ACTIVE` abonnement behoudt de Pro-voordelen uitsluitend tot `cancellationEffectiveAt`; `PAST_DUE` blijft achterstallig. De aanvraag en de uiteindelijke overgang naar `CANCELED` schrijven afzonderlijke append-only `FinancialEvent`-regels.
 
-De onderhoudsrunner voert refundreconciliatie, vervallen opzeggingen en achterstanden van minimaal één maand idempotent en concurrency-safe uit. Productie roept `POST /api/maintenance/finance` met `Authorization: Bearer <FINANCIAL_MAINTENANCE_SECRET>` aan vanuit een externe scheduler, bijvoorbeeld Vercel Cron. De secret moet minimaal 32 tekens bevatten. Zonder configuratie antwoordt de route fail-closed met 503; een fout of ontbrekend bearer-token geeft 401. De externe cronconfiguratie zelf is niet onderdeel van de repository.
+De onderhoudsrunner voert refundreconciliatie, vervallen opzeggingen, achterstanden van minimaal één maand en Jortt-retries idempotent uit. Vercel Cron roept ieder uur `GET /api/maintenance/finance` aan met het afzonderlijke `CRON_SECRET`; deze ingang bestaat uitsluitend in Production. De bestaande handmatige `POST`-ingang blijft afzonderlijk beschermd met `FINANCIAL_MAINTENANCE_SECRET`. Een databasebrede runlease voorkomt overlap. Iedere run registreert begin, einde, trigger, status, begrensde categorietotalen en uitsluitend veilige foutcodes. Een fout in één categorie verhindert de overige categorieën niet. Een afgebroken `RUNNING`-lease wordt na dertig minuten als mislukt geregistreerd voordat een nieuwe run kan starten.
+
+Platformbeheer toont de laatste geslaagde en mislukte run en signaleert wanneer drie uur geen succesvolle run is vastgelegd. Terugbetalingen ouder dan twee uur, verlopen Pro-opzeggingen, Pro-achterstanden ouder dan één maand en opeisbare Jortt-retries die langer dan twee uur blijven staan worden als achterstallig geteld. Deze signalering leest uitsluitend bestaande statusdata en verandert geen financiële records. Afgeronde runregistraties worden negentig dagen bewaard, zodat operationele observability begrensd blijft.
 
 Het platformdashboard rapporteert bruto omzet uit succesvolle creditaankopen, eerste Pro-betalingen en append-only terugkerende Pro-betalingen. Alleen definitief `REFUNDED` terugbetalingen met de bedragen uit hun creditnota worden afgetrokken. Pending, failed en canceled refunds beïnvloeden netto-omzet niet. Het dashboard toont bruto, refund en netto voor excl. btw, btw en incl. btw en houdt credit- en Pro-betalingstellers gescheiden om webhookreplays niet dubbel te tellen.
 
@@ -77,6 +79,7 @@ Alle waarden staan uitsluitend in beheerde omgevingsconfiguratie:
 - `MOLLIE_WEBHOOK_BASE_URL`
 - `MOLLIE_REDIRECT_BASE_URL`
 - `FINANCIAL_MAINTENANCE_SECRET` (minimaal 32 willekeurige tekens; uitsluitend voor de server-side onderhoudsroute)
+- `CRON_SECRET` (minimaal 32 willekeurige tekens; uitsluitend voor de Production Vercel Cron-aanroep)
 - `JORTT_CLIENT_ID` en `JORTT_CLIENT_SECRET` (uitsluitend server-side OAuth-clientcredentials)
 - `JORTT_SYNC_ENVIRONMENT` (`acceptance` voor Preview, `production` voor Production)
 - `JORTT_TRADENAME_ID` en `JORTT_REVENUE_LEDGER_ACCOUNT_ID` (optionele administratieve mapping)

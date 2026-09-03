@@ -1,11 +1,24 @@
-import { AdminPageHeader, AdminSection, AdminTable, MetricCard } from '@/components/platform-admin/platform-admin-ui'
+import { AdminPageHeader, AdminSection, AdminTable, MetricCard, StatusPill } from '@/components/platform-admin/platform-admin-ui'
 import { formatEuro } from '@/lib/finance/financial-contract'
-import { getPlatformFinancialDashboard } from '@/lib/finance/financial-dashboard-service'
+import { getPlatformFinancialDashboard, getPlatformFinancialMaintenanceOverview } from '@/lib/finance/financial-dashboard-service'
 import { requirePlatformAdministrator } from '@/lib/platform-admin/platform-admin-authorization'
 
 export default async function PlatformFinancialPage() {
   const administrator = await requirePlatformAdministrator('/platformbeheer/financien')
-  const data = await getPlatformFinancialDashboard(administrator.id)
+  const [data, maintenance] = await Promise.all([
+    getPlatformFinancialDashboard(administrator.id),
+    getPlatformFinancialMaintenanceOverview(administrator.id),
+  ])
+  const runStatus = maintenance.latestRun?.status === 'SUCCEEDED'
+    ? { label: 'Geslaagd', tone: 'good' as const }
+    : maintenance.latestRun?.status === 'RUNNING'
+      ? { label: 'Bezig', tone: 'neutral' as const }
+      : maintenance.latestRun
+        ? { label: 'Aandacht nodig', tone: 'bad' as const }
+        : { label: 'Nog niet uitgevoerd', tone: 'warning' as const }
+  const formatDateTime = (value: Date | null | undefined) => value
+    ? new Intl.DateTimeFormat('nl-NL', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Amsterdam' }).format(value)
+    : 'Niet beschikbaar'
   return <>
     <AdminPageHeader title="Financieel overzicht" description="Herleidbaar overzicht uit betalingen, facturen, abonnementen en het append-only creditgrootboek." />
     <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
@@ -33,6 +46,26 @@ export default async function PlatformFinancialPage() {
     </AdminSection>
     <AdminSection title="Jortt-synchronisatie" description="Een storing in Jortt verandert nooit betaling, factuur of credits.">
       <AdminTable headers={['Status', 'Aantal']}>{data.jortt.map((item) => <tr key={item.status}><td className="px-4 py-3">{item.status}</td><td className="px-4 py-3">{item._count}</td></tr>)}</AdminTable>
+    </AdminSection>
+    <AdminSection title="Financieel onderhoud" description="Uurlijkse controle op terugbetalingen, Pro-statusovergangen en boekhoudsynchronisatie.">
+      <div className="rounded-card border border-border bg-surface p-4 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div><p className="text-sm font-semibold text-brand-dark">Laatste onderhoudsrun</p><p className="mt-1 text-sm text-text-secondary">{formatDateTime(maintenance.latestRun?.finishedAt ?? maintenance.latestRun?.startedAt)}</p></div>
+          <StatusPill tone={runStatus.tone}>{runStatus.label}</StatusPill>
+        </div>
+        {maintenance.maintenanceLate ? <p className="mt-3 rounded-control bg-surface-subtle p-3 text-sm font-semibold text-error" role="status">Het financiële onderhoud heeft langer dan verwacht niet succesvol gedraaid.</p> : null}
+        <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2 xl:grid-cols-4">
+          <div><dt className="text-text-secondary">Laatste succesvolle run</dt><dd className="font-semibold text-brand-dark">{formatDateTime(maintenance.lastSuccessfulRun?.finishedAt)}</dd></div>
+          <div><dt className="text-text-secondary">Laatste mislukte run</dt><dd className="font-semibold text-brand-dark">{formatDateTime(maintenance.lastFailedRun?.finishedAt)}</dd></div>
+          <div><dt className="text-text-secondary">Terugbetalingen in behandeling</dt><dd className="font-semibold text-brand-dark">{maintenance.pendingRefunds}{maintenance.agedPendingRefunds ? ` · ${maintenance.agedPendingRefunds} vertraagd` : ''}</dd></div>
+          <div><dt className="text-text-secondary">Pro-opzeggingen te finaliseren</dt><dd className="font-semibold text-brand-dark">{maintenance.pendingCancellations}{maintenance.overdueCancellations ? ` · ${maintenance.overdueCancellations} vertraagd` : ''}</dd></div>
+          <div><dt className="text-text-secondary">Pro langer dan één maand achterstallig</dt><dd className="font-semibold text-brand-dark">{maintenance.overduePro}</dd></div>
+          <div><dt className="text-text-secondary">Jortt opnieuw proberen</dt><dd className="font-semibold text-brand-dark">{maintenance.jorttRetryRequired}</dd></div>
+          <div><dt className="text-text-secondary">Jortt definitief mislukt</dt><dd className="font-semibold text-brand-dark">{maintenance.jorttFailed}</dd></div>
+          <div><dt className="text-text-secondary">Jortt vertraagd</dt><dd className="font-semibold text-brand-dark">{maintenance.agedJortt}</dd></div>
+        </dl>
+        {maintenance.lastFailedRun?.errorCodes.length ? <p className="mt-3 text-xs text-text-secondary">Veilige foutindicatie: {maintenance.lastFailedRun.errorCodes.join(', ')}</p> : null}
+      </div>
     </AdminSection>
   </>
 }

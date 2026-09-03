@@ -659,6 +659,15 @@ erDiagram
   FinancialJorttSync ||--o{ FinancialJorttSyncAttempt : probeert
   DiscountCode ||--o{ DiscountRedemption : gebruikt
   Organization ||--o| StarterBenefitGrant : ontvangt
+  FinancialMaintenanceRun {
+    uuid id PK
+    datetime startedAt
+    datetime finishedAt
+    string status
+    string trigger
+    json resultCounts
+    string[] errorCodes
+  }
 ```
 
 Een Pro-abonnement bewaart uitsluitend de Mollie customer-, mandate- en subscription-identifiers plus de gevalideerde mandate-status, methode en verificatietijd. Een iDEAL-first-payment levert bij een geactiveerde SEPA-methode een direct-debit-mandate op; kaart blijft een afzonderlijk geldig alternatief. Gevoelige rekening- en kaartgegevens blijven uitsluitend bij Mollie.

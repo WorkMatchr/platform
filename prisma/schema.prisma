@@ -4115,6 +4115,20 @@ model FinancialEvent {
   @@index([eventType, createdAt])
 }
 
+model FinancialMaintenanceRun {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  startedAt    DateTime  @default(now()) @db.Timestamptz(3)
+  finishedAt   DateTime? @db.Timestamptz(3)
+  status       String    @db.VarChar(30)
+  trigger      String    @db.VarChar(30)
+  resultCounts Json?     @db.JsonB
+  errorCodes   String[]
+  createdAt    DateTime  @default(now()) @db.Timestamptz(3)
+
+  @@index([startedAt])
+  @@index([status, startedAt])
+}
+
 model MarketplaceMatchRun {
   id                 String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   assignmentId       String                         @db.Uuid
