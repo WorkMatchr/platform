@@ -87,8 +87,8 @@ export interface MollieGateway {
     interval: '1 month'
     description: string
     webhookUrl: string
-    mandateId: string
-    method: MollieMandateMethod
+    mandateId?: string
+    method?: MollieMandateMethod
     startDate: string
     idempotencyKey: string
     metadata: { subscriptionId: string; organizationId: string }
@@ -286,13 +286,14 @@ export function createMollieGateway(): MollieGateway {
       }))
     },
     async createSubscription(input) {
+      if (!input.mandateId && !input.method) throw new Error('MOLLIE_SUBSCRIPTION_PAYMENT_SOURCE_MISSING')
+
       const subscription = await client.customerSubscriptions.create({
         customerId: input.customerId,
         amount: { value: input.amountValue, currency: input.currency },
         interval: input.interval,
         description: input.description,
-        mandateId: input.mandateId,
-        method: input.method,
+        ...(input.mandateId ? { mandateId: input.mandateId } : { method: input.method }),
         startDate: input.startDate,
         webhookUrl: input.webhookUrl,
         metadata: input.metadata,

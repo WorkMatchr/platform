@@ -143,7 +143,37 @@ describe('Mollie-bedragconversie', () => {
     expect(result[0]).not.toHaveProperty('details')
   })
 
-  it('bindt de maandelijkse subscription aan mandate, betaalmethode en volgende maand', async () => {
+  it.each(['directdebit', 'creditcard'] as const)(
+    'bindt de maandelijkse subscription uitsluitend aan een expliciete %s-mandate',
+    async (method) => {
+      await createMollieGateway().createSubscription({
+        customerId: 'cst_test',
+        amountValue: '59.29',
+        currency: 'EUR',
+        interval: '1 month',
+        description: 'WorkMatchr Pro maandabonnement',
+        webhookUrl: 'https://example.invalid/webhook',
+        mandateId: 'mdt_test',
+        method,
+        startDate: '2026-09-09',
+        idempotencyKey: 'pro-subscription-test',
+        metadata: {
+          subscriptionId: '30000000-0000-4000-8000-000000000001',
+          organizationId: '20000000-0000-4000-8000-000000000001',
+        },
+      })
+
+      const payload = mocks.createSubscription.mock.calls[0]?.[0]
+      expect(payload).toEqual(expect.objectContaining({
+        amount: { value: '59.29', currency: 'EUR' },
+        mandateId: 'mdt_test',
+        startDate: '2026-09-09',
+      }))
+      expect(payload).not.toHaveProperty('method')
+    },
+  )
+
+  it('behoudt de betaalmethode wanneer geen expliciete mandate is opgegeven', async () => {
     await createMollieGateway().createSubscription({
       customerId: 'cst_test',
       amountValue: '59.29',
@@ -151,22 +181,18 @@ describe('Mollie-bedragconversie', () => {
       interval: '1 month',
       description: 'WorkMatchr Pro maandabonnement',
       webhookUrl: 'https://example.invalid/webhook',
-      mandateId: 'mdt_test',
       method: 'directdebit',
       startDate: '2026-09-09',
-      idempotencyKey: 'pro-subscription-test',
+      idempotencyKey: 'pro-subscription-without-mandate',
       metadata: {
         subscriptionId: '30000000-0000-4000-8000-000000000001',
         organizationId: '20000000-0000-4000-8000-000000000001',
       },
     })
 
-    expect(mocks.createSubscription).toHaveBeenCalledWith(expect.objectContaining({
-      amount: { value: '59.29', currency: 'EUR' },
-      mandateId: 'mdt_test',
-      method: 'directdebit',
-      startDate: '2026-09-09',
-    }))
+    const payload = mocks.createSubscription.mock.calls[0]?.[0]
+    expect(payload).toEqual(expect.objectContaining({ method: 'directdebit' }))
+    expect(payload).not.toHaveProperty('mandateId')
   })
 
   it('vindt een bestaande remote subscription op interne referentie voor veilige retries', async () => {
