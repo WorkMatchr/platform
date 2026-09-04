@@ -76,6 +76,7 @@ export interface MollieGateway {
   }): Promise<MollieRefundSnapshot>
   getRefund(input: { paymentId: string; refundId: string }): Promise<MollieRefundSnapshot>
   createCustomer(input: { name: string; email: string; organizationId: string; idempotencyKey: string }): Promise<{ id: string }>
+  getCustomer(customerId: string): Promise<Readonly<{ id: string; organizationId: string | null }>>
   listFirstPaymentMethods(amountValue: string): Promise<readonly MollieFirstPaymentMethod[]>
   listOneoffPaymentMethods(amountValue: string): Promise<readonly MollieAvailablePaymentMethod[]>
   listCustomerMandates(customerId: string): Promise<readonly MollieMandateSnapshot[]>
@@ -244,6 +245,11 @@ export function createMollieGateway(): MollieGateway {
         idempotencyKey: input.idempotencyKey,
       })
       return { id: customer.id }
+    },
+    async getCustomer(customerId) {
+      const customer = await client.customers.get(customerId)
+      const metadata = z.object({ organizationId: z.string().uuid() }).safeParse(customer.metadata)
+      return Object.freeze({ id: customer.id, organizationId: metadata.success ? metadata.data.organizationId : null })
     },
     async listFirstPaymentMethods(amountValue) {
       const methods = await client.methods.list({
