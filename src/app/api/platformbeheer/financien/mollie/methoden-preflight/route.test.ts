@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => ({
   requirePlatformAdministrator: vi.fn(),
   listOneoffPaymentMethods: vi.fn(),
+  listFirstPaymentMethods: vi.fn(),
   getMollieApiMode: vi.fn(),
 }))
 
@@ -10,7 +11,10 @@ vi.mock('@/lib/platform-admin/platform-admin-authorization', () => ({
   requirePlatformAdministrator: mocks.requirePlatformAdministrator,
 }))
 vi.mock('@/lib/finance/mollie-gateway', () => ({
-  createMollieGateway: () => ({ listOneoffPaymentMethods: mocks.listOneoffPaymentMethods }),
+  createMollieGateway: () => ({
+    listOneoffPaymentMethods: mocks.listOneoffPaymentMethods,
+    listFirstPaymentMethods: mocks.listFirstPaymentMethods,
+  }),
   getMollieApiMode: mocks.getMollieApiMode,
 }))
 
@@ -23,6 +27,7 @@ describe('Mollie-methodenpreflight', () => {
     vi.stubEnv('MOLLIE_WEBHOOK_BASE_URL', 'https://www.workmatchr.nl')
     mocks.getMollieApiMode.mockReturnValue('live')
     mocks.listOneoffPaymentMethods.mockResolvedValue([{ id: 'ideal', name: 'iDEAL' }])
+    mocks.listFirstPaymentMethods.mockResolvedValue(['ideal', 'creditcard'])
   })
 
   afterEach(() => vi.unstubAllEnvs())
@@ -32,6 +37,7 @@ describe('Mollie-methodenpreflight', () => {
 
     expect(mocks.requirePlatformAdministrator).toHaveBeenCalledWith('/platformbeheer/financien')
     expect(mocks.listOneoffPaymentMethods).toHaveBeenCalledWith('30.25')
+    expect(mocks.listFirstPaymentMethods).toHaveBeenCalledWith('59.29')
     expect(await response.json()).toEqual({
       ok: true,
       mode: 'live',
@@ -40,6 +46,14 @@ describe('Mollie-methodenpreflight', () => {
       amount: { value: '30.25', currency: 'EUR' },
       sequenceType: 'oneoff',
       methods: [{ id: 'ideal', name: 'iDEAL' }],
+      proFirstPayment: {
+        mode: 'live',
+        amount: '59.29',
+        currency: 'EUR',
+        sequenceType: 'first',
+        methods: ['ideal', 'creditcard'],
+        hasSuitableMethod: true,
+      },
     })
     expect(response.headers.get('Cache-Control')).toBe('private, no-store')
   })
@@ -73,6 +87,7 @@ describe('Mollie-methodenpreflight', () => {
     await expect(GET()).rejects.toThrow('FORBIDDEN')
     expect(mocks.getMollieApiMode).not.toHaveBeenCalled()
     expect(mocks.listOneoffPaymentMethods).not.toHaveBeenCalled()
+    expect(mocks.listFirstPaymentMethods).not.toHaveBeenCalled()
   })
 
   it('faalt gesloten bij een onbekende keymodus zonder Mollie-call', async () => {
@@ -83,6 +98,24 @@ describe('Mollie-methodenpreflight', () => {
     expect(response.status).toBe(503)
     expect(await response.json()).toMatchObject({ redirectBaseUrlMatchesProduction: true, webhookBaseUrlMatchesProduction: true })
     expect(mocks.listOneoffPaymentMethods).not.toHaveBeenCalled()
+    expect(mocks.listFirstPaymentMethods).not.toHaveBeenCalled()
+  })
+
+  it('rapporteert fail-closed wanneer geen geschikte Pro-first methode beschikbaar is', async () => {
+    mocks.listFirstPaymentMethods.mockResolvedValue([])
+
+    const response = await GET()
+    const body = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(body.proFirstPayment).toEqual({
+      mode: 'live',
+      amount: '59.29',
+      currency: 'EUR',
+      sequenceType: 'first',
+      methods: [],
+      hasSuitableMethod: false,
+    })
   })
 
   it('retourneert alleen gesaniteerde providerdetails bij een preflightfout', async () => {

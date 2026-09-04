@@ -19,9 +19,26 @@ export async function GET() {
     )
   }
   try {
-    const methods = await createMollieGateway().listOneoffPaymentMethods('30.25')
+    const gateway = createMollieGateway()
+    const methods = await gateway.listOneoffPaymentMethods('30.25')
+    const proFirstPaymentMethods = await gateway.listFirstPaymentMethods('59.29')
     return NextResponse.json(
-      { ok: true, mode, ...urlChecks, amount: { value: '30.25', currency: 'EUR' }, sequenceType: 'oneoff', methods },
+      {
+        ok: true,
+        mode,
+        ...urlChecks,
+        amount: { value: '30.25', currency: 'EUR' },
+        sequenceType: 'oneoff',
+        methods,
+        proFirstPayment: {
+          mode,
+          amount: '59.29',
+          currency: 'EUR',
+          sequenceType: 'first',
+          methods: proFirstPaymentMethods,
+          hasSuitableMethod: proFirstPaymentMethods.length > 0,
+        },
+      },
       { headers: { 'Cache-Control': 'private, no-store' } },
     )
   } catch (error) {
