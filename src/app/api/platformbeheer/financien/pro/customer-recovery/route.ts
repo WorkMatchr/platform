@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import { Prisma } from '@/generated/prisma/client'
+import { requireUser } from '@/lib/authorization'
 import { createMollieGateway, getMollieApiMode } from '@/lib/finance/mollie-gateway'
 import { runSerializableFinancialTransaction } from '@/lib/finance/financial-transaction'
 import { getPrisma } from '@/lib/prisma'
-import { requirePlatformOperator } from '@/lib/platform-admin/platform-admin-authorization'
 
 export const runtime = 'nodejs'
 
@@ -16,7 +16,7 @@ function isNotFound(error: unknown) {
 }
 
 export async function GET() {
-  await requirePlatformOperator('/platformbeheer/financien')
+  await requireUser('/credits/pro')
   if (process.env.VERCEL_ENV !== 'production' || getMollieApiMode() !== 'live') {
     return new NextResponse(null, { status: 404 })
   }
@@ -27,7 +27,7 @@ export async function GET() {
 }
 
 export async function POST() {
-  const operator = await requirePlatformOperator('/platformbeheer/financien')
+  const actor = await requireUser('/credits/pro')
   if (process.env.VERCEL_ENV !== 'production' || getMollieApiMode() !== 'live') {
     return new NextResponse(null, { status: 404 })
   }
@@ -38,7 +38,7 @@ export async function POST() {
       organization: { select: { id: true, name: true } },
       firstPaymentAttempts: {
         where: { purchaseId },
-        select: { purchase: { select: { id: true, status: true, molliePaymentId: true, createdByUser: { select: { email: true } } } } },
+        select: { purchase: { select: { id: true, status: true, molliePaymentId: true, createdByUser: { select: { id: true, email: true } } } } },
       },
       events: {
         where: { purchaseId, eventType: 'PRO_FIRST_PAYMENT_START_FAILED', reason: 'MOLLIE_CUSTOMER_INVALID' },
@@ -50,6 +50,7 @@ export async function POST() {
   if (
     !current
     || !attempt
+    || attempt.createdByUser.id !== actor.id
     || attempt.status !== 'FAILED'
     || attempt.molliePaymentId !== null
     || !current.mollieCustomerId
@@ -89,7 +90,7 @@ export async function POST() {
     await transaction.financialEvent.upsert({
       where: { idempotencyKey: `pro-mollie-customer-recovered:${subscriptionId}` },
       create: {
-        actorUserId: operator.userId,
+        actorUserId: actor.id,
         subscriptionId,
         purchaseId,
         eventType: 'PRO_MOLLIE_CUSTOMER_RECOVERED',
