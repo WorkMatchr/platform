@@ -21,6 +21,7 @@ import {
 import { issueInvoiceForPaidSubscriptionPayment } from './invoice-service'
 import { runSerializableFinancialTransaction } from './financial-transaction'
 import { isRetryableProFirstPaymentAttempt } from './pro-subscription-presentation'
+import { getSafeMollieErrorDetails } from './credit-payment-diagnostics'
 
 const inputSchema = z.object({
   actorUserId: z.string().uuid(),
@@ -88,6 +89,177 @@ function assertMatchingRemoteSubscription(
     || remote.method !== mandate.method
     || !['pending', 'active'].includes(remote.status)
   ) throw new Error('MOLLIE_SUBSCRIPTION_MISMATCH')
+}
+
+type RemoteSubscriptionOperation = 'SUBSCRIPTION_LOOKUP' | 'SUBSCRIPTION_CREATE'
+
+function remoteSubscriptionFailureCode(operation: RemoteSubscriptionOperation, error: unknown) {
+  const { httpStatus } = getSafeMollieErrorDetails(error)
+  const rejected = httpStatus !== undefined && httpStatus >= 400 && httpStatus < 500
+  return `MOLLIE_REMOTE_${operation}_${rejected ? 'REJECTED' : 'FAILED'}`
+}
+
+function compactDiagnosticMetadata(values: Record<string, unknown>): Prisma.InputJsonObject {
+  return Object.fromEntries(Object.entries(values).filter(([, value]) => value !== undefined)) as Prisma.InputJsonObject
+}
+
+async function beginRemoteSubscriptionAttempt(subscription: { id: string; organizationId: string; mollieCustomerId: string }) {
+  return runSerializableFinancialTransaction(async (transaction) => {
+    await lock(transaction, subscription.organizationId)
+    const previousAttempts = await transaction.financialEvent.count({
+      where: { subscriptionId: subscription.id, eventType: 'PRO_REMOTE_SUBSCRIPTION_ATTEMPT_STARTED' },
+    })
+    const attemptNumber = previousAttempts + 1
+    await transaction.financialEvent.create({
+      data: {
+        subscriptionId: subscription.id,
+        eventType: 'PRO_REMOTE_SUBSCRIPTION_ATTEMPT_STARTED',
+        result: 'STARTED',
+        idempotencyKey: `pro-remote-subscription-attempt:${subscription.id}:${attemptNumber}`,
+        metadata: {
+          provider: 'MOLLIE',
+          operation: 'SUBSCRIPTION_LOOKUP',
+          localSubscriptionId: subscription.id,
+          mollieCustomerId: subscription.mollieCustomerId,
+          attemptNumber,
+        },
+      },
+    })
+    return attemptNumber
+  })
+}
+
+async function recordRemoteSubscriptionFailure(input: {
+  subscription: { id: string; organizationId: string; mollieCustomerId: string }
+  operation: RemoteSubscriptionOperation
+  attemptNumber: number
+  error: unknown
+}) {
+  const details = getSafeMollieErrorDetails(input.error)
+  const errorCode = remoteSubscriptionFailureCode(input.operation, input.error)
+  await runSerializableFinancialTransaction(async (transaction) => {
+    await lock(transaction, input.subscription.organizationId)
+    await transaction.financialEvent.create({
+      data: {
+        subscriptionId: input.subscription.id,
+        eventType: input.operation === 'SUBSCRIPTION_LOOKUP'
+          ? 'PRO_REMOTE_SUBSCRIPTION_LOOKUP_FAILED'
+          : 'PRO_REMOTE_SUBSCRIPTION_CREATE_FAILED',
+        result: 'FAILED',
+        reason: errorCode,
+        idempotencyKey: `pro-remote-subscription-failure:${input.subscription.id}:${input.attemptNumber}:${input.operation}`,
+        metadata: compactDiagnosticMetadata({
+          provider: 'MOLLIE',
+          operation: input.operation,
+          localSubscriptionId: input.subscription.id,
+          mollieCustomerId: input.subscription.mollieCustomerId,
+          attemptNumber: input.attemptNumber,
+          httpStatus: details.httpStatus,
+          providerErrorCode: details.mollieErrorCode,
+          providerErrorType: details.mollieErrorType,
+          providerErrorField: details.mollieErrorField,
+          providerErrorTitle: details.mollieErrorTitle,
+          providerMessage: details.mollieErrorDetail,
+          providerDocumentation: details.mollieDocumentation,
+        }),
+      },
+    })
+  })
+  console.error('pro_remote_subscription_failure', compactDiagnosticMetadata({
+    errorCode,
+    operation: input.operation,
+    subscriptionId: input.subscription.id,
+    attemptNumber: input.attemptNumber,
+    ...details,
+  }))
+}
+
+async function completeRemoteSubscriptionActivation(
+  subscription: {
+    id: string
+    organizationId: string
+    status: string
+    planLabel: string
+    amountInclVatCents: number
+    currency: string
+    mollieCustomerId: string
+    mollieSubscriptionId: string | null
+  },
+  mandate: ValidRecurringMandate,
+  paymentPurchase: { paidAt: Date | null },
+  gateway: MollieGateway,
+) {
+  const attemptNumber = await beginRemoteSubscriptionAttempt(subscription)
+  let existingRemote: MollieSubscriptionSnapshot | null
+  try {
+    existingRemote = await gateway.findCustomerSubscription(subscription.mollieCustomerId, subscription.id)
+  } catch (error) {
+    await recordRemoteSubscriptionFailure({ subscription, operation: 'SUBSCRIPTION_LOOKUP', attemptNumber, error })
+    throw error
+  }
+
+  const verifiedAt = new Date()
+  const periodStart = paymentPurchase.paidAt ?? verifiedAt
+  const periodEnd = addUtcMonth(periodStart)
+  let remote = existingRemote
+  if (!remote) {
+    const { webhookBaseUrl } = getMollieUrls()
+    try {
+      remote = await gateway.createSubscription({
+        customerId: subscription.mollieCustomerId,
+        amountValue: centsToMollieValue(subscription.amountInclVatCents),
+        currency: 'EUR',
+        interval: '1 month',
+        description: `${subscription.planLabel} maandabonnement`,
+        webhookUrl: new URL('/api/payments/mollie/webhook', webhookBaseUrl).toString(),
+        mandateId: mandate.id,
+        method: mandate.method,
+        startDate: toMollieDate(periodEnd),
+        idempotencyKey: `mollie-pro-subscription-${subscription.id}`,
+        metadata: { subscriptionId: subscription.id, organizationId: subscription.organizationId },
+      })
+    } catch (error) {
+      await recordRemoteSubscriptionFailure({ subscription, operation: 'SUBSCRIPTION_CREATE', attemptNumber, error })
+      throw error
+    }
+  }
+  try {
+    assertMatchingRemoteSubscription(remote, subscription, mandate)
+  } catch (error) {
+    await recordRemoteSubscriptionFailure({
+      subscription,
+      operation: existingRemote ? 'SUBSCRIPTION_LOOKUP' : 'SUBSCRIPTION_CREATE',
+      attemptNumber,
+      error,
+    })
+    throw error
+  }
+  return runSerializableFinancialTransaction(async (transaction) => {
+    await lock(transaction, subscription.organizationId)
+    const current = await transaction.professionalSubscription.findUniqueOrThrow({ where: { id: subscription.id } })
+    if (current.status === 'ACTIVE' && current.mollieSubscriptionId) return current
+    const updated = await transaction.professionalSubscription.update({
+      where: { id: subscription.id },
+      data: { status: 'ACTIVE', mollieSubscriptionId: remote.id, activatedAt: verifiedAt, currentPeriodStart: periodStart, currentPeriodEnd: periodEnd, pastDueAt: null, retryCount: 0 },
+    })
+    await transaction.financialEvent.upsert({
+      where: { idempotencyKey: `pro-remote-subscription-linked:${subscription.id}:${remote.id}` },
+      create: {
+        subscriptionId: subscription.id,
+        eventType: 'PRO_REMOTE_SUBSCRIPTION_LINKED',
+        result: 'SUCCEEDED',
+        idempotencyKey: `pro-remote-subscription-linked:${subscription.id}:${remote.id}`,
+        metadata: { provider: 'MOLLIE', operation: 'SUBSCRIPTION_LINK', localSubscriptionId: subscription.id, mollieCustomerId: subscription.mollieCustomerId, attemptNumber, mollieSubscriptionId: remote.id, reusedRemoteSubscription: existingRemote !== null },
+      },
+      update: {},
+    })
+    await transaction.financialEvent.upsert({
+      where: { idempotencyKey: `pro-activated:${subscription.id}` },
+      create: { subscriptionId: subscription.id, eventType: 'PRO_SUBSCRIPTION_ACTIVATED', result: 'SUCCEEDED', idempotencyKey: `pro-activated:${subscription.id}`, metadata: { mollieSubscriptionId: remote.id } },
+      update: {},
+    })
+    return updated
+  })
 }
 
 function isActiveOrMandatedSubscription(subscription: {
@@ -438,39 +610,55 @@ export async function activateProAfterFirstPayment(subscriptionId: string, gatew
       update: {},
     })
   })
-  const { webhookBaseUrl } = getMollieUrls()
-  const periodStart = paymentPurchase.paidAt ?? verifiedAt
-  const periodEnd = addUtcMonth(periodStart)
-  const existingRemote = await gateway.findCustomerSubscription(subscription.mollieCustomerId, subscription.id)
-  const remote = existingRemote ?? await gateway.createSubscription({
-    customerId: subscription.mollieCustomerId,
-    amountValue: centsToMollieValue(subscription.amountInclVatCents),
-    currency: 'EUR',
-    interval: '1 month',
-    description: `${subscription.planLabel} maandabonnement`,
-    webhookUrl: new URL('/api/payments/mollie/webhook', webhookBaseUrl).toString(),
-    mandateId: mandate.id,
-    method: mandate.method,
-    startDate: toMollieDate(periodEnd),
-    idempotencyKey: `mollie-pro-subscription-${subscription.id}`,
-    metadata: { subscriptionId: subscription.id, organizationId: subscription.organizationId },
+  return completeRemoteSubscriptionActivation(
+    { ...subscription, mollieCustomerId: subscription.mollieCustomerId },
+    mandate,
+    paymentPurchase,
+    gateway,
+  )
+}
+
+export async function retryPendingProRemoteSubscription(
+  subscriptionId: string,
+  gateway: MollieGateway = createMollieGateway(),
+) {
+  const subscription = await getPrisma().professionalSubscription.findUniqueOrThrow({
+    where: { id: subscriptionId },
+    include: {
+      firstPaymentPurchase: { select: { paidAt: true, status: true } },
+      firstPaymentAttempts: {
+        where: { purchase: { status: 'PAID' } },
+        orderBy: { attemptNumber: 'desc' },
+        take: 1,
+        select: { purchase: { select: { paidAt: true, status: true } } },
+      },
+    },
   })
-  assertMatchingRemoteSubscription(remote, subscription, mandate)
-  return runSerializableFinancialTransaction(async (transaction) => {
-    await lock(transaction, subscription.organizationId)
-    const current = await transaction.professionalSubscription.findUniqueOrThrow({ where: { id: subscription.id } })
-    if (current.status === 'ACTIVE' && current.mollieSubscriptionId) return current
-    const updated = await transaction.professionalSubscription.update({
-      where: { id: subscription.id },
-      data: { status: 'ACTIVE', mollieSubscriptionId: remote.id, activatedAt: verifiedAt, currentPeriodStart: periodStart, currentPeriodEnd: periodEnd, pastDueAt: null, retryCount: 0 },
-    })
-    await transaction.financialEvent.upsert({
-      where: { idempotencyKey: `pro-activated:${subscription.id}` },
-      create: { subscriptionId: subscription.id, eventType: 'PRO_SUBSCRIPTION_ACTIVATED', result: 'SUCCEEDED', idempotencyKey: `pro-activated:${subscription.id}`, metadata: { mollieSubscriptionId: remote.id } },
-      update: {},
-    })
-    return updated
-  })
+  if (subscription.status === 'ACTIVE' && subscription.mollieSubscriptionId) return subscription
+  const paidPurchase = subscription.firstPaymentPurchase?.status === 'PAID'
+    ? subscription.firstPaymentPurchase
+    : subscription.firstPaymentAttempts.at(0)?.purchase
+  if (
+    subscription.status !== 'PENDING_MANDATE'
+    || !subscription.mollieCustomerId
+    || !subscription.mollieMandateId
+    || subscription.mollieMandateStatus !== 'valid'
+    || !subscription.mollieMandateMethod
+    || !['directdebit', 'creditcard'].includes(subscription.mollieMandateMethod)
+    || paidPurchase?.status !== 'PAID'
+  ) throw new Error('PRO_REMOTE_SUBSCRIPTION_RETRY_NOT_READY')
+
+  const mandate: ValidRecurringMandate = {
+    id: subscription.mollieMandateId,
+    status: 'valid',
+    method: subscription.mollieMandateMethod as MollieMandateMethod,
+  }
+  return completeRemoteSubscriptionActivation(
+    { ...subscription, mollieCustomerId: subscription.mollieCustomerId },
+    mandate,
+    paidPurchase,
+    gateway,
+  )
 }
 
 export async function processRecurringProPayment(payment: MolliePaymentSnapshot) {

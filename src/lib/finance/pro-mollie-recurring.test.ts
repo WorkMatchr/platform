@@ -8,6 +8,8 @@ const mocks = vi.hoisted(() => ({
   createCustomer: vi.fn(),
   createPayment: vi.fn(),
   createSubscription: vi.fn(),
+  eventCount: vi.fn(),
+  eventCreate: vi.fn(),
   eventUpsert: vi.fn(),
   findRemoteSubscription: vi.fn(),
   invoice: vi.fn(),
@@ -65,7 +67,7 @@ const transaction = {
     create: mocks.firstPaymentAttemptCreate,
   },
   professionalSubscriptionPayment: { upsert: mocks.paymentUpsert },
-  financialEvent: { upsert: mocks.eventUpsert, create: vi.fn() },
+  financialEvent: { upsert: mocks.eventUpsert, create: mocks.eventCreate, count: mocks.eventCount },
   organizationMembership: { findMany: vi.fn(async () => []) },
   marketplaceNotification: { upsert: vi.fn() },
 }
@@ -171,6 +173,7 @@ describe('WorkMatchr Pro via first payment en recurring mandate', () => {
     mocks.listFirstPaymentMethods.mockResolvedValue(['ideal', 'creditcard'])
     mocks.findRemoteSubscription.mockResolvedValue(null)
     mocks.createSubscription.mockResolvedValue(remoteSubscription())
+    mocks.eventCount.mockResolvedValue(0)
     mocks.paymentUpsert.mockResolvedValue({ id: '50000000-0000-4000-8000-000000000001' })
     mocks.invoice.mockResolvedValue({ id: '60000000-0000-4000-8000-000000000001' })
   })
@@ -412,6 +415,12 @@ describe('WorkMatchr Pro via first payment en recurring mandate', () => {
     expect(mocks.eventUpsert).toHaveBeenCalledWith(expect.objectContaining({
       create: expect.objectContaining({ eventType: 'PRO_MANDATE_ACTIVATED' }),
     }))
+    expect(mocks.eventUpsert).toHaveBeenCalledWith(expect.objectContaining({
+      create: expect.objectContaining({
+        eventType: 'PRO_REMOTE_SUBSCRIPTION_LINKED',
+        metadata: expect.objectContaining({ attemptNumber: 1, reusedRemoteSubscription: false }),
+      }),
+    }))
   })
 
   it('blijft fail-closed zonder geldig mandate', async () => {
@@ -441,6 +450,138 @@ describe('WorkMatchr Pro via first payment en recurring mandate', () => {
     await activateProAfterFirstPayment(subscriptionId, gateway())
 
     expect(mocks.createSubscription).not.toHaveBeenCalled()
+    expect(current).toMatchObject({ status: 'ACTIVE', mollieSubscriptionId: 'sub_test' })
+  })
+
+  it('registreert een veilige lookupfailure en maakt geen remote subscription', async () => {
+    mocks.findRemoteSubscription.mockRejectedValue(Object.assign(new Error('Service unavailable.'), {
+      statusCode: 503,
+      code: 'service_unavailable',
+    }))
+    const { activateProAfterFirstPayment } = await import('./subscription-service')
+
+    await expect(activateProAfterFirstPayment(subscriptionId, gateway())).rejects.toThrow('Service unavailable.')
+
+    expect(mocks.createSubscription).not.toHaveBeenCalled()
+    expect(mocks.eventCreate).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        eventType: 'PRO_REMOTE_SUBSCRIPTION_LOOKUP_FAILED',
+        reason: 'MOLLIE_REMOTE_SUBSCRIPTION_LOOKUP_FAILED',
+        metadata: expect.objectContaining({ provider: 'MOLLIE', operation: 'SUBSCRIPTION_LOOKUP', httpStatus: 503, attemptNumber: 1 }),
+      }),
+    }))
+    expect(current).toMatchObject({ status: 'PENDING_MANDATE', mollieSubscriptionId: null })
+  })
+
+  it.each([
+    [422, 'MOLLIE_REMOTE_SUBSCRIPTION_CREATE_REJECTED'],
+    [503, 'MOLLIE_REMOTE_SUBSCRIPTION_CREATE_FAILED'],
+  ])('registreert createfailure HTTP %i zonder lokale activatie', async (statusCode, reason) => {
+    mocks.createSubscription.mockRejectedValue(Object.assign(new Error('Provider request failed.'), {
+      statusCode,
+      code: 'provider_failure',
+      field: 'startDate',
+    }))
+    const { activateProAfterFirstPayment } = await import('./subscription-service')
+
+    await expect(activateProAfterFirstPayment(subscriptionId, gateway())).rejects.toThrow('Provider request failed.')
+
+    expect(mocks.eventCreate).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        eventType: 'PRO_REMOTE_SUBSCRIPTION_CREATE_FAILED',
+        reason,
+        metadata: expect.objectContaining({ provider: 'MOLLIE', operation: 'SUBSCRIPTION_CREATE', httpStatus: statusCode, providerErrorField: 'startDate' }),
+      }),
+    }))
+    expect(current).toMatchObject({ status: 'PENDING_MANDATE', mollieSubscriptionId: null })
+  })
+
+  it('kan na een createfailure veilig retryen zonder nieuwe lokale of remote duplicaten', async () => {
+    mocks.createSubscription
+      .mockRejectedValueOnce(Object.assign(new Error('Temporary provider failure.'), { statusCode: 503 }))
+      .mockResolvedValueOnce(remoteSubscription())
+    mocks.eventCount.mockResolvedValueOnce(0).mockResolvedValueOnce(1)
+    const { activateProAfterFirstPayment, retryPendingProRemoteSubscription } = await import('./subscription-service')
+
+    await expect(activateProAfterFirstPayment(subscriptionId, gateway())).rejects.toThrow('Temporary provider failure.')
+    current = {
+      ...current,
+      mollieMandateId: 'mdt_directdebit',
+      mollieMandateStatus: 'valid',
+      mollieMandateMethod: 'directdebit',
+    }
+    await retryPendingProRemoteSubscription(subscriptionId, gateway())
+
+    expect(mocks.createSubscription).toHaveBeenCalledTimes(2)
+    expect(mocks.eventCreate).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        eventType: 'PRO_REMOTE_SUBSCRIPTION_ATTEMPT_STARTED',
+        metadata: expect.objectContaining({ attemptNumber: 2 }),
+      }),
+    }))
+    expect(current).toMatchObject({ status: 'ACTIVE', mollieSubscriptionId: 'sub_test' })
+    expect(mocks.invoice).not.toHaveBeenCalled()
+  })
+
+  it('hervat een betaalde PENDING_MANDATE rechtstreeks vanaf de remote subscriptionfase', async () => {
+    current = {
+      ...current,
+      mollieMandateId: 'mdt_directdebit',
+      mollieMandateStatus: 'valid',
+      mollieMandateMethod: 'directdebit',
+    }
+    const { retryPendingProRemoteSubscription } = await import('./subscription-service')
+    await retryPendingProRemoteSubscription(subscriptionId, gateway())
+
+    expect(mocks.listMandates).not.toHaveBeenCalled()
+    expect(mocks.findRemoteSubscription).toHaveBeenCalledTimes(1)
+    expect(mocks.createSubscription).toHaveBeenCalledTimes(1)
+    expect(current).toMatchObject({ status: 'ACTIVE', mollieSubscriptionId: 'sub_test' })
+  })
+
+  it('gebruikt bij recovery de geslaagde immutable retrypurchase wanneer de eerste purchase failed bleef', async () => {
+    current = {
+      ...current,
+      firstPaymentPurchase: { ...purchase, status: 'FAILED', paidAt: null },
+      firstPaymentAttempts: [{ purchase: { ...purchase, status: 'PAID', paidAt: purchase.paidAt } }],
+      mollieMandateId: 'mdt_directdebit',
+      mollieMandateStatus: 'valid',
+      mollieMandateMethod: 'directdebit',
+    }
+    const { retryPendingProRemoteSubscription } = await import('./subscription-service')
+    await retryPendingProRemoteSubscription(subscriptionId, gateway())
+
+    expect(mocks.createSubscription).toHaveBeenCalledTimes(1)
+    expect(current).toMatchObject({ status: 'ACTIVE', mollieSubscriptionId: 'sub_test' })
+  })
+
+  it('hergebruikt bij retry een remote subscription die tussen pogingen verscheen', async () => {
+    current = {
+      ...current,
+      mollieMandateId: 'mdt_directdebit',
+      mollieMandateStatus: 'valid',
+      mollieMandateMethod: 'directdebit',
+    }
+    mocks.findRemoteSubscription.mockResolvedValue(remoteSubscription())
+    const { retryPendingProRemoteSubscription } = await import('./subscription-service')
+    await retryPendingProRemoteSubscription(subscriptionId, gateway())
+
+    expect(mocks.createSubscription).not.toHaveBeenCalled()
+    expect(current).toMatchObject({ status: 'ACTIVE', mollieSubscriptionId: 'sub_test' })
+    expect(mocks.eventUpsert).toHaveBeenCalledWith(expect.objectContaining({
+      create: expect.objectContaining({
+        eventType: 'PRO_REMOTE_SUBSCRIPTION_LINKED',
+        metadata: expect.objectContaining({ reusedRemoteSubscription: true }),
+      }),
+    }))
+  })
+
+  it('maakt bij replay geen tweede remote subscription of lokale subscription', async () => {
+    const { activateProAfterFirstPayment } = await import('./subscription-service')
+    await activateProAfterFirstPayment(subscriptionId, gateway())
+    await activateProAfterFirstPayment(subscriptionId, gateway())
+
+    expect(mocks.createSubscription).toHaveBeenCalledTimes(1)
     expect(current).toMatchObject({ status: 'ACTIVE', mollieSubscriptionId: 'sub_test' })
   })
 
