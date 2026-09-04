@@ -15,6 +15,17 @@ function isNotFound(error: unknown) {
   return candidate?.statusCode === 404 || candidate?.status === 404
 }
 
+export async function GET() {
+  await requirePlatformOperator('/platformbeheer/financien')
+  if (process.env.VERCEL_ENV !== 'production' || getMollieApiMode() !== 'live') {
+    return new NextResponse(null, { status: 404 })
+  }
+  return new NextResponse(
+    '<!doctype html><html lang="nl"><body><main><h1>Pro Mollie-customer herstellen</h1><p>Uitsluitend subscription 56f0fa14-ca6d-4851-a8be-942e44d99d39.</p><form method="post"><button type="submit">Customerkoppeling éénmaal herstellen</button></form></main></body></html>',
+    { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'private, no-store' } },
+  )
+}
+
 export async function POST() {
   const operator = await requirePlatformOperator('/platformbeheer/financien')
   if (process.env.VERCEL_ENV !== 'production' || getMollieApiMode() !== 'live') {
