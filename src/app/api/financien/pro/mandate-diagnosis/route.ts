@@ -101,9 +101,10 @@ export async function GET() {
   const apiKey = process.env.MOLLIE_API_KEY?.trim()
   if (!apiKey?.startsWith('live_')) return new NextResponse(null, { status: 404 })
   const mollie = createMollieClient({ apiKey })
-  const [payment, remoteMandates] = await Promise.all([
+  const [payment, remoteMandates, remoteSubscriptions] = await Promise.all([
     mollie.payments.get(purchase.molliePaymentId),
     mollie.customerMandates.page({ customerId: subscription.mollieCustomerId }),
+    mollie.customerSubscriptions.page({ customerId: subscription.mollieCustomerId }),
   ])
 
   const mandates = remoteMandates.map((mandate) => ({
@@ -127,6 +128,20 @@ export async function GET() {
       amount: payment.amount,
     },
     remoteMandates: mandates,
+    remoteSubscriptions: remoteSubscriptions.map((remoteSubscription) => ({
+      id: remoteSubscription.id,
+      status: remoteSubscription.status,
+      mandateId: remoteSubscription.mandateId ?? null,
+      method: remoteSubscription.method ?? null,
+      amount: remoteSubscription.amount,
+      interval: remoteSubscription.interval,
+      metadataMatchesSubscription: Boolean(
+        remoteSubscription.metadata &&
+        typeof remoteSubscription.metadata === 'object' &&
+        'subscriptionId' in remoteSubscription.metadata &&
+        remoteSubscription.metadata.subscriptionId === subscription.id
+      ),
+    })),
     local: {
       purchase: {
         id: purchase.id,
