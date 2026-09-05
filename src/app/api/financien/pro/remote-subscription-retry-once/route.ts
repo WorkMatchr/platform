@@ -34,7 +34,7 @@ async function requireBoundUser() {
   return user
 }
 
-async function readStatus() {
+export async function readStatus() {
   const prisma = getPrisma()
   const [subscription, invoiceCount, localSubscriptionCount, events] = await Promise.all([
     prisma.professionalSubscription.findUnique({
