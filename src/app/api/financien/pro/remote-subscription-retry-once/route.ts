@@ -108,14 +108,9 @@ async function readStatus() {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   if (!await requireBoundUser()) return unavailable()
-  if (request.nextUrl.searchParams.get('status') === '1') {
-    return NextResponse.json(await readStatus(), { headers: { 'Cache-Control': 'private, no-store' } })
-  }
-  return new NextResponse(`<!doctype html><html lang="nl"><body><h1>Eenmalige Pro remote-subscriptionretry</h1><form method="post"><input type="hidden" name="confirmation" value="${CONFIRMATION}"><button type="submit">Voer exact één retry uit</button></form></body></html>`, {
-    headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'private, no-store' },
-  })
+  return NextResponse.json(await readStatus(), { headers: { 'Cache-Control': 'private, no-store' } })
 }
 
 export async function POST(request: NextRequest) {
