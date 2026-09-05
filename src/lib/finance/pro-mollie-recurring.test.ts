@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   listFirstPaymentMethods: vi.fn(),
   paymentUpsert: vi.fn(),
   firstPaymentAttemptCreate: vi.fn(),
+  finalizeDownstream: vi.fn(),
 }))
 
 const subscriptionId = '30000000-0000-4000-8000-000000000001'
@@ -89,6 +90,9 @@ vi.mock('./financial-transaction', () => ({
   runSerializableFinancialTransaction: (operation: (value: typeof transaction) => unknown) => operation(transaction),
 }))
 vi.mock('./invoice-service', () => ({ issueInvoiceForPaidSubscriptionPayment: mocks.invoice }))
+vi.mock('./pro-first-payment-downstream-service', () => ({
+  finalizeProFirstPaymentDownstream: mocks.finalizeDownstream,
+}))
 
 function resetPendingSubscription() {
   purchase = {
@@ -537,6 +541,7 @@ describe('WorkMatchr Pro via first payment en recurring mandate', () => {
     expect(mocks.findRemoteSubscription).toHaveBeenCalledTimes(1)
     expect(mocks.createSubscription).toHaveBeenCalledTimes(1)
     expect(current).toMatchObject({ status: 'ACTIVE', mollieSubscriptionId: 'sub_test' })
+    expect(mocks.finalizeDownstream).toHaveBeenCalledWith(subscriptionId)
   })
 
   it('gebruikt bij recovery de geslaagde immutable retrypurchase wanneer de eerste purchase failed bleef', async () => {
@@ -553,6 +558,7 @@ describe('WorkMatchr Pro via first payment en recurring mandate', () => {
 
     expect(mocks.createSubscription).toHaveBeenCalledTimes(1)
     expect(current).toMatchObject({ status: 'ACTIVE', mollieSubscriptionId: 'sub_test' })
+    expect(mocks.finalizeDownstream).toHaveBeenCalledWith(subscriptionId)
   })
 
   it('hergebruikt bij retry een remote subscription die tussen pogingen verscheen', async () => {

@@ -402,7 +402,7 @@ export async function processMolliePayment(
     if (!subscription) throw new Error('PRO_SUBSCRIPTION_MISSING')
     await activateProAfterFirstPayment(subscription.id, gateway, result.purchaseId)
   }
-  if (result.status === 'PAID' && result.invoiceId) {
+  if (result.status === 'PAID' && result.invoiceId && result.kind !== 'PRO_SUBSCRIPTION') {
     const purchaseForDelivery = await getPrisma().financialPurchase.findUnique({
       where: { id: result.purchaseId },
       select: { createdByUserId: true },

@@ -22,6 +22,7 @@ import { issueInvoiceForPaidSubscriptionPayment } from './invoice-service'
 import { runSerializableFinancialTransaction } from './financial-transaction'
 import { isRetryableProFirstPaymentAttempt } from './pro-subscription-presentation'
 import { getSafeMollieErrorDetails } from './credit-payment-diagnostics'
+import { finalizeProFirstPaymentDownstream } from './pro-first-payment-downstream-service'
 
 const inputSchema = z.object({
   actorUserId: z.string().uuid(),
@@ -563,7 +564,10 @@ export async function activateProAfterFirstPayment(subscriptionId: string, gatew
     where: { id: subscriptionId },
     include: { firstPaymentPurchase: { select: { paidAt: true, status: true } } },
   })
-  if (subscription.status === 'ACTIVE' && subscription.mollieSubscriptionId) return subscription
+  if (subscription.status === 'ACTIVE' && subscription.mollieSubscriptionId) {
+    await finalizeProFirstPaymentDownstream(subscription.id)
+    return subscription
+  }
   if (!subscription.mollieCustomerId) throw new Error('MOLLIE_CUSTOMER_MISSING')
   const paymentPurchase = paymentPurchaseId
     ? await getPrisma().financialPurchase.findUnique({ where: { id: paymentPurchaseId }, select: { paidAt: true, status: true } })
@@ -610,12 +614,14 @@ export async function activateProAfterFirstPayment(subscriptionId: string, gatew
       update: {},
     })
   })
-  return completeRemoteSubscriptionActivation(
+  const activated = await completeRemoteSubscriptionActivation(
     { ...subscription, mollieCustomerId: subscription.mollieCustomerId },
     mandate,
     paymentPurchase,
     gateway,
   )
+  await finalizeProFirstPaymentDownstream(subscription.id)
+  return activated
 }
 
 export async function retryPendingProRemoteSubscription(
@@ -634,7 +640,10 @@ export async function retryPendingProRemoteSubscription(
       },
     },
   })
-  if (subscription.status === 'ACTIVE' && subscription.mollieSubscriptionId) return subscription
+  if (subscription.status === 'ACTIVE' && subscription.mollieSubscriptionId) {
+    await finalizeProFirstPaymentDownstream(subscription.id)
+    return subscription
+  }
   const paidPurchase = subscription.firstPaymentPurchase?.status === 'PAID'
     ? subscription.firstPaymentPurchase
     : subscription.firstPaymentAttempts.at(0)?.purchase
@@ -653,12 +662,14 @@ export async function retryPendingProRemoteSubscription(
     status: 'valid',
     method: subscription.mollieMandateMethod as MollieMandateMethod,
   }
-  return completeRemoteSubscriptionActivation(
+  const activated = await completeRemoteSubscriptionActivation(
     { ...subscription, mollieCustomerId: subscription.mollieCustomerId },
     mandate,
     paidPurchase,
     gateway,
   )
+  await finalizeProFirstPaymentDownstream(subscription.id)
+  return activated
 }
 
 export async function processRecurringProPayment(payment: MolliePaymentSnapshot) {
