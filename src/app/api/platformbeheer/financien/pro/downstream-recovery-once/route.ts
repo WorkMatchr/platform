@@ -92,7 +92,8 @@ export async function GET() {
       return response.json()
     }
     const remote = (await read(`/invoices/${sync.externalReference}`)).data
-    const matches = (await read(`/invoices?query=${encodeURIComponent(sync.technicalReference!)}`)).data
+    const matches = (await read(`/invoices?query=${encodeURIComponent(invoiceNumber)}`)).data
+    const customer = (await read(`/customers/${remote.customer_id}`)).data
     remoteCheck = {
       exactTechnicalMatches: new Set(matches.filter((item: { remarks?: string; id: string }) => item.remarks?.includes(sync.technicalReference!)).map((item: { id: string }) => item.id)).size,
       id: remote.id,
@@ -103,7 +104,7 @@ export async function GET() {
       sendMethod: remote.send_method,
       amounts: Object.fromEntries(Object.entries(remote).filter(([key]) => /amount|total|vat/.test(key))),
       lineItems: remote.line_items?.map((item: { quantity?: unknown; amount?: unknown; vat?: unknown }) => ({ quantity: item.quantity, amount: item.amount, vat: item.vat })),
-      customer: remote.customer,
+      customer: { name: customer.customer_name, address: customer.address_street, postalCode: customer.address_postal_code, city: customer.address_city },
       customerId: remote.customer_id,
     }
   }
