@@ -86,7 +86,7 @@ function assertMatchingRemoteSubscription(
     || remote.currency !== subscription.currency
     || remote.interval !== '1 month'
     || remote.mandateId !== mandate.id
-    || remote.method !== mandate.method
+    || (remote.method != null && remote.method !== '' && remote.method !== mandate.method)
     || !['pending', 'active'].includes(remote.status)
   ) throw new Error('MOLLIE_SUBSCRIPTION_MISMATCH')
 }

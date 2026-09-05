@@ -566,6 +566,7 @@ describe('WorkMatchr Pro via first payment en recurring mandate', () => {
     const { retryPendingProRemoteSubscription } = await import('./subscription-service')
     await retryPendingProRemoteSubscription(subscriptionId, gateway())
 
+    expect(mocks.findRemoteSubscription).toHaveBeenCalledWith('cst_test', subscriptionId)
     expect(mocks.createSubscription).not.toHaveBeenCalled()
     expect(current).toMatchObject({ status: 'ACTIVE', mollieSubscriptionId: 'sub_test' })
     expect(mocks.eventUpsert).toHaveBeenCalledWith(expect.objectContaining({
@@ -574,6 +575,52 @@ describe('WorkMatchr Pro via first payment en recurring mandate', () => {
         metadata: expect.objectContaining({ reusedRemoteSubscription: true }),
       }),
     }))
+  })
+
+  it.each([
+    ['ontbrekende methode', null],
+    ['lege methode', ''],
+    ['overeenkomende methode', 'directdebit'],
+  ])('accepteert een exact mandate met %s', async (_label, method) => {
+    current = {
+      ...current,
+      mollieMandateId: 'mdt_directdebit',
+      mollieMandateStatus: 'valid',
+      mollieMandateMethod: 'directdebit',
+    }
+    mocks.findRemoteSubscription.mockResolvedValue({ ...remoteSubscription(), method })
+    const { retryPendingProRemoteSubscription } = await import('./subscription-service')
+
+    await retryPendingProRemoteSubscription(subscriptionId, gateway())
+
+    expect(current).toMatchObject({ status: 'ACTIVE', mollieSubscriptionId: 'sub_test' })
+    expect(mocks.createSubscription).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['verkeerd mandate', { mandateId: 'mdt_other' }],
+    ['conflicterende methode', { method: 'creditcard' }],
+    ['verkeerd bedrag', { amountValue: '59.30' }],
+    ['verkeerde valuta', { currency: 'USD' }],
+    ['verkeerd interval', { interval: '2 months' }],
+    ['ongeldige status', { status: 'canceled' }],
+    ['andere lokale subscription', { metadata: { subscriptionId: 'other-subscription', organizationId } }],
+    ['andere organisatie', { metadata: { subscriptionId, organizationId: 'other-organization' } }],
+  ])('weigert fail-closed een remote subscription met %s', async (_label, override) => {
+    current = {
+      ...current,
+      mollieMandateId: 'mdt_directdebit',
+      mollieMandateStatus: 'valid',
+      mollieMandateMethod: 'directdebit',
+    }
+    mocks.findRemoteSubscription.mockResolvedValue({ ...remoteSubscription(), ...override })
+    const { retryPendingProRemoteSubscription } = await import('./subscription-service')
+
+    await expect(retryPendingProRemoteSubscription(subscriptionId, gateway()))
+      .rejects.toThrow('MOLLIE_SUBSCRIPTION_MISMATCH')
+
+    expect(current).toMatchObject({ status: 'PENDING_MANDATE', mollieSubscriptionId: null })
+    expect(mocks.createSubscription).not.toHaveBeenCalled()
   })
 
   it('maakt bij replay geen tweede remote subscription of lokale subscription', async () => {
