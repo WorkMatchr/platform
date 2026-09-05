@@ -18,6 +18,8 @@ const mocks = vi.hoisted(() => ({
   paymentUpsert: vi.fn(),
   firstPaymentAttemptCreate: vi.fn(),
   finalizeDownstream: vi.fn(),
+  deliverRecurring: vi.fn(),
+  recordDeliveryFailure: vi.fn(),
 }))
 
 const subscriptionId = '30000000-0000-4000-8000-000000000001'
@@ -92,6 +94,10 @@ vi.mock('./financial-transaction', () => ({
 vi.mock('./invoice-service', () => ({ issueInvoiceForPaidSubscriptionPayment: mocks.invoice }))
 vi.mock('./pro-first-payment-downstream-service', () => ({
   finalizeProFirstPaymentDownstream: mocks.finalizeDownstream,
+}))
+vi.mock('./financial-invoice-delivery-service', () => ({
+  deliverFinancialInvoiceEmail: mocks.deliverRecurring,
+  recordFinancialInvoiceEmailFailure: mocks.recordDeliveryFailure,
 }))
 
 function resetPendingSubscription() {
@@ -649,6 +655,20 @@ describe('WorkMatchr Pro via first payment en recurring mandate', () => {
         periodStart: new Date('2026-09-09T12:00:00Z'), periodEnd: new Date('2026-10-09T12:00:00Z') }),
     }))
     expect(mocks.invoice).toHaveBeenCalledWith(transaction, '50000000-0000-4000-8000-000000000001', expect.any(Date))
+    expect(mocks.deliverRecurring).toHaveBeenCalledWith('60000000-0000-4000-8000-000000000001')
+  })
+
+  it('behoudt de betaalde periode bij mailfout en herhaalt alleen dezelfde idempotente bronnen', async () => {
+    current = { ...current, status: 'ACTIVE', mollieSubscriptionId: 'sub_test', mollieMandateId: 'mdt_directdebit', mollieMandateMethod: 'directdebit' }
+    mocks.deliverRecurring.mockRejectedValueOnce(new Error('EMAIL_DELIVERY_NOT_CONFIGURED')).mockResolvedValueOnce({ delivered: true })
+    const { processRecurringProPayment } = await import('./subscription-service')
+    await expect(processRecurringProPayment(recurringPayment('paid'))).rejects.toThrow('EMAIL_DELIVERY_NOT_CONFIGURED')
+    expect(current.status).toBe('ACTIVE')
+    expect(mocks.recordDeliveryFailure).toHaveBeenCalledWith('60000000-0000-4000-8000-000000000001', null, null)
+    await processRecurringProPayment(recurringPayment('paid'))
+    expect(mocks.paymentUpsert.mock.calls[0][0].where).toEqual(mocks.paymentUpsert.mock.calls[1][0].where)
+    expect(mocks.createSubscription).not.toHaveBeenCalled()
+    expect(mocks.createPayment).not.toHaveBeenCalled()
   })
 
   it('zet een mislukte maandincasso op PAST_DUE zonder credits te wijzigen', async () => {

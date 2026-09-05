@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { getPrisma } from '@/lib/prisma'
+import { resolveCanonicalProFirstPayment } from './pro-first-payment-source'
 import {
   deliverFinancialInvoiceEmail,
   recordFinancialInvoiceEmailFailure,
@@ -67,17 +68,7 @@ async function resolvePaidFirstPaymentInvoice(subscriptionId: string) {
   if (!subscription || subscription.status !== 'ACTIVE' || !subscription.mollieSubscriptionId) {
     throw new Error('PRO_DOWNSTREAM_SUBSCRIPTION_NOT_ACTIVE')
   }
-  const candidates = [
-    subscription.firstPaymentPurchase,
-    ...subscription.firstPaymentAttempts.map(({ purchase }) => purchase),
-  ].filter((purchase): purchase is NonNullable<typeof purchase> => (
-    purchase?.kind === 'PRO_SUBSCRIPTION'
-    && purchase.status === 'PAID'
-    && purchase.invoice !== null
-  ))
-  const uniqueCandidates = [...new Map(candidates.map((purchase) => [purchase.id, purchase])).values()]
-  if (uniqueCandidates.length !== 1) throw new Error('PRO_DOWNSTREAM_PAID_INVOICE_AMBIGUOUS')
-  const purchase = uniqueCandidates[0]
+  const purchase = resolveCanonicalProFirstPayment(subscription)
   if (!purchase.invoice || purchase.invoice.snapshotVersion !== 2) {
     throw new Error('PRO_DOWNSTREAM_SNAPSHOT_V2_REQUIRED')
   }

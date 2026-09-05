@@ -3,6 +3,7 @@ import 'server-only'
 import { Prisma } from '@/generated/prisma/client'
 import { MOLLIE_SANDBOX_ACCEPTANCE_PRICING } from './mollie-test-pricing'
 import { WORKMATCHR_SELLER } from './financial-contract'
+import { resolveCanonicalProFirstPayment } from './pro-first-payment-source'
 
 type Transaction = Prisma.TransactionClient
 
@@ -290,14 +291,17 @@ export async function issueInvoiceForPaidSubscriptionPayment(
     where: { id: subscriptionPaymentId },
     include: {
       subscription: {
-        include: { firstPaymentPurchase: { include: { invoice: true } } },
+        include: {
+          firstPaymentPurchase: { include: { invoice: true } },
+          firstPaymentAttempts: { include: { purchase: { include: { invoice: true } } } },
+        },
       },
     },
   })
-  const customerSnapshot = payment?.subscription.firstPaymentPurchase?.invoice
-  if (!payment || payment.status !== 'PAID' || !customerSnapshot) {
+  if (!payment || payment.status !== 'PAID') {
     throw new Error('PAID_SUBSCRIPTION_PAYMENT_WITH_CUSTOMER_SNAPSHOT_REQUIRED')
   }
+  const customerSnapshot = resolveCanonicalProFirstPayment(payment.subscription).invoice!
   if (!payment.periodStart || !payment.periodEnd) throw new Error('INVOICE_V2_SERVICE_PERIOD_REQUIRED')
   const line = buildInvoiceV2Line({
     description: 'WorkMatchr Pro', quantity: 1, unit: 'maand',

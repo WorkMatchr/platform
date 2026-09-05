@@ -73,6 +73,33 @@ describe('factuurmailbezorging', () => {
     expect(sender).not.toHaveBeenCalled()
   })
 
+  it('bezorgt recurring zonder purchase vanuit de canonieke retry en replay is no-op', async () => {
+    const source = { ...invoice.purchase, id: 'retry', kind: 'PRO_SUBSCRIPTION', invoice: { id: 'first-invoice' } }
+    mocks.invoiceFind.mockResolvedValue({
+      ...invoice, purchaseId: null, purchase: null, organizationId: 'org', amountInclVatCents: 5929,
+      subscriptionPayment: { subscriptionId: 'sub', status: 'PAID', periodStart: new Date('2026-10-05T12:00:00Z'),
+        subscription: { organizationId: 'org', firstPaymentPurchase: { ...source, status: 'FAILED', invoice: null },
+          firstPaymentAttempts: [{ purchase: source }] } },
+    })
+    const sender = vi.fn().mockResolvedValue({ transport: 'RESEND', status: 'ACCEPTED' })
+    const { deliverFinancialInvoiceEmail } = await import('./financial-invoice-delivery-service')
+    await deliverFinancialInvoiceEmail(invoice.id, sender)
+    expect(sender).toHaveBeenCalledWith(expect.objectContaining({ to: 'finance@example.invalid', text: expect.stringContaining('59,29') }))
+    expect(mocks.eventCreate).toHaveBeenCalledWith({ data: expect.objectContaining({ purchaseId: null, subscriptionId: 'sub' }) })
+    mocks.eventFind.mockResolvedValue({ id: 'sent' })
+    await deliverFinancialInvoiceEmail(invoice.id, sender)
+    expect(sender).toHaveBeenCalledTimes(1)
+  })
+
+  it('weigert een onbetaalde of andere-tenant recurring context', async () => {
+    mocks.invoiceFind.mockResolvedValue({ ...invoice, purchase: null, organizationId: 'org',
+      subscriptionPayment: { status: 'PAID', periodStart: new Date(), subscription: { organizationId: 'other' } } })
+    const sender = vi.fn()
+    const { deliverFinancialInvoiceEmail } = await import('./financial-invoice-delivery-service')
+    await expect(deliverFinancialInvoiceEmail(invoice.id, sender)).rejects.toThrow('PAID_SUBSCRIPTION_INVOICE_REQUIRED')
+    expect(sender).not.toHaveBeenCalled()
+  })
+
   it('weigert een factuur zonder betaalde aankoop en registreert alleen veilige faalaudit', async () => {
     mocks.invoiceFind.mockResolvedValue({ ...invoice, purchase: { ...invoice.purchase, status: 'EXPIRED' } })
     const sender = vi.fn()

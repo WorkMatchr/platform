@@ -5,6 +5,7 @@ import { financialInvoiceEmail, sendAuthEmail, type AuthEmailDeliveryResult } fr
 import { getPrisma } from '@/lib/prisma'
 import { getPublicAppBaseUrl } from '@/lib/public-app-url'
 import { runSerializableFinancialTransaction } from './financial-transaction'
+import { resolveCanonicalProFirstPayment } from './pro-first-payment-source'
 
 type InvoiceEmailSender = (email: ReturnType<typeof financialInvoiceEmail>) => Promise<AuthEmailDeliveryResult>
 
@@ -19,25 +20,37 @@ export async function deliverFinancialInvoiceEmail(invoiceId: string, sender: In
     if (delivered) return { delivered: true, idempotent: true }
     const invoice = await transaction.financialInvoice.findUnique({
       where: { id: invoiceId },
-      include: { purchase: { include: { createdByUser: { select: { email: true, displayName: true } } } } },
+      include: {
+        purchase: { include: { createdByUser: { select: { email: true, displayName: true } } } },
+        subscriptionPayment: { include: { subscription: { include: {
+          firstPaymentPurchase: { include: { invoice: true, createdByUser: { select: { email: true, displayName: true } } } },
+          firstPaymentAttempts: { include: { purchase: { include: { invoice: true, createdByUser: { select: { email: true, displayName: true } } } } } },
+        } } } },
+      },
     })
-    if (!invoice?.purchase || invoice.purchase.status !== 'PAID') throw new Error('PAID_PURCHASE_INVOICE_REQUIRED')
-    if (!invoice.purchase.paidAt) throw new Error('PAID_PURCHASE_INVOICE_REQUIRED')
-    const recipient = invoice.purchase.createdByUser
+    if (!invoice) throw new Error('PAID_PURCHASE_INVOICE_REQUIRED')
+    const recurring = invoice.subscriptionPayment
+    if (recurring && (invoice.purchase || recurring.status !== 'PAID' || !recurring.periodStart
+      || recurring.subscription.organizationId !== invoice.organizationId)) throw new Error('PAID_SUBSCRIPTION_INVOICE_REQUIRED')
+    const source = recurring ? resolveCanonicalProFirstPayment(recurring.subscription) : invoice.purchase
+    const paidAt = recurring ? recurring.periodStart : source?.paidAt
+    if (!source || source.status !== 'PAID' || !paidAt) throw new Error('PAID_PURCHASE_INVOICE_REQUIRED')
+    const recipient = source.createdByUser
     const downloadUrl = new URL(`/credits/facturen/${invoice.id}/pdf`, getPublicAppBaseUrl()).toString()
     const email = financialInvoiceEmail({
       to: recipient.email,
       recipientName: recipient.displayName?.trim() || 'gebruiker',
       invoiceNumber: invoice.invoiceNumber,
       paidAmountInclVatCents: invoice.amountInclVatCents,
-      paidAt: invoice.purchase.paidAt,
+      paidAt,
       downloadUrl,
     })
     const delivery = await sender({ ...email, idempotencyKey: `invoice-email:${invoice.id}` })
     await transaction.financialEvent.create({
       data: {
-        actorUserId: invoice.purchase.createdByUserId,
+        actorUserId: source.createdByUserId,
         purchaseId: invoice.purchaseId,
+        subscriptionId: recurring?.subscriptionId,
         invoiceId: invoice.id,
         eventType: 'INVOICE_EMAIL_SENT',
         result: 'SUCCEEDED',
@@ -54,7 +67,7 @@ export async function deliverFinancialInvoiceEmail(invoiceId: string, sender: In
   })
 }
 
-export async function recordFinancialInvoiceEmailFailure(invoiceId: string, purchaseId: string, actorUserId: string | null) {
+export async function recordFinancialInvoiceEmailFailure(invoiceId: string, purchaseId: string | null, actorUserId: string | null) {
   await getPrisma().financialEvent.upsert({
     where: { idempotencyKey: `invoice-email-failed:${invoiceId}` },
     create: {

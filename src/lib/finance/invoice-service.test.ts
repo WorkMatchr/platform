@@ -102,10 +102,11 @@ describe('financiële documentnummering', () => {
         vatRateBps: 2_100, vatAmountCents: 1_029, amountInclVatCents: 5_929, currency: 'EUR',
         periodStart: new Date('2026-09-01T00:00:00Z'), periodEnd: new Date('2026-10-01T00:00:00Z'),
         subscriptionId: 'subscription-pro', subscription: { organizationId: 'organization-id', planCode: 'WORKMATCHR_PRO_MONTHLY',
-          planLabel: 'WorkMatchr Pro', firstPaymentPurchase: { invoice: {
+          planLabel: 'WorkMatchr Pro', firstPaymentPurchase: { id: 'original', kind: 'PRO_SUBSCRIPTION', status: 'FAILED', invoice: null },
+          firstPaymentAttempts: [{ purchase: { id: 'retry', kind: 'PRO_SUBSCRIPTION', status: 'PAID', invoice: {
             customerOrganizationName: 'Voorbeeldorganisatie', customerAddressLine: 'Teststraat 1', customerPostalCode: '1234 AB',
             customerCity: 'Teststad', customerCountryCode: 'NL', customerKvKNumber: null, customerVatId: null,
-          } } },
+          } } }] },
       }) },
       financialJorttSync: { create: vi.fn() }, financialEvent: { create: vi.fn() },
     }
@@ -115,5 +116,12 @@ describe('financiële documentnummering', () => {
       servicePeriodStart: new Date('2026-09-01T00:00:00Z'), servicePeriodEnd: new Date('2026-10-01T00:00:00Z') }) })
     expect(createLine).toHaveBeenCalledWith({ data: expect.objectContaining({ description: 'WorkMatchr Pro', quantity: 1,
       unit: 'maand', servicePeriodStart: new Date('2026-09-01T00:00:00Z'), servicePeriodEnd: new Date('2026-10-01T00:00:00Z') }) })
+    expect(transaction.financialJorttSync.create).toHaveBeenCalledWith({ data: {
+      invoiceId: 'invoice-pro', technicalReference: 'workmatchr-invoice:invoice-pro',
+    } })
+    transaction.financialInvoice.findUnique.mockResolvedValue({ id: 'invoice-pro' } as never)
+    await issueInvoiceForPaidSubscriptionPayment(transaction as never, 'payment-pro')
+    expect(createInvoice).toHaveBeenCalledTimes(1)
+    expect(transaction.financialJorttSync.create).toHaveBeenCalledTimes(1)
   })
 })

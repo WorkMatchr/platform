@@ -23,6 +23,7 @@ import { runSerializableFinancialTransaction } from './financial-transaction'
 import { isRetryableProFirstPaymentAttempt } from './pro-subscription-presentation'
 import { getSafeMollieErrorDetails } from './credit-payment-diagnostics'
 import { finalizeProFirstPaymentDownstream } from './pro-first-payment-downstream-service'
+import { deliverFinancialInvoiceEmail, recordFinancialInvoiceEmailFailure } from './financial-invoice-delivery-service'
 
 const inputSchema = z.object({
   actorUserId: z.string().uuid(),
@@ -679,7 +680,7 @@ export async function processRecurringProPayment(payment: MolliePaymentSnapshot)
   if (payment.currency !== subscription.currency || payment.amountValue !== centsToMollieValue(subscription.amountInclVatCents)) throw new Error('MOLLIE_PAYMENT_MISMATCH')
   if (subscription.mollieMandateId && payment.mandateId !== subscription.mollieMandateId) throw new Error('MOLLIE_MANDATE_MISMATCH')
   if (subscription.mollieMandateMethod && payment.method !== subscription.mollieMandateMethod) throw new Error('MOLLIE_MANDATE_METHOD_MISMATCH')
-  return runSerializableFinancialTransaction(async (transaction) => {
+  const result = await runSerializableFinancialTransaction(async (transaction) => {
     await lock(transaction, subscription.organizationId)
     const fingerprint = await import('node:crypto').then(({ createHash }) => createHash('sha256').update(JSON.stringify({ id: payment.id, status: payment.status, amount: payment.amountValue, currency: payment.currency, subscriptionId: payment.subscriptionId, mandateId: payment.mandateId, method: payment.method })).digest('hex'))
     const paidPeriodStart = payment.status === 'paid' ? (payment.paidAt ? new Date(payment.paidAt) : new Date()) : null
@@ -707,8 +708,8 @@ export async function processRecurringProPayment(payment: MolliePaymentSnapshot)
       const periodEnd = paymentRecord.periodEnd ?? paidPeriodEnd
       if (!periodStart || !periodEnd) throw new Error('PRO_PAYMENT_PERIOD_REQUIRED')
       const updated = await transaction.professionalSubscription.update({ where: { id: subscription.id }, data: { status: 'ACTIVE', currentPeriodStart: periodStart, currentPeriodEnd: periodEnd, pastDueAt: null, retryCount: 0 } })
-      await issueInvoiceForPaidSubscriptionPayment(transaction, paymentRecord.id, periodStart)
-      return updated
+      const invoice = await issueInvoiceForPaidSubscriptionPayment(transaction, paymentRecord.id, periodStart)
+      return { subscription: updated, invoiceId: invoice.id }
     }
     if (['failed', 'canceled', 'expired'].includes(payment.status)) {
       const now = new Date()
@@ -723,10 +724,21 @@ export async function processRecurringProPayment(payment: MolliePaymentSnapshot)
           update: {},
         })
       }
-      return updated
+      return { subscription: updated, invoiceId: null }
     }
-    return subscription
+    return { subscription, invoiceId: null }
   })
+  // Delivery is outside the committed payment transaction. A failed delivery can
+  // be retried by the normal webhook without issuing another invoice or period.
+  if (result.invoiceId) {
+    try {
+      await deliverFinancialInvoiceEmail(result.invoiceId)
+    } catch (error) {
+      await recordFinancialInvoiceEmailFailure(result.invoiceId, null, null)
+      throw error
+    }
+  }
+  return result.subscription
 }
 
 export async function scheduleProCancellation(
