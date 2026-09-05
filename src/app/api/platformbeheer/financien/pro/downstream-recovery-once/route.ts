@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { finalizeProFirstPaymentDownstream } from '@/lib/finance/pro-first-payment-downstream-service'
 import { getPrisma } from '@/lib/prisma'
 import { requirePlatformAdministrator } from '@/lib/platform-admin/platform-admin-authorization'
 
@@ -80,14 +79,4 @@ export async function GET() {
     emailEvents,
     sync,
   }, { headers: { 'Cache-Control': 'private, no-store' } })
-}
-
-export async function POST() {
-  await requirePlatformAdministrator('/platformbeheer/financien')
-  await requireExactAcceptanceTarget()
-  const result = await finalizeProFirstPaymentDownstream(subscriptionId)
-  if (result.invoiceId !== invoiceId || result.purchaseId !== purchaseId) {
-    throw new Error('PRO_DOWNSTREAM_ACCEPTANCE_RESULT_MISMATCH')
-  }
-  return NextResponse.json(result, { headers: { 'Cache-Control': 'private, no-store' } })
 }
