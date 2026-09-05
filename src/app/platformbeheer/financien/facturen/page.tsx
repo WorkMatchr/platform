@@ -7,7 +7,6 @@ import { financialDocumentTypeLabels, financialPaymentStatusLabels, financialPur
 import { listPlatformFinancialInvoices } from '@/lib/finance/platform-financial-query-service'
 import { requirePlatformAdministrator } from '@/lib/platform-admin/platform-admin-authorization'
 import { retryPlatformJorttSyncAction } from '../actions'
-import { readStatus } from '@/app/api/financien/pro/remote-subscription-retry-once/route'
 
 const pathname = '/platformbeheer/financien/facturen'
 
@@ -20,11 +19,9 @@ export default async function PlatformFinancialInvoicesPage({ searchParams }: { 
   const from = singleParam(params, 'from')
   const through = singleParam(params, 'through')
   const data = await listPlatformFinancialInvoices(administrator.id, { page: parsePage(singleParam(params, 'page')), documentType, organization, from: parseDateBoundary(from), through: parseDateBoundary(through, true) })
-  const proAcceptanceStatus = await readStatus()
 
   return <>
     <AdminPageHeader title="Facturen" description="Immutable factuursnapshots en creditnota’s met beveiligde PDF-download." />
-    <pre data-testid="temporary-pro-acceptance-status" className="sr-only">{JSON.stringify(proAcceptanceStatus)}</pre>
     <FilterForm>
       <FilterField name="documentType" label="Documenttype"><select className="min-h-10 rounded-control border border-border bg-surface px-3 text-sm" name="documentType" defaultValue={documentTypeValue ?? ''}><option value="">Alle documenten</option>{Object.values(FinancialDocumentType).map((type) => <option key={type} value={type}>{financialDocumentTypeLabels[type]}</option>)}</select></FilterField>
       <FilterField name="organization" label="Organisatie" defaultValue={organization} />
