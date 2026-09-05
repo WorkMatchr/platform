@@ -19,6 +19,10 @@ async function requireExactAcceptanceTarget() {
       amountExclVatCents: true,
       vatAmountCents: true,
       amountInclVatCents: true,
+      customerOrganizationName: true,
+      customerAddressLine: true,
+      customerPostalCode: true,
+      customerCity: true,
       purchase: {
         select: {
           id: true,
@@ -50,7 +54,7 @@ async function requireExactAcceptanceTarget() {
 
 export async function GET() {
   await requirePlatformAdministrator('/platformbeheer/financien')
-  await requireExactAcceptanceTarget()
+  const invoice = await requireExactAcceptanceTarget()
   const [emailEvents, sync, invoiceCount, purchaseCount] = await Promise.all([
     getPrisma().financialEvent.findMany({
       where: { invoiceId, eventType: { in: ['INVOICE_EMAIL_SENT', 'INVOICE_EMAIL_FAILED'] } },
@@ -72,11 +76,44 @@ export async function GET() {
     getPrisma().financialInvoice.count({ where: { invoiceNumber } }),
     getPrisma().financialPurchase.count({ where: { id: purchaseId } }),
   ])
+  let remoteCheck: unknown = { status: 'NOT_CHECKED' }
+  if (sync?.externalReference === '1cf7fe45-52bb-4e32-a5f8-4c99f5209b4a') {
+    const tokenResponse = await fetch('https://app.jortt.nl/oauth-provider/oauth/token', {
+      method: 'POST',
+      headers: { Authorization: `Basic ${Buffer.from(`${process.env.JORTT_CLIENT_ID}:${process.env.JORTT_CLIENT_SECRET}`).toString('base64')}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ grant_type: 'client_credentials', scope: 'customers:read invoices:read organizations:read' }),
+      signal: AbortSignal.timeout(10000),
+    })
+    if (!tokenResponse.ok) throw new Error('READ_ONLY_JORTT_AUTH_FAILED')
+    const token = await tokenResponse.json()
+    const read = async (path: string) => {
+      const response = await fetch(`https://api.jortt.nl/v3${path}`, { headers: { Authorization: `Bearer ${token.access_token}`, Accept: 'application/json' }, cache: 'no-store', signal: AbortSignal.timeout(15000) })
+      if (!response.ok) throw new Error('READ_ONLY_JORTT_RESOURCE_FAILED')
+      return response.json()
+    }
+    const remote = (await read(`/invoices/${sync.externalReference}`)).data
+    const matches = (await read(`/invoices?query=${encodeURIComponent(sync.technicalReference!)}`)).data
+    remoteCheck = {
+      exactTechnicalMatches: new Set(matches.filter((item: { remarks?: string; id: string }) => item.remarks?.includes(sync.technicalReference!)).map((item: { id: string }) => item.id)).size,
+      id: remote.id,
+      invoiceNumber: remote.invoice_number,
+      reference: remote.reference,
+      technicalIdentityMatches: remote.remarks?.includes(sync.technicalReference!),
+      status: remote.invoice_status,
+      sendMethod: remote.send_method,
+      amounts: Object.fromEntries(Object.entries(remote).filter(([key]) => /amount|total|vat/.test(key))),
+      lineItems: remote.line_items?.map((item: { quantity?: unknown; amount?: unknown; vat?: unknown }) => ({ quantity: item.quantity, amount: item.amount, vat: item.vat })),
+      customer: remote.customer,
+      customerId: remote.customer_id,
+    }
+  }
   return NextResponse.json({
     targetValid: true,
     invoiceCount,
     purchaseCount,
     emailEvents,
     sync,
+    invoiceSnapshot: { name: invoice.customerOrganizationName, address: invoice.customerAddressLine, postalCode: invoice.customerPostalCode, city: invoice.customerCity, excl: invoice.amountExclVatCents, vat: invoice.vatAmountCents, incl: invoice.amountInclVatCents },
+    remoteCheck,
   }, { headers: { 'Cache-Control': 'private, no-store' } })
 }
