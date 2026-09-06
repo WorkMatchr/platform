@@ -14,6 +14,8 @@ import {
 } from './mollie-gateway'
 import { issueCreditNoteForCompletedRefund } from './invoice-service'
 import { runSerializableFinancialTransaction } from './financial-transaction'
+import { deliverCompletedRefundCreditNote } from './credit-note-delivery'
+import { mirrorCreditNoteSnapshot } from './credit-note-snapshot'
 
 const inputSchema = z.object({
   actorUserId: z.string().uuid(),
@@ -35,7 +37,7 @@ export function mapMollieRefundStatus(status: MollieRefundSnapshot['status']) {
 }
 
 export async function applyMollieRefundSnapshot(refundId: string, snapshot: MollieRefundSnapshot) {
-  return runSerializableFinancialTransaction(async (transaction) => {
+  const result = await runSerializableFinancialTransaction(async (transaction) => {
     await lock(transaction, refundId)
     const current = await transaction.financialRefund.findUniqueOrThrow({
       where: { id: refundId },
@@ -130,6 +132,8 @@ export async function applyMollieRefundSnapshot(refundId: string, snapshot: Moll
     })
     return { refund, creditNote: null, reviewRequired: false }
   })
+  await deliverCompletedRefundCreditNote(result)
+  return result
 }
 
 export async function refundWorkmatchrError(input: unknown, gateway: MollieGateway = createMollieGateway()) {
@@ -145,8 +149,14 @@ export async function refundWorkmatchrError(input: unknown, gateway: MollieGatew
       include: { purchase: true, creditNote: true },
     })
     if (existingForPurchase) return { refund: existingForPurchase, reviewRequired: existingForPurchase.purchase.status === 'REFUND_REVIEW_REQUIRED' }
-    const purchase = await transaction.financialPurchase.findUnique({ where: { id: values.purchaseId }, include: { creditedTransaction: true } })
+    const purchase = await transaction.financialPurchase.findUnique({ where: { id: values.purchaseId }, include: {
+      creditedTransaction: true, invoice: { include: { lines: true, vatSummaries: true } },
+    } })
     if (!purchase || purchase.kind !== 'CREDIT_PACKAGE' || purchase.status !== 'PAID' || !purchase.molliePaymentId || !purchase.creditedTransaction) throw new Error('PAID_CREDIT_PURCHASE_REQUIRED')
+    if (!purchase.invoice) throw new Error('CREDIT_NOTE_V2_SOURCE_REQUIRED')
+    mirrorCreditNoteSnapshot(purchase.invoice)
+    if (purchase.invoice.amountInclVatCents !== purchase.amountInclVatCents || purchase.invoice.credits !== purchase.credits
+      || purchase.invoice.organizationId !== purchase.organizationId) throw new Error('FULL_REFUND_INVOICE_REQUIRED')
     const laterUsage = await transaction.creditTransaction.findFirst({
       where: { creditAccountId: purchase.creditedTransaction.creditAccountId, createdAt: { gt: purchase.creditedTransaction.createdAt }, totalDelta: { lt: 0 } },
       select: { id: true },
@@ -196,6 +206,7 @@ export async function refundWorkmatchrError(input: unknown, gateway: MollieGatew
   if (prepared.reviewRequired) return prepared
   if (prepared.refund.status === 'REFUNDED') {
     const creditNote = await getPrisma().financialInvoice.findUnique({ where: { refundId: prepared.refund.id } })
+    await deliverCompletedRefundCreditNote({ refund: prepared.refund, creditNote })
     return { refund: prepared.refund, creditNote, reviewRequired: false }
   }
   if (['FAILED', 'CANCELED'].includes(prepared.refund.status)) return { refund: prepared.refund, creditNote: null, reviewRequired: false }
@@ -243,7 +254,10 @@ export async function reconcileMollieRefund(refundId: string, gateway: MollieGat
     include: { purchase: { select: { molliePaymentId: true } }, creditNote: true },
   })
   if (!refund) throw new Error('PENDING_MOLLIE_REFUND_REQUIRED')
-  if (refund.status === 'REFUNDED') return { refund, creditNote: refund.creditNote, reviewRequired: false }
+  if (refund.status === 'REFUNDED') {
+    await deliverCompletedRefundCreditNote({ refund, creditNote: refund.creditNote })
+    return { refund, creditNote: refund.creditNote, reviewRequired: false }
+  }
   if (['FAILED', 'CANCELED'].includes(refund.status)) return { refund, creditNote: null, reviewRequired: false }
   if (!refund.mollieRefundId || !refund.purchase.molliePaymentId) {
     throw new Error('PENDING_MOLLIE_REFUND_REQUIRED')

@@ -306,7 +306,7 @@ async function buildSnapshotV2FinancialInvoicePdf(invoice: FinancialInvoicePdfSn
       { label: 'Aantal', value: String(line.quantity), x: MARGIN_X + 12, width: 42 },
       { label: 'Eenheid', value: line.unit, x: MARGIN_X + 56, width: 48 },
       { label: 'Prijs excl.', value: formatEuro(line.unitPriceExclVatCents), x: MARGIN_X + 108, width: 68 },
-      { label: 'Korting', value: line.discountAmountCents ? `-${formatEuro(line.discountAmountCents)}` : formatEuro(0), x: MARGIN_X + 180, width: 62 },
+      { label: 'Korting', value: line.discountAmountCents > 0 ? `-${formatEuro(line.discountAmountCents)}` : formatEuro(-line.discountAmountCents), x: MARGIN_X + 180, width: 62 },
       { label: 'Netto', value: formatEuro(line.netAmountExclVatCents), x: MARGIN_X + 246, width: 64 },
       { label: `Btw ${line.vatRateBps / 100}%`, value: formatEuro(line.vatAmountCents), x: MARGIN_X + 314, width: 66 },
       { label: 'Incl. btw', value: formatEuro(line.amountInclVatCents), x: MARGIN_X + 384, width: 90 },

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('server-only', () => ({}))
+vi.mock('./credit-note-delivery', () => ({ deliverCompletedRefundCreditNote: vi.fn() }))
 
 const mocks = vi.hoisted(() => ({ phase: vi.fn(), issueCreditNote: vi.fn(), failNextTransaction: false }))
 

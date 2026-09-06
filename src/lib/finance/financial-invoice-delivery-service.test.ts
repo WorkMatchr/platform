@@ -73,6 +73,47 @@ describe('factuurmailbezorging', () => {
     expect(sender).not.toHaveBeenCalled()
   })
 
+  function creditNote(status = 'REFUNDED') {
+    return { ...invoice, documentType: 'CREDIT_NOTE', purchaseId: null, purchase: null,
+      organizationId: 'org', issuedAt: new Date('2026-09-06'), amountInclVatCents: -3025,
+      refundId: 'refund', originalInvoice: { purchaseId: invoice.purchaseId, organizationId: 'org' },
+      refund: { status, completedAt: new Date('2026-09-06'), amountCents: 3025,
+        purchase: { ...invoice.purchase, id: invoice.purchaseId, organizationId: 'org', status: 'REFUNDED' } } }
+  }
+
+  it('bezorgt creditnota via completed refund zonder directe purchase', async () => {
+    mocks.invoiceFind.mockResolvedValue(creditNote())
+    const sender = vi.fn().mockResolvedValue({ transport: 'RESEND', status: 'ACCEPTED' })
+    const { deliverFinancialInvoiceEmail } = await import('./financial-invoice-delivery-service')
+    await deliverFinancialInvoiceEmail(invoice.id, sender)
+    expect(sender).toHaveBeenCalledOnce()
+    expect(sender).toHaveBeenCalledWith(expect.objectContaining({
+      subject: expect.stringContaining('creditnota'), text: expect.stringContaining('-30,25'),
+      html: expect.stringContaining('Creditnota bekijken'), idempotencyKey: `invoice-email:${invoice.id}`,
+    }))
+    expect(mocks.eventCreate).toHaveBeenCalledWith({ data: expect.objectContaining({ eventType: 'CREDIT_NOTE_EMAIL_SENT', refundId: 'refund' }) })
+  })
+
+  it.each(['PENDING', 'FAILED', 'CANCELED'])('weigert creditnotadelivery bij %s', async status => {
+    mocks.invoiceFind.mockResolvedValue(creditNote(status)); const sender = vi.fn()
+    const { deliverFinancialInvoiceEmail } = await import('./financial-invoice-delivery-service')
+    await expect(deliverFinancialInvoiceEmail(invoice.id, sender)).rejects.toThrow('COMPLETED_REFUND_CREDIT_NOTE_REQUIRED')
+    expect(sender).not.toHaveBeenCalled()
+  })
+
+  it('weigert creditnota met een andere tenant', async () => {
+    mocks.invoiceFind.mockResolvedValue({ ...creditNote(), organizationId: 'other' }); const sender = vi.fn()
+    const { deliverFinancialInvoiceEmail } = await import('./financial-invoice-delivery-service')
+    await expect(deliverFinancialInvoiceEmail(invoice.id, sender)).rejects.toThrow('COMPLETED_REFUND_CREDIT_NOTE_REQUIRED')
+  })
+
+  it('maakt creditnotareplay een no-op met dezelfde bestaande deliverykey', async () => {
+    mocks.invoiceFind.mockResolvedValue(creditNote()); mocks.eventFind.mockResolvedValue({ eventType: 'CREDIT_NOTE_EMAIL_SENT' })
+    const sender = vi.fn(); const { deliverFinancialInvoiceEmail } = await import('./financial-invoice-delivery-service')
+    expect(await deliverFinancialInvoiceEmail(invoice.id, sender)).toEqual({ delivered: true, idempotent: true })
+    expect(sender).not.toHaveBeenCalled()
+  })
+
   it('weigert een factuur zonder betaalde aankoop en registreert alleen veilige faalaudit', async () => {
     mocks.invoiceFind.mockResolvedValue({ ...invoice, purchase: { ...invoice.purchase, status: 'EXPIRED' } })
     const sender = vi.fn()
