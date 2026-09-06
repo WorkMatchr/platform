@@ -23,6 +23,7 @@ import { retryDueJorttSyncs, syncFinancialInvoiceToJortt, type JorttGateway } fr
 
 function invoice(status = 'PENDING', updatedAt = new Date('2026-08-25T10:00:00Z')) {
   return {
+    snapshotVersion: 2, packageLabel: '100 credits',
     id: 'invoice-id', organizationId: 'organization-id', invoiceNumber: 'WM-2026-000001', documentType: 'INVOICE', pricingMode: 'STANDARD', issuedAt: new Date('2026-08-25T10:00:00Z'), supplyDate: new Date('2026-08-25T10:00:00Z'), servicePeriodStart: null, servicePeriodEnd: null,
     sellerLegalName: 'WorkMatchr', sellerKvKNumber: '12345678', sellerVatId: 'NL123456789B01', customerOrganizationName: 'Test B.V.', customerAddressLine: 'Teststraat 1', customerPostalCode: '1234 AB', customerCity: 'Utrecht', customerCountryCode: 'NL', customerKvKNumber: null, customerVatId: null,
     amountExclVatCents: 10_000, vatRateBps: 2_100, vatAmountCents: 2_100, amountInclVatCents: 12_100, currency: 'EUR', molliePaymentId: 'tr_test', originalInvoice: null,
@@ -32,6 +33,51 @@ function invoice(status = 'PENDING', updatedAt = new Date('2026-08-25T10:00:00Z'
 }
 
 describe('Jortt synchronisatieservice', () => {
+  it.each([[100, 21, 121, '25 credits'], [5000, 1050, 6050, '50 credits']] as const)('mapt v1 %i cent zonder opgeslagen regels', async (net, vat, total, label) => {
+    const source = { ...invoice(), snapshotVersion: 1, packageLabel: label, lines: [], vatSummaries: [], amountExclVatCents: net, vatAmountCents: vat, amountInclVatCents: total }
+    const original = structuredClone(source)
+    mocks.invoiceFind.mockResolvedValue(source)
+    const submitInvoice = vi.fn().mockResolvedValue({ externalReference: 'remote-id', remoteInvoiceNumber: 'J1' })
+    await syncFinancialInvoiceToJortt(source.id, { submitInvoice })
+    expect(submitInvoice).toHaveBeenCalledWith(expect.objectContaining({
+      issuedAt: source.issuedAt.toISOString(), currency: 'EUR', technicalReference: 'workmatchr-invoice:invoice-id',
+      amountExclVatCents: net, vatAmountCents: vat, amountInclVatCents: total,
+      lines: [{ description: label, quantity: 1, unit: 'pakket', unitPriceExclVatCents: net, discountAmountCents: 0, netAmountExclVatCents: net, vatRateBps: 2100, vatAmountCents: vat }],
+    }), 'jortt:invoice:invoice-id')
+    expect(source).toEqual(original)
+    mocks.invoiceFind.mockResolvedValue({ ...source, jorttSync: { ...source.jorttSync, status: 'SYNCED' } })
+    await syncFinancialInvoiceToJortt(source.id, { submitInvoice })
+    expect(submitInvoice).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([[100, 21, 122], [100, 20, 120]])('weigert v1 inconsistente historische totalen', async (net, vat, total) => {
+    mocks.invoiceFind.mockResolvedValue({ ...invoice(), snapshotVersion: 1, lines: [], amountExclVatCents: net, vatAmountCents: vat, amountInclVatCents: total })
+    const submitInvoice = vi.fn()
+    await expect(syncFinancialInvoiceToJortt('invoice-id', { submitInvoice })).rejects.toThrow('JORTT_INVOICE_TOTAL_MISMATCH')
+    expect(submitInvoice).not.toHaveBeenCalled()
+  })
+
+  it('behoudt v2-regels zonder reconstructie', async () => {
+    const source = invoice()
+    const submitInvoice = vi.fn().mockResolvedValue({ externalReference: 'remote-id', remoteInvoiceNumber: 'J1' })
+    await syncFinancialInvoiceToJortt(source.id, { submitInvoice })
+    expect(submitInvoice.mock.calls[0][0].lines).toEqual(source.lines)
+  })
+
+  it('reconstrueert nooit ontbrekende v2-regels', async () => {
+    mocks.invoiceFind.mockResolvedValue({ ...invoice(), lines: [] })
+    const submitInvoice = vi.fn().mockRejectedValue(new Error('JORTT_INVOICE_TOTAL_MISMATCH'))
+    await expect(syncFinancialInvoiceToJortt('invoice-id', { submitInvoice })).rejects.toThrow('JORTT_INVOICE_TOTAL_MISMATCH')
+    expect(submitInvoice.mock.calls[0][0].lines).toEqual([])
+  })
+
+  it('laat het bestaande v1-creditnotapad ongewijzigd', async () => {
+    mocks.invoiceFind.mockResolvedValue({ ...invoice(), snapshotVersion: 1, documentType: 'CREDIT_NOTE', lines: [], originalInvoice: { jorttSync: { externalReference: 'original-remote' } } })
+    const submitInvoice = vi.fn().mockResolvedValue({ externalReference: 'credit-remote', remoteInvoiceNumber: 'C1' })
+    await syncFinancialInvoiceToJortt('invoice-id', { submitInvoice })
+    expect(submitInvoice.mock.calls[0][0]).toMatchObject({ documentType: 'CREDIT_NOTE', lines: [], originalInvoiceExternalReference: 'original-remote' })
+  })
+
   beforeEach(() => {
     vi.clearAllMocks()
     vi.useFakeTimers()

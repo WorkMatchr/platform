@@ -1,5 +1,11 @@
 # Financiële keten F3-F9
 
+## Jortt-compatibiliteit voor historische snapshot v1
+
+Reguliere snapshot-v1-facturen hebben geen opgeslagen v2-regels. De Jortt-payload reconstrueert daarom uitsluitend in geheugen één pakketregel: historische `packageLabel`, hoeveelheid 1, eenheidsprijs en netto gelijk aan `amountExclVatCents`, en de opgeslagen `vatRateBps`/`vatAmountCents`. Kortingen zijn al in het historische nettototaal verwerkt en worden niet opnieuw afgetrokken. Valuta en factuurdatum blijven uit de snapshot komen. Gehele centbedragen, excl. plus btw gelijk aan incl. en aansluiting van het tarief op de historische btw worden fail-closed gecontroleerd.
+
+Snapshot v2 gebruikt ongewijzigd de opgeslagen regels en de bestaande strikte gatewayvalidatie; ontbrekende v2-regels krijgen nooit een v1-fallback. Historische records worden niet gewijzigd of gebackfilld. Technische identiteit, bekende remote ID, find-before-create en retry/idempotency blijven gelijk. De bestaande creditnotaroute via de oorspronkelijke Jortt-factuur blijft ongewijzigd; deze compatibiliteitsuitbreiding reconstrueert geen creditnotaregels.
+
 ## Platformbeheer
 
 Platformoperators hebben onder `/platformbeheer/financien` een uitsluitend-lezen financieel overzicht. De onderliggende aankopen, factuursnapshots en terugbetalingen blijven de enige bron; de beheerpagina's vormen geen tweede administratie. Betalingen, facturen en terugbetalingen zijn afzonderlijk filterbaar en gepagineerd. Factuur-PDF's zijn via een platformbeheer-geautoriseerde route beschikbaar. De beheerinterface biedt bewust geen verwijder- of mutatieacties.

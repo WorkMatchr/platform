@@ -62,6 +62,8 @@ function safeErrorCode(error: unknown) {
 }
 
 function buildPayload(invoice: {
+  snapshotVersion: number
+  packageLabel: string
   id: string
   organizationId: string
   invoiceNumber: string
@@ -91,6 +93,25 @@ function buildPayload(invoice: {
   jorttSync: { externalReference: string | null; technicalReference: string | null } | null
   originalInvoice: { jorttSync: { externalReference: string | null } | null } | null
 }): JorttInvoicePayload {
+  let lines = invoice.lines
+  if (invoice.documentType === 'INVOICE') {
+    if (invoice.snapshotVersion === 1) {
+      // V1 has no persisted line model. Use one aggregate line from the immutable snapshot.
+      const { amountExclVatCents: net, vatAmountCents: vat, amountInclVatCents: total, vatRateBps: rate } = invoice
+      if (![net, vat, total, rate].every(Number.isSafeInteger)
+        || net < 0 || vat < 0 || rate < 0 || rate > 10_000
+        || net + vat !== total || !Number.isSafeInteger(net * rate)
+        || Math.round(net * rate / 10_000) !== vat) {
+        throw new Error('JORTT_INVOICE_TOTAL_MISMATCH')
+      }
+      if (!invoice.packageLabel.trim()) throw new Error('JORTT_V1_DESCRIPTION_MISSING')
+      lines = [{ description: invoice.packageLabel, quantity: 1, unit: 'pakket',
+        unitPriceExclVatCents: net, discountAmountCents: 0, netAmountExclVatCents: net,
+        vatRateBps: rate, vatAmountCents: vat }]
+    } else if (invoice.snapshotVersion !== 2) {
+      throw new Error('JORTT_SNAPSHOT_VERSION_UNSUPPORTED')
+    }
+  }
   return Object.freeze({
     invoiceId: invoice.id,
     technicalReference: invoice.jorttSync?.technicalReference ?? `workmatchr-invoice:${invoice.id}`,
@@ -120,7 +141,7 @@ function buildPayload(invoice: {
     currency: invoice.currency,
     paymentReference: invoice.molliePaymentId,
     originalInvoiceExternalReference: invoice.originalInvoice?.jorttSync?.externalReference ?? null,
-    lines: Object.freeze(invoice.lines.map((line) => Object.freeze({ ...line }))),
+    lines: Object.freeze(lines.map((line) => Object.freeze({ ...line }))),
   })
 }
 

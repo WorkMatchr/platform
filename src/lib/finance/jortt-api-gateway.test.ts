@@ -23,6 +23,13 @@ function payload(overrides: Partial<JorttInvoicePayload> = {}): JorttInvoicePayl
 }
 
 describe('Jortt API gateway', () => {
+  it('weigert ontbrekende regels vóór iedere providercall, zonder v1-fallback in de gateway', async () => {
+    const fetcher = vi.fn()
+    await expect(new JorttApiGateway(fetcher as typeof fetch).submitInvoice(payload({ lines: [] }), 'missing-lines'))
+      .rejects.toThrow('JORTT_INVOICE_TOTAL_MISMATCH')
+    expect(fetcher).not.toHaveBeenCalled()
+  })
+
   beforeEach(() => {
     vi.stubEnv('VERCEL_ENV', 'preview')
     vi.stubEnv('JORTT_SYNC_ENVIRONMENT', 'acceptance')
