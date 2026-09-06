@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { operationalJorttFilter } from './jortt-retirement-policy'
 
 vi.mock('server-only', () => ({}))
 
@@ -49,6 +50,7 @@ describe('platformbrede financiële rapportage', () => {
     expect(result.failedCreditPayments).toBe(1)
     expect(result.failedProPayments).toBe(2)
     expect(result.pendingRefunds).toBe(2)
+    expect(prisma.financialJorttSync.groupBy).toHaveBeenCalledWith({ where: operationalJorttFilter, by: ['status'], _count: true })
     expect(result.failedRefunds).toBe(1)
   })
 })
@@ -78,5 +80,6 @@ describe('financiële maintenance-observability', () => {
       maintenanceLate: true,
     })
     expect(getPlatformAdministratorContext).toHaveBeenCalledWith('10000000-0000-4000-8000-000000000001')
+    expect(prisma.financialJorttSync.count).toHaveBeenCalledWith({ where: { status: 'FAILED', AND: [operationalJorttFilter] } })
   })
 })

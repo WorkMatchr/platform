@@ -4,6 +4,7 @@ import { getPrisma } from '@/lib/prisma'
 import { requireProviderMarketplaceAccess } from '@/lib/marketplace/marketplace-authorization'
 import { getPlatformAdministratorContext } from '@/lib/platform-admin/platform-admin-authorization'
 import { deriveCreditBalance } from '@/lib/credits/credit-ledger-contract'
+import { operationalJorttFilter } from './jortt-retirement-policy'
 
 export async function getProfessionalFinancialDashboard(input: { actorUserId: string; organizationId: string }) {
   const prisma = getPrisma()
@@ -43,7 +44,7 @@ export async function getPlatformFinancialDashboard(actorUserId: string) {
     prisma.discountRedemption.count({ where: { status: 'APPLIED' } }),
     prisma.starterBenefitGrant.count(),
     prisma.professionalSubscription.groupBy({ by: ['status'], _count: true }),
-    prisma.financialJorttSync.groupBy({ by: ['status'], _count: true }),
+    prisma.financialJorttSync.groupBy({ where: operationalJorttFilter, by: ['status'], _count: true }),
   ])
   const ledgerTotal = (type: string) => ledger.find((item) => item.type === type)?._sum.totalDelta ?? 0
   const countStatus = (status: string) => payments.find((item) => item.status === status)?._count ?? 0
@@ -118,7 +119,7 @@ export async function getPlatformFinancialMaintenanceOverview(actorUserId: strin
     prisma.professionalSubscription.count({ where: { cancelAtPeriodEnd: true, cancellationEffectiveAt: { lte: at }, status: { in: ['ACTIVE', 'PAST_DUE'] } } }),
     prisma.professionalSubscription.count({ where: { status: 'PAST_DUE', cancelAtPeriodEnd: false, pastDueAt: { lte: overdueThreshold } } }),
     prisma.financialJorttSync.count({ where: { status: 'RETRY_REQUIRED' } }),
-    prisma.financialJorttSync.count({ where: { status: 'FAILED' } }),
+    prisma.financialJorttSync.count({ where: { status: 'FAILED', AND: [operationalJorttFilter] } }),
     prisma.financialJorttSync.count({ where: { status: { in: ['PENDING', 'RETRY_REQUIRED'] }, updatedAt: { lt: jorttThreshold }, OR: [{ nextAttemptAt: null }, { nextAttemptAt: { lte: at } }] } }),
   ])
 

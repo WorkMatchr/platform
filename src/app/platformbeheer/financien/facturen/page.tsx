@@ -7,6 +7,7 @@ import { financialDocumentTypeLabels, financialPaymentStatusLabels, financialPur
 import { listPlatformFinancialInvoices } from '@/lib/finance/platform-financial-query-service'
 import { requirePlatformAdministrator } from '@/lib/platform-admin/platform-admin-authorization'
 import { retryPlatformJorttSyncAction } from '../actions'
+import { isRetiredLegacyJorttSync } from '@/lib/finance/jortt-retirement-policy'
 
 const pathname = '/platformbeheer/financien/facturen'
 
@@ -49,10 +50,10 @@ export default async function PlatformFinancialInvoicesPage({ searchParams }: { 
             <td className="px-4 py-3">{status ? <StatusPill tone={financialStatusTone(status)}>{statusLabel}</StatusPill> : statusLabel}</td>
             <td className="px-4 py-3">
               {invoice.jorttSync ? <div className="flex min-w-36 flex-col items-start gap-1.5">
-                <StatusPill tone={financialSyncStatusTone(invoice.jorttSync.status)}>{financialSyncStatusLabels[invoice.jorttSync.status]}</StatusPill>
+                <StatusPill tone={isRetiredLegacyJorttSync(invoice.jorttSync) ? 'neutral' : financialSyncStatusTone(invoice.jorttSync.status)}>{isRetiredLegacyJorttSync(invoice.jorttSync) ? 'Testhistorie — niet meer synchroniseren' : financialSyncStatusLabels[invoice.jorttSync.status]}</StatusPill>
                 {invoice.jorttSync.remoteInvoiceNumber ? <span className="text-xs text-text-muted">Jortt {invoice.jorttSync.remoteInvoiceNumber}</span> : null}
                 {invoice.jorttSync.lastErrorCode ? <span className="text-xs text-red-700">Foutcode: {invoice.jorttSync.lastErrorCode}</span> : null}
-                {['FAILED', 'RETRY_REQUIRED'].includes(invoice.jorttSync.status) ? <form action={retryPlatformJorttSyncAction}>
+                {!isRetiredLegacyJorttSync(invoice.jorttSync) && ['FAILED', 'RETRY_REQUIRED'].includes(invoice.jorttSync.status) ? <form action={retryPlatformJorttSyncAction}>
                   <input type="hidden" name="invoiceId" value={invoice.id} />
                   <button type="submit" className="text-xs font-semibold text-brand-primary hover:underline">Opnieuw synchroniseren</button>
                 </form> : null}

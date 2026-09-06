@@ -33,6 +33,13 @@ vi.mock('./jortt-sync-service', () => ({ retryDueJorttSyncs: jortt }))
 vi.mock('./mollie-gateway', () => ({ createMollieGateway: vi.fn(() => ({})) }))
 
 describe('financiële maintenance-orchestratie', () => {
+  it('kan succesvol afronden wanneer retirement geen operationele Jortt-retries overlaat', async () => {
+    jortt.mockResolvedValue([])
+    const { runFinancialMaintenance } = await import('./financial-maintenance-service')
+    const result = await runFinancialMaintenance(new Date('2026-09-06T10:00:00Z'), {} as never, 'SCHEDULER')
+    expect(result.status).toBe('SUCCEEDED')
+    expect(result.errorCodes).toEqual([])
+  })
   beforeEach(() => {
     vi.clearAllMocks()
     transaction.financialMaintenanceRun.create.mockResolvedValue({ id: 'maintenance-run-id' })

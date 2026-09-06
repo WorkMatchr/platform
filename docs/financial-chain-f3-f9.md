@@ -1,5 +1,13 @@
 # Financiële keten F3-F9
 
+## Uitfaseren van bevestigde legacy-Jortt-testrecords
+
+De drie expliciet goedgekeurde invoice-identiteiten uit `jortt-retirement-policy.ts` kunnen via `retireLegacyJorttTestSync` door een actuele platformbeheerder worden uitgefaseerd. Dit gebeurt niet automatisch bij deployment: er is bewust geen route, seed of scheduler-hook. Production-uitvoering vereist afzonderlijke toestemming.
+
+De bestaande terminale `FAILED`-status wordt gebruikt met `lastErrorCode=LEGACY_TEST_DATA` en `nextAttemptAt=NULL`. Dit betekent bewust niet gesynchroniseerde testhistorie, niet succes. Een atomair append-only `JORTT_SYNC_RETIRED`-event bewaart actor, database-timestamp, reden, vorige status/fout en attemptCount. Facturen, bedragen, remote-identifiers, bestaande attempts/events blijven intact. Dezelfde invoice-advisory lock voorkomt overlap met een nieuwe syncclaim; `PROCESSING` wordt altijd geweigerd. Herhaling is een no-op.
+
+De maintenance selecteert ongewijzigd alleen `PENDING`/`RETRY_REQUIRED`. Alleen de combinatie van vaste ID, `FAILED` en expliciete reden wordt uit operationele dashboardfouten gehouden en in de facturenlijst als testhistorie getoond zonder retryknop. De syncservice blokkeert ook directe handmatige herhaling. Andere facturen, inclusief v1 en echte failures, blijven normaal verwerkt en zichtbaar. Geen migratie of historische backfill; dit is geen generieke skipfunctie.
+
 ## Jortt-compatibiliteit voor historische snapshot v1
 
 Reguliere snapshot-v1-facturen hebben geen opgeslagen v2-regels. De Jortt-payload reconstrueert daarom uitsluitend in geheugen één pakketregel: historische `packageLabel`, hoeveelheid 1, eenheidsprijs en netto gelijk aan `amountExclVatCents`, en de opgeslagen `vatRateBps`/`vatAmountCents`. Kortingen zijn al in het historische nettototaal verwerkt en worden niet opnieuw afgetrokken. Valuta en factuurdatum blijven uit de snapshot komen. Gehele centbedragen, excl. plus btw gelijk aan incl. en aansluiting van het tarief op de historische btw worden fail-closed gecontroleerd.

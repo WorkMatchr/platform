@@ -33,6 +33,29 @@ function invoice(status = 'PENDING', updatedAt = new Date('2026-08-25T10:00:00Z'
 }
 
 describe('Jortt synchronisatieservice', () => {
+  it('onderhoud verwerkt andere retries en selecteert geen terminale testhistorie', async () => {
+    mocks.syncFindMany.mockImplementation(async ({ where }) => {
+      const records = [
+        { invoiceId: '516a2763-7d62-47ce-aaad-8e2bc63d067e', status: 'FAILED' },
+        { invoiceId: 'cf9c9bac-56f9-45bb-994c-d6a1b596ff1e', status: 'FAILED' },
+        { invoiceId: '63831bd7-277a-48a7-b328-a3d7ed7eb099', status: 'FAILED' },
+        { invoiceId: 'invoice-id', status: 'RETRY_REQUIRED' },
+      ]
+      return records.filter((record) => where.status.in.includes(record.status))
+    })
+    const submitInvoice = vi.fn().mockResolvedValue({ externalReference: 'remote', remoteInvoiceNumber: 'J1' })
+    expect(await retryDueJorttSyncs({ submitInvoice })).toEqual([{ invoiceId: 'invoice-id', status: 'SYNCED' }])
+    expect(submitInvoice).toHaveBeenCalledOnce()
+  })
+  it.each(['516a2763-7d62-47ce-aaad-8e2bc63d067e', 'cf9c9bac-56f9-45bb-994c-d6a1b596ff1e', '63831bd7-277a-48a7-b328-a3d7ed7eb099'])('blokkeert retired %s vóór claim/provider', async (invoiceId) => {
+    const source = invoice('FAILED')
+    mocks.invoiceFind.mockResolvedValue({ ...source, id: invoiceId, jorttSync: { ...source.jorttSync, invoiceId, lastErrorCode: 'LEGACY_TEST_DATA' } })
+    const submitInvoice = vi.fn()
+    await expect(syncFinancialInvoiceToJortt(invoiceId, { submitInvoice })).rejects.toThrow('JORTT_SYNC_RETIRED')
+    expect(submitInvoice).not.toHaveBeenCalled()
+    expect(mocks.syncUpdate).not.toHaveBeenCalled()
+    expect(mocks.attemptCreate).not.toHaveBeenCalled()
+  })
   it.each([[100, 21, 121, '25 credits'], [5000, 1050, 6050, '50 credits']] as const)('mapt v1 %i cent zonder opgeslagen regels', async (net, vat, total, label) => {
     const source = { ...invoice(), snapshotVersion: 1, packageLabel: label, lines: [], vatSummaries: [], amountExclVatCents: net, vatAmountCents: vat, amountInclVatCents: total }
     const original = structuredClone(source)

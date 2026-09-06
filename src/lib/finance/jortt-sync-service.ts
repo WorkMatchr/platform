@@ -2,6 +2,7 @@ import 'server-only'
 
 import { Prisma } from '@/generated/prisma/client'
 import { getPrisma } from '@/lib/prisma'
+import { isRetiredLegacyJorttSync } from './jortt-retirement-policy'
 
 const PROCESSING_LEASE_MS = 5 * 60 * 1000
 
@@ -157,6 +158,7 @@ export async function syncFinancialInvoiceToJortt(
       include: { jorttSync: true, lines: { orderBy: { position: 'asc' } }, originalInvoice: { include: { jorttSync: true } } },
     })
     if (!invoice?.jorttSync) throw new Error('JORTT_SYNC_NOT_FOUND')
+    if (isRetiredLegacyJorttSync(invoice.jorttSync)) throw new Error('JORTT_SYNC_RETIRED')
     if (invoice.jorttSync.status === 'SYNCED') return { invoice, sync: invoice.jorttSync, idempotent: true }
     if (
       invoice.jorttSync.status === 'PROCESSING'
