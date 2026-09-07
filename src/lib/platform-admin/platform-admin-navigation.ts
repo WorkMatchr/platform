@@ -43,6 +43,11 @@ const operatorNavigationGroups = [
     ],
   },
   {
+    label: 'Trading',
+    tone: 'system',
+    items: [{ href: '/platformbeheer/trading/toegang', label: 'Toegang' }],
+  },
+  {
     label: 'Systeem',
     tone: 'system',
     items: [
@@ -73,6 +78,7 @@ export const platformAdminNavigation = [
   ...operatorNavigationGroups[2].items,
   ...operatorNavigationGroups[3].items,
   ...operatorNavigationGroups[4].items,
+  ...operatorNavigationGroups[5].items,
 ] as const
 
 export type PlatformAdminRoute = (typeof platformAdminNavigation)[number]['href']

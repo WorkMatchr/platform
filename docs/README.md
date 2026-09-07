@@ -157,3 +157,5 @@ Module 6C.2 — WOS Beheeracties & Communicatie is technisch opgeleverd en wacht
 Het productmatige en architectonische kompas staat in [FOUNDING_PRINCIPLES.md](FOUNDING_PRINCIPLES.md). Aanvullend staan de uitvoeringsprincipes in [PROJECT_PRINCIPLES.md](../PROJECT_PRINCIPLES.md) en wijzigingen in [CHANGELOG.md](../CHANGELOG.md).
 
 Documentatie wordt bijgewerkt zodra een besluit, risico of functionaliteit verandert.
+
+- [Trading-toegang via bestaande WorkMatchr Beheer](trading-access.md)
