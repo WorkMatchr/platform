@@ -1,0 +1,27 @@
+name: Trading access
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://build:build@127.0.0.1:1/build
+      BETTER_AUTH_SECRET: synthetic-ci-platform-auth-secret-not-for-use
+      BETTER_AUTH_URL: http://localhost:3000
+      TRADING_ADMIN_API_TOKEN: synthetic-ci-management-token-not-for-use
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run db:generate
+      - run: npm run lint
+      - name: Trading access and existing administrator guards
+        run: npm run test -- src/lib/trading/trading-access-service.test.ts src/app/platformbeheer/trading/toegang/trading-access-interface.test.ts src/lib/platform-admin/platform-admin-authorization.test.ts src/lib/platform-admin/platform-admin-navigation.test.ts src/components/platform-admin/platform-admin-navigation-menu.test.tsx --maxWorkers=2
+      - run: npm run build
+      - name: Check browser token isolation
+        run: node scripts/check-trading-token-bundle.mjs
+      - run: git diff --check

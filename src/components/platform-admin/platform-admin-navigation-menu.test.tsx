@@ -34,18 +34,19 @@ describe('inklapbare platformbeheernavigatie', () => {
     expect(html.match(/aria-current="page"/g)).toHaveLength(1)
   })
 
-  it('wisselt de vijf beheergroepen volgens A-B-A-B-A af', () => {
+  it('wisselt de zes beheergroepen volgens A-B-A-B-A-B af', () => {
     navigation.pathname = '/platformbeheer'
     const html = renderToStaticMarkup(<PlatformAdminNavigationMenu membershipRole="ADMIN" />)
     const summaries = [...html.matchAll(/<summary class="([^"]+)"/g)].map((match) => match[1])
 
-    expect(summaries).toHaveLength(5)
+    expect(summaries).toHaveLength(6)
     expect(summaries.map((classes) => classes.includes('border-sky-200 bg-sky-50'))).toEqual([
       true,
       false,
       true,
       false,
       true,
+      false,
     ])
     expect(summaries[1]).toContain('border-slate-200 bg-slate-50')
     expect(summaries[3]).toContain('border-slate-200 bg-slate-50')

@@ -6,14 +6,14 @@ import { getPlatformAdminNavigationGroups, platformAdminNavigation, platformAdmi
 describe('platformbeheernavigatie', () => {
   it('groepeert alle afgesproken hoofdonderdelen in vaste volgorde', () => {
     expect(platformAdminNavigationGroups.map((group) => group.label)).toEqual([
-      'Dagelijks beheer', 'Beoordelingen', 'Inzicht', 'Financieel', 'Systeem',
+      'Dagelijks beheer', 'Beoordelingen', 'Inzicht', 'Financieel', 'Trading', 'Systeem',
     ])
     expect(platformAdminNavigation.map((item) => item.label)).toEqual([
       'Dashboard', 'Actiecentrum', 'Organisaties', 'Dienstverleners', 'Opdrachten',
       'Reviews', 'Goedkeuringen', 'Audit',
       'Betrouwbaarheid', 'Trends', 'Rapportages', 'Kennisbeheer',
       'Overzicht', 'Betalingen', 'Facturen', 'Terugbetalingen', 'Marketplace',
-      'Platformbeheerders', 'Instellingen', 'Bedrijfsregels',
+      'Toegang', 'Platformbeheerders', 'Instellingen', 'Bedrijfsregels',
     ])
     expect(platformAdminNavigation.map((item) => item.label)).not.toContain('Gebruikers')
     expect(platformAdminNavigationGroups.find((group) => group.label === 'Financieel')?.items.map((item) => item.label)).toContain('Marketplace')
