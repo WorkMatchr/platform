@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('server-only', () => ({}))
+vi.mock('./credit-note-delivery', () => ({ deliverCompletedRefundCreditNote: vi.fn() }))
+vi.mock('./credit-note-snapshot', () => ({ mirrorCreditNoteSnapshot: vi.fn() }))
 
 const mocks = vi.hoisted(() => ({
   authorize: vi.fn(),
@@ -17,6 +19,7 @@ const purchase = {
   molliePaymentId: 'tr_test',
   credits: 25,
   amountInclVatCents: 3_025,
+  invoice: { amountInclVatCents: 3025, credits: 25, organizationId: '20000000-0000-4000-8000-000000000001' },
   creditedTransaction: { creditAccountId: '30000000-0000-4000-8000-000000000001', createdAt: new Date('2026-08-09T10:00:00Z') },
 }
 
@@ -95,6 +98,17 @@ describe('financiële refund-foutisolatie', () => {
     transaction.financialRefund.create.mockResolvedValue(refund)
     transaction.financialRefund.update.mockImplementation(async ({ data }: { data: object }) => ({ ...refund, ...data }))
     mocks.issueCreditNote.mockResolvedValue({ id: 'credit-note' })
+  })
+
+  it('blokkeert een ongeschikte historische bron vóór reservering en providerwrite', async () => {
+    const { mirrorCreditNoteSnapshot } = await import('./credit-note-snapshot')
+    vi.mocked(mirrorCreditNoteSnapshot).mockImplementationOnce(() => { throw new Error('CREDIT_NOTE_V2_SOURCE_REQUIRED') })
+    const createRefund = vi.fn()
+    const { refundWorkmatchrError } = await import('./refund-service')
+    await expect(refundWorkmatchrError(input, { createRefund } as never)).rejects.toThrow('CREDIT_NOTE_V2_SOURCE_REQUIRED')
+    expect(createRefund).not.toHaveBeenCalled()
+    expect(mocks.phase).not.toHaveBeenCalled()
+    expect(transaction.financialRefund.create).not.toHaveBeenCalled()
   })
 
   it('houdt credits gereserveerd wanneer Mollie accepteert maar lokale afronding faalt', async () => {

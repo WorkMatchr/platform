@@ -181,14 +181,18 @@ describe('Jortt API gateway', () => {
 
   it('maakt een creditnota tegen de oorspronkelijke remote factuur en verzendt niet naar de klant', async () => {
     const calls: Array<{ url: string; body: unknown }> = []
-    const creditPayload = payload({ invoiceNumber: 'WM-CN-2026-000001', documentType: 'CREDIT_NOTE', originalInvoiceExternalReference: 'invoice-original' })
+    let credited = false
+    const creditPayload = payload({ invoiceNumber: 'WM-CN-2026-000001', documentType: 'CREDIT_NOTE', originalInvoiceExternalReference: 'invoice-original',
+      amountExclVatCents: -2500, vatAmountCents: -525, amountInclVatCents: -3025,
+      lines: [{ description: '25 credits', quantity: 25, unit: 'credit', unitPriceExclVatCents: -100, discountAmountCents: 0,
+        netAmountExclVatCents: -2500, vatRateBps: 2100, vatAmountCents: -525 }] })
     const fetcher = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
       const url = String(input)
       const body = typeof init?.body === 'string' ? JSON.parse(init.body) : null
       calls.push({ url, body })
       if (url.includes('/oauth/token')) return response({ access_token: 'token' })
-      if (url.includes('/invoices?')) return response({ data: [] })
-      if (url.endsWith('/invoices/invoice-original/credit')) return response({ data: { id: 'credit-1' } }, 201)
+      if (url.includes('/invoices?')) return response({ data: credited ? [{ id: 'credit-1', reference: creditPayload.invoiceNumber, remarks: creditPayload.technicalReference, invoice_number: 'J2026-C42' }] : [] })
+      if (url.endsWith('/invoices/invoice-original/credit')) { credited = true; return response({ data: { id: 'credit-1' } }, 201) }
       if (url.endsWith('/invoices/credit-1') && init?.method === 'PUT') return response({ data: { id: 'credit-1' } })
       if (url.endsWith('/invoices/credit-1/send')) return response({ data: { id: 'credit-1' } })
       if (url.endsWith('/invoices/credit-1')) return response({ data: { id: 'credit-1', reference: 'WM-CN-2026-000001', remarks: creditPayload.technicalReference, invoice_number: 'J2026-C42' } })
@@ -199,6 +203,8 @@ describe('Jortt API gateway', () => {
     expect(calls.find((call) => call.url.endsWith('/credit-1/send'))?.body).toEqual({ send_method: 'self' })
     expect(JSON.stringify(calls)).not.toMatch(/peppol|send_method":"email/i)
     expect(calls.some((call) => call.url.endsWith('/invoices') && call.body !== null)).toBe(false)
+    await new JorttApiGateway(fetcher as typeof fetch).submitInvoice(creditPayload, 'credit-replay')
+    expect(calls.filter(call => call.url.endsWith('/invoices/invoice-original/credit'))).toHaveLength(1)
   })
 
   it('onderscheidt originele factuur en creditfactuur met dezelfde menselijke referentie via hun invoice-ID', async () => {

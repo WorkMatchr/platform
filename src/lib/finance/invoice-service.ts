@@ -3,6 +3,7 @@ import 'server-only'
 import { Prisma } from '@/generated/prisma/client'
 import { MOLLIE_SANDBOX_ACCEPTANCE_PRICING } from './mollie-test-pricing'
 import { WORKMATCHR_SELLER } from './financial-contract'
+import { mirrorCreditNoteSnapshot } from './credit-note-snapshot'
 
 type Transaction = Prisma.TransactionClient
 
@@ -228,16 +229,25 @@ export async function issueCreditNoteForCompletedRefund(
   if (existing) return existing
   const refund = await transaction.financialRefund.findUnique({
     where: { id: refundId },
-    include: { purchase: { include: { invoice: true } } },
+    include: { purchase: { include: { invoice: { include: { lines: true, vatSummaries: true } } } } },
   })
   if (!refund || refund.status !== 'REFUNDED' || !refund.purchase.invoice) throw new Error('COMPLETED_REFUND_REQUIRED')
   const original = refund.purchase.invoice
+  if (refund.amountCents !== refund.purchase.amountInclVatCents || refund.amountCents !== original.amountInclVatCents
+    || refund.credits !== original.credits || original.organizationId !== refund.purchase.organizationId) {
+    throw new Error('FULL_REFUND_INVOICE_REQUIRED')
+  }
+  const details = mirrorCreditNoteSnapshot(original)
   const sequenceNumber = await allocateInvoiceSequence(transaction)
-  const ratio = refund.amountCents / refund.purchase.amountInclVatCents
-  const scale = (value: number) => -Math.round(value * ratio)
+  const scale = (value: number) => -value
   const invoice = await transaction.financialInvoice.create({
     data: {
       documentType: 'CREDIT_NOTE',
+      snapshotVersion: 2,
+      supplyDate: original.supplyDate,
+      advancePaymentDate: original.advancePaymentDate,
+      servicePeriodStart: original.servicePeriodStart,
+      servicePeriodEnd: original.servicePeriodEnd,
       pricingMode: original.pricingMode,
       invoiceNumber: formatFinancialDocumentNumber(sequenceNumber, issuedAt),
       sequenceNumber,
@@ -273,6 +283,8 @@ export async function issueCreditNoteForCompletedRefund(
       amountInclVatCents: -refund.amountCents,
       currency: original.currency,
       molliePaymentId: original.molliePaymentId,
+      lines: { create: details.lines },
+      vatSummaries: { create: details.vatSummaries },
     },
   })
   await transaction.financialJorttSync.create({ data: { invoiceId: invoice.id, technicalReference: `workmatchr-invoice:${invoice.id}` } })

@@ -19,27 +19,40 @@ export async function deliverFinancialInvoiceEmail(invoiceId: string, sender: In
     if (delivered) return { delivered: true, idempotent: true }
     const invoice = await transaction.financialInvoice.findUnique({
       where: { id: invoiceId },
-      include: { purchase: { include: { createdByUser: { select: { email: true, displayName: true } } } } },
+      include: {
+        purchase: { include: { createdByUser: { select: { email: true, displayName: true } } } },
+        refund: { include: { purchase: { include: { createdByUser: { select: { email: true, displayName: true } } } } } },
+        originalInvoice: true,
+      },
     })
-    if (!invoice?.purchase || invoice.purchase.status !== 'PAID') throw new Error('PAID_PURCHASE_INVOICE_REQUIRED')
-    if (!invoice.purchase.paidAt) throw new Error('PAID_PURCHASE_INVOICE_REQUIRED')
-    const recipient = invoice.purchase.createdByUser
+    const isCreditNote = invoice?.documentType === 'CREDIT_NOTE'
+    const purchase = isCreditNote ? invoice.refund?.purchase : invoice?.purchase
+    if (isCreditNote) {
+      if (!invoice.refund || invoice.refund.status !== 'REFUNDED' || !invoice.refund.completedAt
+        || !purchase || !invoice.originalInvoice || invoice.originalInvoice.purchaseId !== purchase.id
+        || invoice.originalInvoice.organizationId !== invoice.organizationId || purchase.organizationId !== invoice.organizationId
+        || invoice.amountInclVatCents !== -invoice.refund.amountCents) throw new Error('COMPLETED_REFUND_CREDIT_NOTE_REQUIRED')
+    } else if (!purchase || purchase.status !== 'PAID' || !purchase.paidAt) throw new Error('PAID_PURCHASE_INVOICE_REQUIRED')
+    if (!invoice || !purchase) throw new Error('PAID_PURCHASE_INVOICE_REQUIRED')
+    const recipient = purchase.createdByUser
     const downloadUrl = new URL(`/credits/facturen/${invoice.id}/pdf`, getPublicAppBaseUrl()).toString()
     const email = financialInvoiceEmail({
       to: recipient.email,
       recipientName: recipient.displayName?.trim() || 'gebruiker',
       invoiceNumber: invoice.invoiceNumber,
+      documentType: isCreditNote ? 'CREDIT_NOTE' : 'INVOICE',
       paidAmountInclVatCents: invoice.amountInclVatCents,
-      paidAt: invoice.purchase.paidAt,
+      paidAt: isCreditNote ? invoice.issuedAt : purchase.paidAt!,
       downloadUrl,
     })
     const delivery = await sender({ ...email, idempotencyKey: `invoice-email:${invoice.id}` })
     await transaction.financialEvent.create({
       data: {
-        actorUserId: invoice.purchase.createdByUserId,
-        purchaseId: invoice.purchaseId,
+        actorUserId: purchase.createdByUserId,
+        purchaseId: isCreditNote ? purchase.id : invoice.purchaseId,
+        refundId: isCreditNote ? invoice.refundId : null,
         invoiceId: invoice.id,
-        eventType: 'INVOICE_EMAIL_SENT',
+        eventType: isCreditNote ? 'CREDIT_NOTE_EMAIL_SENT' : 'INVOICE_EMAIL_SENT',
         result: 'SUCCEEDED',
         idempotencyKey: deliveryKey(invoice.id),
         metadata: {

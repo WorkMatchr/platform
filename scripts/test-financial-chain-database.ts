@@ -4,6 +4,7 @@ import { createHash, randomUUID } from 'node:crypto'
 import { spawnSync } from 'node:child_process'
 import { Client } from 'pg'
 import { Prisma } from '../src/generated/prisma/client'
+import { mirrorCreditNoteSnapshot } from '../src/lib/finance/credit-note-snapshot'
 
 const sourceConnectionString = process.env.DATABASE_URL
 if (!sourceConnectionString) throw new Error('DATABASE_URL is niet geconfigureerd.')
@@ -91,6 +92,48 @@ async function main() {
     })))
     assert.deepEqual(invoices.map((invoice) => invoice.sequenceNumber).sort((a, b) => a - b), Array.from({ length: 12 }, (_, index) => index + 1))
     assert.equal(new Set(invoices.map((invoice) => invoice.invoiceNumber)).size, 12)
+
+    // Separate local-only fixtures prove signed v2 constraints, including deferred totals.
+    const noteSourcePurchase = await prisma.financialPurchase.create({ data: {
+      ...purchases[1], id: randomUUID(), molliePaymentId: `tr_v2${randomUUID()}`, idempotencyKey: randomUUID(),
+      discountCodeSnapshot: Prisma.DbNull,
+    } })
+    const v2Line = { position: 1, description: '25 credits', quantity: 25, unit: 'credit', unitPriceExclVatCents: 100,
+      grossAmountExclVatCents: 2500, discountAmountCents: 0, netAmountExclVatCents: 2500, vatRateBps: 2100,
+      vatAmountCents: 525, amountInclVatCents: 3025 }
+    const v2Vat = { vatRateBps: 2100, taxableAmountExclVatCents: 2500, vatAmountCents: 525, amountInclVatCents: 3025 }
+    const originalV2 = await prisma.financialInvoice.create({ data: {
+      ...invoices[1], id: randomUUID(), invoiceNumber: 'WM-TEST-V2', sequenceNumber: 10000, purchaseId: noteSourcePurchase.id,
+      snapshotVersion: 2, supplyDate: new Date(), lines: { create: [v2Line] }, vatSummaries: { create: [v2Vat] },
+    }, include: { lines: true, vatSummaries: true } })
+    const beforeV2 = JSON.stringify(originalV2)
+    const v2Refund = await prisma.financialRefund.create({ data: {
+      purchaseId: noteSourcePurchase.id, amountCents: 3025, credits: 25, status: 'REFUNDED',
+      reason: 'Local credit note contract test', approvedByUserId: platformAdministrator.id,
+      completedAt: new Date(), idempotencyKey: randomUUID(),
+    } })
+    const mirrored = mirrorCreditNoteSnapshot(originalV2)
+    const creditData = { ...invoices[1], id: randomUUID(), invoiceNumber: 'WM-TEST-CN', sequenceNumber: 10001,
+      documentType: 'CREDIT_NOTE' as const, snapshotVersion: 2, purchaseId: null, originalInvoiceId: originalV2.id,
+      refundId: v2Refund.id, supplyDate: originalV2.supplyDate, credits: -25, baseAmountCents: -2500,
+      amountExclVatCents: -2500, vatAmountCents: -525, amountInclVatCents: -3025,
+      lines: { create: mirrored.lines }, vatSummaries: { create: mirrored.vatSummaries } }
+    await assert.rejects(() => prisma!.financialInvoice.create({ data: {
+      ...creditData, lines: { create: [] },
+    } }))
+    assert.equal(await prisma.financialInvoice.count({ where: { refundId: v2Refund.id } }), 0)
+    const concurrentNotes = await Promise.allSettled([0, 1].map(index => prisma!.financialInvoice.create({
+      data: { ...creditData, id: randomUUID(), invoiceNumber: `WM-TEST-CN-${index}`, sequenceNumber: 10001 + index },
+    })))
+    assert.equal(concurrentNotes.filter(result => result.status === 'fulfilled').length, 1)
+    assert.equal(await prisma.financialInvoice.count({ where: { refundId: v2Refund.id } }), 1)
+    const note = await prisma.financialInvoice.findUniqueOrThrow({ where: { refundId: v2Refund.id }, include: { lines: true, vatSummaries: true } })
+    assert.equal(note.snapshotVersion, 2); assert.equal(note.lines[0].netAmountExclVatCents, -2500)
+    assert.equal(note.vatSummaries[0].vatAmountCents, -525)
+    await assert.rejects(() => prisma!.financialInvoice.create({ data: { ...creditData, id: randomUUID(), invoiceNumber: 'WM-TEST-DUP', sequenceNumber: 10002 } }))
+    await assert.rejects(() => prisma!.financialInvoiceLine.update({ where: { id: note.lines[0].id }, data: { description: 'changed' } }), /immutable/i)
+    assert.equal(JSON.stringify(await prisma.financialInvoice.findUnique({ where: { id: originalV2.id }, include: { lines: true, vatSummaries: true } })), beforeV2)
+    console.log('V2 creditnota: negatieve regels/btw, deferred totalen, uniciteit en immutable bron PASS.')
 
     const first = purchases[0]
     await assert.rejects(() => prisma!.financialPurchase.update({ where: { id: first.id }, data: { amountInclVatCents: 9_999 } }), /snapshot is immutable/i)

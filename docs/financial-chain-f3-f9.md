@@ -1,5 +1,13 @@
 # Financiële keten F3-F9
 
+## Volledige refunds: v2-creditnota en delivery
+
+Nieuwe creditnota’s vereisen een consistente oorspronkelijke v2-factuur en een volledig afgeronde refund. Regels, btw-groepen, leverancier, klant, valuta en prestatiedatums worden uitsluitend uit de immutable bron overgenomen. Hoeveelheid en btw-tarief blijven gelijk; alle geldbedragen (ook unitprijs en korting) worden exact van teken gewisseld. Geen proratering of actuele prijslookup. Historische documenten blijven ongewijzigd; een v1-bron wordt vóór een nieuwe refundaanvraag geweigerd met `CREDIT_NOTE_V2_SOURCE_REQUIRED`, zonder automatische conversie. Bestaande v1-creditnota’s blijven behouden.
+
+Migratie `20260906100000_support_v2_credit_notes` breidt uitsluitend het v2-documentcontract uit. Normale facturen houden positieve regels; creditnota’s negatieve regels. De bestaande deferred totalen- en btw-validatie en immutable triggers blijven bestaan. De creditnota vereist een completed full refund naar de oorspronkelijke v2-factuur. Geen backfill.
+
+Na commit van refundfinalisatie wordt dezelfde factuurdeliveryservice gebruikt via de refund/purchase-relatie. Alleen `REFUNDED` met completedAt en passende tenant/originele factuur mag creditnotamail versturen. De mail gebruikt creditnotateksten, dezelfde beveiligde PDF-route, provider-idempotencykey en factuurgebonden lock. Succes schrijft `CREDIT_NOTE_EMAIL_SENT`; de bestaande deliverykey maakt replay een no-op. Een mailfailure draait de refund niet terug. `reconcileMollieRefund(refundId)` kan voor een reeds afgeronde refund uitsluitend ontbrekende delivery opnieuw proberen, zonder nieuwe providerrefund, creditnota of ledgercorrectie. Automatische pending-refundselectie is niet verbreed. Jortt-mapping blijft ongewijzigd en gebruikt dezelfde originele remote factuur en technische creditnota-identiteit.
+
 ## Uitfaseren van bevestigde legacy-Jortt-testrecords
 
 De drie expliciet goedgekeurde invoice-identiteiten uit `jortt-retirement-policy.ts` kunnen via `retireLegacyJorttTestSync` door een actuele platformbeheerder worden uitgefaseerd. Dit gebeurt niet automatisch bij deployment: er is bewust geen route, seed of scheduler-hook. Production-uitvoering vereist afzonderlijke toestemming.
