@@ -4,6 +4,7 @@ import { getPrisma } from '@/lib/prisma'
 import { sendAuthEmail } from '@/lib/email'
 
 const email = 'trade@workmatchr.nl'
+const TRADING_SINGLETON_ENTITY_ID = 'a6b38c91-5973-42b6-9ee5-d7c84f12e063'
 export class TradingAccessError extends Error {
   constructor() { super('Trading-toegang is tijdelijk niet beschikbaar. Probeer het later opnieuw.') }
 }
@@ -18,7 +19,7 @@ function configuration() {
 }
 async function audit(actorUserId: string, action: string) {
   await getPrisma().adminActionLog.create({ data: {
-    actorUserId, action, entityType: 'TradingAccess', entityId: 'single-user',
+    actorUserId, action, entityType: 'TradingAccess', entityId: TRADING_SINGLETON_ENTITY_ID,
     reason: 'Beheer van WorkMatchr Trading-toegang',
     metadata: { policyVersion: 'TRADING_ACCESS_V1' },
   } })
