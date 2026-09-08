@@ -48,6 +48,26 @@ describe('Trading-toegang via bestaand WorkMatchr Beheer', () => {
     expect(mocks.fetch.mock.calls[0][1].method).toBe('POST')
     expect(Object.keys(mocks.fetch.mock.calls[0][1].headers)).toEqual(['Accept', 'Authorization'])
   })
+  it('gebruikt dezelfde geldige singleton-UUID voor reset-, fout- en sessie-audits', async () => {
+    mocks.fetch.mockResolvedValueOnce(Response.json({ reset_url: 'https://trading.workmatchr.nl/reset-password#token=' + resetToken, expires_in: 1800 }))
+    await resetTradingPassword('test-admin')
+    mocks.fetch.mockResolvedValueOnce(Response.json({ ok: true }))
+    await revokeTradingSessions('test-admin')
+    mocks.fetch.mockRejectedValueOnce(new Error('backend unavailable'))
+    await expect(resetTradingPassword('test-admin')).rejects.toThrow('tijdelijk niet beschikbaar')
+
+    const entries = mocks.audit.mock.calls.map(([entry]) => entry.data)
+    expect(entries.map((entry) => entry.action)).toEqual([
+      'TRADING_PASSWORD_RESET_REQUESTED', 'TRADING_PASSWORD_RESET_MAIL_ACCEPTED',
+      'TRADING_SESSION_REVOCATION_REQUESTED', 'TRADING_SESSIONS_REVOKED',
+      'TRADING_PASSWORD_RESET_REQUESTED', 'TRADING_PASSWORD_RESET_FAILED',
+    ])
+    for (const entry of entries) {
+      expect(entry.entityType).toBe('TradingAccess')
+      expect(entry.entityId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)
+    }
+    expect(new Set(entries.map((entry) => entry.entityId)).size).toBe(1)
+  })
   it('weigert afwijkende resetbestemming en verstuurt geen e-mail', async () => {
     mocks.fetch.mockResolvedValue(Response.json({ reset_url: 'https://evil.example/reset-password#token=' + resetToken, expires_in: 1800 }))
     await expect(resetTradingPassword('test-admin')).rejects.toThrow('tijdelijk niet beschikbaar')
