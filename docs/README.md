@@ -159,3 +159,7 @@ Het productmatige en architectonische kompas staat in [FOUNDING_PRINCIPLES.md](F
 Documentatie wordt bijgewerkt zodra een besluit, risico of functionaliteit verandert.
 
 - [Trading-toegang via bestaande WorkMatchr Beheer](trading-access.md)
+
+## Eenvoudige Advieswijzer en opdrachtpublicatie
+
+Zie [Eenvoudige Advieswijzer → opdracht publiceren](simple-advice-request-flow.md). `AdviceDossierVersion.simpleRequestSnapshot` bewaart de typed startsnapshot; `Request` blijft de externe opdracht. `SIMPLE_ADVICE` identificeert de nieuwe bron. Onderwerp-only publicatie gebruikt een nullable expertise en geen automatische expertiseclaim. Migratie: `20260912090000_simple_advice_request`.

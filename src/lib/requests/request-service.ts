@@ -1,3 +1,4 @@
+import { simpleAdviceSchema, simpleAdviceSummary, requestedExpertiseOptions, usesLocation } from './simple-advice-contract'
 import { z } from 'zod'
 import type {
   AdviceDossierStatus,
@@ -45,7 +46,7 @@ export type RequestReference = Readonly<{
 }>
 
 type ExpertiseSnapshot = Readonly<{
-  primary: string
+  primary: string | null
   additional: readonly string[]
   possible: readonly string[]
   primaryCodes: readonly string[]
@@ -92,6 +93,7 @@ const publicationDossierInclude = {
     orderBy: { versionNumber: 'desc' as const },
     take: 1,
     select: {
+      simpleRequestSnapshot: true,
       versionNumber: true,
       situationSummary: true,
       subject: true,
@@ -116,6 +118,7 @@ type PublicationDossier = Prisma.AdviceDossierGetPayload<{
 function expertiseFromVersion(
   version: Pick<
     PublicationDossier['versions'][number],
+    | 'simpleRequestSnapshot'
     | 'versionNumber'
     | 'primaryProfessionalRequirementSnapshot'
     | 'additionalProfessionalRequirementsSnapshot'
@@ -127,6 +130,11 @@ function expertiseFromVersion(
     version.versionNumber !== currentVersionNumber
   ) {
     throw new RequestServiceError('CONFLICT')
+  }
+  if (version.simpleRequestSnapshot) {
+    const value = simpleAdviceSchema.parse(version.simpleRequestSnapshot)
+    return { primary: value.requestedExpertise ? requestedExpertiseOptions.find(o => o.value === value.requestedExpertise)!.label : null,
+      primaryCodes: value.requestedExpertise ? [value.requestedExpertise] : [], additional: [], possible: [], additionalCodes: [], possibleCodes: [] }
   }
   const primary = professionalRequirementSnapshotSchema.safeParse(
     version.primaryProfessionalRequirementSnapshot,
@@ -289,7 +297,7 @@ async function allocateRequestNumber(
   return `WM-R-${year}-${String(allocated).padStart(6, '0')}`
 }
 
-function isPrismaConflict(error: unknown): boolean {
+export function isPrismaConflict(error: unknown): boolean {
   if (!error || typeof error !== 'object' || !('code' in error)) {
     return false
   }
@@ -301,13 +309,13 @@ function isPrismaConflict(error: unknown): boolean {
   )
 }
 
-async function publishRequestAttempt(input: {
+export async function publishRequestAttempt(input: {
   viewer: AdviceDossierViewer
   publication: RequestPublicationInput
   at: Date
+  transaction?: Transaction
 }): Promise<RequestReference> {
-  return getPrisma().$transaction(
-    async (transaction) => {
+  const run = async (transaction: Transaction) => {
       await transaction.$queryRaw(
         PrismaNamespace.sql`
           SELECT "id"
@@ -409,7 +417,8 @@ async function publishRequestAttempt(input: {
           },
         },
         select: {
-          versionNumber: true,
+          simpleRequestSnapshot: true,
+      versionNumber: true,
           subject: true,
           primaryProfessionalRequirementSnapshot: true,
           additionalProfessionalRequirementsSnapshot: true,
@@ -420,14 +429,17 @@ async function publishRequestAttempt(input: {
         dossier.currentVersionNumber,
       )
       if (!version) throw new RequestServiceError('CONFLICT')
+      const simple = version.simpleRequestSnapshot ? simpleAdviceSchema.parse(version.simpleRequestSnapshot) : null
       const location = await transaction.organizationLocation.findFirst({
         where: {
           organizationId: dossier.organizationId,
+          ...(simple?.organizationLocationId ? { id: simple.organizationLocationId } : {}),
           archivedAt: null,
         },
         orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
         select: { province: true, city: true },
       })
+      if (simple && usesLocation(simple, 'ORGANIZATION') && !location) throw new RequestServiceError('NOT_ELIGIBLE')
       const organizationSector =
         await transaction.organizationSector.findFirst({
           where: { organizationId: dossier.organizationId },
@@ -447,8 +459,7 @@ async function publishRequestAttempt(input: {
         transaction,
         input.at.getUTCFullYear(),
       )
-      const region =
-        location?.province?.trim() || location?.city.trim() || null
+      const region = simple ? (usesLocation(simple, 'OTHER_LOCATION') ? simple.otherLocationCity : usesLocation(simple, 'ORGANIZATION') ? location?.province?.trim() || location?.city.trim() || null : null) : location?.province?.trim() || location?.city.trim() || null
       const sectorCode =
         organizationSector?.sector.providerSectorTaxonomyMap?.term.code ??
         null
@@ -459,14 +470,12 @@ async function publishRequestAttempt(input: {
           organizationId: dossier.organizationId,
           adviceDossierId: dossier.id,
           status: 'PUBLISHED',
-          title: requestTitle(version.subject),
-          publicSummary: input.publication.publicSummary,
+          title: simple?.requestTitle ?? requestTitle(version.subject),
+          publicSummary: simple?.requestDescription ?? input.publication.publicSummary,
           region,
           sector: organizationSector?.sector.name ?? null,
-          requestedStart:
-            input.publication
-              .requestedStart as RequestRequestedStart,
-          notes: input.publication.notes || null,
+          requestedStart: simple?.desiredStartMode ?? input.publication.requestedStart as RequestRequestedStart,
+          notes: simple ? simpleAdviceSummary(simple, location?.city).filter(([label]) => !['Beschrijving', 'Waar heeft u hulp bij?'].includes(label)).map(([label, value]) => `${label}: ${value}`).join('\n') : input.publication.notes || null,
           primaryExpertise: expertise.primary,
           additionalExpertise: [...expertise.additional],
           possibleExpertise: [...expertise.possible],
@@ -525,9 +534,8 @@ async function publishRequestAttempt(input: {
         requestNumber: request.requestNumber,
         eligibleCount,
       }
-    },
-    { isolationLevel: 'Serializable' },
-  )
+    }
+  return input.transaction ? run(input.transaction) : getPrisma().$transaction(run, { isolationLevel: 'Serializable' })
 }
 
 export async function publishRequest(input: {

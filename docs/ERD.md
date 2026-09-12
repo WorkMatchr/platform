@@ -720,3 +720,7 @@ erDiagram
 `KnowledgeMethod` aggregeert bestaande gestructureerde kennisobjecten via geordende XOR-componenten. Methode-, component- en evidencerecords zijn immutable; evidence verwijst rechtstreeks naar full-source-blokken en iedere component moet bij transactiesluiting bewijs hebben.
 
 `KnowledgeSectorApplicability` hergebruikt de centrale sectortaxonomie en koppelt een sector aan exact één onderwerp of claim. De koppeling is append-only; bestaande kennis, sectoren en historie worden niet herschreven.
+
+## Eenvoudige Advieswijzer en opdrachtpublicatie
+
+Zie [Eenvoudige Advieswijzer → opdracht publiceren](simple-advice-request-flow.md). `AdviceDossierVersion.simpleRequestSnapshot` bewaart de typed startsnapshot; `Request` blijft de externe opdracht. `SIMPLE_ADVICE` identificeert de nieuwe bron. Onderwerp-only publicatie gebruikt een nullable expertise en geen automatische expertiseclaim. Migratie: `20260912090000_simple_advice_request`.

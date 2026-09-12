@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — eenvoudige Advieswijzer en opdrachtpublicatie
+
+- Opdrachtgevers kiezen zelf een bestaande deskundigheid of een onderwerp, inclusief Ik weet het echt niet, en vullen daarna dezelfde compacte opdrachtintake in.
+- Controle en publicatie gebruiken de bestaande AdviceDossier/Request-keten met immutable startsnapshot, tenantcontrole en audittrail; automatische expert-routing en AI zijn geen intakevoorwaarde.
+- Onderwerp-only opdrachten mogen zonder expertise worden gepubliceerd. De additieve migratie bewaart de typed invoer en breidt de bestaande startopties uit.
+- Zie [flow en datamapping](docs/simple-advice-request-flow.md) voor de scope en verificatie.
+
 ## 2026-08-21 — Arbo-wijzers account- en organisatiegebonden
 
 - Compliance- en BHV-uitleg blijven publiek, terwijl vragenflow, resultaten, historie en PDF server-side een actieve account- en organisatiecontext vereisen.

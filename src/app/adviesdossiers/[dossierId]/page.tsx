@@ -1,3 +1,4 @@
+import { simpleAdviceSchema, simpleAdviceSummary } from '@/lib/requests/simple-advice-contract'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { AdviceDossierDetail } from '@/components/advice-dossiers/advice-dossier-detail'
@@ -45,6 +46,15 @@ export default async function AdviceDossierPage({
     throw error
   }
 
+  if (dossier.currentVersion.simpleRequestSnapshot) {
+    const input = simpleAdviceSchema.parse(dossier.currentVersion.simpleRequestSnapshot)
+    return <Section spacing="compact"><Container size="narrow"><h1 className="text-2xl font-bold">{input.requestTitle}</h1>
+      <p className="my-4">Uw vastgelegde opdrachtgegevens</p>
+      <dl className="space-y-4">{simpleAdviceSummary(input).map(([label, value]) => <div key={label}><dt className="font-semibold">{label}</dt><dd className="whitespace-pre-wrap">{value}</dd></div>)}</dl>
+      <div className="mt-6 flex gap-3"><LinkButton href="/adviesdossiers" variant="outline">Terug naar adviesdossiers</LinkButton>
+      {dossier.request && <LinkButton href={`/aanvragen/${dossier.request.id}/gepubliceerd`}>Bekijk opdracht</LinkButton>}</div>
+    </Container></Section>
+  }
   return (
     <Section spacing="compact">
       <Container size="narrow">

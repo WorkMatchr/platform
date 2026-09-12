@@ -70,7 +70,7 @@ export function PublicNavigation({
         ariaLabel="Hoofdnavigatie openen of sluiten"
         className={mobileNavigationClass}
         buttonClassName="flex min-h-11 items-center rounded-control border border-border bg-surface px-4 text-sm font-semibold text-brand-dark"
-        panelClassName="absolute right-0 z-30 mt-3 max-h-[calc(100vh-7rem)] w-[min(22rem,calc(100vw-2.5rem))] overflow-y-auto rounded-card border border-border bg-surface p-4 shadow-card"
+        panelClassName={`absolute ${authenticated ? 'left-0 sm:left-auto sm:right-0' : 'right-0'} z-30 mt-3 max-h-[calc(100vh-7rem)] w-[min(22rem,calc(100vw-2.5rem))] overflow-y-auto rounded-card border border-border bg-surface p-4 shadow-card`}
         trigger={<>Menu<span aria-hidden="true" className="ml-2">&#9662;</span></>}
       >
         <nav aria-label="Mobiele hoofdnavigatie">

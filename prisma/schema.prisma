@@ -398,6 +398,7 @@ enum PublicIntakeAIClassificationStatus {
 }
 
 enum AdviceDossierSourceRoute {
+  SIMPLE_ADVICE
   HELP_REQUEST
   KNOWLEDGE
   DIRECT_SPECIALIST_SEARCH
@@ -446,6 +447,9 @@ enum RequestStatus {
 }
 
 enum RequestRequestedStart {
+  WITHIN_TWO_WEEKS
+  LATER
+  SPECIFIC_DATE
   AS_SOON_AS_POSSIBLE
   WITHIN_ONE_MONTH
   IN_CONSULTATION
@@ -2885,6 +2889,7 @@ model AdviceDossier {
 }
 
 model AdviceDossierVersion {
+  simpleRequestSnapshot                      Json?                       @db.JsonB
   id                                         String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   adviceDossierId                            String                      @db.Uuid
   versionNumber                              Int
@@ -2976,7 +2981,7 @@ model Request {
   sector                     String?                       @db.VarChar(160)
   requestedStart             RequestRequestedStart
   notes                      String?                       @db.Text
-  primaryExpertise           String                        @db.VarChar(200)
+  primaryExpertise           String?                       @db.VarChar(200)
   additionalExpertise        String[]                      @default([])
   possibleExpertise          String[]                      @default([])
   primaryExpertiseCodes      String[]                      @default([])

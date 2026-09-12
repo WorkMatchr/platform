@@ -52,6 +52,9 @@ export const requestStatusLabels: Readonly<
 export const requestStartLabels: Readonly<
   Record<RequestRequestedStart, string>
 > = Object.freeze({
+  WITHIN_TWO_WEEKS: 'Binnen 2 weken',
+  LATER: 'Later',
+  SPECIFIC_DATE: 'Specifieke datum (zie opdracht)',
   AS_SOON_AS_POSSIBLE: 'Zo spoedig mogelijk',
   WITHIN_ONE_MONTH: 'Binnen één maand',
   IN_CONSULTATION: 'In overleg',

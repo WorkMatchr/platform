@@ -16,7 +16,7 @@ type RequestPublicationPreview = Readonly<{
   dossierCode: string
   publicSummary: string
   expertise: Readonly<{
-    primary: string
+    primary: string | null
     additional: readonly string[]
     possible: readonly string[]
   }>
@@ -202,7 +202,7 @@ export function RequestPublicationForm({
           Planning
         </legend>
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
-          {Object.entries(requestStartLabels).map(([code, label]) => (
+          {Object.entries(requestStartLabels).filter(([code]) => ['AS_SOON_AS_POSSIBLE', 'WITHIN_ONE_MONTH', 'IN_CONSULTATION'].includes(code)).map(([code, label]) => (
             <label
               key={code}
               className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-control border bg-surface px-4 py-3 ${

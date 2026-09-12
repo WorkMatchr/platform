@@ -221,3 +221,7 @@ De tabellen `KnowledgeSource`, `KnowledgeSourceVersion`, `KnowledgeFragment`, `K
 | `KnowledgeClaim.lastSourceCheckedAt` | Laatste aantoonbare broncontrole. | Nullable voor historische data; geen vervanging voor besluiten en validatiehistorie. |
 | `KnowledgeImprovementReport` | Begrensde inhoudelijke melding door een actieve professional bij gepubliceerde, gevalideerde kennis. | Koppelt verplicht aan claim, controletaak en melder; statuswijziging gebruikt versiecontrole; claiminhoud wordt niet gemuteerd. Toelichting en bronverwijzing zijn intern. |
 | `KnowledgeSectorApplicability` | Append-only toepassingskoppeling tussen de centrale `Sector` en exact één `KnowledgeTopic` of `KnowledgeClaim`. | Stabiele externe sleutel, exact-één-doelconstraint, unieke partiële koppelingen en `RESTRICT`-relaties; bevat geen persoonsgegevens. |
+
+## Eenvoudige Advieswijzer en opdrachtpublicatie
+
+Zie [Eenvoudige Advieswijzer → opdracht publiceren](simple-advice-request-flow.md). `AdviceDossierVersion.simpleRequestSnapshot` bewaart de typed startsnapshot; `Request` blijft de externe opdracht. `SIMPLE_ADVICE` identificeert de nieuwe bron. Onderwerp-only publicatie gebruikt een nullable expertise en geen automatische expertiseclaim. Migratie: `20260912090000_simple_advice_request`.

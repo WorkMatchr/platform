@@ -174,7 +174,7 @@ export function buildAdviceDossierSnapshot(
   })
 }
 
-async function allocateDossierCode(
+export async function allocateDossierCode(
   transaction: Transaction,
   year: number,
 ): Promise<string> {

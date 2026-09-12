@@ -26,9 +26,9 @@ function PublicHeader() {
 function DashboardHeader({ model }: { model: HeaderViewModel }) {
   return (
     <header className="border-b border-border bg-surface">
-      <Container className="flex min-h-20 items-center justify-between gap-5 py-4">
+      <Container className="flex min-h-20 flex-wrap items-center justify-between gap-5 py-4">
         <HeaderBrandLink />
-        <div className="flex min-w-0 items-center gap-2">
+        <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto">
           {model.isPlatformAdministrator ? (
             <Link
               href="/platformbeheer"
@@ -47,7 +47,7 @@ function DashboardHeader({ model }: { model: HeaderViewModel }) {
             panelClassName="absolute right-0 z-30 mt-3 max-h-[calc(100vh-7rem)] w-[min(18rem,calc(100vw-2.5rem))] overflow-y-auto rounded-card border border-border bg-surface p-3 shadow-card"
             trigger={
               <span>
-                <span className="block">
+                <span className="block max-w-48 truncate">
                   {model.displayName} <span aria-hidden="true">&#9662;</span>
                 </span>
                 {model.activeOrganization && (

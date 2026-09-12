@@ -390,6 +390,39 @@ async function main() {
     assert.equal(await prisma.quote.count(), 0)
     assert.equal(await prisma.creditTransaction.count(), 0)
 
+    // Same canonical publication chain, including topic-only and UNKNOWN requests.
+    const { publishSimpleAdviceRequest } = await import('../src/lib/requests/simple-advice-service')
+    const { randomUUID } = await import('node:crypto')
+    const simpleViewer = { userId: owner.id, organizationId: organization.id, organizationRole: 'OWNER' as const, isPlatformAdministrator: false }
+    const basic = { routeChoice: 'NEEDS_TOPIC', helpTopic: 'UNKNOWN', requestTitle: 'Onze eigen titel', requestDescription: 'Wij willen hulp bij een nog onbekend onderwerp.', desiredOutcome: 'ADVICE', workLocationMode: 'REMOTE', desiredStartMode: 'SPECIFIC_DATE', desiredStartDate: '2026-12-12' }
+    const submissionId = randomUUID()
+    const results = await Promise.all([publishSimpleAdviceRequest(simpleViewer, submissionId, basic), publishSimpleAdviceRequest(simpleViewer, submissionId, basic)])
+    assert.equal(results[0].id, results[1].id)
+    const simpleRequest = await prisma.request.findUniqueOrThrow({ where: { id: results[0].id }, include: { events: true, adviceDossier: { include: { versions: true } } } })
+    assert.equal(simpleRequest.status, 'PUBLISHED')
+    assert.equal(simpleRequest.title, basic.requestTitle)
+    assert.equal(simpleRequest.primaryExpertise, null)
+    assert.deepEqual(simpleRequest.primaryExpertiseCodes, [])
+    assert.equal(simpleRequest.region, null)
+    assert.ok(simpleRequest.notes?.includes('12-12-2026'))
+    assert.equal(simpleRequest.events.length, 2)
+    assert.equal(simpleRequest.adviceDossier.versions[0].completionStatus, 'COMPLETED_WITH_USER_INPUT')
+    assert.ok(simpleRequest.adviceDossier.versions[0].simpleRequestSnapshot)
+    await expectRequestError(() => publishSimpleAdviceRequest({ ...simpleViewer, userId: otherOwner.id, organizationId: otherOrganization.id }, submissionId, basic), 'NOT_FOUND')
+    await expectRequestError(() => publishSimpleAdviceRequest({ ...simpleViewer, organizationId: otherOrganization.id }, randomUUID(), basic), 'ACCESS_DENIED')
+    await expectRequestError(() => publishSimpleAdviceRequest(simpleViewer, submissionId, { ...basic, requestTitle: 'gewijzigd' }), 'CONFLICT')
+    await assert.rejects(prisma.adviceDossierVersion.update({ where: { id: simpleRequest.adviceDossier.versions[0].id }, data: { simpleRequestSnapshot: {} } }))
+    await assert.rejects(prisma.request.update({ where: { id: simpleRequest.id }, data: { primaryExpertise: 'HVK' } }))
+    const invalidLocationId = randomUUID()
+    const invalidSubmission = randomUUID()
+    await expectRequestError(() => publishSimpleAdviceRequest(simpleViewer, invalidSubmission, { ...basic, workLocationMode: 'ORGANIZATION', organizationLocationId: invalidLocationId }), 'NOT_ELIGIBLE')
+    assert.equal(await prisma.adviceDossier.count({ where: { id: invalidSubmission } }), 0)
+    const routeA = await publishSimpleAdviceRequest(simpleViewer, randomUUID(), { ...basic, routeChoice: 'KNOWS_EXPERTISE', requestedExpertise: 'MVK', workLocationMode: 'OTHER_LOCATION', otherLocationCity: 'Delft' })
+    const routeARequest = await prisma.request.findUniqueOrThrow({ where: { id: routeA.id } })
+    assert.deepEqual(routeARequest.primaryExpertiseCodes, ['MVK'])
+    assert.equal(routeARequest.region, 'Delft')
+    console.log('Simple advice: A/B/UNKNOWN publication, immutable input, concurrent idempotency, foreign tenant/location and rollback PASS.')
+
     console.log(
       'Aanvraagpublicatie-integriteit: eigenaarautorisatie, tenantisolatie, idempotentie, nummering en immutable historie geslaagd.',
     )

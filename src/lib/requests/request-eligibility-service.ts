@@ -24,7 +24,7 @@ type EligibilityRequest = Readonly<{
   id: string
   regionCode: string | null
   sectorCode: string | null
-  primaryExpertise: string
+  primaryExpertise: string | null
   additionalExpertise: readonly string[]
   possibleExpertise: readonly string[]
   primaryExpertiseCodes: readonly string[]
@@ -85,7 +85,7 @@ function expertiseTiers(request: EligibilityRequest): ExpertiseTier[] {
   return [
     {
       tier: 'PRIMARY' as const,
-      label: request.primaryExpertise,
+      label: request.primaryExpertise ?? '',
       codes: request.primaryExpertiseCodes,
     },
     ...request.additionalExpertise.map((label) => ({

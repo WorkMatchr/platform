@@ -64,6 +64,7 @@ export const adviceDossierSnapshotSchema = z
     disclaimer: z.literal(PROFESSIONAL_ADVICE_DISCLAIMER),
     outcomeSpecificity: z.enum(['SPECIFIC', 'BROAD', 'SAFE_FALLBACK']),
     completionStatus: z.enum([
+      'COMPLETED_WITH_USER_INPUT',
       'COMPLETED_WITH_GUIDANCE',
       'COMPLETED_WITH_SAFE_FALLBACK',
     ]),

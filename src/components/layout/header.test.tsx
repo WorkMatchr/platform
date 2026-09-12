@@ -159,10 +159,10 @@ describe('headerweergave per sessiecontext', () => {
     expect(html).not.toContain('Credits &amp; facturen')
   })
 
-  it('houdt publieke en accountacties bereikbaar in de mobiele header', async () => {
+  it.each(['Opdrachtgever', 'Acceptatie opdrachtgever met een bijzonder lange accountnaam'])('houdt publieke en accountacties bereikbaar in de mobiele header voor %s', async (displayName) => {
     mocks.getContext.mockResolvedValue({
       user: {
-        displayName: 'Opdrachtgever',
+        displayName,
         email: 'opdrachtgever@example.invalid',
         accountType: 'CLIENT',
       },
@@ -183,6 +183,10 @@ describe('headerweergave per sessiecontext', () => {
     expect(html).toContain('Hoofdnavigatie openen of sluiten')
     expect(html).toContain('Accountmenu openen of sluiten')
     expect(html).toContain('relative shrink-0 lg:hidden')
+    expect(html).toContain('flex-wrap')
+    expect(html).toContain('w-full min-w-0 items-center gap-2 sm:w-auto')
+    expect(html).toContain('block max-w-48 truncate')
+    expect(html).toContain(displayName)
     expect(html).toContain('Mijn omgeving')
     expect(html).toContain('Account')
     expect(html).toContain('Dashboard')

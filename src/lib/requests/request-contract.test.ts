@@ -20,6 +20,9 @@ describe('Request-publicatiecontract', () => {
       validInput,
     )
     expect(Object.keys(requestStartLabels)).toEqual([
+      'WITHIN_TWO_WEEKS',
+      'LATER',
+      'SPECIFIC_DATE',
       'AS_SOON_AS_POSSIBLE',
       'WITHIN_ONE_MONTH',
       'IN_CONSULTATION',

@@ -49,6 +49,11 @@ describe('publieke navigatie', () => {
     expect(authenticatedHtml).toContain('relative xl:hidden')
   })
 
+  it('opent het ingelogde menu naar rechts vanaf de smalle tweede headerregel', () => {
+    expect(renderToStaticMarkup(<PublicNavigation authenticated />)).toContain('left-0 sm:left-auto sm:right-0')
+    expect(renderToStaticMarkup(<PublicNavigation />)).not.toContain('left-0')
+  })
+
   it('normaliseert geneste routes, trailing slashes, querystrings en hashes', () => {
     expect(isPublicNavigationItemActive('/diensten/rie', publicRoutes.services)).toBe(true)
     expect(isPublicNavigationItemActive('/diensten/rie/?bron=menu#inhoud', publicRoutes.services)).toBe(true)

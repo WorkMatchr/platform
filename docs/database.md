@@ -443,3 +443,7 @@ Migratie `20260809120000_harden_financial_refund_lifecycle` voegt uitsluitend de
 Migratie `20260825140000_operationalize_jortt_sync` breidt de downstream Jortt-projectie additief uit met `RETRY_REQUIRED` en het door Jortt gegenereerde administratieve factuurnummer. Het WorkMatchr-factuurnummer blijft immutable en wordt als externe reference gebruikt; bestaande facturen, betalingen en pogingen worden niet gewijzigd of gebackfilled.
 
 Migratie `20260809130000_add_mollie_test_acceptance_pricing` voegt additief `FinancialPricingMode` toe aan aankoop- en factuursnapshots. Bestaande records worden `STANDARD`. Een databasecheck staat `MOLLIE_TEST_ACCEPTANCE` uitsluitend toe voor 25 credits met exact €1,00 exclusief btw, €0,21 btw, €1,21 inclusief btw en zonder kortingen. De prijsmodus valt onder de bestaande immutable aankoopbescherming.
+
+## Eenvoudige Advieswijzer en opdrachtpublicatie
+
+Zie [Eenvoudige Advieswijzer → opdracht publiceren](simple-advice-request-flow.md). `AdviceDossierVersion.simpleRequestSnapshot` bewaart de typed startsnapshot; `Request` blijft de externe opdracht. `SIMPLE_ADVICE` identificeert de nieuwe bron. Onderwerp-only publicatie gebruikt een nullable expertise en geen automatische expertiseclaim. Migratie: `20260912090000_simple_advice_request`.

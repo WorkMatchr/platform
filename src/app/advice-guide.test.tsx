@@ -3,6 +3,15 @@ import { join } from 'node:path'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 
+vi.mock('server-only', () => ({}))
+vi.mock('@/app/advieswijzer/simple-actions', () => ({ publishSimpleAdviceAction: vi.fn() }))
+vi.mock('@/lib/advice-dossiers/advice-dossier-authorization', () => ({ getOptionalAdviceDossierViewer: vi.fn().mockResolvedValue(null) }))
+vi.mock('@/lib/prisma', () => ({ getPrisma: vi.fn() }))
+
+vi.mock('@/app/adviesdossiers/actions', () => ({
+  startAdviceDossierIntakeAction: vi.fn(),
+}))
+
 vi.mock(
   '@/lib/advice-dossiers/public-intake-advice-dossier-handoff',
   () => ({
@@ -54,7 +63,7 @@ describe('publieke Advieswijzer', () => {
 
   it('heeft unieke indexeerbare metadata en canonical', () => {
     expect(metadata.title).toBe('Advieswijzer | WorkMatchr')
-    expect(metadata.description).toContain('verduidelijk')
+    expect(metadata.description).toContain('Kies uw deskundigheid of onderwerp')
     expect(metadata.alternates?.canonical).toBe('/advieswijzer')
     expect(metadata.robots).toBeUndefined()
   })
