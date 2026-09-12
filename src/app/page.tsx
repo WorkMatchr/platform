@@ -43,7 +43,7 @@ export default function HomePage() {
           <Badge variant="neutral">Hoe WorkMatchr helpt</Badge>
           <Heading id="process-title" className="mt-4">Van vraag naar een passende vervolgstap</Heading>
           <Text size="lg" className="mt-4 text-text-secondary">
-            WorkMatchr helpt u informatie en mogelijke oplossingen te ordenen. De publieke homepage selecteert niet automatisch een aanbieder.
+            U kiest een deskundigheid of onderwerp, beschrijft uw vraag en publiceert uw opdracht na controle van uw gegevens.
           </Text>
         </div>
         <div className="mt-8"><ProcessSteps steps={content.steps} /></div>

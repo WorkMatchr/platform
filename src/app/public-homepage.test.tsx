@@ -16,8 +16,10 @@ describe('vraaggestuurde publieke homepage', () => {
     expect(html.match(/<h1(?:\s|>)/g)).toHaveLength(1)
     expect(html).toContain('Waarmee kunnen wij u helpen?')
     expect(html).toContain('href="/advieswijzer"')
-    expect(html).toContain('Ontdek welke ondersteuning u nodig heeft')
-    expect(html).toContain('href="/hulpvragen/nieuw"')
+    expect(html).not.toContain('Ontdek welke ondersteuning u nodig heeft')
+    const heroHtml = renderToStaticMarkup(<PublicHero hero={publicHomepageContent.hero} />)
+    expect(heroHtml.match(/<a\s/g)).toHaveLength(1)
+    expect(heroHtml).toMatch(/href="\/advieswijzer"[^>]*>Vraag ondersteuning aan<\/a>/)
     expect(html).toContain('Vraag ondersteuning aan')
     expect(html).not.toContain('Start uw opdracht')
     expect(html).not.toContain('Start de zelfscan')
@@ -93,14 +95,14 @@ describe('vraaggestuurde publieke homepage', () => {
     )
     expect(html).toContain('Ik weet nog niet wat ik nodig heb')
     expect(html).toContain(
-      'Beantwoord enkele korte vragen. WorkMatchr helpt u uw hulpvraag duidelijk te maken.',
+      'Kies het onderwerp van uw vraag als u de deskundigheid nog niet weet.',
     )
     expect(html).toMatch(/href="\/advieswijzer"[\s\S]*Start de advieswijzer/)
   })
 
   it('gebruikt vier begrijpelijke proceslabels in de bedoelde volgorde', () => {
     const html = renderHomepage()
-    const labels = ['Vertel uw situatie', 'Wij verduidelijken uw vraag', 'Ontvang algemene vakinformatie', 'Vind de juiste deskundige']
+    const labels = ['Kies een deskundigheid of onderwerp', 'Beschrijf uw vraag', 'Controleer uw opdracht', 'Publiceer uw opdracht']
 
     expect(publicHomepageContent.process).toEqual(labels)
     for (const label of labels) expect(html).toContain(label)
@@ -166,7 +168,7 @@ describe('vraaggestuurde publieke homepage', () => {
     for (const item of [...publicHomepageContent.steps, ...publicHomepageContent.principles]) {
       expect(html).toContain(item.title)
     }
-    expect(html).toContain('De publieke homepage selecteert niet automatisch een aanbieder')
+    expect(html).toContain('U kiest een deskundigheid of onderwerp, beschrijft uw vraag en publiceert uw opdracht')
   })
 
   it('heeft unieke homepage-metadata met canonical en Open Graph', () => {

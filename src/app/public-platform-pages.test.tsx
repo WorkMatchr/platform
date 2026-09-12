@@ -38,12 +38,13 @@ describe('publieke platformpagina’s', () => {
     expect(html).toContain('break-words')
   })
 
-  it('toont op de homepage actuele dienstlabels en klikbare live sectoren', () => {
+  it('toont op de homepage de eenvoudige opdrachtflow naast de bestaande kennisroutes', () => {
     const html = renderToStaticMarkup(<HomePage />)
 
-    expect(html).toContain('Bekijk Ondersteuning van de preventiemedewerker')
-    expect(html).toContain('href="/sectoren/bouw"')
-    expect(html).toContain('href="/sectoren/zakelijke-dienstverlening"')
+    expect(html).toContain('href="/advieswijzer"')
+    expect(html).toContain('Vraag ondersteuning aan')
+    expect(html).toContain('Kies een deskundigheid of onderwerp')
+    expect(html).toContain('href="/kenniscentrum"')
     expect(html).not.toContain('Er zijn nog geen afzonderlijke sectorpagina’s')
   })
 

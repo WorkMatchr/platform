@@ -11,5 +11,5 @@ export const metadata: Metadata = {
 }
 
 export default function AboutPage() {
-  return <PublicPlaceholderPage title="Meer over WorkMatchr volgt" description="Hier leest u straks waarom WorkMatchr organisaties eerst helpt hun vraag te begrijpen en pas daarna ondersteunt bij het vinden van passende deskundigheid. Zo ziet u welke uitgangspunten aan de begeleiding en verbinding ten grondslag liggen." nextStep={{ href: '/advieswijzer', label: 'Start de Advieswijzer' }} />
+  return <PublicPlaceholderPage title="Meer over WorkMatchr volgt" description="WorkMatchr helpt u uw vraag te beschrijven, zelf een deskundigheid of onderwerp te kiezen en vervolgens een opdracht te publiceren. Hier leest u straks meer over de uitgangspunten van het platform." nextStep={{ href: '/advieswijzer', label: 'Start de Advieswijzer' }} />
 }

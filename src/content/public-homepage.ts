@@ -82,11 +82,10 @@ export const publicHomepageContent = {
     eyebrow: 'Uw digitale arbo-adviseur',
     title: 'Waarmee kunnen wij u helpen?',
     description:
-      'WorkMatchr helpt organisaties hun vraag over arbeidsomstandigheden, veiligheid en gezondheid te verduidelijken en leidt vervolgens naar relevante informatie of passende deskundigheid.',
-    primaryAction: { href: publicRoutes.adviceGuide, label: 'Ontdek welke ondersteuning u nodig heeft' },
-    secondaryAction: { href: publicRoutes.directAssignment, label: 'Vraag ondersteuning aan' },
+      'Beschrijf waar u ondersteuning bij nodig heeft. Kies direct een deskundigheid of, als u dat nog niet weet, het onderwerp van uw vraag. Daarna kunt u uw opdracht eenvoudig publiceren.',
+    primaryAction: { href: publicRoutes.adviceGuide, label: 'Vraag ondersteuning aan' },
   },
-  process: ['Vertel uw situatie', 'Wij verduidelijken uw vraag', 'Ontvang algemene vakinformatie', 'Vind de juiste deskundige'],
+  process: ['Kies een deskundigheid of onderwerp', 'Beschrijf uw vraag', 'Controleer uw opdracht', 'Publiceer uw opdracht'],
   situations: [
     {
       key: 'employer-with-staff',
@@ -139,7 +138,7 @@ export const publicHomepageContent = {
   ] satisfies readonly SituationContent[],
   adviceGuideEntry: {
     title: 'Ik weet nog niet wat ik nodig heb',
-    description: 'Beantwoord enkele korte vragen. WorkMatchr helpt u uw hulpvraag duidelijk te maken.',
+    description: 'Kies het onderwerp van uw vraag als u de deskundigheid nog niet weet. Beschrijf daarna waar u ondersteuning bij nodig heeft en publiceer uw opdracht.',
     href: publicRoutes.adviceGuide,
     label: 'Start de advieswijzer',
     destinationType: 'advice-guide',
@@ -150,24 +149,24 @@ export const publicHomepageContent = {
   },
   steps: [
     {
-      title: 'Vertel uw situatie',
-      description: 'Begin bij uw vraag, situatie of mogelijke verplichting.',
+      title: 'Kies een deskundigheid of onderwerp',
+      description: 'Kies zelf een deskundigheid als u die weet. Kies anders het onderwerp van uw vraag.',
     },
     {
-      title: 'Wij verduidelijken uw vraag',
-      description: 'WorkMatchr helpt u stap voor stap om duidelijk te maken wat er speelt.',
+      title: 'Beschrijf uw vraag',
+      description: 'Vertel waar u ondersteuning bij nodig heeft, wat u wilt bereiken en waar en wanneer u wilt starten.',
     },
     {
-      title: 'Ontvang algemene vakinformatie',
-      description: 'Bekijk relevante kennis, verplichtingen en mogelijke oplossingsrichtingen.',
+      title: 'Controleer uw opdracht',
+      description: 'Bekijk uw ingevulde gegevens en pas ze aan waar nodig.',
     },
     {
-      title: 'Vind de juiste deskundige',
-      description: 'Wanneer professionele ondersteuning passend is, kunt u verder naar de juiste deskundigheid.',
+      title: 'Publiceer uw opdracht',
+      description: 'Log in als opdrachtgever en publiceer uw opdracht. Dat kan ook zonder een deskundigheid te kiezen.',
     },
   ] satisfies readonly ProcessStepContent[],
   principles: [
-    { title: 'Vraaggestuurd', description: 'Eerst de situatie begrijpen, daarna bepalen wat relevant is.' },
+    { title: 'Vraaggestuurd', description: 'Uw eigen vraag en keuze vormen het uitgangspunt van uw opdracht.' },
     {
       title: 'Onafhankelijk',
       description: 'De vraag van de organisatie staat centraal, niet één specifieke aanbieder.',
@@ -180,7 +179,7 @@ export const publicHomepageContent = {
   ],
   closing: {
     title: 'Weet u nog niet precies wat u nodig heeft?',
-    description: 'Begin bij uw situatie en bekijk vervolgens welke informatie, verplichtingen of mogelijke oplossingen relevant kunnen zijn.',
+    description: 'U kunt ook zonder een deskundigheid te kennen een opdracht publiceren. Kies het onderwerp van uw vraag en beschrijf waar u ondersteuning bij nodig heeft.',
     primaryAction: { href: publicAnchors.askQuestion, label: 'Begin bij uw situatie' },
     secondaryAction: { href: publicRoutes.knowledge, label: 'Bekijk het kenniscentrum' },
   },
