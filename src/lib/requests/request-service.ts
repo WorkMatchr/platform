@@ -439,7 +439,7 @@ export async function publishRequestAttempt(input: {
         orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
         select: { province: true, city: true },
       })
-      if (simple && usesLocation(simple, 'ORGANIZATION') && !location) throw new RequestServiceError('NOT_ELIGIBLE')
+      if (simple && usesLocation(simple, 'ORGANIZATION') && !simple.organizationLocationCity && !location) throw new RequestServiceError('NOT_ELIGIBLE')
       const organizationSector =
         await transaction.organizationSector.findFirst({
           where: { organizationId: dossier.organizationId },
@@ -459,7 +459,7 @@ export async function publishRequestAttempt(input: {
         transaction,
         input.at.getUTCFullYear(),
       )
-      const region = simple ? (usesLocation(simple, 'OTHER_LOCATION') ? simple.otherLocationCity : usesLocation(simple, 'ORGANIZATION') ? location?.province?.trim() || location?.city.trim() || null : null) : location?.province?.trim() || location?.city.trim() || null
+      const region = simple ? (usesLocation(simple, 'OTHER_LOCATION') ? simple.otherLocationCity : usesLocation(simple, 'ORGANIZATION') ? simple.organizationLocationCity || location?.province?.trim() || location?.city.trim() || null : null) : location?.province?.trim() || location?.city.trim() || null
       const sectorCode =
         organizationSector?.sector.providerSectorTaxonomyMap?.term.code ??
         null

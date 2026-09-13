@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-09-13 — responsive Advieswijzer en contextuele begeleiding
+
+- Compacte desktop-/tabletindeling en toegankelijke mobiele contextdisclosure bij de eigen deskundigheids- of onderwerpkeuze.
+- Beschrijving als primair tekstveld, deterministisch afgeleide technische titel, vrije plaatsinvoer met behoud na login en startmoment als voorkeur.
+- Browseracceptatie afgerond; geen automatische routering of nieuwe migratie.
+
 ## Unreleased — eenvoudige Advieswijzer en opdrachtpublicatie
 
 - Opdrachtgevers kiezen zelf een bestaande deskundigheid of een onderwerp, inclusief Ik weet het echt niet, en vullen daarna dezelfde compacte opdrachtintake in.

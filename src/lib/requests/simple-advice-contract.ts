@@ -94,7 +94,10 @@ export const helpTopicLabels = {
 } as const
 export const outcomeLabels = { ADVICE: 'Advies', ASSESSMENT: 'Onderzoek / beoordeling', REPORT: 'Document / rapport', IMPLEMENTATION: 'Begeleiding / implementatie', TRAINING: 'Training / instructie', OTHER: 'Anders' } as const
 export const locationLabels = { ORGANIZATION: 'Op locatie', OTHER_LOCATION: 'Op andere locatie', REMOTE: 'Remote', COMBINATION: 'Combinatie' } as const
-export const startLabels = { AS_SOON_AS_POSSIBLE: 'Zo snel mogelijk', WITHIN_TWO_WEEKS: 'Binnen 2 weken', WITHIN_ONE_MONTH: 'Binnen 1 maand', LATER: 'Later', SPECIFIC_DATE: 'Specifieke datum' } as const
+export const startLabels = { AS_SOON_AS_POSSIBLE: 'Zo snel mogelijk', WITHIN_TWO_WEEKS: 'Binnen 2 weken', WITHIN_ONE_MONTH: 'Binnen 1 maand', LATER: 'Later', SPECIFIC_DATE: 'Specifieke voorkeursdatum' } as const
+export function deriveSimpleAdviceTitle(description: string) {
+  return description.trim().replace(/\s+/g, ' ').slice(0, 200).trim()
+}
 export const simpleAdviceRouteSchema = z.object({
   routeChoice: z.enum(['KNOWS_EXPERTISE', 'NEEDS_TOPIC'], { message: 'Kies Ja of Nee.' }),
   requestedExpertise: z.enum(EXPERTISE_IDS).nullable(),
@@ -115,6 +118,7 @@ export const simpleAdviceSchema = z.object({
   desiredOutcomeOther: optionalText,
   workLocationMode: z.enum(['ORGANIZATION', 'OTHER_LOCATION', 'REMOTE', 'COMBINATION'], { message: 'Kies waar de opdracht wordt uitgevoerd.' }),
   organizationLocationId: z.string().uuid().nullable().default(null),
+  organizationLocationCity: z.string().trim().max(120).default(''),
   otherLocationCity: z.string().trim().max(120).default(''),
   combinationModes: z.array(z.enum(['ORGANIZATION', 'OTHER_LOCATION', 'REMOTE'])).max(3).default([]),
   desiredStartMode: z.enum(Object.keys(startLabels) as [keyof typeof startLabels, ...Array<keyof typeof startLabels>], { message: 'Kies wanneer u wilt starten.' }),
@@ -133,6 +137,7 @@ export const simpleAdviceSchema = z.object({
   helpTopicOther: v.routeChoice === 'NEEDS_TOPIC' && v.helpTopic === 'OTHER' ? v.helpTopicOther : '',
   desiredOutcomeOther: v.desiredOutcome === 'OTHER' ? v.desiredOutcomeOther : '',
   organizationLocationId: usesLocation(v, 'ORGANIZATION') ? v.organizationLocationId : null,
+  organizationLocationCity: usesLocation(v, 'ORGANIZATION') && !v.organizationLocationId ? v.organizationLocationCity : '',
   otherLocationCity: usesLocation(v, 'OTHER_LOCATION') ? v.otherLocationCity : '',
   combinationModes: v.workLocationMode === 'COMBINATION' ? [...new Set(v.combinationModes)] : [],
   desiredStartDate: v.desiredStartMode === 'SPECIFIC_DATE' ? v.desiredStartDate : '',
@@ -144,10 +149,10 @@ export function usesLocation(v: { workLocationMode: string; combinationModes: re
 export function simpleAdviceSummary(v: SimpleAdviceInput, organizationLocation?: string) {
   return [
     [v.routeChoice === 'KNOWS_EXPERTISE' ? 'Gezochte deskundigheid' : 'Onderwerp', v.requestedExpertise ? requestedExpertiseOptions.find(o => o.value === v.requestedExpertise)!.label : `${helpTopicLabels[v.helpTopic!]}${v.helpTopicOther ? `: ${v.helpTopicOther}` : ''}`],
-    ['Waar heeft u hulp bij?', v.requestTitle], ['Beschrijving', v.requestDescription],
+    ['Beschrijving', v.requestDescription],
     ['Gewenst resultaat', v.desiredOutcome === 'OTHER' ? v.desiredOutcomeOther : outcomeLabels[v.desiredOutcome]],
     ['Uitvoering', v.workLocationMode === 'COMBINATION' ? v.combinationModes.map(m => locationLabels[m]).join(', ') : locationLabels[v.workLocationMode]],
-    ...(usesLocation(v, 'ORGANIZATION') ? [['Organisatielocatie', organizationLocation || 'Uw organisatielocatie']] : []),
+    ...(usesLocation(v, 'ORGANIZATION') ? [['Organisatielocatie', v.organizationLocationCity || organizationLocation || 'Uw organisatielocatie']] : []),
     ...(usesLocation(v, 'OTHER_LOCATION') ? [['Plaats', v.otherLocationCity]] : []),
     ['Gewenste start', v.desiredStartMode === 'SPECIFIC_DATE' ? v.desiredStartDate.split('-').reverse().join('-') : startLabels[v.desiredStartMode]],
   ]

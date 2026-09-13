@@ -25,7 +25,7 @@ export async function publishSimpleAdviceRequest(viewer: AdviceDossierViewer, su
           const saved = simpleAdviceSchema.safeParse(existing.versions[0]?.simpleRequestSnapshot)
           if (!saved.success || JSON.stringify(saved.data) !== JSON.stringify(value)) throw new RequestServiceError('CONFLICT')
         } else {
-          if (usesLocation(value, 'ORGANIZATION')) {
+          if (usesLocation(value, 'ORGANIZATION') && (value.organizationLocationId || !value.organizationLocationCity)) {
             const location = await transaction.organizationLocation.findFirst({ where: { organizationId: viewer.organizationId!, archivedAt: null, ...(value.organizationLocationId ? { id: value.organizationLocationId } : {}) } })
             if (!location) throw new RequestServiceError('NOT_ELIGIBLE')
           }

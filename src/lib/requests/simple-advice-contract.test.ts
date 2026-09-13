@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { simpleAdviceSchema, requestedExpertiseOptions, helpTopicLabels, startLabels, simpleAdviceSummary } from './simple-advice-contract'
+import { deriveSimpleAdviceTitle, simpleAdviceSchema, requestedExpertiseOptions, helpTopicLabels, startLabels, simpleAdviceSummary } from './simple-advice-contract'
 
 export const simpleInput = { routeChoice: 'KNOWS_EXPERTISE', requestedExpertise: 'HVK', requestTitle: 'Veilig werken', requestDescription: 'Wij zoeken hulp bij veilig werken op onze locatie.', desiredOutcome: 'ADVICE', workLocationMode: 'REMOTE', desiredStartMode: 'AS_SOON_AS_POSSIBLE' }
 describe('Eenvoudige Advieswijzer contract', () => {
@@ -42,5 +42,22 @@ describe('Eenvoudige Advieswijzer contract', () => {
   it('toont controle vanuit exact de gevalideerde invoer', () => {
     const value = simpleAdviceSchema.parse(simpleInput)
     expect(simpleAdviceSummary(value)).toContainEqual(['Beschrijving', simpleInput.requestDescription])
+  })
+})
+
+
+describe('compatibele titel en plaats', () => {
+  it('leidt een geldige compacte titel deterministisch af zonder oudere titels te wijzigen', () => {
+    const description = '  Wij willen   onze werkplek laten beoordelen.  '
+    expect(deriveSimpleAdviceTitle(description)).toBe('Wij willen onze werkplek laten beoordelen.')
+    expect(deriveSimpleAdviceTitle('woord '.repeat(100)).length).toBeLessThanOrEqual(200)
+    expect(simpleAdviceSchema.parse(simpleInput).requestTitle).toBe('Veilig werken')
+    expect(simpleAdviceSchema.parse({ ...simpleInput, requestTitle: deriveSimpleAdviceTitle(description) }).requestTitle).toBe('Wij willen onze werkplek laten beoordelen.')
+  })
+  it('bewaart vrije plaats naast het bestaande vestigingsmodel en wist verborgen plaats', () => {
+    const value = { ...simpleInput, workLocationMode: 'ORGANIZATION', organizationLocationCity: 'Delft' }
+    expect(simpleAdviceSchema.parse(value).organizationLocationCity).toBe('Delft')
+    expect(simpleAdviceSchema.parse({ ...value, workLocationMode: 'REMOTE' }).organizationLocationCity).toBe('')
+    expect(simpleAdviceSchema.parse(simpleInput).organizationLocationCity).toBe('')
   })
 })
