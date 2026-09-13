@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — optionele aanvullende deskundigheden
+
+- Route A biedt maximaal twee zelfgekozen directe aanvullingen naast de ongewijzigde primaire deskundigheid.
+- De bestaande snapshot, Request en eligibility bewaren de expliciete selectie en matchlaag; professionals zien primaire of aanvullende matchuitleg.
+- Route B, historische opdrachten en de bestaande kwalificatiegrenzen blijven behouden; geen AI-routering of migratie.
+
 ## 2026-09-13 — responsive Advieswijzer en contextuele begeleiding
 
 - Compacte desktop-/tabletindeling en toegankelijke mobiele contextdisclosure bij de eigen deskundigheids- of onderwerpkeuze.

@@ -4,6 +4,9 @@ import { useRouter } from 'next/navigation'
 import { useActionState, useEffect, useRef, useState } from 'react'
 import { PublicIntakeDesktopContext, PublicIntakeMobileContext } from '@/components/public/public-intake-context'
 import { getSimpleAdviceContext } from '@/content/simple-advice-context'
+import { AdditionalExpertiseOptions } from './additional-expertise-options'
+import { retainAdditionalExpertises } from '@/lib/requests/additional-expertise'
+import type { ExpertiseId } from '@/lib/requests/simple-advice-contract'
 import { Button } from '@/components/ui/button'
 import { LinkButton } from '@/components/ui/link-button'
 import { fieldClassName } from '@/components/auth/auth-shell'
@@ -19,6 +22,7 @@ export function SimpleAdviceForm({ action, viewerId, locations = [] }: {
 }) {
   const router = useRouter()
   const [v, setV] = useState<Draft>({ ...empty })
+  const [additionalExpertises, setAdditionalExpertises] = useState<ExpertiseId[]>([])
   const [modes, setModes] = useState<string[]>([])
   const [step, setStep] = useState(0)
   const [ready, setReady] = useState(false)
@@ -28,9 +32,9 @@ export function SimpleAdviceForm({ action, viewerId, locations = [] }: {
   const heading = useRef<HTMLHeadingElement>(null)
   const form = useRef<HTMLFormElement>(null)
   const storageKey = `workmatchr-simple-advice:v1:${viewerId ?? 'anonymous'}`
-  const payload = { ...v, requestTitle: deriveSimpleAdviceTitle(v.requestDescription), requestedExpertise: v.requestedExpertise || null, helpTopic: v.helpTopic || null, organizationLocationId: v.organizationLocationId || null, combinationModes: modes }
+  const payload = { ...v, additionalExpertises, requestTitle: deriveSimpleAdviceTitle(v.requestDescription), requestedExpertise: v.requestedExpertise || null, helpTopic: v.helpTopic || null, organizationLocationId: v.organizationLocationId || null, combinationModes: modes }
   useEffect(() => {
-    let saved: { values?: Draft; modes?: string[]; step?: number; submissionId?: string } | null = null
+    let saved: { values?: Draft; modes?: string[]; additionalExpertises?: string[]; step?: number; submissionId?: string } | null = null
     try {
       const resumeAnonymous = viewerId && sessionStorage.getItem('workmatchr-simple-advice-login') === 'yes'
       const key = resumeAnonymous ? 'workmatchr-simple-advice:v1:anonymous' : storageKey
@@ -39,6 +43,7 @@ export function SimpleAdviceForm({ action, viewerId, locations = [] }: {
     } catch { /* A blocked browser store does not block the form. */ }
     // Restore a tab-local draft once after hydration; never share account-scoped drafts.
     setV(current => ({ ...current, ...Object.fromEntries(Object.keys(empty).filter(k => typeof saved?.values?.[k] === 'string').map(k => [k, k === 'organizationLocationId' && !saved!.values![k] ? current.organizationLocationId : saved!.values![k]])) }))
+    setAdditionalExpertises(saved?.values?.routeChoice === 'KNOWS_EXPERTISE' && Array.isArray(saved?.additionalExpertises) ? retainAdditionalExpertises(saved.values.requestedExpertise, saved.additionalExpertises) : [])
     setModes(saved?.modes?.filter(m => ['ORGANIZATION', 'OTHER_LOCATION', 'REMOTE'].includes(m)) ?? [])
     setStep(saved?.step && saved.step >= 0 && saved.step <= 2 ? saved.step : 0)
     setSubmissionId(saved?.submissionId && /^[0-9a-f-]{36}$/i.test(saved.submissionId) ? saved.submissionId : crypto.randomUUID())
@@ -46,8 +51,8 @@ export function SimpleAdviceForm({ action, viewerId, locations = [] }: {
   }, [storageKey, viewerId])
   useEffect(() => {
     if (!ready) return
-    try { sessionStorage.setItem(storageKey, JSON.stringify({ values: v, modes, step, submissionId })) } catch { /* Optional tab persistence. */ }
-  }, [ready, v, modes, step, submissionId, storageKey])
+    try { sessionStorage.setItem(storageKey, JSON.stringify({ values: v, modes, additionalExpertises, step, submissionId })) } catch { /* Optional tab persistence. */ }
+  }, [ready, v, modes, additionalExpertises, step, submissionId, storageKey])
   useEffect(() => { heading.current?.focus() }, [step])
   useEffect(() => {
     if (!state.requestId) return
@@ -56,6 +61,8 @@ export function SimpleAdviceForm({ action, viewerId, locations = [] }: {
   }, [state.requestId, storageKey, router])
   const shownErrors = { ...errors, ...state.errors }
   const update = (key: string, value: string) => {
+    if (key === 'routeChoice') setAdditionalExpertises([])
+    if (key === 'requestedExpertise') setAdditionalExpertises(current => retainAdditionalExpertises(value, current))
     setV(current => ({ ...current, [key]: value, ...(key === 'routeChoice' ? { requestedExpertise: '', helpTopic: '', helpTopicOther: '' } : {}) }))
     setErrors({})
   }
@@ -76,7 +83,8 @@ export function SimpleAdviceForm({ action, viewerId, locations = [] }: {
   const parsed = simpleAdviceSchema.safeParse(payload)
   const context = getSimpleAdviceContext(v, step)
   const contextStep = step === 0 ? 'SITUATION' : step === 1 ? 'ORGANIZATION' : 'PLANNING'
-  return <div className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] md:items-start"><PublicIntakeDesktopContext step={contextStep} context={context} /><div className="min-w-0 space-y-4"><PublicIntakeMobileContext step={contextStep} context={context} /><form ref={form} action={formAction} className="space-y-6 rounded-card border border-border bg-surface p-5 sm:p-8" noValidate onSubmit={e => { if (step !== 2 || !validate()) e.preventDefault() }}>
+  const additionalOptions = step === 1 && v.routeChoice === 'KNOWS_EXPERTISE' && requestedExpertiseOptions.some(option => option.value === v.requestedExpertise) ? <AdditionalExpertiseOptions key={v.requestedExpertise} primary={v.requestedExpertise as ExpertiseId} selected={additionalExpertises} onChange={setAdditionalExpertises} /> : null
+  return <div className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] md:items-start"><PublicIntakeDesktopContext step={contextStep} context={context}>{additionalOptions}</PublicIntakeDesktopContext><div className="min-w-0 space-y-4"><PublicIntakeMobileContext step={contextStep} context={context}>{additionalOptions}</PublicIntakeMobileContext><form ref={form} action={formAction} className="space-y-6 rounded-card border border-border bg-surface p-5 sm:p-8" noValidate onSubmit={e => { if (step !== 2 || !validate()) e.preventDefault() }}>
     <input type="hidden" name="payload" value={JSON.stringify(payload)} />
     <input type="hidden" name="submissionId" value={submissionId} />
     <p className="text-sm text-text-secondary" aria-label="Voortgang">Stap {step + 1} van 3</p>

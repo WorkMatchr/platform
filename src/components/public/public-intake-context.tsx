@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import type { IntakeDecisionStep } from '@/lib/public-intake/intake-decision-engine'
 
 type ProgressState = 'done' | 'current' | 'upcoming'
@@ -82,7 +82,7 @@ export function getAdviceStepContext(step: IntakeDecisionStep): AdviceStepContex
   }
 }
 
-function ContextContent({ step, context }: { step: IntakeDecisionStep; context?: AdviceStepContext }) {
+function ContextContent({ step, context, children }: { step: IntakeDecisionStep; context?: AdviceStepContext; children?: ReactNode }) {
   const content = context ?? getAdviceStepContext(step)
 
   return (
@@ -100,6 +100,7 @@ function ContextContent({ step, context }: { step: IntakeDecisionStep; context?:
           </p>
         )}
       </section>
+      {children}
       <section className="border-t border-border pt-4">
         <h2 className="font-semibold text-brand-dark">Uw privacy</h2>
         <p className="mt-1.5">
@@ -142,16 +143,18 @@ export function PublicIntakeDesktopContext({
   step,
   className = '',
   context,
+  children,
 }: {
   step: IntakeDecisionStep
   className?: string
   context?: AdviceStepContext
+  children?: ReactNode
 }) {
   return (
     <aside
       className={`hidden rounded-card border border-border bg-surface-subtle p-5 md:sticky md:top-4 md:block ${className}`}
     >
-      <ContextContent step={step} context={context} />
+      <ContextContent step={step} context={context}>{children}</ContextContent>
     </aside>
   )
 }
@@ -162,12 +165,14 @@ export function PublicIntakeMobileContext({
   onToggle,
   contextId = 'mobile-intake-context',
   context,
+  children,
 }: {
   step: IntakeDecisionStep
   mobileOpen?: boolean
   onToggle?: () => void
   contextId?: string
   context?: AdviceStepContext
+  children?: ReactNode
 }) {
   const [open, setOpen] = useState(false)
   const expanded = mobileOpen ?? open
@@ -198,7 +203,7 @@ export function PublicIntakeMobileContext({
         aria-live="polite"
       >
         <div className="rounded-card border border-border bg-surface-subtle p-4">
-          <ContextContent step={step} context={context} />
+          <ContextContent step={step} context={context}>{children}</ContextContent>
         </div>
       </section>
     </section>

@@ -78,6 +78,7 @@ export async function listEligibleRequestsForProvider(
       orderBy: { request: { publishedAt: 'desc' } },
       select: {
         matchedExpertise: true,
+        eligibilityBasis: true,
         request: { select: publicRequestSelect },
         interest: {
           select: {
@@ -115,6 +116,7 @@ export async function getEligibleRequestForProvider(
         },
         select: {
           matchedExpertise: true,
+        eligibilityBasis: true,
           request: {
             select: {
               ...publicRequestSelect,

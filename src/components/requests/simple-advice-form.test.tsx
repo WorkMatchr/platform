@@ -144,3 +144,31 @@ describe('contextuele intakeverfijning', () => {
     expect(screen.getByText('01-12-2026')).toBeTruthy()
   })
 })
+
+
+describe('expliciet aanvullende deskundigheden',()=>{
+ const toggle=(name:string)=>fireEvent.click(screen.getAllByLabelText(name,{selector:'input'})[0])
+ it('begint leeg, blokkeert derde keuze en bewaart expliciete selectie in controle en publicatie',async()=>{
+  const action=vi.fn().mockResolvedValue({});render(<SimpleAdviceForm action={action} viewerId="owner" />)
+  fireEvent.click(screen.getByLabelText('Ja'));choose('Welke deskundigheid zoekt u?','HVK');await next()
+  const names=['Middelbare veiligheidskundige (MVK)','Arbeidshygiënist','Incidentonderzoeker']
+  for(const name of names)expect((screen.getAllByLabelText(name,{selector:'input'})[0] as HTMLInputElement).checked).toBe(false)
+  toggle(names[0]);toggle(names[1]);toggle(names[2]);expect(screen.getByRole('alert').textContent).toBe('U kunt maximaal twee aanvullende deskundigheden selecteren.')
+  expect((screen.getAllByLabelText(names[2],{selector:'input'})[0] as HTMLInputElement).checked).toBe(false)
+  toggle(names[0]);toggle(names[2]);fill();await next();expect(screen.getByText('Aanvullende deskundigheden')).toBeTruthy()
+  fireEvent.click(screen.getByText('Wijzigen'));expect((screen.getAllByLabelText(names[2],{selector:'input'})[0] as HTMLInputElement).checked).toBe(true)
+  await next();fireEvent.click(screen.getByText('Opdracht publiceren'));await waitFor(()=>expect(action).toHaveBeenCalledOnce())
+  expect(JSON.parse(String((action.mock.calls[0][1] as FormData).get('payload')))).toMatchObject({requestedExpertise:'HVK',additionalExpertises:['ARBEIDSHYGIENIST','INCIDENTONDERZOEK']})
+ })
+ it('primary-wijziging verwijdert ongeldige aanvullende keuze; Route B toont geen lijst',async()=>{
+  setup();fireEvent.click(screen.getByLabelText('Ja'));choose('Welke deskundigheid zoekt u?','HVK');await next();toggle('Middelbare veiligheidskundige (MVK)');toggle('Incidentonderzoeker')
+  fireEvent.click(screen.getByText('Terug'));choose('Welke deskundigheid zoekt u?','ERGONOMIE_FYSIEKE_BELASTING');await next()
+  expect(screen.queryByLabelText('Incidentonderzoeker')).toBeNull();expect((screen.getAllByLabelText('Middelbare veiligheidskundige (MVK)',{selector:'input'})[0] as HTMLInputElement).checked).toBe(true)
+  fireEvent.click(screen.getByText('Terug'));fireEvent.click(screen.getByLabelText('Nee'));choose('Waar gaat uw vraag over?','UNKNOWN');await next();expect(screen.queryByText('Mogelijk ook relevant voor uw opdracht')).toBeNull()
+ })
+ it('behoudt aanvullende selecties door de bestaande login-overdracht',async()=>{
+  const view=render(<SimpleAdviceForm action={vi.fn().mockResolvedValue({})} viewerId={null}/>);fireEvent.click(screen.getByLabelText('Ja'));choose('Welke deskundigheid zoekt u?','HVK');await next();toggle('Arbeidshygiënist');fill();await next()
+  sessionStorage.setItem('workmatchr-simple-advice-login','yes');view.unmount();setup();await waitFor(()=>expect(screen.getByText('Opdracht publiceren')).toBeTruthy());expect(screen.getByText('Aanvullende deskundigheden')).toBeTruthy()
+  fireEvent.click(screen.getByText('Wijzigen'));expect((screen.getAllByLabelText('Arbeidshygiënist',{selector:'input'})[0] as HTMLInputElement).checked).toBe(true)
+ })
+})

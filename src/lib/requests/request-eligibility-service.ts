@@ -1,3 +1,4 @@
+import { requestedExpertiseOptions, type SimpleAdviceInput } from './simple-advice-contract'
 import type { Prisma } from '@/generated/prisma/client'
 import { evaluateMatchingCandidate } from '@/lib/marketplace/matching-rules'
 import { MARKETPLACE_RULE_VERSION } from '@/lib/marketplace/marketplace-config'
@@ -105,8 +106,13 @@ export async function createRequestEligibilitySnapshot(
   transaction: Transaction,
   request: EligibilityRequest,
   at: Date,
+  selection?: Pick<SimpleAdviceInput, 'primaryExpertise' | 'additionalExpertises' | 'expertiseSelectionSource'>,
 ): Promise<number> {
-  const tiers = expertiseTiers(request)
+  // New user selections keep each label attached to its own code. Legacy snapshots retain their original behavior.
+  const tiers: ExpertiseTier[] = selection ? [
+    ...(selection.primaryExpertise ? [{ tier: 'PRIMARY' as const, label: requestedExpertiseOptions.find(o => o.value === selection.primaryExpertise)!.label, codes: [selection.primaryExpertise] }] : []),
+    ...selection.additionalExpertises.map(code => ({ tier: 'ADDITIONAL' as const, label: requestedExpertiseOptions.find(o => o.value === code)!.label, codes: [code] })),
+  ] : expertiseTiers(request)
   if (tiers.length === 0) return 0
 
   const projections = await transaction.trustedProviderProjection.findMany({
@@ -219,6 +225,7 @@ export async function createRequestEligibilitySnapshot(
           requestRegionCode: request.regionCode,
           requestSectorCode: request.sectorCode,
           matches,
+          ...(selection ? { expertiseSelectionSource: selection.expertiseSelectionSource, matchType: matches.some(match => match.tier === 'PRIMARY') ? 'PRIMARY' : 'ADDITIONAL' } : {}),
         } satisfies Prisma.InputJsonValue,
         createdAt: at,
       },

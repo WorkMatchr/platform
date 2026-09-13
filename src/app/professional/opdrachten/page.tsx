@@ -1,3 +1,4 @@
+import { RequestMatchExplanation } from '@/components/requests/request-match-explanation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -6,7 +7,6 @@ import { Section } from '@/components/layout/section'
 import { Card } from '@/components/ui/card'
 import { requireOrganizationMembership } from '@/lib/organizations/organization-authorization'
 import {
-  presentMatchedExpertise,
   requestInterestStatusLabels,
 } from '@/lib/requests/request-interest-contract'
 import {
@@ -104,14 +104,7 @@ export default async function ProviderRequestsPage() {
                         </dd>
                       </div>
                     </dl>
-                    <p className="mt-4 text-sm text-text-secondary">
-                      <span className="font-semibold text-brand-dark">
-                        Passend op:{' '}
-                      </span>
-                      {item.matchedExpertise
-                        .map(presentMatchedExpertise)
-                        .join(', ')}
-                    </p>
+<RequestMatchExplanation primary={item.request.primaryExpertise} matches={item.matchedExpertise} basis={item.eligibilityBasis} />
                   </div>
                   <div className="flex flex-col items-start gap-3 sm:items-end">
                     <span className="rounded-full bg-surface-muted px-3 py-1 text-sm font-semibold text-brand-dark">

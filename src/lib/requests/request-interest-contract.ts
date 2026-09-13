@@ -25,3 +25,15 @@ export function presentMatchedExpertise(value: string): string {
         : 'Mogelijk'
   return `${tierLabel}: ${label}`
 }
+
+
+export function selectedExpertiseMatchPresentation(primary: string | null, matches: readonly string[], basis: unknown) {
+  if (!primary || !basis || typeof basis !== 'object' || !('expertiseSelectionSource' in basis) || basis.expertiseSelectionSource !== 'USER_SELECTED') return null
+  if (matches.some(value => value.startsWith('PRIMARY:'))) return {
+    type: 'PRIMARY' as const, title: 'Primaire match',
+    description: 'De opdrachtgever heeft ' + primary + ' als primaire deskundigheid geselecteerd.',
+  }
+  const additional = [...new Set(matches.filter(value => value.startsWith('ADDITIONAL:')).map(value => value.slice('ADDITIONAL:'.length)))]
+  if (!additional.length) return null
+  return { type: 'ADDITIONAL' as const, title: 'Aanvullende match', description: 'De opdrachtgever heeft primair ' + primary + ' geselecteerd en daarnaast ' + additional.join(', ') + ' als aanvullende deskundigheid meegenomen.' }
+}

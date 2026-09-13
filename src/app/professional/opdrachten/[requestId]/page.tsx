@@ -1,3 +1,4 @@
+import { RequestMatchExplanation } from '@/components/requests/request-match-explanation'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { Container } from '@/components/layout/container'
@@ -6,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { LinkButton } from '@/components/ui/link-button'
 import { requireOrganizationMembership } from '@/lib/organizations/organization-authorization'
 import {
-  presentMatchedExpertise,
   requestInterestStatusLabels,
 } from '@/lib/requests/request-interest-contract'
 import {
@@ -202,14 +202,7 @@ export default async function ProviderRequestDetailPage({
                 </dd>
               </div>
             </dl>
-            <p className="mt-4 text-sm text-text-secondary">
-              <span className="font-semibold text-brand-dark">
-                Uw organisatie kwam in aanmerking op:{' '}
-              </span>
-              {detail.matchedExpertise
-                .map(presentMatchedExpertise)
-                .join(', ')}
-            </p>
+<RequestMatchExplanation primary={request.primaryExpertise} matches={detail.matchedExpertise} basis={detail.eligibilityBasis} />
           </section>
 
           {detail.requesterDetails ? (

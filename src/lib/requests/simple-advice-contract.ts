@@ -1,6 +1,9 @@
 import { z } from 'zod'
+import { directAdditionalExpertises } from './additional-expertise'
 // Existing accepted expertise identities, without the experimental routing contracts.
 const EXPERTISE_IDS = ['HVK', 'MVK', 'ARBEIDSHYGIENIST', 'A_EN_O_DESKUNDIGE', 'BEDRIJFSARTS', 'ERGONOMIE_FYSIEKE_BELASTING', 'MACHINEVEILIGHEID', 'GEVAARLIJKE_STOFFEN', 'EXPLOSIEVEILIGHEID', 'INCIDENTONDERZOEK', 'BRANDVEILIGHEID', 'GELUIDSDESKUNDIGE', 'STRALINGSDESKUNDIGE', 'ARBEIDSPSYCHOLOOG', 'VERTROUWENSPERSOON', 'CASEMANAGER_VERZUIM', 'PREVENTIEMEDEWERKER', 'BHV_DESKUNDIGE', 'ARBODIENST', 'KEURINGSINSTANTIE'] as const
+
+export type ExpertiseId = typeof EXPERTISE_IDS[number]
 
 export const requestedExpertiseOptions = [
   {
@@ -110,6 +113,10 @@ const optionalText = z.string().trim().max(500, 'Gebruik maximaal 500 tekens.').
 export const simpleAdviceSchema = z.object({
   routeChoice: z.enum(['KNOWS_EXPERTISE', 'NEEDS_TOPIC'], { message: 'Kies Ja of Nee.' }),
   requestedExpertise: z.enum(EXPERTISE_IDS).nullable().default(null),
+  // Compatibility projection of the existing requestedExpertise; never a second choice.
+  primaryExpertise: z.enum(EXPERTISE_IDS).nullable().optional(),
+  additionalExpertises: z.array(z.enum(EXPERTISE_IDS)).max(2, 'U kunt maximaal twee aanvullende deskundigheden selecteren.').default([]),
+  expertiseSelectionSource: z.literal('USER_SELECTED').default('USER_SELECTED'),
   helpTopic: z.enum(Object.keys(helpTopicLabels) as [keyof typeof helpTopicLabels, ...Array<keyof typeof helpTopicLabels>]).nullable().default(null),
   helpTopicOther: optionalText,
   requestTitle: z.string().trim().min(5, 'Gebruik minimaal 5 tekens voor de titel.').max(200, 'Gebruik maximaal 200 tekens.'),
@@ -127,11 +134,16 @@ export const simpleAdviceSchema = z.object({
   const error = (path: string, message: string) => ctx.addIssue({ code: 'custom', path: [path], message })
   const route = simpleAdviceRouteSchema.safeParse(v)
   if (!route.success) for (const issue of route.error.issues) ctx.addIssue({ code: 'custom', path: issue.path, message: issue.message })
+  if (v.primaryExpertise !== undefined && v.primaryExpertise !== (v.routeChoice === 'KNOWS_EXPERTISE' ? v.requestedExpertise : null)) error('requestedExpertise', 'De primaire deskundigheid komt niet overeen met uw keuze.')
+  if (v.routeChoice === 'NEEDS_TOPIC' && v.additionalExpertises.length) error('additionalExpertises', 'Kies eerst zelf een primaire deskundigheid.')
+  if (new Set(v.additionalExpertises).size !== v.additionalExpertises.length) error('additionalExpertises', 'Selecteer iedere aanvullende deskundigheid maximaal één keer.')
+  if (v.additionalExpertises.some(id => !directAdditionalExpertises(v.requestedExpertise ?? '').includes(id))) error('additionalExpertises', 'Kies uitsluitend de aanvullende deskundigheden bij uw primaire keuze.')
   if (v.desiredOutcome === 'OTHER' && !v.desiredOutcomeOther) error('desiredOutcomeOther', 'Licht toe wat u wilt bereiken.')
   if (v.workLocationMode === 'COMBINATION' && new Set(v.combinationModes).size < 2) error('combinationModes', 'Kies minimaal twee uitvoeringsvormen.')
   if (usesLocation(v, 'OTHER_LOCATION') && !v.otherLocationCity) error('otherLocationCity', 'Vul de plaats in.')
   if (v.desiredStartMode === 'SPECIFIC_DATE' && (!/^\d{4}-\d{2}-\d{2}$/.test(v.desiredStartDate) || !Number.isFinite(Date.parse(v.desiredStartDate)) || new Date(v.desiredStartDate).toISOString().slice(0, 10) !== v.desiredStartDate)) error('desiredStartDate', 'Kies een geldige datum.')
-}).transform(v => ({ ...v,
+}).transform(({ primaryExpertise, ...v }) => ({ ...v,
+  primaryExpertise: primaryExpertise ?? (v.routeChoice === 'KNOWS_EXPERTISE' ? v.requestedExpertise : null),
   requestedExpertise: v.routeChoice === 'KNOWS_EXPERTISE' ? v.requestedExpertise : null,
   helpTopic: v.routeChoice === 'NEEDS_TOPIC' ? v.helpTopic : null,
   helpTopicOther: v.routeChoice === 'NEEDS_TOPIC' && v.helpTopic === 'OTHER' ? v.helpTopicOther : '',
@@ -148,7 +160,8 @@ export function usesLocation(v: { workLocationMode: string; combinationModes: re
 }
 export function simpleAdviceSummary(v: SimpleAdviceInput, organizationLocation?: string) {
   return [
-    [v.routeChoice === 'KNOWS_EXPERTISE' ? 'Gezochte deskundigheid' : 'Onderwerp', v.requestedExpertise ? requestedExpertiseOptions.find(o => o.value === v.requestedExpertise)!.label : `${helpTopicLabels[v.helpTopic!]}${v.helpTopicOther ? `: ${v.helpTopicOther}` : ''}`],
+    [v.routeChoice === 'KNOWS_EXPERTISE' ? 'Primaire deskundigheid' : 'Onderwerp', v.requestedExpertise ? requestedExpertiseOptions.find(o => o.value === v.requestedExpertise)!.label : `${helpTopicLabels[v.helpTopic!]}${v.helpTopicOther ? `: ${v.helpTopicOther}` : ''}`],
+    ...(v.routeChoice === 'KNOWS_EXPERTISE' && v.additionalExpertises.length ? [['Aanvullende deskundigheden', v.additionalExpertises.map(id => requestedExpertiseOptions.find(o => o.value === id)!.label).join(', ')]] : []),
     ['Beschrijving', v.requestDescription],
     ['Gewenst resultaat', v.desiredOutcome === 'OTHER' ? v.desiredOutcomeOther : outcomeLabels[v.desiredOutcome]],
     ['Uitvoering', v.workLocationMode === 'COMBINATION' ? v.combinationModes.map(m => locationLabels[m]).join(', ') : locationLabels[v.workLocationMode]],

@@ -134,7 +134,7 @@ function expertiseFromVersion(
   if (version.simpleRequestSnapshot) {
     const value = simpleAdviceSchema.parse(version.simpleRequestSnapshot)
     return { primary: value.requestedExpertise ? requestedExpertiseOptions.find(o => o.value === value.requestedExpertise)!.label : null,
-      primaryCodes: value.requestedExpertise ? [value.requestedExpertise] : [], additional: [], possible: [], additionalCodes: [], possibleCodes: [] }
+      primaryCodes: value.requestedExpertise ? [value.requestedExpertise] : [], additional: value.additionalExpertises.map(id => requestedExpertiseOptions.find(o => o.value === id)!.label), possible: [], additionalCodes: value.additionalExpertises, possibleCodes: [] }
   }
   const primary = professionalRequirementSnapshotSchema.safeParse(
     version.primaryProfessionalRequirementSnapshot,
@@ -504,6 +504,7 @@ export async function publishRequestAttempt(input: {
         transaction,
         request,
         input.at,
+        simple ? { primaryExpertise: simple.primaryExpertise, additionalExpertises: simple.additionalExpertises, expertiseSelectionSource: simple.expertiseSelectionSource } : undefined,
       )
       await transaction.requestEvent.create({
         data: {
