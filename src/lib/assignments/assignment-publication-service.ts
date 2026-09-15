@@ -188,6 +188,7 @@ async function requireConsistentPublishedState(
   assignment: ManagedAssignment,
   expectedStatus: 'OPEN' | 'CANCELLED',
 ) {
+  if (assignment.requestId) throw publicationIntegrityError('Gebruik de canonieke opdracht om deze publicatie in te trekken.')
   if (!hasCompletePublicationMetadata(assignment)) throw publicationIntegrityError()
   if (
     assignment.publishedVersion > assignment.version ||

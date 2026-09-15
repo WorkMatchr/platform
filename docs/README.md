@@ -163,3 +163,8 @@ Documentatie wordt bijgewerkt zodra een besluit, risico of functionaliteit veran
 ## Eenvoudige Advieswijzer en opdrachtpublicatie
 
 Zie [Eenvoudige Advieswijzer → opdracht publiceren](simple-advice-request-flow.md). `AdviceDossierVersion.simpleRequestSnapshot` bewaart de typed startsnapshot; `Request` blijft de externe opdracht. `SIMPLE_ADVICE` identificeert de nieuwe bron. Onderwerp-only publicatie gebruikt een nullable expertise en geen automatische expertiseclaim. Migratie: `20260912090000_simple_advice_request`.
+
+
+## Canonieke Simple Advice-opdrachtketen
+
+Zie [Request → Assignment-handoff](request-assignment-handoff.md) en [ADR-024](adr/ADR-024-canonieke-opdrachtketen-request-assignment.md). Request → RequestAssignmentHandoff → Assignment bewaart exact één immutable bronbinding; Request.id blijft extern. Migratie: `20260915090000_request_assignment_handoff`. Geen automatische productiebackfill.

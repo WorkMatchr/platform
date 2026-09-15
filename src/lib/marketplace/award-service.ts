@@ -1,3 +1,4 @@
+import { externalAssignmentWhere } from '@/lib/assignments/assignment-identity'
 import type { Prisma } from '@/generated/prisma/client'
 import { getPrisma } from '@/lib/prisma'
 import { hashProviderJson, type CanonicalValue } from '@/lib/providers/provider-canonical-json'
@@ -26,7 +27,7 @@ export async function awardMarketplaceQuote(input: {
     const membership = await requireClientMarketplaceManager(transaction, input.actorUserId, input.clientOrganizationId)
     const assignment = await transaction.assignment.findFirst({
       where: {
-        id: input.assignmentId,
+        ...externalAssignmentWhere(input.assignmentId),
         clientOrganizationId: input.clientOrganizationId,
         status: 'IN_SELECTION',
         awardDecision: null,

@@ -178,6 +178,13 @@ export async function withdrawPublishedRequest(input: {
       }
       if (request.status !== 'PUBLISHED') throw new MarketplaceServiceError('INVALID_STATE')
 
+      const canonical = await transaction.assignment.findUnique({ where: { requestId: request.id } })
+      if (canonical) {
+        if (canonical.status !== 'OPEN') throw new MarketplaceServiceError('INVALID_STATE')
+        const changed = await transaction.assignment.updateMany({ where: { id: canonical.id, status: 'OPEN', version: canonical.version }, data: { status: 'CANCELLED', version: { increment: 1 } } })
+        if (changed.count !== 1) throw new MarketplaceServiceError('INVALID_STATE')
+        await transaction.assignmentStatusHistory.create({ data: { assignmentId: canonical.id, fromStatus: 'OPEN', toStatus: 'CANCELLED', changedByUserId: input.userId, reason: (parsed.data.explanation || withdrawalReasonLabels[parsed.data.reason]).padEnd(10, '.').slice(0,500), createdAt: at } })
+      }
       let totalRefundedCredits = 0
       for (const slot of request.offerSlots) {
         if (!slot.creditAmount || !slot.marketplaceRuleSetId || !slot.marketplaceRuleSet) {

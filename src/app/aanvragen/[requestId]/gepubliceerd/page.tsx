@@ -94,7 +94,8 @@ export default async function PublishedRequestPage({
               </dd>
             </div>
           </dl>
-          <dl className="mt-6 grid gap-3 border-t border-success-border pt-5 text-sm sm:grid-cols-2">
+          {request.assignment && <div className="mt-5"><p className="font-semibold">Reactietermijn voor professionals</p><p>{request.assignment.responseDeadline ? new Intl.DateTimeFormat('nl-NL', { dateStyle: 'long', timeZone: 'Europe/Amsterdam' }).format(request.assignment.responseDeadline) : 'Niet beschikbaar'}</p>{!request.assignment.primarySpecialismId && <p className="mt-2">Uw opdracht is gepubliceerd. Selectie van professionals wacht op een expliciete keuze van een primaire deskundigheid.</p>}</div>}
+          {!request.assignment && <dl className="mt-6 grid gap-3 border-t border-success-border pt-5 text-sm sm:grid-cols-2">
             <div>
               <dt className="font-semibold text-text-secondary">
                 Geschikte organisaties
@@ -125,10 +126,10 @@ export default async function PublishedRequestPage({
               </dt>
               <dd className="mt-1 text-brand-dark">0</dd>
             </div>
-          </dl>
+          </dl>}
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            <LinkButton href="/aanvragen">
-              Bekijk mijn aanvragen
+            <LinkButton href={request.assignment ? `/opdrachten/${request.id}` : "/aanvragen"}>
+              Bekijk mijn opdrachten
             </LinkButton>
             <LinkButton href="/dashboard" variant="outline">
               Terug naar dashboard

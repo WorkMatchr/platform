@@ -1,3 +1,4 @@
+import { ownedAssignmentWhere, externalAssignmentId } from './assignment-identity'
 import type { AssignmentStatus, OrganizationMembershipRole, Prisma } from '@/generated/prisma/client'
 import { getPrisma } from '@/lib/prisma'
 import { requireIntakeConverter } from '@/lib/intakes/intake-authorization'
@@ -19,6 +20,10 @@ export type AssignmentListItem = {
 
 export type AssignmentDetailView = AssignmentListItem & {
   description: string
+  canonicalRequestId?: string | null
+  responseDeadline?: string | null
+  primaryExpertise?: string | null
+  additionalExpertises?: string[]
   updatedAt: string
   version: number
   intakeId: string | null
@@ -123,9 +128,9 @@ export async function listAssignmentsForOrganization(
       where: {
         clientOrganizationId: organization.id,
         ...statusWhere(filter),
-        ...(membership.role === 'MEMBER' ? { intake: { createdByUserId: userId } } : {}),
+        ...(membership.role === 'MEMBER' ? ownedAssignmentWhere(userId) : {}),
       },
-      select: { id: true, title: true, status: true, createdAt: true },
+      select: { id: true, requestId: true, title: true, status: true, createdAt: true },
       orderBy: { createdAt: 'desc' },
     })
 
@@ -133,6 +138,7 @@ export async function listAssignmentsForOrganization(
       viewerRole: membership.role,
       items: assignments.map((assignment) => ({
         ...assignment,
+        id: externalAssignmentId(assignment),
         createdAt: assignment.createdAt.toISOString(),
         organizationName: organization.name,
         canDelete: ['OWNER', 'ADMIN'].includes(membership.role) && ['DRAFT', 'READY_FOR_REVIEW'].includes(assignment.status),
@@ -152,6 +158,10 @@ export async function getAssignmentDetail(
       where: { id: access.id },
       select: {
         id: true,
+        requestId: true,
+        responseDeadline: true,
+        primarySpecialism: { select: { name: true } },
+        specialisms: { where: { isRequired: false }, select: { specialism: { select: { name: true } } } },
         title: true,
         description: true,
         status: true,
@@ -190,7 +200,11 @@ export async function getAssignmentDetail(
     if (!assignment) throw new AssignmentServiceError('ACCESS_DENIED', 'Deze opdracht is niet beschikbaar.')
 
     return {
-      id: assignment.id,
+      id: externalAssignmentId(assignment),
+      canonicalRequestId: assignment.requestId,
+      responseDeadline: assignment.responseDeadline?.toISOString() ?? null,
+      primaryExpertise: assignment.primarySpecialism?.name ?? null,
+      additionalExpertises: assignment.specialisms.map(s => s.specialism.name),
       title: assignment.title,
       description: assignment.description,
       status: assignment.status,

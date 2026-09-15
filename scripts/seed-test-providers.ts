@@ -93,6 +93,16 @@ async function loadReferences(prisma: PrismaClient): Promise<ReferenceMaps> {
     select: { id: true, code: true, version: { select: { version: true, checksum: true, taxonomy: { select: { kind: true } } } } },
   })
   const map = new Map(terms.map((term) => [`${term.version.taxonomy.kind}:${term.code}`, term]))
+  // Legacy fixtures retain their existing identity through the canonical map.
+  // Never add retired terms to the active taxonomy or replace a v3 identity.
+  const legacyMappings = await prisma.providerSpecialismTaxonomyMap.findMany({
+    where: { term: { version: { version: 2, status: 'RETIRED', taxonomy: { kind: 'SPECIALISM' } } } },
+    select: { term: { select: { id: true, code: true, version: { select: { version: true, checksum: true, taxonomy: { select: { kind: true } } } } } } },
+  })
+  for (const { term } of legacyMappings) {
+    const key = `SPECIALISM:${term.code}`
+    if (!map.has(key)) map.set(key, term)
+  }
   const taxonomyVersions = [...new Map(terms.filter((term) => term.version.checksum).map((term) => [term.version.taxonomy.kind, {
     kind: term.version.taxonomy.kind,
     version: term.version.version,

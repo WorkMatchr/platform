@@ -24,6 +24,7 @@ export function AssignmentDetail({ assignment, actions }: { assignment: Assignme
           <time className="text-sm text-text-secondary" dateTime={assignment.createdAt}>Aangemaakt op {formatAssignmentDate(assignment.createdAt)}</time>
         </div>
         <dl className="mt-6 grid gap-5 sm:grid-cols-2">
+          {assignment.canonicalRequestId && <><Detail label="Reactietermijn voor professionals" value={formatOptionalAssignmentDate(assignment.responseDeadline ?? null)} /><Detail label="Primaire deskundigheid" value={assignment.primaryExpertise ?? 'Nog niet gekozen'} />{Boolean(assignment.additionalExpertises?.length) && <Detail label="Aanvullende deskundigheden" value={assignment.additionalExpertises!.join(', ')} />}</>}
           <Detail label="Organisatie" value={assignment.organizationName} />
           <Detail label="Gewenste startdatum" value={formatOptionalAssignmentDate(assignment.desiredStartDate)} />
           <Detail label="Locatie" value={assignment.location} />
@@ -127,11 +128,11 @@ export function AssignmentDetail({ assignment, actions }: { assignment: Assignme
             <p className="mt-3 text-sm text-text-secondary">
               Intrekken is definitief. De opdracht blijft ongewijzigd en kan binnen deze versie niet opnieuw worden gepubliceerd.
             </p>
-            <AssignmentWithdrawForm
+            {assignment.canonicalRequestId ? <LinkButton href={`/aanvragen/${assignment.canonicalRequestId}/gepubliceerd`}>Opdracht intrekken</LinkButton> : <AssignmentWithdrawForm
               action={actions.withdraw}
               assignmentId={assignment.id}
               version={assignment.version}
-            />
+            />}
           </details>
         </section>
       )}

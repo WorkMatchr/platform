@@ -1266,6 +1266,7 @@ model User {
   knowledgeAuditEvents               KnowledgeAuditEvent[]                  @relation("KnowledgeAuditActor")
   submittedKnowledgeImprovements     KnowledgeImprovementReport[]           @relation("KnowledgeImprovementReporter")
   handledKnowledgeImprovements       KnowledgeImprovementReport[]           @relation("KnowledgeImprovementHandler")
+  createdRequestAssignmentHandoffs   RequestAssignmentHandoff[]             @relation("RequestAssignmentHandoffCreator")
 
   @@index([status])
   @@index([accountType])
@@ -2914,9 +2915,12 @@ model AdviceDossierVersion {
   adviceDossier                              AdviceDossier               @relation(fields: [adviceDossierId], references: [id], onDelete: Restrict)
   sourcePublicIntakeDraft                    PublicIntakeDraft?          @relation(fields: [sourcePublicIntakeDraftId], references: [id], onDelete: Restrict)
   intakeHandoff                              AdviceDossierIntakeHandoff?
+  requests                                   Request[]                   @relation("RequestAdviceDossierVersion")
+  assignmentHandoffs                         RequestAssignmentHandoff[]
 
   @@unique([adviceDossierId, versionNumber])
   @@unique([sourcePublicIntakeDraftId, sourceDraftVersion])
+  @@unique([id, adviceDossierId])
   @@index([adviceDossierId, createdAt])
   @@index([sourcePublicIntakeDraftId])
 }
@@ -3005,11 +3009,18 @@ model Request {
   reliabilityEvents          MarketplaceReliabilityEvent[]
   marketplaceContactRequests MarketplaceContactRequest[]
   creditTransactions         CreditTransaction[]
+  adviceDossierVersionId     String?                       @db.Uuid
+  adviceDossierVersion       AdviceDossierVersion?         @relation("RequestAdviceDossierVersion", fields: [adviceDossierVersionId, adviceDossierId], references: [id, adviceDossierId], onDelete: Restrict, onUpdate: Restrict)
+  assignment                 Assignment?                   @relation("CanonicalRequestAssignment")
+  assignmentHandoff          RequestAssignmentHandoff?     @relation("RequestAssignmentHandoffRequest")
 
+  @@unique([id, organizationId])
+  @@unique([id, adviceDossierVersionId])
   @@index([tenantId, createdAt])
   @@index([organizationId, createdAt])
   @@index([status, publishedAt])
   @@index([createdAt])
+  @@index([adviceDossierVersionId, adviceDossierId])
 }
 
 model RequestEligibleProvider {
@@ -3414,8 +3425,13 @@ model Assignment {
   awardDecision              AwardDecision?
   marketplaceMessageChannels MarketplaceMessageChannel[]
   locationItems              AssignmentLocationItem[]
+  requestId                  String?                       @unique @db.Uuid
+  request                    Request?                      @relation("CanonicalRequestAssignment", fields: [requestId, clientOrganizationId], references: [id, organizationId], onDelete: Restrict, onUpdate: Restrict)
+  requestHandoff             RequestAssignmentHandoff?     @relation("RequestAssignmentHandoffAssignment")
 
   @@unique([id, publishedVersion])
+  @@unique([id, requestId])
+  @@unique([requestId, clientOrganizationId])
   @@index([clientOrganizationId])
   @@index([createdByUserId])
   @@index([publishedByUserId])
@@ -5449,4 +5465,26 @@ model KnowledgeAuditEvent {
   @@index([entityType, entityId, createdAt])
   @@index([eventType, createdAt])
   @@index([actorUserId, createdAt])
+}
+
+model RequestAssignmentHandoff {
+  id                     String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  requestId              String               @unique @db.Uuid
+  assignmentId           String               @unique @db.Uuid
+  adviceDossierVersionId String               @db.Uuid
+  createdByUserId        String               @db.Uuid
+  snapshot               Json                 @db.JsonB
+  snapshotChecksum       String               @db.Char(64)
+  schemaVersion          Int
+  idempotencyKey         String               @unique @db.VarChar(180)
+  createdAt              DateTime             @default(now()) @db.Timestamptz(3)
+  request                Request              @relation("RequestAssignmentHandoffRequest", fields: [requestId, adviceDossierVersionId], references: [id, adviceDossierVersionId], onDelete: Restrict, onUpdate: Restrict)
+  assignment             Assignment           @relation("RequestAssignmentHandoffAssignment", fields: [assignmentId, requestId], references: [id, requestId], onDelete: Restrict, onUpdate: Restrict)
+  createdByUser          User                 @relation("RequestAssignmentHandoffCreator", fields: [createdByUserId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  adviceDossierVersion   AdviceDossierVersion @relation(fields: [adviceDossierVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([requestId, adviceDossierVersionId])
+  @@unique([assignmentId, requestId])
+  @@index([adviceDossierVersionId])
+  @@index([createdByUserId, createdAt])
 }

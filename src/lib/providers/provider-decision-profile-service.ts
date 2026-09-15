@@ -1,3 +1,4 @@
+import { externalAssignmentWhere, externalAssignmentId } from '@/lib/assignments/assignment-identity'
 import { z } from 'zod'
 import type { Prisma } from '@/generated/prisma/client'
 import { getPrisma } from '@/lib/prisma'
@@ -326,7 +327,7 @@ export async function getAssignmentProviderDecisionProfile(userId: string, assig
   return getPrisma().$transaction(async (transaction) => {
     const assignment = await transaction.assignment.findFirst({
       where: {
-        id: assignmentId,
+        ...externalAssignmentWhere(assignmentId),
         clientOrganization: {
           status: 'ACTIVE',
           memberships: { some: { userId, status: 'ACTIVE', user: { status: 'ACTIVE' } } },
@@ -335,11 +336,11 @@ export async function getAssignmentProviderDecisionProfile(userId: string, assig
           some: { providerProfileId, status: { not: 'REMOVED' } },
         },
       },
-      select: { id: true, title: true, status: true, clientOrganizationId: true },
+      select: { id: true, requestId: true, title: true, status: true, clientOrganizationId: true },
     })
     if (!assignment) throw new ProviderServiceError('ACCESS_DENIED')
     const profile = await loadProfile(transaction, providerProfileId)
     if (!profile) throw new ProviderServiceError('ACCESS_DENIED')
-    return { assignment, profile: presentProfile(profile) }
+    return { assignment: { ...assignment, id: externalAssignmentId(assignment) }, profile: presentProfile(profile) }
   })
 }

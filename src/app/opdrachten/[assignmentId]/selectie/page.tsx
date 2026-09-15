@@ -33,7 +33,7 @@ export default async function AssignmentSelectionPage({ params }: { params: Prom
               Afgerond op {latestRun.completedAt?.toLocaleString('nl-NL')} · kwaliteitsinschatting: {presentMatchConfidence(latestRun.confidenceLevel)} · {latestRun.candidates.length} geselecteerd.
             </p>
           </>
-        ) : result.assignment.status === 'OPEN' ? (
+        ) : result.assignment.matchingBlockReason ? (<p>Uw opdracht is gepubliceerd. Professionals kunnen pas worden geselecteerd nadat u expliciet een primaire deskundigheid heeft gekozen.</p>) : result.assignment.status === 'OPEN' ? (
           <form action={startMarketplaceMatchingAction}>
             <input type="hidden" name="assignmentId" value={result.assignment.id} />
             <input type="hidden" name="expectedAssignmentVersion" value={result.assignment.version} />

@@ -1,3 +1,6 @@
+import { z } from 'zod'
+import { evaluateRequestedExpertises } from './matching-expertise'
+import { externalAssignmentWhere } from '@/lib/assignments/assignment-identity'
 import type { Prisma } from '@/generated/prisma/client'
 import { getPrisma } from '@/lib/prisma'
 import { hashProviderJson, type CanonicalValue } from '@/lib/providers/provider-canonical-json'
@@ -71,16 +74,19 @@ export async function runMarketplaceMatching(input: {
 }) {
   const now = input.now ?? new Date()
   return getPrisma().$transaction(async (transaction) => {
+    const membership = await requireClientMarketplaceManager(transaction, input.actorUserId, input.organizationId)
     const existing = await transaction.marketplaceMatchRun.findUnique({
       where: { idempotencyKey: input.idempotencyKey },
       include: { candidates: { orderBy: { rank: 'asc' } }, invitations: true },
     })
-    if (existing) return existing
-
-    const membership = await requireClientMarketplaceManager(transaction, input.actorUserId, input.organizationId)
+    if (existing) {
+      const source = await transaction.assignment.findFirst({ where: { ...externalAssignmentWhere(input.assignmentId), clientOrganizationId: input.organizationId, id: existing.assignmentId } })
+      if (!source) throw new MarketplaceServiceError('ACCESS_DENIED')
+      return existing
+    }
     const assignment = await transaction.assignment.findFirst({
       where: {
-        id: input.assignmentId,
+        ...externalAssignmentWhere(input.assignmentId),
         clientOrganizationId: input.organizationId,
         status: 'OPEN',
         version: input.expectedAssignmentVersion,
@@ -92,6 +98,10 @@ export async function runMarketplaceMatching(input: {
         version: true,
         title: true,
         description: true,
+        requestId: true,
+        requestHandoff: { select: { snapshot: true } },
+        request: { select: { primaryExpertiseCodes: true, additionalExpertiseCodes: true, requestedStart: true } },
+        specialisms: { select: { isRequired: true, specialism: { select: { id: true, name: true, providerSpecialismTaxonomyMap: { select: { term: { select: { code: true } } } } } } } },
         primarySpecialismId: true,
         sectorId: true,
         allowsRemoteWork: true,
@@ -118,6 +128,13 @@ export async function runMarketplaceMatching(input: {
       select: { term: { select: { code: true } } },
     })
     if (!specialismMapping) throw new MarketplaceServiceError('VALIDATION_ERROR')
+    const handoffReferences = assignment.requestId ? z.object({ references: z.array(z.object({
+      specialismId: z.string().uuid(), capabilityCode: z.string().min(1), tier: z.enum(['PRIMARY','ADDITIONAL']),
+    })).min(1).max(3) }).parse(assignment.requestHandoff?.snapshot).references : null
+    const primaryCode = handoffReferences?.find(r => r.tier === 'PRIMARY' && r.specialismId === assignment.primarySpecialismId)?.capabilityCode ?? specialismMapping.term.code
+    if (handoffReferences && !handoffReferences.some(r => r.tier === 'PRIMARY' && r.specialismId === assignment.primarySpecialismId)) throw new MarketplaceServiceError('INVALID_STATE')
+    const additionalCodes = handoffReferences?.filter(r => r.tier === 'ADDITIONAL').map(r => r.capabilityCode) ?? []
+
     const sectorMapping = assignment.sectorId
       ? await transaction.providerSectorTaxonomyMap.findUnique({ where: { sectorId: assignment.sectorId }, select: { term: { select: { code: true } } } })
       : null
@@ -126,11 +143,12 @@ export async function runMarketplaceMatching(input: {
       assignmentId: assignment.id,
       assignmentVersion: assignment.version,
       publishedVersion: assignment.publishedVersion,
-      capabilityCode: specialismMapping.term.code,
+      capabilityCode: primaryCode,
       sectorCode: sectorMapping?.term.code ?? null,
-      regionCode: normalizeRegion(assignment.location?.province),
+      regionCode: assignment.requestId ? normalizeRegion(assignment.locationProvince) : normalizeRegion(assignment.location?.province),
       allowsRemoteWork: assignment.allowsRemoteWork,
       responseDeadline: assignment.responseDeadline.toISOString(),
+      ...(assignment.request ? { primaryExpertise: assignment.request.primaryExpertiseCodes, additionalExpertises: assignment.request.additionalExpertiseCodes, requestedStart: assignment.request.requestedStart, expertiseSelectionSource: 'USER_SELECTED', specialisms: assignment.specialisms } : {}),
       maxSelections: assignment.maxSelections,
     }
     const inputChecksum = hashProviderJson(asCanonical(assignmentSnapshot)).sha256
@@ -178,13 +196,7 @@ export async function runMarketplaceMatching(input: {
         projection,
         providerProfileId: projection.providerProfileId,
         provider,
-        result: evaluateMatchingCandidate({
-          assignmentId: assignment.id,
-          capabilityCode: specialismMapping.term.code,
-          sectorCode: sectorMapping?.term.code ?? null,
-          regionCode: normalizeRegion(assignment.location?.province),
-          allowsRemoteWork: assignment.allowsRemoteWork,
-        }, provider),
+        result: assignment.requestId ? evaluateRequestedExpertises({ assignmentId: assignment.id, capabilityCode: primaryCode, sectorCode: sectorMapping?.term.code ?? null, regionCode: normalizeRegion(assignment.locationProvince), allowsRemoteWork: assignment.allowsRemoteWork }, additionalCodes, provider) : evaluateMatchingCandidate({ assignmentId: assignment.id, capabilityCode: primaryCode, sectorCode: sectorMapping?.term.code ?? null, regionCode: normalizeRegion(assignment.location?.province), allowsRemoteWork: assignment.allowsRemoteWork }, provider),
       })
     }
     const ranked = rankMatchingCandidates(evaluated)

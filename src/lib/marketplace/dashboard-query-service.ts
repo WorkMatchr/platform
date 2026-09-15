@@ -1,3 +1,4 @@
+import { externalAssignmentWhere, externalAssignmentId, ownedAssignmentWhere } from '@/lib/assignments/assignment-identity'
 import { getPrisma } from '@/lib/prisma'
 import { hasValidPlatformActorFoundation } from '@/lib/account-architecture/platform-actor-policy'
 import { deriveCreditBalance } from '@/lib/credits/credit-ledger-contract'
@@ -77,7 +78,7 @@ export async function getMarketplaceDashboard(userId: string, organizationId: st
   }
 
   const ownAssignmentScope = membership.role === 'MEMBER'
-    ? { intake: { createdByUserId: userId } }
+    ? ownedAssignmentWhere(userId)
     : {}
   const adviceDossierScope = membership.role === 'MEMBER'
     ? { ownerUserId: userId }
@@ -103,6 +104,7 @@ export async function getMarketplaceDashboard(userId: string, organizationId: st
       take: 20,
       select: {
         id: true,
+        requestId: true,
         title: true,
         status: true,
         responseDeadline: true,
@@ -160,7 +162,7 @@ export async function getMarketplaceDashboard(userId: string, organizationId: st
   return {
     kind: 'CLIENT' as const,
     membership,
-    assignments,
+    assignments: assignments.map(a => ({ ...a, id: externalAssignmentId(a) })),
     notifications,
     summary: {
       actionRequired: assignmentsRequiringAction,
@@ -190,10 +192,11 @@ export async function getProviderInvitationDetail(userId: string, organizationId
       deadlineAt: true,
       participation: { select: { id: true, status: true, version: true, creditReservation: { select: { id: true } }, quote: { select: { id: true, status: true, version: true } }, messageChannel: { select: { id: true } } } },
       assignment: { select: {
-        id: true, title: true, description: true, employeeCount: true, desiredStartDate: true, responseDeadline: true,
+        id: true, requestId: true, title: true, description: true, employeeCount: true, desiredStartDate: true, responseDeadline: true,
         locationCity: true, locationProvince: true, locationRegion: true, locationCount: true, allowsRemoteWork: true, maxSelections: true,
         locationName: true, locationAddressLine: true, locationPostalCode: true, locationCountryCode: true, locationDescription: true,
         clientOrganization: { select: { name: true, generalEmail: true, phone: true } },
+        specialisms: { select: { isRequired: true, specialism: { select: { name: true } } } },
         primarySpecialism: { select: { name: true } }, sector: { select: { name: true } },
       } },
     },
@@ -214,7 +217,7 @@ export async function getProviderInvitationDetail(userId: string, organizationId
       deadlineAt: invitation.deadlineAt,
       participation: invitation.participation,
       preview,
-      fullAssignment: hasFullAccess ? invitation.assignment : null,
+      fullAssignment: hasFullAccess ? { ...invitation.assignment, id: externalAssignmentId(invitation.assignment) } : null,
     },
   }
 }
@@ -226,9 +229,11 @@ export async function getClientQuotes(userId: string, organizationId: string, as
   })
   if (!membership) throw new MarketplaceServiceError('ACCESS_DENIED')
   const assignment = await getPrisma().assignment.findFirst({
-    where: { id: assignmentId, clientOrganizationId: organizationId },
+    where: { ...externalAssignmentWhere(assignmentId), clientOrganizationId: organizationId },
     select: {
       id: true,
+      requestId: true,
+      primarySpecialismId: true,
       title: true,
       status: true,
       version: true,
@@ -250,7 +255,7 @@ export async function getClientQuotes(userId: string, organizationId: string, as
     },
   })
   if (!assignment) throw new MarketplaceServiceError('NOT_FOUND')
-  return { membership, assignment }
+  return { membership, assignment: { ...assignment, id: externalAssignmentId(assignment), matchingBlockReason: assignment.requestId && !assignment.primarySpecialismId ? 'PRIMARY_EXPERTISE_REQUIRED' : null } }
 }
 
 export async function getProviderParticipationForQuote(userId: string, organizationId: string, participationId: string) {
@@ -300,9 +305,11 @@ export async function getAssignmentSelectionView(userId: string, organizationId:
   })
   if (!membership) throw new MarketplaceServiceError('ACCESS_DENIED')
   const assignment = await getPrisma().assignment.findFirst({
-    where: { id: assignmentId, clientOrganizationId: organizationId },
+    where: { ...externalAssignmentWhere(assignmentId), clientOrganizationId: organizationId },
     select: {
       id: true,
+      requestId: true,
+      primarySpecialismId: true,
       title: true,
       status: true,
       version: true,
@@ -317,5 +324,5 @@ export async function getAssignmentSelectionView(userId: string, organizationId:
     },
   })
   if (!assignment) throw new MarketplaceServiceError('NOT_FOUND')
-  return { membership, assignment }
+  return { membership, assignment: { ...assignment, id: externalAssignmentId(assignment), matchingBlockReason: assignment.requestId && !assignment.primarySpecialismId ? 'PRIMARY_EXPERTISE_REQUIRED' : null } }
 }

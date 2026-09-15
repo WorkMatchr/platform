@@ -111,7 +111,7 @@ export async function submitQuote(input: {
     const participation = await transaction.providerParticipation.findUniqueOrThrow({ where: { id: quote.participationId } })
     const reservation = await transaction.creditReservation.findUnique({ where: { participationId: participation.id } })
     const invitation = await transaction.providerInvitation.findUniqueOrThrow({ where: { id: participation.invitationId }, select: { deadlineAt: true } })
-    const assignment = await transaction.assignment.findUniqueOrThrow({ where: { id: participation.assignmentId }, select: { clientOrganizationId: true, status: true } })
+    const assignment = await transaction.assignment.findUniqueOrThrow({ where: { id: participation.assignmentId }, select: { clientOrganizationId: true, status: true, requestId: true } })
     const purchase = reservation ? null : await transaction.creditTransaction.findFirst({
       where: { referenceType: 'ProviderParticipation', referenceId: participation.id, type: 'PARTICIPATION_PAYMENT' },
       select: { id: true },
@@ -159,7 +159,7 @@ export async function submitQuote(input: {
         type: 'QUOTE_SUBMITTED',
         title: 'Nieuwe offerte ontvangen',
         body: 'Een deelnemende aanbieder heeft een offerte ingediend.',
-        targetRoute: `/opdrachten/${quote.assignmentId}/offertes`,
+        targetRoute: `/opdrachten/${assignment.requestId ?? quote.assignmentId}/offertes`,
       })
     }
     await writeMarketplaceAudit(transaction, {

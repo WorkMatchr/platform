@@ -2,6 +2,8 @@ export const ASSIGNMENT_PURCHASE_PRICE_CREDITS = 25
 
 export type AssignmentPreviewSource = Readonly<{
   id: string
+  requestId?: string | null
+  specialisms?: readonly { isRequired: boolean; specialism: { name: string } }[]
   title: string
   primarySpecialism?: { name: string } | null
   sector?: { name: string } | null
@@ -21,6 +23,7 @@ export type AssignmentPreview = Readonly<{
   kind: string
   safeSummary: string
   expertise: string | null
+  additionalExpertises?: readonly string[]
   sector: string | null
   region: string | null
   desiredStartDate: Date | null
@@ -35,7 +38,8 @@ export type AssignmentPreview = Readonly<{
 /** Server-side allowlist: the full description and client/contact/location details never enter this projection. */
 export function toAssignmentPreview(source: AssignmentPreviewSource): AssignmentPreview {
   return Object.freeze({
-    assignmentId: source.id,
+    assignmentId: source.requestId ?? source.id,
+    ...(source.requestId ? { additionalExpertises: (source.specialisms ?? []).filter(s => !s.isRequired).map(s => s.specialism.name) } : {}),
     kind: source.primarySpecialism?.name ?? 'Arbo-opdracht',
     safeSummary: source.title,
     expertise: source.primarySpecialism?.name ?? null,

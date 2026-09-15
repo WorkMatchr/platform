@@ -1,4 +1,5 @@
 import 'dotenv/config'
+import { expertiseSpecialismSlugs } from '../src/lib/requests/expertise-specialism-reference'
 import { createHash } from 'node:crypto'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '../src/generated/prisma/client'
@@ -50,6 +51,17 @@ const specialisms = [
   ['arbeids-en-organisatiedeskundige', 'Arbeids- en organisatiedeskundige', null],
   ['asbest', 'Asbestdeskundige', null],
   ['milieudeskundige', 'Milieudeskundige', null],
+  ['gevaarlijke-stoffen', 'Specialist gevaarlijke stoffen', null],
+  ['explosieveiligheid', 'ATEX- en explosieveiligheidsdeskundige', null],
+  ['incidentonderzoek', 'Incidentonderzoeker', null],
+  ['geluidsdeskundige', 'Geluidsdeskundige', null],
+  ['stralingsdeskundige', 'Stralingsdeskundige', null],
+  ['arbeidspsycholoog', 'Arbeidspsycholoog', null],
+  ['vertrouwenspersoon', 'Vertrouwenspersoon', null],
+  ['casemanager-verzuim', 'Casemanager verzuim', null],
+  ['preventiemedewerker', 'Preventiemedewerker', null],
+  ['bhv-deskundige', 'BHV-deskundige', null],
+  ['keuringsinstantie', 'Keuringsinstantie', null],
 ] as const
 
 const certifications = [
@@ -226,9 +238,33 @@ async function seedProviderQualificationReferences() {
 
   const specialismVersion = await seedProviderTaxonomy(
     'SPECIALISM',
-    specialisms.map(([slug, name]) => [slug, name]),
-    2,
+    Object.values(expertiseSpecialismSlugs).map(slug => {
+      const entry = specialisms.find(item => item[0] === slug)!
+      return [entry[0], entry[1]] as const
+    }),
+    3,
   )
+  // Preserve the pre-existing legacy catalogue for legacy provider claims.
+  // Only v3 is active; these historical terms never become extra Advice choices.
+  const taxonomyId = specialismVersion.taxonomyId
+  const legacyTerms = specialisms.slice(0, 17).map(([code, label]) => [code, label] as const)
+  const legacyVersion = await prisma.providerTaxonomyVersion.upsert({
+    where: { taxonomyId_version: { taxonomyId, version: 2 } },
+    update: {},
+    create: { taxonomyId, version: 2, status: 'RETIRED', publishedAt: new Date(), retiredAt: new Date(),
+      checksum: taxonomyChecksum(legacyTerms),
+      terms: { create: legacyTerms.map(([code, label], sortOrder) => ({ code, label, sortOrder })) },
+    },
+    include: { terms: true },
+  })
+  for (const term of legacyVersion.terms) {
+    if (Object.values(expertiseSpecialismSlugs).some(slug => slug === term.code)) continue
+    const specialism = await prisma.specialism.findUnique({ where: { slug: term.code } })
+    if (specialism) await prisma.providerSpecialismTaxonomyMap.upsert({
+      where: { specialismId: specialism.id }, update: {},
+      create: { termId: term.id, specialismId: specialism.id },
+    })
+  }
   const sectorVersion = await seedProviderTaxonomy('SECTOR', sectors.map(([slug, name]) => [slug, name]))
   const certificationVersion = await seedProviderTaxonomy('CERTIFICATION', certifications)
 

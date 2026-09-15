@@ -1,3 +1,4 @@
+import { externalAssignmentWhere } from './assignment-identity'
 import type { Prisma } from '@/generated/prisma/client'
 import { z } from 'zod'
 import { AssignmentServiceError } from './assignment-errors'
@@ -15,7 +16,7 @@ export async function requireAssignmentViewer(
   if (!z.uuid().safeParse(assignmentId).success) throw accessDenied()
   const assignment = await transaction.assignment.findFirst({
     where: {
-      id: assignmentId,
+      ...externalAssignmentWhere(assignmentId),
       clientOrganizationId: organizationId,
       clientOrganization: { memberships: { some: { userId } } },
     },
@@ -23,6 +24,7 @@ export async function requireAssignmentViewer(
       id: true,
       clientOrganizationId: true,
       intake: { select: { createdByUserId: true } },
+      request: { select: { adviceDossier: { select: { ownerUserId: true } } } },
       clientOrganization: {
         select: {
           status: true,
@@ -53,7 +55,7 @@ export async function requireAssignmentViewer(
       membershipStatus: membership.status,
       organizationStatus: assignment.clientOrganization.status,
       organizationType: assignment.clientOrganization.organizationType,
-      intakeCreatedByUserId: assignment.intake?.createdByUserId ?? null,
+      intakeCreatedByUserId: assignment.intake?.createdByUserId ?? assignment.request?.adviceDossier.ownerUserId ?? null,
     })
   ) {
     throw accessDenied()
@@ -70,10 +72,11 @@ export async function requireAssignmentManager(
 ) {
   if (!z.uuid().safeParse(assignmentId).success) throw accessDenied()
   const assignment = await transaction.assignment.findFirst({
-    where: { id: assignmentId, clientOrganizationId: organizationId },
+    where: { ...externalAssignmentWhere(assignmentId), clientOrganizationId: organizationId },
     select: {
       id: true,
       intakeId: true,
+      requestId: true,
       clientOrganizationId: true,
       createdByUserId: true,
       status: true,

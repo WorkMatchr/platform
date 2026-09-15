@@ -1,3 +1,4 @@
+import { handoffRequest } from './request-assignment-handoff'
 import { simpleAdviceSchema, simpleAdviceSummary, requestedExpertiseOptions, usesLocation } from './simple-advice-contract'
 import { z } from 'zod'
 import type {
@@ -417,6 +418,7 @@ export async function publishRequestAttempt(input: {
           },
         },
         select: {
+          id: true,
           simpleRequestSnapshot: true,
       versionNumber: true,
           subject: true,
@@ -469,6 +471,7 @@ export async function publishRequestAttempt(input: {
           tenantId: dossier.organizationId,
           organizationId: dossier.organizationId,
           adviceDossierId: dossier.id,
+          adviceDossierVersionId: simple ? version.id : null,
           status: 'PUBLISHED',
           title: simple?.requestTitle ?? requestTitle(version.subject),
           publicSummary: simple?.requestDescription ?? input.publication.publicSummary,
@@ -500,11 +503,11 @@ export async function publishRequestAttempt(input: {
           possibleExpertiseCodes: true,
         },
       })
-      const eligibleCount = await createRequestEligibilitySnapshot(
+      if (simple) await handoffRequest(transaction, { requestId: request.id, organizationId: dossier.organizationId, actorUserId: input.viewer.userId, sourceVersionId: version.id, at: input.at, mode: 'PUBLICATION' })
+      const eligibleCount = simple ? 0 : await createRequestEligibilitySnapshot(
         transaction,
         request,
         input.at,
-        simple ? { primaryExpertise: simple.primaryExpertise, additionalExpertises: simple.additionalExpertises, expertiseSelectionSource: simple.expertiseSelectionSource } : undefined,
       )
       await transaction.requestEvent.create({
         data: {
@@ -521,7 +524,7 @@ export async function publishRequestAttempt(input: {
           data: { status: 'CLOSED', requestId: request.id },
         })
       }
-      await transaction.requestEvent.create({
+      if (!simple) await transaction.requestEvent.create({
         data: {
           requestId: request.id,
           actorUserId: input.viewer.userId,
@@ -604,6 +607,7 @@ export async function listOwnRequests(viewer: AdviceDossierViewer) {
       title: true,
       status: true,
       publishedAt: true,
+      assignment: { select: { responseDeadline: true, status: true, primarySpecialismId: true } },
       _count: {
         select: {
           eligibleProviders: true,
@@ -627,6 +631,7 @@ export async function getOwnRequest(
       title: true,
       status: true,
       publishedAt: true,
+      assignment: { select: { responseDeadline: true, status: true, primarySpecialismId: true } },
       _count: {
         select: {
           eligibleProviders: true,
