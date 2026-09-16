@@ -452,3 +452,7 @@ Zie [Eenvoudige Advieswijzer → opdracht publiceren](simple-advice-request-flow
 ## Canonieke Simple Advice-opdrachtketen
 
 Zie [Request → Assignment-handoff](request-assignment-handoff.md) en [ADR-024](adr/ADR-024-canonieke-opdrachtketen-request-assignment.md). Request → RequestAssignmentHandoff → Assignment bewaart exact één immutable bronbinding; Request.id blijft extern. Migratie: `20260915090000_request_assignment_handoff`. Geen automatische productiebackfill.
+
+## Legacy Simple Advice-conceptrevisies
+
+Migratie `20260915180000_unify_legacy_simple_advice` voegt append-only `IntakeSimpleAdviceRevision` toe en vereist immutable handoff-provenance wanneer een ongepubliceerde legacy Assignment zijn Intake-FK naast de canonieke Request-binding behoudt. Geen backfill; gepubliceerde bronbindingen blijven immutable. Zie [mapping en validatie](legacy-intake-unification.md).

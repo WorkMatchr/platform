@@ -14,6 +14,7 @@ export class RequestHandoffError extends Error {
 }
 
 type HandoffInput = {
+  legacyIntakeId?: string
   requestId: string; organizationId: string; actorUserId: string
   sourceVersionId: string; at: Date; mode: 'PUBLICATION' | 'RECOVERY'
 }
@@ -43,7 +44,7 @@ export async function handoffRequest(transaction: Prisma.TransactionClient, inpu
     return request.assignmentHandoff
   }
   if (input.mode === 'RECOVERY' && (request.events.length !== 1 || request.events[0]!.occurredAt.getTime() !== request.publishedAt?.getTime())) throw new RequestHandoffError('NOT_ELIGIBLE')
-  if (request.assignment || request.status !== 'PUBLISHED' || !request.publishedAt || request.adviceDossier.sourceRoute !== 'SIMPLE_ADVICE') throw new RequestHandoffError('NOT_ELIGIBLE')
+  if (request.assignment || request.status !== 'PUBLISHED' || !request.publishedAt || (input.mode === 'RECOVERY' && request.adviceDossier.sourceRoute !== 'SIMPLE_ADVICE')) throw new RequestHandoffError('NOT_ELIGIBLE')
   if (Object.values(request._count).some(count => count !== 0)) throw new RequestHandoffError('NOT_ELIGIBLE')
   const version = await transaction.adviceDossierVersion.findFirst({ where: { id: input.sourceVersionId, adviceDossierId: request.adviceDossierId } })
   if (!version || (request.adviceDossierVersionId && request.adviceDossierVersionId !== version.id)) throw new RequestHandoffError('INTEGRITY_ERROR')
@@ -88,18 +89,36 @@ export async function handoffRequest(transaction: Prisma.TransactionClient, inpu
     locationRegion: province, locationDescription: null, locationCount: items.length || null,
     allowsRemoteWork: usesLocation(value, 'REMOTE'),
   }
-  const assignment = await transaction.assignment.create({ data: {
+  if (input.legacyIntakeId) {
+    const intake = await transaction.intake.findUnique({ where: { id: input.legacyIntakeId }, include: { adviceDossierHandoff: true } })
+    if (input.mode !== 'PUBLICATION' || !intake || intake.clientOrganizationId !== request.organizationId ||
+        (intake.adviceDossierHandoff?.adviceDossierId ?? intake.id) !== request.adviceDossierId) throw new RequestHandoffError('ACCESS_DENIED')
+  }
+  const legacy = input.legacyIntakeId ? await transaction.assignment.findUnique({ where: { intakeId: input.legacyIntakeId }, include: {
+    _count: { select: { marketplaceMatchRuns: true, marketplaceInvitations: true, marketplaceParticipations: true, marketplaceQuotes: true, providerSelections: true, marketplaceMessageChannels: true } },
+  } }) : null
+  if (legacy && (input.mode !== 'PUBLICATION' || legacy.clientOrganizationId !== request.organizationId || legacy.requestId || legacy.publishedAt || legacy.archivedAt || !['DRAFT', 'READY_FOR_REVIEW'].includes(legacy.status) || Object.values(legacy._count).some(n => n > 0))) throw new RequestHandoffError('NOT_ELIGIBLE')
+  const assignmentVersion = legacy ? legacy.version + 1 : 1
+  if (legacy) {
+    await transaction.assignmentSpecialism.deleteMany({ where: { assignmentId: legacy.id } })
+    await transaction.assignmentLocationItem.deleteMany({ where: { assignmentId: legacy.id } })
+  }
+  const assignmentData = {
     ...fields, requestId: request.id, clientOrganizationId: request.organizationId, createdByUserId: request.adviceDossier.ownerUserId,
-    status: 'READY_FOR_REVIEW', version: 1,
+    status: 'READY_FOR_REVIEW' as const, version: assignmentVersion,
     specialisms: { create: references.map(r => ({ specialismId: r.specialismId, isRequired: r.tier === 'PRIMARY' })) },
     locationItems: items.length ? { create: items } : undefined,
-  } })
-  await transaction.assignmentRevision.create({ data: { ...fields, assignmentId: assignment.id, version: 1,
+  }
+  const assignment = legacy
+    ? await transaction.assignment.update({ where: { id: legacy.id }, data: { ...assignmentData, createdByUserId: legacy.createdByUserId } })
+    : await transaction.assignment.create({ data: assignmentData })
+  await transaction.assignmentRevision.create({ data: { ...fields, assignmentId: assignment.id, version: assignmentVersion,
     changedByUserId: input.actorUserId, locationItems: items.length ? { create: items } : undefined } })
-  await transaction.assignment.update({ where: { id: assignment.id }, data: { status: 'OPEN', publishedAt: anchor, publishedVersion: 1, publishedByUserId: input.actorUserId } })
+  await transaction.assignment.update({ where: { id: assignment.id }, data: { status: 'OPEN', publishedAt: anchor, publishedVersion: assignmentVersion, publishedByUserId: input.actorUserId } })
   await transaction.assignmentStatusHistory.create({ data: { assignmentId: assignment.id, fromStatus: 'READY_FOR_REVIEW', toStatus: 'OPEN', changedByUserId: input.actorUserId, createdAt: anchor, reason: 'Canonieke overdracht van gepubliceerde opdracht.' } })
   if (!request.adviceDossierVersionId) await transaction.request.update({ where: { id: request.id }, data: { adviceDossierVersionId: version.id } })
   const snapshot = JSON.parse(JSON.stringify({ schemaVersion: 1, requestId: request.id, adviceDossierVersionId: version.id,
+    ...(input.legacyIntakeId ? { legacyIntakeId: input.legacyIntakeId, legacyAssignmentId: legacy?.id ?? null, legacyAssignmentVersion: legacy?.version ?? null } : {}),
     publicationTimestamp: request.publishedAt, handoffTimestamp: input.at, mode: input.mode,
     deadlinePolicy: RESPONSE_DEADLINE_POLICY, deadlineAnchor: anchor, responseDeadline: deadline,
     primaryExpertise: value.primaryExpertise, additionalExpertises: value.additionalExpertises,

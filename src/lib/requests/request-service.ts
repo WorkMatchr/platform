@@ -311,6 +311,7 @@ export function isPrismaConflict(error: unknown): boolean {
 }
 
 export async function publishRequestAttempt(input: {
+  legacyIntakeId?: string
   viewer: AdviceDossierViewer
   publication: RequestPublicationInput
   at: Date
@@ -503,7 +504,7 @@ export async function publishRequestAttempt(input: {
           possibleExpertiseCodes: true,
         },
       })
-      if (simple) await handoffRequest(transaction, { requestId: request.id, organizationId: dossier.organizationId, actorUserId: input.viewer.userId, sourceVersionId: version.id, at: input.at, mode: 'PUBLICATION' })
+      if (simple) await handoffRequest(transaction, { requestId: request.id, organizationId: dossier.organizationId, actorUserId: input.viewer.userId, sourceVersionId: version.id, at: input.at, mode: 'PUBLICATION', legacyIntakeId: input.legacyIntakeId })
       const eligibleCount = simple ? 0 : await createRequestEligibilitySnapshot(
         transaction,
         request,

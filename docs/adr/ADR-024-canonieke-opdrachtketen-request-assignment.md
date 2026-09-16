@@ -347,3 +347,7 @@ De eerstvolgende technische stap is een afzonderlijke, controleerbare impactanal
 9. de legacyroutering en criteria voor het stoppen van nieuwe RequestInterest- en RequestOfferSlot-writes.
 
 Pas na expliciete acceptatie van die impactanalyse mag de additieve Prisma-migratie worden gemaakt.
+
+## Legacy intake-unificatie — 15 september 2026
+
+De expliciete opdracht om bestaande bewerkbare concepten in de gedeelde Simple Advice Flow te behouden gebruikt dezelfde Request-keten. Een gekoppeld AdviceDossier behoudt ID/sourceRoute en oude versies. Een bestaande ongepubliceerde Assignment wordt met dezelfde ID hergebruikt; zijn immutable Intake-FK blijft uitsluitend provenance naast de canonieke Request-binding. De vervangende deferred bronconstraint vereist een overeenkomende immutable handoff. Er is geen massaconversie en gepubliceerde historie wordt niet gewijzigd. Zie [mapping, migratie en validatie](../legacy-intake-unification.md).

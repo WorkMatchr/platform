@@ -40,11 +40,10 @@ describe('intake-interfacearchitectuur', () => {
     expect(content).toContain("querySelector<HTMLElement>('[aria-invalid=\"true\"], [data-invalid=\"true\"]')?.focus()")
   })
 
-  it('toont bij een lege of niet-zichtbare vraagset een herstelbare categoriefout', async () => {
+  it('opent iedere historische categorie met hetzelfde bestaande concept in Simple Advice', async () => {
     const content = await readFile('src/app/hulpvragen/[intakeId]/[category]/page.tsx', 'utf8')
-    expect(content).toContain('De vragen voor deze categorie konden niet worden geladen.')
-    expect(content).toContain('Terug naar categoriekeuze')
-    expect(content).toContain('visibleQuestions.length === 0')
+    expect(content).toContain('LegacySimpleAdvicePage')
+    expect(content).not.toContain('IntakeStepForm')
   })
 
   it('behoudt de bewerkcontext zodat opslaan terugkeert naar het controleoverzicht', async () => {
@@ -53,7 +52,7 @@ describe('intake-interfacearchitectuur', () => {
       readFile('src/components/intakes/intake-step-form.tsx', 'utf8'),
       readFile('src/app/hulpvragen/actions.ts', 'utf8'),
     ])
-    expect(page).toContain("query.wijzig === '1'")
+    expect(page).toContain('intakeId={intakeId}')
     expect(form).toContain('name="returnToReview"')
     expect(actions).toContain('/controle?opgeslagen=1')
   })

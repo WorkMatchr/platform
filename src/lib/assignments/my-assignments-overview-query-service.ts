@@ -32,7 +32,7 @@ export async function getMyAssignmentsOverview(
   return {
     // A converted intake is represented by its Assignment from this point on.
     // Omitting it here prevents the same customer assignment appearing twice.
-    intakes: intakeResult.items.filter((intake) => intake.status !== 'CONVERTED'),
+    intakes: intakeResult.items.filter((intake) => intake.status !== 'CONVERTED' || intake.hasUnpublishedAssignment),
     assignments: [...activeAssignments.items, ...completedAssignments.items, ...cancelledAssignments.items],
     viewerRole: intakeResult.viewerRole,
   }

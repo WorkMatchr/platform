@@ -168,3 +168,7 @@ Zie [Eenvoudige Advieswijzer → opdracht publiceren](simple-advice-request-flow
 ## Canonieke Simple Advice-opdrachtketen
 
 Zie [Request → Assignment-handoff](request-assignment-handoff.md) en [ADR-024](adr/ADR-024-canonieke-opdrachtketen-request-assignment.md). Request → RequestAssignmentHandoff → Assignment bewaart exact één immutable bronbinding; Request.id blijft extern. Migratie: `20260915090000_request_assignment_handoff`. Geen automatische productiebackfill.
+
+## Legacy intake-unificatie
+
+Zie [legacy intake naar gedeelde Simple Advice Flow](legacy-intake-unification.md) voor de compatibele routes, prefill, migratie en acceptatiestatus.

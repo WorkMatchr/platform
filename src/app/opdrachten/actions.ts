@@ -4,10 +4,11 @@ import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { AssignmentServiceError } from '@/lib/assignments/assignment-errors'
-import { publishIntakeAsAssignment } from '@/lib/assignments/intake-assignment-publication-service'
+import { getIntakeDetail } from '@/lib/intakes/intake-query-service'
+import { getAssignmentDetail } from '@/lib/assignments/assignment-query-service'
 import { requireOrganizationMembership } from '@/lib/organizations/organization-authorization'
 import { archiveUnpublishedAssignment, cancelAssignment, markAssignmentReadyForReview, reopenAssignment, updateAssignment } from '@/lib/assignments/assignment-service'
-import { publishAssignment, withdrawPublishedAssignment } from '@/lib/assignments/assignment-publication-service'
+import { withdrawPublishedAssignment } from '@/lib/assignments/assignment-publication-service'
 import { assignmentEditSchema, assignmentReasonTransitionSchema, assignmentTransitionSchema } from '@/lib/assignments/assignment-validation'
 import type { IntakeAssignmentReadinessIssue } from '@/lib/assignments/intake-assignment-readiness'
 import { BASE_SELECTIONS, MAX_SELECTIONS } from '@/lib/marketplace/assignment-quote-slots'
@@ -36,36 +37,6 @@ const withdrawActionSchema = assignmentReasonTransitionSchema.extend({
   confirmed: z.literal('on', { error: 'Bevestig dat u de publicatie wilt intrekken.' }),
 })
 
-function safeIntakePublicationState(error: AssignmentServiceError): PublishIntakeActionState {
-  const errors = error.issues.reduce<Record<string, string[]>>((result, issue) => {
-    const key = issue.questionKey ?? issue.questionId ?? 'assignment'
-    result[key] = [...(result[key] ?? []), issue.message]
-    return result
-  }, {})
-
-  switch (error.code) {
-    case 'CONFLICT':
-      return { message: 'Deze opdracht is ondertussen gewijzigd. Controleer de actuele gegevens voordat u opnieuw publiceert.' }
-    case 'INVALID_STATUS':
-      return { message: 'Controleer de opdracht voordat u deze publiceert.' }
-    case 'VALIDATION_ERROR':
-      return {
-        message: error.readinessIssues.length > 0
-          ? 'Uw opdracht kan nog niet worden gepubliceerd. Vul eerst de ontbrekende gegevens aan.'
-          : 'De opdracht is nog niet volledig. Controleer de ontbrekende gegevens.',
-        errors: {
-          ...error.fieldErrors,
-          ...errors,
-        },
-        ...(error.readinessIssues.length > 0 ? { readinessIssues: error.readinessIssues } : {}),
-      }
-    case 'ACCESS_DENIED':
-      return { message: 'U mag deze opdracht niet publiceren.' }
-    case 'INTEGRITY_ERROR':
-      return { message: 'Publiceren is nu niet gelukt. Uw gegevens zijn bewaard. Probeer het later opnieuw.' }
-  }
-}
-
 export async function publishIntakeAction(
   _state: PublishIntakeActionState,
   formData: FormData,
@@ -84,27 +55,9 @@ export async function publishIntakeAction(
   }
 
   const { user, activeMembership } = await requireOrganizationMembership(undefined, '/hulpvragen')
-  const organizationId = activeMembership.organization.id
-
-  let assignment
-  try {
-    assignment = await publishIntakeAsAssignment(
-      user.id,
-      organizationId,
-      parsed.data.intakeId,
-      {
-        expectedIntakeVersion: parsed.data.expectedIntakeVersion,
-      },
-    )
-  } catch (error) {
-    if (error instanceof AssignmentServiceError) return safeIntakePublicationState(error)
-    throw error
-  }
-
-  revalidatePath('/hulpvragen')
-  revalidatePath(`/hulpvragen/${parsed.data.intakeId}/controle`)
-  revalidatePath('/opdrachten')
-  redirect(`/opdrachten/${assignment.id}?status=gepubliceerd`)
+  await getIntakeDetail(user.id, parsed.data.intakeId)
+  if (activeMembership.organization.organizationType !== 'CLIENT') return { message: 'U mag deze opdracht niet publiceren.' }
+  redirect(`/hulpvragen/${parsed.data.intakeId}/hulpvraag`)
 }
 
 function assignmentValues(formData: FormData) {
@@ -254,18 +207,11 @@ export async function publishAssignmentAction(
   }
 
   const context = await activeAssignmentContext(`/opdrachten/${parsed.data.assignmentId}/publiceren`)
-  try {
-    await publishAssignment(context.userId, context.organizationId, {
-      assignmentId: parsed.data.assignmentId,
-      expectedAssignmentVersion: parsed.data.expectedAssignmentVersion,
-    })
-  } catch (error) {
-    return safeAssignmentState(error, values)
-  }
-
-  revalidatePath('/opdrachten')
-  revalidatePath(`/opdrachten/${parsed.data.assignmentId}`)
-  redirect(`/opdrachten/${parsed.data.assignmentId}?status=gepubliceerd`)
+  const assignment = await getAssignmentDetail(context.userId, context.organizationId, parsed.data.assignmentId)
+  if (!assignment.canManage) return { message: 'U mag deze opdracht niet publiceren.' }
+  if (assignment.publishedAt) redirect(`/opdrachten/${assignment.id}`)
+  if (assignment.intakeId) redirect(`/hulpvragen/${assignment.intakeId}/hulpvraag`)
+  return { message: 'Deze opdracht kan hier niet worden gepubliceerd. Uw bestaande gegevens blijven bewaard.' }
 }
 
 export async function withdrawPublishedAssignmentAction(

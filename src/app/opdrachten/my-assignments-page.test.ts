@@ -11,7 +11,8 @@ describe('Mijn opdrachten-pagina', () => {
 
     expect(page).toContain('Mijn opdrachten')
     expect(page).toContain('getMyAssignmentsOverview')
-    expect(page).toContain('IntakeStartForm')
+    expect(page).toContain('href="/advieswijzer"')
+    expect(page).not.toContain('IntakeStartForm')
     expect(page).toContain('lg:grid-cols-[minmax(0,1.85fr)_minmax(20rem,1fr)]')
     expect(page).toContain('order-1 lg:order-2')
     expect(page).toContain('order-2 lg:order-1')
@@ -20,11 +21,9 @@ describe('Mijn opdrachten-pagina', () => {
     expect(overview).toContain('Beëindigd')
   })
 
-  it('houdt de nieuwe-opdrachtflow bij de bestaande server action', () => {
+  it('start de gedeelde Simple Advice Flow zonder legacyvragen', () => {
     const page = read('src/app/opdrachten/page.tsx')
-
-    expect(page).toContain('action={createIntakeAction}')
-    expect(page).toContain('label="Waar heeft u ondersteuning bij nodig?"')
-    expect(page).toContain('organizationId={organization.id}')
+    expect(page).toContain('href="/advieswijzer"')
+    expect(page).not.toContain('createIntakeAction')
   })
 })

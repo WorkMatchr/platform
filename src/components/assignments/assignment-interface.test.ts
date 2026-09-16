@@ -30,9 +30,8 @@ describe('opdrachtinterfacearchitectuur', () => {
       readFile('src/components/assignments/assignment-publication-actions.tsx', 'utf8'),
       readFile('src/components/assignments/assignment-detail.tsx', 'utf8'),
     ])
-    expect(page).toContain('Publicatie controleren')
-    expect(page).toContain('De opdracht wordt nog niet aan aanbieders getoond.')
-    expect(page).toContain('Matching, credits en betalingen starten niet.')
+    expect(page).toContain('LegacySimpleAdvicePage')
+    expect(page).not.toContain('<AssignmentPublishForm')
     expect(form).toContain('Opdracht publiceren')
     expect(form).toContain('Publicatie intrekken')
     expect(form).toContain('loading={pending}')
@@ -69,8 +68,9 @@ describe('opdrachtinterfacearchitectuur', () => {
     expect(review).toContain('?wijzig=1')
     expect(review).not.toContain('Conceptopdracht')
     expect(review).not.toContain('Concept bewerken')
-    expect(actions).toContain('publishIntakeAsAssignment')
-    expect(actions).toContain('?status=gepubliceerd')
+    expect(actions).not.toContain('publishIntakeAsAssignment')
+    expect(controlPage).toContain('LegacySimpleAdvicePage')
+    expect(actions).toContain('/hulpvraag')
     expect(review).not.toContain('Intake gereedmelden')
     expect(review).not.toContain('Gereed voor controle')
   })
@@ -113,7 +113,8 @@ describe('opdrachtinterfacearchitectuur', () => {
 
   it('laat een concept direct via de afzonderlijke bewuste publicatiestap publiceren', async () => {
     const page = await readFile('src/app/opdrachten/[assignmentId]/publiceren/page.tsx', 'utf8')
-    expect(page).toContain("assignment.status !== 'DRAFT' && assignment.status !== 'READY_FOR_REVIEW'")
-    expect(page).toContain('Na publicatie kan WorkMatchr passende professionals selecteren.')
+    expect(page).toContain("['DRAFT', 'READY_FOR_REVIEW'].includes(assignment.status)")
+    expect(page).toContain('!assignment.publishedAt && assignment.intakeId')
+    expect(page).toContain('LegacySimpleAdvicePage intakeId={assignment.intakeId}')
   })
 })

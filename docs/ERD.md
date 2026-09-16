@@ -729,3 +729,7 @@ Zie [Eenvoudige Advieswijzer → opdracht publiceren](simple-advice-request-flow
 ## Canonieke Simple Advice-opdrachtketen
 
 Zie [Request → Assignment-handoff](request-assignment-handoff.md) en [ADR-024](adr/ADR-024-canonieke-opdrachtketen-request-assignment.md). Request → RequestAssignmentHandoff → Assignment bewaart exact één immutable bronbinding; Request.id blijft extern. Migratie: `20260915090000_request_assignment_handoff`. Geen automatische productiebackfill.
+
+## Legacy conceptstate bij gedeelde Simple Advice
+
+`Intake 1 — N IntakeSimpleAdviceRevision N — 1 User (actor)`. Bij gecontroleerd hergebruik van een ongepubliceerde Assignment blijven zowel Intake-provenance als canonieke Request-FK aanwezig; de deferred constraint vereist bijpassende immutable RequestAssignmentHandoff-provenance. Zie [details](legacy-intake-unification.md).

@@ -40,4 +40,10 @@ describe('getMyAssignmentsOverview', () => {
     expect(result.intakes.map((item) => item.id)).toEqual(['draft'])
     expect(result.assignments.map((item) => item.id)).toEqual(['open', 'closed', 'cancelled'])
   })
+  it('houdt een nog ongepubliceerde legacy Assignment bereikbaar als concept', async () => {
+    mocks.listIntakesForOrganization.mockResolvedValue({ viewerRole: 'OWNER', items: [{ id: 'pending', status: 'CONVERTED', hasUnpublishedAssignment: true }, { id: 'published', status: 'CONVERTED', hasUnpublishedAssignment: false }] })
+    const result = await getMyAssignmentsOverview('owner', 'organization')
+    expect(result.intakes.map(item => item.id)).toEqual(['pending'])
+  })
+
 })

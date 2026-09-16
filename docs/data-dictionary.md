@@ -230,3 +230,7 @@ Zie [Eenvoudige Advieswijzer → opdracht publiceren](simple-advice-request-flow
 ## Canonieke Simple Advice-opdrachtketen
 
 Zie [Request → Assignment-handoff](request-assignment-handoff.md) en [ADR-024](adr/ADR-024-canonieke-opdrachtketen-request-assignment.md). Request → RequestAssignmentHandoff → Assignment bewaart exact één immutable bronbinding; Request.id blijft extern. Migratie: `20260915090000_request_assignment_handoff`. Geen automatische productiebackfill.
+
+## IntakeSimpleAdviceRevision
+
+Append-only formulierstate voor bestaande legacy Intakes: samengestelde sleutel `(intakeId, version)`, JSON-object `payload`, bevoegde `actorUserId` en `createdAt`. Intake/User-relaties gebruiken RESTRICT. Oude antwoorden en dossier-versies blijven ongewijzigd. Zie [legacy intake-unificatie](legacy-intake-unification.md).

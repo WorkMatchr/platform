@@ -1,7 +1,5 @@
 import type { Metadata } from 'next'
 import { MyAssignmentsOverview } from '@/components/assignments/my-assignments-overview'
-import { createIntakeAction } from '@/app/hulpvragen/actions'
-import { IntakeStartForm } from '@/components/intakes/intake-start-form'
 import { Card } from '@/components/ui/card'
 import { Section } from '@/components/layout/section'
 import { Heading } from '@/components/ui/heading'
@@ -39,12 +37,7 @@ export default async function AssignmentOverviewPage() {
             <Heading as="h2" size="h3" id="new-assignment-title">Nieuwe opdracht</Heading>
             <p className="mt-3 text-text-secondary">Beschrijf kort uw vraag of situatie. U hoeft nog niet precies te weten welke dienstverlening u nodig heeft.</p>
             <div className="mt-6">
-              <IntakeStartForm
-                action={createIntakeAction}
-                organizationId={organization.id}
-                label="Waar heeft u ondersteuning bij nodig?"
-                helpText="Beschrijf kort uw vraag of situatie. U hoeft nog niet precies te weten welke dienstverlening u nodig heeft. Vermeld geen namen, medische gegevens, BSN’s, wachtwoorden of andere vertrouwelijke persoonsgegevens."
-              />
+              <LinkButton href="/advieswijzer">Start uw opdracht</LinkButton>
             </div>
           </Card>
         </aside>

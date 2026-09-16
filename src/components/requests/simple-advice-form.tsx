@@ -15,10 +15,14 @@ import { deriveSimpleAdviceTitle, simpleAdviceSchema, simpleAdviceRouteSchema, s
 
 type Draft = Record<string, string> & { routeChoice: string; requestedExpertise: string; helpTopic: string }
 const empty: Draft = { routeChoice: '', requestedExpertise: '', helpTopic: '', helpTopicOther: '', requestTitle: '', requestDescription: '', desiredOutcome: '', desiredOutcomeOther: '', workLocationMode: '', organizationLocationId: '', organizationLocationCity: '', otherLocationCity: '', desiredStartMode: '', desiredStartDate: '' }
-export function SimpleAdviceForm({ action, viewerId, locations = [] }: {
+export function SimpleAdviceForm({ action, viewerId, locations = [], draftId, initialValues, initialVersion = 0, saveAction }: {
   action: (state: SimpleAdviceActionState, form: FormData) => Promise<SimpleAdviceActionState>
   viewerId: string | null
   locations?: Array<{ id: string; city: string }>
+  draftId?: string
+  initialValues?: Record<string, unknown>
+  initialVersion?: number
+  saveAction?: (payload: unknown, expectedVersion: number) => Promise<{ version?: number; message?: string }>
 }) {
   const router = useRouter()
   const [v, setV] = useState<Draft>({ ...empty })
@@ -29,29 +33,36 @@ export function SimpleAdviceForm({ action, viewerId, locations = [] }: {
   const [submissionId, setSubmissionId] = useState('')
   const [errors, setErrors] = useState<Record<string, string[]>>({})
   const [state, formAction, pending] = useActionState(action, {})
+  const [saving, setSaving] = useState(false)
+  const [saveMessage, setSaveMessage] = useState('')
+  const revision = useRef(initialVersion)
   const heading = useRef<HTMLHeadingElement>(null)
   const form = useRef<HTMLFormElement>(null)
-  const storageKey = `workmatchr-simple-advice:v1:${viewerId ?? 'anonymous'}`
+  const storageKey = `workmatchr-simple-advice:v1:${viewerId ?? 'anonymous'}${draftId ? `:${draftId}` : ''}`
   const payload = { ...v, additionalExpertises, requestTitle: deriveSimpleAdviceTitle(v.requestDescription), requestedExpertise: v.requestedExpertise || null, helpTopic: v.helpTopic || null, organizationLocationId: v.organizationLocationId || null, combinationModes: modes }
   useEffect(() => {
-    let saved: { values?: Draft; modes?: string[]; additionalExpertises?: string[]; step?: number; submissionId?: string } | null = null
+    let saved: { values?: Draft; modes?: string[]; additionalExpertises?: string[]; step?: number; submissionId?: string; revision?: number } | null = null
     try {
-      const resumeAnonymous = viewerId && sessionStorage.getItem('workmatchr-simple-advice-login') === 'yes'
+      const resumeAnonymous = !draftId && viewerId && sessionStorage.getItem('workmatchr-simple-advice-login') === 'yes'
       const key = resumeAnonymous ? 'workmatchr-simple-advice:v1:anonymous' : storageKey
       saved = JSON.parse(sessionStorage.getItem(key) || 'null')
+      if (draftId && saved?.revision !== initialVersion) saved = null
       if (resumeAnonymous) { sessionStorage.removeItem(key); sessionStorage.removeItem('workmatchr-simple-advice-login') }
     } catch { /* A blocked browser store does not block the form. */ }
     // Restore a tab-local draft once after hydration; never share account-scoped drafts.
-    setV(current => ({ ...current, ...Object.fromEntries(Object.keys(empty).filter(k => typeof saved?.values?.[k] === 'string').map(k => [k, k === 'organizationLocationId' && !saved!.values![k] ? current.organizationLocationId : saved!.values![k]])) }))
-    setAdditionalExpertises(saved?.values?.routeChoice === 'KNOWS_EXPERTISE' && Array.isArray(saved?.additionalExpertises) ? retainAdditionalExpertises(saved.values.requestedExpertise, saved.additionalExpertises) : [])
-    setModes(saved?.modes?.filter(m => ['ORGANIZATION', 'OTHER_LOCATION', 'REMOTE'].includes(m)) ?? [])
+    const restored = { ...initialValues, ...saved?.values }
+    setV(current => ({ ...current, ...Object.fromEntries(Object.keys(empty).filter(k => typeof restored[k] === 'string').map(k => [k, restored[k] as string])) }))
+    const additional = saved?.additionalExpertises ?? initialValues?.additionalExpertises
+    setAdditionalExpertises(restored.routeChoice === 'KNOWS_EXPERTISE' && Array.isArray(additional) ? retainAdditionalExpertises(String(restored.requestedExpertise), additional) : [])
+    const restoredModes = saved?.modes ?? initialValues?.combinationModes
+    setModes(Array.isArray(restoredModes) ? restoredModes.filter((m): m is string => typeof m === 'string' && ['ORGANIZATION', 'OTHER_LOCATION', 'REMOTE'].includes(m)) : [])
     setStep(saved?.step && saved.step >= 0 && saved.step <= 2 ? saved.step : 0)
     setSubmissionId(saved?.submissionId && /^[0-9a-f-]{36}$/i.test(saved.submissionId) ? saved.submissionId : crypto.randomUUID())
     setReady(true)
-  }, [storageKey, viewerId])
+  }, [storageKey, viewerId, draftId, initialValues, initialVersion])
   useEffect(() => {
     if (!ready) return
-    try { sessionStorage.setItem(storageKey, JSON.stringify({ values: v, modes, additionalExpertises, step, submissionId })) } catch { /* Optional tab persistence. */ }
+    try { sessionStorage.setItem(storageKey, JSON.stringify({ values: v, modes, additionalExpertises, step, submissionId, revision: revision.current })) } catch { /* Optional tab persistence. */ }
   }, [ready, v, modes, additionalExpertises, step, submissionId, storageKey])
   useEffect(() => { heading.current?.focus() }, [step])
   useEffect(() => {
@@ -81,15 +92,30 @@ export function SimpleAdviceForm({ action, viewerId, locations = [] }: {
     return true
   }
   const parsed = simpleAdviceSchema.safeParse(payload)
+  const move = async (next: number) => {
+    if (saveAction) {
+      setSaving(true)
+      try {
+        const result = await saveAction(payload, revision.current)
+        if (result.version === undefined) { setSaveMessage(result.message || 'Opslaan is niet gelukt. Probeer het opnieuw.'); return }
+        revision.current = result.version
+        setSaveMessage('')
+      } catch { setSaveMessage('Opslaan is niet gelukt. Uw invoer blijft in dit tabblad bewaard. Probeer het opnieuw.'); return }
+      finally { setSaving(false) }
+    }
+    setStep(next)
+  }
   const context = getSimpleAdviceContext(v, step)
   const contextStep = step === 0 ? 'SITUATION' : step === 1 ? 'ORGANIZATION' : 'PLANNING'
   const additionalOptions = step === 1 && v.routeChoice === 'KNOWS_EXPERTISE' && requestedExpertiseOptions.some(option => option.value === v.requestedExpertise) ? <AdditionalExpertiseOptions key={v.requestedExpertise} primary={v.requestedExpertise as ExpertiseId} selected={additionalExpertises} onChange={setAdditionalExpertises} /> : null
   return <div className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] md:items-start"><PublicIntakeDesktopContext step={contextStep} context={context}>{additionalOptions}</PublicIntakeDesktopContext><div className="min-w-0 space-y-4"><PublicIntakeMobileContext step={contextStep} context={context}>{additionalOptions}</PublicIntakeMobileContext><form ref={form} action={formAction} className="space-y-6 rounded-card border border-border bg-surface p-5 sm:p-8" noValidate onSubmit={e => { if (step !== 2 || !validate()) e.preventDefault() }}>
     <input type="hidden" name="payload" value={JSON.stringify(payload)} />
     <input type="hidden" name="submissionId" value={submissionId} />
+    <input type="hidden" name="draftVersion" value={revision.current} />
     <p className="text-sm text-text-secondary" aria-label="Voortgang">Stap {step + 1} van 3</p>
     <h2 ref={heading} tabIndex={-1} className="text-xl font-bold text-brand-dark">{['Weet u welke deskundigheid u nodig heeft?', 'Uw opdracht', 'Controleer uw opdracht'][step]}</h2>
     {state.message && <p role="alert" className="text-error">{state.message}</p>}
+    {saveMessage && <p role="alert" className="text-error">{saveMessage}</p>}
     {step === 0 && <>
       <fieldset><legend className="sr-only">Weet u welke deskundigheid u nodig heeft?</legend><div className="flex gap-6">{[['KNOWS_EXPERTISE', 'Ja'], ['NEEDS_TOPIC', 'Nee']].map(([value, label]) => <label key={value} className="flex min-h-11 items-center gap-2"><input type="radio" name="routeChoice" value={value} checked={v.routeChoice === value} onChange={() => update('routeChoice', value)} aria-describedby={error('routeChoice') ? 'routeChoice-error' : undefined} />{label}</label>)}</div>{fieldError('routeChoice')}</fieldset>
       {v.routeChoice === 'KNOWS_EXPERTISE' && select('requestedExpertise', 'Welke deskundigheid zoekt u?', Object.fromEntries(requestedExpertiseOptions.map(o => [o.value, o.label])))}
@@ -112,8 +138,8 @@ export function SimpleAdviceForm({ action, viewerId, locations = [] }: {
     {step === 2 && parsed.success && <dl className="space-y-4">{simpleAdviceSummary(parsed.data, locations.find(l => l.id === v.organizationLocationId)?.city).map(([label, value]) => <div key={label}><dt className="font-semibold">{label}</dt><dd className="whitespace-pre-wrap break-words text-text-secondary">{value}</dd></div>)}</dl>}
     {step === 2 && !viewerId && <div className="space-y-3"><p>Log in als opdrachtgever om uw opdracht te publiceren. Uw ingevulde gegevens blijven in dit tabblad bewaard.</p><LinkButton href="/inloggen?returnTo=%2Fadvieswijzer" onClick={() => { try { sessionStorage.setItem('workmatchr-simple-advice-login', 'yes') } catch {} }}>Inloggen</LinkButton><LinkButton href="/registreren" variant="outline" onClick={() => { try { sessionStorage.setItem('workmatchr-simple-advice-login', 'yes') } catch {} }}>Account aanmaken</LinkButton></div>}
     <div className="flex flex-wrap justify-between gap-3">
-      {step > 0 ? <Button variant="outline" onClick={() => setStep(s => s - 1)} disabled={pending}>{step === 2 ? 'Wijzigen' : 'Terug'}</Button> : <span />}
-      {step < 2 ? <Button key="continue" type="button" disabled={!ready} onClick={event => { event.preventDefault(); if (validate()) setStep(s => s + 1) }}>Verder</Button> : viewerId ? <Button key="publish" type="submit" disabled={!ready || !parsed.success} loading={pending}>Opdracht publiceren</Button> : null}
+      {step > 0 ? <Button variant="outline" onClick={() => void move(step - 1)} disabled={pending || saving}>{step === 2 ? 'Wijzigen' : 'Terug'}</Button> : <span />}
+      {step < 2 ? <Button key="continue" type="button" disabled={!ready || saving} onClick={event => { event.preventDefault(); if (validate()) void move(step + 1) }}>Verder</Button> : viewerId ? <Button key="publish" type="submit" disabled={!ready || !parsed.success || saving} loading={pending}>Opdracht publiceren</Button> : null}
     </div>
   </form></div></div>
 }

@@ -25,7 +25,7 @@ function AssignmentSection({
 }
 
 export function MyAssignmentsOverview({ overview }: Props) {
-  const unfinishedIntakes = overview.intakes.filter((intake) => ['DRAFT', 'IN_PROGRESS'].includes(intake.status))
+  const unfinishedIntakes = overview.intakes.filter((intake) => ['DRAFT', 'IN_PROGRESS'].includes(intake.status) || intake.hasUnpublishedAssignment)
   const readyIntakes = overview.intakes.filter((intake) => intake.status === 'READY_FOR_REVIEW')
   const processingIntakes = overview.intakes.filter((intake) => intake.status === 'SUBMITTED')
   const activeAssignments = overview.assignments.filter((assignment) => ['OPEN', 'MATCHING', 'AWAITING_RESPONSES', 'IN_SELECTION'].includes(assignment.status))

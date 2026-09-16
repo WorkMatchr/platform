@@ -31,6 +31,7 @@ const progressAnswerSelect = {
 } satisfies Prisma.IntakeAnswerSelect
 
 export type IntakeListItem = {
+  hasUnpublishedAssignment?: boolean
   id: string
   freeText: string
   status: IntakeStatus
@@ -125,6 +126,7 @@ export async function listIntakesForOrganization(
         ...(access.membershipRole === 'MEMBER' ? { createdByUserId: userId } : {}),
       },
       select: {
+        assignment: { select: { publishedAt: true, status: true } },
         id: true,
         freeText: true,
         status: true,
@@ -143,6 +145,7 @@ export async function listIntakesForOrganization(
     return {
       viewerRole: access.membershipRole,
       items: intakes.map((intake) => ({
+        hasUnpublishedAssignment: Boolean(intake.assignment && !intake.assignment.publishedAt && ['DRAFT', 'READY_FOR_REVIEW'].includes(intake.assignment.status)),
         id: intake.id,
         freeText: intake.freeText,
         status: intake.status,

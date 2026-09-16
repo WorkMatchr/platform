@@ -1143,6 +1143,7 @@ enum KnowledgeAuditEventType {
 }
 
 model User {
+  simpleAdviceIntakeRevisions IntakeSimpleAdviceRevision[]
   id                                 String                                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email                              String                                 @unique
   displayName                        String?
@@ -3240,6 +3241,7 @@ model IntakeQuestionOption {
 }
 
 model Intake {
+  simpleAdviceRevisions      IntakeSimpleAdviceRevision[]
   id                         String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   clientOrganizationId       String                      @db.Uuid
   createdByUserId            String                      @db.Uuid
@@ -3277,6 +3279,18 @@ model Intake {
   @@index([createdByUserId, status, updatedAt])
   @@index([createdAt])
   @@index([archivedAt])
+}
+
+model IntakeSimpleAdviceRevision {
+  intakeId        String   @db.Uuid
+  version         Int
+  payload         Json     @db.JsonB
+  actorUserId     String   @db.Uuid
+  createdAt       DateTime @default(now()) @db.Timestamptz(3)
+  intake          Intake   @relation(fields: [intakeId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  actor           User     @relation(fields: [actorUserId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([intakeId, version])
 }
 
 model IntakeAnswer {

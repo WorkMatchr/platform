@@ -1,3 +1,4 @@
+import { LegacySimpleAdvicePage } from '@/components/requests/legacy-simple-advice-page'
 import type { Metadata } from 'next'
 import { notFound, redirect } from 'next/navigation'
 import {
@@ -14,6 +15,8 @@ import { requireUser } from '@/lib/authorization'
 import { IntakeServiceError } from '@/lib/intakes/intake-errors'
 import { getIntakeDetail } from '@/lib/intakes/intake-query-service'
 import { getIntakeAssignmentReadiness } from '@/lib/assignments/intake-assignment-readiness'
+import { requireClientAdviceDossierViewer } from '@/lib/advice-dossiers/advice-dossier-authorization'
+import { getLegacySimpleAdvice } from '@/lib/requests/legacy-simple-advice-service'
 
 export const metadata: Metadata = { title: 'Opdracht controleren | WorkMatchr' }
 
@@ -36,6 +39,10 @@ export default async function IntakeReviewPage({
   if (!['DRAFT', 'IN_PROGRESS', 'READY_FOR_REVIEW', 'CONVERTED'].includes(intake.status)) {
     redirect('/hulpvragen')
   }
+  if (['DRAFT', 'IN_PROGRESS', 'READY_FOR_REVIEW'].includes(intake.status)) return <LegacySimpleAdvicePage intakeId={intakeId} />
+  const viewer = await requireClientAdviceDossierViewer(`/hulpvragen/${intakeId}/controle`)
+  const existing = await getLegacySimpleAdvice(viewer, intakeId)
+  if ('initialValues' in existing) return <LegacySimpleAdvicePage intakeId={intakeId} />
   const query = await searchParams
   const readiness = getIntakeAssignmentReadiness(intake)
 

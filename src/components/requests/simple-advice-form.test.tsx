@@ -30,6 +30,28 @@ const fill = () => {
   choose('Wanneer wilt u starten?', 'WITHIN_TWO_WEEKS')
 }
 describe('gedeelde opdrachtflow', () => {
+  it('hervat een bestaand concept via hetzelfde formulier en slaat op zonder publicatie', async () => {
+    const save = vi.fn().mockResolvedValue({ version: 4 })
+    const publish = vi.fn()
+    render(<SimpleAdviceForm draftId="legacy-one" initialVersion={3} initialValues={{ routeChoice: 'KNOWS_EXPERTISE', requestedExpertise: 'HVK', requestDescription: 'Bestaande beschrijving van de opdracht.' }} saveAction={save} action={publish} viewerId="owner" />)
+    await next()
+    await waitFor(() => expect(screen.getByLabelText('Beschrijf uw vraag of situatie')).toBeTruthy())
+    expect((screen.getByLabelText('Beschrijf uw vraag of situatie') as HTMLTextAreaElement).value).toBe('Bestaande beschrijving van de opdracht.')
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({ requestedExpertise: 'HVK' }), 3)
+    expect(publish).not.toHaveBeenCalled()
+  })
+  it('negeert verouderde browserstate na een nieuwere serverrevisie', async () => {
+    sessionStorage.setItem('workmatchr-simple-advice:v1:owner:legacy-two', JSON.stringify({ revision: 1, values: { routeChoice: 'KNOWS_EXPERTISE', requestedExpertise: 'MVK' } }))
+    render(<SimpleAdviceForm draftId="legacy-two" initialVersion={2} initialValues={{ routeChoice: 'KNOWS_EXPERTISE', requestedExpertise: 'HVK' }} action={vi.fn()} viewerId="owner" />)
+    await waitFor(() => expect((screen.getByLabelText('Welke deskundigheid zoekt u?') as HTMLSelectElement).value).toBe('HVK'))
+  })
+  it('blijft bij een opslagconflict op dezelfde stap met behoud van keuzes', async () => {
+    render(<SimpleAdviceForm draftId="legacy-three" initialVersion={1} saveAction={vi.fn().mockResolvedValue({ message: 'Elders gewijzigd' })} action={vi.fn()} viewerId="owner" />)
+    fireEvent.click(screen.getByLabelText('Nee')); choose('Waar gaat uw vraag over?', 'UNKNOWN'); await next()
+    await waitFor(() => expect(screen.getByText('Elders gewijzigd')).toBeTruthy())
+    expect((screen.getByLabelText('Waar gaat uw vraag over?') as HTMLSelectElement).value).toBe('UNKNOWN')
+  })
+
   it('Verder bereikt controle zonder tijdens dezelfde klik een submitknop te worden', async () => {
     const action = vi.fn().mockResolvedValue({})
     render(<SimpleAdviceForm action={action} viewerId="owner" />)
