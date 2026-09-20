@@ -1143,6 +1143,7 @@ enum KnowledgeAuditEventType {
 }
 
 model User {
+  assignmentEmailEnabled Boolean @default(true)
   simpleAdviceIntakeRevisions IntakeSimpleAdviceRevision[]
   id                                 String                                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email                              String                                 @unique
@@ -4440,6 +4441,11 @@ model MarketplaceNotification {
 }
 
 model NotificationOutbox {
+  leaseToken String? @db.Uuid
+  leaseUntil DateTime? @db.Timestamptz(3)
+  firstAttemptAt DateTime? @db.Timestamptz(3)
+  providerMessageId String? @db.VarChar(160)
+  deliveryFingerprint String? @db.Char(64)
   id              String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   eventId         String                   @db.VarChar(120)
   channel         String                   @db.VarChar(20)
@@ -4481,6 +4487,7 @@ model MarketplaceAuditEvent {
 }
 
 model MarketplaceRuleSet {
+  expertiseAdjustments Json @default("{}")
   id                          String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   version                     String                        @unique @db.VarChar(40)
   status                      MarketplaceRuleSetStatus      @default(DRAFT)

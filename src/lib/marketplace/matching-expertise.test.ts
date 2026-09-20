@@ -17,9 +17,9 @@ it('keeps primary and explicit additional matches distinct', () => {
 it('presents canonical identity and additional references without internal ID or client data', () => {
   const preview = toAssignmentPreview({ id: 'internal', requestId: 'external', title: 'Veilig werken', primarySpecialism: { name: 'HVK' },
     specialisms: [{ isRequired: true, specialism: { name: 'HVK' } }, { isRequired: false, specialism: { name: 'MVK' } }],
-    employeeCount: null, desiredStartDate: null, responseDeadline: null, locationCity: null, locationProvince: null, locationRegion: null, locationCount: null, allowsRemoteWork: false, maxSelections: 3 })
+    employeeCount: null, desiredStartDate: null, responseDeadline: null, locationCity: null, locationProvince: null, locationRegion: null, locationCount: null, allowsRemoteWork: false, maxSelections: 3 }, 27, { primaryExpertiseCode: 'hogere-veiligheidskundige', matchType: 'ADDITIONAL', recipientExpertise: 'middelbare-veiligheidskundige' })
   expect(preview.assignmentId).toBe('external')
-  expect(preview.expertise).toBe('HVK')
-  expect(preview.additionalExpertises).toEqual(['MVK'])
+  expect(preview.expertise).toBe('Hogere veiligheidskundige (HVK)')
+  expect(preview.additionalExpertises).toEqual(['Middelbare veiligheidskundige (MVK)'])
   expect(JSON.stringify(preview)).not.toContain('internal')
 })

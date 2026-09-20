@@ -1,0 +1,30 @@
+name: Marketplace assignment notifications
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: marketplace-notification-dispatch
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    if: github.ref == 'refs/heads/main' && vars.MARKETPLACE_NOTIFICATIONS_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Trigger secured marketplace maintenance
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: node ops/marketplace-notifications/dispatch.mjs

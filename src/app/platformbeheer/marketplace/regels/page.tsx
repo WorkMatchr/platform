@@ -1,3 +1,4 @@
+import { MarketplacePricingFields } from '@/components/platform-admin/marketplace-pricing-fields'
 import { createMarketplaceRuleSetAction } from '@/app/platformbeheer/actions'
 import { AdminPageHeader, AdminSection, AdminTable, StatusPill } from '@/components/platform-admin/platform-admin-ui'
 import { requirePlatformAdministrator } from '@/lib/platform-admin/platform-admin-authorization'
@@ -24,7 +25,7 @@ export default async function MarketplaceRulesPage({
       <AdminPageHeader
         eyebrow="Marketplace"
         title="Bedrijfsregels"
-        description="Versieerbare operationele regels voor nieuwe deelnames. Bestaande deelnames en transacties veranderen nooit mee."
+        description="Versieerbare operationele regels voor nieuwe uitnodigingen. Bestaande deelnames en transacties veranderen nooit mee."
       />
       {feedback.resultaat ? <p role="status" className="rounded-control border border-success-border bg-success-subtle p-4">De nieuwe regelset is vastgelegd.</p> : null}
       {feedback.fout ? <p role="alert" className="rounded-control border border-error-border bg-error-subtle p-4">De regelset is niet toegevoegd. Controleer de waarden, ingangsdatum en uw bevoegdheid.</p> : null}
@@ -54,12 +55,11 @@ export default async function MarketplaceRulesPage({
       </AdminSection>
 
       {canManage && current ? (
-        <AdminSection title="Nieuwe regelset" description="Deze wijziging geldt alleen voor nieuwe deelnames vanaf de ingestelde ingangsdatum. Bestaande deelnames en transacties veranderen niet.">
+        <AdminSection title="Nieuwe regelset" description="Deze wijziging geldt alleen voor nieuwe uitnodigingen vanaf de ingestelde ingangsdatum. Bestaande deelnames en transacties veranderen niet.">
           <form action={createMarketplaceRuleSetAction} className="grid gap-4 rounded-card border border-border bg-surface p-5 sm:grid-cols-2 xl:grid-cols-3">
             <label className="grid gap-1 text-sm font-semibold">Versie<input name="version" required maxLength={40} className="rounded-control border border-border px-3 py-2 font-normal" /></label>
             <label className="grid gap-1 text-sm font-semibold">Ingangsdatum<input name="validFrom" type="datetime-local" required className="rounded-control border border-border px-3 py-2 font-normal" /></label>
-            <label className="grid gap-1 text-sm font-semibold">Standaard deelnameprijs<input name="participationPriceCredits" type="number" min={current.minimumParticipationPrice} defaultValue={current.participationPriceCredits} required className="rounded-control border border-border px-3 py-2 font-normal" /></label>
-            <label className="grid gap-1 text-sm font-semibold">Minimum deelnameprijs<input name="minimumParticipationPrice" type="number" min={30} defaultValue={current.minimumParticipationPrice} required className="rounded-control border border-border px-3 py-2 font-normal" /></label>
+            <MarketplacePricingFields basePrice={current.participationPriceCredits} minimumPrice={current.minimumParticipationPrice} adjustments={current.expertiseAdjustments as Record<string, number>} />
             <label className="grid gap-1 text-sm font-semibold">Teruggave bij intrekking (%)<input name="withdrawalRefundPercentage" type="number" min={0} max={100} defaultValue={current.withdrawalRefundPercentage} required className="rounded-control border border-border px-3 py-2 font-normal" /></label>
             <label className="grid gap-1 text-sm font-semibold">Teruggave niet-gegunde offerte<input name="unawardedQuoteRefundCredits" type="number" min={0} defaultValue={current.unawardedQuoteRefundCredits} required className="rounded-control border border-border px-3 py-2 font-normal" /></label>
             <label className="grid gap-1 text-sm font-semibold">Maximaal deelnemers<input name="maximumParticipants" type="number" min={1} max={100} defaultValue={current.maximumParticipants} required className="rounded-control border border-border px-3 py-2 font-normal" /></label>

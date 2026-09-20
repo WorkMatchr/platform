@@ -1,5 +1,6 @@
 'use server'
 
+import { pricingExpertises } from '@/lib/marketplace/assignment-pricing'
 import { revalidatePath } from 'next/cache'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
@@ -223,6 +224,7 @@ export async function createMarketplaceRuleSetAction(formData: FormData) {
         validFrom: String(formData.get('validFrom') ?? ''),
         participationPriceCredits: Number(formData.get('participationPriceCredits')),
         minimumParticipationPrice: Number(formData.get('minimumParticipationPrice')),
+        expertiseAdjustments: Object.fromEntries(pricingExpertises.map(({ code }) => [code, formData.has(`adjustment:${code}`) ? Number(formData.get(`adjustment:${code}`)) : NaN])),
         withdrawalRefundPercentage: Number(formData.get('withdrawalRefundPercentage')),
         roundRefundUp: formData.get('roundRefundUp') === 'on',
         unawardedQuoteRefundCredits: Number(formData.get('unawardedQuoteRefundCredits')),

@@ -1,3 +1,5 @@
+import { readInvitationPrice } from './assignment-pricing'
+import { assignmentPreviewSchema } from './assignment-purchase-preview'
 import { externalAssignmentWhere, externalAssignmentId, ownedAssignmentWhere } from '@/lib/assignments/assignment-identity'
 import { getPrisma } from '@/lib/prisma'
 import { hasValidPlatformActorFoundation } from '@/lib/account-architecture/platform-actor-policy'
@@ -179,7 +181,7 @@ export type MarketplaceDashboardView = Awaited<ReturnType<typeof getMarketplaceD
 
 export async function getProviderInvitationDetail(userId: string, organizationId: string, invitationId: string) {
   const membership = await getPrisma().organizationMembership.findFirst({
-    where: { userId, organizationId, status: 'ACTIVE', user: { status: 'ACTIVE', accountType: 'PROFESSIONAL' } },
+    where: { userId, organizationId, status: 'ACTIVE', organization: { status: 'ACTIVE', organizationType: { in: ['PROVIDER', 'BOTH'] } }, user: { status: 'ACTIVE', accountType: 'PROFESSIONAL' } },
     select: { role: true },
   })
   if (!membership) throw new MarketplaceServiceError('ACCESS_DENIED')
@@ -189,6 +191,7 @@ export async function getProviderInvitationDetail(userId: string, organizationId
       id: true,
       status: true,
       creditCost: true,
+      snapshot: true,
       deadlineAt: true,
       participation: { select: { id: true, status: true, version: true, creditReservation: { select: { id: true } }, quote: { select: { id: true, status: true, version: true } }, messageChannel: { select: { id: true } } } },
       assignment: { select: {
@@ -206,7 +209,10 @@ export async function getProviderInvitationDetail(userId: string, organizationId
     getPrisma().creditAccount.findUnique({ where: { organizationId }, select: { availableBalance: true } }),
     invitation.participation ? getPrisma().creditTransaction.findFirst({ where: { referenceType: 'ProviderParticipation', referenceId: invitation.participation.id, type: 'PARTICIPATION_PAYMENT' }, select: { id: true } }) : null,
   ])
-  const preview = toAssignmentPreview(invitation.assignment)
+  const price = readInvitationPrice(invitation)
+  const stored = invitation.snapshot as Record<string, unknown>
+  const preview = price.priceSnapshot ? assignmentPreviewSchema.parse(stored.preview) : toAssignmentPreview(invitation.assignment, price.credits)
+  if (preview.priceCredits !== price.credits) throw new MarketplaceServiceError('INVALID_STATE')
   const hasFullAccess = Boolean(invitation.participation && (invitation.participation.creditReservation || purchase))
   return {
     membership,

@@ -234,3 +234,12 @@ Zie [Request → Assignment-handoff](request-assignment-handoff.md) en [ADR-024]
 ## IntakeSimpleAdviceRevision
 
 Append-only formulierstate voor bestaande legacy Intakes: samengestelde sleutel `(intakeId, version)`, JSON-object `payload`, bevoegde `actorUserId` en `createdAt`. Intake/User-relaties gebruiken RESTRICT. Oude antwoorden en dossier-versies blijven ongewijzigd. Zie [legacy intake-unificatie](legacy-intake-unification.md).
+
+## Opdrachtmeldingen en ontgrendelprijs
+
+- MarketplaceRuleSet.expertiseAdjustments: immutable JSON-map met canonieke SPECIALISM v3-codes en integercorrecties; legacy {} betekent nul.
+- ProviderInvitation.snapshot.priceSnapshot: versie, basis, minimum, primaire code, correctie, resultaat en resolvedAt; snapshot/checksum/creditCost immutable. Snapshot.preview is de enige gedeelde veilige preview.
+- NotificationOutbox.leaseToken/leaseUntil/firstAttemptAt/deliveryFingerprint/providerMessageId: exclusieve claim en begrensd idempotent herstel; geen extra PII of mailbody.
+- User.assignmentEmailEnabled: persoonlijke transactionele opdrachtmailvoorkeur, standaard true; geen marketingvoorkeur.
+
+Zie [bezorg- en legacybeleid](marketplace-assignment-notifications.md).

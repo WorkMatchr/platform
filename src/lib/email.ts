@@ -9,6 +9,7 @@ export type AuthEmail = {
     | 'TWO_FACTOR_RESET_NOTIFICATION'
     | 'ADMIN_MESSAGE'
     | 'FINANCIAL_INVOICE'
+    | 'MARKETPLACE_ASSIGNMENT'
   to: string
   subject: string
   text: string
@@ -38,13 +39,14 @@ export class AuthEmailDeliveryError extends Error {
     public readonly code: AuthEmailDeliveryErrorCode,
     message: string,
     public readonly providerStatusCode: number | null = null,
+    public readonly retryAfterMs: number | null = null,
   ) {
     super(message)
     this.name = 'AuthEmailDeliveryError'
   }
 }
 
-function escapeHtml(value: string): string {
+export function escapeHtml(value: string): string {
   return value.replace(/[&<>'"]/g, (character) => {
     const entities: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }
     return entities[character]
@@ -123,6 +125,12 @@ export function getAuthEmailConfigurationStatus() {
   }
 }
 
+export function parseEmailRetryAfter(value: string | undefined, now = Date.now()): number | null {
+  if (!value) return null
+  const milliseconds = /^\d+(?:\.\d+)?$/.test(value) ? Number(value) * 1000 : Date.parse(value) - now
+  return Number.isFinite(milliseconds) && milliseconds >= 0 ? milliseconds : null
+}
+
 export async function sendAuthEmail(email: AuthEmail): Promise<AuthEmailDeliveryResult> {
   const resolved = resolvePreviewInvoiceRecipientOverride(email)
   const deliveryEmail = resolved.email
@@ -174,6 +182,7 @@ export async function sendAuthEmail(email: AuthEmail): Promise<AuthEmailDelivery
       'EMAIL_PROVIDER_REJECTED',
       'De e-mailprovider heeft het bericht niet geaccepteerd.',
       result.error.statusCode ?? null,
+      parseEmailRetryAfter(result.headers?.['retry-after']),
     )
   }
   if (!result.data?.id) {

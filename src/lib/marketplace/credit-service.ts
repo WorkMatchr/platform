@@ -58,7 +58,7 @@ export async function reserveCreditsInTransaction(
 
 export async function purchaseAssignmentInTransaction(
   transaction: Transaction,
-  input: { organizationId: string; participationId: string; amount: number; actorUserId: string },
+  input: { organizationId: string; participationId: string; amount: number; actorUserId: string; marketplaceRuleSetId?: string | null },
 ) {
   const idempotencyKey = `ASSIGNMENT_PURCHASE:${input.participationId}`
   const repeated = await transaction.creditTransaction.findUnique({ where: { idempotencyKey } })
@@ -82,7 +82,8 @@ export async function purchaseAssignmentInTransaction(
       spentAfter: account.spentBalance + input.amount,
       referenceType: 'ProviderParticipation',
       referenceId: input.participationId,
-      reason: '25 credits definitief afgeschreven voor aankoop van een opdracht.',
+      reason: `${input.amount} credits definitief afgeschreven voor aankoop van een opdracht.`,
+      marketplaceRuleSetId: input.marketplaceRuleSetId,
       idempotencyKey,
       createdByUserId: input.actorUserId,
     },

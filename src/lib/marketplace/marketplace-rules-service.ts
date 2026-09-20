@@ -117,6 +117,7 @@ export async function createMarketplaceRuleSet(input: {
             validFrom: parsed.data.validFrom,
             participationPriceCredits: parsed.data.participationPriceCredits,
             minimumParticipationPrice: parsed.data.minimumParticipationPrice,
+            expertiseAdjustments: parsed.data.expertiseAdjustments,
             withdrawalRefundPercentage: parsed.data.withdrawalRefundPercentage,
             roundRefundUp: parsed.data.roundRefundUp,
             unawardedQuoteRefundCredits: parsed.data.unawardedQuoteRefundCredits,

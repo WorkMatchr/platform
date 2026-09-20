@@ -1,7 +1,7 @@
 import { getPrisma } from '@/lib/prisma'
 import { requireProviderMarketplaceAccess } from './marketplace-authorization'
 import { purchaseAssignmentInTransaction, releaseCreditReservationInTransaction } from './credit-service'
-import { ASSIGNMENT_PURCHASE_PRICE_CREDITS } from './assignment-purchase-preview'
+import { readInvitationPrice } from './assignment-pricing'
 import { MarketplaceServiceError } from './marketplace-errors'
 import { activeOrganizationRecipients, createMarketplaceNotification, writeMarketplaceAudit } from './marketplace-events'
 import { hasAvailableAssignmentSelection } from './assignment-quote-slots'
@@ -17,9 +17,12 @@ export async function acceptProviderInvitation(input: {
   for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
       return await getPrisma().$transaction(async (transaction) => {
-    const repeated = await transaction.providerParticipation.findUnique({ where: { idempotencyKey: input.idempotencyKey }, include: { creditReservation: true } })
-    if (repeated) return repeated
     const access = await requireProviderMarketplaceAccess(transaction, input.actorUserId, input.providerOrganizationId, true)
+    const repeated = await transaction.providerParticipation.findUnique({ where: { idempotencyKey: input.idempotencyKey }, include: { creditReservation: true } })
+    if (repeated) {
+      if (repeated.providerOrganizationId !== input.providerOrganizationId || repeated.invitationId !== input.invitationId) throw new MarketplaceServiceError('ACCESS_DENIED')
+      return repeated
+    }
     const invitationIdentity = await transaction.providerInvitation.findFirst({
       where: {
         id: input.invitationId,
@@ -55,10 +58,12 @@ export async function acceptProviderInvitation(input: {
         acceptedAt: now,
       },
     })
+    const price = readInvitationPrice(invitation)
     const payment = await purchaseAssignmentInTransaction(transaction, {
       organizationId: input.providerOrganizationId,
       participationId: participation.id,
-      amount: ASSIGNMENT_PURCHASE_PRICE_CREDITS,
+      amount: price.credits,
+      marketplaceRuleSetId: price.marketplaceRuleSetId,
       actorUserId: input.actorUserId,
     })
     await transaction.providerInvitation.update({
@@ -98,7 +103,7 @@ export async function acceptProviderInvitation(input: {
       previousState: 'INVITED',
       nextState: 'ACTIVE',
       correlationKey: input.idempotencyKey,
-      metadata: { invitationId: invitation.id, paymentId: payment.id, credits: ASSIGNMENT_PURCHASE_PRICE_CREDITS },
+      metadata: { invitationId: invitation.id, paymentId: payment.id, credits: price.credits, priceSnapshot: price.priceSnapshot },
     })
     return { ...participation, creditReservation: null, purchaseTransaction: payment }
       }, { isolationLevel: 'Serializable' })

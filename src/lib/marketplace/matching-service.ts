@@ -1,3 +1,6 @@
+import { getApplicableMarketplaceRuleSet } from './marketplace-rules-service'
+import { resolveAssignmentPrice } from './assignment-pricing'
+import { enqueueAssignmentNotifications } from './assignment-notification'
 import { z } from 'zod'
 import { evaluateRequestedExpertises } from './matching-expertise'
 import { externalAssignmentWhere } from '@/lib/assignments/assignment-identity'
@@ -6,7 +9,6 @@ import { getPrisma } from '@/lib/prisma'
 import { hashProviderJson, type CanonicalValue } from '@/lib/providers/provider-canonical-json'
 import { requireClientMarketplaceManager, requireMarketplacePlatformAdmin } from './marketplace-authorization'
 import {
-  MARKETPLACE_CREDIT_COST,
   MARKETPLACE_ENGINE_VERSION,
   MARKETPLACE_MODEL_VERSION,
   MARKETPLACE_RULE_VERSION,
@@ -15,13 +17,10 @@ import {
 import { MAX_SELECTIONS } from './assignment-quote-slots'
 import { MarketplaceServiceError } from './marketplace-errors'
 import {
-  activeOrganizationRecipients,
-  createMarketplaceNotification,
-  enqueueMarketplaceEmail,
   writeMarketplaceAudit,
 } from './marketplace-events'
 import { evaluateMatchingCandidate, rankMatchingCandidates, type MatchingProviderFacts } from './matching-rules'
-import { assignmentInvitationCopy, toAssignmentPreview } from './assignment-purchase-preview'
+import { invitationMatchFromFactors, toAssignmentPreview } from './assignment-purchase-preview'
 
 type TrustedPayload = {
   capabilities: Array<{ serviceCode: string; specialismCode: string | null; deliveryModes: string[] }>
@@ -257,16 +256,23 @@ export async function runMarketplaceMatching(input: {
 
     const selected = candidateRecords.filter((candidate) => candidate.status === 'SELECTED').sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0))
     const invitations = []
+    let emailCount = 0
+    const pricingRules = selected.length ? await getApplicableMarketplaceRuleSet(transaction, now) : null
     for (const selectedCandidate of selected) {
       const projection = latestByProvider.get(selectedCandidate.providerProfileId)!
+      const selectedEvaluation = evaluated.find((candidate) => candidate.providerProfileId === selectedCandidate.providerProfileId)!
+      const match = invitationMatchFromFactors(primaryCode, { factors: selectedEvaluation.result.factors })
+      const priceSnapshot = resolveAssignmentPrice(pricingRules!, primaryCode, now)
+      const preview = toAssignmentPreview(assignment, priceSnapshot.resolvedPrice, match)
       const invitationSnapshot = {
+        priceSnapshot, preview: JSON.parse(JSON.stringify(preview)), ...match,
         assignmentId: assignment.id,
         assignmentVersion: assignment.version,
         matchRunId: run.id,
         matchCandidateId: selectedCandidate.id,
         providerProfileId: selectedCandidate.providerProfileId,
         deadlineAt: assignment.responseDeadline.toISOString(),
-        creditCost: MARKETPLACE_CREDIT_COST,
+        creditCost: priceSnapshot.resolvedPrice,
       }
       const invitation = await transaction.providerInvitation.create({
         data: {
@@ -275,7 +281,7 @@ export async function runMarketplaceMatching(input: {
           matchCandidateId: selectedCandidate.id,
           providerProfileId: selectedCandidate.providerProfileId,
           providerOrganizationId: projection.providerProfile.organizationId,
-          creditCost: MARKETPLACE_CREDIT_COST,
+          creditCost: priceSnapshot.resolvedPrice,
           deadlineAt: assignment.responseDeadline,
           snapshot: invitationSnapshot as Prisma.InputJsonValue,
           snapshotChecksum: hashProviderJson(asCanonical(invitationSnapshot)).sha256,
@@ -283,7 +289,6 @@ export async function runMarketplaceMatching(input: {
         },
         select: { id: true, providerOrganizationId: true },
       })
-      const selectedEvaluation = evaluated.find((candidate) => candidate.providerProfileId === selectedCandidate.providerProfileId)!
       await transaction.assignmentProviderSelection.upsert({
         where: { assignmentId_providerProfileId: { assignmentId: assignment.id, providerProfileId: selectedCandidate.providerProfileId } },
         create: {
@@ -298,23 +303,10 @@ export async function runMarketplaceMatching(input: {
         update: {},
       })
       invitations.push(invitation)
-      const preview = toAssignmentPreview(assignment)
-      const invitationCopy = assignmentInvitationCopy(preview)
-      const recipients = await activeOrganizationRecipients(transaction, invitation.providerOrganizationId)
-      for (const recipientUserId of recipients) {
-        const eventId = `INVITATION:${invitation.id}`
-        await createMarketplaceNotification(transaction, {
-          recipientUserId,
-          eventId,
-          type: 'INVITATION_RECEIVED',
-          title: invitationCopy.title,
-          body: invitationCopy.body,
-          targetRoute: `/uitnodigingen/${invitation.id}`,
-        })
-        await enqueueMarketplaceEmail(transaction, { eventId, recipientUserId, templateKey: 'MARKETPLACE_INVITATION', payload: { invitationId: invitation.id, preview, cta: invitationCopy.cta } })
-      }
+      emailCount += await enqueueAssignmentNotifications(transaction, invitation, preview)
     }
     const report = {
+      emailCount,
       selectedCount: selected.length,
       eligibleCount: ranked.length,
       candidateCount: evaluated.length,
@@ -386,7 +378,8 @@ export async function applyMarketplaceMatchIntervention(input: {
       where: { id: input.matchRunId, status: 'COMPLETED' },
       include: {
         assignment: { select: {
-          id: true, title: true, status: true, responseDeadline: true, employeeCount: true, desiredStartDate: true, maxSelections: true,
+          id: true, requestId: true, title: true, status: true, responseDeadline: true, employeeCount: true, desiredStartDate: true, maxSelections: true,
+          request: { select: { requestedStart: true } },
           locationCity: true, locationProvince: true, locationRegion: true, locationCount: true, allowsRemoteWork: true,
           primarySpecialism: { select: { name: true } }, sector: { select: { name: true } },
         } },
@@ -434,14 +427,19 @@ export async function applyMarketplaceMatchIntervention(input: {
       if (currentInvitation) continue
       const historicalInvitation = run.invitations.find((invitation) => invitation.providerProfileId === candidate.providerProfileId)
       if (historicalInvitation) throw new MarketplaceServiceError('INVALID_STATE')
+      const primaryCode = z.object({ capabilityCode: z.string() }).parse(run.assignmentSnapshot).capabilityCode
+      const match = invitationMatchFromFactors(primaryCode, candidate.explanation)
+      const priceSnapshot = resolveAssignmentPrice(await getApplicableMarketplaceRuleSet(transaction, now), primaryCode, now)
+      const preview = toAssignmentPreview(run.assignment, priceSnapshot.resolvedPrice, match)
       const invitationSnapshot = {
+        priceSnapshot, preview: JSON.parse(JSON.stringify(preview)), ...match,
         assignmentId: run.assignment.id,
         assignmentVersion: run.assignmentVersion,
         matchRunId: run.id,
         matchCandidateId: candidate.id,
         providerProfileId: candidate.providerProfileId,
         deadlineAt: run.assignment.responseDeadline.toISOString(),
-        creditCost: MARKETPLACE_CREDIT_COST,
+        creditCost: priceSnapshot.resolvedPrice,
         interventionId: intervention.id,
       }
       const invitation = await transaction.providerInvitation.create({
@@ -451,7 +449,7 @@ export async function applyMarketplaceMatchIntervention(input: {
           matchCandidateId: candidate.id,
           providerProfileId: candidate.providerProfileId,
           providerOrganizationId: candidate.providerProfile.organizationId,
-          creditCost: MARKETPLACE_CREDIT_COST,
+          creditCost: priceSnapshot.resolvedPrice,
           deadlineAt: run.assignment.responseDeadline,
           snapshot: invitationSnapshot as Prisma.InputJsonValue,
           snapshotChecksum: hashProviderJson(asCanonical(invitationSnapshot)).sha256,
@@ -471,20 +469,7 @@ export async function applyMarketplaceMatchIntervention(input: {
         },
         update: { source: 'MANUAL_ADMIN', status: 'INVITED', removedAt: null, selectedByUserId: input.actorUserId },
       })
-      const preview = toAssignmentPreview(run.assignment)
-      const invitationCopy = assignmentInvitationCopy(preview)
-      for (const recipientUserId of await activeOrganizationRecipients(transaction, candidate.providerProfile.organizationId)) {
-        const eventId = `INVITATION:${invitation.id}`
-        await createMarketplaceNotification(transaction, {
-          recipientUserId,
-          eventId,
-          type: 'INVITATION_RECEIVED',
-          title: invitationCopy.title,
-          body: invitationCopy.body,
-          targetRoute: `/uitnodigingen/${invitation.id}`,
-        })
-        await enqueueMarketplaceEmail(transaction, { eventId, recipientUserId, templateKey: 'MARKETPLACE_INVITATION', payload: { invitationId: invitation.id, preview, cta: invitationCopy.cta } })
-      }
+      await enqueueAssignmentNotifications(transaction, invitation, preview)
     }
     return writeMarketplaceAudit(transaction, {
       actorUserId: input.actorUserId,

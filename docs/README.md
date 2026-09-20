@@ -172,3 +172,5 @@ Zie [Request → Assignment-handoff](request-assignment-handoff.md) en [ADR-024]
 ## Legacy intake-unificatie
 
 Zie [legacy intake naar gedeelde Simple Advice Flow](legacy-intake-unification.md) voor de compatibele routes, prefill, migratie en acceptatiestatus.
+
+- [Opdrachtmeldingen en ontgrendelprijzen](marketplace-assignment-notifications.md)

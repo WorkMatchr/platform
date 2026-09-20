@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { expertiseAdjustmentsSchema, zeroExpertiseAdjustments } from './assignment-pricing'
 
 export const INITIAL_MARKETPLACE_RULES = Object.freeze({
   participationPriceCredits: 30,
@@ -16,8 +17,9 @@ export const marketplaceRuleSetInputSchema = z
   .object({
     version: z.string().trim().min(3).max(40).regex(/^[0-9A-Za-z._-]+$/),
     validFrom: z.coerce.date(),
-    participationPriceCredits: z.number().int().min(30).max(100_000),
-    minimumParticipationPrice: z.number().int().min(30).max(100_000),
+    participationPriceCredits: z.number().int().min(1).max(100_000),
+    minimumParticipationPrice: z.number().int().min(1).max(100_000),
+    expertiseAdjustments: expertiseAdjustmentsSchema.default(() => expertiseAdjustmentsSchema.parse(zeroExpertiseAdjustments)),
     withdrawalRefundPercentage: z.number().int().min(0).max(100),
     roundRefundUp: z.boolean(),
     unawardedQuoteRefundCredits: z.number().int().min(0).max(100_000),

@@ -1,3 +1,5 @@
+import { AssignmentEmailPreference } from '@/components/account/assignment-email-preference'
+import { getPrisma } from '@/lib/prisma'
 import { AuthShell, StatusMessage } from '@/components/auth/auth-shell'
 import { LogoutButton } from '@/components/auth/logout-button'
 import { LinkButton } from '@/components/ui/link-button'
@@ -22,6 +24,7 @@ function Detail({ label, value }: { label: string; value: string }) {
 
 export default async function AccountPage() {
   const context = await getActiveOrganizationContext()
+  const preference = context.user.accountType === 'PROFESSIONAL' ? await getPrisma().user.findUnique({ where: { id: context.user.id }, select: { assignmentEmailEnabled: true } }) : null
   let isPlatformAdministrator = false
   if (context.user.platformRole === 'ADMIN') {
     try {
@@ -45,6 +48,7 @@ export default async function AccountPage() {
     <AuthShell title={model.title} intro="Dit is uw persoonlijke WorkMatchr-account." wide>
       <div className="grid gap-8 lg:grid-cols-[minmax(0,0.45fr)_minmax(0,0.55fr)] lg:items-start">
         <section aria-labelledby="accountgegevens-heading">
+          {preference && <AssignmentEmailPreference enabled={preference.assignmentEmailEnabled} />}
           <h2 id="accountgegevens-heading" className="font-semibold text-brand-dark">Persoonlijk account</h2>
           <dl className="mt-4 grid gap-4 sm:grid-cols-2">
             <Detail label="E-mailadres" value={model.email} />
