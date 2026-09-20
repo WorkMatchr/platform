@@ -1,5 +1,7 @@
+import { NavigationPending } from '@/components/ui/navigation-feedback'
 export default function PlatformAdminLoading() {
-  return (
+  return (<>
+      <NavigationPending />
     <div className="space-y-4" aria-live="polite" aria-busy="true">
       <div className="h-20 animate-pulse rounded-card bg-border" />
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
@@ -7,5 +9,5 @@ export default function PlatformAdminLoading() {
       </div>
       <span className="sr-only">Platformbeheer wordt geladen.</span>
     </div>
-  )
+  </>)
 }

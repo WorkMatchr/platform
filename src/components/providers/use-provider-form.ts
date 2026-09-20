@@ -1,12 +1,14 @@
 'use client'
 
-import { useActionState, useEffect, useId, useState } from 'react'
+import { usePendingAction } from '@/components/ui/use-pending-action'
+
+import { useEffect, useId, useState } from 'react'
 import type { ProviderActionState } from '@/app/aanbiedersdossier/actions'
 
 type ProviderAction = (state: ProviderActionState, formData: FormData) => Promise<ProviderActionState>
 
 export function useProviderForm(action: ProviderAction) {
-  const [state, formAction, pending] = useActionState(action, {})
+  const [state, formAction, pending] = usePendingAction(action, {})
   const [userDirty, setDirty] = useState(false)
   const formId = useId()
   const dirty = state.success ? false : userDirty

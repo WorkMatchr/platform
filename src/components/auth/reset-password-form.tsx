@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type FormEvent } from 'react'
+import { useState, useRef, type FormEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import { FieldError, StatusMessage, fieldClassName } from '@/components/auth/auth-shell'
 import { authClient } from '@/lib/auth-client'
@@ -9,12 +9,15 @@ import { GENERIC_AUTH_REQUEST_ERROR, resetPasswordSchema } from '@/lib/auth-vali
 import { PASSWORD_CHECK_UNAVAILABLE_MESSAGE, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, PASSWORD_REJECTED_MESSAGE } from '@/lib/password-policy'
 
 export function ResetPasswordForm({ token }: { token?: string }) {
-  const [loading, setLoading] = useState(false)
+  const [loading, updateLoading] = useState(false)
+  const active = useRef(false)
+  const setLoading = (value: boolean) => { active.current = value; updateLoading(value) }
   const [message, setMessage] = useState<string>()
   const [errors, setErrors] = useState<Record<string, string[] | undefined>>({})
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (active.current) return
     setMessage(undefined)
     const result = resetPasswordSchema.safeParse({ ...Object.fromEntries(new FormData(event.currentTarget)), token })
     if (!result.success) { setErrors(result.error.flatten().fieldErrors); return }

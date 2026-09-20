@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import Link from '@/components/ui/navigation-link'
 import type { ProviderDossierOpenAction } from '@/lib/providers/provider-dossier-open-actions'
 import { Card } from '@/components/ui/card'
 import { LinkButton } from '@/components/ui/link-button'

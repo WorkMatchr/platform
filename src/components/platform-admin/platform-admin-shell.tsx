@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import Link from '@/components/ui/navigation-link'
 import type { ReactNode } from 'react'
 import { LogoutButton } from '@/components/auth/logout-button'
 import { WorkMatchrLogo } from '@/components/branding/workmatchr-logo'

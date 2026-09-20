@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { Container } from '@/components/layout/container'
 import { Section } from '@/components/layout/section'
-import { Button } from '@/components/ui/button'
+import { ActionForm, SubmitButton as Button } from '@/components/ui/action-form'
 import { LinkButton } from '@/components/ui/link-button'
 import { requireOrganizationMembership } from '@/lib/organizations/organization-authorization'
 import {
@@ -295,7 +295,7 @@ export default async function ProviderRequestDetailPage({
             ) : detail.canManage && interested ? (
               <div className="mt-4 flex flex-col items-start gap-3 sm:flex-row">
                 {!offerSlotsFull ? (
-                  <form action={claimRequestOfferSlotAction}>
+                  <ActionForm action={claimRequestOfferSlotAction}>
                     <input
                       type="hidden"
                       name="requestId"
@@ -304,9 +304,9 @@ export default async function ProviderRequestDetailPage({
                     <Button type="submit">
                       Offerteplaats claimen
                     </Button>
-                  </form>
+                  </ActionForm>
                 ) : null}
-                <form action={withdrawRequestInterestAction}>
+                <ActionForm action={withdrawRequestInterestAction}>
                   <input
                     type="hidden"
                     name="requestId"
@@ -315,10 +315,10 @@ export default async function ProviderRequestDetailPage({
                   <Button type="submit" variant="outline">
                     Interesse intrekken
                   </Button>
-                </form>
+                </ActionForm>
               </div>
             ) : detail.canManage ? (
-              <form
+              <ActionForm
                 action={registerRequestInterestAction}
                 className="mt-4"
               >
@@ -326,7 +326,7 @@ export default async function ProviderRequestDetailPage({
                 <Button type="submit">
                   Ik heb interesse
                 </Button>
-              </form>
+              </ActionForm>
             ) : (
               <p className="mt-3 text-sm text-text-secondary">
                 U kunt deze aanvraag bekijken. Alleen een OWNER of

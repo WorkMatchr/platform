@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type FormEvent } from 'react'
+import { useState, useRef, type FormEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import { FieldError, StatusMessage, fieldClassName } from '@/components/auth/auth-shell'
 import { authClient } from '@/lib/auth-client'
@@ -18,12 +18,15 @@ export function ActivateAccountForm({
   token: string
   email: string
 }) {
-  const [loading, setLoading] = useState(false)
+  const [loading, updateLoading] = useState(false)
+  const active = useRef(false)
+  const setLoading = (value: boolean) => { active.current = value; updateLoading(value) }
   const [message, setMessage] = useState<string>()
   const [errors, setErrors] = useState<Record<string, string[] | undefined>>({})
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (active.current) return
     setMessage(undefined)
     const result = resetPasswordSchema.safeParse({
       ...Object.fromEntries(new FormData(event.currentTarget)),

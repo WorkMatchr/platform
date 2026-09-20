@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import Link from '@/components/ui/navigation-link'
 import { AccountNavigationMenu } from '@/components/layout/account-navigation-menu'
 import { Container } from '@/components/layout/container'
 import { DisclosureMenu } from '@/components/ui/disclosure-menu'

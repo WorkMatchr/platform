@@ -1,6 +1,10 @@
 'use client'
 
-import { useActionState, useRef } from 'react'
+import { ActionForm } from '@/components/ui/action-form'
+
+import { usePendingAction } from '@/components/ui/use-pending-action'
+
+import { useRef } from 'react'
 import type { AccountManagementActionState } from '@/app/organisatie/gebruikers/actions'
 import { Button } from '@/components/ui/button'
 import { fieldClassName } from '@/components/auth/auth-shell'
@@ -26,7 +30,7 @@ export function AccountLifecycleDialog({
   action: LifecycleAction
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
-  const [state, formAction, pending] = useActionState(action, {})
+  const [state, formAction, pending] = usePendingAction(action, {})
   const blocking = mode === 'block'
   const title = blocking ? 'Account blokkeren' : 'Account deblokkeren'
 
@@ -40,7 +44,7 @@ export function AccountLifecycleDialog({
         aria-labelledby={`${mode}-${subjectUserId}-title`}
         className="w-[min(92vw,34rem)] rounded-card border border-border bg-surface p-0 text-text-primary shadow-card backdrop:bg-brand-dark/55"
       >
-        <form action={formAction} className="p-6 sm:p-8">
+        <ActionForm action={formAction} className="p-6 sm:p-8">
           <h2 id={`${mode}-${subjectUserId}-title`} className="text-xl font-bold text-brand-dark">{title}</h2>
           <p className="mt-3 text-sm text-text-secondary">
             {blocking
@@ -69,7 +73,7 @@ export function AccountLifecycleDialog({
             <Button type="button" variant="ghost" onClick={() => dialogRef.current?.close()} disabled={pending}>Annuleren</Button>
             <Button type="submit" variant={blocking ? 'secondary' : 'primary'} loading={pending}>{title}</Button>
           </div>
-        </form>
+        </ActionForm>
       </dialog>
     </>
   )

@@ -1,11 +1,14 @@
 'use client'
 
-import { useActionState } from 'react'
+import { ActionForm } from '@/components/ui/action-form'
+
+import { usePendingAction } from '@/components/ui/use-pending-action'
+
 import type { PublishIntakeActionState } from '@/app/opdrachten/actions'
 import { StatusMessage } from '@/components/auth/auth-shell'
 import { Button } from '@/components/ui/button'
 import type { IntakeAssignmentReadiness } from '@/lib/assignments/intake-assignment-readiness'
-import Link from 'next/link'
+import Link from '@/components/ui/navigation-link'
 import { AssignmentQuoteSlotsField } from './assignment-quote-slots-field'
 
 export function PublishIntakeForm({
@@ -19,12 +22,12 @@ export function PublishIntakeForm({
   expectedIntakeVersion: number
   readiness: IntakeAssignmentReadiness
 }) {
-  const [state, formAction, pending] = useActionState(action, {})
+  const [state, formAction, pending] = usePendingAction(action, {})
   const validationMessages = [...new Set(Object.values(state.errors ?? {}).flatMap((messages) => messages ?? []))]
   const readinessIssues = state.readinessIssues ?? []
 
   return (
-    <form action={formAction}>
+    <ActionForm action={formAction}>
       <input type="hidden" name="intakeId" value={intakeId} />
       <input type="hidden" name="expectedIntakeVersion" value={expectedIntakeVersion} />
       {state.message && <StatusMessage error>{state.message}</StatusMessage>}
@@ -52,6 +55,6 @@ export function PublishIntakeForm({
       <Button type="submit" loading={pending} disabled={!readiness.isReady} className="mt-5 w-full sm:w-auto">
         Opdracht publiceren
       </Button>
-    </form>
+    </ActionForm>
   )
 }

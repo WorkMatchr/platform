@@ -1,6 +1,10 @@
 'use client'
 
-import { useActionState, useEffect, useRef } from 'react'
+import { ActionForm } from '@/components/ui/action-form'
+
+import { usePendingAction } from '@/components/ui/use-pending-action'
+
+import { useEffect, useRef } from 'react'
 import type { OrganizationType } from '@/generated/prisma/client'
 import type { OrganizationActionState } from '@/app/organisatie/actions'
 import type { OrganizationFormValues } from '@/lib/organizations/organization-validation'
@@ -41,7 +45,7 @@ const organizationTypes = [
 ] as const
 
 export function OrganizationForm({ action, initialValues = {}, mode, sectors, fixedOrganizationType }: OrganizationFormProps) {
-  const [state, formAction, pending] = useActionState(action, {})
+  const [state, formAction, pending] = usePendingAction(action, {})
   const formRef = useRef<HTMLFormElement>(null)
   const submittedValues = state.values
   const error = (field: string) => state.errors?.[field]?.[0]
@@ -66,7 +70,7 @@ export function OrganizationForm({ action, initialValues = {}, mode, sectors, fi
   }, [state.errors, state.values])
 
   return (
-    <form ref={formRef} key={formKey} action={formAction} className="space-y-9" noValidate>
+    <ActionForm ref={formRef} key={formKey} action={formAction} className="space-y-9" noValidate>
       {initialValues.id && <input type="hidden" name="organizationId" value={initialValues.id} />}
       {state.message && <StatusMessage error>{state.message}</StatusMessage>}
 
@@ -145,6 +149,6 @@ export function OrganizationForm({ action, initialValues = {}, mode, sectors, fi
 
       {mode === 'create' && <div><label className={`flex items-start gap-3 rounded-control${isInvalid('acceptedBusinessAccuracy') ? ' text-error' : ''}`}><input className="mt-1" type="checkbox" name="acceptedBusinessAccuracy" required defaultChecked={value('acceptedBusinessAccuracy') === 'on'} aria-invalid={isInvalid('acceptedBusinessAccuracy')} aria-describedby={describedBy('acceptedBusinessAccuracy')} /><span>Ik bevestig dat deze gegevens zakelijk en correct zijn. <span aria-hidden="true">*</span></span></label><FieldError id="acceptedBusinessAccuracy-error" message={error('acceptedBusinessAccuracy')} /></div>}
       <Button type="submit" loading={pending} className="w-full sm:w-auto">{mode === 'create' ? 'Organisatie aanmaken' : 'Wijzigingen opslaan'}</Button>
-    </form>
+    </ActionForm>
   )
 }

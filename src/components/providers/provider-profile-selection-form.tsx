@@ -1,5 +1,7 @@
 'use client'
 
+import { ActionForm } from '@/components/ui/action-form'
+
 import type { ProviderActionState } from '@/app/aanbiedersdossier/actions'
 import { FieldError, fieldClassName } from '@/components/auth/auth-shell'
 import { Button } from '@/components/ui/button'
@@ -27,7 +29,7 @@ export function ProviderProfileSelectionForm({
   const selectedExpertise = new Set(form.values('coreExpertiseTermIds', selectedExpertiseIds))
   const selectedWorkModes = new Set(form.values('workModeTermIds', selectedWorkModeIds))
 
-  return <form data-provider-form={form.formId} action={form.formAction} onChange={() => form.setDirty(true)} className="space-y-7" noValidate>
+  return <ActionForm data-provider-form={form.formId} action={form.formAction} onChange={() => form.setDirty(true)} className="space-y-7" noValidate>
     <input type="hidden" name="expectedProfileVersion" value={profileVersion} />
     <ProviderFormFeedback state={form.state} dirty={form.dirty} />
     <fieldset>
@@ -46,7 +48,7 @@ export function ProviderProfileSelectionForm({
       </div>
     </fieldset>
     <Button type="submit" loading={form.pending}>Expertise en werkvormen opslaan</Button>
-  </form>
+  </ActionForm>
 }
 
 export function ProviderOrganizationClaimForm({
@@ -67,7 +69,7 @@ export function ProviderOrganizationClaimForm({
   submitLabel: string
 }) {
   const form = useProviderForm(action)
-  return <form data-provider-form={form.formId} action={form.formAction} onChange={() => form.setDirty(true)} className="space-y-5" noValidate>
+  return <ActionForm data-provider-form={form.formId} action={form.formAction} onChange={() => form.setDirty(true)} className="space-y-5" noValidate>
     <input type="hidden" name="expectedProfileVersion" value={profileVersion} />
     <ProviderFormFeedback state={form.state} dirty={form.dirty} />
     <div><label htmlFor={`${idPrefix}-term`} className="font-semibold">{selectionLabel}</label><select id={`${idPrefix}-term`} name="qualificationTermId" className={fieldClassName} defaultValue={form.value('qualificationTermId', '')} aria-invalid={form.invalid('qualificationTermId')}><option value="">Maak een keuze</option>{options.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}</select><FieldError id={`${idPrefix}-term-error`} message={form.error('qualificationTermId')} /></div>
@@ -75,5 +77,5 @@ export function ProviderOrganizationClaimForm({
     <div className="grid gap-4 sm:grid-cols-2"><div><label htmlFor={`${idPrefix}-start`} className="font-semibold">Startdatum <span className="font-normal text-text-secondary">(optioneel)</span></label><input id={`${idPrefix}-start`} name="issuedAt" type="date" className={fieldClassName} defaultValue={form.value('issuedAt', '')} /></div><div><label htmlFor={`${idPrefix}-end`} className="font-semibold">Einddatum <span className="font-normal text-text-secondary">(optioneel)</span></label><input id={`${idPrefix}-end`} name="validUntil" type="date" className={fieldClassName} defaultValue={form.value('validUntil', '')} /></div></div>
     <p className="text-sm text-text-secondary">Nieuwe vermeldingen worden altijd opgeslagen als zelf opgegeven. U kent uzelf hiermee geen verificatiestatus toe.</p>
     <Button type="submit" loading={form.pending}>{submitLabel}</Button>
-  </form>
+  </ActionForm>
 }

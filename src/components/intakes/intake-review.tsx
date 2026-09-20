@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import Link from '@/components/ui/navigation-link'
 import type { PublishIntakeActionState } from '@/app/opdrachten/actions'
 import { PublishIntakeForm } from '@/components/assignments/submit-intake-form'
 import { LinkButton } from '@/components/ui/link-button'

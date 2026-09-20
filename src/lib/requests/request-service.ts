@@ -375,28 +375,16 @@ export async function publishRequestAttempt(input: {
         ...dossier,
         organization,
       })
-      const membership =
-        await transaction.organizationMembership.findUnique({
-          where: { userId: input.viewer.userId },
-          select: {
-            organizationId: true,
-            status: true,
-            user: { select: { accountType: true } },
-            organization: {
-              select: {
-                status: true,
-                organizationType: true,
-              },
-            },
-          },
-        })
+      const membership = await transaction.organizationMembership.findUnique({ where: { userId: input.viewer.userId } })
+      const memberUser = membership ? await transaction.user.findUnique({ where: { id: membership.userId }, select: { accountType: true } }) : null
+      const memberOrganization = membership ? await transaction.organization.findUnique({ where: { id: membership.organizationId }, select: { status: true, organizationType: true } }) : null
       if (
         !membership ||
         membership.organizationId !== dossier.organizationId ||
         membership.status !== 'ACTIVE' ||
-        membership.user.accountType !== 'CLIENT' ||
-        membership.organization.status !== 'ACTIVE' ||
-        membership.organization.organizationType !== 'CLIENT'
+        memberUser?.accountType !== 'CLIENT' ||
+        memberOrganization?.status !== 'ACTIVE' ||
+        memberOrganization.organizationType !== 'CLIENT'
       ) {
         throw new RequestServiceError('ACCESS_DENIED')
       }

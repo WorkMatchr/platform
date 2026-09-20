@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import Link from '@/components/ui/navigation-link'
 import type { ComponentProps } from 'react'
 import { buttonBaseStyles, buttonVariantStyles, type ButtonVariant } from '@/components/ui/button'
 

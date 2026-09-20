@@ -11,18 +11,22 @@ export async function publishSimpleAdviceRequest(viewer: AdviceDossierViewer, su
   const value = simpleAdviceSchema.parse(raw)
   const at = new Date()
   if (!viewer.organizationId) throw new RequestServiceError('ACCESS_DENIED')
+  let failureStage = 'PUBLICATION_TRANSACTION'
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       return await getPrisma().$transaction(async transaction => {
+        failureStage = 'IDENTITY_VALIDATION'
         // Re-read active identity and tenant inside the same transaction as publication.
-        const membership = await transaction.organizationMembership.findUnique({ where: { userId: viewer.userId },
-          include: { user: { select: { status: true, accountType: true } }, organization: { select: { status: true, organizationType: true } } } })
-        if (!membership || membership.organizationId !== viewer.organizationId || membership.status !== 'ACTIVE' || membership.user.status !== 'ACTIVE' || membership.user.accountType !== 'CLIENT' || membership.organization.status !== 'ACTIVE' || membership.organization.organizationType !== 'CLIENT') throw new RequestServiceError('ACCESS_DENIED')
+        const membership = await transaction.organizationMembership.findUnique({ where: { userId: viewer.userId } })
+        const user = membership ? await transaction.user.findUnique({ where: { id: membership.userId }, select: { status: true, accountType: true } }) : null
+        const organization = membership ? await transaction.organization.findUnique({ where: { id: membership.organizationId }, select: { status: true, organizationType: true } }) : null
+        if (!membership || membership.organizationId !== viewer.organizationId || membership.status !== 'ACTIVE' || user?.status !== 'ACTIVE' || user.accountType !== 'CLIENT' || organization?.status !== 'ACTIVE' || organization.organizationType !== 'CLIENT') throw new RequestServiceError('ACCESS_DENIED')
         await transaction.$queryRaw(Prisma.sql`SELECT pg_advisory_xact_lock(hashtextextended(${id}, 0))::text`)
-        const existing = await transaction.adviceDossier.findUnique({ where: { id }, include: { versions: { where: { versionNumber: 1 } } } })
+        const existing = await transaction.adviceDossier.findUnique({ where: { id } })
+        const existingVersion = existing ? await transaction.adviceDossierVersion.findFirst({ where: { adviceDossierId: id, versionNumber: 1 } }) : null
         if (existing) {
           if (existing.ownerUserId !== viewer.userId || existing.organizationId !== viewer.organizationId) throw new RequestServiceError('NOT_FOUND')
-          const saved = simpleAdviceSchema.safeParse(existing.versions[0]?.simpleRequestSnapshot)
+          const saved = simpleAdviceSchema.safeParse(existingVersion?.simpleRequestSnapshot)
           if (!saved.success || JSON.stringify(saved.data) !== JSON.stringify(value)) throw new RequestServiceError('CONFLICT')
         } else {
           if (usesLocation(value, 'ORGANIZATION') && (value.organizationLocationId || !value.organizationLocationCity)) {
@@ -45,12 +49,20 @@ export async function publishSimpleAdviceRequest(viewer: AdviceDossierViewer, su
             adviceDossierId: id, actorUserId: viewer.userId, type, versionNumber: 1, idempotencyKey: `simple-advice:${id}:${type}`, occurredAt: at,
           })) })
         }
+        failureStage = 'REQUEST_ASSIGNMENT_HANDOFF'
         return publishRequestAttempt({ transaction, viewer, at, publication: { adviceDossierId: id,
           publicSummary: value.requestDescription, requestedStart: value.desiredStartMode === 'AS_SOON_AS_POSSIBLE' ? 'AS_SOON_AS_POSSIBLE' : value.desiredStartMode === 'WITHIN_ONE_MONTH' ? 'WITHIN_ONE_MONTH' : 'IN_CONSULTATION', notes: '' } })
       }, { isolationLevel: 'Serializable' })
     } catch (error) {
       if (error instanceof RequestServiceError) throw error
-      if (!isPrismaConflict(error) || attempt === 2) throw error
+      if (!isPrismaConflict(error) || attempt === 2) {
+        const rawCode = error && typeof error === 'object' && 'code' in error ? String(error.code) : null
+        console.error(JSON.stringify({ event: 'simple_advice_publication_failed', stage: failureStage,
+          exceptionType: error instanceof Error ? error.name : typeof error,
+          exceptionCode: rawCode && /^[A-Z0-9_]{1,64}$/.test(rawCode) ? rawCode : null,
+          correlationId: id }))
+        throw error
+      }
     }
   }
   throw new RequestServiceError('CONFLICT')

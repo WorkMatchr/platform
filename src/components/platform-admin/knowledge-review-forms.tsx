@@ -1,6 +1,10 @@
 'use client'
 
-import { useActionState, type MouseEvent } from 'react'
+import { ActionForm } from '@/components/ui/action-form'
+
+import { ACTION_ERROR, usePendingAction } from '@/components/ui/use-pending-action'
+
+import { type MouseEvent } from 'react'
 import {
   addKnowledgeSupportingSourceAction,
   decideKnowledgeReviewAction,
@@ -46,10 +50,10 @@ export type KnowledgeReviewDraftValues = {
 }
 
 export function KnowledgeReviewEditorialForm({ task, disabled }: { task: KnowledgeReviewDraftValues; disabled: boolean }) {
-  const [rawDecisionState, decisionAction, decisionPending] = useActionState(decideKnowledgeReviewAction, initialKnowledgeReviewActionState)
+  const [rawDecisionState, decisionAction, decisionPending] = usePendingAction(decideKnowledgeReviewAction, initialKnowledgeReviewActionState, () => ({ ...initialKnowledgeReviewActionState, status: 'error' as const, message: ACTION_ERROR }))
   const decisionState = normalizeKnowledgeActionState(rawDecisionState)
   return (
-    <form className="grid gap-5">
+    <ActionForm action={decisionAction} className="grid gap-5">
       <input name="reviewTaskId" type="hidden" value={task.id} />
       <input name="expectedVersion" type="hidden" value={task.version} />
       {disabled ? null : (
@@ -66,15 +70,15 @@ export function KnowledgeReviewEditorialForm({ task, disabled }: { task: Knowled
             <span>Ik bevestig dat de concrete uitzondering voldoende is afgehandeld. Dit publiceert niets automatisch.</span>
           </label>
           <div className="flex flex-wrap gap-3">
-            <button className={secondaryButton} disabled={decisionPending} formAction={decisionAction} name="operation" type="submit" value="DEFER">Later beoordelen</button>
-            <button className={secondaryButton} disabled={decisionPending} formAction={decisionAction} name="operation" type="submit" value="CHANGES_REQUIRED">Uitzondering blijft open</button>
-            <button className={dangerButton} disabled={decisionPending} formAction={decisionAction} name="operation" onClick={(event) => confirmDecision(event, 'Weet u zeker dat u dit kennisitem wilt afwijzen? De historie blijft bewaard.')} type="submit" value="REJECT">Kennisitem afwijzen</button>
-            <button className={primaryButton} disabled={decisionPending} formAction={decisionAction} name="operation" onClick={(event) => confirmDecision(event, 'Bevestigt u dat de concrete uitzondering is afgehandeld? Dit publiceert het kennisitem niet.')} type="submit" value="CONTENT_APPROVE">Uitzondering afhandelen</button>
+            <button className={secondaryButton} disabled={decisionPending} name="operation" type="submit" value="DEFER">Later beoordelen</button>
+            <button className={secondaryButton} disabled={decisionPending} name="operation" type="submit" value="CHANGES_REQUIRED">Uitzondering blijft open</button>
+            <button className={dangerButton} disabled={decisionPending} name="operation" onClick={(event) => confirmDecision(event, 'Weet u zeker dat u dit kennisitem wilt afwijzen? De historie blijft bewaard.')} type="submit" value="REJECT">Kennisitem afwijzen</button>
+            <button className={primaryButton} disabled={decisionPending} name="operation" onClick={(event) => confirmDecision(event, 'Bevestigt u dat de concrete uitzondering is afgehandeld? Dit publiceert het kennisitem niet.')} type="submit" value="CONTENT_APPROVE">Uitzondering afhandelen</button>
           </div>
         </div>
       )}
       <Feedback status={decisionState.status} message={decisionState.message} />
-    </form>
+    </ActionForm>
   )
 }
 
@@ -84,11 +88,11 @@ export function KnowledgeSupportingSourceForm({ reviewTaskId, version, sourceOpt
   disabled: boolean
   sourceOptions: Array<{ id: string; versionLabel: string; source: { code: string; title: string } }>
 }) {
-  const [rawState, action, pending] = useActionState(addKnowledgeSupportingSourceAction, initialKnowledgeReviewActionState)
+  const [rawState, action, pending] = usePendingAction(addKnowledgeSupportingSourceAction, initialKnowledgeReviewActionState, () => ({ ...initialKnowledgeReviewActionState, status: 'error' as const, message: ACTION_ERROR }))
   const state = normalizeKnowledgeActionState(rawState)
   if (disabled) return null
   return (
-    <form action={action} className="grid gap-4 rounded-card border border-border bg-surface p-4">
+    <ActionForm action={action} className="grid gap-4 rounded-card border border-border bg-surface p-4">
       <input name="reviewTaskId" type="hidden" value={reviewTaskId} />
       <input name="expectedVersion" type="hidden" value={version} />
       <label className="grid gap-1 text-sm font-semibold" htmlFor="sourceVersionId">Bestaande kennisbron koppelen (optioneel)
@@ -149,26 +153,26 @@ export function KnowledgeSupportingSourceForm({ reviewTaskId, version, sourceOpt
       <p className="text-xs text-text-secondary">Een geregistreerde bron wordt niet automatisch als betrouwbaar of voldoende voor publicatie aangemerkt.</p>
       <button className={`${secondaryButton} justify-self-start`} disabled={pending} type="submit">Ondersteunende bron registreren</button>
       <Feedback status={state.status} message={state.message} />
-    </form>
+    </ActionForm>
   )
 }
 
 export function KnowledgeSourceWithdrawalButton({ reviewTaskId, referenceId, version }: { reviewTaskId: string; referenceId: string; version: number }) {
   return (
-    <form action={withdrawKnowledgeSupportingSourceAction}>
+    <ActionForm action={withdrawKnowledgeSupportingSourceAction}>
       <input name="reviewTaskId" type="hidden" value={reviewTaskId} />
       <input name="referenceId" type="hidden" value={referenceId} />
       <input name="expectedVersion" type="hidden" value={version} />
       <button className="text-sm font-semibold text-error underline-offset-4 hover:underline" type="submit">Bronverwijzing intrekken</button>
-    </form>
+    </ActionForm>
   )
 }
 
 export function KnowledgeApprovalWithdrawalForm({ reviewTaskId, version }: { reviewTaskId: string; version: number }) {
-  const [rawState, action, pending] = useActionState(withdrawKnowledgeReviewApprovalAction, initialKnowledgeReviewActionState)
+  const [rawState, action, pending] = usePendingAction(withdrawKnowledgeReviewApprovalAction, initialKnowledgeReviewActionState, () => ({ ...initialKnowledgeReviewActionState, status: 'error' as const, message: ACTION_ERROR }))
   const state = normalizeKnowledgeActionState(rawState)
   return (
-    <form action={action} className="grid gap-3 rounded-card border border-error/40 bg-surface p-4">
+    <ActionForm action={action} className="grid gap-3 rounded-card border border-error/40 bg-surface p-4">
       <input name="reviewTaskId" type="hidden" value={reviewTaskId} />
       <input name="expectedVersion" type="hidden" value={version} />
       <label className="grid gap-1 text-sm font-semibold" htmlFor="withdrawalReason">Reden voor intrekken
@@ -181,6 +185,6 @@ export function KnowledgeApprovalWithdrawalForm({ reviewTaskId, version }: { rev
       </label>
       <button className={`${dangerButton} justify-self-start`} disabled={pending} onClick={(event) => confirmDecision(event, 'Wilt u de broncontrole intrekken en het kennisitem opnieuw laten controleren?')} type="submit">Controle intrekken</button>
       <Feedback status={state.status} message={state.message} />
-    </form>
+    </ActionForm>
   )
 }

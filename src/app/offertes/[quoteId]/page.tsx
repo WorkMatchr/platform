@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { submitQuoteAction } from '@/app/marktplaats/actions'
 import { Section } from '@/components/layout/section'
-import { Button } from '@/components/ui/button'
+import { ActionForm, SubmitButton as Button } from '@/components/ui/action-form'
 import { Card } from '@/components/ui/card'
 import { Heading } from '@/components/ui/heading'
 import { getProviderQuoteDetail } from '@/lib/marketplace/dashboard-query-service'
@@ -38,12 +38,12 @@ export default async function QuotePage({ params }: { params: Promise<{ quoteId:
         {quote.status === 'DRAFT' && membership.role !== 'MEMBER' ? (
           <div className="mt-6 flex flex-wrap gap-3">
             <Link className="font-semibold underline" href={`/offertes/nieuw?deelname=${quote.participation.id}`}>Offerte aanpassen</Link>
-            <form action={submitQuoteAction}>
+            <ActionForm action={submitQuoteAction}>
               <input type="hidden" name="quoteId" value={quote.id} />
               <input type="hidden" name="expectedQuoteVersion" value={quote.version} />
               <input type="hidden" name="idempotencyKey" value={`SUBMIT:${quote.id}:${randomUUID()}`} />
               <Button type="submit">Definitief indienen</Button>
-            </form>
+            </ActionForm>
           </div>
         ) : null}
         {quote.participation.messageChannel ? (

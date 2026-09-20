@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import Link from '@/components/ui/navigation-link'
 import type { IntakeListItem } from '@/lib/intakes/intake-query-service'
 import { IntakeStatusBadge } from './intake-status-badge'
 import { Card } from '@/components/ui/card'

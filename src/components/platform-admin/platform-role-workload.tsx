@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import Link from '@/components/ui/navigation-link'
 import { PlatformAdminEmailForm } from './platform-admin-actions'
 import { AdminPageHeader, AdminSection, MetricCard, StatusPill } from './platform-admin-ui'
 import { presentProviderReviewStatus } from '@/lib/providers/provider-dossier-presentation'

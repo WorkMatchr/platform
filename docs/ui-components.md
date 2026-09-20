@@ -71,3 +71,7 @@ Componenten in `src/components/assignments` leveren de centrale statusbadge, ove
 - Behoud een klikoppervlak van minimaal circa 44 × 44 pixels.
 - Vertrouw niet uitsluitend op kleur om status of betekenis over te brengen.
 - Maak alleen een clientcomponent wanneer interactie of een browser-API dit vereist.
+
+## Loading en actiefeedback
+
+Zie [Global action and navigation loading feedback](global-loading-feedback.md) voor het bestaande Button-patroon, ActionForm/SubmitButton, guarded action state en vertraagde navigatiefeedback.

@@ -1,6 +1,10 @@
 'use client'
 
-import { useActionState, useEffect, useRef } from 'react'
+import { ActionForm } from '@/components/ui/action-form'
+
+import { usePendingAction } from '@/components/ui/use-pending-action'
+
+import { useEffect, useRef } from 'react'
 import type { AssignmentActionState } from '@/app/opdrachten/actions'
 import { FieldError, StatusMessage, fieldClassName } from '@/components/auth/auth-shell'
 import { Button } from '@/components/ui/button'
@@ -14,7 +18,7 @@ export function AssignmentEditForm({
   action: (state: AssignmentActionState, formData: FormData) => Promise<AssignmentActionState>
   assignment: AssignmentEditView
 }) {
-  const [state, formAction, pending] = useActionState(action, {})
+  const [state, formAction, pending] = usePendingAction(action, {})
   const formRef = useRef<HTMLFormElement>(null)
   const value = (field: string, fallback: string) => typeof state.values?.[field] === 'string' ? state.values[field] : fallback
   const error = (field: string) => state.errors?.[field]?.[0]
@@ -27,7 +31,7 @@ export function AssignmentEditForm({
   }, [state.errors, state.values])
 
   return (
-    <form ref={formRef} key={formKey} action={formAction} className="space-y-7" noValidate>
+    <ActionForm ref={formRef} key={formKey} action={formAction} className="space-y-7" noValidate>
       <input type="hidden" name="assignmentId" value={assignment.id} />
       <input type="hidden" name="expectedAssignmentVersion" value={assignment.version} />
       {state.message && <StatusMessage error>{state.message}</StatusMessage>}
@@ -104,6 +108,6 @@ export function AssignmentEditForm({
         <LinkButton href={`/opdrachten/${assignment.id}`} variant="outline">Annuleren</LinkButton>
         <Button type="submit" loading={pending}>Wijzigingen opslaan</Button>
       </div>
-    </form>
+    </ActionForm>
   )
 }

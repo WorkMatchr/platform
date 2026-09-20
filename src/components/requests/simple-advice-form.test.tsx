@@ -18,11 +18,11 @@ beforeAll(async () => {
 afterAll(() => { cleanup?.(); closeDom?.(); for (const [key, descriptor] of originalGlobals) { if (descriptor) Object.defineProperty(globalThis, key, descriptor); else Reflect.deleteProperty(globalThis, key) } })
 import { SimpleAdviceForm } from './simple-advice-form'
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }))
-vi.mock('next/link', () => ({ default: ({ children, ...props }: React.ComponentProps<'a'>) => <a {...props}>{children}</a> }))
+vi.mock('next/link', () => ({ useLinkStatus: () => ({ pending: false }), default: ({ children, ...props }: React.ComponentProps<'a'>) => <a {...props}>{children}</a> }))
 beforeEach(() => { cleanup(); sessionStorage.clear() })
 const setup = () => render(<SimpleAdviceForm action={vi.fn().mockResolvedValue({})} viewerId="owner" locations={[{ id: '11111111-1111-4111-8111-111111111111', city: 'Utrecht' }]} />)
 const choose = (label: string, value: string) => fireEvent.change(screen.getByLabelText(label), { target: { value } })
-const next = async () => { await waitFor(() => expect((screen.getByText('Verder') as HTMLButtonElement).disabled).toBe(false)); fireEvent.click(screen.getByText('Verder')) }
+const next = async () => { await waitFor(() => expect((screen.getByRole('button', { name: 'Verder' }) as HTMLButtonElement).disabled).toBe(false)); fireEvent.click(screen.getByRole('button', { name: 'Verder' })) }
 const fill = () => {
   choose('Beschrijf uw vraag of situatie', 'Wij willen onze werkplek laten beoordelen.')
   choose('Wat wilt u bereiken?', 'ADVICE')
@@ -56,7 +56,7 @@ describe('gedeelde opdrachtflow', () => {
     const action = vi.fn().mockResolvedValue({})
     render(<SimpleAdviceForm action={action} viewerId="owner" />)
     fireEvent.click(screen.getByLabelText('Nee')); choose('Waar gaat uw vraag over?', 'UNKNOWN'); await next(); fill()
-    const continueButton = screen.getByText('Verder') as HTMLButtonElement
+    const continueButton = screen.getByRole('button', { name: 'Verder' }) as HTMLButtonElement
     fireEvent.click(continueButton)
     expect(screen.getByText('Controleer uw opdracht')).toBeTruthy()
     expect(continueButton.type).toBe('button')
@@ -193,4 +193,30 @@ describe('expliciet aanvullende deskundigheden',()=>{
   sessionStorage.setItem('workmatchr-simple-advice-login','yes');view.unmount();setup();await waitFor(()=>expect(screen.getByText('Opdracht publiceren')).toBeTruthy());expect(screen.getByText('Aanvullende deskundigheden')).toBeTruthy()
   fireEvent.click(screen.getByText('Wijzigen'));expect((screen.getAllByLabelText('Arbeidshygiënist',{selector:'input'})[0] as HTMLInputElement).checked).toBe(true)
  })
+})
+
+
+it('geeft direct opslagfeedback, blokkeert dubbel Verder en herstelt na afwijzing', async () => {
+  let reject!: (reason: Error) => void
+  const save = vi.fn().mockReturnValue(new Promise((_, fail) => { reject = fail }))
+  render(<SimpleAdviceForm draftId="pending-save" initialValues={{routeChoice:'KNOWS_EXPERTISE',requestedExpertise:'HVK'}} saveAction={save} action={vi.fn()} viewerId="owner" />)
+  await waitFor(()=>expect((screen.getByRole('button',{name:'Verder'}) as HTMLButtonElement).disabled).toBe(false))
+  const button=screen.getByRole('button',{name:'Verder'});fireEvent.click(button);fireEvent.click(button)
+  expect(save).toHaveBeenCalledOnce();expect((screen.getByRole('button',{name:'Opslaan…'}) as HTMLButtonElement).disabled).toBe(true)
+  reject(new Error('network'));await waitFor(()=>expect(screen.getByRole('alert').textContent).toContain('Opslaan is niet gelukt'))
+  expect((screen.getByRole('button',{name:'Verder'}) as HTMLButtonElement).disabled).toBe(false)
+  expect((screen.getByLabelText('Welke deskundigheid zoekt u?') as HTMLSelectElement).value).toBe('HVK')
+})
+it('publicatie geeft directe feedback en herhaalde Enter-submit start geen tweede actie',async()=>{
+  let reject!: (reason:Error)=>void
+  const action=vi.fn().mockReturnValueOnce(new Promise((_,fail)=>{reject=fail})).mockResolvedValue({message:'Opnieuw mogelijk'})
+  render(<SimpleAdviceForm action={action} viewerId="owner" />)
+  fireEvent.click(screen.getByLabelText('Nee'));choose('Waar gaat uw vraag over?','UNKNOWN');await next();fill();await next()
+  const form=screen.getByRole('button',{name:'Opdracht publiceren'}).closest('form')!;fireEvent.submit(form);fireEvent.submit(form)
+  await waitFor(()=>expect(action).toHaveBeenCalledOnce());expect((screen.getByRole('button',{name:'Opdracht publiceren…'}) as HTMLButtonElement).disabled).toBe(true)
+  reject(new Error('network'));await waitFor(()=>expect((screen.getByRole('button',{name:'Opdracht publiceren'}) as HTMLButtonElement).disabled).toBe(false))
+  expect(screen.getByRole('alert').textContent).toContain('technische fout');expect(screen.getByText('Wij willen onze werkplek laten beoordelen.')).toBeTruthy()
+  expect((form.querySelector('input[name=payload]') as HTMLInputElement).value.length).toBeGreaterThan(0)
+  expect((form.querySelector('input[name=submissionId]') as HTMLInputElement).value).toMatch(/^[0-9a-f-]{36}$/i)
+  fireEvent.submit(form);await waitFor(()=>expect(action).toHaveBeenCalledTimes(2));await waitFor(()=>expect(screen.getByRole('alert').textContent).toBe('Opnieuw mogelijk'))
 })

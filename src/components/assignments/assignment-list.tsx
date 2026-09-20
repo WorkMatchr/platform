@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import Link from '@/components/ui/navigation-link'
 import type { AssignmentListItem } from '@/lib/assignments/assignment-query-service'
 import { formatAssignmentDate } from '@/lib/assignments/assignment-presentation'
 import { AssignmentStatusBadge } from './assignment-status-badge'

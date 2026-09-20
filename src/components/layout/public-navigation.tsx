@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import Link from '@/components/ui/navigation-link'
 import { usePathname } from 'next/navigation'
 import { publicNavigationItems, type PublicNavigationHref } from '@/content/public-routes'
 import { DisclosureMenu } from '@/components/ui/disclosure-menu'

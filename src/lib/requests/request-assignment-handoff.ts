@@ -19,17 +19,65 @@ type HandoffInput = {
   sourceVersionId: string; at: Date; mode: 'PUBLICATION' | 'RECOVERY'
 }
 
+type SpecialismReference = {
+  expertiseId: string
+  specialismId: string
+  capabilityCode: string
+  termId: string
+  taxonomyVersionId: string
+  tier: 'PRIMARY' | 'ADDITIONAL'
+}
+
+/** Prisma interactive transactions use one pg client; never overlap queries on it. */
+export async function resolveHandoffSpecialismReferences(
+  transaction: Prisma.TransactionClient,
+  identities: readonly (keyof typeof expertiseSpecialismSlugs)[],
+): Promise<SpecialismReference[]> {
+  const references: SpecialismReference[] = []
+  for (const [position, code] of identities.entries()) {
+    const specialism = await transaction.specialism.findFirst({ where: { slug: expertiseSpecialismSlugs[code], isActive: true } })
+    const mapping = specialism ? await transaction.providerSpecialismTaxonomyMap.findUnique({ where: { specialismId: specialism.id } }) : null
+    const term = mapping ? await transaction.providerTaxonomyTerm.findUnique({ where: { id: mapping.termId } }) : null
+    const version = term ? await transaction.providerTaxonomyVersion.findUnique({ where: { id: term.versionId } }) : null
+    if (!specialism || !term?.isActive || version?.status !== 'PUBLISHED') throw new RequestHandoffError('REFERENCE_MISSING')
+    references.push({ expertiseId: code, specialismId: specialism.id, capabilityCode: term.code, termId: term.id,
+      taxonomyVersionId: term.versionId, tier: position === 0 ? 'PRIMARY' : 'ADDITIONAL' })
+  }
+  return references
+}
+
+/** Nested create-many expansion can overlap queries on Prisma's single transaction client. */
+export async function createHandoffAssignmentSpecialisms(
+  transaction: Prisma.TransactionClient,
+  assignmentId: string,
+  references: readonly SpecialismReference[],
+) {
+  for (const reference of references) {
+    await transaction.assignmentSpecialism.create({ data: {
+      assignmentId,
+      specialismId: reference.specialismId,
+      isRequired: reference.tier === 'PRIMARY',
+    } })
+  }
+}
+
 /** Called only within the publication/recovery Serializable transaction. Never starts matching. */
 export async function handoffRequest(transaction: Prisma.TransactionClient, input: HandoffInput) {
   await transaction.$queryRaw(Prisma.sql`SELECT "id" FROM "Request" WHERE "id"=${input.requestId}::uuid FOR UPDATE`)
-  const request = await transaction.request.findUnique({ where: { id: input.requestId }, include: {
-    adviceDossier: true, assignmentHandoff: true, assignment: true,
-    organization: { select: { status: true, organizationType: true } },
-    events: { where: { type: 'REQUEST_PUBLISHED' } },
-    _count: { select: { interests: true, offerSlots: true, creditTransactions: true, reliabilityEvents: true } },
-  } })
+  const request = await transaction.request.findUnique({ where: { id: input.requestId } })
+  const adviceDossier = request ? await transaction.adviceDossier.findUnique({ where: { id: request.adviceDossierId } }) : null
+  const assignmentHandoff = request ? await transaction.requestAssignmentHandoff.findUnique({ where: { requestId: request.id } }) : null
+  const existingAssignment = request ? await transaction.assignment.findUnique({ where: { requestId: request.id } }) : null
+  const organization = request ? await transaction.organization.findUnique({ where: { id: request.organizationId }, select: { status: true, organizationType: true } }) : null
+  const publicationEvents = request ? await transaction.requestEvent.findMany({ where: { requestId: request.id, type: 'REQUEST_PUBLISHED' } }) : []
+  const dependentCounts = request ? [
+    await transaction.requestInterest.count({ where: { requestId: request.id } }),
+    await transaction.requestOfferSlot.count({ where: { requestId: request.id } }),
+    await transaction.creditTransaction.count({ where: { requestId: request.id } }),
+    await transaction.marketplaceReliabilityEvent.count({ where: { requestId: request.id } }),
+  ] : []
   if (!request || request.organizationId !== input.organizationId || request.tenantId !== input.organizationId) throw new RequestHandoffError('ACCESS_DENIED')
-  if (request.organization.status !== 'ACTIVE' || request.organization.organizationType !== 'CLIENT') throw new RequestHandoffError('NOT_ELIGIBLE')
+  if (!adviceDossier || organization?.status !== 'ACTIVE' || organization.organizationType !== 'CLIENT') throw new RequestHandoffError('NOT_ELIGIBLE')
   if (input.mode === 'RECOVERY') {
     await requireMarketplacePlatformAdmin(transaction, input.actorUserId)
   } else {
@@ -37,15 +85,15 @@ export async function handoffRequest(transaction: Prisma.TransactionClient, inpu
       userId: input.actorUserId, organizationId: input.organizationId, status: 'ACTIVE',
       user: { status: 'ACTIVE', accountType: 'CLIENT' }, organization: { status: 'ACTIVE', organizationType: 'CLIENT' },
     } })
-    if (!member || request.adviceDossier.ownerUserId !== input.actorUserId) throw new RequestHandoffError('ACCESS_DENIED')
+    if (!member || adviceDossier.ownerUserId !== input.actorUserId) throw new RequestHandoffError('ACCESS_DENIED')
   }
-  if (request.assignmentHandoff) {
-    if (request.assignment?.id !== request.assignmentHandoff.assignmentId || request.assignmentHandoff.adviceDossierVersionId !== input.sourceVersionId) throw new RequestHandoffError('INTEGRITY_ERROR')
-    return request.assignmentHandoff
+  if (assignmentHandoff) {
+    if (existingAssignment?.id !== assignmentHandoff.assignmentId || assignmentHandoff.adviceDossierVersionId !== input.sourceVersionId) throw new RequestHandoffError('INTEGRITY_ERROR')
+    return assignmentHandoff
   }
-  if (input.mode === 'RECOVERY' && (request.events.length !== 1 || request.events[0]!.occurredAt.getTime() !== request.publishedAt?.getTime())) throw new RequestHandoffError('NOT_ELIGIBLE')
-  if (request.assignment || request.status !== 'PUBLISHED' || !request.publishedAt || (input.mode === 'RECOVERY' && request.adviceDossier.sourceRoute !== 'SIMPLE_ADVICE')) throw new RequestHandoffError('NOT_ELIGIBLE')
-  if (Object.values(request._count).some(count => count !== 0)) throw new RequestHandoffError('NOT_ELIGIBLE')
+  if (input.mode === 'RECOVERY' && (publicationEvents.length !== 1 || publicationEvents[0]!.occurredAt.getTime() !== request.publishedAt?.getTime())) throw new RequestHandoffError('NOT_ELIGIBLE')
+  if (existingAssignment || request.status !== 'PUBLISHED' || !request.publishedAt || (input.mode === 'RECOVERY' && adviceDossier.sourceRoute !== 'SIMPLE_ADVICE')) throw new RequestHandoffError('NOT_ELIGIBLE')
+  if (dependentCounts.some(count => count !== 0)) throw new RequestHandoffError('NOT_ELIGIBLE')
   const version = await transaction.adviceDossierVersion.findFirst({ where: { id: input.sourceVersionId, adviceDossierId: request.adviceDossierId } })
   if (!version || (request.adviceDossierVersionId && request.adviceDossierVersionId !== version.id)) throw new RequestHandoffError('INTEGRITY_ERROR')
   const value = simpleAdviceSchema.parse(version.simpleRequestSnapshot)
@@ -53,16 +101,9 @@ export async function handoffRequest(transaction: Prisma.TransactionClient, inpu
     JSON.stringify(value.primaryExpertise ? [value.primaryExpertise] : []) !== JSON.stringify(request.primaryExpertiseCodes) ||
     JSON.stringify(value.additionalExpertises) !== JSON.stringify(request.additionalExpertiseCodes)) throw new RequestHandoffError('INTEGRITY_ERROR')
   // Legacy recovery requires unambiguous original v1, never the current/latest version.
-  if (input.mode === 'RECOVERY' && (version.versionNumber !== 1 || request.adviceDossier.currentVersionNumber !== 1)) throw new RequestHandoffError('NOT_ELIGIBLE')
+  if (input.mode === 'RECOVERY' && (version.versionNumber !== 1 || adviceDossier.currentVersionNumber !== 1)) throw new RequestHandoffError('NOT_ELIGIBLE')
   const identities = [...(value.primaryExpertise ? [value.primaryExpertise] : []), ...value.additionalExpertises]
-  const references = await Promise.all(identities.map(async (code, position) => {
-    const specialism = await transaction.specialism.findFirst({ where: { slug: expertiseSpecialismSlugs[code], isActive: true },
-      include: { providerSpecialismTaxonomyMap: { include: { term: { include: { version: true } } } } } })
-    const term = specialism?.providerSpecialismTaxonomyMap?.term
-    if (!specialism || !term?.isActive || term.version.status !== 'PUBLISHED') throw new RequestHandoffError('REFERENCE_MISSING')
-    return { expertiseId: code, specialismId: specialism.id, capabilityCode: term.code, termId: term.id,
-      taxonomyVersionId: term.versionId, tier: position === 0 ? 'PRIMARY' as const : 'ADDITIONAL' as const }
-  }))
+  const references = await resolveHandoffSpecialismReferences(transaction, identities)
   const sector = request.sectorCode ? await transaction.providerSectorTaxonomyMap.findFirst({
     where: { term: { code: request.sectorCode, isActive: true, version: { status: 'PUBLISHED' } }, sector: { isActive: true } },
   }) : null
@@ -104,14 +145,14 @@ export async function handoffRequest(transaction: Prisma.TransactionClient, inpu
     await transaction.assignmentLocationItem.deleteMany({ where: { assignmentId: legacy.id } })
   }
   const assignmentData = {
-    ...fields, requestId: request.id, clientOrganizationId: request.organizationId, createdByUserId: request.adviceDossier.ownerUserId,
+    ...fields, requestId: request.id, clientOrganizationId: request.organizationId, createdByUserId: adviceDossier.ownerUserId,
     status: 'READY_FOR_REVIEW' as const, version: assignmentVersion,
-    specialisms: { create: references.map(r => ({ specialismId: r.specialismId, isRequired: r.tier === 'PRIMARY' })) },
     locationItems: items.length ? { create: items } : undefined,
   }
   const assignment = legacy
     ? await transaction.assignment.update({ where: { id: legacy.id }, data: { ...assignmentData, createdByUserId: legacy.createdByUserId } })
     : await transaction.assignment.create({ data: assignmentData })
+  await createHandoffAssignmentSpecialisms(transaction, assignment.id, references)
   await transaction.assignmentRevision.create({ data: { ...fields, assignmentId: assignment.id, version: assignmentVersion,
     changedByUserId: input.actorUserId, locationItems: items.length ? { create: items } : undefined } })
   await transaction.assignment.update({ where: { id: assignment.id }, data: { status: 'OPEN', publishedAt: anchor, publishedVersion: assignmentVersion, publishedByUserId: input.actorUserId } })

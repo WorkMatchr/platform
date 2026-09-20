@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type FormEvent } from 'react'
+import { useState, useRef, type FormEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import { StatusMessage, fieldClassName } from '@/components/auth/auth-shell'
 import { authClient } from '@/lib/auth-client'
@@ -14,12 +14,15 @@ import {
 } from '@/lib/auth-validation'
 
 export function EmailRequestForm({ mode }: { mode: 'reset' | 'verification' }) {
-  const [loading, setLoading] = useState(false)
+  const [loading, updateLoading] = useState(false)
+  const active = useRef(false)
+  const setLoading = (value: boolean) => { active.current = value; updateLoading(value) }
   const [message, setMessage] = useState<string>()
   const [hasError, setHasError] = useState(false)
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (active.current) return
     setMessage(undefined)
     const result = emailSchema.safeParse(Object.fromEntries(new FormData(event.currentTarget)))
     if (!result.success) {

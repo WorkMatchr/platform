@@ -1,3 +1,4 @@
+import { ActionForm, SubmitButton } from '@/components/ui/action-form'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { changePlatformOrganizationStatusAction } from '@/app/platformbeheer/actions'
@@ -37,14 +38,14 @@ export default async function PlatformOrganizationDetailPage({
         </div>
       </AdminSection>
       {(organization.status === 'ACTIVE' || organization.status === 'SUSPENDED') ? (
-        <form action={changePlatformOrganizationStatusAction} className="flex flex-wrap items-end gap-3 rounded-card border border-border bg-surface p-4">
+        <ActionForm action={changePlatformOrganizationStatusAction} className="flex flex-wrap items-end gap-3 rounded-card border border-border bg-surface p-4">
           <input type="hidden" name="organizationId" value={organization.id} />
           <input type="hidden" name="operation" value={organization.status === 'ACTIVE' ? 'block' : 'unblock'} />
           <label className="grid flex-1 gap-1 text-xs font-semibold text-text-secondary">Reden
             <input className="min-h-10 rounded-control border border-border px-3 text-sm" name="reason" required minLength={5} maxLength={500} />
           </label>
-          <button className="min-h-10 rounded-control border border-border px-4 text-sm font-semibold text-brand-dark" type="submit">{organization.status === 'ACTIVE' ? 'Organisatie blokkeren' : 'Organisatie deblokkeren'}</button>
-        </form>
+          <SubmitButton variant="outline" className="min-h-10 rounded-control border border-border px-4 text-sm font-semibold text-brand-dark" type="submit">{organization.status === 'ACTIVE' ? 'Organisatie blokkeren' : 'Organisatie deblokkeren'}</SubmitButton>
+        </ActionForm>
       ) : null}
       <AdminSection title="Gebruikers" description={`${organization.memberships.length} gebruiker${organization.memberships.length === 1 ? '' : 's'} gekoppeld aan deze organisatie.`}>
         <Link className="inline-flex min-h-10 items-center rounded-control bg-brand-primary px-4 text-sm font-semibold text-white hover:bg-brand-primary-hover" href={`/platformbeheer/organisaties/${organization.id}/gebruikers`}>

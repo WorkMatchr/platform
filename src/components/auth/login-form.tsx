@@ -1,26 +1,30 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, type FormEvent } from 'react'
+import { useState, useRef, type FormEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import { StatusMessage, fieldClassName } from '@/components/auth/auth-shell'
 import { authClient } from '@/lib/auth-client'
 import { GENERIC_SIGN_IN_ERROR, signInSchema } from '@/lib/auth-validation'
+import { runAuthClientRequest } from '@/lib/auth-form-request'
 import { getSafeReturnUrl } from '@/lib/safe-redirect'
 
 export function LoginForm({ returnTo, accessDenied }: { returnTo?: string; accessDenied?: boolean }) {
-  const [loading, setLoading] = useState(false)
+  const [loading, updateLoading] = useState(false)
+  const active = useRef(false)
+  const setLoading = (value: boolean) => { active.current = value; updateLoading(value) }
   const [message, setMessage] = useState<string>()
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (active.current) return
     setMessage(undefined)
     const result = signInSchema.safeParse({ ...Object.fromEntries(new FormData(event.currentTarget)), returnTo })
     if (!result.success) return setMessage(GENERIC_SIGN_IN_ERROR)
     setLoading(true)
-    const response = await authClient.signIn.email({ email: result.data.email, password: result.data.password, rememberMe: true })
+    const response = await runAuthClientRequest(() => authClient.signIn.email({ email: result.data.email, password: result.data.password, rememberMe: true }))
     setLoading(false)
-    if (response.error) return setMessage(response.error.status === 429 ? 'U hebt te veel pogingen gedaan. Probeer het later opnieuw.' : GENERIC_SIGN_IN_ERROR)
+    if (response !== 'accepted') return setMessage(response === 'rate_limited' ? 'U hebt te veel pogingen gedaan. Probeer het later opnieuw.' : GENERIC_SIGN_IN_ERROR)
     const destination = getSafeReturnUrl(result.data.returnTo, '/dashboard')
     window.location.assign(destination)
   }

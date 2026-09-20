@@ -1,8 +1,10 @@
+import { NavigationPending } from '@/components/ui/navigation-feedback'
 import { Container } from '@/components/layout/container'
 import { Section } from '@/components/layout/section'
 
 export default function AdviceDossiersLoading() {
-  return (
+  return (<>
+      <NavigationPending />
     <Section spacing="compact">
       <Container>
         <div
@@ -19,5 +21,5 @@ export default function AdviceDossiersLoading() {
         </div>
       </Container>
     </Section>
-  )
+  </>)
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, type FormEvent } from 'react'
+import { useState, useRef, type FormEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import { FieldError, StatusMessage, fieldClassName } from '@/components/auth/auth-shell'
 import { runNewPasswordRegistrationRequest } from '@/lib/auth-form-request'
@@ -13,12 +13,15 @@ import {
 import { PASSWORD_CHECK_UNAVAILABLE_MESSAGE, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, PASSWORD_REJECTED_MESSAGE } from '@/lib/password-policy'
 
 export function RegisterForm() {
-  const [loading, setLoading] = useState(false)
+  const [loading, updateLoading] = useState(false)
+  const active = useRef(false)
+  const setLoading = (value: boolean) => { active.current = value; updateLoading(value) }
   const [message, setMessage] = useState<string>()
   const [errors, setErrors] = useState<Record<string, string[] | undefined>>({})
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (active.current) return
     setMessage(undefined)
     const form = new FormData(event.currentTarget)
     const result = registrationSchema.safeParse(Object.fromEntries(form))

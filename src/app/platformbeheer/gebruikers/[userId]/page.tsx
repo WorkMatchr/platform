@@ -1,3 +1,4 @@
+import { ActionForm, SubmitButton } from '@/components/ui/action-form'
 import { notFound } from 'next/navigation'
 import { changePlatformUserStatusAction } from '@/app/platformbeheer/actions'
 import {
@@ -57,11 +58,11 @@ export default async function PlatformUserDetailPage({
           />
         </div>
       </AdminSection>
-      {manageable ? <form action={changePlatformUserStatusAction} className="flex flex-wrap items-end gap-3 rounded-card border border-border bg-surface p-4">
+      {manageable ? <ActionForm action={changePlatformUserStatusAction} className="flex flex-wrap items-end gap-3 rounded-card border border-border bg-surface p-4">
         <input type="hidden" name="organizationId" value={membership.organization.id} /><input type="hidden" name="subjectUserId" value={user.id} /><input type="hidden" name="operation" value={user.status === 'ACTIVE' ? 'block' : 'unblock'} />
         <label className="grid flex-1 gap-1 text-xs font-semibold text-text-secondary">Reden<input className="min-h-10 rounded-control border border-border px-3 text-sm" name="reasonNote" required minLength={5} maxLength={500} /></label>
-        <button className="min-h-10 rounded-control border border-border px-4 text-sm font-semibold" type="submit">{user.status === 'ACTIVE' ? 'Account blokkeren' : 'Account deblokkeren'}</button>
-      </form> : null}
+        <SubmitButton variant="outline" className="min-h-10 rounded-control border border-border px-4 text-sm font-semibold" type="submit">{user.status === 'ACTIVE' ? 'Account blokkeren' : 'Account deblokkeren'}</SubmitButton>
+      </ActionForm> : null}
       <AdminSection title="Accountcontext">
         <dl className="grid gap-3 rounded-card border border-border bg-surface p-5 sm:grid-cols-2 xl:grid-cols-4">
           <div><dt className="text-xs text-text-secondary">Platformrol</dt><dd className="font-semibold">{platformRoleLabels[user.platformRole]}</dd></div>

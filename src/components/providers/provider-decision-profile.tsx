@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import Link from '@/components/ui/navigation-link'
 import type { getAssignmentProviderDecisionProfile } from '@/lib/providers/provider-decision-profile-service'
 import { OrganizationLogo } from '@/components/organizations/organization-logo'
 import { Card } from '@/components/ui/card'

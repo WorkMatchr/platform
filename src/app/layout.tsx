@@ -4,6 +4,7 @@ import { CompactFooter, Footer } from '@/components/layout/footer'
 import { getHeaderViewModel, Header } from '@/components/layout/header'
 import { TestImpersonationBanner } from '@/components/layout/test-impersonation-banner'
 import { siteConfig } from '@/config/site'
+import { NavigationFeedback } from '@/components/ui/navigation-feedback'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -31,7 +32,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <a href="#main-content" className="sr-only m-0 z-50 rounded-control bg-surface px-4 py-3 font-semibold text-brand-dark focus:not-sr-only focus:fixed focus:top-4 focus:left-4">
           Ga naar de hoofdinhoud
         </a>
-        <ApplicationChrome
+        <NavigationFeedback><ApplicationChrome
           header={<Header model={headerModel} />}
           headerModel={headerModel}
           banner={<TestImpersonationBanner />}
@@ -39,7 +40,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           footer={<Footer />}
         >
           {children}
-        </ApplicationChrome>
+        </ApplicationChrome></NavigationFeedback>
       </body>
     </html>
   )

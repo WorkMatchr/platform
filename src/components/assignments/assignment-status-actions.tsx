@@ -1,6 +1,10 @@
 'use client'
 
-import { useActionState, useEffect, useRef } from 'react'
+import { ActionForm } from '@/components/ui/action-form'
+
+import { usePendingAction } from '@/components/ui/use-pending-action'
+
+import { useEffect, useRef } from 'react'
 import type { AssignmentStatus } from '@/generated/prisma/client'
 import type { AssignmentActionState } from '@/app/opdrachten/actions'
 import { FieldError, StatusMessage, fieldClassName } from '@/components/auth/auth-shell'
@@ -10,7 +14,7 @@ import { LinkButton } from '@/components/ui/link-button'
 type Action = (state: AssignmentActionState, formData: FormData) => Promise<AssignmentActionState>
 
 function ReasonForm({ action, assignmentId, version, mode }: { action: Action; assignmentId: string; version: number; mode: 'reopen' | 'cancel' }) {
-  const [state, formAction, pending] = useActionState(action, {})
+  const [state, formAction, pending] = usePendingAction(action, {})
   const formRef = useRef<HTMLFormElement>(null)
   const reasonError = state.errors?.reason?.[0]
   const confirmError = state.errors?.confirmed?.[0]
@@ -18,7 +22,7 @@ function ReasonForm({ action, assignmentId, version, mode }: { action: Action; a
     if (state.errors) formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus()
   }, [state.errors, state.values])
   return (
-    <form ref={formRef} action={formAction} className="mt-4 space-y-4" noValidate>
+    <ActionForm ref={formRef} action={formAction} className="mt-4 space-y-4" noValidate>
       <input type="hidden" name="assignmentId" value={assignmentId} />
       <input type="hidden" name="expectedAssignmentVersion" value={version} />
       {state.message && <StatusMessage error>{state.message}</StatusMessage>}
@@ -39,7 +43,7 @@ function ReasonForm({ action, assignmentId, version, mode }: { action: Action; a
       <Button type="submit" loading={pending} variant={mode === 'cancel' ? 'outline' : 'primary'}>
         {mode === 'cancel' ? 'Opdracht annuleren' : 'Terugzetten naar concept'}
       </Button>
-    </form>
+    </ActionForm>
   )
 }
 

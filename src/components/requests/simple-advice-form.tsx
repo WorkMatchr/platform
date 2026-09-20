@@ -1,7 +1,9 @@
 'use client'
 
+import { usePendingAction } from '@/components/ui/use-pending-action'
+
 import { useRouter } from 'next/navigation'
-import { useActionState, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { PublicIntakeDesktopContext, PublicIntakeMobileContext } from '@/components/public/public-intake-context'
 import { getSimpleAdviceContext } from '@/content/simple-advice-context'
 import { AdditionalExpertiseOptions } from './additional-expertise-options'
@@ -32,8 +34,9 @@ export function SimpleAdviceForm({ action, viewerId, locations = [], draftId, in
   const [ready, setReady] = useState(false)
   const [submissionId, setSubmissionId] = useState('')
   const [errors, setErrors] = useState<Record<string, string[]>>({})
-  const [state, formAction, pending] = useActionState(action, {})
-  const [saving, setSaving] = useState(false)
+  const [state, formAction, pending] = usePendingAction(action, {})
+  const [saving, setSaving] = useState<number | null>(null)
+  const saveActive = useRef(false)
   const [saveMessage, setSaveMessage] = useState('')
   const revision = useRef(initialVersion)
   const heading = useRef<HTMLHeadingElement>(null)
@@ -93,15 +96,17 @@ export function SimpleAdviceForm({ action, viewerId, locations = [], draftId, in
   }
   const parsed = simpleAdviceSchema.safeParse(payload)
   const move = async (next: number) => {
+    if (saveActive.current || pending) return
     if (saveAction) {
-      setSaving(true)
+      saveActive.current = true
+      setSaving(next)
       try {
         const result = await saveAction(payload, revision.current)
         if (result.version === undefined) { setSaveMessage(result.message || 'Opslaan is niet gelukt. Probeer het opnieuw.'); return }
         revision.current = result.version
         setSaveMessage('')
       } catch { setSaveMessage('Opslaan is niet gelukt. Uw invoer blijft in dit tabblad bewaard. Probeer het opnieuw.'); return }
-      finally { setSaving(false) }
+      finally { saveActive.current = false; setSaving(null) }
     }
     setStep(next)
   }
@@ -138,8 +143,8 @@ export function SimpleAdviceForm({ action, viewerId, locations = [], draftId, in
     {step === 2 && parsed.success && <dl className="space-y-4">{simpleAdviceSummary(parsed.data, locations.find(l => l.id === v.organizationLocationId)?.city).map(([label, value]) => <div key={label}><dt className="font-semibold">{label}</dt><dd className="whitespace-pre-wrap break-words text-text-secondary">{value}</dd></div>)}</dl>}
     {step === 2 && !viewerId && <div className="space-y-3"><p>Log in als opdrachtgever om uw opdracht te publiceren. Uw ingevulde gegevens blijven in dit tabblad bewaard.</p><LinkButton href="/inloggen?returnTo=%2Fadvieswijzer" onClick={() => { try { sessionStorage.setItem('workmatchr-simple-advice-login', 'yes') } catch {} }}>Inloggen</LinkButton><LinkButton href="/registreren" variant="outline" onClick={() => { try { sessionStorage.setItem('workmatchr-simple-advice-login', 'yes') } catch {} }}>Account aanmaken</LinkButton></div>}
     <div className="flex flex-wrap justify-between gap-3">
-      {step > 0 ? <Button variant="outline" onClick={() => void move(step - 1)} disabled={pending || saving}>{step === 2 ? 'Wijzigen' : 'Terug'}</Button> : <span />}
-      {step < 2 ? <Button key="continue" type="button" disabled={!ready || saving} onClick={event => { event.preventDefault(); if (validate()) void move(step + 1) }}>Verder</Button> : viewerId ? <Button key="publish" type="submit" disabled={!ready || !parsed.success || saving} loading={pending}>Opdracht publiceren</Button> : null}
+      {step > 0 ? <Button variant="outline" loading={saving === step - 1} loadingLabel="Opslaan…" onClick={() => void move(step - 1)} disabled={pending || saving !== null}>{step === 2 ? 'Wijzigen' : 'Terug'}</Button> : <span />}
+      {step < 2 ? <Button key="continue" type="button" loading={saving === step + 1} loadingLabel="Opslaan…" disabled={!ready || saving !== null} onClick={event => { event.preventDefault(); if (validate()) void move(step + 1) }}>Verder</Button> : viewerId ? <Button key="publish" type="submit" disabled={!ready || !parsed.success || saving !== null} loading={pending}>Opdracht publiceren</Button> : null}
     </div>
   </form></div></div>
 }

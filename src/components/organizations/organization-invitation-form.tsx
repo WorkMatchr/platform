@@ -1,6 +1,10 @@
 'use client'
 
-import { useActionState, useEffect, useRef } from 'react'
+import { ActionForm } from '@/components/ui/action-form'
+
+import { usePendingAction } from '@/components/ui/use-pending-action'
+
+import { useEffect, useRef } from 'react'
 import type { OrganizationInvitationActionState } from '@/app/organisatie/gebruikers/actions'
 import { FieldError, StatusMessage, fieldClassName } from '@/components/auth/auth-shell'
 import { Button } from '@/components/ui/button'
@@ -12,7 +16,7 @@ type Props = {
 }
 
 export function OrganizationInvitationForm({ action, idempotencyKey, canInviteAdmin }: Props) {
-  const [state, formAction, pending] = useActionState(action, {})
+  const [state, formAction, pending] = usePendingAction(action, {})
   const formRef = useRef<HTMLFormElement>(null)
   const error = (field: string) => state.errors?.[field]?.[0]
   const inputClass = (field: string) => `${fieldClassName}${error(field) ? ' border-error ring-1 ring-error/30' : ''}`
@@ -23,7 +27,7 @@ export function OrganizationInvitationForm({ action, idempotencyKey, canInviteAd
   }, [state.errors])
 
   return (
-    <form ref={formRef} action={formAction} noValidate className="mt-5 grid gap-5 md:grid-cols-2">
+    <ActionForm ref={formRef} action={formAction} noValidate className="mt-5 grid gap-5 md:grid-cols-2">
       <input type="hidden" name="idempotencyKey" value={idempotencyKey} />
       {state.message && <div className="md:col-span-2"><StatusMessage error={state.error}>{state.message}</StatusMessage></div>}
       <div>
@@ -54,6 +58,6 @@ export function OrganizationInvitationForm({ action, idempotencyKey, canInviteAd
       <div className="flex items-end">
         <Button type="submit" loading={pending}>Uitnodiging versturen</Button>
       </div>
-    </form>
+    </ActionForm>
   )
 }

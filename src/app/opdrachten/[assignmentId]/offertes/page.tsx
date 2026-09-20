@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { awardQuoteAction } from '@/app/marktplaats/actions'
 import { Section } from '@/components/layout/section'
-import { Button } from '@/components/ui/button'
+import { ActionForm, SubmitButton as Button } from '@/components/ui/action-form'
 import { Card } from '@/components/ui/card'
 import { Heading } from '@/components/ui/heading'
 import { getClientQuotes } from '@/lib/marketplace/dashboard-query-service'
@@ -44,7 +44,7 @@ export default async function ClientQuotesPage({ params }: { params: Promise<{ a
               <Link className="mt-5 inline-block font-semibold underline" href={`/berichten/${quote.participation.messageChannel.id}`}>Berichten openen</Link>
             ) : null}
             {quote.status === 'SUBMITTED' && assignment.status === 'IN_SELECTION' && !assignment.awardDecision ? (
-              <form action={awardQuoteAction} className="mt-6 grid gap-3 border-t border-border pt-5">
+              <ActionForm action={awardQuoteAction} className="mt-6 grid gap-3 border-t border-border pt-5">
                 <input type="hidden" name="assignmentId" value={assignment.id} />
                 <input type="hidden" name="quoteId" value={quote.id} />
                 <input type="hidden" name="idempotencyKey" value={`AWARD:${assignment.id}:${randomUUID()}`} />
@@ -53,7 +53,7 @@ export default async function ClientQuotesPage({ params }: { params: Promise<{ a
                   <textarea name="motivation" required minLength={10} maxLength={1000} className="min-h-28 rounded-control border border-border bg-surface px-4 py-3 font-normal" />
                 </label>
                 <Button type="submit" className="justify-self-start">Deze offerte gunnen</Button>
-              </form>
+              </ActionForm>
             ) : null}
             <p className="mt-4 text-sm text-text-secondary">Status: {quoteStatusLabels[quote.status]}</p>
           </Card>

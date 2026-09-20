@@ -1,3 +1,4 @@
+import { ActionForm, SubmitButton } from '@/components/ui/action-form'
 import {
   changePlatformAdministratorAccessAction,
   changePlatformAdministratorRoleAction,
@@ -143,29 +144,29 @@ export default async function PlatformAdministratorsPage({
                 <td className="min-w-72 px-4 py-3">
                   {canManage && membership.status === 'INVITED' && invitation?.status === 'PENDING' ? (
                     <div className="grid gap-3">
-                      <form action={resendPlatformAdministratorInvitationAction}>
+                      <ActionForm action={resendPlatformAdministratorInvitationAction}>
                         <input type="hidden" name="invitationId" value={invitation.id} />
-                        <button className="font-semibold text-brand-primary underline" type="submit">
+                        <SubmitButton variant="outline" className="font-semibold text-brand-primary underline" type="submit">
                           Opnieuw versturen
-                        </button>
-                      </form>
-                      <form action={revokePlatformAdministratorInvitationAction} className="grid gap-2">
+                        </SubmitButton>
+                      </ActionForm>
+                      <ActionForm action={revokePlatformAdministratorInvitationAction} className="grid gap-2">
                         <input type="hidden" name="invitationId" value={invitation.id} />
                         <label className="grid gap-1 text-xs font-semibold">
                           Reden voor intrekken
                           <input className="rounded-control border border-border px-3 py-2 font-normal" name="reason" minLength={10} maxLength={500} required />
                         </label>
-                        <button className="justify-self-start font-semibold text-error underline" type="submit">
+                        <SubmitButton variant="outline" className="justify-self-start font-semibold text-error underline" type="submit">
                           Uitnodiging intrekken
-                        </button>
-                      </form>
+                        </SubmitButton>
+                      </ActionForm>
                     </div>
                   ) : null}
 
                   {canChangeSubject && ['ACTIVE', 'SUSPENDED'].includes(membership.status) ? (
                     <div className="grid gap-4">
                       {membership.status === 'ACTIVE' ? (
-                        <form action={changePlatformAdministratorRoleAction} className="grid gap-2">
+                        <ActionForm action={changePlatformAdministratorRoleAction} className="grid gap-2">
                           <input type="hidden" name="subjectUserId" value={membership.userId} />
                           <label className="grid gap-1 text-xs font-semibold">
                             Platformrol
@@ -177,10 +178,10 @@ export default async function PlatformAdministratorsPage({
                             Reden
                             <input className="rounded-control border border-border px-3 py-2 font-normal" name="reason" minLength={10} maxLength={500} required />
                           </label>
-                          <button className="justify-self-start font-semibold text-brand-primary underline" type="submit">Rol wijzigen</button>
-                        </form>
+                          <SubmitButton variant="outline" className="justify-self-start font-semibold text-brand-primary underline" type="submit">Rol wijzigen</SubmitButton>
+                        </ActionForm>
                       ) : null}
-                      <form action={changePlatformAdministratorAccessAction} className="grid gap-2">
+                      <ActionForm action={changePlatformAdministratorAccessAction} className="grid gap-2">
                         <input type="hidden" name="subjectUserId" value={membership.userId} />
                         <label className="grid gap-1 text-xs font-semibold">
                           Toegangsactie
@@ -193,8 +194,8 @@ export default async function PlatformAdministratorsPage({
                           Reden
                           <input className="rounded-control border border-border px-3 py-2 font-normal" name="reason" minLength={10} maxLength={500} required />
                         </label>
-                        <button className="justify-self-start font-semibold text-error underline" type="submit">Toegangsactie uitvoeren</button>
-                      </form>
+                        <SubmitButton variant="outline" className="justify-self-start font-semibold text-error underline" type="submit">Toegangsactie uitvoeren</SubmitButton>
+                      </ActionForm>
                     </div>
                   ) : null}
 
@@ -216,7 +217,7 @@ export default async function PlatformAdministratorsPage({
           title="Nieuwe beheerder uitnodigen"
           description="De rol wordt pas actief nadat de genodigde de beveiligde uitnodiging heeft geaccepteerd en het e-mailadres is bevestigd."
         >
-          <form
+          <ActionForm
             action={invitePlatformAdministratorAction}
             className="grid gap-4 rounded-card border border-border bg-surface p-5 md:grid-cols-2"
           >
@@ -238,10 +239,10 @@ export default async function PlatformAdministratorsPage({
               <input className="mt-1" type="checkbox" name="ownerConfirmed" />
               <span>Ik bevestig dat een uitnodiging als platformeigenaar volledige beheerrechten geeft. Deze bevestiging is alleen vereist wanneer u die rol kiest.</span>
             </label>
-            <button className="min-h-11 justify-self-start rounded-control bg-brand-primary px-5 font-semibold text-white hover:bg-brand-dark" type="submit">
+            <SubmitButton variant="outline" className="min-h-11 justify-self-start rounded-control bg-brand-primary px-5 font-semibold text-white hover:bg-brand-dark" type="submit">
               Uitnodiging versturen
-            </button>
-          </form>
+            </SubmitButton>
+          </ActionForm>
         </AdminSection>
       ) : (
         <p className="mt-6 rounded-card border border-border bg-surface p-5 text-sm text-text-secondary">

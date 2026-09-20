@@ -1,6 +1,10 @@
 'use client'
 
-import { useActionState, useEffect, useRef } from 'react'
+import { ActionForm } from '@/components/ui/action-form'
+
+import { usePendingAction } from '@/components/ui/use-pending-action'
+
+import { useEffect, useRef } from 'react'
 import type { RequestPublicationActionState } from '@/app/aanvragen/actions'
 import {
   FieldError,
@@ -50,7 +54,7 @@ export function RequestPublicationForm({
   contactResult: 'verzonden' | 'fout' | null
   preview: RequestPublicationPreview
 }) {
-  const [state, formAction, pending] = useActionState(action, {})
+  const [state, formAction, pending] = usePendingAction(action, {})
   const formRef = useRef<HTMLFormElement>(null)
   const error = (field: string) => state.errors?.[field]?.[0]
   const invalid = (field: string) => Boolean(error(field))
@@ -74,7 +78,7 @@ export function RequestPublicationForm({
   }, [state.errors, state.values])
 
   return (
-    <form
+    <ActionForm
       ref={formRef}
       key={formKey}
       action={formAction}
@@ -319,6 +323,6 @@ export function RequestPublicationForm({
           </Button>
         ) : null}
       </div>
-    </form>
+    </ActionForm>
   )
 }

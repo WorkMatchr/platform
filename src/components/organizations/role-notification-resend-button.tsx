@@ -1,6 +1,9 @@
 'use client'
 
-import { useActionState } from 'react'
+import { ActionForm } from '@/components/ui/action-form'
+
+import { usePendingAction } from '@/components/ui/use-pending-action'
+
 import type { OrganizationRoleActionState } from '@/app/organisatie/gebruikers/actions'
 import { Button } from '@/components/ui/button'
 
@@ -12,9 +15,9 @@ type Props = {
 }
 
 export function RoleNotificationResendButton({ action, organizationId, subjectUserId, idempotencyKey }: Props) {
-  const [state, formAction, pending] = useActionState(action, {})
+  const [state, formAction, pending] = usePendingAction(action, {})
   return (
-    <form action={formAction} className="flex max-w-sm flex-col items-start gap-2">
+    <ActionForm action={formAction} className="flex max-w-sm flex-col items-start gap-2">
       <input type="hidden" name="organizationId" value={organizationId} />
       <input type="hidden" name="subjectUserId" value={subjectUserId} />
       <input type="hidden" name="idempotencyKey" value={idempotencyKey} />
@@ -24,6 +27,6 @@ export function RoleNotificationResendButton({ action, organizationId, subjectUs
           {state.message}
         </p>
       )}
-    </form>
+    </ActionForm>
   )
 }

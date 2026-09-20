@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { startMarketplaceMatchingAction } from '@/app/marktplaats/actions'
 import { Section } from '@/components/layout/section'
-import { Button } from '@/components/ui/button'
+import { ActionForm, SubmitButton as Button } from '@/components/ui/action-form'
 import { Card } from '@/components/ui/card'
 import { Heading } from '@/components/ui/heading'
 import { getAssignmentSelectionView } from '@/lib/marketplace/dashboard-query-service'
@@ -34,7 +34,7 @@ export default async function AssignmentSelectionPage({ params }: { params: Prom
             </p>
           </>
         ) : result.assignment.matchingBlockReason ? (<p>Uw opdracht is gepubliceerd. Professionals kunnen pas worden geselecteerd nadat u expliciet een primaire deskundigheid heeft gekozen.</p>) : result.assignment.status === 'OPEN' ? (
-          <form action={startMarketplaceMatchingAction}>
+          <ActionForm action={startMarketplaceMatchingAction}>
             <input type="hidden" name="assignmentId" value={result.assignment.id} />
             <input type="hidden" name="expectedAssignmentVersion" value={result.assignment.version} />
             <input type="hidden" name="idempotencyKey" value={`MATCH:${result.assignment.id}:${randomUUID()}`} />
@@ -42,7 +42,7 @@ export default async function AssignmentSelectionPage({ params }: { params: Prom
             <p className="mt-3 text-sm text-text-secondary">
               Publicatie alleen start geen selectie. Deze actie legt een reproduceerbaar selectierapport vast.
             </p>
-          </form>
+          </ActionForm>
         ) : (
           <p>De selectie kan in de huidige opdrachtstatus niet worden gestart.</p>
         )}

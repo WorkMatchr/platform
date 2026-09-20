@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes } from 'react'
+import { Children, type ButtonHTMLAttributes } from 'react'
 
 export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive'
 
@@ -23,12 +23,14 @@ export function Button({
   children,
   className = '',
   disabled,
-  loading = false,
-  loadingLabel = 'Bezig…',
+  loading,
+  loadingLabel,
   type = 'button',
   variant = 'primary',
   ...props
 }: ButtonProps) {
+  const actionText = Children.toArray(children).filter(child => typeof child === 'string' || typeof child === 'number').join('')
+  const pendingText = loadingLabel ?? (actionText && !['Verder', 'Terug', 'Wijzigen'].includes(actionText) ? `${actionText}…` : 'Bezig…')
   return (
     <button
       type={type}
@@ -37,13 +39,13 @@ export function Button({
       aria-busy={loading || undefined}
       {...props}
     >
-      {loading && (
-        <span
-          aria-hidden="true"
-          className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent motion-reduce:animate-none"
-        />
-      )}
-      {loading ? <span>{loadingLabel}</span> : children}
+      <span className="inline-grid min-w-0 items-center justify-items-center">
+        <span className={`${loading ? 'invisible' : ''} col-start-1 row-start-1`} aria-hidden={loading || undefined}>{children}</span>
+        {loading !== undefined && <span className={`${loading ? '' : 'invisible'} col-start-1 row-start-1 inline-flex max-w-full items-center justify-center gap-2`} aria-hidden={!loading || undefined}>
+          <span aria-hidden="true" className="size-4 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent motion-reduce:animate-none" />
+          <span>{pendingText}</span>
+        </span>}
+      </span>
     </button>
   )
 }

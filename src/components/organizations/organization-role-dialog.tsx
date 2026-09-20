@@ -1,6 +1,10 @@
 'use client'
 
-import { useActionState, useRef } from 'react'
+import { ActionForm } from '@/components/ui/action-form'
+
+import { usePendingAction } from '@/components/ui/use-pending-action'
+
+import { useRef } from 'react'
 import type { OrganizationRoleActionState } from '@/app/organisatie/gebruikers/actions'
 import { Button, buttonBaseStyles, buttonVariantStyles } from '@/components/ui/button'
 import { organizationRoleLabels } from '@/lib/presentation/platform-labels'
@@ -27,7 +31,7 @@ export function OrganizationRoleDialog({
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
-  const [state, formAction, pending] = useActionState(action, {})
+  const [state, formAction, pending] = usePendingAction(action, {})
   const newRole = currentRole === 'ADMIN' ? 'MEMBER' : 'ADMIN'
 
   return (
@@ -46,7 +50,7 @@ export function OrganizationRoleDialog({
         aria-labelledby={`role-${subjectUserId}-title`}
         className="w-[min(92vw,36rem)] rounded-card border border-border bg-surface p-0 text-text-primary shadow-card backdrop:bg-brand-dark/55"
       >
-        <form action={formAction} className="p-6 sm:p-8">
+        <ActionForm action={formAction} className="p-6 sm:p-8">
           <h2 id={`role-${subjectUserId}-title`} className="text-xl font-bold text-brand-dark">Rol wijzigen</h2>
           <p className="mt-3 break-words text-sm text-text-secondary">
             U wijzigt de rol van {displayName} van <strong>{organizationRoleLabels[currentRole]}</strong> naar <strong>{organizationRoleLabels[newRole]}</strong>.
@@ -75,7 +79,7 @@ export function OrganizationRoleDialog({
             <Button type="button" variant="ghost" onClick={() => dialogRef.current?.close()} disabled={pending}>Annuleren</Button>
             <Button type="submit" variant="primary" loading={pending}>Rol wijzigen</Button>
           </div>
-        </form>
+        </ActionForm>
       </dialog>
     </>
   )

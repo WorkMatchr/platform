@@ -1,7 +1,9 @@
+import { NavigationPending } from '@/components/ui/navigation-feedback'
 import { Section } from '@/components/layout/section'
 
 export default function AssignmentPublicationLoading() {
-  return (
+  return (<>
+      <NavigationPending />
     <Section spacing="compact" containerSize="narrow">
       <div
         role="status"
@@ -13,5 +15,5 @@ export default function AssignmentPublicationLoading() {
         <div className="h-48 rounded-card bg-surface-subtle" />
       </div>
     </Section>
-  )
+  </>)
 }

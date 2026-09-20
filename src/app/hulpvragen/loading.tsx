@@ -1,7 +1,9 @@
+import { NavigationPending } from '@/components/ui/navigation-feedback'
 import { Section } from '@/components/layout/section'
 
 export default function IntakeLoading() {
-  return (
+  return (<>
+      <NavigationPending />
     <Section spacing="compact">
       <div role="status" className="animate-pulse space-y-5 motion-reduce:animate-none">
         <span className="sr-only">Hulpvragen laden</span>
@@ -12,5 +14,5 @@ export default function IntakeLoading() {
         </div>
       </div>
     </Section>
-  )
+  </>)
 }

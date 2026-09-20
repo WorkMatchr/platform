@@ -1,6 +1,10 @@
 'use client'
 
-import { useActionState, useEffect, useRef } from 'react'
+import { ActionForm } from '@/components/ui/action-form'
+
+import { usePendingAction } from '@/components/ui/use-pending-action'
+
+import { useEffect, useRef } from 'react'
 import type { AssignmentActionState } from '@/app/opdrachten/actions'
 import { FieldError, StatusMessage, fieldClassName } from '@/components/auth/auth-shell'
 import { Button } from '@/components/ui/button'
@@ -36,12 +40,12 @@ export function AssignmentPublishForm({
   version: number
   maxSelections?: number
 }) {
-  const [state, formAction, pending] = useActionState(action, {})
+  const [state, formAction, pending] = usePendingAction(action, {})
   const formRef = useFirstInvalidField(state)
   const confirmError = state.errors?.confirmed?.[0]
 
   return (
-    <form ref={formRef} action={formAction} className="space-y-5" noValidate>
+    <ActionForm ref={formRef} action={formAction} className="space-y-5" noValidate>
       <input type="hidden" name="assignmentId" value={assignmentId} />
       <input type="hidden" name="expectedAssignmentVersion" value={version} />
       {state.message && <StatusMessage error>{state.message}</StatusMessage>}
@@ -72,7 +76,7 @@ export function AssignmentPublishForm({
       <Button type="submit" loading={pending} className="w-full sm:w-auto">
         Opdracht publiceren
       </Button>
-    </form>
+    </ActionForm>
   )
 }
 
@@ -85,13 +89,13 @@ export function AssignmentWithdrawForm({
   assignmentId: string
   version: number
 }) {
-  const [state, formAction, pending] = useActionState(action, {})
+  const [state, formAction, pending] = usePendingAction(action, {})
   const formRef = useFirstInvalidField(state)
   const reasonError = state.errors?.reason?.[0]
   const confirmError = state.errors?.confirmed?.[0]
 
   return (
-    <form ref={formRef} action={formAction} className="mt-5 space-y-4" noValidate>
+    <ActionForm ref={formRef} action={formAction} className="mt-5 space-y-4" noValidate>
       <input type="hidden" name="assignmentId" value={assignmentId} />
       <input type="hidden" name="expectedAssignmentVersion" value={version} />
       {state.message && <StatusMessage error>{state.message}</StatusMessage>}
@@ -140,6 +144,6 @@ export function AssignmentWithdrawForm({
       <Button type="submit" loading={pending} variant="outline">
         Publicatie intrekken
       </Button>
-    </form>
+    </ActionForm>
   )
 }
