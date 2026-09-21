@@ -14,9 +14,10 @@ describe('publieke detailcontent', () => {
   it('rendert het preventiemedewerkerartikel met interne rol en drie wettelijke kerntaken', () => {
     const article = knowledgeArticles.find((item) => item.id === 'knowledge:preventiemedewerker')!
     const html = renderToStaticMarkup(<KnowledgeArticlePage content={article} />)
-    const related = html.indexOf('Verder met uw vraag')
+    const legal = html.indexOf('Wettelijke context')
     const faq = html.indexOf('Veelgestelde vragen')
     const cta = html.indexOf('Hulp nodig bij uw situatie?')
+    const generalInformation = html.indexOf('Algemene vakinformatie')
     const sources = html.indexOf('Bronnen en onderbouwing')
 
     expect(html).toContain('Iedere werkgever met werknemers moet ten minste één preventiemedewerker aanwijzen')
@@ -29,14 +30,19 @@ describe('publieke detailcontent', () => {
     expect(html).toContain('niet één uniforme opleiding')
     expect(html).toContain('vervangt niet automatisch de verplichting')
     expect(html).toContain('Artikel 13 van de Arbeidsomstandighedenwet')
-    expect(html).toContain('Moet iedere werkgever een preventiemedewerker hebben?')
-    expect(html).toContain('Moet een preventiemedewerker een opleiding hebben?')
-    expect(html).toContain('Kan een externe adviseur de preventiemedewerker vervangen?')
-    expect(related).toBeGreaterThan(0)
-    expect(faq).toBeGreaterThan(related)
-    expect(cta).toBeGreaterThan(faq)
-    expect(sources).toBeGreaterThan(cta)
+    expect(html).not.toContain('Moet iedere werkgever een preventiemedewerker hebben?')
+    expect(html).not.toContain('Moet een preventiemedewerker een opleiding hebben?')
+    expect(html).not.toContain('Kan een externe adviseur de preventiemedewerker vervangen?')
+    expect(html).not.toContain('Verder met uw vraag')
+    expect(faq).toBe(-1)
+    expect(legal).toBeGreaterThan(0)
+    expect(cta).toBeGreaterThan(legal)
+    expect(generalInformation).toBeGreaterThan(cta)
+    expect(sources).toBeGreaterThan(generalInformation)
     expect(html.match(/Hulp nodig bij uw situatie\?/g)).toHaveLength(1)
+    expect(html).toContain('bg-brand-dark')
+    expect(html).toContain('text-text-on-dark')
+    expect(html).toContain('focus-visible:outline-text-on-dark')
   })
 
   it('rendert uitgebreide dienstinformatie in een vaste, begrijpelijke volgorde', () => {

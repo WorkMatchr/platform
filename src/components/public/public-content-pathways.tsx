@@ -72,17 +72,20 @@ export function PublicContentRelations({ contentId }: { contentId: PublicContent
 export function PublicContentCallToAction({
   primaryHref = publicRoutes.adviceGuide,
   linkLabel = 'Start de Advieswijzer',
+  variant = 'default',
 }: {
   primaryHref?: InternalHref
   linkLabel?: string
+  variant?: 'default' | 'prominent'
 }) {
+  const prominent = variant === 'prominent'
   return (
-    <section className="flex flex-col gap-3 rounded-card border border-brand-primary/30 bg-brand-primary/5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6" aria-labelledby="public-content-cta-title">
+    <section className={`flex flex-col rounded-card border ${prominent ? 'gap-5 border-brand-dark bg-brand-dark p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-8' : 'gap-3 border-brand-primary/30 bg-brand-primary/5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6'}`} aria-labelledby="public-content-cta-title">
       <div>
-        <Heading as="h2" size="h3" id="public-content-cta-title">Hulp nodig bij uw situatie?</Heading>
-        <Text className="mt-2 max-w-3xl text-text-secondary">Weet u niet zeker wat deze informatie voor uw organisatie betekent? Vertel kort waar u tegenaan loopt. Via de Advieswijzer kunt u direct aangeven welke ondersteuning u zoekt.</Text>
+        <Heading as="h2" size={prominent ? 'h2' : 'h3'} className={prominent ? 'text-text-on-dark' : ''} id="public-content-cta-title">Hulp nodig bij uw situatie?</Heading>
+        <Text className={`mt-2 max-w-3xl ${prominent ? 'text-text-on-dark' : 'text-text-secondary'}`}>Weet u niet zeker wat deze informatie voor uw organisatie betekent? Vertel kort waar u tegenaan loopt. Via de Advieswijzer kunt u direct aangeven welke ondersteuning u zoekt.</Text>
       </div>
-      <LinkButton href={primaryHref} className="shrink-0">{linkLabel}</LinkButton>
+      <LinkButton href={primaryHref} variant={prominent ? 'outline' : 'primary'} className={`shrink-0 ${prominent ? 'w-full border-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-text-on-dark sm:w-auto' : ''}`}>{linkLabel}</LinkButton>
     </section>
   )
 }
