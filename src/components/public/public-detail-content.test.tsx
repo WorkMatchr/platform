@@ -11,6 +11,34 @@ import { SectorDetailPage } from './sector-detail-page'
 import { ServiceDetailPage } from './service-detail-page'
 
 describe('publieke detailcontent', () => {
+  it('rendert het preventiemedewerkerartikel met interne rol en drie wettelijke kerntaken', () => {
+    const article = knowledgeArticles.find((item) => item.id === 'knowledge:preventiemedewerker')!
+    const html = renderToStaticMarkup(<KnowledgeArticlePage content={article} />)
+    const related = html.indexOf('Verder met uw vraag')
+    const faq = html.indexOf('Veelgestelde vragen')
+    const cta = html.indexOf('Hulp nodig bij uw situatie?')
+    const sources = html.indexOf('Bronnen en onderbouwing')
+
+    expect(html).toContain('Iedere werkgever met werknemers moet ten minste één preventiemedewerker aanwijzen')
+    expect(html).toContain('De drie wettelijke kerntaken')
+    expect(html).toContain('meewerken aan het verrichten en opstellen van de RI&amp;E')
+    expect(html).toContain('adviseren aan en nauw samenwerken met OR of PVT')
+    expect(html).toContain('meewerken aan het uitvoeren van de maatregelen')
+    expect(html).toContain('De werkgever blijft verantwoordelijk voor het arbobeleid')
+    expect(html).toContain('instemmingsrecht over de persoon en de positie')
+    expect(html).toContain('niet één uniforme opleiding')
+    expect(html).toContain('vervangt niet automatisch de verplichting')
+    expect(html).toContain('Artikel 13 van de Arbeidsomstandighedenwet')
+    expect(html).toContain('Moet iedere werkgever een preventiemedewerker hebben?')
+    expect(html).toContain('Moet een preventiemedewerker een opleiding hebben?')
+    expect(html).toContain('Kan een externe adviseur de preventiemedewerker vervangen?')
+    expect(related).toBeGreaterThan(0)
+    expect(faq).toBeGreaterThan(related)
+    expect(cta).toBeGreaterThan(faq)
+    expect(sources).toBeGreaterThan(cta)
+    expect(html.match(/Hulp nodig bij uw situatie\?/g)).toHaveLength(1)
+  })
+
   it('rendert uitgebreide dienstinformatie in een vaste, begrijpelijke volgorde', () => {
     const html = renderToStaticMarkup(<ServiceDetailPage content={services[0]} />)
 
