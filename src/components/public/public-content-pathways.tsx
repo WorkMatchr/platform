@@ -22,11 +22,17 @@ function belongsToGroup(item: ResolvedPublicContentRelation, key: typeof groups[
   return item.type === key || item.id === `overview:${key === 'service' ? 'services' : key === 'sector' ? 'sectors' : key === 'obligation' ? 'obligations' : 'knowledge'}`
 }
 
-function PathwayContent({ contentId, primaryHref }: { contentId: PublicContentId; primaryHref: InternalHref }) {
+function resolvePopulatedGroups(contentId: PublicContentId, includeSectors = true) {
   const related = resolvePublicContentRelations(contentId).filter((item) => item.type !== 'tool')
-  const populatedGroups = groups
+  return groups
+    .filter((group) => includeSectors || group.key !== 'sector')
     .map((group) => ({ ...group, items: related.filter((item) => belongsToGroup(item, group.key)) }))
     .filter((group) => group.items.length > 0)
+}
+
+function PathwayRelations({ contentId, includeSectors = true }: { contentId: PublicContentId; includeSectors?: boolean }) {
+  const populatedGroups = resolvePopulatedGroups(contentId, includeSectors)
+  if (populatedGroups.length === 0) return null
 
   return (
     <>
@@ -34,29 +40,50 @@ function PathwayContent({ contentId, primaryHref }: { contentId: PublicContentId
         <Heading as="h2" size="h2" id={`${contentId}-pathways-title`}>Verder met uw vraag</Heading>
         <Text className="mt-3 max-w-3xl text-text-secondary">Bekijk samenhangende informatie of verduidelijk wat voor uw situatie relevant is.</Text>
       </div>
-      {populatedGroups.length > 0 ? (
-        <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
-          {populatedGroups.map((group) => (
-            <section key={group.key} aria-labelledby={`${contentId}-${group.key}-title`}>
-              <h3 className="text-sm font-bold uppercase tracking-wide text-brand-dark" id={`${contentId}-${group.key}-title`}>{group.title}</h3>
-              <ul className="mt-2 space-y-1">
-                {group.items.map((item) => (
-                  <li key={item.id}>
-                    <Link className="group inline-flex min-h-10 items-center gap-2 rounded-control font-semibold text-brand-primary hover:text-brand-primary-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary" href={item.href}>
-                      <span>{item.title}</span><span aria-hidden="true" className="transition-transform group-hover:translate-x-0.5">→</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))}
-        </div>
-      ) : null}
-      <div className="flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
-        <p className="font-semibold text-text-primary">Wilt u weten wat voor uw situatie relevant is?</p>
-        <LinkButton href={primaryHref} className="shrink-0">Stel uw vraag</LinkButton>
+      <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
+        {populatedGroups.map((group) => (
+          <section key={group.key} aria-labelledby={`${contentId}-${group.key}-title`}>
+            <h3 className="text-sm font-bold uppercase tracking-wide text-brand-dark" id={`${contentId}-${group.key}-title`}>{group.title}</h3>
+            <ul className="mt-2 space-y-1">
+              {group.items.map((item) => (
+                <li key={item.id}>
+                  <Link className="group inline-flex min-h-10 items-center gap-2 rounded-control font-semibold text-brand-primary hover:text-brand-primary-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary" href={item.href}>
+                    <span>{item.title}</span><span aria-hidden="true" className="transition-transform group-hover:translate-x-0.5">→</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
       </div>
     </>
+  )
+}
+
+export function PublicContentRelations({ contentId }: { contentId: PublicContentId }) {
+  if (resolvePopulatedGroups(contentId, false).length === 0) return null
+  return (
+    <section className="grid gap-6 rounded-card border border-border bg-surface-subtle p-5 sm:p-6" aria-labelledby={`${contentId}-pathways-title`}>
+      <PathwayRelations contentId={contentId} includeSectors={false} />
+    </section>
+  )
+}
+
+export function PublicContentCallToAction({
+  primaryHref = publicRoutes.adviceGuide,
+  linkLabel = 'Start de Advieswijzer',
+}: {
+  primaryHref?: InternalHref
+  linkLabel?: string
+}) {
+  return (
+    <section className="flex flex-col gap-3 rounded-card border border-brand-primary/30 bg-brand-primary/5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6" aria-labelledby="public-content-cta-title">
+      <div>
+        <Heading as="h2" size="h3" id="public-content-cta-title">Hulp nodig bij uw situatie?</Heading>
+        <Text className="mt-2 max-w-3xl text-text-secondary">Weet u niet zeker wat deze informatie voor uw organisatie betekent? Vertel kort waar u tegenaan loopt. Via de Advieswijzer kunt u direct aangeven welke ondersteuning u zoekt.</Text>
+      </div>
+      <LinkButton href={primaryHref} className="shrink-0">{linkLabel}</LinkButton>
+    </section>
   )
 }
 
@@ -72,14 +99,16 @@ export function PublicContentPathways({
   if (embedded) {
     return (
       <section className="grid gap-6 rounded-card border border-border bg-surface-subtle p-5 sm:p-6" aria-labelledby={`${contentId}-pathways-title`}>
-        <PathwayContent contentId={contentId} primaryHref={primaryHref} />
+        <PathwayRelations contentId={contentId} />
+        <PublicContentCallToAction primaryHref={primaryHref} linkLabel="Stel uw vraag" />
       </section>
     )
   }
 
   return (
     <Section spacing="compact" className="bg-surface-subtle" containerClassName="grid gap-6" aria-labelledby={`${contentId}-pathways-title`}>
-      <PathwayContent contentId={contentId} primaryHref={primaryHref} />
+      <PathwayRelations contentId={contentId} />
+      <PublicContentCallToAction primaryHref={primaryHref} linkLabel="Stel uw vraag" />
     </Section>
   )
 }

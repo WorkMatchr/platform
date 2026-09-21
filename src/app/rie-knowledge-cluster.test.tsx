@@ -42,12 +42,8 @@ describe('RI&E-kenniscluster', () => {
       expect(internalHrefs.every(isRegisteredPublicHref)).toBe(true)
       expect(internalHrefs).toContain('/advieswijzer')
       expect(internalHrefs).not.toContain(currentHref)
-      if (name === 'vraag') {
-        expect(html.indexOf(`href="${primaryHref}"`)).toBeLessThan(html.indexOf(`href="${supplementalHref}"`))
-      } else {
-        expect(internalHrefs).toContain(primaryHref)
-        expect(internalHrefs).toContain(supplementalHref)
-      }
+      expect(internalHrefs).toContain(primaryHref)
+      expect(internalHrefs).toContain(supplementalHref)
       if (name !== 'vraag') {
         for (const relatedHref of [
           '/kenniscentrum/moet-ik-een-rie-hebben',

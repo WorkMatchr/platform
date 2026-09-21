@@ -2,11 +2,12 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { obligations } from '@/content/obligations'
 import { knowledgeArticles } from '@/content/knowledge/articles'
-import { resolveKnowledgeContextByRoute } from '@/content/knowledge/knowledge-contexts'
 import { services } from '@/content/services'
+import { sectors } from '@/content/sectors'
 import { KnowledgeArticlePage } from './knowledge-article-page'
 import { ObligationDetailPage } from './obligation-detail-page'
 import { PublicBulletList, PublicFaqList, PublicSteps } from './public-detail-shared'
+import { SectorDetailPage } from './sector-detail-page'
 import { ServiceDetailPage } from './service-detail-page'
 
 describe('publieke detailcontent', () => {
@@ -43,29 +44,55 @@ describe('publieke detailcontent', () => {
     }
   })
 
-  it.each(obligations)('$href plaatst de algemene toelichting eenmaal na de bronnen', (content) => {
+  it.each(obligations)('$href plaatst CTA vóór bronnen en de algemene toelichting erna', (content) => {
     const html = renderToStaticMarkup(<ObligationDetailPage content={content} />)
+    const faq = html.indexOf('Veelgestelde vragen')
+    const cta = html.indexOf('Hulp nodig bij uw situatie?')
     const sources = html.indexOf('Bronnen en onderbouwing')
     const evidence = html.indexOf('Belangrijk bij deze uitleg')
-    const pathways = html.indexOf('Stel uw vraag')
 
+    expect(faq).toBeGreaterThan(0)
+    expect(cta).toBeGreaterThan(faq)
+    expect(sources).toBeGreaterThan(cta)
     expect(sources).toBeGreaterThan(0)
     expect(evidence).toBeGreaterThan(sources)
-    expect(pathways).toBeGreaterThan(evidence)
     expect(html.match(/Belangrijk bij deze uitleg/g)).toHaveLength(1)
     expect(html).toContain('hierboven genoemde officiële bronnen')
     expect(html).not.toContain('hieronder genoemde officiële bronnen')
   })
 
-  it.each(knowledgeArticles)('$href biedt één contextuele route naar de Advieswijzer', (article) => {
-    const context = resolveKnowledgeContextByRoute(article.href)
+  it('houdt op alle detailtypen de vaste eindvolgorde aan', () => {
+    const pages = [
+      renderToStaticMarkup(<KnowledgeArticlePage content={knowledgeArticles[0]} />),
+      renderToStaticMarkup(<ServiceDetailPage content={services[0]} />),
+      renderToStaticMarkup(<ObligationDetailPage content={obligations[0]} />),
+      renderToStaticMarkup(<SectorDetailPage content={sectors[0]} />),
+    ]
+
+    for (const html of pages) {
+      const related = html.indexOf('Verder met uw vraag')
+      const faq = html.indexOf('Veelgestelde vragen')
+      const cta = html.indexOf('Hulp nodig bij uw situatie?')
+      const sources = html.indexOf('Bronnen en onderbouwing')
+
+      expect(related).toBeGreaterThan(0)
+      expect(faq).toBeGreaterThan(related)
+      expect(cta).toBeGreaterThan(faq)
+      expect(sources).toBeGreaterThan(cta)
+      expect(html).not.toContain('Gerelateerde sectoren')
+      expect(html.match(/Hulp nodig bij uw situatie\?/g)).toHaveLength(1)
+      expect(html).toContain('Weet u niet zeker wat deze informatie voor uw organisatie betekent?')
+      expect(html).toContain('Start de Advieswijzer')
+      expect(html).toContain('href="/advieswijzer"')
+    }
+  })
+
+  it.each(knowledgeArticles)('$href biedt één directe route naar de Advieswijzer', (article) => {
     const html = renderToStaticMarkup(<KnowledgeArticlePage content={article} />)
 
-    expect(context).not.toBeNull()
-    expect(html).toContain(`href="/advieswijzer?context=${context?.id}"`)
-    expect(html).toContain('Schakel een adviseur in')
-    expect(html.match(/Schakel een adviseur in/g)).toHaveLength(1)
-    expect(html).not.toContain(`href="/hulpvragen/nieuw?context=${context?.id}"`)
+    expect(html).toContain('href="/advieswijzer"')
+    expect(html).toContain('Start de Advieswijzer')
+    expect(html).not.toContain('href="/hulpvragen/nieuw')
     expect(html).not.toContain('Start een opdracht')
     expect(html).not.toContain('Direct een opdracht plaatsen')
   })
@@ -76,7 +103,7 @@ describe('publieke detailcontent', () => {
 
     const html = renderToStaticMarkup(<KnowledgeArticlePage content={article!} />)
 
-    expect(html).toContain('href="/advieswijzer?context=OCCUPATIONAL_PHYSICIAN"')
+    expect(html).toContain('href="/advieswijzer"')
     expect(html).not.toContain('context=BHV')
   })
 
