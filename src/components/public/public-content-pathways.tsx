@@ -30,14 +30,14 @@ function resolvePopulatedGroups(contentId: PublicContentId, includeSectors = tru
     .filter((group) => group.items.length > 0)
 }
 
-function PathwayRelations({ contentId, includeSectors = true }: { contentId: PublicContentId; includeSectors?: boolean }) {
+function PathwayRelations({ contentId, includeSectors = true, title = 'Verder met uw vraag' }: { contentId: PublicContentId; includeSectors?: boolean; title?: string }) {
   const populatedGroups = resolvePopulatedGroups(contentId, includeSectors)
   if (populatedGroups.length === 0) return null
 
   return (
     <>
       <div>
-        <Heading as="h2" size="h2" id={`${contentId}-pathways-title`}>Verder met uw vraag</Heading>
+        <Heading as="h2" size="h2" id={`${contentId}-pathways-title`}>{title}</Heading>
         <Text className="mt-3 max-w-3xl text-text-secondary">Bekijk samenhangende informatie of verduidelijk wat voor uw situatie relevant is.</Text>
       </div>
       <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
@@ -60,11 +60,11 @@ function PathwayRelations({ contentId, includeSectors = true }: { contentId: Pub
   )
 }
 
-export function PublicContentRelations({ contentId }: { contentId: PublicContentId }) {
+export function PublicContentRelations({ contentId, title }: { contentId: PublicContentId; title?: string }) {
   if (resolvePopulatedGroups(contentId, false).length === 0) return null
   return (
     <section className="grid gap-6 rounded-card border border-border bg-surface-subtle p-5 sm:p-6" aria-labelledby={`${contentId}-pathways-title`}>
-      <PathwayRelations contentId={contentId} includeSectors={false} />
+      <PathwayRelations contentId={contentId} includeSectors={false} title={title} />
     </section>
   )
 }

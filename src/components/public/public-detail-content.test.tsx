@@ -141,6 +141,58 @@ describe('publieke detailcontent', () => {
     expect(html).not.toContain('context=BHV')
   })
 
+  it.each([
+    ['knowledge:occupational-physician', ['rechtstreeks kunnen bezoeken', 'De werkgever krijgt geen diagnose', 'Artikel 18']],
+    ['knowledge:psa', ['stress kunnen veroorzaken', 'terugkerende of escalerende conflicten', 'vertrouwenspersoon', 'Artikel 3, tweede lid', 'Artikel 2.15']],
+    ['knowledge:occupational-hygienist', ['begint niet automatisch met meten', 'via de huid', 'grens- of advieswaarden', 'is geen arts', 'meetstrategie en interpretatie']],
+    ['knowledge:incident-investigation', ['leerpotentieel', 'barrières ontbraken of faalden', 'vraag betrokkenen niet onnodig meteen om verklaringen', 'geen algemene wettelijke verplichting om ieder incident door een externe incidentonderzoeker', 'dagopname van enkele uren', 'meer dan drie dagen verzuim', 'werkgeversrapportage met verbeterplan', 'ongeval met een kind van 15 jaar of jonger', 'wanneer u een arbeidsongeval moet melden']],
+  ] as const)('%s gebruikt de goedgekeurde inhoud en eindstructuur zonder zichtbare FAQ', (contentId, requiredCopy) => {
+    const article = knowledgeArticles.find((item) => item.id === contentId)!
+    const html = renderToStaticMarkup(<KnowledgeArticlePage content={article} />)
+    const legal = html.indexOf('Wettelijke context')
+    const cta = html.indexOf('Hulp nodig bij uw situatie?')
+    const generalInformation = html.indexOf('Algemene vakinformatie')
+    const correctionReport = html.indexOf('Onjuistheid of wijziging melden')
+    const related = html.indexOf('Gerelateerde informatie')
+    const sources = html.indexOf('Bronnen en onderbouwing')
+
+    expect(legal).toBeGreaterThan(0)
+    expect(cta).toBeGreaterThan(legal)
+    expect(generalInformation).toBeGreaterThan(cta)
+    expect(correctionReport).toBeGreaterThan(generalInformation)
+    expect(related).toBeGreaterThan(correctionReport)
+    expect(sources).toBeGreaterThan(related)
+    expect(html).not.toContain('Verder met uw vraag')
+    expect(html).not.toContain('Veelgestelde vragen')
+    expect(html).not.toContain('Gerelateerde sectoren')
+    expect(html).toContain('href="/advieswijzer"')
+    expect(html).toContain('bg-brand-dark')
+    expect(html).toContain('text-text-on-dark')
+    expect(html.match(/Hulp nodig bij uw situatie\?/g)).toHaveLength(1)
+    expect(article.faq).toHaveLength(3)
+
+    for (const text of requiredCopy) expect(html.toLowerCase()).toContain(text.toLowerCase())
+  })
+
+  it('linkt het incidentartikel rechtstreeks naar de bestaande meldinformatie', () => {
+    const article = knowledgeArticles.find((item) => item.id === 'knowledge:incident-investigation')!
+    const html = renderToStaticMarkup(<KnowledgeArticlePage content={article} />)
+
+    expect(html).toContain('href="/kenniscentrum/wanneer-arbeidsongeval-melden"')
+  })
+
+  it('toont het negenstappenplan voor incidentonderzoek als genummerde acties', () => {
+    const article = knowledgeArticles.find((item) => item.id === 'knowledge:incident-investigation')!
+    const html = renderToStaticMarkup(<KnowledgeArticlePage content={article} />)
+    const start = html.indexOf('Wat kunt u nu doen?')
+    const end = html.indexOf('Wettelijke context', start)
+    const steps = html.slice(start, end)
+
+    expect(steps.match(/<li\b/g)).toHaveLength(9)
+    expect(steps).toContain('leren, een formele rapportage of beide')
+    expect(steps).toContain('RI&amp;E of plan van aanpak')
+  })
+
   it('toont publieke bullets compact en zonder kunstmatige lege regels', () => {
     const html = renderToStaticMarkup(<PublicBulletList items={['Eerste punt', 'Tweede punt']} />)
 
