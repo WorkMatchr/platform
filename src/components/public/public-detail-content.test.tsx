@@ -6,7 +6,7 @@ import { services } from '@/content/services'
 import { sectors } from '@/content/sectors'
 import { KnowledgeArticlePage } from './knowledge-article-page'
 import { ObligationDetailPage } from './obligation-detail-page'
-import { PublicBulletList, PublicFaqList, PublicSteps } from './public-detail-shared'
+import { PublicBulletList, PublicFaqList, PublicSteps, shouldDisplayPublicFaq } from './public-detail-shared'
 import { SectorDetailPage } from './sector-detail-page'
 import { ServiceDetailPage } from './service-detail-page'
 
@@ -78,18 +78,22 @@ describe('publieke detailcontent', () => {
     }
   })
 
-  it.each(obligations)('$href plaatst CTA vóór bronnen en de algemene toelichting erna', (content) => {
+  it.each(obligations)('$href houdt de bewijscontext in het laatste bronnenblok', (content) => {
     const html = renderToStaticMarkup(<ObligationDetailPage content={content} />)
     const faq = html.indexOf('Veelgestelde vragen')
     const cta = html.indexOf('Hulp nodig bij uw situatie?')
     const sources = html.indexOf('Bronnen en onderbouwing')
     const evidence = html.indexOf('Belangrijk bij deze uitleg')
 
-    expect(faq).toBeGreaterThan(0)
-    expect(cta).toBeGreaterThan(faq)
+    if (shouldDisplayPublicFaq(content.id)) expect(faq).toBeGreaterThan(0)
+    else expect(faq).toBe(-1)
+    if (shouldDisplayPublicFaq(content.id)) expect(cta).toBeGreaterThan(faq)
     expect(sources).toBeGreaterThan(cta)
     expect(sources).toBeGreaterThan(0)
+    expect(evidence).toBeGreaterThan(0)
     expect(evidence).toBeGreaterThan(sources)
+    expect(html.indexOf('Algemene vakinformatie')).toBeGreaterThan(cta)
+    expect(html.indexOf('Onjuistheid of wijziging melden')).toBeGreaterThan(html.indexOf('Algemene vakinformatie'))
     expect(html.match(/Belangrijk bij deze uitleg/g)).toHaveLength(1)
     expect(html).toContain('hierboven genoemde officiële bronnen')
     expect(html).not.toContain('hieronder genoemde officiële bronnen')
@@ -104,20 +108,21 @@ describe('publieke detailcontent', () => {
     ]
 
     for (const html of pages) {
-      const related = html.indexOf('Verder met uw vraag')
+      const related = html.indexOf('Gerelateerde informatie')
       const faq = html.indexOf('Veelgestelde vragen')
       const cta = html.indexOf('Hulp nodig bij uw situatie?')
       const sources = html.indexOf('Bronnen en onderbouwing')
 
-      expect(related).toBeGreaterThan(0)
-      expect(faq).toBeGreaterThan(related)
-      expect(cta).toBeGreaterThan(faq)
+      expect(html).not.toContain('Verder met uw vraag')
+      if (faq >= 0) expect(cta).toBeGreaterThan(faq)
+      if (related >= 0) expect(related).toBeGreaterThan(cta)
       expect(sources).toBeGreaterThan(cta)
       expect(html).not.toContain('Gerelateerde sectoren')
       expect(html.match(/Hulp nodig bij uw situatie\?/g)).toHaveLength(1)
       expect(html).toContain('Weet u niet zeker wat deze informatie voor uw organisatie betekent?')
-      expect(html).toContain('Start de Advieswijzer')
-      expect(html).toContain('href="/advieswijzer"')
+    expect(html).toContain('Start de Advieswijzer')
+    expect(html).toContain('href="/advieswijzer"')
+    expect(html).toContain('Onjuistheid of wijziging melden')
     }
   })
 
@@ -191,6 +196,35 @@ describe('publieke detailcontent', () => {
     expect(steps.match(/<li\b/g)).toHaveLength(9)
     expect(steps).toContain('leren, een formele rapportage of beide')
     expect(steps).toContain('RI&amp;E of plan van aanpak')
+  })
+
+  it('plaatst FAQ vóór aanwezige wettelijke context en de CTA erna', () => {
+    const pages = [
+      { html: renderToStaticMarkup(<KnowledgeArticlePage content={knowledgeArticles.find((item) => item.id === 'knowledge:pmo-pago')!} />), faqVisible: true, context: 'Wettelijke context' },
+      { html: renderToStaticMarkup(<ServiceDetailPage content={services.find((item) => item.id === 'service:bhv')!} />), faqVisible: true, context: 'Relevante wettelijke context' },
+      { html: renderToStaticMarkup(<ObligationDetailPage content={obligations.find((item) => item.id === 'obligation:basiscontract')!} />), faqVisible: true, context: 'Wettelijke basis' },
+      { html: renderToStaticMarkup(<KnowledgeArticlePage content={knowledgeArticles.find((item) => item.id === 'knowledge:preventiemedewerker')!} />), faqVisible: false, context: 'Wettelijke context' },
+    ]
+
+    for (const { html, faqVisible, context } of pages) {
+      const faq = html.indexOf('Veelgestelde vragen')
+      const legalContext = html.indexOf(context)
+      const cta = html.indexOf('Hulp nodig bij uw situatie?')
+      expect(legalContext).toBeGreaterThan(0)
+      expect(cta).toBeGreaterThan(legalContext)
+      if (faqVisible) expect(legalContext).toBeGreaterThan(faq)
+      else expect(faq).toBe(-1)
+    }
+  })
+
+  it('behoudt zichtbare FAQ op reguliere dienst-, sector- en verplichtingpagina’s', () => {
+    const service = services.find((item) => item.id === 'service:bhv')!
+    const sector = sectors.find((item) => item.id === 'sector:industrie')!
+    const obligation = obligations.find((item) => item.id === 'obligation:basiscontract')!
+
+    expect(renderToStaticMarkup(<ServiceDetailPage content={service} />)).toContain('Veelgestelde vragen')
+    expect(renderToStaticMarkup(<SectorDetailPage content={sector} />)).toContain('Veelgestelde vragen')
+    expect(renderToStaticMarkup(<ObligationDetailPage content={obligation} />)).toContain('Veelgestelde vragen')
   })
 
   it('toont publieke bullets compact en zonder kunstmatige lege regels', () => {

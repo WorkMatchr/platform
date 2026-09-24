@@ -2,12 +2,9 @@ import Link from 'next/link'
 import { Text } from '@/components/ui/text'
 import type { KnowledgeArticleContent } from '@/content/public-content-model'
 import { publicRoutes } from '@/content/public-routes'
-import { resolvePublicSources } from '@/content/public-sources'
-import { KnowledgeInformationNotice } from '@/components/knowledge/knowledge-information-notice'
 import { KnowledgeSummary } from './knowledge-summary'
-import { PublicContentCallToAction, PublicContentRelations } from './public-content-pathways'
 import { PublicPageLayout } from './public-page-layout'
-import { PublicBulletList, PublicContentStatus, PublicDetailBody, PublicFaqList, PublicSourceList, PublicSteps, PublicTextSection } from './public-detail-shared'
+import { PublicBulletList, PublicContentStatus, PublicDetailBody, PublicDetailEnding, PublicFaqList, PublicSteps, PublicTextSection, shouldDisplayPublicFaq } from './public-detail-shared'
 
 function PreventionOfficerArticleContent({ content }: { content: KnowledgeArticleContent }) {
   const steps = [
@@ -66,9 +63,6 @@ function PreventionOfficerArticleContent({ content }: { content: KnowledgeArticl
       <Text>Externe deskundigen kunnen helpen bij complexe risico’s, onderzoek of deskundigheidsontwikkeling. Laat die ondersteuning de interne rol versterken en niet onzichtbaar vervangen.</Text>
     </PublicTextSection>
     <section aria-labelledby="vervolg-title"><h2 id="vervolg-title" className="text-2xl font-bold text-brand-dark">Wat kunt u nu doen?</h2><ol className="mt-4 space-y-3">{steps.map((step, index) => <li key={step} className="flex gap-3"><span aria-hidden="true" className="font-bold text-brand-primary">{index + 1}.</span><p className="text-text-secondary">{step}</p></li>)}</ol></section>
-    <PublicTextSection id="wettelijke-context" title="Wettelijke context">
-      <Text>Artikel 13 van de Arbeidsomstandighedenwet regelt de deskundige bijstand door werknemers en de taken van de preventiemedewerker. Iedere werkgever met werknemers moet ten minste één preventiemedewerker aanwijzen. Bij maximaal 25 werknemers mag de werkgever onder voorwaarden zelf deze rol vervullen.</Text>
-    </PublicTextSection>
   </>
 }
 
@@ -94,14 +88,10 @@ export function KnowledgeArticlePage({
   developmentImprovementTestMode?: boolean
 }) {
   const isPreventionOfficerArticle = content.id === 'knowledge:preventiemedewerker'
-  const isContentQualityBatch2Article = ['knowledge:occupational-physician', 'knowledge:psa', 'knowledge:occupational-hygienist', 'knowledge:incident-investigation'].includes(content.id)
   const isIncidentInvestigationArticle = content.id === 'knowledge:incident-investigation'
-  const genericContent = <><PublicTextSection id="relevant" title="Wanneer is dit relevant?"><Text>{content.relevantWhen}</Text></PublicTextSection><PublicTextSection id="context" title="Wat betekent dit in de praktijk?">{content.context.map((paragraph) => <Text key={paragraph}>{paragraph}</Text>)}</PublicTextSection><PublicTextSection id="praktijkvoorbeeld" title="Praktijkvoorbeeld"><Text>{content.practiceExample}</Text></PublicTextSection><PublicTextSection id="aandachtspunten" title="Praktische aandachtspunten"><PublicBulletList items={content.practicalPoints} /></PublicTextSection><PublicTextSection id="rie" title="Wat is de relatie met de RI&E?"><Text>{content.rieRelationship}</Text></PublicTextSection><PublicTextSection id="ondersteuning" title="Wanneer is ondersteuning verstandig?"><Text>{content.supportWhen}</Text></PublicTextSection>{isIncidentInvestigationArticle ? <PublicTextSection id="vervolg" title="Wat kunt u nu doen?"><PublicSteps items={incidentInvestigationSteps} /></PublicTextSection> : <PublicTextSection id="vervolg" title="Wat kunt u nu doen?"><Text>{content.nextStep}</Text></PublicTextSection>}<PublicTextSection id="wettelijke-context" title="Wettelijke context"><Text>{content.legalContext}</Text>{isIncidentInvestigationArticle ? <Text>Lees ook <Link className="font-semibold text-brand-primary underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-primary" href={publicRoutes.accidentQuestion}>wanneer u een arbeidsongeval moet melden</Link>.</Text> : null}</PublicTextSection></>
-  const sharedNotice = <KnowledgeInformationNotice reportHref={improvementReportHref} developmentTestMode={developmentImprovementTestMode} />
-  const pageEnding = isPreventionOfficerArticle
-    ? <><PublicContentCallToAction variant="prominent" />{sharedNotice}<PublicSourceList sources={resolvePublicSources(content.sourceIds)} /></>
-    : isContentQualityBatch2Article
-    ? <><PublicContentCallToAction variant="prominent" />{sharedNotice}<PublicContentRelations contentId={content.id} title="Gerelateerde informatie" /><PublicSourceList sources={resolvePublicSources(content.sourceIds)} /></>
-    : <>{sharedNotice}<PublicContentRelations contentId={content.id} /><PublicFaqList faq={content.faq} /><PublicContentCallToAction /><PublicSourceList sources={resolvePublicSources(content.sourceIds)} /></>
-  return <PublicPageLayout breadcrumbs={[{ label: 'Home', href: publicRoutes.home }, { label: 'Kenniscentrum', href: publicRoutes.knowledge }, { label: content.title }]} eyebrow="Kennis" title={content.title} description={content.summary}><PublicDetailBody><PublicContentStatus content={content} /><KnowledgeSummary>{content.shortAnswer}</KnowledgeSummary>{isPreventionOfficerArticle ? <PreventionOfficerArticleContent content={content} /> : genericContent}{pageEnding}</PublicDetailBody></PublicPageLayout>
+  const genericContent = <><PublicTextSection id="relevant" title="Wanneer is dit relevant?"><Text>{content.relevantWhen}</Text></PublicTextSection><PublicTextSection id="context" title="Wat betekent dit in de praktijk?">{content.context.map((paragraph) => <Text key={paragraph}>{paragraph}</Text>)}</PublicTextSection><PublicTextSection id="praktijkvoorbeeld" title="Praktijkvoorbeeld"><Text>{content.practiceExample}</Text></PublicTextSection><PublicTextSection id="aandachtspunten" title="Praktische aandachtspunten"><PublicBulletList items={content.practicalPoints} /></PublicTextSection><PublicTextSection id="rie" title="Wat is de relatie met de RI&E?"><Text>{content.rieRelationship}</Text></PublicTextSection><PublicTextSection id="ondersteuning" title="Wanneer is ondersteuning verstandig?"><Text>{content.supportWhen}</Text></PublicTextSection>{isIncidentInvestigationArticle ? <PublicTextSection id="vervolg" title="Wat kunt u nu doen?"><PublicSteps items={incidentInvestigationSteps} /></PublicTextSection> : <PublicTextSection id="vervolg" title="Wat kunt u nu doen?"><Text>{content.nextStep}</Text></PublicTextSection>}</>
+  const legalContext = isPreventionOfficerArticle
+    ? <PublicTextSection id="wettelijke-context" title="Wettelijke context"><Text>Artikel 13 van de Arbeidsomstandighedenwet regelt de deskundige bijstand door werknemers en de taken van de preventiemedewerker. Iedere werkgever met werknemers moet ten minste één preventiemedewerker aanwijzen. Bij maximaal 25 werknemers mag de werkgever onder voorwaarden zelf deze rol vervullen.</Text></PublicTextSection>
+    : <PublicTextSection id="wettelijke-context" title="Wettelijke context"><Text>{content.legalContext}</Text>{isIncidentInvestigationArticle ? <Text>Lees ook <Link className="font-semibold text-brand-primary underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-primary" href={publicRoutes.accidentQuestion}>wanneer u een arbeidsongeval moet melden</Link>.</Text> : null}</PublicTextSection>
+  return <PublicPageLayout breadcrumbs={[{ label: 'Home', href: publicRoutes.home }, { label: 'Kenniscentrum', href: publicRoutes.knowledge }, { label: content.title }]} eyebrow="Kennis" title={content.title} description={content.summary}><PublicDetailBody><PublicContentStatus content={content} /><KnowledgeSummary>{content.shortAnswer}</KnowledgeSummary>{isPreventionOfficerArticle ? <PreventionOfficerArticleContent content={content} /> : genericContent}{shouldDisplayPublicFaq(content.id) ? <PublicFaqList faq={content.faq} /> : null}{legalContext}<PublicDetailEnding contentId={content.id} sourceIds={content.sourceIds} improvementReportHref={improvementReportHref} developmentImprovementTestMode={developmentImprovementTestMode} /></PublicDetailBody></PublicPageLayout>
 }
