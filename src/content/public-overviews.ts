@@ -3,6 +3,7 @@ import { knowledgeArticles } from './knowledge/articles'
 import { obligations } from './obligations'
 import { sectors } from './sectors'
 import { services } from './services'
+import { canonicalExpertiseServices } from './canonical-expertise-services'
 
 export type PublicOverviewItem = {
   title: string
@@ -11,7 +12,12 @@ export type PublicOverviewItem = {
   status?: string
 }
 
-export const serviceOverview = services.map((item) => ({ title: item.title, description: item.summary, href: item.href })) satisfies readonly PublicOverviewItem[]
+const canonicalHrefs = new Set<string>(canonicalExpertiseServices.map((item) => item.href))
+export const serviceOverview = services.filter((item) => !canonicalHrefs.has(item.href)).map((item) => ({ title: item.title, description: item.summary, href: item.href })) satisfies readonly PublicOverviewItem[]
+export const expertiseOverview = canonicalExpertiseServices.map((expertise) => {
+  const service = services.find((item) => item.href === expertise.href)!
+  return { title: expertise.label, description: service.summary, href: service.href }
+}) satisfies readonly PublicOverviewItem[]
 
 export const legalOverview = obligations.map((item) => ({ title: item.title, description: item.summary, href: item.href })) satisfies readonly PublicOverviewItem[]
 

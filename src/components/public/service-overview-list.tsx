@@ -18,7 +18,7 @@ export function ServiceOverviewList({ items }: { items: readonly LinkedServiceOv
             className="group flex h-full min-h-11 min-w-0 items-start gap-4 rounded-card border border-border bg-surface p-4 shadow-none transition-colors duration-normal hover:border-brand-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-primary sm:p-5"
           >
             <div className="min-w-0 flex-1">
-              <Heading as="h2" size="h3" className="break-words">
+              <Heading as="h3" size="h3" className="break-words">
                 {item.title}
               </Heading>
               <Text size="sm" className="mt-2 text-text-secondary">{item.description}</Text>

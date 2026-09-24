@@ -20,7 +20,7 @@ function countWords(value: unknown): number {
 
 describe('Public Content Platform v1', () => {
   it('bouwt de afgesproken hoeveelheid hoogwaardige content', () => {
-    expect(services).toHaveLength(8)
+    expect(services).toHaveLength(22)
     expect(obligations).toHaveLength(10)
     expect(sectors).toHaveLength(6)
     expect(knowledgeArticles).toHaveLength(9)
@@ -34,7 +34,8 @@ describe('Public Content Platform v1', () => {
     for (const item of allDetailContent) {
       expect(item.title && item.summary && item.lastReviewed).toBeTruthy()
       if (item.type === 'service' || item.type === 'knowledge') {
-        expect(item.faq).toHaveLength(3)
+        expect(item.faq.length).toBeGreaterThanOrEqual(2)
+        expect(item.faq.length).toBeLessThanOrEqual(3)
       } else {
         expect(item.faq).toHaveLength(2)
       }

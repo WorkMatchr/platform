@@ -4,4 +4,4 @@ Een dienst beschrijft mogelijke professionele ondersteuning, niet een gegarandee
 
 `ServiceDetailPage` toont deze onderdelen in een vaste semantische volgorde, gevolgd door FAQ, bronnen, Advieswijzer en maximaal enkele expliciete relaties. Er staan geen prijzen, vaste doorlooptijden, beschikbaarheidsclaims of garanties in.
 
-Live zijn acht diensten: RI&E, preventiemedewerkerondersteuning, BHV-ondersteuning, bedrijfsarts, PMO, hogere veiligheidskundige, arbeidshygiënist en incidentonderzoek. Middelbare veiligheidskundige en arbeidsdeskundige wachten op voldoende onderscheidende officiële publieksbronbasis.
+De publieke catalogus bevat twintig routes voor de canonieke deskundigheden uit de bestaande Advieswijzerreferentie, naast twee dienstgerichte pagina’s voor RI&E en PMO. De dienstenpagina groepeert deze apart. De canonieke namen, identifiers en routes staan bij elkaar in `src/content/canonical-expertise-services.ts`; deze mapping wijzigt de referentietaxonomie niet.
