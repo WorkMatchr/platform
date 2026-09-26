@@ -20,6 +20,7 @@ const prisma = {
 vi.mock('@/lib/prisma', () => ({ getPrisma: () => prisma }))
 
 import { retryDueJorttSyncs, syncFinancialInvoiceToJortt, type JorttGateway } from './jortt-sync-service'
+import { JorttProviderError } from './jortt-provider-diagnostics'
 
 function invoice(status = 'PENDING', updatedAt = new Date('2026-08-25T10:00:00Z')) {
   return {
@@ -33,6 +34,17 @@ function invoice(status = 'PENDING', updatedAt = new Date('2026-08-25T10:00:00Z'
 }
 
 describe('Jortt synchronisatieservice', () => {
+  it('bewaart veilige providerdiagnostiek bij dezelfde poging zonder retrybeleid of identiteit te wijzigen', async () => {
+    const gateway = { submitInvoice: vi.fn().mockRejectedValue(new JorttProviderError('CUSTOMER_CREATE', 422, 'params.invalid')) }
+    await expect(syncFinancialInvoiceToJortt('invoice-id', gateway)).rejects.toThrow('JORTT_PROVIDER_REJECTED')
+    expect(gateway.submitInvoice).toHaveBeenCalledOnce()
+    expect(mocks.attemptCreate).toHaveBeenCalledExactlyOnceWith({ data: { syncId: 'sync-id', attemptNumber: 1, status: 'FAILED', errorCode: 'JORTT_PROVIDER_REJECTED', idempotencyKey: 'jortt:invoice:invoice-id:1' } })
+    expect(mocks.eventUpsert).toHaveBeenCalledWith(expect.objectContaining({ create: expect.objectContaining({
+      invoiceId: 'invoice-id', idempotencyKey: 'jortt-sync-failed:invoice-id:1',
+      metadata: { provider: 'JORTT', operation: 'CUSTOMER_CREATE', httpStatus: 422, providerErrorCode: 'params.invalid', category: 'JORTT_CUSTOMER_CREATE_REJECTED', syncId: 'sync-id', attemptNumber: 1 },
+    }) }))
+    expect(mocks.syncUpdate).toHaveBeenLastCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: 'RETRY_REQUIRED', lastErrorCode: 'JORTT_PROVIDER_REJECTED', nextAttemptAt: new Date('2026-08-25T12:02:00Z') }) }))
+  })
   it('onderhoud verwerkt andere retries en selecteert geen terminale testhistorie', async () => {
     mocks.syncFindMany.mockImplementation(async ({ where }) => {
       const records = [

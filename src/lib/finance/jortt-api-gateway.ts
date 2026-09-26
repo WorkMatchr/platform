@@ -1,6 +1,7 @@
 import 'server-only'
 
 import type { JorttGateway, JorttInvoicePayload } from './jortt-sync-service'
+import { jorttFetch, jorttJson, jorttOperation } from './jortt-provider-diagnostics'
 
 type Fetcher = typeof fetch
 type JorttRecord = { id: string; reference?: string | null; remarks?: string | null; invoice_number?: string | null; invoice_status?: string | null; send_method?: string | null }
@@ -29,25 +30,21 @@ export function isJorttSyncConfigured() {
   }
 }
 
-async function json<T>(response: Response): Promise<T> {
-  if (!response.ok) throw new Error(response.status === 429 || response.status >= 500 ? 'JORTT_TEMPORARY_PROVIDER_ERROR' : 'JORTT_PROVIDER_REJECTED')
-  return response.json() as Promise<T>
-}
-
 export class JorttApiGateway implements JorttGateway {
   constructor(private readonly fetcher: Fetcher = fetch) {}
 
   private async token() {
     const config = configuration()
     const body = new URLSearchParams({ grant_type: 'client_credentials', scope: 'customers:read customers:write invoices:read invoices:write organizations:read' })
-    const response = await this.fetcher(TOKEN_URL, { method: 'POST', headers: { Authorization: `Basic ${Buffer.from(`${config.clientId}:${config.clientSecret}`).toString('base64')}`, 'Content-Type': 'application/x-www-form-urlencoded' }, body, signal: AbortSignal.timeout(10_000) })
-    const result = await json<{ access_token?: string }>(response)
+    const response = await jorttFetch(this.fetcher, 'AUTH', TOKEN_URL, { method: 'POST', headers: { Authorization: `Basic ${Buffer.from(`${config.clientId}:${config.clientSecret}`).toString('base64')}`, 'Content-Type': 'application/x-www-form-urlencoded' }, body, signal: AbortSignal.timeout(10_000) })
+    const result = await jorttJson<{ access_token?: string }>(response, 'AUTH')
     if (!result.access_token) throw new Error('JORTT_AUTHENTICATION_FAILED')
     return { accessToken: result.access_token, config }
   }
 
   private async request<T>(path: string, accessToken: string, init: RequestInit = {}) {
-    return json<T>(await this.fetcher(`${API_BASE}${path}`, { ...init, headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json', ...(init.body ? { 'Content-Type': 'application/json' } : {}) }, signal: AbortSignal.timeout(15_000) }))
+    const operation = jorttOperation(path, init.method)
+    return jorttJson<T>(await jorttFetch(this.fetcher, operation, `${API_BASE}${path}`, { ...init, headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json', ...(init.body ? { 'Content-Type': 'application/json' } : {}) }, signal: AbortSignal.timeout(15_000) }), operation)
   }
 
   private async findExact(path: 'customers', reference: string, accessToken: string) {
@@ -87,13 +84,12 @@ export class JorttApiGateway implements JorttGateway {
   }
 
   private async sendSelf(invoiceId: string, accessToken: string) {
-    const response = await this.fetcher(`${API_BASE}/invoices/${invoiceId}/send`, {
+    await jorttFetch(this.fetcher, 'INVOICE_FINALIZE', `${API_BASE}/invoices/${invoiceId}/send`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({ send_method: 'self' }),
       signal: AbortSignal.timeout(15_000),
     })
-    if (!response.ok) await json(response)
   }
 
   private async waitForFinalInvoice(invoiceId: string, payload: JorttInvoicePayload, accessToken: string) {

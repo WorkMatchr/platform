@@ -3,6 +3,7 @@ import 'server-only'
 import { Prisma } from '@/generated/prisma/client'
 import { getPrisma } from '@/lib/prisma'
 import { isRetiredLegacyJorttSync } from './jortt-retirement-policy'
+import { JorttProviderError } from './jortt-provider-diagnostics'
 
 const PROCESSING_LEASE_MS = 5 * 60 * 1000
 
@@ -205,7 +206,9 @@ export async function syncFinancialInvoiceToJortt(
       })
       await transaction.financialEvent.upsert({
         where: { idempotencyKey: `jortt-sync-failed:${invoiceId}:${attemptNumber}` },
-        create: { invoiceId, eventType: 'JORTT_SYNC_FAILED', result: 'FAILED', reason: errorCode, idempotencyKey: `jortt-sync-failed:${invoiceId}:${attemptNumber}` },
+        create: { invoiceId, eventType: 'JORTT_SYNC_FAILED', result: 'FAILED', reason: errorCode, idempotencyKey: `jortt-sync-failed:${invoiceId}:${attemptNumber}`,
+          ...(error instanceof JorttProviderError ? { metadata: { ...error.diagnostic, syncId: claimed.sync.id, attemptNumber } } : {}),
+        },
         update: {},
       })
     })

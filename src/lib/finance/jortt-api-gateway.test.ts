@@ -23,6 +23,27 @@ function payload(overrides: Partial<JorttInvoicePayload> = {}): JorttInvoicePayl
 }
 
 describe('Jortt API gateway', () => {
+  it.each(['AUTH', 'INVOICE_LOOKUP', 'CUSTOMER_LOOKUP', 'CUSTOMER_CREATE', 'INVOICE_CREATE', 'INVOICE_FINALIZE', 'INVOICE_READ'])('behoudt de echte gatewayfase %s bij afwijzing en stopt zonder vervolgaanroep', async (failedStage) => {
+    const stages: string[] = []
+    const fetcher = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input)
+      const stage = url.includes('/oauth/token') ? 'AUTH' : url.includes('/invoices?') ? 'INVOICE_LOOKUP' : url.includes('/customers?') ? 'CUSTOMER_LOOKUP' : url.endsWith('/customers') ? 'CUSTOMER_CREATE' : url.endsWith('/send') ? 'INVOICE_FINALIZE' : url.endsWith('/invoices') ? 'INVOICE_CREATE' : 'INVOICE_READ'
+      stages.push(stage)
+      if (stage === failedStage) return response({ error: { key: 'params.invalid', message: 'PRIVATE' } }, 422)
+      if (stage === 'AUTH') return response({ access_token: 'token' })
+      if (stage.endsWith('LOOKUP')) return response({ data: [] })
+      if (stage === 'CUSTOMER_CREATE') return response({ data: { id: 'customer' } })
+      if (stage === 'INVOICE_CREATE') return response({ data: { id: 'invoice' } })
+      if (stage === 'INVOICE_FINALIZE') {
+        expect(JSON.parse(String(init?.body))).toEqual({ send_method: 'self' })
+        return new Response(null, { status: 200 })
+      }
+      return response({ data: { id: 'invoice', reference: payload().invoiceNumber, remarks: payload().technicalReference, invoice_number: 'J1' } })
+    })
+    await expect(new JorttApiGateway(fetcher as typeof fetch).submitInvoice(payload(), 'stable-key')).rejects.toMatchObject({ diagnostic: { operation: failedStage, httpStatus: 422, providerErrorCode: 'params.invalid' } })
+    expect(stages.at(-1)).toBe(failedStage)
+    expect(stages.filter(stage => stage === failedStage)).toHaveLength(1)
+  })
   it('weigert ontbrekende regels vóór iedere providercall, zonder v1-fallback in de gateway', async () => {
     const fetcher = vi.fn()
     await expect(new JorttApiGateway(fetcher as typeof fetch).submitInvoice(payload({ lines: [] }), 'missing-lines'))

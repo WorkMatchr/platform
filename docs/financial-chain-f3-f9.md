@@ -66,6 +66,12 @@ Configuratie is server-only via `JORTT_CLIENT_ID`, `JORTT_CLIENT_SECRET` en `JOR
 
 Een providerfout resulteert in `RETRY_REQUIRED` met begrensde back-off. Het onderhoudsproces en de bevoegde platformbeheerder kunnen veilig herhalen. Een stabiele WorkMatchr-reference, een korte `PROCESSING`-lease, database-advisory locks en find-before-create bij Jortt voorkomen dubbele boekingen bij replay of herstel na een onderbreking.
 
+### Veilige Jortt-providerdiagnostiek
+
+Transportfouten krijgen een vaste operationele fase (`AUTH`, klantlookup/-create, factuurlookup/-read/-create/-update, creditnotacreate of self-finalisatie), HTTP-status indien ontvangen, en een vaste categorie voor afwijzing, throttling, provideruitval, timeout, netwerkfout of ongeldige JSON. Alleen expliciet toegestane codes uit het [Jortt-foutcontract](https://developer.jortt.nl/) en OAuth-foutcodes worden behouden. Onbekende codes worden `null`; vrije providertekst, details, headers, URL's, payloads, persoonsgegevens en secrets worden nooit opgeslagen of gelogd. Foutbody parsing is begrensd tot 16 KiB.
+
+De bestaande `JORTT_SYNC_FAILED`-eventmetadata bewaart deze diagnostiek samen met sync-ID en attemptnummer. Invoice-ID, eventtijd en bestaande idempotencykey correleren het event met de append-only poging. De bestaande generieke foutcode in poging/projectie en het retry-/back-offbeleid blijven behouden. Geen nieuwe events, schemavelden, retries of providercalls worden hiervoor toegevoegd. Oude generieke failures zijn niet met terugwerkende kracht te reconstrueren; zij blijven `ATTEMPT_DIAGNOSTICS_INSUFFICIENT`. Ontbrekende lokale remote ID bewijst niet dat de provider geen gedeeltelijk object heeft aangemaakt: een afzonderlijk goedgekeurde retry moet altijd de bestaande find-before-create gebruiken.
+
 ## Kortingen, startersvoordeel en Pro
 
 Kortingscodes ondersteunen één voordeelvorm per code, geldigheid, pakketbereik, minimumwaarde, gebruikslimiet, eenmalig gebruik per organisatie en alleen-nieuwe-klantbeleid. Reservering en definitieve toepassing zijn afzonderlijk en idempotent.
