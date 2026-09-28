@@ -1,7 +1,7 @@
 import 'server-only'
 
 import type { JorttGateway, JorttInvoicePayload } from './jortt-sync-service'
-import { jorttFetch, jorttJson, jorttOperation } from './jortt-provider-diagnostics'
+import { JorttProviderError, jorttFetch, jorttJson, jorttOperation } from './jortt-provider-diagnostics'
 
 type Fetcher = typeof fetch
 type JorttRecord = { id: string; reference?: string | null; remarks?: string | null; invoice_number?: string | null; invoice_status?: string | null; send_method?: string | null }
@@ -11,13 +11,13 @@ const TOKEN_URL = 'https://app.jortt.nl/oauth-provider/oauth/token'
 const money = (cents: number) => (cents / 100).toFixed(2)
 const date = (iso: string) => iso.slice(0, 10)
 
-function configuration() {
+function configuration(readOnly = false) {
   const clientId = process.env.JORTT_CLIENT_ID
   const clientSecret = process.env.JORTT_CLIENT_SECRET
   const environment = process.env.JORTT_SYNC_ENVIRONMENT
   const expected = process.env.VERCEL_ENV === 'production' ? 'production' : 'acceptance'
   if (!clientId || !clientSecret || environment !== expected) throw new Error('JORTT_EXTERNAL_CONNECTOR_NOT_CONFIGURED')
-  if (expected === 'production' && process.env.JORTT_PRODUCTION_WRITES_ENABLED !== 'true') throw new Error('JORTT_PRODUCTION_WRITES_DISABLED')
+  if (!readOnly && expected === 'production' && process.env.JORTT_PRODUCTION_WRITES_ENABLED !== 'true') throw new Error('JORTT_PRODUCTION_WRITES_DISABLED')
   return { clientId, clientSecret, tradenameId: process.env.JORTT_TRADENAME_ID || undefined, ledgerAccountId: process.env.JORTT_REVENUE_LEDGER_ACCOUNT_ID || undefined }
 }
 
@@ -33,13 +33,53 @@ export function isJorttSyncConfigured() {
 export class JorttApiGateway implements JorttGateway {
   constructor(private readonly fetcher: Fetcher = fetch) {}
 
-  private async token() {
-    const config = configuration()
-    const body = new URLSearchParams({ grant_type: 'client_credentials', scope: 'customers:read customers:write invoices:read invoices:write organizations:read' })
+  private async token(readOnly = false) {
+    const config = configuration(readOnly)
+    const scope = readOnly ? 'organizations:read' : 'customers:read customers:write invoices:read invoices:write organizations:read'
+    const body = new URLSearchParams({ grant_type: 'client_credentials', scope })
     const response = await jorttFetch(this.fetcher, 'AUTH', TOKEN_URL, { method: 'POST', headers: { Authorization: `Basic ${Buffer.from(`${config.clientId}:${config.clientSecret}`).toString('base64')}`, 'Content-Type': 'application/x-www-form-urlencoded' }, body, signal: AbortSignal.timeout(10_000) })
     const result = await jorttJson<{ access_token?: string }>(response, 'AUTH')
     if (!result.access_token) throw new Error('JORTT_AUTHENTICATION_FAILED')
     return { accessToken: result.access_token, config }
+  }
+
+  /** Temporary, strictly read-only connectivity check. Never returns provider data or credentials. */
+  async preflightOrganizationRead(): Promise<{
+    ok: boolean
+    auth: 'PASS' | 'FAIL'
+    organizationRead: 'PASS' | 'FAIL' | 'NOT_RUN'
+    providerCode: string | null
+    httpStatus: number | null
+  }> {
+    let accessToken: string
+    try {
+      ({ accessToken } = await this.token(true))
+    } catch (error) {
+      const diagnostic = error instanceof JorttProviderError ? error.diagnostic : null
+      const localConfigurationError = error instanceof Error && error.message === 'JORTT_EXTERNAL_CONNECTOR_NOT_CONFIGURED'
+      return {
+        ok: false,
+        auth: 'FAIL',
+        organizationRead: 'NOT_RUN',
+        providerCode: diagnostic?.providerErrorCode ?? null,
+        httpStatus: diagnostic?.httpStatus ?? (localConfigurationError ? 503 : null),
+      }
+    }
+
+    try {
+      // Discard the response body: this proves the read permission without exposing organization data.
+      await this.request('/tradenames', accessToken)
+      return { ok: true, auth: 'PASS', organizationRead: 'PASS', providerCode: null, httpStatus: 200 }
+    } catch (error) {
+      const diagnostic = error instanceof JorttProviderError ? error.diagnostic : null
+      return {
+        ok: false,
+        auth: 'PASS',
+        organizationRead: 'FAIL',
+        providerCode: diagnostic?.providerErrorCode ?? null,
+        httpStatus: diagnostic?.httpStatus ?? null,
+      }
+    }
   }
 
   private async request<T>(path: string, accessToken: string, init: RequestInit = {}) {

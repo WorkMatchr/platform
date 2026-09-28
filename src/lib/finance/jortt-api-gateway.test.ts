@@ -327,6 +327,72 @@ describe('Jortt API gateway', () => {
     expect(isJorttSyncConfigured()).toBe(false)
   })
 
+  describe('read-only organization preflight', () => {
+    beforeEach(() => {
+      vi.stubEnv('VERCEL_ENV', 'production')
+      vi.stubEnv('JORTT_SYNC_ENVIRONMENT', 'production')
+      vi.stubEnv('JORTT_PRODUCTION_WRITES_ENABLED', '')
+      vi.stubEnv('JORTT_TRADENAME_ID', '')
+      vi.stubEnv('JORTT_REVENUE_LEDGER_ACCOUNT_ID', '')
+    })
+
+    it('gebruikt uitsluitend OAuth en GET /tradenames zonder write-config of gevoelige response', async () => {
+      const calls: Array<{ url: string; method: string }> = []
+      let requestedScope: string | null = null
+      const fetcher = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+        const url = String(input)
+        calls.push({ url, method: init?.method ?? 'GET' })
+        if (url.includes('/oauth/token')) {
+          requestedScope = new URLSearchParams(String(init?.body)).get('scope')
+          return response({ access_token: 'private-access-token' })
+        }
+        return response({ data: [{ id: 'private-tradename-id', name: 'Private organization' }] })
+      })
+
+      const result = await new JorttApiGateway(fetcher as typeof fetch).preflightOrganizationRead()
+
+      expect(result).toEqual({ ok: true, auth: 'PASS', organizationRead: 'PASS', providerCode: null, httpStatus: 200 })
+      expect(calls).toEqual([
+        { url: 'https://app.jortt.nl/oauth-provider/oauth/token', method: 'POST' },
+        { url: 'https://api.jortt.nl/v3/tradenames', method: 'GET' },
+      ])
+      expect(requestedScope).toBe('organizations:read')
+      expect(calls.some(call => /customers|invoices/i.test(call.url))).toBe(false)
+      expect(JSON.stringify(result)).not.toMatch(/private-access-token|private-tradename-id|Private organization|client-secret|client-id/i)
+      expect(calls[0].method).toBe('POST') // OAuth token grant only; resource operation remains GET.
+      expect(calls[1].method).toBe('GET')
+    })
+
+    it('stopt na een OAuth-weigering en retourneert alleen de veilige providercode', async () => {
+      const fetcher = vi.fn(async () => response({ error: { key: 'invalid_client', error_description: 'PRIVATE SECRET' } }, 401))
+      const result = await new JorttApiGateway(fetcher as typeof fetch).preflightOrganizationRead()
+
+      expect(result).toEqual({ ok: false, auth: 'FAIL', organizationRead: 'NOT_RUN', providerCode: 'invalid_client', httpStatus: 401 })
+      expect(fetcher).toHaveBeenCalledOnce()
+      expect(JSON.stringify(result)).not.toContain('PRIVATE SECRET')
+    })
+
+    it('rapporteert geweigerde organization-read zonder organisatiegegevens', async () => {
+      const fetcher = vi.fn(async (input: string | URL | Request) => String(input).includes('/oauth/token')
+        ? response({ access_token: 'private-access-token' })
+        : response({ error: { key: 'organization.requires_mkb_plan', message: 'PRIVATE ORGANIZATION DATA' } }, 401))
+      const result = await new JorttApiGateway(fetcher as typeof fetch).preflightOrganizationRead()
+
+      expect(result).toEqual({ ok: false, auth: 'PASS', organizationRead: 'FAIL', providerCode: 'organization.requires_mkb_plan', httpStatus: 401 })
+      expect(fetcher).toHaveBeenCalledTimes(2)
+      expect(JSON.stringify(result)).not.toMatch(/private-access-token|PRIVATE ORGANIZATION DATA/i)
+    })
+
+    it('geeft bij ontbrekende credentials geen providercall of gevoelige details terug', async () => {
+      vi.stubEnv('JORTT_CLIENT_ID', '')
+      const fetcher = vi.fn()
+      const result = await new JorttApiGateway(fetcher as typeof fetch).preflightOrganizationRead()
+
+      expect(result).toEqual({ ok: false, auth: 'FAIL', organizationRead: 'NOT_RUN', providerCode: null, httpStatus: 503 })
+      expect(fetcher).not.toHaveBeenCalled()
+    })
+  })
+
   it('weigert een factuur waarvan immutable regels en totalen niet aansluiten vóór de API-call', async () => {
     const fetcher = vi.fn()
     await expect(new JorttApiGateway(fetcher as typeof fetch).submitInvoice(payload({ amountInclVatCents: 11_496 }), 'mismatch')).rejects.toThrow('JORTT_INVOICE_TOTAL_MISMATCH')

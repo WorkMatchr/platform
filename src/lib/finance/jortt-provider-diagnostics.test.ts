@@ -44,6 +44,7 @@ describe('veilige Jortt-transportdiagnostiek', () => {
   })
 
   it.each([
+    ['/tradenames', 'GET', 'ORGANIZATION_READ'],
     ['/customers?query=private', 'GET', 'CUSTOMER_LOOKUP'], ['/customers', 'POST', 'CUSTOMER_CREATE'],
     ['/invoices?query=private', 'GET', 'INVOICE_LOOKUP'], ['/invoices/id', 'GET', 'INVOICE_READ'],
     ['/invoices', 'POST', 'INVOICE_CREATE'], ['/invoices/id', 'PUT', 'INVOICE_UPDATE'],

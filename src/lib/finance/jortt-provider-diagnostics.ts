@@ -1,5 +1,5 @@
 // Only fixed classifications leave the transport boundary; never provider messages or payloads.
-export type JorttOperation = 'AUTH' | 'CUSTOMER_LOOKUP' | 'CUSTOMER_CREATE' | 'INVOICE_LOOKUP' | 'INVOICE_READ' | 'INVOICE_CREATE' | 'INVOICE_UPDATE' | 'CREDIT_NOTE_CREATE' | 'INVOICE_FINALIZE'
+export type JorttOperation = 'AUTH' | 'ORGANIZATION_READ' | 'CUSTOMER_LOOKUP' | 'CUSTOMER_CREATE' | 'INVOICE_LOOKUP' | 'INVOICE_READ' | 'INVOICE_CREATE' | 'INVOICE_UPDATE' | 'CREDIT_NOTE_CREATE' | 'INVOICE_FINALIZE'
 
 const providerCodes = new Set([
   'access_token.invalid', 'access_token.expired', 'access_token.revoked',
@@ -32,6 +32,7 @@ export class JorttProviderError extends Error {
 }
 
 export function jorttOperation(path: string, method = 'GET'): JorttOperation {
+  if (path === '/tradenames' && method === 'GET') return 'ORGANIZATION_READ'
   if (path.startsWith('/customers?')) return 'CUSTOMER_LOOKUP'
   if (path === '/customers' && method === 'POST') return 'CUSTOMER_CREATE'
   if (path.startsWith('/invoices?')) return 'INVOICE_LOOKUP'
