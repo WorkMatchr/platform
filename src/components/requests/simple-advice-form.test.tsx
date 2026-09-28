@@ -220,3 +220,35 @@ it('publicatie geeft directe feedback en herhaalde Enter-submit start geen tweed
   expect((form.querySelector('input[name=submissionId]') as HTMLInputElement).value).toMatch(/^[0-9a-f-]{36}$/i)
   fireEvent.submit(form);await waitFor(()=>expect(action).toHaveBeenCalledTimes(2));await waitFor(()=>expect(screen.getByRole('alert').textContent).toBe('Opnieuw mogelijk'))
 })
+
+
+describe('Advieswijzer deep links', () => {
+  it.each([
+    ['deskundigheid', 'Ja', 'Welke deskundigheid zoekt u?'],
+    ['onderwerp', 'Nee', 'Waar gaat uw vraag over?'],
+  ])('opent %s met de bestaande selectie en focus', async (start, radio, label) => {
+    render(<SimpleAdviceForm start={start} action={vi.fn()} viewerId={null} />)
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText(label)))
+    expect((screen.getByLabelText(radio) as HTMLInputElement).checked).toBe(true)
+    fireEvent.click(screen.getByRole('button', { name: 'Verder' }))
+    expect(screen.getByLabelText(label).getAttribute('aria-invalid')).toBe('true')
+  })
+  it.each([undefined, 'onbekend'])('behoudt gewone start bij %s', start => {
+    render(<SimpleAdviceForm start={start} action={vi.fn()} viewerId={null} />)
+    expect((screen.getByLabelText('Ja') as HTMLInputElement).checked).toBe(false)
+    expect((screen.getByLabelText('Nee') as HTMLInputElement).checked).toBe(false)
+  })
+  it('reageert op terug/vooruit met een andere start zonder overige invoer te verliezen', async () => {
+    const action = vi.fn()
+    sessionStorage.setItem('workmatchr-simple-advice:v1:anonymous', JSON.stringify({values:{routeChoice:'KNOWS_EXPERTISE',requestedExpertise:'HVK',requestDescription:'Bestaande vraag behouden'},step:1}))
+    const view = render(<SimpleAdviceForm start="onderwerp" action={action} viewerId={null} />)
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText('Waar gaat uw vraag over?')))
+    choose('Waar gaat uw vraag over?', 'UNKNOWN')
+    await next()
+    expect((screen.getByLabelText('Beschrijf uw vraag of situatie') as HTMLTextAreaElement).value).toBe('Bestaande vraag behouden')
+    view.rerender(<SimpleAdviceForm start="deskundigheid" action={action} viewerId={null} />)
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText('Welke deskundigheid zoekt u?')))
+    expect((screen.getByLabelText('Welke deskundigheid zoekt u?') as HTMLSelectElement).value).toBe('')
+    expect(action).not.toHaveBeenCalled()
+  })
+})

@@ -17,8 +17,9 @@ import { deriveSimpleAdviceTitle, simpleAdviceSchema, simpleAdviceRouteSchema, s
 
 type Draft = Record<string, string> & { routeChoice: string; requestedExpertise: string; helpTopic: string }
 const empty: Draft = { routeChoice: '', requestedExpertise: '', helpTopic: '', helpTopicOther: '', requestTitle: '', requestDescription: '', desiredOutcome: '', desiredOutcomeOther: '', workLocationMode: '', organizationLocationId: '', organizationLocationCity: '', otherLocationCity: '', desiredStartMode: '', desiredStartDate: '' }
-export function SimpleAdviceForm({ action, viewerId, locations = [], draftId, initialValues, initialVersion = 0, saveAction }: {
+export function SimpleAdviceForm({ action, viewerId, locations = [], draftId, initialValues, initialVersion = 0, saveAction, start }: {
   action: (state: SimpleAdviceActionState, form: FormData) => Promise<SimpleAdviceActionState>
+  start?: string
   viewerId: string | null
   locations?: Array<{ id: string; city: string }>
   draftId?: string
@@ -27,6 +28,8 @@ export function SimpleAdviceForm({ action, viewerId, locations = [], draftId, in
   saveAction?: (payload: unknown, expectedVersion: number) => Promise<{ version?: number; message?: string }>
 }) {
   const router = useRouter()
+  const startChoice = start === 'deskundigheid' ? 'KNOWS_EXPERTISE' : start === 'onderwerp' ? 'NEEDS_TOPIC' : undefined
+  const pendingStartFocus = useRef<string | null>(null)
   const [v, setV] = useState<Draft>({ ...empty })
   const [additionalExpertises, setAdditionalExpertises] = useState<ExpertiseId[]>([])
   const [modes, setModes] = useState<string[]>([])
@@ -54,20 +57,38 @@ export function SimpleAdviceForm({ action, viewerId, locations = [], draftId, in
     } catch { /* A blocked browser store does not block the form. */ }
     // Restore a tab-local draft once after hydration; never share account-scoped drafts.
     const restored = { ...initialValues, ...saved?.values }
+    // A deep link selects the existing branch without discarding unrelated intake answers.
+    if (startChoice && !draftId) {
+      if (restored.routeChoice !== startChoice) {
+        restored.requestedExpertise = ''
+        restored.helpTopic = ''
+        restored.helpTopicOther = ''
+      }
+      restored.routeChoice = startChoice
+      pendingStartFocus.current = startChoice === 'KNOWS_EXPERTISE' ? 'requestedExpertise' : 'helpTopic'
+    }
     setV(current => ({ ...current, ...Object.fromEntries(Object.keys(empty).filter(k => typeof restored[k] === 'string').map(k => [k, restored[k] as string])) }))
     const additional = saved?.additionalExpertises ?? initialValues?.additionalExpertises
     setAdditionalExpertises(restored.routeChoice === 'KNOWS_EXPERTISE' && Array.isArray(additional) ? retainAdditionalExpertises(String(restored.requestedExpertise), additional) : [])
     const restoredModes = saved?.modes ?? initialValues?.combinationModes
     setModes(Array.isArray(restoredModes) ? restoredModes.filter((m): m is string => typeof m === 'string' && ['ORGANIZATION', 'OTHER_LOCATION', 'REMOTE'].includes(m)) : [])
-    setStep(saved?.step && saved.step >= 0 && saved.step <= 2 ? saved.step : 0)
+    setStep(startChoice && !draftId ? 0 : saved?.step && saved.step >= 0 && saved.step <= 2 ? saved.step : 0)
     setSubmissionId(saved?.submissionId && /^[0-9a-f-]{36}$/i.test(saved.submissionId) ? saved.submissionId : crypto.randomUUID())
     setReady(true)
-  }, [storageKey, viewerId, draftId, initialValues, initialVersion])
+  }, [storageKey, viewerId, draftId, initialValues, initialVersion, startChoice])
   useEffect(() => {
     if (!ready) return
     try { sessionStorage.setItem(storageKey, JSON.stringify({ values: v, modes, additionalExpertises, step, submissionId, revision: revision.current })) } catch { /* Optional tab persistence. */ }
   }, [ready, v, modes, additionalExpertises, step, submissionId, storageKey])
   useEffect(() => { heading.current?.focus() }, [step])
+  useEffect(() => {
+    if (!ready || step !== 0 || !pendingStartFocus.current) return
+    const field = form.current?.querySelector<HTMLSelectElement>(`#${pendingStartFocus.current}`)
+    if (!field) return
+    pendingStartFocus.current = null
+    field.focus({ preventScroll: true })
+    field.parentElement?.scrollIntoView?.({ behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' })
+  }, [ready, step, v.routeChoice])
   useEffect(() => {
     if (!state.requestId) return
     try { sessionStorage.removeItem(storageKey) } catch { /* Optional browser persistence. */ }

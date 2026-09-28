@@ -85,7 +85,7 @@ export const publicHomepageContent = {
       'Beschrijf waar u ondersteuning bij nodig heeft. Kies direct een deskundigheid of, als u dat nog niet weet, het onderwerp van uw vraag. Daarna kunt u uw opdracht eenvoudig publiceren.',
     primaryAction: { href: publicRoutes.adviceGuide, label: 'Vraag ondersteuning aan' },
   },
-  process: ['Kies een deskundigheid of onderwerp', 'Beschrijf uw vraag', 'Controleer uw opdracht', 'Publiceer uw opdracht'],
+  process: ['Selecteer welke deskundigheid', 'Beschrijf uw vraag of situatie', 'Publiceer de opdracht', 'Vergelijk en kies opdrachtnemer'],
   situations: [
     {
       key: 'employer-with-staff',
@@ -149,20 +149,20 @@ export const publicHomepageContent = {
   },
   steps: [
     {
-      title: 'Kies een deskundigheid of onderwerp',
-      description: 'Kies zelf een deskundigheid als u die weet. Kies anders het onderwerp van uw vraag.',
+      title: 'Selecteer welke deskundigheid',
+      description: 'Kies de deskundigheid die past bij uw vraag of situatie.',
     },
     {
-      title: 'Beschrijf uw vraag',
-      description: 'Vertel waar u ondersteuning bij nodig heeft, wat u wilt bereiken en waar en wanneer u wilt starten.',
+      title: 'Beschrijf uw vraag of situatie',
+      description: 'Geef aan waarbij u ondersteuning nodig heeft en wat u wilt bereiken.',
     },
     {
-      title: 'Controleer uw opdracht',
-      description: 'Bekijk uw ingevulde gegevens en pas ze aan waar nodig.',
+      title: 'Publiceer de opdracht',
+      description: 'Controleer de gegevens en publiceer uw opdracht op WorkMatchr.',
     },
     {
-      title: 'Publiceer uw opdracht',
-      description: 'Log in als opdrachtgever en publiceer uw opdracht. Dat kan ook zonder een deskundigheid te kiezen.',
+      title: 'Vergelijk en kies opdrachtnemer',
+      description: 'Vergelijk de ontvangen reacties en offertes en kies zelf met welke opdrachtnemer u verdergaat.',
     },
   ] satisfies readonly ProcessStepContent[],
   principles: [
