@@ -16,11 +16,12 @@ import { issueCreditNoteForCompletedRefund } from './invoice-service'
 import { runSerializableFinancialTransaction } from './financial-transaction'
 import { deliverCompletedRefundCreditNote } from './credit-note-delivery'
 import { mirrorCreditNoteSnapshot } from './credit-note-snapshot'
+import { FINANCIAL_REFUND_REASON_CODES } from './refund-reasons'
 
 const inputSchema = z.object({
   actorUserId: z.string().uuid(),
   purchaseId: z.string().uuid(),
-  reasonCode: z.enum(['DUPLICATE_CHARGE', 'CREDITS_NOT_DELIVERED', 'WORKMATCHR_TECHNICAL_ERROR', 'OTHER_APPROVED_WORKMATCHR_ERROR']),
+  reasonCode: z.enum(FINANCIAL_REFUND_REASON_CODES),
   reason: z.string().trim().min(10).max(500),
   idempotencyKey: z.string().trim().min(12).max(160).regex(/^[A-Za-z0-9:_-]+$/),
 })

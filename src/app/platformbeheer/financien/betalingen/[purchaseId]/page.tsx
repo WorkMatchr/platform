@@ -2,19 +2,14 @@ import { randomUUID } from 'node:crypto'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { startPlatformFinancialRefundAction } from '@/app/platformbeheer/financien/actions'
+import { FinancialRefundReasonSelect } from '@/components/platform-admin/financial-refund-reason-select'
 import { AdminPageHeader, AdminSection, StatusPill } from '@/components/platform-admin/platform-admin-ui'
 import { Button } from '@/components/ui/button'
 import { formatEuro } from '@/lib/finance/financial-contract'
+import { FINANCIAL_REFUND_REASON_LABELS } from '@/lib/finance/refund-reasons'
 import { financialPaymentStatusLabels, financialPurchaseKindLabels, financialPurchaseStatusLabels, financialStatusTone } from '@/lib/finance/platform-financial-presentation'
 import { getPlatformFinancialPaymentDetail } from '@/lib/finance/platform-financial-query-service'
 import { requirePlatformAdministrator } from '@/lib/platform-admin/platform-admin-authorization'
-
-const reasonLabels = {
-  DUPLICATE_CHARGE: 'Dubbele betaling',
-  CREDITS_NOT_DELIVERED: 'Credits niet geleverd',
-  WORKMATCHR_TECHNICAL_ERROR: 'Technische fout van WorkMatchr',
-  OTHER_APPROVED_WORKMATCHR_ERROR: 'Andere goedgekeurde fout van WorkMatchr',
-} as const
 
 export default async function PlatformFinancialPaymentDetailPage({ params, searchParams }: { params: Promise<{ purchaseId: string }>; searchParams: Promise<Record<string, string | undefined>> }) {
   const { purchaseId } = await params
@@ -31,7 +26,7 @@ export default async function PlatformFinancialPaymentDetailPage({ params, searc
     <>
       <AdminPageHeader
         title="Betaling"
-        description="Controleer de betaalde aankoop en start alleen bij een goedgekeurde WorkMatchr-fout een volledige terugbetaling."
+        description="Controleer de betaalde aankoop en kies alleen een passende, goedgekeurde reden voor een volledige terugbetaling."
         action={<StatusPill tone={financialStatusTone(purchase.status)}>{financialPurchaseStatusLabels[purchase.status]}</StatusPill>}
       />
       <Link className="mb-4 inline-flex min-h-10 items-center text-sm font-semibold text-brand-primary hover:underline" href="/platformbeheer/financien/betalingen">Terug naar betalingen</Link>
@@ -69,12 +64,7 @@ export default async function PlatformFinancialPaymentDetailPage({ params, searc
           <form action={startPlatformFinancialRefundAction} className="grid max-w-2xl gap-4">
             <input type="hidden" name="purchaseId" value={purchase.id} />
             <input type="hidden" name="idempotencyKey" value={`platform-refund:${purchase.id}:${randomUUID()}`} />
-            <label className="grid gap-1 text-sm font-semibold">Reden terugbetaling
-              <select className="min-h-11 rounded-control border border-border bg-surface px-3 font-normal" name="reasonCode" required>
-                <option value="">Kies een reden</option>
-                {Object.entries(reasonLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-              </select>
-            </label>
+              <FinancialRefundReasonSelect labels={FINANCIAL_REFUND_REASON_LABELS} />
             <label className="grid gap-1 text-sm font-semibold">Toelichting
               <textarea className="min-h-28 rounded-control border border-border bg-surface px-3 py-2 font-normal" name="reason" minLength={10} maxLength={500} required />
             </label>

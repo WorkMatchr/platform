@@ -6,11 +6,12 @@ import { z } from 'zod'
 import { refundWorkmatchrError } from '@/lib/finance/refund-service'
 import { createJorttGateway } from '@/lib/finance/jortt-api-gateway'
 import { syncFinancialInvoiceToJortt } from '@/lib/finance/jortt-sync-service'
+import { FINANCIAL_REFUND_REASON_CODES } from '@/lib/finance/refund-reasons'
 import { requirePlatformAdministrator } from '@/lib/platform-admin/platform-admin-authorization'
 
 const refundSchema = z.object({
   purchaseId: z.string().uuid(),
-  reasonCode: z.enum(['DUPLICATE_CHARGE', 'CREDITS_NOT_DELIVERED', 'WORKMATCHR_TECHNICAL_ERROR', 'OTHER_APPROVED_WORKMATCHR_ERROR']),
+  reasonCode: z.enum(FINANCIAL_REFUND_REASON_CODES),
   reason: z.string().trim().min(10).max(500),
   idempotencyKey: z.string().trim().min(12).max(160).regex(/^[A-Za-z0-9:_-]+$/),
   confirmed: z.literal('on'),

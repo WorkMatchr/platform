@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('server-only', () => ({}))
+vi.mock('@/generated/prisma/client', () => ({ Prisma: { sql: (strings: TemplateStringsArray, ...values: unknown[]) => ({ strings, values }) } }))
 vi.mock('./credit-note-delivery', () => ({ deliverCompletedRefundCreditNote: vi.fn() }))
 vi.mock('./credit-note-snapshot', () => ({ mirrorCreditNoteSnapshot: vi.fn() }))
 
@@ -145,6 +146,63 @@ describe('financiële refund-foutisolatie', () => {
     expect(mocks.phase).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ phase: 'COMPLETE' }))
     expect(mocks.issueCreditNote).toHaveBeenCalledOnce()
     expect(result.refund.status).toBe('REFUNDED')
+  })
+
+  it.each([
+    'DUPLICATE_CHARGE',
+    'CREDITS_NOT_DELIVERED',
+    'WORKMATCHR_TECHNICAL_ERROR',
+    'OTHER_APPROVED_WORKMATCHR_ERROR',
+    'SYSTEM_TEST',
+    'SYSTEM_FAILURE_JORTT',
+    'SYSTEM_FAILURE_MOLLIE',
+    'SYSTEM_FAILURE_WORKMATCHR',
+    'OTHER_APPROVED_REASON',
+  ] as const)('verwerkt reden %s via exact dezelfde volledige refundflow en audittrail', async (reasonCode) => {
+    const createRefund = vi.fn().mockResolvedValue({ id: 're_test', status: 'refunded' })
+    const { refundWorkmatchrError } = await import('./refund-service')
+    const reason = 'Goedgekeurde reden voor deze gecontroleerde test.'
+
+    await refundWorkmatchrError({ ...input, reasonCode, reason }, { createRefund } as never)
+
+    expect(createRefund).toHaveBeenCalledOnce()
+    expect(createRefund).toHaveBeenCalledWith(expect.objectContaining({ amountValue: '30.25', currency: 'EUR' }))
+    expect(transaction.financialRefund.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ reason: `${reasonCode}: ${reason}` }),
+    }))
+    expect(transaction.financialEvent.upsert).toHaveBeenCalledWith(expect.objectContaining({
+      create: expect.objectContaining({
+        eventType: 'WORKMATCHR_REFUND_REQUESTED',
+        metadata: { reasonCode },
+      }),
+    }))
+    expect(mocks.phase).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ phase: 'RESERVE' }))
+    expect(mocks.phase).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ phase: 'COMPLETE' }))
+    expect(mocks.issueCreditNote).toHaveBeenCalledOnce()
+  })
+
+  it('weigert een onbekende reden vóór autorisatie, databasewrites of Mollie', async () => {
+    const createRefund = vi.fn()
+    const { refundWorkmatchrError } = await import('./refund-service')
+
+    await expect(refundWorkmatchrError({ ...input, reasonCode: 'UNCLASSIFIED_TEST' }, { createRefund } as never)).rejects.toThrow()
+
+    expect(mocks.authorize).not.toHaveBeenCalled()
+    expect(transaction.financialRefund.create).not.toHaveBeenCalled()
+    expect(mocks.phase).not.toHaveBeenCalled()
+    expect(createRefund).not.toHaveBeenCalled()
+  })
+
+  it.each(['te kort', 'x'.repeat(501)])('weigert een toelichting buiten 10–500 tekens vóór provider- of financiële acties', async (reason) => {
+    const createRefund = vi.fn()
+    const { refundWorkmatchrError } = await import('./refund-service')
+
+    await expect(refundWorkmatchrError({ ...input, reason }, { createRefund } as never)).rejects.toThrow()
+
+    expect(mocks.authorize).not.toHaveBeenCalled()
+    expect(transaction.financialRefund.create).not.toHaveBeenCalled()
+    expect(mocks.phase).not.toHaveBeenCalled()
+    expect(createRefund).not.toHaveBeenCalled()
   })
 
   it('maakt bij later creditgebruik alleen een reviewrecord en roept Mollie niet aan', async () => {
