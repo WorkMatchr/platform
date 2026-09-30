@@ -43,7 +43,10 @@ describe('publieke platformpagina’s', () => {
 
     expect(html).toContain('href="/advieswijzer"')
     expect(html).toContain('Vraag ondersteuning aan')
-    expect(html).toContain('Kies een deskundigheid of onderwerp')
+    expect(html).toContain('Ja, ik kies een deskundigheid')
+    expect(html).toContain('Nee, ik kies eerst een onderwerp')
+    expect(html).toContain('href="/advieswijzer?start=deskundigheid"')
+    expect(html).toContain('href="/advieswijzer?start=onderwerp"')
     expect(html).toContain('href="/kenniscentrum"')
     expect(html).not.toContain('Er zijn nog geen afzonderlijke sectorpagina’s')
   })
