@@ -6,7 +6,7 @@ import { Text } from '@/components/ui/text'
 
 export function ProcessSteps({ steps }: { steps: readonly ProcessStepContent[] }) {
   return (
-    <ol className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 xl:gap-5">
+    <ol className={`grid gap-4 sm:grid-cols-2 ${steps.length === 3 ? 'xl:grid-cols-3' : 'xl:grid-cols-4'} xl:gap-5`}>
       {steps.map((step, index) => (
         <li key={step.title} className="relative min-w-0">
           <Card className="h-full !p-6 shadow-none sm:!p-7">
