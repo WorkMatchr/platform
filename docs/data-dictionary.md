@@ -258,3 +258,12 @@ Append-only formulierstate voor bestaande legacy Intakes: samengestelde sleutel 
 - User.assignmentEmailEnabled: persoonlijke transactionele opdrachtmailvoorkeur, standaard true; geen marketingvoorkeur.
 
 Zie [bezorg- en legacybeleid](marketplace-assignment-notifications.md).
+
+
+## ComplianceAction en ComplianceActionEvent
+
+`ComplianceAction` is de operationele opvolglaag van een immutable afgeronde Compliance Scan. De actie verwijst naar één `ArboGuideRun` en bewaart immutable oorsprongvelden (`subjectCode`, `findingCode`, titel, beschrijving, prioriteit en optionele service suggestion). Alleen voortgang, verantwoordelijke en deadline mogen later wijzigen.
+
+`ComplianceAction.status`: `OPEN`, `IN_PROGRESS`, `WAITING_EXTERNAL`, `DONE`, `NOT_APPLICABLE`.
+
+`ComplianceActionEvent` is append-only auditgeschiedenis voor aanmaak, statuswijziging, wijziging van verantwoordelijke en deadline. De actor is altijd een WorkMatchr-user. Database-triggers blokkeren mutatie of verwijdering van events en blokkeren wijziging van de oorspronkelijke actie-inhoud.
