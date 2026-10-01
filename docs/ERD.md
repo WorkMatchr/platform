@@ -1,5 +1,16 @@
 # ERD WorkMatchr
 
+## Arbo Compliance Scan — configuratie
+
+`ComplianceFrameworkVersion` 1—N `ComplianceModuleDefinition` 1—N `ComplianceQuestionDefinition` 1—N `ComplianceAnswerOptionDefinition`.
+
+`ComplianceFrameworkVersion` 1—N `ComplianceRuleDefinition`; iedere rule hoort tevens bij precies één module. `ComplianceRuleDefinition` 1—N `ComplianceRuleKnowledgeReference` N—1 `KnowledgeClaim` maakt juridische/vakinhoudelijke herleidbaarheid mogelijk zonder Knowledge-inhoud te dupliceren.
+
+`ArboGuideRun` kan voor `guideType=COMPLIANCE` optioneel naar precies één `ComplianceFrameworkVersion` verwijzen. De run blijft de canonieke uitvoerings- en rapportsnapshot; er ontstaat geen tweede assessment-root.
+
+Gepubliceerde en geretirede frameworkconfiguratie is immutable. Een nieuwe methodiekversie maakt nieuwe configuratierecords en herberekent historische runs niet.
+
+
 ## Arbo-wijzer runs
 
 `Organization` 1—N `ArboGuideRun` N—1 `User`; `ArboGuideRun` 1—N `ArboGuideRunResult`. `ArboGuideRunCounter` staat technisch los van de tenantdata en alloceert uitsluitend rapportnummers per wijzertype/jaar. Alle tenantlezingen worden server-side op `organizationId` begrensd.
