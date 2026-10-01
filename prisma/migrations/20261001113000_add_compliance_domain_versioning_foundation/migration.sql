@@ -162,7 +162,9 @@ CREATE INDEX "ComplianceRuleKnowledgeReference_knowledgeClaimId_idx"
   ON "ComplianceRuleKnowledgeReference"("knowledgeClaimId");
 
 ALTER TABLE "ArboGuideRun"
-  ADD COLUMN "complianceFrameworkVersionId" UUID;
+  ADD COLUMN "complianceFrameworkVersionId" UUID,
+  ADD CONSTRAINT "ArboGuideRun_compliance_framework_type_check"
+    CHECK ("guideType" = 'COMPLIANCE' OR "complianceFrameworkVersionId" IS NULL);
 
 CREATE INDEX "ArboGuideRun_complianceFrameworkVersionId_idx"
   ON "ArboGuideRun"("complianceFrameworkVersionId");
@@ -210,7 +212,7 @@ ALTER TABLE "ArboGuideRun"
 CREATE OR REPLACE FUNCTION prevent_non_draft_compliance_framework_mutation()
 RETURNS trigger
 LANGUAGE plpgsql
-AS $$
+AS $
 BEGIN
   IF TG_OP = 'DELETE' THEN
     IF OLD."status" <> 'DRAFT' THEN
@@ -219,21 +221,33 @@ BEGIN
     RETURN OLD;
   END IF;
 
-  IF OLD."status" <> 'DRAFT' THEN
-    RAISE EXCEPTION 'Published or retired compliance framework versions are immutable.';
-  END IF;
-
   IF NEW."frameworkCode" <> OLD."frameworkCode" OR NEW."version" <> OLD."version" THEN
     RAISE EXCEPTION 'Compliance framework identity is immutable.';
   END IF;
 
-  IF NEW."status" = 'PUBLISHED' AND NEW."publishedAt" IS NULL THEN
-    RAISE EXCEPTION 'Publishing a compliance framework requires publishedAt.';
+  IF OLD."status" = 'DRAFT' THEN
+    IF NEW."status" = 'RETIRED' THEN
+      RAISE EXCEPTION 'A draft compliance framework cannot be retired directly.';
+    END IF;
+    RETURN NEW;
   END IF;
 
-  RETURN NEW;
+  IF OLD."status" = 'PUBLISHED' THEN
+    IF NEW."status" <> 'RETIRED'
+       OR NEW."title" <> OLD."title"
+       OR NEW."methodology" <> OLD."methodology"
+       OR NEW."disclaimer" <> OLD."disclaimer"
+       OR NEW."checksum" <> OLD."checksum"
+       OR NEW."publishedAt" IS DISTINCT FROM OLD."publishedAt"
+       OR NEW."retiredAt" IS NULL THEN
+      RAISE EXCEPTION 'A published compliance framework may only transition unchanged to RETIRED.';
+    END IF;
+    RETURN NEW;
+  END IF;
+
+  RAISE EXCEPTION 'Retired compliance framework versions are immutable.';
 END;
-$$;
+$;
 
 CREATE TRIGGER "ComplianceFrameworkVersion_immutable_after_publish"
 BEFORE UPDATE OR DELETE ON "ComplianceFrameworkVersion"
@@ -244,34 +258,61 @@ RETURNS trigger
 LANGUAGE plpgsql
 AS $$
 DECLARE
-  framework_id UUID;
+  old_framework_id UUID;
+  new_framework_id UUID;
   framework_status "ComplianceFrameworkStatus";
 BEGIN
   IF TG_TABLE_NAME = 'ComplianceModuleDefinition' THEN
-    framework_id := COALESCE(NEW."frameworkVersionId", OLD."frameworkVersionId");
+    IF TG_OP <> 'INSERT' THEN old_framework_id := OLD."frameworkVersionId"; END IF;
+    IF TG_OP <> 'DELETE' THEN new_framework_id := NEW."frameworkVersionId"; END IF;
   ELSIF TG_TABLE_NAME = 'ComplianceQuestionDefinition' THEN
-    SELECT "frameworkVersionId" INTO framework_id
-    FROM "ComplianceModuleDefinition"
-    WHERE "id" = COALESCE(NEW."moduleDefinitionId", OLD."moduleDefinitionId");
+    IF TG_OP <> 'INSERT' THEN
+      SELECT "frameworkVersionId" INTO old_framework_id
+      FROM "ComplianceModuleDefinition" WHERE "id" = OLD."moduleDefinitionId";
+    END IF;
+    IF TG_OP <> 'DELETE' THEN
+      SELECT "frameworkVersionId" INTO new_framework_id
+      FROM "ComplianceModuleDefinition" WHERE "id" = NEW."moduleDefinitionId";
+    END IF;
   ELSIF TG_TABLE_NAME = 'ComplianceAnswerOptionDefinition' THEN
-    SELECT m."frameworkVersionId" INTO framework_id
-    FROM "ComplianceQuestionDefinition" q
-    JOIN "ComplianceModuleDefinition" m ON m."id" = q."moduleDefinitionId"
-    WHERE q."id" = COALESCE(NEW."questionDefinitionId", OLD."questionDefinitionId");
+    IF TG_OP <> 'INSERT' THEN
+      SELECT m."frameworkVersionId" INTO old_framework_id
+      FROM "ComplianceQuestionDefinition" q
+      JOIN "ComplianceModuleDefinition" m ON m."id" = q."moduleDefinitionId"
+      WHERE q."id" = OLD."questionDefinitionId";
+    END IF;
+    IF TG_OP <> 'DELETE' THEN
+      SELECT m."frameworkVersionId" INTO new_framework_id
+      FROM "ComplianceQuestionDefinition" q
+      JOIN "ComplianceModuleDefinition" m ON m."id" = q."moduleDefinitionId"
+      WHERE q."id" = NEW."questionDefinitionId";
+    END IF;
   ELSIF TG_TABLE_NAME = 'ComplianceRuleDefinition' THEN
-    framework_id := COALESCE(NEW."frameworkVersionId", OLD."frameworkVersionId");
+    IF TG_OP <> 'INSERT' THEN old_framework_id := OLD."frameworkVersionId"; END IF;
+    IF TG_OP <> 'DELETE' THEN new_framework_id := NEW."frameworkVersionId"; END IF;
   ELSIF TG_TABLE_NAME = 'ComplianceRuleKnowledgeReference' THEN
-    SELECT "frameworkVersionId" INTO framework_id
-    FROM "ComplianceRuleDefinition"
-    WHERE "id" = COALESCE(NEW."ruleDefinitionId", OLD."ruleDefinitionId");
+    IF TG_OP <> 'INSERT' THEN
+      SELECT "frameworkVersionId" INTO old_framework_id
+      FROM "ComplianceRuleDefinition" WHERE "id" = OLD."ruleDefinitionId";
+    END IF;
+    IF TG_OP <> 'DELETE' THEN
+      SELECT "frameworkVersionId" INTO new_framework_id
+      FROM "ComplianceRuleDefinition" WHERE "id" = NEW."ruleDefinitionId";
+    END IF;
   END IF;
 
-  SELECT "status" INTO framework_status
-  FROM "ComplianceFrameworkVersion"
-  WHERE "id" = framework_id;
+  IF old_framework_id IS NOT NULL THEN
+    SELECT "status" INTO framework_status FROM "ComplianceFrameworkVersion" WHERE "id" = old_framework_id;
+    IF framework_status IS DISTINCT FROM 'DRAFT'::"ComplianceFrameworkStatus" THEN
+      RAISE EXCEPTION 'Compliance configuration may only mutate while its framework version is DRAFT.';
+    END IF;
+  END IF;
 
-  IF framework_status IS DISTINCT FROM 'DRAFT'::"ComplianceFrameworkStatus" THEN
-    RAISE EXCEPTION 'Compliance configuration may only mutate while its framework version is DRAFT.';
+  IF new_framework_id IS NOT NULL AND new_framework_id IS DISTINCT FROM old_framework_id THEN
+    SELECT "status" INTO framework_status FROM "ComplianceFrameworkVersion" WHERE "id" = new_framework_id;
+    IF framework_status IS DISTINCT FROM 'DRAFT'::"ComplianceFrameworkStatus" THEN
+      RAISE EXCEPTION 'Compliance configuration may only mutate while its framework version is DRAFT.';
+    END IF;
   END IF;
 
   IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
