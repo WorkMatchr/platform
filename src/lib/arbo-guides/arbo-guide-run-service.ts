@@ -22,7 +22,10 @@ const reportResultSchema = z.object({
   extended: z.object({
     answerKeys: z.array(z.string().min(1).max(80)).max(50),
     legalBasisAvailable: z.boolean(),
-    priority: z.enum(['HIGH', 'NORMAL']),
+    priority: z.enum(['CRITICAL', 'HIGH', 'NORMAL', 'LOW']).default('NORMAL'),
+    assessmentMode: z.enum(['FULL', 'SCREENING', 'SPECIALIST_REQUIRED']).optional(),
+    findingCode: z.string().min(1).max(80).optional(),
+    serviceSuggestionCode: z.string().min(1).max(80).optional(),
   }),
 })
 export const arboGuideReportSnapshotSchema = z.object({
