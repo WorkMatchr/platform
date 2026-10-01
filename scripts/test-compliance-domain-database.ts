@@ -47,13 +47,13 @@ async function main() {
     `)
     const frameworkId = framework.rows[0]!.id
 
-    const module = await db.query<{ id: string }>(`
+    const moduleResult = await db.query<{ id: string }>(`
       INSERT INTO "ComplianceModuleDefinition"
         ("frameworkVersionId", "code", "title", "category", "defaultAssessmentMode", "position")
       VALUES ($1, 'C01', 'RI&E', 'CORE', 'FULL', 1)
       RETURNING "id"
     `, [frameworkId])
-    const moduleId = module.rows[0]!.id
+    const moduleId = moduleResult.rows[0]!.id
 
     await assert.rejects(
       db.query(`
