@@ -30,7 +30,7 @@ const resultStatusLabels = {
   NOT_APPLICABLE: 'Niet van toepassing',
 } as const
 
-const questionLabels = new Map(c01RieQuestions.map((question) => [question.code, question.prompt]))
+const questionLabels = new Map<string, string>(c01RieQuestions.map((question) => [question.code, question.prompt]))
 
 function formatDate(value: Date | string | null | undefined) {
   if (!value) return '—'
