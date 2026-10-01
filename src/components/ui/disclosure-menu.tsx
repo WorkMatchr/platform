@@ -49,7 +49,9 @@ export function DisclosureMenu({ trigger, children, ariaLabel, className = '', b
   }
 
   return (
-    <div ref={rootRef} className={className}>
+    <div ref={rootRef} className={className} onBlur={(event) => {
+      if (!event.currentTarget.contains(event.relatedTarget as Node | null)) close()
+    }}>
       <button ref={triggerRef} type="button" aria-label={ariaLabel} aria-expanded={open} aria-controls={panelId} className={buttonClassName} onClick={() => setMenuState({ open: !open, pathname })}>
         {trigger}
       </button>

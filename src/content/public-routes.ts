@@ -1,6 +1,8 @@
 export const publicRoutes = {
   home: '/',
   services: '/diensten',
+  clients: '/voor-opdrachtgevers',
+  professionals: '/voor-professionals',
   elearning: '/e-learning',
   rieLearning: '/e-learning/rie-in-de-praktijk',
   rieService: '/diensten/rie',
@@ -80,19 +82,48 @@ export type PublicNavigationItem = {
   kind: 'primary' | 'standard' | 'auth'
 }
 
-export const publicNavigationItems = [
-  { label: 'Kenniscentrum', href: publicRoutes.knowledge, kind: 'standard' },
-  { label: 'Sectoren', href: publicRoutes.sectors, kind: 'standard' },
-  { label: 'Diensten', href: publicRoutes.services, kind: 'standard' },
-  { label: 'Wettelijke verplichtingen', href: publicRoutes.obligations, kind: 'standard' },
-  { label: 'Arbo-wijzers', href: publicRoutes.guides, kind: 'primary' },
+export type PublicNavigationGroup = {
+  key: string
+  label: string
+  items: readonly (PublicNavigationItem & { description: string })[]
+}
+
+export const publicNavigationGroups = [
+  {
+    key: 'professionals',
+    label: 'Professionals & opdrachtgevers',
+    items: [
+      { label: 'Diensten', href: publicRoutes.services, kind: 'standard', description: 'Bekijk waarvoor u via WorkMatchr een professional kunt inschakelen.' },
+      { label: 'Voor opdrachtgevers', href: publicRoutes.clients, kind: 'standard', description: 'Van hulpvraag naar passende professional.' },
+      { label: 'Voor professionals', href: publicRoutes.professionals, kind: 'standard', description: 'Vind opdrachten die aansluiten bij uw expertise.' },
+    ],
+  },
+  {
+    key: 'workmatchr',
+    label: 'WorkMatchr',
+    items: [
+      { label: 'Kenniscentrum', href: publicRoutes.knowledge, kind: 'standard', description: 'Praktische kennis over gezond en veilig werken.' },
+      { label: 'E-learning', href: publicRoutes.elearning, kind: 'standard', description: 'Online Arbo-opleidingen met eindtoets en certificaat. Binnenkort beschikbaar.' },
+      { label: 'Arbo Compliance Check', href: publicRoutes.complianceGuide, kind: 'standard', description: 'Krijg inzicht in uw Arbo-verplichtingen. Publieke uitleg; inloggen om de check te starten.' },
+    ],
+  },
+] as const satisfies readonly PublicNavigationGroup[]
+
+export const publicNavigationItems: readonly PublicNavigationItem[] = [
+  ...publicNavigationGroups.flatMap<PublicNavigationItem>((group) => group.items),
   { label: 'Inloggen', href: publicRoutes.login, kind: 'auth' },
-] as const satisfies readonly PublicNavigationItem[]
+]
 
 export const publicFooterGroups = [
   {
     title: 'Vind uw route',
-    links: publicNavigationItems.filter((item) => ['Arbo-wijzers', 'Diensten', 'Wettelijke verplichtingen', 'Sectoren', 'Kenniscentrum'].includes(item.label)),
+    links: [
+      { label: 'Kenniscentrum', href: publicRoutes.knowledge },
+      { label: 'Sectoren', href: publicRoutes.sectors },
+      { label: 'Diensten', href: publicRoutes.services },
+      { label: 'Wettelijke verplichtingen', href: publicRoutes.obligations },
+      { label: 'Arbo-wijzers', href: publicRoutes.guides },
+    ],
   },
   {
     title: 'WorkMatchr',
@@ -113,6 +144,8 @@ export const publicFooterGroups = [
 export const indexablePublicRoutes = [
   publicRoutes.home,
   publicRoutes.services,
+  publicRoutes.clients,
+  publicRoutes.professionals,
   publicRoutes.elearning,
   publicRoutes.rieLearning,
   publicRoutes.rieService,
