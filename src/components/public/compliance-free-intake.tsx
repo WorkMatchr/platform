@@ -89,30 +89,32 @@ function MultiSelectQuestion({ question, value, onChange }: {
   )
 }
 
-export function ComplianceFreeIntake() {
-  const [answers, setAnswers] = useState<Answers>({})
-  const [stepIndex, setStepIndex] = useState(0)
-  const [showResult, setShowResult] = useState(false)
-  const [restored, setRestored] = useState(false)
-
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        const parsed = JSON.parse(stored) as { answers?: Record<string, unknown>; stepIndex?: number }
-        setAnswers(normalizeComplianceFreeIntakeAnswers(parsed.answers ?? {}) as Answers)
-        setStepIndex(Math.max(0, Math.min(stepGroups.length - 1, parsed.stepIndex ?? 0)))
-      }
-    } catch {
-      window.localStorage.removeItem(STORAGE_KEY)
+function readStoredIntake(): { answers: Answers; stepIndex: number } {
+  if (typeof window === 'undefined') return { answers: {}, stepIndex: 0 }
+  try {
+    const stored = window.localStorage.getItem(STORAGE_KEY)
+    if (!stored) return { answers: {}, stepIndex: 0 }
+    const parsed = JSON.parse(stored) as { answers?: Record<string, unknown>; stepIndex?: number }
+    return {
+      answers: normalizeComplianceFreeIntakeAnswers(parsed.answers ?? {}) as Answers,
+      stepIndex: Math.max(0, Math.min(stepGroups.length - 1, parsed.stepIndex ?? 0)),
     }
-    setRestored(true)
-  }, [])
+  } catch {
+    window.localStorage.removeItem(STORAGE_KEY)
+    return { answers: {}, stepIndex: 0 }
+  }
+}
+
+export function ComplianceFreeIntake() {
+  const [initialState] = useState(readStoredIntake)
+  const [answers, setAnswers] = useState<Answers>(initialState.answers)
+  const [stepIndex, setStepIndex] = useState(initialState.stepIndex)
+  const [showResult, setShowResult] = useState(false)
 
   useEffect(() => {
-    if (!restored || showResult) return
+    if (showResult) return
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ answers, stepIndex }))
-  }, [answers, restored, showResult, stepIndex])
+  }, [answers, showResult, stepIndex])
 
   const currentQuestions = stepGroups[stepIndex].map(questionByCode)
   const teaser = useMemo(() => buildComplianceFreeIntakeTeaser(answers), [answers])
