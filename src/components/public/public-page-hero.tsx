@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Heading } from '@/components/ui/heading'
 import { Text } from '@/components/ui/text'
@@ -6,6 +7,7 @@ type PublicPageHeroProps = {
   eyebrow?: string
   title: string
   description: string
+  actions?: ReactNode
   compact?: boolean
 }
 
@@ -13,6 +15,7 @@ export function PublicPageHero({
   eyebrow,
   title,
   description,
+  actions,
   compact = false,
 }: PublicPageHeroProps) {
   return (
@@ -33,6 +36,7 @@ export function PublicPageHero({
       >
         {description}
       </Text>
+      {actions && <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">{actions}</div>}
     </header>
   )
 }

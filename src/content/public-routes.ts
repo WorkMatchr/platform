@@ -1,6 +1,8 @@
 export const publicRoutes = {
   home: '/',
   services: '/diensten',
+  elearning: '/e-learning',
+  rieLearning: '/e-learning/rie-in-de-praktijk',
   rieService: '/diensten/rie',
   preventionOfficerService: '/diensten/preventiemedewerker',
   bhvService: '/diensten/bhv',
@@ -111,6 +113,8 @@ export const publicFooterGroups = [
 export const indexablePublicRoutes = [
   publicRoutes.home,
   publicRoutes.services,
+  publicRoutes.elearning,
+  publicRoutes.rieLearning,
   publicRoutes.rieService,
   publicRoutes.preventionOfficerService,
   publicRoutes.bhvService,

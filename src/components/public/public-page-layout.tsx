@@ -9,6 +9,7 @@ type PublicPageLayoutProps = {
   eyebrow?: string
   title: string
   description: string
+  heroActions?: ReactNode
   compactHero?: boolean
   children: ReactNode
 }
@@ -18,6 +19,7 @@ export function PublicPageLayout({
   eyebrow,
   title,
   description,
+  heroActions,
   compactHero = false,
   children,
 }: PublicPageLayoutProps) {
@@ -31,6 +33,7 @@ export function PublicPageLayout({
             title={title}
             description={description}
             compact={compactHero}
+            actions={heroActions}
           />
         </Container>
       </div>
