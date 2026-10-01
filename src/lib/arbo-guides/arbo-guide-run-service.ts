@@ -39,6 +39,7 @@ export const arboGuideReportSnapshotSchema = z.object({
 const completionSchema = z.object({
   guideType: z.enum(arboGuideTypes), guideVersion: z.string().min(1).max(32), reportVersion: z.string().min(1).max(32),
   organizationId: z.string().uuid(), completedByUserId: z.string().uuid(), idempotencyKey: z.string().min(8).max(160),
+  complianceFrameworkVersionId: z.string().uuid().nullable().optional(),
   startedAt: z.date(), completedAt: z.date(), answersSnapshot: answerSnapshotSchema, reportSnapshot: arboGuideReportSnapshotSchema,
 })
 
@@ -55,7 +56,7 @@ function stable(value: unknown): unknown {
   return value
 }
 
-export function fingerprintArboGuideRun(input: Pick<z.output<typeof completionSchema>, 'guideType' | 'guideVersion' | 'reportVersion' | 'answersSnapshot' | 'reportSnapshot'>) {
+export function fingerprintArboGuideRun(input: Pick<z.output<typeof completionSchema>, 'guideType' | 'guideVersion' | 'reportVersion' | 'answersSnapshot' | 'reportSnapshot' | 'complianceFrameworkVersionId'>) {
   return createHash('sha256').update(JSON.stringify(stable(input))).digest('hex')
 }
 
@@ -82,6 +83,8 @@ export async function completeArboGuideRun(raw: unknown) {
   const parsed = completionSchema.safeParse(raw)
   if (!parsed.success || parsed.data.completedAt < parsed.data.startedAt) throw new ArboGuideRunError('INVALID_INPUT')
   const input = parsed.data
+  if (input.guideType === 'COMPLIANCE' && !input.complianceFrameworkVersionId) throw new ArboGuideRunError('INVALID_INPUT')
+  if (input.guideType !== 'COMPLIANCE' && input.complianceFrameworkVersionId) throw new ArboGuideRunError('INVALID_INPUT')
   const fingerprint = fingerprintArboGuideRun(input)
 
   let lastError: unknown
@@ -104,6 +107,7 @@ export async function completeArboGuideRun(raw: unknown) {
 
         const run = existing ?? await tx.arboGuideRun.create({ data: {
           guideType: input.guideType, guideVersion: input.guideVersion, reportVersion: input.reportVersion,
+          complianceFrameworkVersionId: input.complianceFrameworkVersionId ?? null,
           organizationId: input.organizationId, completedByUserId: input.completedByUserId, idempotencyKey: input.idempotencyKey,
           startedAt: input.startedAt, answersSnapshot: input.answersSnapshot,
         } })
