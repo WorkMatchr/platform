@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 vi.mock('next/navigation', () => ({ usePathname: () => '/kenniscentrum' }))
 
 import { PublicNavigation, isPublicNavigationItemActive } from './public-navigation'
-import { publicNavigationItems, publicRoutes } from '@/content/public-routes'
+import { publicNavigationGroups, publicNavigationItems, publicRoutes } from '@/content/public-routes'
 
 describe('publieke navigatie', () => {
   it('markeert de actieve route in desktop- en mobiele navigatie', () => {
@@ -18,9 +18,9 @@ describe('publieke navigatie', () => {
     const html = renderToStaticMarkup(<PublicNavigation />)
     for (const item of publicNavigationItems) {
       expect(html.match(new RegExp(`href="${item.href}"`, 'g'))).toHaveLength(2)
-      expect(html.match(new RegExp(`>${item.label}<`, 'g'))).toHaveLength(2)
+      expect(html.match(new RegExp(`>${item.label.replaceAll('&', '&amp;')}<`, 'g'))).toHaveLength(2)
     }
-    expect(html.match(/>Arbo-wijzers</g)).toHaveLength(2)
+    expect(html.match(/>Arbo Compliance Check</g)).toHaveLength(2)
     expect(html).not.toContain('Over WorkMatchr')
     expect(html).not.toContain('>Contact<')
     expect(html).not.toContain('Voor specialisten')
@@ -35,7 +35,7 @@ describe('publieke navigatie', () => {
       expect(html.match(new RegExp(`href="${item.href}"`, 'g'))).toHaveLength(2)
     }
     expect(html).not.toContain('href="/inloggen"')
-    expect(html).toContain('Arbo-wijzers')
+    expect(html).toContain('Arbo Compliance Check')
     expect(html).toContain('Mobiele hoofdnavigatie')
   })
 
@@ -54,7 +54,28 @@ describe('publieke navigatie', () => {
     expect(renderToStaticMarkup(<PublicNavigation />)).not.toContain('left-0')
   })
 
+  it('houdt product- en professionalgroepen gelijk op desktop en mobiel', () => {
+    const html = renderToStaticMarkup(<PublicNavigation />)
+    for (const group of publicNavigationGroups) {
+      expect(html).toContain(group.label.replaceAll('&', '&amp;'))
+      for (const item of group.items) expect(html).toContain(item.description)
+    }
+    expect(html).toContain('Arbo Compliance Check')
+    expect(html).toContain('href="/wijzers/compliance"')
+    expect(html).toContain('href="/e-learning"')
+    expect(publicNavigationGroups.map(group => group.items.map(item => item.label))).toEqual([
+      ['Diensten', 'Voor opdrachtgevers', 'Voor professionals'],
+      ['Kenniscentrum', 'E-learning', 'Arbo Compliance Check'],
+    ])
+    expect(html).toContain('href="/voor-opdrachtgevers"')
+    expect(html).toContain('href="/voor-professionals"')
+    expect(html).toContain('aria-labelledby=')
+    expect(html.match(/aria-expanded="false"/g)).toHaveLength(3)
+    expect(html).toContain('Actuele sectie')
+  })
+
   it('normaliseert geneste routes, trailing slashes, querystrings en hashes', () => {
+    expect(isPublicNavigationItemActive('/e-learning/rie-in-de-praktijk', publicRoutes.elearning)).toBe(true)
     expect(isPublicNavigationItemActive('/diensten/rie', publicRoutes.services)).toBe(true)
     expect(isPublicNavigationItemActive('/diensten/rie/?bron=menu#inhoud', publicRoutes.services)).toBe(true)
     expect(isPublicNavigationItemActive('/kenniscentrum/', publicRoutes.knowledge)).toBe(true)

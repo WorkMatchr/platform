@@ -1,5 +1,7 @@
 # Publieke informatiearchitectuur — Module P1.5
 
+> Public Navigation v2: de actuele groepsindeling en de canonieke Compliance-route staan in [Public Navigation v2](public-navigation-v2.md). De onderstaande P1.5-hoofdstructuur beschrijft de eerdere navigatie.
+
 **Status:** technisch opgeleverd; product-owneracceptatie open.
 
 ## 1. Doel en principes
