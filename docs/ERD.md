@@ -746,3 +746,17 @@ Zie [Request → Assignment-handoff](request-assignment-handoff.md) en [ADR-024]
 `Intake 1 — N IntakeSimpleAdviceRevision N — 1 User (actor)`. Bij gecontroleerd hergebruik van een ongepubliceerde Assignment blijven zowel Intake-provenance als canonieke Request-FK aanwezig; de deferred constraint vereist bijpassende immutable RequestAssignmentHandoff-provenance. Zie [details](legacy-intake-unification.md).
 
 ProviderInvitation bewaart de MarketplaceRuleSet-identiteit en veilige AssignmentPreview in de immutable JSON-snapshot. De bestaande CreditTransaction.marketplaceRuleSetId verwijst naar dezelfde prijsversie. NotificationOutbox blijft de enige bezorgtabel; de leasevelden voegen geen tweede transportrelatie toe.
+
+
+## Arbo Compliance operationele opvolging
+
+```text
+ArboGuideRun 1 ─── * ComplianceAction 1 ─── * ComplianceActionEvent
+                          │                         │
+                          *                         *
+                          │                         │
+                         User                    User
+                      assignee                   actor
+```
+
+De scan en haar resultaten blijven immutable. Alleen de operationele velden van `ComplianceAction` veranderen; iedere wijziging wordt als append-only event vastgelegd.

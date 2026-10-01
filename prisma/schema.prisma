@@ -486,6 +486,21 @@ enum ComplianceQuestionInputType {
   SHORT_TEXT
 }
 
+enum ComplianceActionStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_EXTERNAL
+  DONE
+  NOT_APPLICABLE
+}
+
+enum ComplianceActionEventType {
+  CREATED
+  STATUS_CHANGED
+  ASSIGNEE_CHANGED
+  DUE_DATE_CHANGED
+}
+
 enum RequestStatus {
   DRAFT
   READY_TO_PUBLISH
@@ -1222,6 +1237,8 @@ model User {
   deletionRequestedByUser            User?                                  @relation("UserDeletionRequestActor", fields: [deletionRequestedByUserId], references: [id], onDelete: SetNull)
   deletionRequestedUsers             User[]                                 @relation("UserDeletionRequestActor")
   memberships                        OrganizationMembership[]
+  assignedComplianceActions          ComplianceAction[]                   @relation("ComplianceActionAssignee")
+  complianceActionEvents             ComplianceActionEvent[]              @relation("ComplianceActionEventActor")
   provisioningEventsAsSubject        AccountProvisioningEvent[]             @relation("AccountProvisioningSubject")
   provisioningEventsAsActor          AccountProvisioningEvent[]             @relation("AccountProvisioningActor")
   organizationProvisioningEvents     OrganizationProvisioningEvent[]        @relation("OrganizationProvisioningActor")
@@ -2884,6 +2901,7 @@ model ArboGuideRun {
   completedByUser            User                        @relation("ArboGuideRunActor", fields: [completedByUserId], references: [id], onDelete: Restrict)
   complianceFrameworkVersion ComplianceFrameworkVersion? @relation(fields: [complianceFrameworkVersionId], references: [id], onDelete: Restrict)
   results                    ArboGuideRunResult[]
+  complianceActions          ComplianceAction[]
 
   @@index([complianceFrameworkVersionId])
 
@@ -2911,6 +2929,49 @@ model ArboGuideRunResult {
   @@unique([arboGuideRunId, position])
   @@index([subjectCode, status])
   @@index([status, createdAt])
+}
+
+model ComplianceAction {
+  id                    String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  arboGuideRunId        String                 @db.Uuid
+  subjectCode           String                 @db.VarChar(80)
+  findingCode           String                 @db.VarChar(80)
+  title                 String                 @db.VarChar(240)
+  description           String                 @db.Text
+  priority              CompliancePriority
+  serviceSuggestionCode String?                @db.VarChar(80)
+  assignedUserId        String?                @db.Uuid
+  dueAt                 DateTime?              @db.Timestamptz(3)
+  status                ComplianceActionStatus @default(OPEN)
+  createdAt             DateTime               @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime               @updatedAt @db.Timestamptz(3)
+  arboGuideRun          ArboGuideRun           @relation(fields: [arboGuideRunId], references: [id], onDelete: Restrict)
+  assignedUser          User?                  @relation("ComplianceActionAssignee", fields: [assignedUserId], references: [id], onDelete: Restrict)
+  events                ComplianceActionEvent[]
+
+  @@unique([arboGuideRunId, findingCode])
+  @@index([arboGuideRunId, status])
+  @@index([assignedUserId, status])
+  @@index([dueAt, status])
+}
+
+model ComplianceActionEvent {
+  id                 String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  complianceActionId String                    @db.Uuid
+  eventType          ComplianceActionEventType
+  actorUserId        String                    @db.Uuid
+  previousStatus     ComplianceActionStatus?
+  newStatus          ComplianceActionStatus?
+  previousAssigneeId String?                   @db.Uuid
+  newAssigneeId      String?                   @db.Uuid
+  previousDueAt      DateTime?                 @db.Timestamptz(3)
+  newDueAt           DateTime?                 @db.Timestamptz(3)
+  occurredAt         DateTime                  @default(now()) @db.Timestamptz(3)
+  action             ComplianceAction          @relation(fields: [complianceActionId], references: [id], onDelete: Restrict)
+  actor              User                      @relation("ComplianceActionEventActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([complianceActionId, occurredAt])
+  @@index([actorUserId, occurredAt])
 }
 
 model ComplianceFrameworkVersion {

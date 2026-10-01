@@ -89,7 +89,10 @@ export function buildC01RieReportSnapshot(input: {
     extended: {
       answerKeys: Object.keys(assessment.answers),
       legalBasisAvailable: sourceSnapshots.length > 0,
-      priority: assessment.aggregation.priority === 'CRITICAL' || assessment.aggregation.priority === 'HIGH' ? 'HIGH' as const : 'NORMAL' as const,
+      priority: assessment.aggregation.priority ?? 'NORMAL',
+      assessmentMode: assessment.aggregation.assessmentMode,
+      findingCode: primaryFinding?.findingCode ?? undefined,
+      serviceSuggestionCode: primaryFinding?.serviceSuggestionCode ?? undefined,
     },
   }
 
