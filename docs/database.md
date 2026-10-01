@@ -465,3 +465,14 @@ Zie [Request → Assignment-handoff](request-assignment-handoff.md) en [ADR-024]
 ## Legacy Simple Advice-conceptrevisies
 
 Migratie `20260915180000_unify_legacy_simple_advice` voegt append-only `IntakeSimpleAdviceRevision` toe en vereist immutable handoff-provenance wanneer een ongepubliceerde legacy Assignment zijn Intake-FK naast de canonieke Request-binding behoudt. Geen backfill; gepubliceerde bronbindingen blijven immutable. Zie [mapping en validatie](legacy-intake-unification.md).
+
+
+## Compliance-acties
+
+Migratie `20261001210000_add_compliance_actions` voegt de operationele actielaag voor de Arbo Compliance Scan toe. De migratie is additief en bevat geen backfill.
+
+- `ComplianceAction` koppelt een uitvoerbare actie aan een afgeronde `ArboGuideRun`.
+- Oorspronkelijke finding, titel, beschrijving, prioriteit en service suggestion zijn databasebreed immutable.
+- Status, verantwoordelijke en deadline mogen worden bijgewerkt.
+- `ComplianceActionEvent` is append-only en legt deze wijzigingen met actor vast.
+- Foreign keys gebruiken `ON DELETE RESTRICT`.
