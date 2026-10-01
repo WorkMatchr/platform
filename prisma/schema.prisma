@@ -439,6 +439,53 @@ enum ArboGuideResultStatus {
   NOT_APPLICABLE
 }
 
+enum ComplianceFrameworkStatus {
+  DRAFT
+  PUBLISHED
+  RETIRED
+}
+
+enum ComplianceModuleCategory {
+  CORE
+  RISK
+}
+
+enum ComplianceApplicability {
+  RELEVANT
+  POSSIBLY_RELEVANT
+  NOT_APPLICABLE
+}
+
+enum ComplianceAssessmentStatus {
+  IN_ORDER
+  ATTENTION_REQUIRED
+  ACTION_REQUIRED
+  NOT_ASSESSED
+  NOT_APPLICABLE
+}
+
+enum ComplianceAssessmentMode {
+  FULL
+  SCREENING
+  SPECIALIST_REQUIRED
+}
+
+enum CompliancePriority {
+  CRITICAL
+  HIGH
+  NORMAL
+  LOW
+}
+
+enum ComplianceQuestionInputType {
+  BOOLEAN
+  SINGLE_SELECT
+  MULTI_SELECT
+  NUMBER
+  DATE
+  SHORT_TEXT
+}
+
 enum RequestStatus {
   DRAFT
   READY_TO_PUBLISH
@@ -2816,11 +2863,12 @@ model ArboGuideRunCounter {
 }
 
 model ArboGuideRun {
-  id                  String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  reportNumber        String?              @unique @db.VarChar(32)
-  guideType           ArboGuideType
-  guideVersion        String               @db.VarChar(32)
-  reportVersion       String               @db.VarChar(32)
+  id                           String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reportNumber                 String?                     @unique @db.VarChar(32)
+  guideType                    ArboGuideType
+  guideVersion                 String                      @db.VarChar(32)
+  reportVersion                String                      @db.VarChar(32)
+  complianceFrameworkVersionId String?                     @db.Uuid
   organizationId      String               @db.Uuid
   completedByUserId   String               @db.Uuid
   status              ArboGuideRunStatus   @default(IN_PROGRESS)
@@ -2833,8 +2881,11 @@ model ArboGuideRun {
   createdAt           DateTime             @default(now()) @db.Timestamptz(3)
   updatedAt           DateTime             @updatedAt @db.Timestamptz(3)
   organization        Organization         @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  completedByUser     User                 @relation("ArboGuideRunActor", fields: [completedByUserId], references: [id], onDelete: Restrict)
-  results             ArboGuideRunResult[]
+  completedByUser            User                        @relation("ArboGuideRunActor", fields: [completedByUserId], references: [id], onDelete: Restrict)
+  complianceFrameworkVersion ComplianceFrameworkVersion? @relation(fields: [complianceFrameworkVersionId], references: [id], onDelete: Restrict)
+  results                    ArboGuideRunResult[]
+
+  @@index([complianceFrameworkVersionId])
 
   @@unique([organizationId, idempotencyKey])
   @@index([organizationId, completedAt])
@@ -2860,6 +2911,123 @@ model ArboGuideRunResult {
   @@unique([arboGuideRunId, position])
   @@index([subjectCode, status])
   @@index([status, createdAt])
+}
+
+model ComplianceFrameworkVersion {
+  id                 String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  frameworkCode      String                    @db.VarChar(40)
+  version            String                    @db.VarChar(32)
+  status             ComplianceFrameworkStatus @default(DRAFT)
+  title              String                    @db.VarChar(160)
+  methodology        String                    @db.Text
+  disclaimer         String                    @db.Text
+  checksum           String                    @db.Char(64)
+  publishedAt        DateTime?                 @db.Timestamptz(3)
+  retiredAt          DateTime?                 @db.Timestamptz(3)
+  createdAt          DateTime                  @default(now()) @db.Timestamptz(3)
+  modules            ComplianceModuleDefinition[]
+  rules              ComplianceRuleDefinition[]
+  arboGuideRuns      ArboGuideRun[]
+
+  @@unique([frameworkCode, version])
+  @@index([frameworkCode, status])
+  @@index([status, publishedAt])
+}
+
+model ComplianceModuleDefinition {
+  id                    String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  frameworkVersionId    String                    @db.Uuid
+  code                  String                    @db.VarChar(8)
+  title                 String                    @db.VarChar(160)
+  category              ComplianceModuleCategory
+  defaultAssessmentMode ComplianceAssessmentMode
+  position              Int
+  isActive              Boolean                   @default(true)
+  createdAt             DateTime                  @default(now()) @db.Timestamptz(3)
+  frameworkVersion      ComplianceFrameworkVersion @relation(fields: [frameworkVersionId], references: [id], onDelete: Restrict)
+  questions             ComplianceQuestionDefinition[]
+  rules                 ComplianceRuleDefinition[]
+
+  @@unique([frameworkVersionId, code])
+  @@unique([frameworkVersionId, position])
+  @@index([category, isActive])
+}
+
+model ComplianceQuestionDefinition {
+  id                 String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  moduleDefinitionId String                      @db.Uuid
+  code               String                      @db.VarChar(40)
+  prompt             String                      @db.VarChar(1000)
+  helpText           String?                     @db.VarChar(2000)
+  inputType          ComplianceQuestionInputType
+  isRequired         Boolean                     @default(true)
+  position           Int
+  riskTags           String[]                    @default([])
+  createdAt          DateTime                    @default(now()) @db.Timestamptz(3)
+  moduleDefinition   ComplianceModuleDefinition  @relation(fields: [moduleDefinitionId], references: [id], onDelete: Restrict)
+  options            ComplianceAnswerOptionDefinition[]
+
+  @@unique([moduleDefinitionId, code])
+  @@unique([moduleDefinitionId, position])
+  @@index([code])
+}
+
+model ComplianceAnswerOptionDefinition {
+  id                   String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  questionDefinitionId String                       @db.Uuid
+  value                String                       @db.VarChar(80)
+  label                String                       @db.VarChar(200)
+  position             Int
+  isExclusive          Boolean                      @default(false)
+  createdAt            DateTime                     @default(now()) @db.Timestamptz(3)
+  questionDefinition   ComplianceQuestionDefinition @relation(fields: [questionDefinitionId], references: [id], onDelete: Restrict)
+
+  @@unique([questionDefinitionId, value])
+  @@unique([questionDefinitionId, position])
+}
+
+model ComplianceRuleDefinition {
+  id                    String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  frameworkVersionId    String                     @db.Uuid
+  moduleDefinitionId    String                     @db.Uuid
+  code                  String                     @db.VarChar(60)
+  conditionSchema       Json                       @db.JsonB
+  applicability         ComplianceApplicability?
+  assessmentStatus      ComplianceAssessmentStatus?
+  priority              CompliancePriority?
+  assessmentMode        ComplianceAssessmentMode
+  findingCode           String?                    @db.VarChar(80)
+  findingTitle          String?                    @db.VarChar(240)
+  findingBody           String?                    @db.Text
+  recommendedAction     String?                    @db.Text
+  escalation            Json?                      @db.JsonB
+  serviceSuggestionCode String?                    @db.VarChar(80)
+  position              Int
+  createdAt             DateTime                   @default(now()) @db.Timestamptz(3)
+  frameworkVersion      ComplianceFrameworkVersion @relation(fields: [frameworkVersionId], references: [id], onDelete: Restrict)
+  moduleDefinition      ComplianceModuleDefinition @relation(fields: [moduleDefinitionId], references: [id], onDelete: Restrict)
+  knowledgeReferences   ComplianceRuleKnowledgeReference[]
+
+  @@unique([frameworkVersionId, code])
+  @@unique([moduleDefinitionId, position])
+  @@index([moduleDefinitionId])
+  @@index([assessmentStatus, priority])
+}
+
+model ComplianceRuleKnowledgeReference {
+  id               String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ruleDefinitionId String                    @db.Uuid
+  knowledgeClaimId String                    @db.Uuid
+  supportType      KnowledgeSupportType
+  isPrimary        Boolean                   @default(false)
+  position         Int
+  createdAt        DateTime                  @default(now()) @db.Timestamptz(3)
+  ruleDefinition   ComplianceRuleDefinition  @relation(fields: [ruleDefinitionId], references: [id], onDelete: Restrict)
+  knowledgeClaim   KnowledgeClaim             @relation(fields: [knowledgeClaimId], references: [id], onDelete: Restrict)
+
+  @@unique([ruleDefinitionId, knowledgeClaimId, supportType])
+  @@unique([ruleDefinitionId, position])
+  @@index([knowledgeClaimId])
 }
 
 model AdviceDossier {
@@ -4879,6 +5047,7 @@ model KnowledgeTopic {
 }
 
 model KnowledgeClaim {
+  complianceRuleReferences ComplianceRuleKnowledgeReference[]
   id                      String                               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   externalKey             String                               @unique @db.VarChar(160)
   topicId                 String                               @db.Uuid
