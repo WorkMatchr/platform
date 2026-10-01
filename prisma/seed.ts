@@ -5,6 +5,7 @@ import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '../src/generated/prisma/client'
 import { intakeQuestionnaireV1, type IntakeQuestionnaireQuestionSeed } from './intake-questionnaire-v1'
 import { intakeQuestionnaireV2 } from './intake-questionnaire-v2'
+import { complianceFrameworkV1 } from './compliance-framework-v1'
 
 const connectionString = process.env.DATABASE_URL
 
@@ -643,6 +644,90 @@ async function seedIntakeQuestionnaireV2() {
   }
 }
 
+async function seedComplianceFrameworkV1() {
+  const definition = {
+    frameworkCode: complianceFrameworkV1.frameworkCode,
+    version: complianceFrameworkV1.version,
+    title: complianceFrameworkV1.title,
+    methodology: complianceFrameworkV1.methodology,
+    disclaimer: complianceFrameworkV1.disclaimer,
+    modules: complianceFrameworkV1.modules.map(([code, title, category, defaultAssessmentMode], position) => ({
+      code, title, category, defaultAssessmentMode, position: position + 1,
+    })),
+  }
+  const checksum = createHash('sha256').update(JSON.stringify(definition)).digest('hex')
+  const existing = await prisma.complianceFrameworkVersion.findUnique({
+    where: { frameworkCode_version: { frameworkCode: definition.frameworkCode, version: definition.version } },
+    include: { modules: { orderBy: { position: 'asc' } } },
+  })
+
+  if (existing && existing.status !== 'DRAFT') {
+    const matches =
+      existing.checksum === checksum &&
+      existing.title === definition.title &&
+      existing.methodology === definition.methodology &&
+      existing.disclaimer === definition.disclaimer &&
+      existing.modules.length === definition.modules.length &&
+      definition.modules.every((moduleDefinition, index) => {
+        const stored = existing.modules[index]
+        return stored?.code === moduleDefinition.code &&
+          stored.title === moduleDefinition.title &&
+          stored.category === moduleDefinition.category &&
+          stored.defaultAssessmentMode === moduleDefinition.defaultAssessmentMode &&
+          stored.position === moduleDefinition.position &&
+          stored.isActive
+      })
+    if (!matches) throw new Error(`Gepubliceerde complianceframeworkversie ${definition.frameworkCode}/${definition.version} wijkt af en wordt niet overschreven.`)
+    return existing
+  }
+
+  return prisma.$transaction(async (transaction) => {
+    const framework = existing
+      ? await transaction.complianceFrameworkVersion.update({
+          where: { id: existing.id },
+          data: {
+            title: definition.title,
+            methodology: definition.methodology,
+            disclaimer: definition.disclaimer,
+            checksum,
+          },
+        })
+      : await transaction.complianceFrameworkVersion.create({
+          data: {
+            frameworkCode: definition.frameworkCode,
+            version: definition.version,
+            status: 'DRAFT',
+            title: definition.title,
+            methodology: definition.methodology,
+            disclaimer: definition.disclaimer,
+            checksum,
+          },
+        })
+
+    for (const moduleDefinition of definition.modules) {
+      await transaction.complianceModuleDefinition.upsert({
+        where: { frameworkVersionId_code: { frameworkVersionId: framework.id, code: moduleDefinition.code } },
+        update: {
+          title: moduleDefinition.title,
+          category: moduleDefinition.category,
+          defaultAssessmentMode: moduleDefinition.defaultAssessmentMode,
+          position: moduleDefinition.position,
+          isActive: true,
+        },
+        create: {
+          frameworkVersionId: framework.id,
+          code: moduleDefinition.code,
+          title: moduleDefinition.title,
+          category: moduleDefinition.category,
+          defaultAssessmentMode: moduleDefinition.defaultAssessmentMode,
+          position: moduleDefinition.position,
+        },
+      })
+    }
+    return framework
+  })
+}
+
 async function main() {
   for (const [slug, name] of sectors) {
     await prisma.sector.upsert({ where: { slug }, update: { name, isActive: true }, create: { slug, name } })
@@ -670,18 +755,20 @@ async function main() {
 
   await seedIntakeQuestionnaireV1()
   await seedIntakeQuestionnaireV2()
+  await seedComplianceFrameworkV1()
   await seedProviderQualificationReferences()
   await backfillLegacyProviderClaims()
 
-  const [sectorCount, specialismCount, certificationCount, questionnaireVersionCount] = await Promise.all([
+  const [sectorCount, specialismCount, certificationCount, questionnaireVersionCount, complianceFrameworkCount] = await Promise.all([
     prisma.sector.count(),
     prisma.specialism.count(),
     prisma.certification.count(),
     prisma.intakeQuestionnaireVersion.count(),
+    prisma.complianceFrameworkVersion.count(),
   ])
 
   console.info(
-    `Seed voltooid: ${sectorCount} sectoren, ${specialismCount} specialismen, ${certificationCount} certificeringstypen en ${questionnaireVersionCount} vraagsetversie(s).`,
+    `Seed voltooid: ${sectorCount} sectoren, ${specialismCount} specialismen, ${certificationCount} certificeringstypen, ${questionnaireVersionCount} vraagsetversie(s) en ${complianceFrameworkCount} complianceframeworkversie(s).`,
   )
 }
 

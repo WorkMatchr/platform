@@ -1,5 +1,20 @@
 # Datawoordenboek WorkMatchr
 
+## Arbo Compliance Scan — domain/versioning foundation
+
+- `ComplianceFrameworkVersion`: versieerbare methodiek voor één complianceframework, bijvoorbeeld `NL_ARBO/2026-10`. Alleen `DRAFT` is inhoudelijk muteerbaar; gepubliceerde/geretirede versies zijn databasebreed beschermd.
+- `ComplianceModuleDefinition`: moduledefinitie binnen één frameworkversie. C01–C10 zijn kernmodules; R01–R23 zijn risicomodules.
+- `ComplianceQuestionDefinition`: versiegebonden vraagdefinitie met stabiele code, type, helptekst, positie en risicotags.
+- `ComplianceAnswerOptionDefinition`: getypeerde antwoordoptie voor selectvragen.
+- `ComplianceRuleDefinition`: deterministische regelconfiguratie met begrensde JSON-conditie en afzonderlijke outputs voor applicability, beoordeling, prioriteit en assessment mode.
+- `ComplianceRuleKnowledgeReference`: bronbinding van een compliance-regel naar een bestaande `KnowledgeClaim`.
+- `ComplianceApplicability`: `RELEVANT`, `POSSIBLY_RELEVANT`, `NOT_APPLICABLE`.
+- `ComplianceAssessmentStatus`: `IN_ORDER`, `ATTENTION_REQUIRED`, `ACTION_REQUIRED`, `NOT_ASSESSED`, `NOT_APPLICABLE`.
+- `ComplianceAssessmentMode`: `FULL`, `SCREENING`, `SPECIALIST_REQUIRED`.
+- `CompliancePriority`: `CRITICAL`, `HIGH`, `NORMAL`, `LOW`.
+- `ArboGuideRun.complianceFrameworkVersionId`: optionele bronbinding voor compliance-runs. Bestaande historische runs blijven zonder backfill geldig; niet-COMPLIANCE-runs mogen geen frameworkbinding krijgen.
+
+
 ## Arbo-wijzers
 
 - `ArboGuideRunCounter`: technische teller per `guideType` en UTC-jaar voor unieke leesbare rapportnummers; geen klantobject.

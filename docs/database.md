@@ -1,5 +1,14 @@
 # Database WorkMatchr
 
+## Arbo Compliance Scan — domain/versioning foundation
+
+Migratie `20261001113000_add_compliance_domain_versioning_foundation` voegt additief de versieerbare complianceconfiguratie toe: frameworkversies, C/R-moduledefinities, vragen, antwoordopties, deterministische ruledefinities en KnowledgeClaim-bronbindingen. `ArboGuideRun` krijgt uitsluitend een nullable `complianceFrameworkVersionId`; bestaande runs worden niet gebackfilld of gewijzigd.
+
+Databaseconstraints bewaken de vaste C01–C10/R01–R23 codering, regel/module-frameworkconsistentie en geldige frameworkstatusdatums. Gepubliceerde configuratie kan niet inhoudelijk worden gewijzigd; een gepubliceerde frameworkversie mag alleen ongewijzigd naar `RETIRED` overgaan. Configuratiekinderen kunnen uitsluitend worden gemuteerd zolang hun framework `DRAFT` is.
+
+De seed maakt `NL_ARBO/2026-10` bewust als `DRAFT` aan met de 33 stabiele modulecodes. Vragen, rules en Knowledge-bindings worden pas in volgende gecontroleerde implementatiestappen toegevoegd.
+
+
 ## FinancialInvoice Snapshot v2-validatie
 
 Migratie `20260825150000_scope_financial_invoice_vat_validation` corrigeert uitsluitend de bestaande deferred validatiefunctie: btw-regels en btw-samenvattingen worden per `FinancialInvoice` vergeleken. Andere facturen kunnen daardoor een nieuwe geldige Snapshot-v2-factuur niet meer blokkeren. De totaliteits-, immutable- en fail-closed controles blijven ongewijzigd actief; bestaande facturen worden niet gemuteerd of teruggevuld.
