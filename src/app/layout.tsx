@@ -9,6 +9,7 @@ import './globals.css'
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
+  icons: { icon: '/branding/workmatchr-logo.png' },
   title: 'WorkMatchr | Uw digitale arbo-adviseur',
   description:
     'WorkMatchr helpt organisaties hun arbo- en veiligheidsvraag te begrijpen, relevante verplichtingen te herkennen en passende specialisten te vinden.',
