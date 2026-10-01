@@ -1,75 +1,49 @@
-# Publieke e-learningpagina’s
+# Public Learning v1 — publieke presentatie
 
-## Scope en uitgangspunt
+## Scope
 
-Geïsoleerde publieke wijziging op origin/main `5d5e9b411719601439654f9a931261d12d7b357d` (homepage v0.2). Geen Learning-backend, database, betalingen, entitlements, ADR-024, intake- of AdviceDossier-wijzigingen. Het oorspronkelijke lokale werk is niet overgezet of gewijzigd.
+Publieke funnel: / → /e-learning → /e-learning/rie-in-de-praktijk. De bestaande integratie op /diensten blijft behouden. De homepage krijgt één compacte sectie; bestaande secties, navigatie, footer en visuele stijl blijven intact.
 
-- `/diensten` behoudt alle diensten, deskundigen en bestaande vervolgroutes en krijgt een aanvullende sectie met een link naar `/e-learning`.
-- `/e-learning` bevat de hero, drie leerstappen, deelnemers- en organisatie-informatie, een voorlopige aanbodsectie en een afsluitende CTA.
-- Metadata bevat titel, beschrijving, canonical en Open Graph. De bestaande sitemap leest de aangevulde `indexablePublicRoutes`.
+Dit is geen release van de Learning-applicatie. Geen databasewijziging, migratie, seed, studentactivatie, aankoop, certificaatuitgifte, mail of kennisbehoud wordt geactiveerd. Alle nieuwe pagina's zijn statische servercomponenten zonder sessie- of databasequery.
 
-## Hergebruik
+## Inhoud en verwachtingen
 
-Bestaande publieke site-shell, navigatie, footer, `PublicPageLayout`, `PublicPageHero`, `Section`, `ProcessSteps`, `PublicContentCard`, `KnowledgeCallToAction`, `Card`, `Heading`, `Text` en `LinkButton`. Alleen optionele hero-acties en de drie-kolomsvariant voor drie processtappen zijn toegevoegd. Bestaande aanroepen behouden hun gedrag. Geen nieuwe stylesheets of dependencies.
+RI&E in de praktijk krijgt overal de expliciete tekststatus **Binnenkort beschikbaar**. De aangekondigde prijzen zijn €149 individueel en €595 voor 5 deelnemers. Er zijn uitsluitend informatieve links, geen inschrijving, betaling of startknop.
 
-## Tijdelijke aanbodsectie
+De tien hoofdstuktitels zijn redactioneel gecontroleerd tegen de bestaande WL-001-specificatie (prototypebron op commit ac061d4); er is geen Learning-featurebranchcode geïmporteerd. De publieke content staat zelfstandig in src/content/public-learning.ts en bevat alleen titels, status, prijzen en een publieke URL. Dit is geen cursusdatabase.
 
-Op deze origin/main bestaan geen Learning-routes, canonieke cursusdata of veilige publieke catalogusread-flow. Daarom toont de pagina de redactionele placeholder **RI&E in de praktijk — In ontwikkeling**, zonder cursuslink. De leeromgeving, persoonlijke voortgang en organisatiemogelijkheden worden niet als beschikbare functies gepresenteerd. De lokale prototypecursus is geen release-afhankelijkheid; er is geen tweede cursusdatabase gemaakt.
+De eindtoets telt 50 vragen met minimaal 40/50 = 80%. Het aangekondigde certificaat is een certificaat van afronding, geen wettelijk erkend diploma, beroepscertificering of bewijs van wettelijke compliance. Het vervangt geen RI&E, toetsing of professioneel advies. Vrijwillig kennisbehoud is voorzien gedurende 12 weken met 5 vragen per week; een aparte optionele jaarherinnering biedt een 10-vragencheck en verlengt geen certificaat. Geen van deze functies kan via de publieke pagina's worden geactiveerd.
 
-`Bekijk het aanbod` gaat naar de aanbodsectie. `Inloggen` gaat naar de bestaande `/inloggen`-route en belooft geen toegang tot opleidingen. Het commentaar bij de aanbodsectie markeert de latere aansluiting op een veilige publieke catalogus. Vóór die aansluiting moeten beschikbaarheidsclaims en CTA’s opnieuw worden beoordeeld.
+## Architectuur en SEO
 
-## Gewijzigde bestanden
+Hergebruik: publieke site-shell, PublicPageLayout, PublicPageHero, Section, ProcessSteps, PublicContentCard, KnowledgeCallToAction, Card, Heading, Text, LinkButton en de bestaande homepage-Band. Geen nieuwe dependencies of stylesheets. Beide Learning-routes hebben metadata, canonical en Open Graph en staan in de bestaande sitemap via indexablePublicRoutes.
 
-- `src/app/e-learning/page.tsx`
-- `src/app/diensten/page.tsx`
-- `src/app/public-elearning-pages.test.tsx`
-- `src/app/public-platform-pages.test.tsx`
-- `src/components/public/public-page-layout.tsx`
-- `src/components/public/public-page-hero.tsx`
-- `src/components/public/process-steps.tsx`
-- `src/content/public-routes.ts`
-- `docs/public-elearning-pages.md`
+## Releasecontrole
 
-## Verificatie
+Start-HEAD van deze uitbreiding: f44f0b92554a521dfccbb19e8b85314e9231ddb1. De eerdere publieke slice is al gemerged via PR #4. De gecorrigeerde homepage-regressietest blijft behouden.
 
-De oude homepage-assertie `Kies een deskundigheid of onderwerp` faalt ook vóór wijziging op de schone origin/main. De bijbehorende publieke regressietest controleert nu de twee daadwerkelijk bestaande keuzes van homepage v0.2 en hun exacte bestemmingen. De homepage-implementatie is ongewijzigd.
-
-De gerichte set bevat 29 tests in vijf bestanden: e-learning, publieke platformpagina’s, publieke informatiearchitectuur, homepage en visuele dichtheid. De e-learningtests controleren behoud van diensten en deskundigen, koppen, CTA’s, aanbodstatus, metadata en sitemap, met blokkerende mocks op auth en Prisma om onbedoeld privaat gegevensgebruik te detecteren.
-
-Reproduceerbare controle vanuit deze worktree:
-
-```powershell
-npm ci --no-audit --no-fund
-# Gebruik een lokale test-DATABASE_URL en een tijdelijke BETTER_AUTH_SECRET.
-npm run db:generate
-npm test -- src/app/public-elearning-pages.test.tsx src/app/public-platform-pages.test.tsx src/app/public-information-architecture.test.tsx src/app/public-homepage.test.tsx src/components/public/public-visual-density.test.tsx
-npm run lint
-npm run typecheck
-npm run build -- --webpack
-git diff --check origin/main
-npm start -- --port 3100
-```
-
-Prisma-generatie moet gereed zijn vóór TypeScript. Webpack wordt expliciet gebruikt voor een reproduceerbare lokale production build; er worden geen TypeScript- of lintcontroles uitgezet.
-
-## Resultaat op 30 september 2026
-
-**READY** voor review; geen merge of deployment uitgevoerd.
-
-- Nieuwe e-learningtests en publieke regressieset: **29/29 geslaagd**.
-- Volledige lint: geslaagd, exitcode 0.
-- TypeScript na Prisma-generatie: geslaagd, exitcode 0.
-- `npm run build -- --webpack`: geslaagd, inclusief TypeScript en 144 statische pagina’s; exitcode 0.
-- `git diff --check origin/main`: geslaagd. De diff bevat uitsluitend de negen hierboven genoemde bestanden; start-HEAD is gelijk aan de opgehaalde origin/main.
-- Productionserver op `http://localhost:3100`: `/e-learning` en `/diensten` beide HTTP 200, zonder sessie en zonder authredirect.
-- Edge: desktop 1440×1000 en mobiel 390×844 gecontroleerd, zonder horizontale overflow.
-- Echte browserzoom 200% gecontroleerd: CSS-viewport 1440 → 720 en devicePixelRatio 1 → 2; geen horizontale overflow.
-- Skiplink, toetsenbordnavigatie, zichtbare focus en Enter-activering gecontroleerd op beide pagina’s.
-- Alle vier e-learning-CTA’s en de nieuwe diensten-CTA doorgeklikt; bestemmingen werken. Geen browserfouten.
-- Desktop-, mobiele en zoomscreenshots beoordeeld: bestaande visuele stijl, leesbare koppen, gestapelde kaarten en knoppen op mobiel.
+Controleer gerichte publieke tests, volledige lint, effectieve TypeScript-check, volledige production build met Webpack en git diff --check. Browsermatrix: 1280×900, 390×844, 500×900, keyboard-only, zichtbare focus, logische koppen, echte 200% zoom, geen horizontale overflow en alle informatieve CTA's. Alle vier publieke routes moeten zonder sessie HTTP 200 geven. Bewijsbestanden blijven buiten Git.
 
 ## Productreview
 
-De pagina gebruikt u/uw, bestaande tokens en componenten, één H1 en logische H2/H3-niveaus. De voorlopige status is expliciet en belooft geen beschikbare cursussen, certificaten, organisatiebeheer of voortgangsfuncties. CTA’s beschrijven hun werkelijke bestemming. Er worden geen persoonsgegevens gevraagd of gegevens geladen. Bestaande diensten, deskundigen, navigatie en footer blijven beschikbaar. De gecontroleerde UI-structuur bestaat uit hero → leerstappen → deelnemers/organisaties → voorlopig aanbod → afsluitende CTA.
+Copy gebruikt u/uw, een expliciete tekststatus en geen beschikbaarheidsclaim voor nog niet uitgebrachte functies. De pagina's vragen geen persoonsgegevens en bieden geen activeringsflow. De compacte homepagesectie hergebruikt het bestaande ritme. Het definitieve releaseverslag bevat test-, browser-, PR- en deploymentresultaten.
 
-Browserbewijsmateriaal en logs zijn uitsluitend lokaal buiten beide bronworktrees bewaard en worden niet gecommit. Er is niet gepusht, gemerged of gedeployd. De oorspronkelijke lokale worktree en server zijn ongemoeid gelaten. Product Owner-bevestiging voor merge/deployment blijft een afzonderlijke vervolgstap.
+## Productiebaseline en afbakening
+
+De bestaande live deployment is gebaseerd op be3349f80eb0793a4614cd6760e87ab93eb36fe1 en bevat een refunduitbreiding die nog niet op main staat. Daarom wordt de publieke PR tegen main afzonderlijk gecontroleerd en wordt het deploymentartefact opgebouwd vanaf de bestaande live commit met uitsluitend dezelfde publieke bestanden. Zo wordt de refundfunctionaliteit niet teruggedraaid en wordt nieuw compliance-databasewerk op main niet mee uitgerold. Er wordt geen database deployment, migratie, seed of Learning-activatie uitgevoerd.
+
+De browsercontrole vond een bestaande 404 voor /favicon.ico. De publieke metadata verwijst nu naar het bestaande WorkMatchr-logo als favicon, zonder nieuw beeldmateriaal. Alle releasechecks worden op de definitieve versie beoordeeld.
+
+## Lokale releasechecks — 1 oktober 2026
+
+- Gerichte Public Learning-tests en publieke regressieset: 34/34 PASS op beide baselines.
+- Volledige lint: PASS op beide baselines.
+- Volledige TypeScript-check zonder incremental-cache: PASS op beide baselines; ook de definitieve builds hebben TypeScript volledig doorlopen.
+- Production build met Webpack: PASS op beide baselines, inclusief 145 statische pagina’s.
+- Definitieve productievariant: /, /diensten, /e-learning en /e-learning/rie-in-de-praktijk HTTP 200 zonder sessie.
+- Browsermatrix 1280×900, 390×844 en 500×900: PASS. Keyboard-only, skiplink, zichtbare focus, headinghiërarchie, echte browserzoom 200% en geen horizontale overflow: PASS.
+- Alle informatieve CTA’s en beide Learning-sitemapvermeldingen: PASS. Geen console- of page-errors in de definitieve run.
+- Geen koop-, inschrijf-, start- of kennisbehoudactivatie; private Learning-routes ontbreken en de gecontroleerde routes geven 404. De zichtbare status is Binnenkort beschikbaar.
+- git diff --check: PASS. Productiecode buiten de publieke slice blijft identiek aan de live baseline. Geen databasescripts, schema, migratie, secrets, env-files, screenshots of lokale artifacts in de commit.
+
+PR- en deploymentidentiteit worden in het uiteindelijke releaseverslag vastgelegd; deze lokale checks zijn geen bewering dat productie al is omgeschakeld.
