@@ -51,6 +51,9 @@ async function main() {
     const user = await prisma.user.create({ data: { email: 'arbo-guide@example.invalid', status: 'ACTIVE', emailVerified: true, accountType: 'CLIENT' } })
     const otherUser = await prisma.user.create({ data: { email: 'other-arbo-guide@example.invalid', status: 'ACTIVE', emailVerified: true, accountType: 'CLIENT' } })
     const organization = await prisma.organization.create({ data: { name: 'Arbo Test BV', organizationType: 'CLIENT', status: 'ACTIVE' } })
+    const framework = await prisma.complianceFrameworkVersion.create({ data: {
+      frameworkCode: 'NL_ARBO', version: 'test-run', status: 'DRAFT', title: 'Testframework', methodology: 'Test', disclaimer: 'Test', checksum: 'c'.repeat(64),
+    } })
     const otherOrganization = await prisma.organization.create({ data: { name: 'Andere BV', organizationType: 'CLIENT', status: 'ACTIVE' } })
     await prisma.organizationMembership.createMany({ data: [
       { userId: user.id, organizationId: organization.id, role: 'OWNER', status: 'ACTIVE' },
@@ -58,7 +61,7 @@ async function main() {
     ] })
 
     const base = {
-      guideType: 'COMPLIANCE' as const, guideVersion: '1', reportVersion: '1.0', organizationId: organization.id,
+      guideType: 'COMPLIANCE' as const, guideVersion: '1', reportVersion: '1.0', complianceFrameworkVersionId: framework.id, organizationId: organization.id,
       completedByUserId: user.id, startedAt: new Date('2026-08-20T09:50:00Z'), completedAt: new Date('2026-08-20T10:00:00Z'),
       answersSnapshot: { generalPolicy: 'YES' }, reportSnapshot: report,
     }
