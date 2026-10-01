@@ -59,6 +59,7 @@ export const publicRoutes = {
   contact: '/contact',
   guides: '/wijzers',
   complianceGuide: '/wijzers/compliance',
+  complianceScan: '/wijzers/compliance/scan',
   bhvGuide: '/wijzers/bhv',
   adviceGuide: '/advieswijzer',
   directAssignment: '/hulpvragen/nieuw',
@@ -200,6 +201,7 @@ export const indexablePublicRoutes = [
   publicRoutes.incidentInvestigationQuestion,
   publicRoutes.guides,
   publicRoutes.complianceGuide,
+  publicRoutes.complianceScan,
   publicRoutes.bhvGuide,
   publicRoutes.adviceGuide,
 ] as const satisfies readonly PublicRoute[]

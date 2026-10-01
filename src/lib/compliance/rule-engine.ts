@@ -118,5 +118,9 @@ export function evaluateComplianceRules(rawRules: readonly unknown[], answers: C
     .map((rawRule) => complianceRuleDefinitionSchema.parse(rawRule))
     .filter((rule) => evaluateComplianceCondition(rule.condition, answers))
     .sort((a, b) => a.position - b.position || a.code.localeCompare(b.code))
-    .map(({ condition: _condition, ...rule }) => rule)
+    .map((rule) => {
+      const result = { ...rule }
+      delete (result as Partial<typeof result>).condition
+      return result
+    })
 }
