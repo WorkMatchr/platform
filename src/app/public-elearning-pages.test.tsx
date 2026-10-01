@@ -60,8 +60,11 @@ describe('publieke e-learningpagina’s', () => {
     }
     expect(html).toContain('Welke ondersteuning past bij uw vraag?')
     expect(html).toContain('Verder met uw vraag')
-    expect(html).toContain('E-learning &amp; opleidingen')
-    expect(html).toMatch(/href="\/e-learning"[^>]*>Bekijk e-learning &amp; opleidingen<\/a>/)
+    expect(html).toContain('Zelf kennis opbouwen?')
+    expect(html).toContain('via WorkMatchr een professional kunt inschakelen')
+    expect(html).toContain('Naast het vinden van professionals')
+    expect(html.indexOf('Zelf kennis opbouwen?')).toBeGreaterThan(html.indexOf('Verder met uw vraag'))
+    expect(html).toMatch(/href="\/e-learning"[^>]*>Bekijk E-learning<\/a>/)
   })
 
   it('rendert zonder sessie of Learning-database met alle koppen en werkende CTA-doelen', () => {
