@@ -668,13 +668,13 @@ async function seedComplianceFrameworkV1() {
       existing.methodology === definition.methodology &&
       existing.disclaimer === definition.disclaimer &&
       existing.modules.length === definition.modules.length &&
-      definition.modules.every((module, index) => {
+      definition.modules.every((moduleDefinition, index) => {
         const stored = existing.modules[index]
-        return stored?.code === module.code &&
-          stored.title === module.title &&
-          stored.category === module.category &&
-          stored.defaultAssessmentMode === module.defaultAssessmentMode &&
-          stored.position === module.position &&
+        return stored?.code === moduleDefinition.code &&
+          stored.title === moduleDefinition.title &&
+          stored.category === moduleDefinition.category &&
+          stored.defaultAssessmentMode === moduleDefinition.defaultAssessmentMode &&
+          stored.position === moduleDefinition.position &&
           stored.isActive
       })
     if (!matches) throw new Error(`Gepubliceerde complianceframeworkversie ${definition.frameworkCode}/${definition.version} wijkt af en wordt niet overschreven.`)
@@ -704,23 +704,23 @@ async function seedComplianceFrameworkV1() {
           },
         })
 
-    for (const module of definition.modules) {
+    for (const moduleDefinition of definition.modules) {
       await transaction.complianceModuleDefinition.upsert({
-        where: { frameworkVersionId_code: { frameworkVersionId: framework.id, code: module.code } },
+        where: { frameworkVersionId_code: { frameworkVersionId: framework.id, code: moduleDefinition.code } },
         update: {
-          title: module.title,
-          category: module.category,
-          defaultAssessmentMode: module.defaultAssessmentMode,
-          position: module.position,
+          title: moduleDefinition.title,
+          category: moduleDefinition.category,
+          defaultAssessmentMode: moduleDefinition.defaultAssessmentMode,
+          position: moduleDefinition.position,
           isActive: true,
         },
         create: {
           frameworkVersionId: framework.id,
-          code: module.code,
-          title: module.title,
-          category: module.category,
-          defaultAssessmentMode: module.defaultAssessmentMode,
-          position: module.position,
+          code: moduleDefinition.code,
+          title: moduleDefinition.title,
+          category: moduleDefinition.category,
+          defaultAssessmentMode: moduleDefinition.defaultAssessmentMode,
+          position: moduleDefinition.position,
         },
       })
     }
