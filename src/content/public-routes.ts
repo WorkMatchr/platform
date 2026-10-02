@@ -1,3 +1,5 @@
+import { publicLearningHref, roadmapLearningCourses } from './public-learning-catalog'
+
 export const publicRoutes = {
   home: '/',
   services: '/diensten',
@@ -73,7 +75,7 @@ export const publicAnchors = {
   askQuestion: '/#situaties',
 } as const
 
-export type PublicRoute = (typeof publicRoutes)[keyof typeof publicRoutes]
+export type PublicRoute = (typeof publicRoutes)[keyof typeof publicRoutes] | ReturnType<typeof publicLearningHref>
 export type PublicAnchor = (typeof publicAnchors)[keyof typeof publicAnchors]
 export type PublicNavigationHref = PublicRoute | PublicAnchor
 
@@ -149,6 +151,7 @@ export const indexablePublicRoutes = [
   publicRoutes.professionals,
   publicRoutes.elearning,
   publicRoutes.rieLearning,
+  ...roadmapLearningCourses.map(publicLearningHref),
   publicRoutes.rieService,
   publicRoutes.preventionOfficerService,
   publicRoutes.bhvService,
@@ -207,5 +210,5 @@ export const indexablePublicRoutes = [
 ] as const satisfies readonly PublicRoute[]
 
 export function isRegisteredPublicHref(href: string): href is PublicNavigationHref {
-  return (Object.values(publicRoutes) as readonly string[]).includes(href) || (Object.values(publicAnchors) as readonly string[]).includes(href)
+  return (Object.values(publicRoutes) as readonly string[]).includes(href) || roadmapLearningCourses.some(course => publicLearningHref(course) === href) || (Object.values(publicAnchors) as readonly string[]).includes(href)
 }
