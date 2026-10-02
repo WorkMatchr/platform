@@ -31,7 +31,7 @@ describe('platformbeheernavigatie', () => {
 
   it('beperkt de navigatie voor een platformauditor tot audit', () => {
     expect(getPlatformAdminNavigationGroups('MEMBER')).toEqual([
-      { label: 'Controle', tone: 'reviews', items: [{ href: '/platformbeheer/auditor', label: 'Audit' }] },
+      { key: 'audit', label: 'Controle', tone: 'reviews', items: [{ href: '/platformbeheer/auditor', label: 'Audit' }] },
     ])
     expect(getPlatformAdminNavigationGroups('ADMIN')).toEqual(platformAdminNavigationGroups)
     expect(getPlatformAdminNavigationGroups('OWNER')).toEqual(platformAdminNavigationGroups)
@@ -62,4 +62,10 @@ describe('platformbeheernavigatie', () => {
     expect(existsSync(route)).toBe(true)
     expect(readFileSync(route, 'utf8')).toContain('PlatformOrganizationUsers')
   })
+})
+
+it.each(['OWNER', 'ADMIN', 'MEMBER'] as const)('has stable unique navigation keys for %s', role => {
+  const groups = getPlatformAdminNavigationGroups(role)
+  expect(new Set(groups.map(group => group.key)).size).toBe(groups.length)
+  expect(groups.every(group => group.key.length > 0)).toBe(true)
 })

@@ -17,7 +17,7 @@ export function PlatformAdminNavigationMenu({ membershipRole }: { membershipRole
       ariaLabel="Platformbeheer"
       isRouteActive={isPlatformAdminRouteActive}
       groups={navigationGroups.map((group) => ({
-        key: group.tone,
+        key: group.key,
         label: group.label,
         links: group.items,
       }))}
