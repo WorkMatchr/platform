@@ -1,0 +1,53 @@
+.shell > main {
+  max-width: 1200px;
+  gap: 1.5rem;
+  padding: 1.5rem 1.25rem;
+}
+.shell [data-account-sidebar] {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  padding: 1rem .75rem;
+}
+.shell [data-account-sidebar] > div:first-child {
+  background: var(--color-surface-subtle);
+  border-radius: var(--radius-control);
+  border-bottom: 0;
+  padding: 1rem;
+}
+.shell [data-account-sidebar] p {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.shell [data-account-content] {
+  overflow-wrap: break-word;
+}
+.shell [data-account-content] > div {
+  max-width: 100%;
+}
+.shell [data-account-content] h1 {
+  color: var(--color-brand-dark);
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  line-height: 1.25;
+  letter-spacing: -.025em;
+}
+.shell [data-account-content] h2 {
+  font-size: 1.25rem;
+  line-height: 1.4;
+}
+.shell [data-account-content] :global(.rounded-card) {
+  box-shadow: none;
+}
+@media (min-width: 640px) {
+  .shell > main { padding: 2rem; }
+}
+@media (min-width: 1024px) {
+  .shell > main {
+    grid-template-columns: 14rem minmax(0, 1fr);
+    padding-inline: 2.5rem;
+    gap: 2rem;
+  }
+}
+
+.shell [data-account-content] > section { padding-block: 0; }
+.shell [data-account-content] > section > div { padding-inline: 0; }
+.shell > div > header > div { max-width: 1200px; }
