@@ -8,7 +8,7 @@ import { Text } from '@/components/ui/text'
 import { publicLearning } from '@/content/public-learning'
 
 const title = 'RI&E in de praktijk — online RI&E-opleiding | WorkMatchr'
-const description = 'Leer de RI&E toepassen in 10 hoofdstukken. Online in uw eigen tempo, met oefeningen, een eindtoets en certificaat van afronding. Binnenkort beschikbaar vanaf €149.'
+const description = `Leer de RI&E toepassen in 10 hoofdstukken. Online in uw eigen tempo, met oefeningen, een eindtoets en certificaat van afronding. Binnenkort beschikbaar vanaf ${publicLearning.individualPrice}.`
 export const metadata: Metadata = { title, description, alternates: { canonical: publicLearning.href }, openGraph: { title, description, url: publicLearning.href } }
 
 export default function RieLearningPage() {

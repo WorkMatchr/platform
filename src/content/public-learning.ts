@@ -1,10 +1,11 @@
+import { publicLearningPrices } from './public-learning-prices'
+
 // Editorial public presentation only. No Learning runtime, pricing API or enrollment data.
 export const publicLearning = {
   title: 'RI&E in de praktijk',
   status: 'Binnenkort beschikbaar',
   href: '/e-learning/rie-in-de-praktijk',
-  individualPrice: '€149',
-  teamPrice: '€595',
+  ...publicLearningPrices,
   chapters: [
     'Waarom een RI&E?',
     'Wie doet wat?',

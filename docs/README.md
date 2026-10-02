@@ -55,6 +55,7 @@ Module 6C.2 — WOS Beheeracties & Communicatie is technisch opgeleverd en wacht
 
 - [Icebox — geparkeerde productideeën](ICEBOX.md)
 
+- [Public Learning roadmap v1 en centraal prijsbeleid](public-learning-roadmap.md)
 - [Publieke platformlayout — Module P1.2](public-platform-layout.md)
 - [RI&E-kenniscluster — Module P1.3](rie-knowledge-cluster.md)
 - [Vraaggestuurde homepage — Module P1.4](public-homepage-experience.md)
