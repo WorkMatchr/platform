@@ -2,6 +2,7 @@ import type { PlatformMembershipRole } from './platform-admin-policy'
 
 const operatorNavigationGroups = [
   {
+    key: 'daily',
     label: 'Dagelijks beheer',
     tone: 'daily',
     items: [
@@ -13,6 +14,7 @@ const operatorNavigationGroups = [
     ],
   },
   {
+    key: 'reviews',
     label: 'Beoordelingen',
     tone: 'reviews',
     items: [
@@ -22,6 +24,7 @@ const operatorNavigationGroups = [
     ],
   },
   {
+    key: 'insight',
     label: 'Inzicht',
     tone: 'insight',
     items: [
@@ -32,6 +35,7 @@ const operatorNavigationGroups = [
     ],
   },
   {
+    key: 'finance',
     label: 'Financieel',
     tone: 'finance',
     items: [
@@ -43,11 +47,13 @@ const operatorNavigationGroups = [
     ],
   },
   {
+    key: 'trading',
     label: 'Trading',
     tone: 'system',
     items: [{ href: '/platformbeheer/trading/toegang', label: 'Toegang' }],
   },
   {
+    key: 'system',
     label: 'Systeem',
     tone: 'system',
     items: [
@@ -60,6 +66,7 @@ const operatorNavigationGroups = [
 
 const auditorNavigationGroups = [
   {
+    key: 'audit',
     label: 'Controle',
     tone: 'reviews',
     items: [{ href: '/platformbeheer/auditor', label: 'Audit' }],

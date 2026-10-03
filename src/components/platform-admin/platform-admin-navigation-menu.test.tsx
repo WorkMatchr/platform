@@ -52,3 +52,12 @@ describe('inklapbare platformbeheernavigatie', () => {
     expect(summaries[3]).toContain('border-slate-200 bg-slate-50')
   })
 })
+
+it.each(['/platformbeheer/trading/toegang', '/platformbeheer/instellingen'])('opens only the matching group on %s', pathname => {
+  navigation.pathname = pathname
+  const html = renderToStaticMarkup(<PlatformAdminNavigationMenu membershipRole="ADMIN" />)
+  expect(html.match(/open=""/g)).toHaveLength(1)
+  expect(html.match(/aria-current="page"/g)).toHaveLength(1)
+  const groups = html.match(/<details[\s\S]*?<\/details>/g)!
+  expect(groups.find(group => group.includes('open=""'))).toContain(pathname.includes('/trading/') ? '>Trading<' : '>Systeem<')
+})

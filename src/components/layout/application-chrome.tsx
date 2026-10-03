@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation'
 import type { ReactNode } from 'react'
 import { AccountNavigationMenu } from './account-navigation-menu'
 import type { HeaderViewModel } from './header-model'
+import accountStyles from './account-shell-v02.module.css'
 import { organizationRoleLabels } from '@/lib/presentation/platform-labels'
 
 const authenticatedWorkspacePrefixes = [
@@ -53,16 +54,18 @@ export function ApplicationChrome({
     !headerModel.isPlatformAdministrator &&
     usesAuthenticatedWorkspace(pathname)
 
+  const useV02 = process.env.NEXT_PUBLIC_ACCOUNT_SHELL_VERSION !== 'v01'
+
   if (usesAccountChrome) {
     return (
-      <div className="flex min-h-screen flex-col bg-background lg:h-dvh lg:min-h-0 lg:overflow-hidden">
+      <div data-account-shell={useV02 ? 'v02' : 'v01'} className={`flex min-h-screen flex-col bg-background lg:h-dvh lg:min-h-0 lg:overflow-hidden ${useV02 ? accountStyles.shell : ''}`}>
         <div className="shrink-0">{header}</div>
         <div className="shrink-0">{banner}</div>
         <main
           id="main-content"
           className="mx-auto grid w-full max-w-[96rem] flex-1 gap-6 px-4 py-6 sm:px-6 lg:min-h-0 lg:grid-cols-[15rem_minmax(0,1fr)] lg:overflow-hidden lg:px-8"
         >
-          <aside className="hidden self-start rounded-card border border-border bg-surface p-3 lg:block lg:min-h-0 lg:self-stretch lg:overflow-y-auto lg:overscroll-contain">
+          <aside data-account-sidebar className="hidden self-start rounded-card border border-border bg-surface p-3 lg:block lg:min-h-0 lg:self-stretch lg:overflow-y-auto lg:overscroll-contain">
             <div className="border-b border-border px-3 pb-4">
               <p className="truncate text-sm font-semibold text-brand-dark">{headerModel.displayName}</p>
               {headerModel.activeOrganization ? (
@@ -76,7 +79,7 @@ export function ApplicationChrome({
             </div>
             <AccountNavigationMenu groups={headerModel.navigationGroups} />
           </aside>
-          <div className="min-w-0 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
+          <div data-account-content className="min-w-0 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
             {children}
           </div>
         </main>
