@@ -39,7 +39,7 @@ export function PublicHomepageV02() {
         <figure className="min-w-0 overflow-hidden rounded-card bg-surface shadow-xl">
           <figcaption className="bg-brand-dark px-6 py-4 text-sm font-bold text-text-on-dark">WorkMatchr / Vraag ondersteuning aan</figcaption>
           <div className="p-6 sm:p-8">
-            <p className="text-sm font-semibold text-brand-primary-hover">Stap 1 van 3</p>
+            <p className="text-sm font-semibold text-brand-primary-hover">Begin met uw hulpvraag</p>
             <p className="mt-4 text-xl font-bold leading-snug text-brand-dark">Weet u welke deskundigheid u nodig heeft?</p>
             <div className="mt-6 space-y-3">
               <Link href="/advieswijzer?start=deskundigheid" className="block rounded-control border border-border bg-brand-primary-subtle p-4 hover:border-brand-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-primary">
