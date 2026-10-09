@@ -3,14 +3,14 @@ import { describe, expect, it } from 'vitest'
 import { PublicContentPathways } from './public-content-pathways'
 
 describe('publieke vervolgroutes', () => {
-  it('groepeert bestaande relaties compact en toont één duidelijke CTA', () => {
-    const html = renderToStaticMarkup(<PublicContentPathways contentId="knowledge:rie-required" embedded />)
+  it.each([true, false])('groepeert relaties met de geaccepteerde CTA (embedded=%s)', (embedded) => {
+    const html = renderToStaticMarkup(<PublicContentPathways contentId="knowledge:rie-required" embedded={embedded} />)
 
     expect(html).toContain('Gerelateerde diensten')
     expect(html).toContain('Gerelateerde sectoren')
     expect(html).toContain('Gerelateerde wettelijke verplichtingen')
     expect(html).not.toContain('Gerelateerde kennis')
-    expect(html.match(/>Stel uw vraag</g)).toHaveLength(1)
+    expect(html.match(/>Vraag ondersteuning aan</g)).toHaveLength(1)
     expect(html).toContain('href="/advieswijzer"')
     expect(html).not.toContain('shadow-card')
   })
