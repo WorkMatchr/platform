@@ -5,6 +5,7 @@ import type { ReactNode } from 'react'
 import { AccountNavigationMenu } from './account-navigation-menu'
 import type { HeaderViewModel } from './header-model'
 import accountStyles from './account-shell-v02.module.css'
+import uniformStyles from './uniform-account-shell.module.css'
 import { organizationRoleLabels } from '@/lib/presentation/platform-labels'
 
 const authenticatedWorkspacePrefixes = [
@@ -56,9 +57,11 @@ export function ApplicationChrome({
 
   const useV02 = process.env.NEXT_PUBLIC_ACCOUNT_SHELL_VERSION !== 'v01'
 
+  const useUniformLayout = useV02 && process.env.NEXT_PUBLIC_ACCOUNT_LAYOUT_VERSION !== 'legacy'
+
   if (usesAccountChrome) {
     return (
-      <div data-account-shell={useV02 ? 'v02' : 'v01'} className={`flex min-h-screen flex-col bg-background lg:h-dvh lg:min-h-0 lg:overflow-hidden ${useV02 ? accountStyles.shell : ''}`}>
+      <div data-account-shell={useV02 ? 'v02' : 'v01'} data-account-layout={useUniformLayout ? 'uniform' : 'legacy'} className={`flex min-h-screen flex-col bg-background lg:h-dvh lg:min-h-0 lg:overflow-hidden ${useV02 ? accountStyles.shell : ''} ${useUniformLayout ? uniformStyles.shell : ''}`}>
         <div className="shrink-0">{header}</div>
         <div className="shrink-0">{banner}</div>
         <main
@@ -79,7 +82,7 @@ export function ApplicationChrome({
             </div>
             <AccountNavigationMenu groups={headerModel.navigationGroups} />
           </aside>
-          <div data-account-content className="min-w-0 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
+          <div data-account-content className={`min-w-0 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:pr-1 ${useUniformLayout ? uniformStyles.content : ''}`}>
             {children}
           </div>
         </main>

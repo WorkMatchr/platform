@@ -35,7 +35,7 @@ export default async function ProviderDossierLayout({ children }: { children: Re
         <p className="text-sm text-text-secondary">Actieve organisatie</p>
         <p className="font-bold text-brand-dark">{context.organization.name}</p>
       </div>
-      <div className="grid gap-8 lg:grid-cols-[18rem_minmax(0,1fr)]">
+      <div data-provider-workspace className="grid gap-8 lg:grid-cols-[18rem_minmax(0,1fr)]">
         <aside><ProviderDossierNavigation items={items} /></aside>
         <div className="min-w-0">{children}</div>
       </div>

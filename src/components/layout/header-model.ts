@@ -81,7 +81,7 @@ export function buildHeaderViewModel(
                 : []),
               ...(supportsProviderWork
                 ? [
-                    { href: '/professional/opdrachten', label: 'Aanvragen' },
+                    { href: '/professional/opdrachten', label: 'Beschikbare opdrachten' },
                     { href: '/uitnodigingen', label: 'Uitnodigingen' },
                   ]
                 : []),
@@ -98,10 +98,13 @@ export function buildHeaderViewModel(
             label: 'Organisatie',
             links: [
               { href: organization ? '/organisatie' : '/organisatie/nieuw', label: 'Organisatie' },
+              ...(organization && (context.activeMembership?.role === 'OWNER' || context.activeMembership?.role === 'ADMIN')
+                ? [{ href: '/organisatie/gebruikers', label: 'Medewerkers' }] : []),
               ...(supportsProviderWork
                 ? [
                     { href: '/aanbiedersdossier', label: 'Dienstverlenersprofiel' },
                     { href: '/aanbiedersdossier/professionals', label: 'Professionals' },
+                    { href: '/aanbiedersdossier/profiel', label: 'Kernexpertises en profiel' },
                   ]
                 : []),
             ],
