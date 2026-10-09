@@ -103,7 +103,7 @@ export function PublicContentPathways({
     return (
       <section className="grid gap-6 rounded-card border border-border bg-surface-subtle p-5 sm:p-6" aria-labelledby={`${contentId}-pathways-title`}>
         <PathwayRelations contentId={contentId} />
-        <PublicContentCallToAction primaryHref={primaryHref} linkLabel="Stel uw vraag" />
+        <PublicContentCallToAction primaryHref={primaryHref} linkLabel="Vraag ondersteuning aan" />
       </section>
     )
   }
@@ -111,7 +111,7 @@ export function PublicContentPathways({
   return (
     <Section spacing="compact" className="bg-surface-subtle" containerClassName="grid gap-6" aria-labelledby={`${contentId}-pathways-title`}>
       <PathwayRelations contentId={contentId} />
-      <PublicContentCallToAction primaryHref={primaryHref} linkLabel="Stel uw vraag" />
+      <PublicContentCallToAction primaryHref={primaryHref} linkLabel="Vraag ondersteuning aan" />
     </Section>
   )
 }
