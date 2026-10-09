@@ -175,3 +175,8 @@ Zie [Request → Assignment-handoff](request-assignment-handoff.md) en [ADR-024]
 Zie [legacy intake naar gedeelde Simple Advice Flow](legacy-intake-unification.md) voor de compatibele routes, prefill, migratie en acceptatiestatus.
 
 - [Opdrachtmeldingen en ontgrendelprijzen](marketplace-assignment-notifications.md)
+
+## Navigatie v0.2 en releaseonderzoek
+
+- [Platformbeheer v0.2 — bestaande vergelijkingversie](platform-admin-v02.md)
+- [A01.6 — herkomst, herstel en acceptatie ingelogde navigatie](a01-6-account-navigation-audit.md)

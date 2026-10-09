@@ -33,7 +33,8 @@ export function PlatformAdminShell({
             <WorkMatchrLogo size="header" priority />
             <span className="font-semibold text-text-secondary">Platformbeheer</span>
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <a href="/platformbeheer/v02" className="inline-flex min-h-10 items-center rounded-control px-3 text-sm font-semibold text-brand-primary underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary">Bekijk v0.2</a>
             <Link
               href="/account"
               className="inline-flex min-h-10 items-center rounded-control px-3 text-sm font-semibold text-brand-dark hover:bg-brand-primary-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
