@@ -3,38 +3,43 @@
 Onderzoek: 9 oktober 2026. Issue: [WorkMatchr/platform#17](https://github.com/WorkMatchr/platform/issues/17).
 Basis: origin/main `756a3d5401b18e4e4a2e7ac709ba5e9b8348feb1` (merge PR #19).
 
-## Waarom recente merges niet live verschijnen
+## Productiedeployment: feiten en diagnosegrens
 
-De huidige Vercel GitHub-appinstallatie heeft geen zichtbare toegang tot `WorkMatchr/platform`, terwijl het Vercel-project die repository nog als Git-link bewaart. Dit is de concrete integratieblokkade; er is geen mislukte Vercel-build voor PR #19 aangetroffen.
+Recent main is niet live omdat voor de recente main-merges geen Production deployment is geregistreerd. Er is geen mislukte Vercel-build voor PR #19 gevonden. Waarom het main-event niet is verwerkt, is met de beschikbare read-only gegevens nog niet sluitend vast te stellen.
 
 Read-only bewijs:
 
 - Project `platform`, ID `prj_a2ifiMVtQjDXYBQQn0ZjZcmvSkqb`, team `workmatchrs-projects`.
-- Opgeslagen Git-link: GitHub `WorkMatchr/platform`, repository-ID `1298074929`, production branch `main`.
-- Vercel `git-namespaces` toont de WorkMatchr-installatie `145931613` als `isAccessRestricted: true`.
-- Vercel `integrations/search-repo` met deze namespace/installatie retourneert alleen `WorkMatchr/workmatchr-trading` en `WorkMatchr/website`; zoeken op `platform` retourneert geen repository.
-- `createDeployments` staat op `enabled`; er is geen ignored-build-command, rollback freeze of uitschakeling in `vercel.json` gevonden.
-- Laatste Production deployment: `dpl_DqUcUV5dDnrB4bhxCpQhEx5DgCfW`, 3 oktober 2026, `READY`, bron `cli`. Git-source/commitmetadata ontbreken. Een live commit-SHA is daarmee niet aantoonbaar.
-- `www.workmatchr.nl` is verified op dit project en resolveert via de Vercel deployment-API naar deze deployment.
-- PR #19 is op 9 oktober gemerged. De main-check `verify` is groen; een Vercel-check/status en nieuwere deployment ontbreken.
-- De live homepage is al v0.2, maar toont nog de oude previewtekst `Stap 1 van 3`. Main bevat sinds PR #18 `Begin met uw hulpvraag`. De verouderde waarneming uit issue #17 dat v0.1 live zou staan, is niet bevestigd.
+- Git-link: GitHub `WorkMatchr/platform`, repository-ID `1298074929`, Production Branch `main`. `createDeployments` is `enabled`; geen ignored-build-command, rollback freeze of uitschakeling in `vercel.json` gevonden.
+- Laatste Production deployment: `dpl_DqUcUV5dDnrB4bhxCpQhEx5DgCfW`, 3 oktober 2026, `READY`, bron `cli`.
+- De gedetailleerde CLI/API-respons bevat `meta.productionCommit = 77f5585e7db4b799f7dde57dd2eef2610a46fe80` en `releasePr = 15`. Dit is door de CLI-release aangeleverde metadata; `gitSource` ontbreekt. De eerdere compacte connectorrespons liet deze metadata weg.
+- `www.workmatchr.nl` is verified op dit project en resolveert naar deze deployment. Geen domein- of cachemisrouting aangetoond.
+- PR #19 is op 9 oktober gemerged. De main-check `verify` is groen; main heeft geen Vercel-check/status of nieuwere productiedeployment.
+- Live is al v0.2 met `Vind de juiste deskundige voor uw vraag`, maar toont nog `Stap 1 van 3`. Main bevat sinds PR #18 `Begin met uw hulpvraag`. De verouderde crawl uit issue #17 is dus geen bewijs dat v0.1 live staat.
 
-De CLI-route verklaart waarom de eerdere release wel live kon gaan ondanks de ontoegankelijke Git-repository. De precieze datum/oorzaak van de gewijzigde app-repositoryselectie is niet uit de beschikbare API's af te leiden.
+### Nieuwe tegenproef tijdens het maken van deze PR
 
-## Buildconfiguratie en veilige herstelroute
+De geautoriseerde push van de A01-featurebranch heeft automatisch een Git-preview gestart: `dpl_9s33qJatGXMFctbaMZWkeFMS1JPP`, source `git`, ref `codex/a01-homepage-deployment`, SHA `9fb2e0392f7721b2028c2af0311a083fc5dc90b9`, target `null` (Preview). Er is geen deploycommando uitgevoerd. Production bleef de deployment van 3 oktober.
+
+Hiermee is een algemene ontbrekende repositorytoegang als oorzaak NIET bewezen. De eerdere hypothese daarop is ingetrokken. De GitHub-installatie/API voor repositoryselectie toont wel `isAccessRestricted: true` en geen `platform` in `search-repo`, maar die lijst is kennelijk geen sluitend bewijs voor de effectieve toegang van de bestaande projectkoppeling. Projectconfiguratie is tijdens A01 niet gewijzigd.
+
+Er verschijnt daarnaast automatisch een falende previewcheck voor het bestaande project `jortt-production-forward-port`, voor dezelfde repository/branch/SHA (deployment `dpl_KqxpvYosr5tMUHW2zfEy4dUHZQ3L`, ERROR, ENOENT / npm run build exit 1). Dit is een afzonderlijke bestaande projectkoppeling, niet de Production deployment van `platform`. Deze koppeling is niet verwijderd of aangepast.
+
+## Buildconfiguratie en veilige vervolgcontrole
 
 Next.js; root directory standaard repositoryroot; Node 24.x; standaard install/build-detectie. `npm run build` voert `prisma generate && next build` uit, geen migratie. `vercel.json` bevat alleen het schema en een bestaande dagelijkse finance-cron. GitHub workflow `Trading access` valideert pushes/PR's maar bevat geen deploymentstap. De notification-workflow triggert maintenance, geen deployment.
 
-Geen repositoryconfiguratie hoeft voor deze oorzaak te worden aangepast. Het toevoegen van een tweede deployworkflow of nieuw Vercel-project zou de bestaande integratieblokkade verhullen en is niet gedaan.
+Er is geen bewezen foutieve repositoryconfiguratie om veilig te corrigeren. Geen alternatieve deployworkflow, nieuwe projectkoppeling of permissionwijziging aangebracht.
 
-Nog door de bevoegde accountbeheerder, in een expliciet goedgekeurd releasevenster:
+Nog door de bevoegde beheerder of Vercel-support, eerst read-only:
 
-1. Controleer bij de bestaande Vercel GitHub-appinstallatie van WorkMatchr de geselecteerde repositories en voeg uitsluitend `platform` toe indien deze ontbreekt.
-2. Verifieer in Vercel opnieuw project `platform`, team `workmatchrs-projects`, repository `WorkMatchr/platform`, Production Branch `main` en enabled Git deployments. Voeg geen ander project/repository toe.
-3. Controleer dat de integratie `platform` daadwerkelijk kan zien. Stem de eerste deploy/merge apart af: herstel van Git-toegang kan nieuwe automatische deployments mogelijk maken.
-4. Als een apart geautoriseerde release vóór integratieherstel nodig is, bestaat de CLI-route. Gebruik uitsluitend een schone checkout van de expliciet goedgekeurde release-SHA, de bestaande project-ID en expliciete teamscope. Controleer de lokale projectlink vóór een productiecommando; geen automatische creatie van een nieuw project. Verifieer daarna target, READY-status, domeinalias en herleidbare commitmetadata.
+1. Controleer GitHub-app event delivery / Vercel Git activity voor de main-merge van PR #19 op 9 oktober 2026 om 10:06:16 UTC en SHA `756a3d5401b18e4e4a2e7ac709ba5e9b8348feb1`. Vraag naar ontvangst, filtering en eventuele weigering van dat specifieke event. Deze deliverylogs waren via de beschikbare accounttoegang niet aantoonbaar beschikbaar.
+2. Vergelijk het ontbrekende main-event met het wel verwerkte A01-branch-event. Trek geen permissionconclusie uitsluitend uit `search-repo`; de preview bewijst dat Git-deployment voor deze repository mogelijk is.
+3. Beoordeel afzonderlijk of de tweede projectkoppeling `jortt-production-forward-port` bedoeld is. Geen disconnect/verwijdering zonder specifieke autorisatie.
+4. Voer een eventuele reconnect, repo-permissioncorrectie of Production deploy pas in een apart goedgekeurd releasevenster uit; deze acties kunnen deployments activeren. Volgens de [Vercel Git-documentatie](https://vercel.com/docs/git) hoort een merge naar de Production Branch normaal een productiedeployment te starten.
+5. Als een apart geautoriseerde release vóór definitief integratieherstel nodig is, bestaat de bewezen CLI-route. Gebruik uitsluitend een schone checkout van de goedgekeurde release-SHA, de bestaande project-ID en expliciete teamscope. Controleer de lokale projectlink vóór een productiecommando; maak geen nieuw project. Verifieer daarna target, READY-status, domeinalias en commitmetadata.
 
-Geen van deze mutaties/deploymentacties is voor A01 uitgevoerd. Geen credentials bekeken of gewijzigd, geen migraties, geen productiepublicatie.
+Geen productie-deployment, secretwijziging, migratie of productiepublicatie uitgevoerd. Alleen de bestaande automatische previews ontstonden door de gevraagde branchpush/PR.
 
 ## Bevestigde homepagecorrecties
 
@@ -78,6 +83,6 @@ Browsercontrole, lokaal met uitsluitend synthetische buildconfiguratie en zonder
 - Echte 200%-browserzoom (320 px reflow is hiervoor geen vervanging).
 - Definitieve product-ownerbeoordeling van copy en responsive weergave.
 - Ingelogde rolvarianten in de browser; geautomatiseerde header-/roltests zijn wel groen.
-- GitHub-apprepositorytoegang herstellen en een latere, apart geautoriseerde productie-release live controleren. Geen deploymentacceptatie claimen op basis van uitsluitend lokale checks.
+- Ontbrekend main-deployevent via beheerder/Vercel-support verklaren en een latere, apart geautoriseerde productie-release live controleren. Geen deploymentacceptatie claimen op basis van uitsluitend lokale checks.
 
 Aanvullend open: interactionele browsercontrole van alle secundaire bestemmingspagina's, screenreader en gesimuleerde netwerkuitval. De 32 succesvolle HTTP-controles en route-regressietest bewijzen bereikbaarheid en route-registratie, geen volledige interactionele acceptatie van iedere bestemming.
