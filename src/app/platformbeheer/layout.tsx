@@ -1,3 +1,5 @@
+import { cookies } from 'next/headers'
+import { PlatformAdminShellV02 } from '@/components/platform-admin/platform-admin-shell-v02'
 import type { ReactNode } from 'react'
 import { PlatformAdminShell } from '@/components/platform-admin/platform-admin-shell'
 import { requirePlatformAuditor } from '@/lib/platform-admin/platform-admin-authorization'
@@ -34,13 +36,15 @@ export default async function PlatformAdminLayout({ children }: { children: Reac
     }
   }
 
+  const Shell = (await cookies()).get('platform-admin-view')?.value === 'v02' ? PlatformAdminShellV02 : PlatformAdminShell
+
   return (
-    <PlatformAdminShell
+    <Shell
       displayName={administrator.displayName?.trim() || 'Platformbeheerder'}
       membershipRole={administrator.membershipRole}
       testAccountSwitcher={testAccountSwitcher}
     >
       {children}
-    </PlatformAdminShell>
+    </Shell>
   )
 }

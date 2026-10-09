@@ -1,3 +1,5 @@
+import { redirect } from 'next/navigation'
+import { getPlatformAdminLanding } from '@/lib/platform-admin/platform-admin-landing'
 import type { Metadata } from 'next'
 import { MarketplaceDashboard } from '@/components/marketplace/marketplace-dashboard'
 import { Section } from '@/components/layout/section'
@@ -9,6 +11,8 @@ export const metadata: Metadata = { title: 'Dashboard | WorkMatchr' }
 
 export default async function DashboardPage() {
   const { user, activeMembership } = await getActiveOrganizationContext('/dashboard')
+  const platformLanding = await getPlatformAdminLanding(user.id)
+  if (platformLanding) redirect(platformLanding)
   const dashboard = activeMembership
     ? await getMarketplaceDashboard(user.id, activeMembership.organization.id)
     : await getMarketplacePlatformDashboard(user.id)
