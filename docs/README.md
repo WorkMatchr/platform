@@ -45,6 +45,7 @@ Module 6C.2 — WOS Beheeracties & Communicatie is technisch opgeleverd en wacht
 23. [ADR-013 Fase 2B — Lifecycle en tenant](adr-013-fase-2b-lifecycle-en-tenant.md)
 24. [ADR-013 Contract — migratierunbook](adr-013-contract-migratie-runbook.md)
 24. [Architectuur publieke homepage — Module P1.1](public-website-homepage-architecture.md)
+   - [A01 — homepagecontrole en Vercel-deploymentdiagnose](a01-homepage-deployment-audit.md)
 25. [Module 7 — Nieuwe hulpvraag](module-7-nieuwe-hulpvraag-ontwerp.md)
 26. [Module 7B — Professional Advice](module-7b-professional-advice.md)
 27. [Module 7C — WorkMatchr Adviesdossier](module-7c-adviesdossier.md)
