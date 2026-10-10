@@ -3,7 +3,7 @@ import { LinkButton } from '@/components/ui/link-button'
 import { Button } from '@/components/ui/button'
 import { requireOrganizationMembership } from '@/lib/organizations/organization-authorization'
 import { getComplianceDashboard } from '@/lib/compliance/compliance-action-service'
-import { c01RieQuestions } from '@/lib/compliance/c01-rie'
+import { getFullScanQuestionLabels } from '@/lib/compliance/full-scan-assessment'
 import { updateComplianceActionFromForm } from './actions'
 
 export const metadata = { title: 'Arbo Compliance | WorkMatchr' }
@@ -30,7 +30,7 @@ const resultStatusLabels = {
   NOT_APPLICABLE: 'Niet van toepassing',
 } as const
 
-const questionLabels = new Map<string, string>(c01RieQuestions.map((question) => [question.code, question.prompt]))
+const questionLabels = getFullScanQuestionLabels()
 
 function formatDate(value: Date | string | null | undefined) {
   if (!value) return '—'
