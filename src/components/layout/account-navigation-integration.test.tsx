@@ -29,12 +29,14 @@ describe('A01.6 bestaande accountnavigatie', () => {
       expect(document.querySelector('[data-account-shell="v02"]')).not.toBeNull()
       const menus = [...document.querySelectorAll('nav[aria-label="Accountnavigatie"]')]
       expect(menus).toHaveLength(2)
+      expect([...document.querySelectorAll('button')].filter(button => button.textContent === 'Uitloggen')).toHaveLength(1)
+      expect(document.querySelector('header')?.textContent).toContain('Uitloggen')
       const routes = menus.map(menu => [...menu.querySelectorAll('a')].map(link => link.getAttribute('href')))
       expect(routes[0]).toEqual(routes[1])
       for (const menu of menus) {
         expect(menu.querySelectorAll('[aria-current="page"]')).toHaveLength(1)
         expect(menu.querySelector('[aria-current="page"]')?.getAttribute('href')).toBe(route.pathname)
-        expect(menu.textContent).toContain('Uitloggen')
+        expect(menu.textContent).not.toContain('Uitloggen')
         expect(menu.querySelector('a[href="/platformbeheer"]')).toBeNull()
         expect(menu.querySelector(`a[href="${professional ? '/opdrachten' : '/credits'}"]`)).toBeNull()
       }

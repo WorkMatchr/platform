@@ -36,7 +36,7 @@ describe('klantaccount-shell v0.2', () => {
       for (const group of model(role).navigationGroups) for (const link of group.links) expect(html).toContain('href="'+link.href+'"')
       expect(html).toContain('action="/bestaande-actie"'); expect(html).toContain('value="Bewaard"')
       expect(html.match(/aria-current="page"/g)).toHaveLength(1)
-      expect(html).toContain('Header met mobiel accountmenu'); expect(html).toContain('Uitloggen')
+      expect(html).toContain('Header met mobiel accountmenu'); expect(html).not.toContain('Uitloggen')
     }
   })
   it('raakt publieke routes en platformbeheer niet', () => {

@@ -97,3 +97,11 @@ Alle hieronder genoemde suites zijn gericht opnieuw uitgevoerd op de main-identi
 | src/lib/public-intake/public-intake-guidance-presentation.test.ts | Verwachte additional requirement ontbreekt, ook op main |
 
 Releasegereed: NEE. De implementatie is gereed voor review als Draft PR; echte ingelogde rolacceptatie/tenantcontrole en 200% moeten worden voltooid, en de bestaande rode checks moeten volgens de normale reviewprocedure worden behandeld. Geen nieuwe taakgerelateerde fout aangetoond.
+
+## Vervolgcorrectie issue #22 — Uitloggen in de header
+
+Voor alle ingelogde reguliere accounts staan Mijn omgeving en de bestaande LogoutButton nu samen rechts in de header, ook mobiel. Het accountmenu (desktopzijbalk én mobiele disclosure) bevat geen tweede uitlogactie meer. De eigen Platformbeheer-v01/v02-headers blijven ongewijzigd; ApplicationChrome onderdrukt daar nog steeds de globale header. Buiten die beheerroutes krijgt een ingelogde beheerder eveneens één headerknop. Anonieme bezoekers krijgen geen uitlogactie.
+
+LogoutButton, Better Auth signOut, pending-/disabledgedrag en redirect naar `/` zijn ongewijzigd. Geen auth-, autorisatie-, database- of configuratiewijziging. Visuele rollback via revert van uitsluitend deze vervolgcommit; geen migratie.
+
+Validatie: 67/67 gerichte tests PASS, inclusief echte LogoutButton met gemockte auth-transportgrens (één signOut, redirect pas na afronden, dezelfde bestemming). Synthetische echte-componentbrowserpreview: opdrachtgever desktop 1280px, mobiel 390px; dienstverlener 320px, geen pagina-overflow, knop ook zonder menu zichtbaar, geen duplicate bij geopend menu. Tab-focus zichtbaar; accessibility tree exposeert één button met naam Uitloggen. Dit is geen NVDA-/VoiceOver-spraaksessie en geen echte productie-uitlogactie. Beide eigen beheerdersshells aanvullend getest op precies één knop. Volledige lint, productiebuild, diff-check en secrets-patterncontrole PASS. Standalone TypeScript rapporteert uitsluitend de vier reeds gedocumenteerde TS2345 readonly-arraybaselinefouten in src/lib/compliance/rule-engine.test.ts (13:79, 14:89, 23:8, 24:89); dit bestand is identiek aan origin/main. Geen nieuwe TypeScript-fout uit deze wijziging.

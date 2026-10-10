@@ -30,7 +30,7 @@ describe('A01.7 uniforme werkruimte', () => {
       expect(html).toContain('data-account-layout="uniform"')
       expect(html).toContain('action="/existing-action"')
       expect(html).toContain('value="Behouden"')
-      expect(html).toContain('Uitloggen')
+      expect(html).not.toContain('Uitloggen')
       expect(html).toContain('Testorganisatie')
     }
   })

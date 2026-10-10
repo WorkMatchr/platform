@@ -33,7 +33,7 @@ describe('accountzijbalknavigatie', () => {
     expect(html.match(/open=""/g)).toHaveLength(1)
     expect(html).toMatch(/aria-current="page"[^>]*href="\/aanbiedersdossier\/professionals"/)
     expect(html.match(/aria-current="page"/g)).toHaveLength(1)
-    expect(html).toContain('Uitloggen')
+    expect(html).not.toContain('Uitloggen')
   })
 
   it('wisselt de groepskleuren A-B-A af', () => {

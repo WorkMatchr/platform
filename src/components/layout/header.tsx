@@ -1,4 +1,5 @@
 import Link from '@/components/ui/navigation-link'
+import { LogoutButton } from '@/components/auth/logout-button'
 import { AccountNavigationMenu } from '@/components/layout/account-navigation-menu'
 import { Container } from '@/components/layout/container'
 import { DisclosureMenu } from '@/components/ui/disclosure-menu'
@@ -28,7 +29,7 @@ function DashboardHeader({ model }: { model: HeaderViewModel }) {
     <header className="border-b border-border bg-surface">
       <Container className="flex min-h-20 flex-wrap items-center justify-between gap-5 py-4">
         <HeaderBrandLink />
-        <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto">
+        <div className="flex w-full min-w-0 flex-wrap items-center justify-end gap-2 sm:w-auto">
           {model.isPlatformAdministrator ? (
             <Link
               href="/platformbeheer"
@@ -70,22 +71,25 @@ function DashboardHeader({ model }: { model: HeaderViewModel }) {
             <AccountNavigationMenu groups={model.navigationGroups} />
           </DisclosureMenu>
           )}
-          {!model.isPlatformAdministrator && (
-            <Link
-              href="/dashboard"
-              className="hidden min-h-11 items-center rounded-control px-3 text-sm font-semibold text-brand-dark hover:bg-brand-primary-subtle lg:inline-flex"
-            >
-              Mijn omgeving
-            </Link>
-          )}
-          {model.isPlatformAdministrator && (
-            <Link
-              href="/account"
-              className="inline-flex min-h-11 items-center rounded-control px-3 text-sm font-semibold text-brand-dark hover:bg-brand-primary-subtle"
-            >
-              Account
-            </Link>
-          )}
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            {!model.isPlatformAdministrator && (
+              <Link
+                href="/dashboard"
+                className="inline-flex min-h-11 items-center rounded-control px-3 text-sm font-semibold text-brand-dark hover:bg-brand-primary-subtle"
+              >
+                Mijn omgeving
+              </Link>
+            )}
+            {model.isPlatformAdministrator && (
+              <Link
+                href="/account"
+                className="inline-flex min-h-11 items-center rounded-control px-3 text-sm font-semibold text-brand-dark hover:bg-brand-primary-subtle"
+              >
+                Account
+              </Link>
+            )}
+            <LogoutButton variant="ghost" />
+          </div>
         </div>
       </Container>
     </header>
