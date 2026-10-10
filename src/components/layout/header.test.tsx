@@ -184,7 +184,7 @@ describe('headerweergave per sessiecontext', () => {
     expect(html).toContain('Accountmenu openen of sluiten')
     expect(html).toContain('relative shrink-0 lg:hidden')
     expect(html).toContain('flex-wrap')
-    expect(html).toContain('w-full min-w-0 items-center gap-2 sm:w-auto')
+    expect(html).toContain('w-full min-w-0 flex-wrap items-center justify-end gap-2 sm:w-auto')
     expect(html).toContain('block max-w-48 truncate')
     expect(html).toContain(displayName)
     expect(html).toContain('Mijn omgeving')
