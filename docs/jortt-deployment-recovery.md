@@ -154,3 +154,52 @@ Rollback: deze documentatiecommit is normaal revertbaar. Een toekomstige heraans
 Financiële mockregressies opnieuw **143/143 PASS, 14 bestanden**. Geen nieuwe runtimecode of tests nodig voor deze documentatieaanvulling. Lint/diff/secretsresultaten volgen bij afsluiting. Geen TypeScript/build-herhaling nodig voor uitsluitend deze Markdown-aanvulling; de J01-baselineresultaten hierboven blijven apart staan.
 
 Afsluiting J01.2: volledige `npm run lint` PASS; `git diff --check` PASS; scopegerichte secrets-patterncontrole 0 hits. Exact één gewijzigd bestand: dit rapport. **Vercel-ontkoppeling verantwoord: NEE; conclusie C.** Geen beheeractie, deployment of productiehandeling uitgevoerd.
+
+## J01.3 — herbeoordeling met Product Owner-bewijs (11 oktober 2026)
+
+**Actueel definitief besluitadvies: C — nog onvoldoende bewijs.** Dit is het geldende besluit voor deze review; de eerdere J01/J01.2-secties blijven historische onderzoeksresultaten. De resterende bewijsgrens is hieronder teruggebracht tot twee concrete controles. Er is geen nieuwe actieve afhankelijkheid of financiële fout vastgesteld.
+
+### Aanvullend bewijs en herkomst
+
+Onderstaande bevindingen zijn expliciet door de Product Owner gerapporteerd. Ze zijn als betrouwbaar product-ownerbewijs verwerkt, niet als zelfstandig door Codex uitgevoerde providerinspectie:
+
+| Controle | Bevinding | Wat dit bewijst / niet bewijst |
+| --- | --- | --- |
+| Vercel Deploy Hooks | Geen aanwezig in jortt-production-forward-port | De eerdere onzekerheid over zichtbare Deploy Hooks is opgeheven |
+| Vercel Cron Jobs | Geen geregistreerde taken zichtbaar | Geen zichtbare projectcron; eerdere croninventarisblokkade opgeheven |
+| Mollie algemeen webhookoverzicht | Leeg | Geen registraties in dat overzicht; geen bewijs over webhookUrl per historische betaling/subscription |
+| Jortt-applicatie | WorkMatchr Acceptance bestaat | App aanwezig; de naam bewijst niet welke administratie, credentialbinding of callbackinstellingen actief zijn |
+| WorkMatchr factuur WM-26095006 en creditfactuur WM-26105007 | Beide Gesynchroniseerd | Concrete lokale successtatus voor deze documenten, niet voor alle financiële verwerking |
+| Jortt-documenten | Beide onder corresponderende referenties teruggevonden | Bevestigt werkelijke remote verwerking van deze factuur en creditfactuur; geen nieuwe boeking vereist |
+| Tweede Vercel-project | Geen werkende afzonderlijke Jortt-runtime aangetroffen | Ondersteunt centrale platformarchitectuur; geen bewijs van alle mogelijke externe URL-registraties |
+
+### Aanvullende read-only controle
+
+- Bestaande branch en Draft PR #27 zijn schoon respectievelijk OPEN/DRAFT vóór deze documentatieaanvulling.
+- `mollie-gateway.ts` geeft `webhookUrl` door bij het aanmaken van betalingen én subscriptions. `subscription-service.ts` leidt die URL af uit de destijds geldende webhookBaseUrl. Daarom kan een objectgebonden historische callback buiten een algemeen webhookoverzicht bestaan. De actuele broncode kan die opgeslagen providerwaarde niet bewijzen.
+- GitHub-codezoekacties in de door de Render-services gebruikte repository `WorkMatchr/workmatchr-trading` op de volledige tweede-projectnaam en het project-ID leveren beide nul bestandsresultaten. Dit is aanvullend zoekindexbewijs, geen volledige garantie over alle branches, dynamisch samengestelde URL's of private environmentconfiguratie.
+- De beschikbare Render-integratie biedt service-inventaris/details, maar geen aangetoonde uitsluitend namen/hostmatches teruggevende private environmentcontrole. De eerdere vijf service-entrypoints bevatten geen directe verwijzing. Geen private envwaarden opgevraagd; geen update-tool gebruikt als leesomweg.
+- Geen Mollie-beheerconnector beschikbaar voor objectgebonden callbackinspectie. Geen credentials opgehaald en geen betaal-/subscriptionrecords via een zelfgemaakte providerverbinding gelezen.
+
+### Bijgewerkte afhankelijkheidsbeoordeling
+
+Interne hoofdwebsite, Jortt-gateway, financiële syncwachtrij en GitHub marketplace-scheduler: eerdere NEE-beoordeling binnen de onderzochte codegrens blijft staan. Deploy Hooks en zichtbare projectcron: **NEE volgens Product Owner-controle**. De dubbele Git-deploymentkoppeling: **JA**. Historische Mollie-objectcallbacks en private workerconfiguratie: **ONBEKEND**. Geen onbekende omgezet naar NEE op basis van nul zoekresultaten.
+
+Geslaagde synchronisatie van de twee documenten versterkt het bewijs dat de bestaande financiële keten functioneert; zij bewijst niet zelfstandig welke host iedere toekomstige callback ontvangt. Git ontkoppelen is geen project verwijderen: het stopt de automatische Git-buildtrigger, terwijl project/domein behouden moeten blijven. De resterende onbekenden zijn dus geen bewezen onmiddellijke uitval bij Disconnect. Toch is de gevraagde volledige afhankelijkheidsvrijgave zonder de twee controles nog niet onderbouwd; C is een bewijsbesluit, geen claim dat Disconnect financiële mutaties uitvoert.
+
+### Exact nog noodzakelijk — uitvoerder en veilige uitkomst
+
+1. **Historische Mollie-callbacks — Product Owner of bevoegde Mollie-beheerder/integratiebeheerder.** Controleer read-only `webhookUrl` (en eventuele relevante redirectbestemming) van nog actieve subscriptions en niet-terminale betalingen, plus historische objecten waarvoor nog webhook/reconciliatieverwerking kan plaatsvinden. Zoek op het tweede projectdomein inclusief deployment-hostnamen met die prefix. Geef uitsluitend terug: gecontroleerde scope, aantal matches en hostmatch ja/nee; geen klantdata, tokens of volledige callback-URL's met parameters. Een beheerexport of bestaande geautoriseerde read-only providerinterface mag hiervoor worden gebruikt. Bij een match: eerst afzonderlijk impact beoordelen; niets wijzigen binnen J01.3.
+2. **Private workers — beheerder van Render-workspace tea-dafcrg5bedkc738ng6n0 en eventuele overige bestaande schedulers.** Controleer URL-configuratie van de vijf eerder geïnventariseerde services, gekoppelde environmentgroepen en eventuele expliciete HTTP/deploytargets. Zoek lokaal in de beheerinterface naar tweede-projecthost/prefix/project-ID; deel alleen een matchboolean per service/groep en de afgedekte scope. Geen geheimwaarden of hook-URL's delen. Bevestig of er andere relevante schedulers buiten deze inventaris zijn. Bij een match: eerst bepalen of het een gewone runtimeaanroep of een afhankelijkheid van Git-deployments betreft.
+
+Voor deze twee controles is geen nieuwe testbetaling, factuur, synchronisatie of deployment nodig. Het algemene Jortt-appbestaan vraagt geen nieuwe boekhoudtest. Als beide controles voldoende dekking en nul relevante matches aantonen, kan de vrijgave naar A worden bijgewerkt. Bij een echte afhankelijkheid volgt B met een concreet, afzonderlijk geautoriseerd herstelplan.
+
+### Rode check beëindigen en verificatie
+
+Na voldoende bewijs en expliciete toestemming uitsluitend de Git-repositorykoppeling van `jortt-production-forward-port` verwijderen via het eerder beschreven Settings → Git-protocol; `platform` gekoppeld houden. Niet het project of domein verwijderen. Vervolgens bij een afzonderlijk geautoriseerde nieuwe commit/PR controleren dat alleen de bedoelde platformcheck verschijnt. Historische rode checks worden daardoor niet gewist of achteraf groen. Geen dummy-commit, ontkoppeling of provideractie in J01.3 uitgevoerd.
+
+### Validatie en scope J01.3
+
+Uitsluitend dit rapport bijgewerkt. Geen runtime-, test-, package-, schema- of configuratiewijziging. De 143/143 financiële mocktests en volledige lint PASS uit J01.2 blijven eerder uitgevoerd bewijs; niet als opnieuw uitgevoerd gepresenteerd. Voor deze Markdown-aanvulling worden diff-check en credentialpatrooncontrole opnieuw uitgevoerd. Rollback blijft beperkt tot normale documentatierevert; een toekomstige Git-herkoppeling vereist afzonderlijke toestemming wegens mogelijke buildtriggers.
+
+Afsluiting J01.3: diff-check PASS; scopegerichte credentialpatrooncontrole 0 hits. Vercel-ontkoppeling niet uitgevoerd; besluitadvies C.
