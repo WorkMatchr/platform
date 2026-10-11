@@ -1,0 +1,12 @@
+/* Presentation only; never hide controls, descriptions or data. Scoped to v0.2. */
+.content { min-width: 0; overflow-wrap: break-word; }
+.content :global(.space-y-6) > :not(:last-child) { margin-block-end: 1rem; }
+.content :global(.mb-6) { margin-bottom: 1rem; }
+.content :global(.mt-6) { margin-top: 1rem; }
+.content :global(.gap-6) { gap: 1rem; }
+.content :global(.rounded-card):is(:global(.p-5), :global(.p-6)) { padding: 1rem; }
+.content :global(.min-h-28) { min-height: 5.25rem; }
+.content h1 { font-size: 1.5rem; line-height: 1.3; }
+.content h2 { font-size: 1rem; }
+.content :is(td, th) { padding-block: .5rem; }
+.content :is(input, select, textarea) { max-width: 100%; }

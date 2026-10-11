@@ -27,23 +27,18 @@ describe('A01.6 bestaande accountnavigatie', () => {
       const html = renderToStaticMarkup(<ApplicationChrome header={await Header({ model })} headerModel={model} banner={null} footer={null} compactFooter={null}><h1>Werkruimte</h1></ApplicationChrome>)
       const document = new JSDOM(html).window.document
       expect(document.querySelector('[data-account-shell="v02"]')).not.toBeNull()
-      const menus = [...document.querySelectorAll('nav[aria-label="Accountnavigatie"]')]
-      expect(menus).toHaveLength(2)
+      const chapters = document.querySelector('nav[aria-label="Accounthoofdstukken"]')!
+      expect(chapters).not.toBeNull()
+      expect(document.querySelector('summary')).toBeNull()
       expect([...document.querySelectorAll('button')].filter(button => button.textContent === 'Uitloggen')).toHaveLength(1)
-      expect(document.querySelector('header')?.textContent).toContain('Uitloggen')
-      const routes = menus.map(menu => [...menu.querySelectorAll('a')].map(link => link.getAttribute('href')))
-      expect(routes[0]).toEqual(routes[1])
-      for (const menu of menus) {
-        expect(menu.querySelectorAll('[aria-current="page"]')).toHaveLength(1)
-        expect(menu.querySelector('[aria-current="page"]')?.getAttribute('href')).toBe(route.pathname)
-        expect(menu.textContent).not.toContain('Uitloggen')
-        expect(menu.querySelector('a[href="/platformbeheer"]')).toBeNull()
-        expect(menu.querySelector(`a[href="${professional ? '/opdrachten' : '/credits'}"]`)).toBeNull()
-      }
-      expect(routes[0]).toEqual(model.navigationGroups.flatMap(group => group.links.map(link => link.href)))
-      expect(document.querySelector('[data-account-sidebar]')?.className).toContain('hidden')
-      expect(document.querySelector('[data-account-sidebar]')?.className).toContain('lg:block')
-      expect(document.querySelector('button[aria-label="Accountmenu openen of sluiten"]')).not.toBeNull()
+      const activeGroup = model.navigationGroups.find(group => group.links.some(link => link.href === route.pathname))!
+      const local = document.querySelector(`nav[aria-label="Binnen ${activeGroup.label}"]`)!
+      expect([...local.querySelectorAll('a')].map(link => link.getAttribute('href'))).toEqual(activeGroup.links.map(link => link.href))
+      expect(local.querySelector('[aria-current="page"]')?.getAttribute('href')).toBe(route.pathname)
+      expect([...chapters.querySelectorAll('a')].map(link => link.textContent)).toEqual(model.navigationGroups.map(group => group.label))
+      expect(chapters.querySelector('[aria-current="location"]')?.textContent).toBe(activeGroup.label)
+      expect(document.querySelector('a[href="/platformbeheer"]')).toBeNull()
+      expect(document.querySelector('button[aria-label="Accountmenu openen of sluiten"]')).toBeNull()
     }
   })
 

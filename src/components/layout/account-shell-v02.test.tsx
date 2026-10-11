@@ -33,10 +33,11 @@ describe('klantaccount-shell v0.2', () => {
       route.pathname = path
       const html = markup(role)
       expect(html).toContain('data-account-shell="v02"'); expect(html).toContain('Testorganisatie')
-      for (const group of model(role).navigationGroups) for (const link of group.links) expect(html).toContain('href="'+link.href+'"')
+      expect(html).toContain('Accounthoofdstukken')
+      expect(html).not.toContain('<summary')
       expect(html).toContain('action="/bestaande-actie"'); expect(html).toContain('value="Bewaard"')
       expect(html.match(/aria-current="page"/g)).toHaveLength(1)
-      expect(html).toContain('Header met mobiel accountmenu'); expect(html).not.toContain('Uitloggen')
+      expect(html).not.toContain('Header met mobiel accountmenu'); expect(html.match(/>Uitloggen<\/button>/g)).toHaveLength(1)
     }
   })
   it('raakt publieke routes en platformbeheer niet', () => {

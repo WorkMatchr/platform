@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation'
 import type { ReactNode } from 'react'
+import { AccountWorkspaceShell } from './account-workspace-shell'
 import { AccountNavigationMenu } from './account-navigation-menu'
 import type { HeaderViewModel } from './header-model'
 import accountStyles from './account-shell-v02.module.css'
@@ -52,12 +53,16 @@ export function ApplicationChrome({
   const usesPlatformChrome =
     pathname === '/platformbeheer' || pathname.startsWith('/platformbeheer/')
   const usesAccountChrome = headerModel.authenticated &&
-    !headerModel.isPlatformAdministrator &&
+    !usesPlatformChrome &&
     usesAuthenticatedWorkspace(pathname)
 
   const useV02 = process.env.NEXT_PUBLIC_ACCOUNT_SHELL_VERSION !== 'v01'
 
   const useUniformLayout = useV02 && process.env.NEXT_PUBLIC_ACCOUNT_LAYOUT_VERSION !== 'legacy'
+
+  if (usesAccountChrome && useUniformLayout) {
+    return <AccountWorkspaceShell model={headerModel} banner={banner}>{children}</AccountWorkspaceShell>
+  }
 
   if (usesAccountChrome) {
     return (

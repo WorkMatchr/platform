@@ -92,12 +92,12 @@ describe('routebewuste applicatiechrome', () => {
       </ApplicationChrome>,
     )
 
-    expect(html).toContain('lg:grid-cols-[15rem_minmax(0,1fr)]')
+    expect(html).toContain('lg:grid-cols-[14rem_minmax(0,1fr)]')
     expect(html).toContain('Opdrachtgever')
     expect(html).toContain('Organisatie BV')
     expect(html).toContain('aria-current="page"')
     expect(html).toContain('lg:overflow-y-auto')
-    expect(html).toContain('Compacte workspacefooter')
+    expect(html).toContain('Beveiligde accountomgeving')
     expect(html).not.toContain('Publieke footer')
   })
 })
