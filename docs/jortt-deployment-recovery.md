@@ -1,5 +1,7 @@
 # J01 — Jortt deployment recovery
 
+> Actueel besluit J01.4: **A — alleen de Git-repositorykoppeling veilig ontkoppelbaar.** Zie de afsluitende J01.4-sectie; eerdere C-besluiten zijn historisch. Geen ontkoppeling uitgevoerd.
+
 ## Besluit en afbakening
 
 Onderzoek op 11 oktober 2026 vanaf `origin/main` `9c4c84417734f0866a5bc31224afbc13f756ee91`. Aanbeveling: **A, Jortt binnen hoofdproject platform behouden**. Geen runtimecode, financiële gegevens, Prisma-configuratie of Vercel-instellingen gewijzigd. Een beheeractie is noodzakelijk; dit rapport geeft geen toestemming die automatisch uit te voeren.
@@ -203,3 +205,46 @@ Na voldoende bewijs en expliciete toestemming uitsluitend de Git-repositorykoppe
 Uitsluitend dit rapport bijgewerkt. Geen runtime-, test-, package-, schema- of configuratiewijziging. De 143/143 financiële mocktests en volledige lint PASS uit J01.2 blijven eerder uitgevoerd bewijs; niet als opnieuw uitgevoerd gepresenteerd. Voor deze Markdown-aanvulling worden diff-check en credentialpatrooncontrole opnieuw uitgevoerd. Rollback blijft beperkt tot normale documentatierevert; een toekomstige Git-herkoppeling vereist afzonderlijke toestemming wegens mogelijke buildtriggers.
 
 Afsluiting J01.3: diff-check PASS; scopegerichte credentialpatrooncontrole 0 hits. Vercel-ontkoppeling niet uitgevoerd; besluitadvies C.
+
+## J01.4 — definitieve risicoafweging
+
+**Definitief besluitadvies: A — uitsluitend de Git-koppeling is veilig ontkoppelbaar.** Dit vervangt de besluitadviezen C uit J01.2/J01.3. Het is geen toestemming het project, deployments, domeinen of financiële configuratie te verwijderen, noch een verklaring dat elke historische externe URL bekend is.
+
+### Waarom het advies verandert
+
+De eerdere beoordeling verlangde volledige afwezigheid van externe URL-verwijzingen voordat alleen een buildtrigger kon worden verwijderd. Dat was een te ruime voorwaarde. De juiste beoordeling is het effect van de concrete beheeractie: Git Disconnect verwijdert de repositorykoppeling voor Git-deployments; projectverwijdering en deploymentverwijdering zijn afzonderlijke acties. De bekende defecte Git-builds dragen geen aangetoonde werkende financiële runtime. De centrale integratie draait in het andere project en heeft bewezen gesynchroniseerde documenten. Geen Deploy Hooks of geregistreerde crons zijn aangetroffen. Er is geen concreet bewijs van een werkend proces dat succesvolle toekomstige Git-builds van dit tweede project nodig heeft.
+
+Een eventuele historische Mollie-callback of private worker die het tweede projectadres gebruikt, is daarmee niet ineens bewezen afwezig. Zo'n gewone HTTP-verwijzing wordt door uitsluitend Git Disconnect echter niet verwijderd of omgeleid; het project en zijn adressen blijven behouden. Een al defecte bestemming wordt door deze maatregel ook niet hersteld. Daarom zijn deze resterende onbekenden geen essentiële blokkade voor het stoppen van de dubbele Git-builds. Zij moeten wel worden onderzocht vóór een eventuele latere verwijdering van project/domein of verplaatsing van callbacks. Geen universele exactly-once- of nulrisicogarantie.
+
+Officiële productgrenzen, gecontroleerd in J01.4: [Vercel Git CLI](https://vercel.com/docs/cli/git), [Git-deployments](https://vercel.com/docs/git), [deploymentbeheer](https://vercel.com/docs/deployments/managing-deployments). Deze beschrijven Git-koppeling/automatische builds en afzonderlijk deploymentbeheer. De veiligheidsconclusie hierboven is een risicoafweging op basis van die grens plus het projectspecifieke bewijs, geen nieuw bewijs over private providerconfiguratie.
+
+### Bewijsstatus en concrete toegangsgrenzen
+
+| Onderdeel | Technisch bewezen / door Product Owner bevestigd | Aannemelijk | Nog onbekend / toegang |
+| --- | --- | --- | --- |
+| Tweede project | Volledige appbuild zonder DATABASE_URL; geen gevonden READY-runtime; geen hooks/crons volgens PO | Achtergebleven redundant deploymentdoel | Oorspronkelijke aanmaakbedoeling |
+| Centrale Jortt-keten | Gateway/sync/retries/audit op platform; factuur en creditfactuur door PO lokaal én remote bevestigd | Hoofdplatform is de bedoelde enige uitvoerder | Niet iedere historische providertransactie geaudit |
+| Mollie | Algemene webhooklijst leeg volgens PO; code ondersteunt objectgebonden webhookUrl | Geen aanwijzing voor afhankelijkheid van tweede Git-buildtrigger | Historische payment-/subscription-URL's niet gelezen; geen Mollie-connector beschikbaar |
+| Render | Vijf services/entrypoints en workerrepositoryzoekwerk zonder directe verwijzing, reeds vastgelegd | Geen operationele Jortt-buildafhankelijkheid | Private environmentgroepen/waarden niet controleerbaar met beschikbare read-only connector |
+| Jortt | WorkMatchr Acceptance-app en twee remote documenten volgens PO; uitgaand client-credentialsprotocol | Geen inkomende callback nodig voor deze implementatie | Externe appinstellingen niet zelfstandig ingezien; geen Jortt-beheerconnector |
+
+Nieuwe toegangsinventaris J01.4: de beschikbare browserinterface bevat geen tabs of ingelogde providerbeheeromgeving. De Render-tools bieden service-details en een muterende environment-update, maar geen read-only private-environmentscan; die update is niet als leesomweg gebruikt. Geen lokale Render-CLI gevonden. Geen credentials gezocht, onthuld of gewijzigd en geen onbevoegde providerverbinding opgebouwd. Hiermee is de concrete grens bereikt; herhaalde metadata-inventarisatie levert geen aanvullend providerbewijs.
+
+Voor volledige externe URL-audit is later minimaal een bestaande geautoriseerde Mollie-/Jortt-beheersessie respectievelijk Render-configuratieleesinterface nodig. Geen wachtwoord/token in de chat nodig. **Voor uitsluitend Git Disconnect is die aanvullende toegang niet noodzakelijk:** de relevante beschikbaarheidsgrens wordt niet verwijderd. Er resteert dus geen essentiële onderzoeksblokkade voor deze beperkte actie, wel een expliciete uitvoerings- en verificatiestap.
+
+### Exacte beheeractie (niet uitgevoerd)
+
+1. Open Vercel-team `workmatchrs-projects` en uitsluitend project `jortt-production-forward-port`, ID `prj_EvKgrjy72lfh5w1ziEKE29DkI4z7`.
+2. Settings → Git. Controleer Connected Git Repository = `WorkMatchr/platform`.
+3. Kies Disconnect en bevestig uitsluitend het verwijderen van die repositorykoppeling. Stop als de interface project-, deployment- of domeinverwijdering voorstelt.
+4. Laat project `platform`, ID `prj_a2ifiMVtQjDXYBQQn0ZjZcmvSkqb`, zijn Git-koppeling, domein www.workmatchr.nl en alle secrets/configuratie ongemoeid. Verwijder niet de GitHub-appinstallatie voor de hele organisatie.
+
+Deze actie start geen financiële verwerking en creëert geen tweede uitvoerder. Geen herdeploy, synchronisatie, retry of databaseactie nodig. Goedkeuring van dit advies is geen claim dat de handeling al uitgevoerd is.
+
+### Verificatie en rollback
+
+Na de handeling: controleer dat het tweede project blijft bestaan maar geen Git-repository meer toont; platform blijft gekoppeld. Controleer hoofdwebsite en bestaande financiële read-only beheerweergave. Bij de eerstvolgende expliciet geautoriseerde normale commit/PR: platform-Preview aanwezig en geen nieuwe check/deployment voor het tweede project. Geen dummy-commit nodig. Reeds lopende/voorgaande checks kunnen nog een resultaat geven; historische rode checks blijven historisch. Als GitHub de oude projectcheck verplicht stelt, controleer eerst de concrete ruleset; een eventuele wijziging van alleen die obsolete eis vereist afzonderlijke autorisatie.
+
+Rollback: dezelfde repository opnieuw aan uitsluitend het behouden tweede project koppelen. Dit kan opnieuw builds en rode checks veroorzaken en vereist afzonderlijke toestemming. Geen dataherstel of nieuwe credentials nodig door deze ontkoppeling; geen snapshots of financiële historie veranderd. Een nieuwe operationele afhankelijkheid zou vóór een latere projectverwijdering opnieuw onderzocht moeten worden.
+
+J01.4 validatie: 53/53 gerichte Jortt-/maintenance-mocktests PASS (5 bestanden); financiële code/config gelijk aan origin/main; diff-check PASS. Alleen Markdown gewijzigd, geen lint/typecheck/build opnieuw nodig; eerdere uitslagen blijven historische validatie. Credentialpatrooncontrole hieronder uitgevoerd vóór commit.
