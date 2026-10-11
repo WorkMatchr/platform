@@ -81,7 +81,8 @@ describe('opdrachtinterfacearchitectuur', () => {
       readFile('src/app/opdrachten/[assignmentId]/aangemaakt/page.tsx', 'utf8'),
     ])
     expect(list).toContain('Uw organisatie heeft nog geen opdrachten.')
-    expect(list).toContain('Start een nieuwe opdracht')
+    expect(list).toContain('Start uw opdracht')
+    expect(list).toContain('/opdracht-starten')
     expect(success).toContain('Uw opdracht is aangemaakt')
     expect(success).not.toContain('Conceptopdracht')
     expect(success).not.toContain('aanbieders geselecteerd')

@@ -6,7 +6,7 @@ describe('gedeelde Arbo-wijzerlayout', () => {
   it('bouwt overzicht en detail met dezelfde productfamilie en behouden routes', () => {
     const overview = renderToStaticMarkup(
       <ArboGuidePageLayout title="Kies een Arbo-wijzer" description="Kies wat bij uw vraag past.">
-        <ArboGuideOverviewCard title="Advieswijzer" description="Verduidelijk uw vraag." href="/advieswijzer" actionLabel="Start de Advieswijzer" />
+        <ArboGuideOverviewCard title="Advieswijzer" description="Verduidelijk uw vraag." href="/opdracht-starten" actionLabel="Start uw opdracht" />
       </ArboGuidePageLayout>,
     )
     const detail = renderToStaticMarkup(
@@ -16,7 +16,7 @@ describe('gedeelde Arbo-wijzerlayout', () => {
     )
 
     expect(overview).toContain('Arbo-wijzers')
-    expect(overview).toContain('href="/advieswijzer"')
+    expect(overview).toContain('href="/opdracht-starten"')
     expect(detail).toContain('href="/wijzers"')
     expect(detail).toContain('Compliance-wijzer')
     expect(detail).toContain('Indicatieve uitkomst')

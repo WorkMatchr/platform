@@ -82,7 +82,7 @@ describe('Public Content Platform v1', () => {
       expect(publicContentRelations[item.id]?.length).toBeGreaterThanOrEqual(3)
       expect(publicContentRelations[item.id]?.length).toBeLessThanOrEqual(4)
       const cta = resolvePublicContentCta(item.id)
-      expect([cta?.primary.href, cta?.secondary?.href]).toContain('/advieswijzer')
+      expect([cta?.primary.href, cta?.secondary?.href]).toContain('/opdracht-starten')
     }
   })
 

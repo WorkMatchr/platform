@@ -17,7 +17,7 @@ describe('compacte publieke presentatie', () => {
   })
 
   it('maakt beide CTA’s leesbaar en stapelt ze op smalle schermen', () => {
-    const html = renderToStaticMarkup(<PublicCallToAction title="Vervolg" description="Kies een passende vervolgstap." primaryAction={{ href: '/advieswijzer', label: 'Stel uw vraag' }} secondaryAction={{ href: '/kenniscentrum', label: 'Bekijk kennis' }} />)
+    const html = renderToStaticMarkup(<PublicCallToAction title="Vervolg" description="Kies een passende vervolgstap." primaryAction={{ href: '/opdracht-starten', label: 'Stel uw vraag' }} secondaryAction={{ href: '/kenniscentrum', label: 'Bekijk kennis' }} />)
     expect(html).toContain('text-text-on-dark')
     expect(html).toContain('border-text-on-dark')
     expect(html.match(/w-full/g)?.length).toBeGreaterThanOrEqual(2)

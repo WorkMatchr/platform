@@ -15,13 +15,13 @@ describe('vraaggestuurde publieke homepage', () => {
     const html = renderHomepage()
     expect(html.match(/<h1(?:\s|>)/g)).toHaveLength(1)
     expect(html).toContain('Waarmee kunnen wij u helpen?')
-    expect(html).toContain('href="/advieswijzer"')
+    expect(html).toContain('href="/opdracht-starten"')
     expect(html).not.toContain('Ontdek welke ondersteuning u nodig heeft')
     const heroHtml = renderToStaticMarkup(<PublicHero hero={publicHomepageContent.hero} />)
     expect(heroHtml.match(/<a\s/g)).toHaveLength(1)
-    expect(heroHtml).toMatch(/href="\/advieswijzer"[^>]*>Vraag ondersteuning aan<\/a>/)
+    expect(heroHtml).toMatch(/href="\/opdracht-starten"[^>]*>Start uw opdracht<\/a>/)
     expect(html).toContain('Vraag ondersteuning aan')
-    expect(html).not.toContain('Start uw opdracht')
+    expect(html).toContain('Start uw opdracht')
     expect(html).not.toContain('Start de zelfscan')
   })
 
@@ -89,7 +89,7 @@ describe('vraaggestuurde publieke homepage', () => {
         destinationType: 'services',
       },
     })
-    expect(publicHomepageContent.situations.map((situation) => situation.href)).not.toContain('/advieswijzer')
+    expect(publicHomepageContent.situations.map((situation) => situation.href)).not.toContain('/opdracht-starten')
     expect(html).toMatch(
       /Ik heb personeel in dienst[\s\S]*href="\/wettelijke-verplichtingen"[\s\S]*Bekijk wat u moet regelen/,
     )
@@ -97,7 +97,7 @@ describe('vraaggestuurde publieke homepage', () => {
     expect(html).toContain(
       'Kies het onderwerp van uw vraag als u de deskundigheid nog niet weet.',
     )
-    expect(html).toMatch(/href="\/advieswijzer"[\s\S]*Start de advieswijzer/)
+    expect(html).toMatch(/href="\/opdracht-starten"[\s\S]*Start uw opdracht/)
   })
 
   it('gebruikt vier begrijpelijke proceslabels in de bedoelde volgorde', () => {

@@ -83,7 +83,7 @@ export const publicHomepageContent = {
     title: 'Waarmee kunnen wij u helpen?',
     description:
       'Beschrijf waar u ondersteuning bij nodig heeft. Kies direct een deskundigheid of, als u dat nog niet weet, het onderwerp van uw vraag. Daarna kunt u uw opdracht eenvoudig publiceren.',
-    primaryAction: { href: publicRoutes.adviceGuide, label: 'Vraag ondersteuning aan' },
+    primaryAction: { href: publicRoutes.adviceGuide, label: 'Start uw opdracht' },
   },
   process: ['Selecteer welke deskundigheid', 'Beschrijf uw vraag of situatie', 'Publiceer de opdracht', 'Vergelijk en kies opdrachtnemer'],
   situations: [
@@ -140,7 +140,7 @@ export const publicHomepageContent = {
     title: 'Ik weet nog niet wat ik nodig heb',
     description: 'Kies het onderwerp van uw vraag als u de deskundigheid nog niet weet. Beschrijf daarna waar u ondersteuning bij nodig heeft en publiceer uw opdracht.',
     href: publicRoutes.adviceGuide,
-    label: 'Start de advieswijzer',
+    label: 'Start uw opdracht',
     destinationType: 'advice-guide',
   } satisfies LinkContent & {
     title: string

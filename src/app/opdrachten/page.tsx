@@ -37,7 +37,7 @@ export default async function AssignmentOverviewPage() {
             <Heading as="h2" size="h3" id="new-assignment-title">Nieuwe opdracht</Heading>
             <p className="mt-3 text-text-secondary">Beschrijf kort uw vraag of situatie. U hoeft nog niet precies te weten welke dienstverlening u nodig heeft.</p>
             <div className="mt-6">
-              <LinkButton href="/advieswijzer">Start uw opdracht</LinkButton>
+              <LinkButton href="/opdracht-starten">Start uw opdracht</LinkButton>
             </div>
           </Card>
         </aside>

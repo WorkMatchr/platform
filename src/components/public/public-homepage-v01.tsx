@@ -66,7 +66,7 @@ export default function PublicHomepageV01() {
           ))}
         </ol>
         <div className="mt-8">
-          <LinkButton href={content.hero.primaryAction.href}>Vraag ondersteuning aan</LinkButton>
+          <LinkButton href={content.hero.primaryAction.href}>Start uw opdracht</LinkButton>
         </div>
       </Section>
 

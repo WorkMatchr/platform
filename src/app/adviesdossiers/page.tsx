@@ -39,14 +39,14 @@ export default async function AdviceDossiersPage() {
               Nog geen adviesdossiers
             </h2>
             <p className="mt-2 text-text-secondary">
-              Zodra u een hulpvraag via de Advieswijzer afrondt, vindt u
+              Zodra u een hulpvraag via Opdracht starten afrondt, vindt u
               het bijbehorende Adviesdossier hier terug.
             </p>
             <Link
-              href="/advieswijzer"
+              href="/opdracht-starten"
               className="mt-4 inline-flex min-h-11 items-center rounded-control bg-brand-primary px-5 py-2.5 text-sm font-semibold text-text-on-dark hover:bg-brand-primary-hover"
             >
-              Start de Advieswijzer
+              Start uw opdracht
             </Link>
           </div>
         ) : (

@@ -11,12 +11,12 @@ describe('publieke vervolgroutes', () => {
     expect(html).toContain('Gerelateerde wettelijke verplichtingen')
     expect(html).not.toContain('Gerelateerde kennis')
     expect(html.match(/>Stel uw vraag</g)).toHaveLength(1)
-    expect(html).toContain('href="/advieswijzer"')
+    expect(html).toContain('href="/opdracht-starten"')
     expect(html).not.toContain('shadow-card')
   })
 
   it('behoudt een contextuele Advieswijzer-route', () => {
-    const html = renderToStaticMarkup(<PublicContentPathways contentId="knowledge:incident-investigation" primaryHref="/advieswijzer?bron=incident" embedded />)
-    expect(html).toContain('href="/advieswijzer?bron=incident"')
+    const html = renderToStaticMarkup(<PublicContentPathways contentId="knowledge:incident-investigation" primaryHref="/opdracht-starten?bron=incident" embedded />)
+    expect(html).toContain('href="/opdracht-starten?bron=incident"')
   })
 })

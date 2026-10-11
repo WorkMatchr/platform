@@ -13,7 +13,7 @@ export function AssignmentList({ items }: { items: AssignmentListItem[] }) {
         <p className="mx-auto mt-3 max-w-xl text-text-secondary">
           Start een nieuwe opdracht, controleer de gegevens en publiceer wanneer alles klopt.
         </p>
-        <LinkButton href="/hulpvragen/nieuw" className="mt-6">Start een nieuwe opdracht</LinkButton>
+        <LinkButton href="/opdracht-starten" className="mt-6">Start uw opdracht</LinkButton>
       </Card>
     )
   }

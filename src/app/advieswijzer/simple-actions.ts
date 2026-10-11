@@ -8,7 +8,7 @@ import { RequestServiceError } from '@/lib/requests/request-service'
 
 export type SimpleAdviceActionState = { requestId?: string; message?: string; errors?: Record<string, string[]> }
 export async function publishSimpleAdviceAction(_state: SimpleAdviceActionState, form: FormData): Promise<SimpleAdviceActionState> {
-  const viewer = await requireClientAdviceDossierViewer('/advieswijzer')
+  const viewer = await requireClientAdviceDossierViewer('/opdracht-starten')
   let raw: unknown
   try {
     const payload = String(form.get('payload') ?? '')

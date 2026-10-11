@@ -23,7 +23,7 @@ describe('Publieke detailpagina-contracten', () => {
     expect(html).toContain('break-words')
     expect(html).toContain('aria-label="Broodkruimelpad"')
     expect(html).toContain('Bronnen en onderbouwing')
-    expect(html).toMatch(/href="\/advieswijzer(?:\?[^\"]+)?"/)
+    expect(html).toMatch(/href="\/opdracht-starten(?:\?[^\"]+)?"/)
     expect(html).not.toContain('href="#"')
   })
 

@@ -22,7 +22,7 @@ vi.mock(
 import { PublicIntakePrototype } from '@/components/public/public-intake-prototype'
 import { PublicPageHero } from '@/components/public/public-page-hero'
 import { resolveActiveKnowledgeContext } from '@/content/knowledge/knowledge-contexts'
-import { metadata } from './advieswijzer/page'
+import { metadata } from './opdracht-starten/page'
 
 describe('publieke Advieswijzer', () => {
   it('rendert het openingsscherm met vrije invoer en zeven compacte situaties', () => {
@@ -62,9 +62,10 @@ describe('publieke Advieswijzer', () => {
   })
 
   it('heeft unieke indexeerbare metadata en canonical', () => {
-    expect(metadata.title).toBe('Advieswijzer | WorkMatchr')
+    expect(metadata.title).toBe('Opdracht starten | WorkMatchr')
     expect(metadata.description).toContain('Kies uw deskundigheid of onderwerp')
-    expect(metadata.alternates?.canonical).toBe('/advieswijzer')
+    expect(metadata.alternates?.canonical).toBe('/opdracht-starten')
+    expect(metadata.openGraph).toMatchObject({ url: '/opdracht-starten', title: 'Opdracht starten | WorkMatchr' })
     expect(metadata.robots).toBeUndefined()
   })
 
@@ -109,14 +110,14 @@ describe('publieke Advieswijzer', () => {
       />,
     )
     const pageSource = readFileSync(
-      join(process.cwd(), 'src/app/advieswijzer/page.tsx'),
+      join(process.cwd(), 'src/app/opdracht-starten/page.tsx'),
       'utf8',
     )
 
     expect(html).toContain('py-5 sm:py-7')
     expect(html).toContain('!text-[clamp(2.25rem,3.5vw,3rem)]')
     expect(pageSource).toContain('ArboGuidePageLayout')
-    expect(pageSource).toContain('currentLabel="Advieswijzer"')
+    expect(pageSource).toContain('currentLabel="Opdracht starten"')
     expect(pageSource).not.toContain('<Section')
   })
 

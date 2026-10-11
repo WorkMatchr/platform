@@ -41,12 +41,12 @@ describe('publieke platformpagina’s', () => {
   it('toont op de homepage de eenvoudige opdrachtflow naast de bestaande kennisroutes', () => {
     const html = renderToStaticMarkup(<HomePage />)
 
-    expect(html).toContain('href="/advieswijzer"')
+    expect(html).toContain('href="/opdracht-starten"')
     expect(html).toContain('Vraag ondersteuning aan')
     expect(html).toContain('Ja, ik kies een deskundigheid')
     expect(html).toContain('Nee, ik kies eerst een onderwerp')
-    expect(html).toContain('href="/advieswijzer?start=deskundigheid"')
-    expect(html).toContain('href="/advieswijzer?start=onderwerp"')
+    expect(html).toContain('href="/opdracht-starten?start=deskundigheid"')
+    expect(html).toContain('href="/opdracht-starten?start=onderwerp"')
     expect(html).toContain('href="/kenniscentrum"')
     expect(html).not.toContain('Er zijn nog geen afzonderlijke sectorpagina’s')
   })
