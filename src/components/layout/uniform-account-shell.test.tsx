@@ -27,10 +27,10 @@ describe('A01.7 uniforme werkruimte', () => {
       expect(links.some(link => link.href.startsWith('/platformbeheer'))).toBe(false)
       for (const link of links) expect(existsSync(`src/app${link.href}/page.tsx`), link.href).toBe(true)
       const html = markup(model)
-      expect(html).toContain('data-account-layout="uniform"')
+      expect(html).toContain('data-account-layout="shared"')
       expect(html).toContain('action="/existing-action"')
       expect(html).toContain('value="Behouden"')
-      expect(html).not.toContain('Uitloggen')
+      expect(html.match(/>Uitloggen<\/button>/g)).toHaveLength(1)
       expect(html).toContain('Testorganisatie')
     }
   })

@@ -182,3 +182,5 @@ Zie [legacy intake naar gedeelde Simple Advice Flow](legacy-intake-unification.m
 - [A01.6 — herkomst, herstel en acceptatie ingelogde navigatie](a01-6-account-navigation-audit.md)
 
 - [Uniforme accountlayout A01.7](uniform-account-layout-v02.md)
+
+- [Gedeelde WorkMatchr-werkruimte — issue #22](shared-workspace-shell.md)

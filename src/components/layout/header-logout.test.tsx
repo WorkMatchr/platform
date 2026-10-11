@@ -31,7 +31,7 @@ it.each(['CLIENT', 'PROFESSIONAL', 'PLATFORM'] as const)('toont exact één toeg
     expect(destination.getAttribute('href')).toBe('/dashboard')
     expect(destination.nextElementSibling).toBe(button)
     expect(destination.className).not.toContain('hidden')
-    fireEvent.click(screen.getByRole('button', { name: 'Accountmenu openen of sluiten' }))
+    expect(screen.queryByRole('button', { name: 'Accountmenu openen of sluiten' })).toBeNull()
     expect(screen.getAllByRole('button', { name: /^Uitloggen$/ })).toHaveLength(1)
   }
 })

@@ -36,7 +36,7 @@ export default async function PlatformAdminLayout({ children }: { children: Reac
     }
   }
 
-  const Shell = (await cookies()).get('platform-admin-view')?.value === 'v02' ? PlatformAdminShellV02 : PlatformAdminShell
+  const Shell = (await cookies()).get('platform-admin-view')?.value === 'v01' ? PlatformAdminShell : PlatformAdminShellV02
 
   return (
     <Shell

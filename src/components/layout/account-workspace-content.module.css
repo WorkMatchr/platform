@@ -1,0 +1,9 @@
+.content > :is(div, section) { padding-block: 0; padding-inline: 0; }
+.content { min-width: 0; overflow-wrap: anywhere; }
+.content [data-provider-workspace] { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+@media (min-width: 1280px) {
+  .content [data-provider-workspace] { grid-template-columns: 14rem minmax(0, 1fr); }
+}
+.content :global(.rounded-card):is(:global(.p-7), :global(.sm\:p-8)) { padding: 1rem; }
+
+.content > section > div { max-width: none; padding-inline: 0; }
