@@ -16,7 +16,7 @@ const rieLegalPage = getObligationBySlug('rie')!
 
 const routes = [
   ['vraag', RieQuestionPage, rieQuestionArticle, 'Kennis', '/kenniscentrum/moet-ik-een-rie-hebben', '/wettelijke-verplichtingen/rie', '/diensten/rie'],
-  ['dienst', RieServiceRoute, rieServicePage, 'Dienst', '/diensten/rie', '/advieswijzer', '/wettelijke-verplichtingen/rie'],
+  ['dienst', RieServiceRoute, rieServicePage, 'Dienst', '/diensten/rie', '/opdracht-starten', '/wettelijke-verplichtingen/rie'],
   ['verplichting', RieLegalRoute, rieLegalPage, 'Wettelijke verplichting', '/wettelijke-verplichtingen/rie', '/kenniscentrum/moet-ik-een-rie-hebben', '/diensten/rie'],
 ] as const
 
@@ -30,7 +30,7 @@ describe('RI&E-kenniscluster', () => {
       expect(html).toContain('Bronnen en onderbouwing')
       expect(html).toContain('Laatst inhoudelijk gecontroleerd')
       expect(html).toContain('Bronnen gecontroleerd')
-      expect(html).toContain('/advieswijzer')
+      expect(html).toContain('/opdracht-starten')
       expect(html).not.toMatch(/meest gekozen|populairst|trend|premium/i)
       expect(html).not.toContain('href="#"')
       expect(html).toContain('aria-label="Broodkruimelpad"')
@@ -40,7 +40,7 @@ describe('RI&E-kenniscluster', () => {
         (match) => match[1]!.split('?')[0]!,
       )
       expect(internalHrefs.every(isRegisteredPublicHref)).toBe(true)
-      expect(internalHrefs).toContain('/advieswijzer')
+      expect(internalHrefs).toContain('/opdracht-starten')
       expect(internalHrefs).not.toContain(currentHref)
       expect(internalHrefs).toContain(primaryHref)
       expect(internalHrefs).toContain(supplementalHref)
@@ -75,7 +75,7 @@ describe('RI&E-kenniscluster', () => {
       const cta = resolvePublicContentCta(document.id)
       expect(relations).toHaveLength(4)
       expect(new Set(relations.map((relation) => relation.href))).toHaveLength(4)
-      expect(relations.some((relation) => relation.href === '/advieswijzer')).toBe(true)
+      expect(relations.some((relation) => relation.href === '/opdracht-starten')).toBe(true)
       expect(relations.some((relation) => relation.id === document.id)).toBe(false)
       expect(cta?.primary.href).toMatch(/^\//)
     }

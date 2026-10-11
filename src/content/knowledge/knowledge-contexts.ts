@@ -123,7 +123,7 @@ export function resolveKnowledgeContextByRoute(route: string): KnowledgeContextD
   return context?.status === 'ACTIVE' ? context : null
 }
 
-export function knowledgeContextHref(base: '/advieswijzer' | '/hulpvragen/nieuw', context: KnowledgeContextDefinition): InternalHref {
+export function knowledgeContextHref(base: '/opdracht-starten' | '/hulpvragen/nieuw', context: KnowledgeContextDefinition): InternalHref {
   return `${base}?${KNOWLEDGE_CONTEXT_QUERY_PARAM}=${encodeURIComponent(context.id)}` as InternalHref
 }
 

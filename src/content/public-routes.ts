@@ -63,7 +63,7 @@ export const publicRoutes = {
   complianceGuide: '/wijzers/compliance',
   complianceScan: '/wijzers/compliance/scan',
   bhvGuide: '/wijzers/bhv',
-  adviceGuide: '/advieswijzer',
+  adviceGuide: '/opdracht-starten',
   directAssignment: '/hulpvragen/nieuw',
   privacy: '/privacy',
   cookies: '/cookies',

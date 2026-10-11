@@ -67,7 +67,7 @@ function service(input: ServiceInput): ServiceContent {
     ...enhancement,
     type: 'service', status: 'PUBLISHED', validationStatus: input.slug === 'rie' ? 'VALIDATED' : 'CONTEXT_DEPENDENT', evidenceLevel: 'AUTHORITATIVE', lastReviewed: '2026-07-24',
     metadata: { title: `${input.title} | WorkMatchr`, description: input.summary },
-    notDirectlyWhen: ['als de hulpvraag nog niet duidelijk is; begin dan met de Advieswijzer;', 'als direct handelen bij acuut gevaar of een medisch noodgeval nodig is.'],
+    notDirectlyWhen: ['als de hulpvraag nog niet duidelijk is; begin dan met Opdracht starten;', 'als direct handelen bij acuut gevaar of een medisch noodgeval nodig is.'],
     process: ['Verhelder de aanleiding, werkzaamheden en gewenste uitkomst.', 'Bepaal welke informatie, locaties en betrokkenen nodig zijn.', 'Laat de deskundige onderzoek of advies uitvoeren en bevindingen uitleggen.', 'Vertaal de uitkomst naar eigenaarschap, maatregelen en een passende evaluatie.'],
     organizationResponsibility: 'De organisatie blijft verantwoordelijk voor veilige en gezonde arbeidsomstandigheden, voor besluiten over maatregelen en voor de uitvoering en evaluatie daarvan. Een deskundige ondersteunt, maar neemt die verantwoordelijkheid niet over.',
     faq: [...input.faq, additionalFaq].map((item, index) => ({ id: `${input.slug}-faq-${index + 1}`, ...item })),

@@ -19,7 +19,7 @@ describe('publieke contactpagina', () => {
     expect(html).not.toContain('wordt voorbereid')
     expect(html).toContain('mailto:contact@workmatchr.nl')
     expect(html).toContain('href="/privacy"')
-    expect(html).toContain('href="/advieswijzer"')
+    expect(html).toContain('href="/opdracht-starten"')
   })
 
   it('behoudt een logische headingstructuur en responsieve DOM-volgorde', () => {

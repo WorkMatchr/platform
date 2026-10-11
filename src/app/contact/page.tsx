@@ -27,7 +27,7 @@ const contactOptions = [
   {
     title: 'Voor opdrachtgevers',
     description: 'Wilt u uw situatie verduidelijken of weten welke ondersteuning passend kan zijn? Begin bij uw vraag.',
-    action: { label: 'Stel uw vraag', href: publicRoutes.adviceGuide },
+    action: { label: 'Start uw opdracht', href: publicRoutes.adviceGuide },
   },
   {
     title: 'Voor professionals',

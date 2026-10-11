@@ -13,7 +13,7 @@ describe('publieke doelgroeppagina’s', () => {
     const html = renderToStaticMarkup(<ClientsPage />)
     expect(html.match(/<h1(?:\s|>)/g)).toHaveLength(1)
     expect(html).toContain('Van hulpvraag naar passende professional')
-    expect(html).toMatch(/href="\/advieswijzer"[^>]*>Start de Advieswijzer<\/a>/)
+    expect(html).toMatch(/href="\/opdracht-starten"[^>]*>Start uw opdracht<\/a>/)
     expect(html).toMatch(/href="\/diensten"[^>]*>Bekijk diensten<\/a>/)
     expect(html).toContain('De definitieve aanpak, prijs en planning spreekt u af met de professional.')
     expect(html).not.toContain('<form')

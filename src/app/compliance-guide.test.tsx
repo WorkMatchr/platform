@@ -14,7 +14,7 @@ describe('publieke Arbo-wijzers', () => {
   beforeEach(() => accessMock.get.mockResolvedValue({ status: 'AUTHORIZED', userId: 'user-1', organizationId: 'organization-1', organizationName: 'Voorbeeld BV' }))
   it('biedt Advieswijzer en Compliance-wijzer op /wijzers', () => {
     const html = renderToStaticMarkup(<GuidesPage />)
-    expect(html).toContain('href="/advieswijzer"')
+    expect(html).toContain('href="/opdracht-starten"')
     expect(html).toContain('href="/wijzers/compliance"')
     expect(html).toContain('Arbo-wijzers')
     expect(guidesMetadata.title).toBe('Arbo-wijzers | WorkMatchr')

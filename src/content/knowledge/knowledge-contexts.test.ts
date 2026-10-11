@@ -24,7 +24,7 @@ describe('knowledge context catalog', () => {
 
   it('neemt alleen de veilige context-ID in vervolglinks op', () => {
     const context = resolveActiveKnowledgeContext('OCCUPATIONAL_PHYSICIAN')!
-    expect(knowledgeContextHref('/advieswijzer', context)).toBe('/advieswijzer?context=OCCUPATIONAL_PHYSICIAN')
+    expect(knowledgeContextHref('/opdracht-starten', context)).toBe('/opdracht-starten?context=OCCUPATIONAL_PHYSICIAN')
     expect(knowledgeContextHref('/hulpvragen/nieuw', context)).toBe('/hulpvragen/nieuw?context=OCCUPATIONAL_PHYSICIAN')
   })
 })

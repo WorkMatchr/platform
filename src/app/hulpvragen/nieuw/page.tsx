@@ -3,5 +3,5 @@ import { requireClientAdviceDossierViewer } from '@/lib/advice-dossiers/advice-d
 
 export default async function NewIntakePage() {
   await requireClientAdviceDossierViewer('/hulpvragen/nieuw')
-  redirect('/advieswijzer')
+  redirect('/opdracht-starten')
 }

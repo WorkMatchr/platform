@@ -11,9 +11,9 @@ describe('homepage v0.2 release', () => {
   })
   it('behoudt alle instaplinks en generieke CTA’s', () => {
     const html = renderToStaticMarkup(<HomePage />)
-    expect(html.match(/href="\/advieswijzer\?start=deskundigheid"/g)).toHaveLength(2)
-    expect(html.match(/href="\/advieswijzer\?start=onderwerp"/g)).toHaveLength(2)
-    expect(html).toContain('href="/advieswijzer"')
+    expect(html.match(/href="\/opdracht-starten\?start=deskundigheid"/g)).toHaveLength(2)
+    expect(html.match(/href="\/opdracht-starten\?start=onderwerp"/g)).toHaveLength(2)
+    expect(html).toContain('href="/opdracht-starten"')
     expect(html).toContain('Deskundigheid voor verschillende Arbo- en veiligheidsvragen')
     expect(html).not.toContain('frontpage-v02')
   })

@@ -193,7 +193,7 @@ export default async function ComplianceDashboardPage() {
       <section className="mt-8 rounded-card bg-brand-dark p-6 text-text-on-dark">
         <h2 className="text-xl font-bold">Hulp nodig bij een actie?</h2>
         <p className="mt-2 max-w-3xl text-text-on-dark-muted">De volgende koppeling wordt de route van een concrete compliancebevinding naar een reviewbaar Adviesdossier en daarna de bestaande WorkMatchr-marktplaats.</p>
-        <LinkButton href="/advieswijzer?context=COMPLIANCE" className="mt-5">Hulp inschakelen</LinkButton>
+        <LinkButton href="/opdracht-starten?context=COMPLIANCE" className="mt-5">Start uw opdracht</LinkButton>
       </section>
     </AuthShell>
   )

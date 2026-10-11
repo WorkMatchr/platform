@@ -120,8 +120,8 @@ describe('publieke detailcontent', () => {
       expect(html).not.toContain('Gerelateerde sectoren')
       expect(html.match(/Hulp nodig bij uw situatie\?/g)).toHaveLength(1)
       expect(html).toContain('Weet u niet zeker wat deze informatie voor uw organisatie betekent?')
-    expect(html).toContain('Start de Advieswijzer')
-    expect(html).toContain('href="/advieswijzer"')
+    expect(html).toContain('Start uw opdracht')
+    expect(html).toContain('href="/opdracht-starten"')
     expect(html).toContain('Onjuistheid of wijziging melden')
     }
   })
@@ -129,8 +129,8 @@ describe('publieke detailcontent', () => {
   it.each(knowledgeArticles)('$href biedt één directe route naar de Advieswijzer', (article) => {
     const html = renderToStaticMarkup(<KnowledgeArticlePage content={article} />)
 
-    expect(html).toContain('href="/advieswijzer"')
-    expect(html).toContain('Start de Advieswijzer')
+    expect(html).toContain('href="/opdracht-starten"')
+    expect(html).toContain('Start uw opdracht')
     expect(html).not.toContain('href="/hulpvragen/nieuw')
     expect(html).not.toContain('Start een opdracht')
     expect(html).not.toContain('Direct een opdracht plaatsen')
@@ -142,7 +142,7 @@ describe('publieke detailcontent', () => {
 
     const html = renderToStaticMarkup(<KnowledgeArticlePage content={article!} />)
 
-    expect(html).toContain('href="/advieswijzer"')
+    expect(html).toContain('href="/opdracht-starten"')
     expect(html).not.toContain('context=BHV')
   })
 
@@ -170,7 +170,7 @@ describe('publieke detailcontent', () => {
     expect(html).not.toContain('Verder met uw vraag')
     expect(html).not.toContain('Veelgestelde vragen')
     expect(html).not.toContain('Gerelateerde sectoren')
-    expect(html).toContain('href="/advieswijzer"')
+    expect(html).toContain('href="/opdracht-starten"')
     expect(html).toContain('bg-brand-dark')
     expect(html).toContain('text-text-on-dark')
     expect(html.match(/Hulp nodig bij uw situatie\?/g)).toHaveLength(1)

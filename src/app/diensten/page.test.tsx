@@ -79,7 +79,7 @@ describe('publiek dienstenoverzicht', () => {
       const html = renderToStaticMarkup(
         await ServicePage({ params: Promise.resolve({ slug: expertise.href.split('/').at(-1)! }) }),
       )
-      const adviceLinks = html.match(/href="\/advieswijzer"/g) ?? []
+      const adviceLinks = html.match(/href="\/opdracht-starten"/g) ?? []
       const service = services.find((item) => item.href === expertise.href)
       const faqQuestions = service!.faq.map((item) => item.question)
 

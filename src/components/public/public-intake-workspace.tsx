@@ -215,7 +215,7 @@ export function AnonymousAdviceSavePanel() {
         adviesdossiers.
       </p>
       <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-        <LinkButton href="/inloggen?returnTo=%2Fadvieswijzer">
+        <LinkButton href="/inloggen?returnTo=%2Fopdracht-starten">
           Inloggen
         </LinkButton>
         <LinkButton href="/registreren" variant="outline">

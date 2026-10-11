@@ -97,7 +97,7 @@ describe('GuidanceOutcome-weergave', () => {
       'Log in met een opdrachtgeveraccount om dit advies op te slaan in Mijn adviesdossiers.',
     )
     expect(html).toContain(
-      'href="/inloggen?returnTo=%2Fadvieswijzer"',
+      'href="/inloggen?returnTo=%2Fopdracht-starten"',
     )
     expect(html).toContain('>Inloggen<')
     expect(html).toContain('href="/registreren"')

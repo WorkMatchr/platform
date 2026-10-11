@@ -236,9 +236,9 @@ function Results({ answers, onRestart, headingRef, idempotencyKey, startedAt, co
 
       <section className="rounded-card bg-brand-dark p-6 text-text-on-dark">
         <h2 className="text-xl font-bold">Wilt u uw situatie laten beoordelen?</h2>
-        <p className="mt-2 text-text-on-dark-muted">De Advieswijzer helpt u bepalen welke ondersteuning passend is. Uw antwoorden uit deze wijzer worden niet in de URL meegestuurd.</p>
+        <p className="mt-2 text-text-on-dark-muted">WorkMatchr helpt u bepalen welke ondersteuning passend is. Uw antwoorden uit deze wijzer worden niet in de URL meegestuurd.</p>
         <div className="mt-5 flex flex-wrap gap-3">
-          {context && <LinkButton href={knowledgeContextHref('/advieswijzer', context)}>Schakel een adviseur in</LinkButton>}
+          {context && <LinkButton href={knowledgeContextHref('/opdracht-starten', context)}>Start uw opdracht</LinkButton>}
           <Button variant="outline" onClick={onRestart}>Opnieuw beginnen</Button>
         </div>
       </section>
