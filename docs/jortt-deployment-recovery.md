@@ -96,3 +96,61 @@ Resultaten worden na de lokale controles hieronder aangevuld. Geen database-/pro
 ## Oplevering en resterende blokkade
 
 Bestanden: `docs/jortt-deployment-recovery.md`, `docs/README.md`. Technisch onderzoek en beheerprocedure gereed voor review. **Releasegereed: NEE** voor de daadwerkelijke productieafhandeling: externe afhankelijkheidscontrole, afzonderlijke goedkeuring/uitvoering van de Vercel-beheeractie en verificatie van toekomstige checks staan open. Lokale build en repo-brede baseline zijn hierboven afzonderlijk gerapporteerd. Het oorspronkelijke aanmaakmotief van het tweede project blijft onbewezen; het ontbreken van een benodigde afzonderlijke runtime is wel door de repositorystructuur en huidige configuratie onderbouwd.
+
+## J01.2 — laatste afhankelijkheidscontrole (11 oktober 2026)
+
+**Besluit: C — ontkoppeling nog niet verantwoord.** Dit vervangt geen eerdere architectuuraanbeveling A: de centrale runtime blijft de voorkeursarchitectuur, maar essentiële externe configuraties zijn niet bewezen. De onderstaande matrix gebruikt NEE alleen binnen de expliciet onderzochte grens. De eerdere beheerprocedure is conditioneel en mag nu niet worden uitgevoerd.
+
+### Onderzoeksgrens en actuele bronnen
+
+- Bestaande Draft PR #27 is OPEN/DRAFT, branch `codex/jortt-deployment-recovery`; vertrekcommit `bae299ad3ff876a93e282b58f07c4f00d3f11f60`. Fetch bevestigt main `9c4c84417734f0866a5bc31224afbc13f756ee91`.
+- Alle tracked bestanden op HEAD en actuele main doorzocht op projectnaam, project-ID en domeinprefix. Alleen dit onderzoeksrapport en `docs/a01-6-account-navigation-audit.md` verwijzen ernaar. Geen verwijzingen in runtime, tests, scripts, ops of workflows. Historische lokale forward-portkoppeling is in J01 afzonderlijk vastgesteld; geen actieve dependency daarvan aangetoond. Genegeerde secretbestanden niet gelezen.
+- Callback-, webhook-, sync-, maintenance- en providerbroncode gecontroleerd. Jortt gebruikt uitgaand OAuth client credentials en `api.jortt.nl/v3`; geen inkomende Jortt-webhookroute gevonden. Mollie krijgt webhook-URL's vanuit beheerde serverconfiguratie, dus de broncode alleen bewijst de actuele URL-waarde niet.
+- Vercel-domainlijst opnieuw: uitsluitend `jortt-production-forward-port.vercel.app`, geen custom domain, pagination eindigt. `www.workmatchr.nl` blijft geverifieerd aan project `platform` gekoppeld.
+- Tweede-project env list opnieuw: geen environmentvariabelen. Geen env pull, decryptie, secretwaarden of configuratiewijzigingen.
+- Tweede-project deploymentquery `state=READY`: nul resultaten. Runtimeaggregatie `group_by=source`, laatste 30 minuten: geen groepen/records. De poging over 24 uur is geweigerd vanwege Hobby-retentie; oudere runtimeactiviteit is niet controleerbaar met deze toegang. Het lege venster betreft runtime-output en bewijst niet nul HTTP-verzoeken of nul externe configuraties.
+- GitHub repositorymetadata: variabelenaam `MARKETPLACE_NOTIFICATIONS_ENABLED`, secretnaam `CRON_SECRET`; geen waarden gelezen. De bestaande scheduled workflow roept via `ops/marketplace-notifications/dispatch.mjs` exact `https://www.workmatchr.nl/api/maintenance/marketplace` aan. De trading-access-workflow is een validatieworkflow. Geen Actions-trigger gestart.
+- Render-workspace `tea-dafcrg5bedkc738ng6n0` read-only geïnventariseerd: Workmatcher-Practice-engine, workmatcher-forward-paper, workmatcher-eur-asml-pilot, workmatcher-generic-shadow en workmatcher-generic-live. Alle vijf wijzen naar WorkMatchr/workmatchr-trading en Python/trading-entrypoints, niet rechtstreeks naar het Jortt-projectadres. Private environmentwaarden, code in die andere repository en overige externe schedulers zijn niet als gecontroleerd voorgesteld. Geen Render-mutatie.
+
+### Afhankelijkheidsmatrix
+
+| Onderdeel | Afhankelijk van tweede project? | Controleerbaar bewijs / grens | Risico |
+| --- | --- | --- | --- |
+| WorkMatchr-hoofdwebsite | NEE | Eigen platform-project/domein; geen runtimeverwijzing in tracked repository | Geen aangetoonde interne afhankelijkheid |
+| Jortt-synchronisatie binnen platform | NEE | Directe Jortt-API-client, lokale DB-syncservice en platform-maintenance; geen tweede-projecthost | Actuele providerconfiguratie/succes niet bewezen |
+| Financiële outbox/syncwachtrij binnen platform | NEE | FinancialJorttSync + due selectie in dezelfde applicatie; NotificationOutbox is de aparte notificatiegrens | Geen extra worker creëren of beide systemen verwarren |
+| Mollie (actuele providerconfiguratie) | ONBEKEND | Webhookbasis uit env; geen geautoriseerde providerbeheerinspectie beschikbaar/uitgevoerd | Eventuele historische payment-/subscriptioncallback kan nog tweede host gebruiken |
+| Webhooks/callbacks bij Jortt en overige providers | ONBEKEND | Geen Jortt-ingangsroute in code, maar externe registratie niet ingezien | Afwezigheid in code sluit providerregistratie niet uit |
+| Cronjobs tweede project | ONBEKEND | Repo declareert finance-cron; actuele Vercel-cronregistratie niet geverifieerd | Oude registratie/trigger niet uitsluiten op basis van mislukte builds |
+| Externe workers | ONBEKEND | Render zichtbare entrypoints bevatten geen directe referentie; private config/andere systemen niet gecontroleerd | Indirecte hostconfiguratie mogelijk |
+| GitHub marketplace-scheduler | NEE | Hardgecodeerde hoofdplatform-URL in dispatcher; workflow hergebruikt deze | Geen tweede-projectendpoint in deze flow |
+| GitHub/Vercel deploymentkoppeling | JA | Bestaande Git-Preview/Production-deployments voor WorkMatchr/platform | Dit is juist de dubbele buildtrigger die later moet vervallen |
+| Vercel Deploy Hooks | ONBEKEND | Geen hookinventaris verkregen via een aantoonbaar uitsluitend niet-geheim overzicht | Externe deploytrigger kan buiten Git-koppeling blijven bestaan |
+
+### Exact nog ontbrekend bewijs
+
+1. Vercel Settings → Git: uitsluitend aantal/namen/doelbranches van Deploy Hooks, zonder hook-URL of hook-ID met authenticatiefunctie. Inspecteer tevens Cron Jobs: geregistreerde paden, schema's, actief/inactief. Geen Run/Deploy aanklikken. De gebruikte CLI-overzichten leveren dit niet; er is geen ruwe projectexport opgehaald die hooktokens kan bevatten.
+2. Jortt-beheer: bevestig of webhook-/callbackregistraties naar het tweede domein bestaan. In deze sessie is geen Jortt-beheerconnector of geauthenticeerde beheerinspectie gebruikt; geen API-credentials opgehaald.
+3. Mollie-beheer: controleer de gebruikte webhook-/redirectbestemmingen, inclusief bestaande recurring subscriptions/betalingen voor zover deze hun eigen historische callback bewaren. Alleen host/path of een veilige matchboolean rapporteren, geen klant-/betalingsinhoud. Geen geautoriseerde Mollie-beheerinterface beschikbaar in de gebruikte koppelingen.
+4. Render/overige schedulers: beheerder bevestigt of private URL-configuratie of andere jobs het tweede domein gebruiken. Zichtbare startcommando's zijn onvoldoende om private verwijzingen uit te sluiten. Geen secrets nodig voor die bevestiging.
+5. Bevoegde platformbeheerder controleert read-only de actuele financiële onderhoudsstatus en Jortt-audit in het hoofdplatform. De maintenance- en retryroutes zijn muterend en mogen hiervoor niet worden aangeroepen.
+
+Geen actieve externe runtimeverwijzing aangetoond; dat is nadrukkelijk geen bewijs dat die afwezig is. Alleen de dubbele Git-deploymentkoppeling is aantoonbaar actief. Ontbrekende toegang/configuratiebewijzen zijn de concrete reden voor C, geen geconstateerde nieuwe financiële codebug.
+
+### Financiële veiligheid
+
+De gateway, invoice-sync, lease, technische identiteit, immutable snapshot, auditevents, back-off, onderhoud en beheerautorisatie zijn ongewijzigd en intern onafhankelijk van het tweede project. De in J01 beschreven beperkingen van exactly-once blijven gelden. Er is geen nieuwe synchronisatie, boeking, betaling, factuurmutatie, databaseaanroep of provideracceptatietest uitgevoerd.
+
+### Conditioneel ontkoppelings- en verificatieprotocol
+
+Pas nadat alle vijf open controles met controleerbaar bewijs zijn afgevinkt, opnieuw besluit A/B/C vastleggen. Bij A en afzonderlijke toestemming: team `workmatchrs-projects` → project `jortt-production-forward-port` (ID uit de inventaris) → Settings → Git → repository `WorkMatchr/platform` controleren → Disconnect → uitsluitend Git-koppeling bevestigen. Project, domeinen, hoofdproject en secrets behouden. Deploy Hooks en cron niet impliciet als verwijderd beschouwen; afzonderlijk inventariseren en eventuele actie eerst laten goedkeuren.
+
+Na de toekomstige actie: controleer read-only dat platform gekoppeld blijft, www.workmatchr.nl beschikbaar blijft, financiële read-only beheerpagina's bereikbaar zijn en nieuwe financiële foutcategorieën niet ontstaan binnen een expliciet gerapporteerd logvenster. Geen muterende healthcheck of boeking. Vervolgens uitsluitend na expliciete toestemming met een veilige nieuwe commit/PR aantonen dat platform-Preview werkt en géén tweede Jortt-buildcheck wordt gestart. J01.2 actualiseert nu de bestaande PR terwijl de koppeling nog bestaat; de daaruit eventueel automatisch ontstane Preview is geen verificatie ná ontkoppeling. Historische rode checks blijven historische failures.
+
+Rollback: deze documentatiecommit is normaal revertbaar. Een toekomstige heraansluiting op exact dezelfde repository/branch is een aparte beheeractie die builds kan starten; niet automatisch uitvoeren. Omdat project en configuratie behouden blijven, is geen gegevensherstel of secretkopie onderdeel van dit protocol. Nieuwe financiële verwerking uitsluitend volgens bestaande autorisatie.
+
+### J01.2 validatie
+
+Financiële mockregressies opnieuw **143/143 PASS, 14 bestanden**. Geen nieuwe runtimecode of tests nodig voor deze documentatieaanvulling. Lint/diff/secretsresultaten volgen bij afsluiting. Geen TypeScript/build-herhaling nodig voor uitsluitend deze Markdown-aanvulling; de J01-baselineresultaten hierboven blijven apart staan.
+
+Afsluiting J01.2: volledige `npm run lint` PASS; `git diff --check` PASS; scopegerichte secrets-patterncontrole 0 hits. Exact één gewijzigd bestand: dit rapport. **Vercel-ontkoppeling verantwoord: NEE; conclusie C.** Geen beheeractie, deployment of productiehandeling uitgevoerd.
