@@ -248,3 +248,9 @@ Na de handeling: controleer dat het tweede project blijft bestaan maar geen Git-
 Rollback: dezelfde repository opnieuw aan uitsluitend het behouden tweede project koppelen. Dit kan opnieuw builds en rode checks veroorzaken en vereist afzonderlijke toestemming. Geen dataherstel of nieuwe credentials nodig door deze ontkoppeling; geen snapshots of financiële historie veranderd. Een nieuwe operationele afhankelijkheid zou vóór een latere projectverwijdering opnieuw onderzocht moeten worden.
 
 J01.4 validatie: 53/53 gerichte Jortt-/maintenance-mocktests PASS (5 bestanden); financiële code/config gelijk aan origin/main; diff-check PASS. Alleen Markdown gewijzigd, geen lint/typecheck/build opnieuw nodig; eerdere uitslagen blijven historische validatie. Credentialpatrooncontrole hieronder uitgevoerd vóór commit.
+
+## J01.5 — post-disconnect controlecommit (12 oktober 2026)
+
+De Product Owner heeft uitsluitend de Git-repositorykoppeling van Vercel-project `jortt-production-forward-port` verwijderd. Vercel Git-deployment-context bevestigt dat het project niet meer als Git-gekoppeld wordt vermeld; het hoofdproject `platform` is nog gekoppeld aan `WorkMatchr/platform`.
+
+Deze documentatiecommit is een niet-functionele rooktest voor nieuwe PR-checks na ontkoppeling. Controleer of de Vercel-check `platform` voor deze nieuwe commit slaagt en of er geen **nieuwe** `jortt-production-forward-port`-deployment/check verschijnt. Bestaande historische rode checks zijn geen regressie. Dit is geen financiële live-integratietest, geen productiepublicatie en geen vervanging voor de eerdere externe-afhankelijkheidsafweging.
