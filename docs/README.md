@@ -186,3 +186,5 @@ Zie [legacy intake naar gedeelde Simple Advice Flow](legacy-intake-unification.m
 - [Gedeelde WorkMatchr-werkruimte — issue #22](shared-workspace-shell.md)
 
 - [A01.8 — Opdracht starten en compatibele Advieswijzer-route](a018-opdracht-starten.md)
+
+- [J01 — Jortt deploymentonderzoek en veilige beheeractie](jortt-deployment-recovery.md)
