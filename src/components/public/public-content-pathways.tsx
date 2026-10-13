@@ -32,7 +32,7 @@ function resolvePopulatedGroups(contentId: PublicContentId, includeSectors = tru
 
 function PathwayRelations({ contentId, includeSectors = true, title = 'Verder met uw vraag' }: { contentId: PublicContentId; includeSectors?: boolean; title?: string }) {
   const populatedGroups = resolvePopulatedGroups(contentId, includeSectors)
-  const linkColors = contentId === 'overview:services' || contentId.startsWith('service:')
+  const linkColors = contentId === 'overview:services' || contentId === 'overview:obligations' || contentId.startsWith('obligation:') || contentId.startsWith('service:')
     ? 'text-brand-primary-hover hover:text-brand-dark'
     : 'text-brand-primary hover:text-brand-primary-hover'
   if (populatedGroups.length === 0) return null

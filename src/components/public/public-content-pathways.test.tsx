@@ -29,10 +29,12 @@ it.each([false, true])('allows a scoped CTA label without changing other pages (
     const other = renderToStaticMarkup(<PublicContentPathways contentId={contentId} embedded={embedded} />)
     expect(other.match(/>Vraag ondersteuning aan</g)).toHaveLength(1)
     expect(other).not.toContain('>Start uw opdracht<')
-    expect(other).toContain('font-semibold text-brand-primary hover:text-brand-primary-hover')
+    expect(other).toContain(contentId === 'overview:obligations'
+      ? 'font-semibold text-brand-primary-hover hover:text-brand-dark'
+      : 'font-semibold text-brand-primary hover:text-brand-primary-hover')
   }
 })
-it.each(['overview:services', 'service:rie', 'service:bedrijfsarts'] as const)('uses the existing darker token for service related links: %s', contentId => {
+it.each(['overview:services', 'overview:obligations', 'obligation:rie', 'obligation:basiscontract', 'service:rie', 'service:bedrijfsarts'] as const)('uses the existing darker token for the audited related links: %s', contentId => {
   const html = renderToStaticMarkup(<PublicContentPathways contentId={contentId} />)
   const links = [...html.matchAll(/class="(group inline-flex[^"]+)"/g)]
   expect(links.length).toBeGreaterThan(0)

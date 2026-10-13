@@ -5,3 +5,7 @@ Een verplichtingenpagina scheidt wettelijke basis, mogelijke toepasselijkheid, p
 Primaire of gezaghebbende officiële bronnen en een controledatum zijn verplicht. Universele ja/nee-conclusies, boetebedragen en dreigende commerciële formuleringen zijn uitgesloten.
 
 Live zijn RI&E, plan van aanpak, preventiemedewerker, BHV, basiscontract, toegang bedrijfsarts, PAGO, PSA, arbeidsongevallen en voorlichting en onderricht.
+
+## A03 broncontrole
+
+Zie [A03 — controle wettelijke verplichtingen](a03-obligations-audit.md) voor de primaire bronnen, gerichte correcties en technische acceptatie per onderwerp. Praktische uitvoeringshulp blijft onderscheiden van de wettelijke eisen. Dit rapport is geen juridische certificering.

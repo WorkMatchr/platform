@@ -150,7 +150,7 @@ describe('publieke detailcontent', () => {
     ['knowledge:occupational-physician', ['rechtstreeks kunnen bezoeken', 'De werkgever krijgt geen diagnose', 'Artikel 18']],
     ['knowledge:psa', ['stress kunnen veroorzaken', 'terugkerende of escalerende conflicten', 'vertrouwenspersoon', 'Artikel 3, tweede lid', 'Artikel 2.15']],
     ['knowledge:occupational-hygienist', ['begint niet automatisch met meten', 'via de huid', 'grens- of advieswaarden', 'is geen arts', 'meetstrategie en interpretatie']],
-    ['knowledge:incident-investigation', ['leerpotentieel', 'barrières ontbraken of faalden', 'vraag betrokkenen niet onnodig meteen om verklaringen', 'geen algemene wettelijke verplichting om ieder incident door een externe incidentonderzoeker', 'dagopname van enkele uren', 'meer dan drie dagen verzuim', 'werkgeversrapportage met verbeterplan', 'ongeval met een kind van 15 jaar of jonger', 'wanneer u een arbeidsongeval moet melden']],
+    ['knowledge:incident-investigation', ['leerpotentieel', 'barrières ontbraken of faalden', 'vraag betrokkenen niet onnodig meteen om verklaringen', 'geen algemene wettelijke verplichting om ieder incident door een externe incidentonderzoeker', 'dagopname van enkele uren', 'meer dan drie werkdagen verzuim', 'werkgeversrapportage met verbeterplan', 'ongeval met een kind van 15 jaar of jonger', 'wanneer u een arbeidsongeval moet melden']],
   ] as const)('%s gebruikt de goedgekeurde inhoud en eindstructuur zonder zichtbare FAQ', (contentId, requiredCopy) => {
     const article = knowledgeArticles.find((item) => item.id === contentId)!
     const html = renderToStaticMarkup(<KnowledgeArticlePage content={article} />)
