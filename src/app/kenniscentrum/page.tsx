@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import { Section } from '@/components/layout/section'
 import { Heading } from '@/components/ui/heading'
 import { PublicContentCard } from '@/components/public/public-content-card'
-import { PublicOverviewGrid } from '@/components/public/public-overview-grid'
 import { PublicPageLayout } from '@/components/public/public-page-layout'
 import { PublicContentPathways } from '@/components/public/public-content-pathways'
 import { knowledgeArticles } from '@/content/knowledge/articles'
@@ -22,7 +21,7 @@ export const metadata: Metadata = {
 
 export default function KnowledgeCenterPage() {
   return (
-    <PublicPageLayout
+    <div className="[&_a.group]:text-brand-primary-hover [&_a.group:hover]:text-brand-dark"><PublicPageLayout
       breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Kenniscentrum' }]}
       eyebrow="Kenniscentrum"
       title="Betrouwbare uitleg begint bij uw vraag"
@@ -41,19 +40,19 @@ export default function KnowledgeCenterPage() {
         </section>
         <section aria-labelledby="categories-title">
           <Heading as="h2" size="h2" id="categories-title">Categorieën</Heading>
-          <div className="mt-5"><PublicOverviewGrid items={knowledgeCategories} /></div>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{knowledgeCategories.map(item => <PublicContentCard key={item.title} {...item} headingLevel="h3" compact />)}</div>
         </section>
         <section aria-labelledby="types-title">
           <Heading as="h2" size="h2" id="types-title">Vier soorten informatie</Heading>
           <div className="mt-5 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-            <PublicContentCard title="Diensten" description="Bekijk welke professionele ondersteuning bij uw situatie kan passen." href={publicRoutes.services} compact />
-            <PublicContentCard title="Wettelijke verplichtingen" description="Lees algemene wettelijke context met herleidbare bronnen." href={publicRoutes.obligations} compact />
-            <PublicContentCard title="Sectoren" description="Bekijk aandachtspunten per werkomgeving en soort werkzaamheden." href={publicRoutes.sectors} compact />
-            <PublicContentCard title="Kennisartikelen" description="Vind begrijpelijke antwoorden op praktische vragen." href={publicRoutes.knowledge} compact />
+            <PublicContentCard title="Diensten" description="Bekijk welke professionele ondersteuning bij uw situatie kan passen." href={publicRoutes.services} headingLevel="h3" compact />
+            <PublicContentCard title="Wettelijke verplichtingen" description="Lees algemene wettelijke context met herleidbare bronnen." href={publicRoutes.obligations} headingLevel="h3" compact />
+            <PublicContentCard title="Sectoren" description="Bekijk aandachtspunten per werkomgeving en soort werkzaamheden." href={publicRoutes.sectors} headingLevel="h3" compact />
+            <PublicContentCard title="Kennisartikelen" description="Vind begrijpelijke antwoorden op praktische vragen." href={publicRoutes.knowledge} headingLevel="h3" compact />
           </div>
         </section>
       </Section>
-      <PublicContentPathways contentId="overview:knowledge" />
-    </PublicPageLayout>
+      <PublicContentPathways contentId="overview:knowledge" linkLabel="Start uw opdracht" />
+    </PublicPageLayout></div>
   )
 }
