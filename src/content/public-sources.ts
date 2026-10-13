@@ -1,6 +1,46 @@
 import type { PublicSource } from './public-content-model'
 
 export const publicSources = {
+  'arbobesluit-current-a03': {
+    id: 'arbobesluit-current-a03',
+    title: 'Arbeidsomstandighedenbesluit',
+    publisher: 'Overheid.nl',
+    url: 'https://wetten.overheid.nl/BWBR0008498/',
+    type: 'LAW',
+    evidenceLevel: 'PRIMARY',
+    reviewedAt: '2026-10-13',
+    note: 'Artikelen 2.14b en 2.15: voorwaarden voor RI&E-toetsingsuitzonderingen en maatregelen tegen PSA.',
+  },
+  'arboportaal-maatwerk-a03': {
+    id: 'arboportaal-maatwerk-a03',
+    title: 'Basiscontract en de maatwerkregeling',
+    publisher: 'Arboportaal',
+    url: 'https://www.arboportaal.nl/onderwerpen/ondersteuning-bij-arbowet/basiscontract/basiscontract-en-de-maatwerkregeling',
+    type: 'OFFICIAL_GUIDANCE',
+    evidenceLevel: 'AUTHORITATIVE',
+    reviewedAt: '2026-10-13',
+    note: 'Voorwaarden voor maatwerk, zelfstandige bedrijfsartsen en het terugvallen op de vangnetregeling.',
+  },
+  'arboportaal-rechten-werkenden-a03': {
+    id: 'arboportaal-rechten-werkenden-a03',
+    title: 'Algemene rechten en plichten van werkenden',
+    publisher: 'Arboportaal',
+    url: 'https://www.arboportaal.nl/onderwerpen/rechten-plichten-werkenden/algemene-rechten--plichten-van-werkenden',
+    type: 'OFFICIAL_GUIDANCE',
+    evidenceLevel: 'AUTHORITATIVE',
+    reviewedAt: '2026-10-13',
+    note: 'Preventieve toegang tot de bedrijfsarts zonder toestemming van de werkgever.',
+  },
+  'eerstekamer-vertrouwenspersoon-a03': {
+    id: 'eerstekamer-vertrouwenspersoon-a03',
+    title: 'Wetsvoorstel 35.592: vertrouwenspersoon ongewenst gedrag',
+    publisher: 'Eerste Kamer',
+    url: 'https://www.eerstekamer.nl/wetsvoorstel/35592_initiatiefvoorstel_patijn',
+    type: 'OFFICIAL_GUIDANCE',
+    evidenceLevel: 'AUTHORITATIVE',
+    reviewedAt: '2026-10-13',
+    note: 'Parlementaire stand van zaken: wetsvoorstel nog in behandeling; geen reeds geldende algemene verplichting.',
+  },
   'arbowet-current': {
     id: 'arbowet-current',
     title: 'Arbeidsomstandighedenwet',
