@@ -12,6 +12,9 @@ it('weigert verzending wanneer uitgeschakeld en koppelt fouten aan velden', () =
   expect(fetcher).not.toHaveBeenCalled()
   expect(document.activeElement).toBe(screen.getByLabelText('Naam'))
   expect(screen.getByLabelText('E-mailadres').getAttribute('aria-invalid')).toBe('true')
+  expect(screen.getByLabelText('Onderwerp').getAttribute('aria-invalid')).toBe('true')
+  expect(screen.getAllByRole('option')).toHaveLength(5)
+  expect(screen.getByRole('link', { name: 'privacyverklaring' }).getAttribute('href')).toBe('/privacy')
 })
 it('blokkeert dubbel submit, bewaart invoer na failure en houdt retry idempotent', async () => {
   let resolve!: (value: unknown) => void
@@ -20,7 +23,8 @@ it('blokkeert dubbel submit, bewaart invoer na failure en houdt retry idempotent
   render(<ContactForm enabled />)
   fireEvent.change(screen.getByLabelText('Naam'), { target: { value: 'Test' } })
   fireEvent.change(screen.getByLabelText('E-mailadres'), { target: { value: 'a06@example.invalid' } })
-  fireEvent.change(screen.getByLabelText('Uw vraag'), { target: { value: 'Een synthetische vraag voor de test.' } })
+  fireEvent.change(screen.getByLabelText('Bericht'), { target: { value: 'Een synthetische vraag voor de test.' } })
+  fireEvent.change(screen.getByLabelText('Onderwerp'), { target: { value: 'TECHNICAL' } })
   const form = screen.getByRole('button').closest('form')!
   fireEvent.submit(form); fireEvent.submit(form)
   expect(fetcher).toHaveBeenCalledTimes(1)
@@ -29,7 +33,7 @@ it('blokkeert dubbel submit, bewaart invoer na failure en houdt retry idempotent
   resolve({ ok: false, json: async () => ({ ok: false, message: 'Tijdelijk niet beschikbaar.' }) })
   await waitFor(() => expect((screen.getByRole('button') as HTMLButtonElement).disabled).toBe(false))
   expect(screen.getByRole('alert').textContent).toBe('Tijdelijk niet beschikbaar.')
-  expect((screen.getByLabelText('Uw vraag') as HTMLTextAreaElement).value).toContain('synthetische')
+  expect((screen.getByLabelText('Bericht') as HTMLTextAreaElement).value).toContain('synthetische')
   fetcher.mockResolvedValue({ ok: true, json: async () => ({ ok: true, message: 'Aangeboden aan de maildienst.' }) })
   fireEvent.submit(form)
   await waitFor(() => expect(screen.getByRole('status').textContent).toBe('Aangeboden aan de maildienst.'))

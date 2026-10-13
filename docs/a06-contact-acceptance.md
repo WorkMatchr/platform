@@ -8,10 +8,10 @@ De contactpagina had uitsluitend bestaande contactroutes en mailto-links, geen s
 
 ## Implementatie
 
-- Naam, e-mailadres en vraag; bestaande routekaarten, privacyroute, metadata/canonical en opdrachtstart blijven behouden.
+- Naam, e-mailadres, verplicht onderwerp (Algemene vraag / Technische ondersteuning / Privacy of klacht / Overig) en bericht; bestaande routekaarten, privacyroute, metadata/canonical en opdrachtstart blijven behouden.
 - Client- en servervalidatie, strikte payload, maximaal 20 KB body en 4000 berichttekens; verborgen honeypot. Geen bestandsupload of automatische bevestigingsmail.
 - `POST /api/contact`: standaard UIT, exacte origincontrole tegen serverconfiguratie, geen vertrouwen in aangeleverde Host. Op Vercel gebruikt de limiter uitsluitend de door Vercel beheerde `x-vercel-forwarded-for`; ontbrekende header faalt gesloten. Buiten Vercel wordt een gedeelde conservatieve bucket gebruikt.
-- De bestaande `sendAuthEmail`/Resend-transportlaag verstuurt naar de vaste mailbox `contact@workmatchr.nl`. Geen aanpasbare ontvanger of onderwerp; HTML escaping; de naam/e-mail uit het formulier staan uitsluitend in de mailinhoud. Geen outbox met opgeslagen berichtinhoud toegevoegd.
+- De bestaande `sendAuthEmail`/Resend-transportlaag verstuurt naar het server-side configureerbare `CONTACT_EMAIL_TO`, standaard `contact@workmatchr.nl`. De client kan de ontvanger niet bepalen. Ongeldige/meerledige ontvangerconfiguratie faalt vóór limiter/mail. Het onderwerp wordt uitsluitend uit vier vaste labels samengesteld; HTML escaping; de naam/e-mail uit het formulier staan uitsluitend in de mailinhoud. Geen outbox met opgeslagen berichtinhoud toegevoegd.
 - Persistente begrenzing via het bestaande `RateLimit`-model: 30 globaal/10 minuten, 5 per HMAC-IP/10 minuten, 3 per HMAC-e-mail/uur. Eén PostgreSQL transaction advisory lock serialiseert de contactreserveringen. Bij databasefout geen mail. Geen schemawijziging/migratie.
 - Sleutels bevatten HMACs, geen ruwe IP's/e-mails. Verlopen contactbuckets ouder dan een uur worden bij de volgende poging opgeruimd; zonder volgende poging kunnen deze pseudonieme tellers langer blijven staan. Berichtinhoud wordt niet gelogd of in de platformdatabase opgeslagen.
 - Direct pending, disabled submit en synchrone double-submitguard. Bij fout blijft invoer behouden en de knop bruikbaar. Een retry behoudt request-ID; dezelfde payload krijgt dezelfde provider-idempotencykey (Resend heeft een begrensd, geen permanent deduplicatievenster). Geen automatische retry.
@@ -19,14 +19,14 @@ De contactpagina had uitsluitend bestaande contactroutes en mailto-links, geen s
 
 ## Configuratie vóór eventuele release
 
-`CONTACT_FORM_ENABLED=true` is een expliciete releasekeuze; ontbrekend/anders betekent uit. De pagina wordt tijdens de build gegenereerd: stel de flag zowel bij build als runtime consistent in. Bestaande `RESEND_API_KEY`, `AUTH_EMAIL_FROM`, `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET` en `DATABASE_URL` worden hergebruikt; er zijn geen secrets ingesteld of veranderd.
+`CONTACT_FORM_ENABLED=true` is een expliciete releasekeuze; ontbrekend/anders betekent uit. De pagina wordt tijdens de build gegenereerd: stel de flag zowel bij build als runtime consistent in. Optioneel `CONTACT_EMAIL_TO` bepaalt één geldig intern contactadres; ongeldige configuratie faalt gesloten. Bestaande `RESEND_API_KEY`, `AUTH_EMAIL_FROM`, `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET` en `DATABASE_URL` worden hergebruikt; er zijn geen secrets ingesteld of veranderd.
 
 De lokale browserbuild op `http://127.0.0.1:3045/contact` heeft alleen de formulierflag aan, synthetische buildconfiguratie, geen Resend-credential en geen werkende databaseverbinding. Een lokale submit eindigt veilig in 503 vóór database- of mailwerk. Gebruik dit om layout/validatie/error recovery te beoordelen, niet om ontvangst te testen.
 
 ## Getest
 
-- **37/37 PASS**, zes bestanden: contactpagina, contactformulierinteractie, API-route, contactservice, limiter en bestaande `email.test.ts`.
-- Tests dekken default-off, verkeerde/missende origin, contenttype/JSON/bodylimiet, honeypot, invalid input, ontbrekend secret, rate limit, HTML escaping, vaste ontvanger, providerfailure/developmentweigering, provider-idempotencykey, pending/dubbel submit, invoerbehoud en succes na retry. Alle transportcalls zijn mocks.
+- **51/51 PASS**, zes bestanden: contactpagina, contactformulierinteractie, API-route, contactservice, limiter en bestaande `email.test.ts`.
+- Tests dekken default-off, verkeerde/missende origin, contenttype/JSON/bodylimiet, honeypot, invalid input, ontbrekend secret, rate limit, HTML escaping, standaard/configureerbare ontvanger, header-injectie, verplichte onderwerpkeuze, te lange berichten, providerfailure/developmentweigering, provider-idempotencykey, pending/dubbel submit, invoerbehoud en succes na retry. Alle transportcalls zijn mocks.
 - Limiter-unittests bewaken lockaanroep, geen gedeeltelijke reservering bij overschrijding en heropening van verlopen vensters. Echte PostgreSQL-concurrency is hiermee **niet** bewezen.
 - Volledige lint PASS; productiebuild PASS; diff-check en secretpatrooncontrole PASS.
 - Standalone TypeScript: uitsluitend vier bestaande TS2345 readonly-arrayfouten in ongewijzigd `src/lib/compliance/rule-engine.test.ts` (13,14,23,24).
@@ -65,3 +65,9 @@ Geen package/lockfile-, authenticatie-, financiële-, matching- of schemaverande
 - [ ] Contactlimiter-databasetest, privacy/retentie en apart geautoriseerde bezorgtest afgerond vóór inschakelen.
 - [ ] Baselinefouten afzonderlijk opgelost of expliciet geaccepteerd; lint/tests/typecheck/build op geïntegreerde main rapporteren.
 - [ ] Geen financiële of andere productieacties zonder afzonderlijk akkoord; releasebesluit blijft bij Product Owner.
+
+## Aanvullende functionele eisen
+
+De vier verplichte velden en onderwerpkeuzes zijn verwerkt. Privacytoelichting en link staan direct bij de verzendknop; input blijft na fouten staan. De branch is nog steeds gebaseerd op actuele main f002905. PR #39 blijft de afzonderlijke A06 Draft PR. Geen echte mail, productieconfiguratie- of databasewijziging.
+
+Browserhercontrole van de uitgebreide versie: desktop 1280px en mobiel 390px; alle vier verplichte velden krijgen toegankelijke foutkoppelingen. De onderwerpselectie is met toetsenbord bereikbaar, Tab gaat door naar Bericht met zichtbare focus. Na de veilige lokale 503 blijven onderwerp en bericht behouden en is de knop opnieuw bruikbaar. Privacyverklaring staat direct boven de knop. Geen horizontale overflow of consolefout waargenomen. De witte knoptekst op de bestaande blauwe achtergrond heeft circa 4,8:1 contrast.

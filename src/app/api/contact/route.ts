@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     // Vercel overwrites this trusted header; other hosts share a conservative bucket.
     const address = process.env.VERCEL === '1' ? request.headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim() : 'local-or-unconfigured-proxy'
     if (!address) return unavailableResponse()
-    const result = await submitContact(payload, address, process.env.BETTER_AUTH_SECRET ?? '', { reserve: reserveContactAttempt, send: sendAuthEmail })
+    const result = await submitContact(payload, address, process.env.BETTER_AUTH_SECRET ?? '', { reserve: reserveContactAttempt, send: sendAuthEmail, recipient: process.env.CONTACT_EMAIL_TO })
     return Response.json(result.body, { status: result.status, headers: { 'Cache-Control': 'no-store' } })
   } catch { return Response.json({ ok: false, message: 'Controleer uw bericht en probeer opnieuw.' }, { status: 400 }) }
 }

@@ -19,7 +19,7 @@ it('verwerkt een geldig bericht uitsluitend naar de vaste mailbox via de transpo
   vi.stubEnv('VERCEL', '')
   mocks.reserve.mockResolvedValue(true)
   mocks.send.mockResolvedValue({ transport: 'RESEND', status: 'ACCEPTED' })
-  const response = await POST(request(JSON.stringify({ name: 'Test', email: 'contact-test@example.invalid', message: 'Een synthetische vraag.', requestId: '9f413d52-4499-4981-a7a0-b81da7777777' })))
+  const response = await POST(request(JSON.stringify({ name: 'Test', subject: 'GENERAL', email: 'contact-test@example.invalid', message: 'Een synthetische vraag.', requestId: '9f413d52-4499-4981-a7a0-b81da7777777' })))
   expect(response.status).toBe(200)
   expect(mocks.send).toHaveBeenCalledTimes(1)
   expect(mocks.send.mock.calls[0][0].to).toBe('contact@workmatchr.nl')
