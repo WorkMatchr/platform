@@ -45,3 +45,11 @@ Acceptatie: `http://127.0.0.1:3044/kenniscentrum`.
 
 Dit rapport; `src/app/kenniscentrum/page.tsx`; `src/app/kenniscentrum/acceptance.test.tsx`; `src/components/public/knowledge-article-page.tsx`; `src/components/public/public-detail-content.test.tsx`; `src/content/knowledge/articles.ts`.
 Geen database-, financiële-, intake- of authenticatiewijzigingen. Geen merge of deployment. A07 blijft uitgesteld tot integratie/acceptatie van A03–A06.
+
+## Aanvullende eindcontrole — categorieën, links en beoordelingsdata
+
+- Alle 29 unieke interne href-bestemmingen uit het gerenderde overzicht en de negen artikelen zijn lokaal gecontroleerd: 29 HTTP 200, nul fouten (redirects gevolgd). Dit omvat breadcrumbs, gerelateerde diensten/verplichtingen, onderlinge artikellinks en `/opdracht-starten`.
+- **Voorstel aan Product Owner:** behoud de vijf categoriekaarten voorlopig als informatieve rubrieken. De contentstructuur definieert hiervoor titels en beschrijvingen, maar geen categorie-hrefs of gepubliceerde categoriepagina's. Alle negen artikelen staan al direct bereikbaar boven deze kaarten. Een klik zonder specifieke bestemming zou een niet-bestaande navigatiemogelijkheid suggereren; een filter of categorieoverzicht vraagt een afzonderlijk productbesluit. Daarom zijn geen links, filters of nieuwe routes toegevoegd. De kaarten hebben geen interactieve rol/tabstop.
+- De vastgelegde reviewdatums zijn vergeleken met main: uitsluitend het daadwerkelijk opnieuw beoordeelde en gecorrigeerde incidentonderzoekartikel is bijgewerkt naar 2026-10-13. Andere datums zijn niet automatisch opgehoogd vanwege link-, layout- of technische controles. De primaire bronrecords en hun eigen reviewdatums zijn ongewijzigd.
+- Actuele main is nog steeds f002905; de bestaande afzonderlijke Draft PR #38 blijft de A05-oplevering. Geen duplicaatbranch/PR nodig. De code en bestaande 49 geslaagde tests zijn bij deze aanvullende documentatiecontrole niet veranderd.
+- Echte 200%-zoom en functionele eindacceptatie blijven expliciet open voor Product Owner; geen merge, financiële actie, databasewijziging of productiedeployment.
