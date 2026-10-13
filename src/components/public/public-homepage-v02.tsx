@@ -33,7 +33,7 @@ export function PublicHomepageV02() {
           <Eyebrow>ARBO- EN VEILIGHEIDSONDERSTEUNING</Eyebrow>
           <Heading as="h1" size="display" className="text-brand-dark">Vind de juiste deskundige voor uw vraag</Heading>
           <p className="mt-6 max-w-xl text-lg leading-8 text-text-secondary">Beschrijf wat er speelt. WorkMatchr helpt u uw hulpvraag concreet te maken, een opdracht te publiceren en passende opdrachtnemers te vergelijken.</p>
-          <div className="mt-8 flex flex-wrap items-center gap-4"><LinkButton href={publicRoutes.adviceGuide}>Start uw opdracht</LinkButton><LinkButton href="#advieswijzer" variant="ghost">Ontdek eerst wat u nodig heeft</LinkButton></div>
+          <div className="mt-8 flex flex-wrap items-center gap-4"><LinkButton href={publicRoutes.adviceGuide}>Start uw opdracht</LinkButton><LinkButton href="#advieswijzer" variant="outline">Ontdek eerst wat u nodig heeft</LinkButton></div>
           <p className="mt-6 text-sm leading-6 text-text-secondary">Onafhankelijk · Transparant · U kiest zelf de opdrachtnemer</p>
         </div>
         <figure className="min-w-0 overflow-hidden rounded-card bg-surface shadow-xl">
