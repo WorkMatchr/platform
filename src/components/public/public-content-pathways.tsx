@@ -32,6 +32,9 @@ function resolvePopulatedGroups(contentId: PublicContentId, includeSectors = tru
 
 function PathwayRelations({ contentId, includeSectors = true, title = 'Verder met uw vraag' }: { contentId: PublicContentId; includeSectors?: boolean; title?: string }) {
   const populatedGroups = resolvePopulatedGroups(contentId, includeSectors)
+  const linkColors = contentId === 'overview:services' || contentId.startsWith('service:')
+    ? 'text-brand-primary-hover hover:text-brand-dark'
+    : 'text-brand-primary hover:text-brand-primary-hover'
   if (populatedGroups.length === 0) return null
 
   return (
@@ -47,7 +50,7 @@ function PathwayRelations({ contentId, includeSectors = true, title = 'Verder me
             <ul className="mt-2 space-y-1">
               {group.items.map((item) => (
                 <li key={item.id}>
-                  <Link className="group inline-flex min-h-10 items-center gap-2 rounded-control font-semibold text-brand-primary hover:text-brand-primary-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary" href={item.href}>
+                  <Link className={`group inline-flex min-h-10 items-center gap-2 rounded-control font-semibold ${linkColors} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary`} href={item.href}>
                     <span>{item.title}</span><span aria-hidden="true" className="transition-transform group-hover:translate-x-0.5">→</span>
                   </Link>
                 </li>
@@ -94,16 +97,18 @@ export function PublicContentPathways({
   contentId,
   primaryHref = publicRoutes.adviceGuide,
   embedded = false,
+  linkLabel = 'Vraag ondersteuning aan',
 }: {
   contentId: PublicContentId
   primaryHref?: InternalHref
   embedded?: boolean
+  linkLabel?: string
 }) {
   if (embedded) {
     return (
       <section className="grid gap-6 rounded-card border border-border bg-surface-subtle p-5 sm:p-6" aria-labelledby={`${contentId}-pathways-title`}>
         <PathwayRelations contentId={contentId} />
-        <PublicContentCallToAction primaryHref={primaryHref} linkLabel="Vraag ondersteuning aan" />
+        <PublicContentCallToAction primaryHref={primaryHref} linkLabel={linkLabel} />
       </section>
     )
   }
@@ -111,7 +116,7 @@ export function PublicContentPathways({
   return (
     <Section spacing="compact" className="bg-surface-subtle" containerClassName="grid gap-6" aria-labelledby={`${contentId}-pathways-title`}>
       <PathwayRelations contentId={contentId} />
-      <PublicContentCallToAction primaryHref={primaryHref} linkLabel="Vraag ondersteuning aan" />
+      <PublicContentCallToAction primaryHref={primaryHref} linkLabel={linkLabel} />
     </Section>
   )
 }
