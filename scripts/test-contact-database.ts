@@ -50,14 +50,32 @@ try {
     assert.ok(registry.every(row => row.finished_at && !row.rolled_back_at))
     console.log(`Migrations: ${registry.length}/${local.length}; failed=0; unexpected=0`)
   }
-  const concurrency = process.argv.includes('--burst') ? 45 : 3
-  console.log(`Concurrent requests per wave: ${concurrency}`)
-  const requests = async <T>(count: number, run: (index: number) => Promise<T>) => {
-    const results: T[] = []
-    for (let offset = 0; offset < count; offset += concurrency) {
-      results.push(...await Promise.all(Array.from({ length: Math.min(concurrency, count - offset) }, (_, index) => run(offset + index))))
-    }
-    return results
+  const requests = async <T extends { status: number }>(count: number, run: (index: number) => Promise<T>, concurrency = 1) => {
+    const observer = new Client({ connectionString: testUrl.href })
+    await observer.connect()
+    let maxLockWaiters = 0, maxConnections = 0
+    let sample: Promise<void> | undefined
+    const timer = setInterval(() => {
+      if (sample) return
+      sample = observer.query(`SELECT count(*) FILTER (WHERE wait_event_type = 'Lock')::int AS waiting, count(*)::int AS connections FROM pg_stat_activity WHERE datname = current_database() AND pid <> pg_backend_pid()`)
+        .then(({ rows }) => { maxLockWaiters = Math.max(maxLockWaiters, rows[0].waiting); maxConnections = Math.max(maxConnections, rows[0].connections) })
+        .finally(() => { sample = undefined })
+    }, 20)
+    const results: T[] = [], latencies: number[] = []
+    const started = performance.now()
+    try {
+      for (let offset = 0; offset < count; offset += concurrency) {
+        results.push(...await Promise.all(Array.from({ length: Math.min(concurrency, count - offset) }, async (_, index) => {
+          const start = performance.now()
+          const result = await run(offset + index)
+          latencies.push(performance.now() - start)
+          return result
+        })))
+      }
+      latencies.sort((a, b) => a - b)
+      console.log(JSON.stringify({ count, concurrency, statuses: Object.fromEntries([200,429,503].map(status => [status,results.filter(r => r.status === status).length])), elapsedMs: Math.round(performance.now()-started), p50Ms: Math.round(latencies[Math.floor(count*.5)]), p95Ms: Math.round(latencies[Math.min(count-1,Math.floor(count*.95))]), maxLockWaiters, maxConnections }))
+      return results
+    } finally { clearInterval(timer); await sample; await observer.end() }
   }
   let sent: AuthEmail[] = []
   const send = async (mail: AuthEmail): Promise<AuthEmailDeliveryResult> => {
@@ -76,7 +94,7 @@ try {
   }, send, recipient: 'contact-test@example.invalid' })
   const reset = async () => { await db!.rateLimit.deleteMany(); sent = [] }
   const test = async (name: string, run: () => Promise<void>) => { await reset(); await run(); passed++; console.log(`PASS ${name}`) }
-  await test('same email: 12 attempts in concurrent waves -> exactly 3 accepted', async () => {
+  await test('same email: 12 sequential attempts -> exactly 3 accepted', async () => {
     const results = await requests(12, i => request(i, 'same-ip', 'same@example.invalid'))
     assert.equal(results.filter(r => r.status === 200).length, 3)
     assert.equal(results.filter(r => r.status === 429).length, 9)
@@ -94,8 +112,6 @@ try {
     assert.equal(results.filter(r => r.status === 200).length, 30)
     assert.equal(results.filter(r => r.status === 429).length, 15)
     assert.equal(sent.length, 30)
-    const connections = await db!.$queryRaw<{ count: bigint }[]>`SELECT count(*) FROM pg_stat_activity WHERE datname = current_database() AND application_name = 'a06-contact-test'`
-    assert.ok(Number(connections[0].count) >= 2, 'Concurrent PostgreSQL connections required')
   })
   await test('exhausted email does not partially consume global/new-IP buckets', async () => {
     for (let i = 0; i < 3; i++) assert.equal((await request(i, 'ip-one', 'same@example.invalid')).status, 200)
@@ -133,7 +149,38 @@ try {
     try { assert.equal((await request(1, 'test-ip')).status, 503); assert.equal(sent.length, 0) }
     finally { await db!.$executeRawUnsafe('ALTER TABLE "RateLimit_test_unavailable" RENAME TO "RateLimit"') }
   })
-  console.log(`CONTACT_DATABASE_TESTS_PASS ${passed}/8; real emails=0`)
+  if (process.argv.includes('--burst')) {
+    for (let repeat = 1; repeat <= 3; repeat++) {
+      for (const scenario of [{ name: 'email', limit: 3 }, { name: 'ip', limit: 5 }, { name: 'global', limit: 30 }]) {
+        await test(`burst ${repeat} ${scenario.name}: 45 requests, bounded acceptance and controlled rejection`, async () => {
+          const results = await requests(45, i => request(i, scenario.name === 'global' ? `ip-${i}` : 'one-ip', scenario.name === 'email' ? 'one@example.invalid' : `test-${i}@example.invalid`), 45)
+          const accepted = results.filter(r => r.status === 200).length
+          assert.ok(accepted > 0 && accepted <= scenario.limit)
+          assert.ok(results.every(r => r.status === 200 || r.status === 429))
+          assert.equal(sent.length, accepted)
+          assert.equal((await db!.rateLimit.findUniqueOrThrow({ where: { key: 'contact:global' } })).count, accepted)
+          assert.ok(results.some(r => r.retryAfterSeconds === 5))
+          const connections = await db!.$queryRaw<{ count: bigint }[]>`SELECT count(*) FROM pg_stat_activity WHERE datname = current_database() AND application_name = 'a06-contact-test'`
+          assert.ok(Number(connections[0].count) >= 2, 'Concurrent PostgreSQL connections required')
+        })
+      }
+    }
+    await test('held advisory lock: all 45 requests return 429, no mail or counters', async () => {
+      const holder = new Client({ connectionString: testUrl.href })
+      await holder.connect()
+      await holder.query('BEGIN')
+      await holder.query('SELECT pg_advisory_xact_lock(310034)')
+      try {
+        const results = await requests(45, i => request(i, `held-lock-${i}`), 45)
+        assert.ok(results.every(r => r.status === 429 && r.retryAfterSeconds === 5))
+        assert.equal(sent.length, 0)
+        assert.equal(await db!.rateLimit.count(), 0)
+      } finally { await holder.query('ROLLBACK'); await holder.end() }
+      assert.equal((await request(100, 'after-release')).status, 200)
+      assert.equal(sent.length, 1)
+    })
+  }
+  console.log(`CONTACT_DATABASE_TESTS_PASS ${passed}/${process.argv.includes('--burst') ? 18 : 8}; real emails=0`)
 } finally {
   await db?.$disconnect()
   if (created) await admin.query(`DROP DATABASE "${databaseName}" WITH (FORCE)`)

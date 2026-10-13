@@ -150,3 +150,49 @@ Voor een echte bezorgtest: eerst privacytekst en uitvoerbaar retentiebeleid afro
 Technische conclusie: de contactfunctionaliteit en gerichte concurrency-/rate-limitcontrole zijn bewezen, maar **nog geen volledige technische vrijgave voor ingeschakelde publicatie**: de volledige database-integratie strandt op de bestaande migratiebaseline en de zwaardere bursttest levert P2028/503 op. Behoud het formulier uit; beoordeel burstbeschikbaarheid vóór inschakeling en behandel de migratiebaseline afzonderlijk. Privacy-/retentieacceptatie blijft daarnaast expliciet open totdat beleid én uitvoering zijn geverifieerd. De handmatige 200%-controle is PASS en hoeft hiervoor niet opnieuw.
 
 Productiebuild op geïntegreerde main: **PASS**, met formulierflag uit en zonder mailcredentials. Bestaande niet-blokkerende NFT-warning vanuit de knowledge-importketen. Diff-check PASS. Geen productcode buiten A06 aangepast.
+
+
+## A06 resterende technische blokkades — vervolg 13 oktober 2026
+
+Deze sectie vervangt de eerdere conclusie over de burstblocker. `origin/main` opnieuw opgehaald: nog steeds d3bce312, inclusief A03–A05. De eerdere privacy-/retentiebeperkingen blijven gelden.
+
+### Oorzaak en meting vóór herstel
+
+De gedeelde PrismaPg-pool gebruikt de bestaande pg-pooldefault van 10 verbindingen. Iedere contacttransactie hield een verbinding bezet terwijl `pg_advisory_xact_lock(310034)` op dezelfde globale contactlock wachtte. Dat serialiseert terecht de quotacontrole, maar een vertraagde houder vult de pool met wachtende transacties. Nieuwe transacties lopen vervolgens tegen hun start-/transactiebudget aan (P2028). Het is geen tekort aan quotum of onbewezen behoefte aan extra databasecapaciteit.
+
+Gemeten via `pg_stat_activity` op een afzonderlijke tijdelijke PostgreSQL 17-database, echte parallelle verbindingen en gemockt transport. De burstmetingen lopen door de contactservice; HTTP-serialisatie en Retry-After zijn afzonderlijk in de endpointregressietest gecontroleerd. Dit is geen productie-HTTP-loadtest:
+
+| Scenario vóór herstel | 200 | 429 | 503 | p50 | p95 | Hoogste aantal lockwachtenden |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 45 verschillende aanvragen, zonder buildbelasting | 30 | 15 | 0 | 720 ms | 971 ms | 9 |
+| Dezelfde burst, contactlock bewust 3,5 sec bezet | 10 | 0 | 35 | 2016 ms | 3757 ms | 10 |
+
+De tweede proef reproduceert de oorzaak gecontroleerd; P2028 wordt door de bestaande service veilig vertaald naar 503, zonder verzending voor die aanvragen. De oorspronkelijke lage vrije geheugenruimte/gelijktijdige build kan de wachttijden versterken; de gerichte lockproef bewijst het ontwerpmechanisme onafhankelijk daarvan.
+
+### Minimale correctie
+
+- Zelfde locknamespace en transactionele quotacontrole; nu `pg_try_advisory_xact_lock` in plaats van wachten op de lock.
+- Bezette lock resulteert in expliciet `BUSY`, vóór cleanup, reads, writes of transport. De endpoint geeft 429, `Retry-After: 5`, no-store en een Nederlandse druktemelding die bevestigt dat invoer blijft staan. Geen automatische retry.
+- Bewuste toelatingsbegrenzing: bij een burst kunnen ook aanvragen onder hun quotum worden geweigerd; dit is geen belofte dat 30 gelijktijdige aanvragen worden afgeleverd. De gebruiker kan later opnieuw proberen.
+- Poolgrootte, capaciteit, Prisma-timeouts, quota 30/5/3 en mailtransport onveranderd. Geen in-memory lock die tussen serverless instanties zou verschillen. De lock wordt door PostgreSQL aan het transactie-einde vrijgegeven.
+- Echte database-/transportfouten blijven 503 en fail-closed; deze worden niet als een gewone quotumoverschrijding verborgen.
+
+### Resultaat na herstel
+
+**18/18 PostgreSQL-tests PASS.** De exacte quota worden afzonderlijk zonder lockcontentie bewezen (3/5/30). Daarnaast drie herhalingen voor elk van e-mail/IP/globale begrenzing: negen bursts van 45 gelijktijdige aanvragen (405 totaal). Per burst 2–3 geaccepteerd en 42–43 gecontroleerd geweigerd, nul 503; p50 47–77 ms, p95 67–105 ms, nul waargenomen lockwachtenden. Counters en aantal mockmails zijn exact gelijk aan het aantal geaccepteerde aanvragen; geen enkele quotaoverschrijding. Minimaal twee werkelijke databaseverbindingen vereist door de tests.
+
+Bij een gedurende de hele proef vastgehouden lock: 45/45 status 429, `Retry-After: 5`, nul mails en nul counters, p50 43 ms/p95 63 ms. Na vrijgave slaagt één nieuwe aanvraag. De tijdelijke databases en uitsluitend hiervoor gemaakte container zijn verwijderd.
+
+Het testharnas bewaakt nu afzonderlijk exacte quotasemantiek en gecontroleerde bursttoelating; geen test veronderstelt dat alle aanvragen onder hun quotum bij drukte moeten worden geaccepteerd. Zowel de afwijzingen als side-effectvrije lockdrukte worden strikt gecontroleerd. Geen productielimiet is versoepeld.
+
+Commando: `npx tsx scripts/test-contact-database.ts --rate-limit-only --burst`, met expliciete lokale DATABASE_URL en CONTACT_DATABASE_TEST_ACK zoals hierboven. Default zonder de gerichte fixture blijft de echte volledige migratieketen uitvoeren; die bestaande baseline wordt niet omzeild voor volledige integratieacceptatie.
+
+### Afzonderlijk migratieonderzoek
+
+Git-historie: migratie aangemaakt in 07e1fa7; commit `09fb864466a98012a304052c841d8426c09271c9` veranderde bij `prevent_non_draft_compliance_framework_mutation` de delimiters `AS $$` / `$$;` in `AS $` / `$;`. Dat verklaart exact de eerder gemeten PostgreSQL 42601 / Prisma P3018. De fout staat op huidige origin/main. Geen migration SQL, schema of migratieregister gewijzigd binnen A06. Of dit bestand elders ooit succesvol geregistreerd is, is in deze opdracht niet vastgesteld; een afzonderlijk herstel moet dat eerst onderzoeken en het repositorybeleid voor toegepaste migraties volgen.
+
+### Releasegate
+
+Opgelost: de contactlock veroorzaakt bij geteste piekbelasting geen wachtrij met P2028/503 meer; standaard uit blijft behouden. Open: volledige databasebootstrap door de onafhankelijke compliance-migratie; vier bekende standalone-TypeScriptbaselinefouten; privacytekst en aantoonbare mailboxretentie/toegang; afzonderlijk goedgekeurde echte bezorgtest. Geen productiegegevens, secrets, mailboxinstellingen of echte mail geraakt. Geen merge of productie-deployment.
+
+Regressies op geïntegreerde A03–A06: **137/137 PASS**, twaalf bestanden, inclusief nieuwe busy-/Retry-Aftertests. Volledige lint, productiebuild (inclusief build-TypeScript), git diff --check en secretpatrooncontrole PASS. Build uitgevoerd met CONTACT_FORM_ENABLED uit en zonder mailcredentials; bestaande niet-blokkerende knowledge/NFT-warning blijft. De bekende vier standalone-TypeScriptbaselinefouten zijn in deze ronde niet opnieuw afzonderlijk uitgevoerd of gerepareerd.

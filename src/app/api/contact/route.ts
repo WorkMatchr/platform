@@ -29,6 +29,6 @@ export async function POST(request: Request) {
     const address = process.env.VERCEL === '1' ? request.headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim() : 'local-or-unconfigured-proxy'
     if (!address) return unavailableResponse()
     const result = await submitContact(payload, address, process.env.BETTER_AUTH_SECRET ?? '', { reserve: reserveContactAttempt, send: sendAuthEmail, recipient: process.env.CONTACT_EMAIL_TO })
-    return Response.json(result.body, { status: result.status, headers: { 'Cache-Control': 'no-store' } })
+    return Response.json(result.body, { status: result.status, headers: { 'Cache-Control': 'no-store', ...(result.retryAfterSeconds ? { 'Retry-After': String(result.retryAfterSeconds) } : {}) } })
   } catch { return Response.json({ ok: false, message: 'Controleer uw bericht en probeer opnieuw.' }, { status: 400 }) }
 }

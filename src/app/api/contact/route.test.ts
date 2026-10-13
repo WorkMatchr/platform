@@ -33,3 +33,16 @@ it('weigert op Vercel zonder vertrouwde IP-header voor limiter en transport', as
   expect(mocks.reserve).not.toHaveBeenCalled()
   expect(mocks.send).not.toHaveBeenCalled()
 })
+
+it('geeft bij lockdrukte 429 met Retry-After zonder transportcall', async () => {
+  vi.stubEnv('CONTACT_FORM_ENABLED', 'true')
+  vi.stubEnv('BETTER_AUTH_URL', 'https://workmatchr.example.invalid')
+  vi.stubEnv('BETTER_AUTH_SECRET', 'synthetic-test-secret-at-least-32-characters')
+  vi.stubEnv('VERCEL', '')
+  mocks.reserve.mockResolvedValue('BUSY')
+  const response = await POST(request(JSON.stringify({ name: 'Test', subject: 'GENERAL', email: 'contact-test@example.invalid', message: 'Een synthetische vraag.', requestId: '9f413d52-4499-4981-a7a0-b81da7777777' })))
+  expect(response.status).toBe(429)
+  expect(response.headers.get('retry-after')).toBe('5')
+  expect((await response.json()).message).toContain('Uw invoer blijft staan')
+  expect(mocks.send).not.toHaveBeenCalled()
+})

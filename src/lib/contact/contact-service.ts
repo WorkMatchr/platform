@@ -5,10 +5,10 @@ import { escapeHtml, type AuthEmail, type AuthEmailDeliveryResult } from '@/lib/
 
 type Dependencies = {
   recipient?: string
-  reserve: (keys: { key: string; limit: number; windowMs: number }[]) => Promise<boolean>
+  reserve: (keys: { key: string; limit: number; windowMs: number }[]) => Promise<boolean | 'BUSY'>
   send: (mail: AuthEmail) => Promise<AuthEmailDeliveryResult>
 }
-export async function submitContact(payload: unknown, clientAddress: string, secret: string, dependencies: Dependencies): Promise<{ status: number; body: ContactResult }> {
+export async function submitContact(payload: unknown, clientAddress: string, secret: string, dependencies: Dependencies): Promise<{ status: number; body: ContactResult; retryAfterSeconds?: number }> {
   const parsed = contactSchema.safeParse(payload)
   if (!parsed.success) {
     const errors: ContactResult['errors'] = {}
@@ -32,6 +32,7 @@ export async function submitContact(payload: unknown, clientAddress: string, sec
       { key: `contact:ip:${digest(clientAddress)}`, limit: 5, windowMs: 600000 },
       { key: `contact:email:${digest(email)}`, limit: 3, windowMs: 3600000 },
     ])
+    if (allowed === 'BUSY') return { status: 429, retryAfterSeconds: 5, body: { ok: false, message: 'Het contactformulier is momenteel druk. Uw invoer blijft staan. Probeer het over enkele seconden opnieuw.' } }
     if (!allowed) return { status: 429, body: { ok: false, message: 'Er zijn te veel berichten verstuurd. Uw invoer blijft staan. Probeer het over een uur opnieuw of mail contact@workmatchr.nl.' } }
     const result = await dependencies.send({
       kind: 'ADMIN_MESSAGE', to: recipient, subject: `${subjectLabel} | WorkMatchr`,

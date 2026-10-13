@@ -2,9 +2,11 @@ import { getPrisma } from '@/lib/prisma'
 
 // Reuses the existing RateLimit model. Lock only this endpoint's namespace.
 export async function reserveContactAttempt(limits: { key: string; limit: number; windowMs: number }[]) {
-  const now = Date.now()
   return getPrisma().$transaction(async transaction => {
-    await transaction.$executeRaw`SELECT pg_advisory_xact_lock(310034)`
+    // Do not let a busy contact lock occupy every connection in the shared pool.
+    const [lock] = await transaction.$queryRaw<{ acquired: boolean }[]>`SELECT pg_try_advisory_xact_lock(310034) AS acquired`
+    if (!lock?.acquired) return 'BUSY' as const
+    const now = Date.now()
     await transaction.rateLimit.deleteMany({ where: { key: { startsWith: 'contact:' }, lastRequest: { lt: BigInt(now - 3600000) } } })
     const counts = []
     for (const limit of limits) {
