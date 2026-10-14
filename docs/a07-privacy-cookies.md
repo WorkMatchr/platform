@@ -41,7 +41,7 @@ Onderstaande grondslagen zijn **vermoedelijke grondslagen**, geen vastgesteld re
 | Partij | Technisch/extern bevestigd | Nog te bevestigen vóór definitieve verklaring |
 |---|---|---|
 | Vercel / Blob | Hostingarchitectuur en private Blob-adapter in `src/lib/knowledge/knowledge-source-upload-storage.ts`; publieke DPA bevat doorgiftekaders | Projectregio, logdrains/analyticsinstellingen, log/backupretentie, feitelijk gebruikte stores, contractversie/subverwerkers; EU-hosting sluit toegang van buiten EER niet uit |
-| PostgreSQL / Neon | Prisma PostgreSQL; eerdere productiecontext noemt Neon. Geen productieverbinding of records voor A07 geopend | Actuele contractentiteit/plan, regio, branch/backups, toegangslanden en toepasselijke DPA, inclusief eventuele Databricks-overgang; niet afleiden uit oude documentatie |
+| Neon | PostgreSQL is databasetechnologie, geen afzonderlijke leverancier. Prisma PostgreSQL; eerdere productiecontext noemt Neon. Geen productieverbinding of records voor A07 geopend | Actuele contractentiteit/plan, regio, branch/backups, toegangslanden en toepasselijke DPA, inclusief eventuele Databricks-overgang; niet afleiden uit oude documentatie |
 | Better Auth / HIBP | Better Auth is lokale library. Plugin verstuurt eerste 5 SHA-1-tekens naar `api.pwnedpasswords.com/range/…`, met padding, zonder volledige hash/wachtwoord/e-mail | Noodzakelijkheid/belangenafweging, providerrol en internationale netwerkinfrastructuur; niet als verzending van wachtwoorden beschrijven |
 | Resend | `src/lib/email.ts` transport; leverancier beschrijft VS-opslag, SCC-kader, 30 dagen e-mail/logs voor Free/Pro/Scale en 7 dagen backups | Werkelijk plan, domeintracking, contract/DPA en subverwerkers bewijs ophalen. EU-verzendregio ≠ uitsluitend EER-opslag. Geen productiemail verzonden |
 | Mailbox contact@workmatchr.nl | Eerdere A06-MX-observatie: spamrelay.zxcs.nl; dit identificeert hooguit relay, niet sluitend mailboxdienst/pakket | PO/IT: daadwerkelijke provider, mailbox-/archief-/trash-/backupinstellingen, MFA en gemachtigden aantonen |
@@ -128,3 +128,12 @@ Nulmeting: na lokale Prisma-clientgeneratie (zonder databaseverbinding) 16/16 pu
 8. `src/app/public-placeholder-routes.test.tsx` — vervallen cookieplaceholderverwachting verwijderen.
 
 **Opleverstatus:** geschikt als onderzoeks-/concept-Draft PR; **niet vrijgegeven voor definitieve juridische publicatie**. Verplichte eigenaarbesluiten en runtime-/contractverificaties staan hierboven. Geen merge of deployment uitgevoerd.
+
+
+### Aanpassing leverancierssectie op verzoek van de Product Owner
+
+Op 14 oktober 2026 is de sectie hernoemd naar **Met wie delen wij persoonsgegevens?** en vervangen door de aangeleverde noodzakelijkheid-/leverancierscopy. De verwerkingstabel ondersteunt Vercel (hosting), Neon (databaseopslag), Resend (e-mail), Mollie (betalingen) en Jortt (boekhouding); niet iedere partij ontvangt dezelfde gegevens. PostgreSQL is technologie en wordt niet als leverancier gepresenteerd. Mollies zelfstandige rol voor eigen betaal-/wettelijke doeleinden blijft expliciet, evenals HIBP, mailboxonzekerheid en internationale doorgifte.
+
+De bestaande inventarisatie en relevante beveiligings-/opslag-/Jortt-documentatie leveren geen gecontroleerd bewijs dat alle vereiste WorkMatchr-verwerkersafspraken bestaan en passend zijn. Publieke leveranciers-DPA’s zijn daarvoor onvoldoende. De zin over afspraken is daarom een **vereiste vóór definitieve publicatie**, met verificatie en invulling van ontbrekende afspraken, geen claim dat overeenkomsten reeds zijn gesloten. Geen bedrijfsgegevens, facturatie, database, runtimeconfiguratie of conceptstatus gewijzigd.
+
+Validatie van deze aanvulling: **23/23 gerichte tests PASS**, volledige lint PASS, productiebuild PASS, diff-check PASS en secrets-patterncontrole 0 treffers. De bestaande niet-blokkerende NFT-tracingwaarschuwing blijft; geen nieuwe buildfout. Standalone TypeScript is voor deze copy-aanvulling niet opnieuw uitgevoerd; de eerdere vier baselinefouten blijven afzonderlijk hierboven gedocumenteerd.

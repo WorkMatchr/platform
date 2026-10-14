@@ -43,6 +43,20 @@ describe('A07 juridische conceptpagina’s', () => {
     expect(html).toContain(`mailto:${legalIdentityDraft.proposedPrivacyEmail}`)
     expect(renderToStaticMarkup(<CookiesPage />)).toContain(`mailto:${legalIdentityDraft.proposedPrivacyEmail}`)
   })
+  it('onderscheidt leveranciers van techniek en vereist bewijs van passende verwerkersafspraken', () => {
+    const html = renderToStaticMarkup(<PrivacyPage />)
+    const recipients = html.match(/<section aria-labelledby="recipients">([\s\S]*?)<\/section>/)?.[1] ?? ''
+    expect(recipients).toContain('Met wie delen wij persoonsgegevens?')
+    for (const provider of ['Vercel (hosting)', 'Neon (databaseopslag)', 'Resend (e-mail)', 'Mollie (betalingen)', 'Jortt (boekhouding)']) expect(recipients).toContain(provider)
+    expect(recipients).not.toContain('PostgreSQL')
+    expect(recipients).toContain('Niet iedere dienstverlener ontvangt dezelfde gegevens.')
+    expect(recipients).toContain('Mollie op als zelfstandige verwerkingsverantwoordelijke')
+    expect(recipients).toContain('Vóór definitieve publicatie moet nog worden aangetoond')
+    expect(recipients).toContain('ontbrekende afspraken moeten eerst worden ingevuld')
+    expect(recipients).not.toContain('maken wij afspraken')
+    expect(recipients).toContain('Have I Been Pwned')
+    expect(recipients).toContain('Verwerking buiten de Europese Economische Ruimte')
+  })
   it('maakt retentie-onzekerheid, A06-status en privacyrechten expliciet', () => {
     const html = renderToStaticMarkup(<PrivacyPage />)
     for (const text of ['nog niet geactiveerd', 'twaalf maanden na afhandeling', 'nog niet aantoonbaar ingevoerd', 'dertig dagen', 'back-upretentie staat nog open', 'bezwaar', 'inzage', 'één maand', 'Verenigde Staten', 'geen juridische certificering']) expect(html).toContain(text)
