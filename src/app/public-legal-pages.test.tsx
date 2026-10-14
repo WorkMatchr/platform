@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import PrivacyPage, { metadata as privacyMetadata } from './privacy/page'
 import CookiesPage, { metadata as cookieMetadata } from './cookies/page'
-import { legalIdentityDraft } from '@/config/legal-identity'
+import { legalIdentityDraft, privacyMailbox } from '@/config/legal-identity'
 import { browserStorageInventory } from '@/content/public-legal'
 import { indexablePublicRoutes } from '@/content/public-routes'
 
@@ -40,14 +40,14 @@ describe('A07 juridische conceptpagina’s', () => {
     expect(html).toContain(legalIdentityDraft.correspondenceAddress)
     expect(html).toContain('postadres in Zwolle')
     expect(html).toContain('Vóór livegang')
-    expect(html).toContain(`mailto:${legalIdentityDraft.proposedPrivacyEmail}`)
-    expect(renderToStaticMarkup(<CookiesPage />)).toContain(`mailto:${legalIdentityDraft.proposedPrivacyEmail}`)
+    expect(html).toContain(`mailto:${legalIdentityDraft.privacyEmail}`)
+    expect(renderToStaticMarkup(<CookiesPage />)).toContain(`mailto:${legalIdentityDraft.privacyEmail}`)
   })
   it('onderscheidt leveranciers van techniek en vereist bewijs van passende verwerkersafspraken', () => {
     const html = renderToStaticMarkup(<PrivacyPage />)
     const recipients = html.match(/<section aria-labelledby="recipients">([\s\S]*?)<\/section>/)?.[1] ?? ''
     expect(recipients).toContain('Met wie delen wij persoonsgegevens?')
-    for (const provider of ['Vercel (hosting)', 'Neon (databaseopslag)', 'Resend (e-mail)', 'Mollie (betalingen)', 'Jortt (boekhouding)']) expect(recipients).toContain(provider)
+    for (const provider of ['Vercel (hosting)', 'Neon (databaseopslag)', 'Resend (uitgaande applicatiemails)', 'Vimexx (e-mailforwarding en ontvangende mailbox)', 'Mollie (betalingen)', 'Jortt (boekhouding)']) expect(recipients).toContain(provider)
     expect(recipients).not.toContain('PostgreSQL')
     expect(recipients).toContain('Niet iedere dienstverlener ontvangt dezelfde gegevens.')
     expect(recipients).toContain('Mollie op als zelfstandige verwerkingsverantwoordelijke')
@@ -57,9 +57,27 @@ describe('A07 juridische conceptpagina’s', () => {
     expect(recipients).toContain('Have I Been Pwned')
     expect(recipients).toContain('Verwerking buiten de Europese Economische Ruimte')
   })
+  it('onderscheidt bevestigd privacycontact en mailroute van onbewezen mailboxinstellingen', () => {
+    expect(legalIdentityDraft.privacyEmail).toBe('contact@workmatchr.nl')
+    expect(legalIdentityDraft.privacyContactStatus).toBe('PRODUCT_OWNER_CONFIRMED')
+    expect(privacyMailbox.configurationEvidence).toBe('PRODUCT_OWNER_CONFIRMED')
+    expect(privacyMailbox.technicalVerification).toBe('PENDING')
+    expect(privacyMailbox.forwardingProvider).toBe('Vimexx')
+    expect(privacyMailbox.mailboxProvider).toBe('Vimexx')
+    expect(privacyMailbox.destination).toBe('info@workmatchr.nl')
+    const html = renderToStaticMarkup(<PrivacyPage />)
+    expect(html).toContain('Officieel e-mailadres voor privacyverzoeken:')
+    expect(html).toContain('automatische forwarder van Vimexx')
+    expect(html).toContain('info@workmatchr.nl, een mailbox bij Vimexx')
+    expect(html).toContain('niet onafhankelijk technisch geverifieerd')
+    expect(html).toContain('Of de forwarder aanvullende kopieën of logs bewaart')
+    expect(html).toContain('nog niet aantoonbaar ingevoerd')
+    expect(html).toContain('de uitvoering van dit toegangsbeleid en MFA moet nog worden gecontroleerd')
+    for (const { Page } of pages) expect(renderToStaticMarkup(<Page />)).not.toMatch(/Voorgesteld privacycontact|Voorlopig privacycontact/)
+  })
   it('maakt retentie-onzekerheid, A06-status en privacyrechten expliciet', () => {
     const html = renderToStaticMarkup(<PrivacyPage />)
-    for (const text of ['nog niet geactiveerd', 'twaalf maanden na afhandeling', 'nog niet aantoonbaar ingevoerd', 'dertig dagen', 'back-upretentie staat nog open', 'bezwaar', 'inzage', 'één maand', 'Verenigde Staten', 'geen juridische certificering']) expect(html).toContain(text)
+    for (const text of ['nog niet geactiveerd', 'twaalf maanden na afhandeling', 'nog niet aantoonbaar ingevoerd', 'dertig dagen', 'back-upretentie bij Vimexx staat nog open', 'bezwaar', 'inzage', 'één maand', 'Verenigde Staten', 'geen juridische certificering']) expect(html).toContain(text)
     expect(html).toContain('href="/cookies"')
   })
   it('toont ieder opslagitem uniek met doel, aanbieder, duur en toestemmingsbeoordeling', () => {
