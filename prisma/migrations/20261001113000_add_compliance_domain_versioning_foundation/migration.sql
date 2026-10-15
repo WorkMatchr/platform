@@ -212,7 +212,7 @@ ALTER TABLE "ArboGuideRun"
 CREATE OR REPLACE FUNCTION prevent_non_draft_compliance_framework_mutation()
 RETURNS trigger
 LANGUAGE plpgsql
-AS $
+AS $$
 BEGIN
   IF TG_OP = 'DELETE' THEN
     IF OLD."status" <> 'DRAFT' THEN
@@ -247,7 +247,7 @@ BEGIN
 
   RAISE EXCEPTION 'Retired compliance framework versions are immutable.';
 END;
-$;
+$$;
 
 CREATE TRIGGER "ComplianceFrameworkVersion_immutable_after_publish"
 BEFORE UPDATE OR DELETE ON "ComplianceFrameworkVersion"

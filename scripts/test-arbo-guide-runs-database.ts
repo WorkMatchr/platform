@@ -51,9 +51,7 @@ async function main() {
     const user = await prisma.user.create({ data: { email: 'arbo-guide@example.invalid', status: 'ACTIVE', emailVerified: true, accountType: 'CLIENT' } })
     const otherUser = await prisma.user.create({ data: { email: 'other-arbo-guide@example.invalid', status: 'ACTIVE', emailVerified: true, accountType: 'CLIENT' } })
     const organization = await prisma.organization.create({ data: { name: 'Arbo Test BV', organizationType: 'CLIENT', status: 'ACTIVE' } })
-    const framework = await prisma.complianceFrameworkVersion.create({ data: {
-      frameworkCode: 'NL_ARBO', version: 'test-run', status: 'DRAFT', title: 'Testframework', methodology: 'Test', disclaimer: 'Test', checksum: 'c'.repeat(64),
-    } })
+    const framework = await prisma.complianceFrameworkVersion.findUniqueOrThrow({ where: { id: '7e44a647-0549-4d96-a14c-c1d783d11e01' } })
     const otherOrganization = await prisma.organization.create({ data: { name: 'Andere BV', organizationType: 'CLIENT', status: 'ACTIVE' } })
     await prisma.organizationMembership.createMany({ data: [
       { userId: user.id, organizationId: organization.id, role: 'OWNER', status: 'ACTIVE' },

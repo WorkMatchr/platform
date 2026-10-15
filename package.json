@@ -39,6 +39,7 @@
     "test:db:knowledge:multi-source": "tsx scripts/test-knowledge-multi-source-database.ts",
     "test:db:arbo-guides": "tsx scripts/test-arbo-guide-runs-database.ts",
     "test:db:compliance-domain": "tsx scripts/test-compliance-domain-database.ts",
+    "test:db:compliance-runs": "tsx scripts/test-compliance-runs-database.ts",
     "db:generate": "prisma generate",
     "db:format": "prisma format",
     "db:validate": "prisma validate",

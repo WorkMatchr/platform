@@ -43,6 +43,7 @@ describe('Compliance-runroute', () => {
       organizationId: '00000000-0000-4000-8000-000000000002',
       completedByUserId: '00000000-0000-4000-8000-000000000001',
       guideType: 'COMPLIANCE', guideVersion: '1', reportVersion: '1.0',
+      complianceFrameworkVersionId: '7e44a647-0549-4d96-a14c-c1d783d11e01',
     })
     expect(mocks.complete.mock.calls[0][0].answersSnapshot).not.toHaveProperty('forged')
   })

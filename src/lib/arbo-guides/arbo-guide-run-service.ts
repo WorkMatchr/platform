@@ -1,4 +1,5 @@
 import 'server-only'
+import { COMPLIANCE_FRAMEWORK_BINDING } from '@/lib/compliance-guide/compliance-framework-binding'
 
 import { createHash } from 'node:crypto'
 import { z } from 'zod'
@@ -107,6 +108,16 @@ export async function completeArboGuideRun(raw: unknown) {
           return { id: existing.id, reportNumber: existing.reportNumber!, created: false }
         }
         if (existing && JSON.stringify(stable(existing.answersSnapshot)) !== JSON.stringify(stable(input.answersSnapshot))) throw new ArboGuideRunError('CONFLICT')
+
+        // Validate inside the same transaction, after authorization and immutable replay.
+        // Historical reads/replays remain possible after retirement; new completions do not.
+        if (input.guideType === 'COMPLIANCE') {
+          const binding = COMPLIANCE_FRAMEWORK_BINDING
+          if (input.complianceFrameworkVersionId !== binding.id || input.guideVersion !== binding.guideVersion || input.reportVersion !== binding.reportVersion || input.reportSnapshot.assessmentVersion !== Number(binding.guideVersion) || input.reportSnapshot.reportVersion !== binding.reportVersion) throw new ArboGuideRunError('INVALID_INPUT')
+          const framework = await tx.complianceFrameworkVersion.findUnique({ where: { id: binding.id } })
+          if (!framework || framework.status !== 'PUBLISHED' || framework.frameworkCode !== binding.frameworkCode || framework.version !== binding.version || framework.checksum !== binding.checksum) throw new ArboGuideRunError('INVALID_INPUT')
+          if (existing && existing.complianceFrameworkVersionId !== binding.id) throw new ArboGuideRunError('CONFLICT')
+        }
 
         const run = existing ?? await tx.arboGuideRun.create({ data: {
           guideType: input.guideType, guideVersion: input.guideVersion, reportVersion: input.reportVersion,

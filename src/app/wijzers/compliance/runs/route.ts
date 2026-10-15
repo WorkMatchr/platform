@@ -2,6 +2,7 @@ import { getArboGuideApiAccess } from '@/lib/arbo-guides/arbo-guide-access'
 import { COMPLIANCE_GUIDE_VERSION, normalizeComplianceGuideAnswers, type ComplianceGuideAnswers } from '@/lib/compliance-guide/compliance-guide'
 import { buildComplianceReportData, COMPLIANCE_REPORT_VERSION } from '@/lib/compliance-guide/compliance-report'
 import { ArboGuideRunError, completeArboGuideRun } from '@/lib/arbo-guides/arbo-guide-run-service'
+import { COMPLIANCE_FRAMEWORK_BINDING } from '@/lib/compliance-guide/compliance-framework-binding'
 
 export const runtime = 'nodejs'
 const MAX_REQUEST_BYTES = 16_384
@@ -44,6 +45,7 @@ export async function POST(request: Request) {
     })
     const result = await completeArboGuideRun({
       guideType: 'COMPLIANCE',
+      complianceFrameworkVersionId: COMPLIANCE_FRAMEWORK_BINDING.id,
       guideVersion: String(COMPLIANCE_GUIDE_VERSION),
       reportVersion: COMPLIANCE_REPORT_VERSION,
       organizationId: access.organizationId,
