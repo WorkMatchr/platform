@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { LinkButton } from '@/components/ui/link-button'
 import {
   complianceFreeIntakeQuestions,
   type ComplianceFreeIntakeQuestion,
@@ -166,7 +167,7 @@ export function ComplianceFreeIntake() {
           <h2 className="text-xl font-bold">Volledige Arbo Compliance Scan</h2>
           <p className="mt-2 max-w-3xl text-text-on-dark-muted">In de volledige scan worden de geselecteerde onderwerpen beoordeeld en krijgt u per onderwerp de status, onderbouwing, prioriteit en aanbevolen vervolgstap.</p>
           <div className="mt-5 flex flex-wrap gap-3">
-            <Button disabled>Volledige scan starten — binnenkort</Button>
+            <LinkButton href="/dashboard/compliance/scan/nieuw">Volledige scan starten</LinkButton>
             <Button variant="outline" onClick={restart}>Intake opnieuw doen</Button>
           </div>
         </section>
@@ -198,7 +199,7 @@ export function ComplianceFreeIntake() {
         <Button variant="outline" disabled={stepIndex === 0} onClick={() => setStepIndex((current) => current - 1)}>Vorige</Button>
         <Button disabled={!currentComplete} onClick={() => {
           if (stepIndex === stepGroups.length - 1) {
-            window.localStorage.removeItem(STORAGE_KEY)
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ answers, stepIndex }))
             setShowResult(true)
           } else {
             setStepIndex((current) => current + 1)
