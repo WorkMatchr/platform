@@ -77,7 +77,7 @@ describe('A07 juridische conceptpagina’s', () => {
   })
   it('maakt retentie-onzekerheid, A06-status en privacyrechten expliciet', () => {
     const html = renderToStaticMarkup(<PrivacyPage />)
-    for (const text of ['nog niet geactiveerd', 'één jaar na ontvangst', 'nog niet aantoonbaar ingevoerd', 'dertig dagen', 'back-upretentie bij Vimexx staat nog open', 'bezwaar', 'inzage', 'één maand', 'Verenigde Staten', 'geen juridische certificering']) expect(html).toContain(text)
+    for (const text of ['nog niet geactiveerd', 'één jaar na de datum van ontvangst', 'nog niet aantoonbaar ingevoerd', 'prullenbak- en back-upretentie bij Vimexx staat nog open', 'bezwaar', 'inzage', 'één maand', 'Verenigde Staten', 'geen juridische certificering']) expect(html).toContain(text)
     expect(html).toContain('href="/cookies"')
   })
   it('rekent contactbewaring vanaf ontvangst en beperkt uitzonderingen zonder nieuwe jaartermijn na afronding', () => {
@@ -85,16 +85,20 @@ describe('A07 juridische conceptpagina’s', () => {
     const contact = html.match(/<section[^>]*aria-labelledby="contact-retention">([\s\S]*?)<\/section>/)?.[1] ?? ''
     for (const text of [
       'Hoe lang bewaren wij contactberichten?',
-      'in beginsel maximaal één jaar na ontvangst',
-      'zaak die na deze termijn nog niet is afgerond',
-      'zolang dat noodzakelijk is voor de behandeling',
-      'Na afronding beoordelen wij of de gegevens kunnen worden verwijderd',
-      'wettelijke bewaarplicht of een andere gerechtvaardigde noodzaak',
-      'beoordelen periodiek of de gegevens nog nodig zijn',
-      'De verwijdering wordt handmatig uitgevoerd.',
+      'ontvangen algemene e-mailberichten maximaal één jaar na de datum van ontvangst',
+      'lopende zaak, klacht, geschil of andere noodzakelijke behandeling',
+      'zolang daarvoor een gerechtvaardigde reden bestaat',
+      'Na afronding van de zaak wordt opnieuw beoordeeld of verdere bewaring noodzakelijk is.',
+      'Berichten die niet langer nodig zijn, worden verwijderd.',
+      'De eigenaar van WorkMatchr is verantwoordelijk voor de handmatige controle en verwijdering',
+      'Dit beleid geldt voor zowel de inbox als het archief.',
+      'De technische verwijdering uit de prullenbak en back-ups is afhankelijk',
+      'De Product Owner heeft dit bewaarbeleid definitief vastgesteld op 15 oktober 2026.',
+      'De privacyverklaring als geheel blijft concept',
       'de uitvoering is nog niet aantoonbaar ingevoerd',
     ]) expect(contact).toContain(text)
     expect(html).not.toMatch(/(?:twaalf maanden|één jaar) na afhandeling/)
+    expect(contact).not.toMatch(/dertig dagen|30 dagen|in beginsel/)
   })
   it('toont ieder opslagitem uniek met doel, aanbieder, duur en toestemmingsbeoordeling', () => {
     const html = renderToStaticMarkup(<CookiesPage />)
