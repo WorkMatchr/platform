@@ -352,3 +352,8 @@ Juridische eindacceptatie, persistent-loginbesluit, Compliance-bewaarbesluit, hy
 - **git diff --check PASS; secrets-patterncontrole 0 treffers** op vier taakbestanden. Geen volledige externe secretsaudit geclaimd. Gegenereerde Next-typesverwijzing teruggebracht; geen buildartefact in wijzigingsset.
 - Exact gewijzigd: `docs/a07-privacy-cookies.md`, `src/content/public-legal.ts`, `src/app/cookies/page.tsx`, `src/app/public-legal-pages.test.tsx`. Alleen onderzoek, conceptcopy en test; geen nieuwe cookies, banner, TTL, login-/logoutlogica, accounts, database of configuratie gewijzigd.
 - **Ingelogde cookieacceptatie: OPEN voor opdrachtgever, dienstverlener en platformbeheer.** Geen geslaagde juridische eindacceptatie of volledige runtime-inventaris geclaimd. PR #40 blijft Draft.
+
+
+## Ontwerpvervolg — nog geen implementatie
+
+Het [ontwerp- en herstelvoorstel voor browseropslag en sessies](a07-storage-session-design.md) beschrijft de expliciete loginoptie, native sessieduren, voorgestelde 24-uursconceptopslag, logout/legacy-overgang, gereproduceerde hydratatieoorzaak en minimale testomgeving. De twee geïsoleerde oorzaakproeven zijn geslaagd; de bestaande component blijft ongewijzigd. Alle implementatie- en inrichtingskeuzes vereisen afzonderlijk akkoord. De cookie-/privacyverklaring blijft de huidige implementatie beschrijven, niet het voorgestelde gedrag. De drie ingelogde rolcontroles blijven OPEN.
