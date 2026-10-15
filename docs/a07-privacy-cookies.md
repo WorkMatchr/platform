@@ -357,3 +357,23 @@ Juridische eindacceptatie, persistent-loginbesluit, Compliance-bewaarbesluit, hy
 ## Ontwerpvervolg — nog geen implementatie
 
 Het [ontwerp- en herstelvoorstel voor browseropslag en sessies](a07-storage-session-design.md) beschrijft de expliciete loginoptie, native sessieduren, voorgestelde 24-uursconceptopslag, logout/legacy-overgang, gereproduceerde hydratatieoorzaak en minimale testomgeving. De twee geïsoleerde oorzaakproeven zijn geslaagd; de bestaande component blijft ongewijzigd. Alle implementatie- en inrichtingskeuzes vereisen afzonderlijk akkoord. De cookie-/privacyverklaring blijft de huidige implementatie beschrijven, niet het voorgestelde gedrag. De drie ingelogde rolcontroles blijven OPEN.
+
+
+## A07 vervolg — goedgekeurde sessie- en opslagimplementatie (15 oktober 2026)
+
+De eerdere inventarisatie beschrijft de oorspronkelijke situatie. De code in deze Draft PR is nu aangepast volgens [het goedgekeurde ontwerp en implementatieverslag](a07-storage-session-design.md#8-implementatie-van-het-goedgekeurde-ontwerp--15-oktober-2026):
+
+| Onderdeel | Nieuwe implementatie | Acceptatiegrens |
+| --- | --- | --- |
+| Login / accountactivatie | Standaard niet onthouden: sessiecookie, maximaal 24 uur zonder refresh. Expliciet vinkje: bestaande rollende 7 dagen. | Geen bestaande sessies ingetrokken; historische persistentie afzonderlijk beoordelen. |
+| Compliance v2 | Alleen na bewaaractie; absolute 24 uur, geen verlenging door invoer/hervatten. Bekende antwoordcodes, geen vrije tekst/account-ID. | Geen automatische fysieke wisgarantie bij gesloten browser; actieve invoer blijft in geheugen. |
+| Legacy v1 | Expliciete keuze hervatten/verwijderen; hervatten naar geheugen zonder fictieve bewaardatum. | Oude kopie kan tot die keuze blijven staan. |
+| Uitloggen | Gerichte waarschuwing, bevestiging, alleen Compliance-opslag/geheugen wissen en bestaande signOut. | Native Better Auth kan database-deletefout intern afvangen; werkelijke intrekking bij databasefout nog testen. |
+| Andere tabbladen | BroadcastChannel alleen presence/wissignalen; tijdelijk clear-key als fallback, direct verwijderd. | Zonder kanaal geen detectie van geheugenconcept in andere tab; beide transporten geblokkeerd beperkt coördinatie. |
+| Opdrachtconcepten | Bestaande sessionStorage ongewijzigd. | Geen generieke browserwipe of wijziging van serverdossiers. |
+
+De verwerkingstabel en publieke conceptteksten zijn hiermee in lijn gebracht. Er is geen algemene cookiebanner toegevoegd en geen definitieve juridische vrijstelling voor alle productie-instellingen geclaimd. Het door de Product Owner vastgestelde e-mailbewaarbeleid, Vimexx-retentievragen en verplichte adrescontrole voor Zwolle blijven ongewijzigd.
+
+### Afzonderlijke databaseblokkade
+
+Docker is bereikbaar, maar de bestaande lifecycle-integratietest strandt op de schone tijdelijke database bij de bekende compliance-migratie: `20261001113000_add_compliance_domain_versioning_foundation`, P3018 / PostgreSQL 42601, ongeldige dollarquoting. Hetzelfde bestand staat op origin/main. De testdatabase is opgeruimd; geen bestaande lokale of productiedatabase gewijzigd. Geen migratiegeschiedenis vervalst. Eerst afzonderlijk toegepast SQL/checksum-bewijs en een veilige migratiereparatie vaststellen; vervolgens replay en drie synthetische onafhankelijke logins. Tot die tijd blijft ingelogde cookie-/sessieacceptatie OPEN.

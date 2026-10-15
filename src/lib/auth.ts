@@ -166,6 +166,9 @@ export const auth = betterAuth({
       }
 
       if (ctx.path === '/sign-in/email') {
+        // Better Auth runs this hook before endpoint validation/defaults.
+        // Leave invalid types to its validator; only missing input defaults to false.
+        if (ctx.body && ctx.body.rememberMe === undefined) ctx.body.rememberMe = false
         const email = typeof ctx.body?.email === 'string' ? normalizeEmail(ctx.body.email) : ''
         const user = email
           ? await getPrisma().user.findUnique({ where: { email }, select: { status: true } })
@@ -233,6 +236,16 @@ export const auth = betterAuth({
       },
     },
     session: {
+      update: {
+        before: async (update, context) => {
+          if (!update.expiresAt) return { data: update }
+          // A missing/deleted dont_remember cookie must never promote a short session.
+          // Better Auth supplies the original server-side session during refresh.
+          const current = context?.context.session?.session
+          if (!current || current.expiresAt.getTime() - current.createdAt.getTime() <= 24 * 60 * 60 * 1000) return false
+          return { data: update }
+        },
+      },
       create: {
         before: async (session) => {
           const user = await getPrisma().user.findUnique({ where: { id: session.userId }, select: { status: true } })

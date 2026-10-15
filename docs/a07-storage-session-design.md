@@ -1,6 +1,6 @@
 # A07 — ontwerp en herstelvoorstel browseropslag en sessies
 
-**Status: VOORSTEL — afzonderlijke Product Owner-goedkeuring vereist.** Issue #35, bestaande Draft PR #40. Onderzoek: 15 oktober 2026, baseline `c2152d17b45811f9785ed1e802ae786dd353428c`. Dit document wijzigt geen runtimegedrag, privacybeloften, accounts, database, migratie of productieconfiguratie. Het is geen toestemming om de onderstaande inrichting of release uit te voeren.
+**Status: ontwerp goedgekeurd; implementatie in Draft PR #40, eindacceptatie nog OPEN.** Issue #35, bestaande Draft PR #40. Onderzoek: 15 oktober 2026, baseline `c2152d17b45811f9785ed1e802ae786dd353428c`. Het oorspronkelijke onderzoek hieronder blijft als besluitonderbouwing bewaard. De Product Owner heeft implementatie van de sessiekeuze, expliciete 24-uursconceptopslag, uitlogwaarschuwing en legacyovergang goedgekeurd. De implementatiestatus staat in paragraaf 8. De voorgestelde intrekking van bestaande sessies is nadrukkelijk niet goedgekeurd en niet geïmplementeerd. Geen toestemming voor merge of deployment.
 
 ## 1. Expliciet ‘Ingelogd blijven’
 
@@ -139,3 +139,67 @@ Na goedgekeurde implementatie: relevante tests, volledige lint, standalone TypeS
 - [ ] Lokale inrichting/fixtures en afzonderlijke migratieoplossing toestaan; HTTPS-aanpak vaststellen.
 
 **Uitgevoerd in deze ontwerpronde:** read-only bron-/bibliotheek-/omgevingonderzoek, publieke browserpoging, 2/2 geïsoleerde oorzaaksproeven en documentatie. Geen gedragswijziging geïmplementeerd. Lint/productiebuild niet opnieuw uitgevoerd voor uitsluitend documentatie; de vorige audit op dezelfde runtimebron had 69 tests/lint/build PASS. Geen nieuw resultaat daarvan geclaimd. Volledige ingelogde acceptatie blijft OPEN. Geen productiegegevens, echte accounts, betaalgegevens, mail, merge of deployment gebruikt/uitgevoerd.
+
+
+## 8. Implementatie van het goedgekeurde ontwerp — 15 oktober 2026
+
+### Uitgevoerd
+
+- Login heeft de native checkbox **Ingelogd blijven**, standaard uit. FormData accepteert alleen `on` als true. De Better Auth-before-hook vult ontbrekende invoer met false vóór endpointvalidatie; ongeldige typen blijven geweigerd. Accountactivatie gebruikt false. Registratie/verificatie blijven zonder automatische login.
+- Native Better Auth: false geeft een sessiecookie en 24 uur servergeldigheid, true behoudt 7 dagen/1 dag rolling refresh. Er is geen eigen token-/cookiecryptografie of nieuwe authprovider. De bestaande veilige cookieattributen en accountstatuschecks blijven gelden.
+- Aanvullende fail-closed guard in de bestaande Better Auth session-updatehook: een sessie waarvan de oorspronkelijke servergeldigheid maximaal 24 uur is, mag niet worden verlengd. Dit voorkomt dat het verwijderen van `dont_remember` onbedoeld 7 dagen oplevert. Zonder de marker leidt een refreshpoging tot de native 401/uitloggen; normale korte sessies verversen niet. Zonder oorspronkelijke servercontext wordt geen expiryverlenging toegestaan.
+- **Bestaande sessies worden niet ingetrokken of achteraf aangepast.** Zevendaagse sessies behouden hun eerdere gedrag. De juridische overgang van die eerdere impliciete persistentie blijft open voor afzonderlijk besluit.
+- Compliance-intake begint voor SSR en eerste clientrender met dezelfde laadstatus. Browserherstel gebeurt na mount; annulering bij unmount en Strict Mode voorkomen voortijdige verwerking. Geen `suppressHydrationWarning` of SSR-uitschakeling.
+- Standaard geheugenopslag. Alleen de expliciete knop start v2-opslag. Absolute `savedAt + 24 uur`; updates behouden dezelfde termijn. Een verlopen/verwijderde lease kan niet door een oud tabblad worden hersteld. Verlopen opslag wordt bij lezen, schrijven, focus, zichtbaarheid of timer gecontroleerd. Actieve antwoorden blijven in geheugen behouden.
+- Behoud van actieve antwoorden bij verlopen/verwijderen is bewust: ‘Concept van dit apparaat verwijderen’ verwijdert de persistente kopie en zet bewaren uit. Resultaat/herstart beëindigen ook het geheugenconcept. Andere opslag en serverdossiers worden niet aangeraakt.
+- Legacy v1: eerst hervatten/verwijderen kiezen, geen automatische antwoorden of fictieve oorspronkelijke datum. Hervatten leest naar geheugen en verwijdert v1; opnieuw bewaren vereist een afzonderlijke actie. Onbekende versie wordt niet stilzwijgend gewist. Ongeldige bekende opslag wordt veilig verwijderd; opslagfouten geven een melding.
+- Uitloggen gebruikt een native toegankelijk modal dialog met teruglink en expliciete wisbevestiging, gevolgd door de bestaande Better Auth-signOut. API-/netwerkfouten geven geen succesredirect. Als lokaal wissen door de browser wordt geweigerd, wordt dat zichtbaar gemeld ook wanneer serverlogout slaagt.
+- Tabbladcoördinatie: BroadcastChannel met alleen `query`/`present`/`clear`, plus een direct verwijderd `workmatchr:compliance-free-intake:clear` localStorage-signaal als wisfallback. Geen antwoorden, account-ID of tracking-ID verzonden. Een paginalange luisteraar voorkomt hervatten van oude geheugeninvoer na navigatie in een ander tabblad. Bij opslagwijzigingen door een andere tab blijft actieve invoer behouden en gaat bewaren uit.
+
+### Concrete beperkingen en resterende acceptatie
+
+- Een gesloten/slapende browser kan niet op het exacte vervalmoment wissen. Nooit hervatten na expiry; opruimen bij eerstvolgende relevante activiteit. Clientklok en geblokkeerde opslag begrenzen client-side garanties.
+- Als BroadcastChannel niet beschikbaar is, kan aanwezigheid van uitsluitend geheugeninvoer in een ander tabblad niet vóór logout worden opgevraagd. Het scoped localStorage-signaal wist die invoer wel wanneer opslag beschikbaar is. Als beide mechanismen geblokkeerd zijn, is geen betrouwbare tabbladcoördinatie mogelijk. Test dit in de daadwerkelijk ondersteunde browsers; geen universele wisgarantie.
+- Better Auth kan een interne database-deletefout bij signOut afvangen. De frontend detecteert teruggegeven fouten, maar een 200 alleen is geen bewijs dat iedere databasefout tot intrekking leidde. PostgreSQL-foutinspuiting blijft vereist vóór volledige sessieacceptatie.
+- Docker is opgestart. Bestaand `npm run test:db:account-lifecycle` is uitgevoerd met een uitsluitend lokale URL naar de Docker PostgreSQL 17-container. Het script maakt een eigen tijdelijke `workmatchr_account_lifecycle_test_*` database, past de worktree-migraties toe en verwijdert die database in `finally`.
+- **Afzonderlijke bestaande migratieblokkade gereproduceerd:** 83 migraties gevonden; replay strandt bij `20261001113000_add_compliance_domain_versioning_foundation`, Prisma P3018 / PostgreSQL 42601, `syntax error at or near "$"` (positie 10788). De foutieve `AS $` / `$;` staat ook op `origin/main`; laatste bestandshistorie `09fb864` / `07e1fa7`. Na de test zijn 0 tijdelijke lifecycle-databases over.
+- Geen historische migratie aangepast, overgeslagen of handmatig als applied gemarkeerd. Veilige afzonderlijke herstelroute: eerst de daadwerkelijk toegepaste SQL/checksums in bekende omgevingen read-only vergelijken; afhankelijk daarvan origineel exact herstellen of een controleerbare migratieherstelprocedure vaststellen. Zonder dat bewijs hier geen herschrijving van geschiedenis. Pas daarna volledige schone replay, drie synthetische `example.invalid` accounts via bestaande Better Auth/accountfixtures en onafhankelijke logins voor opdrachtgever/dienstverlener/platformbeheer.
+- Daardoor blijven ingelogde PostgreSQL-browseracceptatie, echte cookiejarcontrole voor drie rollen en foutinjectie op sessieverwijdering OPEN. Publieke UI en geïsoleerde native Better Auth-/React-tests zijn afzonderlijk bewijs, geen vervanging daarvan.
+- Echte 200%-browserzoom voor de gewijzigde login-/concept-/uitlogbediening blijft handmatige Product Owner-acceptatie. Geen eerdere zoomgoedkeuring van ongewijzigde pagina’s hergebruiken.
+- A06 blijft standaard uit; geen productiegegevens, bestaande sessies, mailboxinstellingen, echte mail, betalingen, merge of deployment gewijzigd/uitgevoerd.
+
+Validatieresultaten en de exacte wijzigingsset worden in PR #40 bij deze implementatie vastgelegd. Privacy-/cookieverklaring blijven concept; overige juridische en Vimexx-acceptatiepunten blijven open.
+
+
+### Validatie en wijzigingsset
+
+- **147/147 tests PASS, 16 suites**: native Better Auth met echte WorkMatchr hooks op een in-memory testadapter (geen PostgreSQL-bewijs), login/activering/logout, headerrollen, consent/TTL/legacy/ongeldige opslag/blocked storage/tabbladberichten/SSR-hydratatie, bestaande intake/public/legal/contactregressies. Geen echte e-mail of account aangemaakt.
+- Volledige lint en productiebuild PASS. Productiebuild gebruikt synthetische configuratie en een onbereikbare builddatabase; A06 en mail zijn uitgeschakeld.
+- Standalone TypeScript: uitsluitend de **4 bestaande TS2345-fouten** in `src/lib/compliance/rule-engine.test.ts` regels 13/14/23/24 (readonly-array tegenover mutable-arraytype). Dat bestand is inhoudelijk identiek aan `origin/main` (`d3bce31248cf496f4c0563e210addbcb8d2e721c`); geen nieuwe typefout uit deze wijziging.
+- Lokale browser op `http://127.0.0.1:3047`: geen bewaaractie → herladen stap 1; expliciet bewaren → herladen stap 2 zonder console-/hydratatiefout; tweede tabblad hervat; verwijderen in tab 1 schakelt bewaren in tab 2 uit en oude invoer schrijft niet opnieuw weg. Logincheckbox standaard uit, bedienbaar met Spatie, gekoppelde uitleg en zichtbare focus. Desktop 1280 px en mobiel 390 px: geen horizontale overflow, knoppen en toelichting leesbaar/bereikbaar. Geen echte login uitgevoerd.
+- Echte 200%-zoom expliciet aan Product Owner voorgelegd; nog geen nieuwe PASS ontvangen. Uitlogdialoog/activering getest in React/JSDOM, niet als drie ingelogde browserrollen geaccepteerd.
+- Diff-check PASS. Secrets-patterncontrole: geen private keys, providercredentials of credentialbevattende verbindingsstrings aangetroffen. Synthetische fixtures zijn uitsluitend lokaal/in-memory; geen volledige externe secretscanner geclaimd.
+- Read-only metadata in bestaande lokale `workmatchr`: geen registratie voor de genoemde compliance-migratie; dit bewijst niet dat zij nergens anders is toegepast. Geen productiecontrole of migratiereparatie uitgevoerd.
+
+Exacte taakbestanden:
+
+- `docs/a07-privacy-cookies.md`
+- `docs/a07-storage-session-design.md`
+- `src/app/cookies/page.tsx`
+- `src/app/public-legal-pages.test.tsx`
+- `src/components/auth/activate-account-form.tsx`
+- `src/components/auth/login-form.tsx`
+- `src/components/auth/logout-button.tsx`
+- `src/components/auth/session-choice.test.tsx`
+- `src/components/layout/header-logout.test.tsx`
+- `src/components/public/compliance-free-intake-storage.test.tsx`
+- `src/components/public/compliance-free-intake.tsx`
+- `src/components/public/use-compliance-draft.ts`
+- `src/content/public-legal.ts`
+- `src/lib/auth-session.test.ts`
+- `src/lib/auth-validation.ts`
+- `src/lib/auth.ts`
+- `src/lib/compliance/free-intake-storage.test.ts`
+- `src/lib/compliance/free-intake-storage.ts`
+
+Geen migratie-, schema-, package-, lockfile-, omgevings- of A06-codewijzigingen. De gegenereerde wijziging in next-env.d.ts is teruggezet. PR blijft Draft; status volledige A07-eindacceptatie: OPEN/BLOCKED door de genoemde database-/ingelogde controles en juridische acceptatie.

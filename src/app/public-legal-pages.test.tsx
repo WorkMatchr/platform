@@ -100,12 +100,12 @@ describe('A07 juridische conceptpagina’s', () => {
     expect(html).not.toMatch(/(?:twaalf maanden|één jaar) na afhandeling/)
     expect(contact).not.toMatch(/dertig dagen|30 dagen|in beginsel/)
   })
-  it('claimt geen vrijstelling voor standaard blijvend inloggen en legt opslag na logout uit', () => {
+  it('beschrijft expliciete keuzes en het beperkte wissen bij logout', () => {
     const html = renderToStaticMarkup(<CookiesPage />)
     const session = browserStorageInventory.find(item => item.name.endsWith('session_token'))!
-    expect(session.consent).toContain('rememberMe=true')
-    expect(session.consent).toContain('expliciete keuze nodig')
-    expect(html).toContain('Uitloggen wist conceptantwoorden in localStorage en sessionStorage niet expliciet')
+    expect(session.consent).toContain('standaard uit')
+    expect(session.consent).toContain('expliciete keuze')
+    expect(html).toContain('Opdrachtconcepten in sessionStorage worden hiermee niet gewist')
     expect(html).toContain('niet per account gescheiden')
     expect(html).toContain('Een algemene cookiebanner is daarvoor niet vanzelf de juiste oplossing')
     expect(html).toContain('wp194_en.pdf')
@@ -118,8 +118,8 @@ describe('A07 juridische conceptpagina’s', () => {
       expect(html).toContain(item.provider)
       expect(html).toContain(item.duration)
     }
-    expect(html).toContain('Geen vaste vervaldatum')
-    expect(html).toContain('Vrijstelling nog niet definitief vastgesteld')
+    expect(html).toContain('24 uur vanaf de bewaaractie')
+    expect(html).toContain('Geen betrouwbare vervaldatum')
     expect(html).toContain('href="/privacy"')
   })
 })
