@@ -100,6 +100,16 @@ describe('A07 juridische conceptpagina’s', () => {
     expect(html).not.toMatch(/(?:twaalf maanden|één jaar) na afhandeling/)
     expect(contact).not.toMatch(/dertig dagen|30 dagen|in beginsel/)
   })
+  it('claimt geen vrijstelling voor standaard blijvend inloggen en legt opslag na logout uit', () => {
+    const html = renderToStaticMarkup(<CookiesPage />)
+    const session = browserStorageInventory.find(item => item.name.endsWith('session_token'))!
+    expect(session.consent).toContain('rememberMe=true')
+    expect(session.consent).toContain('expliciete keuze nodig')
+    expect(html).toContain('Uitloggen wist conceptantwoorden in localStorage en sessionStorage niet expliciet')
+    expect(html).toContain('niet per account gescheiden')
+    expect(html).toContain('Een algemene cookiebanner is daarvoor niet vanzelf de juiste oplossing')
+    expect(html).toContain('wp194_en.pdf')
+  })
   it('toont ieder opslagitem uniek met doel, aanbieder, duur en toestemmingsbeoordeling', () => {
     const html = renderToStaticMarkup(<CookiesPage />)
     expect(new Set(browserStorageInventory.map(item => item.name)).size).toBe(browserStorageInventory.length)

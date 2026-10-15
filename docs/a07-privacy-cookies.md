@@ -68,7 +68,7 @@ De volledige bezoekerslijst met naam, techniek, aanbieder, doel, categorie, term
 - `wm_public_intake`: legacy HttpOnly/SameSite=Lax/Secure cookie met 90 dagen/pad `/advieswijzer`. Codeaanwezigheid bewijst geen nieuwe plaatsing in actuele `/opdracht-starten`-flow.
 - Geen analytics/trackingpackage, script of embedded video gevonden in de onderzochte publieke code. Third-party betaalpagina's en dashboard-geactiveerde tracking zijn hiermee niet uitgesloten.
 
-**Besluit nu:** geen automatische cookieconsentbanner toegevoegd. Noodzakelijke login/opdrachtcontinuïteit vormt een plausibele vrijstelling; de onbeperkte Compliance-conceptopslag is nog geen definitief bevestigde vrijstelling. PO/privacyadviseur moet bewaarbeperking of aantoonbare noodzaak besluiten. Niet-vrijgestelde technieken mogen niet actief worden zonder voorafgaande geldige toestemming. Als die worden aangetoond: blokkeer netwerk/opslag vooraf, gelijkwaardige Accepteren/Weigeren, geen voorafselectie, keuze per doel en permanent eenvoudige intrekking. Dit is een ontwerpvoorwaarde, geen geïmplementeerde CMP. A07-fase 1 maakt geen storage- of consentlogica anders.
+**Besluit nu:** geen automatische cookieconsentbanner toegevoegd. Noodzakelijke sessieauthenticatie/opdrachtcontinuïteit vormt een plausibele vrijstelling, maar de standaard persistente login zonder aparte keuze niet (zie herbeoordeling 15 oktober); de onbeperkte Compliance-conceptopslag is nog geen definitief bevestigde vrijstelling. PO/privacyadviseur moet bewaarbeperking of aantoonbare noodzaak besluiten. Niet-vrijgestelde technieken mogen niet actief worden zonder voorafgaande geldige toestemming. Als die worden aangetoond: blokkeer netwerk/opslag vooraf, gelijkwaardige Accepteren/Weigeren, geen voorafselectie, keuze per doel en permanent eenvoudige intrekking. Dit is een ontwerpvoorwaarde, geen geïmplementeerde CMP. A07-fase 1 maakt geen storage- of consentlogica anders.
 
 ## Browser- en netwerkbewijs / beperkingen
 
@@ -254,3 +254,101 @@ De Product Owner heeft het algemene e-mailbewaarbeleid definitief bevestigd. De 
 Nieuw is de jaarlijkse totaalcontrole met registratie van controledatum en noodzakelijke uitzonderingscategorieën zonder persoonsgegevens. Deze jaarlijkse controle mag de éénjaargrens niet verlengen: tijdige handmatige verwijdering en beoordeling na afronding blijven leidend. Exacte Vimexx-prullenbak- en backupretentie blijven open. Vastgesteld beleid is geen bewijs van uitvoering en geen vrijgave van de volledige conceptprivacyverklaring. A06 blijft standaard uit; geen wijziging aan bestaande gegevens of mailboxinstellingen.
 
 Validatie definitieve beleidsvastlegging: **25/25 gerichte tests PASS**, **volledige lint PASS** en **productiebuild PASS**. De eerste lintpoging viel samen met Prisma-generatie door de build en meldde ENOENT op een tijdelijk vervangen gegenereerd bestand; na de build is volledige lint opnieuw uitgevoerd en geslaagd. Geen codefix of baselinewijziging hiervoor. De bestaande niet-blokkerende NFT-tracingwaarschuwing blijft. Diff-check PASS, secrets-patterncontrole op drie taakbestanden: 0 treffers. Standalone TypeScript niet opnieuw gedraaid in deze beperkte copy-opdracht; eerdere vier compliance-baselinefouten blijven afzonderlijk gedocumenteerd. Build heeft zijn eigen typecontrole doorlopen. Alleen `docs/a07-privacy-cookies.md`, `src/app/privacy/page.tsx` en `src/app/public-legal-pages.test.tsx` gewijzigd; gegenereerde Next-typesverwijzing teruggebracht. Geen historische bedrijfs-/mailboxgegevens gewijzigd.
+
+
+## Aanvullende cookie-/browseropslagaudit — 15 oktober 2026
+
+Onderzocht: A07-branch `codex/a07-privacy-cookies`, uitgangscommit `05d138898fe28c4c74371380b364f4635c93cb85`, bestaande Draft PR #40 / issue #35. Dit is een onderzoeksaanvulling, geen vrijgave van toestemming, juridische tekst of productie. De onderstaande actuele beoordeling vervangt de eerdere onvoorwaardelijke vrijstellingsformulering bij de sessiecookie.
+
+### Feitelijk uitgevoerde metingen
+
+| Route | Anonieme HTTP GET lokaal / productie | Lokale browser: scriptbestanden / iframes | Externe script-, stylesheet-, img- of iframe-URL in DOM |
+|---|---|---|---|
+| `/` | 200 / 200 | 9 / 0 | Geen |
+| `/diensten` | 200 / 200 | 9 / 0 | Geen |
+| `/wettelijke-verplichtingen` | 200 / 200 | 9 / 0 | Geen |
+| `/sectoren` | 200 / 200 | 9 / 0 | Geen |
+| `/kenniscentrum` | 200 / 200 | 9 / 0 | Geen |
+| `/opdracht-starten` | 200 / 200 | 12 / 0 | Geen |
+| `/wijzers/compliance/scan` | 200 / 200 | 10 / 0 | Geen |
+| `/privacy` | 200 / 200 | 9 / 0 | Geen |
+| `/cookies` | 200 / 200 | 9 / 0 | Geen |
+
+- Lokale origin: `http://127.0.0.1:3046`; productie: `https://www.workmatchr.nl`. In geen van de **18 anonieme documentresponses** werd een Set-Cookie-header aangetroffen. Alleen GET, geen inzending, login of mutatie op productie. Geen cookie-/tokenwaarden bewaard. Dit sluit cookies in subrequests of JavaScript-opslag nadrukkelijk niet uit.
+- Lokale browser gebruikte de bestaande A07-acceptatieserver (oudere build van dezelfde branch; de nieuwe documentatiecopy is daarmee niet gevalideerd). Eigen resources: `/_next/static/chunks/*.js`, CSS en `/_next/image` voor het eigen logo. Het aantal scripts is een momentopname, geen regressiecontract. Dit is een DOM-resource-inventaris, **geen volledige netwerkcapture** van XHR/fetch, redirects of beacons.
+- Gratis Compliance: uitsluitend fictieve keuzes werknemers Ja, 1–25 en thuiswerk; stap 2 bereikt. Na herladen verscheen eerst servermarkup van stap 1, daarna werd stap 2 hervat; teruggaan toonde de drie keuzes nog geselecteerd. **Console: React-hydratatiefout 418 waargenomen bij hervatten.** De code leest browserstate in de `useState`-initializer, terwijl SSR lege state gebruikt; dit is een concrete verklaring die nog in een afzonderlijke reparatie moet worden bevestigd. Geen opslag-/hydratiecode gewijzigd. Hervatgedrag is waargenomen, daadwerkelijke localStorage-inhoud/TTL is alleen uit code vastgesteld.
+- Opdrachtstart: anoniem Nee → Ik weet het echt niet → stap 2; dezelfde stap na herladen zichtbaar. Geen tekst met persoonsgegevens ingevoerd, geen opdracht gepubliceerd. Het tabblad bevat uitsluitend deze synthetische lokale keuzes; geen browseropslag van anderen gewist.
+- De beschikbare browser-API biedt DOM/console, maar geen cookiejar, localStorage/sessionStorage-inspectie of netwerklog. HttpOnly-cookies zijn ook niet via DOM te bewijzen. Geen toolingbeperking omzeild. Geen HAR met tokens, aanvraagbody's, cookieheaders of persoonsgegevens gemaakt.
+
+### Opslag: volledigheid en lifecycle
+
+De zeven expliciete opslagitems blijven centraal in `src/content/public-legal.ts`, met naam/aanbieder/doel/duur/categorie/toestemming/bewijs. `session_data`, `account_data` en OAuth-cookies zijn conditionele Better Auth-bibliotheekmogelijkheden; cookiecache/accountcache en OAuth zijn hier niet als actieve flow geconfigureerd. Verlopen-cookieheaders bij logout betekenen niet dat deze cookies vooraf actief waren. Geen eigen organisatiecookie: tenantcontext wordt server-side uit membership afgeleid.
+
+| Onderdeel | Technische noodzaak en toestemming | Logout / grens |
+|---|---|---|
+| Better Auth `session_token` | Nodig voor geauthenticeerde requests. WorkMatchr forceert echter `rememberMe: true` bij login en accountactivatie; 7 dagen maxAge, updateAge 1 dag. Die persistentie is niet gelijk aan een vrijgestelde browsersessie. Expliciete keuze voor blijven ingelogd vereist, of een afzonderlijk aantoonbaar andere juridische onderbouwing | Better Auth POST sign-out verwijdert de DB-sessie en laat authcookies verlopen. Bibliotheek vangt een DB-deletefout af; succesvolle intrekking en foutpad moeten nog op test-DB worden gemeten. Geen gegarandeerde DB-verwijdering uit alleen clientredirect afleiden |
+| `dont_remember` | Noodzakelijke sessiemarker bij rememberMe=false; huidige UI biedt dat niet | Bibliotheek laat marker bij logout verlopen; geen plaatsing waargenomen |
+| `platform-admin-view` | Gevraagde functionele v01/v02-voorkeur; sessiecookie, path `/platformbeheer`, HttpOnly/SameSite=Lax/Secure in productie | Logout verwijdert deze voorkeur niet expliciet; geen authbewijs of bevoegdheid |
+| Opdrachtconcept sessionStorage | Hervatten meerstapsformulier; functioneel doel, geen tracking. Opslag bevat ook vrije tekst, locatiekeuzes, submissionId en revisie. Per gebruiker/concept gescheiden key | Verwijderd na succesvolle publicatie; anoniem concept en loginmarker verwijderd na overname. Niet expliciet gewist bij logout. Accountkeys beperken verkeerd hervatten maar beschermen niet tegen scripts op dezelfde origin of een gebruiker met toegang tot browseropslag |
+| Loginmarker sessionStorage | Functionele overdracht na expliciete loginactie | Verwijderd bij overname; blijft bij afgebroken flow tot tabbladsessie eindigt (browserherstel kan verlengen) |
+| Compliance localStorage | Alleen profielantwoorden en stap; geen accountkey, timestamp, TTL of trackingdoel. Schrijft al bij mount, ook leeg. Onbegrensde opslag is niet bewezen strikt noodzakelijk | Verwijderd bij resultaat/herstart, daarna kan leeg concept opnieuw ontstaan. Logout wist niets; dezelfde origin deelt de gegevens tussen tabbladen/accounts. Geen serverdatabase-opslag door dit gratis component |
+| Legacy `wm_public_intake` | Oud intakepad met 90 dagen; geen nieuwe plaatsing op actuele opdrachtstart bewezen | `/advieswijzer` redirect naar `/opdracht-starten`; actions/config bestaan nog. Geen logoutopruiming gevonden; oude browsercookies kunnen tot vervaldatum blijven bestaan |
+
+Code: `src/lib/auth.ts`, `src/components/auth/login-form.tsx`, `activate-account-form.tsx`, `logout-button.tsx`, `src/components/requests/simple-advice-form.tsx`, `src/components/public/compliance-free-intake.tsx`, `src/lib/public-intake/public-intake-config.ts`, `src/app/advieswijzer/route.ts`, `src/app/platformbeheer/v01/route.ts`, `v02/route.ts`; Better Auth 1.6.23 `dist/cookies/index.mjs` en `dist/api/routes/sign-out.mjs`. Zoekactie in `src` en package.json vond geen aanvullende localStorage/sessionStorage-, IndexedDB-, service-worker-, analytics- of sendBeacon-integratie. Dit bewijst geen afwezigheid van door hosting geïnjecteerde technieken.
+
+### Externe diensten en verzoeken
+
+| Dienst | Aangetoonde integratie / browsergrens | Meetstatus |
+|---|---|---|
+| Vercel | Hosting van dezelfde publieke origin; eigen Next-assets. Geen Vercel Analytics/Speed Insights in code gevonden | Anonieme productie-documentresponses gecontroleerd; projectinstellingen, bot-/challengecookies en volledige runtimecapture niet gecontroleerd |
+| Neon/PostgreSQL | Prisma/PG serververbinding; geen browserdatabaseclient | Codebewijs. Geen Neon-query of databasecredential gebruikt in deze audit |
+| Resend | Server-side `src/lib/email.ts`, `new Resend(...).emails.send`; geen browserscript | Geen mail verstuurd. Mailopen-/clicktracking van ontvangen mails en providerinstellingen vallen buiten deze websitecapture en blijven open |
+| Vimexx | Bevestigde ontvangende mailbox/forwarder, geen webscript in WorkMatchr | Geen mailbox bezocht; mailroute wijzigt geen cookieoordeel over de website |
+| Mollie | Server-only API-client in `src/lib/finance/mollie-gateway.ts`; browser kan later naar externe checkout | Geen checkout/betaling gestart. Cookies op die externe origin niet gemeten, geen vrijstelling namens Mollie vastgesteld |
+| Jortt | Server-only gateway: `api.jortt.nl` en `app.jortt.nl` OAuth-tokenendpoint | Geen Jortt-browserintegratie gevonden; geen financiële actie of OAuth-flow uitgevoerd |
+| Have I Been Pwned | Server-side wachtwoordcontrole via Better Auth-plugin | Geen wachtwoordaanvraag uitgevoerd; geen browsercookie afgeleid uit server-API |
+| Officiële bronwebsites | Gewone externe links, geen iframe of automatisch script | Geen toestemming nodig alleen wegens het tonen van een gewone link; na aanklikken geldt aparte websitecontext |
+
+Er is **geen volledige lijst daadwerkelijk uitgaande browsernetwerkverzoeken** beschikbaar. Bovenstaande tabel onderscheidt waargenomen documentresponses/DOM van codepaden; server-side integraties zijn niet ten onrechte als cookies aangemerkt.
+
+### Beoordeling en concreet advies
+
+Noodzakelijke functionele opslag kan zijn vrijgesteld; het etiket functioneel of de afwezigheid van advertenties is daarvoor onvoldoende. Doel, expliciet gevraagde functie en passende duur zijn leidend. WP194 onderscheidt browsersessie-authenticatie van persistent blijven ingelogd en noemt een geïnformeerde onthoudkeuze voor dat laatste. Dit geldt ook voor vergelijkbare opslagtechnieken. Bron: [WP29 Opinion 04/2012, §2.3/3.1/3.2](https://ec.europa.eu/justice/article-29/documentation/opinion-recommendation/files/2012/wp194_en.pdf), volledige PDF gelezen op 15 oktober 2026. [Rijksoverheid, cookietoestemming](https://www.rijksoverheid.nl/themas/overheid-en-democratie/privacy-en-persoonsgegevens/vraag-en-antwoord/telecommunicatie/mag-een-website-ongevraagd-cookies-plaatsen) bevestigt het onderscheid tussen noodzakelijke functionaliteit en tracking. De AP-pagina over heldere banners was via zoekindex toegankelijk maar directe fetch gaf 403; wetten.overheid.nl was niet uitleesbaar. Juridische eindcontrole blijft vereist.
+
+**Advies: nu geen algemene cookiebanner toevoegen, maar evenmin verklaren dat alle huidige opslag vrijgesteld is.** Er is geen aangetoonde marketing-/trackingintegratie die zo'n algemene banner rechtvaardigt. Twee afgebakende besluiten zijn nodig:
+
+1. **Login:** voorstel voor een afzonderlijke vervolgopdracht: sessiegebonden login als standaard, plus een expliciete niet-voorgeselecteerde onthoudkeuze met doel/duur. Controleer tegelijk accountactivatie en logout. Dit is een gerichte toestemmingskeuze, geen reden voor een banner op alle publieke pagina's. Geen authenticatielogica gewijzigd in A07.
+2. **Compliance:** onbegrensd bewaren is niet noodzakelijk onderbouwd. Voorkeur: tabbladsessie met expliciete hervatfunctie en minimale antwoorden. Als herstel na sluiten echt nodig is: bepaal met PO een korte, onderbouwde termijn en informeer de gebruiker; stel geen willekeurige wettelijke 24-uursnorm. Voeg daarna pas automatische expiry-controle vóór lezen/hervatten toe, timestampcontrole, opruiming bij verlopen/resultaat/herstart en beleid voor gedeelde apparaten/logout. Beoordeel ook schrijven vóór eerste invoer. Een TTL is wenselijk voor dataminimalisatie, maar bewijst op zichzelf geen toestemmingsvrijstelling. Als persistent bewaren geen strikt noodzakelijke gevraagde functie is, vereist het vooraf een vrije, specifieke keuze met gelijkwaardig weigeren/intrekken en blokkering van opslag vóór akkoord.
+
+Geen banner, TTL, authinstelling of storagegedrag geïmplementeerd. De publieke concepttekst maakt de beperkingen zichtbaar; zij certificeert geen juridische compliance.
+
+### Read-only lokale acceptatie-inventarisatie na PO-instructie
+
+- **Feitelijke URL:** `http://127.0.0.1:3046`. Alleen publieke A07-server, geen werkende database; uitdrukkelijk geen bewijs voor ingelogde acceptatie. Geen andere listener gevonden in poortbereik 3000–3050.
+- Docker CLI kan de Docker Desktop Linux-engine niet bereiken (named pipe ontbreekt). Geen lokale listener op 5432, 5433, 5434, 55432 of 55433. Dit bewijst onbereikbaarheid op deze controlepunten, niet dat historische databases of accounts verdwenen zijn. Geen Docker-service gestart en geen DB-query uitgevoerd.
+- Gecontroleerd: A07-worktree, bestaande `platform-admin-v02`-worktree, oorspronkelijke WorkMatchr-configuratiereferenties; uitsluitend host/poort/databasenaam en testflag uit env geïnventariseerd. Originele checkout verwijst naar lokale database `workmatchr` op localhost:5432, en heeft een testwisselaarflag in `.env.development.local`. Dat is geen bewezen afzonderlijke acceptatiedatabase en is niet gebruikt of veranderd. A07 en de onderzochte Platformbeheer-worktree hadden geen eigen `.env*`-databaseconfiguratie. Geen niet-lokale URL of credential gerapporteerd/gebruikt.
+- `docs/test-provider-dataset.md` en `scripts/seed-test-providers.ts` beschrijven aparte lokale `workmatchr_test_providers` met fictieve opdrachtgever-/dienstverleneraccounts. `docs/simple-advice-final-acceptance.md` bevat historisch testaccountbewijs. **Huidig bestaan, status, memberships en platformbeheerder niet bevestigd** wegens ontbrekende databaseverbinding; geen historische inventaris als actuele loginmogelijkheid gepresenteerd.
+- Testwisselaar (`src/lib/test-impersonation/*`) bestaat: alleen buiten production en met expliciete flag, bestaande bevoegde actieve platformbeheerder met actieve WorkMatchr-platformmembership, doelen ACTIVE/geverifieerd onder `example.invalid`. Hij gebruikt dezelfde Better Auth-sessie en verandert de effectieve gebruiker. Daarmee kan men rolgebonden pagina's testen, maar niet drie onafhankelijke login-/logoutlevenscycli bewijzen. Actuele runtimebeschikbaarheid niet bevestigd. Een `next start`-productiebuild schakelt de wisselaar beleidsmatig uit.
+
+| Rol | Nu werkelijk ingelogd getest | Blokkade |
+|---|---|---|
+| Opdrachtgever | Nee — OPEN | Geen bevestigde bereikbare geïsoleerde DB/testaccount |
+| Dienstverlener | Nee — OPEN | Idem |
+| Platformbeheer | Nee — OPEN | Idem; geen bestaande bevoegde testsessie |
+
+**Minimale inrichting, uitsluitend voorstel voor apart akkoord:** eerst Docker laten starten; daarna bestaande afzonderlijke testdatabase en alleen synthetische accountmetadata read-only verifiëren. Indien geschikt: A07-server procesgebonden aan die database, op vrije loopbackpoort (3047 voorgesteld, nog niet gestart), zonder mail-/betaalcredentials en met A06 uit. Voor de wisselaar developmentmodus plus expliciete flag; voor realistische Secure-cookiecontrole daarnaast een toegestane lokale HTTPS-testopstelling. Indien geen passende database/accounts bestaan: eerst afzonderlijk akkoord voor een nieuwe geïsoleerde database, actuele migraties en bestaande Better Auth/testseedmechanismen; geen handmatige sessies, wachtwoordwijzigingen of productieaccounts. Geen database/account aangemaakt of aangepast in deze opdracht.
+
+### Open meetprotocol vóór afronding
+
+PO/IT registreert in een schoon testbrowserprofiel alleen cookienaam/domein/path/flags/maxAge, storagekey/type/duur en netwerkorigin/type/status. Geen waarden, payloads, IDs of ruwe HAR in Git. Herhaal publieke routes en per rol: login → eigen dashboard → synthetisch concept → logout → beschermd verzoek opnieuw → opnieuw inloggen. Verifieer cookieverval én serversessie-intrekking; observeer apart conceptopslag na logout, tabs sluiten/heropenen en browserherstel. Meet de gratis Compliance-route vóór invoer, na invoer, reload, resultaat en herstart. Databasefout bij logout alleen in geïsoleerde testomgeving. Vercel-runtime-injecties en eventuele externe checkout alleen read-only/toegestane testflow. Alle drie rolcontroles blijven **OPEN** totdat daadwerkelijk uitgevoerd.
+
+Juridische eindacceptatie, persistent-loginbesluit, Compliance-bewaarbesluit, hydratatiebevinding en volledige browser/netwerkmeting blijven open. E-mailbeleid van 15 oktober blijft definitief vastgesteld; Vimexx-trash/backup, uitvoering, bedrijfsgegevens/nieuw Zwolle-adres en overige A07-verwerkingsgrondslagen blijven hun eigen acceptatiepunten. Geen accounts, provider-/mailboxinstellingen, productiegegevens of A06-branch gewijzigd; geen mail, betaling, merge of deployment.
+
+### Validatie van deze opslagaudit
+
+- Actuele GitHub main read-only bevestigd als `d3bce31248cf496f4c0563e210addbcb8d2e721c`; onderzochte auth-, conceptopslag- en testwisselaarbestanden hebben geen diff met die main. Geen sync/rebase of productfix uitgevoerd.
+- **69/69 gerichte tests PASS** in zeven suites: public-legal-pages, public-placeholder-routes, public-information-architecture, contact/page, simple-advice-form, auth-policy en header-logout. Nieuwe regressie controleert dat de conceptverklaring persistent-loginvrijstelling niet onvoorwaardelijk claimt en opslag na logout vermeldt. Bestaande formulier-/autorisatietests zijn geen vervanging voor echte drie-rollenlogin.
+- **Volledige lint PASS; productiebuild PASS**, inclusief de buildtypecontrole. Alleen bekende niet-blokkerende NFT-tracingwaarschuwing via `next.config.ts`/kennisbron-upload. Standalone TypeScript niet opnieuw gevraagd/uitgevoerd; de eerder vastgestelde vier compliance-testbaselinefouten zijn geen nieuwe bevinding en niet gerepareerd.
+- **git diff --check PASS; secrets-patterncontrole 0 treffers** op vier taakbestanden. Geen volledige externe secretsaudit geclaimd. Gegenereerde Next-typesverwijzing teruggebracht; geen buildartefact in wijzigingsset.
+- Exact gewijzigd: `docs/a07-privacy-cookies.md`, `src/content/public-legal.ts`, `src/app/cookies/page.tsx`, `src/app/public-legal-pages.test.tsx`. Alleen onderzoek, conceptcopy en test; geen nieuwe cookies, banner, TTL, login-/logoutlogica, accounts, database of configuratie gewijzigd.
+- **Ingelogde cookieacceptatie: OPEN voor opdrachtgever, dienstverlener en platformbeheer.** Geen geslaagde juridische eindacceptatie of volledige runtime-inventaris geclaimd. PR #40 blijft Draft.
