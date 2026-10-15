@@ -2918,7 +2918,9 @@ model ArboGuideRunResult {
   position          Int
   subjectCode       String                @db.VarChar(80)
   title             String                @db.VarChar(200)
-  status            ArboGuideResultStatus
+  status            ArboGuideResultStatus?
+  assessmentStatus  ComplianceAssessmentStatus?
+  resultSchemaVersion Int @default(1)
   explanation       String                @db.Text
   recommendedAction String                @db.Text
   sourceIdsSnapshot Json                  @db.JsonB
@@ -3048,6 +3050,7 @@ model ComplianceAnswerOptionDefinition {
 }
 
 model ComplianceRuleDefinition {
+  basis                 String? @db.VarChar(32)
   id                    String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   frameworkVersionId    String                     @db.Uuid
   moduleDefinitionId    String                     @db.Uuid

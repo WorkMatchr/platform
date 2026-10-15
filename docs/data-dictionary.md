@@ -1,5 +1,13 @@
 # Datawoordenboek WorkMatchr
 
+## Compliance F2 — resultaatcontract
+
+- `ArboGuideRunResult.resultSchemaVersion`: 1 (default, legacy) of 2.
+- `ArboGuideRunResult.status`: verplicht voor schema 1, null voor schema 2. De oude vier statussen worden niet omgezet.
+- `ArboGuideRunResult.assessmentStatus`: verplicht voor schema 2, null voor schema 1; gebruikt de vijf bestaande `ComplianceAssessmentStatus`-waarden.
+- `ComplianceRuleDefinition.basis`: `LEGAL_REQUIREMENT` of `PRACTICAL_RECOMMENDATION`; nullable voor bestaande configuratie, vereist in v2.
+- V2-`reportSnapshot`: schema 2, productcode, framework-ID/versie/checksum, volledige definitie, bron- en regelidentiteiten/checksums, vijfstatusuitkomsten en expliciete onvolledigheid. Immutable; dezelfde `ArboGuideRun`-opslagketen.
+
 ## Arbo Compliance Scan — domain/versioning foundation
 
 - `ComplianceFrameworkVersion`: versieerbare methodiek voor één complianceframework, bijvoorbeeld `NL_ARBO/2026-10`. Alleen `DRAFT` is inhoudelijk muteerbaar; gepubliceerde/geretirede versies zijn databasebreed beschermd.

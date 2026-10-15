@@ -157,15 +157,18 @@ export async function buildComplianceReportPdf(report: ArboGuideReportSnapshot |
     twoColumnList(scenarioLabels)
   }
 
+  const v2 = 'schemaVersion' in report && report.schemaVersion === 2 ? report : null
+  const attentionItems = 'attentionItems' in report ? report.attentionItems : report.results.filter(r => r.status !== 'IN_ORDER' && r.status !== 'NOT_APPLICABLE')
   heading('Samenvatting')
   text(`${report.summary.order} onderdelen op orde`)
-  text(`${report.summary.action} onderdelen vragen actie`)
-  text(`${report.summary.check} onderdelen moeten worden gecontroleerd`)
+  text(`${report.summary.action} onderdelen ${v2 ? 'vereisen' : 'vragen'} actie`)
+  if ('check' in report.summary) text(`${report.summary.check} onderdelen moeten worden gecontroleerd`)
+  else { text(`${report.summary.attention} onderdelen vragen aandacht`); text(`${report.summary.notAssessed} onderdelen niet beoordeeld`) }
   text(`${report.summary.notApplicable} onderdelen niet van toepassing`)
 
-  if (report.attentionItems.length > 0) {
+  if (attentionItems.length > 0) {
     heading('Belangrijkste aandachtspunten')
-    for (const result of report.attentionItems.slice(0, 5)) text(`- ${result.title}: ${result.statusLabel}`)
+    for (const result of attentionItems.slice(0, 5)) text(`- ${result.title}: ${result.statusLabel}`)
   }
 
   if (page !== coverPage) throw new Error('De samenvatting past niet volledig op de voorpagina.')
@@ -183,12 +186,14 @@ export async function buildComplianceReportPdf(report: ArboGuideReportSnapshot |
     text(result.title, { font: bold, size: 12, color: brandDark, gapAfter: 2 })
     text(`Status: ${result.statusLabel}`, { font: bold, color: brandBlue, gapAfter: 3 })
     text(result.explanation)
+    if ('sufficientlyAssessed' in result && !result.sufficientlyAssessed) text('Dit onderwerp is nog niet voldoende beoordeeld.', { color: muted })
+    if ('evidence' in result) for (const e of result.evidence) text(`${e.basis === 'LEGAL_REQUIREMENT' ? 'Wettelijke verplichting' : 'Praktische aanbeveling'}: ${e.explanation}`, { color: muted })
     text(`Vervolgstap: ${result.nextStep}`, { color: muted, gapAfter: 7 })
   }
 
   heading('Belangrijkste aandachtspunten')
-  if (report.attentionItems.length === 0) text('Op basis van de ingevoerde antwoorden zijn geen onderdelen als Actie nodig of Controleren aangemerkt.')
-  for (const result of report.attentionItems) {
+  if (attentionItems.length === 0) text(v2 ? 'Er zijn geen onderdelen als Actie vereist, Aandacht nodig of Niet beoordeeld aangemerkt.' : 'Op basis van de ingevoerde antwoorden zijn geen onderdelen als Actie nodig of Controleren aangemerkt.')
+  for (const result of attentionItems) {
     text(`${result.statusLabel} - ${result.title}`, { font: bold, gapAfter: 2 })
     text(result.nextStep, { indent: 8, gapAfter: 6 })
   }

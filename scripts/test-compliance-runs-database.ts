@@ -147,6 +147,8 @@ async function main() {
     assert.deepEqual(await db.arboGuideRun.findUniqueOrThrow({ where: { id: saved.runId }, include: { results: true } }), stored)
     assert.equal((await service.listArboGuideRuns({ userId: user.id, organizationId: organization.id })).length, 3)
     assert.deepEqual(await db.arboGuideRun.findUniqueOrThrow({ where: { id: historical.id } }), historical)
+    const { verifyComplianceV2Database } = await import('./fixtures/compliance-v2-database')
+    await verifyComplianceV2Database(db, { userId: user.id, organizationId: organization.id }, { userId: otherUser.id, organizationId: other.id })
     console.log('Route → evaluator → service → PostgreSQL PASS; 6 gelijktijdige aanvragen: exact 1 nieuwe run/9 resultaten; autorisatie, tenantisolatie, frameworkversie en historische snapshots PASS.')
   } finally {
     fixture.complianceTestContext = null
@@ -158,6 +160,11 @@ async function main() {
 }
 
 main().catch((error: unknown) => {
-  console.error(error instanceof assert.AssertionError ? error.message : 'Compliance F1-databasetest mislukt; geen credentials gelogd.')
+  console.error(error instanceof assert.AssertionError ? error.message : 'Compliance F1/F2-databasetest mislukt; geen credentials gelogd.')
+  if (error instanceof Error) console.error(error.name, (error.stack ?? '').split('\n').filter(line => line.trim().startsWith('at ')).slice(0, 5).join('\n'))
+  if (error instanceof Error && error.cause && typeof error.cause === 'object') {
+    const cause = error.cause as Record<string, unknown>
+    console.error('Local database diagnostic:', JSON.stringify({ kind: cause.kind, code: cause.originalCode, message: typeof cause.originalMessage === 'string' ? cause.originalMessage.replace(/postgres(?:ql)?:\/\/\S+/gi, '[REDACTED]') : undefined }))
+  }
   process.exitCode = 1
 })
