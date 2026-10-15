@@ -77,8 +77,24 @@ describe('A07 juridische conceptpagina’s', () => {
   })
   it('maakt retentie-onzekerheid, A06-status en privacyrechten expliciet', () => {
     const html = renderToStaticMarkup(<PrivacyPage />)
-    for (const text of ['nog niet geactiveerd', 'twaalf maanden na afhandeling', 'nog niet aantoonbaar ingevoerd', 'dertig dagen', 'back-upretentie bij Vimexx staat nog open', 'bezwaar', 'inzage', 'één maand', 'Verenigde Staten', 'geen juridische certificering']) expect(html).toContain(text)
+    for (const text of ['nog niet geactiveerd', 'één jaar na ontvangst', 'nog niet aantoonbaar ingevoerd', 'dertig dagen', 'back-upretentie bij Vimexx staat nog open', 'bezwaar', 'inzage', 'één maand', 'Verenigde Staten', 'geen juridische certificering']) expect(html).toContain(text)
     expect(html).toContain('href="/cookies"')
+  })
+  it('rekent contactbewaring vanaf ontvangst en beperkt uitzonderingen zonder nieuwe jaartermijn na afronding', () => {
+    const html = renderToStaticMarkup(<PrivacyPage />)
+    const contact = html.match(/<section[^>]*aria-labelledby="contact-retention">([\s\S]*?)<\/section>/)?.[1] ?? ''
+    for (const text of [
+      'Hoe lang bewaren wij contactberichten?',
+      'in beginsel maximaal één jaar na ontvangst',
+      'zaak die na deze termijn nog niet is afgerond',
+      'zolang dat noodzakelijk is voor de behandeling',
+      'Na afronding beoordelen wij of de gegevens kunnen worden verwijderd',
+      'wettelijke bewaarplicht of een andere gerechtvaardigde noodzaak',
+      'beoordelen periodiek of de gegevens nog nodig zijn',
+      'De verwijdering wordt handmatig uitgevoerd.',
+      'de uitvoering is nog niet aantoonbaar ingevoerd',
+    ]) expect(contact).toContain(text)
+    expect(html).not.toMatch(/(?:twaalf maanden|één jaar) na afhandeling/)
   })
   it('toont ieder opslagitem uniek met doel, aanbieder, duur en toestemmingsbeoordeling', () => {
     const html = renderToStaticMarkup(<CookiesPage />)
