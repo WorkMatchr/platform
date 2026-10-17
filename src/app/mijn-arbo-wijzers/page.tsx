@@ -24,7 +24,7 @@ export default async function MyArboGuidesPage() {
                     <h2 className="text-xl font-bold text-brand-dark">{guideLabels[run.guideType]}</h2>
                     <p className="mt-1 text-sm text-text-secondary">{run.reportNumber} · {new Intl.DateTimeFormat('nl-NL', { dateStyle: 'long' }).format(run.completedAt!)}</p>
                     <p className="mt-2 text-sm text-text-secondary">Wijzerversie {run.guideVersion} · rapportversie {run.reportVersion}</p>
-                    <p className="mt-3 text-text-secondary">{report.summary.order} op orde · {report.summary.action} actie nodig · {report.summary.check} controleren · {report.summary.notApplicable} niet van toepassing</p>
+                    <p className="mt-3 text-text-secondary">{report.schemaVersion === 2 ? `${report.summary.order} op orde · ${report.summary.attention} aandacht nodig · ${report.summary.action} actie vereist · ${report.summary.notAssessed} niet beoordeeld · ${report.summary.notApplicable} niet van toepassing` : `${report.summary.order} op orde · ${report.summary.action} actie nodig · ${report.summary.check} controleren · ${report.summary.notApplicable} niet van toepassing`}</p>
                   </div>
                   <div className="flex flex-wrap gap-3">
                     <LinkButton href={`/mijn-arbo-wijzers/${run.id}`}>Bekijken</LinkButton>

@@ -1,8 +1,10 @@
+import { ComplianceV2ReportView } from './compliance-v2-report-view'
 import { ArboGuideStatus } from './arbo-guide-status'
 import { ArboGuideResultGrid } from '@/components/public/arbo-guide-layout'
 import type { ArboGuideReportSnapshot } from '@/lib/arbo-guides/arbo-guide-run-service'
 
 export function ArboGuideReportView({ report }: { report: ArboGuideReportSnapshot }) {
+  if (report.schemaVersion === 2) return <ComplianceV2ReportView report={report} />
   return (
     <div className="space-y-6">
       <section className="rounded-card border border-brand-primary/20 bg-brand-primary-subtle p-6">

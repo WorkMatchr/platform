@@ -1,5 +1,16 @@
 # Database WorkMatchr
 
+## Compliance F2
+
+Migratie `20261016100000_add_compliance_v2_result_contract` breidt de bestaande
+resultaatprojectie additief uit. Schema 1 gebruikt het bestaande vierstatusveld;
+schema 2 gebruikt `assessmentStatus` met vijf statussen. Een CHECK verplicht precies
+één van beide. Triggers bewaken versie/snapshotconsistentie en verbieden toevoegen
+aan afgeronde runs. `ComplianceRuleDefinition.basis` is nullable voor legacy;
+de v2-service vereist een expliciete wettelijke of praktische grondslag.
+Geen backfill of wijziging van historische migraties. Zie het
+[F2-runbook](compliance-f2-versioned-results.md) voor releasevolgorde en rollback.
+
 ## Arbo Compliance Scan — domain/versioning foundation
 
 Migratie `20261001113000_add_compliance_domain_versioning_foundation` voegt additief de versieerbare complianceconfiguratie toe: frameworkversies, C/R-moduledefinities, vragen, antwoordopties, deterministische ruledefinities en KnowledgeClaim-bronbindingen. `ArboGuideRun` krijgt uitsluitend een nullable `complianceFrameworkVersionId`; bestaande runs worden niet gebackfilld of gewijzigd.
