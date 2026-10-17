@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   complianceFreeIntakeQuestions,
@@ -8,10 +8,9 @@ import {
 } from '@/lib/compliance/free-intake'
 import {
   buildComplianceFreeIntakeTeaser,
-  normalizeComplianceFreeIntakeAnswers,
 } from '@/lib/compliance/free-intake-applicability'
 
-const STORAGE_KEY = 'workmatchr:compliance-free-intake:v1'
+import { useComplianceDraft } from './use-compliance-draft'
 const stepGroups = [
   ['FI-01', 'FI-02', 'FI-03'],
   ['FI-04', 'FI-05', 'FI-06'],
@@ -31,8 +30,6 @@ const labels: Record<string, string> = {
   HEIGHT: 'Werken op hoogte', ELECTRICAL: 'Elektrotechnische risico\'s', PRESSURE: 'Drukapparatuur / perslucht', RADIATION: 'Straling',
   LONE_WORK: 'Alleenwerk', NIGHT_OR_SHIFT: 'Nacht- of ploegendienst',
 }
-
-type Answers = Record<string, string | string[]>
 
 function questionByCode(code: string) {
   return complianceFreeIntakeQuestions.find((question) => question.code === code)!
@@ -89,32 +86,10 @@ function MultiSelectQuestion({ question, value, onChange }: {
   )
 }
 
-function readStoredIntake(): { answers: Answers; stepIndex: number } {
-  if (typeof window === 'undefined') return { answers: {}, stepIndex: 0 }
-  try {
-    const stored = window.localStorage.getItem(STORAGE_KEY)
-    if (!stored) return { answers: {}, stepIndex: 0 }
-    const parsed = JSON.parse(stored) as { answers?: Record<string, unknown>; stepIndex?: number }
-    return {
-      answers: normalizeComplianceFreeIntakeAnswers(parsed.answers ?? {}) as Answers,
-      stepIndex: Math.max(0, Math.min(stepGroups.length - 1, parsed.stepIndex ?? 0)),
-    }
-  } catch {
-    window.localStorage.removeItem(STORAGE_KEY)
-    return { answers: {}, stepIndex: 0 }
-  }
-}
-
 export function ComplianceFreeIntake() {
-  const [initialState] = useState(readStoredIntake)
-  const [answers, setAnswers] = useState<Answers>(initialState.answers)
-  const [stepIndex, setStepIndex] = useState(initialState.stepIndex)
+  const storage = useComplianceDraft()
+  const { answers, stepIndex } = storage.draft
   const [showResult, setShowResult] = useState(false)
-
-  useEffect(() => {
-    if (showResult) return
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ answers, stepIndex }))
-  }, [answers, showResult, stepIndex])
 
   const currentQuestions = stepGroups[stepIndex].map(questionByCode)
   const teaser = useMemo(() => buildComplianceFreeIntakeTeaser(answers), [answers])
@@ -124,15 +99,23 @@ export function ComplianceFreeIntake() {
   })
 
   function setAnswer(code: string, value: string | string[]) {
-    setAnswers((current) => ({ ...current, [code]: value }))
+    storage.update({ answers: { ...answers, [code]: value }, stepIndex })
   }
 
   function restart() {
-    window.localStorage.removeItem(STORAGE_KEY)
-    setAnswers({})
-    setStepIndex(0)
+    storage.restart()
     setShowResult(false)
   }
+
+  if (!storage.ready) return <p role="status">Uw intake wordt klaargezet…</p>
+  if (storage.legacy) return <section className="mx-auto max-w-4xl rounded-card border border-border bg-surface p-6">
+    <h2 className="text-xl font-bold text-brand-dark">Oud Compliance-concept gevonden</h2>
+    <p className="mt-3 text-text-secondary">De ouderdom van dit concept is onbekend. Kies of u het wilt hervatten of verwijderen. Hervatten bewaart het niet automatisch opnieuw.</p>
+    <div className="mt-5 flex flex-wrap gap-3">
+      <Button onClick={storage.resumeLegacy}>Hervat oud concept</Button>
+      <Button variant="outline" onClick={storage.forget}>Verwijder oud concept</Button>
+    </div>
+  </section>
 
   if (showResult) {
     const visibleModules = teaser.modules.filter((module) => module.applicability !== 'NOT_APPLICABLE')
@@ -195,20 +178,27 @@ export function ComplianceFreeIntake() {
       </div>
 
       <div className="mt-7 flex flex-wrap justify-between gap-3">
-        <Button variant="outline" disabled={stepIndex === 0} onClick={() => setStepIndex((current) => current - 1)}>Vorige</Button>
+        <Button variant="outline" disabled={stepIndex === 0} onClick={() => storage.update({ answers, stepIndex: stepIndex - 1 })}>Vorige</Button>
         <Button disabled={!currentComplete} onClick={() => {
           if (stepIndex === stepGroups.length - 1) {
-            window.localStorage.removeItem(STORAGE_KEY)
+            storage.finish()
             setShowResult(true)
           } else {
-            setStepIndex((current) => current + 1)
+            storage.update({ answers, stepIndex: stepIndex + 1 })
           }
         }}>
           {stepIndex === stepGroups.length - 1 ? 'Bekijk relevante onderwerpen' : 'Volgende'}
         </Button>
       </div>
 
-      <p className="mt-6 text-sm text-text-secondary">Uw voortgang wordt alleen in deze browser bewaard zodat u de gratis intake kunt hervatten. Vul geen namen, medische gegevens of ongevalsgegevens in.</p>
+      <section className="mt-6 rounded-card border border-border bg-surface-subtle p-5" aria-label="Concept bewaren">
+        <p id="compliance-storage-help" className="text-sm text-text-secondary">Zonder bewaren blijft uw invoer alleen in dit tabblad beschikbaar. Bewaren is optioneel, geldt voor dit apparaat en eindigt na 24 uur; openen of bewerken verlengt die termijn niet. Uitloggen verwijdert uw lokale concept. Vul geen namen, medische gegevens of ongevalsgegevens in.</p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Button variant="outline" onClick={storage.remember} disabled={!!storage.saved} aria-describedby="compliance-storage-help">Concept 24 uur op dit apparaat bewaren</Button>
+          <Button variant="ghost" onClick={storage.forget}>Concept van dit apparaat verwijderen</Button>
+        </div>
+        {storage.message && <p role="status" className="mt-3 text-sm text-text-secondary">{storage.message}</p>}
+      </section>
     </div>
   )
 }
