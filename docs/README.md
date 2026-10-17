@@ -19,6 +19,8 @@ Module 6C.2 — WOS Beheeracties & Communicatie is technisch opgeleverd en wacht
 
 ## Product en planning
 
+- [Compliance F3 — vijfvragenintake en A07-opslagovergang](compliance-f3-free-intake.md)
+
 - [Compliance F1 — migratieherstel en versiecorrecte resultaatopslag](compliance-f1-foundation.md)
 - [Compliance F2 — versiegrens en vijfstatusresultaten](compliance-f2-versioned-results.md)
 

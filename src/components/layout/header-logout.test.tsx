@@ -47,14 +47,16 @@ it('toont geen uitlogknop zonder sessie', async () => {
 })
 it('gebruikt de echte LogoutButton: één signOut, daarna dezelfde bestemming', async () => {
   let finish!: () => void
-  mocks.signOut.mockReturnValue(new Promise<void>(resolve => { finish = resolve }))
+  mocks.signOut.mockReturnValue(new Promise(resolve => { finish = () => resolve({ data: { success: true }, error: null }) }))
+  vi.stubGlobal('BroadcastChannel', undefined)
+  vi.stubGlobal('localStorage', { getItem: () => null, removeItem: vi.fn(), setItem: vi.fn() })
   const assign = vi.fn()
   const original = window
   vi.stubGlobal('window', new Proxy(original, { get(target, key) { return key === 'location' ? { assign, href: original.location.href, origin: original.location.origin } : Reflect.get(target, key, target) } }))
   render(await Header({ model: modelFor('CLIENT') }))
   const button = screen.getByRole('button', { name: /^Uitloggen$/ })
   fireEvent.click(button)
-  expect(mocks.signOut).toHaveBeenCalledTimes(1)
+  await waitFor(() => expect(mocks.signOut).toHaveBeenCalledTimes(1))
   expect(button.getAttribute('aria-busy')).toBe('true')
   expect((button as HTMLButtonElement).disabled).toBe(true)
   expect(assign).not.toHaveBeenCalled()
