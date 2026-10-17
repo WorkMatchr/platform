@@ -150,6 +150,9 @@ async function main() {
     const { verifyComplianceV2Database } = await import('./fixtures/compliance-v2-database')
     await verifyComplianceV2Database(db, { userId: user.id, organizationId: organization.id }, { userId: otherUser.id, organizationId: other.id })
     console.log('Route → evaluator → service → PostgreSQL PASS; 6 gelijktijdige aanvragen: exact 1 nieuwe run/9 resultaten; autorisatie, tenantisolatie, frameworkversie en historische snapshots PASS.')
+    fixture.complianceTestContext = context
+    const { verifyComplianceF4Database } = await import('./fixtures/compliance-f4-database')
+    await verifyComplianceF4Database(db, { userId: user.id, organizationId: organization.id }, { userId: otherUser.id, organizationId: other.id })
   } finally {
     fixture.complianceTestContext = null
     await db?.$disconnect()

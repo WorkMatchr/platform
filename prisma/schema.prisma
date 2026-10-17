@@ -3022,6 +3022,7 @@ model ComplianceQuestionDefinition {
   code               String                      @db.VarChar(40)
   prompt             String                      @db.VarChar(1000)
   helpText           String?                     @db.VarChar(2000)
+  visibilityCondition Json?
   inputType          ComplianceQuestionInputType
   isRequired         Boolean                     @default(true)
   position           Int

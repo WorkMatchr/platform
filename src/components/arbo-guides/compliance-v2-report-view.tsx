@@ -12,6 +12,7 @@ export function ComplianceV2ReportView({ report }: { report: ComplianceV2Report 
       <p className="mt-2 font-semibold text-brand-dark">{result.statusLabel}</p>
       {!result.sufficientlyAssessed && <p className="mt-2 text-text-secondary">Dit onderwerp is nog niet voldoende beoordeeld. Bekende aandachtspunten blijven hieronder zichtbaar.</p>}
       <p className="mt-3 whitespace-pre-line text-text-secondary">{result.explanation}</p>
+      {result.missingQuestionCodes.length > 0 && <div className="mt-3 text-text-secondary"><h3 className="font-semibold">Nog te verduidelijken</h3><ul className="mt-2 list-disc pl-5">{result.missingQuestionCodes.map(code => <li key={code}>{report.definitionSnapshot.modules.flatMap(m => m.questions).find(q => q.code === code)?.prompt ?? 'Aanvullende informatie ontbreekt.'}</li>)}</ul></div>}
       <h3 className="mt-4 font-semibold text-brand-dark">Aanbevolen vervolgstap</h3>
       <p className="mt-2 whitespace-pre-line text-text-secondary">{result.nextStep}</p>
       <ul className="mt-4 space-y-2 text-text-secondary">{result.evidence.map(e => <li key={e.ruleId}>
