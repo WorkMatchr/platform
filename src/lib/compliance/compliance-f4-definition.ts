@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import { complianceV2DefinitionSchema, type ComplianceV2Definition } from './compliance-v2'
 import type { Condition as ComplianceCondition } from './compliance-v2-conditions'
 import { F4_BINDING, f4Catalog, f4Help, f4ModuleTitles, f4Options, f4Visibility } from './compliance-f4-catalog'
+import { f4RuleReviewHolds } from './compliance-f4-rule-review'
 
 type Source = ComplianceV2Definition['modules'][number]['rules'][number]['sources'][number]
 export type F4SourceBindings = Record<string, Source[]>
@@ -30,6 +31,7 @@ export function buildF4Definition(bindings: F4SourceBindings): ComplianceV2Defin
         const basis = q.kind === 'LEGAL' ? 'LEGAL_REQUIREMENT' : 'PRACTICAL_RECOMMENDATION'
         const variants = ['YES', 'PARTIAL', 'NO', ...(q.code === 'CW2-BHV-03' ? ['NO_SHARED_WORKPLACE'] : q.code === 'CW2-PSA-02' ? ['NONE_IDENTIFIED'] : [])]
         return variants.map((answer): ComplianceV2Definition['modules'][number]['rules'][number] => {
+          const reviewHold = f4RuleReviewHolds[q.code]
           const positive = !['NO', 'PARTIAL'].includes(answer)
           const conditions: ComplianceCondition[] = [eq('HASEMPLOYEES', 'YES'), eq(q.code, answer)]
           // A conditional assertion cannot establish that testing is required.
@@ -38,10 +40,10 @@ export function buildF4Definition(bindings: F4SourceBindings): ComplianceV2Defin
           if (answer === 'NONE_IDENTIFIED') conditions.push(eq('CW2-PSA-01', 'YES'))
           const ruleCode = `${q.code}-${answer}`
           return { id: id(ruleCode), code: ruleCode, condition: { all: conditions },
-            applicability: 'RELEVANT', status: positive ? 'IN_ORDER' : basis === 'LEGAL_REQUIREMENT' ? 'ACTION_REQUIRED' : 'ATTENTION_REQUIRED',
-            mode: 'FULL', basis, sources,
-            explanation: `${q.prompt} — ${f4Options(q.code)[answer]}. ${positive ? 'Vastgelegd als zelfverklaring; de bewijsstukken zijn niet gecontroleerd.' : basis === 'LEGAL_REQUIREMENT' ? 'De beschreven maatregel ontbreekt of is nog niet volledig geregeld.' : 'Dit is een praktisch verbeterpunt.'}`,
-            nextStep: positive ? 'Controleer periodiek of deze afspraak nog past bij het werk en de risico’s.' : `Bespreek en regel dit onderdeel: ${q.prompt}`,
+            applicability: reviewHold ? 'POSSIBLY_RELEVANT' : 'RELEVANT', status: reviewHold ? 'NOT_ASSESSED' : positive ? 'IN_ORDER' : basis === 'LEGAL_REQUIREMENT' ? 'ACTION_REQUIRED' : 'ATTENTION_REQUIRED',
+            mode: reviewHold ? 'SPECIALIST_REQUIRED' : 'FULL', basis, sources,
+            explanation: reviewHold ? `${q.prompt} — ${f4Options(q.code)[answer]}. Dit antwoord is onvoldoende voor een nalevingsoordeel over dit onderdeel.` : `${q.prompt} — ${f4Options(q.code)[answer]}. ${positive ? 'Vastgelegd als zelfverklaring; de bewijsstukken zijn niet gecontroleerd.' : basis === 'LEGAL_REQUIREMENT' ? 'De beschreven maatregel ontbreekt of is nog niet volledig geregeld.' : 'Dit is een praktisch verbeterpunt.'}`,
+            nextStep: reviewHold ?? (positive ? 'Controleer periodiek of deze afspraak nog past bij het werk en de risico’s.' : `Bespreek en regel dit onderdeel: ${q.prompt}`),
           }
         })
       })

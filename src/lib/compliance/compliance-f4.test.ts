@@ -5,6 +5,7 @@ import { v2Context, v2Definition, v2Answers } from '@/test-fixtures/compliance-v
 import { buildComplianceV2Report, complianceChecksum, complianceV2DefinitionSchema } from './compliance-v2'
 import { f4Catalog, f4LegacyQuestionMap } from './compliance-f4-catalog'
 import { buildF4Definition } from './compliance-f4-definition'
+import { f4RuleReviewHolds } from './compliance-f4-rule-review'
 import { resolveComplianceQuestions } from './compliance-question-visibility'
 
 const definition = f4TestDefinition(), questions = definition.modules.flatMap(m => m.questions)
@@ -19,13 +20,15 @@ describe('F4 versiegebonden catalogus en beoordeling', () => {
     expect(f4Catalog.filter(q => q.code.startsWith('CW2-'))).toHaveLength(25)
     expect(new Set(f4Catalog.map(q => q.code)).size).toBe(48)
     expect(definition.modules).toHaveLength(10)
-    expect(report().summary.order).toBe(10)
+    expect(report().summary.order).toBe(4)
+    expect(report().summary.notAssessed).toBe(6)
     expect(() => buildF4Definition({})).toThrow(/bronbinding/)
   })
   for (const q of f4Catalog.filter(q => q.kind === 'LEGAL' || q.kind === 'RECOMMENDATION')) {
     for (const answer of ['YES', 'NO', 'PARTIAL', 'UNKNOWN']) it(`${q.code}: ${answer}`, () => {
       const result = report({ [q.code]: answer, ...(q.code === 'RIETESTING' ? { 'CW2-RIE-04': 'NO' } : {}) }).results.find(r => r.id === q.module)!
-      expect(result.status).toBe(answer === 'YES' ? 'IN_ORDER' : answer === 'UNKNOWN' ? 'NOT_ASSESSED' : q.kind === 'RECOMMENDATION' ? 'ATTENTION_REQUIRED' : 'ACTION_REQUIRED')
+      const moduleHasHold = f4Catalog.some(other => other.module === q.module && f4RuleReviewHolds[other.code])
+      expect(result.status).toBe(f4RuleReviewHolds[q.code] || answer === 'UNKNOWN' || (answer === 'YES' && moduleHasHold) ? 'NOT_ASSESSED' : answer === 'YES' ? 'IN_ORDER' : q.kind === 'RECOMMENDATION' ? 'ATTENTION_REQUIRED' : 'ACTION_REQUIRED')
     })
   }
   it('verbergt afhankelijke vragen en negeert hun achtergebleven antwoorden', () => {
@@ -54,7 +57,7 @@ describe('F4 versiegebonden catalogus en beoordeling', () => {
   })
   it('erkende branche-RI&E is geen bewezen erkenning, >25 kent geen branchevrijstelling', () => {
     expect(report({ RIETESTING: 'NO', 'CW2-RIE-04': 'NO', 'CW2-RIE-05': 'RECOGNIZED_INSTRUMENT' }).results[0].status).toBe('NOT_ASSESSED')
-    expect(report({ EMPLOYEECOUNT: 'MORE_THAN_25', RIETESTING: 'NO', 'CW2-RIE-04': 'NO' }).results[0].status).toBe('ACTION_REQUIRED')
+    expect(report({ EMPLOYEECOUNT: 'MORE_THAN_25', RIETESTING: 'NO', 'CW2-RIE-04': 'NO' }).results[0].status).toBe('NOT_ASSESSED')
   })
   it('lokale uitsluiting maakt nooit heel BHV/PSA niet van toepassing', () => {
     expect(report({ 'CW2-BHV-03': 'NO_SHARED_WORKPLACE', 'CW2-PSA-02': 'NONE_IDENTIFIED' }).summary.notApplicable).toBe(0)

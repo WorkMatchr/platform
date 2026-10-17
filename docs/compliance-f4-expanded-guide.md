@@ -116,6 +116,8 @@ Op 17 oktober lokaal op 127.0.0.1:3049 met een tijdelijke, uitsluitend developme
 
 ## Technische validatie
 
+Onderstaande 265-testmeting hoort bij de oorspronkelijke implementatiecommit 0739758. De bronreview en de definitieve herhaling staan in de aanvulling eronder.
+
 - 265/265 gerichte tests, 15 suites PASS (F4, F2, v1, rapport/PDF, API, opslag, UI/hydratatie).
 - Definitieve PostgreSQL-herhaling PASS: 86/86 migraties en checksums, 0 failed/onverwacht, tweede deploy ongewijzigd. F1/F2-historie behouden; F4 echte route→service, zes gelijktijdige aanvragen → één run/tien resultaten. OWNER/ADMIN/MEMBER, geschorste membership, cross-tenant, immutable zichtbaarheid en bronafwijking gecontroleerd. Alleen proces-eigen tijdelijke lokale databases gebruikt en opgeruimd.
 - Volledige lint PASS.
@@ -123,3 +125,32 @@ Op 17 oktober lokaal op 127.0.0.1:3049 met een tijdelijke, uitsluitend developme
 - Diff-check en secrets-patrooncontrole van de taakbestanden PASS.
 - F3 #47 blijft Draft, head 9941ef521806a39ceb8f28353f51d0de55c869cd. A07 #40 blijft Draft, head 70374ed71f195feef3feca1549c48c5a9ad567fd. Geen van beide branches samengevoegd.
 - Productiebuild PASS, inclusief TypeScript-buildfase en 165 pagina's/routes. Bestaande workspace-root/NFT-waarschuwingen in de Knowledge-uploadketen blijven apart vermeld. De eerste build had een stale `.next/dev`-verwijzing naar de verwijderde tijdelijke preview; uitsluitend die gegenereerde cache is verwijderd, waarna de build slaagde. Geen configuratie- of productworkaround.
+
+## Aanvulling — juridische bronbinding en vrijgavevoorbereiding
+
+Controle op 17 oktober 2026, binnen dezelfde Draft PR #49. **NO-GO voor frameworkpublicatie**. Zie het [vrijgaveplan](compliance-f4-publication-plan.md), de [leesbare juridische matrix](compliance-f4-legal-matrix.md), de [exacte vraag-/regelmatrix met checksums](compliance-f4-legal-matrix.json) en de [read-only broninventaris](compliance-f4-source-evidence.json).
+
+Alle 48 velden en 141 regels zijn geïnventariseerd. De 46 bestaande Knowledge-claims zijn niet publiceerbaar; actuele wetstekstrevisies zijn REVIEW_REQUIRED. De 107 kandidaatfragmenten en 19 historische claimkandidaten zijn uitsluitend onderzoeksreferenties. Geen claim-ID, bronrevisie of finale bound checksum is verzonnen. Het framework bestaat nog niet in productie.
+
+Negen onvoldoende onderbouwde gevolgtrekkingen leveren voortaan Niet beoordeeld in plaats van een definitief positief/negatief oordeel. Zelfstandig bevestigde tekortkomingen blijven zichtbaar. Vraagteksten, antwoordopties, gepubliceerde historische frameworks, rapporten en F3/A07-code zijn ongewijzigd. De globale gate is niet aangepast en blijft standaard uit. Voor de scopebronbinding en volledige Knowledge-publicatiepolicy zijn expliciete vervolgcontroles nodig; groen technisch testen geeft geen inhoudelijke vrijgave.
+
+Bestanden van uitsluitend deze aanvulling:
+
+- `docs/README.md`
+- `docs/compliance-f4-expanded-guide.md`
+- `docs/compliance-f4-legal-matrix.json`
+- `docs/compliance-f4-legal-matrix.md`
+- `docs/compliance-f4-publication-plan.md`
+- `docs/compliance-f4-source-evidence.json`
+- `src/lib/compliance/compliance-f4-definition.ts`
+- `src/lib/compliance/compliance-f4-rule-review.ts`
+- `src/lib/compliance/compliance-f4-source-review.test.ts`
+- `src/lib/compliance/compliance-f4.test.ts`
+
+Herhaalde PostgreSQL-integratie: PASS, 86/86 migraties/checksums op een eigen tijdelijke lokale database; herhaald deploy ongewijzigd. F4 zes aanvragen → één run/tien resultaten, OWNER/ADMIN/MEMBER, membership/tenant, immutable zichtbaarheid, bronafwijking en historie PASS. De database is door de harness opgeruimd. Productie is uitsluitend met SELECT bevraagd en heeft 85 migraties behouden.
+
+Standalone TypeScript: dezelfde vier TS2345-baselinefouten in `src/lib/compliance/rule-engine.test.ts` op 13, 14, 23, 24. Geen nieuwe F4-typefouten. De eerste unitrun signaleerde de ontbrekende kandidaatfragmentkoppeling voor werkgeversscope; die is met bestaande bronmetadata aangevuld. Daarnaast startte een Vitest-UI-worker tweemaal niet binnen de timeout. De definitieve controles zijn daarom apart gerapporteerd: 268 tests in 15 suites PASS en daarna de drie UI-/hydratatietests zelfstandig PASS; samen 271 tests, 16 suites. De gecombineerde run had vanwege de workerstart een niet-nul exitcode en wordt niet als volledig geslaagde run gepresenteerd. Geen assertions of timeouts versoepeld.
+
+Volledige lint PASS. Diff-check en secrets-patrooncontrole van de tien aanvullende taakbestanden PASS. Geen gewijzigde vraagcatalogus, gate, Prisma-schema of migratie in deze aanvulling.
+
+Productiebuild: exitcode 0, compile + build-TypeScript + 165/165 pagina's/routes gereed. Uitgevoerd met een uitsluitend procesgebonden, onbereikbare lokale DATABASE_URL-placeholder en F4=false, zonder productiecredential. Better Auth meldde tijdens page-data-verzameling het ontbreken van een ingestelde secret; dit is geen ingelogde runtimeacceptatie. Bestaande workspace-root/NFT-waarschuwingen aanwezig. Een eerdere poging miste de verplichte Prisma-configuratievariabele; een tweede poging had een Windows EBUSY-lock omdat het logbestand in de door Next opgeschoonde buildmap stond. De geslaagde herhaling gebruikte geen logbestand in die map. Geen productconfiguratie of secrets gewijzigd.

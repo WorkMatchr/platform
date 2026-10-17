@@ -1,0 +1,842 @@
+{
+  "observedOn": "2026-10-17",
+  "access": "SELECT_ONLY",
+  "projectId": "billowing-term-15867762",
+  "branchId": "br-odd-smoke-agf0wj9j",
+  "database": "neondb",
+  "migrations": 85,
+  "claimCount": 46,
+  "usableClaimCount": 0,
+  "sourceVersionCount": 124,
+  "claimStates": {
+    "publicationStatus": "DRAFT",
+    "validationStatus": "UNVALIDATED",
+    "temporalStatus": "HISTORICAL",
+    "sourceControlStatus": "OUTDATED"
+  },
+  "sources": [
+    {
+      "code": "NL-ARBOWET-BWBR0010346",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "versionLabel": "2026-07-01_0",
+      "importRevision": 1,
+      "reviewStatus": "REVIEW_REQUIRED",
+      "checksum": "73eab70e3a47370f63c5b4a2e5509a1f787578ca314a23bf77596e2444aa0a59",
+      "url": "https://wetten.overheid.nl/BWBR0010346/"
+    },
+    {
+      "code": "NL-ARBOBESLUIT-BWBR0008498",
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e",
+      "versionLabel": "2026-08-01_0",
+      "importRevision": 1,
+      "reviewStatus": "REVIEW_REQUIRED",
+      "checksum": "ae1c527c017d521098d5010bd2363430eefca348b51e08f2aa7c509915cff9ef",
+      "url": "https://wetten.overheid.nl/BWBR0008498/"
+    }
+  ],
+  "candidateBlocks": [
+    {
+      "id": "1c79bb56-5c6b-46fb-bf7e-bd2a2646f76b",
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e",
+      "sectionPath": "Hoofdstuk 1 Definities en toepassingsgebied > Afdeling 8 Jeugdigen > Artikel 1.36 Nadere voorschriften risico-inventarisatie en -evaluatie > Lid 1",
+      "textHash": "de7c5299a36b47192bf4aacac5ee07c0158f529f2f2b5c436eecfa4bcda4a026"
+    },
+    {
+      "id": "7f0dff3d-b66c-454e-8ddc-603561ad805f",
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e",
+      "sectionPath": "Hoofdstuk 1 Definities en toepassingsgebied > Afdeling 8 Jeugdigen > Artikel 1.36 Nadere voorschriften risico-inventarisatie en -evaluatie > Lid 1 > Onderdeel a",
+      "textHash": "0ab3845843df11b4399a5343abb218f080a3d7ddd5118e576db9141c76388816"
+    },
+    {
+      "id": "a014a849-be3b-4f3a-92aa-5b6b0e31fd2a",
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e",
+      "sectionPath": "Hoofdstuk 1 Definities en toepassingsgebied > Afdeling 8 Jeugdigen > Artikel 1.36 Nadere voorschriften risico-inventarisatie en -evaluatie > Lid 1 > Onderdeel b",
+      "textHash": "09c7b47757352a13083aa2ed9a0c135597f7aebc075014a7c43f11d56fb1bc77"
+    },
+    {
+      "id": "468655a0-e224-4480-a172-35d5c42cced8",
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e",
+      "sectionPath": "Hoofdstuk 1 Definities en toepassingsgebied > Afdeling 8 Jeugdigen > Artikel 1.36 Nadere voorschriften risico-inventarisatie en -evaluatie > Lid 1 > Onderdeel c",
+      "textHash": "46a16de8e779d34d95ceef0fcdb20025b9f12b5bf87af46249e9cc624d483798"
+    },
+    {
+      "id": "ecfad811-ca83-4c11-ba3d-7e76d77eb42a",
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e",
+      "sectionPath": "Hoofdstuk 1 Definities en toepassingsgebied > Afdeling 8 Jeugdigen > Artikel 1.36 Nadere voorschriften risico-inventarisatie en -evaluatie > Lid 1 > Onderdeel d",
+      "textHash": "ba6da7d8b818c9f0a51fa76684269930801d22ac165e36f9430e60f0cecdf847"
+    },
+    {
+      "id": "6519fdbd-0740-4e9e-b537-130ac5cf00b4",
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e",
+      "sectionPath": "Hoofdstuk 1 Definities en toepassingsgebied > Afdeling 8 Jeugdigen > Artikel 1.36 Nadere voorschriften risico-inventarisatie en -evaluatie > Lid 1 > Onderdeel e",
+      "textHash": "92e82a1c77d1eb3c2e3805b6b098812f9b40685eaa9f2294c135e25cd9d6a8a5"
+    },
+    {
+      "id": "287d6225-f99d-4e78-bf06-f82b82a70016",
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e",
+      "sectionPath": "Hoofdstuk 1 Definities en toepassingsgebied > Afdeling 8 Jeugdigen > Artikel 1.36 Nadere voorschriften risico-inventarisatie en -evaluatie > Lid 1 > Onderdeel f",
+      "textHash": "fc6d9f44898ddf2f128e730f17fa5b4ddf5b318007037c573bd8b655f91c5198"
+    },
+    {
+      "id": "c931d47f-ab8c-46ae-93fc-055343dcb342",
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e",
+      "sectionPath": "Hoofdstuk 1 Definities en toepassingsgebied > Afdeling 8 Jeugdigen > Artikel 1.36 Nadere voorschriften risico-inventarisatie en -evaluatie > Lid 2",
+      "textHash": "8f4eeff7de30285c69700c09237b69c3c6f6de6c3af4db095897f899bd74e43c"
+    },
+    {
+      "id": "8b37edfd-3550-4f62-a33c-d76d4804c3e4",
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e",
+      "sectionPath": "Hoofdstuk 1 Definities en toepassingsgebied > Afdeling 9 Zwangere werknemers en werknemers tijdens de lactatie > Artikel 1.41 Risico-inventarisatie en -evaluatie",
+      "textHash": "83fb1920067e70dbd33d92965c263fe564991b03e64dba45476237dbec41ec0a"
+    },
+    {
+      "id": "906e0ad5-ecb2-4366-b86e-1a0e97980e66",
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e",
+      "sectionPath": "Hoofdstuk 2 Arbozorg en organisatie van de arbeid > Afdeling 4 Psychosociale arbeidsbelasting > Artikel 2.15 Maatregelen ter voorkoming of beperking van psychosociale arbeidsbelasting > Lid 1",
+      "textHash": "cc6a2a9a1ea3b07c5d5f05f3a395290a7633087cfa9a9ea7bc0890886d3f0380"
+    },
+    {
+      "id": "39503ba2-77b8-463f-9613-a45c25138764",
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e",
+      "sectionPath": "Hoofdstuk 2 Arbozorg en organisatie van de arbeid > Afdeling 4 Psychosociale arbeidsbelasting > Artikel 2.15 Maatregelen ter voorkoming of beperking van psychosociale arbeidsbelasting > Lid 2",
+      "textHash": "44dc171798a3362e3ecaac489159d26c493b850921eb916da6f5a5e77e08331c"
+    },
+    {
+      "id": "3a217a02-e23b-43e4-840f-4cb7c81a833e",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 2 Arbeidsomstandighedenbeleid > Artikel 3 Arbobeleid > Lid 1",
+      "textHash": "66d2356557b3368ab9352f3f58c23cf83b019728ba68dea85a539c93cc145588"
+    },
+    {
+      "id": "1d7a8c35-4bd7-4eef-b18b-732f1c3427d1",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 2 Arbeidsomstandighedenbeleid > Artikel 3 Arbobeleid > Lid 1 > Onderdeel a",
+      "textHash": "a5f2812239bcf809f60d7f623059617b82c994ab285092b2e4df51a7a94a2e76"
+    },
+    {
+      "id": "630ed311-f2ef-41c9-a67e-c555963b628c",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 2 Arbeidsomstandighedenbeleid > Artikel 3 Arbobeleid > Lid 1 > Onderdeel b",
+      "textHash": "84d7e177f92ed46beb4053a7ecf9b257027b9a1de5521ad4cd4d5305cf9d6bd9"
+    },
+    {
+      "id": "3066773f-9b7e-4e11-885c-a5e5fac7e57b",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 2 Arbeidsomstandighedenbeleid > Artikel 3 Arbobeleid > Lid 1 > Onderdeel c",
+      "textHash": "cfc406c39f7b9123efcb4a0b629c27ad85f650e38de2b849d11c7d0471e7ce7e"
+    },
+    {
+      "id": "c74aa276-8225-4e58-9c1e-c42904aed847",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 2 Arbeidsomstandighedenbeleid > Artikel 3 Arbobeleid > Lid 1 > Onderdeel d",
+      "textHash": "c310aab55f89c79646345a053552b8c68e22e0b34ea7787a7c3a35e7d137425e"
+    },
+    {
+      "id": "f7232824-ba92-4e97-ab81-75f4ab85563a",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 2 Arbeidsomstandighedenbeleid > Artikel 3 Arbobeleid > Lid 1 > Onderdeel e",
+      "textHash": "835263a6440fc85e94b2ae45fb282876d4b59ae21cfc872b5790c1d7ad3bd07f"
+    },
+    {
+      "id": "811d3b1b-59bf-48ec-aad3-11949cebff28",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 2 Arbeidsomstandighedenbeleid > Artikel 3 Arbobeleid > Lid 1 > Onderdeel f",
+      "textHash": "e3d631ebb84f3fd8710cd2b6be73df404315320c615d85d782ca61d8ef7f4b64"
+    },
+    {
+      "id": "1c3acd5d-3ea0-4cb5-bec7-a740a2b7a13c",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 2 Arbeidsomstandighedenbeleid > Artikel 3 Arbobeleid > Lid 2",
+      "textHash": "84879b07f5c5931594267989f1345ce72248bf6d66600f2737b46ab5b0463502"
+    },
+    {
+      "id": "d340726b-c129-474b-8876-2b73fdf7430e",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 2 Arbeidsomstandighedenbeleid > Artikel 3 Arbobeleid > Lid 3",
+      "textHash": "92e3acbfa30fa5c5c05f18bb40a04269c7f97a734222d274e263d41af321ef7b"
+    },
+    {
+      "id": "60c71fad-17c0-4a16-812a-80bf41b68da2",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 2 Arbeidsomstandighedenbeleid > Artikel 3 Arbobeleid > Lid 4",
+      "textHash": "21776efd42f71ce5bbb8bb350602da50934beb42775290c946a529e1752b4305"
+    },
+    {
+      "id": "35058cfe-ea36-434b-a954-a78bcea9b898",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 2 Arbeidsomstandighedenbeleid > Artikel 5 Inventarisatie en evaluatie van risico’s > Lid 1",
+      "textHash": "2bd9b6dd5dc75c75f3f50b4c458e662a5f0cc45746b08f0b739b8f19ed2762d9"
+    },
+    {
+      "id": "98b99fc6-51e0-4085-a6fd-e52b8bcb405d",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 2 Arbeidsomstandighedenbeleid > Artikel 5 Inventarisatie en evaluatie van risico’s > Lid 2",
+      "textHash": "78be93697c728ee06672723f08e95a532e06f91c8bb6b296554fc9081341baac"
+    },
+    {
+      "id": "dbc1c538-84b0-4ee0-bbed-137fcc21d7cb",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 2 Arbeidsomstandighedenbeleid > Artikel 5 Inventarisatie en evaluatie van risico’s > Lid 3",
+      "textHash": "8c3dddd32e6e8bccb8b1f01b384047d35e1fbd5b4d911e846a15e8877f0411d6"
+    },
+    {
+      "id": "315b197b-5399-4c00-b189-42243095d887",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 2 Arbeidsomstandighedenbeleid > Artikel 5 Inventarisatie en evaluatie van risico’s > Lid 4",
+      "textHash": "7ac3adf3116d2617bbd3d3db3db8a8d4d43b1be3491b659469d2637701db57b3"
+    },
+    {
+      "id": "5b793a72-7f08-4e9a-a1ec-0034781f1a54",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 2 Arbeidsomstandighedenbeleid > Artikel 5 Inventarisatie en evaluatie van risico’s > Lid 5",
+      "textHash": "601ffbfddc7b3cd9d8eb09aecf114884188816e67fedddd5142510f5fe4b4d58"
+    },
+    {
+      "id": "7b97b11b-ec94-45c5-b9a0-66939643a146",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 2 Arbeidsomstandighedenbeleid > Artikel 5 Inventarisatie en evaluatie van risico’s > Lid 6",
+      "textHash": "f22b67f02db8b9444e7f6ef957c21fb0564c53b407464f6f9ebbe94473f03465"
+    },
+    {
+      "id": "657d0cd2-d8e2-4e8f-8ea6-f42a7326b45b",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 2 Arbeidsomstandighedenbeleid > Artikel 8 Voorlichting en onderricht > Lid 1",
+      "textHash": "73891a5cbcf18af594cfbb4da67b478f462be95d9b983ea352b876894fc3e6f0"
+    },
+    {
+      "id": "4259f7f2-2f71-4578-8a5e-c6816102b9fd",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 2 Arbeidsomstandighedenbeleid > Artikel 8 Voorlichting en onderricht > Lid 1",
+      "textHash": "f0b89d2c587131de9569ac216cda4d55bff9f24c91ab2896eef576ec38524121"
+    },
+    {
+      "id": "cfe6f795-6d7e-4254-b43f-bf7a1ebe0bb7",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 2 Arbeidsomstandighedenbeleid > Artikel 8 Voorlichting en onderricht > Lid 2",
+      "textHash": "e4b68d52952f092d2de77daad19c96d178dbdfba1de979e2fb5a2c15a622707d"
+    },
+    {
+      "id": "2f88a1ae-333c-4347-9d12-032a500df2ef",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 2 Arbeidsomstandighedenbeleid > Artikel 8 Voorlichting en onderricht > Lid 3",
+      "textHash": "1d7be34a2412bdfeee73dd4964d3e1fa1be2d020f46b289c785f9fe9d83d3175"
+    },
+    {
+      "id": "1c83de76-0a8e-4fae-968a-f76b6e0de5d6",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 2 Arbeidsomstandighedenbeleid > Artikel 8 Voorlichting en onderricht > Lid 4",
+      "textHash": "9d2936e4fda2541619c1e34ee7ce855e448be98bd6b8ec890bbf6f1af101c5dd"
+    },
+    {
+      "id": "02b77199-2eb4-49ab-8dea-2c146605ca20",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 2 Arbeidsomstandighedenbeleid > Artikel 8 Voorlichting en onderricht > Lid 5",
+      "textHash": "7597e7c228f0ff7eddd263d3032f5620043e6f708fc871a1509f6a84f0f97e73"
+    },
+    {
+      "id": "5cebc678-0c26-4574-9861-689fd77ef709",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 2 Arbeidsomstandighedenbeleid > Artikel 9 Melding en registratie van arbeidsongevallen en beroepsziekten > Lid 1",
+      "textHash": "4217c850883556cfb37ccd993cdd4f93c2a0960d91464168042a02285a0725f2"
+    },
+    {
+      "id": "47b42bcf-df85-4568-bbe6-cc6637ba6fcc",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 2 Arbeidsomstandighedenbeleid > Artikel 9 Melding en registratie van arbeidsongevallen en beroepsziekten > Lid 2",
+      "textHash": "94a7c8e2e76e1151878450921ca2316734fe7e22b618d7637c29f07484bdeac2"
+    },
+    {
+      "id": "fe300c39-b0f5-48d9-8e35-0eaaec035b98",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 12 Raadpleging arbeidsomstandighedenbeleid en bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de belanghebbende werknemers > Lid 1",
+      "textHash": "af5371bc2633d2144373bf27e81b066b29278388426e59c511a4a0895a64fdbf"
+    },
+    {
+      "id": "0cb02d0e-747c-443c-a0fb-78c43cb18efb",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 12 Raadpleging arbeidsomstandighedenbeleid en bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de belanghebbende werknemers > Lid 2",
+      "textHash": "5fedfd36f88bceb7026737d6d572a1e3ede161c22ba88af2e8c0d92b09cc7f24"
+    },
+    {
+      "id": "a01406dc-c07f-410e-89cd-5d1769859091",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 12 Raadpleging arbeidsomstandighedenbeleid en bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de belanghebbende werknemers > Lid 2 > Onderdeel a",
+      "textHash": "2c998f69619bcc58c5198d89b8b22b54a9612e8c7b1de51744cc5dbb95291782"
+    },
+    {
+      "id": "c3c99189-3c19-4222-9bee-def1df609a8e",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 12 Raadpleging arbeidsomstandighedenbeleid en bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de belanghebbende werknemers > Lid 2 > Onderdeel b",
+      "textHash": "042c601078f28f986a5ba2cbd03e4bfb562109d99c5d01a500d3cb6882bb6839"
+    },
+    {
+      "id": "d65e2e20-707d-4461-b7b2-5f61c0f69048",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 12 Raadpleging arbeidsomstandighedenbeleid en bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de belanghebbende werknemers > Lid 2 > Onderdeel c",
+      "textHash": "194471f66f3a3646689e52b9225a0666403e3f37fc65d93df85a2ed3716f2780"
+    },
+    {
+      "id": "b7ab4880-9621-4aa9-bad0-38a58f9bca53",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 12 Raadpleging arbeidsomstandighedenbeleid en bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de belanghebbende werknemers > Lid 2 > Onderdeel d",
+      "textHash": "e9281678a18603c78b9967aadea17837aafe21d4d7ac9196780aaef52821bfc2"
+    },
+    {
+      "id": "a140e09f-ec57-4b66-b3b9-a50e3492551f",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 12 Raadpleging arbeidsomstandighedenbeleid en bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de belanghebbende werknemers > Lid 2 > Onderdeel e",
+      "textHash": "2f11509ee62bd3499c0e02e2393c030f00ca8f84dafae123bf3013517835ba4d"
+    },
+    {
+      "id": "c176d6e5-dc10-42dd-95c1-3d87a5ce9090",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 12 Raadpleging arbeidsomstandighedenbeleid en bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de belanghebbende werknemers > Lid 2 > Onderdeel f",
+      "textHash": "02ae6a3fbc50b72bb14aac80ff6cbde5a7b585fec5612993ed33ae662ba2d85d"
+    },
+    {
+      "id": "b4476baf-e221-4ec0-9203-c41d0774fa10",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 13 Bijstand deskundige werknemers op het gebied van preventie en bescherming > Lid 1",
+      "textHash": "e6fa8faa0a762afaa5f8de68592bf436155e9b4c504fb40e1c97094342222ba4"
+    },
+    {
+      "id": "f7306a69-759c-4b94-a98e-cab30ab9743e",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 13 Bijstand deskundige werknemers op het gebied van preventie en bescherming > Lid 2",
+      "textHash": "986686362fd26160bd54f73451f30b4a7611f4a1f13de72c76aa4073fc88abd3"
+    },
+    {
+      "id": "f0b0920f-5b8d-4f52-9565-8914710c67e0",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 13 Bijstand deskundige werknemers op het gebied van preventie en bescherming > Lid 3",
+      "textHash": "e2f20c895011c3b2e1ad9d999319a4450c1686462d84556906b539836ca1d7e8"
+    },
+    {
+      "id": "a8f21ad3-5d9a-42a8-81c5-cca4fc61f2d3",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 13 Bijstand deskundige werknemers op het gebied van preventie en bescherming > Lid 4",
+      "textHash": "a8cb46f2d448cbbf81590b2a9ae8f1478075cbb638eeb3b275dd9345f8d89f96"
+    },
+    {
+      "id": "b368cdfc-ecbd-414a-9695-50ba8b518200",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 13 Bijstand deskundige werknemers op het gebied van preventie en bescherming > Lid 7",
+      "textHash": "3501c9f980f696576f466323aa5df2cda6e00dcd0949bd81e5db2d186583afa5"
+    },
+    {
+      "id": "3605ea9f-72bb-409b-b521-33acd947c375",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 13 Bijstand deskundige werknemers op het gebied van preventie en bescherming > Lid 7 > Onderdeel a",
+      "textHash": "b68b7147c1e5293ecd219485904c898077150d0644ac2ec74630f2793d75c609"
+    },
+    {
+      "id": "2603bf99-de9d-4c4e-b270-8474683494f6",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 13 Bijstand deskundige werknemers op het gebied van preventie en bescherming > Lid 7 > Onderdeel b",
+      "textHash": "525f4ae7b6619b432e0331d36989e6d5322f897a85cfb64d88662562c5cf6ea6"
+    },
+    {
+      "id": "a27c2a69-ce10-47c8-b357-94ba5a5003c9",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 13 Bijstand deskundige werknemers op het gebied van preventie en bescherming > Lid 7 > Onderdeel c",
+      "textHash": "36748fc63d6c4124cab1453a238bb21b3c520d321497393e3d3d9eb2e046b043"
+    },
+    {
+      "id": "7ae34971-5587-4b45-9e57-098c66e20929",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 13 Bijstand deskundige werknemers op het gebied van preventie en bescherming > Lid 9",
+      "textHash": "16016de55415b63c77b1c14540e8dee72512a8669626ff136024c6ea6a28306f"
+    },
+    {
+      "id": "205c9761-ac1f-4662-a0bb-7c72f8ee1981",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 13 Bijstand deskundige werknemers op het gebied van preventie en bescherming > Lid 10",
+      "textHash": "eb05c4371e196010d8169666b23688b13086fc0a61e8aebdb23540ca0f61cefb"
+    },
+    {
+      "id": "2bc72e1c-e04e-4752-b2b8-0ddc4dd4a8fe",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 14 Maatwerkregeling aanvullende deskundige bijstand bij specifieke taken op het gebied van preventie en bescherming > Lid 1",
+      "textHash": "d81d31eec7c8b0cae84f6f900e4e6c8b6ade10f2963c67eed2d5b048bab74bbf"
+    },
+    {
+      "id": "753b761a-5ab4-49fa-b722-b64756edb49a",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 14 Maatwerkregeling aanvullende deskundige bijstand bij specifieke taken op het gebied van preventie en bescherming > Lid 1 > Onderdeel a",
+      "textHash": "aca2e81a54a22602a9abd27c7b80c736149260457b8a77bb18cd6b3512c3fbc1"
+    },
+    {
+      "id": "9af2c4c5-18da-402e-886a-77a48ea6d15a",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 14 Maatwerkregeling aanvullende deskundige bijstand bij specifieke taken op het gebied van preventie en bescherming > Lid 1 > Onderdeel b",
+      "textHash": "b5021d361b860777bb6a41648b9322148d168b2ff5cefeee5237894e340d160d"
+    },
+    {
+      "id": "3ede99db-5ed0-4a54-bf3a-3ca1eda73b0d",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 14 Maatwerkregeling aanvullende deskundige bijstand bij specifieke taken op het gebied van preventie en bescherming > Lid 1 > Onderdeel c",
+      "textHash": "f94a4950b42cc784b043cc190ce0e69430c2ec7c7119ddab0a060579e87a8032"
+    },
+    {
+      "id": "6abcd4d0-d23f-435e-9cfc-211c2bc81248",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 14 Maatwerkregeling aanvullende deskundige bijstand bij specifieke taken op het gebied van preventie en bescherming > Lid 1 > Onderdeel c > Onderdeel 1°",
+      "textHash": "9d21c94cb42d963a330e30af507e297ca58f3cf4497856a55b4954cb4194f1eb"
+    },
+    {
+      "id": "bd43de38-fdc5-48d9-bc37-d13d331bd0d4",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 14 Maatwerkregeling aanvullende deskundige bijstand bij specifieke taken op het gebied van preventie en bescherming > Lid 1 > Onderdeel c > Onderdeel 2°",
+      "textHash": "cbf1b042a9dcbd25080f8203fd9040d6273ab2cdab0688ad7a5b27a6b2545a74"
+    },
+    {
+      "id": "bd7c62a3-084d-465e-840b-18ac55c75595",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 14 Maatwerkregeling aanvullende deskundige bijstand bij specifieke taken op het gebied van preventie en bescherming > Lid 1 > Onderdeel c > Onderdeel 3°",
+      "textHash": "f82b43f922a2fdd37ed722c3ed249d9e33fb4ab98d65c24674cdf4c1bd33225e"
+    },
+    {
+      "id": "3b0562b1-bb55-4a56-b348-595c0d241f73",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 14 Maatwerkregeling aanvullende deskundige bijstand bij specifieke taken op het gebied van preventie en bescherming > Lid 2",
+      "textHash": "0a75fc78a511e6932bf712b2d6a65493856193a1d7a6fc56577194b277f855fa"
+    },
+    {
+      "id": "38820ca1-be43-42af-a2d7-bbf97c7ca0b7",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 14 Maatwerkregeling aanvullende deskundige bijstand bij specifieke taken op het gebied van preventie en bescherming > Lid 2 > Onderdeel a",
+      "textHash": "a5a0424d506ff29916c43b8c5094e4522fb21f7484d707c37773a29b185fb35b"
+    },
+    {
+      "id": "c7ed6869-1230-4b11-883d-f6ce5431a4ab",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 14 Maatwerkregeling aanvullende deskundige bijstand bij specifieke taken op het gebied van preventie en bescherming > Lid 2 > Onderdeel b",
+      "textHash": "2c28e8cd53a66ae9e4333759a265337532bf6008dbe0b3febbd901408dac0b85"
+    },
+    {
+      "id": "1dc30ed5-1138-49ad-9362-b678b77b9232",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 14 Maatwerkregeling aanvullende deskundige bijstand bij specifieke taken op het gebied van preventie en bescherming > Lid 2 > Onderdeel c",
+      "textHash": "90fdf9104830a93f66cd12c9bbd75735690e3a7cfabfe18b967cb6a5ea278200"
+    },
+    {
+      "id": "4b791926-423a-4f1d-8259-303f92374ac1",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 14 Maatwerkregeling aanvullende deskundige bijstand bij specifieke taken op het gebied van preventie en bescherming > Lid 2 > Onderdeel d",
+      "textHash": "82ed71ab6a23aa4fd07dd13142a69b4410e627f26d4cbecf7edf10c3276c77b6"
+    },
+    {
+      "id": "c8b9c9f0-8105-42f6-90dd-46ea9a7a6053",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 14 Maatwerkregeling aanvullende deskundige bijstand bij specifieke taken op het gebied van preventie en bescherming > Lid 2 > Onderdeel e",
+      "textHash": "d0bd8bb8c21c7c3cdf4f1f5bdb336ee6ead36fa6e815cad881b23069461d4068"
+    },
+    {
+      "id": "68df95a0-e9b5-486f-8f06-0a4b348e71d4",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 14 Maatwerkregeling aanvullende deskundige bijstand bij specifieke taken op het gebied van preventie en bescherming > Lid 2 > Onderdeel f",
+      "textHash": "0a576542220e6c63d5d33d4bd24cf857b3a8569ad2b1cd192b4815177df30ad7"
+    },
+    {
+      "id": "7c282c92-2bac-4452-8ddf-c082ceca8861",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 14 Maatwerkregeling aanvullende deskundige bijstand bij specifieke taken op het gebied van preventie en bescherming > Lid 2 > Onderdeel g",
+      "textHash": "7c4cd2750bd968a21c0cc3130a9bba68fe2100414bef142daa610753f29c0daa"
+    },
+    {
+      "id": "a6ce25a9-cdd2-4954-8c34-e80149ed0813",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 14 Maatwerkregeling aanvullende deskundige bijstand bij specifieke taken op het gebied van preventie en bescherming > Lid 2 > Onderdeel h",
+      "textHash": "940b819bf63a1f4af64cd3dca934b263498d23827fe11e092ecc74a7abb8258e"
+    },
+    {
+      "id": "aa3006f6-9177-4584-93d4-496f349b1ff4",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 14 Maatwerkregeling aanvullende deskundige bijstand bij specifieke taken op het gebied van preventie en bescherming > Lid 2 > Onderdeel i",
+      "textHash": "6f7c9a612529308deb78001a9ba555b12c6984b4c4a36f0dabfa927f8e425080"
+    },
+    {
+      "id": "545f6674-700e-47f1-b565-e94992ada207",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 14 Maatwerkregeling aanvullende deskundige bijstand bij specifieke taken op het gebied van preventie en bescherming > Lid 2 > Onderdeel j",
+      "textHash": "1897b3de582ebb0c5f137fd06c13610faa5ddebc918617a892c1749e31f95723"
+    },
+    {
+      "id": "e0ff3072-a35d-43c1-a5d6-2935584bc276",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 14 Maatwerkregeling aanvullende deskundige bijstand bij specifieke taken op het gebied van preventie en bescherming > Lid 3",
+      "textHash": "96af0060f1aed3286da423b4d57349199535f8e5f5be26d99a12884b4fddf3df"
+    },
+    {
+      "id": "574dcc3f-501b-4e5d-9ca8-dc81aacd98d0",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 14 Maatwerkregeling aanvullende deskundige bijstand bij specifieke taken op het gebied van preventie en bescherming > Lid 4",
+      "textHash": "4569a21a1ee4435da64f0f230dec88f12d33f0c81949a4b902ea8f8de0b7f39a"
+    },
+    {
+      "id": "f3a354aa-32ed-4548-8a6d-162433ef5d90",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 14 Maatwerkregeling aanvullende deskundige bijstand bij specifieke taken op het gebied van preventie en bescherming > Lid 5",
+      "textHash": "4a972c7e47f6ce1a05aa8bf903ac942ea9c854d670cb0c61301d830d10fcbf10"
+    },
+    {
+      "id": "d57ac327-7990-4750-8755-b80eecebd53d",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 14 Maatwerkregeling aanvullende deskundige bijstand bij specifieke taken op het gebied van preventie en bescherming > Lid 12",
+      "textHash": "da67e0db504d7083a3d3ed8738e127c88090711126b6c0389102d4a9794b4ad2"
+    },
+    {
+      "id": "f946cf96-07e8-4ade-9b29-b79b65326ecc",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 14 Maatwerkregeling aanvullende deskundige bijstand bij specifieke taken op het gebied van preventie en bescherming > Lid 12 > Onderdeel a",
+      "textHash": "c4cd4743f82b849be178aa8013dc6473e8de44d98915dca53d532703e3155510"
+    },
+    {
+      "id": "6698fe36-6d36-4134-ae53-cead8fff7ebb",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 14 Maatwerkregeling aanvullende deskundige bijstand bij specifieke taken op het gebied van preventie en bescherming > Lid 12 > Onderdeel b",
+      "textHash": "d6ca5219114e412d3a725d5e2cef58996d0ea401948c16584710391bed2a8406"
+    },
+    {
+      "id": "d9cc4500-a0a5-4879-ac2b-fd92a1f742a4",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 14 Maatwerkregeling aanvullende deskundige bijstand bij specifieke taken op het gebied van preventie en bescherming > Lid 12 > Onderdeel b > Onderdeel 1°",
+      "textHash": "2ce617fc675c5557d3eede2a72f5ac9e1e6f62f4c237cda08188ce84e9a11574"
+    },
+    {
+      "id": "2ee2a9ed-f25e-48c6-b6f3-cdd3966899ac",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 14 Maatwerkregeling aanvullende deskundige bijstand bij specifieke taken op het gebied van preventie en bescherming > Lid 12 > Onderdeel b > Onderdeel 2°",
+      "textHash": "cbc7356dacc01665e58213dd63277e4554b912e852d8b5b39244a7821dfe3b3e"
+    },
+    {
+      "id": "1afe66fc-ec9b-4439-814d-4bd94e5468d8",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 14 Maatwerkregeling aanvullende deskundige bijstand bij specifieke taken op het gebied van preventie en bescherming > Lid 13",
+      "textHash": "c2b09a8f426bec810392014d38a1cab02ee9ea7312ae0ebb2dde3bfeee11d3e0"
+    },
+    {
+      "id": "7cc89953-70c4-4f57-abfd-8e9763797290",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 14 Maatwerkregeling aanvullende deskundige bijstand bij specifieke taken op het gebied van preventie en bescherming > Lid 13 > Onderdeel a",
+      "textHash": "481fb2b421c288b05b9cd3c99e40b8eef0e951c1a25b8f8e6745b55c01d5d243"
+    },
+    {
+      "id": "4170c0f7-dfc0-4062-928f-ea21f259ef15",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 14 Maatwerkregeling aanvullende deskundige bijstand bij specifieke taken op het gebied van preventie en bescherming > Lid 13 > Onderdeel b",
+      "textHash": "c888b750d81c2a38b24548690a8f666bc659cdf236859a2712565878f75b7230"
+    },
+    {
+      "id": "b2f98c5f-e834-4ed6-a4fc-18f4dc83a153",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 15 Deskundige bijstand op het gebied van bedrijfshulpverlening > Lid 1",
+      "textHash": "bf106cb7fa4f7e6299199cba289ae1e3ac780584cdb757fa63f47b72a3209fa2"
+    },
+    {
+      "id": "51cbd43d-cef7-4996-aad2-ffbb40b65913",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 15 Deskundige bijstand op het gebied van bedrijfshulpverlening > Lid 2",
+      "textHash": "bf3888f0f24d41f64d83f7649376f7a5fe22cc4f82a46f0289d025abcda0a0a8"
+    },
+    {
+      "id": "2cd49602-38a9-46a2-bc63-86b3c85be91d",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 15 Deskundige bijstand op het gebied van bedrijfshulpverlening > Lid 2 > Onderdeel a",
+      "textHash": "e55b5abcd3d3dbfb611d155a1afc399065ea52805743147083bc8d9cb712e890"
+    },
+    {
+      "id": "1b866171-9cf8-4800-8743-ca38f28f805a",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 15 Deskundige bijstand op het gebied van bedrijfshulpverlening > Lid 2 > Onderdeel b",
+      "textHash": "dbfe657a04482e06adf21f5d908a0b9b3277a7465c54ef763ab2442ef93d342a"
+    },
+    {
+      "id": "cc5e9c5c-ac13-4951-b496-23cc8fb9ce47",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 15 Deskundige bijstand op het gebied van bedrijfshulpverlening > Lid 2 > Onderdeel c",
+      "textHash": "d1bea79d1fa4362fbd60520b07ab697c2b1b07461b25ac823fcfa9881f9e96bc"
+    },
+    {
+      "id": "a7937e40-a533-473f-9c8e-6739eaea23c3",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 3 Raadpleging van de werknemersvertegenwoordigers of belanghebbende werknemers, bijzondere rechten van de ondernemingsraad, de personeelsvertegenwoordiging en de regeling van de deskundige bijstand > Artikel 15 Deskundige bijstand op het gebied van bedrijfshulpverlening > Lid 3",
+      "textHash": "bc3b4a80923891d46d314c9f56d07b22d3ab85f4ea6f85fa8f18d162ce8bc9b2"
+    },
+    {
+      "id": "c90fb828-af81-463b-bf65-33abb0a8a572",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 4 Bijzondere verplichtingen > Artikel 18 Arbeidsgezondheidskundig onderzoek",
+      "textHash": "4e7f6128a31591437bb173a8ae1cc14ccee81d180b79bc75cd5e9e2f5d9e3bb9"
+    },
+    {
+      "id": "e9f52955-f5d0-42a8-8259-be702ccadaef",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 4 Bijzondere verplichtingen > Artikel 19 Verschillende werkgevers > Lid 1",
+      "textHash": "493794cff28197221643a133bb900ab13d6e97919a4c6787fded92736c66e22d"
+    },
+    {
+      "id": "2525d39a-08f4-47f4-ae6d-d34aa18021c4",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 4 Bijzondere verplichtingen > Artikel 19 Verschillende werkgevers > Lid 2",
+      "textHash": "4b8b2d5abe5661d0c766ab5973d05c998c0e73407b8b6fc6acc38fca654728ba"
+    },
+    {
+      "id": "571dd77e-22bb-44a3-a53f-47a075f31e0f",
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e",
+      "sectionPath": "Hoofdstuk 2 Arbozorg en organisatie van de arbeid > Afdeling 3 Arbodiensten en deskundigen > § 3 Uitzonderingen > Artikel 2.14b Uitzondering bijstand risico-inventarisatie en -evaluatie > Lid 1",
+      "textHash": "8864f9fcfdd4aaa114411b9c021b012ca0fa0f6d7ab9678f008d23473045ffe1"
+    },
+    {
+      "id": "70b823cc-9825-4d15-8df0-ab2ed6d502b8",
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e",
+      "sectionPath": "Hoofdstuk 2 Arbozorg en organisatie van de arbeid > Afdeling 3 Arbodiensten en deskundigen > § 3 Uitzonderingen > Artikel 2.14b Uitzondering bijstand risico-inventarisatie en -evaluatie > Lid 2",
+      "textHash": "5e9017e7cbc1f54d837449a9acd38e18ec19affa3eb4f173ab2946a28a089391"
+    },
+    {
+      "id": "7b07fe2f-2ae8-4a53-8ab3-9c01a34fcea1",
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e",
+      "sectionPath": "Hoofdstuk 2 Arbozorg en organisatie van de arbeid > Afdeling 3 Arbodiensten en deskundigen > § 3 Uitzonderingen > Artikel 2.14b Uitzondering bijstand risico-inventarisatie en -evaluatie > Lid 3",
+      "textHash": "ebb83c95abca3871fe10ffe206c6c85feeac9bd4f6007dd7eeb7fa07c3a0274c"
+    },
+    {
+      "id": "00d87c7b-11db-46bf-bc0b-e8ec72483a85",
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e",
+      "sectionPath": "Hoofdstuk 2 Arbozorg en organisatie van de arbeid > Afdeling 3 Arbodiensten en deskundigen > § 3 Uitzonderingen > Artikel 2.14b Uitzondering bijstand risico-inventarisatie en -evaluatie > Lid 3 > Onderdeel a",
+      "textHash": "54c47582c378209c38fcb5a5ee856ea0e3265f70462e1616565a40d10c91a283"
+    },
+    {
+      "id": "58090dc2-a444-4bc4-920e-0e14cab897f4",
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e",
+      "sectionPath": "Hoofdstuk 2 Arbozorg en organisatie van de arbeid > Afdeling 3 Arbodiensten en deskundigen > § 3 Uitzonderingen > Artikel 2.14b Uitzondering bijstand risico-inventarisatie en -evaluatie > Lid 3 > Onderdeel b",
+      "textHash": "e3052ab9adb2d6f99b568ff8c6cd7cfce36d5fe4c32454ab861a2f690a269e3e"
+    },
+    {
+      "id": "e8d0a074-c531-47bf-9284-749064b57f60",
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e",
+      "sectionPath": "Hoofdstuk 2 Arbozorg en organisatie van de arbeid > Afdeling 3 Arbodiensten en deskundigen > § 3 Uitzonderingen > Artikel 2.14b Uitzondering bijstand risico-inventarisatie en -evaluatie > Lid 3 > Onderdeel c",
+      "textHash": "1a4799fbf91ee20fa51014c700428ccd4155a21082ed697355c7e4092c6868f0"
+    },
+    {
+      "id": "f2aa76a4-24a3-42eb-895f-0b14e42c0304",
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e",
+      "sectionPath": "Hoofdstuk 2 Arbozorg en organisatie van de arbeid > Afdeling 3 Arbodiensten en deskundigen > § 3 Uitzonderingen > Artikel 2.14b Uitzondering bijstand risico-inventarisatie en -evaluatie > Lid 3 > Onderdeel d",
+      "textHash": "844ae0a485d8abc060f9edbea1317a4be7c7ec484a532954fb2f1c47337be644"
+    },
+    {
+      "id": "cc792691-596a-4d78-acad-f9ea774f1bb3",
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e",
+      "sectionPath": "Hoofdstuk 2 Arbozorg en organisatie van de arbeid > Afdeling 3 Arbodiensten en deskundigen > § 3 Uitzonderingen > Artikel 2.14b Uitzondering bijstand risico-inventarisatie en -evaluatie > Lid 4",
+      "textHash": "9e2be42f61e34af6e24a8a9910e1ebe320cc3bdf8c92f87fcd1fccc42a8f2787"
+    },
+    {
+      "id": "48531b21-af40-4148-bdf4-6f4eaa19cb69",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 1 Definities en toepassingsgebied > Artikel 1 Definities > Lid 1 > Onderdeel 3",
+      "textHash": "be311e1a230d063f5b1bff2ad0ce99314acf0908c9a98d24cc735fe5d99d3c1f"
+    },
+    {
+      "id": "cd781c66-4bf0-4811-8aa8-71df86a6292d",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 1 Definities en toepassingsgebied > Artikel 1 Definities > Lid 1 > Onderdeel 11",
+      "textHash": "15449a033f4cb85585293ee05d891b0dcaaa40c5d6a23685b9e4144bd997eb6d"
+    },
+    {
+      "id": "d20d50c2-5c6d-4c27-82c4-3fcaee90ecd1",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 1 Definities en toepassingsgebied > Artikel 1 Definities > Lid 1 > Onderdeel 12 > Onderdeel a",
+      "textHash": "bf084af528eb57a36339eb1e0c7a2eb13ac57a5bc84514d874efefd7f800dd41"
+    },
+    {
+      "id": "393caa8f-fb2a-4872-b01c-265a98bb8c02",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 1 Definities en toepassingsgebied > Artikel 1 Definities > Lid 1 > Onderdeel 12 > Onderdeel b",
+      "textHash": "42a526d12c5f9be138ad7ed67e65534fc786e66c3d12abd405f02db1aced732f"
+    },
+    {
+      "id": "9bbdeb17-f3d2-44a5-b857-0e64a478681a",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 1 Definities en toepassingsgebied > Artikel 1 Definities > Lid 1 > Onderdeel 13",
+      "textHash": "a167c46dd91c4ec59cab28b4aeeb20dcce48804393df7820950b9637d3b3c0d2"
+    },
+    {
+      "id": "bb16bfb5-3763-458a-8b8f-48eed6c6b701",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 1 Definities en toepassingsgebied > Artikel 1 Definities > Lid 2 > Onderdeel 3 > Onderdeel a",
+      "textHash": "98aa5bf83cf545152adf50865e9d12a07d5844d6e8cdc294a314dd172b74b061"
+    },
+    {
+      "id": "61401276-bc2d-4e97-850e-f9385a101e61",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 1 Definities en toepassingsgebied > Artikel 1 Definities > Lid 2 > Onderdeel 3 > Onderdeel b",
+      "textHash": "b87266ae4184b2ea5b4ae14db6787a2462ffc129c644356551f4af75cdaf388e"
+    },
+    {
+      "id": "99f497d0-2429-4e4c-9d8a-39a8eb992e5d",
+      "sourceVersionId": "d0d8606c-c4bf-46b0-830b-9d26f135ef9c",
+      "sectionPath": "Hoofdstuk 1 Definities en toepassingsgebied > Artikel 1 Definities > Lid 2 > Onderdeel 4",
+      "textHash": "051f4e5472d584c1ff774cf174845160e880b1590d5a7e89f6471845050066b1"
+    }
+  ],
+  "excludedHistoricalCandidates": [
+    {
+      "id": "e5a65199-4402-4b7d-893b-f772e19442f4",
+      "externalKey": "ai-01:c1",
+      "sourceVersionId": "b7825dca-b14a-4581-a331-68fa672da80b",
+      "sourceChecksum": "4d14cc8c6e2c680425565e8b11267be346b1491ba3696509b6bef546caabb64e",
+      "citationId": "ca2ae1e4-a43d-45a1-a150-881fc612e470",
+      "decision": "NOT_REUSABLE_WITHOUT_NEW_CURRENT_CLAIM_REVIEW"
+    },
+    {
+      "id": "43955364-3088-42b4-b165-ab2d63040c21",
+      "externalKey": "ai-01:c2",
+      "sourceVersionId": "b7825dca-b14a-4581-a331-68fa672da80b",
+      "sourceChecksum": "4d14cc8c6e2c680425565e8b11267be346b1491ba3696509b6bef546caabb64e",
+      "citationId": "81b26c91-2d61-4d56-9974-e5fd3bb76903",
+      "decision": "NOT_REUSABLE_WITHOUT_NEW_CURRENT_CLAIM_REVIEW"
+    },
+    {
+      "id": "4fcbe38c-8d25-4877-8704-7bebb8ed21a8",
+      "externalKey": "ai-01:c3",
+      "sourceVersionId": "b7825dca-b14a-4581-a331-68fa672da80b",
+      "sourceChecksum": "4d14cc8c6e2c680425565e8b11267be346b1491ba3696509b6bef546caabb64e",
+      "citationId": "3f0595bd-5413-4a38-9938-11001f7a0154",
+      "decision": "NOT_REUSABLE_WITHOUT_NEW_CURRENT_CLAIM_REVIEW"
+    },
+    {
+      "id": "e64b1fc3-825d-468f-ab28-9562434a0cb1",
+      "externalKey": "ai-01:c4",
+      "sourceVersionId": "b7825dca-b14a-4581-a331-68fa672da80b",
+      "sourceChecksum": "4d14cc8c6e2c680425565e8b11267be346b1491ba3696509b6bef546caabb64e",
+      "citationId": "a9198209-b07c-40c0-8c3e-73caff9e964e",
+      "decision": "NOT_REUSABLE_WITHOUT_NEW_CURRENT_CLAIM_REVIEW"
+    },
+    {
+      "id": "dc25a704-e7e4-4e25-9605-ea8fd6e9dbdf",
+      "externalKey": "ai-01:c5",
+      "sourceVersionId": "b7825dca-b14a-4581-a331-68fa672da80b",
+      "sourceChecksum": "4d14cc8c6e2c680425565e8b11267be346b1491ba3696509b6bef546caabb64e",
+      "citationId": "9efb0bb8-2f40-4add-b8d5-5f7867290332",
+      "decision": "NOT_REUSABLE_WITHOUT_NEW_CURRENT_CLAIM_REVIEW"
+    },
+    {
+      "id": "afb3f434-8f03-4883-acde-433d0877b324",
+      "externalKey": "ai-01:c6",
+      "sourceVersionId": "b7825dca-b14a-4581-a331-68fa672da80b",
+      "sourceChecksum": "4d14cc8c6e2c680425565e8b11267be346b1491ba3696509b6bef546caabb64e",
+      "citationId": "655d25aa-32d1-4fa2-a59e-237481d01e53",
+      "decision": "NOT_REUSABLE_WITHOUT_NEW_CURRENT_CLAIM_REVIEW"
+    },
+    {
+      "id": "f32747d3-26af-4b8e-abf0-fe5442f4306c",
+      "externalKey": "ai-01:c7",
+      "sourceVersionId": "b7825dca-b14a-4581-a331-68fa672da80b",
+      "sourceChecksum": "4d14cc8c6e2c680425565e8b11267be346b1491ba3696509b6bef546caabb64e",
+      "citationId": "a2efb00d-92e5-4461-8ee6-41b768375bca",
+      "decision": "NOT_REUSABLE_WITHOUT_NEW_CURRENT_CLAIM_REVIEW"
+    },
+    {
+      "id": "328dad12-5c78-4b58-8a16-066429d8753a",
+      "externalKey": "ai-01:c8",
+      "sourceVersionId": "b7825dca-b14a-4581-a331-68fa672da80b",
+      "sourceChecksum": "4d14cc8c6e2c680425565e8b11267be346b1491ba3696509b6bef546caabb64e",
+      "citationId": "1c65e307-4f85-428b-9d8d-c79d60b53b21",
+      "decision": "NOT_REUSABLE_WITHOUT_NEW_CURRENT_CLAIM_REVIEW"
+    },
+    {
+      "id": "8e3409a2-d63d-44eb-a8e2-d096f16233d2",
+      "externalKey": "ai-10:c1",
+      "sourceVersionId": "0734b34e-2d0c-4281-b580-3863b6591a0e",
+      "sourceChecksum": "0ea0a1c3ec78693d8416bed2321a36e5b6ee0fec148bd2bcb966e256df186407",
+      "citationId": "4da0e580-054d-4753-a0ec-c338707f353d",
+      "decision": "NOT_REUSABLE_WITHOUT_NEW_CURRENT_CLAIM_REVIEW"
+    },
+    {
+      "id": "9f4496f1-de92-4f47-9571-cea4037ae6be",
+      "externalKey": "ai-10:c10",
+      "sourceVersionId": "0734b34e-2d0c-4281-b580-3863b6591a0e",
+      "sourceChecksum": "0ea0a1c3ec78693d8416bed2321a36e5b6ee0fec148bd2bcb966e256df186407",
+      "citationId": "cc2a3fbf-dfa3-473a-95b4-7dea6286c232",
+      "decision": "NOT_REUSABLE_WITHOUT_NEW_CURRENT_CLAIM_REVIEW"
+    },
+    {
+      "id": "b08465d5-52b8-45a2-84a2-d619a428cac4",
+      "externalKey": "ai-10:c2",
+      "sourceVersionId": "0734b34e-2d0c-4281-b580-3863b6591a0e",
+      "sourceChecksum": "0ea0a1c3ec78693d8416bed2321a36e5b6ee0fec148bd2bcb966e256df186407",
+      "citationId": "bf45162e-fecb-4eeb-813d-0e8b08c26c80",
+      "decision": "NOT_REUSABLE_WITHOUT_NEW_CURRENT_CLAIM_REVIEW"
+    },
+    {
+      "id": "cad71720-8279-4bb9-ba36-14ad8e8bfd99",
+      "externalKey": "ai-10:c3",
+      "sourceVersionId": "0734b34e-2d0c-4281-b580-3863b6591a0e",
+      "sourceChecksum": "0ea0a1c3ec78693d8416bed2321a36e5b6ee0fec148bd2bcb966e256df186407",
+      "citationId": "256e4d04-e8f7-4d1c-8f8f-0a2d700285ba",
+      "decision": "NOT_REUSABLE_WITHOUT_NEW_CURRENT_CLAIM_REVIEW"
+    },
+    {
+      "id": "4dc8e6f8-e2f3-40b4-a9e0-828983a8a411",
+      "externalKey": "ai-10:c4",
+      "sourceVersionId": "0734b34e-2d0c-4281-b580-3863b6591a0e",
+      "sourceChecksum": "0ea0a1c3ec78693d8416bed2321a36e5b6ee0fec148bd2bcb966e256df186407",
+      "citationId": "05027bbe-b6de-43a8-938f-864d4b3f2785",
+      "decision": "NOT_REUSABLE_WITHOUT_NEW_CURRENT_CLAIM_REVIEW"
+    },
+    {
+      "id": "94ee9e0f-a995-4eab-8e24-16070e8ee5b0",
+      "externalKey": "ai-10:c5",
+      "sourceVersionId": "0734b34e-2d0c-4281-b580-3863b6591a0e",
+      "sourceChecksum": "0ea0a1c3ec78693d8416bed2321a36e5b6ee0fec148bd2bcb966e256df186407",
+      "citationId": "4f00e9c7-b33e-4295-93a7-d2da40abd8b6",
+      "decision": "NOT_REUSABLE_WITHOUT_NEW_CURRENT_CLAIM_REVIEW"
+    },
+    {
+      "id": "cedfbcff-57b2-4d8d-8ad5-42f55e7845f3",
+      "externalKey": "ai-10:c6",
+      "sourceVersionId": "0734b34e-2d0c-4281-b580-3863b6591a0e",
+      "sourceChecksum": "0ea0a1c3ec78693d8416bed2321a36e5b6ee0fec148bd2bcb966e256df186407",
+      "citationId": "38cd391e-b1ea-44ed-8e7f-0057747d04dd",
+      "decision": "NOT_REUSABLE_WITHOUT_NEW_CURRENT_CLAIM_REVIEW"
+    },
+    {
+      "id": "bb8a37f8-dc53-454c-a807-4df2e5aeb63e",
+      "externalKey": "ai-10:c7",
+      "sourceVersionId": "0734b34e-2d0c-4281-b580-3863b6591a0e",
+      "sourceChecksum": "0ea0a1c3ec78693d8416bed2321a36e5b6ee0fec148bd2bcb966e256df186407",
+      "citationId": "0aac2c86-eda7-4b69-9717-9b16ba62c5fb",
+      "decision": "NOT_REUSABLE_WITHOUT_NEW_CURRENT_CLAIM_REVIEW"
+    },
+    {
+      "id": "4e5427c0-8c67-47ed-aeaa-c6b69d126f20",
+      "externalKey": "ai-10:c8",
+      "sourceVersionId": "0734b34e-2d0c-4281-b580-3863b6591a0e",
+      "sourceChecksum": "0ea0a1c3ec78693d8416bed2321a36e5b6ee0fec148bd2bcb966e256df186407",
+      "citationId": "a13191f9-ee06-48ea-9f51-5a5d3f6cac06",
+      "decision": "NOT_REUSABLE_WITHOUT_NEW_CURRENT_CLAIM_REVIEW"
+    },
+    {
+      "id": "60f7515b-e26c-4f5f-a38a-bdf0eb192f7b",
+      "externalKey": "ai-10:c9",
+      "sourceVersionId": "0734b34e-2d0c-4281-b580-3863b6591a0e",
+      "sourceChecksum": "0ea0a1c3ec78693d8416bed2321a36e5b6ee0fec148bd2bcb966e256df186407",
+      "citationId": "fde9b649-e4c8-4668-bf4d-273e5ef77eb2",
+      "decision": "NOT_REUSABLE_WITHOUT_NEW_CURRENT_CLAIM_REVIEW"
+    },
+    {
+      "id": "bfa3a12c-b177-4ab3-97a9-1e7030a9557b",
+      "externalKey": "ai-12:review:c1",
+      "sourceVersionId": "ce758624-ef86-47ff-8ff9-267967d8653b",
+      "sourceChecksum": "e6c2398ce71508deb3486bbb0db2997ece967718ba1194ca576204cd39140ef0",
+      "citationId": "fb527b8e-f88e-4051-a0dd-9fc1a151dbc1",
+      "decision": "NOT_REUSABLE_WITHOUT_NEW_CURRENT_CLAIM_REVIEW"
+    }
+  ],
+  "framework": {
+    "id": "f4000000-0000-4000-8000-000000000021",
+    "code": "NL_ARBO_GUIDE",
+    "version": "2.1",
+    "present": false,
+    "checksum": null
+  }
+}
