@@ -191,3 +191,5 @@ Zie [legacy intake naar gedeelde Simple Advice Flow](legacy-intake-unification.m
 - [A01.8 — Opdracht starten en compatibele Advieswijzer-route](a018-opdracht-starten.md)
 
 - [J01 — Jortt deploymentonderzoek en veilige beheeractie](jortt-deployment-recovery.md)
+
+- [Compliance F4 — uitgebreide versiegebonden wijzer](compliance-f4-expanded-guide.md)

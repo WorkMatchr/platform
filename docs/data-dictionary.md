@@ -275,3 +275,7 @@ Zie [bezorg- en legacybeleid](marketplace-assignment-notifications.md).
 `ComplianceAction.status`: `OPEN`, `IN_PROGRESS`, `WAITING_EXTERNAL`, `DONE`, `NOT_APPLICABLE`.
 
 `ComplianceActionEvent` is append-only auditgeschiedenis voor aanmaak, statuswijziging, wijziging van verantwoordelijke en deadline. De actor is altijd een WorkMatchr-user. Database-triggers blokkeren mutatie of verwijdering van events en blokkeren wijziging van de oorspronkelijke actie-inhoud.
+
+## Compliance F4 (nog niet uitgerold)
+
+Nullable `ComplianceQuestionDefinition.visibilityCondition` bewaart versiegebonden zichtbaarheid. Geen bestaande data gewijzigd; zie [F4](compliance-f4-expanded-guide.md).

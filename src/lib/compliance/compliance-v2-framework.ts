@@ -17,7 +17,9 @@ export async function loadComplianceV2Framework(tx: Prisma.TransactionClient, id
   if (!f || f.status !== 'PUBLISHED' || f.modules.some(m => !m.isActive)) throw new Error('V2-framework is niet beschikbaar.')
   const definition = complianceV2DefinitionSchema.parse({ id: f.id, frameworkCode: f.frameworkCode, version: f.version, title: f.title, disclaimer: f.disclaimer,
     modules: f.modules.map(m => ({ code: m.code, title: m.title,
-      questions: m.questions.map(q => ({ id: q.id, code: q.code, prompt: q.prompt, required: q.isRequired, inputType: q.inputType,
+      questions: m.questions.map(q => ({
+        ...(f.version === '2.1' ? { ...(q.helpText ? { helpText: q.helpText } : {}), ...(q.visibilityCondition ? { visibleWhen: q.visibilityCondition } : {}) } : {}),
+        id: q.id, code: q.code, prompt: q.prompt, required: q.isRequired, inputType: q.inputType,
         options: q.options.map(o => ({ value: o.value, label: o.label, exclusive: o.isExclusive })),
       })),
       rules: m.rules.map(r => ({ id: r.id, code: r.code, condition: r.conditionSchema, applicability: r.applicability, status: r.assessmentStatus,
