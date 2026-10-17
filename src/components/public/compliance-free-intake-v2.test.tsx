@@ -25,6 +25,17 @@ const mount = async () => { await act(async () => { render(<StrictMode><Complian
 const click = (name: string) => fireEvent.click(screen.getByRole('button', { name }))
 
 describe('F3 browsercontract', () => {
+  it('toont bij FI2-01 alleen de relevante toelichting en behoudt vijf keuzes', async () => {
+    await mount()
+    expect(screen.getByText('Denk ook aan uitzendkrachten en stagiairs.', { exact: true })).toBeTruthy()
+    expect(screen.queryByText(/Vul geen namen in\./)).toBeNull()
+    const choices = screen.getAllByRole('radio') as HTMLInputElement[]
+    expect(choices.map(choice => [choice.name, choice.value])).toEqual([
+      ['FI2-01', 'EMPLOYEES'], ['FI2-01', 'OTHERS_UNDER_AUTHORITY'],
+      ['FI2-01', 'VOLUNTEERS_ONLY'], ['FI2-01', 'NONE'], ['FI2-01', 'UNKNOWN'],
+    ])
+    expect(screen.queryByRole('textbox')).toBeNull()
+  })
   it('werkt anoniem van vijf vragen tot oriëntatie, zonder netwerk of automatische opslag', async () => {
     const fetch = vi.fn(); vi.stubGlobal('fetch', fetch)
     await mount(); click('Volgende')
