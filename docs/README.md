@@ -95,6 +95,8 @@ Module 6C.2 — WOS Beheeracties & Communicatie is technisch opgeleverd en wacht
 - [Toegangsniveaus kennis](knowledge-access-tiers.md)
 - [Contextuele kennisroutes naar Advieswijzer en opdracht](knowledge-context-routing.md)
 - [Compliance-wijzer v1](compliance-guide-v1.md)
+- [Compliance-producten — functioneel herontwerp (voorstel, nog geen implementatie)](compliance-product-redesign.md)
+- [Compliance-producten — bestaande vragen, 25 aanvullingen en bronverantwoording](compliance-product-question-catalog.md)
 - [BHV-wijzer v1](bhv-guide-v1.md)
 - [Arbo-wijzer runfundament](arbo-guide-run-foundation.md)
 - [Lokale broninventaris Knowledge Engine PoC](knowledge-source-inventory.md)
