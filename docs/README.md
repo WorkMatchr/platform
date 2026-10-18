@@ -195,3 +195,4 @@ Zie [legacy intake naar gedeelde Simple Advice Flow](legacy-intake-unification.m
 - [Compliance F4 — uitgebreide versiegebonden wijzer](compliance-f4-expanded-guide.md)
 - [Compliance F4 — juridische vraag- en regelmatrix](compliance-f4-legal-matrix.md)
 - [Compliance F4 — bronbinding en frameworkvrijgaveplan](compliance-f4-publication-plan.md)
+- [Compliance F4 — 46 claimreviews en read-only publicatiecontrole](compliance-f4-knowledge-publication.md)

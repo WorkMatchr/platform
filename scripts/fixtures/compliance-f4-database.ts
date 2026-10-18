@@ -5,6 +5,7 @@ import { complianceChecksum } from '../../src/lib/compliance/compliance-v2'
 import { f4TestDefinition, f4PositiveAnswers } from '../../src/test-fixtures/compliance-f4'
 import { v2Context } from '../../src/test-fixtures/compliance-v2'
 import type { ArboGuideViewer } from '../../src/lib/arbo-guides/arbo-guide-run-service'
+import { createReviewedTestCitation } from './compliance-knowledge-database'
 
 // Called exclusively by the self-creating, localhost-only F1/F2 database harness.
 export async function verifyComplianceF4Database(db: PrismaClient, viewer: ArboGuideViewer, other: ArboGuideViewer) {
@@ -12,12 +13,13 @@ export async function verifyComplianceF4Database(db: PrismaClient, viewer: ArboG
   const d = f4TestDefinition(), sources = [...new Map(d.modules.flatMap(m => m.rules.flatMap(r => r.sources)).map(s => [s.id, s])).values()]
   const topic = await db.knowledgeTopic.create({ data: { slug: 'synthetic-f4', title: 'Test', description: 'Test', domain: 'OTHER' } })
   const source = await db.knowledgeSource.create({ data: { code: 'SYNTHETIC_F4', title: sources[0].title, publisher: sources[0].publisher, sourceUrl: sources[0].url,
-    sourceType: 'LEGISLATION', sourceFormat: 'HTML', copyrightClassification: 'PUBLIC_DOMAIN', authorityLevel: 'PRIMARY_LEGAL', sourceFamily: 'TEST', independenceGroup: 'TEST' } })
-  await db.knowledgeSourceVersion.create({ data: { id: sources[0].sourceVersionId, sourceId: source.id, versionLabel: 'test-f4', checksum: sources[0].sourceChecksum } })
+    sourceType: 'LEGISLATION', sourceFormat: 'HTML', copyrightClassification: 'PUBLIC_DOMAIN', authorityLevel: 'PRIMARY_LEGAL', sourceFamily: 'TEST', independenceGroup: 'TEST', temporalStatus: 'CURRENT' } })
+  await db.knowledgeSourceVersion.create({ data: { id: sources[0].sourceVersionId, sourceId: source.id, versionLabel: 'test-f4', checksum: sources[0].sourceChecksum, reviewStatus: 'REVIEWED' } })
   for (const s of sources) {
     const recommendation = s.claimId.endsWith('2')
-    await db.knowledgeClaim.create({ data: { id: s.claimId, topicId: topic.id, externalKey: `synthetic-f4-${recommendation}`, claimType: recommendation ? 'RECOMMENDATION' : 'LEGAL_REQUIREMENT', statement: recommendation ? 'Synthetische aanbeveling' : 'Synthetische F4-testclaim', applicability: 'Test', createdByActor: 'F4_TEST', publicationStatus: 'PUBLISHED', validationStatus: 'VALIDATED', copyrightCheckPassed: true, reviewedByUserId: viewer.userId, reviewedAt: new Date(v2Context.scannedAt) } })
-    await db.knowledgeCitation.create({ data: { id: s.id, claimId: s.claimId, sourceVersionId: s.sourceVersionId, supportType: 'DIRECT_SUPPORT' } })
+    const scope = s.claimId.endsWith('3')
+    await db.knowledgeClaim.create({ data: { id: s.claimId, topicId: topic.id, externalKey: `synthetic-f4-${s.claimId}`, claimType: recommendation ? 'RECOMMENDATION' : scope ? 'CONDITION' : 'LEGAL_REQUIREMENT', statement: recommendation ? 'Synthetische aanbeveling' : scope ? 'Synthetische werkgeversscope' : 'Synthetische F4-testclaim', applicability: 'Test', createdByActor: 'F4_TEST', publicationStatus: 'PUBLISHED', validationStatus: 'VALIDATED', temporalStatus: 'CURRENT', sourceControlStatus: 'CONTROL_COMPLETE', copyrightCheckPassed: true, reviewedByUserId: viewer.userId, reviewedAt: new Date(v2Context.scannedAt) } })
+    await createReviewedTestCitation(db, s, viewer.userId, new Date(v2Context.scannedAt))
   }
   await db.complianceFrameworkVersion.create({ data: { id: d.id, frameworkCode: d.frameworkCode, version: d.version, title: d.title, disclaimer: d.disclaimer, methodology: 'Uitsluitend synthetische F4-testbronbindingen', checksum: complianceChecksum(d) } })
   for (const [i, m] of d.modules.entries()) {
@@ -28,6 +30,17 @@ export async function verifyComplianceF4Database(db: PrismaClient, viewer: ArboG
       knowledgeReferences: { create: r.sources.map((s, k) => ({ knowledgeClaimId: s.claimId, supportType: 'DIRECT_SUPPORT', isPrimary: k === 0, position: k + 1 })) } } })
   }
   const { POST } = await import('../../src/app/wijzers/compliance/v2/runs/route')
+  const { inspectComplianceFramework } = await import('../../src/lib/compliance/compliance-v2-framework')
+  const beforeInspection = await db.complianceFrameworkVersion.findUniqueOrThrow({ where: { id: d.id } })
+  const inspection = await db.$transaction(async tx => {
+    await tx.$executeRawUnsafe('SET TRANSACTION READ ONLY')
+    assert.deepEqual(await tx.$queryRawUnsafe('SHOW transaction_read_only'), [{ transaction_read_only: 'on' }])
+    return inspectComplianceFramework(tx, d.id)
+  }, { isolationLevel: 'RepeatableRead', timeout: 30_000 })
+  assert.equal(inspection.decision, 'GO')
+  assert.equal(inspection.status, 'DRAFT')
+  assert.equal(inspection.rules.length, 141)
+  assert.deepEqual(await db.complianceFrameworkVersion.findUniqueOrThrow({ where: { id: d.id } }), beforeInspection)
   const payload = { idempotencyKey: randomUUID(), startedAt: new Date(Date.now() - 60_000).toISOString(), completedAt: new Date().toISOString(), answers: f4PositiveAnswers }
   const post = (body: unknown = payload) => POST(new Request('http://localhost/wijzers/compliance/v2/runs', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }))
   delete process.env.COMPLIANCE_F4_ENABLED
@@ -55,6 +68,10 @@ export async function verifyComplianceF4Database(db: PrismaClient, viewer: ArboG
   await db.organizationMembership.update({ where: { userId: viewer.userId }, data: { status: 'SUSPENDED' } })
   assert.equal((await post()).status, 403)
   await db.organizationMembership.update({ where: { userId: viewer.userId }, data: { status: 'ACTIVE' } })
+  await db.knowledgeSource.update({ where: { id: source.id }, data: { temporalStatus: 'WITHDRAWN' } })
+  assert.equal((await post({ ...payload, idempotencyKey: randomUUID() })).status, 400, 'Withdrawn evidence blocks new runs')
+  assert.deepEqual((await service.getArboGuideRun(viewer, run.id)).reportSnapshot, bodies[0].report, 'Historical report remains readable')
+  await db.knowledgeSource.update({ where: { id: source.id }, data: { temporalStatus: 'CURRENT' } })
   await db.knowledgeSource.update({ where: { id: source.id }, data: { title: 'Gewijzigde testbron' } })
   assert.equal((await post({ ...payload, idempotencyKey: randomUUID() })).status, 400)
   for (const old of historical) assert.deepEqual(await db.arboGuideRun.findUniqueOrThrow({ where: { id: old.id }, include: { results: true } }), old)

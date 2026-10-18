@@ -1,5 +1,7 @@
 # F4 — bronbinding en gecontroleerde frameworkvrijgave
 
+**Actualisatie 18 oktober 2026:** de vervolgcontrole is uitgewerkt in [Knowledge-publicatiecontrole](compliance-f4-knowledge-publication.md). Alle 46 claims zijn nu afzonderlijk geïnventariseerd; de 141-regelmatrix bevat de expliciete reviewbindings. De gedeelde F2/F4-loader gebruikt de volledige Knowledge-policy plus bron-/review-/scopecontroles. Een read-only dry-run is geïmplementeerd; een registrerende/publicerende runner nadrukkelijk niet. De hieronder genoemde ontbrekende technische policy-integratie is daarmee historische context van 17 oktober. De inhoudelijke NO-GO en negen holds blijven gelden. Er is niets gepubliceerd of in productie gewijzigd.
+
 Beoordeling: 17 oktober 2026. PR #49 / issue #48. **NO-GO voor publicatie van NL_ARBO_GUIDE / 2.1.** Dit document bereidt een latere vrijgave voor; het registreert of publiceert niets. `COMPLIANCE_F4_ENABLED` blijft standaard uitgeschakeld. Geen productiegegevens of frameworkstatussen zijn gewijzigd.
 
 ## Bewijs en afbakening

@@ -154,3 +154,44 @@ Standalone TypeScript: dezelfde vier TS2345-baselinefouten in `src/lib/complianc
 Volledige lint PASS. Diff-check en secrets-patrooncontrole van de tien aanvullende taakbestanden PASS. Geen gewijzigde vraagcatalogus, gate, Prisma-schema of migratie in deze aanvulling.
 
 Productiebuild: exitcode 0, compile + build-TypeScript + 165/165 pagina's/routes gereed. Uitgevoerd met een uitsluitend procesgebonden, onbereikbare lokale DATABASE_URL-placeholder en F4=false, zonder productiecredential. Better Auth meldde tijdens page-data-verzameling het ontbreken van een ingestelde secret; dit is geen ingelogde runtimeacceptatie. Bestaande workspace-root/NFT-waarschuwingen aanwezig. Een eerdere poging miste de verplichte Prisma-configuratievariabele; een tweede poging had een Windows EBUSY-lock omdat het logbestand in de door Next opgeschoonde buildmap stond. De geslaagde herhaling gebruikte geen logbestand in die map. Geen productconfiguratie of secrets gewijzigd.
+
+## Aanvulling — volledige Knowledge-publicatiecontrole (18 oktober 2026)
+
+Zie [de 46 claimreviews en publicatiedry-run](compliance-f4-knowledge-publication.md). Alle historische claims hebben een individuele reviewdispositie; geen daarvan is gepromoveerd. Alle 141 regels hebben expliciete bron-/artikelreferenties, antwoorduitkomsten, voorwaarden en ontbrekende onderbouwing. De negen holds blijven staan. Een afzonderlijke werkgeversscopebinding vervangt de eerdere inhoudelijke bronfallback.
+
+Nieuwe F2/F4-runs en de read-only dry-run gebruiken dezelfde volledige Knowledge-policy, met actuele menselijke validatie, bron-/fragmentreview, conflict-/withdrawalcontrole, tijdscontext en checksumcontrole. Alleen de ongepubliceerde F4-claimbinding wordt uitgebreid met het exacte citatiefragment. Historische v1/v2-snapshots, readers en oude v2-hashes blijven ongewijzigd. Een later publicatiepad moet deze precondition binnen zijn transactie opnieuw gebruiken; er is hier geen schrijvende publisher geïntroduceerd.
+
+### Validatie van deze aanvulling
+
+- 317 gerichte tests in 18 suites PASS; vervolgens 3 bestaande UI-/hydratatietests in één suite PASS: **320 tests / 19 suites**. Coverage omvat volledige policy, 141 regels, 46 claiminventaris, aparte scope, fragmentwissel, negen holds, bestaande v1/v2-resultaten en routevalidatie. Een eerste sandboxrun kon zijn Vitest-cache niet hernoemen (EPERM); dezelfde tests zijn daarna buiten die cachebeperking geslaagd.
+- Volledige lint PASS.
+- Definitieve standalone TypeScript: uitsluitend dezelfde vier bestaande TS2345-readonly-arrayfouten in `src/lib/compliance/rule-engine.test.ts` (13, 14, 23, 24); geen nieuwe taakfouten. Geen assertions of baselinecode aangepast.
+- Definitieve productiebuild PASS (exit 0): compile, build-TypeScript en 165 routes/pagina's. Alleen procesgebonden onbereikbare lokale databaseplaceholder, F4=false en een willekeurige lokale buildsecret; geen productieverbinding. Bestaande workspace-root/NFT-waarschuwingen. De gegenereerde next-env-wijziging is niet opgenomen.
+- Diff-check en secrets-patrooncontrole PASS; geen aparte CI-secretscanner in deze checkout aangetroffen.
+- CLI `--check` zonder reviewcredential weigert vóór verbinding (exit 1). Er bestaat geen apply-modus. Een negatieve CLI-aanroep met dat argument is door automatische goedkeuringscontrole geweigerd en niet uitgevoerd; geen omweg gebruikt.
+- **PostgreSQL-herhaling OPEN, niet uitgevoerd.** De huidige opdracht zegt expliciet migratie 86 niet uit te voeren. De bestaande tijdelijke databaseharness bouwt alle 86 migraties op; daarom is afzonderlijk verduidelijking gevraagd voor uitsluitend een proces-eigen lokale testdatabase. Tot dat antwoord geen database aangemaakt, geen migratie gestart. De gewijzigde synthetische fixtures bevatten review-/fragmentrecords, READ ONLY-dry-runasserties en bronintrekking/historische-readchecks, maar zijn in deze aanvulling nog niet tegen PostgreSQL uitgevoerd. Eerdere 86/86-resultaten hierboven gelden uitsluitend voor hun toenmalige commits, niet als bewijs voor deze nieuwe policy-integratie.
+- Productie opnieuw uitsluitend SELECT: **85 succesvolle migraties, 46 claims, 0 gepubliceerde claims, 0 framework-2.1-registraties**. Geen productiecredential in uitvoer of bestanden.
+
+### Exacte bestanden van deze aanvulling
+
+- `docs/README.md`
+- `docs/compliance-f4-expanded-guide.md`
+- `docs/compliance-f4-claim-review.json`
+- `docs/compliance-f4-knowledge-publication.md`
+- `docs/compliance-f4-legal-matrix.json`
+- `docs/compliance-f4-publication-plan.md`
+- `scripts/check-compliance-f4-publication.ts`
+- `scripts/fixtures/compliance-f4-database.ts`
+- `scripts/fixtures/compliance-v2-database.ts`
+- `scripts/fixtures/compliance-knowledge-database.ts`
+- `src/lib/compliance/compliance-f4-definition.ts`
+- `src/lib/compliance/compliance-f4-framework.ts`
+- `src/lib/compliance/compliance-f4-source-review.test.ts`
+- `src/lib/compliance/compliance-v2-framework.ts`
+- `src/lib/compliance/compliance-knowledge-publication.ts`
+- `src/lib/compliance/compliance-knowledge-publication.test.ts`
+- `src/lib/compliance/compliance-framework-publication.test.ts`
+- `src/test-fixtures/compliance-f4.ts`
+- `src/test-fixtures/compliance-source-fragment.ts`
+
+**NO-GO voor inhoudelijke frameworkpublicatie.** Menselijke/juridische bronreview, echte actuele bindings, PG-herhaling en een afzonderlijk geautoriseerd publicatieproces blijven noodzakelijk. Geen productiemigratie, claim-/frameworkpublicatie, activering, merge of deployment. F3 #47 en A07 #40 zijn niet gewijzigd.

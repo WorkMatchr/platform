@@ -26,8 +26,6 @@ export function buildF4Definition(bindings: F4SourceBindings): ComplianceV2Defin
         options: Object.entries(f4Options(q.code)).map(([value, label]) => ({ value, label, exclusive: true })),
       }))
       const rules: ComplianceV2Definition['modules'][number]['rules'] = catalog.filter(q => q.kind === 'LEGAL' || q.kind === 'RECOMMENDATION').flatMap(q => {
-        const sources = bindings[q.code]
-        if (!sources?.length) throw new Error(`Ontbrekende beoordeelde bronbinding: ${q.code}`)
         const basis = q.kind === 'LEGAL' ? 'LEGAL_REQUIREMENT' : 'PRACTICAL_RECOMMENDATION'
         const variants = ['YES', 'PARTIAL', 'NO', ...(q.code === 'CW2-BHV-03' ? ['NO_SHARED_WORKPLACE'] : q.code === 'CW2-PSA-02' ? ['NONE_IDENTIFIED'] : [])]
         return variants.map((answer): ComplianceV2Definition['modules'][number]['rules'][number] => {
@@ -39,6 +37,8 @@ export function buildF4Definition(bindings: F4SourceBindings): ComplianceV2Defin
           if (q.code === 'RIETESTING' && !positive) conditions.push(eq('CW2-RIE-04', 'NO'), { any: [eq('EMPLOYEECOUNT', 'MORE_THAN_25'), eq('CW2-RIE-05', 'OTHER')] })
           if (answer === 'NONE_IDENTIFIED') conditions.push(eq('CW2-PSA-01', 'YES'))
           const ruleCode = `${q.code}-${answer}`
+          const sources = bindings[ruleCode] ?? bindings[q.code]
+          if (!sources?.length) throw new Error(`Ontbrekende beoordeelde bronbinding: ${ruleCode}`)
           return { id: id(ruleCode), code: ruleCode, condition: { all: conditions },
             applicability: reviewHold ? 'POSSIBLY_RELEVANT' : 'RELEVANT', status: reviewHold ? 'NOT_ASSESSED' : positive ? 'IN_ORDER' : basis === 'LEGAL_REQUIREMENT' ? 'ACTION_REQUIRED' : 'ATTENTION_REQUIRED',
             mode: reviewHold ? 'SPECIALIST_REQUIRED' : 'FULL', basis, sources,
@@ -50,7 +50,7 @@ export function buildF4Definition(bindings: F4SourceBindings): ComplianceV2Defin
       rules.push({ id: id(`${code}-SCOPE-UNCERTAIN`), code: `${code}-SCOPE-UNCERTAIN`,
         condition: { all: [{ any: [eq('HASEMPLOYEES', 'NO'), eq('HASEMPLOYEES', 'OTHERS'), eq('HASEMPLOYEES', 'VOLUNTEERS'), eq('EMPLOYEECOUNT', 'ZERO')] }] },
         applicability: 'POSSIBLY_RELEVANT', status: 'NOT_ASSESSED', mode: 'SPECIALIST_REQUIRED', basis: 'LEGAL_REQUIREMENT',
-        sources: rules.find(r => r.basis === 'LEGAL_REQUIREMENT')!.sources,
+        sources: bindings[`${code}-SCOPE-UNCERTAIN`] ?? [],
         explanation: 'De werkgeversstatus of personeelsomvang vraagt nadere verificatie. Er wordt geen algemene vrijstelling toegekend.',
         nextStep: 'Controleer wie onder uw gezag werkt en welke verplichtingen op uw situatie van toepassing zijn.',
       })

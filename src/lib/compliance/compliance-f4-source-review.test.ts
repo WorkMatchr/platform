@@ -18,7 +18,37 @@ const evidence = JSON.parse(readFileSync('docs/compliance-f4-source-evidence.jso
 }
 const definition = f4TestDefinition()
 
+const claimReview = JSON.parse(readFileSync('docs/compliance-f4-claim-review.json', 'utf8')) as {
+  claims: { id: string; externalKey: string; reviewedAt: null; reusableNow: boolean; publicationAction: string; reviewNote: string; citations: { id: string; sourceVersionId: string; reviewStatus: string; checksum: string }[] }[]
+}
+
 describe('F4 bronreview en publicatiemanifest', () => {
+  it('registreert alle 46 echte historische claimkandidaten zonder goedkeuring te verzinnen', () => {
+    expect(claimReview.claims).toHaveLength(46)
+    expect(new Set(claimReview.claims.map(c => c.id)).size).toBe(46)
+    expect(new Set(claimReview.claims.map(c => c.externalKey)).size).toBe(46)
+    for (const claim of claimReview.claims) {
+      expect(claim.reusableNow).toBe(false)
+      expect(claim.publicationAction).toBe('NONE')
+      expect(claim.reviewedAt).toBeNull()
+      expect(claim.reviewNote.length).toBeGreaterThan(30)
+      expect(claim.citations.length).toBeGreaterThan(0)
+      for (const citation of claim.citations) {
+        expect(citation.sourceVersionId).toMatch(/^[a-f0-9-]{36}$/)
+        expect(citation.checksum).toMatch(/^[a-f0-9]{64}$/)
+        expect(citation.reviewStatus).toBe('REVIEW_REQUIRED')
+      }
+    }
+  })
+  it('maakt per regel de ontbrekende juridische goedkeuring en alle antwoorduitkomsten expliciet', () => {
+    const inventory = JSON.parse(matrixText) as { rules: { bindingReview: { legalConclusionSupported: boolean; humanReviewRequired: boolean; answerOutcomes: Record<string, string>; requiredArticleOrFragment: string } }[] }
+    for (const rule of inventory.rules) {
+      expect(rule.bindingReview.legalConclusionSupported).toBe(false)
+      expect(rule.bindingReview.humanReviewRequired).toBe(true)
+      expect(Object.keys(rule.bindingReview.answerOutcomes).sort()).toEqual(['NO', 'PARTIAL', 'UNKNOWN', 'YES'])
+      expect(rule.bindingReview.requiredArticleOrFragment.length).toBeGreaterThan(0)
+    }
+  })
   it('dekt alle actuele vraagdefinities inclusief opties en zichtbaarheid zonder fictieve bindings', () => {
     expect(matrix.framework).toEqual({ ...F4_BINDING, published: false, checksum: null })
     expect(matrix.questions).toHaveLength(48)
