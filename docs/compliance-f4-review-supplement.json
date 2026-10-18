@@ -1,0 +1,1006 @@
+{
+  "observedOn": "2026-10-18",
+  "access": "SELECT_ONLY",
+  "administrativeLabel": "REVIEW_REQUIRED",
+  "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e",
+  "sourceVersionLabel": "2026-08-01_0",
+  "sourceUrl": "https://wetten.overheid.nl/BWBR0008498/",
+  "currentConsolidationVerified": false,
+  "method": "Bestaande wettelijke tekstblokken uit bestaande revisie, geen import/publicatie. Exacte kopblokduplicaten (exactText gelijk aan sectionPath) uitgesloten. Selectie van kandidaatbepalingen; niet de volledige wet.",
+  "claims": [
+    {
+      "claimExternalKey": "ai-02:c1",
+      "candidateArticles": [
+        "AB 5.9"
+      ],
+      "blockIds": [
+        "bf60fbdd-e159-49a4-8105-0ece37babba7",
+        "e7bb2bd5-b930-43b0-baec-a4cd6ba3d20c"
+      ],
+      "legalApproval": false
+    },
+    {
+      "claimExternalKey": "ai-02:c2",
+      "candidateArticles": [
+        "AB 5.4",
+        "AB 5.12"
+      ],
+      "blockIds": [
+        "8091d691-0095-4165-8c59-ae447ae030e8",
+        "f4ab2428-7a8a-4408-a672-2c38a60a597c"
+      ],
+      "legalApproval": false
+    },
+    {
+      "claimExternalKey": "ai-02:c3",
+      "candidateArticles": [
+        "AB 5.4",
+        "AB 5.12"
+      ],
+      "blockIds": [
+        "8091d691-0095-4165-8c59-ae447ae030e8",
+        "f4ab2428-7a8a-4408-a672-2c38a60a597c"
+      ],
+      "legalApproval": false
+    },
+    {
+      "claimExternalKey": "ai-02:c4",
+      "candidateArticles": [
+        "AB 5.4",
+        "AB 5.12"
+      ],
+      "blockIds": [
+        "8091d691-0095-4165-8c59-ae447ae030e8",
+        "f4ab2428-7a8a-4408-a672-2c38a60a597c"
+      ],
+      "legalApproval": false
+    },
+    {
+      "claimExternalKey": "ai-02:c5",
+      "candidateArticles": [
+        "AB 5.8",
+        "AB 5.10"
+      ],
+      "blockIds": [
+        "717b2142-be6f-445e-9e52-0162314f8152",
+        "bcca8548-dd80-47d8-a1af-a8536f757c7d",
+        "3241133d-b30b-4ab3-ac9f-be1b6dc56cb5",
+        "5523f9af-d478-49a9-9ef5-490691d735b6",
+        "a6185e12-6791-4d56-af10-0f14b0517998",
+        "16420fd2-cd08-41b5-be37-3d3f939cae93",
+        "b50f12ad-08ad-49fc-835b-f1242793086e"
+      ],
+      "legalApproval": false
+    },
+    {
+      "claimExternalKey": "ai-02:c6",
+      "candidateArticles": [
+        "AB 5.12"
+      ],
+      "blockIds": [
+        "f4ab2428-7a8a-4408-a672-2c38a60a597c"
+      ],
+      "legalApproval": false
+    },
+    {
+      "claimExternalKey": "ai-02:c8",
+      "candidateArticles": [
+        "AB 5.9"
+      ],
+      "blockIds": [
+        "bf60fbdd-e159-49a4-8105-0ece37babba7",
+        "e7bb2bd5-b930-43b0-baec-a4cd6ba3d20c"
+      ],
+      "legalApproval": false
+    },
+    {
+      "claimExternalKey": "ai-03:review:c1",
+      "candidateArticles": [
+        "AB 4.54a"
+      ],
+      "blockIds": [
+        "b9706b4f-4e2a-405a-ac43-28cf6e5d9046",
+        "3703dd94-f513-4f13-a5d3-360e6fb9dfe8",
+        "012503be-1b3d-4c80-a7b4-487d1f004dbe",
+        "c4a09ea5-1fdf-492d-8843-374f8f09465e",
+        "6ba5d678-9cd7-4f5d-a8dd-28e6bdc2f192",
+        "b6787701-7541-48fc-bbca-9de5c4572878",
+        "18204c0b-ddce-4164-8a1f-6e1b29dc6dfe",
+        "407f6853-3df7-4709-9a04-d36da82ae1eb",
+        "beb3b40b-aa39-4311-ac35-0a4fbe3fa1f8",
+        "e630c4ad-441f-46bf-baf7-8a87c2f2b981"
+      ],
+      "legalApproval": false
+    },
+    {
+      "claimExternalKey": "ai-03:review:c2",
+      "candidateArticles": [
+        "AB 4.45 lid 1"
+      ],
+      "blockIds": [
+        "5e8203fc-0426-45b1-b355-30888d8b0d76"
+      ],
+      "legalApproval": false
+    },
+    {
+      "claimExternalKey": "ai-04:review:c1",
+      "candidateArticles": [
+        "AB 6.7 lid 1",
+        "AB 6.7 lid 2"
+      ],
+      "blockIds": [
+        "3890403d-3aa6-47d2-afad-e1d696a90198",
+        "b54b0346-8db2-484a-b0d3-9f957c231737"
+      ],
+      "legalApproval": false
+    },
+    {
+      "claimExternalKey": "ai-04:review:c2",
+      "candidateArticles": [
+        "AB 6.8 lid 1",
+        "AB 6.8 lid 2"
+      ],
+      "blockIds": [
+        "bf65ecac-acce-4973-98cb-ae8306f99083",
+        "16ce6f6f-8b29-4853-baf4-35a8c22fa78d",
+        "df248ddb-69aa-4fa5-9360-2eafaf2fe994",
+        "3aca7749-3ba9-42e1-8d90-8d33a31652af",
+        "3459f0f3-ec5b-4e08-b313-6bd72c01b4b0",
+        "afe2e21b-b591-4800-9441-929d3212fd11",
+        "fd45b289-a568-4486-b7b4-06496ccec342",
+        "871ce33d-ac30-4717-bcf1-1873e08fcb54",
+        "ee85aa54-e27d-4b56-b423-0ecf694a41c1",
+        "9df6f309-b4bc-44d2-9815-68bc0642ef8e",
+        "7af72765-4a27-4e40-b22b-449b61bd301b",
+        "c2c4ecc7-2cbb-4238-b5fa-ffad1632fb4d",
+        "27248587-8696-41cd-a012-c48d4ef05812"
+      ],
+      "legalApproval": false
+    },
+    {
+      "claimExternalKey": "ai-05:review:c1",
+      "candidateArticles": [
+        "AB 3.5g lid 1",
+        "AB 3.5g lid 2",
+        "AB 3.5g lid 4"
+      ],
+      "blockIds": [
+        "1bd38ed1-58ab-4675-8b00-f042bfc53292",
+        "12a8dc44-de5f-4fb2-a770-f697c47a2c15",
+        "df19a197-b3ad-483a-8e4a-edec0731835d",
+        "97c678f4-2f12-4454-ac4f-dc94ad47678e",
+        "75bd7694-54a5-4d80-8859-9774f0cbe635"
+      ],
+      "legalApproval": false
+    },
+    {
+      "claimExternalKey": "ai-05:review:c2",
+      "candidateArticles": [
+        "AB 3.5g lid 4"
+      ],
+      "blockIds": [
+        "df19a197-b3ad-483a-8e4a-edec0731835d",
+        "97c678f4-2f12-4454-ac4f-dc94ad47678e",
+        "75bd7694-54a5-4d80-8859-9774f0cbe635"
+      ],
+      "legalApproval": false
+    },
+    {
+      "claimExternalKey": "ai-06:review:c1",
+      "candidateArticles": [
+        "AB 4.17"
+      ],
+      "blockIds": [
+        "08e8d3f7-3e94-4391-841e-bdb4b8ac87ea"
+      ],
+      "legalApproval": false
+    },
+    {
+      "claimExternalKey": "ai-06:review:c2",
+      "candidateArticles": [
+        "AB 4.18 lid 1",
+        "AB 4.18 lid 2",
+        "AB 4.18 lid 3",
+        "AB 4.18 lid 4"
+      ],
+      "blockIds": [
+        "9dbd6bed-103d-48ad-926a-b411c4b3d794",
+        "fedd9909-6def-4fbb-9346-75eb7198eec3",
+        "abce80a0-497c-45f9-92e9-2e5e3a4ac4fc",
+        "1700e2d6-a886-491a-9d3f-5c531176dce0"
+      ],
+      "legalApproval": false
+    },
+    {
+      "claimExternalKey": "ai-07:review:c1",
+      "candidateArticles": [
+        "AB 6.1"
+      ],
+      "blockIds": [
+        "7f6ec87e-7464-42c9-99d5-a10f04d7cc75",
+        "5a259d9f-ff97-4b69-a283-dbdb3820a3b2"
+      ],
+      "legalApproval": false
+    },
+    {
+      "claimExternalKey": "ai-07:review:c2",
+      "candidateArticles": [
+        "AB 6.3"
+      ],
+      "blockIds": [
+        "81e932c0-c3f1-46c5-84dc-0d628dabc9d0",
+        "a1f20ffa-2d2b-4468-b74a-dd70366fc789",
+        "8fecff5d-1e2b-4487-a783-2c3c64ea6902",
+        "7f343c89-031c-404b-9f2a-6a22a29d178b"
+      ],
+      "legalApproval": false
+    },
+    {
+      "claimExternalKey": "ai-08:review:c1",
+      "candidateArticles": [
+        "AB 5.2",
+        "AB 5.3",
+        "AB 5.4"
+      ],
+      "blockIds": [
+        "fe7251d8-d00b-4ac9-934c-5f058b9fe17d",
+        "4686ce88-3e98-4d3f-aed9-0aadc31f4e97",
+        "f61cb83e-5e45-45b7-8722-442e791a815a",
+        "19dd31f3-ef18-41d0-be2d-15c9d47ee507",
+        "8091d691-0095-4165-8c59-ae447ae030e8"
+      ],
+      "legalApproval": false
+    },
+    {
+      "claimExternalKey": "ai-08:review:c2",
+      "candidateArticles": [
+        "AB 5.2",
+        "AB 5.3",
+        "AB 5.4"
+      ],
+      "blockIds": [
+        "fe7251d8-d00b-4ac9-934c-5f058b9fe17d",
+        "4686ce88-3e98-4d3f-aed9-0aadc31f4e97",
+        "f61cb83e-5e45-45b7-8722-442e791a815a",
+        "19dd31f3-ef18-41d0-be2d-15c9d47ee507",
+        "8091d691-0095-4165-8c59-ae447ae030e8"
+      ],
+      "legalApproval": false
+    },
+    {
+      "claimExternalKey": "ai-09:review:c1",
+      "candidateArticles": [
+        "AB 4.85"
+      ],
+      "blockIds": [
+        "637a166f-8c40-4905-a025-85b4a47194f9",
+        "9de30ba0-1c88-4263-9a26-bae0cdc47145",
+        "6018f797-7de5-40ad-9bfb-f344b87a5075",
+        "46b8e495-c38c-472d-bcac-aa0acd8c7033",
+        "9db1f80f-5d11-4681-8d4a-f80089dff7b5",
+        "729d0a5e-eaad-471a-9ca9-461eb41360b9",
+        "e8e09ef5-b527-476d-9888-0f6813930853",
+        "b3b70bc5-7e4f-44fb-befb-3b753775ff40"
+      ],
+      "legalApproval": false
+    },
+    {
+      "claimExternalKey": "ai-09:review:c2",
+      "candidateArticles": [
+        "AB 4.87"
+      ],
+      "blockIds": [
+        "7cadf8f0-89eb-4dad-ac71-6ff63cf43ff1"
+      ],
+      "legalApproval": false
+    },
+    {
+      "claimExternalKey": "ai-11:review:c1",
+      "candidateArticles": [
+        "AB 7.7 lid 1",
+        "AB 7.7 lid 6",
+        "AB 7.7 lid 7"
+      ],
+      "blockIds": [
+        "41a162e3-4140-4f3d-b57b-71fa43e65f62",
+        "5a2f753f-051a-48b6-9b94-e36c240f4920",
+        "42583ec3-6112-4b86-b9e4-636746af5a00"
+      ],
+      "legalApproval": false
+    },
+    {
+      "claimExternalKey": "ai-11:review:c2",
+      "candidateArticles": [
+        "AB 7.5 lid 2",
+        "AB 7.5 lid 3"
+      ],
+      "blockIds": [
+        "206e4e27-12b7-47b4-9ce9-db918ccd1641",
+        "daa5ec3a-1585-44c5-ae0c-b58c72c3a8fd"
+      ],
+      "legalApproval": false
+    },
+    {
+      "claimExternalKey": "ai-13:review:c1",
+      "candidateArticles": [
+        "AB 5.2",
+        "AB 5.3",
+        "AB 5.4"
+      ],
+      "blockIds": [
+        "fe7251d8-d00b-4ac9-934c-5f058b9fe17d",
+        "4686ce88-3e98-4d3f-aed9-0aadc31f4e97",
+        "f61cb83e-5e45-45b7-8722-442e791a815a",
+        "19dd31f3-ef18-41d0-be2d-15c9d47ee507",
+        "8091d691-0095-4165-8c59-ae447ae030e8"
+      ],
+      "legalApproval": false
+    }
+  ],
+  "employerScope": {
+    "candidateArticle": "AB 9.5a leden 1–3",
+    "blockIds": [
+      "3ff4f51e-84f0-4e8c-9eeb-69424e09b38f",
+      "1c8f13c8-3181-45a1-8cf5-a14742d77a35",
+      "c94eee80-e428-4fda-b1d3-c6cc82212aaf",
+      "a905600c-5304-4d7a-96e8-a52a6e745e6a",
+      "b890038c-4c5c-4579-a7be-47975015860f",
+      "ca164863-714f-4e8c-9ca9-83237ab95e49",
+      "db35665f-9927-4681-a2bc-3dc9c8a0624b",
+      "0954892a-4285-4be5-b327-04a555363892",
+      "8e0fd353-a6c0-4ece-b9b5-d7a8d13ddc45",
+      "a3dc5e5b-54cd-4632-8640-6454b2366d48"
+    ],
+    "reviewNote": "Vrijwilligers vallen niet onder een algemene vrijstelling. Let op opgesomde voorschriften, blootstelling gevaarlijke stoffen/biologische agentia, jeugdigen en zwangerschap/lactatie. Geen scopeclaim geregistreerd."
+  },
+  "blocks": [
+    {
+      "id": "1bd38ed1-58ab-4675-8b00-f042bfc53292",
+      "sectionPath": "Hoofdstuk 3 Inrichting arbeidsplaatsen > Afdeling 1 Algemene voorschriften > § 2b Voor de gezondheid schadelijke atmosferen > Artikel 3.5g Gevaar voor verstikking, bedwelming, vergiftiging, brand of explosie > Lid 1",
+      "exactText": "Indien kan worden vermoed dat de atmosfeer op een plaats of in een ruimte in zodanige mate stoffen bevat dat daardoor gevaar bestaat voor verstikking, bedwelming, vergiftiging, brand of explosie, mag de werknemer zich alleen bevinden op die plaats of in die ruimte indien uit onderzoek blijkt dat het gevaar niet aanwezig is.",
+      "textHash": "2d2b12c0e3a2ce2e44c06998c207f97c35b024b57c0ff8c29e3f146d8a23311b",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "12a8dc44-de5f-4fb2-a770-f697c47a2c15",
+      "sectionPath": "Hoofdstuk 3 Inrichting arbeidsplaatsen > Afdeling 1 Algemene voorschriften > § 2b Voor de gezondheid schadelijke atmosferen > Artikel 3.5g Gevaar voor verstikking, bedwelming, vergiftiging, brand of explosie > Lid 2",
+      "exactText": "Indien uit het onderzoek, bedoeld in het eerste lid, blijkt dat gevaar voor verstikking, bedwelming, vergiftiging, brand of explosie aanwezig is, worden doeltreffende maatregelen genomen, zodat de werknemer zich zonder gevaren op die plaats of in die ruimte, bedoeld in het eerste lid, kan bevinden.",
+      "textHash": "7f2259b7a7276dd8bcf333c1bfff214bd7d8e8e5d6a6a7e24e8e4a818c26d505",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "df19a197-b3ad-483a-8e4a-edec0731835d",
+      "sectionPath": "Hoofdstuk 3 Inrichting arbeidsplaatsen > Afdeling 1 Algemene voorschriften > § 2b Voor de gezondheid schadelijke atmosferen > Artikel 3.5g Gevaar voor verstikking, bedwelming, vergiftiging, brand of explosie > Lid 4",
+      "exactText": "Indien het niet mogelijk is om de maatregelen, bedoeld in het tweede lid, te nemen en het noodzakelijk is om zich in de gevaarlijke atmosfeer, bedoeld in het eerste lid, te begeven, dan wordt de werknemer permanent geobserveerd en worden doeltreffende maatregelen genomen om deze werknemer:",
+      "textHash": "59dd128c7ad64d57a225ede4a6c044db323dec8c839bfcedbc8f83fc26d16c45",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "97c678f4-2f12-4454-ac4f-dc94ad47678e",
+      "sectionPath": "Hoofdstuk 3 Inrichting arbeidsplaatsen > Afdeling 1 Algemene voorschriften > § 2b Voor de gezondheid schadelijke atmosferen > Artikel 3.5g Gevaar voor verstikking, bedwelming, vergiftiging, brand of explosie > Lid 4 > Onderdeel a",
+      "exactText": "te beschermen tegen het gevaar, bedoeld in het tweede lid;",
+      "textHash": "b281fe64370f6f28d9e6235afd80335129ffda9e481f320f6467ec9490239b89",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "75bd7694-54a5-4d80-8859-9774f0cbe635",
+      "sectionPath": "Hoofdstuk 3 Inrichting arbeidsplaatsen > Afdeling 1 Algemene voorschriften > § 2b Voor de gezondheid schadelijke atmosferen > Artikel 3.5g Gevaar voor verstikking, bedwelming, vergiftiging, brand of explosie > Lid 4 > Onderdeel b",
+      "exactText": "bij direct gevaar onmiddellijk op doeltreffende wijze hulp te bieden.",
+      "textHash": "d7c1f6cb5bff999b1227c4f4b2e8ebc00594718c471688c30beb01dd0b9078ea",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "08e8d3f7-3e94-4391-841e-bdb4b8ac87ea",
+      "sectionPath": "Hoofdstuk 4 Gevaarlijke stoffen en biologische agentia > Afdeling 2 Aanvullende voorschriften kankerverwekkende, mutagene of reprotoxische stoffen en kankerverwekkende of mutagene processen > § 3 Grenswaarden en voorkomen of beperken van blootstelling > Artikel 4.17 Voorkomen van blootstelling; vervangen",
+      "exactText": "Zodanige technische en organisatorische maatregelen zijn genomen dat de kans op blootstelling van werknemers aan kankerverwekkende, mutagene of reprotoxische stoffen of stoffen die vrijkomen bij kankerverwekkende of mutagene processen zoveel mogelijk bij de bron daarvan wordt voorkomen, met name door kankerverwekkende, mutagene of reprotoxische stoffen of kankerverwekkende of mutagene processen, voor zover dit technisch uitvoerbaar is, te vervangen door stoffen of processen waarbij de werknemers, gelet op de eigenschappen van die stoffen of processen, de aard van de arbeid, de werkmethoden en de werkomstandigheden, niet of minder aan gevaar voor hun veiligheid of gezondheid worden blootgesteld.",
+      "textHash": "7feafafe2d3e42388a7ff7f4041ad8181bd3753e507c8c344de54e1ce5dcbccb",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "9dbd6bed-103d-48ad-926a-b411c4b3d794",
+      "sectionPath": "Hoofdstuk 4 Gevaarlijke stoffen en biologische agentia > Afdeling 2 Aanvullende voorschriften kankerverwekkende, mutagene of reprotoxische stoffen en kankerverwekkende of mutagene processen > § 3 Grenswaarden en voorkomen of beperken van blootstelling > Artikel 4.18 Voorkomen of beperken van blootstelling > Lid 1",
+      "exactText": "Voor zover uit de resultaten van de beoordeling, bedoeld in het artikel 4.2, eerste lid, blijkt dat er gevaar voor de gezondheid van de werknemers bestaat en dat het op doeltreffende wijze voorkomen van blootstelling door het nemen van maatregelen als bedoeld in artikel 4.17 technisch niet uitvoerbaar is, wordt de blootstelling, voor zover dit technisch uitvoerbaar is, bij de bron voorkomen of teruggebracht tot een zo laag mogelijk niveau onder de grenswaarde, met name door de productie en het gebruik van kankerverwekkende, mutagene of reprotoxische stoffen of kankerverwekkende of mutagene processen plaats te doen vinden in een gesloten systeem.",
+      "textHash": "52a90f000346a710191a9573cd57e28eeeb0fe1d71dfcfbc75cfd761a4eb1631",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "fedd9909-6def-4fbb-9346-75eb7198eec3",
+      "sectionPath": "Hoofdstuk 4 Gevaarlijke stoffen en biologische agentia > Afdeling 2 Aanvullende voorschriften kankerverwekkende, mutagene of reprotoxische stoffen en kankerverwekkende of mutagene processen > § 3 Grenswaarden en voorkomen of beperken van blootstelling > Artikel 4.18 Voorkomen of beperken van blootstelling > Lid 2",
+      "exactText": "Indien het voorkomen van blootstelling of het terugbrengen van blootstelling tot een zo laag mogelijk niveau onder de grenswaarde technisch niet uitvoerbaar is, worden collectieve maatregelen genomen om kankerverwekkende, mutagene of reprotoxische stoffen of stoffen die vrijkomen bij kankerverwekkende of mutagene processen op doeltreffende wijze bij de bron te verwijderen, onder meer door plaatselijke afvoer van de lucht, zo nodig aangevuld door algemene ventilatie, waarbij, met inachtneming van artikel 4.5, gelijktijdig voldoende toevoer van niet-verontreinigde lucht is gewaarborgd zonder dat hierbij gevaar ontstaat voor de volksgezondheid en het milieu.",
+      "textHash": "9b1d67a310a5d1e873602d3b47c864019ef84b870f7103e8da5e53c194e4aa19",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "abce80a0-497c-45f9-92e9-2e5e3a4ac4fc",
+      "sectionPath": "Hoofdstuk 4 Gevaarlijke stoffen en biologische agentia > Afdeling 2 Aanvullende voorschriften kankerverwekkende, mutagene of reprotoxische stoffen en kankerverwekkende of mutagene processen > § 3 Grenswaarden en voorkomen of beperken van blootstelling > Artikel 4.18 Voorkomen of beperken van blootstelling > Lid 3",
+      "exactText": "Indien het technisch niet uitvoerbaar is om de blootstelling van werknemers te voorkomen of te beperken tot een zo laag mogelijk niveau onder de grenswaarde door middel van de maatregelen, bedoeld in het tweede lid, worden aan de werknemers die worden of kunnen worden blootgesteld, persoonlijke beschermingsmiddelen ter beschikking gesteld.",
+      "textHash": "0b0ce320e4251bc07bdb3a11e2c553a79bb789db68912746baebc36e984cb6d9",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "1700e2d6-a886-491a-9d3f-5c531176dce0",
+      "sectionPath": "Hoofdstuk 4 Gevaarlijke stoffen en biologische agentia > Afdeling 2 Aanvullende voorschriften kankerverwekkende, mutagene of reprotoxische stoffen en kankerverwekkende of mutagene processen > § 3 Grenswaarden en voorkomen of beperken van blootstelling > Artikel 4.18 Voorkomen of beperken van blootstelling > Lid 4",
+      "exactText": "Indien de werkzaamheden worden verricht met gebruik van persoonlijke beschermingsmiddelen overeenkomstig het derde lid, wordt de duur van het dragen daarvan voor ieder van deze werknemers tot het strikt noodzakelijke beperkt.",
+      "textHash": "4bf2dca37690e084ced7b3e547eaabf9c5e61a725f57cf8248ce55c5e979baea",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "5e8203fc-0426-45b1-b355-30888d8b0d76",
+      "sectionPath": "Hoofdstuk 4 Gevaarlijke stoffen en biologische agentia > Afdeling 5 Aanvullende voorschriften asbest > § 3 Voorschriften voor het werken met asbest en asbesthoudende producten > Artikel 4.45 Preventieve maatregelen > Lid 1",
+      "exactText": "De concentratie van asbestvezels in de lucht wordt zo laag mogelijk onder de grenswaarden, bedoeld in artikel 4.46, gehouden.",
+      "textHash": "34671c04ed072832764a70f58b7ee12bbc476c4c5c42265878de92da35e13ce7",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "b9706b4f-4e2a-405a-ac43-28cf6e5d9046",
+      "sectionPath": "Hoofdstuk 4 Gevaarlijke stoffen en biologische agentia > Afdeling 5 Aanvullende voorschriften asbest > § 6 Certificatie > Artikel 4.54a Asbestinventarisatie > Lid 1",
+      "exactText": "In het kader van de beoordeling, bedoeld in artikel 4.2, wordt de aanwezigheid van asbest of asbesthoudende producten volledig geïnventariseerd voordat wordt aangevangen met de volgende werkzaamheden:",
+      "textHash": "cf2a6e9fa6136709ab33351d948b3044c91e4ebb75b64792e724382f33165bf8",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "3703dd94-f513-4f13-a5d3-360e6fb9dfe8",
+      "sectionPath": "Hoofdstuk 4 Gevaarlijke stoffen en biologische agentia > Afdeling 5 Aanvullende voorschriften asbest > § 6 Certificatie > Artikel 4.54a Asbestinventarisatie > Lid 1 > Onderdeel a",
+      "exactText": "het geheel of gedeeltelijk afbreken of uit elkaar nemen van bouwwerken, met uitzondering van grondwerken, of objecten waarin naar redelijke verwachting asbest of een asbesthoudend product is toegepast;",
+      "textHash": "40bf6f739e63ef33d6166783e5e328ff5e7a219c2ff6ade447c0810c5e247271",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "012503be-1b3d-4c80-a7b4-487d1f004dbe",
+      "sectionPath": "Hoofdstuk 4 Gevaarlijke stoffen en biologische agentia > Afdeling 5 Aanvullende voorschriften asbest > § 6 Certificatie > Artikel 4.54a Asbestinventarisatie > Lid 1 > Onderdeel b",
+      "exactText": "het verwijderen van asbest of asbesthoudende producten uit de bouwwerken of objecten, bedoeld in onderdeel a; of",
+      "textHash": "41687c2396deefffe4e3e990b8a7ba12a13ca4e4678807a64340d2f7761e76c7",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "c4a09ea5-1fdf-492d-8843-374f8f09465e",
+      "sectionPath": "Hoofdstuk 4 Gevaarlijke stoffen en biologische agentia > Afdeling 5 Aanvullende voorschriften asbest > § 6 Certificatie > Artikel 4.54a Asbestinventarisatie > Lid 1 > Onderdeel c",
+      "exactText": "het opruimen van asbest of asbesthoudende producten die ten gevolge van een incident zijn vrijgekomen.",
+      "textHash": "59b9f6b8338177cba3c4009c8627c6239a824b8bdbf1a418f24c5ae595525e2e",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "6ba5d678-9cd7-4f5d-a8dd-28e6bdc2f192",
+      "sectionPath": "Hoofdstuk 4 Gevaarlijke stoffen en biologische agentia > Afdeling 5 Aanvullende voorschriften asbest > § 6 Certificatie > Artikel 4.54a Asbestinventarisatie > Lid 2",
+      "exactText": "Op grond van de inventarisatie, bedoeld in het eerste lid, wordt in het kader van de risicobeoordeling, bedoeld in artikel 4.2, door het bedrijf, bedoeld in het vierde lid, bepaald in welke risicoklasse als bedoeld in de artikelen 4.44, 4.48 of 4.53a de werkzaamheden vallen.",
+      "textHash": "5d23196a728aecdbda0059985f1ff3fbbd074591674d7260fdbb395f2677cb3f",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "b6787701-7541-48fc-bbca-9de5c4572878",
+      "sectionPath": "Hoofdstuk 4 Gevaarlijke stoffen en biologische agentia > Afdeling 5 Aanvullende voorschriften asbest > § 6 Certificatie > Artikel 4.54a Asbestinventarisatie > Lid 3",
+      "exactText": "De resultaten van de inventarisatie, bedoeld in het eerste lid, en de indeling in een risicoklasse, bedoeld in het tweede lid, worden opgenomen in een inventarisatierapport.",
+      "textHash": "f1e44962886545c04b9fcb0ee28a2ea139d75de42d12d114fb6ab4cc063f3fc7",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "18204c0b-ddce-4164-8a1f-6e1b29dc6dfe",
+      "sectionPath": "Hoofdstuk 4 Gevaarlijke stoffen en biologische agentia > Afdeling 5 Aanvullende voorschriften asbest > § 6 Certificatie > Artikel 4.54a Asbestinventarisatie > Lid 4",
+      "exactText": "De inventarisatie, bedoeld in het eerste lid, en het inventarisatierapport, bedoeld in het derde lid, worden uitgevoerd, onderscheidenlijk opgesteld, door een bedrijf dat in het bezit is van een certificaat asbestinventarisatie dat is afgegeven door Onze Minister of een certificerende instelling.",
+      "textHash": "0c595a1ffff03aa2fe67d26b4d6c4b2c53a0b1e042a77f67331c88809babb1cb",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "407f6853-3df7-4709-9a04-d36da82ae1eb",
+      "sectionPath": "Hoofdstuk 4 Gevaarlijke stoffen en biologische agentia > Afdeling 5 Aanvullende voorschriften asbest > § 6 Certificatie > Artikel 4.54a Asbestinventarisatie > Lid 5",
+      "exactText": "Een afschrift van het inventarisatierapport wordt verstrekt aan het bedrijf dat asbest verwijdert.",
+      "textHash": "f36a7bbdcca72dc0031b10e3b1766ea97200e7e2182008db7e12f9ef7d6cacf7",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "beb3b40b-aa39-4311-ac35-0a4fbe3fa1f8",
+      "sectionPath": "Hoofdstuk 4 Gevaarlijke stoffen en biologische agentia > Afdeling 5 Aanvullende voorschriften asbest > § 6 Certificatie > Artikel 4.54a Asbestinventarisatie > Lid 6",
+      "exactText": "Het certificaat asbestinventarisatie of een afschrift daarvan is op de arbeidsplaats aanwezig.",
+      "textHash": "186b72bb484d1ad69a24b764832070cf0002c27eab576f2f6057bb6d4b14f807",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "e630c4ad-441f-46bf-baf7-8a87c2f2b981",
+      "sectionPath": "Hoofdstuk 4 Gevaarlijke stoffen en biologische agentia > Afdeling 5 Aanvullende voorschriften asbest > § 6 Certificatie > Artikel 4.54a Asbestinventarisatie > Lid 7",
+      "exactText": "De inventarisatie, bedoeld in het eerste lid, wordt verricht door of onder toezicht van een persoon die daartoe aantoonbare specifieke deskundigheid bezit.",
+      "textHash": "5cd1ea2453db21b3d24f6c4cd1bad61a13117764d93c4290f335ff02fa9d9138",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "637a166f-8c40-4905-a025-85b4a47194f9",
+      "sectionPath": "Hoofdstuk 4 Gevaarlijke stoffen en biologische agentia > Afdeling 9 Biologische agentia > § 2 Risico-inventarisatie en -evaluatie en gevolgen categorie-indeling > Artikel 4.85 Nadere voorschriften risico-inventarisatie en -evaluatie > Lid 1",
+      "exactText": "Indien een werknemer wordt of kan worden blootgesteld aan een of meer specifiek bij zijn arbeid voorkomende of naar verwachting voorkomende biologische agentia, wordt, in het kader van de in artikel 5 van de wet bedoelde risico-inventarisatie en -evaluatie, de aard, de mate en de duur van de blootstelling beoordeeld teneinde het gevaar voor de werknemer te bepalen. Deze beoordeling geschiedt met inachtneming van met name:",
+      "textHash": "999337147d44a5939d95976fb873f39dc0c808ce853da244c749f81d502b72dd",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "9de30ba0-1c88-4263-9a26-bae0cdc47145",
+      "sectionPath": "Hoofdstuk 4 Gevaarlijke stoffen en biologische agentia > Afdeling 9 Biologische agentia > § 2 Risico-inventarisatie en -evaluatie en gevolgen categorie-indeling > Artikel 4.85 Nadere voorschriften risico-inventarisatie en -evaluatie > Lid 1 > Onderdeel a",
+      "exactText": "de categorie of categorieën,waarin de biologische agentia waaraan werknemers kunnen worden blootgesteld, zijn ingedeeld;",
+      "textHash": "910b59a726f1db6902d751c3c17e36bbf40ccb00ff3696024737afe47e2c23f8",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "6018f797-7de5-40ad-9bfb-f344b87a5075",
+      "sectionPath": "Hoofdstuk 4 Gevaarlijke stoffen en biologische agentia > Afdeling 9 Biologische agentia > § 2 Risico-inventarisatie en -evaluatie en gevolgen categorie-indeling > Artikel 4.85 Nadere voorschriften risico-inventarisatie en -evaluatie > Lid 1 > Onderdeel b",
+      "exactText": "informatie over ziekten die werknemers kunnen oplopen of al hebben opgelopen als gevolg van blootstelling aan biologische agentia;",
+      "textHash": "7d8e43d8edd669630a700d3b6028c3b66f9adc22dfa8f0bab9b49418c0542f44",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "46b8e495-c38c-472d-bcac-aa0acd8c7033",
+      "sectionPath": "Hoofdstuk 4 Gevaarlijke stoffen en biologische agentia > Afdeling 9 Biologische agentia > § 2 Risico-inventarisatie en -evaluatie en gevolgen categorie-indeling > Artikel 4.85 Nadere voorschriften risico-inventarisatie en -evaluatie > Lid 1 > Onderdeel c",
+      "exactText": "mogelijke allergische of vergiftigingseffecten die de werknemers als gevolg van blootstelling aan biologische agentia ondervinden of kunnen ondervinden;",
+      "textHash": "4d3fd574cb19b6d888d9faca496960f18f0375867912ddf8330f1e631233b746",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "9db1f80f-5d11-4681-8d4a-f80089dff7b5",
+      "sectionPath": "Hoofdstuk 4 Gevaarlijke stoffen en biologische agentia > Afdeling 9 Biologische agentia > § 2 Risico-inventarisatie en -evaluatie en gevolgen categorie-indeling > Artikel 4.85 Nadere voorschriften risico-inventarisatie en -evaluatie > Lid 1 > Onderdeel d",
+      "exactText": "de resultaten van de arbeidsgezondheidskundige onderzoeken, bedoeld in artikel 4.91, alsmede de ziekten waarvan bekend is dat een werknemer hieraan lijdt en de medicijnen waarvan bekend is dat die door een werknemer worden gebruikt, een en ander in statistische, niet tot individuen herleidbare vorm;",
+      "textHash": "6fc7d07681cb19c67cd26cb9518e6c8d66b52990b8144cbd1515390f9086a584",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "729d0a5e-eaad-471a-9ca9-461eb41360b9",
+      "sectionPath": "Hoofdstuk 4 Gevaarlijke stoffen en biologische agentia > Afdeling 9 Biologische agentia > § 2 Risico-inventarisatie en -evaluatie en gevolgen categorie-indeling > Artikel 4.85 Nadere voorschriften risico-inventarisatie en -evaluatie > Lid 1 > Onderdeel e",
+      "exactText": "de door een daartoe bevoegde instantie verstrekte aanbevelingen om het biologische agens onder controle te houden teneinde de gezondheid van de werknemers te beschermen wanneer de werknemers ten gevolge van hun werk aan een dergelijk agens worden of kunnen worden blootgesteld.",
+      "textHash": "08b4d68cd19f541d8cc402cee89f5035f7a7104aafcb9e8b7db2f782e3886a42",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "e8e09ef5-b527-476d-9888-0f6813930853",
+      "sectionPath": "Hoofdstuk 4 Gevaarlijke stoffen en biologische agentia > Afdeling 9 Biologische agentia > § 2 Risico-inventarisatie en -evaluatie en gevolgen categorie-indeling > Artikel 4.85 Nadere voorschriften risico-inventarisatie en -evaluatie > Lid 2",
+      "exactText": "Indien sprake is van verschillende biologische agentia, wordt de beoordeling, bedoeld in het eerste lid, gebaseerd op het risico dat die biologische agentia in combinatie opleveren.",
+      "textHash": "b6a96c3a1d620314c4bd75a9984822be19fba53fe6fae01404038e286a37540f",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "b3b70bc5-7e4f-44fb-befb-3b753775ff40",
+      "sectionPath": "Hoofdstuk 4 Gevaarlijke stoffen en biologische agentia > Afdeling 9 Biologische agentia > § 2 Risico-inventarisatie en -evaluatie en gevolgen categorie-indeling > Artikel 4.85 Nadere voorschriften risico-inventarisatie en -evaluatie > Lid 3",
+      "exactText": "De beoordeling, bedoeld in het eerste lid, wordt regelmatig herzien, in ieder geval telkens wanneer er een wijziging plaatsvindt in de omstandigheden die van invloed kunnen zijn op de blootstelling van werknemers aan biologische agentia.",
+      "textHash": "0355cad561615e6991fd61ebf0ad9177ee6ee81378af9ff89f63ee7b807137fb",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "7cadf8f0-89eb-4dad-ac71-6ff63cf43ff1",
+      "sectionPath": "Hoofdstuk 4 Gevaarlijke stoffen en biologische agentia > Afdeling 9 Biologische agentia > § 3 Maatregelen met betrekking tot de blootstelling > Artikel 4.87 Voorkomen van blootstelling; vervangen",
+      "exactText": "Indien de aard van de arbeid het toelaat, worden schadelijke biologische agentia vervangen door biologische agentia die, gelet op de stand van de wetenschap en de techniek en de werkomstandigheden, niet of minder gevaarlijk zijn voor de veiligheid of gezondheid van de werknemers.",
+      "textHash": "b5dc3b747be16db0fab0712357a2747b2dfc3a08d3cfb162ceeb9dfd3f23e2f8",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "fe7251d8-d00b-4ac9-934c-5f058b9fe17d",
+      "sectionPath": "Hoofdstuk 5 Fysieke belasting > Afdeling 1 Fysieke belasting > Artikel 5.2 Voorkomen gevaren",
+      "exactText": "De arbeid wordt zodanig georganiseerd, de arbeidsplaats wordt zodanig ingericht, een zodanige productie- en werkmethode wordt toegepast of zodanige hulpmiddelen en persoonlijke beschermingsmiddelen, worden gebruikt, dat de fysieke belasting geen gevaren met zich kan brengen voor de veiligheid en de gezondheid van de werknemer.",
+      "textHash": "50053a8143aeb2abb999b8299ec2d60cba8a63f3f8599e422b1cf164c1654af6",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "4686ce88-3e98-4d3f-aed9-0aadc31f4e97",
+      "sectionPath": "Hoofdstuk 5 Fysieke belasting > Afdeling 1 Fysieke belasting > Artikel 5.3 Beperken gevaren en risico-inventarisatie en -evaluatie",
+      "exactText": "Voorzover de gevaren, bedoeld in artikel 5.2, redelijkerwijs niet kunnen worden voorkomen:",
+      "textHash": "8417bf6891cdb9d148924d369f9ee22c73caacaa87c32b9ef4389e9c49bf418a",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "f61cb83e-5e45-45b7-8722-442e791a815a",
+      "sectionPath": "Hoofdstuk 5 Fysieke belasting > Afdeling 1 Fysieke belasting > Artikel 5.3 Beperken gevaren en risico-inventarisatie en -evaluatie > Onderdeel a",
+      "exactText": "wordt met inachtneming van bijlage I bij de richtlijn, de arbeid zodanig georganiseerd, de arbeidsplaats zodanig ingericht, een zodanige productie- en werkmethode toegepast of worden zodanige hulpmiddelen en persoonlijke beschermingsmiddelen gebruikt dat die gevaren zoveel als redelijkerwijs mogelijk is worden beperkt;",
+      "textHash": "8737609846e2c22a5b2e8d685b535d3e0121567ae3f555bf6dc3b6069fbd10fa",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "19dd31f3-ef18-41d0-be2d-15c9d47ee507",
+      "sectionPath": "Hoofdstuk 5 Fysieke belasting > Afdeling 1 Fysieke belasting > Artikel 5.3 Beperken gevaren en risico-inventarisatie en -evaluatie > Onderdeel b",
+      "exactText": "worden in de risico-inventarisatie en -evaluatie, bedoeld in artikel 5 van de wet, met inachtneming van bijlage I bij de richtlijn, de veiligheids- en gezondheidsaspecten van de fysieke belasting beoordeeld, waarbij met name wordt gelet op de kenmerken van de last, de vereiste lichamelijke inspanning, de kenmerken van de werkomgeving en de eisen van de taak.",
+      "textHash": "fd58849a40919f9ed637a81eacec3387456c72eb09c98546159d73d5a0c50a81",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "8091d691-0095-4165-8c59-ae447ae030e8",
+      "sectionPath": "Hoofdstuk 5 Fysieke belasting > Afdeling 1 Fysieke belasting > Artikel 5.4 Ergonomische inrichting werkplekken",
+      "exactText": "Tenzij dit redelijkerwijs niet kan worden gevergd worden werkplekken ingericht volgens de ergonomische beginselen.",
+      "textHash": "a404d95c6b4f0aa47dda070e1dd8db2d9e69c733c679e0e51cd98ae661619f5b",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "717b2142-be6f-445e-9e52-0162314f8152",
+      "sectionPath": "Hoofdstuk 5 Fysieke belasting > Afdeling 2 Beeldschermwerk > Artikel 5.10 Dagindeling van de arbeid",
+      "exactText": "De arbeid aan een beeldscherm is zodanig georganiseerd dat deze arbeid op gezette tijden wordt afgewisseld door andersoortige arbeid of door een rusttijd, zodanig dat de belasting van het verrichten van de arbeid aan een beeldscherm wordt verlicht.",
+      "textHash": "c839548aaf88e807ec3fa89bd893ed848c71ce8270e3bb05a1547718f16d7c07",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "f4ab2428-7a8a-4408-a672-2c38a60a597c",
+      "sectionPath": "Hoofdstuk 5 Fysieke belasting > Afdeling 2 Beeldschermwerk > Artikel 5.12 Voorschriften voor de inrichting van beeldschermwerkplekken",
+      "exactText": "Onverminderd artikel 5.4 worden bij ministeriële regeling nadere regels gesteld met betrekking tot de beeldschermwerkplek en de wisselwerking tussen de gebruikte apparatuur en de werknemers.",
+      "textHash": "3495fb361de71496f664774c89a5014d2533a1c331b8c4b4480d82f010708754",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "bcca8548-dd80-47d8-a1af-a8536f757c7d",
+      "sectionPath": "Hoofdstuk 5 Fysieke belasting > Afdeling 2 Beeldschermwerk > Artikel 5.8 Toepasselijkheid > Lid 1",
+      "exactText": "Deze afdeling is niet van toepassing op:",
+      "textHash": "b2fb43946ea2cc86726f27b5cbd65454c55604268c7a23a8c67d2030e9f1ed5b",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "3241133d-b30b-4ab3-ac9f-be1b6dc56cb5",
+      "sectionPath": "Hoofdstuk 5 Fysieke belasting > Afdeling 2 Beeldschermwerk > Artikel 5.8 Toepasselijkheid > Lid 1 > Onderdeel a",
+      "exactText": "bestuurdersplaatsen op machines;",
+      "textHash": "a7a994b29c719162ed111aec9466ee314d5ed65ca7a9e56918648a0357192a17",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "5523f9af-d478-49a9-9ef5-490691d735b6",
+      "sectionPath": "Hoofdstuk 5 Fysieke belasting > Afdeling 2 Beeldschermwerk > Artikel 5.8 Toepasselijkheid > Lid 1 > Onderdeel b",
+      "exactText": "computersystemen die in de eerste plaats bestemd zijn voor gebruik door het publiek;",
+      "textHash": "bcc85786ce83cca3ba95fdd7c7da6db511586b4330f9c75792423a67f0dc1bbe",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "a6185e12-6791-4d56-af10-0f14b0517998",
+      "sectionPath": "Hoofdstuk 5 Fysieke belasting > Afdeling 2 Beeldschermwerk > Artikel 5.8 Toepasselijkheid > Lid 1 > Onderdeel c",
+      "exactText": "zogenoemde draagbare systemen die niet aanhoudend worden gebruikt op een werkplek;",
+      "textHash": "82c4337f887659a312dbe2bc82fe004899e57c998251cf5f0ecac5cc468b5c79",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "16420fd2-cd08-41b5-be37-3d3f939cae93",
+      "sectionPath": "Hoofdstuk 5 Fysieke belasting > Afdeling 2 Beeldschermwerk > Artikel 5.8 Toepasselijkheid > Lid 1 > Onderdeel d",
+      "exactText": "rekenmachines, kassa’s en andere apparatuur die voorzien zijn van een klein display voor gegevens of hoeveelheden, nodig voor het directe gebruik van die apparatuur.",
+      "textHash": "1f523995f6e2e88cf88dffc3ad5e209525c012e732489ef3abd650c9c8f06658",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "b50f12ad-08ad-49fc-835b-f1242793086e",
+      "sectionPath": "Hoofdstuk 5 Fysieke belasting > Afdeling 2 Beeldschermwerk > Artikel 5.8 Toepasselijkheid > Lid 2",
+      "exactText": "Voorts is deze afdeling niet van toepassing op arbeid waarbij een werknemer gewoonlijk minder dan twee uren per etmaal gebruik maakt van een beeldscherm.",
+      "textHash": "9d878c415a6646e7535ec6fc0f41e09b4f6541bdac6fd2be361366aa5927db88",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "bf60fbdd-e159-49a4-8105-0ece37babba7",
+      "sectionPath": "Hoofdstuk 5 Fysieke belasting > Afdeling 2 Beeldschermwerk > Artikel 5.9 Risico-inventarisatie en -evaluatie > Lid 1",
+      "exactText": "In de risico-inventarisatie en -evaluatie, bedoeld in artikel 5 van de wet, wordt specifiek aandacht besteed aan de gevaren voor het gezichtsvermogen en die van de fysieke en psychische belasting als gevolg van arbeid aan een beeldscherm.",
+      "textHash": "18bda6aa028b65ac724ad99412594266bc8ded83ae109af582291974a4881fa2",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "e7bb2bd5-b930-43b0-baec-a4cd6ba3d20c",
+      "sectionPath": "Hoofdstuk 5 Fysieke belasting > Afdeling 2 Beeldschermwerk > Artikel 5.9 Risico-inventarisatie en -evaluatie > Lid 2",
+      "exactText": "Op basis van de uitkomsten van de in het eerste lid bedoelde risico-inventarisatie en -evaluatie worden doeltreffende maatregelen genomen om de desbetreffende gevaren te ondervangen, rekening houdend met de gevolgen van die gevaren en de onderlinge samenhang daartussen.",
+      "textHash": "729b138a068979e0294dfda815d3dba3878c1d3be2e5a5b676ceeb418680ff0e",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "7f6ec87e-7464-42c9-99d5-a10f04d7cc75",
+      "sectionPath": "Hoofdstuk 6 Fysische factoren > Afdeling 1 Temperatuur en luchtverversing > Artikel 6.1 Temperatuur > Lid 1",
+      "exactText": "Rekening houdend met de aard van de werkzaamheden die door de werknemers worden verricht en de fysieke belasting die daar het gevolg van is, veroorzaakt de temperatuur op de arbeidsplaats geen schade aan de gezondheid van de werknemers.",
+      "textHash": "b9d89bc6ab29bc6c148c6a64f917839264543e21671d6efb22ad5db46919beb6",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "5a259d9f-ff97-4b69-a283-dbdb3820a3b2",
+      "sectionPath": "Hoofdstuk 6 Fysische factoren > Afdeling 1 Temperatuur en luchtverversing > Artikel 6.1 Temperatuur > Lid 2",
+      "exactText": "Indien door de temperatuur op de arbeidsplaats of door ongunstige weersomstandigheden toch schade aan de gezondheid van de werknemers kan ontstaan, worden persoonlijke beschermingsmiddelen ter beschikking gesteld. Indien de ter beschikking gestelde persoonlijke beschermingsmiddelen schade aan de gezondheid niet kunnen voorkomen, wordt de duur van de arbeid in een zodanige mate beperkt of wordt de arbeid met een zodanige frequentie afgewisseld door een tijdelijk verblijf op een plaats waar een temperatuur heerst als bedoeld in het eerste lid, dat geen schade aan de gezondheid ontstaat.",
+      "textHash": "b8cbe9a95efe2cf93d743e181764d5e8554550faea9daee91c114a580e45a945",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "81e932c0-c3f1-46c5-84dc-0d628dabc9d0",
+      "sectionPath": "Hoofdstuk 6 Fysische factoren > Afdeling 2 Verlichting > Artikel 6.3 Daglicht en kunstlicht > Lid 1",
+      "exactText": "Arbeidsplaatsen en verbindingswegen zijn zodanig verlicht, dat het aanwezige licht geen risico oplevert voor de veiligheid en gezondheid van werknemers.",
+      "textHash": "2353605cbeaad0cb7ba21ba9f698a901b2a29957641ffabc970e562308884f89",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "a1f20ffa-2d2b-4468-b74a-dd70366fc789",
+      "sectionPath": "Hoofdstuk 6 Fysische factoren > Afdeling 2 Verlichting > Artikel 6.3 Daglicht en kunstlicht > Lid 2",
+      "exactText": "Op arbeidsplaatsen komt, voor zover mogelijk, voldoende daglicht binnen en zijn voldoende voorzieningen voor kunstverlichting aanwezig.",
+      "textHash": "30570af91aaedc601bb7d6463161436c9bf5a147f09fde58950e7fcb24eae9d5",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "8fecff5d-1e2b-4487-a783-2c3c64ea6902",
+      "sectionPath": "Hoofdstuk 6 Fysische factoren > Afdeling 2 Verlichting > Artikel 6.3 Daglicht en kunstlicht > Lid 3",
+      "exactText": "De voorzieningen voor kunstverlichting zijn zodanig aangebracht dat gevaar voor ongevallen is voorkomen.",
+      "textHash": "d2b17d83680599e605025eda80c0419e1e7594a0d5192686116249be9228ffc6",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "7f343c89-031c-404b-9f2a-6a22a29d178b",
+      "sectionPath": "Hoofdstuk 6 Fysische factoren > Afdeling 2 Verlichting > Artikel 6.3 Daglicht en kunstlicht > Lid 4",
+      "exactText": "De voor kunstlicht gebruikte kleur mag de waarneming van de veiligheids- en gezondheidssignalering, bepaald bij of krachtens afdeling 2 van hoofdstuk 8, niet wijzigen of beïnvloeden.",
+      "textHash": "ecee11bcbe18d0b2be0f5b4537574fb196ada57e603f12ae984e7e6c59cf8f9b",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "3890403d-3aa6-47d2-afad-e1d696a90198",
+      "sectionPath": "Hoofdstuk 6 Fysische factoren > Afdeling 3 Lawaai > § 2 Voorschriften met betrekking tot lawaai > Artikel 6.7 Nadere voorschriften risico-inventarisatie en -evaluatie, beoordelen en meten > Lid 1",
+      "exactText": "In het kader van de risico-inventarisatie en -evaluatie, bedoeld in artikel 5 van de wet, worden de lawaainiveaus waaraan de werknemers zijn blootgesteld, beoordeeld en, indien nodig, gemeten teneinde te bepalen waar en in welke mate werknemers aan de in artikel 6.8 vastgestelde niveaus van schadelijk lawaai kunnen worden blootgesteld.",
+      "textHash": "0fc08fade120c5d547fd1536dc58a351682094bb0114b8ade81ed4770f53a108",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "b54b0346-8db2-484a-b0d3-9f957c231737",
+      "sectionPath": "Hoofdstuk 6 Fysische factoren > Afdeling 3 Lawaai > § 2 Voorschriften met betrekking tot lawaai > Artikel 6.7 Nadere voorschriften risico-inventarisatie en -evaluatie, beoordelen en meten > Lid 2",
+      "exactText": "De beoordeling en de meting worden, in aanvulling op artikel 5 van de wet, volgens een schriftelijk vastgelegd tijdschema periodiek uitgevoerd door de deskundigen, genoemd in artikel 13 van de wet, of de deskundigen of arbodiensten, genoemd in de artikelen 14 en 14a van de wet, en in ieder geval opnieuw uitgevoerd, indien de omstandigheden ingrijpend zijn gewijzigd, er redenen zijn om aan te nemen dat de uitgevoerde beoordeling of meting onjuist is of wanneer de resultaten van het arbeidsgezondheidskundig onderzoek, bedoeld in artikel 6.10, eerste tot en met derde lid, dit nodig maken. Bij de beoordeling van de meetresultaten wordt rekening gehouden met de meetonzekerheden, die zijn vastgesteld volgens de bij het meten gangbare praktijk.",
+      "textHash": "a2e982faad967729001026dc986b9b419690658714f100582583f15fd5cff757",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "bf65ecac-acce-4973-98cb-ae8306f99083",
+      "sectionPath": "Hoofdstuk 6 Fysische factoren > Afdeling 3 Lawaai > § 2 Voorschriften met betrekking tot lawaai > Artikel 6.8 Maatregelen ter voorkoming of beperking van de blootstelling > Lid 1",
+      "exactText": "Ter voorkoming of beperking van de blootstelling aan lawaai worden zodanige technische of organisatorische maatregelen genomen dat de risico’s van blootstelling worden weggenomen aan de bron of tot een minimum beperkt, waarbij rekening wordt gehouden met de technische vooruitgang en de beschikbaarheid van maatregelen.",
+      "textHash": "39da429cd60a069370071046b1ffe398fabb40bca66f165ec403925e3c6f25cc",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "16ce6f6f-8b29-4853-baf4-35a8c22fa78d",
+      "sectionPath": "Hoofdstuk 6 Fysische factoren > Afdeling 3 Lawaai > § 2 Voorschriften met betrekking tot lawaai > Artikel 6.8 Maatregelen ter voorkoming of beperking van de blootstelling > Lid 2",
+      "exactText": "Bij het voorkomen of beperken van de blootstelling, bedoeld in het eerste lid, wordt in ieder geval rekening gehouden met:",
+      "textHash": "5a5402f5453036424aeafba45165f2f3a6a46e918f7d737b6cee1217c2ce7b28",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "df248ddb-69aa-4fa5-9360-2eafaf2fe994",
+      "sectionPath": "Hoofdstuk 6 Fysische factoren > Afdeling 3 Lawaai > § 2 Voorschriften met betrekking tot lawaai > Artikel 6.8 Maatregelen ter voorkoming of beperking van de blootstelling > Lid 2 > Onderdeel a",
+      "exactText": "alternatieve werkmethoden die leiden tot minder blootstelling aan lawaai;",
+      "textHash": "05f9796ba18d5fff3acd1ebbc73e4cde0fb3fd46e8e4a25b6795c2a8130e755a",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "3aca7749-3ba9-42e1-8d90-8d33a31652af",
+      "sectionPath": "Hoofdstuk 6 Fysische factoren > Afdeling 3 Lawaai > § 2 Voorschriften met betrekking tot lawaai > Artikel 6.8 Maatregelen ter voorkoming of beperking van de blootstelling > Lid 2 > Onderdeel b",
+      "exactText": "de keuze van de juiste arbeidsmiddelen, rekening houdend met het te verrichten werk, die zo weinig mogelijk lawaai maken, met inbegrip van de mogelijkheid om de werknemers te laten beschikken over arbeidsmiddelen die een beperking van de blootstelling aan lawaai tot doel of als gevolg hebben;",
+      "textHash": "a11f98a552b6f537de47c01aef7144234d2dbd73e6353e4838010dd5f7494302",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "3459f0f3-ec5b-4e08-b313-6bd72c01b4b0",
+      "sectionPath": "Hoofdstuk 6 Fysische factoren > Afdeling 3 Lawaai > § 2 Voorschriften met betrekking tot lawaai > Artikel 6.8 Maatregelen ter voorkoming of beperking van de blootstelling > Lid 2 > Onderdeel c",
+      "exactText": "het ontwerp en de indeling van de werkplek en de arbeidsplaats;",
+      "textHash": "4fa2fa28a4207c204336ad9789332d6e76af108577007d9e291b705a1bb181cd",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "afe2e21b-b591-4800-9441-929d3212fd11",
+      "sectionPath": "Hoofdstuk 6 Fysische factoren > Afdeling 3 Lawaai > § 2 Voorschriften met betrekking tot lawaai > Artikel 6.8 Maatregelen ter voorkoming of beperking van de blootstelling > Lid 2 > Onderdeel d",
+      "exactText": "een doeltreffende voorlichting en doeltreffend onderricht om de werknemers te leren hoe arbeidsmiddelen juist te gebruiken teneinde de blootstelling aan lawaai tot een minimum te beperken;",
+      "textHash": "4e56ab4efe5346c98ca6984b61bccf16d27f8ab5a59174a2e6f9c981ab85dcfc",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "fd45b289-a568-4486-b7b4-06496ccec342",
+      "sectionPath": "Hoofdstuk 6 Fysische factoren > Afdeling 3 Lawaai > § 2 Voorschriften met betrekking tot lawaai > Artikel 6.8 Maatregelen ter voorkoming of beperking van de blootstelling > Lid 2 > Onderdeel e",
+      "exactText": "technische maatregelen ter beperking van lawaai:",
+      "textHash": "2290c5eed7c5260bf4ab2cc00574d65402b990c9dbff0183c21033b54138c294",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "871ce33d-ac30-4717-bcf1-1873e08fcb54",
+      "sectionPath": "Hoofdstuk 6 Fysische factoren > Afdeling 3 Lawaai > § 2 Voorschriften met betrekking tot lawaai > Artikel 6.8 Maatregelen ter voorkoming of beperking van de blootstelling > Lid 2 > Onderdeel e > Onderdeel i",
+      "exactText": "beperking van het luchtgeluid, bijvoorbeeld door afscherming, omkasting of afdekking met geluidsabsorberend materiaal;",
+      "textHash": "060adc9216c67d77c125b0b2c3434887c58249301293bca70a3d5900f472c815",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "ee85aa54-e27d-4b56-b423-0ecf694a41c1",
+      "sectionPath": "Hoofdstuk 6 Fysische factoren > Afdeling 3 Lawaai > § 2 Voorschriften met betrekking tot lawaai > Artikel 6.8 Maatregelen ter voorkoming of beperking van de blootstelling > Lid 2 > Onderdeel e > Onderdeel ii",
+      "exactText": "beperking van het constructiegeluid, bijvoorbeeld door demping of isolatie;",
+      "textHash": "a000401943b813c89d584168cbea0c484f692b5c88c3976e8d33e94488d5925d",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "9df6f309-b4bc-44d2-9815-68bc0642ef8e",
+      "sectionPath": "Hoofdstuk 6 Fysische factoren > Afdeling 3 Lawaai > § 2 Voorschriften met betrekking tot lawaai > Artikel 6.8 Maatregelen ter voorkoming of beperking van de blootstelling > Lid 2 > Onderdeel f",
+      "exactText": "passende onderhoudsprogramma’s voor de arbeidsmiddelen, de werkplek en de systemen op de werkplek;",
+      "textHash": "016625b9fbb3a36abba75f0e119357527fd4f727b1eb63675aa8b16d5e7e92e3",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "7af72765-4a27-4e40-b22b-449b61bd301b",
+      "sectionPath": "Hoofdstuk 6 Fysische factoren > Afdeling 3 Lawaai > § 2 Voorschriften met betrekking tot lawaai > Artikel 6.8 Maatregelen ter voorkoming of beperking van de blootstelling > Lid 2 > Onderdeel g",
+      "exactText": "de organisatie van de werkzaamheden, met het oog op een beperking van het lawaai:",
+      "textHash": "7f52c0faec90770653a5d3240a4c458f0e0ce84143b2a4f77d2fa8ac55a006d0",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "c2c4ecc7-2cbb-4238-b5fa-ffad1632fb4d",
+      "sectionPath": "Hoofdstuk 6 Fysische factoren > Afdeling 3 Lawaai > § 2 Voorschriften met betrekking tot lawaai > Artikel 6.8 Maatregelen ter voorkoming of beperking van de blootstelling > Lid 2 > Onderdeel g > Onderdeel i",
+      "exactText": "beperking van de duur en intensiteit van de blootstelling;",
+      "textHash": "af5e9f06a013dff4c5198410ff7316aaa9be6191c701e435e3f0d947f3251d35",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "27248587-8696-41cd-a012-c48d4ef05812",
+      "sectionPath": "Hoofdstuk 6 Fysische factoren > Afdeling 3 Lawaai > § 2 Voorschriften met betrekking tot lawaai > Artikel 6.8 Maatregelen ter voorkoming of beperking van de blootstelling > Lid 2 > Onderdeel g > Onderdeel ii",
+      "exactText": "passende werkschema’s met voldoende rustpauzes.",
+      "textHash": "e70f266e3bfe68af71e190370296d0421021f146facbb49d5961c8698af279ef",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "206e4e27-12b7-47b4-9ce9-db918ccd1641",
+      "sectionPath": "Hoofdstuk 7 Arbeidsmiddelen en specifieke werkzaamheden > Afdeling 2 Algemene voorschriften > Artikel 7.5 Montage, demontage, onderhoud, reparatie en reiniging van arbeidsmiddelen > Lid 2",
+      "exactText": "Onderhouds-, reparatie- en reinigingswerkzaamheden aan een arbeidsmiddel worden slechts uitgevoerd indien het arbeidsmiddel is uitgeschakeld en drukloos of spanningsloos is gemaakt. Indien dit niet mogelijk is worden doeltreffende maatregelen genomen om die werkzaamheden veilig te kunnen uitvoeren.",
+      "textHash": "5b7279cb8c974d064d4de71b17b90ab4771aaa034b2d869d4b623b23454607b0",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "daa5ec3a-1585-44c5-ae0c-b58c72c3a8fd",
+      "sectionPath": "Hoofdstuk 7 Arbeidsmiddelen en specifieke werkzaamheden > Afdeling 2 Algemene voorschriften > Artikel 7.5 Montage, demontage, onderhoud, reparatie en reiniging van arbeidsmiddelen > Lid 3",
+      "exactText": "Het tweede lid is van overeenkomstige toepassing op productie- en afstelwerkzaamheden met of aan een arbeidsmiddel.",
+      "textHash": "df1b4aaf74ed7eccc30f720dbfcb90b4c18878ab2d8521614e381374b1f85f6c",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "41a162e3-4140-4f3d-b57b-71fa43e65f62",
+      "sectionPath": "Hoofdstuk 7 Arbeidsmiddelen en specifieke werkzaamheden > Afdeling 2 Algemene voorschriften > Artikel 7.7 Veiligheidsvoorzieningen in verband met bewegende delen van arbeidsmiddelen > Lid 1",
+      "exactText": "Indien bewegende delen van een arbeidsmiddel gevaar opleveren, zijn zij van zodanige schermen of beveiligingsinrichtingen voorzien, dat het gevaar zoveel mogelijk wordt voorkomen.",
+      "textHash": "05d863634a78d717715cd7b3797050f7aa439fe340fbbd52b12d5c114198d1af",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "5a2f753f-051a-48b6-9b94-e36c240f4920",
+      "sectionPath": "Hoofdstuk 7 Arbeidsmiddelen en specifieke werkzaamheden > Afdeling 2 Algemene voorschriften > Artikel 7.7 Veiligheidsvoorzieningen in verband met bewegende delen van arbeidsmiddelen > Lid 6",
+      "exactText": "De schermen of beveiligingsinrichtingen belemmeren het zicht op de arbeid zo min mogelijk.",
+      "textHash": "54fca98738d0c79bb8a8fbdbc967f1cdef58286c1e0d3aadb0ce9a77c321c639",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "42583ec3-6112-4b86-b9e4-636746af5a00",
+      "sectionPath": "Hoofdstuk 7 Arbeidsmiddelen en specifieke werkzaamheden > Afdeling 2 Algemene voorschriften > Artikel 7.7 Veiligheidsvoorzieningen in verband met bewegende delen van arbeidsmiddelen > Lid 7",
+      "exactText": "De schermen of beveiligingsinrichtingen zijn op een zodanige wijze aangebracht dat de noodzakelijke onderhouds- en reparatiewerkzaamheden op veilige wijze kunnen worden uitgevoerd. Daarbij wordt zoveel mogelijk voorkomen dat de schermen of beveiligingsinrichtingen moeten worden gedemonteerd.",
+      "textHash": "a39bd80f888ad97d801afd122f2f56e471f3fd38d30b09c85e873d56d778b088",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "3ff4f51e-84f0-4e8c-9eeb-69424e09b38f",
+      "sectionPath": "Hoofdstuk 9 Verplichtingen, strafbare feiten, overtredingen, bestuursrechtelijke bepalingen en overgangs- en slotbepalingen > Afdeling 1 Aanduiding normadressaten van de bij of krachtens dit besluit vastgestelde verplichtingen > Artikel 9.5a Verplichtingen van degenen bij wie vrijwilligers werkzaam zijn > Lid 1",
+      "exactText": "Degene bij wie vrijwilligers werkzaam zijn is verplicht tot naleving ten aanzien van die vrijwilligers van de voorschriften en verboden die zijn opgenomen in de volgende artikelen:",
+      "textHash": "5606a1f8a0fb3401322b1bfcf9f5ea16dc04f87d486051c63b0bccb5ca4c6a94",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "1c8f13c8-3181-45a1-8cf5-a14742d77a35",
+      "sectionPath": "Hoofdstuk 9 Verplichtingen, strafbare feiten, overtredingen, bestuursrechtelijke bepalingen en overgangs- en slotbepalingen > Afdeling 1 Aanduiding normadressaten van de bij of krachtens dit besluit vastgestelde verplichtingen > Artikel 9.5a Verplichtingen van degenen bij wie vrijwilligers werkzaam zijn > Lid 1 > Onderdeel a",
+      "exactText": "van de wet: de artikelen 3, 4, 6 tot en met 11, 16, 17 en 19 tot en met 44, en de artikelen 5 en 18, voor zover het betreft arbeid met gevaarlijke stoffen en biologische agentia waarop hoofdstuk 4 van het besluit van toepassing is;",
+      "textHash": "e010b159c22a9955f710b4497ba90d34bff6597dff6f41f0061f48e83d660f32",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "c94eee80-e428-4fda-b1d3-c6cc82212aaf",
+      "sectionPath": "Hoofdstuk 9 Verplichtingen, strafbare feiten, overtredingen, bestuursrechtelijke bepalingen en overgangs- en slotbepalingen > Afdeling 1 Aanduiding normadressaten van de bij of krachtens dit besluit vastgestelde verplichtingen > Artikel 9.5a Verplichtingen van degenen bij wie vrijwilligers werkzaam zijn > Lid 1 > Onderdeel b",
+      "exactText": "van hoofdstuk 3: de artikelen 3.2, eerste lid, 3.3, 3.4, 3.5, 3.5d, eerste lid, 3.5g, 3.5h, 3.6, eerste lid, 3.16 en 3.17;",
+      "textHash": "30c50512bf8412482c70f55e12f7a1e8e5d5e14ef30e48d880ab65f1f69decf0",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "a905600c-5304-4d7a-96e8-a52a6e745e6a",
+      "sectionPath": "Hoofdstuk 9 Verplichtingen, strafbare feiten, overtredingen, bestuursrechtelijke bepalingen en overgangs- en slotbepalingen > Afdeling 1 Aanduiding normadressaten van de bij of krachtens dit besluit vastgestelde verplichtingen > Artikel 9.5a Verplichtingen van degenen bij wie vrijwilligers werkzaam zijn > Lid 1 > Onderdeel c",
+      "exactText": "van hoofdstuk 4: de artikelen 4.1b tot en met 4.10d, 4.13 tot en met 4.21, 4.23, 4.44 tot en met 4.54d, 4.58 tot en met 4.61, 4.61a, 4.61b, 4.62b, 4.84 tot en met 4.102, 4.108 en 4.109;",
+      "textHash": "8a515090948aac99d4f2364060c6a8e6d353f44b1a57bb2ebe178ae73cb84032",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "b890038c-4c5c-4579-a7be-47975015860f",
+      "sectionPath": "Hoofdstuk 9 Verplichtingen, strafbare feiten, overtredingen, bestuursrechtelijke bepalingen en overgangs- en slotbepalingen > Afdeling 1 Aanduiding normadressaten van de bij of krachtens dit besluit vastgestelde verplichtingen > Artikel 9.5a Verplichtingen van degenen bij wie vrijwilligers werkzaam zijn > Lid 1 > Onderdeel d",
+      "exactText": "van hoofdstuk 5: de artikelen 5.2, 5.3, aanhef en onder a, en 5.13a;",
+      "textHash": "ee1d58c10d57ec49d1d21dd0e5b18233178aa979353e3f152aaa4bee0f111df9",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "ca164863-714f-4e8c-9ca9-83237ab95e49",
+      "sectionPath": "Hoofdstuk 9 Verplichtingen, strafbare feiten, overtredingen, bestuursrechtelijke bepalingen en overgangs- en slotbepalingen > Afdeling 1 Aanduiding normadressaten van de bij of krachtens dit besluit vastgestelde verplichtingen > Artikel 9.5a Verplichtingen van degenen bij wie vrijwilligers werkzaam zijn > Lid 1 > Onderdeel e",
+      "exactText": "van hoofdstuk 6: de artikelen 6.8, eerste tot en met derde, zevende, negende, tiende en elfde lid, 6.11c, tweede lid, 6.12e, eerste, tweede en vierde lid, 6.12j, eerste lid, 6.12l, eerste, tweede en negende lid6.13, 6.14, 6.14a, 6.14b, 6.15, 6.16, 6.17, 6.18, 6.19 en 6.20;",
+      "textHash": "8c0f7233d4b8daee7d6d7efd604a2dcb55a83842eeec3bec7a84d65b60302a24",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "db35665f-9927-4681-a2bc-3dc9c8a0624b",
+      "sectionPath": "Hoofdstuk 9 Verplichtingen, strafbare feiten, overtredingen, bestuursrechtelijke bepalingen en overgangs- en slotbepalingen > Afdeling 1 Aanduiding normadressaten van de bij of krachtens dit besluit vastgestelde verplichtingen > Artikel 9.5a Verplichtingen van degenen bij wie vrijwilligers werkzaam zijn > Lid 1 > Onderdeel f",
+      "exactText": "van hoofdstuk 7: de artikelen 7.3, tweede tot en met vierde lid, 7.4, 7.5, tweede, derde en vijfde lid, 7.7, eerste lid, 7.9, 7.11, tweede lid, 7.16, 7.17a, eerste, tweede en vijfde lid, 7.17b, eerste en tweede lid, 7.17c, eerste en tweede lid, 7.18, tweede, derde, vierde, zesde en zevende lid, 7.18a, derde en dertiende lid, 7.18b, eerste lid, 7.23, 7.23a tot en met 7.23d, en 7.32 tot en met 7.35;",
+      "textHash": "872b04640b79cafdd486dc58c06b2dc9a3c911405480c150ecff96f3e98c9af8",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "0954892a-4285-4be5-b327-04a555363892",
+      "sectionPath": "Hoofdstuk 9 Verplichtingen, strafbare feiten, overtredingen, bestuursrechtelijke bepalingen en overgangs- en slotbepalingen > Afdeling 1 Aanduiding normadressaten van de bij of krachtens dit besluit vastgestelde verplichtingen > Artikel 9.5a Verplichtingen van degenen bij wie vrijwilligers werkzaam zijn > Lid 1 > Onderdeel g",
+      "exactText": "van hoofdstuk 8: de artikelen 8.1, tweede, zevende en achtste lid, en 8.4.",
+      "textHash": "434393831c0a52c71c31dc9e94417103d504a50aba370dd9505b55be4b792ab9",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "8e0fd353-a6c0-4ece-b9b5-d7a8d13ddc45",
+      "sectionPath": "Hoofdstuk 9 Verplichtingen, strafbare feiten, overtredingen, bestuursrechtelijke bepalingen en overgangs- en slotbepalingen > Afdeling 1 Aanduiding normadressaten van de bij of krachtens dit besluit vastgestelde verplichtingen > Artikel 9.5a Verplichtingen van degenen bij wie vrijwilligers werkzaam zijn > Lid 2",
+      "exactText": "De persoon, bedoeld in het eerste lid, is ten aanzien van vrijwilligers die jonger zijn dan 18 jaar tevens verplicht tot naleving ten aanzien van die vrijwilligers van de voorschriften en verboden die zijn opgenomen in de artikelen 1.37, eerste lid, eerste zin, en tweede lid, 3.46, 6.27 en 7.39.",
+      "textHash": "130139b347f402797cd4ace7457210eb3d489c80b2fc33b3102d71fabcd82729",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    },
+    {
+      "id": "a3dc5e5b-54cd-4632-8640-6454b2366d48",
+      "sectionPath": "Hoofdstuk 9 Verplichtingen, strafbare feiten, overtredingen, bestuursrechtelijke bepalingen en overgangs- en slotbepalingen > Afdeling 1 Aanduiding normadressaten van de bij of krachtens dit besluit vastgestelde verplichtingen > Artikel 9.5a Verplichtingen van degenen bij wie vrijwilligers werkzaam zijn > Lid 3",
+      "exactText": "De persoon, bedoeld in het eerste lid, is ten aanzien van zwangere vrijwilligers en vrijwilligers tijdens de lactatie tevens verplicht tot naleving ten aanzien van die vrijwilligers van de voorschriften en verboden die zijn opgenomen in de artikelen 1.42, 1.42a, 3.48, 6.29, 6.29a, 6.29b en 6.29c.",
+      "textHash": "66020687a448c22b8405c47d9a8d1d6e46626a9117cca807115c42303f5a35bd",
+      "requiresReview": false,
+      "sourceVersionId": "27ba0ef3-f785-4b00-82cb-2c6acf48194e"
+    }
+  ]
+}

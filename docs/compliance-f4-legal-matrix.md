@@ -1,5 +1,7 @@
 # F4 — juridische vraag- en regelmatrix
 
+Aanvulling 18 oktober 2026 / issue #50: het [juridisch reviewer-dossier](compliance-f4-review-dossier.md) bevat alle 46 claimdossiers, 141 afzonderlijke regelreviews, 188 herleidbare opgeslagen wetsfragmenten en lege menselijke beslisbladen. De oorspronkelijke matrix hieronder blijft behouden; deze aanvulling geeft geen juridische goedkeuring.
+
 Status: NO-GO voor frameworkpublicatie. Controle: 17 oktober 2026. Geen juridische certificering.
 
 AW = Arbowet; AB = Arbobesluit. Alle exacte vraag-/regel-ID’s, voorwaarden, antwoordcodes, teksten en templatechecksums staan in [de machineleesbare matrix](compliance-f4-legal-matrix.json). De [bestaande bronrevisies en fragmenthashes](compliance-f4-source-evidence.json) zijn read-only waargenomen, niet door dit onderzoek gepubliceerd of gevalideerd. Het [vrijgaveplan](compliance-f4-publication-plan.md) benoemt de open controles.
