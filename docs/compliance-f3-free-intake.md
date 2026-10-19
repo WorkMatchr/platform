@@ -99,7 +99,9 @@ Uitgebreide betaalde scan blijft niet beschikbaar, zonder aankoopactie.
 Relevante regressies omvatten elke optie, conflicten, alle modules, positieve
 mapping, ontbrekend/onbekend, interesseordening, expliciete opslag, verval,
 legacy/A07-herstel, geblokkeerde opslag, multitab, logout/error/focus en SSR-hydratatie.
-Geen externe mails, betalingen, productiegegevens of databasefixtures nodig.
+De componentregressies vereisen geen databasefixtures. Voor de aanvullende echte
+sessieacceptatie zijn uitsluitend tijdelijke synthetische lokale fixtures gebruikt
+(zie de eindcontrole hieronder). Geen externe mails, betalingen of productiegegevens.
 
 PC-025/028/029: gedeelde vraagconfig/validatie. PC-040/043: begrijpelijke fouten,
 behouden invoer en herstelkeuze. PC-044/047: vaste profielcodes zonder persoonsgegevens.
@@ -140,3 +142,101 @@ Definitieve technische meetresultaten staan in de Draft PR.
 - `src/lib/compliance/free-intake-v2.test.ts`
 
 Definitieve gerichte run: **163/163 tests, 16 suites PASS** (met één worker). Volledige lint PASS. Productiebuild PASS, 163/163 pagina's. Diff-check PASS; secretpatrooncontrole over alle 16 taakbestanden: 0 treffers. Standalone TypeScript blijft BASELINE_FAILURE zoals hierboven beschreven.
+
+### Definitieve technische browseracceptatie — 19 oktober 2026
+
+Geteste code: PR #47-head `9941ef521806a39ceb8f28353f51d0de55c869cd`,
+branch `codex/compliance-f3-free-intake`. Geen productcodecorrectie nodig.
+Deze controle sluit de eerder openstaande echte ingelogde logoutacceptatie.
+
+#### Geïsoleerde omgeving en opruiming
+
+- Alleen lokaal Docker PostgreSQL 17 op `127.0.0.1:5432`;
+  nieuwe database `workmatchr_f3_browser_test_20896_1792429453144`.
+- Alle 85 F3-migraties werkelijk uitgevoerd: 85/85, nul mislukte/onverwachte
+  migraties; alle geregistreerde SHA-256-checksums gelijk aan de SQL-bestanden.
+- Twee synthetische `example.invalid`-CLIENT-accounts, elk uitsluitend OWNER
+  van een eigen synthetische organisatie. Bestaand Prisma-testfixturepatroon
+  en Better Auth-wachtwoordhashing gebruikt; echte login via het inlogformulier.
+- Acceptatieserver `http://127.0.0.1:3048`, zonder externe mailcredentials,
+  `CONTACT_FORM_ENABLED=false` en `COMPLIANCE_F4_ENABLED=false`.
+- Vóór verwijdering: exact twee testgebruikers, twee testorganisaties,
+  nul sessies en nul serverbeoordelingen. Acceptatieserver gestopt; daarna
+  uitsluitend bovenstaande database verwijderd, zonder geforceerde disconnects.
+- Afwezigheid van die database bevestigd. Overige database-identiteiten/OID's
+  en PostgreSQL-rollen vóór/na opruimen identiek. Geen writes naar bestaande
+  databases, bestaande gebruikers of productie uitgevoerd; dit is geen claim
+  dat hun volledige inhoud opnieuw is gehasht.
+- `.local-storage/f3-acceptance/` volledig verwijderd, inclusief tijdelijke
+  credentials en scripts. De map was ignored en nooit tracked/staged.
+  Alle tracked bestanden gecontroleerd op de concrete tijdelijke wachtwoorden,
+  authsecret en verbinding: nul treffers. Geen secrets in rapport of PR.
+
+#### Echte browsercontroles
+
+| Controle | Resultaat en bewijs |
+| --- | --- |
+| Login en organisatiecontext | PASS: A en B tonen uitsluitend hun eigen synthetische organisatie. |
+| Onopgeslagen concept + logout | PASS: waarschuwing vóór signOut; teruggaan behoudt selectie en sessie; focus terug op Uitloggen. |
+| Bevestigde logout onopgeslagen concept | PASS: invoer gewist, signOut HTTP 200, publieke homepage; sessieaantal A van 1 naar 0; dashboard verwijst naar Inloggen. |
+| Expliciet bewaren + herladen | PASS: vraag 3 en antwoord 1–25 hersteld; terug naar vraag 2 behoudt Industrie; verdergaan behoudt antwoorden. |
+| Bewaard concept + logout | PASS: waarschuwing; Escape behoudt antwoord; bevestigen wist concept en beëindigt sessie (A: 0). |
+| Tweede geopende tab | PASS: concept eerst hersteld op vraag 4; logout in andere tab wist antwoorden en keert terug naar lege vraag 1 met verwijdermelding. |
+| Wisselen A → B | PASS: B heeft eigen organisatiecontext en lege intake; geen concept van A hersteld. Geen antwoorden in URL of serverbeoordeling opgeslagen. |
+| Vijf vragen / navigatie | PASS: alle vijf doorlopen, vooruit/achteruit en opnieuw beginnen; nieuwe intake heeft vijf ongevulde antwoordopties op vraag 1. |
+| Ontbrekende/onbekende risico's | PASS: lege selectie geeft validatiefout; onbekende antwoorden leveren 0 relevante en 33 mogelijk relevante onderwerpen, geen vrijstelling. |
+| Tekstcorrectie | PASS: toelichting is “Denk ook aan uitzendkrachten en stagiairs.”; exacte tekst “Vul geen namen in” afwezig. Algemene privacytoelichting behouden. |
+| Laatste logout B | PASS: beide accounts hebben 0 sessies vóór databaseverwijdering. |
+| Laatste browsercontrole | PASS: nieuw geopend lokaal tabblad toont Inloggen, lege vraag 1 en 0 geselecteerde antwoorden; geen concept wordt hersteld. |
+| Console/hydratatie | Geen errors/hydratatiefouten in vastgelegde browserlogs. Laatste devcontrole meldt alleen een logo-LCP/laadprioriteitswaarschuwing; geen F3-regressie. |
+
+De browsertool biedt hier geen uitlezing van ruwe localStorage. De browserclaim
+is daarom beperkt tot aantoonbaar ontbreken van een hersteld concept en de
+zichtbare wissing in beide tabs. Het daadwerkelijk verwijderen van de specifieke
+v1/v2-keys en het behouden van andere browsergegevens is aanvullend gedekt door
+de opslagregressies. TTL-grens en legacygevallen zijn met gecontroleerde tijd
+en fixtures in tests gecontroleerd, niet door 24 uur in de browser te wachten.
+
+#### Herhaalde gerichte regressies
+
+```text
+npm run test -- --maxWorkers=1 src/lib/compliance/free-intake-storage.test.ts src/lib/compliance/free-intake-v2.test.ts src/components/public/compliance-free-intake-v2.test.tsx src/components/auth/logout-compliance-draft.test.tsx src/components/layout/header-logout.test.tsx
+```
+
+**118/118 tests, 5/5 suites PASS** in één finale run (58,19 s). Dekt onder meer
+logout/annuleren/focus/fouten, gerichte wissing, 24-uurslease zonder verlenging,
+verlopen opslag met behoud van actieve invoer, legacy/A07-concepten, stale tabs,
+geblokkeerde opslag en SSR/hydratatie. In een eerdere poging startte één worker
+niet tijdig; de suite slaagde afzonderlijk en de finale gezamenlijke run heeft
+geen workerfout. Geen limieten of assertions versoepeld.
+
+Echte 200%-zoom blijft de eerder gegeven Product Owner-PASS. De uiteindelijke
+functionele Product Owner-goedkeuring en het besluit tot merge blijven apart.
+PR #40 en PR #49, productie, migraties en frameworkpublicatie zijn ongemoeid.
+
+#### Finale kwaliteitscontrole en advies
+
+- Volledige `npm run lint`: PASS (exit 0).
+- `npm run build`: PASS (exit 0), inclusief ingebouwde TypeScript-check en
+  163/163 gegenereerde pagina's. De eerste poging stopte vóór compilatie omdat
+  `DATABASE_URL` ontbrak. Herhaling gebruikt uitsluitend een niet-bereikbare
+  localhost-build-URL en een tijdelijke procesgebonden authsecret; geen database,
+  `.env` of productieconfiguratie gewijzigd. Bestaande worktree-root- en
+  kennisbank-NFT-tracingwaarschuwingen blijven apart geregistreerd.
+- De door Next gegenereerde wijziging van `next-env.d.ts` is teruggebracht
+  naar de oorspronkelijke inhoud; zij hoort niet bij de wijzigingsset.
+- `git diff --check`: PASS. Secretpatrooncontrole van de rapporttoevoeging:
+  nul treffers; concrete tijdelijke secrets tevens vóór cleanup tegen alle
+  tracked bestanden gecontroleerd (nul treffers).
+- Standalone `tsc` is in deze laatste acceptatieronde niet opnieuw gevraagd
+  of uitgevoerd. De eerder gedocumenteerde standalone-baseline blijft als
+  historische bevinding staan; de actuele ingebouwde buildcheck is geslaagd.
+
+**Technisch advies: GO voor merge na afzonderlijk Product Owner-akkoord.**
+Geen resterende F3-technische acceptatieblocker gevonden. Dit is geen besluit
+tot merge of deployment. PR #47 blijft Draft. Functionele eindacceptatie en
+latere afstemming met A07/F4 blijven afzonderlijke Product Owner-/reviewstappen.
+De Product Owner heeft de definitieve technische afronding bevestigd en
+uitsluitend commit/push van dit rapport naar de bestaande PR #47-branch
+geautoriseerd. Productcode blijft ongewijzigd. PR #47 blijft Draft; merge en
+productiedeployment zijn niet geautoriseerd.
