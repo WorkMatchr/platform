@@ -1,5 +1,7 @@
 # F4 — juridisch reviewer-dossier (issue #50)
 
+Aanvulling 19 oktober 2026: [RI&E-review in twee deelcontroles](compliance-f4-rie-legal-review.md) werkt de zeven geselecteerde vragen, 21 antwoordregels, 28 antwoordvarianten en beide toetsingsuitzonderingen uit. Dit is een reviewvoorstel; RIETESTING blijft Niet beoordeeld en menselijke vrijgave blijft open.
+
 **NO-GO voor juridische vrijgave en frameworkpublicatie.** Voorbereid op 18 oktober 2026 voor Draft PR #49, NL_ARBO_GUIDE / 2.1. Alle menselijke beslisvelden zijn leeg. Geen claim-, regel-, vraag- of productiestatus gewijzigd.
 
 ## Bewijsgrens en werkwijze
