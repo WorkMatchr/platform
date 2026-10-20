@@ -49,4 +49,12 @@ describe('FREE_INTAKE/2.0 — expliciete signalen, geen beoordeling', () => {
     expect(toggleFreeIntakeV2(questions[3], ['UNKNOWN'], 'FIRE')).toEqual(['FIRE'])
     expect(toggleFreeIntakeV2(questions[3], ['FIRE'], 'OTHER')).toEqual(['FIRE', 'OTHER'])
   })
+  it.each(['NONE_RECOGNIZED', 'UNKNOWN'])('houdt %s exclusief tegenover iedere andere FI2-04-keuze', exclusive => {
+    for (const option of questions[3].options.filter(o => o.value !== exclusive)) {
+      expect(toggleFreeIntakeV2(questions[3], [option.value], exclusive)).toEqual([exclusive])
+      expect(toggleFreeIntakeV2(questions[3], [exclusive], option.value)).toEqual([option.value])
+      expect(normalizeFreeIntakeV2({ 'FI2-04': [exclusive, option.value] })).toEqual({})
+    }
+    expect(toggleFreeIntakeV2(questions[3], [exclusive], exclusive)).toEqual([])
+  })
 })

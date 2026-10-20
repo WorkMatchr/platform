@@ -73,3 +73,6 @@ export function orientFreeIntakeV2(raw: IntakeAnswers) {
   }).sort((a, b) => Number(preferred.has(b.code) || (priorities.includes('OTHER_RISKS') && b.code.startsWith('R'))) - Number(preferred.has(a.code) || (priorities.includes('OTHER_RISKS') && a.code.startsWith('R'))) || a.code.localeCompare(b.code))
   return { ...FREE_INTAKE_V2, modules, relevant: modules.filter(m => m.applicability === 'RELEVANT').length, possiblyRelevant: modules.filter(m => m.applicability === 'POSSIBLY_RELEVANT').length }
 }
+
+// Shared with the presentation layer; the orientation rules remain unchanged.
+export { signals as freeIntakeV2Signals, interests as freeIntakeV2Interests }

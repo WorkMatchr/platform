@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { JSDOM } from 'jsdom'
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { renderToString } from 'react-dom/server'
 import { hydrateRoot } from 'react-dom/client'
 import { StrictMode } from 'react'
@@ -25,6 +25,66 @@ const mount = async () => { await act(async () => { render(<StrictMode><Complian
 const click = (name: string) => fireEvent.click(screen.getByRole('button', { name }))
 
 describe('F3 browsercontract', () => {
+  it('scheidt aanvullende situaties van exclusieve alternatieven en behoudt labels/focus', async () => {
+    setMemoryDraft({ answers: {}, stepIndex: 3, questionnaireVersion: '2.0' })
+    await mount()
+    const machine = screen.getByLabelText('Machines') as HTMLInputElement
+    const other = screen.getByLabelText('Mogelijk andere werkzaamheden of situaties die niet in de lijst staan') as HTMLInputElement
+    const none = screen.getByLabelText('Ik herken geen van de genoemde situaties') as HTMLInputElement
+    const unknown = screen.getByLabelText('Ik kan nog niet inschatten welke situaties voorkomen') as HTMLInputElement
+    expect(screen.getByRole('heading', { name: 'Aanvullende situaties' })).toBeTruthy()
+    fireEvent.click(machine); fireEvent.click(other)
+    expect([machine.checked, other.checked]).toEqual([true, true])
+    none.focus(); fireEvent.click(none)
+    expect([machine.checked, other.checked, none.checked, unknown.checked]).toEqual([false, false, true, false])
+    expect(document.activeElement).toBe(none)
+    fireEvent.click(unknown)
+    expect([none.checked, unknown.checked]).toEqual([false, true])
+    fireEvent.click(other)
+    expect([other.checked, unknown.checked]).toEqual([true, false])
+  })
+  it.each(['NONE_RECOGNIZED', 'UNKNOWN', 'OTHER'])('herstelt bestaand 2.0-concept %s zonder omcodering of nieuwe TTL', async choice => {
+    const now = Date.now()
+    const value = { ...draft, answers: { 'FI2-04': [choice] }, stepIndex: 3, version: 3, savedAt: now - 1000, expiresAt: now - 1000 + DRAFT_TTL }
+    const original = JSON.stringify(value)
+    localStorage.setItem(KEY, original); await mount()
+    const selected = (screen.getAllByRole('checkbox') as HTMLInputElement[]).filter(input => input.checked)
+    expect(selected.map(input => input.value)).toEqual([choice])
+    expect(localStorage.getItem(KEY)).toBe(original)
+    fireEvent.click(screen.getByLabelText('Machines'))
+    const updated = JSON.parse(localStorage.getItem(KEY)!)
+    expect(updated.expiresAt).toBe(value.expiresAt)
+    expect(updated.answers['FI2-04']).toEqual(choice === 'OTHER' ? ['MACHINES', 'OTHER'] : ['MACHINES'])
+  })
+  it('herstelt tegenstrijdige opgeslagen keuzes zonder willekeurig één te kiezen', async () => {
+    localStorage.setItem(KEY, JSON.stringify({ ...saved(), stepIndex: 3, answers: { 'FI2-04': ['UNKNOWN', 'MACHINES'] } }))
+    await mount()
+    expect((screen.getAllByRole('checkbox') as HTMLInputElement[]).some(input => input.checked)).toBe(false)
+    expect(JSON.parse(localStorage.getItem(KEY)!).answers['FI2-04']).toEqual(['UNKNOWN', 'MACHINES'])
+  })
+  it('toont maximaal zes onderwerpen en een correct getelde, standaard gesloten restlijst', async () => {
+    setMemoryDraft({ questionnaireVersion: '2.0', stepIndex: 4, answers: {
+      'FI2-01': 'EMPLOYEES', 'FI2-02': ['sector:industrie'], 'FI2-03': 'ONE_TO_25', 'FI2-04': ['MACHINES'], 'FI2-05': ['BHV'],
+    } })
+    await mount(); click('Bekijk relevante onderwerpen')
+    const section = screen.getByRole('region', { name: 'Dit sluit aan op uw antwoorden' })
+    expect(within(section).getAllByRole('listitem')).toHaveLength(6)
+    expect(within(section).getAllByRole('heading', { level: 3 })[0].textContent).toBe('BHV & noodorganisatie')
+    const summary = screen.getByText('Overige mogelijk relevante onderwerpen (27)')
+    const details = summary.closest('details')!
+    expect(details.open).toBe(false)
+    expect(details.querySelectorAll('li')).toHaveLength(27)
+    expect(screen.getByText(/Uw antwoorden uit deze intake worden nog niet meegenomen/)).toBeTruthy()
+  })
+  it('houdt alle onbekende onderwerpen ingeklapt en de vervolgstap beschikbaar', async () => {
+    setMemoryDraft({ questionnaireVersion: '2.0', stepIndex: 4, answers: {
+      'FI2-01': 'UNKNOWN', 'FI2-02': ['UNKNOWN'], 'FI2-03': 'UNKNOWN', 'FI2-04': ['UNKNOWN'], 'FI2-05': ['UNKNOWN'],
+    } })
+    await mount(); click('Bekijk relevante onderwerpen')
+    expect(screen.getByText(/onvoldoende richting voor een persoonlijke selectie/)).toBeTruthy()
+    expect(screen.getByText('Overige mogelijk relevante onderwerpen (33)').closest('details')!.open).toBe(false)
+    expect(screen.getByRole('link', { name: 'Naar de Compliance-wijzer' }).getAttribute('href')).toBe('/wijzers/compliance')
+  })
   it('toont bij FI2-01 alleen de relevante toelichting en behoudt vijf keuzes', async () => {
     await mount()
     expect(screen.getByText('Denk ook aan uitzendkrachten en stagiairs.', { exact: true })).toBeTruthy()

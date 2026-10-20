@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { LinkButton } from '@/components/ui/link-button'
 import { publicRoutes } from '@/content/public-routes'
-import { freeIntakeV2Questions, freeIntakeV2Error, employeeScopeConflict, orientFreeIntakeV2, toggleFreeIntakeV2, type IntakeAnswers } from '@/lib/compliance/free-intake-v2'
+import { freeIntakeV2Questions, freeIntakeV2Error, employeeScopeConflict, toggleFreeIntakeV2, type IntakeAnswers } from '@/lib/compliance/free-intake-v2'
+import { freeIntakeV2DisplayQuestions, presentFreeIntakeV2 } from '@/lib/compliance/free-intake-v2-presentation'
 
 type Props = {
   answers: IntakeAnswers
@@ -25,8 +26,8 @@ export function ComplianceFreeIntakeV2({ answers, stepIndex, onChange, onFinish,
     heading.current?.focus({ preventScroll: true })
     heading.current?.scrollIntoView({ block: 'start', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' })
   }, [stepIndex, result])
-  const q = freeIntakeV2Questions[stepIndex]
-  const orientation = orientFreeIntakeV2(answers)
+  const q = freeIntakeV2DisplayQuestions[stepIndex]
+  const orientation = presentFreeIntakeV2(answers)
   const progress = Math.round((stepIndex + 1) / 5 * 100)
   function changeStep(next: number) { moved.current = true; setError(null); onChange(answers, next) }
   function answer(value: string | string[]) {
@@ -37,20 +38,30 @@ export function ComplianceFreeIntakeV2({ answers, stepIndex, onChange, onFinish,
   if (result) return <div className="space-y-6">
     <section className="rounded-card border border-brand-primary/20 bg-brand-primary-subtle p-6">
       <h2 ref={heading} tabIndex={-1} className="scroll-mt-24 text-2xl font-bold text-brand-dark">Uw onderwerpen om verder te verkennen</h2>
-      <p className="mt-3 text-text-secondary">Dit is een oriënterend overzicht, geen compliancebeoordeling of juridische conclusie. Niet-herkende situaties zijn niet automatisch uitgesloten.</p>
-      <p className="mt-3 font-semibold text-brand-dark">{orientation.relevant} relevante en {orientation.possiblyRelevant} mogelijk relevante onderwerpen</p>
+      <p className="mt-3 text-text-secondary">Deze selectie helpt u een volgende stap te kiezen. Zij stelt geen verplichtingen, risico’s of tekortkomingen vast. Niet-herkende situaties zijn niet automatisch uitgesloten.</p>
     </section>
     <section aria-labelledby="orientation-topics" className="rounded-card border border-border bg-surface p-6">
-      <h2 id="orientation-topics" className="text-xl font-bold text-brand-dark">Relevante en mogelijk relevante arbo-onderwerpen</h2>
-      <p className="mt-2 text-text-secondary">Uw gekozen informatiebehoefte staat vooraan. Een mogelijk relevant onderwerp is niet inhoudelijk beoordeeld.</p>
-      <ul className="mt-5 grid gap-3 md:grid-cols-2">
-        {orientation.modules.map(m => <li key={m.code} className="min-w-0 rounded-control border border-border p-4">
+      <h2 id="orientation-topics" className="text-xl font-bold text-brand-dark">Dit sluit aan op uw antwoorden</h2>
+      <p className="mt-2 text-text-secondary">{orientation.shortlist.length
+        ? 'Eerst uw informatiebehoefte, daarna herkende werksituaties en uw personeelskeuze. We tonen hier maximaal zes onderwerpen.'
+        : 'Uw antwoorden geven nog onvoldoende richting voor een persoonlijke selectie. U kunt hieronder onderwerpen bekijken of verdergaan met de gratis Compliance-wijzer.'}</p>
+      {orientation.shortlist.length > 0 && <ul role="list" className="mt-5 grid list-none gap-3 md:grid-cols-2">
+        {orientation.shortlist.map(m => <li key={m.code} className="min-w-0 rounded-control border border-border p-4">
           <h3 className="font-semibold text-brand-dark">{m.title}</h3>
-          <p className="mt-1 font-medium text-brand-dark">{m.applicability === 'RELEVANT' ? 'Relevant voor verdere verkenning' : 'Mogelijk relevant — nader bepalen'}</p>
           <p className="mt-2 text-sm text-text-secondary">{m.explanation}</p>
         </li>)}
-      </ul>
+      </ul>}
     </section>
+    <details className="rounded-card border border-border bg-surface p-5">
+      <summary className="min-h-11 cursor-pointer rounded-control py-2 font-semibold text-brand-dark focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-primary">Overige mogelijk relevante onderwerpen ({orientation.remaining.length})</summary>
+      <p className="mt-3 text-sm text-text-secondary">Deze onderwerpen zijn niet uitgesloten of inhoudelijk beoordeeld. Ook onderwerpen die niet in de eerste selectie passen, kunnen voor uw organisatie van belang zijn.</p>
+      <ul role="list" className="mt-4 grid list-none gap-3 md:grid-cols-2">
+        {orientation.remaining.map(m => <li key={m.code} className="min-w-0 border-t border-border pt-3">
+          <h3 className="font-semibold text-brand-dark">{m.title}</h3>
+          {m.priority > 0 && <p className="mt-1 text-sm text-text-secondary">{m.explanation}</p>}
+        </li>)}
+      </ul>
+    </details>
     <section className="rounded-card border border-border bg-surface p-6">
       <h2 className="text-xl font-bold text-brand-dark">Verder met de gratis Compliance-wijzer</h2>
       <p className="mt-2 text-text-secondary">In de bestaande Compliance-wijzer kunt u met een gratis account en actieve organisatie de basis van uw arbobeleid verkennen en een resultaat bewaren. Uw antwoorden uit deze intake worden nog niet meegenomen. U vult daar zelf de gevraagde gegevens in.</p>
