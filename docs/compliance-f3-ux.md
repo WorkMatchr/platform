@@ -3,6 +3,15 @@
 Basis: main `a49b59507139ef7121634705da19f781b17845f0` (gemergede F3 #47).
 Branch: `codex/compliance-f3-ux`. Geen wijzigingen aan PR #40 of #49.
 
+**Actuele integrale review (22 oktober 2026):** zie
+[compliance-f3-review.md](compliance-f3-review.md) voor alle 25 controlepunten,
+broncontrole, concrete resultaatkaarten en beperkingen. Het resultaat heeft nu
+maximaal vier uitgewerkte kaarten met controlepunt, vervolgstap en officiële
+toelichting. De eerdere korte verkenningssuggesties hieronder beschrijven de
+uitgangssituatie van PR #52. De finale regressies omvatten 162 tests.
+200%-zoom is inmiddels door de Product Owner als standaard geaccepteerd;
+er wordt geen nieuw afzonderlijk zoomakkoord gevraagd.
+
 ## Vastgestelde problemen en oplossing
 
 - FI2-04 had al exclusieve `NONE_RECOGNIZED` en `UNKNOWN`, maar presenteerde
@@ -112,9 +121,10 @@ niet opnieuw browsermatig uitgevoerd; de ongewijzigde logout-/opslagcode wordt
 door de bestaande gerichte regressies bewaakt. De eerdere F3-browseracceptatie
 is afzonderlijk vastgelegd in `compliance-f3-free-intake.md`.
 
-Functionele eindacceptatie en echte 200%-browserzoom blijven open bij de Product Owner.
-De eerdere zoomacceptatie voor F3 geldt niet automatisch als bewijs voor deze
-gewijzigde resultaatweergave.
+De hierboven beschreven browserrun is het historische bewijs van 20 oktober.
+De nieuwe resultaatweergave en de actuele acceptatieafspraken staan in het
+integrale reviewrapport. Functionele beoordeling van de nieuwe teksten blijft
+een Product Owner-besluit; 200%-zoom is als standaard geaccepteerd.
 
 ## Exacte wijzigingsset
 
@@ -126,6 +136,7 @@ gewijzigde resultaatweergave.
 - `src/lib/compliance/free-intake-v2-presentation.ts`
 - `src/lib/compliance/free-intake-v2-presentation.test.ts`
 
-Technisch gereed voor review als Draft PR; geen definitieve UX-vrijgave zolang
-de genoemde handmatige acceptatie openstaat. Geen merge, productiemigratie of
-deployment uitgevoerd.
+De review voegt `src/lib/compliance/free-intake-v2-guidance.ts` en
+`docs/compliance-f3-review.md` toe. De totale PR bevat daarmee negen taakbestanden.
+Technisch advies en actuele browser-/validatieresultaten staan in het integrale
+reviewrapport. Geen merge, productiemigratie of productiedeployment uitgevoerd.

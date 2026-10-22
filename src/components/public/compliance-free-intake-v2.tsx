@@ -15,6 +15,19 @@ type Props = {
   onRestart: () => void
 }
 
+type Topic = ReturnType<typeof presentFreeIntakeV2>['shortlist'][number]
+
+function TopicAdvice({ topic }: { topic: Topic }) {
+  return <div className="mt-3 space-y-3 text-sm text-text-secondary">
+    <p>{topic.guidance.about}</p>
+    <dl className="space-y-3">
+      <div><dt className="font-semibold text-brand-dark">Praktisch controleren</dt><dd className="mt-1">{topic.guidance.check}</dd></div>
+      <div><dt className="font-semibold text-brand-dark">Een volgende stap</dt><dd className="mt-1">{topic.guidance.next}</dd></div>
+    </dl>
+    <a href={topic.guidance.source} className="inline-block rounded-control py-2 text-brand-primary underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-primary">Officiële toelichting over {topic.title.toLowerCase()}</a>
+  </div>
+}
+
 export function ComplianceFreeIntakeV2({ answers, stepIndex, onChange, onFinish, onRestart }: Props) {
   const [result, setResult] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -39,16 +52,19 @@ export function ComplianceFreeIntakeV2({ answers, stepIndex, onChange, onFinish,
     <section className="rounded-card border border-brand-primary/20 bg-brand-primary-subtle p-6">
       <h2 ref={heading} tabIndex={-1} className="scroll-mt-24 text-2xl font-bold text-brand-dark">Uw onderwerpen om verder te verkennen</h2>
       <p className="mt-3 text-text-secondary">Deze selectie helpt u een volgende stap te kiezen. Zij stelt geen verplichtingen, risico’s of tekortkomingen vast. Niet-herkende situaties zijn niet automatisch uitgesloten.</p>
+      <p className="mt-3 text-sm text-text-secondary">De controlepunten hieronder zijn praktische suggesties, geen volledige wettelijke checklist. Ook zonder werknemers in dienst kunnen arboregels gelden, bijvoorbeeld bij werk onder uw gezag. Voor vrijwilligers en zelfstandigen gelden eigen voorwaarden; deze intake toetst die niet.</p>
     </section>
     <section aria-labelledby="orientation-topics" className="rounded-card border border-border bg-surface p-6">
       <h2 id="orientation-topics" className="text-xl font-bold text-brand-dark">Dit sluit aan op uw antwoorden</h2>
       <p className="mt-2 text-text-secondary">{orientation.shortlist.length
-        ? 'Eerst uw informatiebehoefte, daarna herkende werksituaties en uw personeelskeuze. We tonen hier maximaal zes onderwerpen.'
+        ? 'Maximaal vier onderwerpen om mee te beginnen: eerst uw informatiebehoefte, daarna herkende werksituaties en de algemene werkgeversbasis. De volgorde is geen ranglijst van urgentie.'
         : 'Uw antwoorden geven nog onvoldoende richting voor een persoonlijke selectie. U kunt hieronder onderwerpen bekijken of verdergaan met de gratis Compliance-wijzer.'}</p>
       {orientation.shortlist.length > 0 && <ul role="list" className="mt-5 grid list-none gap-3 md:grid-cols-2">
         {orientation.shortlist.map(m => <li key={m.code} className="min-w-0 rounded-control border border-border p-4">
+          <p className="mb-2 text-sm font-medium text-text-secondary">{m.category}</p>
           <h3 className="font-semibold text-brand-dark">{m.title}</h3>
           <p className="mt-2 text-sm text-text-secondary">{m.explanation}</p>
+          <TopicAdvice topic={m} />
         </li>)}
       </ul>}
     </section>
@@ -57,8 +73,11 @@ export function ComplianceFreeIntakeV2({ answers, stepIndex, onChange, onFinish,
       <p className="mt-3 text-sm text-text-secondary">Deze onderwerpen zijn niet uitgesloten of inhoudelijk beoordeeld. Ook onderwerpen die niet in de eerste selectie passen, kunnen voor uw organisatie van belang zijn.</p>
       <ul role="list" className="mt-4 grid list-none gap-3 md:grid-cols-2">
         {orientation.remaining.map(m => <li key={m.code} className="min-w-0 border-t border-border pt-3">
-          <h3 className="font-semibold text-brand-dark">{m.title}</h3>
-          {m.priority > 0 && <p className="mt-1 text-sm text-text-secondary">{m.explanation}</p>}
+          <details>
+            <summary className="min-h-11 cursor-pointer rounded-control py-2 font-semibold text-brand-dark focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-primary">{m.title}</summary>
+            <p className="mt-2 text-sm text-text-secondary">{m.category} · {m.explanation}</p>
+            <TopicAdvice topic={m} />
+          </details>
         </li>)}
       </ul>
     </details>

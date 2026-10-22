@@ -62,18 +62,23 @@ describe('F3 browsercontract', () => {
     expect((screen.getAllByRole('checkbox') as HTMLInputElement[]).some(input => input.checked)).toBe(false)
     expect(JSON.parse(localStorage.getItem(KEY)!).answers['FI2-04']).toEqual(['UNKNOWN', 'MACHINES'])
   })
-  it('toont maximaal zes onderwerpen en een correct getelde, standaard gesloten restlijst', async () => {
+  it('toont vier uitgewerkte onderwerpen en een correct getelde, standaard gesloten restlijst', async () => {
     setMemoryDraft({ questionnaireVersion: '2.0', stepIndex: 4, answers: {
       'FI2-01': 'EMPLOYEES', 'FI2-02': ['sector:industrie'], 'FI2-03': 'ONE_TO_25', 'FI2-04': ['MACHINES'], 'FI2-05': ['BHV'],
     } })
     await mount(); click('Bekijk relevante onderwerpen')
     const section = screen.getByRole('region', { name: 'Dit sluit aan op uw antwoorden' })
-    expect(within(section).getAllByRole('listitem')).toHaveLength(6)
+    expect(within(section).getAllByRole('listitem')).toHaveLength(4)
     expect(within(section).getAllByRole('heading', { level: 3 })[0].textContent).toBe('BHV & noodorganisatie')
-    const summary = screen.getByText('Overige mogelijk relevante onderwerpen (27)')
+    expect(within(section).getAllByText('Praktisch controleren')).toHaveLength(4)
+    expect(within(section).getAllByText('Een volgende stap')).toHaveLength(4)
+    expect(within(section).getAllByRole('link', { name: /Officiële toelichting/ })).toHaveLength(4)
+    const summary = screen.getByText('Overige mogelijk relevante onderwerpen (29)')
     const details = summary.closest('details')!
     expect(details.open).toBe(false)
-    expect(details.querySelectorAll('li')).toHaveLength(27)
+    expect(details.querySelectorAll('li')).toHaveLength(29)
+    expect([...details.querySelectorAll('details')].every(item => !item.open)).toBe(true)
+    expect(screen.getByText(/geen volledige wettelijke checklist/)).toBeTruthy()
     expect(screen.getByText(/Uw antwoorden uit deze intake worden nog niet meegenomen/)).toBeTruthy()
   })
   it('houdt alle onbekende onderwerpen ingeklapt en de vervolgstap beschikbaar', async () => {
@@ -110,6 +115,28 @@ describe('F3 browsercontract', () => {
     expect(screen.queryByText('Op orde')).toBeNull(); expect(screen.queryByText('Actie vereist')).toBeNull()
     expect(localStorage.length).toBe(0); expect(fetch).not.toHaveBeenCalled()
     expect(screen.queryByRole('button', { name: 'Concept 24 uur op dit apparaat bewaren' })).toBeNull()
+  })
+  it('behoudt antwoorden bij teruggaan en wist opgeslagen gegevens bij afronden en opnieuw beginnen', async () => {
+    await mount(); fireEvent.click(screen.getByLabelText(employee)); click('Volgende')
+    fireEvent.click(screen.getByLabelText('Industrie')); click('Vorige')
+    expect((screen.getByLabelText(employee) as HTMLInputElement).checked).toBe(true)
+    click('Volgende'); expect((screen.getByLabelText('Industrie') as HTMLInputElement).checked).toBe(true)
+    click('Volgende'); fireEvent.click(screen.getByLabelText('1–25')); click('Volgende')
+    fireEvent.click(screen.getByLabelText('Machines')); click('Volgende')
+    fireEvent.click(screen.getByLabelText('BHV')); click('Concept 24 uur op dit apparaat bewaren')
+    expect(localStorage.getItem(KEY)).not.toBeNull()
+    click('Bekijk relevante onderwerpen'); expect(localStorage.getItem(KEY)).toBeNull()
+    expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Uw onderwerpen om verder te verkennen' }))
+    click('Nieuwe intake starten')
+    expect((screen.getAllByRole('radio') as HTMLInputElement[]).every(input => !input.checked)).toBe(true)
+    expect(localStorage.getItem(KEY)).toBeNull()
+  })
+  it('weigert afronden van een hersteld concept met ontbrekende eerdere antwoorden', async () => {
+    setMemoryDraft({ answers: { 'FI2-05': ['BHV'] }, stepIndex: 4, questionnaireVersion: '2.0' })
+    await mount(); click('Bekijk relevante onderwerpen')
+    expect(screen.queryByRole('heading', { name: 'Uw onderwerpen om verder te verkennen' })).toBeNull()
+    expect(screen.getByRole('alert').textContent).toContain('Kies een antwoord')
+    expect(screen.getByRole('heading', { name: 'Heeft uw organisatie personeel?' })).toBeTruthy()
   })
   it('bewaart uitsluitend expliciet, zonder leaseverlenging en zonder stille hervatting van bewaren na verwijderen', async () => {
     await mount(); fireEvent.click(screen.getByLabelText(employee))

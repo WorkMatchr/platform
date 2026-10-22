@@ -57,4 +57,21 @@ describe('FREE_INTAKE/2.0 — expliciete signalen, geen beoordeling', () => {
     }
     expect(toggleFreeIntakeV2(questions[3], [exclusive], exclusive)).toEqual([])
   })
+  it('controleert alle 25 werksignalen en ieder tweetal tegen de bedoelde onderwerpen', () => {
+    // Independent contract fixture: do not derive expected results from the implementation's mapping.
+    const expected: Record<string, string[]> = {
+      HOME: ['R05', 'R18'], MULTIPLE_LOCATIONS: [], THIRD_PARTY_LOCATIONS: ['R15'], DISPLAY_SCREEN: ['R05', 'R18'], WORKPLACE_SETUP: ['R18'],
+      MACHINES: ['R01'], WORK_EQUIPMENT: ['R01'], VEHICLES: ['R16'], HEIGHT: ['R09'], ELECTRICAL: ['R20'], PRESSURE: ['R22'], RADIATION: ['R21'], FIRE: ['R19'],
+      HAZARDOUS_SUBSTANCES: ['R03'], BIOLOGICAL_AGENTS: ['R12'], ATEX: ['R19', 'R23'], PHYSICAL_LOAD: ['R04'], NOISE: ['R07'], VIBRATION: ['R08'], CLIMATE: ['R17'],
+      PSA: ['R06'], LONE_WORK: ['R13'], NIGHT_OR_SHIFT: ['R14'], YOUNG_WORKERS: ['R10'], PREGNANCY_WORK_RISK: ['R11'],
+    }
+    expect(Object.keys(expected).sort()).toEqual(questions[3].options.map(option => option.value).filter(value => !['OTHER', 'NONE_RECOGNIZED', 'UNKNOWN'].includes(value)).sort())
+    const entries = Object.entries(expected)
+    for (let i = 0; i < entries.length; i++) for (let j = i; j < entries.length; j++) {
+      const result = orientFreeIntakeV2({ 'FI2-04': [...new Set([entries[i][0], entries[j][0]])] })
+      expect(result.modules.filter(module => module.applicability === 'RELEVANT').map(module => module.code).sort()).toEqual([...new Set([...entries[i][1], ...entries[j][1]])].sort())
+      expect(result.modules).toHaveLength(33)
+      expect(result.modules.some(module => !['RELEVANT', 'POSSIBLY_RELEVANT'].includes(module.applicability))).toBe(false)
+    }
+  })
 })
