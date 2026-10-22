@@ -219,10 +219,12 @@ de bestaande mappings. Dit bestand is in de reviewcommit niet opnieuw gewijzigd.
 Geen package, lockfile, routing, sessiecode, opslagcode, migratie of backend gewijzigd.
 De door Next gegenereerde `next-env.d.ts`-padwijziging is teruggebracht en uitgesloten.
 
-**Technisch advies: GO voor review/merge na afzonderlijke Product Owner-beslissing.**
-Geen bevestigde taakgerelateerde technische blocker. De bekende standalone
-TypeScript-baseline en beperkte rechtstreekse wetstoegang blijven expliciet
-zichtbaar; geen juridische goedkeuring geautomatiseerd. PR blijft Draft.
+**Actueel technisch advies: NO-GO voor definitieve afronding van werkpakket 1.**
+De codechecks zijn groen, maar F3-20 heeft nog geen nieuwe ingelogde browserproef
+op de actuele branch. De onderstaande vervolgcontrole legt de concrete lokale
+omgevingsblokkade vast. Historisch bewijs en mocks vervangen deze ontbrekende
+controle niet. De bekende standalone TypeScript-baseline en beperkte rechtstreekse
+wetstoegang blijven expliciet zichtbaar. PR blijft Draft.
 De exacte commit en actuele CI/previewstatus staan in PR #52; historische
 checkresultaten mogen niet als bewijs voor een nieuwe commit worden gebruikt.
 
@@ -254,3 +256,35 @@ checkresultaten mogen niet als bewijs voor een nieuwe commit worden gebruikt.
   ongewijzigde logoutcode, actuele mocks en afzonderlijk historisch bewijs.
 - Geen claims over productiedeployment, productieaccounts of database-integriteit
   op basis van deze lokale presentatiechecks.
+
+## Vervolgcontrole opeenvolgende werkpakketten — 22 oktober 2026
+
+- Actuele PR #52-head: `f627cfd372c75dd274c33bc14385f5b7c1ab907a`;
+  branch `codex/compliance-f3-ux`, OPEN/Draft. Worktree vóór deze rapportaanvulling schoon.
+- Na fetch is `origin/main` nog `a49b59507139ef7121634705da19f781b17845f0`.
+- Dezelfde zes gerichte suites opnieuw uitgevoerd: **162/162 PASS**, 6/6 suites,
+  58,59 seconden. Opslag, TTL, legacy, exclusiviteit, hydratatie, logoutwaarschuwing
+  en headerlogout blijven gedekt. Er is geen productcode gewijzigd.
+- GitHub `verify` runs `39833243631` en `39833251865`: PASS op bovenstaande head.
+  Bestaande Vercel-preview: PASS. Er is geen nieuwe deployment gestart.
+- Lokale openbare intake op `http://127.0.0.1:3049/wijzers/compliance/scan`
+  browsermatig bereikbaar: lege eerste vraag, vijf opties, correcte toelichting.
+  Deze server heeft geen werkende testdatabase en bewijst geen ingelogde sessie.
+- Docker Linux-engine niet bereikbaar: named pipe `dockerDesktopLinuxEngine`
+  ontbreekt; PostgreSQL-poort 5432 gesloten. Docker Desktop is gestart, maar
+  `docker-desktop` WSL-distributie en `com.docker.service` blijven gestopt.
+  De service kon met de beschikbare Windows-rechten niet worden geopend/gestart.
+- Geen nieuwe database, synthetische gebruiker of sessie aangemaakt. Geen
+  bestaande database, gebruikers of migratiegeschiedenis gewijzigd.
+- **F3-20 blijft NOT TESTED; uitvoering BLOCKED door lokale testinfrastructuur.**
+  Voor de volledige technische afsluiting is een werkende lokale Docker-engine
+  nodig, gevolgd door een nieuwe geïsoleerde database en de daadwerkelijke
+  login/logout-/accountisolatieproef. De vraag aan de Product Owner staat open.
+- Lint/build zijn in deze documentatieronde niet opnieuw uitgevoerd: broncode
+  ongewijzigd, eerdere resultaten hierboven. Diff-check opnieuw PASS.
+
+Volgens de expliciete volgordevoorwaarde beginnen werkpakket 2 (F4 technische
+controle) en werkpakket 3 (juridisch dossier #50) pas na technische afronding
+van F3. Zij zijn in deze ronde **NOT STARTED**, niet goedgekeurd of afgekeurd.
+PR #49, issue #50, A07 en alle F4-bestanden blijven ongemoeid. Hun afzonderlijke
+rapporten volgen bij uitvoering; er wordt geen onderzoek geclaimd dat niet is gedaan.
