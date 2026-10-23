@@ -391,7 +391,23 @@ async function main() {
       where: { id: ownerAdminInvite.membershipId },
     })).status, 'INVITED')
     const invitedPassword = `Test-WM-${randomUUID()}!`
+    await assert.rejects(() => authModule.auth.api.resetPassword({
+      body: { token: randomUUID(), newPassword: invitedPassword },
+    }), 'Een onbekende herstelcode mag geen wachtwoordwijziging toestaan.')
+    const expiredResetToken = randomUUID()
+    await prisma.verification.create({ data: {
+      identifier: `reset-password:${expiredResetToken}`,
+      value: ownerAdminInvite.userId,
+      expiresAt: new Date(Date.now() - 60_000),
+    } })
+    await assert.rejects(() => authModule.auth.api.resetPassword({
+      body: { token: expiredResetToken, newPassword: invitedPassword },
+    }), 'Een verlopen herstelcode mag geen account activeren.')
+    assert.equal((await prisma.user.findUniqueOrThrow({ where: { id: ownerAdminInvite.userId } })).status, 'INVITED')
     await authModule.auth.api.resetPassword({ body: { token: activationToken, newPassword: invitedPassword } })
+    await assert.rejects(() => authModule.auth.api.resetPassword({
+      body: { token: activationToken, newPassword: invitedPassword },
+    }), 'Een gebruikte activatiecode mag niet opnieuw gebruikt worden.')
     const activatedUser = await prisma.user.findUniqueOrThrow({ where: { id: ownerAdminInvite.userId } })
     assert.equal(activatedUser.status, 'ACTIVE')
     assert.equal(activatedUser.emailVerified, true)
