@@ -1,5 +1,5 @@
 import { ownedAssignmentWhere, externalAssignmentId } from './assignment-identity'
-import type { AssignmentStatus, OrganizationMembershipRole, Prisma } from '@/generated/prisma/client'
+import type { AssignmentStatus, OrganizationMembershipRole, Prisma, RequestRequestedStart } from '@/generated/prisma/client'
 import { getPrisma } from '@/lib/prisma'
 import { requireIntakeConverter } from '@/lib/intakes/intake-authorization'
 import { intakeIdentifierSchema } from '@/lib/intakes/intake-validation'
@@ -31,6 +31,7 @@ export type AssignmentDetailView = AssignmentListItem & {
   sectorName: string | null
   employeeCount: number | null
   desiredStartDate: string | null
+  requestedStart?: RequestRequestedStart | null
   location: string
   locationDescription: string | null
   locationItems: string[]
@@ -159,6 +160,7 @@ export async function getAssignmentDetail(
       select: {
         id: true,
         requestId: true,
+        request: { select: { requestedStart: true } },
         responseDeadline: true,
         primarySpecialism: { select: { name: true } },
         specialisms: { where: { isRequired: false }, select: { specialism: { select: { name: true } } } },
@@ -217,6 +219,7 @@ export async function getAssignmentDetail(
       sectorName: assignment.sector?.name ?? null,
       employeeCount: assignment.employeeCount,
       desiredStartDate: assignment.desiredStartDate?.toISOString() ?? null,
+      requestedStart: assignment.request?.requestedStart ?? null,
       location: assignmentLocationLabel(assignment, assignment.locationItems),
       locationDescription: assignment.locationDescription,
       locationItems: (assignment.locationItems ?? []).map((item) => item.placeOrRegion),
