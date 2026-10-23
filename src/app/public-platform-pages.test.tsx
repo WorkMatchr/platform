@@ -64,7 +64,8 @@ describe('publieke platformpagina’s', () => {
     for (const [, Page] of pages) {
       const html = renderToStaticMarkup(<Page />)
       expect(html).toContain('Verder met uw vraag')
-      expect(html).toContain('Stel uw vraag')
+      expect(html).toMatch(/href="\/opdracht-starten"[^>]*>Start uw opdracht<\/a>/)
+      expect(html).not.toContain('Stel uw vraag')
       expect(html).toMatch(/Gerelateerde kennis|Gerelateerde diensten|Gerelateerde wettelijke verplichtingen/)
       expect(html.match(/Verder met uw vraag/g)).toHaveLength(1)
       expect(html).not.toContain('href="#"')
