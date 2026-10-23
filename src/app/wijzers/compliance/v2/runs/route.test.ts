@@ -2,8 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => ({ enabled: false, access: vi.fn(), load: vi.fn(), complete: vi.fn() }))
 vi.mock('@/lib/compliance/compliance-f4-framework', () => ({ isF4Enabled: () => mocks.enabled, loadF4Framework: mocks.load }))
 vi.mock('@/lib/arbo-guides/arbo-guide-access', () => ({ getArboGuideApiAccess: mocks.access }))
-vi.mock('@/lib/arbo-guides/arbo-guide-run-service', () => ({ completeArboGuideRun: mocks.complete, ArboGuideRunError: class extends Error {} }))
+vi.mock('@/lib/arbo-guides/arbo-guide-run-service', () => ({ completeArboGuideRun: mocks.complete, ArboGuideRunError: class extends Error { constructor(public code: string) { super(code) } } }))
 import { POST } from './route'
+import { ArboGuideRunError } from '@/lib/arbo-guides/arbo-guide-run-service'
 import { f4TestDefinition, f4PositiveAnswers } from '@/test-fixtures/compliance-f4'
 const request = (body: unknown) => new Request('http://localhost/wijzers/compliance/v2/runs', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
 const body = () => ({ answers: f4PositiveAnswers, idempotencyKey: 'b0000000-0000-4000-8000-000000000001', startedAt: new Date().toISOString(), completedAt: new Date().toISOString() })
@@ -17,6 +18,16 @@ describe('F4 route', () => {
     const input = mocks.complete.mock.calls[0][0]
     expect(input.organizationId).toBe('trusted-org'); expect(input.completedByUserId).toBe('trusted-user')
     expect(input.reportSnapshot.results).toHaveLength(10); expect(input.guideVersion).toBe('2')
+    expect(mocks.complete.mock.calls[0][1]).toEqual({ maxCompletionAgeMs: 300_000 })
+  })
+  it('laat oude identieke inzendingen door de geautoriseerde replaycontrole beoordelen', async () => {
+    const old = new Date(Date.now() - 360_000).toISOString()
+    mocks.complete.mockResolvedValue({ id: 'existing', created: false })
+    expect((await POST(request({ ...body(), startedAt: old, completedAt: old }))).status).toBe(200)
+    mocks.complete.mockRejectedValue(new ArboGuideRunError('EXPIRED_COMPLETION'))
+    const expired = await POST(request({ ...body(), startedAt: old, completedAt: old }))
+    expect(expired.status).toBe(409)
+    expect(await expired.json()).toEqual({ saved: false, code: 'EXPIRED_COMPLETION' })
   })
   it('weigert verlopen/verkeerde invoer en ontbrekende gepubliceerde bronnen', async () => {
     expect((await POST(request({ ...body(), completedAt: '2020-01-01T00:00:00.000Z' }))).status).toBe(400)

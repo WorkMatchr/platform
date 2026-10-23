@@ -30,6 +30,13 @@ export function ComplianceExpandedGuide({ definition }: { definition: Compliance
     try {
       const response = await fetch('/wijzers/compliance/v2/runs', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...transaction.current, answers }) })
       const result = await response.json()
+      if (response.status === 409 && result.code === 'EXPIRED_COMPLETION') {
+        // The server checked under its idempotency lock that no completed replay
+        // exists. Only this definitive response permits a fresh submission.
+        transaction.current = null
+        setError('De verzendtermijn is verlopen. Uw antwoorden blijven behouden. Kies opnieuw Beoordeling afronden en opslaan.')
+        return
+      }
       if (!response.ok || !result.saved) throw new Error('Opslag mislukt.')
       setReport(result.report)
     } catch { setError('Opslaan is niet gelukt. Uw antwoorden blijven behouden. Probeer het opnieuw.') }

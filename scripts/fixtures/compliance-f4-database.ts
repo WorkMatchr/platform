@@ -58,6 +58,18 @@ export async function verifyComplianceF4Database(db: PrismaClient, viewer: ArboG
   const run = await db.arboGuideRun.findUniqueOrThrow({ where: { id: bodies[0].runId }, include: { results: true } })
   assert.equal(run.results.length, 10)
   assert.deepEqual(run.reportSnapshot, bodies[0].report)
+  const realNow = Date.now
+  try {
+    Date.now = () => realNow() + 360_000
+    const replay = await post()
+    assert.equal(replay.status, 200, 'An exact replay remains valid after the five-minute submission window')
+    assert.equal((await replay.json()).runId, run.id)
+    const expired = await post({ ...payload, idempotencyKey: randomUUID() })
+    assert.equal(expired.status, 409, 'An expired new submission must not create a run')
+    assert.equal((await expired.json()).code, 'EXPIRED_COMPLETION')
+    assert.equal(await db.arboGuideRun.count(), historical.length + 1)
+    assert.deepEqual(await db.arboGuideRun.findUniqueOrThrow({ where: { id: run.id }, include: { results: true } }), run)
+  } finally { Date.now = realNow }
   const service = await import('../../src/lib/arbo-guides/arbo-guide-run-service')
   await assert.rejects(service.getArboGuideRun(other, run.id))
   await assert.rejects(db.complianceQuestionDefinition.update({ where: { id: d.modules[0].questions[1].id }, data: { visibilityCondition: { question: 'hasEmployees', equals: 'NO' } } }))
