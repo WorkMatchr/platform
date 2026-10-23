@@ -1,0 +1,3008 @@
+{
+  "schemaVersion": 1,
+  "checkedOn": "2026-10-23",
+  "codeBaseline": "c807f174b242766bae87b261a65909a6205ecbad",
+  "framework": "NL_ARBO_GUIDE / 2.1",
+  "issue": 50,
+  "pr": 49,
+  "technicalMechanismAdvice": "GO_FOR_REVIEW",
+  "legalAcceptanceAdvice": "NOT_READY",
+  "legalPublicationAdvice": "NO_GO",
+  "humanApprovalGranted": false,
+  "observationScope": "Committed dossier and local test evidence; no current production database observation.",
+  "files": [
+    {
+      "path": "docs/compliance-f4-review-dossier.json",
+      "sha256": "857622ad8f51cb1ed62a8ae6ec0c6e32a487916a328eadf78f1677c97d305ddc"
+    },
+    {
+      "path": "docs/compliance-f4-legal-matrix.json",
+      "sha256": "e9fb5c6661b6a1ff4036eb642d3ca09d3d04b097501a3fc0f8c8f6df30129e8b"
+    },
+    {
+      "path": "docs/compliance-f4-claim-review.json",
+      "sha256": "74b25fbb2f9e332e89a2201161dbdaa34c6091e66120a7fbed9ee7171b20a72d"
+    },
+    {
+      "path": "docs/compliance-f4-source-evidence.json",
+      "sha256": "7df0686d8c69a72d7de374b9eac2e8039b07561382e017c4ec0be4055835a78c"
+    },
+    {
+      "path": "docs/compliance-f4-review-source-blocks.json",
+      "sha256": "21f0694a4f6b2968a95e29336243432f168f69538507558f27bd2b43049766d5"
+    },
+    {
+      "path": "docs/compliance-f4-review-supplement.json",
+      "sha256": "94b7966f12b408d9fd4a27ee1016891ee83dabc38d04aa24fafdfc45dffd8c09"
+    }
+  ],
+  "claims": [
+    {
+      "id": "e5a65199-4402-4b7d-893b-f772e19442f4",
+      "externalKey": "ai-01:c1",
+      "administrativeLabel": "REVIEW_REQUIRED",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "43955364-3088-42b4-b165-ab2d63040c21",
+      "externalKey": "ai-01:c2",
+      "administrativeLabel": "REVIEW_REQUIRED",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "4fcbe38c-8d25-4877-8704-7bebb8ed21a8",
+      "externalKey": "ai-01:c3",
+      "administrativeLabel": "REVIEW_REQUIRED",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "e64b1fc3-825d-468f-ab28-9562434a0cb1",
+      "externalKey": "ai-01:c4",
+      "administrativeLabel": "REVIEW_REQUIRED",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "dc25a704-e7e4-4e25-9605-ea8fd6e9dbdf",
+      "externalKey": "ai-01:c5",
+      "administrativeLabel": "REVIEW_REQUIRED",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "afb3f434-8f03-4883-acde-433d0877b324",
+      "externalKey": "ai-01:c6",
+      "administrativeLabel": "REVIEW_REQUIRED",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "f32747d3-26af-4b8e-abf0-fe5442f4306c",
+      "externalKey": "ai-01:c7",
+      "administrativeLabel": "REVIEW_REQUIRED",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "328dad12-5c78-4b58-8a16-066429d8753a",
+      "externalKey": "ai-01:c8",
+      "administrativeLabel": "REVIEW_REQUIRED",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "4505898d-27a9-4dcc-a766-267e5dac7344",
+      "externalKey": "ai-02:c1",
+      "administrativeLabel": "INSUFFICIENT_EVIDENCE",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "7f16124c-b663-4306-ba4f-b09aa082f837",
+      "externalKey": "ai-02:c2",
+      "administrativeLabel": "INSUFFICIENT_EVIDENCE",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "2c6ec9ff-df57-4cca-bf4d-e18a388e9a3c",
+      "externalKey": "ai-02:c3",
+      "administrativeLabel": "INSUFFICIENT_EVIDENCE",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "65714b58-ae7e-4642-a518-9d4a19969338",
+      "externalKey": "ai-02:c4",
+      "administrativeLabel": "INSUFFICIENT_EVIDENCE",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "d7b937d5-c8af-46a8-ae43-4d409c6f8bb4",
+      "externalKey": "ai-02:c5",
+      "administrativeLabel": "INSUFFICIENT_EVIDENCE",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "f8ce0888-9afb-4f65-9dd0-96c9ef7e9803",
+      "externalKey": "ai-02:c6",
+      "administrativeLabel": "INSUFFICIENT_EVIDENCE",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "d90e9c3b-c703-4777-ba90-51416937ba0a",
+      "externalKey": "ai-02:c7",
+      "administrativeLabel": "INSUFFICIENT_EVIDENCE",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "2876cbf5-e5f2-4d22-95d5-8402066ea81c",
+      "externalKey": "ai-02:c8",
+      "administrativeLabel": "INSUFFICIENT_EVIDENCE",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "b7d94561-ba89-4a53-9e28-fc41bf7f4145",
+      "externalKey": "ai-03:review:c1",
+      "administrativeLabel": "INSUFFICIENT_EVIDENCE",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "25e57824-f15c-4545-859e-e743c3c8b989",
+      "externalKey": "ai-03:review:c2",
+      "administrativeLabel": "INSUFFICIENT_EVIDENCE",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "a59c1724-b062-44af-9bbe-7714af0bb9c6",
+      "externalKey": "ai-04:review:c1",
+      "administrativeLabel": "INSUFFICIENT_EVIDENCE",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "eb267676-f173-49a2-a70d-c0b254ccc038",
+      "externalKey": "ai-04:review:c2",
+      "administrativeLabel": "INSUFFICIENT_EVIDENCE",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "1e6cce86-745f-4aa1-ae96-1563cb1b51a1",
+      "externalKey": "ai-05:review:c1",
+      "administrativeLabel": "INSUFFICIENT_EVIDENCE",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "65b56e92-248e-48fc-b0dd-57206f319a94",
+      "externalKey": "ai-05:review:c2",
+      "administrativeLabel": "INSUFFICIENT_EVIDENCE",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "222b9fff-b457-430d-8bdd-4a6d6886e488",
+      "externalKey": "ai-06:review:c1",
+      "administrativeLabel": "INSUFFICIENT_EVIDENCE",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "5f8e2489-5668-44af-bb6f-08d9ec335558",
+      "externalKey": "ai-06:review:c2",
+      "administrativeLabel": "INSUFFICIENT_EVIDENCE",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "c35649f8-43a8-4aff-9457-ecff8f1c73bc",
+      "externalKey": "ai-07:review:c1",
+      "administrativeLabel": "INSUFFICIENT_EVIDENCE",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "3ca81aa1-ef3d-4a9d-be5c-b24fe5503c20",
+      "externalKey": "ai-07:review:c2",
+      "administrativeLabel": "INSUFFICIENT_EVIDENCE",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "3bd81597-2868-4124-9eb3-1a5207ffe6ed",
+      "externalKey": "ai-08:review:c1",
+      "administrativeLabel": "INSUFFICIENT_EVIDENCE",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "cee34d3e-508e-4159-9801-80bcff6bd494",
+      "externalKey": "ai-08:review:c2",
+      "administrativeLabel": "INSUFFICIENT_EVIDENCE",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "c2cbaf61-1ae7-4e17-8227-d32451160363",
+      "externalKey": "ai-09:review:c1",
+      "administrativeLabel": "INSUFFICIENT_EVIDENCE",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "05879725-8124-4130-be34-9e0049523e0d",
+      "externalKey": "ai-09:review:c2",
+      "administrativeLabel": "INSUFFICIENT_EVIDENCE",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "8e3409a2-d63d-44eb-a8e2-d096f16233d2",
+      "externalKey": "ai-10:c1",
+      "administrativeLabel": "REVIEW_REQUIRED",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "9f4496f1-de92-4f47-9571-cea4037ae6be",
+      "externalKey": "ai-10:c10",
+      "administrativeLabel": "REVIEW_REQUIRED",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "b08465d5-52b8-45a2-84a2-d619a428cac4",
+      "externalKey": "ai-10:c2",
+      "administrativeLabel": "REVIEW_REQUIRED",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "cad71720-8279-4bb9-ba36-14ad8e8bfd99",
+      "externalKey": "ai-10:c3",
+      "administrativeLabel": "REVIEW_REQUIRED",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "4dc8e6f8-e2f3-40b4-a9e0-828983a8a411",
+      "externalKey": "ai-10:c4",
+      "administrativeLabel": "REVIEW_REQUIRED",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "94ee9e0f-a995-4eab-8e24-16070e8ee5b0",
+      "externalKey": "ai-10:c5",
+      "administrativeLabel": "REVIEW_REQUIRED",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "cedfbcff-57b2-4d8d-8ad5-42f55e7845f3",
+      "externalKey": "ai-10:c6",
+      "administrativeLabel": "REVIEW_REQUIRED",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "bb8a37f8-dc53-454c-a807-4df2e5aeb63e",
+      "externalKey": "ai-10:c7",
+      "administrativeLabel": "REVIEW_REQUIRED",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "4e5427c0-8c67-47ed-aeaa-c6b69d126f20",
+      "externalKey": "ai-10:c8",
+      "administrativeLabel": "REVIEW_REQUIRED",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "60f7515b-e26c-4f5f-a38a-bdf0eb192f7b",
+      "externalKey": "ai-10:c9",
+      "administrativeLabel": "REVIEW_REQUIRED",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "4aa93016-518c-456b-9a92-415e826bcf73",
+      "externalKey": "ai-11:review:c1",
+      "administrativeLabel": "INSUFFICIENT_EVIDENCE",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "415bd227-6b90-421f-98c0-a82d9c447f21",
+      "externalKey": "ai-11:review:c2",
+      "administrativeLabel": "INSUFFICIENT_EVIDENCE",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "bfa3a12c-b177-4ab3-97a9-1e7030a9557b",
+      "externalKey": "ai-12:review:c1",
+      "administrativeLabel": "REVIEW_REQUIRED",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "b05b24d4-2f9f-4819-9b3e-746913f020fe",
+      "externalKey": "ai-12:review:c2",
+      "administrativeLabel": "INSUFFICIENT_EVIDENCE",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "c27e847c-a303-4619-83a4-4765d1f1817f",
+      "externalKey": "ai-13:review:c1",
+      "administrativeLabel": "INSUFFICIENT_EVIDENCE",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    },
+    {
+      "id": "de1ee47b-f2ab-4c17-81b5-01c0266c05f3",
+      "externalKey": "ai-13:review:c2",
+      "administrativeLabel": "REVIEW_REQUIRED",
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      },
+      "publicationAction": "NONE"
+    }
+  ],
+  "rules": [
+    {
+      "id": "69a69f85-82fc-4027-8164-7ac7022f31ee",
+      "code": "GENERALPOLICY-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "d1153658d01cb3d07acbb1194ec065e4cdd215c35a23be02bf18cec73a10f416",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "9d46a0ef-26fb-412f-8e71-3e27682c9bc2",
+      "code": "GENERALPOLICY-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "3c1f08a0c652706fba6475d542b87e3eaf11840191506f6b6c590ca507c0349c",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "c76f9b74-3744-41f5-8a17-deaec2d8706f",
+      "code": "GENERALPOLICY-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "52a66c9930058860c8fa5c0a0184aa4b7229865950bf7459ae2297fa9797379a",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "b45fda32-b64e-41d2-820b-c33743d7b30d",
+      "code": "RIE-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "6a89add8d33d0942354fe9fe4e07933b254829b47c9cf0519f109cc96adc982a",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "31990a8a-4da4-4886-8573-9d713cb40ba9",
+      "code": "RIE-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "2741503f325151b42d7d514b6be9923de8594dfc2c94b1a526f8d889f9824655",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "6db72199-0f50-4d22-8c2d-7e6a324f9ed8",
+      "code": "RIE-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "4773106b6c3533f18456c99d1d502c21d900f49396f9d878fa45474c13ae8d31",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "02c86f49-fe37-4481-8c53-90fd026460f0",
+      "code": "RIEUPDATED-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "312d98de683ae3ba7bf5ae2abd166f1403c818018ca6a23e7684d43eb6ff0e05",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "115b7d26-3dc9-4dd1-8522-e1a3b02480d1",
+      "code": "RIEUPDATED-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "820533babeb368783419649eea1f2c2c16870885dffd7cca4c055a58b6a40ddf",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "876f3c07-48e6-47e1-8497-9dbf3a6c4bb4",
+      "code": "RIEUPDATED-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "b4f18e026baf5974a344fe88a6d34b11af8534697f4e5dff32a887745936b576",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "f09336b2-c0c2-481a-8f2a-2640c557e6d3",
+      "code": "RIETESTING-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "efa2dc5e434b590890d4f35ee8623b75a964c54eb9f2ddbb1695ee1317d9e01a",
+      "reviewHold": "Controleer de toetsingsplicht, de gezamenlijke uren zonder de wettelijke DGA-uitzondering mee te tellen, en de geldigheid van een branche-instrument of cao-model. De huidige antwoorden stellen dit nog niet voldoende vast.",
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "fa13e9e2-5127-429e-8a5d-1d53509bdab4",
+      "code": "RIETESTING-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "2e824dc9d90aa380dd2d461f07e02ed95a1c3710caa0e12f94117af5c35bd734",
+      "reviewHold": "Controleer de toetsingsplicht, de gezamenlijke uren zonder de wettelijke DGA-uitzondering mee te tellen, en de geldigheid van een branche-instrument of cao-model. De huidige antwoorden stellen dit nog niet voldoende vast.",
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "d132b801-b279-441a-8065-c28cca736ca5",
+      "code": "RIETESTING-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "287f798a468f9ac65f45246e22ef09c8af54485a561489ba974d235dec3f3a3f",
+      "reviewHold": "Controleer de toetsingsplicht, de gezamenlijke uren zonder de wettelijke DGA-uitzondering mee te tellen, en de geldigheid van een branche-instrument of cao-model. De huidige antwoorden stellen dit nog niet voldoende vast.",
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "646af4f1-c9a5-4439-83b2-8a6154dcc06b",
+      "code": "CW2-RIE-01-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "d893b0220014075fe22789d0637c2af898cf33ae87b48ad8fdccb545fa3a5746",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "434e5077-9c93-4ccb-8216-809c4bd7c36c",
+      "code": "CW2-RIE-01-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "38ef84a24bffabdf0805f2b941d53ea9a8872747d4e68912ca70442a5a8de05e",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "2b0ffb5b-d6ac-4aaf-8c22-08b8e2ba5483",
+      "code": "CW2-RIE-01-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "c19f8b26598228ab5b64e6540880242cadfe225409281c4246a789e1f11d7c1d",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "e1bd4ff1-f72c-420e-89aa-edf691c73bb5",
+      "code": "CW2-RIE-02-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "9249f619775330f21251c2d92bf29faee0a551d2759f342b97be39627871c595",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "944d9155-6438-47a2-8428-c02242145e7d",
+      "code": "CW2-RIE-02-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "57d82f6749b0f4e49f6acd8eca02c30c7a5346ad2175f61aaa4954ae27ce47da",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "af45a594-5c89-4864-8bd5-b2648822cea2",
+      "code": "CW2-RIE-02-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "6108dcf632c0fc2d6212a60d5039c6af56776fe17efe702c2b76d8b95c09b459",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "ac501e2f-7f44-4b25-8c9d-afb70e6d97f0",
+      "code": "CW2-RIE-03-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "894d9b8e7b7d01ff4027354fd8cb4d36980e9464be14f9a21e6acb21152e3744",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "167dbb6c-c199-44a8-8832-47c5c2887b7b",
+      "code": "CW2-RIE-03-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "6cc093c4729f00cf4405f0fc75419c38f2a4154a2308e80b4af656b7265c25ee",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "727528e7-e04f-42b8-85f5-c93381d42cc7",
+      "code": "CW2-RIE-03-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "6f4ca4ad7e0c57c327892f2c06f0d81f342c3ff1178ba37948501249e0964c46",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "16967f77-2181-4a1f-8d21-90c8b2fc2866",
+      "code": "C01-SCOPE-UNCERTAIN",
+      "kind": "SCOPE_UNCERTAINTY",
+      "templateChecksum": "351dee512a5ecdc96b5859d8bb7e0543e600b2ee86fe00464e61ea53dc2cfc08",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "0245fe10-ef7d-404e-8b0e-e7b4d4e8ac47",
+      "code": "ACTIONPLAN-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "581811d0f45c0281c4e1701ac2569fa41c6569631b83c2b043ed42da77fc635b",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "015a44b3-9e7e-43ae-84f5-88366af8a930",
+      "code": "ACTIONPLAN-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "d7d11cd9179c4c6e554e9ad993b57eb229c92dbae09d0b85456ce7d1318deb54",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "89c2372e-13e5-4182-87bb-0e4ae615faae",
+      "code": "ACTIONPLAN-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "05f28f9a569d1c882a604169fa7cef24c2e5b260c45aa125f5329586cb783267",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "8409d175-17eb-4e7c-8928-df4c67d797fc",
+      "code": "CW2-PVA-01-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "708dbdcde08684a522b975fd7c8bf2f08db5bee80b1f3c0aff1ae7a995214fd0",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "219dc0da-9c3a-4a5a-87d3-44669a3b1364",
+      "code": "CW2-PVA-01-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "c13db9dccb88fdef484f25a3ea583e9fda09b01596ac6dfadad05e394537a9ef",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "fca6d9cc-2526-4dbe-8323-781dd326c51f",
+      "code": "CW2-PVA-01-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "68517689b537c3148e5ef3cdf7ce486b4fd35bea10a490337cd2126b395a9de0",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "ba1750e9-6e6f-4f7f-80cd-0328b0b1f5ac",
+      "code": "CW2-PVA-02-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "f0a52640a9722f6b01fb5066a2e5acbed991978b19cb7380c42e14f0181b2027",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "4eb87a92-75ce-4fd1-8bd4-2e3389b146d0",
+      "code": "CW2-PVA-02-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "a2c7826cd5a318c2a30b8fe86d6bc999bfcfae650e728be7e292d039116aadd6",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "56146f2d-53b4-44cd-8bbf-137abca19b16",
+      "code": "CW2-PVA-02-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "10cb8da010a7f186c5510289fe296ddbd178f7f78daaa5b86a1d7b945728e944",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "4ef07e60-8a3c-4f38-88cd-95e60d8c05e3",
+      "code": "CW2-PVA-03-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "785da7b411248578c3427f49bf9b1f0025f7b7bec88fcf92197e752a6a8474c1",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "7dd6c229-7f30-4d30-88cb-580b593d324b",
+      "code": "CW2-PVA-03-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "340e96f67e28bf28b446999eb06c7044a6fa670b0a01286f8c579209f38520b1",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "1e459f2c-7f53-4e2a-810f-734e475eac26",
+      "code": "CW2-PVA-03-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "04951ce828c1efc4303c233f2e6cbae1dbaf034cbdb74f80e2e646154ae025d8",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "5b59cfc0-2dd9-4995-8d7c-76a4f6ac2fd9",
+      "code": "C02-SCOPE-UNCERTAIN",
+      "kind": "SCOPE_UNCERTAINTY",
+      "templateChecksum": "36c81f6fc3e551fd0d712fc719af04b0ec30899243a1b13a7bc867d882c66b1a",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "ead5c039-52bc-41af-8362-8974a81877c1",
+      "code": "PREVENTIONOFFICER-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "c7123cc49f7420703ae0337262aebff0386d4a49533d8fc6d308f4dec3531bb4",
+      "reviewHold": "Controleer wie de preventietaken uitvoert en of de voorwaarden voor uitvoering door werkgever/directeur of externe bijstand gelden. Alleen de aanwijzingsvraag beslist dit niet.",
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "e5ebdd5c-4f93-42bb-81e4-3b0c1ba5dab7",
+      "code": "PREVENTIONOFFICER-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "7a7a88053dd2560ed6b91b1606a1a65b9af7258cc7da25fb39e4f457deeca397",
+      "reviewHold": "Controleer wie de preventietaken uitvoert en of de voorwaarden voor uitvoering door werkgever/directeur of externe bijstand gelden. Alleen de aanwijzingsvraag beslist dit niet.",
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "64346189-cd11-4c10-87b1-62cdd359795f",
+      "code": "PREVENTIONOFFICER-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "59654820e732e7730425cc69fcce536f6af303d2a26d45d4ba09a6a46cbd62b8",
+      "reviewHold": "Controleer wie de preventietaken uitvoert en of de voorwaarden voor uitvoering door werkgever/directeur of externe bijstand gelden. Alleen de aanwijzingsvraag beslist dit niet.",
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "412e5645-2e8d-4615-80e4-bfec17b5ccc5",
+      "code": "PREVENTIONCONSULTATION-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "c4452ea6e2db643087cd317bae9fea51f2adcad5b472f476ba49ec4488cb6c6a",
+      "reviewHold": "Controleer of OR/PVT aanwezig is en of vereiste instemming met persoon en positie is verkregen. Betrokkenheid alleen bewijst geen instemming.",
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "3a0127cd-a66f-48bb-86be-7e1254fbc659",
+      "code": "PREVENTIONCONSULTATION-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "951c0220a53345077b0f29808a895234ba69403e91aaaf551e24dc8c87c23e8b",
+      "reviewHold": "Controleer of OR/PVT aanwezig is en of vereiste instemming met persoon en positie is verkregen. Betrokkenheid alleen bewijst geen instemming.",
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "2ae1de70-3c49-40ef-8178-722a83f70b74",
+      "code": "PREVENTIONCONSULTATION-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "9b53a7b3e8ba165a2e73d9c3a866b345e13272a28215c0f42b3570c310487164",
+      "reviewHold": "Controleer of OR/PVT aanwezig is en of vereiste instemming met persoon en positie is verkregen. Betrokkenheid alleen bewijst geen instemming.",
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "decf5533-ac75-4746-83a4-5dff1660010c",
+      "code": "CW2-PRE-01-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "d0ba6327b425e8598b89272c2f450099e594177c0dea44c9349d0137e5c3d63c",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "64c8fff6-651a-4acd-8f02-aceeddd19010",
+      "code": "CW2-PRE-01-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "d45c540784497467303a0bd14c1a583c6ecd81d5b25507b8936f470ee0eceab3",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "8e1d06f4-0d69-4265-8c5e-acff174130cc",
+      "code": "CW2-PRE-01-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "476153a32f139f377c3cdc232f69a4b937cfb9d2dde596826001687ed1d2c1bf",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "3076ec02-656d-4647-877e-cd0dc7b9ae94",
+      "code": "CW2-PRE-02-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "053543343aaf9b84b1226c1d0cd3a4a03147873bd1969fe69861afe04b5e28ce",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "65ce8b2c-0884-40c8-8cee-b8cd091775fa",
+      "code": "CW2-PRE-02-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "6e5ede2b38eff063ba60ccb3e85fcd30b7c6d50e563fb442378d6c19eba3b760",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "96bce366-2431-4938-890f-e682bc552af5",
+      "code": "CW2-PRE-02-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "d8c1fea391f57940c2d761f4334810b23a20b7e2d5b9475280badc564923747f",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "57c6ebe4-f05d-4894-8b1f-62702781950c",
+      "code": "CW2-PRE-03-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "8822632b9752d6ac09fdee9665f2580b8d0d923f45aa12b34b318ec24bc1c1b1",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "27153ee2-dd78-4eed-88bc-0cbb9a49d443",
+      "code": "CW2-PRE-03-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "1ce2c2210032d628f04db94a158a8c3d952dc12051787d8d9d321ac8bf279ee5",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "6849bbe0-8daa-44b3-8f8f-737d28ed1dde",
+      "code": "CW2-PRE-03-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "dc71b1bbb869ea1ef36779df39720a78032231873c63476b615cf83491c7586f",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "86771aa9-cb5d-470d-8edd-26f393500524",
+      "code": "C03-SCOPE-UNCERTAIN",
+      "kind": "SCOPE_UNCERTAINTY",
+      "templateChecksum": "af451c5bbb9c97f887344888373694232ccb02373fba1a065636e73b1f555827",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "649a18aa-c7f6-4a98-8267-cc192162f56d",
+      "code": "BASICCONTRACT-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "d997002ec04ab8741eb9b9a467393c86ba03e27297469a9177717a25e22c622d",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "23a01124-c1f3-4129-8121-f71b86aed3a1",
+      "code": "BASICCONTRACT-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "04aa824e1cd52bc140c352b55548848e4f74e98d183bcd4ef9eecdcfcf658844",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "9c5b3684-9318-4bfb-81c9-2771a3a793e6",
+      "code": "BASICCONTRACT-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "97594329f58432e15fa00147276cd3782b186365fbf83b45edb8e8da00ca1662",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "eedfe252-cad9-42ee-8c85-2d6b68ab3405",
+      "code": "OCCUPATIONALPHYSICIANACCESS-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "c9427c976880aa0bc1a81abc4c3cd63e4300c61963b010bb0785513e2a7c44f7",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "e02fe6e4-c36c-400d-8118-00feda460715",
+      "code": "OCCUPATIONALPHYSICIANACCESS-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "e38d52d210269ef7efc2e6f95d3fadbfb0e1345e38a6a8a1103b3cc127722bdc",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "5f6e8c70-d7a9-45f8-89b3-1d73d7f6f84d",
+      "code": "OCCUPATIONALPHYSICIANACCESS-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "e89be3a5a0d74e0cb199cc8583424e3954fc31f6ca086f76b765aeef08cac05e",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "d8d03ee2-cef8-4484-8211-3d18e9223beb",
+      "code": "EXPERTTASKSCOVERED-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "28df9d5555619d2e8f606bb5ee8a58e4f989e7fd786085b3c3ea6fba44f8973c",
+      "reviewHold": "Controleer per deskundige taak de toepasselijkheid en uitvoering. Een algemene bevestiging onderbouwt niet alle taken of uitzonderingen.",
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "07cb6080-5be3-4cd8-8ea7-6cd12603553c",
+      "code": "EXPERTTASKSCOVERED-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "44a1b501cd5a7ca9ff92d21c9ad3874ef7186b85cb282d06141b8bc154a56345",
+      "reviewHold": "Controleer per deskundige taak de toepasselijkheid en uitvoering. Een algemene bevestiging onderbouwt niet alle taken of uitzonderingen.",
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "a2286ae8-2fdc-4260-8db2-7c122b959696",
+      "code": "EXPERTTASKSCOVERED-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "e8beb317a1a898169cc6bdfa2c6df346c662a2133bda11c9716b14b7406d8bdc",
+      "reviewHold": "Controleer per deskundige taak de toepasselijkheid en uitvoering. Een algemene bevestiging onderbouwt niet alle taken of uitzonderingen.",
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "058e18d2-4429-43e8-8b00-e2243fc74c86",
+      "code": "CW2-BC-01-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "b1f850b592f82c67852c1e615d36932a1877034e78d757a4edd126cba44eb68e",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "47173edb-c65b-432c-8539-48dfd4ae68b7",
+      "code": "CW2-BC-01-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "3db33cad99db9d5d5f63d2864d27ddc85e5234218481f514164bc86151e876e6",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "3ab71c12-86ea-4a3f-879a-a183bc989d42",
+      "code": "CW2-BC-01-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "bce3a9018ffdf9b469a358208330d824bd3a37bbca4c6d0747a7df9b1113a140",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "b90ded42-02de-4153-80f1-b1f43bcb5cfc",
+      "code": "CW2-BC-02-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "cb0a0347c05e598f777f34d8fb354e44e5c628ce93a5e97b2c5813cb5a9aa304",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "68f19929-08e3-41e6-8175-adab0d37f019",
+      "code": "CW2-BC-02-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "05a193c59e7db63e097d91eed67ff652b87ceff4c578df61c7e7242849fee4d4",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "5a0f57fc-e10f-4555-86dc-2c31f5afb867",
+      "code": "CW2-BC-02-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "0d03a8f13c2597550e83d64dd442ce22efb52e2384d77255bb4b4988da063978",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "bd14bd89-103b-49c1-8b27-fef4d0e51161",
+      "code": "CW2-BC-03-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "1df429b8320b093cfcec567959aaa7e7f08c6a7a2092772b088c57e6e346a077",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "3de63f8b-37db-4c61-8798-63ccd414a124",
+      "code": "CW2-BC-03-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "83d1fa978e158f1865321b840ccd840f7027a8bc3e4c16a7843758d538a9a690",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "dd26b70d-46dc-4bae-869a-09070ce87cc3",
+      "code": "CW2-BC-03-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "b44bd300d8016f54e22b7e8e45356aa5c5d9e2ae56375434703f4a36f0405597",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "4e341a56-f05b-4e77-8c46-752b1a5f2c6e",
+      "code": "C04-SCOPE-UNCERTAIN",
+      "kind": "SCOPE_UNCERTAINTY",
+      "templateChecksum": "3f10ac55325b002a8a093780ff618d2f8d5f8c4b768546fb1efceef0e11c194d",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "de2d54e1-a1f5-4bd2-8e1a-e6d70b14267a",
+      "code": "BHVORGANIZED-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "cc11dcb7c7301f32ba90af501bef18b6ccec23cbfa0cd5eeb750dbf767cafc06",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "39b6f81c-cfdb-4966-8bd5-4ce491926782",
+      "code": "BHVORGANIZED-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "31fb056a6d0747ab4307f30831466acbddd31ef2f02d9e28c1e16d97114778d2",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "afb6ec30-e2d3-47c3-870d-8164609f5c66",
+      "code": "BHVORGANIZED-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "a4bcbbad7d091a2678542a0d5f038d2a3bc2d7cb1cbc2cc7220e8393bd60e132",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "27652735-66d4-4271-8033-e884dd616370",
+      "code": "BHVAPPOINTED-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "98c8e96f86414bfc3407569e30b7dbc190b963776b6602b571ab33b4d94aa746",
+      "reviewHold": "Controleer afzonderlijk de aanwijzing van BHV’ers en de feitelijke beschikbaarheid. Het gecombineerde antwoord maakt niet duidelijk welk onderdeel ontbreekt.",
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "4cafa85b-d24e-400c-83d0-96279b8525f8",
+      "code": "BHVAPPOINTED-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "fa1c09b011809ea543f0edc0b6e85914dd542576177519cb67653c8b86fc187b",
+      "reviewHold": "Controleer afzonderlijk de aanwijzing van BHV’ers en de feitelijke beschikbaarheid. Het gecombineerde antwoord maakt niet duidelijk welk onderdeel ontbreekt.",
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "480b9769-1cc7-487d-8931-1aefc1ad90c7",
+      "code": "BHVAPPOINTED-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "56fc6754fbd205ce6030705524d1460e749360c33d4b9a414ad81e3db2f718ee",
+      "reviewHold": "Controleer afzonderlijk de aanwijzing van BHV’ers en de feitelijke beschikbaarheid. Het gecombineerde antwoord maakt niet duidelijk welk onderdeel ontbreekt.",
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "b1b8c0b8-249d-4894-815e-1e924e775a05",
+      "code": "BHVRISKBASED-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "94dc2b1a0ac3d990d3faa7504587222b5abe511002427c2edfc17fd6f1139ab2",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "e2786f40-1d05-4164-8e3d-5331b06ded28",
+      "code": "BHVRISKBASED-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "596f19ce4dcfe99d6b5c7cacb89d41bdda7e61112dd91b45e8cf2bc2ce9d9084",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "c0ff1a94-5889-493a-831d-228aa00cce0b",
+      "code": "BHVRISKBASED-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "fc3ae8e884bea2d80de804a6b7dcd2279e9ab4a3a5f14eff408a20da9157eae1",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "b21a5bea-8a77-4b1b-8c66-ad95bc224807",
+      "code": "BHVPREPARED-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "14fe7a71b2a1956fea54af618c2f957da4b455e574b06cac419d9e32b94bdfab",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "bf202223-397c-4ad0-8ec4-a1721396b017",
+      "code": "BHVPREPARED-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "adbb85375fa23be76b9eb0077a3161c42df53d0bb264bf2ddbb61f82dd349ad0",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "2784b275-5810-402e-8287-53b83d2bf6c7",
+      "code": "BHVPREPARED-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "94c7699c95c99a5559c35832aa4164a97c72bfea0b709c55e5489599ccef6d07",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "0efd2c8d-dfb7-4d76-88b4-28660a52aa9e",
+      "code": "CW2-BHV-01-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "691cf7bc48c234168a3046659fb113986e3ca8092f27fe57158aeaa0df8c476e",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "de9b76ff-24dd-4860-8940-ac59d18829d1",
+      "code": "CW2-BHV-01-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "4ad65e473e018a43a35d7306cc5cb47678c8756b76e47bbe191d8e29721216e3",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "20eec802-eee8-43cc-8d3f-b3830ae8cd8b",
+      "code": "CW2-BHV-01-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "1c8a74d54d34f79e9540a999370a1f7dd3e38848a6d36b3bfbbd124a6d92fafb",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "ca0e1e67-4384-491d-803b-8e3ffc29fc61",
+      "code": "CW2-BHV-02-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "85de9184950e73b7eca8288c3954a54f146724d4d41dc38acb1ac55470eb9e72",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "0227ec2a-2ea3-48d8-8e60-d7e870ee6fd4",
+      "code": "CW2-BHV-02-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "173d7bccc28b66846a6df816800cc6bb03a6b31dd208886e8b1027e962165c4a",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "768d0e00-2b3e-4951-8b03-5683fbf88ef3",
+      "code": "CW2-BHV-02-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "7b7accd2fbc4b9065b4aa67b11dfbd3e23347cbcc7b52948179cc7a1997d308b",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "19da62d0-01a1-40b8-864d-7b2996d1f612",
+      "code": "CW2-BHV-03-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "42936ccef51f068236601da792898ecca79eb38211fe1a54be1379bad6d92cd1",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "ab23f24f-13a3-436e-8ff9-a59feddf0e2a",
+      "code": "CW2-BHV-03-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "1111dbec269b8e1cb4e50aadde5f40f0529ad799839a83d44ddf6133d387e0fa",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "1e630124-6dd7-4c8a-89bb-e4b556bd28cf",
+      "code": "CW2-BHV-03-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "740f26b838f35dd064613d6be8a7098abbf97be6fb9e7c664bb372fbe19903f0",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "0d7a04bd-cf92-43a3-8805-6849741e9f82",
+      "code": "CW2-BHV-03-NO_SHARED_WORKPLACE",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "2c6454982f79c4bc0ef9ba64d009cfc2ffef77df562256c4cc42348c65e5ad32",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "de52efad-496a-4829-84e8-a1a7000d4e57",
+      "code": "C05-SCOPE-UNCERTAIN",
+      "kind": "SCOPE_UNCERTAINTY",
+      "templateChecksum": "21d0aef2e3659949d2cd31858168bbd4fc937a830f1ecd39a9bad0492581305c",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "c206ebb1-b001-4cd4-82a3-25634c068a7f",
+      "code": "PAGOOFFERED-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "4b5cbdff68812182bbe74fa15756a3ac37cfe1eeca9fa249014cdeacea54d8aa",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "64d740c0-6e16-4cc8-88ff-9524bf458eb4",
+      "code": "PAGOOFFERED-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "f2638ef791de04c83b90367b568be27fcbbd754fa4bf2cc5f9d05ae2a1220820",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "d920308c-0dfe-417d-8447-5face3e358db",
+      "code": "PAGOOFFERED-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "f5114bc076db9625f5cb4a0e05e1cdb2f78412f6bc6ca28bf5095fe8f53913f0",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "26d1902c-fff4-4968-8c39-e0f94bb84e43",
+      "code": "CW2-PAGO-01-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "635bcfc73dd11b21c793ba3d8d67f267211932d43d684fbb6b5189159246d5ea",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "3fb7d4ec-8377-4ce6-88f7-b91881888ad4",
+      "code": "CW2-PAGO-01-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "788c56a4ed01c9d31b93d04f350b7ef4a515eeafd9dd5d7b0ed3c20389e04247",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "ef851d2d-9999-4fd8-8cc1-9fc6742be270",
+      "code": "CW2-PAGO-01-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "d5fc04fbca953ad2dfcf2593124ce252f333a033ae4d747f1eb0985ccb83e65b",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "237efbbc-24c8-413e-8e78-583a8babb29c",
+      "code": "CW2-PAGO-02-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "62d279d1bf5ffdbd220d887c4f0504f8b5ac4a79ebca3bcab0cdcf1f9549e3af",
+      "reviewHold": "Controleer de voorlichting over vrijwillige deelname. De wettelijke aanbiedingsplicht bewijst geen afzonderlijke overtreding uitsluitend doordat deze uitleg ontbreekt.",
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "54fb375b-9cf4-4148-8026-4c76f428c0c2",
+      "code": "CW2-PAGO-02-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "d00f81be35f0f53ad77e8fee27e7845b566c7b4bb4649745070a9ca4d21394d0",
+      "reviewHold": "Controleer de voorlichting over vrijwillige deelname. De wettelijke aanbiedingsplicht bewijst geen afzonderlijke overtreding uitsluitend doordat deze uitleg ontbreekt.",
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "d48a6926-f533-4c59-86c8-0247b6702b4b",
+      "code": "CW2-PAGO-02-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "8d57f3bbd122dd5c30036e7ebee45b79c4a46ac98cd43a86c431cbc250798346",
+      "reviewHold": "Controleer de voorlichting over vrijwillige deelname. De wettelijke aanbiedingsplicht bewijst geen afzonderlijke overtreding uitsluitend doordat deze uitleg ontbreekt.",
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "00b1ea00-94d0-421e-8f37-9daf1e00457f",
+      "code": "C06-SCOPE-UNCERTAIN",
+      "kind": "SCOPE_UNCERTAINTY",
+      "templateChecksum": "5901d823170459580f538de10df7d68434671f888f0414521d07d572a9362749",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "6eea18e8-8455-473a-8653-2cd2fadf3b25",
+      "code": "INSTRUCTION-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "4c6e15b4259010ff4940f80f53973497d5c7fd6a561cff8a0fbfe9e231a46151",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "cde8606a-b5d9-4fb1-8d90-f83be2618cd1",
+      "code": "INSTRUCTION-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "c9d22421829f24b8245e561ca78a9bcef9e9cfaf1b07e345058d23a36b6f1f64",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "99881dbb-e719-4888-8247-df11a5572ab9",
+      "code": "INSTRUCTION-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "78635d150c0de34b35893ccfef39a300c9e651a20b555ce8d2f533b9192cd24a",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "8f352343-94f8-44cc-8728-e492b24e053c",
+      "code": "SUPERVISION-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "f4b2a44bc865e1e7b9fc0931a67c88afba4f734713a65dd4d7a33fd46b9bc119",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "1ae3b7e6-b304-40b5-8477-363435ce4bd2",
+      "code": "SUPERVISION-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "9cd23614a9fdfb5d130526be734efbddd3baa5c5036914919141a4cd7928ed14",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "bb85b863-eb6f-4fb0-8d11-16845252de7e",
+      "code": "SUPERVISION-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "eeea60b18d35679237b475e8254323706b0d8fe355a34caa1789d3b019b58b35",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "9259fd3e-4fcb-4ff7-806c-534835aa22ac",
+      "code": "CW2-INS-01-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "236fa43cedd54ba4e43938ae4adf9ac4930f1178fb153a2881146dfe676a65ff",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "b8d32fda-0d8c-4f99-8afd-f6d4812aba33",
+      "code": "CW2-INS-01-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "fa3de61bae16939ae118775971e2752416e63f6a31c815cf49b4e72285212957",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "77730efd-25bb-4f67-8ea5-25663a332ce9",
+      "code": "CW2-INS-01-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "77c7a553a92b35810adb77f531674179b7e01872eee9ae3bd6b560dde207b96c",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "e5093833-7c9c-4144-8434-b9aeb6e16c5b",
+      "code": "CW2-INS-02-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "b4c6744296eb17e3b98db7b2646d19325d5f8420e61c425a05671337a09ab729",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "d9538f4c-f366-482d-8c28-5e39dcde9431",
+      "code": "CW2-INS-02-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "fe6af06d35172098ffbd038071f3c47a764e4cc64ba9735f79c154148e41d519",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "efd77f5b-deeb-427b-8c18-41bb23320f2f",
+      "code": "CW2-INS-02-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "d3814e9f1726e52ced1d51869de9d51aba64646a3ad169b1a8afa05f22899935",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "f0457055-9ef2-4152-8377-b01de7416da2",
+      "code": "C08-SCOPE-UNCERTAIN",
+      "kind": "SCOPE_UNCERTAINTY",
+      "templateChecksum": "f27cd6d8e54eeff54b09515b2de52ac03642ccf0dca291407abf84c2ec6aa666",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "479e349c-d700-409f-87df-f199f05052de",
+      "code": "ACCIDENTREGISTRATION-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "acf4fc4b2d7fae1c25653902a658a44cde9e50b3c9ff3a8d47954e30f39bcaad",
+      "reviewHold": "Controleer het ongevallenregister en eventuele registratieplichtige ongevallen. Een procesbeschrijving bewijst niet dat de vereiste registratie is uitgevoerd.",
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "236e249d-67d6-4510-85a1-1907049267a6",
+      "code": "ACCIDENTREGISTRATION-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "a6fe333120dcc15e18fe670c61733582369dcff8c40986d8fa54150cac242ff4",
+      "reviewHold": "Controleer het ongevallenregister en eventuele registratieplichtige ongevallen. Een procesbeschrijving bewijst niet dat de vereiste registratie is uitgevoerd.",
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "775ed5d8-8a77-4d3b-8a8a-aa52ac915501",
+      "code": "ACCIDENTREGISTRATION-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "529da0ea284d8161700ee616a58495b2f57c5877a84a1cdbb5c32db0860c808f",
+      "reviewHold": "Controleer het ongevallenregister en eventuele registratieplichtige ongevallen. Een procesbeschrijving bewijst niet dat de vereiste registratie is uitgevoerd.",
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "799d9ab9-80ec-418a-89a0-95be93fecfa8",
+      "code": "ACCIDENTREPORTING-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "2ef18f93c0c0939d0ca291b32bd4d71083df30be5a801d4c2b3ad8e2051d33f4",
+      "reviewHold": "Controleer eventuele meldingsplichtige ongevallen en de feitelijke melding. Bekendheid met de meldplicht bewijst de uitvoering daarvan niet.",
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "dcdf27dc-04fd-4530-8a66-1692790fddba",
+      "code": "ACCIDENTREPORTING-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "03e3df3581edc3a063daed43a1aa6f3df34d744aeb28635752d0a5ac0e85dd3d",
+      "reviewHold": "Controleer eventuele meldingsplichtige ongevallen en de feitelijke melding. Bekendheid met de meldplicht bewijst de uitvoering daarvan niet.",
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "0960282e-d261-4e64-8a79-be2043f249de",
+      "code": "ACCIDENTREPORTING-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "8a7b3a2de3bd6897dfcef7d16c2b25221aaacca2dff53174848640309ebb95d7",
+      "reviewHold": "Controleer eventuele meldingsplichtige ongevallen en de feitelijke melding. Bekendheid met de meldplicht bewijst de uitvoering daarvan niet.",
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "1520c8ea-a822-4fd1-82d3-b9cd671ae32b",
+      "code": "CW2-ONG-01-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "47fc23be50ad0b95220c4d0d52a34b6b8760529a7cfe09a6eb1b925fca225ddd",
+      "reviewHold": "Controleer of later bekend geworden ernstige gevolgen daadwerkelijk direct zijn gemeld. Een vooraf geregelde procedure bewijst dat niet.",
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "09b9c1b5-aac8-4a5f-8c7a-d756618caa0c",
+      "code": "CW2-ONG-01-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "7a18ba7a99ed8dbdaf4751794a88367b8fc0b901e09ad2bd251cbfe3cab1e3fc",
+      "reviewHold": "Controleer of later bekend geworden ernstige gevolgen daadwerkelijk direct zijn gemeld. Een vooraf geregelde procedure bewijst dat niet.",
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "f1d46cfe-7dbd-400c-8299-1b2703cf81b4",
+      "code": "CW2-ONG-01-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "f5748e73c45bb666b8b92505a22b83758fc67a321de6bbf45e57bab7f729ed49",
+      "reviewHold": "Controleer of later bekend geworden ernstige gevolgen daadwerkelijk direct zijn gemeld. Een vooraf geregelde procedure bewijst dat niet.",
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "c1ae44cb-e2bf-467a-885c-5cce828420ca",
+      "code": "CW2-ONG-02-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "e86610ba7831050416ceec28d28942005a763981c55ed160ec564997c218f526",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "e53fd75e-a4d1-4c25-8c6f-a15fdadbb186",
+      "code": "CW2-ONG-02-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "a96a9be4d1e339d357ab3b4e56dd8c91a6d60f67d79d4e7efb37f3a4f7b4edcf",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "68b3c855-d16b-4404-8687-492d1768c00e",
+      "code": "CW2-ONG-02-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "af9b8485fdf074b0fbd3f68c49aaba52f2f88f09b99c431d571f4b7365b3d030",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "dd7522d1-ef62-4cf0-89ec-6f1811bc8d48",
+      "code": "C09-SCOPE-UNCERTAIN",
+      "kind": "SCOPE_UNCERTAINTY",
+      "templateChecksum": "a6156b275fde1734bd63f14d7cd7e2985f002892f29f5d65d7de7be294e88f2b",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "2ac8cda9-1474-49d9-8d4d-58b43d640617",
+      "code": "WORKERCONSULTATION-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "f1bd3c9a2fd2a21f0a108b633e200523a9a905b1046d75bf7d27985ecfaba5c7",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "bd0b2144-b933-475e-82f7-af378144a278",
+      "code": "WORKERCONSULTATION-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "a9048d9f4f0a9319ada5266bc07d8d708fc106faf0f7bcd803d49221f8acd334",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "57de953f-516c-41de-8dea-4510fd2ce9eb",
+      "code": "WORKERCONSULTATION-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "39ee8757d0fc9dd8596cc828bdd9632fadae6a54bfb8d84732fd5225d32ef1fc",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "583a8ff7-f5f8-440f-858f-0c926f1f27a5",
+      "code": "C10-SCOPE-UNCERTAIN",
+      "kind": "SCOPE_UNCERTAINTY",
+      "templateChecksum": "22f774e80fb221400fcd539b7b8373e15aad47ae432d2a301c1a2f00c3829a3b",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "966be05f-69fe-40ec-8c72-f8496948c594",
+      "code": "CW2-PSA-01-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "93df68b1a54331c5d35517f1642926f309af75a71fe60d763c5ac2ed6befef7d",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "446dddb1-87b5-467a-8272-57e7b85bd72a",
+      "code": "CW2-PSA-01-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "c49bf2920a15c02c3871c40888fa77e6455bdc8b7b421131dc270d951d5bc0c9",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "1d20382c-40d6-4d12-8a5c-6bc17ed52799",
+      "code": "CW2-PSA-01-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "a6de27b7a89770182f04d259f8f32baa0d25ce15b6165489bd5db89650ef481e",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "420a9cc2-47fe-433a-8bb1-57cd8e0d18c3",
+      "code": "CW2-PSA-02-YES",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "49611606e186753307f2a4ee75f016e383b8c077448a902166f7bb6e23ffc252",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "9790b68a-9f43-4ba0-8262-adc4978851fd",
+      "code": "CW2-PSA-02-PARTIAL",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "0a0e564e6ec45865fa3e50c1f1485dbb900829e6d5d2749eda248c056b955221",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "dd97bf31-c809-47e9-8828-70402c576f1d",
+      "code": "CW2-PSA-02-NO",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "8b95b32293c334e7360c79b26c79e317f0b2ecdfe1017a75d1a83d7714eaaec4",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "91d31c23-445f-48b1-8e5c-2c5729ac4230",
+      "code": "CW2-PSA-02-NONE_IDENTIFIED",
+      "kind": "ANSWER_RULE",
+      "templateChecksum": "1fcdde2324f03c1c2e5f849bc21b0c25a0bbc2cd910f2e467278d1a95f2fa98c",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    },
+    {
+      "id": "6f656317-b97f-41bd-81cb-0d6ab126e231",
+      "code": "R06-SCOPE-UNCERTAIN",
+      "kind": "SCOPE_UNCERTAINTY",
+      "templateChecksum": "d31d673aba52ce993690563f69abc8e26835d1b0d74f3dcc203a32b7724bf190",
+      "reviewHold": null,
+      "legalConclusionSupported": false,
+      "humanDecision": {
+        "decision": null,
+        "reviewer": null,
+        "date": null,
+        "reviewedRevision": null,
+        "rationale": null,
+        "followUp": null
+      }
+    }
+  ],
+  "integrity": {
+    "claims": 46,
+    "rules": 141,
+    "answerRules": 131,
+    "scopeRules": 10,
+    "heldQuestionCodes": [
+      "RIETESTING",
+      "PREVENTIONOFFICER",
+      "PREVENTIONCONSULTATION",
+      "EXPERTTASKSCOVERED",
+      "BHVAPPOINTED",
+      "CW2-PAGO-02",
+      "ACCIDENTREGISTRATION",
+      "ACCIDENTREPORTING",
+      "CW2-ONG-01"
+    ],
+    "blocks": 188,
+    "validBlockHashes": 188
+  },
+  "currentConsolidationVerified": false,
+  "unavailablePrimarySources": [
+    {
+      "url": "https://wetten.overheid.nl/BWBR0010346/",
+      "observed": "HTTP_429",
+      "checkedOn": "2026-10-23"
+    },
+    {
+      "url": "https://wetten.overheid.nl/BWBR0008498/",
+      "observed": "HTTP_429",
+      "checkedOn": "2026-10-23"
+    },
+    {
+      "url": "https://wetten.overheid.nl/BWBR0008587/",
+      "observed": "HTTP_429",
+      "checkedOn": "2026-10-23"
+    },
+    {
+      "url": "https://wetten.overheid.nl/BWBR0007671/",
+      "observed": "HTTP_429",
+      "checkedOn": "2026-10-23"
+    }
+  ],
+  "sourceAccessExceptions": [
+    {
+      "key": "PSA",
+      "observed": "TIMEOUT",
+      "alternative": "https://www.arboportaal.nl/onderwerpen/psychosociale-arbeidsbelasting/werkdruk/wat-zegt-de-wet"
+    },
+    {
+      "key": "CMR",
+      "observed": "HTTP_404; historical search index still present, not full verification"
+    },
+    {
+      "key": "LIGHT",
+      "observed": "Referral page only, underlying consolidated law not verified"
+    }
+  ],
+  "tests": {
+    "focusedSuites": 5,
+    "passed": 63,
+    "failed": 0,
+    "broaderEvidence": "compliance-f4-technical-acceptance.md",
+    "newProductionReads": 0,
+    "newDatabaseWrites": 0
+  }
+}
