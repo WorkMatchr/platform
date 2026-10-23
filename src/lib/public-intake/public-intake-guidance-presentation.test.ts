@@ -48,18 +48,10 @@ describe('centrale vakdisciplinelabels', () => {
       priority: 'PRIMARY',
       capabilityCodes: ['ergonoom'],
     })
-    expect(presentation.additionalProfessionalRequirements).toEqual([
-      expect.objectContaining({
-        label: 'Arbeidsdeskundige',
-        capabilityCodes: ['arbeidsdeskundige'],
-      }),
-    ])
-    expect(presentation.possibleProfessionalRequirements).toEqual([
-      expect.objectContaining({
-        label: 'Hoger Veiligheidskundige (HVK)',
-        capabilityCodes: ['hogere-veiligheidskundige'],
-      }),
-    ])
+    // De bestaande ergonomieregressie levert zonder aanvullende feiten geen
+    // andere disciplines op. De presentatie mag die niet zelf reconstrueren.
+    expect(presentation.additionalProfessionalRequirements).toEqual([])
+    expect(presentation.possibleProfessionalRequirements).toEqual([])
     expect(JSON.stringify(presentation)).not.toMatch(/RI&E-deskundige/i)
   })
 })
