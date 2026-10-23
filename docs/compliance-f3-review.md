@@ -1,6 +1,6 @@
 # Integrale F3-review — PR #52 / issue #51
 
-Reviewdatum: 22 oktober 2026. Basis: `9c6f0056189d668e494c563b774c04034a18672f`.
+Reviewdatum: 23 oktober 2026. Basis: `9c6f0056189d668e494c563b774c04034a18672f`.
 `origin/main`: `a49b59507139ef7121634705da19f781b17845f0`.
 De bestaande PR was open, Draft en mergeable; de worktree was schoon.
 Daarom is veilig verdergewerkt op `codex/compliance-f3-ux`, zonder andere PR's
@@ -194,7 +194,7 @@ geen productievrijgave of menselijke juridische eindgoedkeuring.
 | F3-17 juridische conclusies | PASS | Geen nieuwe beoordelingsregel, vrijstelling, vijfstatus of tekortkoming. |
 | F3-18 primaire broncontrole | PASS | Officiële toelichtingen gecontroleerd; directe wetten.overheid.nl-verificatie BLOCKED door 429, geen nieuwe wettelijke beslisregels daarop gebaseerd. |
 | F3-19 productgrens | PASS | Oriëntatiedisclaimer, geen certificering, F4/betaalde scan niet geactiveerd. |
-| F3-20 privacy/sessies | NOT TESTED | Dataminimalisatie/TTL/logoutregressies; echte nieuwe ingelogde sessie-/tenantbrowserproef NOT TESTED, ongewijzigde code en historisch bewijs afzonderlijk vermeld. |
+| F3-20 privacy/sessies | PASS | Nieuwe echte login/logout- en accountwisselingproef op geïsoleerde lokale database; onbewaard/bewaard concept, annuleren, bevestigen, tweede tabblad en nul resterende sessies gecontroleerd op 23 oktober. |
 | F3-21 bevindingen afhandelen | PASS | Bevestigde inhoudelijke tekortkomingen hersteld; geen overige taakregressie gevonden. |
 | F3-22 finale checks | PASS | Finale testset/lint/typecheck/build/diff/secretcontrole uitgevoerd; baseline apart. |
 | F3-23 volledige finale intake | PASS | Specifiek, uitsluitend onbekend en nul werknemers doorlopen op laatste productiebuild. |
@@ -219,12 +219,12 @@ de bestaande mappings. Dit bestand is in de reviewcommit niet opnieuw gewijzigd.
 Geen package, lockfile, routing, sessiecode, opslagcode, migratie of backend gewijzigd.
 De door Next gegenereerde `next-env.d.ts`-padwijziging is teruggebracht en uitgesloten.
 
-**Actueel technisch advies: NO-GO voor definitieve afronding van werkpakket 1.**
-De codechecks zijn groen, maar F3-20 heeft nog geen nieuwe ingelogde browserproef
-op de actuele branch. De onderstaande vervolgcontrole legt de concrete lokale
-omgevingsblokkade vast. Historisch bewijs en mocks vervangen deze ontbrekende
-controle niet. De bekende standalone TypeScript-baseline en beperkte rechtstreekse
-wetstoegang blijven expliciet zichtbaar. PR blijft Draft.
+**Actueel technisch advies: GO voor technische afronding van werkpakket 1.**
+Alle 25 controlepunten hebben technisch bewijs; de ontbrekende ingelogde
+browserproef is op 23 oktober uitgevoerd. De eerdere Dockerblokkade is opgelost.
+De bekende standalone TypeScript-baseline en beperkte rechtstreekse wetstoegang
+blijven expliciet zichtbaar. Dit is geen juridische of Product Owner-vrijgave
+en geen toestemming voor merge/deployment. PR blijft Draft.
 De exacte commit en actuele CI/previewstatus staan in PR #52; historische
 checkresultaten mogen niet als bewijs voor een nieuwe commit worden gebruikt.
 
@@ -252,8 +252,8 @@ checkresultaten mogen niet als bewijs voor een nieuwe commit worden gebruikt.
 - Definitieve waardering van de nieuwe resultaatteksten blijft Product Owner-
   review. Nieuwe juridische beslisregels vereisen afzonderlijke inhoudelijke
   review en liggen buiten F3.
-- Geen nieuwe ingelogde browser-/databaseproef in deze ronde: anonieme F3,
-  ongewijzigde logoutcode, actuele mocks en afzonderlijk historisch bewijs.
+- De ingelogde browser-/databaseproef van 23 oktober hieronder vult de eerdere
+  anonieme controle aan; de logout- en sessiecode zijn niet gewijzigd.
 - Geen claims over productiedeployment, productieaccounts of database-integriteit
   op basis van deze lokale presentatiechecks.
 
@@ -288,3 +288,41 @@ controle) en werkpakket 3 (juridisch dossier #50) pas na technische afronding
 van F3. Zij zijn in deze ronde **NOT STARTED**, niet goedgekeurd of afgekeurd.
 PR #49, issue #50, A07 en alle F4-bestanden blijven ongemoeid. Hun afzonderlijke
 rapporten volgen bij uitvoering; er wordt geen onderzoek geclaimd dat niet is gedaan.
+
+## Afronding sessieacceptatie — 23 oktober 2026
+
+- Getest op PR-head `8b82fa6b5934c395b44ce586ee0c76ce524df6e1`, zonder
+  productcodewijzigingen. De zes gerichte suites slagen opnieuw: **162/162**,
+  6/6 suites, 75,25 seconden.
+- Nieuwe geïsoleerde database `workmatchr_f3_browser_test_4460_1792735636136`
+  op lokale PostgreSQL 17; 85/85 migraties werkelijk vanaf nul uitgevoerd,
+  nul mislukte migraties en alle namen/checksums gelijk aan de worktree.
+- Twee synthetische example.invalid-accounts in afzonderlijke organisaties,
+  met bestaande Better Auth-wachtwoordhashing en reguliere inlogflow.
+  Server uitsluitend lokaal op 3050; geen externe mailtransportcredentials.
+- Onbewaarde invoer: logoutwaarschuwing zichtbaar, annuleren behoudt invoer
+  en sessie; bevestigen beëindigt de echte sessie en wist het concept.
+  `/dashboard` verwijst daarna naar inloggen; database telt nul sessies.
+- Expliciet bewaard concept: vraag 2 met Industrie na herladen hersteld.
+  Tweede tabblad herstelt dezelfde keuze. Escape sluit de logoutdialoog,
+  behoudt invoer en geeft focus terug aan Uitloggen. Bevestigen wist het
+  concept; het tweede tabblad toont de verwijdermelding en een lege vraag 1.
+- Account B ziet uitsluitend organisatie B en een lege intake, zonder
+  sector/antwoord van account A. Daarna ook B uitgelogd: nul sessies en nul
+  opgeslagen beoordelingen in de tijdelijke database. Geen consolewaarschuwingen,
+  fouten of hydratatiefouten in de gecontroleerde browsertab.
+- Opslagwissing is browsermatig vastgesteld via reset, herladen en accountwisseling;
+  de exacte opslagkeys/TTL worden aanvullend door de regressietests bewezen.
+- Acceptatieserver gestopt; uitsluitend deze tijdelijke database en de genegeerde
+  `.local-storage/f3-acceptance/`-fixtures/logs verwijderd. Database- en rolidentiteiten
+  vóór en na zijn gelijk. Bestaande databases zijn niet aangepast; geen algemene
+  inhoudschecksum van bestaande databases geclaimd. De publieke PO-server op 3049
+  blijft beschikbaar.
+- Geen testgeheimen of fixtures toegevoegd aan Git. Alleen de twee F3-rapporten
+  worden bijgewerkt. Werkpakket 1 is technisch afgerond; werkpakket 2 mag starten.
+- Finale volledige lint en productiebuild PASS (163 routes). Eerste buildpoging
+  miste DATABASE_URL; herhaling met uitsluitend onbereikbare lokale buildplaceholder
+  en tijdelijke processecret slaagt. Geen productieverbinding. Standalone TypeScript
+  bevestigt uitsluitend de vier bestaande TS2345-readonly-arrayfouten in
+  `rule-engine.test.ts` (13, 14, 23, 24). Diff-check en secrets-patrooncontrole PASS.
+  De gegenereerde next-env-padwijziging is weer uitgesloten.

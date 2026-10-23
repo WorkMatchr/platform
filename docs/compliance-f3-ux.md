@@ -116,10 +116,11 @@ geen werkende databaseverbinding, account, externe mail of productieactie.
 - Browserconsole: geen waarschuwingen of fouten, geen hydratatiefout.
 - Nieuwe intake starten: leeg formulier. Geen synthetisch concept achtergelaten.
 
-Werkelijke sessiebeëindiging met een ingelogd account is in deze opdracht
-niet opnieuw browsermatig uitgevoerd; de ongewijzigde logout-/opslagcode wordt
-door de bestaande gerichte regressies bewaakt. De eerdere F3-browseracceptatie
-is afzonderlijk vastgelegd in `compliance-f3-free-intake.md`.
+De ingelogde vervolgcontrole van 23 oktober is vastgelegd in
+`compliance-f3-review.md`: onbewaard/bewaard concept, annuleren, bevestigen,
+tweede tabblad, echte sessiebeëindiging en accountwisseling PASS. De tijdelijke
+database en synthetische accounts zijn daarna verwijderd. De eerdere
+F3-browseracceptatie blijft afzonderlijk in `compliance-f3-free-intake.md` staan.
 
 De hierboven beschreven browserrun is het historische bewijs van 20 oktober.
 De nieuwe resultaatweergave en de actuele acceptatieafspraken staan in het
