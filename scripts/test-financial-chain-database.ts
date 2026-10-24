@@ -2,9 +2,15 @@ import 'dotenv/config'
 import assert from 'node:assert/strict'
 import { createHash, randomUUID } from 'node:crypto'
 import { spawnSync } from 'node:child_process'
+import { registerHooks } from 'node:module'
 import { Client } from 'pg'
 import { Prisma } from '../src/generated/prisma/client'
 import { mirrorCreditNoteSnapshot } from '../src/lib/finance/credit-note-snapshot'
+
+registerHooks({ resolve(specifier, context, nextResolve) {
+  if (specifier === 'server-only') return { url: 'data:text/javascript,export default {}', shortCircuit: true }
+  return nextResolve(specifier, context)
+} })
 
 const sourceConnectionString = process.env.DATABASE_URL
 if (!sourceConnectionString) throw new Error('DATABASE_URL is niet geconfigureerd.')
@@ -360,6 +366,59 @@ async function main() {
     assert.equal(await prisma.financialInvoice.count({ where: { purchaseId: incompletePurchase.id } }), 0)
     console.log('FinancialInvoice snapshot v2 totaliteit, rollback en immutability zijn geslaagd.')
     console.log('Kortingscode- en startersvoordeelconcurrency zijn transactioneel geslaagd.')
+
+    // Exercise real payment processing with an in-memory provider and no external transport.
+    assert.ok(!process.env.RESEND_API_KEY && !process.env.MOLLIE_API_KEY)
+    globalThis.fetch = async () => { throw new Error('EXTERNAL_TRANSPORT_DISABLED_IN_FINANCE_TEST') }
+    process.env.NEXT_PUBLIC_APP_URL = 'http://127.0.0.1:1'
+    const { processMolliePayment, createCreditPurchase } = await import('../src/lib/finance/financial-purchase-service')
+    const simulatedPurchase = await prisma.financialPurchase.create({ data: {
+      organizationId: organization.id, createdByUserId: user.id, status: 'PAYMENT_PENDING', packageSku: 'CREDITS_25', packageLabel: '25 synthetische credits', credits: 25,
+      baseAmountCents: 2500, amountExclVatCents: 2500, vatRateBps: 2100, vatAmountCents: 525, amountInclVatCents: 3025, currency: 'EUR',
+      billingOrganizationName: organization.name, billingAddressLine: 'Teststraat 1', billingPostalCode: '1000 AA', billingCity: 'Testplaats', billingCountryCode: 'NL',
+      molliePaymentId: `tr_wp08${randomUUID().replaceAll('-', '')}`, mollieCheckoutUrl: 'https://example.invalid/checkout', idempotencyKey: `wp08-payment-${randomUUID()}`,
+    } })
+    let providerState: import('../src/lib/finance/mollie-gateway').MolliePaymentSnapshot['status'] = 'pending'
+    const unexpectedProviderCall = async (): Promise<never> => { throw new Error('UNEXPECTED_PROVIDER_CALL') }
+    const gateway: import('../src/lib/finance/mollie-gateway').MollieGateway = {
+      getPayment: async () => ({ id: simulatedPurchase.molliePaymentId!, status: providerState, amountValue: '30.25', currency: 'EUR', metadata: { purchaseId: simulatedPurchase.id, organizationId: organization.id }, paidAt: '2026-10-01T12:00:00Z', createdAt: null, checkoutUrl: null, subscriptionId: null, mandateId: null, method: null }),
+      createPayment: unexpectedProviderCall, createRefund: unexpectedProviderCall, getRefund: unexpectedProviderCall,
+      createCustomer: unexpectedProviderCall, getCustomer: unexpectedProviderCall,
+      listFirstPaymentMethods: unexpectedProviderCall, listOneoffPaymentMethods: unexpectedProviderCall,
+      listCustomerMandates: unexpectedProviderCall, createSubscription: unexpectedProviderCall,
+      findCustomerSubscription: unexpectedProviderCall, cancelSubscription: unexpectedProviderCall,
+    }
+    await processMolliePayment(simulatedPurchase.molliePaymentId!, gateway)
+    assert.equal(await prisma.creditTransaction.count({ where: { referenceId: simulatedPurchase.id } }), 0)
+    providerState = 'paid'
+    const failedDeliveries = await Promise.allSettled(Array.from({ length: 6 }, () => processMolliePayment(simulatedPurchase.molliePaymentId!, gateway)))
+    assert.equal(failedDeliveries.length, 6)
+    assert.ok(failedDeliveries.every((result) => result.status === 'rejected' && result.reason instanceof Error && result.reason.message === 'INVOICE_EMAIL_NOT_ACCEPTED'))
+    assert.equal(await prisma.creditTransaction.count({ where: { referenceId: simulatedPurchase.id, type: 'PURCHASE' } }), 1)
+    assert.equal(await prisma.financialInvoice.count({ where: { purchaseId: simulatedPurchase.id } }), 1)
+    assert.equal(await prisma.financialEvent.count({ where: { purchaseId: simulatedPurchase.id, eventType: 'INVOICE_EMAIL_SENT' } }), 0)
+    assert.equal(await prisma.financialEvent.count({ where: { purchaseId: simulatedPurchase.id, eventType: 'INVOICE_EMAIL_FAILED' } }), 1)
+    const { deliverFinancialInvoiceEmail } = await import('../src/lib/finance/financial-invoice-delivery-service')
+    const simulatedInvoice = await prisma.financialInvoice.findUniqueOrThrow({ where: { purchaseId: simulatedPurchase.id } })
+    let fakeDeliveries = 0
+    const fakeSender: Parameters<typeof deliverFinancialInvoiceEmail>[1] = async (email) => {
+      assert.equal(email.to, user.email)
+      assert.equal(email.kind, 'FINANCIAL_INVOICE')
+      assert.equal(email.idempotencyKey, `invoice-email:${simulatedInvoice.id}`)
+      fakeDeliveries += 1
+      return { accepted: true, transport: 'RESEND', status: 'ACCEPTED', messageId: 'synthetic-accepted-invoice' }
+    }
+    await deliverFinancialInvoiceEmail(simulatedInvoice.id, fakeSender)
+    await deliverFinancialInvoiceEmail(simulatedInvoice.id, fakeSender)
+    assert.equal(fakeDeliveries, 1)
+    assert.equal(await prisma.financialEvent.count({ where: { purchaseId: simulatedPurchase.id, eventType: 'INVOICE_EMAIL_SENT' } }), 1)
+    const paidBefore = await prisma.financialPurchase.findUniqueOrThrow({ where: { id: simulatedPurchase.id } })
+    providerState = 'pending'
+    await processMolliePayment(simulatedPurchase.molliePaymentId!, gateway)
+    assert.equal((await prisma.financialPurchase.findUniqueOrThrow({ where: { id: simulatedPurchase.id } })).status, 'PAID')
+    assert.equal((await prisma.financialPurchase.findUniqueOrThrow({ where: { id: simulatedPurchase.id } })).creditedTransactionId, paidBefore.creditedTransactionId)
+    await assert.rejects(() => createCreditPurchase({ actorUserId: secondUser.id, organizationId: organization.id, packageSku: 'CREDITS_25', idempotencyKey: simulatedPurchase.idempotencyKey, billingAddress: { organizationName: 'Synthetisch', addressLine: 'Teststraat 1', postalCode: '1000 AA', city: 'Testplaats', countryCode: 'NL' } }, gateway), { code: 'ACCESS_DENIED' })
+    console.log('WP8/WP9: zes development-mailweigeringen behouden één ledger/factuur; geen vals SENT; één fake accepted delivery; replay zonder tweede mail; vertraagde pending geen terugval; vreemde checkoutactor geweigerd. Geen externe providercall.')
   } finally {
     if (prisma) await prisma.$disconnect()
     await admin.query(`DROP DATABASE IF EXISTS "${databaseName}" WITH (FORCE)`)
