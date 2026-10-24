@@ -23,6 +23,12 @@ afterEach(() => {
 })
 
 describe('authenticatie-e-mails', () => {
+  it('behandelt het SDK-netwerkfoutobject als tijdelijke transportfailure', async () => {
+    vi.stubEnv('RESEND_API_KEY', 'test-resend-key')
+    vi.stubEnv('AUTH_EMAIL_FROM', 'WorkMatchr <account@example.invalid>')
+    resendMocks.send.mockResolvedValue({ data: null, error: { name: 'application_error', statusCode: null, message: 'Private provider detail' }, headers: null })
+    await expect(sendAuthEmail(passwordResetEmail('test@example.invalid', 'Test', 'https://example.invalid/reset'))).rejects.toMatchObject({ code: 'EMAIL_PROVIDER_UNAVAILABLE', providerStatusCode: null })
+  })
   it('maakt een responsive factuurmail met consistente HTML en plain-text fallback', () => {
     const email = financialInvoiceEmail({
       to: 'factuur@example.invalid',

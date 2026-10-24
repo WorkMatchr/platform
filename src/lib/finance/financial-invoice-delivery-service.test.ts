@@ -65,6 +65,13 @@ describe('factuurmailbezorging', () => {
     }) }))
   })
 
+  it('registreert een development-log niet als geaccepteerde factuurmail', async () => {
+    const sender = vi.fn().mockResolvedValue({ accepted: true, transport: 'DEVELOPMENT_LOG', status: 'DEVELOPMENT_ONLY', messageId: 'development-only' })
+    const { deliverFinancialInvoiceEmail } = await import('./financial-invoice-delivery-service')
+    await expect(deliverFinancialInvoiceEmail(invoice.id, sender)).rejects.toThrow('INVOICE_EMAIL_NOT_ACCEPTED')
+    expect(mocks.eventCreate).not.toHaveBeenCalled()
+  })
+
   it('herhaalt een al bezorgde factuurmail niet', async () => {
     mocks.eventFind.mockResolvedValue({ id: 'existing-event' })
     const sender = vi.fn()

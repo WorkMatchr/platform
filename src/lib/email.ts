@@ -178,6 +178,10 @@ export async function sendAuthEmail(email: AuthEmail): Promise<AuthEmailDelivery
     throw new AuthEmailDeliveryError('EMAIL_PROVIDER_UNAVAILABLE', 'De e-mailprovider kon niet worden bereikt.')
   }
   if (result.error) {
+    // The SDK returns transport failures as application_error without an HTTP status.
+    if (result.error.name === 'application_error' && result.error.statusCode == null) {
+      throw new AuthEmailDeliveryError('EMAIL_PROVIDER_UNAVAILABLE', 'De e-mailprovider kon niet worden bereikt.')
+    }
     throw new AuthEmailDeliveryError(
       'EMAIL_PROVIDER_REJECTED',
       'De e-mailprovider heeft het bericht niet geaccepteerd.',

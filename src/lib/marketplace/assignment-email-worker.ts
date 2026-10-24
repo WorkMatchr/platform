@@ -57,7 +57,7 @@ export async function deliverAssignmentEmails(input: { limit?: number; now?: () 
       where: { id: parsed.data.invitationId, status: 'INVITED', deadlineAt: { gt: now },
         providerProfile: { selectabilityStatus: 'SELECTABLE', lifecycleStatus: 'QUALIFIED', archivedAt: null, blocks: { none: { release: null } } },
         providerOrganization: { status: 'ACTIVE', organizationType: { in: ['PROVIDER', 'BOTH'] } },
-        assignment: { status: { in: ['MATCHING', 'AWAITING_RESPONSES', 'IN_SELECTION'] }, archivedAt: null },
+        assignment: { status: { in: ['MATCHING', 'AWAITING_RESPONSES', 'IN_SELECTION'] }, archivedAt: null, clientOrganization: { status: 'ACTIVE' } },
       }, select: { providerOrganizationId: true, snapshot: true, creditCost: true },
     })
     if (!invitation) { await finish('FAILED', 'INVITATION_NOT_DELIVERABLE'); continue }
