@@ -13,7 +13,6 @@ import {
 } from './learning-final-exam-service'
 
 const databaseUrl = process.env.LEARNING_TEST_DATABASE_URL
-const historyDatabaseName = 'wl001_v10_history_test'
 if (databaseUrl) {
   const target = new URL(databaseUrl)
   const disposableLocal = ['localhost', '127.0.0.1'].includes(target.hostname)
