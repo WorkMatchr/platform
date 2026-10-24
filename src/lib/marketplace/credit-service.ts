@@ -186,9 +186,13 @@ export async function grantMarketplaceCredits(input: {
     throw new MarketplaceServiceError('VALIDATION_ERROR')
   }
   return getPrisma().$transaction(async (transaction) => {
-    const repeated = await transaction.creditTransaction.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
-    if (repeated) return repeated
     await requireMarketplacePlatformAdmin(transaction, input.actorUserId)
+    const repeated = await transaction.creditTransaction.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
+    if (repeated) {
+      const account = await transaction.creditAccount.findUnique({ where: { organizationId: input.providerOrganizationId } })
+      if (repeated.createdByUserId !== input.actorUserId || repeated.creditAccountId !== account?.id || repeated.type !== 'ADMIN_GRANT' || repeated.amount !== input.amount || repeated.reason !== input.reason.trim()) throw new MarketplaceServiceError('CONFLICT')
+      return repeated
+    }
     const organization = await transaction.organization.findFirst({
       where: {
         id: input.providerOrganizationId,
@@ -270,9 +274,13 @@ export async function correctMarketplaceCredits(input: {
     throw new MarketplaceServiceError('VALIDATION_ERROR')
   }
   return getPrisma().$transaction(async (transaction) => {
-    const repeated = await transaction.creditTransaction.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
-    if (repeated) return repeated
     await requireMarketplacePlatformAdmin(transaction, input.actorUserId)
+    const repeated = await transaction.creditTransaction.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
+    if (repeated) {
+      const account = await transaction.creditAccount.findUnique({ where: { organizationId: input.providerOrganizationId } })
+      if (repeated.createdByUserId !== input.actorUserId || repeated.creditAccountId !== account?.id || repeated.type !== 'ADMIN_CORRECTION' || repeated.amount !== input.amount || repeated.reason !== input.reason.trim()) throw new MarketplaceServiceError('CONFLICT')
+      return repeated
+    }
     const account = await transaction.creditAccount.findUnique({ where: { organizationId: input.providerOrganizationId } })
     if (!account) throw new MarketplaceServiceError('NOT_FOUND')
     await transaction.$queryRaw`SELECT "id" FROM "CreditAccount" WHERE "id" = ${account.id}::uuid FOR UPDATE`

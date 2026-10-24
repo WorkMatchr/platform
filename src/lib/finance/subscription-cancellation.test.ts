@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('server-only', () => ({}))
 
@@ -59,10 +59,21 @@ function resetSubscription(status: 'ACTIVE' | 'PAST_DUE' | 'SUSPENDED' | 'EXPIRE
 describe('WorkMatchr Pro opzeggen', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-08-20T12:00:00Z'))
     resetSubscription('ACTIVE')
     mocks.authorize.mockResolvedValue({ role: 'OWNER' })
     mocks.gatewayCancel.mockResolvedValue({ id: 'sub_test', status: 'canceled' })
     mocks.findDue.mockResolvedValue([])
+  })
+
+  afterEach(() => vi.useRealTimers())
+
+  it('plant een reeds verstreken periode niet met terugwerkende kracht', async () => {
+    vi.setSystemTime(new Date('2026-10-24T12:00:00Z'))
+    const { scheduleProCancellation } = await import('./subscription-service')
+    const result = await scheduleProCancellation({ actorUserId, organizationId }, gateway)
+    expect(result.cancellationEffectiveAt).toEqual(new Date('2026-10-24T12:00:00Z'))
   })
 
   it.each(['ACTIVE', 'PAST_DUE'] as const)('plant %s opzegging aan periode-einde zonder de status te wijzigen', async (status) => {
