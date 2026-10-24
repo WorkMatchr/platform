@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — WP5 accountacceptatie
+
+- Normale accounts zonder actieve organisatie krijgen vanuit het dashboard de bestaande onboarding in plaats van een serverfout; platform- en tenantautorisatie blijven behouden.
+- De accountpagina gebruikt uitsluitend de bestaande uitlogknop in de gedeelde header.
+- PostgreSQL-regressiedekking voor onbekende, verlopen en hergebruikte accountactivatie-/herstelcodes is uitgebreid. Zie `docs/wp05-account-acceptance.md` voor bewijs en open acceptatiepunten.
+
 ## Unreleased — optionele aanvullende deskundigheden
 
 - Route A biedt maximaal twee zelfgekozen directe aanvullingen naast de ongewijzigde primaire deskundigheid.
