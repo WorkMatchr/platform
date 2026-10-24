@@ -31,7 +31,7 @@ describe.skipIf(!databaseUrl)('WL-001 v1.0 → v1.1 historische attempt-runtime'
     if (phase !== 'create-v10') return
     const user = await prisma!.user.upsert({
       where: { id: historyUserId }, update: {},
-      create: { id: historyUserId, email: 'wl001-v10-history@example.invalid', displayName: 'WL001 History Test', status: 'ACTIVE' },
+      create: { id: historyUserId, email: 'wl001-explicit-history@example.invalid', displayName: 'WL001 History Test', status: 'ACTIVE' },
     })
     const course = await prisma!.learningCourse.findUniqueOrThrow({ where: { code: 'WL-001' } })
     const courseVersion = await prisma!.learningCourseVersion.findUniqueOrThrow({

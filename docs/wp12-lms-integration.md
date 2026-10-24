@@ -67,6 +67,10 @@ enrollments, examens, snapshots en migratieregistraties blijven behouden.
   zes gelijktijdige starts/voortgangsupdates, eindtoets, certificaat en retention.
   De certificaatretentietest vraagt nu eerst via de normale service een certificaat
   aan voor de nieuwe synthetische geslaagde deelnemer; geen productregel versoepeld.
+- De harness voert ook de afzonderlijke v1.0-historietest in twee fasen uit:
+  normale poging vóór de upgrade, dezelfde score/antwoorden teruglezen en een nieuwe
+  v1.1-poging starten erna. Deze fixture gebruikt een eigen `example.invalid`-adres
+  zodat zij niet botst met de bestaande runtimefixture. Geen authenticatielogica gewijzigd.
 - Alle speciaal aangemaakte testdatabases verwijderd; bestaande database- en
   rolidentiteiten behouden. Geen productieverbinding of echte mail/betaling.
 - De 85 migratieblobs op main zijn ongewijzigd. Windows-checkouts kunnen CRLF
