@@ -1,4 +1,5 @@
 import { normalizeComplianceFreeIntakeAnswers } from './free-intake-applicability'
+import { normalizeFreeIntakeV2 } from './free-intake-v2'
 
 export const COMPLIANCE_DRAFT_KEY = 'workmatchr:compliance-free-intake:v2'
 export const COMPLIANCE_LEGACY_KEY = 'workmatchr:compliance-free-intake:v1'
@@ -6,8 +7,8 @@ export const COMPLIANCE_CLEAR_KEY = 'workmatchr:compliance-free-intake:clear'
 export const COMPLIANCE_CHANNEL = 'workmatchr:compliance-free-intake'
 export const DRAFT_TTL = 24 * 60 * 60 * 1000
 export const COMPLIANCE_SCAN_PATH = '/wijzers/compliance/scan'
-export type Draft = { answers: Record<string, string | string[]>; stepIndex: number }
-export type SavedDraft = Draft & { version: 2; savedAt: number; expiresAt: number }
+export type Draft = { answers: Record<string, string | string[]>; stepIndex: number; questionnaireVersion?: '1.0' | '2.0' }
+export type SavedDraft = Draft & { version: 2 | 3; savedAt: number; expiresAt: number }
 export type DraftRead =
   | { kind: 'saved'; draft: SavedDraft }
   | { kind: 'legacy'; draft: Draft }
@@ -19,14 +20,19 @@ function parseDraft(value: unknown): Draft | null {
   if (!Number.isInteger(raw.stepIndex) || Number(raw.stepIndex) < 0 || Number(raw.stepIndex) > 4 ||
       !raw.answers || typeof raw.answers !== 'object' || Array.isArray(raw.answers)) return null
   // Only canonical answer codes survive; never persist unknown/free-text properties.
-  const answers = normalizeComplianceFreeIntakeAnswers(raw.answers as Record<string, unknown>)
-  return { answers: answers as Draft['answers'], stepIndex: Number(raw.stepIndex) }
+  if (raw.questionnaireVersion !== undefined && raw.questionnaireVersion !== '1.0' && raw.questionnaireVersion !== '2.0') return null
+  const answers = raw.questionnaireVersion === '2.0'
+    ? normalizeFreeIntakeV2(raw.answers as Record<string, unknown>)
+    : normalizeComplianceFreeIntakeAnswers(raw.answers as Record<string, unknown>)
+  return { answers: answers as Draft['answers'], stepIndex: Number(raw.stepIndex), ...(raw.questionnaireVersion ? { questionnaireVersion: raw.questionnaireVersion } : {}) }
 }
 
 export function decodeDraft(raw: string, legacy: boolean, now: number): DraftRead {
   try {
     const value = JSON.parse(raw)
-    if (!legacy && value?.version !== 2) return { kind: 'unsupported' }
+    if (!legacy && value?.version !== 2 && value?.version !== 3) return { kind: 'unsupported' }
+    if (!legacy && ((value.version === 3 && value.questionnaireVersion !== '2.0') || (value.version === 2 && value.questionnaireVersion !== undefined && value.questionnaireVersion !== '1.0'))) return { kind: 'unsupported' }
+    if (legacy && value?.questionnaireVersion !== undefined && value.questionnaireVersion !== '1.0') return { kind: 'unsupported' }
     const draft = parseDraft(value)
     if (!draft) return { kind: 'invalid' }
     if (legacy) return { kind: 'legacy', draft }
@@ -34,12 +40,13 @@ export function decodeDraft(raw: string, legacy: boolean, now: number): DraftRea
     if (!Number.isFinite(savedAt) || !Number.isFinite(expiresAt) || savedAt <= 0 || savedAt > now ||
         expiresAt !== savedAt + DRAFT_TTL) return { kind: 'invalid' }
     if (now >= expiresAt) return { kind: 'expired' }
-    return { kind: 'saved', draft: { ...draft, version: 2, savedAt, expiresAt } }
+    return { kind: 'saved', draft: { ...draft, version: value.version, savedAt, expiresAt } }
   } catch { return { kind: 'invalid' } }
 }
 
 export function readDraft(now = Date.now()): DraftRead {
   try {
+    if (window.localStorage.getItem(COMPLIANCE_DRAFT_KEY) !== null && window.localStorage.getItem(COMPLIANCE_LEGACY_KEY) !== null) return { kind: 'unsupported' }
     for (const [key, legacy] of [[COMPLIANCE_DRAFT_KEY, false], [COMPLIANCE_LEGACY_KEY, true]] as const) {
       const raw = window.localStorage.getItem(key)
       if (raw === null) continue
@@ -59,11 +66,12 @@ export function saveDraft(draft: Draft, previous: SavedDraft | null, now = Date.
       if (current.kind !== 'saved' || current.draft.savedAt !== previous.savedAt || now >= previous.expiresAt) return null
     } else {
       const current = readDraft(now)
-      if (current.kind === 'legacy' || current.kind === 'unsupported' || current.kind === 'unavailable') return null
+      if (current.kind === 'saved' || current.kind === 'legacy' || current.kind === 'unsupported' || current.kind === 'unavailable') return null
     }
     const normalized = parseDraft(draft)
     if (!normalized) return null
-    const saved: SavedDraft = { ...normalized, version: 2, savedAt: previous?.savedAt ?? now, expiresAt: previous?.expiresAt ?? now + DRAFT_TTL }
+    if (previous && (previous.questionnaireVersion ?? '1.0') !== (normalized.questionnaireVersion ?? '1.0')) return null
+    const saved: SavedDraft = { ...normalized, version: normalized.questionnaireVersion === '2.0' ? 3 : 2, savedAt: previous?.savedAt ?? now, expiresAt: previous?.expiresAt ?? now + DRAFT_TTL }
     window.localStorage.setItem(COMPLIANCE_DRAFT_KEY, JSON.stringify(saved))
     return saved
   } catch { return null }

@@ -17,9 +17,9 @@ export default async function ComplianceGuidePage() {
     <ArboGuidePageLayout currentLabel="Compliance-wijzer" title="Welke algemene arboverplichtingen heeft u geregeld?" description="Beantwoord compacte vragen over de basis van uw arbobeleid. U krijgt per onderwerp een indicatieve uitkomst en een concrete vervolgstap.">
       <ArboGuideNotice><strong className="text-brand-dark">Goed om te weten:</strong> de Compliance-wijzer geeft een indicatief overzicht op basis van uw antwoorden. De uitkomst is geen formele juridische beoordeling of certificering.</ArboGuideNotice>
       <section className="mb-7 rounded-card border border-brand-primary/20 bg-brand-primary-subtle p-6">
-        <p className="text-sm font-semibold uppercase tracking-wide text-brand-primary">Nieuwe Arbo Compliance Scan</p>
+        <p className="text-sm font-semibold uppercase tracking-wide text-brand-primary">Gratis oriëntatie zonder account</p>
         <h2 className="mt-2 text-xl font-bold text-brand-dark">Start met de gratis intake</h2>
-        <p className="mt-2 max-w-3xl text-text-secondary">Beantwoord 15 korte profielvragen en zie welke arbo-onderwerpen in uw volledige scan relevant zijn. De intake geeft nog geen betaalde detailbevindingen prijs.</p>
+        <p className="mt-2 max-w-3xl text-text-secondary">Verken met vijf hoofdvragen welke arbo-onderwerpen relevant of mogelijk relevant zijn. Sommige vragen hebben meerdere keuzes. De intake geeft geen complianceoordeel. De uitgebreide Compliance Scan is in voorbereiding en nog niet beschikbaar.</p>
         <LinkButton className="mt-5" href={publicRoutes.complianceScan}>Start gratis intake</LinkButton>
       </section>
       {access.status === 'AUTHORIZED'

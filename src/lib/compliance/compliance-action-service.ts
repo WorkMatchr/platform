@@ -58,7 +58,7 @@ export async function ensureComplianceActionsForRun(viewer: ArboGuideViewer, run
   }
 
   const report = arboGuideReportSnapshotSchema.parse(run.reportSnapshot)
-  if (report.tier !== 'EXTENDED') return []
+  if (report.schemaVersion !== 1 || report.tier !== 'EXTENDED') return []
 
   await prisma.$transaction(async (tx) => {
     for (const result of report.results) {

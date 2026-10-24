@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
 import { arboGuideReportSnapshotSchema, fingerprintArboGuideRun } from './arbo-guide-run-service'
+import { buildComplianceV2Report } from '../compliance/compliance-v2'
+import { v2Definition, v2Answers, v2Context } from '../../test-fixtures/compliance-v2'
 
 vi.mock('server-only', () => ({}))
 
@@ -23,6 +25,17 @@ const report = {
 }
 
 describe('ArboGuideRun-contract', () => {
+  it('behandelt volgorde en herhaalde v2-meerkeuzewaarden als dezelfde beoordeling', () => {
+    const definition = v2Definition()
+    definition.modules[0].questions[0].inputType = 'MULTI_SELECT'
+    definition.modules[0].questions[0].options = ['A', 'B'].map(value => ({ value, label: value, exclusive: false }))
+    definition.modules[0].rules[0].condition = { question: 'Q1', includes: 'A' }
+    const answers = { ...v2Answers, Q1: ['A', 'B'] }
+    const snapshot = buildComplianceV2Report(definition, answers, v2Context)
+    const input = { guideType: 'COMPLIANCE' as const, guideVersion: '2', reportVersion: '2.0', complianceFrameworkVersionId: definition.id, answersSnapshot: answers, reportSnapshot: snapshot }
+    expect(fingerprintArboGuideRun(input)).toBe(fingerprintArboGuideRun({ ...input, answersSnapshot: { ...answers, Q1: ['B', 'A', 'A'] } }))
+    expect(fingerprintArboGuideRun(input)).not.toBe(fingerprintArboGuideRun({ ...input, answersSnapshot: { ...answers, Q1: ['A'] } }))
+  })
   it('accepteert een versieerbaar rapport en maakt een deterministische fingerprint', () => {
     expect(arboGuideReportSnapshotSchema.parse(report)).toEqual(report)
     const input = { guideType: 'COMPLIANCE' as const, guideVersion: '1', reportVersion: '1.0', answersSnapshot: { generalPolicy: 'YES' }, reportSnapshot: report }

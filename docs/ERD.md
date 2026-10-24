@@ -1,5 +1,11 @@
 # ERD WorkMatchr
 
+Compliance F2 voegt geen entiteit of assessment-root toe. `ArboGuideRun` →
+`ArboGuideRunResult` blijft leidend; `resultSchemaVersion` onderscheidt de legacy
+vierstatusprojectie van de vijfstatusprojectie. V2 vereist een gepubliceerde,
+checksumgebonden frameworkrelatie en bewaart de gebruikte definitie en bronnen
+in de bestaande immutable rapportsnapshot.
+
 ## Arbo Compliance Scan — configuratie
 
 `ComplianceFrameworkVersion` 1—N `ComplianceModuleDefinition` 1—N `ComplianceQuestionDefinition` 1—N `ComplianceAnswerOptionDefinition`.

@@ -1,4 +1,8 @@
 import 'server-only'
+import { COMPLIANCE_FRAMEWORK_BINDING } from '@/lib/compliance-guide/compliance-framework-binding'
+
+import { buildComplianceV2Report, canonicalJson, complianceV2ReportSchema, normalizeComplianceV2Answers, complianceV2AnswersSchema } from '@/lib/compliance/compliance-v2'
+import { loadComplianceV2Framework } from '@/lib/compliance/compliance-v2-framework'
 
 import { createHash } from 'node:crypto'
 import { z } from 'zod'
@@ -28,7 +32,7 @@ const reportResultSchema = z.object({
     serviceSuggestionCode: z.string().min(1).max(80).optional(),
   }),
 })
-export const arboGuideReportSnapshotSchema = z.object({
+export const arboGuideReportV1SnapshotSchema = z.object({
   schemaVersion: z.literal(1), tier: z.enum(['BASIC', 'EXTENDED']), organizationName: z.string().max(160).nullable(),
   scannedAt: z.string().datetime(), assessmentVersion: z.number().int().positive(), reportVersion: z.string().min(1).max(32),
   summary: z.object({ order: z.number().int().nonnegative(), action: z.number().int().nonnegative(), check: z.number().int().nonnegative(), notApplicable: z.number().int().nonnegative() }),
@@ -39,11 +43,14 @@ export const arboGuideReportSnapshotSchema = z.object({
   scenarioLabels: z.array(z.string().min(1).max(200)).max(30).optional(),
 })
 
+export const arboGuideReportSnapshotSchema = z.union([arboGuideReportV1SnapshotSchema, complianceV2ReportSchema])
+export type ArboGuideReportV1Snapshot = z.output<typeof arboGuideReportV1SnapshotSchema>
+
 const completionSchema = z.object({
   guideType: z.enum(arboGuideTypes), guideVersion: z.string().min(1).max(32), reportVersion: z.string().min(1).max(32),
   organizationId: z.string().uuid(), completedByUserId: z.string().uuid(), idempotencyKey: z.string().min(8).max(160),
   complianceFrameworkVersionId: z.string().uuid().nullable().optional(),
-  startedAt: z.date(), completedAt: z.date(), answersSnapshot: answerSnapshotSchema, reportSnapshot: arboGuideReportSnapshotSchema,
+  startedAt: z.date(), completedAt: z.date(), answersSnapshot: complianceV2AnswersSchema, reportSnapshot: arboGuideReportSnapshotSchema,
 })
 
 export type ArboGuideCompletionInput = z.input<typeof completionSchema>
@@ -60,7 +67,8 @@ function stable(value: unknown): unknown {
 }
 
 export function fingerprintArboGuideRun(input: Pick<z.output<typeof completionSchema>, 'guideType' | 'guideVersion' | 'reportVersion' | 'answersSnapshot' | 'reportSnapshot' | 'complianceFrameworkVersionId'>) {
-  return createHash('sha256').update(JSON.stringify(stable(input))).digest('hex')
+  const normalized = input.reportSnapshot.schemaVersion === 2 ? { ...input, answersSnapshot: normalizeComplianceV2Answers(input.answersSnapshot) } : input
+  return createHash('sha256').update(input.reportSnapshot.schemaVersion === 2 ? canonicalJson(normalized) : JSON.stringify(stable(normalized))).digest('hex')
 }
 
 const prefixes = { COMPLIANCE: 'CW', BHV: 'BHV', RIE: 'RIE', RISK: 'RSK' } as const
@@ -88,6 +96,12 @@ export async function completeArboGuideRun(raw: unknown) {
   const input = parsed.data
   if (input.guideType === 'COMPLIANCE' && !input.complianceFrameworkVersionId) throw new ArboGuideRunError('INVALID_INPUT')
   if (input.guideType !== 'COMPLIANCE' && input.complianceFrameworkVersionId) throw new ArboGuideRunError('INVALID_INPUT')
+  if (input.reportSnapshot.schemaVersion === 1) {
+    if (!answerSnapshotSchema.safeParse(input.answersSnapshot).success) throw new ArboGuideRunError('INVALID_INPUT')
+  } else {
+    if (input.guideType !== 'COMPLIANCE' || input.guideVersion !== '2' || input.reportVersion !== '2.0' || input.complianceFrameworkVersionId !== input.reportSnapshot.framework.id) throw new ArboGuideRunError('INVALID_INPUT')
+    input.answersSnapshot = normalizeComplianceV2Answers(input.answersSnapshot)
+  }
   const fingerprint = fingerprintArboGuideRun(input)
 
   let lastError: unknown
@@ -108,6 +122,23 @@ export async function completeArboGuideRun(raw: unknown) {
         }
         if (existing && JSON.stringify(stable(existing.answersSnapshot)) !== JSON.stringify(stable(input.answersSnapshot))) throw new ArboGuideRunError('CONFLICT')
 
+        // Validate inside the same transaction, after authorization and immutable replay.
+        // Historical reads/replays remain possible after retirement; new completions do not.
+        if (input.reportSnapshot.schemaVersion === 2) {
+          try {
+            const definition = await loadComplianceV2Framework(tx, input.complianceFrameworkVersionId!)
+            const expected = buildComplianceV2Report(definition, input.answersSnapshot, { organizationName: input.reportSnapshot.organizationName, scannedAt: input.reportSnapshot.scannedAt })
+            if (canonicalJson(expected) !== canonicalJson(input.reportSnapshot)) throw new Error('Afwijkend serverresultaat')
+            if (existing && existing.complianceFrameworkVersionId !== definition.id) throw new Error('Afwijkende frameworkbinding')
+          } catch { throw new ArboGuideRunError('INVALID_INPUT') }
+        } else if (input.guideType === 'COMPLIANCE') {
+          const binding = COMPLIANCE_FRAMEWORK_BINDING
+          if (input.complianceFrameworkVersionId !== binding.id || input.guideVersion !== binding.guideVersion || input.reportVersion !== binding.reportVersion || input.reportSnapshot.assessmentVersion !== Number(binding.guideVersion) || input.reportSnapshot.reportVersion !== binding.reportVersion) throw new ArboGuideRunError('INVALID_INPUT')
+          const framework = await tx.complianceFrameworkVersion.findUnique({ where: { id: binding.id } })
+          if (!framework || framework.status !== 'PUBLISHED' || framework.frameworkCode !== binding.frameworkCode || framework.version !== binding.version || framework.checksum !== binding.checksum) throw new ArboGuideRunError('INVALID_INPUT')
+          if (existing && existing.complianceFrameworkVersionId !== binding.id) throw new ArboGuideRunError('CONFLICT')
+        }
+
         const run = existing ?? await tx.arboGuideRun.create({ data: {
           guideType: input.guideType, guideVersion: input.guideVersion, reportVersion: input.reportVersion,
           complianceFrameworkVersionId: input.complianceFrameworkVersionId ?? null,
@@ -116,7 +147,10 @@ export async function completeArboGuideRun(raw: unknown) {
         } })
         const reportNumber = await allocateReportNumber(tx, input.guideType, input.completedAt.getUTCFullYear())
         await tx.arboGuideRunResult.createMany({ data: input.reportSnapshot.results.map((result, index) => ({
-          arboGuideRunId: run.id, position: index + 1, subjectCode: result.id, title: result.title, status: result.status,
+          arboGuideRunId: run.id, position: index + 1, subjectCode: result.id, title: result.title,
+          ...(input.reportSnapshot.schemaVersion === 2
+            ? { status: null, assessmentStatus: (result as import('@/lib/compliance/compliance-v2').ComplianceV2Report['results'][number]).status, resultSchemaVersion: 2 }
+            : { status: (result as ArboGuideReportV1Snapshot['results'][number]).status }),
           explanation: result.explanation, recommendedAction: result.nextStep, sourceIdsSnapshot: result.sources.map((source) => source.id),
         })) })
         const updated = await tx.arboGuideRun.updateMany({ where: { id: run.id, status: 'IN_PROGRESS' }, data: {

@@ -1,12 +1,12 @@
 import { resolvePublicSources } from '@/content/public-sources'
 import { selectArboGuideSources, toArboGuideReportSource } from '@/lib/arbo-guides/arbo-guide-sources'
-import type { ArboGuideReportSnapshot } from '@/lib/arbo-guides/arbo-guide-run-service'
+import type { ArboGuideReportV1Snapshot } from '@/lib/arbo-guides/arbo-guide-run-service'
 import { evaluateBhvGuide, normalizeBhvGuideAnswers, selectBhvScenarios, summarizeBhvResults, BHV_GUIDE_VERSION, type BhvGuideAnswers } from './bhv-guide'
 
 export const BHV_REPORT_VERSION = '1.0'
 export const BHV_REPORT_DISCLAIMER = 'De BHV-wijzer geeft een indicatieve beoordeling op basis van de ingevoerde antwoorden. De uitkomst is geen formele toets, certificering of garantie dat uw BHV-organisatie aan alle toepasselijke eisen voldoet.'
 
-export function buildBhvReportData(input: Readonly<{ answers: Partial<Record<keyof BhvGuideAnswers, unknown>>; organizationName?: string | null; scannedAt: Date; tier: 'BASIC' | 'EXTENDED' }>): ArboGuideReportSnapshot {
+export function buildBhvReportData(input: Readonly<{ answers: Partial<Record<keyof BhvGuideAnswers, unknown>>; organizationName?: string | null; scannedAt: Date; tier: 'BASIC' | 'EXTENDED' }>): ArboGuideReportV1Snapshot {
   const answers = normalizeBhvGuideAnswers(input.answers)
   const evaluated = evaluateBhvGuide(answers)
   const scenarios = selectBhvScenarios(answers)

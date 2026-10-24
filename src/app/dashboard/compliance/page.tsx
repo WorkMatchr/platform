@@ -1,4 +1,5 @@
 import { AuthShell, StatusMessage } from '@/components/auth/auth-shell'
+import { ComplianceV2ReportView } from '@/components/arbo-guides/compliance-v2-report-view'
 import { LinkButton } from '@/components/ui/link-button'
 import { Button } from '@/components/ui/button'
 import { requireOrganizationMembership } from '@/lib/organizations/organization-authorization'
@@ -56,6 +57,15 @@ export default async function ComplianceDashboardPage() {
   }
 
   const report = dashboard.latestRun.reportSnapshot
+  if (report.schemaVersion === 2) {
+    return <AuthShell title="Arbo Compliance" intro="Uw beoordeling met de vastgelegde methodiek en bronnen." wide>
+      <div className="mb-7 flex flex-wrap gap-3">
+        <LinkButton href={'/mijn-arbo-wijzers/' + dashboard.latestRun.id + '/pdf'} variant="outline">PDF downloaden</LinkButton>
+        <LinkButton href="/mijn-arbo-wijzers" variant="outline">Scanhistorie</LinkButton>
+      </div>
+      <ComplianceV2ReportView report={report} />
+    </AuthShell>
+  }
   const framework = dashboard.latestRun.complianceFrameworkVersion
   const activeActions = dashboard.actions.filter((action) => action.status !== 'DONE' && action.status !== 'NOT_APPLICABLE')
   const priorityOrder = { CRITICAL: 0, HIGH: 1, NORMAL: 2, LOW: 3 } as const

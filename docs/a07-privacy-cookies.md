@@ -377,3 +377,23 @@ De verwerkingstabel en publieke conceptteksten zijn hiermee in lijn gebracht. Er
 ### Afzonderlijke databaseblokkade
 
 Docker is bereikbaar, maar de bestaande lifecycle-integratietest strandt op de schone tijdelijke database bij de bekende compliance-migratie: `20261001113000_add_compliance_domain_versioning_foundation`, P3018 / PostgreSQL 42601, ongeldige dollarquoting. Hetzelfde bestand staat op origin/main. De testdatabase is opgeruimd; geen bestaande lokale of productiedatabase gewijzigd. Geen migratiegeschiedenis vervalst. Eerst afzonderlijk toegepast SQL/checksum-bewijs en een veilige migratiereparatie vaststellen; vervolgens replay en drie synthetische onafhankelijke logins. Tot die tijd blijft ingelogde cookie-/sessieacceptatie OPEN.
+# WP12-integratiecontrole
+
+De vier conflicten met F3 zijn opgelost op basis van de actuele F3-branch
+`45a9f7068a0f555d2af5606e4f26505651ef12a0`. De intakewrapper, opslaghook,
+opslagimplementatie en opslagunittests zijn exact die van F3; ook de nieuwere
+F3-UX uit #52 blijft behouden. De reeds overgenomen logoutcomponent is identiek.
+Er is geen tweede opslagimplementatie en geen terugzetting naar de oude intake.
+
+De aanvullende A07-componenttests gebruiken nu expliciete F3-v2-fixtures
+(`FI2-01`, questionnaireVersion 2.0, opslagversie 3). De afzonderlijke legacyfixture
+behoudt `FI-01` en wordt uitsluitend na gebruikerskeuze hervat. De assertions voor
+24 uur, geen automatische TTL-verlenging, expliciet bewaren, cross-tab logout,
+geblokkeerde opslag en SSR/hydratatie zijn behouden. De gerichte gecombineerde
+set slaagt: **82/82**, zes bestanden. Dit omvat de echte Better Auth-engine met
+WorkMatchr-hooks op een memory-adapter; het is geen live browser-/PostgreSQL-sessieproef.
+
+Afhankelijkheid voor merge: #52 eerst. Privacyverklaring en cookieverklaring
+blijven concept; het nieuwe postadres en de exacte Vimexx-prullenbak-/backupretentie
+vereisen nog Product Owner-validatie. Contactformulier blijft standaard uit.
+WP12 verleent geen juridische publicatie- of productieactivatietoestemming.
