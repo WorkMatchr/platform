@@ -1,0 +1,1094 @@
+{
+  "date": "2026-10-24",
+  "main": "a49b59507139ef7121634705da19f781b17845f0",
+  "integrationHead": "9b1f152780c1240ba9e75c913ab320f83848f168",
+  "integrationBranch": "codex/wp12-integration",
+  "productionReadOnly": {
+    "project": "platform",
+    "id": "dpl_5Wcw6uPWGHLvHCiZc1Am6rSf5Xdk",
+    "target": "production",
+    "state": "READY",
+    "sha": "a49b59507139ef7121634705da19f781b17845f0",
+    "alias": "www.workmatchr.nl",
+    "databasePreflightRepeated": false
+  },
+  "reportCheckNote": "Checks of the final report-only commit in PR59 are recorded in its final GitHub comment after push; no self-referential commit evidence.",
+  "pullRequests": [
+    {
+      "headRefName": "codex/wp04-public-acceptance",
+      "headRefOid": "67cef1657c6537d77283673190e4e325468f6bbd",
+      "isDraft": true,
+      "mergeable": "MERGEABLE",
+      "number": 53,
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-23T07:13:13Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/WorkMatchr/platform/actions/runs/39916040940/job/120289729086",
+          "name": "verify",
+          "startedAt": "2026-10-23T07:10:11Z",
+          "status": "COMPLETED",
+          "workflowName": "Trading access"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-23T07:13:00Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/WorkMatchr/platform/actions/runs/39915996876/job/120289599286",
+          "name": "verify",
+          "startedAt": "2026-10-23T07:09:46Z",
+          "status": "COMPLETED",
+          "workflowName": "Trading access"
+        },
+        {
+          "__typename": "StatusContext",
+          "context": "Vercel",
+          "startedAt": "2026-10-23T07:13:20Z",
+          "state": "SUCCESS",
+          "targetUrl": "https://vercel.com/workmatchrs-projects/platform/7XeNNaruQUKjCW1FT6enmHRQhxio"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-23T07:13:23Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://vercel.com/github",
+          "name": "Vercel Preview Comments",
+          "startedAt": "2026-10-23T07:13:23Z",
+          "status": "COMPLETED",
+          "workflowName": ""
+        }
+      ],
+      "url": "https://github.com/WorkMatchr/platform/pull/53",
+      "initialHead": "67cef1657c6537d77283673190e4e325468f6bbd",
+      "changedFiles": [
+        "docs/wp04-public-acceptance.md",
+        "src/app/not-found.tsx",
+        "src/app/public-information-architecture.test.tsx",
+        "src/app/public-platform-pages.test.tsx"
+      ]
+    },
+    {
+      "headRefName": "codex/wp05-account-acceptance",
+      "headRefOid": "db6e296da5bc9f171346372c691ade88ed0c0adc",
+      "isDraft": true,
+      "mergeable": "MERGEABLE",
+      "number": 54,
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-23T07:41:58Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/WorkMatchr/platform/actions/runs/39919158086/job/120299913595",
+          "name": "verify",
+          "startedAt": "2026-10-23T07:38:55Z",
+          "status": "COMPLETED",
+          "workflowName": "Trading access"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-23T07:41:42Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/WorkMatchr/platform/actions/runs/39919148617/job/120299880515",
+          "name": "verify",
+          "startedAt": "2026-10-23T07:38:50Z",
+          "status": "COMPLETED",
+          "workflowName": "Trading access"
+        },
+        {
+          "__typename": "StatusContext",
+          "context": "Vercel",
+          "startedAt": "2026-10-23T07:42:06Z",
+          "state": "SUCCESS",
+          "targetUrl": "https://vercel.com/workmatchrs-projects/platform/5sP1XQGx9jzekeN47AWYZS9AUq3s"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-23T07:42:08Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://vercel.com/github",
+          "name": "Vercel Preview Comments",
+          "startedAt": "2026-10-23T07:42:08Z",
+          "status": "COMPLETED",
+          "workflowName": ""
+        }
+      ],
+      "url": "https://github.com/WorkMatchr/platform/pull/54",
+      "initialHead": "db6e296da5bc9f171346372c691ade88ed0c0adc",
+      "changedFiles": [
+        "CHANGELOG.md",
+        "docs/wp05-account-acceptance.md",
+        "scripts/test-account-lifecycle-database.ts",
+        "src/app/account/account-view-model.test.ts",
+        "src/app/account/page.tsx",
+        "src/app/dashboard/dashboard-access.test.tsx",
+        "src/app/dashboard/page.tsx"
+      ]
+    },
+    {
+      "headRefName": "codex/wp06-advice-chain-acceptance",
+      "headRefOid": "9798176af964419e521b57451f3e327503b49333",
+      "isDraft": true,
+      "mergeable": "MERGEABLE",
+      "number": 55,
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-23T08:17:23Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/WorkMatchr/platform/actions/runs/39923361444/job/120313677691",
+          "name": "verify",
+          "startedAt": "2026-10-23T08:15:23Z",
+          "status": "COMPLETED",
+          "workflowName": "Trading access"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-23T08:18:22Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/WorkMatchr/platform/actions/runs/39923348080/job/120313635477",
+          "name": "verify",
+          "startedAt": "2026-10-23T08:15:17Z",
+          "status": "COMPLETED",
+          "workflowName": "Trading access"
+        },
+        {
+          "__typename": "StatusContext",
+          "context": "Vercel",
+          "startedAt": "2026-10-23T08:19:40Z",
+          "state": "SUCCESS",
+          "targetUrl": "https://vercel.com/workmatchrs-projects/platform/4xcicuUiDL3W166NLKxBBk4XMzii"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-23T08:19:42Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://vercel.com/github",
+          "name": "Vercel Preview Comments",
+          "startedAt": "2026-10-23T08:19:42Z",
+          "status": "COMPLETED",
+          "workflowName": ""
+        }
+      ],
+      "url": "https://github.com/WorkMatchr/platform/pull/55",
+      "initialHead": "9798176af964419e521b57451f3e327503b49333",
+      "changedFiles": [
+        "docs/wp06-advice-chain-acceptance.md",
+        "src/components/assignments/assignment-detail.tsx",
+        "src/lib/assignments/assignment-presentation.test.ts",
+        "src/lib/assignments/assignment-presentation.ts",
+        "src/lib/assignments/assignment-query-service.test.ts",
+        "src/lib/assignments/assignment-query-service.ts",
+        "src/lib/public-intake/public-intake-context-question-service.test.ts",
+        "src/lib/public-intake/public-intake-guidance-presentation.test.ts"
+      ]
+    },
+    {
+      "headRefName": "codex/wp07-marketplace-acceptance",
+      "headRefOid": "a7447ddaae2a23cd7ded03cf1ad89bf3c055104c",
+      "isDraft": true,
+      "mergeable": "MERGEABLE",
+      "number": 56,
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-24T04:23:55Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/WorkMatchr/platform/actions/runs/40061986904/job/120777279893",
+          "name": "verify",
+          "startedAt": "2026-10-24T04:21:02Z",
+          "status": "COMPLETED",
+          "workflowName": "Trading access"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-24T04:23:52Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/WorkMatchr/platform/actions/runs/40061983790/job/120777270846",
+          "name": "verify",
+          "startedAt": "2026-10-24T04:21:00Z",
+          "status": "COMPLETED",
+          "workflowName": "Trading access"
+        },
+        {
+          "__typename": "StatusContext",
+          "context": "Vercel",
+          "startedAt": "2026-10-24T04:23:21Z",
+          "state": "SUCCESS",
+          "targetUrl": "https://vercel.com/workmatchrs-projects/platform/AmCdtZXBpoXiAQabVEA2WcvTsV95"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-24T04:23:22Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://vercel.com/github",
+          "name": "Vercel Preview Comments",
+          "startedAt": "2026-10-24T04:23:22Z",
+          "status": "COMPLETED",
+          "workflowName": ""
+        }
+      ],
+      "url": "https://github.com/WorkMatchr/platform/pull/56",
+      "initialHead": "a7447ddaae2a23cd7ded03cf1ad89bf3c055104c",
+      "changedFiles": [
+        "docs/wp07-marketplace-acceptance.md",
+        "scripts/test-marketplace-concurrency-database.ts",
+        "src/app/uitnodigingen/[invitationId]/page.tsx",
+        "src/lib/marketplace/award-service.ts",
+        "src/lib/marketplace/dashboard-query-service.ts",
+        "src/lib/marketplace/marketplace-read-boundaries.test.ts",
+        "src/lib/marketplace/marketplace-replay-authorization.test.ts",
+        "src/lib/marketplace/matching-service.ts",
+        "src/lib/marketplace/messaging-service.ts",
+        "src/lib/marketplace/participation-service.ts"
+      ]
+    },
+    {
+      "headRefName": "codex/wp08-finance-acceptance",
+      "headRefOid": "116ef7233458604b44b2f34862eaac648a29bb03",
+      "isDraft": true,
+      "mergeable": "MERGEABLE",
+      "number": 57,
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-24T04:57:36Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/WorkMatchr/platform/actions/runs/40064250605/job/120784030949",
+          "name": "verify",
+          "startedAt": "2026-10-24T04:55:34Z",
+          "status": "COMPLETED",
+          "workflowName": "Trading access"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-24T04:58:01Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/WorkMatchr/platform/actions/runs/40064247325/job/120784021315",
+          "name": "verify",
+          "startedAt": "2026-10-24T04:55:32Z",
+          "status": "COMPLETED",
+          "workflowName": "Trading access"
+        },
+        {
+          "__typename": "StatusContext",
+          "context": "Vercel",
+          "startedAt": "2026-10-24T04:58:04Z",
+          "state": "SUCCESS",
+          "targetUrl": "https://vercel.com/workmatchrs-projects/platform/EfE9LfinwZ5xtP9NVEZ4ZvnXXbFZ"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-24T04:58:05Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://vercel.com/github",
+          "name": "Vercel Preview Comments",
+          "startedAt": "2026-10-24T04:58:05Z",
+          "status": "COMPLETED",
+          "workflowName": ""
+        }
+      ],
+      "url": "https://github.com/WorkMatchr/platform/pull/57",
+      "initialHead": "116ef7233458604b44b2f34862eaac648a29bb03",
+      "changedFiles": [
+        "docs/wp08-finance-acceptance.md",
+        "scripts/test-credit-wallet-database.ts",
+        "scripts/test-financial-chain-database.ts",
+        "src/lib/finance/financial-purchase-service.ts",
+        "src/lib/finance/payment-verification-boundaries.test.ts",
+        "src/lib/finance/subscription-cancellation.test.ts",
+        "src/lib/marketplace/credit-admin-boundaries.test.ts",
+        "src/lib/marketplace/credit-service.ts",
+        "src/lib/marketplace/marketplace-credit-admin-service.ts"
+      ]
+    },
+    {
+      "headRefName": "codex/wp09-notifications-acceptance",
+      "headRefOid": "836fa1e0ab928d0754ad77092541305de9107f65",
+      "isDraft": true,
+      "mergeable": "MERGEABLE",
+      "number": 58,
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-24T07:36:31Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/WorkMatchr/platform/actions/runs/40074661724/job/120815347991",
+          "name": "verify",
+          "startedAt": "2026-10-24T07:34:22Z",
+          "status": "COMPLETED",
+          "workflowName": "Trading access"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-24T07:37:03Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/WorkMatchr/platform/actions/runs/40074659196/job/120815340464",
+          "name": "verify",
+          "startedAt": "2026-10-24T07:34:19Z",
+          "status": "COMPLETED",
+          "workflowName": "Trading access"
+        },
+        {
+          "__typename": "StatusContext",
+          "context": "Vercel",
+          "startedAt": "2026-10-24T07:40:19Z",
+          "state": "SUCCESS",
+          "targetUrl": "https://vercel.com/workmatchrs-projects/platform/B68wecrgDGjCVUnoxn7y32jUPXu6"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-24T07:40:20Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://vercel.com/github",
+          "name": "Vercel Preview Comments",
+          "startedAt": "2026-10-24T07:40:20Z",
+          "status": "COMPLETED",
+          "workflowName": ""
+        }
+      ],
+      "url": "https://github.com/WorkMatchr/platform/pull/58",
+      "initialHead": "05e6ff0029d63cd45560ab7a1765c9c9dc7a4dfb",
+      "changedFiles": [
+        "docs/wp08-finance-acceptance.md",
+        "docs/wp09-notifications-acceptance.md",
+        "scripts/test-assignment-notifications-database.ts",
+        "scripts/test-credit-wallet-database.ts",
+        "scripts/test-financial-chain-database.ts",
+        "src/lib/email.test.ts",
+        "src/lib/email.ts",
+        "src/lib/finance/financial-invoice-delivery-service.test.ts",
+        "src/lib/finance/financial-invoice-delivery-service.ts",
+        "src/lib/finance/financial-purchase-service.ts",
+        "src/lib/finance/payment-verification-boundaries.test.ts",
+        "src/lib/finance/subscription-cancellation.test.ts",
+        "src/lib/marketplace/assignment-email-worker.ts",
+        "src/lib/marketplace/credit-admin-boundaries.test.ts",
+        "src/lib/marketplace/credit-service.ts",
+        "src/lib/marketplace/marketplace-credit-admin-service.ts"
+      ]
+    },
+    {
+      "headRefName": "codex/compliance-f3-ux",
+      "headRefOid": "45a9f7068a0f555d2af5606e4f26505651ef12a0",
+      "isDraft": true,
+      "mergeable": "MERGEABLE",
+      "number": 52,
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-23T06:31:13Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/WorkMatchr/platform/actions/runs/39911768714/job/120276171050",
+          "name": "verify",
+          "startedAt": "2026-10-23T06:29:16Z",
+          "status": "COMPLETED",
+          "workflowName": "Trading access"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-23T06:31:46Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/WorkMatchr/platform/actions/runs/39911763086/job/120276152073",
+          "name": "verify",
+          "startedAt": "2026-10-23T06:29:13Z",
+          "status": "COMPLETED",
+          "workflowName": "Trading access"
+        },
+        {
+          "__typename": "StatusContext",
+          "context": "Vercel",
+          "startedAt": "2026-10-23T06:32:06Z",
+          "state": "SUCCESS",
+          "targetUrl": "https://vercel.com/workmatchrs-projects/platform/B5mpRqxfw3usyUr79kwu9ff94CJX"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-23T06:32:07Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://vercel.com/github",
+          "name": "Vercel Preview Comments",
+          "startedAt": "2026-10-23T06:32:07Z",
+          "status": "COMPLETED",
+          "workflowName": ""
+        }
+      ],
+      "url": "https://github.com/WorkMatchr/platform/pull/52",
+      "initialHead": "45a9f7068a0f555d2af5606e4f26505651ef12a0",
+      "changedFiles": [
+        "docs/compliance-f3-review.md",
+        "docs/compliance-f3-ux.md",
+        "src/components/public/compliance-free-intake-v2.test.tsx",
+        "src/components/public/compliance-free-intake-v2.tsx",
+        "src/lib/compliance/free-intake-v2-guidance.ts",
+        "src/lib/compliance/free-intake-v2-presentation.test.ts",
+        "src/lib/compliance/free-intake-v2-presentation.ts",
+        "src/lib/compliance/free-intake-v2.test.ts",
+        "src/lib/compliance/free-intake-v2.ts"
+      ]
+    },
+    {
+      "headRefName": "codex/compliance-f4-expanded-guide",
+      "headRefOid": "00207461c34f41fe2739bdfefff5875d2763afc6",
+      "isDraft": true,
+      "mergeable": "MERGEABLE",
+      "number": 49,
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-23T06:50:58Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/WorkMatchr/platform/actions/runs/39913719594/job/120282361334",
+          "name": "verify",
+          "startedAt": "2026-10-23T06:48:06Z",
+          "status": "COMPLETED",
+          "workflowName": "Trading access"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-23T06:50:23Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/WorkMatchr/platform/actions/runs/39913714602/job/120282344723",
+          "name": "verify",
+          "startedAt": "2026-10-23T06:48:03Z",
+          "status": "COMPLETED",
+          "workflowName": "Trading access"
+        },
+        {
+          "__typename": "StatusContext",
+          "context": "Vercel",
+          "startedAt": "2026-10-23T06:51:18Z",
+          "state": "SUCCESS",
+          "targetUrl": "https://vercel.com/workmatchrs-projects/platform/ERG2zwY5RbvsBkLhjdjpKFbtmoUT"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-23T06:51:19Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://vercel.com/github",
+          "name": "Vercel Preview Comments",
+          "startedAt": "2026-10-23T06:51:19Z",
+          "status": "COMPLETED",
+          "workflowName": ""
+        }
+      ],
+      "url": "https://github.com/WorkMatchr/platform/pull/49",
+      "initialHead": "00207461c34f41fe2739bdfefff5875d2763afc6",
+      "changedFiles": [
+        "docs/ERD.md",
+        "docs/README.md",
+        "docs/compliance-f4-claim-review.json",
+        "docs/compliance-f4-expanded-guide.md",
+        "docs/compliance-f4-knowledge-publication.md",
+        "docs/compliance-f4-legal-acceptance.json",
+        "docs/compliance-f4-legal-acceptance.md",
+        "docs/compliance-f4-legal-matrix.json",
+        "docs/compliance-f4-legal-matrix.md",
+        "docs/compliance-f4-publication-plan.md",
+        "docs/compliance-f4-review-dossier.json",
+        "docs/compliance-f4-review-dossier.md",
+        "docs/compliance-f4-review-source-blocks.json",
+        "docs/compliance-f4-review-supplement.json",
+        "docs/compliance-f4-rie-legal-review.md",
+        "docs/compliance-f4-source-evidence.json",
+        "docs/compliance-f4-technical-acceptance.md",
+        "docs/data-dictionary.md",
+        "docs/database.md",
+        "prisma/migrations/20261017100000_add_compliance_question_visibility/migration.sql",
+        "prisma/schema.prisma",
+        "scripts/check-compliance-f4-publication.ts",
+        "scripts/fixtures/compliance-f4-database.ts",
+        "scripts/fixtures/compliance-knowledge-database.ts",
+        "scripts/fixtures/compliance-v2-database.ts",
+        "scripts/test-compliance-runs-database.ts",
+        "src/app/wijzers/compliance/v2/page.tsx",
+        "src/app/wijzers/compliance/v2/runs/route.test.ts",
+        "src/app/wijzers/compliance/v2/runs/route.ts",
+        "src/components/arbo-guides/compliance-v2-report-view.tsx",
+        "src/components/public/compliance-expanded-guide.test.tsx",
+        "src/components/public/compliance-expanded-guide.tsx",
+        "src/lib/arbo-guides/arbo-guide-run-service.ts",
+        "src/lib/compliance/compliance-f4-catalog.ts",
+        "src/lib/compliance/compliance-f4-definition.ts",
+        "src/lib/compliance/compliance-f4-framework.ts",
+        "src/lib/compliance/compliance-f4-review-dossier.test.ts",
+        "src/lib/compliance/compliance-f4-rule-review.ts",
+        "src/lib/compliance/compliance-f4-source-review.test.ts",
+        "src/lib/compliance/compliance-f4.test.ts",
+        "src/lib/compliance/compliance-framework-publication.test.ts",
+        "src/lib/compliance/compliance-knowledge-publication.test.ts",
+        "src/lib/compliance/compliance-knowledge-publication.ts",
+        "src/lib/compliance/compliance-question-visibility.ts",
+        "src/lib/compliance/compliance-v2-conditions.ts",
+        "src/lib/compliance/compliance-v2-framework.ts",
+        "src/lib/compliance/compliance-v2.ts",
+        "src/test-fixtures/compliance-f4.ts",
+        "src/test-fixtures/compliance-source-fragment.ts"
+      ]
+    },
+    {
+      "headRefName": "codex/a07-privacy-cookies",
+      "headRefOid": "b2e6f6ab4283c4e7c58f6d93d3d64bbc3191d79d",
+      "isDraft": true,
+      "mergeable": "MERGEABLE",
+      "number": 40,
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-24T07:36:32Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/WorkMatchr/platform/actions/runs/40074648060/job/120815307573",
+          "name": "verify",
+          "startedAt": "2026-10-24T07:34:09Z",
+          "status": "COMPLETED",
+          "workflowName": "Trading access"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-24T07:36:54Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/WorkMatchr/platform/actions/runs/40074645188/job/120815299185",
+          "name": "verify",
+          "startedAt": "2026-10-24T07:34:07Z",
+          "status": "COMPLETED",
+          "workflowName": "Trading access"
+        },
+        {
+          "__typename": "StatusContext",
+          "context": "Vercel",
+          "startedAt": "2026-10-24T07:37:16Z",
+          "state": "SUCCESS",
+          "targetUrl": "https://vercel.com/workmatchrs-projects/platform/BiaG8m6DHdobBN89rk9jQjbeGgAi"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-24T07:37:17Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://vercel.com/github",
+          "name": "Vercel Preview Comments",
+          "startedAt": "2026-10-24T07:37:17Z",
+          "status": "COMPLETED",
+          "workflowName": ""
+        }
+      ],
+      "url": "https://github.com/WorkMatchr/platform/pull/40",
+      "initialHead": "70374ed71f195feef3feca1549c48c5a9ad567fd",
+      "changedFiles": [
+        "docs/README.md",
+        "docs/a07-privacy-cookies.md",
+        "docs/a07-storage-session-design.md",
+        "docs/compliance-f3-review.md",
+        "docs/compliance-f3-ux.md",
+        "src/app/cookies/page.tsx",
+        "src/app/privacy/page.tsx",
+        "src/app/public-legal-pages.test.tsx",
+        "src/app/public-placeholder-routes.test.tsx",
+        "src/components/auth/activate-account-form.tsx",
+        "src/components/auth/login-form.tsx",
+        "src/components/auth/session-choice.test.tsx",
+        "src/components/public/compliance-free-intake-storage.test.tsx",
+        "src/components/public/compliance-free-intake-v2.test.tsx",
+        "src/components/public/compliance-free-intake-v2.tsx",
+        "src/config/legal-identity.ts",
+        "src/content/public-legal.ts",
+        "src/lib/auth-session.test.ts",
+        "src/lib/auth-validation.ts",
+        "src/lib/auth.ts",
+        "src/lib/compliance/free-intake-v2-guidance.ts",
+        "src/lib/compliance/free-intake-v2-presentation.test.ts",
+        "src/lib/compliance/free-intake-v2-presentation.ts",
+        "src/lib/compliance/free-intake-v2.test.ts",
+        "src/lib/compliance/free-intake-v2.ts"
+      ]
+    },
+    {
+      "headRefName": "codex/wp12-lms-candidate",
+      "headRefOid": "9e1f097f998370c930d31986e4481e5b6397f807",
+      "isDraft": true,
+      "mergeable": "MERGEABLE",
+      "number": 60,
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "0001-01-01T00:00:00Z",
+          "conclusion": "",
+          "detailsUrl": "https://github.com/WorkMatchr/platform/actions/runs/40075591488/job/120818112341",
+          "name": "verify",
+          "startedAt": "2026-10-24T07:48:38Z",
+          "status": "IN_PROGRESS",
+          "workflowName": "Trading access"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "0001-01-01T00:00:00Z",
+          "conclusion": "",
+          "detailsUrl": "https://github.com/WorkMatchr/platform/actions/runs/40075586748/job/120818098875",
+          "name": "verify",
+          "startedAt": "2026-10-24T07:48:33Z",
+          "status": "IN_PROGRESS",
+          "workflowName": "Trading access"
+        },
+        {
+          "__typename": "StatusContext",
+          "context": "Vercel",
+          "startedAt": "2026-10-24T07:48:31Z",
+          "state": "PENDING",
+          "targetUrl": "https://vercel.com/workmatchrs-projects/platform/GGWCwvMW4P3CLcRMDcYaWGw99owR"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-24T07:48:32Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://vercel.com/github",
+          "name": "Vercel Preview Comments",
+          "startedAt": "2026-10-24T07:48:32Z",
+          "status": "COMPLETED",
+          "workflowName": ""
+        }
+      ],
+      "url": "https://github.com/WorkMatchr/platform/pull/60",
+      "initialHead": null,
+      "changedFiles": [
+        "docs/README.md",
+        "docs/learning-accessibility-audit.md",
+        "docs/learning-certificate-verification.md",
+        "docs/learning-final-exam-architecture.md",
+        "docs/learning-final-exam-verification.md",
+        "docs/learning-retention-architecture.md",
+        "docs/learning-retention-content-review.md",
+        "docs/learning-retention-vertical-slice-verification.md",
+        "docs/learning.md",
+        "docs/wp12-lms-integration.md",
+        "package-lock.json",
+        "package.json",
+        "prisma/migrations/20260924150000_add_learning_vertical_slice/migration.sql",
+        "prisma/migrations/20260927210000_add_learning_final_exam/migration.sql",
+        "prisma/migrations/20260929100000_add_learning_certificates/migration.sql",
+        "prisma/migrations/20260930100000_add_learning_retention/migration.sql",
+        "prisma/migrations/20260930120000_correct_learning_retention_publication_policy/migration.sql",
+        "prisma/migrations/20261019100000_allow_annual_reminder_reconsent/migration.sql",
+        "prisma/schema.prisma",
+        "prisma/seed-data/WL-001_FINAL_EXAM_v1.0_CANONICAL_QUESTION_BANK.md",
+        "prisma/seed-data/WL-001_FINAL_EXAM_v1.1_CANONICAL_QUESTION_BANK.md",
+        "scripts/seed-learning-final-exam-v1-1.ts",
+        "scripts/seed-learning-final-exam.ts",
+        "scripts/seed-learning.ts",
+        "scripts/test-learning-database.ts",
+        "src/app/api/learning/certificates/[certificateId]/pdf/route.test.ts",
+        "src/app/api/learning/certificates/[certificateId]/pdf/route.ts",
+        "src/app/certificaat/[code]/page.tsx",
+        "src/app/e-learnings/[courseSlug]/eindtoets/[attemptId]/page.tsx",
+        "src/app/e-learnings/[courseSlug]/eindtoets/page.tsx",
+        "src/app/e-learnings/[courseSlug]/eindtoets/resultaat/[attemptId]/page.tsx",
+        "src/app/e-learnings/[courseSlug]/kennisbehoud/jaarlijks/page.tsx",
+        "src/app/e-learnings/[courseSlug]/kennisbehoud/page.tsx",
+        "src/app/e-learnings/[courseSlug]/kennisbehoud/week/[checkId]/page.tsx",
+        "src/app/e-learnings/[courseSlug]/leren/[chapterSlug]/page.tsx",
+        "src/app/e-learnings/[courseSlug]/page.tsx",
+        "src/app/e-learnings/aanbod/page.tsx",
+        "src/app/e-learnings/actions.ts",
+        "src/app/e-learnings/certificaat/actions.ts",
+        "src/app/e-learnings/certificaat/gegevens/page.tsx",
+        "src/app/e-learnings/exam-actions.ts",
+        "src/app/e-learnings/mijn/page.tsx",
+        "src/app/e-learnings/page.tsx",
+        "src/app/e-learnings/retention-actions.ts",
+        "src/components/layout/header-model.test.ts",
+        "src/components/layout/header-model.ts",
+        "src/components/layout/header.test.tsx",
+        "src/components/layout/header.tsx",
+        "src/components/learning/annual-retention-player.tsx",
+        "src/components/learning/final-exam-player-dialog.test.tsx",
+        "src/components/learning/final-exam-player.test.tsx",
+        "src/components/learning/final-exam-player.tsx",
+        "src/components/learning/lesson-player.test.tsx",
+        "src/components/learning/lesson-player.tsx",
+        "src/components/learning/retention-program-controls.test.tsx",
+        "src/components/learning/retention-program-controls.tsx",
+        "src/lib/email.test.ts",
+        "src/lib/email.ts",
+        "src/lib/learning/learning-answer-policy.test.ts",
+        "src/lib/learning/learning-answer-policy.ts",
+        "src/lib/learning/learning-authorization.test.ts",
+        "src/lib/learning/learning-authorization.ts",
+        "src/lib/learning/learning-certificate-email-worker.ts",
+        "src/lib/learning/learning-certificate-email.test.ts",
+        "src/lib/learning/learning-certificate-pdf.test.ts",
+        "src/lib/learning/learning-certificate-pdf.ts",
+        "src/lib/learning/learning-certificate-service.test.ts",
+        "src/lib/learning/learning-certificate-service.ts",
+        "src/lib/learning/learning-certificate-template.ts",
+        "src/lib/learning/learning-chapter10-content.test.ts",
+        "src/lib/learning/learning-chapter10-content.ts",
+        "src/lib/learning/learning-chapter2-content.test.ts",
+        "src/lib/learning/learning-chapter2-content.ts",
+        "src/lib/learning/learning-chapter4-content.test.ts",
+        "src/lib/learning/learning-chapter4-content.ts",
+        "src/lib/learning/learning-chapter5-content.test.ts",
+        "src/lib/learning/learning-chapter5-content.ts",
+        "src/lib/learning/learning-chapter6-content.test.ts",
+        "src/lib/learning/learning-chapter6-content.ts",
+        "src/lib/learning/learning-chapter7-content.test.ts",
+        "src/lib/learning/learning-chapter7-content.ts",
+        "src/lib/learning/learning-chapter8-content.test.ts",
+        "src/lib/learning/learning-chapter8-content.ts",
+        "src/lib/learning/learning-chapter9-content.test.ts",
+        "src/lib/learning/learning-chapter9-content.ts",
+        "src/lib/learning/learning-concurrency-runtime.integration.test.ts",
+        "src/lib/learning/learning-exam-policy.test.ts",
+        "src/lib/learning/learning-exam-policy.ts",
+        "src/lib/learning/learning-final-exam-content.test.ts",
+        "src/lib/learning/learning-final-exam-content.ts",
+        "src/lib/learning/learning-final-exam-runtime.integration.test.ts",
+        "src/lib/learning/learning-final-exam-service.ts",
+        "src/lib/learning/learning-final-exam-v10-history.integration.test.ts",
+        "src/lib/learning/learning-full-course-runtime.integration.test.ts",
+        "src/lib/learning/learning-prototype-content.test.ts",
+        "src/lib/learning/learning-prototype-content.ts",
+        "src/lib/learning/learning-query-service.test.ts",
+        "src/lib/learning/learning-query-service.ts",
+        "src/lib/learning/learning-retention-annual-service.test.ts",
+        "src/lib/learning/learning-retention-annual-service.ts",
+        "src/lib/learning/learning-retention-content.test.ts",
+        "src/lib/learning/learning-retention-content.ts",
+        "src/lib/learning/learning-retention-email-worker.ts",
+        "src/lib/learning/learning-retention-email.test.ts",
+        "src/lib/learning/learning-retention-neon-runtime.integration.test.ts",
+        "src/lib/learning/learning-retention-policy.test.ts",
+        "src/lib/learning/learning-retention-policy.ts",
+        "src/lib/learning/learning-retention-publication.test.ts",
+        "src/lib/learning/learning-retention-publication.ts",
+        "src/lib/learning/learning-retention-runtime-core.test.ts",
+        "src/lib/learning/learning-retention-runtime-core.ts",
+        "src/lib/learning/learning-retention-selector.test.ts",
+        "src/lib/learning/learning-retention-selector.ts",
+        "src/lib/learning/learning-retention-service.ts",
+        "src/lib/learning/learning-runtime-gate.test.ts",
+        "src/lib/learning/learning-runtime-policy.ts",
+        "src/lib/learning/learning-runtime.integration.test.ts",
+        "src/test/server-only.ts",
+        "vitest.config.ts"
+      ]
+    },
+    {
+      "headRefName": "codex/wp10-lms-acceptance",
+      "headRefOid": "2af761849154186eb46fe39916afaa60dfc4ca35",
+      "isDraft": true,
+      "mergeable": "MERGEABLE",
+      "number": 59,
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-24T06:42:39Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/WorkMatchr/platform/actions/runs/40071111013/job/120804544019",
+          "name": "verify",
+          "startedAt": "2026-10-24T06:40:15Z",
+          "status": "COMPLETED",
+          "workflowName": "Trading access"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-24T06:42:19Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/WorkMatchr/platform/actions/runs/40071069995/job/120804419620",
+          "name": "verify",
+          "startedAt": "2026-10-24T06:39:37Z",
+          "status": "COMPLETED",
+          "workflowName": "Trading access"
+        },
+        {
+          "__typename": "StatusContext",
+          "context": "Vercel",
+          "startedAt": "2026-10-24T06:42:51Z",
+          "state": "SUCCESS",
+          "targetUrl": "https://vercel.com/workmatchrs-projects/platform/6XEtj3BoKrWHFwqWGvcku82R4wxY"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-24T06:42:52Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://vercel.com/github",
+          "name": "Vercel Preview Comments",
+          "startedAt": "2026-10-24T06:42:52Z",
+          "status": "COMPLETED",
+          "workflowName": ""
+        }
+      ],
+      "url": "https://github.com/WorkMatchr/platform/pull/59",
+      "initialHead": "2af761849154186eb46fe39916afaa60dfc4ca35",
+      "changedFiles": [
+        "docs/work-packages-01-10-overview.md",
+        "docs/wp10-learning-runtime-repair.patch",
+        "docs/wp10-lms-acceptance.md",
+        "docs/wp11-evidence-inventory.json",
+        "docs/wp11-finance-test-integration.patch",
+        "docs/wp11-release-preparation.md"
+      ]
+    }
+  ],
+  "mergeOrder": [
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    52,
+    49,
+    40,
+    60,
+    59
+  ],
+  "tests": {
+    "phaseA": {
+      "passed": 210,
+      "files": 24,
+      "durationSeconds": 14.82
+    },
+    "abc": {
+      "passed": 1271,
+      "files": 119,
+      "durationSeconds": 127.29
+    },
+    "a07": {
+      "passed": 82,
+      "files": 6,
+      "durationSeconds": 15.73
+    },
+    "lmsUnit": {
+      "passed": 219,
+      "skipped": 14,
+      "passedFiles": 35,
+      "skippedFiles": 6
+    },
+    "final": {
+      "passed": 1565,
+      "skipped": 14,
+      "passedFiles": 171,
+      "skippedFiles": 6,
+      "durationSeconds": 199.15
+    },
+    "qualityInitial": {
+      "lint": 0,
+      "build": 134,
+      "types": 2,
+      "tests": 0
+    },
+    "buildRetry": {
+      "build": 0,
+      "maxOldSpaceSizeMb": 8192
+    },
+    "generatedPages": 169,
+    "browserTokenBundleScan": "PASS",
+    "typeScriptBaseline": {
+      "code": "TS2345",
+      "count": 4,
+      "file": "src/lib/compliance/rule-engine.test.ts",
+      "lines": [
+        13,
+        14,
+        23,
+        24
+      ]
+    },
+    "postgres": {
+      "results": [
+        {
+          "suite": "account-lifecycle",
+          "exit": 0,
+          "durationMs": 55978
+        },
+        {
+          "suite": "requests",
+          "exit": 0,
+          "durationMs": 74166
+        },
+        {
+          "suite": "marketplace-concurrency",
+          "exit": 0,
+          "durationMs": 44973
+        },
+        {
+          "suite": "credits",
+          "exit": 0,
+          "durationMs": 56287
+        },
+        {
+          "suite": "finance",
+          "exit": 0,
+          "durationMs": 58611
+        },
+        {
+          "suite": "assignment-notifications",
+          "exit": 0,
+          "durationMs": 53005
+        },
+        {
+          "suite": "compliance-runs",
+          "exit": 0,
+          "durationMs": 42059
+        },
+        {
+          "suite": "learning",
+          "exit": 0,
+          "durationMs": 155149
+        }
+      ],
+      "existingIdentitiesPreserved": true,
+      "newDatabasesRemaining": []
+    },
+    "secretPatternScan": [
+      {
+        "name": "wp12-a07-integration",
+        "head": "b2e6f6ab4283c4e7c58f6d93d3d64bbc3191d79d",
+        "files": 25,
+        "secretPatternFiles": [],
+        "forbiddenFiles": [],
+        "diffCheck": "PASS"
+      },
+      {
+        "name": "wp12-notifications-integration",
+        "head": "836fa1e0ab928d0754ad77092541305de9107f65",
+        "files": 16,
+        "secretPatternFiles": [],
+        "forbiddenFiles": [],
+        "diffCheck": "PASS"
+      },
+      {
+        "name": "wp12-lms-candidate",
+        "head": "9e1f097f998370c930d31986e4481e5b6397f807",
+        "files": 119,
+        "secretPatternFiles": [],
+        "forbiddenFiles": [],
+        "diffCheck": "PASS"
+      },
+      {
+        "name": "wp12-integration",
+        "head": "9b1f152780c1240ba9e75c913ab320f83848f168",
+        "files": 233,
+        "secretPatternFiles": [],
+        "forbiddenFiles": [],
+        "diffCheck": "PASS"
+      }
+    ]
+  },
+  "migrations": {
+    "main": 85,
+    "lmsStandalone": 91,
+    "combined": 92,
+    "failed": 0,
+    "unexpected": 0,
+    "productionExecuted": false,
+    "existingGitBlobsChanged": [],
+    "localChecksums": "computed from bytes actually executed; Windows CRLF is distinguished from Git blobs"
+  },
+  "safety": {
+    "lmsChangedProtectedPaths": [],
+    "contactFormEnabled": false,
+    "complianceF4Enabled": false,
+    "learningRuntimeEnabled": false,
+    "frameworkPublished": false,
+    "legalHoldsRetained": 9,
+    "automaticHumanApprovals": 0,
+    "mainMerged": false,
+    "productionDeployment": false,
+    "realMail": false,
+    "realPayment": false
+  },
+  "dependencyAudit": {
+    "scope": "npm audit --omit=dev",
+    "counts": {
+      "info": 0,
+      "low": 0,
+      "moderate": 7,
+      "high": 14,
+      "critical": 1,
+      "total": 22
+    },
+    "baselineCountsIdentical": true,
+    "newVulnerablePackages": [],
+    "exploitClaim": false
+  },
+  "newWp12Files": {
+    "a07": [
+      "docs/ERD.md",
+      "docs/README.md",
+      "docs/a07-privacy-cookies.md",
+      "docs/compliance-f1-foundation.md",
+      "docs/compliance-f2-versioned-results.md",
+      "docs/compliance-f3-free-intake.md",
+      "docs/compliance-f3-review.md",
+      "docs/compliance-f3-ux.md",
+      "docs/data-dictionary.md",
+      "docs/database.md",
+      "package.json",
+      "prisma/migrations/20261001113000_add_compliance_domain_versioning_foundation/migration.sql",
+      "prisma/migrations/20261015180000_register_legacy_compliance_framework/migration.sql",
+      "prisma/migrations/20261016100000_add_compliance_v2_result_contract/migration.sql",
+      "prisma/schema.prisma",
+      "scripts/fixtures/compliance-v2-database.ts",
+      "scripts/test-arbo-guide-runs-database.ts",
+      "scripts/test-compliance-runs-database.ts",
+      "src/app/dashboard/compliance/page.tsx",
+      "src/app/mijn-arbo-wijzers/page.tsx",
+      "src/app/wijzers/compliance/page.tsx",
+      "src/app/wijzers/compliance/runs/route.test.ts",
+      "src/app/wijzers/compliance/runs/route.ts",
+      "src/app/wijzers/compliance/scan/page.tsx",
+      "src/components/arbo-guides/arbo-guide-report-view.tsx",
+      "src/components/arbo-guides/compliance-v2-report-view.test.tsx",
+      "src/components/arbo-guides/compliance-v2-report-view.tsx",
+      "src/components/auth/logout-compliance-draft.test.tsx",
+      "src/components/public/compliance-free-intake-legacy.tsx",
+      "src/components/public/compliance-free-intake-storage.test.tsx",
+      "src/components/public/compliance-free-intake-v2.test.tsx",
+      "src/components/public/compliance-free-intake-v2.tsx",
+      "src/components/public/compliance-free-intake.tsx",
+      "src/components/public/use-compliance-draft.ts",
+      "src/lib/arbo-guides/arbo-guide-run-service.test.ts",
+      "src/lib/arbo-guides/arbo-guide-run-service.ts",
+      "src/lib/bhv-guide/bhv-report.ts",
+      "src/lib/compliance-guide/compliance-framework-binding.test.ts",
+      "src/lib/compliance-guide/compliance-framework-binding.ts",
+      "src/lib/compliance-guide/compliance-report-pdf.ts",
+      "src/lib/compliance/compliance-action-service.ts",
+      "src/lib/compliance/compliance-v2-framework.ts",
+      "src/lib/compliance/compliance-v2.test.ts",
+      "src/lib/compliance/compliance-v2.ts",
+      "src/lib/compliance/free-intake-storage.test.ts",
+      "src/lib/compliance/free-intake-storage.ts",
+      "src/lib/compliance/free-intake-v2-guidance.ts",
+      "src/lib/compliance/free-intake-v2-presentation.test.ts",
+      "src/lib/compliance/free-intake-v2-presentation.ts",
+      "src/lib/compliance/free-intake-v2.test.ts",
+      "src/lib/compliance/free-intake-v2.ts",
+      "src/test-fixtures/compliance-v2.ts"
+    ],
+    "financeNotificationFix": [
+      "docs/wp09-notifications-acceptance.md",
+      "scripts/test-financial-chain-database.ts"
+    ]
+  },
+  "lmsFinalHarness": {
+    "results": [
+      {
+        "suite": "learning",
+        "exit": 0,
+        "durationMs": 165940
+      }
+    ],
+    "existingIdentitiesPreserved": true,
+    "newDatabasesRemaining": []
+  },
+  "lmsFinalQuality": {
+    "lint": 0,
+    "build": 0
+  },
+  "sourceReports": [
+    "docs/wp11-release-preparation.md",
+    "docs/wp11-evidence-inventory.json",
+    "docs/wp10-lms-acceptance.md",
+    "docs/wp12-lms-integration.md"
+  ]
+}
