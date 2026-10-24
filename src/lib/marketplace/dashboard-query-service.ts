@@ -179,9 +179,9 @@ export async function getMarketplaceDashboard(userId: string, organizationId: st
 
 export type MarketplaceDashboardView = Awaited<ReturnType<typeof getMarketplaceDashboard>> | Awaited<ReturnType<typeof getMarketplacePlatformDashboard>>
 
-export async function getProviderInvitationDetail(userId: string, organizationId: string, invitationId: string) {
+export async function getProviderInvitationDetail(userId: string, organizationId: string, invitationId: string, now = new Date()) {
   const membership = await getPrisma().organizationMembership.findFirst({
-    where: { userId, organizationId, status: 'ACTIVE', organization: { status: 'ACTIVE', organizationType: { in: ['PROVIDER', 'BOTH'] } }, user: { status: 'ACTIVE', accountType: 'PROFESSIONAL' } },
+    where: { userId, organizationId, status: 'ACTIVE', user: { status: 'ACTIVE', accountType: 'PROFESSIONAL' }, organization: { status: 'ACTIVE', organizationType: { in: ['PROVIDER', 'BOTH'] }, systemKey: null } },
     select: { role: true },
   })
   if (!membership) throw new MarketplaceServiceError('ACCESS_DENIED')
@@ -195,7 +195,7 @@ export async function getProviderInvitationDetail(userId: string, organizationId
       deadlineAt: true,
       participation: { select: { id: true, status: true, version: true, creditReservation: { select: { id: true } }, quote: { select: { id: true, status: true, version: true } }, messageChannel: { select: { id: true } } } },
       assignment: { select: {
-        id: true, requestId: true, title: true, description: true, employeeCount: true, desiredStartDate: true, responseDeadline: true,
+        id: true, requestId: true, status: true, title: true, description: true, employeeCount: true, desiredStartDate: true, responseDeadline: true,
         locationCity: true, locationProvince: true, locationRegion: true, locationCount: true, allowsRemoteWork: true, maxSelections: true,
         locationName: true, locationAddressLine: true, locationPostalCode: true, locationCountryCode: true, locationDescription: true,
         clientOrganization: { select: { name: true, generalEmail: true, phone: true } },
@@ -221,6 +221,7 @@ export async function getProviderInvitationDetail(userId: string, organizationId
       id: invitation.id,
       status: invitation.status,
       deadlineAt: invitation.deadlineAt,
+      canPurchase: invitation.status === 'INVITED' && invitation.deadlineAt > now && ['AWAITING_RESPONSES', 'MATCHING', 'IN_SELECTION'].includes(invitation.assignment.status),
       participation: invitation.participation,
       preview,
       fullAssignment: hasFullAccess ? { ...invitation.assignment, id: externalAssignmentId(invitation.assignment) } : null,
@@ -230,7 +231,7 @@ export async function getProviderInvitationDetail(userId: string, organizationId
 
 export async function getClientQuotes(userId: string, organizationId: string, assignmentId: string) {
   const membership = await getPrisma().organizationMembership.findFirst({
-    where: { userId, organizationId, status: 'ACTIVE', user: { status: 'ACTIVE', accountType: 'CLIENT' }, role: { in: ['OWNER', 'ADMIN'] } },
+    where: { userId, organizationId, status: 'ACTIVE', user: { status: 'ACTIVE', accountType: 'CLIENT' }, role: { in: ['OWNER', 'ADMIN'] }, organization: { status: 'ACTIVE', organizationType: 'CLIENT', systemKey: null } },
     select: { role: true },
   })
   if (!membership) throw new MarketplaceServiceError('ACCESS_DENIED')
@@ -266,7 +267,7 @@ export async function getClientQuotes(userId: string, organizationId: string, as
 
 export async function getProviderParticipationForQuote(userId: string, organizationId: string, participationId: string) {
   const membership = await getPrisma().organizationMembership.findFirst({
-    where: { userId, organizationId, status: 'ACTIVE', role: { in: ['OWNER', 'ADMIN'] }, user: { status: 'ACTIVE', accountType: 'PROFESSIONAL' } },
+    where: { userId, organizationId, status: 'ACTIVE', role: { in: ['OWNER', 'ADMIN'] }, user: { status: 'ACTIVE', accountType: 'PROFESSIONAL' }, organization: { status: 'ACTIVE', organizationType: { in: ['PROVIDER', 'BOTH'] }, systemKey: null } },
     select: { role: true },
   })
   if (!membership) throw new MarketplaceServiceError('ACCESS_DENIED')
@@ -285,7 +286,7 @@ export async function getProviderParticipationForQuote(userId: string, organizat
 
 export async function getProviderQuoteDetail(userId: string, organizationId: string, quoteId: string) {
   const membership = await getPrisma().organizationMembership.findFirst({
-    where: { userId, organizationId, status: 'ACTIVE', user: { status: 'ACTIVE', accountType: 'PROFESSIONAL' } },
+    where: { userId, organizationId, status: 'ACTIVE', user: { status: 'ACTIVE', accountType: 'PROFESSIONAL' }, organization: { status: 'ACTIVE', organizationType: { in: ['PROVIDER', 'BOTH'] }, systemKey: null } },
     select: { role: true },
   })
   if (!membership) throw new MarketplaceServiceError('ACCESS_DENIED')
@@ -306,7 +307,7 @@ export async function getProviderQuoteDetail(userId: string, organizationId: str
 
 export async function getAssignmentSelectionView(userId: string, organizationId: string, assignmentId: string) {
   const membership = await getPrisma().organizationMembership.findFirst({
-    where: { userId, organizationId, status: 'ACTIVE', role: { in: ['OWNER', 'ADMIN'] }, user: { status: 'ACTIVE', accountType: 'CLIENT' } },
+    where: { userId, organizationId, status: 'ACTIVE', role: { in: ['OWNER', 'ADMIN'] }, user: { status: 'ACTIVE', accountType: 'CLIENT' }, organization: { status: 'ACTIVE', organizationType: 'CLIENT', systemKey: null } },
     select: { role: true },
   })
   if (!membership) throw new MarketplaceServiceError('ACCESS_DENIED')
