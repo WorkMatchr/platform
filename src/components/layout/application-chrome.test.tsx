@@ -45,6 +45,13 @@ describe('routebewuste applicatiechrome', () => {
     expect(html).toContain('Testmodusbanner')
   })
 
+  it('houdt de homepagefooter onder de eerste viewport tijdens streaming, zonder andere routes te verlengen', () => {
+    expect(renderChrome()).toMatch(/<main[^>]+class="min-h-screen flex-1"/)
+    for (const route of ['/opdracht-starten', '/advieswijzer', '/inloggen', '/contact']) {
+      mocks.pathname = route
+      expect(renderChrome()).toMatch(/<main[^>]+class="flex-1"/)
+    }
+  })
   it('verbergt publieke chrome op alle platformbeheerroutes', () => {
     mocks.pathname = '/platformbeheer/gebruikers'
     const html = renderChrome()

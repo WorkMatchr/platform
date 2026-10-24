@@ -108,7 +108,10 @@ export function ApplicationChrome({
       {usesPlatformChrome ? <div className="shrink-0">{banner}</div> : banner}
       <main
         id="main-content"
-        className={usesPlatformChrome ? 'flex-1 lg:min-h-0 lg:overflow-hidden' : 'flex-1'}
+        className={usesPlatformChrome
+          ? 'flex-1 lg:min-h-0 lg:overflow-hidden'
+          // Reserve the first viewport while the homepage's empty loading boundary streams.
+          : pathname === '/' ? 'min-h-screen flex-1' : 'flex-1'}
       >
         {children}
       </main>
