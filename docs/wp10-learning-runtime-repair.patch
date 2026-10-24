@@ -1,0 +1,249 @@
+diff --git a/scripts/test-learning-database.ts b/scripts/test-learning-database.ts
+index 35f5bda..e6d9ccb 100644
+--- a/scripts/test-learning-database.ts
++++ b/scripts/test-learning-database.ts
+@@ -1,5 +1,5 @@
+ import assert from 'node:assert/strict'
+-import { randomUUID } from 'node:crypto'
++import { createHash, randomUUID } from 'node:crypto'
+ import { spawnSync } from 'node:child_process'
+ import { Client } from 'pg'
+ import {
+@@ -19,7 +19,7 @@ import { learningChapter8Blocks, learningChapter8Questions } from '../src/lib/le
+ import { learningChapter9Blocks, learningChapter9Questions } from '../src/lib/learning/learning-chapter9-content'
+ import { learningChapter10Blocks, learningChapter10Questions } from '../src/lib/learning/learning-chapter10-content'
+ import { parseFinalExamQuestionBank } from '../src/lib/learning/learning-final-exam-content'
+-import { readFileSync } from 'node:fs'
++import { existsSync, readFileSync, readdirSync } from 'node:fs'
+
+ const allQuestions = [...learningQuestions, ...learningChapter2Questions, ...learningChapter3Questions, ...learningChapter4Questions, ...learningChapter5Questions, ...learningChapter6Questions, ...learningChapter7Questions, ...learningChapter8Questions, ...learningChapter9Questions, ...learningChapter10Questions]
+ const allBlockCount = learningChapterBlocks.length + learningChapter2Blocks.length + learningChapter3Blocks.length + learningChapter4Blocks.length + learningChapter5Blocks.length + learningChapter6Blocks.length + learningChapter7Blocks.length + learningChapter8Blocks.length + learningChapter9Blocks.length + learningChapter10Blocks.length
+@@ -142,7 +142,19 @@ async function main() {
+     assert.equal(catalog.rows[0]?.certificate_tables, 1, 'Certificate table is incomplete')
+     assert.equal(catalog.rows[0]?.certificate_triggers, 3, 'Certificate validation, immutable and no-delete triggers are incomplete')
+     assert.equal(catalog.rows[0]?.profile_name_fields, 2, 'Certificate name fields are incomplete')
+-    assert.equal(catalog.rows[0]?.migration_count, 90, 'Expected all 90 canonical migrations')
++    const migrationNames = readdirSync('prisma/migrations')
++      .filter((name) => existsSync(`prisma/migrations/${name}/migration.sql`)).sort()
++    const migrationRows = (await db.query<{ migration_name: string; checksum: string; finished_at: Date | null; rolled_back_at: Date | null }>(
++      'SELECT migration_name, checksum, finished_at, rolled_back_at FROM _prisma_migrations ORDER BY migration_name',
++    )).rows
++    assert.equal(catalog.rows[0]?.migration_count, migrationNames.length, 'Expected the complete canonical migration chain')
++    assert.deepEqual(migrationRows.map((row) => row.migration_name), migrationNames)
++    for (const row of migrationRows) {
++      assert.ok(row.finished_at && !row.rolled_back_at)
++      assert.equal(row.checksum, createHash('sha256').update(readFileSync(`prisma/migrations/${row.migration_name}/migration.sql`)).digest('hex'))
++    }
++    run([prismaCli, 'migrate', 'deploy', '--config', 'prisma.config.ts'], 'Idempotent migration replay')
++    assert.deepEqual((await db.query('SELECT migration_name, checksum, finished_at, rolled_back_at FROM _prisma_migrations ORDER BY migration_name')).rows, migrationRows)
+
+     const users = [randomUUID(), randomUUID()]
+     for (const [index, id] of users.entries()) {
+@@ -341,7 +353,7 @@ async function main() {
+     assert.deepEqual(v11Counts.rows[0], { versions: 1, questions: 50, codes: 50, first_position: 1, last_position: 50, versioned_questions: changedExamCodesV11.size, option_rows: examBankV11.reduce((total, question) => total + question.options.length, 0) })
+     const v11Distribution = await db.query(`SELECT eq."chapterNumber", count(*)::int AS count FROM "LearningExamQuestion" eq JOIN "LearningExamVersion" ev ON ev.id=eq."examVersionId" WHERE ev.version='WL-001-EXAM-1.1' GROUP BY eq."chapterNumber" ORDER BY eq."chapterNumber"`)
+     assert.deepEqual(v11Distribution.rows.map((row) => row.count), [3, 4, 5, 6, 6, 5, 5, 4, 4, 8])
+-    run(['node_modules/vitest/vitest.mjs', 'run', '--configLoader', 'runner', '--pool=forks', '--maxWorkers=4', 'src/lib/learning/learning-final-exam-runtime.integration.test.ts'], 'WL-001 v1.1 final exam runtime: access, secrecy, exact scoring, ownership, immutable submission, retries and history', { LEARNING_TEST_EXPECT_EXAM_VERSION: 'WL-001-EXAM-1.1' })
++    run(['node_modules/vitest/vitest.mjs', 'run', '--configLoader', 'runner', '--pool=forks', '--maxWorkers=4', 'src/lib/learning/learning-final-exam-runtime.integration.test.ts'], 'WL-001 v1.1 final exam runtime: access, secrecy, exact scoring, ownership, immutable submission, retries and history', { LEARNING_TEST_EXPECT_EXAM_VERSION: 'WL-001-EXAM-1.1', LEARNING_TEST_EXPECT_V10_HISTORY: '1' })
+     assert.deepEqual((await db.query(`SELECT a.* FROM "LearningExamAttempt" a JOIN "LearningExamVersion" v ON v.id=a."examVersionId" WHERE v.version='WL-001-EXAM-1.0' ORDER BY a.id`)).rows, v10AttemptsBeforeV11.rows)
+     assert.deepEqual((await db.query(`SELECT answer.* FROM "LearningExamAnswer" answer JOIN "LearningExamVersion" v ON v.id=answer."examVersionId" WHERE v.version='WL-001-EXAM-1.0' ORDER BY answer."attemptId",answer."questionId"`)).rows, v10AnswersBeforeV11.rows)
+     const v10VersionAfterV11 = (await db.query(`SELECT * FROM "LearningExamVersion" WHERE version='WL-001-EXAM-1.0'`)).rows[0]
+@@ -351,7 +363,7 @@ async function main() {
+     assert.deepEqual((await db.query(`SELECT question.* FROM "LearningQuestion" question JOIN "LearningExamQuestion" mapping ON mapping."questionId"=question.id JOIN "LearningExamVersion" version ON version.id=mapping."examVersionId" WHERE version.version='WL-001-EXAM-1.0' ORDER BY question.code`)).rows, v10QuestionsBeforeV11.rows)
+     assert.deepEqual((await db.query(`SELECT option.* FROM "LearningQuestionOption" option JOIN "LearningExamQuestion" mapping ON mapping."questionId"=option."questionId" JOIN "LearningExamVersion" version ON version.id=mapping."examVersionId" WHERE version.version='WL-001-EXAM-1.0' ORDER BY mapping.code,option.position`)).rows, v10QuestionOptionsBeforeV11.rows)
+
+-    console.log(`Fresh 90-migration chain, Learning/v1.0/v1.1 seeds idempotent, E01–E50 distributions, H1–H10 positions, v1.0 attempt/answer preservation and v1.1 runtime invariants PASS; v1.1 new QuestionVersions=${changedExamCodesV11.size}, their option rows=${examV11NewQuestionOptionCount}`)
++    console.log(`Fresh ${migrationNames.length}-migration chain and checksums, Learning/v1.0/v1.1 seeds idempotent, E01–E50 distributions, H1–H10 positions, v1.0 attempt/answer preservation and v1.1 runtime invariants PASS; v1.1 new QuestionVersions=${changedExamCodesV11.size}, their option rows=${examV11NewQuestionOptionCount}`)
+     allChecksPassed = true
+   } finally {
+     await db.end().catch(() => undefined)
+diff --git a/src/app/e-learnings/actions.ts b/src/app/e-learnings/actions.ts
+index fa1745a..64f8fb0 100644
+--- a/src/app/e-learnings/actions.ts
++++ b/src/app/e-learnings/actions.ts
+@@ -30,6 +30,8 @@ export async function startLearningCourseAction(formData: FormData) {
+   if (requestedChapterSlug && !selectedChapter) redirect(coursePath(courseSlug))
+
+   await prisma.$transaction(async (transaction) => {
++    // Serialize enrollment initialization for this user, including the first chapter.
++    await transaction.$queryRaw`SELECT id FROM "User" WHERE id = ${user.id}::uuid FOR UPDATE`
+     await transaction.learningProfile.upsert({ where: { userId: user.id }, update: {}, create: { userId: user.id } })
+     const enrollment = await transaction.learningEnrollment.upsert({
+       where: { userId_courseVersionId: { userId: user.id, courseVersionId: version.id } },
+@@ -69,6 +71,8 @@ async function recordCompletedBlock(
+   input: { userId: string; enrollmentId: string; chapterId: string; courseVersionId: string; blockId: string },
+ ) {
+   const now = new Date()
++  // Count and project progress after preceding block completions have committed.
++  await transaction.$queryRaw`SELECT id FROM "LearningEnrollment" WHERE id = ${input.enrollmentId}::uuid FOR UPDATE`
+   await transaction.learningInteractionAttempt.upsert({
+     where: { enrollmentId_contentBlockId: { enrollmentId: input.enrollmentId, contentBlockId: input.blockId } },
+     update: {},
+diff --git a/src/lib/learning/learning-final-exam-runtime.integration.test.ts b/src/lib/learning/learning-final-exam-runtime.integration.test.ts
+index ca855d3..0145076 100644
+--- a/src/lib/learning/learning-final-exam-runtime.integration.test.ts
++++ b/src/lib/learning/learning-final-exam-runtime.integration.test.ts
+@@ -39,7 +39,9 @@ describe.skipIf(!databaseUrl)('WL-001 eindtoets runtime op geïsoleerde database
+     const ownerId = randomUUID()
+     const outsiderId = randomUUID()
+     for (const id of [ownerId, outsiderId]) {
+-      await prisma!.user.create({ data: { id, email: `${id}@example.invalid`, displayName: 'Exam test', status: 'ACTIVE' } })
++      const email = expectedVersion === 'WL-001-EXAM-1.0' && id === ownerId
++        ? 'wl001-v10-history@example.invalid' : `${id}@example.invalid`
++      await prisma!.user.create({ data: { id, email, displayName: 'Exam test', status: 'ACTIVE' } })
+     }
+
+     const course = await prisma!.learningCourse.findUniqueOrThrow({ where: { code: 'WL-001' } })
+@@ -155,7 +157,7 @@ describe.skipIf(!databaseUrl)('WL-001 eindtoets runtime op geïsoleerde database
+     if (expectedVersion === 'WL-001-EXAM-1.1') {
+       const historicalV10Attempt = await prisma!.learningExamAttempt.findFirst({
+         where: process.env.LEARNING_TEST_EXPECT_V10_HISTORY === '1'
+-          ? { status: 'SUBMITTED', user: { email: 'wl001-v10-history@example.invalid' }, examVersion: { version: 'WL-001-EXAM-1.0' } }
++          ? { status: 'SUBMITTED', passed: true, user: { email: 'wl001-v10-history@example.invalid' }, examVersion: { version: 'WL-001-EXAM-1.0' } }
+           : { status: 'SUBMITTED', examVersion: { version: 'WL-001-EXAM-1.0' } },
+         orderBy: { startedAt: 'asc' },
+         include: { answers: true, examVersion: true },
+diff --git a/src/lib/learning/learning-final-exam-service.ts b/src/lib/learning/learning-final-exam-service.ts
+index 544adfa..36fd8c5 100644
+--- a/src/lib/learning/learning-final-exam-service.ts
++++ b/src/lib/learning/learning-final-exam-service.ts
+@@ -275,6 +275,12 @@ export async function submitFinalExamAttempt(userId: string, attemptId: string)
+           submittedAt: new Date(),
+         },
+       })
++      if (result.passed) {
++        await transaction.learningEnrollment.updateMany({
++          where: { id: attempt.enrollmentId, userId, courseVersionId: attempt.courseVersionId, status: 'IN_PROGRESS' },
++          data: { status: 'COMPLETED', completedAt: submitted.submittedAt },
++        })
++      }
+       return { ...submitted, knowledgeAreas: knowledgeAreaResults(attempt.examVersion.questions, answers) }
+     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 15_000 })
+   } catch (error) {
+diff --git a/src/lib/learning/learning-full-course-runtime.integration.test.ts b/src/lib/learning/learning-full-course-runtime.integration.test.ts
+new file mode 100644
+--- /dev/null
++++ b/src/lib/learning/learning-full-course-runtime.integration.test.ts
+@@ -0,0 +1,67 @@
++import { randomUUID } from 'node:crypto'
++import { afterAll, describe, expect, it, vi } from 'vitest'
++import { PrismaPg } from '@prisma/adapter-pg'
++import { PrismaClient } from '@/generated/prisma/client'
++
++const actor = vi.hoisted(() => ({ id: '' }))
++vi.mock('@/lib/learning/learning-authorization', () => ({ requireLearningUser: async () => actor }))
++vi.mock('next/navigation', () => ({ redirect: (path: string) => { throw new Error(`REDIRECT:${path}`) } }))
++vi.mock('@/lib/prisma', () => ({ getPrisma: () => db }))
++import { startLearningCourseAction, finishLearningBlockAction, submitLearningAnswerAction, completeLearningChapterAction } from '@/app/e-learnings/actions'
++import { startFinalExamAttempt, saveFinalExamAnswer, submitFinalExamAttempt, getFinalExamResult } from './learning-final-exam-service'
++import { getMyLearningEnrollments } from './learning-query-service'
++
++const databaseUrl = process.env.LEARNING_TEST_DATABASE_URL
++if (databaseUrl) {
++  const target = new URL(databaseUrl)
++  if (target.hostname !== '127.0.0.1' || !/^\/workmatchr_learning_\d+_\d+$/.test(target.pathname)) throw new Error('Disposable local database required')
++}
++const db = databaseUrl ? new PrismaClient({ adapter: new PrismaPg({ connectionString: databaseUrl }) }) : null
++afterAll(async () => { await db?.$disconnect() })
++
++describe.skipIf(!databaseUrl)('Complete course through production services', () => {
++  it('persists all chapters, failed/passed exam, one completion and owner-isolated result', async () => {
++    actor.id = process.env.LEARNING_TEST_FLOW_USER_ID ?? randomUUID()
++    if (!process.env.LEARNING_TEST_FLOW_USER_ID) await db!.user.create({ data: { id: actor.id, email: `${actor.id}@example.invalid`, status: 'ACTIVE' } })
++    const ownerId = actor.id
++    const form = new FormData()
++    form.set('courseSlug', 'rie-in-de-praktijk')
++    await expect(startLearningCourseAction(form)).rejects.toThrow('REDIRECT:')
++    const enrollment = await db!.learningEnrollment.findFirstOrThrow({ where: { userId: ownerId } })
++    const chapters = await db!.learningChapter.findMany({ where: { courseVersionId: enrollment.courseVersionId }, orderBy: { position: 'asc' } })
++    expect(chapters).toHaveLength(10)
++    for (const chapter of chapters) {
++      const blocks = await db!.learningContentBlock.findMany({ where: { chapterId: chapter.id }, include: { question: true }, orderBy: { position: 'asc' } })
++      for (const block of blocks) {
++        if (block.question) {
++          const key = block.question.correctAnswer
++          const answer = ['SORTING', 'MULTI_CHOICE'].includes(block.question.type) ? key : (key as string[])[0]
++          expect(await submitLearningAnswerAction(block.id, answer)).toMatchObject({ ok: true, correct: true })
++        } else expect(await finishLearningBlockAction(block.id)).toEqual({ ok: true })
++      }
++      expect(await completeLearningChapterAction(chapter.id)).toEqual({ ok: true })
++    }
++    expect(await db!.learningChapterProgress.count({ where: { enrollmentId: enrollment.id, status: 'COMPLETED', progressPercentage: 100 } })).toBe(10)
++    expect(await db!.learningEnrollment.findUnique({ where: { id: enrollment.id } })).toMatchObject({ status: 'IN_PROGRESS', completedAt: null })
++    const failed = await startFinalExamAttempt(ownerId)
++    expect(await submitFinalExamAttempt(ownerId, failed.id)).toMatchObject({ score: 0, passed: false })
++    expect(await db!.learningEnrollment.findUnique({ where: { id: enrollment.id } })).toMatchObject({ status: 'IN_PROGRESS', completedAt: null })
++    const passed = await startFinalExamAttempt(ownerId)
++    const mappings = await db!.learningExamQuestion.findMany({ where: { examVersionId: passed.examVersionId }, include: { question: true } })
++    expect(mappings).toHaveLength(50)
++    for (const mapping of mappings) {
++      const key = mapping.question.correctAnswer as string[]
++      await saveFinalExamAnswer(ownerId, passed.id, mapping.questionId, mapping.question.type === 'SINGLE_CHOICE' ? key[0] : key)
++    }
++    const submissions = await Promise.all([submitFinalExamAttempt(ownerId, passed.id), submitFinalExamAttempt(ownerId, passed.id)])
++    expect(submissions.every((item) => item.score === 50 && item.passed)).toBe(true)
++    const completed = await db!.learningEnrollment.findUniqueOrThrow({ where: { id: enrollment.id } })
++    expect(completed).toMatchObject({ status: 'COMPLETED', completedAt: submissions[0].submittedAt })
++    await submitFinalExamAttempt(ownerId, passed.id)
++    await submitFinalExamAttempt(ownerId, failed.id)
++    expect(await db!.learningEnrollment.findUnique({ where: { id: enrollment.id } })).toEqual(completed)
++    expect(await getFinalExamResult(randomUUID(), passed.id)).toBeNull()
++    expect(await getFinalExamResult(ownerId, passed.id)).toMatchObject({ score: 50, passed: true })
++    expect((await getMyLearningEnrollments(ownerId))[0]).toMatchObject({ status: 'COMPLETED', completedAt: completed.completedAt })
++  }, 300_000)
++})
+diff --git a/src/lib/learning/learning-concurrency-runtime.integration.test.ts b/src/lib/learning/learning-concurrency-runtime.integration.test.ts
+new file mode 100644
+--- /dev/null
++++ b/src/lib/learning/learning-concurrency-runtime.integration.test.ts
+@@ -0,0 +1,50 @@
++import { randomUUID } from 'node:crypto'
++import { afterAll, describe, expect, it, vi } from 'vitest'
++import { PrismaPg } from '@prisma/adapter-pg'
++import { PrismaClient } from '@/generated/prisma/client'
++
++const actor = vi.hoisted(() => ({ id: '' }))
++vi.mock('@/lib/learning/learning-authorization', () => ({ requireLearningUser: async () => actor }))
++vi.mock('next/navigation', () => ({ redirect: (path: string) => { throw new Error(`REDIRECT:${path}`) } }))
++vi.mock('@/lib/prisma', () => ({ getPrisma: () => db }))
++import { startLearningCourseAction, finishLearningBlockAction } from '@/app/e-learnings/actions'
++
++const databaseUrl = process.env.LEARNING_TEST_DATABASE_URL
++if (databaseUrl) {
++  const target = new URL(databaseUrl)
++  if (target.hostname !== '127.0.0.1' || !/^\/workmatchr_learning_\d+_\d+$/.test(target.pathname)) throw new Error('Disposable local database required')
++}
++const db = databaseUrl ? new PrismaClient({ adapter: new PrismaPg({ connectionString: databaseUrl }) }) : null
++afterAll(async () => { await db?.$disconnect() })
++
++describe.skipIf(!databaseUrl)('Learning concurrency on disposable PostgreSQL', () => {
++it('six concurrent course starts produce one enrollment and normal redirects', async () => {
++  actor.id = randomUUID()
++  await db!.user.create({ data: { id: actor.id, email: `${actor.id}@example.invalid`, status: 'ACTIVE', displayName: 'WP10 synthetic' } })
++  const input = new FormData()
++  input.set('courseSlug', 'rie-in-de-praktijk')
++  const outcomes = await Promise.allSettled(Array.from({ length: 6 }, () => startLearningCourseAction(input)))
++  console.log('Concurrent start outcomes', outcomes.map((r) => r.status === 'fulfilled' ? 'RETURN' : String(r.reason).startsWith('Error: REDIRECT:') ? 'REDIRECT' : (r.reason?.code ?? 'ERROR')))
++  expect(await db!.learningEnrollment.count({ where: { userId: actor.id } })).toBe(1)
++  expect(outcomes.every((r) => r.status === 'rejected' && String(r.reason).startsWith('Error: REDIRECT:'))).toBe(true)
++}, 60000)
++
++it('concurrent completed blocks leave percentage consistent with stored interactions', async () => {
++  actor.id = randomUUID()
++  await db!.user.create({ data: { id: actor.id, email: `${actor.id}@example.invalid`, status: 'ACTIVE', displayName: 'WP10 synthetic' } })
++  const input = new FormData()
++  input.set('courseSlug', 'rie-in-de-praktijk')
++  await expect(startLearningCourseAction(input)).rejects.toThrow('REDIRECT:')
++  const enrollment = await db!.learningEnrollment.findFirstOrThrow({ where: { userId: actor.id } })
++  const chapter = await db!.learningChapter.findFirstOrThrow({ where: { courseVersionId: enrollment.courseVersionId, position: 1 } })
++  const blocks = await db!.learningContentBlock.findMany({ where: { chapterId: chapter.id, questionId: null }, take: 6, orderBy: { position: 'asc' } })
++  const result = await Promise.all(blocks.map((b) => finishLearningBlockAction(b.id)))
++  expect(result.every((r) => r.ok)).toBe(true)
++  const completed = await db!.learningInteractionAttempt.count({ where: { enrollmentId: enrollment.id } })
++  const total = await db!.learningContentBlock.count({ where: { chapterId: chapter.id } })
++  const progress = await db!.learningChapterProgress.findUniqueOrThrow({ where: { enrollmentId_chapterId: { enrollmentId: enrollment.id, chapterId: chapter.id } } })
++  expect(completed).toBe(blocks.length)
++  expect(progress.progressPercentage).toBe(Math.floor(100 * completed / total))
++}, 60000)
++
++})
