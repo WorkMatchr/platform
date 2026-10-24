@@ -31,6 +31,7 @@ export const registrationSchema = z
   })
 
 export const signInSchema = z.object({
+  rememberMe: z.enum(['on']).optional().transform((value) => value === 'on'),
   email,
   password: z.string().min(1).max(128),
   returnTo: z.string().optional(),

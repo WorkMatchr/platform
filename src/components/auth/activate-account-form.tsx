@@ -62,7 +62,7 @@ export function ActivateAccountForm({
     const signInResult = await runAuthClientRequest(() => authClient.signIn.email({
       email,
       password: result.data.password,
-      rememberMe: true,
+      rememberMe: false,
     }))
     setLoading(false)
     if (signInResult !== 'accepted') {
