@@ -107,3 +107,62 @@ PASS betekent uitsluitend de hieronder vermelde lokale/codecontrole, nooit bewez
 PR #58 neemt de bestaande commits van #57 als expliciete afhankelijkheid mee; de functionele financiële correcties zijn niet opnieuw geïmplementeerd. Mergevolgorde: #57 vóór #58. Op de nieuwe testkopie is uitsluitend `scripts/test-financial-chain-database.ts` afgestemd op de strengere mailacceptatie: zes development-bezorgweigeringen leveren één ledgerboeking/factuur, nul vals-SENT-events en één failure-event. Een expliciete fake provideracceptatie wordt vervolgens exact eenmaal verwerkt; replay verstuurt niet opnieuw. De PostgreSQL-proef slaagt (54,68 s), eigen database verwijderd, bestaande database-/rolidentiteiten behouden. Er is geen echte mail of betaling uitgevoerd.
 
 De gezamenlijke WP12-regressies en definitieve checks worden in het integrale WP12-rapport vastgelegd. Deze voorbereiding is geen productie- of providerbezorgacceptatie.
+
+## PR #58 — mergeherstel na #57 (24 oktober 2026)
+
+### Bevestigde oorzaak en beperkte oplossing
+
+GitHub rapporteerde `CONFLICTING / DIRTY` voor head `836fa1e0ab928d0754ad77092541305de9107f65`. De actuele main is `4cb6f5bc109c6c503ae7429c5ef426a4319ea8b8`, waarin #57 als squashcommit is opgenomen. De gemeenschappelijke voorouder is `a49b59507139ef7121634705da19f781b17845f0`.
+
+Een werkboom-onafhankelijke `git merge-tree --write-tree --name-only` reproduceert exact één conflicterend bestand: `scripts/test-financial-chain-database.ts`. Beide branches introduceerden hetzelfde betaalreplay-testblok na de gemeenschappelijke voorouder, maar #58 bevatte al de strengere WP11/WP12-mailafstemming. Daardoor conflicteerden twee hunks: de concurrency-/mailassertions en hun samenvattende logregel. Dit is een werkelijk Git-inhoudsconflict; geen aanwijzing voor een nieuwe productieregressie of een CI-infrastructuurfout.
+
+Actuele main is uitsluitend in de schone bestaande notificatie-integratieworktree samengevoegd, zonder rebase of force-push. Beide conflicthunks behouden exact de versie uit de bestaande #58-head. De opgeloste financiële test is inhoudelijk identiek aan die vóór de merge. Geen nieuwe productlogica of verzwakte assertion toegevoegd.
+
+Expliciet vergeleken:
+
+- Alle acht overige door #57 geraakte bestanden zijn exact gelijk aan actuele main, inclusief financiële replay-autorisatie, volledig ledgersaldo en bescherming tegen een vertraagde betaalstatus.
+- De vijf notification-bron-/testbestanden zijn exact gelijk aan de bestaande #58-head. Retrybare Resend-transportfout, alleen echte provideracceptatie als SENT en hercontrole van actieve opdrachtgeverstatus blijven intact.
+- Het WP11/WP12-contract blijft behouden: zes development-mailweigeringen, één ledger/factuur, nul onterecht SENT, één failure-event; vervolgens één geïnjecteerde fake provideracceptatie en replay zonder tweede mail.
+- Tegen actuele main resteren uitsluitend de oorspronkelijke acht notificatie-/test-/rapportbestanden. De eerder meegevoerde #57-wijzigingen verschijnen niet opnieuw als PR-wijziging.
+
+### Hernieuwde regressievalidatie
+
+| Controle | Resultaat |
+| --- | --- |
+| Finance, credits, marketplace, e-mail, organisaties, uitnodigingen, authpolicy en maintenance | 487/487 tests, 65 bestanden PASS |
+| Scheduler/auth/deduplicatie/logveiligheid met mocks | 10/10 PASS |
+| PostgreSQL financiële keten | PASS, 179,58 s |
+| PostgreSQL creditwallet/ledger | PASS, 289,79 s |
+| PostgreSQL assignment-notificaties | PASS, 156,87 s; 17 matchingfixtures |
+| Tijdelijke databasecleanup | PASS; 19 bestaande database-identiteiten en 16 rollen ongewijzigd, nul achtergebleven testdatabases |
+
+De bestaande harnesses maakten ieder een eigen tijdelijke database op de bevestigde lokale Docker PostgreSQL 17-server. Alleen daar zijn de 85 bestaande worktree-migraties uitgevoerd en synthetische fixtures gebruikt. De financiële keten gebruikt een in-memory Mollie-gateway en blokkeert externe fetches; mailacceptatie is geïnjecteerd fake transport. Geen productieverbinding, bestaande databasemigratie, echte betaling, echte mail of providerconfiguratiewijziging. De notificatiebrowser-fixtureoptie was uitgeschakeld; geen nieuwe testaccountwachtwoorden of blijvende accounts aangemaakt.
+
+De creditwalletproef bevestigt onder meer het saldo 151 over 54 ledgerregels, terwijl de UI-query vijftig regels toont. De notificatieproef bevestigt geschorste opdrachtgever/membership, leaseherstel, Retry-After, payloadintegriteit, developmentstatus, privacy, voorkeuren en tenantisolatie. De bestaande niet-fatale pg-deprecation over overlappende querycalls is afzonderlijk zichtbaar; geen unrelated driverrefactor uitgevoerd.
+
+| Aanvullende controle | Resultaat |
+| --- | --- |
+| Volledige lint | PASS; uitsluitend genegeerde lokale testlogs/helpers onder .local-storage uitgesloten |
+| Standalone TypeScript | BASELINE_FAILURE: exact vier TS2345-readonly-arrayfouten in src/lib/compliance/rule-engine.test.ts:13,14,23,24; geen nieuwe fout |
+| Productiebuild | PASS; compilatie, build-TypeScript, 163 pagina's en buildtraces afgerond |
+| git diff --check | PASS |
+| Secrets-/scopecontrole | PASS; nul patroonbevindingen in toegevoegde regels, geen env/config/database/package-artifacts in de PR |
+
+De vier standalone TypeScript-fouten waren al vastgelegd in de baseline; het betreffende testbestand en tsconfig zijn identiek aan actuele main. Deze unrelated fouten zijn niet aangepast. De lokale productiebuild is uitgevoerd met `npm run build -- --webpack` vanwege de bestaande node_modules-junction. Er is geen buildconfiguratie of dependency gewijzigd. De bestaande Next-waarschuwing over meerdere workspace-lockfiles is geen nieuwe regressie.
+
+De definitieve PR-diff tegen main bestaat uit precies deze acht bestanden:
+
+- docs/wp09-notifications-acceptance.md
+- scripts/test-assignment-notifications-database.ts
+- scripts/test-financial-chain-database.ts
+- src/lib/email.test.ts
+- src/lib/email.ts
+- src/lib/finance/financial-invoice-delivery-service.test.ts
+- src/lib/finance/financial-invoice-delivery-service.ts
+- src/lib/marketplace/assignment-email-worker.ts
+
+### Afgebakend mergeadvies
+
+Lokaal technisch GO voor deze bestaande, begrensde PR #58 zodra de checks van de nieuwe head en de bijbehorende Vercel-preview groen zijn. De remote resultaten worden bij de PR vastgelegd. PR #58 blijft Draft en wordt niet automatisch gemerged.
+
+Dit advies betreft het conflictvrij integreren van de bestaande notificatiecorrecties met #57. Het is geen integrale productie- of bezorgvrijgave: de eerdere operationele bezorg-/retentie-/provideracceptatiepunten en financiële acknowledgementgrens van WP09 blijven open. Geen nieuwe productieactie, echte e-mail, betaling, juridische vrijgave of brede securityvrijgave volgt uit deze testresultaten.

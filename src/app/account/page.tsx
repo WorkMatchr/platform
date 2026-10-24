@@ -1,7 +1,6 @@
 import { AssignmentEmailPreference } from '@/components/account/assignment-email-preference'
 import { getPrisma } from '@/lib/prisma'
 import { AuthShell, StatusMessage } from '@/components/auth/auth-shell'
-import { LogoutButton } from '@/components/auth/logout-button'
 import { LinkButton } from '@/components/ui/link-button'
 import { getActiveOrganizationContext } from '@/lib/organizations/organization-authorization'
 import { canManageOrganization } from '@/lib/organizations/organization-policy'
@@ -95,7 +94,6 @@ export default async function AccountPage() {
               <div className="mt-5"><LinkButton href="/mijn-arbo-wijzers" variant="outline">Bekijk Mijn Arbo-wijzers</LinkButton></div>
             </section>
           ) : null}
-          <div><LogoutButton /></div>
         </div>
       </div>
     </AuthShell>

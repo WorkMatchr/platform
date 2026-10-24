@@ -116,7 +116,8 @@ describe('publieke informatiearchitectuur', () => {
     expect(html.match(/<h1(?:\s|>)/g)).toHaveLength(1)
     expect(html).toContain('Deze pagina kunnen we niet vinden')
     expect(html).toContain('href="/"')
-    expect(html).toContain('href="/#situaties"')
+    expect(html).toMatch(/href="\/opdracht-starten"[^>]*>Start uw opdracht<\/a>/)
+    expect(html).not.toContain('href="/#situaties"')
     expect(html).toContain('href="/kenniscentrum"')
   })
 

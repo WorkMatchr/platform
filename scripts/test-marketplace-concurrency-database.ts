@@ -42,9 +42,10 @@ async function main() {
     process.env.DATABASE_URL = testUrl.toString()
     const { getPrisma } = await import('../src/lib/prisma')
     const { acceptProviderInvitation } = await import('../src/lib/marketplace/participation-service')
-    const { getProviderInvitationDetail } = await import('../src/lib/marketplace/dashboard-query-service')
+    const { getProviderInvitationDetail, getClientQuotes, getProviderQuoteDetail } = await import('../src/lib/marketplace/dashboard-query-service')
     const { saveQuoteDraft, submitQuote } = await import('../src/lib/marketplace/quote-service')
     const { awardMarketplaceQuote } = await import('../src/lib/marketplace/award-service')
+    const { sendMarketplaceMessage } = await import('../src/lib/marketplace/messaging-service')
     const { correctMarketplaceCredits, grantMarketplaceCredits, reserveCreditsInTransaction } = await import('../src/lib/marketplace/credit-service')
     const { createMarketplaceNotification, enqueueMarketplaceEmail, writeMarketplaceAudit } = await import('../src/lib/marketplace/marketplace-events')
     prisma = getPrisma()
@@ -165,6 +166,12 @@ async function main() {
     assert.equal(await prisma.marketplaceAuditEvent.count({ where: { action: 'QUOTE_SUBMITTED', entityId: quote.id } }), 1)
 
     await submitQuote({ actorUserId: secondProviderUser.id, providerOrganizationId: secondProviderOrganization.id, quoteId: secondQuote.id, expectedQuoteVersion: 1, idempotencyKey: randomUUID() })
+    const channel = await prisma.marketplaceMessageChannel.findFirstOrThrow({ where: { participationId: acceptedParticipation.id } })
+    const messageInput = { actorUserId: providerUser.id, organizationId: providerOrganization.id, channelId: channel.id, content: 'Uitsluitend synthetisch testbericht.', idempotencyKey: randomUUID() }
+    const message = await sendMarketplaceMessage(messageInput)
+    assert.equal((await sendMarketplaceMessage(messageInput)).id, message.id)
+    await assert.rejects(() => sendMarketplaceMessage({ ...messageInput, actorUserId: secondProviderUser.id, organizationId: secondProviderOrganization.id }), { code: 'ACCESS_DENIED' })
+    assert.equal(await prisma.marketplaceMessage.count({ where: { idempotencyKey: messageInput.idempotencyKey } }), 1)
     const awardKey = randomUUID()
     const awardRace = await Promise.allSettled([
       awardMarketplaceQuote({ actorUserId: clientUser.id, clientOrganizationId: clientOrganization.id, assignmentId: acceptanceFixture.assignment.id, quoteId: quote.id, motivation: 'Deze fictieve offerte past aantoonbaar het beste.', idempotencyKey: awardKey }),
@@ -177,6 +184,21 @@ async function main() {
     assert.equal((await prisma.quote.findUniqueOrThrow({ where: { id: secondQuote.id } })).status, 'REJECTED')
     assert.equal(await prisma.assignmentResolution.count({ where: { assignmentId: acceptanceFixture.assignment.id } }), 1)
     assert.equal(await prisma.marketplaceAuditEvent.count({ where: { action: 'QUOTE_AWARDED', organizationId: clientOrganization.id } }), 1)
+    const awardInput = { actorUserId: clientUser.id, clientOrganizationId: clientOrganization.id, assignmentId: acceptanceFixture.assignment.id, quoteId: quote.id, motivation: 'Deze fictieve offerte past aantoonbaar het beste.', idempotencyKey: awardKey }
+    assert.equal((await awardMarketplaceQuote(awardInput)).quoteId, quote.id)
+    await assert.rejects(() => awardMarketplaceQuote({ ...awardInput, actorUserId: secondProviderUser.id, clientOrganizationId: secondProviderOrganization.id }), { code: 'ACCESS_DENIED' })
+    await assert.rejects(() => awardMarketplaceQuote({ ...awardInput, quoteId: secondQuote.id }), { code: 'ACCESS_DENIED' })
+    await prisma.organizationMembership.updateMany({ where: { userId: clientUser.id, organizationId: clientOrganization.id }, data: { status: 'SUSPENDED' } })
+    await assert.rejects(() => awardMarketplaceQuote(awardInput), { code: 'ACCESS_DENIED' })
+    await prisma.organizationMembership.updateMany({ where: { userId: clientUser.id, organizationId: clientOrganization.id }, data: { status: 'ACTIVE' } })
+    await prisma.organization.update({ where: { id: clientOrganization.id }, data: { status: 'SUSPENDED' } })
+    await assert.rejects(() => getClientQuotes(clientUser.id, clientOrganization.id, acceptanceFixture.assignment.id), { code: 'ACCESS_DENIED' })
+    await assert.rejects(() => sendMarketplaceMessage(messageInput), { code: 'ACCESS_DENIED' })
+    await prisma.organization.update({ where: { id: clientOrganization.id }, data: { status: 'ACTIVE' } })
+    await prisma.organization.update({ where: { id: providerOrganization.id }, data: { status: 'SUSPENDED' } })
+    await assert.rejects(() => getProviderQuoteDetail(providerUser.id, providerOrganization.id, quote.id), { code: 'ACCESS_DENIED' })
+    await prisma.organization.update({ where: { id: providerOrganization.id }, data: { status: 'ACTIVE' } })
+    console.log('Replay-autorisatie: eigen herhaling één resultaat; vreemde tenant, andere offerte en ingetrokken membership geweigerd.')
 
     const grantKey = randomUUID()
     const grantRace = await Promise.allSettled([

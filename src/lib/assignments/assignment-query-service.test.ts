@@ -41,6 +41,10 @@ beforeEach(() => {
     publishedAt: null,
     publishedVersion: null,
     publishedByUser: null,
+    requestId: null,
+    request: null,
+    primarySpecialism: null,
+    specialisms: [],
     createdAt: new Date('2026-07-13T10:00:00Z'),
     updatedAt: new Date('2026-07-13T10:00:00Z'),
     clientOrganization: { name: 'Voorbeeldorganisatie' },
@@ -66,7 +70,7 @@ describe('opdrachtqueryservice', () => {
     expect(result.items[0]?.organizationName).toBe('Voorbeeldorganisatie')
   })
 
-  it('begrenst MEMBER in het overzicht tot opdrachten uit eigen intakes', async () => {
+  it('begrenst MEMBER tot eigen legacy-intakes of canonieke adviesdossiers binnen de tenant', async () => {
     mocks.organizationFind.mockResolvedValue({ id: organizationId, name: 'Voorbeeldorganisatie', memberships: [{ role: 'MEMBER' }] })
     await listAssignmentsForOrganization(userId, organizationId, 'completed')
     expect(mocks.assignmentFindMany).toHaveBeenCalledWith(expect.objectContaining({
@@ -74,7 +78,10 @@ describe('opdrachtqueryservice', () => {
         clientOrganizationId: organizationId,
         publishedAt: { not: null },
         status: { in: ['AWARDED', 'CLOSED'] },
-        intake: { createdByUserId: userId },
+        OR: [
+          { intake: { createdByUserId: userId } },
+          { request: { adviceDossier: { ownerUserId: userId } } },
+        ],
       },
     }))
   })
@@ -90,6 +97,9 @@ describe('opdrachtqueryservice', () => {
       publishedByName: null,
       publishedVersion: null,
       revisionCount: 1,
+      canonicalRequestId: null,
+      primaryExpertise: null,
+      additionalExpertises: [],
     })
   })
 
@@ -97,5 +107,15 @@ describe('opdrachtqueryservice', () => {
     mocks.requireViewer.mockRejectedValue(new AssignmentServiceError('ACCESS_DENIED'))
     await expect(getAssignmentDetail(userId, organizationId, assignmentId)).rejects.toMatchObject({ code: 'ACCESS_DENIED' })
     expect(mocks.assignmentFindUnique).not.toHaveBeenCalled()
+  })
+
+  it('leest de startvoorkeur uit de canonieke Request zonder de publicatiedata te wijzigen', async () => {
+    const assignment = await mocks.assignmentFindUnique()
+    mocks.assignmentFindUnique.mockResolvedValue({ ...assignment, requestId: assignmentId, request: { requestedStart: 'WITHIN_ONE_MONTH' } })
+    const result = await getAssignmentDetail(userId, organizationId, assignmentId)
+    expect(result).toMatchObject({ requestedStart: 'WITHIN_ONE_MONTH', desiredStartDate: null })
+    expect(mocks.assignmentFindUnique).toHaveBeenLastCalledWith(expect.objectContaining({
+      select: expect.objectContaining({ request: { select: { requestedStart: true } } }),
+    }))
   })
 })

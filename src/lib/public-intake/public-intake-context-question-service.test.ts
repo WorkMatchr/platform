@@ -25,7 +25,7 @@ const classification = {
 
 describe('public intake context-question persistence', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.resetAllMocks()
     mocks.transaction.mockImplementation(async (callback: (transaction: unknown) => unknown) => callback({
       publicIntakeContextQuestion: {
         findMany: mocks.findMany,
