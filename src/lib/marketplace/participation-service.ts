@@ -130,9 +130,12 @@ export async function declineProviderInvitation(input: {
   if (input.reason.trim().length < 10) throw new MarketplaceServiceError('VALIDATION_ERROR')
   const now = input.now ?? new Date()
   return getPrisma().$transaction(async (transaction) => {
-    const repeated = await transaction.marketplaceAuditEvent.findUnique({ where: { correlationKey: input.idempotencyKey } })
-    if (repeated) return repeated
     const access = await requireProviderMarketplaceAccess(transaction, input.actorUserId, input.providerOrganizationId, true)
+    const repeated = await transaction.marketplaceAuditEvent.findUnique({ where: { correlationKey: input.idempotencyKey } })
+    if (repeated) {
+      if (repeated.actorUserId !== input.actorUserId || repeated.organizationId !== input.providerOrganizationId || repeated.action !== 'INVITATION_DECLINED' || repeated.entityType !== 'ProviderInvitation' || repeated.entityId !== input.invitationId) throw new MarketplaceServiceError('ACCESS_DENIED')
+      return repeated
+    }
     const invitation = await transaction.providerInvitation.findFirst({
       where: { id: input.invitationId, providerOrganizationId: input.providerOrganizationId, providerProfileId: access.providerProfile.id, status: 'INVITED' },
       include: { assignment: { select: { clientOrganizationId: true } } },
