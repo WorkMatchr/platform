@@ -1,4 +1,5 @@
-import type { AssignmentStatus } from '@/generated/prisma/client'
+import type { AssignmentStatus, RequestRequestedStart } from '@/generated/prisma/client'
+import { requestStartLabels } from '@/lib/requests/request-contract'
 
 export const assignmentStatusLabels: Record<AssignmentStatus, string> = {
   DRAFT: 'Nog invullen',
@@ -23,4 +24,8 @@ export function formatAssignmentDate(value: string): string {
 
 export function formatOptionalAssignmentDate(value: string | null): string {
   return value ? formatAssignmentDate(value) : 'Nog niet bepaald'
+}
+
+export function formatAssignmentStart(date: string | null, preference?: RequestRequestedStart | null): string {
+  return date ? formatAssignmentDate(date) : preference ? requestStartLabels[preference] : 'Nog niet bepaald'
 }
