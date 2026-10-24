@@ -1,11 +1,12 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
   getContext: vi.fn(),
   getPlatformContext: vi.fn(),
+  getLearningProfile: vi.fn(),
 }))
 
 vi.mock('@/lib/organizations/organization-authorization', () => ({
@@ -25,6 +26,10 @@ vi.mock('@/lib/platform-admin/platform-admin-authorization', () => ({
   getPlatformContext: mocks.getPlatformContext,
 }))
 
+vi.mock('@/lib/prisma', () => ({
+  getPrisma: () => ({ learningProfile: { findUnique: mocks.getLearningProfile } }),
+}))
+
 import { Header } from './header'
 
 async function renderHeader() {
@@ -32,8 +37,9 @@ async function renderHeader() {
 }
 
 beforeEach(() => {
-  vi.clearAllMocks()
+  vi.clearAllMocks(); vi.stubEnv('LEARNING_RUNTIME_ENABLED', 'true')
   mocks.getPlatformContext.mockRejectedValue(new Error('Geen platformbeheerder'))
+  mocks.getLearningProfile.mockResolvedValue(null)
 })
 
 describe('headerweergave per sessiecontext', () => {
@@ -79,6 +85,8 @@ describe('headerweergave per sessiecontext', () => {
     expect(html).toContain('Arbo Compliance Check')
     expect(html).toContain('Werk')
     expect(html).toContain('Organisatie')
+    expect(html).toContain('E-LEARNINGS')
+    expect(html).toContain('Mijn e-learnings')
     expect(html).toContain('Persoonlijk')
     expect(html).toContain('Account')
     expect(html).toContain('Organisatie')
@@ -119,10 +127,27 @@ describe('headerweergave per sessiecontext', () => {
     expect(html).toContain('Credits &amp; facturen')
     expect(html).toContain('href="/credits/pro"')
     expect(html).toContain('WorkMatchr Pro')
+    expect(html).toContain('E-LEARNINGS')
     expect(html.indexOf('Werk')).toBeLessThan(html.indexOf('Organisatie'))
     expect(html.indexOf('Organisatie')).toBeLessThan(html.indexOf('Persoonlijk'))
     expect(html).not.toMatch(/Aanbiedersdossier|Providerdossier|Mijn providerdossier/)
     expect(html).toContain('Uitloggen')
+  })
+
+  it('toont Learning-only gebruikers geen Marketplace- of organisatienavigatie', async () => {
+    mocks.getContext.mockResolvedValue({
+      user: { id: 'learning-user-1', displayName: 'Cursist', email: 'cursist@example.invalid', accountType: null, status: 'ACTIVE' },
+      activeMembership: null,
+    })
+    mocks.getLearningProfile.mockResolvedValue({ id: 'learning-profile-1' })
+
+    const html = await renderHeader()
+
+    expect(html).toContain('E-LEARNINGS')
+    expect(html).toContain('Opleidingsaanbod')
+    expect(html).not.toContain('>Werk<')
+    expect(html).not.toContain('>Organisatie<')
+    expect(html).not.toContain('>Opdrachten<')
   })
 
   it('toont voor een gevalideerde platformbeheerder uitsluitend beheernavigatie', async () => {
@@ -203,3 +228,6 @@ describe('headerweergave per sessiecontext', () => {
     expect(logout).toContain("window.location.assign('/')")
   })
 })
+
+afterEach(() => vi.unstubAllEnvs())
+it('raadpleegt geen Learning-tabellen zolang de gate uitstaat', async () => { vi.stubEnv('LEARNING_RUNTIME_ENABLED', 'false'); mocks.getLearningProfile.mockClear(); mocks.getContext.mockResolvedValue({user:{id:'synthetic',displayName:'Synthetisch',accountType:'CLIENT',status:'ACTIVE'},activeMembership:null}); const html=await renderHeader(); expect(mocks.getLearningProfile).not.toHaveBeenCalled(); expect(html).not.toContain('E-LEARNINGS') })

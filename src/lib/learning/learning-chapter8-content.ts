@@ -1,0 +1,262 @@
+import type { LearningBlockSeed, LearningQuestionSeed } from './learning-prototype-content'
+
+export const learningChapter8SourceMetadata = {
+  chapter: 'rie-actueel-houden',
+  checkedAt: '2026-09-27',
+  reviewStatus: 'PROTOTYPE_REQUIRES_CONTENT_AND_LEGAL_REVIEW',
+  sourceIds: ['arbowet-current', 'arbeidsinspectie-rie', 'arboportaal-werknemersraadpleging-2026'],
+  sources: [
+    { title: 'Arboportaal — Waaruit bestaat de RI&E?', url: 'https://www.arboportaal.nl/onderwerpen/arbowet--en--regelgeving/risico-inventarisatie---evaluatie/waaruit-bestaat-de-rie' },
+    { title: 'Arboportaal — Regels voor raadpleging van werknemers aangepast per 1 juli 2026', url: 'https://www.arboportaal.nl/actueel/nieuws/2026/06/29/regels-voor-raadpleging-van-werknemers-aangepast-per-1-juli-2026' },
+    { title: 'Nederlandse Arbeidsinspectie — Werkinstructie Arbozorg: RI&E, basiscontract en deskundige bijstand (26 januari 2026)', url: 'https://www.nlarbeidsinspectie.nl/site/binaries/site-content/collections/documents/2026/01/26/werkinstructie-arbozorg-onderdeel-rie-basiscontract-en-deskundige-bijstand/werkinstructie-arbozorg-onderdeel-rie-basiscontract-en-deskundige-bijstand-20260126.pdf' },
+  ],
+  reviewNotes: 'CONTENT REVIEW REQUIRED: laat actualisatieclaims, werknemersraadpleging en toepassing op specifieke situaties beoordelen door een arbotechnisch/juridisch reviewer. Management of Change en PDCA zijn didactische methodieken; deze les stelt geen individuele juridische verplichtingen vast.',
+} as const
+
+function question(code: string, type: LearningQuestionSeed['type'], knowledgeArea: string, difficulty: number,
+  learningObjective: string, questionText: string, explanation: string,
+  choices: Array<[value: string, text: string, correct: boolean]>): LearningQuestionSeed {
+  return {
+    code: `WL001-H8-${code}`, type, knowledgeArea, difficulty, learningObjective, questionText, explanation,
+    correctAnswer: choices.filter((item) => item[2]).map((item) => item[0]),
+    options: choices.map(([value, text, isCorrect]) => ({ value, text, isCorrect })),
+  }
+}
+
+const four = (correct: [string, string], wrong: [string, string], wrong2: [string, string], wrong3: [string, string]) =>
+  [[...correct, true], [...wrong, false], [...wrong2, false], [...wrong3, false]] as Array<[string, string, boolean]>
+
+export const learningChapter8Questions: LearningQuestionSeed[] = [
+  question('OPENING', 'SINGLE_CHOICE', 'actualiteit', 2, 'Een vaste algemene geldigheidsduur onderscheiden van actualisatie op basis van ontwikkelingen',
+    'Directeur Karin zegt: “Onze RI&E is twee jaar oud. Dus die is nog drie jaar geldig.” Klopt deze redenering?',
+    'Er is niet simpelweg een algemene vaste geldigheidsduur. Gewijzigde werkmethoden of omstandigheden, opgedane ervaring en nieuwe inzichten kunnen eerder aanleiding geven de RI&E aan te passen. Dat betekent ook niet dat ieder jaar de hele RI&E opnieuw moet worden opgesteld.', four(
+      ['impact', 'Nee. Er is geen vaste algemene termijn; ontwikkelingen kunnen aanpassing nodig maken.'],
+      ['ongeval', 'Ja, behalve na een ongeval; dan bekijkt de werkgever opnieuw de hele RI&E.'],
+      ['vijf', 'Ja. Een RI&E geldt altijd vijf jaar; veranderingen tellen tussendoor niet mee.'],
+      ['jaarlijks', 'Nee. De werkgever maakt ieder jaar de volledige RI&E opnieuw, ongeacht veranderingen.'])),
+  question('TRIGGERS', 'MULTI_CHOICE', 'verandertriggers', 2, 'Fysieke en organisatorische ontwikkelingen herkennen als mogelijke actualisatietriggers',
+    'Welke gebeurtenissen geven duidelijk aanleiding om te beoordelen of de RI&E nog aansluit op de werkelijkheid? Selecteer alle toepasselijke antwoorden.',
+    'Een nieuwe productielijn, verhuizing, nieuwe stof, gewijzigde ploegendienst, bijna-aanrijdingen en betrouwbare nieuwe kennis kunnen de risico’s of bestaande beheersing veranderen. Beoordeel de impact; niet elke gebeurtenis vereist automatisch een volledige nieuwe RI&E.', [
+      ['machine', 'Er wordt een nieuwe productielijn met andere machines geplaatst.', true],
+      ['verhuizing', 'De organisatie verhuist naar een ander magazijn.', true],
+      ['stof', 'Er wordt een nieuwe chemische reiniger gebruikt.', true],
+      ['ploeg', 'De werktijden veranderen en er komt een ploegendienst bij.', true],
+      ['bijna', 'Er zijn twee bijna-aanrijdingen op dezelfde route geweest.', true],
+      ['kennis', 'Er komen betrouwbare nieuwe inzichten over gezondheidseffecten van een gebruikte stof.', true],
+      ['administratief', 'Een administratieve wijziging heeft geen invloed op werk, risico’s of maatregelen.', false],
+    ]),
+  question('NIEUWE-MACHINE', 'SINGLE_CHOICE', 'management-of-change', 2, 'Risico’s van een geplande verandering tijdig beoordelen',
+    'Een organisatie plaatst over twee maanden een nieuwe productiemachine. Wanneer is het verstandig de arbeidsrisico’s van deze verandering mee te nemen?',
+    'Neem de risico’s bij voorkeur vóór de invoering mee. Dan kunnen passende maatregelen en eventuele aanpassingen van RI&E en Plan van Aanpak tijdig worden voorbereid. Dit is goede praktijk; de precieze aanpak hangt af van de verandering en situatie.', four(
+      ['vooraf', 'Voor de invoering, zodat risico’s en mogelijke maatregelen tijdig kunnen worden meegenomen.'],
+      ['later', 'Pas na enkele maanden, wanneer er genoeg praktijkervaring is opgebouwd.'],
+      ['ongeval', 'Alleen nadat de machine een incident heeft veroorzaakt.'],
+      ['volledig', 'De hele RI&E moet al vóór iedere aanschaf opnieuw worden opgesteld.'])),
+  question('MO-C', 'SINGLE_CHOICE', 'management-of-change', 2, 'Management of Change als methodische denkwijze herkennen',
+    'Wat is in deze les de rol van Management of Change?',
+    'Management of Change is hier een methodiek: een manier om een geplande verandering systematisch langs mogelijke risico’s, maatregelen en actualisatie te leggen. De term duidt geen universeel wettelijk verplicht systeem aan.', four(
+      ['methodiek', 'Een denkwijze om vóór en tijdens een verandering risico’s, maatregelen en mogelijke actualisatie systematisch te bekijken.'],
+      ['wet', 'Een wettelijk voorgeschreven procedure met voor iedere organisatie dezelfde stappen en formulieren.'],
+      ['inspectie', 'Een vervanging van de RI&E door een inspectie na afloop van een project.'],
+      ['volledig', 'Een vaste regel dat bij iedere verandering de complete RI&E opnieuw wordt opgesteld.'])),
+  question('BIJNA-ONGEVAL', 'SINGLE_CHOICE', 'incidenten-en-signalen', 2, 'Een bijna-ongeval als informatiebron voor herbeoordeling gebruiken',
+    'Een heftruck mist een medewerker op enkele centimeters. Niemand raakt gewond. Omdat er geen letsel is, hoeft de RI&E niet opnieuw bekeken te worden. Klopt dat?',
+    'Nee. Een bijna-ongeval kan laten zien dat een gevaar niet was herkend of dat bestaande maatregelen in de praktijk onvoldoende werken. Onderzoek de gebeurtenis en beoordeel wat dit betekent voor relevante onderdelen van RI&E en Plan van Aanpak.', four(
+      ['nee', 'Nee. Ook zonder letsel is dit een signaal om het risico en de werking van maatregelen te beoordelen.'],
+      ['ja', 'Ja. Zonder letsel is er geen informatie die relevant kan zijn voor de RI&E.'],
+      ['volledig', 'Nee. Ieder bijna-ongeval verplicht automatisch tot een volledig nieuwe RI&E.'],
+      ['toets', 'Ja. Alleen een externe deskundige mag na letsel naar de RI&E kijken.'])),
+  question('ONGEVAL', 'SINGLE_CHOICE', 'incidenten-en-signalen', 3, 'Incidentonderzoek onderscheiden van de vraag of de RI&E en maatregelen passend zijn',
+    'Een medewerker raakt gewond tijdens onderhoud aan een machine. Welke RI&E-vraag is naast incidentonderzoek relevant?',
+    'Onderzoek ook of het onderhoudsrisico voldoende was geïnventariseerd en beoordeeld, en of de bestaande maatregelen in deze situatie passend waren. Werk relevante onderdelen bij als dat uit de beoordeling nodig blijkt; incidentonderzoek en RI&E-actualisatie zijn verwante maar verschillende activiteiten.', four(
+      ['risico', 'Was dit risico voldoende in de RI&E opgenomen en beoordeeld, en zijn de maatregelen nog passend?'],
+      ['leeftijd', 'Is de RI&E ouder dan vijf jaar en daarom automatisch ongeldig?'],
+      ['volledig', 'Moet zonder verdere analyse altijd de hele RI&E worden vervangen?'],
+      ['rapport', 'Kan het incidentrapport de RI&E vervangen zodat geen verdere beoordeling nodig is?'])),
+  question('WERKNEMERS', 'SINGLE_CHOICE', 'werknemerssignalen', 2, 'De praktijkkennis van werknemers benutten bij het actueel houden van de RI&E',
+    'Waarom kunnen werknemers belangrijk zijn bij het actueel houden van de RI&E?',
+    'Werknemers kennen de feitelijke werkzaamheden en merken veranderingen, knelpunten en signalen vaak vroeg op. De werkgever raadpleegt werknemers over onderwerpen die de arbeidsomstandigheden beïnvloeden; de manier waarop dat gebeurt hangt mede samen met OR/PVT en de toepasselijke situatie. Dit vervangt de eigen beoordeling van risico’s niet.', four(
+      ['praktijk', 'Zij ervaren het dagelijkse werk en kunnen veranderingen en knelpunten signaleren die niet altijd uit documenten blijken.'],
+      ['overdragen', 'Omdat werknemers daarmee de verantwoordelijkheid voor de RI&E van de werkgever overnemen.'],
+      ['alleen', 'Alleen werknemers met een formele preventierol kunnen praktijkervaring over risico’s geven.'],
+      ['na', 'Hun informatie is pas relevant nadat een deskundige de RI&E heeft goedgekeurd.'])),
+  question('PV-A', 'SINGLE_CHOICE', 'pva-actualisatie', 2, 'De gevolgen van een gewijzigde risicobeoordeling verbinden aan het Plan van Aanpak',
+    'Een relevante RI&E-beoordeling is aangepast. Wat is een logische vervolgvraag over het Plan van Aanpak?',
+    'Bekijk of risico’s anders zijn beoordeeld en of bestaande maatregelen nog passen. Werk het Plan van Aanpak waar nodig bij, bijvoorbeeld wanneer acties, eigenaarschap of termijnen veranderen. Een wijziging in de RI&E leidt niet automatisch tot een willekeurige nieuwe actie.', four(
+      ['maatregelen', 'Zijn de bestaande maatregelen nog passend en moet het Plan van Aanpak op basis van de beoordeling worden bijgewerkt?'],
+      ['archief', 'Moet het Plan van Aanpak ongewijzigd blijven omdat het al bij de RI&E hoorde?'],
+      ['alles', 'Moet ieder actiepunt automatisch worden geschrapt en opnieuw ingevoerd?'],
+      ['toets', 'Moet de werkgever altijd eerst de volgende vaste toetsdatum afwachten?'])),
+  question('EFFECT', 'SINGLE_CHOICE', 'effectiviteit', 3, 'Een uitgevoerde maar ineffectieve maatregel opnieuw beoordelen',
+    'Een technische maatregel uit het Plan van Aanpak is uitgevoerd. Bij controle blijkt dat relevante blootstelling blijft bestaan. Wat betekent dit?',
+    'Uitvoering alleen bewijst niet dat het risico voldoende wordt beheerst. Beoordeel de werking opnieuw en pas RI&E en Plan van Aanpak waar nodig aan. De precieze vervolgstap hangt af van de feiten en kan aanvullende deskundigheid vragen.', four(
+      ['bijstellen', 'Beoordeel de beheersing opnieuw en pas risico-inschatting en acties waar nodig aan.'],
+      ['afgerond', 'Het actiepunt is uitgevoerd en kan daarom altijd als effectief worden beschouwd.'],
+      ['vijfjaar', 'Wacht tot de volgende vijfjaarlijkse volledige RI&E voordat u de maatregel beoordeelt.'],
+      ['stop', 'Verwijder de maatregel uit de RI&E omdat deze niet direct alles heeft opgelost.'])),
+  question('NIEUWE-KENNIS', 'SINGLE_CHOICE', 'nieuwe-inzichten', 2, 'Herkennen dat nieuwe kennis zonder gewijzigde werkzaamheden relevant kan zijn',
+    'Een stof wordt al jaren gebruikt. Nieuwe betrouwbare inzichten wijzen op ernstiger gezondheidseffecten dan eerder werd aangenomen. De werkzaamheden zijn niet veranderd. Kan actualisatie toch nodig zijn?',
+    'Ja. Nieuwe relevante inzichten kunnen reden zijn om de bestaande beoordeling en maatregelen opnieuw te bekijken, ook als het werk zelf niet is veranderd. Beoordeel de impact en actualiseer waar nodig.', four(
+      ['ja', 'Ja. Nieuwe inzichten kunnen aanleiding zijn de beoordeling en maatregelen te herzien.'],
+      ['nee', 'Nee. Alleen een fysieke verandering in de werkplek kan actualisatie relevant maken.'],
+      ['ongeval', 'Nee. Zonder een ongeval is nieuwe informatie geen aanleiding.'],
+      ['volledig', 'Ja. Nieuwe kennis betekent altijd dat de volledige RI&E vanaf nul moet worden opgesteld.'])),
+  question('ORGANISATIE', 'SINGLE_CHOICE', 'organisatorische-verandering', 3, 'Organisatorische veranderingen verbinden aan arbeidsomstandigheden en risico’s',
+    'Een klantenservice groeit van 8 naar 25 medewerkers. Er komen avondroosters, nieuwe targets en een andere teamstructuur. Er zijn geen nieuwe machines of stoffen. Kan dit toch relevant zijn voor de RI&E?',
+    'Ja. De organisatie van het werk kan onder meer werkdruk, arbeidstijden, bezetting, verantwoordelijkheden, communicatie en psychosociale arbeidsbelasting veranderen. Beoordeel de mogelijke impact in de feitelijke situatie.', four(
+      ['ja', 'Ja. De verandering kan arbeidsomstandigheden en risico’s beïnvloeden, ook zonder nieuwe machines of stoffen.'],
+      ['nee', 'Nee. Zonder fysieke verandering hoeft de RI&E niet te worden bekeken.'],
+      ['automatisch', 'Ja. Iedere groei van het personeelsbestand vereist automatisch een volledige nieuwe RI&E.'],
+      ['alleen', 'Alleen als de nieuwe medewerkers zelf een formele klacht indienen.'])),
+  question('HYBRIDE', 'SINGLE_CHOICE', 'organisatorische-verandering', 2, 'Een verandering in de werkplek en werkwijze impactgericht beoordelen',
+    'Een organisatie gaat structureel meerdere dagen per week hybride werken. Wat is de passende RI&E-vraag?',
+    'Breng in beeld welke arbeidsomstandigheden en risico’s door de nieuwe manier van werken veranderen en of deze voldoende in de huidige RI&E zijn meegenomen. Het antwoord volgt uit de concrete werksituatie, niet uit het label hybride werken alleen.', four(
+      ['impact', 'Welke arbeidsomstandigheden en risico’s veranderen, en zijn deze voldoende in de huidige RI&E meegenomen?'],
+      ['thuis', 'Hybride werken valt altijd buiten de RI&E omdat medewerkers niet op kantoor zijn.'],
+      ['volledig', 'Iedere vorm van hybride werken vereist een geheel nieuwe RI&E voor alle risico’s.'],
+      ['geen', 'Alleen fysieke werkplekken tellen; werkwijze en organisatie zijn niet relevant.'])),
+  question('TECHNOLOGIE', 'SINGLE_CHOICE', 'nieuwe-technologie', 3, 'Niet-fysieke technologische verandering beoordelen op arbeidsomstandighedenimpact',
+    'Een organisatie introduceert software die planning, werktempo en prestaties mede automatisch stuurt. Kan deze verandering relevant zijn voor de RI&E?',
+    'Dat kan. Beoordeel of de technologie invloed heeft op het werktempo, de werkdruk, autonomie, taakverdeling of andere arbeidsomstandigheden. Deze les doet geen uitspraak over andere juridische onderwerpen rond software of AI.', four(
+      ['kan', 'Ja. Kijk of de technologie de arbeidsomstandigheden en risico’s in de praktijk beïnvloedt.'],
+      ['nee', 'Nee. Software kan geen arbeidsomstandigheden of werkorganisatie veranderen.'],
+      ['automatisch', 'Ja. Iedere softwarewijziging vereist een volledige nieuwe RI&E.'],
+      ['privacy', 'Alleen privacywetgeving bepaalt of een softwarewijziging in de RI&E thuishoort.'])),
+  question('LOGISTIEK-NOORD', 'MULTI_CHOICE', 'integrale-herbeoordeling', 3, 'Meerdere ontwikkelingen in een doorlopende casus samen beoordelen',
+    'Logistiek Noord breidt het magazijn uit, gebruikt meer heftrucks, start een nachtdienst en neemt een orderpickinstallatie in gebruik. Medewerkers melden hogere werkdruk. Ook moet blijken of de eerder geplaatste fysieke scheiding op kruisingen goed werkt. Welke informatie geeft duidelijk aanleiding om de RI&E-impact te beoordelen? Selecteer alle toepasselijke antwoorden.',
+    'De uitbreiding, extra heftrucks, nachtdienst, installatie en werkdruksignalen kunnen de risico’s of blootstelling veranderen. Ook controleer je of de eerder gekozen maatregel effectief is. Beoordeel samenhang en reikwijdte; dat kan meer dan één bestaand onderdeel raken, maar betekent niet automatisch dat alles vanaf nul moet.', [
+      ['uitbreiding', 'De magazijnuitbreiding en de gewijzigde loop- en rijroutes.', true],
+      ['heftrucks', 'Het grotere aantal heftrucks en de gewijzigde verkeersbewegingen.', true],
+      ['nacht', 'De nieuwe nachtdienst en de gewijzigde arbeidstijden.', true],
+      ['installatie', 'De orderpickinstallatie en de manier waarop medewerkers ermee werken.', true],
+      ['werkdruk', 'De signalen over hogere werkdruk.', true],
+      ['effect', 'De controle of de fysieke scheiding op kruisingen in de praktijk werkt.', true],
+      ['volledig', 'Alleen het bestaan van een nieuwe situatie bewijst dat de volledige RI&E vanaf nul moet worden gemaakt.', false],
+    ]),
+  question('TRIGGERS-CHECK', 'MULTI_CHOICE', 'verandertriggers', 2, 'Verschillende soorten actualisatietriggers onderscheiden van een niet-relevante wijziging',
+    'Welke ontwikkelingen kunnen aanleiding geven om relevante delen van de RI&E opnieuw te bekijken? Selecteer alle toepasselijke antwoorden.',
+    'Een nieuwe machine, andere werkwijze, nieuwe kennis en verhuizing kunnen invloed hebben op risico’s. Eén medewerker krijgt een andere standaard bureaustoel zonder verandering van werk of risico’s; dat feit alleen geeft hier geen duidelijke aanleiding tot RI&E-actualisatie. Beoordeel altijd wat de impact is.', [
+      ['machine', 'Er komt een machine bij die andere werkzaamheden of blootstelling meebrengt.', true],
+      ['werkwijze', 'Een werkmethode verandert en kan nieuwe risico’s meebrengen.', true],
+      ['kennis', 'Nieuwe betrouwbare kennis kan de beoordeling van een bestaand risico veranderen.', true],
+      ['verhuizing', 'Een verhuizing kan de werkomgeving of arbeidsrisico’s veranderen.', true],
+      ['stoel', 'Een medewerker krijgt een andere standaard bureaustoel, zonder andere verandering van werk of risico.', false],
+    ]),
+  question('PDCA', 'SORTING', 'pdca', 2, 'De PDCA-stappen in een logische verbetercyclus ordenen',
+    'Zet de PDCA-stappen in de juiste volgorde.',
+    'PLAN: beoordeel of actualiseer de RI&E en plan maatregelen. DO: voer maatregelen uit. CHECK: controleer de werking en veranderingen. ACT: stuur bij en pas RI&E of Plan van Aanpak waar nodig aan. De oefening toetst de methodiek, niet een afzonderlijke wettelijke procedure.', [
+      ['plan', 'PLAN — RI&E beoordelen of actualiseren en maatregelen plannen', true],
+      ['do', 'DO — maatregelen uitvoeren', true],
+      ['check', 'CHECK — werking en veranderingen controleren', true],
+      ['act', 'ACT — bijsturen en RI&E of Plan van Aanpak waar nodig aanpassen', true],
+    ]),
+  question('CHECK-01', 'SINGLE_CHOICE', 'actualiteit', 2, 'De algemene geldigheidsduur van een RI&E correct duiden',
+    'Hoe lang is een RI&E standaard geldig?',
+    'Er is niet simpelweg een algemene vaste geldigheidsduur. De RI&E moet worden aangepast wanneer ontwikkelingen daar aanleiding toe geven. Een periodieke review kan helpen veranderingen te signaleren, maar is geen algemene vijfjaarsregel.', four(
+      ['geen-vaste-termijn', 'Er is geen vaste algemene termijn; ontwikkelingen kunnen aanpassing nodig maken.'],
+      ['vijf', 'Standaard vijf jaar, waarna de volledige RI&E steeds opnieuw moet worden opgesteld.'],
+      ['jaar', 'Een RI&E is één jaar geldig en wordt daarna volledig opnieuw opgesteld.'],
+      ['toets', 'Een RI&E blijft geldig tot een deskundige een nieuwe toets uitvoert.'])),
+  question('CHECK-02', 'MULTI_CHOICE', 'verandertriggers', 2, 'Meerdere relevante triggers herkennen zonder volledige herziening te veronderstellen',
+    'Welke ontwikkelingen kunnen aanleiding geven om relevante delen van de RI&E opnieuw te bekijken? Selecteer alle toepasselijke antwoorden.',
+    'Een nieuwe machine, gewijzigde werkmethode, nieuwe kennis en verhuizing kunnen de risico’s of maatregelen beïnvloeden. Een productnaam kan veranderen terwijl samenstelling, gebruik en blootstelling aantoonbaar gelijk blijven; beoordeel steeds de impact. Selecteer de volledige toepasselijke set.', [
+      ['machine', 'Er wordt een machine geplaatst die het werk of de blootstelling verandert.', true],
+      ['methode', 'Een werkmethode verandert en kan andere risico’s opleveren.', true],
+      ['inzichten', 'Nieuwe kennis kan de beoordeling van een bestaand risico veranderen.', true],
+      ['verhuizing', 'De organisatie verhuist naar een pand met andere omstandigheden.', true],
+      ['productnaam', 'De productnaam van een stof verandert, maar samenstelling, gebruik en blootstelling blijven aantoonbaar gelijk.', false],
+    ]),
+  question('CHECK-03', 'SINGLE_CHOICE', 'incidenten-en-signalen', 2, 'Een bijna-ongeval opvolgen met onderzoek en impactgerichte actualisatie',
+    'Een bijna-ongeval laat een gevaar zien dat niet in de bestaande RI&E is opgenomen. Wat is de meest passende vervolgstap?',
+    'Onderzoek wat er is gebeurd en beoordeel het betreffende risico en de maatregelen. Werk relevante onderdelen van RI&E en Plan van Aanpak bij waar dat uit de beoordeling volgt.', four(
+      ['beoordelen', 'Onderzoek het risico en pas relevante delen van de RI&E en het Plan van Aanpak waar nodig aan.'],
+      ['wachten', 'Wacht op een ongeval met letsel voordat u de RI&E beoordeelt.'],
+      ['volledig', 'Vervang automatisch de volledige RI&E, zonder de gebeurtenis te onderzoeken.'],
+      ['rapport', 'Leg het bijna-ongeval alleen vast; de RI&E blijft buiten beschouwing.'])),
+  question('CHECK-04', 'SINGLE_CHOICE', 'effectiviteit', 3, 'De risicobeheersing bij een ineffectieve maatregel opnieuw beoordelen',
+    'Een maatregel uit het Plan van Aanpak is uitgevoerd, maar bij controle blijkt het risico onvoldoende te zijn verminderd. Wat betekent dit voor de RI&E en het Plan van Aanpak?',
+    'Beoordeel de beheersing opnieuw en pas de relevante risico-inschatting en acties waar nodig aan. Uitgevoerd is niet hetzelfde als effectief; kies vervolgstappen op basis van de situatie.', four(
+      ['herbeoordelen', 'Beoordeel de beheersing opnieuw en pas RI&E en Plan van Aanpak waar nodig aan.'],
+      ['afsluiten', 'Sluit het actiepunt omdat uitvoering voldoende bewijs van effect is.'],
+      ['vijfjaar', 'Wacht tot een vaste vijfjaarlijkse herziening om effect opnieuw te bekijken.'],
+      ['helemaal', 'Stel altijd de volledige RI&E opnieuw op, ongeacht de omvang van de resterende risico’s.'])),
+  question('CHECK-05', 'SINGLE_CHOICE', 'integrale-herbeoordeling', 3, 'Veranderingen in apparatuur en organisatie integraal maar impactgericht beoordelen',
+    'Een organisatie heeft een RI&E die drie jaar geleden is opgesteld. Sindsdien is een nieuwe productiemachine geplaatst en is een avonddienst ingevoerd. Er zijn geen ernstige arbeidsongevallen gemeld. Welke uitspraak is het meest juist?',
+    'De leeftijd van drie jaar bepaalt niet op zichzelf wat nodig is. De machine en avonddienst zijn aanleiding om te beoordelen welke risico’s, maatregelen en onderdelen van het Plan van Aanpak veranderen. Dat er geen ernstig ongeval is gemeld, maakt die beoordeling niet overbodig; de reikwijdte volgt uit de impact.', four(
+      ['impact', 'Niet de leeftijd alleen is doorslaggevend. Beoordeel welke onderdelen door de machine en avonddienst moeten worden bijgewerkt.'],
+      ['vijf', 'De RI&E is nog twee jaar geldig; er hoeft dus niets te gebeuren.'],
+      ['ongeval', 'Zonder ernstig ongeval is de RI&E nog passend, ongeacht de nieuwe machine en dienst.'],
+      ['volledig', 'De volledige RI&E moet automatisch vanaf nul worden opgesteld zodra er een wijziging is.'])),
+]
+
+const objectives = [
+  'Uitleggen dat er niet simpelweg een algemene vaste geldigheidsduur voor een RI&E geldt',
+  'Fysieke en organisatorische veranderingen herkennen die aanleiding geven tot impactbeoordeling',
+  'Incidenten, bijna-ongevallen en werknemerssignalen benutten als informatie',
+  'Nieuwe kennis en inzichten meenemen, ook wanneer werkzaamheden gelijk blijven',
+  'Bepalen welke RI&E-onderdelen opnieuw moeten worden beoordeeld en zo nodig aangepast',
+  'De gevolgen voor bestaande maatregelen en het Plan van Aanpak beoordelen',
+  'Werknemers raadplegen en hun praktijkervaring benutten',
+  'Periodieke review onderscheiden van actualisatie naar aanleiding van ontwikkelingen',
+  'Management of Change herkennen als methodische denkwijze en geen universele wettelijke procedure',
+  'PDCA herkennen als hulpmiddel voor doorlopende verbetering',
+]
+
+const paragraph = (title: string, ...paragraphs: string[]): LearningBlockSeed => ({ type: 'TEXT', data: { title, paragraphs } })
+const callout = (label: string, title: string, body: string, items?: string[]): LearningBlockSeed => ({ type: 'CALLOUT', data: { label, title, body, ...(items ? { items } : {}) } })
+const process = (title: string, steps: string[], footer: string): LearningBlockSeed => ({ type: 'PROCESS', data: { title, steps, footer } })
+const exercise = (code: string, title: string): LearningBlockSeed => {
+  const item = learningChapter8Questions.find((candidate) => candidate.code === `WL001-H8-${code}`)!
+  return { type: item.type, questionCode: item.code, data: { title, prompt: item.questionText } }
+}
+
+export const learningChapter8Blocks: LearningBlockSeed[] = [
+  { type: 'HEADING', data: { title: 'RI&E actueel houden', eyebrow: 'Hoofdstuk 8 van 10', subtitle: 'Wanneer kijkt u opnieuw naar de RI&E en wat doet u vervolgens?', estimatedDurationLabel: '15–20 minuten', learningObjectives: objectives } },
+  callout('LEERDOELEN', 'Na dit hoofdstuk kunt u', 'U herkent ontwikkelingen die aanleiding geven om de RI&E opnieuw te bekijken en bepaalt welke onderdelen mogelijk moeten worden aangepast.', objectives),
+  paragraph('Is een RI&E vijf jaar geldig?', 'Directeur Karin zegt: “Onze RI&E is twee jaar oud. Dus die is nog drie jaar geldig.”', 'De leeftijd alleen vertelt niet of de RI&E nog aansluit op het werk. Veranderingen, ervaring en nieuwe inzichten kunnen eerder aanleiding geven om opnieuw te kijken.'),
+  exercise('OPENING', 'Klopt de redenering van Karin?'),
+  callout('WETTELIJKE EIS', 'Aanpassen wanneer dat nodig is', 'Werkgevers passen de RI&E zo vaak aan als nodig is. Gewijzigde werkmethoden of werkomstandigheden en nieuwe inzichten kunnen aanleiding geven om de RI&E te actualiseren. Deze hoofdregel is geen algemene vaste termijn voor een volledige herziening.'),
+  process('Geen houdbaarheidsdatum', ['RI&E', 'VERANDERING, ERVARING OF NIEUW INZICHT?', 'IMPACT OP HET WERK BEOORDELEN', 'WAAR NODIG RELEVANTE DELEN ACTUALISEREN'], 'Een periodieke review kan helpen veranderingen op te merken. Zij vervangt het beoordelen van concrete ontwikkelingen niet.'),
+  paragraph('Wat kan aanleiding geven?', 'Een aanleiding kan zichtbaar zijn in apparatuur of stoffen, maar ook in de manier waarop werk is georganiseerd. Kijk naar wat er feitelijk verandert en welke werknemers of werkzaamheden hierdoor worden geraakt.'),
+  process('Voorbeelden van ontwikkelingen', ['NIEUWE MACHINE, MIDDEL OF STOF', 'ANDERE WERKMETHODE OF WERKPLEK', 'WIJZIGING IN ORGANISATIE OF WERKTIJDEN', 'INCIDENT, BIJNA-ONGEVAL OF KLACHT', 'NIEUWE KENNIS OF INZICHT'], 'Dit zijn mogelijke signalen om impact te beoordelen; niet ieder signaal betekent automatisch een volledige nieuwe RI&E.'),
+  exercise('TRIGGERS', 'Welke ontwikkelingen verdienen aandacht?'),
+  paragraph('Niet automatisch alles opnieuw', 'Een verandering betekent niet automatisch dat de volledige RI&E vanaf nul moet worden opgesteld. Breng eerst in kaart wat er verandert, welke gevaren of blootstelling daardoor anders kunnen zijn en of bestaande maatregelen nog passen.', 'Een verandering kan breder doorwerken dan één paragraaf. Beoordeel daarom relevante onderdelen en verbreed de herziening wanneer de impact dat vraagt.'),
+  exercise('NIEUWE-MACHINE', 'Wanneer beoordeelt u de nieuwe machine?'),
+  callout('GOEDE PRAKTIJK', 'Risico’s vooraf meenemen', 'Neem arbeidsrisico’s bij voorkeur mee voordat een geplande verandering volledig is ingevoerd. Dan is er ruimte om passende maatregelen en eventuele aanpassingen van de RI&E of het Plan van Aanpak voor te bereiden.'),
+  callout('METHODIEK', 'Management of Change', 'Management of Change is in deze les een denkwijze om een verandering systematisch op mogelijke risico’s en maatregelen te beoordelen. Het is geen universeel wettelijk voorgeschreven procedure.', ['Verandering voorgenomen', 'Wat verandert er in het werk?', 'Welke risico’s of maatregelen veranderen?', 'RI&E en Plan van Aanpak waar nodig aanpassen', 'Verandering invoeren en het effect controleren']),
+  exercise('MO-C', 'Wat is hier de rol van Management of Change?'),
+  paragraph('Incidenten en bijna-ongevallen', 'Een incident kan informatie geven over een risico dat niet was herkend, anders uitpakte dan verwacht of onvoldoende werd beheerst. Ook een bijna-ongeval kan waardevolle informatie opleveren, ook als niemand letsel heeft.', 'Incidentonderzoek en het beoordelen van de RI&E hangen samen, maar zijn niet hetzelfde. Kijk na onderzoek ook wat de gebeurtenis betekent voor de relevante risicobeoordeling en maatregelen.'),
+  exercise('BIJNA-ONGEVAL', 'Een bijna-aanrijding zonder letsel'),
+  exercise('ONGEVAL', 'Letsel tijdens machineonderhoud'),
+  paragraph('Klachten en signalen uit de praktijk', 'Rug- of huidklachten, hoge werkdruk, problemen met persoonlijke beschermingsmiddelen, omzeilde beveiligingen, onduidelijke instructies en herhaalde storingen kunnen aanleiding zijn om vragen te stellen.', 'Een signaal bewijst niet automatisch dat de hele RI&E onjuist is. Het is informatie om de feitelijke situatie en de bestaande beoordeling te controleren.'),
+  paragraph('Werknemers betrekken', 'Werknemers zien vaak hoe het werk werkelijk verloopt en kunnen vroeg signaleren waar een werkwijze, maatregel of instructie niet goed aansluit. Die ervaring helpt om veranderingen en knelpunten te herkennen.', 'De werkgever raadpleegt werknemers over onderwerpen die de arbeidsomstandigheden beïnvloeden, waaronder de RI&E. Afhankelijk van de organisatie gebeurt dat via OR of PVT, of rechtstreeks met belanghebbende werknemers waar dat van toepassing is. De preventiemedewerker heeft daarnaast een eigen ondersteunende rol; deze rollen zijn niet hetzelfde.'),
+  exercise('WERKNEMERS', 'Waarom is praktijkervaring belangrijk?'),
+  process('De RI&E en het Plan van Aanpak', ['RI&E OF BEOORDELING AANGEPAST', 'RISICO OF BLOOTSTELLING VERANDERD?', 'BESTAANDE MAATREGEL NOG PASSEND?', 'PvA WAAR NODIG BIJWERKEN'], 'Kijk of acties, verantwoordelijkheden en termijnen nog aansluiten op de aangepaste beoordeling.'),
+  exercise('PV-A', 'Wat bekijkt u na een aangepaste beoordeling?'),
+  paragraph('Uitgevoerd is niet hetzelfde als effectief', 'Een maatregel kan zijn uitgevoerd terwijl het risico in de praktijk blijft bestaan. Controleer daarom of de maatregel werkt en of omstandigheden of risico’s zijn veranderd.', 'Als de beheersing onvoldoende blijkt, beoordeel dan opnieuw wat nodig is en pas RI&E en Plan van Aanpak waar nodig aan.'),
+  exercise('EFFECT', 'De maatregel is geplaatst, maar blootstelling blijft'),
+  paragraph('Nieuwe kennis telt ook', 'Ook wanneer werkzaamheden gelijk blijven, kunnen betrouwbare nieuwe inzichten over bijvoorbeeld gezondheidseffecten reden zijn om de bestaande beoordeling en maatregelen opnieuw te bekijken.', 'Beoordeel de betekenis van die informatie voor de eigen situatie; nieuwe kennis betekent niet automatisch dat de gehele RI&E vanaf nul moet worden opgesteld.'),
+  exercise('NIEUWE-KENNIS', 'Nieuwe inzichten over een bekende stof'),
+  paragraph('Organisatie en werktijden veranderen', 'Een andere taakverdeling, personeelsbezetting, ploegendienst, teamstructuur of manier van aansturen kan werkdruk, arbeidstijden, communicatie en andere arbeidsomstandigheden beïnvloeden.', 'Ook hybride werken en nieuwe technologie kunnen de manier waarop werk wordt uitgevoerd veranderen. Kijk naar de werkelijke impact en niet alleen naar het soort verandering.'),
+  exercise('ORGANISATIE', 'Groei, avondroosters en nieuwe targets'),
+  exercise('HYBRIDE', 'Structureel hybride werken'),
+  exercise('TECHNOLOGIE', 'Software stuurt tempo en planning'),
+  callout('CONTENT REVIEW REQUIRED', 'Juridische afbakening', 'Deze voorbeelden helpen ontwikkelingen te herkennen, maar stellen geen individuele juridische conclusie vast. Beoordeel de feiten, toepasselijke regels en eventuele specialistische risico’s in de eigen situatie.'),
+  paragraph('Logistiek Noord — veranderingen stapelen op', 'Logistiek Noord breidt het magazijn uit. Er rijden meer heftrucks, er is een nachtdienst gestart en een orderpickinstallatie wordt gebruikt. Medewerkers geven aan dat de werkdruk is toegenomen.', 'De fysieke scheiding tussen heftruck- en voetgangersroutes op twee kruisingen was eerder als maatregel gekozen. Nu moet ook worden nagegaan of die scheiding in de praktijk werkt.'),
+  exercise('LOGISTIEK-NOORD', 'Welke informatie vraagt om herbeoordeling?'),
+  paragraph('Eerst de impact, dan de reikwijdte', 'Bekijk per ontwikkeling hoe werkzaamheden, blootstelling, risico’s en maatregelen veranderen. De uitbreidingsplannen kunnen samenhangen: nieuwe routes, nachtdienst en orderpicking kunnen elkaar beïnvloeden.', 'Werk de relevante onderdelen bij en verbreed de beoordeling als de impact breder is. Controleer ook of het Plan van Aanpak nog de juiste acties bevat.'),
+  paragraph('Niet elke kleine wijziging verandert een arbeidsrisico', 'Een verandering is aanleiding om de mogelijke impact te beoordelen, maar het antwoord kan zijn dat werk en risico’s gelijk blijven. Bijvoorbeeld: één medewerker krijgt een andere standaard bureaustoel, zonder andere wijziging van werkzaamheden of risico’s.'),
+  exercise('TRIGGERS-CHECK', 'Welke ontwikkelingen veranderen mogelijk de RI&E?'),
+  callout('GOEDE PRAKTIJK', 'Periodieke review', 'Een terugkerende bespreking kan helpen veranderingen, signalen en openstaande acties tijdig op te merken. Een reviewmoment is een praktisch hulpmiddel; het vormt geen algemene wettelijke geldigheidsduur en vervangt beoordeling naar aanleiding van concrete ontwikkelingen niet.'),
+  callout('METHODIEK', 'PDCA als verbetercyclus', 'PDCA is een methodiek om planmatig te werken, uitvoering te volgen en waar nodig bij te sturen. De letters staan voor Plan, Do, Check en Act. De cyclus is een hulpmiddel en geen afzonderlijke universele RI&E-procedure.'),
+  exercise('PDCA', 'Zet de PDCA-stappen in de juiste volgorde'),
+  process('PDCA in de praktijk', ['PLAN — RI&E beoordelen of actualiseren en maatregelen plannen', 'DO — maatregelen uitvoeren', 'CHECK — werking en veranderingen controleren', 'ACT — bijsturen en RI&E of Plan van Aanpak waar nodig aanpassen'], 'Zo wordt de beoordeling verbonden met uitvoering, controle en bijsturing.'),
+  { type: 'SUMMARY', data: { title: 'Dit neemt u mee', items: ['Er is niet simpelweg een algemene vaste geldigheidsduur voor een RI&E.', 'Veranderingen in werk, omstandigheden, ervaring en nieuwe inzichten kunnen aanleiding geven tot beoordeling.', 'Fysieke én organisatorische veranderingen kunnen relevant zijn.', 'Incidenten, bijna-ongevallen, klachten en werknemerssignalen zijn informatie; zij betekenen niet automatisch een volledige herziening.', 'Beoordeel de impact en pas relevante onderdelen aan; verbreed de herziening wanneer de impact breder is.', 'Bekijk of bestaande maatregelen nog passend en effectief zijn.', 'Werk het Plan van Aanpak waar nodig bij.', 'Betrek werknemers en benut hun kennis van het dagelijkse werk.', 'Een periodieke review is een praktisch hulpmiddel, geen algemene wettelijke termijn.', 'PDCA en Management of Change zijn methodieken om systematisch te blijven verbeteren.'] } },
+  { type: 'HEADING', data: { title: 'Hoofdstukcheck', subtitle: 'Vijf formatieve vragen. U hoeft niet alles goed te hebben om dit hoofdstuk af te ronden. Dit is geen examen of certificering.' } },
+  exercise('CHECK-01', 'Hoe lang is een RI&E geldig?'),
+  exercise('CHECK-02', 'Welke ontwikkelingen verdienen aandacht?'),
+  exercise('CHECK-03', 'Een bijna-ongeval zonder letsel'),
+  exercise('CHECK-04', 'De maatregel blijkt onvoldoende effectief'),
+  exercise('CHECK-05', 'Nieuwe machine en avonddienst'),
+  callout('AFRONDING', 'RI&E actueel houden', 'U kunt nu ontwikkelingen herkennen die aanleiding geven om de RI&E te beoordelen, de impact op risico’s en maatregelen onderzoeken en relevante delen en het Plan van Aanpak waar nodig aanpassen. In Hoofdstuk 9 staat het vertalen van plannen naar de dagelijkse praktijk centraal.'),
+]

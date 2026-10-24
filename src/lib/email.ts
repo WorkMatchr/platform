@@ -10,10 +10,14 @@ export type AuthEmail = {
     | 'ADMIN_MESSAGE'
     | 'FINANCIAL_INVOICE'
     | 'MARKETPLACE_ASSIGNMENT'
+    | 'LEARNING_CERTIFICATE'
+    | 'LEARNING_RETENTION_WEEK_READY'
+    | 'LEARNING_RETENTION_ANNUAL_READY'
   to: string
   subject: string
   text: string
   html: string
+  attachments?: Array<{ filename: string; content: string | Buffer; contentType?: string }>
   developmentUrl?: string
   idempotencyKey?: string
 }
@@ -171,7 +175,14 @@ export async function sendAuthEmail(email: AuthEmail): Promise<AuthEmailDelivery
   let result
   try {
     result = await new Resend(apiKey).emails.send(
-      { from, to: deliveryEmail.to, subject: deliveryEmail.subject, text: deliveryEmail.text, html: deliveryEmail.html },
+      {
+        from,
+        to: deliveryEmail.to,
+        subject: deliveryEmail.subject,
+        text: deliveryEmail.text,
+        html: deliveryEmail.html,
+        ...(deliveryEmail.attachments?.length ? { attachments: deliveryEmail.attachments } : {}),
+      },
       deliveryEmail.idempotencyKey ? { headers: { 'Idempotency-Key': deliveryEmail.idempotencyKey } } : undefined,
     )
   } catch {
