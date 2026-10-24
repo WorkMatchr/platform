@@ -102,3 +102,8 @@ PASS betekent uitsluitend de hieronder vermelde lokale/codecontrole, nooit bewez
 - NOTIFICATION INTEGRITY **NO-GO** voor het gehele platform; invitation-outbox lokaal PASS, ontbrekende consumers en financiële acknowledgementgrens open.
 - FUNCTIONAL REVIEW **READY** voor deze begrensde wijzigingen, met bovenstaande beperkingen.
 - PRODUCTION RELEASE **NOT READY**. Geen merge/deploy/live-mail. Onafhankelijk WP10-onderzoek kan doorgaan.
+## WP12 — integratie met financiële autorisatie
+
+PR #58 neemt de bestaande commits van #57 als expliciete afhankelijkheid mee; de functionele financiële correcties zijn niet opnieuw geïmplementeerd. Mergevolgorde: #57 vóór #58. Op de nieuwe testkopie is uitsluitend `scripts/test-financial-chain-database.ts` afgestemd op de strengere mailacceptatie: zes development-bezorgweigeringen leveren één ledgerboeking/factuur, nul vals-SENT-events en één failure-event. Een expliciete fake provideracceptatie wordt vervolgens exact eenmaal verwerkt; replay verstuurt niet opnieuw. De PostgreSQL-proef slaagt (54,68 s), eigen database verwijderd, bestaande database-/rolidentiteiten behouden. Er is geen echte mail of betaling uitgevoerd.
+
+De gezamenlijke WP12-regressies en definitieve checks worden in het integrale WP12-rapport vastgelegd. Deze voorbereiding is geen productie- of providerbezorgacceptatie.
