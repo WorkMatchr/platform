@@ -54,4 +54,29 @@ Een productiepreflight moet de dan actuele historie, checksums en herstelroute
 verifiëren; geen reset of resolve. Rollback: gate uit en vorige appversie; historische
 enrollments, examens, snapshots en migratieregistraties blijven behouden.
 
-Definitieve testresultaten en mergevolgorde staan in het integrale WP12-rapport.
+## WP12-testresultaten (24 oktober 2026)
+
+- Afzonderlijke kandidaat: 219 unit-/componenttests PASS; 14 PostgreSQL-cases
+  bewust overgeslagen in deze unitrun en afzonderlijk met de echte database getest.
+- Volledige lint PASS; productiebuild PASS. Standalone TypeScript: uitsluitend
+  de vier bestaande TS2345 readonly-arrayfouten in `rule-engine.test.ts`.
+- Gecombineerd met #40, #49 en #52–#58: 1.565 tests PASS, 14 databasecases in
+  de unitrun overgeslagen; alle acht PostgreSQL-suites PASS, inclusief Learning.
+- De echte Learning-harness valideert de gecombineerde 92 migraties/checksums,
+  herhaalde deploy/seeds, v1.0/v1.1-examenhistorie, de tienhoofdstukkenketen,
+  zes gelijktijdige starts/voortgangsupdates, eindtoets, certificaat en retention.
+  De certificaatretentietest vraagt nu eerst via de normale service een certificaat
+  aan voor de nieuwe synthetische geslaagde deelnemer; geen productregel versoepeld.
+- Alle speciaal aangemaakte testdatabases verwijderd; bestaande database- en
+  rolidentiteiten behouden. Geen productieverbinding of echte mail/betaling.
+- De 85 migratieblobs op main zijn ongewijzigd. Windows-checkouts kunnen CRLF
+  gebruiken; de harness vergelijkt checksums met de daadwerkelijk uitgevoerde
+  bestanden. De zes nieuwe migratieblobs zijn gelijk aan de gereviewde bron.
+
+Dit bewijst technische isolatie en integriteit, geen volledige playerbrowser-,
+didactische of juridische acceptatie. De actuele productie-dependency-audit heeft
+dezelfde 22 bevindingen als main (1 critical, 14 high, 7 moderate); de kandidaat
+voegt geen nieuw gemeld kwetsbaar pakket toe. Afzonderlijke securitybeoordeling blijft nodig.
+
+Definitieve gecombineerde resultaten en mergevolgorde: `docs/wp12-integration-readiness.md`
+in het bewijs- en rapportagepakket van PR #59.
