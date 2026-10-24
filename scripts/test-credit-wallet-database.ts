@@ -2,7 +2,13 @@ import 'dotenv/config'
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { spawnSync } from 'node:child_process'
+import { registerHooks } from 'node:module'
 import { Client } from 'pg'
+
+registerHooks({ resolve(specifier, context, nextResolve) {
+  if (specifier === 'server-only') return { url: 'data:text/javascript,export default {}', shortCircuit: true }
+  return nextResolve(specifier, context)
+} })
 
 const sourceConnectionString = process.env.DATABASE_URL
 if (!sourceConnectionString) throw new Error('DATABASE_URL is niet geconfigureerd.')
@@ -187,6 +193,32 @@ async function main() {
       }),
       /uitsluitend afleidbaar uit CreditTransaction/i,
     )
+    const { grantMarketplaceCredits, correctMarketplaceCredits } = await import('../src/lib/marketplace/credit-service')
+    const { mutateMarketplaceCredits, getPlatformProviderCreditOverview } = await import('../src/lib/marketplace/marketplace-credit-admin-service')
+    const administrativeInput = { actorUserId: platformAdmin.id, providerOrganizationId: otherProfessionalOrganization.id, amount: 100, reason: 'Synthetische beheerregressie.', idempotencyKey: `WP08-GRANT:${randomUUID()}` }
+    const grant = await grantMarketplaceCredits(administrativeInput)
+    assert.equal((await grantMarketplaceCredits(administrativeInput)).id, grant.id)
+    await assert.rejects(() => grantMarketplaceCredits({ ...administrativeInput, actorUserId: professionalUser.id }), { code: 'ACCESS_DENIED' })
+    await assert.rejects(() => grantMarketplaceCredits({ ...administrativeInput, providerOrganizationId: professionalOrganization.id }), { code: 'CONFLICT' })
+    const correctionInput = { ...administrativeInput, amount: -1, idempotencyKey: `WP08-CORRECT:${randomUUID()}` }
+    const correction = await correctMarketplaceCredits(correctionInput)
+    assert.equal((await correctMarketplaceCredits(correctionInput)).id, correction.id)
+    await assert.rejects(() => correctMarketplaceCredits({ ...correctionInput, actorUserId: professionalUser.id }), { code: 'ACCESS_DENIED' })
+    await assert.rejects(() => correctMarketplaceCredits({ ...correctionInput, amount: -2 }), { code: 'CONFLICT' })
+    const manualInput = { actorUserId: platformAdmin.id, values: { providerOrganizationId: otherProfessionalOrganization.id, amount: 1, reasonCode: 'TECHNICAL_COMPENSATION', explanation: 'Synthetische compensatie.', idempotencyKey: `WP08-MANUAL:${randomUUID()}`, confirmed: true } }
+    const manual = await mutateMarketplaceCredits(manualInput)
+    assert.equal((await mutateMarketplaceCredits(manualInput)).id, manual.id)
+    await assert.rejects(() => mutateMarketplaceCredits({ ...manualInput, actorUserId: professionalUser.id }), { code: 'ACCESS_DENIED' })
+    await assert.rejects(() => mutateMarketplaceCredits({ ...manualInput, values: { ...manualInput.values, reference: 'other-reference' } }), { code: 'CONFLICT' })
+    for (let index = 0; index < 51; index += 1) {
+      await correctMarketplaceCredits({ ...administrativeInput, amount: 1, idempotencyKey: `WP08-HISTORY:${index}:${randomUUID()}` })
+    }
+    const overview = await getPlatformProviderCreditOverview({ actorUserId: platformAdmin.id, providerOrganizationId: otherProfessionalOrganization.id })
+    assert.equal(overview?.creditAccount?.transactions.length, 50)
+    assert.equal(overview?.creditAccount?.availableBalance, 151)
+    assert.equal(overview?.creditAccount?.spentBalance, 0)
+    assert.equal(overview?.creditAccount?.reservedBalance, 0)
+    console.log('WP8 beheerreplay-autorisatie en volledig saldo over 54 ledgerregels PASS (151 credits, 50 zichtbare regels).')
     console.log('Professionele creditwallet, ledger, autorisatie, idempotentie en concurrency zijn geslaagd.')
   } finally {
     if (prisma) await prisma.$disconnect()
