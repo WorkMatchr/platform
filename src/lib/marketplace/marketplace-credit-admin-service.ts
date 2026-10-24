@@ -120,12 +120,19 @@ export async function mutateMarketplaceCredits(input: {
 
   return getPrisma().$transaction(
     async (transaction) => {
+      await requireMarketplacePlatformAdmin(transaction, input.actorUserId)
       const repeated = await transaction.creditTransaction.findUnique({
         where: { idempotencyKey: values.idempotencyKey },
       })
-      if (repeated) return repeated
-
-      await requireMarketplacePlatformAdmin(transaction, input.actorUserId)
+      if (repeated) {
+        const account = await transaction.creditAccount.findUnique({ where: { organizationId: values.providerOrganizationId } })
+        const audit = await transaction.marketplaceAuditEvent.findUnique({ where: { correlationKey: `manual-credit:${values.idempotencyKey}` } })
+        const metadata = z.object({ reference: z.string().nullable() }).safeParse(audit?.metadata)
+        const reversal = values.reasonCode === 'CORRECTION_OF_PREVIOUS_TRANSACTION'
+        const expectedType = reversal ? 'REVERSAL' : transactionTypeByReason[values.reasonCode as Exclude<ManualCreditReasonCode, 'CORRECTION_OF_PREVIOUS_TRANSACTION'>]
+        if (repeated.createdByUserId !== input.actorUserId || repeated.creditAccountId !== account?.id || repeated.type !== expectedType || (!reversal && repeated.amount !== values.amount) || repeated.reason !== values.reasonCode || repeated.description !== values.explanation || repeated.reversalOfTransactionId !== (values.reversalOfTransactionId ?? null) || !metadata.success || metadata.data.reference !== (values.reference ?? null)) throw new MarketplaceServiceError('CONFLICT')
+        return repeated
+      }
       await requireProviderOrganization(transaction, values.providerOrganizationId)
       let account = await transaction.creditAccount.findUnique({
         where: { organizationId: values.providerOrganizationId },
@@ -255,7 +262,14 @@ export async function getPlatformProviderCreditOverview(input: {
     },
   })
   if (!organization?.creditAccount) return organization
-  const balance = deriveCreditBalance(organization.creditAccount.transactions)
+  const totals = await getPrisma().creditTransaction.aggregate({
+    where: { creditAccountId: organization.creditAccount.id },
+    _sum: { totalDelta: true, reservedDelta: true },
+  })
+  const balance = deriveCreditBalance([{
+    totalDelta: totals._sum.totalDelta ?? 0,
+    reservedDelta: totals._sum.reservedDelta ?? 0,
+  }])
   return {
     ...organization,
     creditAccount: {
