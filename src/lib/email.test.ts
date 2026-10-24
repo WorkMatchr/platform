@@ -181,6 +181,21 @@ describe('authenticatie-e-mails', () => {
     })
     expect(output).not.toHaveBeenCalled()
   })
+  it('geeft een PDF-bijlage door aan de bestaande Resend-adapter', async () => {
+    vi.stubEnv('NODE_ENV', 'production')
+    vi.stubEnv('RESEND_API_KEY', 'test-resend-key')
+    vi.stubEnv('AUTH_EMAIL_FROM', 'WorkMatchr <account@workmatchr.nl>')
+    resendMocks.send.mockResolvedValue({ data: { id: 'resend-certificate-test' }, error: null })
+    const pdf = Buffer.from('%PDF-fake-test')
+    await sendAuthEmail({
+      kind: 'LEARNING_CERTIFICATE', to: 'student@example.invalid', subject: 'Certificaat', text: 'Bericht', html: '<p>Bericht</p>',
+      attachments: [{ filename: 'certificaat.pdf', content: pdf, contentType: 'application/pdf' }],
+    })
+    expect(resendMocks.send).toHaveBeenCalledWith(expect.objectContaining({
+      to: 'student@example.invalid',
+      attachments: [{ filename: 'certificaat.pdf', content: pdf, contentType: 'application/pdf' }],
+    }), undefined)
+  })
   it('bezorgt een factuurmail alleen in Preview naar de expliciete testontvanger', async () => {
     vi.stubEnv('VERCEL_ENV', 'preview')
     vi.stubEnv('PREVIEW_EMAIL_RECIPIENT_OVERRIDE', 'info@workmatchr.nl')

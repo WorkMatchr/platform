@@ -4,6 +4,8 @@ import { AccountNavigationMenu } from '@/components/layout/account-navigation-me
 import { Container } from '@/components/layout/container'
 import { DisclosureMenu } from '@/components/ui/disclosure-menu'
 import { getOptionalActiveOrganizationContext } from '@/lib/organizations/organization-authorization'
+import { getPrisma } from '@/lib/prisma'
+import { isLearningRuntimeEnabled } from '@/lib/learning/learning-runtime-policy'
 import {
   getPlatformContext,
   PlatformAdminAccessError,
@@ -107,7 +109,11 @@ export async function getHeaderViewModel() {
       if (!(error instanceof PlatformAdminAccessError)) throw error
     }
   }
-  return buildHeaderViewModel(context, isPlatformAdministrator)
+  const learningEnabled = isLearningRuntimeEnabled()
+  const hasLearningProfile = context && learningEnabled
+    ? Boolean(await getPrisma().learningProfile.findUnique({ where: { userId: context.user.id }, select: { id: true } }))
+    : false
+  return buildHeaderViewModel(context, isPlatformAdministrator, hasLearningProfile, learningEnabled)
 }
 
 export async function Header({ model }: { model?: HeaderViewModel } = {}) {

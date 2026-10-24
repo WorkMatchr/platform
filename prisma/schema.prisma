@@ -17,6 +17,80 @@ enum AccountType {
   PROFESSIONAL
 }
 
+enum LearningCourseStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum LearningCourseVersionStatus {
+  DRAFT
+  PUBLISHED
+  RETIRED
+}
+
+enum LearningEnrollmentStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum LearningProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum LearningContentBlockType {
+  HEADING
+  TEXT
+  CALLOUT
+  IMAGE
+  PROCESS
+  SINGLE_CHOICE
+  MULTI_CHOICE
+  TRUE_FALSE
+  SORTING
+  CASE_STUDY
+  SUMMARY
+}
+
+enum LearningQuestionType {
+  SINGLE_CHOICE
+  MULTI_CHOICE
+  TRUE_FALSE
+  SORTING
+  CASE_STUDY
+}
+
+enum LearningExamVersionStatus {
+  DRAFT
+  PUBLISHED
+  RETIRED
+}
+
+enum LearningExamAttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+}
+
+enum LearningCertificateStatus {
+  ACTIVE
+  REVOKED
+}
+
+enum LearningRetentionParticipationStatus {
+  ACTIVE
+  STOPPED
+  COMPLETED
+}
+
+enum LearningRetentionProgramVersionStatus {
+  DRAFT
+  PUBLISHED
+  RETIRED
+}
+
 enum UserStatus {
   INVITED
   ACTIVE
@@ -1237,6 +1311,16 @@ model User {
   deletionRequestedByUser            User?                                  @relation("UserDeletionRequestActor", fields: [deletionRequestedByUserId], references: [id], onDelete: SetNull)
   deletionRequestedUsers             User[]                                 @relation("UserDeletionRequestActor")
   memberships                        OrganizationMembership[]
+  learningProfile                    LearningProfile?
+  learningEnrollments                LearningEnrollment[]
+  learningQuestionAttempts           LearningQuestionAttempt[]
+  learningExamAttempts               LearningExamAttempt[]
+  learningCertificates               LearningCertificate[]
+  learningRetentionParticipations    LearningRetentionParticipation[]
+  learningAnnualReminders            LearningAnnualReminder[]
+  learningRetentionAnswers           LearningRetentionWeeklyAnswer[]
+  learningRetentionAnnualChecks      LearningRetentionAnnualCheck[]
+  learningAnnualCheckAnswers         LearningRetentionAnnualAnswer[]
   assignedComplianceActions          ComplianceAction[]                   @relation("ComplianceActionAssignee")
   complianceActionEvents             ComplianceActionEvent[]              @relation("ComplianceActionEventActor")
   provisioningEventsAsSubject        AccountProvisioningEvent[]             @relation("AccountProvisioningSubject")
@@ -5741,4 +5825,548 @@ model RequestAssignmentHandoff {
   @@unique([assignmentId, requestId])
   @@index([adviceDossierVersionId])
   @@index([createdByUserId, createdAt])
+}
+
+model LearningProfile {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @unique @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  firstName String?  @db.VarChar(100)
+  lastName  String?  @db.VarChar(100)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([createdAt])
+}
+
+model LearningCourse {
+  id          String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug        String                  @unique @db.VarChar(120)
+  code        String                  @unique @db.VarChar(40)
+  title       String                  @db.VarChar(240)
+  description String                  @db.Text
+  status      LearningCourseStatus    @default(DRAFT)
+  createdAt   DateTime                @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime                @updatedAt @db.Timestamptz(3)
+  versions    LearningCourseVersion[]
+  exams       LearningExam[]
+  certificates LearningCertificate[]
+  retentionPrograms LearningRetentionProgram[]
+
+  @@index([status, title])
+}
+
+model LearningCourseVersion {
+  id             String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId       String                      @db.Uuid
+  version        String                      @db.VarChar(40)
+  status         LearningCourseVersionStatus @default(DRAFT)
+  publishedAt    DateTime?                   @db.Timestamptz(3)
+  validFrom      DateTime?                   @db.Timestamptz(3)
+  reviewDueAt    DateTime?                   @db.Timestamptz(3)
+  sourceMetadata Json?                       @db.JsonB
+  createdAt      DateTime                    @default(now()) @db.Timestamptz(3)
+  course         LearningCourse              @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  chapters       LearningChapter[]
+  enrollments    LearningEnrollment[]
+  examVersions   LearningExamVersion[]
+
+  @@unique([courseId, version])
+  @@unique([id, courseId])
+  @@index([status, publishedAt])
+}
+
+model LearningChapter {
+  id               String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseVersionId  String                    @db.Uuid
+  slug             String                    @db.VarChar(120)
+  title            String                    @db.VarChar(240)
+  position         Int
+  estimatedMinutes Int
+  createdAt        DateTime                  @default(now()) @db.Timestamptz(3)
+  courseVersion    LearningCourseVersion     @relation(fields: [courseVersionId], references: [id], onDelete: Restrict)
+  contentBlocks    LearningContentBlock[]
+  progress         LearningChapterProgress[]
+  questionAttempts LearningQuestionAttempt[]
+
+  @@unique([courseVersionId, slug])
+  @@unique([courseVersionId, position])
+  @@unique([id, courseVersionId])
+  @@index([courseVersionId, position])
+}
+
+model LearningContentBlock {
+  id         String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  chapterId  String                       @db.Uuid
+  position   Int
+  type       LearningContentBlockType
+  data       Json                         @db.JsonB
+  questionId String?                      @db.Uuid
+  chapter    LearningChapter              @relation(fields: [chapterId], references: [id], onDelete: Restrict)
+  question   LearningQuestion?            @relation(fields: [questionId], references: [id], onDelete: Restrict)
+  attempts   LearningInteractionAttempt[]
+
+  @@unique([chapterId, position])
+  @@index([chapterId, position])
+  @@index([questionId])
+}
+
+model LearningQuestion {
+  id                String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code              String                    @db.VarChar(80)
+  knowledgeArea     String                    @db.VarChar(120)
+  learningObjective String                    @db.VarChar(240)
+  type              LearningQuestionType
+  difficulty        Int                       @default(1)
+  questionText      String                    @db.Text
+  explanation       String                    @db.Text
+  correctAnswer     Json                      @db.JsonB
+  status            String                    @default("DRAFT") @db.VarChar(30)
+  version           Int                       @default(1)
+  options           LearningQuestionOption[]
+  contentBlocks     LearningContentBlock[]
+  attempts          LearningQuestionAttempt[]
+  examMappings      LearningExamQuestion[]
+  retentionMetadata LearningRetentionQuestion?
+
+  @@unique([code, version])
+  @@index([knowledgeArea, learningObjective])
+  @@index([status, type])
+}
+
+model LearningQuestionOption {
+  id         String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  questionId String           @db.Uuid
+  value      String           @db.VarChar(100)
+  text       String           @db.Text
+  isCorrect  Boolean          @default(false)
+  position   Int
+  question   LearningQuestion @relation(fields: [questionId], references: [id], onDelete: Restrict)
+
+  @@unique([questionId, position])
+  @@unique([questionId, value])
+  @@index([questionId])
+}
+
+model LearningEnrollment {
+  id                  String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId              String                       @db.Uuid
+  courseVersionId     String                       @db.Uuid
+  status              LearningEnrollmentStatus     @default(NOT_STARTED)
+  startedAt           DateTime?                    @db.Timestamptz(3)
+  completedAt         DateTime?                    @db.Timestamptz(3)
+  createdAt           DateTime                     @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime                     @updatedAt @db.Timestamptz(3)
+  user                User                         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  courseVersion       LearningCourseVersion        @relation(fields: [courseVersionId], references: [id], onDelete: Restrict)
+  progress            LearningChapterProgress[]
+  questionAttempts    LearningQuestionAttempt[]
+  interactionAttempts LearningInteractionAttempt[]
+  examAttempts        LearningExamAttempt[]
+  certificates        LearningCertificate[]
+  retentionParticipations LearningRetentionParticipation[]
+  annualReminders     LearningAnnualReminder[]
+
+  @@unique([userId, courseVersionId])
+  @@unique([id, courseVersionId])
+  @@unique([id, userId])
+  @@unique([id, courseVersionId, userId])
+  @@index([userId, status, updatedAt])
+}
+
+model LearningChapterProgress {
+  id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  enrollmentId         String                 @db.Uuid
+  courseVersionId      String                 @db.Uuid
+  chapterId            String                 @db.Uuid
+  status               LearningProgressStatus @default(NOT_STARTED)
+  progressPercentage   Int                    @default(0)
+  startedAt            DateTime?              @db.Timestamptz(3)
+  lastVisitedAt        DateTime?              @db.Timestamptz(3)
+  completedAt          DateTime?              @db.Timestamptz(3)
+  lastCompletedBlockId String?                @db.Uuid
+  enrollment           LearningEnrollment     @relation(fields: [enrollmentId, courseVersionId], references: [id, courseVersionId], onDelete: Restrict)
+  chapter              LearningChapter        @relation(fields: [chapterId, courseVersionId], references: [id, courseVersionId], onDelete: Restrict)
+
+  @@unique([enrollmentId, chapterId])
+  @@index([enrollmentId, status])
+}
+
+model LearningQuestionAttempt {
+  id            String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  enrollmentId  String             @db.Uuid
+  userId        String             @db.Uuid
+  questionId    String             @db.Uuid
+  chapterId     String             @db.Uuid
+  attemptNumber Int
+  answer        Json               @db.JsonB
+  correct       Boolean
+  answeredAt    DateTime           @default(now()) @db.Timestamptz(3)
+  enrollment    LearningEnrollment @relation(fields: [enrollmentId, userId], references: [id, userId], onDelete: Restrict)
+  user          User               @relation(fields: [userId], references: [id], onDelete: Restrict)
+  question      LearningQuestion   @relation(fields: [questionId], references: [id], onDelete: Restrict)
+  chapter       LearningChapter    @relation(fields: [chapterId], references: [id], onDelete: Restrict)
+
+  @@unique([enrollmentId, questionId, attemptNumber], map: "LearningQuestionAttempt_enrollmentId_questionId_attemptNumb_key")
+  @@index([userId, enrollmentId, answeredAt])
+  @@index([questionId, answeredAt])
+}
+
+model LearningInteractionAttempt {
+  id             String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  enrollmentId   String               @db.Uuid
+  contentBlockId String               @db.Uuid
+  completedAt    DateTime             @default(now()) @db.Timestamptz(3)
+  enrollment     LearningEnrollment   @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+  contentBlock   LearningContentBlock @relation(fields: [contentBlockId], references: [id], onDelete: Restrict)
+
+  @@unique([enrollmentId, contentBlockId])
+  @@index([enrollmentId, completedAt])
+}
+
+model LearningExam {
+  id        String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId  String                @db.Uuid
+  code      String                @unique @db.VarChar(80)
+  title     String                @db.VarChar(240)
+  createdAt DateTime              @default(now()) @db.Timestamptz(3)
+  course    LearningCourse        @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  versions  LearningExamVersion[]
+
+  @@unique([id, courseId])
+  @@index([courseId])
+}
+
+model LearningExamVersion {
+  id                String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  examId            String                    @db.Uuid
+  courseId          String                    @db.Uuid
+  courseVersionId   String                    @db.Uuid
+  version           String                    @db.VarChar(40)
+  status            LearningExamVersionStatus @default(DRAFT)
+  questionCount     Int
+  maxScore          Int
+  passingScore      Int
+  passingPercentage Int
+  timeLimitMinutes  Int?
+  attemptLimit      Int?
+  publishedAt       DateTime?                 @db.Timestamptz(3)
+  createdAt         DateTime                  @default(now()) @db.Timestamptz(3)
+  exam              LearningExam              @relation(fields: [examId, courseId], references: [id, courseId], onDelete: Restrict)
+  courseVersion     LearningCourseVersion     @relation(fields: [courseVersionId, courseId], references: [id, courseId], onDelete: Restrict)
+  questions         LearningExamQuestion[]
+  attempts          LearningExamAttempt[]
+
+  @@unique([examId, version])
+  @@unique([id, examId, courseVersionId])
+  @@unique([id, courseVersionId])
+  @@index([status, publishedAt])
+}
+
+model LearningExamQuestion {
+  id             String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  examVersionId  String               @db.Uuid
+  questionId     String               @db.Uuid
+  code           String               @db.VarChar(40)
+  position       Int
+  chapterNumber  Int
+  cognitiveLevel String               @db.VarChar(1)
+  knowledgeAreas String[]             @default([])
+  isCritical     Boolean              @default(false)
+  examVersion    LearningExamVersion  @relation(fields: [examVersionId], references: [id], onDelete: Restrict)
+  question       LearningQuestion     @relation(fields: [questionId], references: [id], onDelete: Restrict)
+  answers        LearningExamAnswer[]
+
+  @@unique([examVersionId, questionId])
+  @@unique([examVersionId, position])
+  @@unique([examVersionId, code])
+  @@index([questionId])
+}
+
+model LearningExamAttempt {
+  id              String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String                    @db.Uuid
+  enrollmentId    String                    @db.Uuid
+  examId          String                    @db.Uuid
+  examVersionId   String                    @db.Uuid
+  courseVersionId String                    @db.Uuid
+  attemptNumber   Int
+  status          LearningExamAttemptStatus @default(IN_PROGRESS)
+  currentPosition Int                       @default(1)
+  maxScore        Int
+  passingScore    Int
+  score           Int?
+  percentage      Int?
+  passed          Boolean?
+  startedAt       DateTime                  @default(now()) @db.Timestamptz(3)
+  submittedAt     DateTime?                 @db.Timestamptz(3)
+  createdAt       DateTime                  @default(now()) @db.Timestamptz(3)
+  user            User                      @relation(fields: [userId], references: [id], onDelete: Restrict)
+  enrollment      LearningEnrollment        @relation(fields: [enrollmentId, courseVersionId, userId], references: [id, courseVersionId, userId], onDelete: Restrict)
+  examVersion     LearningExamVersion       @relation(fields: [examVersionId, examId, courseVersionId], references: [id, examId, courseVersionId], onDelete: Restrict)
+  answers         LearningExamAnswer[]
+  certificate     LearningCertificate?
+  annualReminder  LearningAnnualReminder?
+
+  @@unique([enrollmentId, examId, attemptNumber])
+  @@unique([id, examVersionId])
+  @@unique([id, userId, enrollmentId])
+  @@index([userId, examId, startedAt])
+  @@index([enrollmentId, examId, status])
+}
+
+model LearningExamAnswer {
+  id            String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  attemptId     String               @db.Uuid
+  examVersionId String               @db.Uuid
+  questionId    String               @db.Uuid
+  answer        Json                 @db.JsonB
+  updatedAt     DateTime             @updatedAt @db.Timestamptz(3)
+  attempt       LearningExamAttempt  @relation(fields: [attemptId, examVersionId], references: [id, examVersionId], onDelete: Restrict)
+  examQuestion  LearningExamQuestion @relation(fields: [examVersionId, questionId], references: [examVersionId, questionId], onDelete: Restrict)
+
+  @@unique([attemptId, questionId])
+  @@index([examVersionId, questionId])
+}
+
+model LearningRetentionProgram {
+  id        String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId  String                         @db.Uuid
+  code      String                         @unique @db.VarChar(80)
+  title     String                         @db.VarChar(240)
+  createdAt DateTime                       @default(now()) @db.Timestamptz(3)
+  course    LearningCourse                 @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  versions  LearningRetentionProgramVersion[]
+
+  @@unique([id, courseId])
+  @@index([courseId])
+}
+
+model LearningRetentionProgramVersion {
+  id                     String                                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  programId              String                                 @db.Uuid
+  courseId               String                                 @db.Uuid
+  version                String                                 @unique @db.VarChar(40)
+  status                 LearningRetentionProgramVersionStatus  @default(DRAFT)
+  durationWeeks          Int                                    @default(12)
+  questionsPerWeek       Int                                    @default(5)
+  openAfterProgramDays   Int                                    @default(30)
+  selectionPolicyVersion String                                 @db.VarChar(60)
+  consentVersion         String                                 @db.VarChar(40)
+  consentCopy            String                                 @db.Text
+  publishedAt            DateTime?                              @db.Timestamptz(3)
+  createdAt              DateTime                               @default(now()) @db.Timestamptz(3)
+  program                LearningRetentionProgram               @relation(fields: [programId, courseId], references: [id, courseId], onDelete: Restrict)
+  participations         LearningRetentionParticipation[]
+
+  @@unique([id, courseId])
+  @@index([programId, status, publishedAt])
+}
+
+model LearningRetentionQuestion {
+  id                 String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  questionId         String           @unique @db.Uuid
+  bankVersion        String           @db.VarChar(40)
+  chapterNumber      Int
+  cognitiveLevel     String           @db.VarChar(1)
+  criticalConcept    Boolean          @default(false)
+  legalReviewRequired Boolean         @default(false)
+  correctFeedback   String           @db.Text
+  incorrectFeedback String           @db.Text
+  status             String           @default("DRAFT") @db.VarChar(30)
+  createdAt          DateTime         @default(now()) @db.Timestamptz(3)
+  question           LearningQuestion @relation(fields: [questionId], references: [id], onDelete: Restrict)
+  weeklyAssignments  LearningRetentionWeeklyQuestion[]
+  annualAssignments  LearningRetentionAnnualQuestion[]
+
+  @@unique([id, bankVersion])
+  @@index([status, chapterNumber, cognitiveLevel])
+}
+
+model LearningRetentionParticipation {
+  id                   String                               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId               String                               @db.Uuid
+  learningEnrollmentId String                               @db.Uuid
+  courseVersionId      String                               @db.Uuid
+  programVersionId     String                               @db.Uuid
+  courseId             String                               @db.Uuid
+  status               LearningRetentionParticipationStatus @default(ACTIVE)
+  consentedAt          DateTime                             @db.Timestamptz(3)
+  consentVersion       String                               @db.VarChar(40)
+  startedAt            DateTime                             @default(now()) @db.Timestamptz(3)
+  stoppedAt            DateTime?                            @db.Timestamptz(3)
+  completedAt          DateTime?                            @db.Timestamptz(3)
+  createdAt            DateTime                             @default(now()) @db.Timestamptz(3)
+  user                 User                                 @relation(fields: [userId], references: [id], onDelete: Restrict)
+  enrollment           LearningEnrollment                   @relation(fields: [learningEnrollmentId, courseVersionId, userId], references: [id, courseVersionId, userId], onDelete: Restrict)
+  programVersion       LearningRetentionProgramVersion      @relation(fields: [programVersionId, courseId], references: [id, courseId], onDelete: Restrict)
+  weeklyChecks         LearningRetentionWeeklyCheck[]
+
+  @@unique([learningEnrollmentId, programVersionId])
+  @@unique([id, userId])
+  @@index([userId, status, startedAt])
+}
+
+model LearningRetentionWeeklyCheck {
+  id              String                           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  participationId String                           @db.Uuid
+  userId          String                           @db.Uuid
+  weekNumber      Int
+  availableAt     DateTime                         @db.Timestamptz(3)
+  closesAt        DateTime                         @db.Timestamptz(3)
+  completedAt     DateTime?                        @db.Timestamptz(3)
+  createdAt       DateTime                         @default(now()) @db.Timestamptz(3)
+  participation   LearningRetentionParticipation  @relation(fields: [participationId, userId], references: [id, userId], onDelete: Restrict)
+  questions       LearningRetentionWeeklyQuestion[]
+  answers         LearningRetentionWeeklyAnswer[]
+
+  @@unique([participationId, weekNumber])
+  @@unique([id, userId])
+  @@index([userId, availableAt, closesAt])
+}
+
+model LearningRetentionWeeklyQuestion {
+  id                   String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  weeklyCheckId        String                     @db.Uuid
+  retentionQuestionId  String                     @db.Uuid
+  position             Int
+  selectionReason      String                     @db.VarChar(20)
+  weeklyCheck          LearningRetentionWeeklyCheck @relation(fields: [weeklyCheckId], references: [id], onDelete: Restrict)
+  retentionQuestion    LearningRetentionQuestion @relation(fields: [retentionQuestionId], references: [id], onDelete: Restrict)
+  answers              LearningRetentionWeeklyAnswer[]
+
+  @@unique([weeklyCheckId, position])
+  @@unique([weeklyCheckId, retentionQuestionId])
+  @@unique([id, weeklyCheckId])
+  @@index([retentionQuestionId])
+}
+
+model LearningRetentionWeeklyAnswer {
+  id                      String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  weeklyCheckId           String                       @db.Uuid
+  weeklyQuestionId        String                       @db.Uuid
+  userId                  String                       @db.Uuid
+  answer                  Json                         @db.JsonB
+  correct                 Boolean
+  answeredAt              DateTime                     @default(now()) @db.Timestamptz(3)
+  weeklyCheck             LearningRetentionWeeklyCheck @relation(fields: [weeklyCheckId, userId], references: [id, userId], onDelete: Restrict)
+  weeklyQuestion          LearningRetentionWeeklyQuestion @relation(fields: [weeklyQuestionId, weeklyCheckId], references: [id, weeklyCheckId], onDelete: Restrict)
+  user                    User                         @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([weeklyQuestionId])
+  @@index([userId, answeredAt])
+}
+
+model LearningAnnualReminder {
+  id                    String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                String               @db.Uuid
+  enrollmentId          String               @db.Uuid
+  qualifyingAttemptId   String               @unique @db.Uuid
+  consentedAt           DateTime             @db.Timestamptz(3)
+  consentVersion        String               @db.VarChar(40)
+  scheduledFor          DateTime             @db.Timestamptz(3)
+  revokedAt             DateTime?            @db.Timestamptz(3)
+  sentAt                DateTime?            @db.Timestamptz(3)
+  createdAt             DateTime             @default(now()) @db.Timestamptz(3)
+  user                  User                 @relation(fields: [userId], references: [id], onDelete: Restrict)
+  enrollment            LearningEnrollment   @relation(fields: [enrollmentId, userId], references: [id, userId], onDelete: Restrict)
+  qualifyingAttempt     LearningExamAttempt  @relation(fields: [qualifyingAttemptId, userId, enrollmentId], references: [id, userId, enrollmentId], onDelete: Restrict)
+  consentEvents         LearningAnnualReminderConsentEvent[]
+  check                 LearningRetentionAnnualCheck?
+
+  @@unique([enrollmentId])
+  @@unique([id, userId])
+  @@unique([qualifyingAttemptId, userId, enrollmentId])
+  @@index([revokedAt, scheduledFor, sentAt])
+}
+
+model LearningAnnualReminderConsentEvent {
+  id              String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reminderId      String                @db.Uuid
+  eventType       String                @db.VarChar(16)
+  occurredAt      DateTime              @db.Timestamptz(3)
+  consentVersion  String                @db.VarChar(40)
+  createdAt       DateTime              @default(now()) @db.Timestamptz(3)
+  reminder        LearningAnnualReminder @relation(fields: [reminderId], references: [id], onDelete: Restrict)
+
+  @@index([reminderId, occurredAt])
+}
+
+model LearningRetentionAnnualCheck {
+  id             String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reminderId     String                        @unique @db.Uuid
+  userId         String                        @db.Uuid
+  checkVersion   String                        @default("WL-001-ANNUAL-CHECK-1.0") @db.VarChar(40)
+  availableAt    DateTime                      @db.Timestamptz(3)
+  startedAt      DateTime                      @default(now()) @db.Timestamptz(3)
+  completedAt    DateTime?                     @db.Timestamptz(3)
+  score          Int?
+  maxScore       Int                           @default(10)
+  createdAt      DateTime                      @default(now()) @db.Timestamptz(3)
+  reminder       LearningAnnualReminder       @relation(fields: [reminderId, userId], references: [id, userId], onDelete: Restrict)
+  user           User                          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  questions      LearningRetentionAnnualQuestion[]
+  answers        LearningRetentionAnnualAnswer[]
+
+  @@unique([id, userId])
+  @@unique([reminderId, userId])
+  @@index([userId, availableAt])
+}
+
+model LearningRetentionAnnualQuestion {
+  id                   String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  annualCheckId        String                         @db.Uuid
+  retentionQuestionId  String                         @db.Uuid
+  position             Int
+  annualCheck           LearningRetentionAnnualCheck   @relation(fields: [annualCheckId], references: [id], onDelete: Restrict)
+  retentionQuestion     LearningRetentionQuestion     @relation(fields: [retentionQuestionId], references: [id], onDelete: Restrict)
+  answers               LearningRetentionAnnualAnswer[]
+
+  @@unique([annualCheckId, position])
+  @@unique([annualCheckId, retentionQuestionId])
+  @@unique([id, annualCheckId])
+  @@index([retentionQuestionId])
+}
+
+model LearningRetentionAnnualAnswer {
+  id                 String                          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  annualCheckId      String                          @db.Uuid
+  annualQuestionId   String                          @db.Uuid
+  userId             String                          @db.Uuid
+  answer             Json                            @db.JsonB
+  correct            Boolean
+  answeredAt         DateTime                        @default(now()) @db.Timestamptz(3)
+  annualCheck        LearningRetentionAnnualCheck    @relation(fields: [annualCheckId, userId], references: [id, userId], onDelete: Restrict)
+  annualQuestion     LearningRetentionAnnualQuestion @relation(fields: [annualQuestionId, annualCheckId], references: [id, annualCheckId], onDelete: Restrict)
+  user               User                            @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([annualQuestionId])
+  @@index([userId, answeredAt])
+}
+
+model LearningCertificate {
+  id                 String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId             String                    @db.Uuid
+  courseId           String                    @db.Uuid
+  enrollmentId       String                    @db.Uuid
+  examAttemptId      String                    @unique @db.Uuid
+  certificateNumber String                    @unique @db.VarChar(48)
+  firstName          String                    @db.VarChar(100)
+  lastName           String                    @db.VarChar(100)
+  courseTitle        String                    @db.VarChar(240)
+  courseVersion      String                    @db.VarChar(40)
+  examVersion        String                    @db.VarChar(40)
+  templateVersion    String                    @db.VarChar(40)
+  issuedAt           DateTime                  @db.Timestamptz(3)
+  status             LearningCertificateStatus @default(ACTIVE)
+  revokedAt          DateTime?                 @db.Timestamptz(3)
+  createdAt          DateTime                  @default(now()) @db.Timestamptz(3)
+  user               User                      @relation(fields: [userId], references: [id], onDelete: Restrict)
+  course             LearningCourse            @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  enrollment         LearningEnrollment        @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+  examAttempt        LearningExamAttempt       @relation(fields: [examAttemptId], references: [id], onDelete: Restrict)
+
+  @@unique([courseId, userId])
+  @@index([userId, createdAt])
+  @@index([status, issuedAt])
 }
