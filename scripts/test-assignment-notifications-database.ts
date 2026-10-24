@@ -122,6 +122,45 @@ try {
   assert.equal((await db.notificationOutbox.findUniqueOrThrow({ where: { id: optedOut.job.id } })).lastErrorCode, 'RECIPIENT_NOT_DELIVERABLE')
   await db.user.update({ where: { id: user.id }, data: { assignmentEmailEnabled: true } })
 
+  const inactiveClient = await fixture()
+  await db.organization.update({ where: { id: clientOrg.id }, data: { status: 'SUSPENDED' } })
+  const callsBeforeSuspension = calls
+  assert.equal((await deliverAssignmentEmails({ limit: 1, send: accepted })).failed, 1)
+  assert.equal(calls, callsBeforeSuspension)
+  assert.equal((await db.notificationOutbox.findUniqueOrThrow({ where: { id: inactiveClient.job.id } })).lastErrorCode, 'INVITATION_NOT_DELIVERABLE')
+  await db.organization.update({ where: { id: clientOrg.id }, data: { status: 'ACTIVE' } })
+
+  const inactiveMembership = await fixture()
+  await db.organizationMembership.updateMany({ where: { userId: user.id }, data: { status: 'SUSPENDED' } })
+  assert.equal((await deliverAssignmentEmails({ send: accepted })).failed, 1)
+  assert.equal((await db.notificationOutbox.findUniqueOrThrow({ where: { id: inactiveMembership.job.id } })).lastErrorCode, 'RECIPIENT_NOT_DELIVERABLE')
+  await db.organizationMembership.updateMany({ where: { userId: user.id }, data: { status: 'ACTIVE' } })
+
+  const recoverable = await fixture()
+  await db.notificationOutbox.update({ where: { id: recoverable.job.id }, data: { status: 'PROCESSING', leaseToken: randomUUID(), leaseUntil: new Date(0), firstAttemptAt: new Date(Date.now() - 60_000), attemptCount: 1 } })
+  assert.equal((await deliverAssignmentEmails({ send: accepted })).sent, 1)
+  const recovered = await db.notificationOutbox.findUniqueOrThrow({ where: { id: recoverable.job.id } })
+  assert.equal(recovered.attemptCount, 2)
+  assert.equal(recovered.leaseToken, null)
+
+  const delayed = await fixture()
+  const retryTime = new Date()
+  assert.equal((await deliverAssignmentEmails({ now: () => retryTime, send: async () => { throw new AuthEmailDeliveryError('EMAIL_PROVIDER_REJECTED', 'private detail', 429, 120_000) } })).retry, 1)
+  const retryJob = await db.notificationOutbox.findUniqueOrThrow({ where: { id: delayed.job.id } })
+  assert.equal(retryJob.availableAt.getTime(), retryTime.getTime() + 120_000)
+  assert.equal((await deliverAssignmentEmails({ now: () => new Date(retryTime.getTime() + 119_999), send: accepted })).claimed, 0)
+  assert.equal((await deliverAssignmentEmails({ now: () => new Date(retryTime.getTime() + 120_000), send: accepted })).sent, 1)
+
+  const changedPayload = await fixture()
+  await db.notificationOutbox.update({ where: { id: changedPayload.job.id }, data: { payload: { ...(changedPayload.job.payload as object), preview: { ...((changedPayload.job.payload as { preview: object }).preview), kind: 'Changed content' } } } })
+  assert.equal((await deliverAssignmentEmails({ send: accepted })).failed, 1)
+  assert.equal((await db.notificationOutbox.findUniqueOrThrow({ where: { id: changedPayload.job.id } })).lastErrorCode, 'INVITATION_PAYLOAD_MISMATCH')
+
+  const localOnly = await fixture()
+  assert.equal((await deliverAssignmentEmails({ send: async () => ({ accepted: true, transport: 'DEVELOPMENT_LOG', status: 'DEVELOPMENT_ONLY', messageId: 'local-only' }) })).failed, 1)
+  assert.equal((await db.notificationOutbox.findUniqueOrThrow({ where: { id: localOnly.job.id } })).lastErrorCode, 'DEVELOPMENT_ONLY')
+  console.log('WP9 suspended client/membership, lease recovery, Retry-After, payload integrity and development-only status PASS.')
+
   await db.marketplaceRuleSet.create({ data: { ...ruleData, participationPriceCredits: 40, version: 'test.notifications.2', validFrom: new Date() } })
   const newer = await fixture()
   assert.equal(newer.invitation.creditCost, 42)
