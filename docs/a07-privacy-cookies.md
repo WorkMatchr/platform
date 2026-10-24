@@ -397,3 +397,5 @@ Afhankelijkheid voor merge: #52 eerst. Privacyverklaring en cookieverklaring
 blijven concept; het nieuwe postadres en de exacte Vimexx-prullenbak-/backupretentie
 vereisen nog Product Owner-validatie. Contactformulier blijft standaard uit.
 WP12 verleent geen juridische publicatie- of productieactivatietoestemming.
+
+WP12 kwaliteitscontrole: volledige lint PASS, productiebuild PASS; standalone TypeScript geeft uitsluitend de vier bestaande TS2345-readonly-arrayfouten in `src/lib/compliance/rule-engine.test.ts` (13/14/23/24). Geen nieuwe typefouten. De A07-documentatielink staat bij authenticatie zodat de F4-index niet wordt overschreven.
