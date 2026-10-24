@@ -133,12 +133,12 @@ export async function createCreditPurchase(
   const values = createCreditPurchaseSchema.parse(input)
   const purchase = await runSerializableFinancialTransaction(async (transaction) => {
     await lockKey(transaction, `purchase:${values.idempotencyKey}`)
+    await requireProviderMarketplaceAccess(transaction, values.actorUserId, values.organizationId, true)
     const existing = await transaction.financialPurchase.findUnique({ where: { idempotencyKey: values.idempotencyKey } })
     if (existing) {
       if (existing.organizationId !== values.organizationId || existing.packageSku !== values.packageSku) throw new MarketplaceServiceError('CONFLICT')
       return existing
     }
-    await requireProviderMarketplaceAccess(transaction, values.actorUserId, values.organizationId, true)
     const { discount, price } = await resolveCreditPurchasePrice(transaction, values)
     const created = await transaction.financialPurchase.create({
       data: {
@@ -314,6 +314,7 @@ export async function processMolliePayment(
   gateway: MollieGateway = createMollieGateway(),
 ) {
   const payment = await gateway.getPayment(paymentId)
+  if (payment.id !== paymentId) throw new Error('MOLLIE_PAYMENT_MISMATCH')
   const purchase = await getPrisma().financialPurchase.findUnique({ where: { molliePaymentId: payment.id } })
   if (!purchase) return processRecurringProPayment(payment)
   const amountCents = mollieValueToCents(payment.amountValue)
@@ -354,6 +355,11 @@ export async function processMolliePayment(
       },
       update: {},
     })
+    // A delayed payment observation cannot undo a completed payment or refund.
+    if (['REFUND_REVIEW_REQUIRED', 'PARTIALLY_REFUNDED', 'REFUNDED'].includes(current.status)
+      || (current.status === 'PAID' && payment.status !== 'paid')) {
+      return { purchaseId: current.id, kind: current.kind, status: current.status, invoiceId: null }
+    }
     if (payment.status === 'paid') {
       if (current.status !== 'PAID') {
         await transaction.financialPurchase.update({
