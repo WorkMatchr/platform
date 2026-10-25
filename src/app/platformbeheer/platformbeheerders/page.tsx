@@ -121,7 +121,7 @@ export default async function PlatformAdministratorsPage({
                 </td>
                 <td className="px-4 py-3 text-sm">
                   {membership.user.sessions[0]?.updatedAt.toLocaleString('nl-NL') ??
-                    'Nog niet ingelogd'}
+                    'Geen sessie beschikbaar'}
                 </td>
                 <td className="px-4 py-3 text-sm">
                   {invitation ? (
