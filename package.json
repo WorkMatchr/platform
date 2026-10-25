@@ -23,6 +23,7 @@
     "test:db:request-offer-slots": "tsx scripts/test-request-offer-slot-database.ts",
     "test:db:providers": "tsx scripts/test-provider-dataset-database.ts",
     "test:db:accounts": "tsx scripts/test-account-architecture-database.ts",
+    "test:db:auth-sessions": "tsx scripts/test-auth-sessions-database.ts",
     "test:db:account-lifecycle": "tsx scripts/test-account-lifecycle-database.ts",
     "test:db:credits": "tsx scripts/test-credit-wallet-database.ts",
     "test:db:finance": "tsx scripts/test-financial-chain-database.ts",

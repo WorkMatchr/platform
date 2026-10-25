@@ -151,6 +151,8 @@ Module 6C.2 — WOS Beheeracties & Communicatie is technisch opgeleverd en wacht
 
 ## Authenticatie en beveiliging
 
+- [A07 — technische sessie- en opslagverbeteringen, afgescheiden review](a07-technical-split.md)
+
 - [Authenticatie](authentication.md)
 - [Beveiliging](security.md)
 - [ADR-003: Better Auth en platformrollen](adr/ADR-003-better-auth-en-platformrollen.md)
