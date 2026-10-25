@@ -1,0 +1,636 @@
+[
+  {
+    "package": "@prisma/config",
+    "severity": "high",
+    "direct": false,
+    "old": [
+      "7.8.0"
+    ],
+    "current": [
+      "7.10.1"
+    ],
+    "via": [
+      "deepmerge-ts"
+    ],
+    "effects": [
+      "prisma"
+    ]
+  },
+  {
+    "package": "@prisma/dev",
+    "severity": "moderate",
+    "direct": false,
+    "old": [
+      "0.24.3"
+    ],
+    "current": [
+      "0.24.17"
+    ],
+    "via": [
+      "valibot"
+    ],
+    "effects": [
+      "prisma"
+    ]
+  },
+  {
+    "package": "@vercel/blob",
+    "severity": "high",
+    "direct": true,
+    "old": [
+      "2.8.0"
+    ],
+    "current": [
+      "2.8.0"
+    ],
+    "via": [
+      "@vercel/oidc"
+    ],
+    "effects": []
+  },
+  {
+    "package": "@vercel/cli-config",
+    "severity": "high",
+    "direct": false,
+    "old": [
+      "0.2.4"
+    ],
+    "current": [
+      "0.2.4"
+    ],
+    "via": [
+      "zod"
+    ],
+    "effects": [
+      "@vercel/oidc"
+    ]
+  },
+  {
+    "package": "@vercel/oidc",
+    "severity": "high",
+    "direct": true,
+    "old": [
+      "3.8.5"
+    ],
+    "current": [
+      "3.8.5"
+    ],
+    "via": [
+      "@vercel/cli-config"
+    ],
+    "effects": [
+      "@vercel/blob"
+    ]
+  },
+  {
+    "package": "@vitest/mocker",
+    "severity": "moderate",
+    "direct": false,
+    "old": [
+      "4.1.10"
+    ],
+    "current": [
+      "4.1.12"
+    ],
+    "via": [
+      {
+        "title": "Vitest: Path Traversal / Arbitrary File Read via @vitest/mocker Redirect Mock",
+        "url": "https://github.com/advisories/GHSA-82fw-gwwq-j7x9",
+        "range": ">=2.1.0 <4.1.11"
+      },
+      {
+        "title": "Vitest: Code injection via unauthenticated manual mock registration",
+        "url": "https://github.com/advisories/GHSA-qxg6-89mg-rqv8",
+        "range": ">=2.1.0-beta.7 <4.1.12"
+      }
+    ],
+    "effects": [
+      "vitest"
+    ]
+  },
+  {
+    "package": "baseline-browser-mapping",
+    "severity": "moderate",
+    "direct": false,
+    "old": [
+      "2.10.43"
+    ],
+    "current": [
+      "2.11.32"
+    ],
+    "via": [
+      {
+        "title": "baseline-browser-mapping process termination on invalid input causes denial of service",
+        "url": "https://github.com/advisories/GHSA-w5vr-8v7q-w6rv",
+        "range": ">=2.0.0 <2.11.0"
+      }
+    ],
+    "effects": []
+  },
+  {
+    "package": "deepmerge-ts",
+    "severity": "high",
+    "direct": false,
+    "old": [
+      "7.1.5"
+    ],
+    "current": [
+      "8.0.2"
+    ],
+    "via": [
+      {
+        "title": "DeepmergeTS has stack exhaustion when merging recursive object graphs",
+        "url": "https://github.com/advisories/GHSA-ggr8-5vv4-36mx",
+        "range": "<8.0.0"
+      }
+    ],
+    "effects": [
+      "@prisma/config"
+    ]
+  },
+  {
+    "package": "fast-uri",
+    "severity": "high",
+    "direct": false,
+    "old": [
+      "3.1.4"
+    ],
+    "current": [
+      "3.1.9"
+    ],
+    "via": [
+      {
+        "title": "fast-uri vulnerable to host confusion via backslash authority introducer",
+        "url": "https://github.com/advisories/GHSA-7p8r-x3mc-p8w7",
+        "range": ">=3.0.0 <3.1.5"
+      },
+      {
+        "title": "fast-uri vulnerable to host confusion via skipped IDN canonicalization on scheme-relative references",
+        "url": "https://github.com/advisories/GHSA-5jgf-p345-68v8",
+        "range": ">=3.1.3 <3.1.6"
+      },
+      {
+        "title": "fast-uri vulnerable to server-side request forgery via malformed IPv6 normalization",
+        "url": "https://github.com/advisories/GHSA-f65p-4m7j-42xc",
+        "range": ">=3.0.0 <3.1.6"
+      },
+      {
+        "title": "fast-uri vulnerable to server-side request forgery via repeated hostname percent-decoding",
+        "url": "https://github.com/advisories/GHSA-fph4-wmhf-6fwf",
+        "range": ">=3.1.2 <3.1.6"
+      },
+      {
+        "title": "fast-uri vulnerable to host confusion via percent-encoded scheme normalization",
+        "url": "https://github.com/advisories/GHSA-jqff-g426-hqxp",
+        "range": ">=3.0.0 <3.1.6"
+      },
+      {
+        "title": "fast-uri vulnerable to authority injection via an unvalidated port in serialize",
+        "url": "https://github.com/advisories/GHSA-qw65-cvwx-89v3",
+        "range": ">=3.0.0 <3.1.7"
+      },
+      {
+        "title": "fast-uri vulnerable to inconsistent host case normalization via percent-encoded octets",
+        "url": "https://github.com/advisories/GHSA-hrr3-gc8f-f4qj",
+        "range": ">=3.0.0 <3.1.8"
+      },
+      {
+        "title": "fast-uri vulnerable to URI scheme spoofing via percent-encoded scheme decoding",
+        "url": "https://github.com/advisories/GHSA-w74x-v6f9-j3xg",
+        "range": ">=3.0.0 <3.1.9"
+      },
+      {
+        "title": "fast-uri vulnerable to improper path equivalence in relative reference normalization",
+        "url": "https://github.com/advisories/GHSA-xhq7-xmqj-769h",
+        "range": ">=3.0.0 <3.1.9"
+      },
+      {
+        "title": "fast-uri vulnerable to host confusion via unchecked WHATWG host canonicalization",
+        "url": "https://github.com/advisories/GHSA-wjr9-j795-jxcr",
+        "range": ">=3.1.3 <3.1.9"
+      },
+      {
+        "title": "fast-uri vulnerable to scheme injection via an unescaped first-segment colon in suffix references",
+        "url": "https://github.com/advisories/GHSA-333x-w4r6-6crp",
+        "range": ">=3.0.0 <3.1.9"
+      }
+    ],
+    "effects": []
+  },
+  {
+    "package": "hono",
+    "severity": "moderate",
+    "direct": false,
+    "old": [
+      "4.12.32"
+    ],
+    "current": [],
+    "via": [
+      {
+        "title": "Hono: ReDoS in CORS middleware via Access-Control-Request-Headers",
+        "url": "https://github.com/advisories/GHSA-8j4g-w8fx-2239",
+        "range": "<4.12.34"
+      },
+      {
+        "title": "Hono: `memo()` retains SSR output across requests, leading to cross-user data disclosure",
+        "url": "https://github.com/advisories/GHSA-f23p-vx2j-j53r",
+        "range": ">=3.8.0 <4.12.34"
+      },
+      {
+        "title": "Hono: Proxy Helper does not remove response headers listed in the `Connection` header",
+        "url": "https://github.com/advisories/GHSA-79qm-7rj5-m7r9",
+        "range": ">=4.7.0 <4.12.34"
+      },
+      {
+        "title": "Hono: Algorithmic Complexity DoS in Language Middleware",
+        "url": "https://github.com/advisories/GHSA-54fx-42gc-7vw4",
+        "range": ">=4.12.0 <4.12.34"
+      },
+      {
+        "title": "Hono: Incomplete fix for CVE-2026-39408: `toSSG()` still writes files outside the output directory",
+        "url": "https://github.com/advisories/GHSA-gqvv-2mrq-wpjv",
+        "range": "<4.13.5"
+      },
+      {
+        "title": "Hono: Unbounded dot-notation nesting in `parseBody()` can cause memory exhaustion",
+        "url": "https://github.com/advisories/GHSA-g6gw-c38x-mqfc",
+        "range": "<4.13.5"
+      },
+      {
+        "title": "Hono: Query parser reads parameters after the URL fragment, causing cache-key and proxy interpretation differentials",
+        "url": "https://github.com/advisories/GHSA-crvj-82cr-hjcx",
+        "range": "<4.13.5"
+      },
+      {
+        "title": "hono/jsx renders plain strings unescaped in boundary components, leading to XSS",
+        "url": "https://github.com/advisories/GHSA-hxh3-vqpv-xpqv",
+        "range": "<4.13.7"
+      },
+      {
+        "title": "Hono: `serveStatic` decodes the request path a second time, leading to bypass of middleware on static paths",
+        "url": "https://github.com/advisories/GHSA-5r4p-p66f-jhc7",
+        "range": ">=4.12.4 <4.13.11"
+      }
+    ],
+    "effects": []
+  },
+  {
+    "package": "mysql2",
+    "severity": "high",
+    "direct": false,
+    "old": [
+      "3.15.3"
+    ],
+    "current": [
+      "3.24.4"
+    ],
+    "via": [
+      {
+        "title": "MySQL2: Auth Plugin Downgrade to mysql_clear_password Leaks Plaintext Credentials",
+        "url": "https://github.com/advisories/GHSA-3f6p-5ww8-9rcr",
+        "range": "<3.22.0"
+      },
+      {
+        "title": "MySQL2: Unbounded zlib inflate in compressed MySQL protocol handler allows decompression-bomb DoS",
+        "url": "https://github.com/advisories/GHSA-rgwj-5xj2-c3m3",
+        "range": "<=3.23.0"
+      }
+    ],
+    "effects": [
+      "prisma"
+    ]
+  },
+  {
+    "package": "nanoid",
+    "severity": "high",
+    "direct": false,
+    "old": [
+      "3.3.16"
+    ],
+    "current": [
+      "3.3.20"
+    ],
+    "via": [
+      {
+        "title": "nanoid: custom generators can loop indefinitely when size is zero",
+        "url": "https://github.com/advisories/GHSA-2v37-7h3g-55p8",
+        "range": "<3.3.18"
+      }
+    ],
+    "effects": []
+  },
+  {
+    "package": "next",
+    "severity": "critical",
+    "direct": true,
+    "old": [
+      "16.2.11"
+    ],
+    "current": [
+      "16.4.3"
+    ],
+    "via": [
+      {
+        "title": "Next.js: Unauthenticated Remote Code Execution on windows-hosted servers",
+        "url": "https://github.com/advisories/GHSA-p293-qw3h-jr36",
+        "range": ">=16.0.0 <16.3.3"
+      },
+      {
+        "title": "Next.js: Unauthenticated Remote Code Execution in Image Optimization API when AVIF files are used",
+        "url": "https://github.com/advisories/GHSA-2xp9-vwfh-vxw4",
+        "range": ">=16.0.0 <16.3.3"
+      },
+      {
+        "title": "Next.js: Remote Code Execution in next/og ImageResponse",
+        "url": "https://github.com/advisories/GHSA-vcvr-r3jv-pc5j",
+        "range": ">=16.2.0 <16.3.6"
+      },
+      {
+        "title": "Next.js has cache poisoning of SSG and ISR pages in self-hosted applications",
+        "url": "https://github.com/advisories/GHSA-4jqv-mc3x-m676",
+        "range": ">=16.0.0 <16.3.8"
+      },
+      {
+        "title": "Next.js has information disclosure in development server's Model Context Protocol endpoint",
+        "url": "https://github.com/advisories/GHSA-39w2-rjm5-chcv",
+        "range": ">=16.0.0 <16.3.8"
+      },
+      {
+        "title": "Next.js has information disclosure in App Router metadata image routes via dynamicParams bypass",
+        "url": "https://github.com/advisories/GHSA-f87g-xv8r-7p7x",
+        "range": ">=16.0.0 <16.3.8"
+      },
+      {
+        "title": "Next.js has cache poisoning in SSG/ISR rendering that leads to cross-user content substitution and persistent denial of service",
+        "url": "https://github.com/advisories/GHSA-mcj8-r9mp-w47p",
+        "range": ">=16.0.0 <16.3.8"
+      },
+      {
+        "title": "Next.js has Server-Side Request Forgery in Image Optimization",
+        "url": "https://github.com/advisories/GHSA-cjq9-62q9-8jv4",
+        "range": ">=16.0.0 <16.3.8"
+      },
+      {
+        "title": "Next.js: Unauthenticated Remote Code Execution in Image Optimization API when SVG files are used",
+        "url": "https://github.com/advisories/GHSA-2464-fhr4-w9xw",
+        "range": ">=16.0.0 <=16.4.0"
+      },
+      {
+        "title": "Next.js: Denial of Service in App Router using Server Actions",
+        "url": "https://github.com/advisories/GHSA-p3m5-59mp-jv5r",
+        "range": ">=16.0.0 <=16.4.0"
+      },
+      {
+        "title": "Next.js: Unauthenticated Remote Code Execution in `use cache` functions returning typed arrays",
+        "url": "https://github.com/advisories/GHSA-673q-mjm6-r5xr",
+        "range": ">=16.0.0 <=16.4.0"
+      },
+      "postcss",
+      "sharp"
+    ],
+    "effects": []
+  },
+  {
+    "package": "postcss",
+    "severity": "moderate",
+    "direct": false,
+    "old": [
+      "8.5.22"
+    ],
+    "current": [
+      "8.5.31"
+    ],
+    "via": [
+      {
+        "title": "PostCSS: incomplete fix of GHSA-6g55-p6wh-862q — attacker-controlled sourceMappingURL reads arbitrary .map files when `from` is unset",
+        "url": "https://github.com/advisories/GHSA-fxqj-rqcc-2cmp",
+        "range": "<=8.5.22"
+      }
+    ],
+    "effects": [
+      "next",
+      "vite"
+    ]
+  },
+  {
+    "package": "prisma",
+    "severity": "high",
+    "direct": true,
+    "old": [
+      "7.8.0"
+    ],
+    "current": [
+      "7.10.1"
+    ],
+    "via": [
+      "@prisma/config",
+      "@prisma/dev",
+      "mysql2"
+    ],
+    "effects": []
+  },
+  {
+    "package": "sharp",
+    "severity": "high",
+    "direct": true,
+    "old": [
+      "0.35.3"
+    ],
+    "current": [
+      "0.35.5"
+    ],
+    "via": [
+      {
+        "title": "sharp: Vulnerabilities in libheif: GHSA-g89c-p67h-r497 and GHSA-2jg2-4ch7-h545",
+        "url": "https://github.com/advisories/GHSA-rgj7-g3m4-5g8c",
+        "range": "<0.35.4"
+      },
+      {
+        "title": "sharp : Vulnerability in librsvg dependency CVE-2026-96889",
+        "url": "https://github.com/advisories/GHSA-wq5f-xc86-pv6w",
+        "range": "<0.35.5"
+      }
+    ],
+    "effects": [
+      "next"
+    ]
+  },
+  {
+    "package": "source-map-js",
+    "severity": "high",
+    "direct": false,
+    "old": [
+      "1.2.1"
+    ],
+    "current": [
+      "1.2.2"
+    ],
+    "via": [
+      {
+        "title": "source-map-js allows event-loop denial of service through indexed source-map section offsets",
+        "url": "https://github.com/advisories/GHSA-68fv-2mgg-jv7q",
+        "range": ">=1.0.0 <1.2.2"
+      }
+    ],
+    "effects": []
+  },
+  {
+    "package": "undici",
+    "severity": "high",
+    "direct": false,
+    "old": [
+      "7.29.1",
+      "6.28.0"
+    ],
+    "current": [
+      "7.30.1",
+      "6.29.1"
+    ],
+    "via": [
+      {
+        "title": "undici vulnerable to Denial of Service via unhandled error in WebSocket permessage-deflate decompression",
+        "url": "https://github.com/advisories/GHSA-3wwx-pv8p-q78v",
+        "range": ">=6.25.0 <6.28.1"
+      },
+      {
+        "title": "undici vulnerable to downstream response splitting via retry interceptor",
+        "url": "https://github.com/advisories/GHSA-r53p-7pc4-xj5r",
+        "range": "<6.28.1"
+      },
+      {
+        "title": "undici vulnerable to Denial of Service via unrequested WebSocket subprotocol",
+        "url": "https://github.com/advisories/GHSA-rfgv-xxqx-mfg5",
+        "range": ">=6.7.0 <6.28.1"
+      },
+      {
+        "title": "undici vulnerable to Denial of Service via unbounded memory in the EventSource parser",
+        "url": "https://github.com/advisories/GHSA-4qv8-2p9j-2685",
+        "range": ">=7.0.0 <7.30.1"
+      },
+      {
+        "title": "undici vulnerable to Denial of Service via unbounded memory in the EventSource parser",
+        "url": "https://github.com/advisories/GHSA-4qv8-2p9j-2685",
+        "range": ">=6.5.0 <6.29.1"
+      },
+      {
+        "title": "undici vulnerable to Subresource Integrity bypass via non-lowercase algorithm tokens",
+        "url": "https://github.com/advisories/GHSA-f72v-6w45-q472",
+        "range": ">=7.15.0 <7.30.1"
+      },
+      {
+        "title": "undici vulnerable to Denial of Service via unhandled error on excessive content-encodings",
+        "url": "https://github.com/advisories/GHSA-xjj6-f33q-929c",
+        "range": ">=7.18.0 <7.30.1"
+      },
+      {
+        "title": "undici vulnerable to Denial of Service via unhandled error on excessive content-encodings",
+        "url": "https://github.com/advisories/GHSA-xjj6-f33q-929c",
+        "range": ">=6.23.0 <6.29.1"
+      }
+    ],
+    "effects": []
+  },
+  {
+    "package": "valibot",
+    "severity": "moderate",
+    "direct": false,
+    "old": [
+      "1.2.0"
+    ],
+    "current": [
+      "1.4.2"
+    ],
+    "via": [
+      {
+        "title": "Valibot: record() issue paths can make flatten() throw for inherited Object property names",
+        "url": "https://github.com/advisories/GHSA-5qjj-4xww-7phc",
+        "range": "<=1.4.1"
+      }
+    ],
+    "effects": [
+      "@prisma/dev"
+    ]
+  },
+  {
+    "package": "vite",
+    "severity": "high",
+    "direct": false,
+    "old": [
+      "8.1.5"
+    ],
+    "current": [
+      "8.3.5"
+    ],
+    "via": [
+      {
+        "title": "launch-editor: escapeCmdArgs() omits % escaping on Windows",
+        "url": "https://github.com/advisories/GHSA-698v-4r3x-3vcv",
+        "range": ">=8.0.0 <=8.1.5"
+      },
+      {
+        "title": "launch-editor: Editor CLI flag misinterpretation causing arbitrary command execution for some editors",
+        "url": "https://github.com/advisories/GHSA-r825-w8mm-5pxw",
+        "range": ">=8.0.0 <=8.1.5"
+      },
+      {
+        "title": "launch-editor: `fs.existsSync()` existence check can be bypassed on Windows",
+        "url": "https://github.com/advisories/GHSA-587h-7wmj-h5pm",
+        "range": ">=8.0.0 <=8.1.5"
+      },
+      {
+        "title": "Vite: Cross origin script execution through Vite custom middleware",
+        "url": "https://github.com/advisories/GHSA-9jrq-w75r-8gcw",
+        "range": ">=8.0.0 <=8.1.5"
+      },
+      {
+        "title": "Vite: Files outside `server.fs.allow` could be served when project paths match system paths on non-Windows machine",
+        "url": "https://github.com/advisories/GHSA-rq7h-c2jc-7f22",
+        "range": ">=8.0.0 <=8.1.5"
+      },
+      "postcss"
+    ],
+    "effects": []
+  },
+  {
+    "package": "vitest",
+    "severity": "moderate",
+    "direct": true,
+    "old": [
+      "4.1.10"
+    ],
+    "current": [
+      "4.1.12"
+    ],
+    "via": [
+      "@vitest/mocker",
+      {
+        "title": "Vitest: Path Traversal / Arbitrary File Read via @vitest/mocker Redirect Mock",
+        "url": "https://github.com/advisories/GHSA-82fw-gwwq-j7x9",
+        "range": ">=2.1.0 <4.1.11"
+      }
+    ],
+    "effects": []
+  },
+  {
+    "package": "zod",
+    "severity": "high",
+    "direct": true,
+    "old": [
+      "4.1.11",
+      "4.4.3"
+    ],
+    "current": [
+      "4.6.7"
+    ],
+    "via": [
+      {
+        "title": "Zod can exhaust memory while validating oversized constrained collections",
+        "url": "https://github.com/advisories/GHSA-mrhx-c7xc-m3w5",
+        "range": "<4.6.6"
+      }
+    ],
+    "effects": [
+      "@vercel/cli-config"
+    ]
+  }
+]
