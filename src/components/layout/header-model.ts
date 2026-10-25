@@ -22,8 +22,8 @@ export type HeaderViewModel = {
   displayName: string
   activeOrganization: { id: string; name: string; role: OrganizationMembershipRole } | null
   navigationGroups: Array<{
-    key: 'work' | 'organization' | 'personal'
-    label: 'Werk' | 'Organisatie' | 'Persoonlijk'
+    key: 'work' | 'organization' | 'learning' | 'personal'
+    label: 'Werk' | 'Organisatie' | 'E-LEARNINGS' | 'Persoonlijk'
     links: Array<{ href: string; label: string }>
   }>
 }
@@ -31,6 +31,8 @@ export type HeaderViewModel = {
 export function buildHeaderViewModel(
   context: HeaderContext | null,
   isPlatformAdministrator = false,
+  hasLearningProfile = false,
+  learningRuntimeEnabled = false,
 ): HeaderViewModel {
   if (!context) {
     return {
@@ -49,6 +51,8 @@ export function buildHeaderViewModel(
       (organization.organizationType === 'PROVIDER' || organization.organizationType === 'BOTH'),
   )
   const supportsProfessionalFinance = supportsProviderWork
+  const isLearningOnly = learningRuntimeEnabled && context.user.accountType == null && !organization && hasLearningProfile
+  const hasLearningAccess = learningRuntimeEnabled && (context.user.accountType != null || hasLearningProfile)
   return {
     authenticated: true,
     isPlatformAdministrator,
@@ -93,7 +97,7 @@ export function buildHeaderViewModel(
                 : []),
             ],
           },
-          {
+          ...(!isLearningOnly ? [{
             key: 'organization',
             label: 'Organisatie',
             links: [
@@ -108,7 +112,15 @@ export function buildHeaderViewModel(
                   ]
                 : []),
             ],
-          },
+          } as const] : []),
+          ...(hasLearningAccess ? [{
+            key: 'learning',
+            label: 'E-LEARNINGS',
+            links: [
+              { href: '/e-learnings/mijn', label: 'Mijn e-learnings' },
+              { href: '/e-learnings/aanbod', label: 'Opleidingsaanbod' },
+            ],
+          } as const] : []),
           {
             key: 'personal',
             label: 'Persoonlijk',
