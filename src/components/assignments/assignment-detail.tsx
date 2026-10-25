@@ -15,6 +15,7 @@ function Detail({ label, value }: { label: string; value: string }) {
 
 export function AssignmentDetail({ assignment, actions }: { assignment: AssignmentDetailView; actions: { reopen: Action; cancel: Action; withdraw: Action } }) {
   const wasPublished = Boolean(assignment.publishedAt && assignment.publishedVersion)
+  const canViewMarketplace = assignment.canManage && wasPublished && !['CANCELLED', 'ARCHIVED'].includes(assignment.status)
 
   return (
     <div className="space-y-6">
@@ -79,7 +80,7 @@ export function AssignmentDetail({ assignment, actions }: { assignment: Assignme
               value={
                 assignment.status === 'OPEN'
                   ? 'Gereed voor marktverwerking'
-                  : 'Publicatie ingetrokken'
+                  : assignmentStatusLabels[assignment.status]
               }
             />
           </dl>
@@ -141,8 +142,12 @@ export function AssignmentDetail({ assignment, actions }: { assignment: Assignme
         <h2 className="text-lg font-bold text-brand-dark">Wat gebeurt hierna?</h2>
         {assignment.status === 'OPEN' ? (
           <p className="mt-2 text-text-secondary">
-            De opdracht is gereed voor toekomstige marktverwerking. Zij is nog niet zichtbaar voor aanbieders; matching, credits en betalingen zijn niet gestart.
+            {assignment.canonicalRequestId && !assignment.primaryExpertise
+              ? 'Uw opdracht is gepubliceerd. Professionals kunnen pas worden geselecteerd nadat u expliciet een primaire deskundigheid heeft gekozen.'
+              : 'Uw opdracht is gepubliceerd. Start de selectie om passende professionals uit te nodigen. Publicatie alleen start geen selectie.'}
           </p>
+        ) : wasPublished && ['MATCHING', 'AWAITING_RESPONSES', 'IN_SELECTION', 'AWARDED', 'CLOSED'].includes(assignment.status) ? (
+          <p className="mt-2 text-text-secondary">Bekijk de selectie en ontvangen offertes om de voortgang van uw opdracht te volgen.</p>
         ) : assignment.status === 'CANCELLED' && wasPublished ? (
           <p className="mt-2 text-text-secondary">
             De publicatie is ingetrokken. De vastgelegde inhoud en historie blijven behouden; opnieuw publiceren is binnen deze versie niet mogelijk.
@@ -159,6 +164,10 @@ export function AssignmentDetail({ assignment, actions }: { assignment: Assignme
       </Card>
 
       <div className="flex flex-col gap-3 sm:flex-row">
+        {canViewMarketplace && <>
+          <LinkButton href={`/opdrachten/${assignment.id}/selectie`}>Bekijk selectie</LinkButton>
+          <LinkButton href={`/opdrachten/${assignment.id}/offertes`} variant="outline">Bekijk offertes</LinkButton>
+        </>}
         {assignment.intakeId && <LinkButton href={`/hulpvragen/${assignment.intakeId}/controle`}>Bekijk oorspronkelijke hulpvraag</LinkButton>}
         <LinkButton href="/opdrachten" variant="outline">Terug naar opdrachten</LinkButton>
       </div>

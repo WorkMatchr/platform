@@ -31,7 +31,7 @@ export default async function PlatformUsersPage({ searchParams }: { searchParams
               <td className="px-4 py-3">{membership?.organization.name ?? 'Platformaccount'}</td>
               <td className="px-4 py-3">{membership ? organizationRoleLabels[membership.role] : user.platformRole === 'ADMIN' ? 'Platformbeheerder' : 'Geen organisatierol'}</td>
               <td className="px-4 py-3"><StatusPill tone={user.status === 'ACTIVE' ? 'good' : user.status === 'BLOCKED' ? 'bad' : 'warning'}>{userStatusLabels[user.status]}</StatusPill></td>
-              <td className="px-4 py-3">{user.sessions[0]?.updatedAt.toLocaleString('nl-NL') ?? 'Nog niet ingelogd'}</td>
+              <td className="px-4 py-3">{user.sessions[0]?.updatedAt.toLocaleString('nl-NL') ?? 'Geen sessie beschikbaar'}</td>
               <td className="px-4 py-3"><Link className="font-semibold text-brand-primary underline" href={`/platformbeheer/gebruikers/${user.id}`}>Bekijken</Link></td>
             </tr>
           })}

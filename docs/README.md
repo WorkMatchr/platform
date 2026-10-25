@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [WP13 — integrale gebruikersacceptatie en beperkte herstelset](wp13-integral-acceptance.md)
+
 - [WP12 — geïsoleerde, standaard uitgeschakelde LMS-runtimekandidaat](wp12-lms-integration.md)
 
 Deze map bevat de leidende projectdocumentatie. Lees vóór een wijziging minimaal het document dat bij de betreffende module of beslissing hoort.

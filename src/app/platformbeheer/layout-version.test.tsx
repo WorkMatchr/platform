@@ -11,7 +11,7 @@ import Layout from './layout'
 
 beforeEach(() => { vi.resetAllMocks(); mocks.authorize.mockResolvedValue({ membershipRole: 'MEMBER', displayName: 'Testbeheerder' }) })
 describe('A01.6 herstelde platformversiekeuze', () => {
-  it.each([[undefined, 'v01'], ['invalid', 'v01'], ['v01', 'v01'], ['v02', 'v02']])('behoudt de bestaande voorkeur %s -> %s', async (cookie, expected) => {
+  it.each([[undefined, 'v02'], ['invalid', 'v02'], ['v01', 'v01'], ['v02', 'v02']])('gebruikt v02 standaard en behoudt expliciete rollback %s -> %s', async (cookie, expected) => {
     const get = vi.fn(() => cookie ? { value: cookie } : undefined)
     mocks.cookies.mockResolvedValue({ get })
     const html = renderToStaticMarkup(await Layout({ children: <h1>Audit</h1> }))

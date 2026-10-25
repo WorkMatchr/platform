@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url'
-import { defineConfig } from 'vitest/config'
+import { configDefaults, defineConfig } from 'vitest/config'
 
 export default defineConfig({
   resolve: {
@@ -10,5 +10,7 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
+    // This node:test suite is executed by test:scheduler, not by Vitest.
+    exclude: [...configDefaults.exclude, 'ops/marketplace-notifications/dispatch.test.mjs'],
   },
 })
