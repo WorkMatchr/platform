@@ -51,9 +51,9 @@ TTL voor/tijdens/na 24 uur, legacy v1, ongeldige/geblokkeerde opslag, Strict Mod
 - PostgreSQL-harness: tweemaal PASS inclusief foutinjectie, laatste run met definitieve afscherming van providerwaarden; 92/92 migraties en beide tijdelijke databases opgeruimd.
 - Standalone TypeScript: **BASELINE_FAILURE**, exact vier TS2345 readonly-arrayfouten in src/lib/compliance/rule-engine.test.ts, regels 13/14/23/24. Git-blob identiek aan actuele main (d209f87db83211f3bd1542d511799917e7a7004c); dezelfde fouten gedocumenteerd in WP11/WP12/F4. Geen nieuwe A07-typefout, geen baselinecode versoepeld.
 - Volledige lint en productiebuild: **PASS** op de definitieve code. Bekende niet-blokkerende Turbopack/NFT-waarschuwing rond next.config.ts via de Knowledge-extractor blijft ongewijzigd; geen nieuwe buildfout.
-- Diff-check PASS. Secrets-patterncontrole: geen private keys, providercredentials of credentialbevattende PostgreSQL-URL's in de 18 PR-bestanden. Genegeerde runtimefixture niet tracked/staged; daarna verwijderd. Synthetische unitconstants zijn geen bruikbare credentials. Geen volledige externe secretscanner geclaimd.
+- Diff-check PASS. Secrets-patterncontrole: geen private keys, providercredentials of credentialbevattende PostgreSQL-URL's in de 18 oorspronkelijke PR-bestanden; de aanvullend gewijzigde CI-stap bevat uitsluitend de niet-geheime heapinstelling. Genegeerde runtimefixture niet tracked/staged; daarna verwijderd. Synthetische unitconstants zijn geen bruikbare credentials. Geen volledige externe secretscanner geclaimd.
 - De eerste buildpoging stopte vóór compilatie omdat DATABASE_URL ontbrak. De geldige build gebruikt uitsluitend synthetische processvariabelen en een niet-bereikbare lokale builddatabase; geen bestaande database nodig. Een zware TypeScript-run is tijdens browseracceptatie gestopt wegens lokale geheugenbelasting en daarna volledig herhaald.
-- CI/Vercel-status voor de nieuwe head wordt na push vastgelegd in PR #40. Een oud groen resultaat wordt niet aan een nieuwe commit toegeschreven.
+- Remote controle van c5ab469: Vercel Preview READY; GitHub-runs 40177388153 en 40177385507 slagen voor lint en 31/31 tests, maar de Next.js-TypeScriptworker crasht op de standaard Node-heap van circa 4 GiB (SIGABRT / heap out of memory). Geen testassertiefout. De buildstap krijgt daarom uitsluitend in CI NODE_OPTIONS=--max-old-space-size=6144, dezelfde begrensde instelling waarmee de volledige lokale build al PASS is. Geen runner-/planupgrade, geen overgeslagen controle en geen productieconfiguratiewijziging. De nieuwe-head-CI-uitkomst wordt in PR #40 vastgelegd; eerdere resultaten gelden niet automatisch voor die head.
 
 Gewijzigd in deze afronding (naast afzonderlijke main-integratie):
 
@@ -66,6 +66,7 @@ Gewijzigd in deze afronding (naast afzonderlijke main-integratie):
 7. src/content/public-legal.ts
 8. src/lib/auth-session.test.ts
 9. src/lib/auth.ts
+10. .github/workflows/trading-access.yml (alleen build-heaplimiet na aangetoonde CI-OOM)
 
 De gegenereerde next-env.d.ts-wijziging hoort niet bij de commit. Overige al aanwezige PR #40-bestanden behouden hun scope; geen migratie-, lockfile- of A06-wijziging toegevoegd.
 
