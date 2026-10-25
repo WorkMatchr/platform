@@ -1,5 +1,5 @@
 import type { AssignmentDetailView } from '@/lib/assignments/assignment-query-service'
-import { assignmentStatusLabels, formatAssignmentDate, formatOptionalAssignmentDate } from '@/lib/assignments/assignment-presentation'
+import { assignmentStatusLabels, formatAssignmentDate, formatAssignmentStart, formatOptionalAssignmentDate } from '@/lib/assignments/assignment-presentation'
 import { AssignmentStatusBadge } from './assignment-status-badge'
 import { Card } from '@/components/ui/card'
 import { LinkButton } from '@/components/ui/link-button'
@@ -26,7 +26,7 @@ export function AssignmentDetail({ assignment, actions }: { assignment: Assignme
         <dl className="mt-6 grid gap-5 sm:grid-cols-2">
           {assignment.canonicalRequestId && <><Detail label="Reactietermijn voor professionals" value={formatOptionalAssignmentDate(assignment.responseDeadline ?? null)} /><Detail label="Primaire deskundigheid" value={assignment.primaryExpertise ?? 'Nog niet gekozen'} />{Boolean(assignment.additionalExpertises?.length) && <Detail label="Aanvullende deskundigheden" value={assignment.additionalExpertises!.join(', ')} />}</>}
           <Detail label="Organisatie" value={assignment.organizationName} />
-          <Detail label="Gewenste startdatum" value={formatOptionalAssignmentDate(assignment.desiredStartDate)} />
+          <Detail label={assignment.canonicalRequestId ? 'Gewenste start' : 'Gewenste startdatum'} value={formatAssignmentStart(assignment.desiredStartDate, assignment.requestedStart)} />
           <Detail label="Locatie" value={assignment.location} />
           <Detail label="Betrokken medewerkers" value={assignment.employeeCount?.toLocaleString('nl-NL') ?? 'Nog niet bepaald'} />
           <Detail label="Sector" value={assignment.sectorName ?? 'Nog niet bepaald'} />

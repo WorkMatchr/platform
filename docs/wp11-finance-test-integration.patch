@@ -1,0 +1,41 @@
+diff --git a/scripts/test-financial-chain-database.ts b/scripts/test-financial-chain-database.ts
+index 7f69f5b..16e2302 100644
+--- a/scripts/test-financial-chain-database.ts
++++ b/scripts/test-financial-chain-database.ts
+@@ -391,16 +391,34 @@ async function main() {
+     await processMolliePayment(simulatedPurchase.molliePaymentId!, gateway)
+     assert.equal(await prisma.creditTransaction.count({ where: { referenceId: simulatedPurchase.id } }), 0)
+     providerState = 'paid'
+-    await Promise.all(Array.from({ length: 6 }, () => processMolliePayment(simulatedPurchase.molliePaymentId!, gateway)))
++    const failedDeliveries = await Promise.allSettled(Array.from({ length: 6 }, () => processMolliePayment(simulatedPurchase.molliePaymentId!, gateway)))
++    assert.equal(failedDeliveries.length, 6)
++    assert.ok(failedDeliveries.every((result) => result.status === 'rejected' && result.reason instanceof Error && result.reason.message === 'INVOICE_EMAIL_NOT_ACCEPTED'))
+     assert.equal(await prisma.creditTransaction.count({ where: { referenceId: simulatedPurchase.id, type: 'PURCHASE' } }), 1)
+     assert.equal(await prisma.financialInvoice.count({ where: { purchaseId: simulatedPurchase.id } }), 1)
++    assert.equal(await prisma.financialEvent.count({ where: { purchaseId: simulatedPurchase.id, eventType: 'INVOICE_EMAIL_SENT' } }), 0)
++    assert.equal(await prisma.financialEvent.count({ where: { purchaseId: simulatedPurchase.id, eventType: 'INVOICE_EMAIL_FAILED' } }), 1)
++    const { deliverFinancialInvoiceEmail } = await import('../src/lib/finance/financial-invoice-delivery-service')
++    const simulatedInvoice = await prisma.financialInvoice.findUniqueOrThrow({ where: { purchaseId: simulatedPurchase.id } })
++    let fakeDeliveries = 0
++    const fakeSender: Parameters<typeof deliverFinancialInvoiceEmail>[1] = async (email) => {
++      assert.equal(email.to, user.email)
++      assert.equal(email.kind, 'FINANCIAL_INVOICE')
++      assert.equal(email.idempotencyKey, `invoice-email:${simulatedInvoice.id}`)
++      fakeDeliveries += 1
++      return { accepted: true, transport: 'RESEND', status: 'ACCEPTED', messageId: 'synthetic-accepted-invoice' }
++    }
++    await deliverFinancialInvoiceEmail(simulatedInvoice.id, fakeSender)
++    await deliverFinancialInvoiceEmail(simulatedInvoice.id, fakeSender)
++    assert.equal(fakeDeliveries, 1)
++    assert.equal(await prisma.financialEvent.count({ where: { purchaseId: simulatedPurchase.id, eventType: 'INVOICE_EMAIL_SENT' } }), 1)
+     const paidBefore = await prisma.financialPurchase.findUniqueOrThrow({ where: { id: simulatedPurchase.id } })
+     providerState = 'pending'
+     await processMolliePayment(simulatedPurchase.molliePaymentId!, gateway)
+     assert.equal((await prisma.financialPurchase.findUniqueOrThrow({ where: { id: simulatedPurchase.id } })).status, 'PAID')
+     assert.equal((await prisma.financialPurchase.findUniqueOrThrow({ where: { id: simulatedPurchase.id } })).creditedTransactionId, paidBefore.creditedTransactionId)
+     await assert.rejects(() => createCreditPurchase({ actorUserId: secondUser.id, organizationId: organization.id, packageSku: 'CREDITS_25', idempotencyKey: simulatedPurchase.idempotencyKey, billingAddress: { organizationName: 'Synthetisch', addressLine: 'Teststraat 1', postalCode: '1000 AA', city: 'Testplaats', countryCode: 'NL' } }, gateway), { code: 'ACCESS_DENIED' })
+-    console.log('WP8 paymentservice: pending geen credits; zes betaalreplays één ledger/factuur; vertraagde pending geen terugval; vreemde checkoutactor geweigerd. Geen externe providercall.')
++    console.log('WP8/WP9: zes development-mailweigeringen behouden één ledger/factuur; geen vals SENT; één fake accepted delivery; replay zonder tweede mail; vertraagde pending geen terugval; vreemde checkoutactor geweigerd. Geen externe providercall.')
+   } finally {
+     if (prisma) await prisma.$disconnect()
+     await admin.query(`DROP DATABASE IF EXISTS "${databaseName}" WITH (FORCE)`)

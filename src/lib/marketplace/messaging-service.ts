@@ -13,6 +13,7 @@ async function requireChannelAccess(
   const channel = await transaction.marketplaceMessageChannel.findFirst({
     where: {
       id: channelId,
+      clientOrganization: { status: 'ACTIVE', organizationType: 'CLIENT', systemKey: null },
       OR: [
         { clientOrganizationId: organizationId },
         { participation: { providerOrganizationId: organizationId } },
@@ -23,7 +24,7 @@ async function requireChannelAccess(
       participation: { select: { providerOrganizationId: true, status: true } },
       clientOrganization: {
         select: {
-          memberships: { where: { userId, status: 'ACTIVE', user: { status: 'ACTIVE' } }, select: { role: true }, take: 1 },
+          memberships: { where: { userId, status: 'ACTIVE', user: { status: 'ACTIVE', accountType: 'CLIENT' } }, select: { role: true }, take: 1 },
         },
       },
     },
@@ -31,7 +32,7 @@ async function requireChannelAccess(
   if (!channel || channel.participation.status !== 'ACTIVE') throw new MarketplaceServiceError('ACCESS_DENIED')
   const clientRole = channel.clientOrganization.memberships[0]?.role
   const providerMembership = await transaction.organizationMembership.findFirst({
-    where: { userId, organizationId: channel.participation.providerOrganizationId, status: 'ACTIVE', user: { status: 'ACTIVE' } },
+    where: { userId, organizationId: channel.participation.providerOrganizationId, status: 'ACTIVE', user: { status: 'ACTIVE', accountType: 'PROFESSIONAL' }, organization: { status: 'ACTIVE', organizationType: { in: ['PROVIDER', 'BOTH'] }, systemKey: null } },
     select: { role: true },
   })
   const role = channel.clientOrganizationId === organizationId ? clientRole : providerMembership?.role
@@ -49,9 +50,12 @@ export async function sendMarketplaceMessage(input: {
   const content = input.content.trim()
   if (content.length < 1 || content.length > 4000) throw new MarketplaceServiceError('VALIDATION_ERROR')
   return getPrisma().$transaction(async (transaction) => {
-    const repeated = await transaction.marketplaceMessage.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
-    if (repeated) return repeated
     const { channel, role } = await requireChannelAccess(transaction, input.actorUserId, input.organizationId, input.channelId, true)
+    const repeated = await transaction.marketplaceMessage.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
+    if (repeated) {
+      if (repeated.senderUserId !== input.actorUserId || repeated.senderOrganizationId !== input.organizationId || repeated.channelId !== input.channelId || repeated.content !== content) throw new MarketplaceServiceError('ACCESS_DENIED')
+      return repeated
+    }
     const message = await transaction.marketplaceMessage.create({
       data: {
         channelId: channel.id,

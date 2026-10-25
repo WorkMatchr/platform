@@ -57,7 +57,7 @@ export type ArboGuideCompletionInput = z.input<typeof completionSchema>
 export type ArboGuideReportSnapshot = z.output<typeof arboGuideReportSnapshotSchema>
 
 export class ArboGuideRunError extends Error {
-  constructor(public readonly code: 'ACCESS_DENIED' | 'NOT_FOUND' | 'INVALID_INPUT' | 'CONFLICT') { super(code) }
+  constructor(public readonly code: 'ACCESS_DENIED' | 'NOT_FOUND' | 'INVALID_INPUT' | 'CONFLICT' | 'EXPIRED_COMPLETION') { super(code) }
 }
 
 function stable(value: unknown): unknown {
@@ -90,7 +90,8 @@ async function allocateReportNumber(tx: Prisma.TransactionClient, guideType: key
   return `${prefixes[guideType]}-${year}-${String(rows[0].nextNumber).padStart(6, '0')}`
 }
 
-export async function completeArboGuideRun(raw: unknown) {
+export async function completeArboGuideRun(raw: unknown, options: { maxCompletionAgeMs?: number } = {}) {
+  if (options.maxCompletionAgeMs !== undefined && (!Number.isFinite(options.maxCompletionAgeMs) || options.maxCompletionAgeMs <= 0)) throw new ArboGuideRunError('INVALID_INPUT')
   const parsed = completionSchema.safeParse(raw)
   if (!parsed.success || parsed.data.completedAt < parsed.data.startedAt) throw new ArboGuideRunError('INVALID_INPUT')
   const input = parsed.data
@@ -121,6 +122,10 @@ export async function completeArboGuideRun(raw: unknown) {
           return { id: existing.id, reportNumber: existing.reportNumber!, created: false }
         }
         if (existing && JSON.stringify(stable(existing.answersSnapshot)) !== JSON.stringify(stable(input.answersSnapshot))) throw new ArboGuideRunError('CONFLICT')
+
+        // Check freshness under the same lock, after immutable replay. A lost response
+        // must remain replayable; an expired new completion must never be inserted.
+        if (options.maxCompletionAgeMs !== undefined && Date.now() - input.completedAt.getTime() > options.maxCompletionAgeMs) throw new ArboGuideRunError('EXPIRED_COMPLETION')
 
         // Validate inside the same transaction, after authorization and immutable replay.
         // Historical reads/replays remain possible after retirement; new completions do not.

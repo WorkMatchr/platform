@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [WP12 — geïsoleerde, standaard uitgeschakelde LMS-runtimekandidaat](wp12-lms-integration.md)
+
 Deze map bevat de leidende projectdocumentatie. Lees vóór een wijziging minimaal het document dat bij de betreffende module of beslissing hoort.
 
 ## Hoogste richtinggevende document
@@ -23,6 +25,7 @@ Module 6C.2 — WOS Beheeracties & Communicatie is technisch opgeleverd en wacht
 
 - [Compliance F1 — migratieherstel en versiecorrecte resultaatopslag](compliance-f1-foundation.md)
 - [Compliance F2 — versiegrens en vijfstatusresultaten](compliance-f2-versioned-results.md)
+- [Compliance F4 — juridisch reviewer-dossier, claim-/regelmatrix en beslisbladen (issue #50)](compliance-f4-review-dossier.md)
 
 1. [Productvisie](01-productvisie.md)
 2. [Architectuur](02-architectuur.md)
@@ -195,3 +198,8 @@ Zie [legacy intake naar gedeelde Simple Advice Flow](legacy-intake-unification.m
 - [A01.8 — Opdracht starten en compatibele Advieswijzer-route](a018-opdracht-starten.md)
 
 - [J01 — Jortt deploymentonderzoek en veilige beheeractie](jortt-deployment-recovery.md)
+
+- [Compliance F4 — uitgebreide versiegebonden wijzer](compliance-f4-expanded-guide.md)
+- [Compliance F4 — juridische vraag- en regelmatrix](compliance-f4-legal-matrix.md)
+- [Compliance F4 — bronbinding en frameworkvrijgaveplan](compliance-f4-publication-plan.md)
+- [Compliance F4 — 46 claimreviews en read-only publicatiecontrole](compliance-f4-knowledge-publication.md)

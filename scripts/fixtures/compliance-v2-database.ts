@@ -3,17 +3,18 @@ import type { PrismaClient } from '../../src/generated/prisma/client'
 import { buildComplianceV2Report, complianceChecksum } from '../../src/lib/compliance/compliance-v2'
 import { v2Definition, v2Answers, v2Context } from '../../src/test-fixtures/compliance-v2'
 import * as service from '../../src/lib/arbo-guides/arbo-guide-run-service'
+import { createReviewedTestCitation } from './compliance-knowledge-database'
 
 export async function verifyComplianceV2Database(db: PrismaClient, viewer: service.ArboGuideViewer, other: service.ArboGuideViewer) {
   const historical = await db.arboGuideRun.findMany({ include: { results: true }, orderBy: { id: 'asc' } })
   const d = v2Definition(), src = d.modules[0].rules[0].sources[0]
   const topic = await db.knowledgeTopic.create({ data: { slug: 'synthetic-f2', title: 'Test', description: 'Test', domain: 'OTHER' } })
   const source = await db.knowledgeSource.create({ data: { code: 'SYNTHETIC_F2', title: src.title, publisher: src.publisher, sourceUrl: src.url,
-    sourceType: 'LEGISLATION', sourceFormat: 'HTML', copyrightClassification: 'PUBLIC_DOMAIN', authorityLevel: 'PRIMARY_LEGAL', sourceFamily: 'TEST', independenceGroup: 'TEST',
+    sourceType: 'LEGISLATION', sourceFormat: 'HTML', copyrightClassification: 'PUBLIC_DOMAIN', authorityLevel: 'PRIMARY_LEGAL', sourceFamily: 'TEST', independenceGroup: 'TEST', temporalStatus: 'CURRENT',
   } })
-  await db.knowledgeSourceVersion.create({ data: { id: src.sourceVersionId, sourceId: source.id, versionLabel: 'test-1', checksum: src.sourceChecksum } })
-  await db.knowledgeClaim.create({ data: { id: src.claimId, topicId: topic.id, externalKey: 'synthetic-f2', claimType: 'LEGAL_REQUIREMENT', statement: 'Synthetische testclaim', applicability: 'Test', createdByActor: 'F2_TEST', publicationStatus: 'PUBLISHED', validationStatus: 'VALIDATED', copyrightCheckPassed: true, reviewedByUserId: viewer.userId, reviewedAt: new Date(v2Context.scannedAt) } })
-  await db.knowledgeCitation.create({ data: { id: src.id, claimId: src.claimId, sourceVersionId: src.sourceVersionId, supportType: 'DIRECT_SUPPORT' } })
+  await db.knowledgeSourceVersion.create({ data: { id: src.sourceVersionId, sourceId: source.id, versionLabel: 'test-1', checksum: src.sourceChecksum, reviewStatus: 'REVIEWED' } })
+  await db.knowledgeClaim.create({ data: { id: src.claimId, topicId: topic.id, externalKey: 'synthetic-f2', claimType: 'LEGAL_REQUIREMENT', statement: 'Synthetische testclaim', applicability: 'Test', createdByActor: 'F2_TEST', publicationStatus: 'PUBLISHED', validationStatus: 'VALIDATED', temporalStatus: 'CURRENT', sourceControlStatus: 'CONTROL_COMPLETE', copyrightCheckPassed: true, reviewedByUserId: viewer.userId, reviewedAt: new Date(v2Context.scannedAt) } })
+  await createReviewedTestCitation(db, src, viewer.userId, new Date(v2Context.scannedAt))
   await db.complianceFrameworkVersion.create({ data: { id: d.id, frameworkCode: d.frameworkCode, version: d.version, title: d.title, disclaimer: d.disclaimer, methodology: 'Synthetische F2-test', checksum: complianceChecksum(d) } })
   for (const [i, m] of d.modules.entries()) {
     const moduleDefinition = await db.complianceModuleDefinition.create({ data: { frameworkVersionId: d.id, code: m.code, title: m.title, category: 'CORE', position: i + 1, defaultAssessmentMode: 'FULL' } })

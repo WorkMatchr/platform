@@ -23,6 +23,12 @@ afterEach(() => {
 })
 
 describe('authenticatie-e-mails', () => {
+  it('behandelt het SDK-netwerkfoutobject als tijdelijke transportfailure', async () => {
+    vi.stubEnv('RESEND_API_KEY', 'test-resend-key')
+    vi.stubEnv('AUTH_EMAIL_FROM', 'WorkMatchr <account@example.invalid>')
+    resendMocks.send.mockResolvedValue({ data: null, error: { name: 'application_error', statusCode: null, message: 'Private provider detail' }, headers: null })
+    await expect(sendAuthEmail(passwordResetEmail('test@example.invalid', 'Test', 'https://example.invalid/reset'))).rejects.toMatchObject({ code: 'EMAIL_PROVIDER_UNAVAILABLE', providerStatusCode: null })
+  })
   it('maakt een responsive factuurmail met consistente HTML en plain-text fallback', () => {
     const email = financialInvoiceEmail({
       to: 'factuur@example.invalid',
@@ -180,6 +186,21 @@ describe('authenticatie-e-mails', () => {
       messageId: 'resend-message-123',
     })
     expect(output).not.toHaveBeenCalled()
+  })
+  it('geeft een PDF-bijlage door aan de bestaande Resend-adapter', async () => {
+    vi.stubEnv('NODE_ENV', 'production')
+    vi.stubEnv('RESEND_API_KEY', 'test-resend-key')
+    vi.stubEnv('AUTH_EMAIL_FROM', 'WorkMatchr <account@workmatchr.nl>')
+    resendMocks.send.mockResolvedValue({ data: { id: 'resend-certificate-test' }, error: null })
+    const pdf = Buffer.from('%PDF-fake-test')
+    await sendAuthEmail({
+      kind: 'LEARNING_CERTIFICATE', to: 'student@example.invalid', subject: 'Certificaat', text: 'Bericht', html: '<p>Bericht</p>',
+      attachments: [{ filename: 'certificaat.pdf', content: pdf, contentType: 'application/pdf' }],
+    })
+    expect(resendMocks.send).toHaveBeenCalledWith(expect.objectContaining({
+      to: 'student@example.invalid',
+      attachments: [{ filename: 'certificaat.pdf', content: pdf, contentType: 'application/pdf' }],
+    }), undefined)
   })
   it('bezorgt een factuurmail alleen in Preview naar de expliciete testontvanger', async () => {
     vi.stubEnv('VERCEL_ENV', 'preview')

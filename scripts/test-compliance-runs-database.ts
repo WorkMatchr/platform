@@ -60,6 +60,22 @@ async function main() {
     assert.deepEqual(await registry(), before, 'Herhaald deploy wijzigt geen registraties/checksums.')
     console.log(`Migratieketen: ${before.length}/${migrations.length}, 0 failed, 0 onverwacht; herhaling ongewijzigd.`)
 
+    // Exercise the existing operator CLI only against this process-owned database.
+    const frameworkCount = await db.complianceFrameworkVersion.count()
+    const dryRun = spawnSync(process.execPath, [npmPath!, 'exec', '--', 'tsx', 'scripts/check-compliance-f4-publication.ts', '--check'], {
+      cwd: process.cwd(), env: { ...process.env, COMPLIANCE_REVIEW_DATABASE_URL: testUrl.toString() }, encoding: 'utf8', stdio: 'pipe',
+    })
+    assert.equal(dryRun.status, 2, 'Niet geregistreerd F4-framework moet CLI NO_GO opleveren.')
+    const dryRunReport = JSON.parse(dryRun.stdout) as { readOnly: boolean; decision: string; errors: string[]; expectedRules: { present: boolean }[] }
+    assert.equal(dryRunReport.readOnly, true)
+    assert.equal(dryRunReport.decision, 'NO_GO')
+    assert.deepEqual(dryRunReport.errors, ['FRAMEWORK_NOT_REGISTERED'])
+    assert.equal(dryRunReport.expectedRules.length, 141)
+    assert.ok(dryRunReport.expectedRules.every(rule => !rule.present))
+    assert.equal(await db.complianceFrameworkVersion.count(), frameworkCount)
+    assert.deepEqual(await registry(), before)
+    console.log('F4 read-only CLI PASS: exit 2 NO_GO, 141 ontbrekende regels, geen frameworkregistratie of migratiehistoriewijziging.')
+
     const user = await db.user.create({ data: { email: 'compliance-f1@example.invalid', status: 'ACTIVE', emailVerified: true, accountType: 'CLIENT' } })
     const otherUser = await db.user.create({ data: { email: 'other-compliance-f1@example.invalid', status: 'ACTIVE', emailVerified: true, accountType: 'CLIENT' } })
     const organization = await db.organization.create({ data: { name: 'Synthetische F1 organisatie', organizationType: 'CLIENT', status: 'ACTIVE' } })
@@ -150,6 +166,9 @@ async function main() {
     const { verifyComplianceV2Database } = await import('./fixtures/compliance-v2-database')
     await verifyComplianceV2Database(db, { userId: user.id, organizationId: organization.id }, { userId: otherUser.id, organizationId: other.id })
     console.log('Route → evaluator → service → PostgreSQL PASS; 6 gelijktijdige aanvragen: exact 1 nieuwe run/9 resultaten; autorisatie, tenantisolatie, frameworkversie en historische snapshots PASS.')
+    fixture.complianceTestContext = context
+    const { verifyComplianceF4Database } = await import('./fixtures/compliance-f4-database')
+    await verifyComplianceF4Database(db, { userId: user.id, organizationId: organization.id }, { userId: otherUser.id, organizationId: other.id })
   } finally {
     fixture.complianceTestContext = null
     await db?.$disconnect()

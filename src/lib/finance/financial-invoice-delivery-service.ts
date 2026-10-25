@@ -46,6 +46,7 @@ export async function deliverFinancialInvoiceEmail(invoiceId: string, sender: In
       downloadUrl,
     })
     const delivery = await sender({ ...email, idempotencyKey: `invoice-email:${invoice.id}` })
+    if (delivery.status !== 'ACCEPTED' || delivery.transport !== 'RESEND') throw new Error('INVOICE_EMAIL_NOT_ACCEPTED')
     await transaction.financialEvent.create({
       data: {
         actorUserId: purchase.createdByUserId,

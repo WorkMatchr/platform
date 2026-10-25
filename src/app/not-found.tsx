@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card'
 import { Heading } from '@/components/ui/heading'
 import { LinkButton } from '@/components/ui/link-button'
 import { Text } from '@/components/ui/text'
-import { publicAnchors, publicRoutes } from '@/content/public-routes'
+import { publicRoutes } from '@/content/public-routes'
 
 export default function NotFound() {
   return (
@@ -18,7 +18,7 @@ export default function NotFound() {
         </Text>
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row sm:flex-wrap">
           <LinkButton href={publicRoutes.home}>Naar de homepage</LinkButton>
-          <LinkButton href={publicAnchors.askQuestion} variant="secondary">Stel uw vraag</LinkButton>
+          <LinkButton href={publicRoutes.adviceGuide} variant="secondary">Start uw opdracht</LinkButton>
           <LinkButton href={publicRoutes.knowledge} variant="secondary">Bekijk het kenniscentrum</LinkButton>
           <LinkButton href={publicRoutes.services} variant="secondary">Bekijk diensten</LinkButton>
         </div>

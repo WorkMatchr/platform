@@ -371,9 +371,13 @@ export async function applyMarketplaceMatchIntervention(input: {
   if (new Set(input.candidateIds).size !== input.candidateIds.length) throw new MarketplaceServiceError('VALIDATION_ERROR')
   const now = input.now ?? new Date()
   return getPrisma().$transaction(async (transaction) => {
-    const repeated = await transaction.marketplaceAuditEvent.findUnique({ where: { correlationKey: input.idempotencyKey } })
-    if (repeated) return repeated
     await requireMarketplacePlatformAdmin(transaction, input.actorUserId)
+    const repeated = await transaction.marketplaceAuditEvent.findUnique({ where: { correlationKey: input.idempotencyKey } })
+    if (repeated) {
+      const original = z.object({ matchRunId: z.string(), replacementSelection: z.array(z.object({ candidateId: z.string() })) }).safeParse(repeated.metadata)
+      if (repeated.actorUserId !== input.actorUserId || repeated.action !== 'MATCH_SELECTION_INTERVENED' || repeated.entityType !== 'MarketplaceMatchIntervention' || !original.success || original.data.matchRunId !== input.matchRunId || original.data.replacementSelection.length !== input.candidateIds.length || original.data.replacementSelection.some(candidate => !input.candidateIds.includes(candidate.candidateId))) throw new MarketplaceServiceError('ACCESS_DENIED')
+      return repeated
+    }
     const run = await transaction.marketplaceMatchRun.findFirst({
       where: { id: input.matchRunId, status: 'COMPLETED' },
       include: {

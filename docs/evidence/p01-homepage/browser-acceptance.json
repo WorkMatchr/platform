@@ -1,0 +1,182 @@
+{
+  "results": [
+    {
+      "width": 1350,
+      "homepage": 200,
+      "overflow": false,
+      "keyboard": true,
+      "focus": {
+        "style": "solid",
+        "width": "3px"
+      },
+      "mobileDisclosure": "not applicable",
+      "genericEntry": "PASS",
+      "expertiseEntry": "PASS",
+      "topicEntry": "PASS",
+      "legacyRedirect": "PASS",
+      "errors": []
+    },
+    {
+      "width": 800,
+      "homepage": 200,
+      "overflow": false,
+      "keyboard": true,
+      "focus": {
+        "style": "solid",
+        "width": "3px"
+      },
+      "mobileDisclosure": "PASS",
+      "genericEntry": "PASS",
+      "expertiseEntry": "PASS",
+      "topicEntry": "PASS",
+      "legacyRedirect": "PASS",
+      "errors": []
+    },
+    {
+      "width": 390,
+      "homepage": 200,
+      "overflow": false,
+      "keyboard": true,
+      "focus": {
+        "style": "solid",
+        "width": "3px"
+      },
+      "mobileDisclosure": "PASS",
+      "genericEntry": "PASS",
+      "expertiseEntry": "PASS",
+      "topicEntry": "PASS",
+      "legacyRedirect": "PASS",
+      "errors": []
+    }
+  ],
+  "links": [
+    {
+      "href": "/",
+      "status": 200
+    },
+    {
+      "href": "/diensten",
+      "status": 200
+    },
+    {
+      "href": "/voor-opdrachtgevers",
+      "status": 200
+    },
+    {
+      "href": "/voor-professionals",
+      "status": 200
+    },
+    {
+      "href": "/kenniscentrum",
+      "status": 200
+    },
+    {
+      "href": "/e-learning",
+      "status": 200
+    },
+    {
+      "href": "/wijzers/compliance",
+      "status": 200
+    },
+    {
+      "href": "/inloggen",
+      "status": 200
+    },
+    {
+      "href": "/opdracht-starten",
+      "status": 200
+    },
+    {
+      "href": "/opdracht-starten?start=deskundigheid",
+      "status": 200
+    },
+    {
+      "href": "/opdracht-starten?start=onderwerp",
+      "status": 200
+    },
+    {
+      "href": "/diensten/rie",
+      "status": 200
+    },
+    {
+      "href": "/diensten/hogere-veiligheidskundige",
+      "status": 200
+    },
+    {
+      "href": "/diensten/arbeidshygienist",
+      "status": 200
+    },
+    {
+      "href": "/diensten/ergonoom",
+      "status": 200
+    },
+    {
+      "href": "/diensten/bedrijfsarts",
+      "status": 200
+    },
+    {
+      "href": "/diensten/incidentonderzoek",
+      "status": 200
+    },
+    {
+      "href": "/wettelijke-verplichtingen/rie",
+      "status": 200
+    },
+    {
+      "href": "/wettelijke-verplichtingen/plan-van-aanpak",
+      "status": 200
+    },
+    {
+      "href": "/wettelijke-verplichtingen/preventiemedewerker",
+      "status": 200
+    },
+    {
+      "href": "/wettelijke-verplichtingen",
+      "status": 200
+    },
+    {
+      "href": "/kenniscentrum/moet-ik-een-rie-hebben",
+      "status": 200
+    },
+    {
+      "href": "/kenniscentrum/wat-doet-een-preventiemedewerker",
+      "status": 200
+    },
+    {
+      "href": "/kenniscentrum/hoeveel-bhvers-heb-ik-nodig",
+      "status": 200
+    },
+    {
+      "href": "/e-learning/rie-in-de-praktijk",
+      "status": 200
+    },
+    {
+      "href": "/sectoren",
+      "status": 200
+    },
+    {
+      "href": "/wijzers",
+      "status": 200
+    },
+    {
+      "href": "/over-workmatchr",
+      "status": 200
+    },
+    {
+      "href": "/contact",
+      "status": 200
+    },
+    {
+      "href": "/privacy",
+      "status": 200
+    },
+    {
+      "href": "/cookies",
+      "status": 200
+    },
+    {
+      "href": "/algemene-voorwaarden",
+      "status": 200
+    }
+  ]
+}

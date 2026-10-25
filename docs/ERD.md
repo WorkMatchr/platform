@@ -766,3 +766,7 @@ ArboGuideRun 1 ─── * ComplianceAction 1 ─── * ComplianceActionEvent
 ```
 
 De scan en haar resultaten blijven immutable. Alleen de operationele velden van `ComplianceAction` veranderen; iedere wijziging wordt als append-only event vastgelegd.
+
+## Compliance F4 (nog niet uitgerold)
+
+Nullable `ComplianceQuestionDefinition.visibilityCondition` bewaart versiegebonden zichtbaarheid. Geen bestaande data gewijzigd; zie [F4](compliance-f4-expanded-guide.md).

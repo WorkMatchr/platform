@@ -34,6 +34,10 @@ function context(memberships: Membership[], activeMembership: Membership | null)
 }
 
 describe('accountweergave van platform- en organisatierollen', () => {
+  it('laat uitloggen aan de gedeelde header over zonder dubbele pagina-actie', () => {
+    const page = readFileSync(join(process.cwd(), 'src/app/account/page.tsx'), 'utf8')
+    expect(page).not.toContain('LogoutButton')
+  })
   it('toont bij één organisatie de platformrol en volledige organisatiecontext', () => {
     const active = membership('organization-1', 'Veilig Werk BV', 'OWNER')
 

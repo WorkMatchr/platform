@@ -1,6 +1,10 @@
 import { createHash } from 'node:crypto'
 import { z } from 'zod'
-import { complianceConditionSchema, type ComplianceAnswerMap } from './rule-engine'
+import { complianceConditionSchema } from './rule-engine'
+import type { Condition } from './compliance-v2-conditions'
+import { canonicalJson, normalizeComplianceV2Answers, conditionQuestions, isKnownComplianceAnswer, evaluateComplianceV2Condition } from './compliance-v2-conditions'
+export { canonicalJson, normalizeComplianceV2Answers, conditionQuestions, isKnownComplianceAnswer, evaluateComplianceV2Condition, complianceV2AnswersSchema } from './compliance-v2-conditions'
+import { resolveComplianceQuestions } from './compliance-question-visibility'
 import { complianceAssessmentStatuses, complianceApplicabilities, complianceAssessmentModes } from './module-aggregation'
 
 export const COMPLIANCE_V2 = { frameworkCode: 'NL_ARBO_GUIDE', version: '2', guideVersion: '2', reportVersion: '2.0', productCode: 'COMPLIANCE_GUIDE' } as const
@@ -11,19 +15,7 @@ export const complianceStatusLabels = {
 const checksum = z.string().regex(/^[a-f0-9]{64}$/)
 const frameworkVersion = z.string().max(32).regex(/^2(?:\.\d+){0,2}$/)
 const code = z.string().min(1).max(80)
-const scalar = z.union([z.string().max(500), z.number().finite(), z.boolean(), z.null()])
-export const complianceV2AnswersSchema = z.record(code, z.union([scalar, z.array(scalar).max(50)]))
-export function canonicalJson(value: unknown): string {
-  const stable = (v: unknown): unknown => Array.isArray(v) ? v.map(stable) : v && typeof v === 'object'
-    ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0).map(([k, x]) => [k, stable(x)])) : v
-  return JSON.stringify(stable(value))
-}
 export const complianceChecksum = (value: unknown) => createHash('sha256').update(canonicalJson(value)).digest('hex')
-export function normalizeComplianceV2Answers(raw: unknown) {
-  const answers = complianceV2AnswersSchema.parse(raw)
-  return Object.fromEntries(Object.entries(answers).map(([key, value]) => [key, Array.isArray(value)
-    ? [...new Map(value.map((v) => [JSON.stringify(v), v])).entries()].sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0).map(([, v]) => v) : value]))
-}
 export const complianceV2SourceSchema = z.object({
   id: z.string().uuid(), title: z.string().min(1).max(300), publisher: z.string().min(1).max(200),
   url: z.string().url().startsWith('https://'), reviewedAt: z.string().date(),
@@ -32,6 +24,8 @@ export const complianceV2SourceSchema = z.object({
 }).strict()
 const questionSchema = z.object({
   id: z.string().uuid(), code, prompt: z.string().min(1).max(1000), required: z.boolean(),
+  helpText: z.string().max(2000).optional(),
+  visibleWhen: complianceConditionSchema.optional(),
   inputType: z.enum(['BOOLEAN', 'SINGLE_SELECT', 'MULTI_SELECT', 'NUMBER', 'DATE', 'SHORT_TEXT']),
   options: z.array(z.object({ value: z.string().min(1).max(80), label: z.string().min(1).max(200), exclusive: z.boolean() }).strict()).max(100),
 }).strict()
@@ -53,36 +47,13 @@ export const complianceV2DefinitionSchema = z.object({
   for (const values of [d.modules.map(m => m.code), d.modules.flatMap(m => m.questions.map(q => q.code)), d.modules.flatMap(m => m.rules.map(r => r.code))]) {
     if (new Set(values).size !== values.length) ctx.addIssue({ code: 'custom', message: 'Dubbele versie-identiteit.' })
   }
+  try { resolveComplianceQuestions(d.modules.flatMap(m => m.questions), {}) } catch { ctx.addIssue({ code: 'custom', message: 'Ongeldige vraagafhankelijkheid.' }) }
+  if (d.version !== '2.1' && d.modules.some(m => m.questions.some(q => q.visibleWhen || q.helpText))) ctx.addIssue({ code: 'custom', message: 'Vraagmetadata vereist versie 2.1.' })
   for (const m of d.modules) for (const r of m.rules) {
-    if (conditionQuestions(r.condition).some(q => !m.questions.some(x => x.code === q))) ctx.addIssue({ code: 'custom', message: 'Onbekende regelvraag.' })
+    if (conditionQuestions(r.condition).some(q => !(d.version === '2.1' ? d.modules.flatMap(x => x.questions) : m.questions).some(x => x.code === q))) ctx.addIssue({ code: 'custom', message: 'Onbekende regelvraag.' })
   }
 })
 export type ComplianceV2Definition = z.infer<typeof complianceV2DefinitionSchema>
-type Condition = z.infer<typeof complianceConditionSchema>
-export function conditionQuestions(c: Condition): string[] {
-  if ('question' in c) return [c.question]
-  if ('not' in c) return conditionQuestions(c.not)
-  return ('all' in c ? c.all : c.any).flatMap(conditionQuestions)
-}
-export function isKnownComplianceAnswer(value: unknown): boolean {
-  return value !== undefined && value !== null && value !== '' && !['UNKNOWN', 'SKIPPED', 'SKIPPED_DEPENDENCY'].includes(String(value))
-    && (!Array.isArray(value) || (value.length > 0 && value.every(isKnownComplianceAnswer)))
-}
-// V2 only: three-valued logic. Negation never turns unknown/missing into evidence.
-export function evaluateComplianceV2Condition(c: Condition, answers: ComplianceAnswerMap): boolean | null {
-  if ('question' in c) {
-    const value = answers[c.question]
-    if (!isKnownComplianceAnswer(value)) return null
-    if (c.exists !== undefined) return c.exists
-    if (c.equals !== undefined) return canonicalJson(normalizeComplianceV2Answers({ v: value }).v) === canonicalJson(normalizeComplianceV2Answers({ v: c.equals }).v)
-    if (c.notEquals !== undefined) return canonicalJson(normalizeComplianceV2Answers({ v: value }).v) !== canonicalJson(normalizeComplianceV2Answers({ v: c.notEquals }).v)
-    return Array.isArray(value) && value.some(v => Object.is(v, c.includes))
-  }
-  if ('not' in c) { const result = evaluateComplianceV2Condition(c.not, answers); return result === null ? null : !result }
-  const results = ('all' in c ? c.all : c.any).map(x => evaluateComplianceV2Condition(x, answers))
-  return 'all' in c ? (results.includes(false) ? false : results.includes(null) ? null : true)
-    : (results.includes(true) ? true : results.includes(null) ? null : false)
-}
 // Exclusions must be positive, fully known facts, never negation/absence.
 function positiveExclusion(c: Condition): boolean {
   if ('question' in c) return (c.equals !== undefined && isKnownComplianceAnswer(c.equals)) || (c.includes !== undefined && isKnownComplianceAnswer(c.includes))
@@ -130,16 +101,19 @@ export function buildComplianceV2Report(rawDefinition: unknown, rawAnswers: unkn
       : q.inputType === 'DATE' ? z.string().date().safeParse(value).success : typeof value === 'string'
     if (!valid) throw new Error('Ongeldig v2-antwoord.')
   }
+  const resolution = resolveComplianceQuestions(questions, answers)
+  const effectiveAnswers = resolution.answers
   const results = definition.modules.map(m => {
-    const matched = m.rules.filter(r => evaluateComplianceV2Condition(r.condition, answers) === true)
-    const missing = m.questions.filter(q => q.required && !isKnownComplianceAnswer(answers[q.code])).map(q => q.code)
+    const required = m.questions.filter(q => q.required && resolution.visibleCodes.includes(q.code))
+    const matched = m.rules.filter(r => evaluateComplianceV2Condition(r.condition, effectiveAnswers) === true)
+    const missing = required.filter(q => !isKnownComplianceAnswer(effectiveAnswers[q.code]) || (definition.version === '2.1' && !matched.some(r => r.status !== null && r.status !== 'NOT_ASSESSED' && r.status !== 'NOT_APPLICABLE' && conditionQuestions(r.condition).includes(q.code)))).map(q => q.code)
     const action = matched.some(r => r.status === 'ACTION_REQUIRED')
     const attention = matched.some(r => r.status === 'ATTENTION_REQUIRED')
     const exclusion = matched.some(r => r.applicability === 'NOT_APPLICABLE' && r.status === 'NOT_APPLICABLE'
-      && positiveExclusion(r.condition) && conditionQuestions(r.condition).every(q => isKnownComplianceAnswer(answers[q])))
+      && positiveExclusion(r.condition) && conditionQuestions(r.condition).every(q => isKnownComplianceAnswer(effectiveAnswers[q])))
     const relevant = action || attention || matched.some(r => r.applicability === 'RELEVANT' || r.status === 'IN_ORDER')
     const excluded = exclusion && !relevant && !matched.some(r => r.applicability === 'POSSIBLY_RELEVANT' || r.mode === 'SPECIALIST_REQUIRED' || r.status === 'NOT_ASSESSED')
-    const covered = m.questions.filter(q => q.required).every(q => matched.some(r => r.status !== null && r.status !== 'NOT_ASSESSED' && r.status !== 'NOT_APPLICABLE' && conditionQuestions(r.condition).includes(q.code)))
+    const covered = required.every(q => matched.some(r => r.status !== null && r.status !== 'NOT_ASSESSED' && r.status !== 'NOT_APPLICABLE' && conditionQuestions(r.condition).includes(q.code)))
     const sufficientlyAssessed = excluded || (missing.length === 0 && !matched.some(r => r.mode === 'SPECIALIST_REQUIRED' || r.status === 'NOT_ASSESSED' || r.applicability === 'POSSIBLY_RELEVANT') && covered)
     const status = action ? 'ACTION_REQUIRED' : attention ? 'ATTENTION_REQUIRED' : excluded ? 'NOT_APPLICABLE'
       : sufficientlyAssessed && relevant && matched.some(r => r.status === 'IN_ORDER') ? 'IN_ORDER' : 'NOT_ASSESSED'

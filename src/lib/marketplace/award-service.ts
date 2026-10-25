@@ -22,9 +22,14 @@ export async function awardMarketplaceQuote(input: {
   if (input.motivation.trim().length < 10) throw new MarketplaceServiceError('VALIDATION_ERROR')
   const now = input.now ?? new Date()
   return getPrisma().$transaction(async (transaction) => {
-    const repeated = await transaction.awardDecision.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
-    if (repeated) return repeated
     const membership = await requireClientMarketplaceManager(transaction, input.actorUserId, input.clientOrganizationId)
+    const repeated = await transaction.awardDecision.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
+    if (repeated) {
+      if (repeated.clientOrganizationId !== input.clientOrganizationId || repeated.decidedByUserId !== input.actorUserId || repeated.quoteId !== input.quoteId) throw new MarketplaceServiceError('ACCESS_DENIED')
+      const originalAssignment = await transaction.assignment.findFirst({ where: { AND: [{ id: repeated.assignmentId }, externalAssignmentWhere(input.assignmentId)], clientOrganizationId: input.clientOrganizationId }, select: { id: true } })
+      if (!originalAssignment) throw new MarketplaceServiceError('ACCESS_DENIED')
+      return repeated
+    }
     const assignment = await transaction.assignment.findFirst({
       where: {
         ...externalAssignmentWhere(input.assignmentId),

@@ -35,7 +35,7 @@ describe('gedeelde headercontext', () => {
   })
 
   it('toont een ingelogde opdrachtgever zonder login- of providerlink', () => {
-    const model = buildHeaderViewModel(clientContext)
+    const model = buildHeaderViewModel(clientContext, false, false, true)
     expect(model.authenticated).toBe(true)
     expect(model.navigationGroups).toEqual([
       {
@@ -52,6 +52,14 @@ describe('gedeelde headercontext', () => {
         key: 'organization',
         label: 'Organisatie',
         links: [{ href: '/organisatie', label: 'Organisatie' }, { href: '/organisatie/gebruikers', label: 'Medewerkers' }],
+      },
+      {
+        key: 'learning',
+        label: 'E-LEARNINGS',
+        links: [
+          { href: '/e-learnings/mijn', label: 'Mijn e-learnings' },
+          { href: '/e-learnings/aanbod', label: 'Opleidingsaanbod' },
+        ],
       },
       {
         key: 'personal',
@@ -81,6 +89,16 @@ describe('gedeelde headercontext', () => {
       { href: '/credits/pro', label: 'WorkMatchr Pro' },
     ]))
     expect(model.navigationGroups.flatMap((group) => group.links)).not.toContainEqual({ href: '/hulpvragen', label: 'Opdrachten' })
+  })
+
+  it('toont aan een learning-only gebruiker alleen Learning en persoonlijke routes', () => {
+    const model = buildHeaderViewModel({
+      user: { displayName: 'Student', email: 'student@example.invalid', accountType: null },
+      activeMembership: null,
+    }, false, true, true)
+    expect(model.navigationGroups.map((group) => group.key)).toEqual(['learning', 'personal'])
+    expect(model.navigationGroups.flatMap((group) => group.links)).not.toContainEqual({ href: '/organisatie/nieuw', label: 'Organisatie' })
+    expect(model.navigationGroups.flatMap((group) => group.links)).not.toContainEqual({ href: '/opdrachten', label: 'Opdrachten' })
   })
 
   it('gebruikt Better Auth voor uitloggen', () => {
@@ -146,3 +164,5 @@ describe('gedeelde headercontext', () => {
     expect(buildHeaderViewModel(clientContext).navigationGroups.flatMap((group) => group.links).some((item) => item.href === '/platformbeheer')).toBe(false)
   })
 })
+
+it('laat standaard alle bestaande navigatie intact zonder Learning-groep', () => { const model=buildHeaderViewModel(clientContext); expect(model.navigationGroups.map(group=>group.key)).toEqual(['work', 'organization', 'personal']) })
