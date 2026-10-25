@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { evaluateComplianceCondition, evaluateComplianceRules } from '@/lib/compliance/rule-engine'
+import { evaluateComplianceCondition, evaluateComplianceRules, type ComplianceAnswerMap } from '@/lib/compliance/rule-engine'
 import { aggregateComplianceModule } from '@/lib/compliance/module-aggregation'
 
 describe('compliance rule engine', () => {
@@ -8,7 +8,7 @@ describe('compliance rule engine', () => {
       'RIE-001': 'NO',
       'RISK-SET': ['CHEMICALS', 'HEIGHT'],
       'COUNT': 12,
-    } as const
+    } satisfies ComplianceAnswerMap
 
     expect(evaluateComplianceCondition({ question: 'RIE-001', equals: 'NO' }, answers)).toBe(true)
     expect(evaluateComplianceCondition({ question: 'RISK-SET', includes: 'CHEMICALS' }, answers)).toBe(true)

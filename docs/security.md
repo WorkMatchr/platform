@@ -16,8 +16,9 @@ De AI-limiter staat vóór een cacheclaim en providercall. Daardoor kunnen uniek
 
 ## Sessies en autorisatie
 
-- databasegebaseerde sessies verlopen na zeven dagen;
-- sessies worden na één dag volgens Better Auths updatebeleid vernieuwd;
+- standaard staat Ingelogd blijven uit: een browser-sessiecookie en maximaal 24 uur servergeldigheid, zonder rollende verlenging;
+- uitsluitend expliciet gekozen blijvende sessies gebruiken zeven dagen met Better Auths vernieuwing na één dag;
+- sessie-intrekking faalt gesloten: bij databasefalen wordt geen succesvolle logout gemeld;
 - e-mailverificatie is verplicht voor login;
 - `BLOCKED` en `ARCHIVED` worden in de session-create-hook geweigerd;
 - beveiligde serverpagina’s lezen de actuele `User.status` opnieuw uit de database;

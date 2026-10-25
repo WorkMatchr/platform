@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [WP14 — productievoorbereiding, securityherstel en vrijgavebesluiten](wp14-production-readiness.md)
+
 - [WP13 — integrale gebruikersacceptatie en beperkte herstelset](wp13-integral-acceptance.md)
 
 - [WP12 — geïsoleerde, standaard uitgeschakelde LMS-runtimekandidaat](wp12-lms-integration.md)
