@@ -22,6 +22,9 @@ jobs:
       - name: Trading access and existing administrator guards
         run: npm run test -- src/lib/trading/trading-access-service.test.ts src/app/platformbeheer/trading/toegang/trading-access-interface.test.ts src/lib/platform-admin/platform-admin-authorization.test.ts src/lib/platform-admin/platform-admin-navigation.test.ts src/components/platform-admin/platform-admin-navigation-menu.test.tsx --maxWorkers=2
       - run: npm run build
+        env:
+          # Full-project type generation exceeds the default 4 GiB Node heap.
+          NODE_OPTIONS: --max-old-space-size=6144
       - name: Check browser token isolation
         run: node scripts/check-trading-token-bundle.mjs
       - run: git diff --check
