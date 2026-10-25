@@ -1,0 +1,44 @@
+[
+  {
+    "mode": "desktop",
+    "url": "http://127.0.0.1:3050/",
+    "status": 200,
+    "viewport": {
+      "width": 1350,
+      "height": 940,
+      "scale": 1
+    },
+    "network": {
+      "latencyMs": 150,
+      "downloadBytesPerSecond": 200000
+    },
+    "cpuSlowdown": 4,
+    "browser": "Chrome/155.0.8059.86",
+    "cls": 0,
+    "shifts": [],
+    "overflow": false,
+    "h1": "Vind de juiste deskundige voor uw vraag",
+    "exceptions": []
+  },
+  {
+    "mode": "mobile",
+    "url": "http://127.0.0.1:3050/",
+    "status": 200,
+    "viewport": {
+      "width": 412,
+      "height": 823,
+      "scale": 1.75
+    },
+    "network": {
+      "latencyMs": 150,
+      "downloadBytesPerSecond": 200000
+    },
+    "cpuSlowdown": 4,
+    "browser": "Chrome/155.0.8059.86",
+    "cls": 0,
+    "shifts": [],
+    "overflow": false,
+    "h1": "Vind de juiste deskundige voor uw vraag",
+    "exceptions": []
+  }
+]

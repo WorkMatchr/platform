@@ -1,0 +1,125 @@
+[
+  {
+    "mode": "desktop",
+    "url": "https://www.workmatchr.nl/",
+    "viewport": {
+      "width": 1350,
+      "height": 940,
+      "scale": 1
+    },
+    "network": {
+      "latencyMs": 150,
+      "downloadBytesPerSecond": 200000
+    },
+    "cpuSlowdown": 4,
+    "browser": "Chrome/155.0.8059.86",
+    "cls": 0.5526727229261296,
+    "shifts": [
+      {
+        "time": 4955.099999964237,
+        "value": 0.5526727229261296,
+        "sources": [
+          {
+            "node": "FOOTER",
+            "previous": {
+              "x": 0,
+              "y": 514,
+              "width": 1335,
+              "height": 426,
+              "top": 514,
+              "right": 1335,
+              "bottom": 940,
+              "left": 0
+            },
+            "current": {
+              "x": 0,
+              "y": 0,
+              "width": 0,
+              "height": 0,
+              "top": 0,
+              "right": 0,
+              "bottom": 0,
+              "left": 0
+            }
+          },
+          {
+            "node": "DIV",
+            "previous": {
+              "x": 35,
+              "y": 0,
+              "width": 1280,
+              "height": 96.796875,
+              "top": 0,
+              "right": 1315,
+              "bottom": 96.796875,
+              "left": 35
+            },
+            "current": {
+              "x": 27.5,
+              "y": 0,
+              "width": 1280,
+              "height": 96.796875,
+              "top": 0,
+              "right": 1307.5,
+              "bottom": 96.796875,
+              "left": 27.5
+            }
+          }
+        ]
+      }
+    ],
+    "overflow": false,
+    "h1": "Vind de juiste deskundige voor uw vraag",
+    "exceptions": []
+  },
+  {
+    "mode": "mobile",
+    "url": "https://www.workmatchr.nl/",
+    "viewport": {
+      "width": 412,
+      "height": 823,
+      "scale": 1.75
+    },
+    "network": {
+      "latencyMs": 150,
+      "downloadBytesPerSecond": 200000
+    },
+    "cpuSlowdown": 4,
+    "browser": "Chrome/155.0.8059.86",
+    "cls": 0.9003645200486027,
+    "shifts": [
+      {
+        "time": 4874.599999964237,
+        "value": 0.9003645200486027,
+        "sources": [
+          {
+            "node": "FOOTER",
+            "previous": {
+              "x": 0,
+              "y": 81.59375,
+              "width": 412,
+              "height": 741.40625,
+              "top": 81.59375,
+              "right": 412,
+              "bottom": 823,
+              "left": 0
+            },
+            "current": {
+              "x": 0,
+              "y": 0,
+              "width": 0,
+              "height": 0,
+              "top": 0,
+              "right": 0,
+              "bottom": 0,
+              "left": 0
+            }
+          }
+        ]
+      }
+    ],
+    "overflow": false,
+    "h1": "Vind de juiste deskundige voor uw vraag",
+    "exceptions": []
+  }
+]
