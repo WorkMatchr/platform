@@ -1,5 +1,5 @@
 import { betterAuth } from 'better-auth'
-import { APIError, createAuthMiddleware, getSessionFromCtx } from 'better-auth/api'
+import { APIError, createAuthMiddleware, getSessionFromCtx, originCheckMiddleware } from 'better-auth/api'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
 import { haveIBeenPwned } from 'better-auth/plugins/haveibeenpwned'
 import { nextCookies } from 'better-auth/next-js'
@@ -138,6 +138,24 @@ export const auth = betterAuth({
   },
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
+      if (ctx.path === '/sign-out') {
+        // Use Better Auth's CSRF/signature/adapter machinery before its native
+        // endpoint, which catches delete failures and otherwise returns success.
+        await originCheckMiddleware(ctx)
+        const token = await ctx.getSignedCookie(ctx.context.authCookies.sessionToken.name, ctx.context.secret)
+        if (token) {
+          try {
+            await ctx.context.internalAdapter.deleteSession(token)
+            if (await ctx.context.internalAdapter.findSession(token)) throw new Error('SESSION_REMAINS')
+          } catch {
+            // Keep the browser cookie available for retry; never log the token
+            // or raw database error. The native cookie clearing runs only on success.
+            console.error('SESSION_REVOCATION_UNCONFIRMED')
+            throw new APIError('SERVICE_UNAVAILABLE', { code: 'SESSION_REVOCATION_UNCONFIRMED', message: 'Uitloggen is niet gelukt. Probeer het opnieuw.' })
+          }
+        }
+      }
+
       if (ctx.path === '/sign-up/email' || ctx.path === '/reset-password' || ctx.path === '/change-password' || ctx.path === '/set-password') {
         const password = typeof ctx.body?.password === 'string'
           ? ctx.body.password
@@ -166,6 +184,9 @@ export const auth = betterAuth({
       }
 
       if (ctx.path === '/sign-in/email') {
+        // Better Auth runs this hook before endpoint validation/defaults.
+        // Leave invalid types to its validator; only missing input defaults to false.
+        if (ctx.body && ctx.body.rememberMe === undefined) ctx.body.rememberMe = false
         const email = typeof ctx.body?.email === 'string' ? normalizeEmail(ctx.body.email) : ''
         const user = email
           ? await getPrisma().user.findUnique({ where: { email }, select: { status: true } })
@@ -233,6 +254,16 @@ export const auth = betterAuth({
       },
     },
     session: {
+      update: {
+        before: async (update, context) => {
+          if (!update.expiresAt) return { data: update }
+          // A missing/deleted dont_remember cookie must never promote a short session.
+          // Better Auth supplies the original server-side session during refresh.
+          const current = context?.context.session?.session
+          if (!current || current.expiresAt.getTime() - current.createdAt.getTime() <= 24 * 60 * 60 * 1000) return false
+          return { data: update }
+        },
+      },
       create: {
         before: async (session) => {
           const user = await getPrisma().user.findUnique({ where: { id: session.userId }, select: { status: true } })
