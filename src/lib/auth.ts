@@ -1,5 +1,5 @@
 import { betterAuth } from 'better-auth'
-import { APIError, createAuthMiddleware, getSessionFromCtx } from 'better-auth/api'
+import { APIError, createAuthMiddleware, getSessionFromCtx, originCheckMiddleware } from 'better-auth/api'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
 import { haveIBeenPwned } from 'better-auth/plugins/haveibeenpwned'
 import { nextCookies } from 'better-auth/next-js'
@@ -138,6 +138,24 @@ export const auth = betterAuth({
   },
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
+      if (ctx.path === '/sign-out') {
+        // Use Better Auth's CSRF/signature/adapter machinery before its native
+        // endpoint, which catches delete failures and otherwise returns success.
+        await originCheckMiddleware(ctx)
+        const token = await ctx.getSignedCookie(ctx.context.authCookies.sessionToken.name, ctx.context.secret)
+        if (token) {
+          try {
+            await ctx.context.internalAdapter.deleteSession(token)
+            if (await ctx.context.internalAdapter.findSession(token)) throw new Error('SESSION_REMAINS')
+          } catch {
+            // Keep the browser cookie available for retry; never log the token
+            // or raw database error. The native cookie clearing runs only on success.
+            console.error('SESSION_REVOCATION_UNCONFIRMED')
+            throw new APIError('SERVICE_UNAVAILABLE', { code: 'SESSION_REVOCATION_UNCONFIRMED', message: 'Uitloggen is niet gelukt. Probeer het opnieuw.' })
+          }
+        }
+      }
+
       if (ctx.path === '/sign-up/email' || ctx.path === '/reset-password' || ctx.path === '/change-password' || ctx.path === '/set-password') {
         const password = typeof ctx.body?.password === 'string'
           ? ctx.body.password

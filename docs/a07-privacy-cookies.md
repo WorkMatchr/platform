@@ -1,5 +1,93 @@
 # A07 fase 1 — verwerkingen, privacy en cookies (concept)
 
+## Eindacceptatie 25 oktober 2026
+
+Deze sectie vervangt de technische openstaande punten uit de gedateerde onderzoeksrondes hieronder. Die oudere verslagen blijven historie. De juridische conceptstatus wordt niet opgeheven.
+
+### Baseline en gerichte correcties
+
+- Bestaande branch codex/a07-privacy-cookies, Draft PR #40 / issue #35. Main: aa17c4cb7cfce11f4eeb5d7470ee2a47357c7504, inclusief PR #62. Main is in deze PR geïntegreerd; geen merge naar main uitgevoerd.
+- Actuele F3-opslag/logout, F4-vragen/regels, LMS en PR #62-opdrachtflow zijn identiek aan main behouden. Geen oude A07-opslagvariant teruggebracht. Schema, migraties, lockfile en afhankelijkheden zijn ongewijzigd. Alleen een npm-testcommando toegevoegd.
+- Bevestigde fout: native Better Auth-sign-out kan een mislukte sessie-DELETE afvangen en toch HTTP 200 teruggeven. De bestaande beforehook gebruikt nu Better Auth-origin/CSRF-controle, ondertekende cookie en native adapter om intrekking uit te voeren en te verifiëren. Bij onzekere intrekking: HTTP 503, geen cookieverwijdering, veilig opnieuw proberen. Logging bevat uitsluitend vaste code SESSION_REVOCATION_UNCONFIRMED; geen token/raw databasefout. Geen parallel authenticatiemodel.
+- Conceptprivacytekst bijgewerkt voor de inmiddels aanwezige, standaard uitgeschakelde LMS-runtime. Geen onjuiste claim meer dat voortgang/resultaatopslag ontbreekt. Rechtsgronden, rollen en retentie blijven te beoordelen.
+
+### PostgreSQL-bewijs
+
+- PostgreSQL 17 in lokale Docker. De nieuwe harness maakt uitsluitend zijn eigen loopbackdatabase workmatchr_a07_session_test_<pid>_<tijd>, zonder dotenv/Neonconfiguratie. Providerwaarden worden afgeschermd; geen echte mail.
+- **92/92 migraties** werkelijk uitgevoerd; exacte SHA-256-checksums, nul failed/pending/extra. Tweede deploy laat registry identiek. Geen migratie gewijzigd, overgeslagen of handmatig geregistreerd.
+- Drie tijdelijke example.invalid-accounts: opdrachtgever/MEMBER, professional/MEMBER, platformbeheerder ADMIN/OWNER. Better Auth-hashing; willekeurig lokaal wachtwoord uitsluitend in genegeerde fixture. Geen echte gebruikersgegevens. De ontbrekende OWNER-meldingen bij de twee minimale MEMBER-testorganisaties zijn verwachte fixturekenmerken, geen productiebevinding.
+- Per rol: standaard sessiecookie/24 uur zonder refresh, expliciete 7 dagen met refresh, originweigering vóór DELETE, intrekking, blokkering, server-side autorisatie en cross-tenantweigering. Platformmembership geeft terecht geen normale klanttenanttoegang.
+- Echte PostgreSQL-trigger veroorzaakt DELETE-fout: 503, nul Set-Cookie-headers, sessie blijft bestaan. Na verwijderen van de synthetische trigger: twee gelijktijdige uitlogpogingen slagen, nul sessies. Ongeldig/verlopen token geweigerd.
+- Definitieve harnessrun na laatste wijziging: PASS en cleanup PASS. Alle eigen databases inclusief synthetische accounts verwijderd; vooraf bestaande database-inventaris behouden. Geen bestaande DB-inhoud gewijzigd.
+
+### Echte browseracceptatie
+
+Lokale origin http://127.0.0.1:3062, uitsluitend gekoppeld aan de eigen tijdelijke database.
+
+| Controle | Resultaat |
+|---|---|
+| Opdrachtgever, professional, platformbeheerder | Alle drie daadwerkelijk ingelogd; juiste rol/organisatiecontext zichtbaar |
+| Sessiekeuze | Standaard uit, expliciete Spatie-keuze werkt; DB bevestigt korte sessie van 24 uur |
+| Niet-opgeslagen concept | Uitlogwaarschuwing, focus op teruggaan, Tab/Enter, annuleren behoudt antwoord en herstelt focus; bevestigen logt uit |
+| Expliciet bewaard concept | Herladen en tweede tab hervatten vraag 5 met antwoorden; bewaring alleen na knopactie |
+| Uitloggen met concept | Invoer en opgeslagen kopie in beide tabs gewist; nieuwe professional-login krijgt geen klantconcept |
+| Vijfvragenintake | Alle vijf doorlopen, onbekende risico's niet als vrijstelling; maximaal vier prioritaire onderwerpen en 29 overige ingeklapt; herstart werkt |
+| Sessieverloop platformbeheer | Alleen synthetische DB-sessie verlopen gemaakt; beveiligde pagina verwijst naar /inloggen?returnTo=%2Fplatformbeheer; opnieuw inloggen werkt |
+| Browser bij echte DELETE-fout | Zichtbare foutmelding, geen succesredirect, knop opnieuw bruikbaar, DB-sessie behouden; na herstel succesvolle retry |
+| Laatste uitloggen | Nul sessies in testdatabase vóór cleanup; lege intake na herladen |
+| Desktop en mobiel | Desktop 1280 px; intake 390 px (375 bruikbaar) en login 320 px (305 bruikbaar): scrollWidth == clientWidth, controls bereikbaar |
+| Toetsenbord/focus | Correcte labels, Spatie-checkbox, dialoogfocus/Tab/Enter; zichtbare solid outline 2,4 px |
+| Console/hydratatie | Geen fout in normale gecontroleerde flows; verwachte 503 van foutinjectie afzonderlijk behandeld |
+| 200% | Bestaande PO-acceptatie behouden; echte browserzoom niet opnieuw ingesteld. Smalle reflow is aanvullend, geen nieuwe echte-zoomclaim |
+
+Viewportoverrides werkten pas na herladen; geen productfout. Screenshots van waarschuwing, foutmelding en smalle login lokaal bewaard buiten Git; geen sessietokens zichtbaar. Eigen browser-tabs gesloten en server gestopt na cleanup.
+
+TTL voor/tijdens/na 24 uur, legacy v1, ongeldige/geblokkeerde opslag, Strict Mode/hydratatie en tabblad-races zijn deterministisch in de regressies gedekt. Geen 24 uur verstreken-tijdmeting of browserklokmanipulatie geclaimd. Accountactivatie is met bestaande component-/domeinregressies gedekt; geen echte activatiemail verstuurd.
+
+### Definitieve controles
+
+- Gerichte regressies: **597/597 PASS, 31 suites** (74,32 s). Native sessiehooks, auth-UI, F3/F4, opslag/hydratatie/legacy/TTL, rol-/tenantbeleid, impersonation en PR #62-situatiekeuzes.
+- Na de laatste feitelijke correctie op de conceptcookiepagina: **12/12 juridische-paginaregressies PASS**. Geen juridische goedkeuring afgeleid uit de tests.
+- PostgreSQL-harness: tweemaal PASS inclusief foutinjectie, laatste run met definitieve afscherming van providerwaarden; 92/92 migraties en beide tijdelijke databases opgeruimd.
+- Standalone TypeScript: **BASELINE_FAILURE**, exact vier TS2345 readonly-arrayfouten in src/lib/compliance/rule-engine.test.ts, regels 13/14/23/24. Git-blob identiek aan actuele main (d209f87db83211f3bd1542d511799917e7a7004c); dezelfde fouten gedocumenteerd in WP11/WP12/F4. Geen nieuwe A07-typefout, geen baselinecode versoepeld.
+- Volledige lint en productiebuild: **PASS** op de definitieve code. Bekende niet-blokkerende Turbopack/NFT-waarschuwing rond next.config.ts via de Knowledge-extractor blijft ongewijzigd; geen nieuwe buildfout.
+- Diff-check PASS. Secrets-patterncontrole: geen private keys, providercredentials of credentialbevattende PostgreSQL-URL's in de 18 PR-bestanden. Genegeerde runtimefixture niet tracked/staged; daarna verwijderd. Synthetische unitconstants zijn geen bruikbare credentials. Geen volledige externe secretscanner geclaimd.
+- De eerste buildpoging stopte vóór compilatie omdat DATABASE_URL ontbrak. De geldige build gebruikt uitsluitend synthetische processvariabelen en een niet-bereikbare lokale builddatabase; geen bestaande database nodig. Een zware TypeScript-run is tijdens browseracceptatie gestopt wegens lokale geheugenbelasting en daarna volledig herhaald.
+- CI/Vercel-status voor de nieuwe head wordt na push vastgelegd in PR #40. Een oud groen resultaat wordt niet aan een nieuwe commit toegeschreven.
+
+Gewijzigd in deze afronding (naast afzonderlijke main-integratie):
+
+1. docs/a07-privacy-cookies.md
+2. docs/a07-storage-session-design.md
+3. package.json (alleen testcommando)
+4. scripts/test-auth-sessions-database.ts
+5. src/app/cookies/page.tsx (feitelijke acceptatieverwijzing; conceptstatus behouden)
+6. src/app/public-legal-pages.test.tsx
+7. src/content/public-legal.ts
+8. src/lib/auth-session.test.ts
+9. src/lib/auth.ts
+
+De gegenereerde next-env.d.ts-wijziging hoort niet bij de commit. Overige al aanwezige PR #40-bestanden behouden hun scope; geen migratie-, lockfile- of A06-wijziging toegevoegd.
+
+### Afzonderlijk vrijgaveadvies
+
+- **TECHNICAL MERGE READY** voor de geteste A07-correcties, met de vier bestaande TypeScript-baselinefouten afzonderlijk geregistreerd. CI en Preview voor de nieuwe head moeten vóór daadwerkelijke merge bevestigd zijn; dit advies geeft geen juridische publicatievrijgave.
+- **SESSION SECURITY GO** voor de geteste sessiekeuze/intrekking, inclusief echte database- en browserfoutinjectie.
+- **PRIVACY REVIEW READY**: dossier en concepten kunnen menselijk beoordeeld worden; dit is geen juridische acceptatie.
+- **LEGAL PUBLICATION NOT APPROVED**: onderstaande besluiten en uitvoering zijn niet aantoonbaar geaccepteerd.
+- **PRODUCTION RELEASE NOT READY**: geen zelfstandige merge/publicatie; afzonderlijke PO-vrijgave en controle van productie-instellingen nodig.
+
+### Juridische en operationele besluiten blijven open
+
+1. Bedrijfsidentiteit en nieuw postadres Zwolle valideren. Privacycontact en e-mailbewaarbeleid zijn PO-bevestigd; overige gegevens blijven voorlopig.
+2. Leveranciersrollen, toepasselijke overeenkomsten/DPA's, regio's/doorgifte, rechtsgronden en overige bewaartermijnen vaststellen. Mollie niet automatisch als verwerker behandelen.
+3. Vimexx-toegang/MFA, prullenbak/back-upretentie, forwarding/logging en uitvoering van jaarlijkse handmatige verwijdering aantonen. Geen mailboxinstellingen gewijzigd.
+4. Bestaande impliciet persistente sessies niet massaal ingetrokken. De overgang blijft een afzonderlijk eigenaarbesluit.
+5. Opdrachtconcepten in sessionStorage worden niet door de Compliance-wisactie verwijderd. Gedeeld-apparaatrisico/bewaarbeleid afzonderlijk beoordelen. Gesloten browsers kunnen niet exact op expiry wissen; tabbladcoördinatie kent beperkingen bij geblokkeerde storage/BroadcastChannel.
+6. Conceptverklaringen inhoudelijk accepteren vóór definitieve publicatie. Een sessie-PASS is geen AVG-goedkeuring. F4-holds blijven behouden; A06, F4 en LMS tijdens tests uitgeschakeld.
+
+## Historisch onderzoek vanaf 14 oktober 2026
+
 Issue #35. Onderzoeksdatum: 14 oktober 2026. Basis: `origin/main` `d3bce31248cf496f4c0563e210addbcb8d2e721c` (A03–A05 aanwezig, A06 PR #39 nog niet gemerged). Dit is voorbereiding, geen afgeronde integrale A07-acceptatie en geen toestemming voor juridische publicatie.
 
 ## Bewijsniveaus en grenzen
@@ -10,7 +98,7 @@ Issue #35. Onderzoeksdatum: 14 oktober 2026. Basis: `origin/main` `d3bce31248cf4
 - **Leverancier gedocumenteerd (L):** publieke providerhandleiding, geen bewijs dat de functie op het WorkMatchr-pakket beschikbaar of ingesteld is.
 - **Voorstel/open (O):** rechtsgrond, belangenafweging, contractrol, termijn of eigenaarbesluit moet worden bevestigd. Een schemakolom of leveranciersmarketing is geen bewijs van uitvoering of afgesloten overeenkomst.
 
-De vorige A06-bevindingen worden als afhankelijkheid benoemd, niet als op main geïmplementeerde functionaliteit. Het contactformulier wordt door deze PR niet toegevoegd of aangezet. Geen database/migratie/package/lockfile/financiële wijziging.
+De vorige A06-bevindingen worden als afhankelijkheid benoemd, niet als op main geïmplementeerde functionaliteit. Het contactformulier wordt door deze PR niet toegevoegd of aangezet. Geen schema-/migratie-/afhankelijkheids-/lockfile-/financiële wijziging; de finale acceptatie voegt alleen een npm-testcommando toe.
 
 ## Identiteit en centraal beheer
 
@@ -28,14 +116,14 @@ Onderstaande grondslagen zijn **vermoedelijke grondslagen**, geen vastgesteld re
 |---|---|---|---|---|---|
 | Publieke bezoekers | HTTP-verzoeken, IP/browser en eventuele hostinglogs voor aflevering/beveiliging; geen analyticsintegratie in code gevonden | 6f veilige beschikbare website; WorkMatchr eigen verantwoordelijkheid | Vercel/hosting; internationale toegang en logregio open | Hostinglog- en back-upretentie onbekend; niet gelijkstellen aan cookielevensduur | TLS op productie waargenomen; `src/app/layout.tsx`, `src/app/globals.css`, `next.config.ts`; geen externe script/iframe-integratie gevonden |
 | Contactpersonen | E-mail, naam, bericht/bijlagen via bestaande mailto-contactroutes; A06: toekomstige velden naam/e-mail/onderwerp/bericht en abuse-controls | 6f correspondentie of 6b concrete aanvraag; 6c alleen bij specifieke rechtenverzoeken; WorkMatchr eigen verantwoordelijkheid | P: contact@workmatchr.nl via Vimexx-forwarder naar info@workmatchr.nl bij Vimexx. A06 gebruikt Resend voor uitgaande applicatiemail. Technische mailboxcontrole, contract/regio en doorgifte open | Definitief PO-beleid 15 oktober: ontvangen algemene mail max. één jaar na ontvangst, inbox én archief; noodzakelijke uitzondering bij lopende zaak, klacht, geschil of andere behandeling met gerechtvaardigde reden. Eigenaar verantwoordelijk voor handmatige controle/verwijdering en herbeoordeling na afronding. Exacte Vimexx-trash/backupretentie en uitvoering nog niet geverifieerd | Huidige `src/app/contact/page.tsx`; A06-documentatie in PR #39. Geen mails getest |
-| Registratie/authenticatie | Naam/e-mail, wachtwoordhash, verificatie/reset, sessietoken, IP/user-agent, status; veilige toegang/herstel | 6b eigen contract; anders 6f toegang/beveiliging; WorkMatchr eigen verantwoordelijkheid | Database/Neon, Vercel, Resend; HIBP-servercontrole (hashprefix); doorgifte zie leveranciersmatrix | Sessiegeldigheid 7 dagen, update na 1 dag; verificatie/reset 1 uur. Geen bewijs dat verlopen DB-records direct verdwijnen. Accountverwijder/purgebeleid open | `src/lib/auth.ts`, `auth-policy.ts`, Prisma `User/Account/Session/Verification/RateLimit`; Better Auth hashing; productie Secure/HttpOnly/SameSite=Lax; actieve-statuscontroles |
+| Registratie/authenticatie | Naam/e-mail, wachtwoordhash, verificatie/reset, sessietoken, IP/user-agent, status; veilige toegang/herstel | 6b eigen contract; anders 6f toegang/beveiliging; WorkMatchr eigen verantwoordelijkheid | Database/Neon, Vercel, Resend; HIBP-servercontrole (hashprefix); doorgifte zie leveranciersmatrix | Nieuwe sessies standaard maximaal 24 uur zonder verlenging; expliciete Ingelogd blijven-keuze 7 dagen, update na 1 dag; verificatie/reset 1 uur. Geen bewijs dat verlopen DB-records direct verdwijnen. Accountverwijder/purgebeleid open | `src/lib/auth.ts`, `auth-policy.ts`, Prisma `User/Account/Session/Verification/RateLimit`; Better Auth hashing; productie Secure/HttpOnly/SameSite=Lax; actieve-statuscontroles |
 | Organisaties/memberships | Zakelijke naam/adres/contact, leden, rollen en uitnodigingen; tenantbeheer/toegang | 6b/6f; rol bij door werkgever aangeleverde gegevens bevestigen | Eigen organisatie en bevoegde beheerders; hosting/database; eventuele logo-opslag | Geen generiek operationeel vernietigingsschema aangetoond; termijn na uitdiensttreding/einde contract plus uitzonderingen vaststellen | `src/lib/organizations/organization-authorization.ts`, `src/lib/account-architecture/*`, `docs/organizations.md`; actuele membership/accountstatus server-side; blokkering ≠ verwijdering |
 | Opdrachtgevers/opdrachten/offertes | Vrije tekst, deskundigheid, locatie, planning, snapshots, auditactor, reacties/offertes; publicatie, matching en samenwerking | 6b/6f; rol organisatie/professional per dienst nog vaststellen | Passende professionals krijgen afgeschermde preview; vrijgegeven detailinformatie volgens deelname/toegangsregels; bevoegde beheerders | Publicatie-snapshot/audit append-only; geen algemene purge aangetoond. Noodzaak en bewaartermijn inclusief geschilbewaring apart besluiten | `src/lib/requests/simple-advice-service.ts`, `request-assignment-handoff*`, `src/lib/marketplace/assignment-preview*`; canonieke keten en tenantchecks blijven ongewijzigd |
 | Dienstverleners/professionals | Displaynaam, contactmail, expertise, regio/capaciteit, kwalificatie- en bewijsdocumenten, verzekering/reviews; geschiktheid/presentatie | 6b/6f; selectie-impact en artikel 22/DPIA-beoordeling open; bewijsdocumenten kunnen overtollige of bijzondere gegevens bevatten | Bevoegde organisatie/beheer; presentatie/preview volgens toegang; opslagprovider waar ingeschakeld | Termijn geldigheidsbewijzen, afwijzingen, verouderde revisies en dossiers open | Prisma `ProviderProfile`, `ProviderProfessionalPrivateData` (displayName/contactEmail), `ProviderEvidence*`, `ProviderQualification*`; `src/lib/providers/provider-authorization.ts`; geen medische-dossierfunctie aannemen |
 | Berichten/notificaties | Gespreksinhoud, afzender/ontvanger, tijd, gelezenstatus, voorkeuren; opdrachtcommunicatie en maildelivery | 6b/6f; geen marketingtoestemming afleiden uit functionele e-mailvoorkeur | Kanaaldeelnemers; Resend ontvangt template/ontvanger; Vercel/Neon; externe mailbox | DB-berichten/outbox geen generieke purge aangetoond. Resend leveranciersclaim 30 dagen op genoemde plannen ≠ WorkMatchr bewaarbeleid | `src/lib/marketplace/notification-service.ts`, `assignment-notification.ts`, Prisma `MarketplaceMessage/Notification/NotificationOutbox`; kanaalautorisatie en idempotente outbox; mailtracking-dashboardinstellingen onbekend |
 | Credits/abonnementen/betalingen/boekhouding | Saldo/ledger, aankoop, betaalreferenties, factuuradres/naam/btw, abonnement/mandaatreferenties; uitvoering/administratie | 6b en 6c fiscale plicht; WorkMatchr eigen administratie. Mollie zelfstandig verantwoordelijke voor eigen betaaldienst/wettelijke doelen, Jortt beoogd verwerker administratie | Mollie, Jortt, Resend voor factuurmail, hosting/database. Exacte contracten/subverwerkers/regio's open | Fiscale basisgegevens in beginsel 7 jaar; startpunt/uitzonderingen bepalen met boekhouder. Alleen `FinancialMaintenanceRun` opruiming na 90 dagen codebevestigd, geen algemene factuurverwijdering | `src/lib/finance/mollie-gateway.ts`, `financial-purchase-service.ts`, `subscription-service.ts`, `jortt-api-gateway.ts`, `financial-maintenance-service.ts`; gehoste Mollie-checkout, geen betaalactie uitgevoerd |
-| Compliance Scan / Arbo-wijzer | Gratis intake: antwoorden/stepIndex lokaal, geen serverresultaat. Ingelogde wijzer: organisatie, uitvoerder, answersSnapshot/reportSnapshot/versie/tijd; hervatten/resultaten | 6b/6f; rol voor personeelsgegevens en impact van beoordeling open | Gratis concept alleen browser; ingelogde resultaten Vercel/Neon en organisatiebevoegden | localStorage geen TTL, verwijderen bij afronden/herstart; opgeslagen scans/revisies geen vastgesteld purgebeleid | `src/components/public/compliance-free-intake.tsx`, `src/app/wijzers/compliance/runs/route.ts`, `src/lib/arbo-guides/arbo-guide-run-service.ts`; server-side autorisatie en idempotentie; geen juridische-certificeringsclaim |
-| E-learning | Op deze main: openbare cursus-/roadmappagina's; geen enrollment, voortgangsregistratie of certificaatbackend aangetroffen | Alleen webbezoek zoals eerste rij; toekomstige leergegevens nog geen actieve verwerking verklaren | Hosting; overige verwerking eerst opnieuw inventariseren bij implementatie | Geen leerresultatentermijn verzinnen | `docs/public-learning-roadmap.md`, `src/app/e-learning`, afwezigheid leerresultaatmodellen in huidige Prisma-schema; andere dirty worktrees niet als bewijs gebruikt |
+| Compliance Scan / Arbo-wijzer | Gratis intake: antwoorden/stepIndex lokaal, geen serverresultaat. Ingelogde wijzer: organisatie, uitvoerder, answersSnapshot/reportSnapshot/versie/tijd; hervatten/resultaten | 6b/6f; rol voor personeelsgegevens en impact van beoordeling open | Gratis concept alleen browser; ingelogde resultaten Vercel/Neon en organisatiebevoegden | Actuele v2-localStorage uitsluitend na bewaaractie, absolute TTL 24 uur; legacy v1 vraagt expliciete keuze; verwijderen bij afronden/herstart/uitloggen; opgeslagen scans/revisies geen vastgesteld purgebeleid | `src/components/public/compliance-free-intake.tsx`, `src/app/wijzers/compliance/runs/route.ts`, `src/lib/arbo-guides/arbo-guide-run-service.ts`; server-side autorisatie en idempotentie; geen juridische-certificeringsclaim |
+| E-learning | Actuele main bevat openbare cursussen en een standaard uitgeschakelde LMS-runtime voor enrollment, voortgang, toetsresultaten en certificaten | Webbezoek zoals eerste rij; bij expliciete activering rechtsgrond/werkgeversrol voor leergegevens afzonderlijk vaststellen | Hosting/database en bevoegde organisatie/beheer bij activering; exacte ontvangers en doorgifte bevestigen | Geen leerresultatentermijn verzinnen | `src/lib/learning`, `learning-runtime-policy.ts`, actuele Prisma-leermodellen; aanwezigheid is geen bewijs van productieactivering |
 | Beheer/beveiliging | Actor/org/actie/tijd/redenen, sessie-/limitergegevens, audit- en operationele logs; ondersteuning/misbruikbestrijding/verantwoording | 6f; 6c alleen specifieke plicht; WorkMatchr eigen verantwoordelijkheid | Bevoegde platformbeheerders, hosting/database. Externe logdrains onbekend | Audit/RateLimit/backup algemene bewaartermijnen en uitvoering nog open; lifecyclekolommen bewijzen geen werkende anonymisatie | `AdminActionLog`, `MarketplaceAuditEvent`, `KnowledgeAuditEvent`; `src/lib/platform-admin/platform-admin-authorization.ts`, `src/lib/account-architecture/account-lifecycle-service.ts`; geen claim dat platform-MFA verplicht geïmplementeerd is |
 
 ## Leveranciers en internationale doorgifte

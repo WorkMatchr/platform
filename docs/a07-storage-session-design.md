@@ -1,6 +1,6 @@
 # A07 — ontwerp en herstelvoorstel browseropslag en sessies
 
-**Status: ontwerp goedgekeurd; implementatie in Draft PR #40, eindacceptatie nog OPEN.** Issue #35, bestaande Draft PR #40. Onderzoek: 15 oktober 2026, baseline `c2152d17b45811f9785ed1e802ae786dd353428c`. Het oorspronkelijke onderzoek hieronder blijft als besluitonderbouwing bewaard. De Product Owner heeft implementatie van de sessiekeuze, expliciete 24-uursconceptopslag, uitlogwaarschuwing en legacyovergang goedgekeurd. De implementatiestatus staat in paragraaf 8. De voorgestelde intrekking van bestaande sessies is nadrukkelijk niet goedgekeurd en niet geïmplementeerd. Geen toestemming voor merge of deployment.
+**Status: ontwerp goedgekeurd; actuele technische eindacceptatie van 25 oktober staat in [het A07-acceptatierapport](a07-privacy-cookies.md#eindacceptatie-25-oktober-2026). Juridische vrijgave blijft OPEN.** Issue #35, bestaande Draft PR #40. Onderzoek: 15 oktober 2026, baseline `c2152d17b45811f9785ed1e802ae786dd353428c`. Het oorspronkelijke onderzoek hieronder blijft als besluitonderbouwing bewaard. De Product Owner heeft implementatie van de sessiekeuze, expliciete 24-uursconceptopslag, uitlogwaarschuwing en legacyovergang goedgekeurd. De implementatiestatus staat in paragraaf 8. De voorgestelde intrekking van bestaande sessies is nadrukkelijk niet goedgekeurd en niet geïmplementeerd. Geen toestemming voor merge of deployment.
 
 ## 1. Expliciet ‘Ingelogd blijven’
 
@@ -203,3 +203,10 @@ Exacte taakbestanden:
 - `src/lib/compliance/free-intake-storage.ts`
 
 Geen migratie-, schema-, package-, lockfile-, omgevings- of A06-codewijzigingen. De gegenereerde wijziging in next-env.d.ts is teruggezet. PR blijft Draft; status volledige A07-eindacceptatie: OPEN/BLOCKED door de genoemde database-/ingelogde controles en juridische acceptatie.
+
+
+## 9. Heracceptatie 25 oktober 2026
+
+De oude migratieblokkade en open drie-rollen-/foutinspuitcontroles hierboven zijn historische resultaten, inmiddels vervangen door de actuele eindacceptatie. De keten op actuele main bevat 92 migraties; replay, checksums en herhaalde uitvoering zijn op een eigen tijdelijke PostgreSQL-database gecontroleerd. De A07-beforehook bevestigt sessie-intrekking vóór native cookieverwijdering. Een echte DELETE-fout levert 503 en behoudt de cookie voor retry. De browserwaarschuwing, foutmelding, retry, sessieverloop en drie synthetische rollen zijn getest.
+
+F3-opslag en logout worden rechtstreeks uit actuele main hergebruikt; geen oude A07-variant teruggezet. PR #62 blijft intact. Zie het actuele rapport voor aantallen, resterende technische beperkingen en juridische besluiten. Er is geen toestemming tot merge, deployment, algemene sessie-intrekking of definitieve juridische publicatie afgeleid uit deze tests.

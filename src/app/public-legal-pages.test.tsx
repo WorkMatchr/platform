@@ -109,6 +109,8 @@ describe('A07 juridische conceptpagina’s', () => {
     expect(html).toContain('niet per account gescheiden')
     expect(html).toContain('Een algemene cookiebanner is daarvoor niet vanzelf de juiste oplossing')
     expect(html).toContain('wp194_en.pdf')
+    expect(html).toContain('synthetische accounts in een geïsoleerde testomgeving')
+    expect(html).not.toContain('Controle na inloggen en van productie-instellingen staat nog open')
   })
   it('toont ieder opslagitem uniek met doel, aanbieder, duur en toestemmingsbeoordeling', () => {
     const html = renderToStaticMarkup(<CookiesPage />)
@@ -121,5 +123,12 @@ describe('A07 juridische conceptpagina’s', () => {
     expect(html).toContain('24 uur vanaf de bewaaractie')
     expect(html).toContain('Geen betrouwbare vervaldatum')
     expect(html).toContain('href="/privacy"')
+  })
+  it('beschrijft de bestaande maar standaard gesloten LMS-runtime zonder ongeverifieerde verwerking te ontkennen', () => {
+    const html = renderToStaticMarkup(<PrivacyPage />)
+    expect(html).toContain('studievoortgang, toetsantwoorden, resultaten en certificaatgegevens')
+    expect(html).toContain('De runtime staat standaard uit')
+    expect(html).toContain('vóór inschakeling definitief worden vastgesteld')
+    expect(html).not.toContain('geen registratie van leerresultaten of studievoortgang aangetroffen')
   })
 })

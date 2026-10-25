@@ -16,7 +16,7 @@ afterEach(() => vi.useRealTimers())
 async function fixture() {
   const db: Record<string, Record<string, unknown>[]> = { user: [], account: [], session: [], verification: [], RateLimit: [] }
   const auth = betterAuth({ ...applicationAuth.options, baseURL: 'http://localhost:3046', trustedOrigins: ['http://localhost:3046'],
-    secret: 'synthetic-unit-test-secret-not-for-use-9384', database: memoryAdapter(db), plugins: [] })
+    secret: 'synthetic-unit-test-secret-not-for-use-9384', database: memoryAdapter(db), plugins: [], advanced: { ...applicationAuth.options.advanced, disableOriginCheck: false, disableCSRFCheck: false } })
   const ctx = await auth.$context
   const user = await ctx.internalAdapter.createUser({ name: 'Synthetic session test', email, emailVerified: true })
   await ctx.internalAdapter.createAccount({ userId: user.id, accountId: user.id, providerId: 'credential', password: passwordHash })
@@ -78,5 +78,38 @@ describe('native Better Auth sessies met de echte WorkMatchr hooks', () => {
     const result = await auth.api.signOut({ headers: new Headers({ cookie: cookies(first), origin: 'http://localhost:3046' }) })
     expect(result.success).toBe(true); expect(db.session).toHaveLength(1)
     expect(await auth.api.getSession({ headers: new Headers({ cookie: cookies(first) }) })).toBeNull()
+  })
+
+  it('rapporteert een mislukte intrekking niet als uitloggen en laat veilig opnieuw proberen toe', async () => {
+    const { auth, db, login } = await fixture()
+    const response = await login(false)
+    const context = await auth.$context
+    const failure = vi.spyOn(context.internalAdapter, 'deleteSession').mockRejectedValueOnce(new Error('SYNTHETIC_DELETE_FAILURE'))
+    const request = () => new Request('http://localhost:3046/api/auth/sign-out', { method: 'POST', headers: { cookie: cookies(response), origin: 'http://localhost:3046' } })
+    const failed = await auth.handler(request())
+    expect(failed.status).toBe(503)
+    expect(failed.headers.getSetCookie()).toHaveLength(0)
+    expect(db.session).toHaveLength(1)
+    failure.mockRestore()
+    expect((await auth.handler(request())).status).toBe(200)
+    expect(db.session).toHaveLength(0)
+  })
+  it('weigert ook een stil overgeslagen delete en laat andere sessies ongemoeid', async () => {
+    const { auth, db, login } = await fixture()
+    const response = await login(false)
+    const context = await auth.$context
+    const skip = vi.spyOn(context.internalAdapter, 'deleteSession').mockResolvedValueOnce(undefined)
+    const failed = await auth.handler(new Request('http://localhost:3046/api/auth/sign-out', { method: 'POST', headers: { cookie: cookies(response), origin: 'http://localhost:3046' } }))
+    expect(failed.status).toBe(503)
+    expect(failed.headers.getSetCookie()).toHaveLength(0)
+    expect(db.session).toHaveLength(1)
+    skip.mockRestore()
+  })
+  it('weigert cross-origin logout vóór de databasewijziging', async () => {
+    const { auth, db, login } = await fixture()
+    const response = await login(false)
+    const denied = await auth.handler(new Request('http://localhost:3046/api/auth/sign-out', { method: 'POST', headers: { cookie: cookies(response), origin: 'https://other.example.invalid' } }))
+    expect(denied.status).toBe(403)
+    expect(db.session).toHaveLength(1)
   })
 })
