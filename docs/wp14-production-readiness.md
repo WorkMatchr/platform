@@ -20,7 +20,7 @@ Productie draait nog de oude dependencyboom: de kandidaat is niet automatisch vr
 Algemene commerciële publieke lancering blijft **NO-GO** totdat privacyinformatie,
 operationele mail-/betaalacceptatie, herstelverantwoordelijkheid en expliciete
 releasebesluiten zijn afgerond. F4 en LMS blijven uitgeschakeld. Geen juridische
-hold is opgeheven. De lokale technische correcties zijn gevalideerd; remote CI/Preview en menselijke code-review blijven afzonderlijke mergevoorwaarden.
+hold is opgeheven. De lokale technische correcties zijn gevalideerd; Linux CI en Vercel Preview voor de implementatiecommit zijn geslaagd; menselijke code-review blijft vereist.
 
 ## Actuele main en productie
 
@@ -119,7 +119,7 @@ alarm-/restoreproeven vallen niet onder een schone dependency-audit.
 | Controle | Status | Actueel bewijs en grens |
 |---|---|---|
 | REL-01 | PASS | 22 oorspronkelijke packages geclassificeerd, volledige audit en versies vastgelegd. |
-| REL-02 | PASS | Begrensde updates, geen nieuwe hoofdversie; volledige audit nul bevindingen. Eindregressies hieronder. |
+| REL-02 | PASS | Begrensde updates binnen bestaande framework-hoofdversies; volledige audit nul bevindingen. Eindregressies hieronder. |
 | REL-03 | PASS | Echte tijdelijke PostgreSQL: drie rollen, 24h/7d, renew/expiry, foutinjectie logout, actuele status/membership/tenant, financiële replay en marketplaceconcurrency. |
 | REL-04 | PASS | Bestaand HSTS/sessiecookie/redirectbeleid gecontroleerd; ontbrekende headers in kandidaat hersteld. Geen volledige CSP/XSS-claim. |
 | REL-05 | BLOCKED | Kandidaat kan securityfixes leveren; productie is nog ongepatcht, operationele herstel-/monitoringacceptatie open. |
@@ -342,7 +342,7 @@ Onderstaande GO's gelden uitsluitend voor de geteste technische kandidaat, niet 
 het nog ongepatchte productieartefact. SECURITY GO is een beperkte beoordeling van
 dependencies, headers en geteste authenticatie-/tenantgrenzen, geen penetratietest.
 Een functionele GO betreft de beschreven synthetische keten; echte provideracceptatie
-wordt daar nooit uit afgeleid. Lokale eindvalidatie is voltooid. Remote CI/Preview en menselijke code-review blijven afzonderlijke mergevoorwaarden.
+wordt daar nooit uit afgeleid. Lokale eindvalidatie is voltooid. Linux CI en Vercel Preview zijn geslaagd; menselijke code-review blijft vereist.
 
 | Module | Techniek | Security | Functioneel | Juridische review | Productievrijgave |
 |---|---|---|---|---|---|
@@ -370,3 +370,17 @@ wordt daar nooit uit afgeleid. Lokale eindvalidatie is voltooid. Remote CI/Previ
 Geen auth-/intake-/matching-/financiële implementatie, juridische content, Prisma-schema,
 migratie, featuregate of providerconfiguratie gewijzigd. Alle tijdelijke fixtures,
 credentials en ruwe logs blijven buiten Git en worden waar nodig opgeruimd.
+
+## GitHub-oplevering
+
+Afzonderlijke [Draft PR #66](https://github.com/WorkMatchr/platform/pull/66), branch
+`codex/wp14-production-readiness`, vanaf actuele main `93a61386…`.
+Implementatiecommit: `8a1859f236b7d01bca78eb5c44719331c0339ee4`.
+
+- [GitHub Actions 40200422839](https://github.com/WorkMatchr/platform/actions/runs/40200422839): **SUCCESS**, inclusief Linux/Node24 npm ci, lint, bestaande beheerders-/Trading-guards, build en token-bundlecontrole.
+- Vercel **Preview READY**, exact dezelfde implementatie-SHA: `dpl_2ttTjfQK7wyvi9nSDoPMWZa3Y7V3`; [preview](https://platform-jt6vhfpyg-workmatchrs-projects.vercel.app).
+- GitHub meldt mergeable/clean. Dit is geen mergeautorisatie. PR blijft Draft.
+- Deze afsluitende rapportageaanvulling verandert uitsluitend dit document. De actuele head en daarbij behorende laatste checks worden in de PR-beschrijving vastgelegd, zodat geen zelfverwijzende commit-SHA in het rapport nodig is.
+- Lokale testcredentials, ruwe logs en tijdelijke scripts zitten niet in de commitset. De worktree is na de rapportagecommit schoon.
+
+**Technisch advies voor deze afgebakende security-/baselinecorrectie: GO voor code-review en afzonderlijke mergecontrole. Algemene commerciële publieke lancering: NO-GO.** De modulevoorwaarden en menselijke besluiten hierboven blijven onverkort van toepassing.
