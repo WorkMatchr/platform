@@ -396,6 +396,26 @@ async function main() {
     const { randomUUID } = await import('node:crypto')
     const simpleViewer = { userId: owner.id, organizationId: organization.id, organizationRole: 'OWNER' as const, isPlatformAdministrator: false }
     const basic = { routeChoice: 'NEEDS_TOPIC', helpTopic: 'UNKNOWN', requestTitle: 'Onze eigen titel', requestDescription: 'Wij willen hulp bij een nog onbekend onderwerp.', desiredOutcome: 'ADVICE', workLocationMode: 'REMOTE', desiredStartMode: 'SPECIFIC_DATE', desiredStartDate: '2026-12-12' }
+    const topicSituations = { version: 1, topic: 'EXPOSURE', selected: ['NOISE', 'DUST', 'OTHER'], otherText: 'Een andere factor op de werkplek' }
+    const contextual = { ...basic, helpTopic: 'EXPOSURE', topicSituations }
+    const contextId = randomUUID()
+    const contextualResults = await Promise.all([publishSimpleAdviceRequest(simpleViewer, contextId, contextual), publishSimpleAdviceRequest(simpleViewer, contextId, contextual)])
+    assert.equal(contextualResults[0].id, contextualResults[1].id)
+    const contextRequest = await prisma.request.findUniqueOrThrow({ where: { id: contextualResults[0].id }, include: { adviceDossierVersion: true, assignmentHandoff: true } })
+    assert.deepEqual((contextRequest.adviceDossierVersion!.simpleRequestSnapshot as { topicSituations: unknown }).topicSituations, topicSituations)
+    assert.deepEqual((contextRequest.assignmentHandoff!.snapshot as { topicSituations: unknown }).topicSituations, topicSituations)
+    assert.ok(contextRequest.notes?.includes('Geluid op de werkplek; Stof, dampen of rook; Anders: Een andere factor op de werkplek'))
+    assert.equal(contextRequest.primaryExpertise, null)
+    assert.deepEqual(contextRequest.additionalExpertiseCodes, [])
+    assert.equal(await prisma.assignment.count({ where: { requestId: contextRequest.id } }), 1)
+    assert.equal(await prisma.requestAssignmentHandoff.count({ where: { requestId: contextRequest.id } }), 1)
+    assert.equal(await prisma.requestEligibleProvider.count({ where: { requestId: contextRequest.id } }), 0)
+    assert.equal(await prisma.marketplaceAuditEvent.count({ where: { action: 'REQUEST_ASSIGNMENT_HANDOFF', entityId: contextRequest.id } }), 1)
+    await expectRequestError(() => publishSimpleAdviceRequest(simpleViewer, contextId, { ...contextual, topicSituations: { ...topicSituations, selected: ['NOISE'], otherText: '' } }), 'CONFLICT')
+    await expectRequestError(() => publishSimpleAdviceRequest({ ...simpleViewer, userId: otherOwner.id, organizationId: otherOrganization.id }, contextId, contextual), 'NOT_FOUND')
+    const rejectedContextId = randomUUID()
+    await assert.rejects(publishSimpleAdviceRequest(simpleViewer, rejectedContextId, { ...contextual, topicSituations: { ...topicSituations, selected: ['UNKNOWN', 'NOISE'] } }))
+    assert.equal(await prisma.adviceDossier.count({ where: { id: rejectedContextId } }), 0)
     const submissionId = randomUUID()
     const results = await Promise.all([publishSimpleAdviceRequest(simpleViewer, submissionId, basic), publishSimpleAdviceRequest(simpleViewer, submissionId, basic)])
     assert.equal(results[0].id, results[1].id)
@@ -526,8 +546,17 @@ async function main() {
       assert.equal(await prisma.adviceDossier.count(), beforeDossiers)
       assert.equal(await prisma.request.count(), beforeRequests)
       await assert.rejects(legacy.getLegacySimpleAdvice({ ...simpleViewer, userId: otherOwner.id, organizationId: otherOrganization.id }, intake.id))
-      const input = { ...basic, routeChoice: primary ? 'KNOWS_EXPERTISE' : 'NEEDS_TOPIC', requestedExpertise: primary, additionalExpertises: primary ? ['MVK', 'ARBEIDSHYGIENIST'] : [] }
+      const input = { ...(primary ? basic : contextual), routeChoice: primary ? 'KNOWS_EXPERTISE' : 'NEEDS_TOPIC', requestedExpertise: primary, additionalExpertises: primary ? ['MVK', 'ARBEIDSHYGIENIST'] : [] }
+      if (!primary) {
+        await assert.rejects(legacy.saveLegacySimpleAdvice(simpleViewer, intake.id, 0, { ...input, topicSituations: { ...topicSituations, selected: ['UNKNOWN', 'NOISE'] } }))
+        assert.equal(await prisma.intakeSimpleAdviceRevision.count({ where: { intakeId: intake.id } }), 0)
+      }
       const version = await legacy.saveLegacySimpleAdvice(simpleViewer, intake.id, 0, input)
+      if (!primary) {
+        const reopened = await legacy.getLegacySimpleAdvice(simpleViewer, intake.id)
+        assert.ok(reopened.initialValues)
+        assert.deepEqual(reopened.initialValues.topicSituations, topicSituations)
+      }
       await expectRequestError(() => legacy.saveLegacySimpleAdvice(simpleViewer, intake.id, 0, input), 'CONFLICT')
       await assert.rejects(prisma.intakeSimpleAdviceRevision.update({ where: { intakeId_version: { intakeId: intake.id, version } }, data: { payload: {} } }))
       const draftAssignment = primary ? await prisma.assignment.create({ data: { intakeId: intake.id, clientOrganizationId: organization.id, createdByUserId: owner.id, status: 'DRAFT', title: 'Bestaand concept', description: 'Oorspronkelijke conceptinhoud', revisions: { create: { version: 1, title: 'Bestaand concept', description: 'Oorspronkelijke conceptinhoud', allowsRemoteWork: false, changedByUserId: owner.id } } } }) : null

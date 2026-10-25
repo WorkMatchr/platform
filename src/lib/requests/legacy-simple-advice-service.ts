@@ -9,14 +9,16 @@ import { legacySimpleAdvicePrefill } from './legacy-simple-advice-prefill'
 import { simpleAdviceSchema, usesLocation } from './simple-advice-contract'
 import { publishRequestAttempt, RequestServiceError } from './request-service'
 import { expertiseSpecialismSlugs } from './expertise-specialism-reference'
+import { topicSituationsSchema, validateTopicSituations } from './topic-situations'
 
 const keys = ['routeChoice', 'requestedExpertise', 'helpTopic', 'helpTopicOther', 'requestTitle', 'requestDescription', 'desiredOutcome', 'desiredOutcomeOther', 'workLocationMode', 'organizationLocationId', 'organizationLocationCity', 'otherLocationCity', 'desiredStartMode', 'desiredStartDate']
 const draftSchema = z.object({
   ...Object.fromEntries(keys.map(key => [key, z.string().max(key === 'requestDescription' ? 4000 : 500).nullable().optional()])),
   additionalExpertises: z.array(z.string().max(60)).max(2).optional(),
+  topicSituations: topicSituationsSchema.optional(),
   organizationLocationId: z.union([z.string().uuid(), z.literal('')]).nullable().optional(),
   combinationModes: z.array(z.enum(['ORGANIZATION', 'OTHER_LOCATION', 'REMOTE'])).max(3).optional(),
-}).strict()
+}).strict().superRefine((v, ctx) => validateTopicSituations(v, ctx))
 
 async function source(tx: Prisma.TransactionClient, viewer: AdviceDossierViewer, intakeId: string) {
   await requireIntakeViewer(tx, viewer.userId, intakeId)

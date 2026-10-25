@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — thema-afhankelijke situaties
+
+- De onderwerp-route van Opdracht starten vraagt welke situaties de bezoeker herkent, met meerdere checkboxkeuzes, exclusief onbekend en een toelichting bij Anders.
+- Twee kolommen vanaf tabletbreedte, één op mobiel; gekozen situaties blijven zichtbaar bij de omschrijving en controle.
+- Versiegebonden context blijft in de bestaande concept-/publicatiesnapshots bewaard; geen automatische deskundigheid, matchingregel of databasemigratie. Zie `docs/advice-topic-situations.md`.
+
 ## Unreleased — WP5 accountacceptatie
 
 - Normale accounts zonder actieve organisatie krijgen vanuit het dashboard de bestaande onboarding in plaats van een serverfout; platform- en tenantautorisatie blijven behouden.
