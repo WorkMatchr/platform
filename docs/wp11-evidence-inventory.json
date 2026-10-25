@@ -1,0 +1,930 @@
+{
+  "checkedAt": "2026-10-24T06:37:33.851Z",
+  "main": "a49b59507139ef7121634705da19f781b17845f0",
+  "reports": [
+    {
+      "wp": 1,
+      "pr": 52,
+      "branch": "codex/compliance-f3-ux",
+      "commit": "45a9f7068a0f555d2af5606e4f26505651ef12a0",
+      "path": "docs/compliance-f3-review.md",
+      "sha256": "2ab6667071efaa861886333e2c61c07705368379cf38a9e4cb8cc025ed256753",
+      "reportMatchesCommit": true,
+      "statusRows": {
+        "PASS": 25
+      },
+      "localChanges": []
+    },
+    {
+      "wp": 2,
+      "pr": 49,
+      "branch": "codex/compliance-f4-expanded-guide",
+      "commit": "00207461c34f41fe2739bdfefff5875d2763afc6",
+      "path": "docs/compliance-f4-technical-acceptance.md",
+      "sha256": "4001ddb3813694af90a9489248d63e3822d38dfb0da8fc4bdb894e8ad08b8626",
+      "reportMatchesCommit": true,
+      "statusRows": {
+        "PASS": 33,
+        "BLOCKED": 6,
+        "NOT TESTED": 1
+      },
+      "localChanges": []
+    },
+    {
+      "wp": 3,
+      "pr": 49,
+      "branch": "codex/compliance-f4-expanded-guide",
+      "commit": "00207461c34f41fe2739bdfefff5875d2763afc6",
+      "path": "docs/compliance-f4-legal-acceptance.md",
+      "sha256": "24435a84e5f792de4883881ee5ce2d18571d4fbb1e0e1da69f6bc94fd751df58",
+      "reportMatchesCommit": true,
+      "statusRows": {},
+      "localChanges": []
+    },
+    {
+      "wp": 4,
+      "pr": 53,
+      "branch": "codex/wp04-public-acceptance",
+      "commit": "67cef1657c6537d77283673190e4e325468f6bbd",
+      "path": "docs/wp04-public-acceptance.md",
+      "sha256": "4b512fef7070489d48a8d2fba73496916bb713eab8d71034248a66db7f3bb8f1",
+      "reportMatchesCommit": true,
+      "statusRows": {
+        "PASS": 27,
+        "BLOCKED": 11,
+        "NOT TESTED": 1
+      },
+      "localChanges": []
+    },
+    {
+      "wp": 5,
+      "pr": 54,
+      "branch": "codex/wp05-account-acceptance",
+      "commit": "db6e296da5bc9f171346372c691ade88ed0c0adc",
+      "path": "docs/wp05-account-acceptance.md",
+      "sha256": "bd1026999c8bb42fcc686c9f34ee89f65d932bb88dd88e0558119276667296a0",
+      "reportMatchesCommit": true,
+      "statusRows": {
+        "PASS": 27,
+        "NOT TESTED": 11,
+        "BLOCKED": 2
+      },
+      "localChanges": []
+    },
+    {
+      "wp": 6,
+      "pr": 55,
+      "branch": "codex/wp06-advice-chain-acceptance",
+      "commit": "9798176af964419e521b57451f3e327503b49333",
+      "path": "docs/wp06-advice-chain-acceptance.md",
+      "sha256": "ef4b9df230c9dee0fdf043d5077e31c9cd6b48bdf9b3b77acfad8752402eb1ba",
+      "reportMatchesCommit": true,
+      "statusRows": {
+        "PASS": 40,
+        "BLOCKED": 3,
+        "NOT TESTED": 2
+      },
+      "localChanges": []
+    },
+    {
+      "wp": 7,
+      "pr": 56,
+      "branch": "codex/wp07-marketplace-acceptance",
+      "commit": "a7447ddaae2a23cd7ded03cf1ad89bf3c055104c",
+      "path": "docs/wp07-marketplace-acceptance.md",
+      "sha256": "929c73d7456183ebf1b7d715f77dab1d6f08d09513348f194a5b32d5763ca1c5",
+      "reportMatchesCommit": true,
+      "statusRows": {
+        "PASS": 47,
+        "NOT TESTED": 1,
+        "BLOCKED": 2
+      },
+      "localChanges": []
+    },
+    {
+      "wp": 8,
+      "pr": 57,
+      "branch": "codex/wp08-finance-acceptance",
+      "commit": "116ef7233458604b44b2f34862eaac648a29bb03",
+      "path": "docs/wp08-finance-acceptance.md",
+      "sha256": "444ac5f497f4a0d58bf709ccd0e034b50eff5065958cf52b7ae81f30826b6e5e",
+      "reportMatchesCommit": true,
+      "statusRows": {
+        "PASS": 48,
+        "BLOCKED": 2
+      },
+      "localChanges": []
+    },
+    {
+      "wp": 9,
+      "pr": 58,
+      "branch": "codex/wp09-notifications-acceptance",
+      "commit": "05e6ff0029d63cd45560ab7a1765c9c9dc7a4dfb",
+      "path": "docs/wp09-notifications-acceptance.md",
+      "sha256": "3d5910daea6fcd2442abc496d6fc4df2bb0bc212d76326b5907552676471d595",
+      "reportMatchesCommit": true,
+      "statusRows": {
+        "PASS": 38,
+        "BLOCKED": 5,
+        "NOT IMPLEMENTED": 2
+      },
+      "localChanges": []
+    }
+  ],
+  "prs": [
+    {
+      "number": 14,
+      "title": "feat: full Arbo Compliance Scan content and flow",
+      "branch": "feat/compliance-full-scan-content",
+      "head": "625ca85397bdef453a9a6ba96bac1b09bb463737",
+      "isDraft": true,
+      "mergeable": "CONFLICTING",
+      "state": "OPEN",
+      "files": [
+        "src/app/dashboard/compliance/page.tsx",
+        "src/app/dashboard/compliance/scan/nieuw/actions.ts",
+        "src/app/dashboard/compliance/scan/nieuw/full-compliance-scan.tsx",
+        "src/app/dashboard/compliance/scan/nieuw/page.tsx",
+        "src/components/public/compliance-free-intake.tsx",
+        "src/lib/compliance/full-scan-assessment.test.ts",
+        "src/lib/compliance/full-scan-assessment.ts",
+        "src/lib/compliance/full-scan-content.ts"
+      ],
+      "checks": [
+        {
+          "name": "verify",
+          "status": "FAILURE"
+        },
+        {
+          "name": "verify",
+          "status": "FAILURE"
+        }
+      ],
+      "reviewCount": 0
+    },
+    {
+      "number": 20,
+      "title": "A01: homepage-CTA-correcties en onderzoek ontbrekende main-deployment",
+      "branch": "codex/a01-homepage-deployment",
+      "head": "6008eba46e21e0497fd22e0bc001fe57bc3af19b",
+      "isDraft": true,
+      "mergeable": "CONFLICTING",
+      "state": "OPEN",
+      "files": [
+        "docs/README.md",
+        "docs/a01-homepage-deployment-audit.md",
+        "src/app/public-homepage.test.tsx",
+        "src/components/public/public-content-pathways.test.tsx",
+        "src/components/public/public-homepage-v02.tsx"
+      ],
+      "checks": [
+        {
+          "name": "verify",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "verify",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "Vercel – jortt-production-forward-port",
+          "status": "FAILURE"
+        },
+        {
+          "name": "Vercel Preview Comments",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "Vercel – platform",
+          "status": "SUCCESS"
+        }
+      ],
+      "reviewCount": 0
+    },
+    {
+      "number": 39,
+      "title": "A06: algemeen contactformulier met veilige e-mailafhandeling",
+      "branch": "codex/a06-contact-form",
+      "head": "afd46590901cb31b1aa154c4ca28744a4e622764",
+      "isDraft": true,
+      "mergeable": "MERGEABLE",
+      "state": "OPEN",
+      "files": [
+        "docs/a06-contact-acceptance.md",
+        "scripts/test-contact-database.ts",
+        "src/app/api/contact/route.test.ts",
+        "src/app/api/contact/route.ts",
+        "src/app/contact/page.test.tsx",
+        "src/app/contact/page.tsx",
+        "src/components/public/contact-form.test.tsx",
+        "src/components/public/contact-form.tsx",
+        "src/lib/contact/contact-contract.ts",
+        "src/lib/contact/contact-rate-limit.test.ts",
+        "src/lib/contact/contact-rate-limit.ts",
+        "src/lib/contact/contact-service.test.ts",
+        "src/lib/contact/contact-service.ts"
+      ],
+      "checks": [
+        {
+          "name": "verify",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "verify",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "Vercel",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "Vercel Preview Comments",
+          "status": "SUCCESS"
+        }
+      ],
+      "reviewCount": 0
+    },
+    {
+      "number": 40,
+      "title": "A07: privacy- en cookieconcepten met verwerkingsinventarisatie",
+      "branch": "codex/a07-privacy-cookies",
+      "head": "70374ed71f195feef3feca1549c48c5a9ad567fd",
+      "isDraft": true,
+      "mergeable": "CONFLICTING",
+      "state": "OPEN",
+      "files": [
+        "docs/README.md",
+        "docs/a07-privacy-cookies.md",
+        "docs/a07-storage-session-design.md",
+        "src/app/cookies/page.tsx",
+        "src/app/privacy/page.tsx",
+        "src/app/public-legal-pages.test.tsx",
+        "src/app/public-placeholder-routes.test.tsx",
+        "src/components/auth/activate-account-form.tsx",
+        "src/components/auth/login-form.tsx",
+        "src/components/auth/logout-button.tsx",
+        "src/components/auth/session-choice.test.tsx",
+        "src/components/layout/header-logout.test.tsx",
+        "src/components/public/compliance-free-intake-storage.test.tsx",
+        "src/components/public/compliance-free-intake.tsx",
+        "src/components/public/use-compliance-draft.ts",
+        "src/config/legal-identity.ts",
+        "src/content/public-legal.ts",
+        "src/lib/auth-session.test.ts",
+        "src/lib/auth-validation.ts",
+        "src/lib/auth.ts",
+        "src/lib/compliance/free-intake-storage.test.ts",
+        "src/lib/compliance/free-intake-storage.ts"
+      ],
+      "checks": [
+        {
+          "name": "verify",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "verify",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "Vercel",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "Vercel Preview Comments",
+          "status": "SUCCESS"
+        }
+      ],
+      "reviewCount": 0
+    },
+    {
+      "number": 42,
+      "title": "Compliance-producten: functioneel ontwerp voor intake, wijzer en scan",
+      "branch": "codex/compliance-product-design",
+      "head": "690ee84cc705d162008017fdd175b8538bc8b840",
+      "isDraft": true,
+      "mergeable": "MERGEABLE",
+      "state": "OPEN",
+      "files": [
+        "docs/README.md",
+        "docs/compliance-product-question-catalog.md",
+        "docs/compliance-product-redesign.md"
+      ],
+      "checks": [
+        {
+          "name": "verify",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "verify",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "Vercel",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "Vercel Preview Comments",
+          "status": "SUCCESS"
+        }
+      ],
+      "reviewCount": 0
+    },
+    {
+      "number": 49,
+      "title": "feat(compliance): add versioned expanded guide",
+      "branch": "codex/compliance-f4-expanded-guide",
+      "head": "00207461c34f41fe2739bdfefff5875d2763afc6",
+      "isDraft": true,
+      "mergeable": "MERGEABLE",
+      "state": "OPEN",
+      "files": [
+        "docs/ERD.md",
+        "docs/README.md",
+        "docs/compliance-f4-claim-review.json",
+        "docs/compliance-f4-expanded-guide.md",
+        "docs/compliance-f4-knowledge-publication.md",
+        "docs/compliance-f4-legal-acceptance.json",
+        "docs/compliance-f4-legal-acceptance.md",
+        "docs/compliance-f4-legal-matrix.json",
+        "docs/compliance-f4-legal-matrix.md",
+        "docs/compliance-f4-publication-plan.md",
+        "docs/compliance-f4-review-dossier.json",
+        "docs/compliance-f4-review-dossier.md",
+        "docs/compliance-f4-review-source-blocks.json",
+        "docs/compliance-f4-review-supplement.json",
+        "docs/compliance-f4-rie-legal-review.md",
+        "docs/compliance-f4-source-evidence.json",
+        "docs/compliance-f4-technical-acceptance.md",
+        "docs/data-dictionary.md",
+        "docs/database.md",
+        "prisma/migrations/20261017100000_add_compliance_question_visibility/migration.sql",
+        "prisma/schema.prisma",
+        "scripts/check-compliance-f4-publication.ts",
+        "scripts/fixtures/compliance-f4-database.ts",
+        "scripts/fixtures/compliance-knowledge-database.ts",
+        "scripts/fixtures/compliance-v2-database.ts",
+        "scripts/test-compliance-runs-database.ts",
+        "src/app/wijzers/compliance/v2/page.tsx",
+        "src/app/wijzers/compliance/v2/runs/route.test.ts",
+        "src/app/wijzers/compliance/v2/runs/route.ts",
+        "src/components/arbo-guides/compliance-v2-report-view.tsx",
+        "src/components/public/compliance-expanded-guide.test.tsx",
+        "src/components/public/compliance-expanded-guide.tsx",
+        "src/lib/arbo-guides/arbo-guide-run-service.ts",
+        "src/lib/compliance/compliance-f4-catalog.ts",
+        "src/lib/compliance/compliance-f4-definition.ts",
+        "src/lib/compliance/compliance-f4-framework.ts",
+        "src/lib/compliance/compliance-f4-review-dossier.test.ts",
+        "src/lib/compliance/compliance-f4-rule-review.ts",
+        "src/lib/compliance/compliance-f4-source-review.test.ts",
+        "src/lib/compliance/compliance-f4.test.ts",
+        "src/lib/compliance/compliance-framework-publication.test.ts",
+        "src/lib/compliance/compliance-knowledge-publication.test.ts",
+        "src/lib/compliance/compliance-knowledge-publication.ts",
+        "src/lib/compliance/compliance-question-visibility.ts",
+        "src/lib/compliance/compliance-v2-conditions.ts",
+        "src/lib/compliance/compliance-v2-framework.ts",
+        "src/lib/compliance/compliance-v2.ts",
+        "src/test-fixtures/compliance-f4.ts",
+        "src/test-fixtures/compliance-source-fragment.ts"
+      ],
+      "checks": [
+        {
+          "name": "verify",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "verify",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "Vercel",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "Vercel Preview Comments",
+          "status": "SUCCESS"
+        }
+      ],
+      "reviewCount": 0
+    },
+    {
+      "number": 52,
+      "title": "F3: verduidelijk intakekeuzes en concrete resultaatbegeleiding",
+      "branch": "codex/compliance-f3-ux",
+      "head": "45a9f7068a0f555d2af5606e4f26505651ef12a0",
+      "isDraft": true,
+      "mergeable": "MERGEABLE",
+      "state": "OPEN",
+      "files": [
+        "docs/compliance-f3-review.md",
+        "docs/compliance-f3-ux.md",
+        "src/components/public/compliance-free-intake-v2.test.tsx",
+        "src/components/public/compliance-free-intake-v2.tsx",
+        "src/lib/compliance/free-intake-v2-guidance.ts",
+        "src/lib/compliance/free-intake-v2-presentation.test.ts",
+        "src/lib/compliance/free-intake-v2-presentation.ts",
+        "src/lib/compliance/free-intake-v2.test.ts",
+        "src/lib/compliance/free-intake-v2.ts"
+      ],
+      "checks": [
+        {
+          "name": "verify",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "verify",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "Vercel",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "Vercel Preview Comments",
+          "status": "SUCCESS"
+        }
+      ],
+      "reviewCount": 0
+    },
+    {
+      "number": 53,
+      "title": "WP4: herstel 404-opdrachtstart en leg publieke acceptatie vast",
+      "branch": "codex/wp04-public-acceptance",
+      "head": "67cef1657c6537d77283673190e4e325468f6bbd",
+      "isDraft": true,
+      "mergeable": "MERGEABLE",
+      "state": "OPEN",
+      "files": [
+        "docs/wp04-public-acceptance.md",
+        "src/app/not-found.tsx",
+        "src/app/public-information-architecture.test.tsx",
+        "src/app/public-platform-pages.test.tsx"
+      ],
+      "checks": [
+        {
+          "name": "verify",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "verify",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "Vercel",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "Vercel Preview Comments",
+          "status": "SUCCESS"
+        }
+      ],
+      "reviewCount": 0
+    },
+    {
+      "number": 54,
+      "title": "WP5: herstel accountonboarding en controleer rollen en sessies",
+      "branch": "codex/wp05-account-acceptance",
+      "head": "db6e296da5bc9f171346372c691ade88ed0c0adc",
+      "isDraft": true,
+      "mergeable": "MERGEABLE",
+      "state": "OPEN",
+      "files": [
+        "CHANGELOG.md",
+        "docs/wp05-account-acceptance.md",
+        "scripts/test-account-lifecycle-database.ts",
+        "src/app/account/account-view-model.test.ts",
+        "src/app/account/page.tsx",
+        "src/app/dashboard/dashboard-access.test.tsx",
+        "src/app/dashboard/page.tsx"
+      ],
+      "checks": [
+        {
+          "name": "verify",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "verify",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "Vercel",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "Vercel Preview Comments",
+          "status": "SUCCESS"
+        }
+      ],
+      "reviewCount": 0
+    },
+    {
+      "number": 55,
+      "title": "WP6: verify advice chain and preserve requested start",
+      "branch": "codex/wp06-advice-chain-acceptance",
+      "head": "9798176af964419e521b57451f3e327503b49333",
+      "isDraft": true,
+      "mergeable": "MERGEABLE",
+      "state": "OPEN",
+      "files": [
+        "docs/wp06-advice-chain-acceptance.md",
+        "src/components/assignments/assignment-detail.tsx",
+        "src/lib/assignments/assignment-presentation.test.ts",
+        "src/lib/assignments/assignment-presentation.ts",
+        "src/lib/assignments/assignment-query-service.test.ts",
+        "src/lib/assignments/assignment-query-service.ts",
+        "src/lib/public-intake/public-intake-context-question-service.test.ts",
+        "src/lib/public-intake/public-intake-guidance-presentation.test.ts"
+      ],
+      "checks": [
+        {
+          "name": "verify",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "verify",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "Vercel",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "Vercel Preview Comments",
+          "status": "SUCCESS"
+        }
+      ],
+      "reviewCount": 0
+    },
+    {
+      "number": 56,
+      "title": "WP7: marketplace-autorisatie en geïsoleerde acceptatie",
+      "branch": "codex/wp07-marketplace-acceptance",
+      "head": "a7447ddaae2a23cd7ded03cf1ad89bf3c055104c",
+      "isDraft": true,
+      "mergeable": "MERGEABLE",
+      "state": "OPEN",
+      "files": [
+        "docs/wp07-marketplace-acceptance.md",
+        "scripts/test-marketplace-concurrency-database.ts",
+        "src/app/uitnodigingen/[invitationId]/page.tsx",
+        "src/lib/marketplace/award-service.ts",
+        "src/lib/marketplace/dashboard-query-service.ts",
+        "src/lib/marketplace/marketplace-read-boundaries.test.ts",
+        "src/lib/marketplace/marketplace-replay-authorization.test.ts",
+        "src/lib/marketplace/matching-service.ts",
+        "src/lib/marketplace/messaging-service.ts",
+        "src/lib/marketplace/participation-service.ts"
+      ],
+      "checks": [
+        {
+          "name": "verify",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "verify",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "Vercel",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "Vercel Preview Comments",
+          "status": "SUCCESS"
+        }
+      ],
+      "reviewCount": 0
+    },
+    {
+      "number": 57,
+      "title": "WP8: protect financial replay authorization and ledger integrity",
+      "branch": "codex/wp08-finance-acceptance",
+      "head": "116ef7233458604b44b2f34862eaac648a29bb03",
+      "isDraft": true,
+      "mergeable": "MERGEABLE",
+      "state": "OPEN",
+      "files": [
+        "docs/wp08-finance-acceptance.md",
+        "scripts/test-credit-wallet-database.ts",
+        "scripts/test-financial-chain-database.ts",
+        "src/lib/finance/financial-purchase-service.ts",
+        "src/lib/finance/payment-verification-boundaries.test.ts",
+        "src/lib/finance/subscription-cancellation.test.ts",
+        "src/lib/marketplace/credit-admin-boundaries.test.ts",
+        "src/lib/marketplace/credit-service.ts",
+        "src/lib/marketplace/marketplace-credit-admin-service.ts"
+      ],
+      "checks": [
+        {
+          "name": "verify",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "verify",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "Vercel",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "Vercel Preview Comments",
+          "status": "SUCCESS"
+        }
+      ],
+      "reviewCount": 0
+    },
+    {
+      "number": 58,
+      "title": "WP09: controle mailafhandeling en ontvangergrenzen",
+      "branch": "codex/wp09-notifications-acceptance",
+      "head": "05e6ff0029d63cd45560ab7a1765c9c9dc7a4dfb",
+      "isDraft": true,
+      "mergeable": "MERGEABLE",
+      "state": "OPEN",
+      "files": [
+        "docs/wp09-notifications-acceptance.md",
+        "scripts/test-assignment-notifications-database.ts",
+        "src/lib/email.test.ts",
+        "src/lib/email.ts",
+        "src/lib/finance/financial-invoice-delivery-service.test.ts",
+        "src/lib/finance/financial-invoice-delivery-service.ts",
+        "src/lib/marketplace/assignment-email-worker.ts"
+      ],
+      "checks": [
+        {
+          "name": "verify",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "verify",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "Vercel",
+          "status": "SUCCESS"
+        },
+        {
+          "name": "Vercel Preview Comments",
+          "status": "SUCCESS"
+        }
+      ],
+      "reviewCount": 0
+    }
+  ],
+  "lms": {
+    "candidateCommit": "b7188ebf1cbc3c2ecf96e1a3eb8069df1763340e",
+    "patch": "docs/wp10-learning-runtime-repair.patch",
+    "patchSha256": "a7242d9508fa97f0d79645afa6103d8638493aa0456577c9896edee5c8046b8d",
+    "statusCounts": {
+      "PASS": 33,
+      "NOT TESTED": 7,
+      "BLOCKED": 10
+    },
+    "quality": {
+      "lint": 0,
+      "types": 0,
+      "build": 0
+    },
+    "unit": {
+      "passed": 173,
+      "skipped": 14,
+      "passedFiles": 31,
+      "skippedFiles": 6
+    },
+    "concurrency": {
+      "passed": 9
+    },
+    "fullChainWithConcurrency": {
+      "passed": 3
+    },
+    "http": {
+      "status": "PASS",
+      "checks": [
+        "anonymous route redirects to sign-in",
+        "owner sees completed enrollment and passed result through real authenticated HTTP",
+        "logout destroys session; new session retains identical historical result",
+        "separate account and organization cannot read owner result or enrollment",
+        "zero remaining synthetic sessions"
+      ],
+      "browserInteraction": "NOT TESTED - CUA initialization unavailable"
+    },
+    "cleanup": {
+      "ownDatabaseRemoved": true,
+      "successfulMigrations": 91,
+      "remainingSessionsBeforeDrop": 0,
+      "existingDatabasesPreserved": true,
+      "existingRolesPreserved": true,
+      "leftoverTaskDatabases": []
+    }
+  },
+  "integration": {
+    "order": [
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      49
+    ],
+    "unit": {
+      "passed": 1168,
+      "passedFiles": 117
+    },
+    "quality": {
+      "lint": 0,
+      "build": 0,
+      "types": 2
+    },
+    "initialDatabaseRuns": {
+      "results": [
+        {
+          "suite": "accounts",
+          "exit": 1,
+          "durationMs": 11004
+        },
+        {
+          "suite": "requests",
+          "exit": 0,
+          "durationMs": 144956
+        },
+        {
+          "suite": "marketplace-concurrency",
+          "exit": 0,
+          "durationMs": 33962
+        },
+        {
+          "suite": "credits",
+          "exit": 0,
+          "durationMs": 48321
+        },
+        {
+          "suite": "finance",
+          "exit": 1,
+          "durationMs": 25292
+        },
+        {
+          "suite": "assignment-notifications",
+          "exit": 0,
+          "durationMs": 60040
+        },
+        {
+          "suite": "compliance-runs",
+          "exit": 0,
+          "durationMs": 80005
+        }
+      ],
+      "existingDatabasesPreserved": true,
+      "newDatabaseNamesRemaining": [
+        "workmatchr_wp11_accounts_14428_1792823131056"
+      ],
+      "note": "De genoemde eigen accountdatabase was alleen tijdens de gelijktijdige hertest aanwezig; definitieve cleanup bevestigt geen resterende taakdatabase."
+    },
+    "databaseFollowup": {
+      "results": [
+        {
+          "label": "accounts-migrations",
+          "exit": 0,
+          "durationMs": 22891
+        },
+        {
+          "label": "accounts-seed",
+          "exit": 0,
+          "durationMs": 8222
+        },
+        {
+          "label": "accounts-final",
+          "exit": 0,
+          "durationMs": 3139
+        },
+        {
+          "label": "finance-final",
+          "exit": 0,
+          "durationMs": 28041
+        }
+      ],
+      "ownAccountDatabaseRemoved": true
+    },
+    "financeTestPatch": "docs/wp11-finance-test-integration.patch",
+    "financeTestPatchSha256": "4e8b22ead8f42b914c499d7f1b396f9be49631ab71a6da8c6f352cf77982ddbf"
+  },
+  "production": {
+    "readOnly": true,
+    "project": "platform",
+    "alias": "www.workmatchr.nl",
+    "deployment": "dpl_5Wcw6uPWGHLvHCiZc1Am6rSf5Xdk",
+    "state": "READY",
+    "target": "production",
+    "gitSha": "a49b59507139ef7121634705da19f781b17845f0"
+  },
+  "logHashes": {
+    "lms/canonical-fixed.log": "f509d917efc0b027b8844ff3012566eb48c91aa04ebb82b0bc07f15aedf3756d",
+    "lms/wp11-full-chain.log": "d593c8c90683715421dacb70d7e76f2a37cb7c9edd0565d8853b8301ace30b65",
+    "lms/wp11-concurrency-final.log": "4830e41ce85ec157b190e18d88ec981d79b5f18964c9c44edd5b693bd38aadca",
+    "lms/retention-final.log": "9d98cb87b6c823a9f736f06c12f464fc1e97d57567a6f976a4f9f385ac14fc30",
+    "lms/wp11-unit-complete.log": "a4c98734d20b1ada17518eded8cb4bdaf51fcd719ae3627d06ed8e696368f4f9",
+    "lms/wp11-lint.log": "bc3aa87ef23430f365648a548678d1890a0bc765cc5341be893c63a617fd62b8",
+    "lms/wp11-types-final.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "lms/wp11-build.log": "e7c22c80c41d433cc182f095d93f6c9be8e7be8ae85aecd3b79cca0b07f520b4",
+    "integration/combined-tests.log": "336f7545eee76920f06eb204510c59c7f447d65f171e70ab35c66f548cf004fd",
+    "integration/lint.log": "bc3aa87ef23430f365648a548678d1890a0bc765cc5341be893c63a617fd62b8",
+    "integration/types.log": "9cc93d13356158b12b9885534ecb7d389b246721238af22f23b69d32b0654b50",
+    "integration/build.log": "9fc6a4887994aca4bee7aba98ed7eced5fb5ff2886d86415e6edccf55824b388",
+    "integration/db-requests.log": "bffc0090944ead84a810e2c73263934939defb3134abd2e995917bd0b6aa1ecc",
+    "integration/db-marketplace-concurrency.log": "e1aac7e46b0191cda02899102accd6d926b91403affd6f7bdef10541a6fdaa4e",
+    "integration/db-credits.log": "926a10afe3fe4d9e18221912623af2b6dcde5ca64678be42e06e3464c2a6bb86",
+    "integration/finance-final.log": "1b4e37315daa334e887e0caef770bdbbcfcbb279df3202a16d7123363a994c3f",
+    "integration/db-assignment-notifications.log": "84baaed4a82037c3ea69f3eba14177af291d564625401c030bdfe863c5402071",
+    "integration/db-compliance-runs.log": "b62304121f97b44a27f1d8cfbdc36f922660382677339078c558204e4b8cbe85",
+    "integration/accounts-final.log": "c40dd019b2d26abb12119c8d46d8fbc1ff7e3e821369118f5ac15245b9488534"
+  },
+  "worktrees": {
+    "registeredCount": 115,
+    "prunableCount": 25,
+    "relevant": [
+      {
+        "folder": "WorkMatchr",
+        "head": "afd46590901cb31b1aa154c4ca28744a4e622764",
+        "branch": "codex/a06-contact-form"
+      },
+      {
+        "folder": "WorkMatchr",
+        "head": "70374ed71f195feef3feca1549c48c5a9ad567fd",
+        "branch": "codex/a07-privacy-cookies"
+      },
+      {
+        "folder": "WorkMatchr",
+        "head": "baad69fc2cbd4b50d4a7342730e056246f450384",
+        "branch": "detached"
+      },
+      {
+        "folder": "compliance-f3-free-intake",
+        "head": "03aa8b2e48ffdddd980e901831aab3effe9d4726",
+        "branch": "codex/compliance-f3-free-intake"
+      },
+      {
+        "folder": "compliance-f3-ux",
+        "head": "45a9f7068a0f555d2af5606e4f26505651ef12a0",
+        "branch": "codex/compliance-f3-ux"
+      },
+      {
+        "folder": "compliance-f4-expanded-guide",
+        "head": "00207461c34f41fe2739bdfefff5875d2763afc6",
+        "branch": "codex/compliance-f4-expanded-guide"
+      },
+      {
+        "folder": "wl001-main-integration",
+        "head": "b7188ebf1cbc3c2ecf96e1a3eb8069df1763340e",
+        "branch": "codex/wl001-main-integration"
+      },
+      {
+        "folder": "wp04-public-acceptance",
+        "head": "67cef1657c6537d77283673190e4e325468f6bbd",
+        "branch": "codex/wp04-public-acceptance"
+      },
+      {
+        "folder": "wp05-account-acceptance",
+        "head": "db6e296da5bc9f171346372c691ade88ed0c0adc",
+        "branch": "codex/wp05-account-acceptance"
+      },
+      {
+        "folder": "wp06-advice-chain-acceptance",
+        "head": "9798176af964419e521b57451f3e327503b49333",
+        "branch": "codex/wp06-advice-chain-acceptance"
+      },
+      {
+        "folder": "wp07-marketplace-acceptance",
+        "head": "a7447ddaae2a23cd7ded03cf1ad89bf3c055104c",
+        "branch": "codex/wp07-marketplace-acceptance"
+      },
+      {
+        "folder": "wp08-finance-acceptance",
+        "head": "116ef7233458604b44b2f34862eaac648a29bb03",
+        "branch": "codex/wp08-finance-acceptance"
+      },
+      {
+        "folder": "wp09-notifications-acceptance",
+        "head": "05e6ff0029d63cd45560ab7a1765c9c9dc7a4dfb",
+        "branch": "codex/wp09-notifications-acceptance"
+      },
+      {
+        "folder": "wp10-lms-acceptance",
+        "head": "a49b59507139ef7121634705da19f781b17845f0",
+        "branch": "codex/wp10-lms-acceptance"
+      },
+      {
+        "folder": "wp10-lms-candidate",
+        "head": "b7188ebf1cbc3c2ecf96e1a3eb8069df1763340e",
+        "branch": "detached"
+      },
+      {
+        "folder": "wp11-integration-probe",
+        "head": "a49b59507139ef7121634705da19f781b17845f0",
+        "branch": "codex/wp11-integration-probe"
+      }
+    ]
+  }
+}
