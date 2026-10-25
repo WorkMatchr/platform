@@ -487,3 +487,7 @@ Migratie `20261001210000_add_compliance_actions` voegt de operationele actielaag
 - Status, verantwoordelijke en deadline mogen worden bijgewerkt.
 - `ComplianceActionEvent` is append-only en legt deze wijzigingen met actor vast.
 - Foreign keys gebruiken `ON DELETE RESTRICT`.
+
+## Compliance F4 (nog niet uitgerold)
+
+Nullable `ComplianceQuestionDefinition.visibilityCondition` bewaart versiegebonden zichtbaarheid. Geen bestaande data gewijzigd; zie [F4](compliance-f4-expanded-guide.md).
