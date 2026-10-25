@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { directAdditionalExpertises } from './additional-expertise'
+import { topicSituationsSchema, topicSituationSummary, validateTopicSituations } from './topic-situations'
 // Existing accepted expertise identities, without the experimental routing contracts.
 const EXPERTISE_IDS = ['HVK', 'MVK', 'ARBEIDSHYGIENIST', 'A_EN_O_DESKUNDIGE', 'BEDRIJFSARTS', 'ERGONOMIE_FYSIEKE_BELASTING', 'MACHINEVEILIGHEID', 'GEVAARLIJKE_STOFFEN', 'EXPLOSIEVEILIGHEID', 'INCIDENTONDERZOEK', 'BRANDVEILIGHEID', 'GELUIDSDESKUNDIGE', 'STRALINGSDESKUNDIGE', 'ARBEIDSPSYCHOLOOG', 'VERTROUWENSPERSOON', 'CASEMANAGER_VERZUIM', 'PREVENTIEMEDEWERKER', 'BHV_DESKUNDIGE', 'ARBODIENST', 'KEURINGSINSTANTIE'] as const
 
@@ -105,7 +106,9 @@ export const simpleAdviceRouteSchema = z.object({
   routeChoice: z.enum(['KNOWS_EXPERTISE', 'NEEDS_TOPIC'], { message: 'Kies Ja of Nee.' }),
   requestedExpertise: z.enum(EXPERTISE_IDS).nullable(),
   helpTopic: z.enum(Object.keys(helpTopicLabels) as [keyof typeof helpTopicLabels, ...Array<keyof typeof helpTopicLabels>]).nullable(),
+  topicSituations: topicSituationsSchema.optional(),
 }).superRefine((v, ctx) => {
+  validateTopicSituations(v, ctx, true)
   if (v.routeChoice === 'KNOWS_EXPERTISE' && !v.requestedExpertise) ctx.addIssue({ code: 'custom', path: ['requestedExpertise'], message: 'Kies een deskundigheid.' })
   if (v.routeChoice === 'NEEDS_TOPIC' && !v.helpTopic) ctx.addIssue({ code: 'custom', path: ['helpTopic'], message: 'Kies een onderwerp.' })
 })
@@ -119,6 +122,7 @@ export const simpleAdviceSchema = z.object({
   expertiseSelectionSource: z.literal('USER_SELECTED').default('USER_SELECTED'),
   helpTopic: z.enum(Object.keys(helpTopicLabels) as [keyof typeof helpTopicLabels, ...Array<keyof typeof helpTopicLabels>]).nullable().default(null),
   helpTopicOther: optionalText,
+  topicSituations: topicSituationsSchema.optional(),
   requestTitle: z.string().trim().min(5, 'Gebruik minimaal 5 tekens voor de titel.').max(200, 'Gebruik maximaal 200 tekens.'),
   requestDescription: z.string().trim().min(20, 'Beschrijf uw vraag in minimaal 20 tekens.').max(4000, 'Gebruik maximaal 4000 tekens.'),
   desiredOutcome: z.enum(Object.keys(outcomeLabels) as [keyof typeof outcomeLabels, ...Array<keyof typeof outcomeLabels>], { message: 'Kies wat u wilt bereiken.' }),
@@ -162,6 +166,7 @@ export function simpleAdviceSummary(v: SimpleAdviceInput, organizationLocation?:
   return [
     [v.routeChoice === 'KNOWS_EXPERTISE' ? 'Primaire deskundigheid' : 'Onderwerp', v.requestedExpertise ? requestedExpertiseOptions.find(o => o.value === v.requestedExpertise)!.label : `${helpTopicLabels[v.helpTopic!]}${v.helpTopicOther ? `: ${v.helpTopicOther}` : ''}`],
     ...(v.routeChoice === 'KNOWS_EXPERTISE' && v.additionalExpertises.length ? [['Aanvullende deskundigheden', v.additionalExpertises.map(id => requestedExpertiseOptions.find(o => o.value === id)!.label).join(', ')]] : []),
+    ...(v.topicSituations ? [['Herkenbare situaties', topicSituationSummary(v.topicSituations)]] : []),
     ['Beschrijving', v.requestDescription],
     ['Gewenst resultaat', v.desiredOutcome === 'OTHER' ? v.desiredOutcomeOther : outcomeLabels[v.desiredOutcome]],
     ['Uitvoering', v.workLocationMode === 'COMBINATION' ? v.combinationModes.map(m => locationLabels[m]).join(', ') : locationLabels[v.workLocationMode]],

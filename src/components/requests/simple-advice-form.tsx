@@ -7,6 +7,8 @@ import { useEffect, useRef, useState } from 'react'
 import { PublicIntakeDesktopContext, PublicIntakeMobileContext } from '@/components/public/public-intake-context'
 import { getSimpleAdviceContext } from '@/content/simple-advice-context'
 import { AdditionalExpertiseOptions } from './additional-expertise-options'
+import { TopicSituationOptions } from './topic-situation-options'
+import { topicSituationsSchema, hasTopicSituations, topicSituationSummary, type TopicSituations } from '@/lib/requests/topic-situations'
 import { retainAdditionalExpertises } from '@/lib/requests/additional-expertise'
 import type { ExpertiseId } from '@/lib/requests/simple-advice-contract'
 import { Button } from '@/components/ui/button'
@@ -32,6 +34,7 @@ export function SimpleAdviceForm({ action, viewerId, locations = [], draftId, in
   const pendingStartFocus = useRef<string | null>(null)
   const [v, setV] = useState<Draft>({ ...empty })
   const [additionalExpertises, setAdditionalExpertises] = useState<ExpertiseId[]>([])
+  const [topicSituations, setTopicSituations] = useState<TopicSituations>()
   const [modes, setModes] = useState<string[]>([])
   const [step, setStep] = useState(0)
   const [ready, setReady] = useState(false)
@@ -45,9 +48,9 @@ export function SimpleAdviceForm({ action, viewerId, locations = [], draftId, in
   const heading = useRef<HTMLHeadingElement>(null)
   const form = useRef<HTMLFormElement>(null)
   const storageKey = `workmatchr-simple-advice:v1:${viewerId ?? 'anonymous'}${draftId ? `:${draftId}` : ''}`
-  const payload = { ...v, additionalExpertises, requestTitle: deriveSimpleAdviceTitle(v.requestDescription), requestedExpertise: v.requestedExpertise || null, helpTopic: v.helpTopic || null, organizationLocationId: v.organizationLocationId || null, combinationModes: modes }
+  const payload = { ...v, additionalExpertises, ...(topicSituations ? { topicSituations } : {}), requestTitle: deriveSimpleAdviceTitle(v.requestDescription), requestedExpertise: v.requestedExpertise || null, helpTopic: v.helpTopic || null, organizationLocationId: v.organizationLocationId || null, combinationModes: modes }
   useEffect(() => {
-    let saved: { values?: Draft; modes?: string[]; additionalExpertises?: string[]; step?: number; submissionId?: string; revision?: number } | null = null
+    let saved: { values?: Draft; modes?: string[]; additionalExpertises?: string[]; topicSituations?: unknown; step?: number; submissionId?: string; revision?: number } | null = null
     try {
       const resumeAnonymous = !draftId && viewerId && sessionStorage.getItem('workmatchr-simple-advice-login') === 'yes'
       const key = resumeAnonymous ? 'workmatchr-simple-advice:v1:anonymous' : storageKey
@@ -70,16 +73,23 @@ export function SimpleAdviceForm({ action, viewerId, locations = [], draftId, in
     setV(current => ({ ...current, ...Object.fromEntries(Object.keys(empty).filter(k => typeof restored[k] === 'string').map(k => [k, restored[k] as string])) }))
     const additional = saved?.additionalExpertises ?? initialValues?.additionalExpertises
     setAdditionalExpertises(restored.routeChoice === 'KNOWS_EXPERTISE' && Array.isArray(additional) ? retainAdditionalExpertises(String(restored.requestedExpertise), additional) : [])
+    const situations = topicSituationsSchema.safeParse(saved?.topicSituations ?? initialValues?.topicSituations)
+    const restoredSituations: TopicSituations | undefined = restored.routeChoice === 'NEEDS_TOPIC' && typeof restored.helpTopic === 'string' && hasTopicSituations(restored.helpTopic)
+      ? situations.success && situations.data.topic === restored.helpTopic ? situations.data : { version: 1, topic: restored.helpTopic, selected: [], otherText: '' }
+      : undefined
+    setTopicSituations(restoredSituations)
     const restoredModes = saved?.modes ?? initialValues?.combinationModes
     setModes(Array.isArray(restoredModes) ? restoredModes.filter((m): m is string => typeof m === 'string' && ['ORGANIZATION', 'OTHER_LOCATION', 'REMOTE'].includes(m)) : [])
-    setStep(startChoice && !draftId ? 0 : saved?.step && saved.step >= 0 && saved.step <= 2 ? saved.step : 0)
+    // Older drafts keep their description, but first show the new unanswered question.
+    const needsSituationAnswer = restoredSituations && (!restoredSituations.selected.length || (restoredSituations.selected.includes('OTHER') && !restoredSituations.otherText.trim()))
+    setStep((startChoice && !draftId) || needsSituationAnswer ? 0 : saved?.step && saved.step >= 0 && saved.step <= 2 ? saved.step : 0)
     setSubmissionId(saved?.submissionId && /^[0-9a-f-]{36}$/i.test(saved.submissionId) ? saved.submissionId : crypto.randomUUID())
     setReady(true)
   }, [storageKey, viewerId, draftId, initialValues, initialVersion, startChoice])
   useEffect(() => {
     if (!ready) return
-    try { sessionStorage.setItem(storageKey, JSON.stringify({ values: v, modes, additionalExpertises, step, submissionId, revision: revision.current })) } catch { /* Optional tab persistence. */ }
-  }, [ready, v, modes, additionalExpertises, step, submissionId, storageKey])
+    try { sessionStorage.setItem(storageKey, JSON.stringify({ values: v, modes, additionalExpertises, topicSituations, step, submissionId, revision: revision.current })) } catch { /* Optional tab persistence. */ }
+  }, [ready, v, modes, additionalExpertises, topicSituations, step, submissionId, storageKey])
   useEffect(() => { heading.current?.focus() }, [step])
   useEffect(() => {
     if (!ready || step !== 0 || !pendingStartFocus.current) return
@@ -96,6 +106,8 @@ export function SimpleAdviceForm({ action, viewerId, locations = [], draftId, in
   }, [state.requestId, storageKey, router])
   const shownErrors = { ...errors, ...state.errors }
   const update = (key: string, value: string) => {
+    if (key === 'routeChoice') setTopicSituations(undefined)
+    if (key === 'helpTopic') setTopicSituations(hasTopicSituations(value) ? { version: 1, topic: value, selected: [], otherText: '' } : undefined)
     if (key === 'routeChoice') setAdditionalExpertises([])
     if (key === 'requestedExpertise') setAdditionalExpertises(current => retainAdditionalExpertises(value, current))
     setV(current => ({ ...current, [key]: value, ...(key === 'routeChoice' ? { requestedExpertise: '', helpTopic: '', helpTopicOther: '' } : {}) }))
@@ -109,10 +121,10 @@ export function SimpleAdviceForm({ action, viewerId, locations = [], draftId, in
   const validate = () => {
     const parsed = step === 0 ? simpleAdviceRouteSchema.safeParse(payload) : simpleAdviceSchema.safeParse(payload)
     const all = parsed.success ? {} : parsed.error.flatten().fieldErrors
-    const selected = step === 0 ? Object.fromEntries(Object.entries(all).filter(([key]) => ['routeChoice', 'requestedExpertise', 'helpTopic'].includes(key))) : all
+    const selected = step === 0 ? Object.fromEntries(Object.entries(all).filter(([key]) => ['routeChoice', 'requestedExpertise', 'helpTopic', 'topicSituations'].includes(key))) : all
     if (usesLocation({ workLocationMode: v.workLocationMode, combinationModes: modes }, 'ORGANIZATION') && step > 0 && (v.organizationLocationId ? !locations.some(l => l.id === v.organizationLocationId) : !v.organizationLocationCity.trim())) Object.assign(selected, { [v.organizationLocationId ? 'organizationLocationId' : 'organizationLocationCity']: [locations.length ? 'Kies een beschikbare organisatielocatie of vul de plaats in.' : 'Vul de plaats in.'] })
     setErrors(selected)
-    if (Object.keys(selected).length) { if (step === 2) setStep(Object.keys(selected).some(k => ['routeChoice', 'requestedExpertise', 'helpTopic'].includes(k)) ? 0 : 1); setTimeout(() => form.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus(), 0); return false }
+    if (Object.keys(selected).length) { if (step === 2) setStep(Object.keys(selected).some(k => ['routeChoice', 'requestedExpertise', 'helpTopic', 'topicSituations'].includes(k)) ? 0 : 1); setTimeout(() => form.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus(), 0); return false }
     return true
   }
   const parsed = simpleAdviceSchema.safeParse(payload)
@@ -147,8 +159,10 @@ export function SimpleAdviceForm({ action, viewerId, locations = [], draftId, in
       {v.routeChoice === 'KNOWS_EXPERTISE' && select('requestedExpertise', 'Welke deskundigheid zoekt u?', Object.fromEntries(requestedExpertiseOptions.map(o => [o.value, o.label])))}
       {v.routeChoice === 'NEEDS_TOPIC' && select('helpTopic', 'Waar gaat uw vraag over?', helpTopicLabels)}
       {v.routeChoice === 'NEEDS_TOPIC' && v.helpTopic === 'OTHER' && text('helpTopicOther', 'Toelichting (optioneel)')}
+      {v.routeChoice === 'NEEDS_TOPIC' && v.helpTopic && topicSituations && <TopicSituationOptions value={topicSituations} error={error('topicSituations')} onChange={value => { setTopicSituations(value); setErrors({}) }} />}
     </>}
     {step === 1 && <>
+      {v.routeChoice === 'NEEDS_TOPIC' && topicSituations?.selected.length ? <div className="rounded-card border border-border bg-brand-primary-subtle p-4"><p className="font-semibold text-brand-dark">Uw gekozen situaties</p><p className="mt-1 whitespace-pre-wrap break-words text-sm">{topicSituationSummary(topicSituations)}</p><p className="mt-2 text-sm text-text-secondary">Gebruik dit als context bij uw beschrijving. Via Terug kunt u uw keuzes wijzigen.</p></div> : null}
       <div><label className="mb-2 block font-semibold" htmlFor="requestDescription">Beschrijf uw vraag of situatie</label><p id="description-help" className="mb-2 text-sm text-text-secondary">Beschrijf kort wat er speelt, waar u ondersteuning bij zoekt en wat u wilt bereiken. U hoeft geen vaktermen te gebruiken.</p><textarea {...attrs('requestDescription')} aria-describedby={['description-help', error('requestDescription') ? 'requestDescription-error' : ''].filter(Boolean).join(' ')} rows={5} maxLength={4000} /><p className="mt-1 text-sm text-text-secondary">Noem geen namen, medische gegevens of andere gevoelige persoonsgegevens.</p>{fieldError('requestDescription')}</div>
       {select('desiredOutcome', 'Wat wilt u bereiken?', outcomeLabels)}
       {v.desiredOutcome === 'OTHER' && text('desiredOutcomeOther', 'Licht toe wat u wilt bereiken')}

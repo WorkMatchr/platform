@@ -9,6 +9,8 @@ De opdracht van 11 september 2026 vervangt automatische deskundigheidsroutering 
 
 ## Opslag en bestaande keten
 
+De onderwerp-route heeft een aanvullende versiegebonden situatiekeuze. Zie [thema-afhankelijke situaties](advice-topic-situations.md) voor de opties, compatibiliteit en acceptatie. Deze context verandert geen deskundigheids- of matchingregels.
+
 `simpleAdviceSchema` valideert dezelfde typed waarden in browser en server. De expertise-identiteiten komen uit de bestaande goedgekeurde catalogus; de probleemonderwerpen beschrijven de vraag en vormen geen tweede expertisetaxonomie.
 
 De nieuwe startsnapshot staat één keer als `AdviceDossierVersion.simpleRequestSnapshot`, met route, gekozen expertise/onderwerp, resultaat, uitvoering en datum. Titel en omschrijving worden daarnaast geprojecteerd naar de bestaande canonieke `Request.title` en `Request.publicSummary`. De bestaande start-enum is uitgebreid. `Request.notes` bevat een leesbare publicatiesamenvatting van keuze, resultaat, locatie en start; plaats/regio gebruikt `Request.region`. Deze projectie blijft immutable, ook na een wijziging aan een organisatielocatie. De dossierbron is `SIMPLE_ADVICE` en bevat geen gegenereerd advies of matchingprofiel.

@@ -163,6 +163,7 @@ export async function handoffRequest(transaction: Prisma.TransactionClient, inpu
     publicationTimestamp: request.publishedAt, handoffTimestamp: input.at, mode: input.mode,
     deadlinePolicy: RESPONSE_DEADLINE_POLICY, deadlineAnchor: anchor, responseDeadline: deadline,
     primaryExpertise: value.primaryExpertise, additionalExpertises: value.additionalExpertises,
+    ...(value.topicSituations ? { topicSituations: value.topicSituations } : {}),
     expertiseSelectionSource: value.expertiseSelectionSource, references, requestedStart: request.requestedStart,
     matchingBlockReason: value.primaryExpertise ? null : 'PRIMARY_EXPERTISE_REQUIRED', assignment: fields, locationItems: items,
   })) as Prisma.InputJsonObject
