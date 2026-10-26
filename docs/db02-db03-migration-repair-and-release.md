@@ -170,17 +170,22 @@ afzonderlijke databases**. DATABASE_URL Production is sensitive, target uitsluit
 production, laatst gewijzigd 19 augustus. De standaard Preview heeft een eigen
 encrypted variabele plus DATABASE_URL_UNPOOLED; twee gevoelige branchoverrides
 bestaan voor codex/jortt-technical-identity-hardening en codex/arbo-guide-account-access.
-configurationId is leeg. Alleen decrypt=false-metadata geraadpleegd; geen
-credentials ontsleuteld, naar bestanden gekopieerd of gepubliceerd.
+configurationId is leeg. De DATABASE_URL-waarden zijn uitsluitend met
+decrypt=false geïnspecteerd; geen verbindingscredentials ontsleuteld, naar
+bestanden gekopieerd of gepubliceerd. In de aanvullende controle hieronder zijn
+alleen de afzonderlijke niet-geheime host-, project-, database- en rolvelden gelezen.
 
 src/lib/prisma.ts gebruikt DATABASE_URL. Het geautoriseerd onderzochte Neon-project
-heeft precies één branch, production. Een previewdatabase elders is mogelijk,
-maar niet bewezen. Afgeschermde waarden zijn geen toestemming om via een nieuw
+heeft precies één branch, production. De aanvullende controle identificeert een
+elders geconfigureerde Preview-resource; de effectieve DATABASE_URL blijft onbewezen.
+Afgeschermde waarden zijn geen toestemming om via een nieuw
 endpoint, deployment of logging secrets zichtbaar te maken.
 [Vercel Config/Secret-documentatie](https://vercel.com/docs/environment-variables/sensitive-environment-variables).
 
-Alle aangetroffen LOGIN-rollen op deze branch, neondb_owner en neon_service, hebben
-CREATEDB/CREATEROLE/BYPASSRLS; geen gewone superuser. neon_superuser is NOLOGIN.
+De aangetroffen gebruiks-/servicerollen neondb_owner en neon_service hebben
+CREATEDB/CREATEROLE/BYPASSRLS en zijn geen superuser. neon_superuser is NOLOGIN.
+De hercontrole toont daarnaast de Neon-beheerrol cloud_admin met LOGIN en
+SUPERUSER. Die is niet als WorkMatchr-runtimerol aangetoond.
 Er is geen aantoonbare aparte least-privilege-applicatierol. De inspectierol is
 neondb_owner; de werkelijke Vercel-runtimerol is onbekend. Geen grants gewijzigd.
 
@@ -189,6 +194,59 @@ overrides host/endpoint, project, branch-ID, database en rol zonder wachtwoord
 bevestigen. Daarna onafhankelijk aan Neon-metadata relateren. Tot die tijd geen
 ingelogde/muterende previewacceptatie en geen claim van veilige previewwrites.
 Een Preview-buildstatus wordt uitsluitend als buildbewijs gebruikt.
+
+### Aanvullende read-only verificatie na PO-reactie — 26 oktober, circa 07:12 UTC
+
+De Product Owner bevestigde project billowing-term-15867762, production /
+br-odd-smoke-agf0wj9j, neondb en neondb_owner rechtstreeks in Neon. Daarbij bleef
+de Vercel-binding uitdrukkelijk onbevestigd. Dat onderscheid is gehandhaafd.
+
+| Controle | Feitelijk aangetroffen | Bewijskracht |
+|---|---|---|
+| Neon-inspectie via identiteitsquery | neondb / public; current_user=neondb_owner; neon.endpoint_id=ep-royal-sound-agegzj34; neon.branch_id=br-odd-smoke-agf0wj9j; PostgreSQL 18.6 | Onafhankelijke bevestiging van de onderzochte Neon-verbinding; niet van Vercel-runtime |
+| Productie-endpointmetadata | ep-royal-sound-agegzj34.c-2.eu-central-1.aws.neon.tech; bijbehorende pooled host ep-royal-sound-agegzj34-pooler.c-2.eu-central-1.aws.neon.tech | Beide hostnamen horen aantoonbaar bij die production-branch |
+| Vercel Production DATABASE_URL | sensitive, uitsluitend target production | Host/branch/database/rol van deze afgeschermde runtimewaarde blijven onbekend |
+| Standaard Preview PGHOST / PGHOST_UNPOOLED | ep-lucky-band-auio366z-pooler.c-10.us-east-1.aws.neon.tech / ep-lucky-band-auio366z.c-10.us-east-1.aws.neon.tech | Afzonderlijke configuratievelden; geen bewijs dat DATABASE_URL daarmee overeenkomt |
+| Standaard Preview NEON_PROJECT_ID / PGDATABASE / PGUSER | odd-water-61971869 / neondb / neondb_owner | Niet-geheime velden veilig uitgelezen; geen connection string gelezen |
+| Neon-metadata bij die Preview-host | main / br-hidden-waterfall-aukitoly, endpoint ep-lucky-band-auio366z, AWS us-east-1 | Host/project/branch onafhankelijk gekoppeld |
+| Status van die Preview-branch | archived sinds 10 oktober; endpoint idle, laatst actief 9 oktober | Mogelijk verouderde configuratie; geen connectie gestart, unarchive of compute-start uitgevoerd |
+| Vercel-resourcebinding | workmatchr-preview / store_inW86VVtGPU8gUdg, gekoppeld aan platform, environments=[preview] | Preview-resourcebinding bewezen; effectieve DATABASE_URL en branchoverrides blijven afzonderlijk te verifiëren |
+
+De Vercel-connector gaf bij integratieconfiguraties 403 en bij Connect-connectors
+404. De bestaande CLI kon met expliciete scope workmatchrs-projects het juiste
+platform-project inspecteren. De read-only fallback vond Neon-installatie
+icfg_trCizcNuUCwPTwusumaSFaSk en bovenstaande Preview-resource. Deze installatie-
+en resourcegegevens bevatten geen bewezen Production-DATABASE_URL-koppeling.
+De twee Preview-branchoverrides blijven buiten de bewezen standaardbinding.
+
+src/lib/prisma.ts gebruikt uitsluitend DATABASE_URL; het combineren van losse
+PGHOST/PGUSER/PGDATABASE-velden mag daarom niet worden gepresenteerd als bewijs
+van de werkelijke applicatieverbinding. Geen bestaande route gevonden die de
+database-identiteit read-only vanuit de Vercel-runtime rapporteert. Geen nieuwe
+diagnoseroute, deployment, env pull, secret-getter voor DATABASE_URL of ingelogde
+productie-/previewactie gebruikt om die beperking te omzeilen.
+
+Conclusie: **configuratieaanwijzingen voor gescheiden omgevingen, maar effectieve
+Production/Preview-isolatie nog NOT VERIFIED**. De gearchiveerde Preview-branch
+is een concrete extra controle vóór functionele previewacceptatie. Een READY-build
+bewijst geen werkende of geïsoleerde databaseverbinding.
+
+Nog nodig: een bevoegde Vercel-beheerder vergelijkt de daadwerkelijke waarden van
+DATABASE_URL voor Production, standaard Preview en relevante overrides zonder
+wachtwoord/URL te delen, of levert een identiteitsquery uit de betreffende
+bestaande runtimecontext. Registreer uitsluitend deployment-SHA, target,
+host/endpoint, branch-ID, database, current_user en controletijd. Een los van Vercel
+uitgevoerde Neon-query is daarvoor niet voldoende. Eventuele benodigde nieuwe
+runtimevoorziening of configuratiewijziging vereist afzonderlijk akkoord.
+
+Geschikte identiteitsquery binnen een al geautoriseerde verbinding, zonder
+bedrijfsgegevens of secrets:
+
+```sql
+SELECT current_database(), current_user, current_schema(),
+       current_setting('neon.endpoint_id', true) AS endpoint_id,
+       current_setting('neon.branch_id', true) AS branch_id;
+```
 
 ## 6. Ongeversioneerde metadatafunctie — DB-02-19–23
 
@@ -204,7 +262,33 @@ andere publieke functiebron of applicatie-/migratie-/scriptcode gevonden.
 Ook git log --all -S show_db_tree binnen prisma/scripts/src leverde geen resultaat.
 Een externe dynamische aanroep of historisch handmatige creatie is hiermee niet
 uitgesloten. PostgreSQL bewaart hier geen betrouwbare maker-/creatiedatumhistorie.
-Herkomst blijft onbekend; geen claim dat Neon de functie heeft aangemaakt.
+De precieze aanroeper en aanmaakdatum blijven onbekend. De aanvullende bronvergelijking
+hieronder herleidt de functietemplate wel tot de officiële Neon MCP-code.
+
+### Herkomst nader onderbouwd
+
+De volledige functiebodies zijn vergeleken, met uitsluitend witruimte verwijderd:
+**exacte match** met DESCRIBE_DATABASE_STATEMENTS in de officiële Neon MCP-repository.
+Vastgelegde broncommit fd9123cfba3f3e7d03c6bc01bad880251d5bf682;
+blob a91747dc86f8e6f407bba8a773c8da6b6b559aef.
+[Neon MCP-template](https://github.com/neondatabase/mcp-server-neon/blob/fd9123cfba3f3e7d03c6bc01bad880251d5bf682/mcp/tools/utils.ts).
+
+Upstream [issue #196](https://github.com/neondatabase/mcp-server-neon/issues/196)
+beschrijft het achterblijven van deze helper na describe_branch. De gecontroleerde
+[huidige handler](https://github.com/neondatabase/mcp-server-neon/blob/fd9123cfba3f3e7d03c6bc01bad880251d5bf682/mcp/tools/handlers/describe-branch.ts)
+maakt de functie aan en voert ook een DROP uit. Die tool is dus geen geschikte
+strikt read-only preflight, ook niet wanneer het eindresultaat alleen metadata is.
+describe_branch is voor dit onderzoek niet aangeroepen.
+
+Dit is sterk bewijs voor de oorsprong van de template, geen sluitend bewijs welke
+persoon, toolversie of handmatige kopie deze concrete productie-instantie creëerde.
+De beschikbare Neon-endpointlogs leverden voor show_db_tree in de laatste zeven
+dagen nul treffers op; dat beperkt venster bewijst geen afwezigheid van ouder gebruik.
+Er zijn geen gebruikersgegevens of ruwe logpayloads in dit rapport opgenomen.
+
+De hercontrole bevestigt PUBLIC EXECUTE, owner neondb_owner, SECURITY INVOKER,
+geen vaste search_path, nul extension-afhankelijkheden, nul inkomende pg_depend-
+relaties en nul verwijzingen in andere publieke functies. Geen rechten aangepast.
 
 Geen aangetoonde privilege escalation: invoker gebruikt de rechten van de aanroeper.
 Wel metadatazichtbaarheid via standaard EXECUTE en geen expliciete search_path-
@@ -223,6 +307,10 @@ history_retention_seconds=21600 (zes uur), geen geplande snapshots.
 Enige snapshot: snap-young-sunset-agambfcl,
 pre-compliance-f2-migration85-2026-10-16, 16 oktober 05:02:33 UTC.
 Die is van vóór migratie 85 en geen actueel DB-02/03-herstelpunt.
+De aanvullende controle na de PO-reactie bevestigt exact dezelfde snapshot,
+zes uur geconfigureerde history en een lege snapshotplanning. Het configuratievenster
+is geen bewijs dat een specifiek herstelmoment succesvol is beproefd. Geen nieuw
+snapshot, restore, branchkopie of wijziging van bewaartermijnen uitgevoerd.
 
 De actuele Neon-documentatie noemt voor Free één handmatige snapshot, maximaal
 zes uur history met datalimiet en geen scheduled backups. De snapshotplaats is
@@ -447,14 +535,23 @@ De laatste documentatie-head en haar opnieuw uitgevoerde CI/Preview-controles
 staan in de PR-omschrijving/eindrapportage. De bestaande open PR's blijven
 ongemoeid. Geen merge of productiedeployment uitgevoerd.
 
+De aanvullende read-only verificatie na de PO-reactie wijzigt uitsluitend dit
+rapport. Geen code, migratie, configuratie of testfixture aangepast. Diff-check
+en secrets-patrooncontrole zijn herhaald; de eerdere code-/PostgreSQL-testresultaten
+blijven betrekking hebben op de ongewijzigde herstelcode. Deze aanvulling is na
+de merge van PR #67 behouden in het afzonderlijke documentatiepakket
+[DB-04](db04-final-production-readiness.md). Dat vervolgrapport bevat de nieuwere
+daadwerkelijke Preview-binding, deploymentcontrole en definitieve beheerbesluiten.
+
 Beoogde commitset: nieuwe correctiemigratie, gerichte PostgreSQL-harness,
 bijbehorend npm-commando en PostgreSQL-18 CI-job, migratiemanifest, dit rapport,
 het inhoudelijk ongewijzigde DB-01-rapport (alleen de lege EOF-regel verwijderd)
 en de documentindexlinks. Geen wijzigingen
 aan schema.prisma, historische migraties, lockfile, businesscode of productieconfig.
 
-Nog nodig van Product Owner/beheerder: onafhankelijke databasebinding en rol,
-previewisolatie, verklaring metadatahelper, actueel herstelpunt en herstelafspraken,
+Nog nodig van Product Owner/beheerder: effectieve databasebinding en rol,
+previewisolatie (inclusief de gearchiveerde resource), verklaring van het concrete
+gebruik van de tot Neon MCP herleide metadatahelper, actueel herstelpunt en herstelafspraken,
 onderhouds-/lockbeleid en daarna expliciete uitvoertoestemming. Juridische F4-holds
 en LMS-inhoudelijke acceptatie blijven afzonderlijk; deze PR heft ze niet op.
 

@@ -1,5 +1,6 @@
 # Documentatie WorkMatchr
 
+- [DB-04 — laatste technische productieblokkades en definitieve checklist](db04-final-production-readiness.md)
 - [DB-02/03 — migratiereparatie, databaseveiligheid en uitvoeringsplan](db02-db03-migration-repair-and-release.md)
 - [DB-01 — read-only productiemigratiecontrole](db01-production-migration-readiness.md)
 
