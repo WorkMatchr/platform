@@ -1,5 +1,8 @@
 # Documentatie WorkMatchr
 
+- [DB-02/03 — migratiereparatie, databaseveiligheid en uitvoeringsplan](db02-db03-migration-repair-and-release.md)
+- [DB-01 — read-only productiemigratiecontrole](db01-production-migration-readiness.md)
+
 - [WP14 — productievoorbereiding, securityherstel en vrijgavebesluiten](wp14-production-readiness.md)
 
 - [WP13 — integrale gebruikersacceptatie en beperkte herstelset](wp13-integral-acceptance.md)
