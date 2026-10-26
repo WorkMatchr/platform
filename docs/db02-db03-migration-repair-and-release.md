@@ -275,8 +275,9 @@ compliance-runs en learning (alle met het voorvoegsel npm run test:db:).
 
 Lokale engine: PostgreSQL 17.10 op de bestaande loopback-testserver; geen aanpassing
 van capaciteit, bestaande database of Docker-configuratie. Productie draait 18.6.
-De nieuwe CI-job gebruikt daarom postgres:18; de remote uitslag wordt apart bij
-de PR vastgelegd. Lokale PASS is niet stilzwijgend bewijs van uitvoering op 18.
+De nieuwe CI-job gebruikt daarom postgres:18. GitHub-run 40279023166 bevestigt
+PostgreSQL 18.6, 93/93 voor upgrade en fresh, 96 negatieve controles en cleanup PASS.
+Dit is afzonderlijk Linux/PostgreSQL-18-bewijs, naast de lokale Windows/17.10-run.
 De eerste typecheck vond één typefout in de nieuwe testharness; die is hersteld
 en de standalone controle opnieuw groen uitgevoerd. Dit is geen baselinefout.
 
@@ -426,10 +427,24 @@ geaccepteerd. De nu bestaande snapshot van 16 oktober is daarvoor onvoldoende ac
 
 ## 10. Reviewpakket, besluiten en eindadvies
 
-Afzonderlijke Draft PR vanaf origin/main f77976c9d5a9eedaf8611bba6361668d59a0e690,
-branch codex/db02-db03-migration-repair. De exacte gepushte commit en remote
-CI-/Preview-resultaten worden in de PR-omschrijving en eindrapportage vastgelegd;
-geen self-referentiële commit-SHA in dit bestand. De bestaande open PR's blijven
+[Draft PR #67](https://github.com/WorkMatchr/platform/pull/67), vanaf origin/main
+f77976c9d5a9eedaf8611bba6361668d59a0e690, branch codex/db02-db03-migration-repair.
+Herstelcommit: a39e66a48b3cea723fd65b584ddabcab9aec686b.
+
+Remote bewijs voor deze herstelcommit:
+
+- Learning publication integrity: PASS op push én PR; PostgreSQL 18.6.
+  [PR-run 40279023166](https://github.com/WorkMatchr/platform/actions/runs/40279023166).
+- Bestaande Trading access verify: PASS op push én PR, inclusief lint, gerichte
+  autorisatietests, build en controle dat beheertokens niet in browserbundels staan.
+  [PR-run 40279023122](https://github.com/WorkMatchr/platform/actions/runs/40279023122).
+- Vercel Preview READY: dpl_4qHuPETzDdCh79rMcfqdVEwBzKg1, dezelfde herstel-SHA,
+  platform / workmatchrs-projects; GitHub Vercel-status SUCCESS.
+- Geen ingelogde previewacties: databaseisolatie blijft onbewezen.
+
+Dit rapport wordt daarna uitsluitend met deze bewijsregistratie bijgewerkt.
+De laatste documentatie-head en haar opnieuw uitgevoerde CI/Preview-controles
+staan in de PR-omschrijving/eindrapportage. De bestaande open PR's blijven
 ongemoeid. Geen merge of productiedeployment uitgevoerd.
 
 Beoogde commitset: nieuwe correctiemigratie, gerichte PostgreSQL-harness,
@@ -450,6 +465,6 @@ en LMS-inhoudelijke acceptatie blijven afzonderlijk; deze PR heft ze niet op.
 | PRODUCTION DATA COMPATIBILITY | PASS voor de geverifieerde 85-migratiebranch en geaggregeerde huidige data; Vercel-binding afzonderlijk onbewezen |
 | PRODUCTION/PREVIEW ISOLATION | NOT VERIFIED |
 | BACKUP & RECOVERY READY | NO |
-| TECHNICAL MERGE READY | GO op lokale herstel-/regressiebewijzen; remote CI/Preview blijft vóór mergecontrole vereist |
+| TECHNICAL MERGE READY | GO: lokale regressies, PostgreSQL-18 CI en Preview groen; geen toestemming voor merge of productiemigratie |
 | PRODUCTION MIGRATION READY | NO-GO |
 | PRODUCTION MIGRATION EXECUTED | NO |
