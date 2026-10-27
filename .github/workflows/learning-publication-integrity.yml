@@ -25,3 +25,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run test:db:learning-integrity
+      - name: Restricted metadata helper and read-only diagnostic SQL
+        run: node scripts/test-show-db-tree-privileges.mjs
+      - run: npm run db:generate
+      - name: Closed database diagnostic and maintenance authentication
+        run: npx vitest run src/lib/maintenance/database-identity.test.ts src/app/api/maintenance/database-identity/route.test.ts src/lib/finance/financial-maintenance-auth.test.ts src/app/api/maintenance/marketplace/route.test.ts src/lib/learning/learning-runtime-gate.test.ts --maxWorkers=2
