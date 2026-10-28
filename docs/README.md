@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [WP17B — runtimeverificatie en geïsoleerde acceptatieomgeving](wp17b-runtime-verification-and-acceptance-environment.md)
+
 - [WP17 — infrastructuur, Preview-isolatie en rollen/herstelacceptatie](wp17-production-infrastructure-readiness.md)
 - [WP16 — productievoorbereiding en acceptatie](wp16-production-readiness-and-acceptance.md)
 - [WP15 — integraal commercieel release- en beslisdossier](wp15-integrated-commercial-release-readiness.md)

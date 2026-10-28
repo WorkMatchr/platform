@@ -1,5 +1,6 @@
 import 'server-only'
-import { getPrisma } from '@/lib/prisma'
+import { getPrisma, getPreviewRuntimePool } from '@/lib/prisma'
+import { verifiedDatabaseClientTls } from './database-client-tls'
 
 const WINDOW_MS = 15 * 60 * 1000
 
@@ -30,7 +31,31 @@ export async function readDatabaseIdentity() {
     ssl: boolean | null; tls_version: string | null; read_only: string
     superuser: boolean; create_database: boolean; create_role: boolean; bypass_rls: boolean
   }
-  const identity = await getPrisma().$transaction(async transaction => {
+  const previewPool = getPreviewRuntimePool()
+  let clientTlsVersion: string | null = null
+  const previewIdentity = async (): Promise<Identity> => {
+    const client = await previewPool!.connect()
+    try {
+      clientTlsVersion = verifiedDatabaseClientTls(client, url.hostname)
+      await client.query('BEGIN READ ONLY')
+      await client.query("SET LOCAL statement_timeout = '5s'")
+      const { rows } = await client.query<Identity>({ text: `SELECT
+        current_database() AS database_name, current_user::text AS database_role,
+        current_setting('neon.endpoint_id', true) AS endpoint_id,
+        current_setting('neon.branch_id', true) AS branch_id,
+        ssl.ssl, ssl.version AS tls_version,
+        current_setting('transaction_read_only') AS read_only,
+        role.rolsuper AS superuser, role.rolcreatedb AS create_database,
+        role.rolcreaterole AS create_role, role.rolbypassrls AS bypass_rls
+        FROM pg_catalog.pg_roles role
+        LEFT JOIN pg_catalog.pg_stat_ssl ssl ON ssl.pid=pg_backend_pid()
+        WHERE role.rolname=current_user`, query_timeout: 5000 } as { text: string })
+      if (rows.length !== 1) throw new Error('DATABASE_IDENTITY_UNAVAILABLE')
+      await client.query('ROLLBACK')
+      return rows[0]
+    } finally { client.release(true) }
+  }
+  const identity = previewPool ? await previewIdentity() : await getPrisma().$transaction(async transaction => {
     await transaction.$executeRaw`SET TRANSACTION READ ONLY`
     await transaction.$executeRaw`SET LOCAL statement_timeout = '5s'`
     const rows = await transaction.$queryRaw<Identity[]>`
@@ -53,6 +78,13 @@ export async function readDatabaseIdentity() {
     return row
   }, { maxWait: 2000, timeout: 8000 })
 
+  if (!identity || identity.read_only !== 'on'
+    || (!clientTlsVersion && (identity.ssl !== true || !identity.tls_version))
+    || identity.endpoint_id !== configuredEndpoint || !identity.branch_id?.startsWith('br-')
+    || identity.database_name !== configuredDatabase || identity.database_role !== configuredRole) {
+    throw new Error('DATABASE_IDENTITY_UNAVAILABLE')
+  }
+
   return {
     observedAt: new Date().toISOString(),
     environment: process.env.VERCEL_ENV ?? 'unknown',
@@ -63,7 +95,8 @@ export async function readDatabaseIdentity() {
     branchId: identity.branch_id,
     database: identity.database_name,
     role: identity.database_role,
-    tlsVersion: identity.tls_version,
+    tlsVersion: clientTlsVersion ?? identity.tls_version,
+    tlsEvidence: clientTlsVersion ? 'verified-runtime-client-socket' : 'pg_stat_ssl',
     transactionReadOnly: true,
     featureGates: {
       complianceF4: process.env.COMPLIANCE_F4_ENABLED === 'true',

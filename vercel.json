@@ -5,7 +5,8 @@
       "codex/db05-runtime-preflight": false,
       "codex/wp15-integrated-readiness": false,
       "codex/wp16-production-readiness": false,
-      "codex/wp17-infrastructure-readiness": false
+      "codex/wp17-infrastructure-readiness": false,
+      "codex/wp17b-runtime-acceptance": false
     }
   },
   "crons": [
