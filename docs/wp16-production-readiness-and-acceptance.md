@@ -16,9 +16,10 @@ Main: `46962cff1724e87e5f33697173cbb9168d6f9da3`.
 WP15: `dff1470bb64783842ffc4818dc1d18b5497fe957`; [PR #70](https://github.com/WorkMatchr/platform/pull/70)
 is bij de nulmeting open en Draft. Daarom is #71 bewust gestapeld op
 `codex/wp15-integrated-readiness`, zonder main te mergen. De onderstaande
-uitvoerbare code is volledig getest op `a478ae46c2b19895ac5a25f8d11c33587fce046d`.
-Een latere rapportagecommit verandert die code niet; de actuele head en checks
-staan in de PR. Voor merge eerst #70 beoordelen, daarna #71 opnieuw tegen main
+productiecode is getest op `a478ae46c2b19895ac5a25f8d11c33587fce046d`.
+De eindcontrole heeft daarnaast de hieronder beschreven niet-deterministische
+LMS-testfixture gecorrigeerd. De actuele head en exacte checks staan in de PR.
+Voor merge eerst #70 beoordelen, daarna #71 opnieuw tegen main
 vergelijken en de base gecontroleerd aanpassen. Niet beide wijzigingssets dupliceren.
 
 De bestaande DB-02/03-, DB-05-, WP8/9/13/14- en
@@ -207,6 +208,23 @@ certificaatpresentatie/verifieerbare naam en cursusclaims vereisen expliciete
 inhoudelijke/privacyacceptatie. Een technisch groene WL-001 is geen gecertificeerde
 opleiding. WL-002 is geen werkende opleiding omdat een openbare overzichtspagina bestaat.
 
+### Gevonden LMS-testafwijking en gerichte correctie
+
+Op rapportagehead 2100777 slaagde de PR-databaserun, terwijl push-run 40715981831
+faalde op `sawMulti` in de retentietest. De echte selector garandeert de
+PERSONAL/CORE/SPREAD-verdeling, niet beide antwoordtypen per week. Een pure
+reproductie met participationKey `wp16-type-coverage-8`, week 1, lege signalen/historie
+geeft geldig R061/R041/R021/R071/R099: vijf SINGLE_CHOICE-vragen.
+
+De bestaande willekeurige selectietest en al haar antwoord-, privacy-, replay- en
+scoreassertions blijven bestaan. Beide antwoordtypen worden nu aanvullend
+deterministisch via de echte antwoordservice getest op een tweede synthetische
+participatie met vijf expliciet samengestelde vragen. Beide typen, vijf correcte
+antwoorden, feedback en eindscore worden verplicht gecontroleerd. Geen selector,
+vragenbank, service, examen-/retentiebeleid of databasearchitectuur gewijzigd.
+29 gerichte selector-/policy-/runtime-coretests PASS; de volledige PostgreSQL-harness
+wordt op de nieuwe head opnieuw uitgevoerd. De rode run is niet als PASS weggeschreven.
+
 ## Browserbewijs en grenzen
 
 28 oktober, eigen anoniem testtabblad, alleen GET/navigatie:
@@ -240,7 +258,7 @@ Codehead `a478ae46c2b19895ac5a25f8d11c33587fce046d`:
 | Notification/commercial PostgreSQL | 17 matchingfixtures plus gecombineerde serviceketen PASS |
 | Finance/marketplace PostgreSQL | PASS, concurrency/idempotentie/tenant/ledger/invoice/creditnota |
 | Compliance/LMS PostgreSQL | PASS, hierboven gespecificeerde route-, historie-, cursus-/examen-/retentie-invarianten |
-| Diff/secrets | Diff-check en secrets-patrooncontrole PASS op de exacte elf taakbestanden; geen migratie-, lockfile- of omgevingsbestand. Geen volledige historische secretsaudit geclaimd |
+| Diff/secrets | Diff-check en secrets-patrooncontrole op de exacte taakbestanden; geen migratie-, lockfile- of omgevingsbestand. Geen volledige historische secretsaudit geclaimd |
 
 Code-CI: [PostgreSQL PR-run](https://github.com/WorkMatchr/platform/actions/runs/40711120658),
 [PostgreSQL push-run](https://github.com/WorkMatchr/platform/actions/runs/40711112360),
@@ -319,6 +337,7 @@ privacytekst, bronclaim, cursus of featuregate gepubliceerd.
 - scripts/fixtures/commercial-payment-database.ts: fake-providerfixture op bestaande services.
 - src/lib/finance/mollie-gateway.ts: alleen benoemde SDK-factory-import.
 - src/lib/finance/mollie-gateway.test.ts: export-/gatewayregressie.
+- src/lib/learning/learning-retention-neon-runtime.integration.test.ts: deterministische dekking van beide antwoordtypen, zonder selectiebeleid te wijzigen.
 - vercel.json: reviewbranch niet deployen zolang isolatie onbekend is.
 - docs/README.md: verwijzing naar dit dossier.
 - docs/wp16-production-readiness-and-acceptance.md: integrale beoordeling.
