@@ -38,3 +38,7 @@ jobs:
         run: npm run test:db:finance && npm run test:db:marketplace-concurrency
       - name: Versioned Compliance and personal learning history
         run: npm run test:db:compliance-runs && npm run test:db:learning
+      - name: Session security and synthetic account isolation
+        run: npm run test:db:auth-sessions
+      - name: Infrastructure and application regressions
+        run: npx vitest run src/lib/compliance src/lib/learning src/lib/finance src/lib/credits src/lib/email.test.ts src/components/compliance src/components/arbo-guide --maxWorkers=2

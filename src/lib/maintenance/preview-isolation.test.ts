@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Pool, type PoolClient } from 'pg'
+import { EventEmitter } from 'node:events'
 import { previewDatabasePolicy, isPreviewInfrastructureAccepted, PREVIEW_FORBIDDEN_VARIABLES } from './preview-isolation'
 import { PreviewDatabasePool, PREVIEW_IDENTITY_SQL } from './preview-database-pool'
 import { isLearningRuntimeEnabled } from '@/lib/learning/learning-runtime-policy'
@@ -73,6 +74,21 @@ describe('Preview isolation before any application query', () => {
     const pool = new PreviewDatabasePool(previewDatabasePolicy(environment)!)
     await expect(pool.query('SELECT 42 AS application_query')).rejects.toThrow('PREVIEW_DATABASE_ISOLATION_REQUIRED')
     expect(client.query).toHaveBeenCalledTimes(1)
+  })
+  it('executes normal Pool.query only after a successful check on the same client', async () => {
+    const client = Object.assign(new EventEmitter(), {
+      release: vi.fn(),
+      query: vi.fn((query: { text: string } | string, values?: unknown, callback?: (error: null, result: unknown) => void) => {
+        if (typeof query === 'object' && query.text === PREVIEW_IDENTITY_SQL) return Promise.resolve({ rows: [identity] })
+        callback!(null, { rows: [{ answer: 42 }] })
+      }),
+    })
+    vi.spyOn(Pool.prototype, 'connect').mockImplementation(() => Promise.resolve(client as unknown as PoolClient))
+    const pool = new PreviewDatabasePool(previewDatabasePolicy(environment)!)
+    expect((await pool.query('SELECT 42 AS answer')).rows).toEqual([{ answer: 42 }])
+    expect(client.query.mock.calls[0][0]).toEqual({ text: PREVIEW_IDENTITY_SQL, query_timeout: 5000 })
+    expect(client.query.mock.calls[1][0]).toBe('SELECT 42 AS answer')
+    expect(client.release).toHaveBeenCalledTimes(1)
   })
   it('does not propagate a driver exception or credentials', async () => {
     vi.spyOn(Pool.prototype, 'connect').mockRejectedValue(new Error(environment.DATABASE_URL))
