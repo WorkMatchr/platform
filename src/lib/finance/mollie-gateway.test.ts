@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@mollie/api-client', () => ({
-  default: () => ({
+  createMollieClient: () => ({
     payments: { create: mocks.createPayment },
     methods: { list: mocks.listMethods },
     customerMandates: { page: mocks.listMandates },
@@ -42,6 +42,12 @@ function remoteSubscription() {
 }
 
 describe('Mollie-bedragconversie', () => {
+  it('kan de echte SDK via de benoemde factory importeren zonder een request uit te voeren', async () => {
+    const sdk = await vi.importActual<typeof import('@mollie/api-client')>('@mollie/api-client')
+    expect(typeof sdk.createMollieClient).toBe('function')
+    const client = sdk.createMollieClient({ apiKey: 'test_' + '0'.repeat(30) })
+    expect(typeof client.payments.create).toBe('function')
+  })
   beforeEach(() => {
     vi.clearAllMocks()
     vi.stubEnv('MOLLIE_API_KEY', 'test_fictief')
