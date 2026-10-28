@@ -25,8 +25,16 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run test:db:learning-integrity
+        env:
+          WP16_POSTGRES_CONTAINER_ID: ${{ job.services.postgres.id }}
       - name: Restricted metadata helper and read-only diagnostic SQL
         run: node scripts/test-show-db-tree-privileges.mjs
       - run: npm run db:generate
       - name: Closed database diagnostic and maintenance authentication
         run: npx vitest run src/lib/maintenance/database-identity.test.ts src/app/api/maintenance/database-identity/route.test.ts src/lib/finance/financial-maintenance-auth.test.ts src/app/api/maintenance/marketplace/route.test.ts src/lib/learning/learning-runtime-gate.test.ts src/app/featuregate-isolation.test.ts --maxWorkers=2
+      - name: Combined synthetic commercial chain and notification recovery
+        run: npm run test:db:assignment-notifications
+      - name: Financial concurrency and tenant authorization
+        run: npm run test:db:finance && npm run test:db:marketplace-concurrency
+      - name: Versioned Compliance and personal learning history
+        run: npm run test:db:compliance-runs && npm run test:db:learning

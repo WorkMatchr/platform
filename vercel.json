@@ -3,7 +3,8 @@
   "git": {
     "deploymentEnabled": {
       "codex/db05-runtime-preflight": false,
-      "codex/wp15-integrated-readiness": false
+      "codex/wp15-integrated-readiness": false,
+      "codex/wp16-production-readiness": false
     }
   },
   "crons": [
