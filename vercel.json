@@ -1,5 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": {
+    "deploymentEnabled": {
+      "codex/db05-runtime-preflight": false
+    }
+  },
   "crons": [
     {
       "path": "/api/maintenance/finance",
