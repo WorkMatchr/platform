@@ -105,8 +105,12 @@ credentialrotatie zijn afzonderlijke provisioning, niet uitgevoerd. Geen automat
 future-table/default-grants; nieuwe schemaobjecten vereisen expliciete review.
 De proef verifieert RateLimit-CRUD, benodigde reads, metadataquery, registry- en
 DDL-afwijzing en bestaande immutable examen-/retentieguards. Dit bewijst nog niet
-de volledige commerciële browserketen onder een nieuw productielogin. Die roluitrol
-blijft afhankelijk van de volledige synthetische service-/browseracceptatie.
+de volledige commerciële browserketen onder een nieuw productielogin. De WP16
+commerciële serviceharnas gebruikt nu na de owner-migratie/seed expliciet SET ROLE
+op iedere eigen verbinding: de echte publicatie-/fake-betaal-/ledger-/notificatieketen
+draait als beperkte runtime. Geen productiecredential of nieuwe appauthlogica.
+De productie-roluitrol blijft afhankelijk van ingelogde browseracceptatie en
+afzonderlijk geverifieerde loginprovisioning.
 
 ### show_db_tree()
 
@@ -235,6 +239,9 @@ Gerichte lokale run na startup- en preflighttoevoeging: **268/268 PASS**, negen
 bestanden (voorafgaande run 245 PASS, niet erbij opgeteld). Een sandboxrun faalde vóór tests op
 Windows EPERM in de tijdelijke Vite-cache; herhaald met eigen ignored TEMP/TMP.
 TypeScript vond nieuwe wrapper-/mockoverloadfouten; die zijn gericht hersteld.
+De eerste PostgreSQL-CI vond een fout in de nieuwe preflight-objectlijst: Membership
+moest OrganizationMembership zijn. De schema-assertion bleef intact en de lijst is
+gecorrigeerd; geen database of productmodel aangepast.
 Definitieve lint/typecheck/build/regressies en nieuwe CI worden op de reviewhead
 hieronder vastgelegd. Geen testassertions of securitygates versoepeld.
 

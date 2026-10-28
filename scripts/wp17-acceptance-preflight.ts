@@ -40,7 +40,7 @@ async function check() {
         .map(text => createHash('sha256').update(text).digest('hex'))
       assert.ok(hashes.includes(row.checksum))
     }
-    const required = ['User', 'Session', 'Organization', 'Membership', 'Request', 'Assignment', 'NotificationOutbox', 'LearningEnrollment', 'LearningCertificate', 'ComplianceFrameworkVersion']
+    const required = ['User', 'Session', 'Organization', 'OrganizationMembership', 'Request', 'Assignment', 'NotificationOutbox', 'LearningEnrollment', 'LearningCertificate', 'ComplianceFrameworkVersion']
     for (const table of required) assert.ok((await db.query('SELECT to_regclass($1) AS object', [`public."${table}"`])).rows[0].object)
     await db.query('ROLLBACK')
     console.log(JSON.stringify({ status: 'LOCAL_PREFLIGHT_PASS', database: identity.database, migrations: rows.length, externalProviders: 'absent', gates: 'closed', browserAcceptance: 'not performed' }))

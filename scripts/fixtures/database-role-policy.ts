@@ -6,7 +6,7 @@ import { PREVIEW_IDENTITY_SQL } from '../../src/lib/maintenance/preview-database
 // just created. It is NOT a production grant/provisioning command.
 export async function configureSyntheticRoles(db: Client, runtime: string, diagnostic: string) {
   const name = (await db.query('SELECT current_database() AS name')).rows[0].name as string
-  assert.match(name, /^workmatchr_db02_fresh_\d+_\d+$/)
+  assert.match(name, /^workmatchr_(db02_fresh|notifications_test)_\d+_\d+$/)
   for (const role of [runtime, diagnostic]) assert.match(role, /^wp17_(runtime|diagnostic)_\d+_\d+$/)
   await db.query(`REVOKE CREATE, TEMPORARY ON DATABASE "${name}" FROM PUBLIC`)
   await db.query('REVOKE CREATE ON SCHEMA public FROM PUBLIC')

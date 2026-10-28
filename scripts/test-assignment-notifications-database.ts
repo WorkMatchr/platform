@@ -6,6 +6,7 @@ import { registerHooks } from 'node:module'
 import { Client } from 'pg'
 import type { AuthEmail } from '../src/lib/email'
 import { fundCommercialFixture } from './fixtures/commercial-payment-database'
+import { configureSyntheticRoles } from './fixtures/database-role-policy'
 
 registerHooks({ resolve(specifier, context, nextResolve) {
   if (specifier === 'server-only') return { url: 'data:text/javascript,export default {}', shortCircuit: true }
@@ -19,6 +20,10 @@ if (!['postgres:', 'postgresql:'].includes(source.protocol) || [...source.search
 assert.ok(!process.env.RESEND_API_KEY && !process.env.MOLLIE_API_KEY && !process.env.JORTT_CLIENT_SECRET)
 globalThis.fetch = async () => { throw new Error('EXTERNAL_TRANSPORT_DISABLED_IN_WP16') }
 const databaseName = `workmatchr_notifications_test_${process.pid}_${Date.now()}`
+const roleSuffix = `${process.pid}_${Date.now()}`
+const runtimeRole = `wp17_runtime_${roleSuffix}`
+const diagnosticRole = `wp17_diagnostic_${roleSuffix}`
+const createdRoles: string[] = []
 const adminUrl = new URL(source); adminUrl.pathname = '/postgres'; adminUrl.search = ''
 const testUrl = new URL(source); testUrl.pathname = `/${databaseName}`
 const admin = new Client({ connectionString: adminUrl.href })
@@ -33,6 +38,16 @@ try {
     const result = spawnSync(process.execPath, [process.env.npm_execpath!, 'run', script], { cwd: process.cwd(), env: process.env, encoding: 'utf8' })
     if (result.status !== 0) throw new Error(`${script}: ${result.stdout} ${result.stderr}`)
   }
+  // Schema/seed owner is separate from the role used by the actual service chain.
+  for (const role of [runtimeRole, diagnosticRole]) {
+    await admin.query(`CREATE ROLE "${role}" NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS`)
+    createdRoles.push(role)
+  }
+  const provisioning = new Client({ connectionString: testUrl.href })
+  try { await provisioning.connect(); await configureSyntheticRoles(provisioning, runtimeRole, diagnosticRole) }
+  finally { await provisioning.end() }
+  testUrl.searchParams.set('options', `-c role=${runtimeRole}`)
+  process.env.DATABASE_URL = testUrl.href
   const { getPrisma } = await import('../src/lib/prisma')
   const { runMarketplaceMatching } = await import('../src/lib/marketplace/matching-service')
   const { enqueueAssignmentNotifications } = await import('../src/lib/marketplace/assignment-notification')
@@ -43,6 +58,8 @@ try {
   const { deliverAssignmentEmails } = await import('../src/lib/marketplace/assignment-email-worker')
   const { AuthEmailDeliveryError } = await import('../src/lib/email')
   db = getPrisma()
+  const effectiveRole = await db.$queryRaw<Array<{ role: string }>>`SELECT current_user::text AS role`
+  assert.equal(effectiveRole[0].role, runtimeRole)
   const clientOrg = await db.organization.create({ data: { name: 'TEST Notification Client', organizationType: 'CLIENT', status: 'ACTIVE' } })
   const providerOrg = await db.organization.create({ data: { name: 'TEST Notification Provider', organizationType: 'PROVIDER', status: 'ACTIVE' } })
   const client = await db.user.create({ data: { email: `${randomUUID()}@example.invalid`, status: 'ACTIVE', accountType: 'CLIENT', emailVerified: true, memberships: { create: { organizationId: clientOrg.id, status: 'ACTIVE', role: 'OWNER' } } } })
@@ -274,9 +291,13 @@ try {
     console.log('LOCAL_BROWSER_FIXTURES_READY')
   }
   console.log(`PASS: ${fixtureNumber} matching fixtures; pricing snapshot/purchase/privacy/deduplication/concurrent worker/retry/failure/preference/tenant checks`)
+  console.log('WP17 COMMERCIAL ROLE PASS: canonical publication/payment/ledger/notification services executed as restricted runtime, not schema owner')
 } finally {
   await db?.$disconnect()
-  if (!keepDatabase) await admin.query(`DROP DATABASE IF EXISTS "${databaseName}" WITH (FORCE)`)
+  if (!keepDatabase) {
+    await admin.query(`DROP DATABASE IF EXISTS "${databaseName}" WITH (FORCE)`)
+    for (const role of createdRoles.reverse()) await admin.query(`DROP ROLE "${role}"`)
+  }
   else console.log('Temporary acceptance database retained for browser checks; explicit cleanup required.')
   await admin.end()
 }
