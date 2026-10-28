@@ -29,4 +29,4 @@ jobs:
         run: node scripts/test-show-db-tree-privileges.mjs
       - run: npm run db:generate
       - name: Closed database diagnostic and maintenance authentication
-        run: npx vitest run src/lib/maintenance/database-identity.test.ts src/app/api/maintenance/database-identity/route.test.ts src/lib/finance/financial-maintenance-auth.test.ts src/app/api/maintenance/marketplace/route.test.ts src/lib/learning/learning-runtime-gate.test.ts --maxWorkers=2
+        run: npx vitest run src/lib/maintenance/database-identity.test.ts src/app/api/maintenance/database-identity/route.test.ts src/lib/finance/financial-maintenance-auth.test.ts src/app/api/maintenance/marketplace/route.test.ts src/lib/learning/learning-runtime-gate.test.ts src/app/featuregate-isolation.test.ts --maxWorkers=2
