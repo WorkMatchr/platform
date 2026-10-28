@@ -10,6 +10,10 @@ Main: `46962cff1724e87e5f33697173cbb9168d6f9da3`. WP15 #70 is open/Draft op
 `19539d656a46e820aee2cd6e93187b9a77424412`, gestapeld op #70. WP17 start exact
 op die WP16-head en richt zijn Draft op `codex/wp16-production-readiness`.
 Geen cherry-pick, dubbele overname, mainmerge of wijziging van #70/#71.
+Oplevering: [Draft PR #72](https://github.com/WorkMatchr/platform/pull/72),
+branch `codex/wp17-infrastructure-readiness`. Implementatie-/testhead:
+`e039c10996ba63e847f4f58f7513339b002d0945`; de afsluitende rapportagecommit
+wijzigt alleen dit dossier. De exacte actuele head/checks staan ook in de PR.
 
 Leidend en hergebruikt: [WP15](wp15-integrated-commercial-release-readiness.md),
 [WP16](wp16-production-readiness-and-acceptance.md),
@@ -242,8 +246,64 @@ TypeScript vond nieuwe wrapper-/mockoverloadfouten; die zijn gericht hersteld.
 De eerste PostgreSQL-CI vond een fout in de nieuwe preflight-objectlijst: Membership
 moest OrganizationMembership zijn. De schema-assertion bleef intact en de lijst is
 gecorrigeerd; geen database of productmodel aangepast.
-Definitieve lint/typecheck/build/regressies en nieuwe CI worden op de reviewhead
-hieronder vastgelegd. Geen testassertions of securitygates versoepeld.
+Geen testassertions of securitygates versoepeld.
+
+### Definitieve technische bewijsvoering
+
+| Controle | Werkelijk uitgevoerd resultaat |
+|---|---|
+| Preview/diagnose/maintenance/gates/preflight | CI 264/264 PASS in acht bestanden op e039c10; lokaal eerdere bredere routeset 268 PASS, daarna nieuwe positieve Pool.query-test 57/57 in de gerichte suite |
+| Brede Compliance/LMS/finance/credits/mail/UI-regressies | CI 864 PASS, 14 faseafhankelijke DB-tests overgeslagen in deze unitrun; die worden afzonderlijk door de bestaande PostgreSQL-learningharnas uitgevoerd |
+| Lokale brede regressierun | Niet groen, afgebroken na timeouts; afzonderlijke herhaling cancellation/PDF: 17 PASS/1 PDF-timeout op 5s. Exact dezelfde tests zonder timeoutverruiming groen in CI. Geen functionele fix of assertionversoepeling |
+| PostgreSQL 18 fresh en upgrade | Beide 93/93, checksums/herhaling, 112 verboden historie-/mutatiepogingen geweigerd; echte read-only acceptatiepreflight PASS |
+| Rollen | DML en metadata PASS; 13 verboden operaties vóór restore en dezelfde 13 erna; geen registrywrites, DDL/TRUNCATE/TEMP, rolbeheer of privilege-escalatie |
+| Synthetische restore | 1476 ms op e039c10 PR-run; 93 registraties, alle tabeldigests, tabel-/sequence-owners/ACLs, functies/ACLs en guards gelijk; geen Neon-RTO-claim |
+| Commerciële keten als beperkte rol | 17 matchingfixtures plus echte services voor checkout/fake payment/six replays/één ledger+factuur, canonieke Request-handoff, PRIMARY/ADDITIONAL, fake outbox-SENT, unlock, offerte/gunning, immutable snapshot en tenantweigering PASS |
+| Finance/marketplace PostgreSQL | Idempotentie, concurrentie, wallet/ledger/factuur/creditnota en autorisatie PASS |
+| Compliance PostgreSQL | Legacy behouden, F2 vijfstatusroundtrip, F4 route/48velden/10resultaten/zes aanvragen-één run, bron-/checksumweigering; dry-run blijft NO_GO met 141 ontbrekende regels |
+| Sessies PostgreSQL | Client/professional/admin: 24h/7d, refresh, logout, deactivering en tenantisolatie PASS. Echte DELETE-fout→503/behouden cookie, retry/concurrent logout→nul sessies, verlopen/ongeldig geweigerd |
+| Metadatahelper | Exacte READ ONLY-SQL, writeweigering, owner/operator behouden, outsider geweigerd, idempotente minimale REVOKE en oorspronkelijke ACL-rollback PASS |
+| Cleanup | Eigen tijdelijke databases/rollen verwijderd; bestaande database-/rolinventarissen ongewijzigd. Geen lokale DB aangemaakt; alleen eigen vastgelopen Docker-versieprobe gestopt |
+| Volledige lint | Lokaal en CI PASS; vier bestaande Next-navigatiewaarschuwingen, nul errors. Lokale ignored cache uitgesloten, alle tracked code gecontroleerd |
+| Standalone TypeScript | Lokaal PASS, nul fouten; ook buildtypecheck PASS |
+| Productiebuild | Lokaal en CI PASS, 169 pagina's; drie bestaande dynamic-filesystem-tracingwaarschuwingen. Uitsluitend synthetische onbereikbare localhost-builddatabase |
+| Diff/secrets/scope | PASS; 18 expliciete taakbestanden patroon-gecontroleerd, geen geheimen gevonden. Geen migratie/schema/package/lockfile/.env-bestand; automatische next-env-wijziging teruggebracht naar HEAD |
+| Vercel | Nul deployments voor WP17 bevestigd. Preview bewust uitgeschakeld, niet als READY presenteren; Production niet gewijzigd |
+
+Vier checks op implementatiehead e039c10 zijn SUCCESS:
+[PostgreSQL PR](https://github.com/WorkMatchr/platform/actions/runs/40745841709),
+[PostgreSQL push](https://github.com/WorkMatchr/platform/actions/runs/40745831310),
+[build/lint PR](https://github.com/WorkMatchr/platform/actions/runs/40745842370),
+[build/lint push](https://github.com/WorkMatchr/platform/actions/runs/40745831493).
+De afsluitende uitsluitend-documentatiehead wordt opnieuw gevolgd; definitieve
+checkstatus/commit staan in de PR-beschrijving. Geen handmatige rerun of deployment.
+
+### Exacte wijzigingsset tegenover WP16
+
+- `.github/workflows/learning-publication-integrity.yml`
+- `docs/README.md`
+- `docs/evidence/wp17/production-readonly.json`
+- `docs/wp17-production-infrastructure-readiness.md`
+- `scripts/fixtures/database-role-policy.ts`
+- `scripts/test-assignment-notifications-database.ts`
+- `scripts/test-learning-publication-integrity-database.ts`
+- `scripts/wp17-acceptance-preflight.test.ts`
+- `scripts/wp17-acceptance-preflight.ts`
+- `src/instrumentation.ts`
+- `src/lib/compliance/compliance-f4-framework.ts`
+- `src/lib/finance/financial-maintenance-auth.ts`
+- `src/lib/learning/learning-runtime-policy.ts`
+- `src/lib/maintenance/preview-database-pool.ts`
+- `src/lib/maintenance/preview-isolation.test.ts`
+- `src/lib/maintenance/preview-isolation.ts`
+- `src/lib/prisma.ts`
+- `vercel.json`
+
+Veilige reviewvolgorde: #70 → #71 → #72, na elk afzonderlijk akkoord base/diff/CI
+opnieuw controleren. Deze code kan niet alvast deploymentautorisatie vervangen.
+Rollback kandidaatcode: gereviewde revert van uitsluitend WP17; geen database-revert.
+Preview dan eerst uitschakelen: terugrollen verwijdert de nieuwe softwarecontrole
+en mag niet stilzwijgend toegang tot een onbewezen database heropenen.
 
 ## Exacte afzonderlijke autorisaties
 
@@ -271,7 +331,7 @@ blijven afzonderlijke latere besluiten; WP17 verleent die niet.
 |---|---|
 | Diagnosecode en operatorprocedure | Gereed voor review; Production-run niet geautoriseerd |
 | Preview softwaregrens | Geïmplementeerd; actuele externe bindingen BLOCKED |
-| Rollen-/restorekandidaat | Synthetische hertest vereist op exacte head; productieuitrol niet toegestaan |
+| Rollen-/restorekandidaat | PASS synthetisch, inclusief commerciële serviceketen; productieuitrol niet toegestaan |
 | Migratiebytes en registry | PASS read-only; migratie-uitvoering NO-GO |
 | Actueel herstelpunt/capaciteit | BLOCKED; oude snapshot blijft behouden |
 | WP18/WP19 browseromgeving | Voorbereid; lokale infrastructuur/provider-browserfixture open |
