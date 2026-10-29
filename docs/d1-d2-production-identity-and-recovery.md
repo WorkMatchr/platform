@@ -384,6 +384,10 @@ publiceren. Een latere merge is evenmin automatisch geautoriseerd.
 - Na correctie: **123/123** in zeven bestanden PASS (poolidentiteit, TLS,
   auth/gate, mismatch, timeout/late acquisition, Preview-isolatie).
 - Twee echte read-only checks op uitsluitend synthetische WP17B: PASS.
+- Gerichte lokale PostgreSQL-helpertest: PASS. Exacte runtimequery in READ ONLY,
+  schrijfpoging geweigerd; PUBLIC-revoke, eigenaar/named operator, outsider,
+  idempotentie en ACL-herstel gecontroleerd. Eigen tijdelijke database/rollen
+  verwijderd; inventaris van bestaande databases/rollen ongewijzigd.
 - Volledige lint: PASS, vier bestaande Next.js-locationwaarschuwingen.
 - Standalone TypeScript: PASS, nul fouten.
 - Productiebuild: PASS, 169 pagina's. Drie bestaande Knowledge-filesystem-tracing-
@@ -391,6 +395,10 @@ publiceren. Een latere merge is evenmin automatisch geautoriseerd.
 - Eerste testsandbox blokkeerde cache-rename met EPERM vóór tests; dezelfde tests
   buiten die sandbox PASS. Geen productdefect hiervan gemaakt.
 - Actuele main verify-/PostgreSQL-CI SUCCESS; geen handmatige rerun gestart.
+- De eerste Draft-head-CI stopte in de bestaande helpertest: de SQL-extractieregex
+  zocht nog de oude Prisma-aanroep. Alleen die extractor is aangepast aan de
+  gedeelde pg-query, met een expliciete assertion bij ontbrekende SQL. Geen
+  rechtenassertie versoepeld; de volledige helpertest hierboven slaagt lokaal.
 - Migraties ongewijzigd; synthetische restorebron byte-identiek aan actuele main.
 - Diff-/secretscontrole en exacte Draft-head-CI staan in de PR-oplevering.
 
@@ -398,6 +406,7 @@ Scope:
 `src/lib/prisma.ts`, `src/lib/prisma.test.ts`,
 `src/lib/maintenance/database-identity.ts` en bijbehorende test,
 de bestaande PostgreSQL-CI-testlijst,
+`scripts/test-show-db-tree-privileges.mjs` (uitsluitend query-extractie),
 dit dossier, vier veilige evidence-JSONs en docs/README.md.
 `vercel.json` sluit alleen deze reviewbranch uit van automatische deployment.
 Geen productieconfiguratie, package, lockfile, schema of migratie gewijzigd.
