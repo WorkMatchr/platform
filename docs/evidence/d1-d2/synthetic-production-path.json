@@ -1,0 +1,29 @@
+{
+  "scope": "Local process on explicitly pinned existing synthetic WP17B database; NOT Vercel runtime",
+  "prismaAndDiagnosticIdentityEqual": true,
+  "prismaReadableAfterDiagnostic": true,
+  "identity": {
+    "observedAt": "2026-10-29T09:58:05.901Z",
+    "environment": "production",
+    "commit": null,
+    "deployment": null,
+    "configuredHostname": "ep-dry-hat-bao6j8me.c-8.eu-central-1.aws.neon.tech",
+    "endpointId": "ep-dry-hat-bao6j8me",
+    "branchId": "br-steep-base-bamb189s",
+    "database": "workmatchr_wp17b",
+    "role": "workmatchr_preview_wp17b",
+    "tlsVersion": "TLSv1.3",
+    "tlsEvidence": "verified-runtime-client-socket",
+    "transactionReadOnly": true,
+    "featureGates": {
+      "complianceF4": false,
+      "learningRuntime": false
+    },
+    "roleCapabilities": {
+      "superuser": false,
+      "createDatabase": false,
+      "createRole": false,
+      "bypassRls": false
+    }
+  }
+}

@@ -33,7 +33,7 @@ jobs:
       - name: Real-client TLS and isolated WP17B target validation
         run: npx vitest run src/lib/maintenance/database-client-tls.test.ts scripts/wp17b-acceptance-target.test.ts --maxWorkers=2
       - name: Closed database diagnostic and maintenance authentication
-        run: npx vitest run scripts/wp17-acceptance-preflight.test.ts src/lib/maintenance/preview-isolation.test.ts src/lib/maintenance/database-identity.test.ts src/app/api/maintenance/database-identity/route.test.ts src/lib/finance/financial-maintenance-auth.test.ts src/app/api/maintenance/marketplace/route.test.ts src/lib/learning/learning-runtime-gate.test.ts src/app/featuregate-isolation.test.ts --maxWorkers=2
+        run: npx vitest run src/lib/prisma.test.ts scripts/wp17-acceptance-preflight.test.ts src/lib/maintenance/preview-isolation.test.ts src/lib/maintenance/database-identity.test.ts src/app/api/maintenance/database-identity/route.test.ts src/lib/finance/financial-maintenance-auth.test.ts src/app/api/maintenance/marketplace/route.test.ts src/lib/learning/learning-runtime-gate.test.ts src/app/featuregate-isolation.test.ts --maxWorkers=2
       - name: Combined synthetic commercial chain and notification recovery
         run: npm run test:db:assignment-notifications
       - name: Financial concurrency and tenant authorization
