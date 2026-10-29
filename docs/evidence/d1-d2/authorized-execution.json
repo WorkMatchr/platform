@@ -1,0 +1,739 @@
+{
+  "scope": "D1-P / D2-R authorized bounded execution; no production migration or application deployment",
+  "followupEndpointDocumentation": {
+    "api": "https://neon.com/docs/reference/api/endpoints/create-project-endpoint",
+    "passwordlessOverride": "not implemented; omit in a future proposal",
+    "planDefaultSuspendSeconds": 0,
+    "freePlanSuspendSeconds": 300,
+    "authDocumentation": "https://neon.com/docs/connect/passwordless-connect",
+    "newAttemptExecuted": false,
+    "remainingAccessCheck": "Confirm inherited database-role credential access remains limited to authorized administrators before a newly authorized copy"
+  },
+  "reviewedRuntimeCommit": "48a49727acfbcee0bf5760a6fb58a0175361b658",
+  "productionCommit": "c09e740df650d4bc9ef957b10d60ecd152b960c4",
+  "productionDeployment": "dpl_2tLMu9SbDxGABX3XSXZgWEz9iCej",
+  "d1": {
+    "activated": false,
+    "deployments": 0,
+    "authenticatedProbes": 0,
+    "blockedBy": "Existing sensitive Production CRON_SECRET cannot be retrieved by authorized connector; no valid local operator credential proven",
+    "closedProbe": {
+      "at": "2026-10-29T10:44:34.936Z",
+      "authenticated": false,
+      "status": 404,
+      "noStore": true,
+      "identityReturned": false
+    },
+    "enabled": false,
+    "until": "2026-10-28T20:03:11.000Z",
+    "authenticatedClosureVerified": false
+  },
+  "d2": {
+    "project": "billowing-term-15867762",
+    "parent": "br-odd-smoke-agf0wj9j",
+    "name": "d1d2-recovery-check-20261029T105010Z",
+    "startedAt": "2026-10-29T10:50:10.571Z",
+    "expiresAt": "2026-10-29T11:50:10Z",
+    "sourcePoint": "current parent HEAD",
+    "readOnly": true,
+    "created": true,
+    "cleanup": true,
+    "id": "br-flat-star-ag34oo0k",
+    "creationMs": 2935,
+    "parentLsn": "0/29129D58",
+    "parentTimestamp": "2026-10-29T10:50:10Z",
+    "expiryVerified": "2026-10-29T11:50:10Z",
+    "pass": false,
+    "error": "TOOL_OPERATION_FAILED",
+    "remaining": [
+      {
+        "id": "br-odd-smoke-agf0wj9j",
+        "name": "production",
+        "default": true
+      }
+    ],
+    "cleanedAt": "2026-10-29T10:50:31.872Z",
+    "errorCode": "INVALID_ARGUMENT",
+    "providerError": "creating an endpoint with passwordless access disabled is currently not supported",
+    "failedStage": "create_postgres_endpoint",
+    "computeRequest": {
+      "minCu": 0.25,
+      "maxCu": 0.25,
+      "suspendSeconds": 60,
+      "passwordlessAccess": false,
+      "poolerEnabled": false
+    },
+    "sqlRestoreChecksExecuted": false,
+    "maxBranchesAuthorized": 1,
+    "totalRetentionMs": 21301
+  },
+  "branchOperations": [
+    {
+      "id": "ee83f03e-c807-4af6-870c-4576537d9793",
+      "branchId": "br-flat-star-ag34oo0k",
+      "action": "delete_timeline",
+      "status": "finished",
+      "createdAt": "2026-10-29T10:50:27Z",
+      "updatedAt": "2026-10-29T10:50:29Z"
+    },
+    {
+      "id": "f8c91dc3-65ae-4890-87f7-8ad1519a1b10",
+      "branchId": "br-flat-star-ag34oo0k",
+      "action": "timeline_update_protected_config",
+      "status": "finished",
+      "createdAt": "2026-10-29T10:50:11Z",
+      "updatedAt": "2026-10-29T10:50:12Z"
+    },
+    {
+      "id": "c3130ecd-c4f1-4d97-9503-f4ee1a6c28ca",
+      "branchId": "br-flat-star-ag34oo0k",
+      "action": "create_branch",
+      "status": "finished",
+      "createdAt": "2026-10-29T10:50:11Z",
+      "updatedAt": "2026-10-29T10:50:12Z"
+    }
+  ],
+  "productionBefore": {
+    "identity": {
+      "checked_at": "2026-10-29T10:49:12.933Z",
+      "database": "neondb",
+      "role": "neondb_owner",
+      "read_only": "on",
+      "endpoint_id": "ep-royal-sound-agegzj34",
+      "branch_id": "br-odd-smoke-agf0wj9j"
+    },
+    "registry": [
+      {
+        "name": "20260712132604_init",
+        "checksum": "cc6572647f66b73a37a4206b2676859540f077e5d4b6ef3d38680a42293a691b",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260712165804_add_authentication",
+        "checksum": "4bef0ef0efb094c143e5fd5e6d0dc7727da0994b0bc5038214fa945329938ba0",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260713103000_add_organization_logo",
+        "checksum": "00664df89b06137e136ef85940980f241835427ec892265b8f974c3cf8373e6a",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260713190000_add_intake_foundation",
+        "checksum": "8280155cc58a8f6ce31b7b9da2bb50c82df139356b528f7e87776bfaa6556b0c",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260713230000_add_assignment_conversion",
+        "checksum": "e4d9c62da5767f2a431ab3be2e6bc1b5d0933a5da468e7d9b9f840fb001f34c0",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260714120000_add_assignment_publication",
+        "checksum": "49845a2194a726337b200c24dc74971883d0f61a5153662e46d345d87a148190",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260714183000_add_provider_qualification_foundation",
+        "checksum": "a69fa48431c41f10d8798c09884d15107c55bb2a402a0c701ce7718f0a0c252d",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260714184032_add_provider_insurance_requirements",
+        "checksum": "7db9ab57c87cc3d7672aa32d1013b0391e78eb70f837c0c4c8c87a61d7387803",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260714184549_add_provider_evidence_scan_decisions",
+        "checksum": "52386922f60038ba2340de8f302616a390f607a391df8f589c13c27193b676c0",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260714184950_add_provider_block_four_eyes",
+        "checksum": "9c8ee6e5ca0d037dbc90b0ee9d668b85416473f68a812fb896d1b5056c1c69d2",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260714210500_harden_provider_qualification_immutability",
+        "checksum": "a6490a1ddbe4ec6e44037db420744b56c183db6c8409715b38e9d56ae208e42a",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260715120000_add_provider_dossier_workflow_foundation",
+        "checksum": "4126e05540e7cfe52e8d1438b1974c18b4c18fc2f895b8f30c34f4f8f6d18011",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260715121000_harden_provider_dossier_workflow",
+        "checksum": "f4f5d209efb20d9087410c224dd9e754f4ef6cca535f2c10bb26924fc4cd1ffa",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260715170000_complete_provider_dossier_resubmission_binding",
+        "checksum": "a1ced9cbe1dd97d9ea316b7655b6cf1adbcff7a38c7dd1c6068f0bd30aec3dca",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260716120000_simplify_provider_qualification_input",
+        "checksum": "4bbf997510157b5bbff62b55ee22e7bc82eee55139ea9cd2857e71c2996590e4",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260717150000_add_adr013_expand_foundation",
+        "checksum": "5f8e10230ae0eea8d65679866756542d9168888d11ee5c7fd09e8dbe6aad41f0",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260717190000_add_platform_provisioning_events",
+        "checksum": "c8a3bd493e9a147c384a5481b1325c5355b035edfd70bdf5464daf19aba9d78e",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260720150000_add_marketplace_transaction_platform",
+        "checksum": "1b23e402d870e6e99053eca2fdef3568909a4378732277b5cad7af3ea3d5a3bb",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260720173000_make_marketplace_audit_correlation_unique",
+        "checksum": "ca6b706d34f5611b1bcd5b009c54bdd336275170e93f1e7b342025434d5918a2",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260724150000_enforce_single_organization_membership",
+        "checksum": "8a8c3a3b298a6f66cce9fbdf4ae2aab561dedfc4cb2f53c8378aab21bdfabb38",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260726150000_add_public_intake_draft_foundation",
+        "checksum": "8fbee0da6d262692c7aae963a31a417be5ab9f1a60488dae72df83e19c0b3197",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260726190000_add_public_intake_user_abandonment",
+        "checksum": "7a402eda3eba3e4abfb09ca397abb0e94bf12ead77b3df88cbc0b7ee1ae30516",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260729100000_add_public_intake_ai_classification_cache",
+        "checksum": "1fa968d5b332c0245479d29da17875ca5e22a28a71e5dfed8b8fb217e7adae26",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260729143000_add_public_intake_answer_source",
+        "checksum": "0a61fae78827c1e4bd1dd4e685c3575052eba2ee5eee77faffe577e93da27c41",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260729180000_add_advice_dossiers",
+        "checksum": "311a971ff5370102858ed8cd4b3567b2181bf50172e301cc351617c8ff07dbd6",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260730090000_add_published_requests",
+        "checksum": "1ef1d3d97c3c36227ba1bd5a9320a634af73c3e1067e5a624f685a6eca615361",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260730120000_add_request_interest_foundation",
+        "checksum": "1221e329952630411b7f4733a24c92b06cc90c5a086d63940ee7ee7d696911c5",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260730150000_add_request_offer_slots",
+        "checksum": "972733d960f3fca6b60c8e81298c6f975b1f8d7fcbe1e5b30fee1ae728efbb0a",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260730170000_add_professional_discipline_taxonomy",
+        "checksum": "98c9519b0f48e4e64b81e21fa97ce20399e3fd89b4cb1123b3de5586ffd98d8c",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260731100000_add_test_session_impersonation",
+        "checksum": "47c2c14551c82c26be38c364cf275672a89eabf2e89bbda3f02f56691a370136",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260801100000_add_assignment_location_snapshots",
+        "checksum": "4f649553703a66a76128e28c20085fdc833426e0784ede2e7f02b9a375bf7caa",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260801101000_validate_assignment_location_snapshots",
+        "checksum": "40c0346883e76819e54701ab97fb4dea043de1cefa8975f29b50e8a2aa8c1a8b",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260801102000_add_assignment_location_items",
+        "checksum": "88ee91fc3c3e8b93bb77b33e26d7bf8dd4612ec9c53d1fef5663796b1ae9882a",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260801110000_add_marketplace_rules_credit_reliability",
+        "checksum": "eaf651b96570d6e7f4001577a2433299ccd30cca32a3b18e55070609da8d250c",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260802100000_add_knowledge_engine_foundation",
+        "checksum": "058823f82567cb55dad76aa85d1be49b192847b17869d785cb3cc21694b5016f",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260802110000_add_knowledge_context_provenance",
+        "checksum": "6b9560656c04cf5d9088ecac63cb22dfd25e23514eb34b37bd14fcc2385a4aaf",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260802120000_add_knowledge_review_workflow",
+        "checksum": "3214d597149075eec19299b62f2aa5e6dc5195ce560985b7aff75b4fc91039cb",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260802121000_validate_knowledge_review_workflow",
+        "checksum": "a70f34d1a808e2ee36aa2a6229f94624496e50c80cf46aacd279af3856252aba",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260802130000_add_provider_profile_expertise_basis",
+        "checksum": "c53cde722b1a208006f9764834104de6c9335ad654f4a5b6cd8a27ff3605d27e",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260802140000_expand_provider_service_taxonomy",
+        "checksum": "4ba2afc055242881b0a096209b5cc9b846bf29d7728ea6237abd5b1a32a50a80",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260802150000_add_knowledge_control_workflow",
+        "checksum": "e32d3e86cbb98fe1120221eef17435410da3e44330f357c2cf55f8d8594f6b96",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260803100000_exception_driven_knowledge_control",
+        "checksum": "091b7ec2d42a2295fdcfb4aea74a3efa6edf73db457e35ab49a657b3fd5612e3",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260805100000_add_user_account_types",
+        "checksum": "ac91a336ad3bd8481f86323d463fe99ad2dd78915dc11dcc92821956fc726e6e",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260805110000_add_professional_credit_wallet_ledger",
+        "checksum": "3f16a2018d94fe7117827280dec273ce74e7535c7599e1d0c008f95aaebb7ca8",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260805111000_protect_credit_wallet_projections",
+        "checksum": "654083a0b5e2c8dd8e614d890a8662ff2af1164e5898745ebd0d0bb0a2c22035",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260805112000_derive_credit_wallet_spent_projection",
+        "checksum": "b2623adf91f7097367e9f3f0a79f3275d4c53640230abc63d98fa4beffd0c522",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260808100000_add_generic_knowledge_source_metadata",
+        "checksum": "e3683af5eaccb52548e9f865b93b7ea903a8c0c89818b7d5e9bbe693a200dcbf",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260808110000_add_structured_knowledge_sector_links",
+        "checksum": "8e0bb7c55f13438d9f94a6753f17fbdf7a6b91238de7efbacd1470912ff64cfb",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260808120000_add_knowledge_import_corrections",
+        "checksum": "dc10472ce487f0ce25fcfa5fa6838780601b07fdf0ac290214bcbc1beb21f229",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260808121000_harden_knowledge_import_corrections",
+        "checksum": "da251a9cdebd24428e7067fdeefee2246c327159fdb6566ad7a851412e415ffe",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260809100000_add_financial_chain_f3_f9",
+        "checksum": "0db6609f2f11fa03a7e80adcae74f39306740bead0e903fddee054541381d476",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260809110000_add_pro_cancellation_at_period_end",
+        "checksum": "72dba62c02babde46aba51eab21510d0ea459a408990147862ea298f8a8fdb47",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260809120000_harden_financial_refund_lifecycle",
+        "checksum": "eb27ffb612617745a340565ad6f440efae5badf6f09218d0c441516a1313be08",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260809130000_add_mollie_test_acceptance_pricing",
+        "checksum": "b63e0ff6fa07b5393101b04e1d069e2db1178a6c8ba0dfd7b7da6ef1e6188ed3",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260809140000_add_pro_mollie_mandate_projection",
+        "checksum": "05254e600c24c08c425c8bff279cda3458dc80c6cc03a44bcb6468da26ace512",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260810100000_add_pro_first_payment_attempts",
+        "checksum": "2cb0c47c436cc5356054e36dc61ffbb698add9a9390596e98cc9387e64e7d316",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260811100000_add_better_auth_two_factor_foundation",
+        "checksum": "bca4cb3312ac95592bdcce4a8889b5ac5d48edfa4f10892bed76e458855125ae",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260812100000_add_admin_communication_archive",
+        "checksum": "b7e076d70c03bf4f9c7452394d0ecd3b8498a56d324228cdf29ebba0cfc29ece",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260813100000_add_two_factor_reset_notification_audit",
+        "checksum": "11dcd31d70d26aabb75cb3a96f2aa6d88bea848cc119ea8278c4ee6b2db0e309",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260813110000_add_public_intake_ai_context_questions",
+        "checksum": "962c49f28d5bfa8247581fcae29c71a1ebbba686f2fe6ffb160e33fbb9ec86e8",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260813120000_add_advice_dossier_intake_handoff",
+        "checksum": "f87f21865e020eb3c07877a66de805a3179a91ef0adb38897322a3c65177f8d4",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260815100000_add_knowledge_full_source_foundation",
+        "checksum": "478dd3601fe4c06bcb70dc703429036d3f0edf56b23af5ac18c8fbf6140ed4b3",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260815110000_add_knowledge_method_foundation",
+        "checksum": "0d47fdc21f34d89626b6aca0df75dc4c5751c197ee508491a0de19ebbec46ff5",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260816100000_add_bhv_structured_component_evidence",
+        "checksum": "623f7519f1f71cad7aad2ee8270340b3b6d55ec9bdaaa0b2a5b667957cc614c3",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260816110000_add_multi_source_knowledge_onboarding",
+        "checksum": "2d1cd733569d516325a5120d43e02d79d231a950dc412ede286f99f6b51c3ea5",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260816120000_add_knowledge_document_families",
+        "checksum": "92648c13d7420aab65ce2d414de857422e3ba30346fe3cc6ed40035a5539b32d",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260817100000_add_knowledge_canonical_source_identity",
+        "checksum": "65789630432f03dc174dd44ff4f13dc98f97ee2c919447f69d3a61a883866a85",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260818100000_add_knowledge_cross_validation_assessments",
+        "checksum": "9813a5dc24233770d4c8fb8a33d2cb3ec20d66d57cd98290af1c84348dfb8cae",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260819100000_add_public_ai_intake_abuse_protection",
+        "checksum": "f1cbe0992675df29ebb3aee100f06778ee1db0f6ddf3d0b59be7dba4fe599171",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260820100000_add_arbo_guide_runs",
+        "checksum": "e623e65fed7b26efc37a51bb9122c948f8cf20d50f7418d087ea264510fa0a51",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260824100000_add_financial_invoice_snapshot_v2",
+        "checksum": "3016d641b242e93a073befefbf6a724d25b137c5bfaa45f2b3fab0e5ad9b846e",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260825140000_operationalize_jortt_sync",
+        "checksum": "7e22e5e4a999469569c97b10101be0cb42594e0408860ca1188f486567471881",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260825150000_scope_financial_invoice_vat_validation",
+        "checksum": "b0d318216cba5378bfd903fc97a945d4f696267ef4c7548249866a83da7c2491",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260827100000_add_assignment_max_selections",
+        "checksum": "0c634466f33d4090f7fbd6d2a6ce7b0013a2eb9a5e2a1b94b208cbceba8ae26e",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260901100000_harden_jortt_invoice_identity",
+        "checksum": "b274514689552ff76c36de296cad6e9c5672638f65040e995b2016f22d1aebf6",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260903100000_add_financial_maintenance_runs",
+        "checksum": "f2106201a0503943b8ef46522b10f1ec49dd31d34074c53293618ef85bdde4ab",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260906100000_support_v2_credit_notes",
+        "checksum": "d4661542df68e403d3f468868b78603760c64a3d9a9b2d07f10a068d3d0a58c1",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260912090000_simple_advice_request",
+        "checksum": "19e2f6de0c5264cba17c4e8dbdeeb6df536acff401fd76df594b1af7bd3d6cf2",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260915090000_request_assignment_handoff",
+        "checksum": "d40542bc36cc52d4dd63d178095add69d25db10b1d6666d63b2c19e29fb1ca15",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260915180000_unify_legacy_simple_advice",
+        "checksum": "0b4c8222b8e024a4306006d1b540e1dba53577bfaf4b295a67976f38c0384c0c",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20260920120000_assignment_notifications_pricing",
+        "checksum": "d6d027ef14f210f5d44b46c13e5bfc250663f18a2c47399502c54c3400fe8f0b",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20261001113000_add_compliance_domain_versioning_foundation",
+        "checksum": "119c864839d38488b8886c9f1c62275d2ca5f0ed496418f81e2f776e908c923c",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20261001210000_add_compliance_actions",
+        "checksum": "5f93d33f49d8d008156e816a4d923599a24506c7bd936e17e427daabb2484682",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20261015180000_register_legacy_compliance_framework",
+        "checksum": "af43e55651f1ac12e99e242f7602a5aad0f855f57f1f6eeceda43103d65d2766",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "name": "20261016100000_add_compliance_v2_result_contract",
+        "checksum": "0eefcabcf4ed1161b08dc0b14dc285323e4dd4a05bc0daa7196ae5925e0d21da",
+        "finished": true,
+        "rolled_back": false
+      }
+    ],
+    "counts": {
+      "runs": 4,
+      "results": 38,
+      "requests": 2,
+      "assignments": 2
+    },
+    "integrity": [
+      {
+        "kind": "columns",
+        "count": 2265,
+        "digest": "924d0774ce8ffa98e6e89e23c5512b2c"
+      },
+      {
+        "kind": "constraints",
+        "count": 2643,
+        "digest": "35404b196cea07447a762d6bb2227498"
+      },
+      {
+        "kind": "indexes",
+        "count": 915,
+        "digest": "e2f52acba36d4b181eadec336624d5a1"
+      },
+      {
+        "kind": "triggers",
+        "count": 187,
+        "digest": "9211174924f23a0f0bc397aa713626ee"
+      },
+      {
+        "kind": "functions",
+        "count": 99,
+        "digest": "9131790a8149e093235eddb7f93f5601"
+      },
+      {
+        "kind": "owners_acl",
+        "count": 207,
+        "digest": "6d2a1275f31d6765acf4c76e633bca5f"
+      },
+      {
+        "kind": "roles",
+        "count": 17,
+        "digest": "efdfca6cf8cc0b1bd96985a9e3a7c8d9"
+      }
+    ],
+    "helper": {
+      "body_hash": "2dc5cdeafbbc8d0c82c8db059c0e25e5",
+      "security_definer": false,
+      "owner": "neondb_owner",
+      "operator_execute": true
+    }
+  },
+  "productionAfter": {
+    "identity": {
+      "checked_at": "2026-10-29T10:53:22.186Z",
+      "database": "neondb",
+      "role": "neondb_owner",
+      "read_only": "on",
+      "endpoint_id": "ep-royal-sound-agegzj34",
+      "branch_id": "br-odd-smoke-agf0wj9j"
+    },
+    "counts": {
+      "runs": 4,
+      "results": 38,
+      "requests": 2,
+      "assignments": 2
+    },
+    "integrity": [
+      {
+        "kind": "columns",
+        "count": 2265,
+        "digest": "924d0774ce8ffa98e6e89e23c5512b2c"
+      },
+      {
+        "kind": "constraints",
+        "count": 2643,
+        "digest": "35404b196cea07447a762d6bb2227498"
+      },
+      {
+        "kind": "indexes",
+        "count": 915,
+        "digest": "e2f52acba36d4b181eadec336624d5a1"
+      },
+      {
+        "kind": "triggers",
+        "count": 187,
+        "digest": "9211174924f23a0f0bc397aa713626ee"
+      },
+      {
+        "kind": "functions",
+        "count": 99,
+        "digest": "9131790a8149e093235eddb7f93f5601"
+      },
+      {
+        "kind": "owners_acl",
+        "count": 207,
+        "digest": "6d2a1275f31d6765acf4c76e633bca5f"
+      },
+      {
+        "kind": "roles",
+        "count": 17,
+        "digest": "efdfca6cf8cc0b1bd96985a9e3a7c8d9"
+      }
+    ],
+    "helper": {
+      "body_hash": "2dc5cdeafbbc8d0c82c8db059c0e25e5",
+      "security_definer": false,
+      "owner": "neondb_owner",
+      "operator_execute": true
+    }
+  },
+  "comparison": {
+    "registryUnchanged": true,
+    "countsUnchanged": true,
+    "objectDigestsUnchanged": true,
+    "helperUnchanged": true
+  },
+  "retainedSnapshot": {
+    "id": "snap-young-sunset-agambfcl",
+    "createdAt": "2026-10-16T05:02:33Z",
+    "bytes": 193462272
+  },
+  "previewReleased": false,
+  "productionMigrationsExecuted": false
+}

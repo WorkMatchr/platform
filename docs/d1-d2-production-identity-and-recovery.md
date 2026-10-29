@@ -3,7 +3,136 @@
 **Peildatum: 29 oktober 2026. D1/D2 en productiemigratie: NO-GO.**
 Dit dossier vervangt de verouderde actuele-statusregels in DB-01–05/WP15–17B/ABC,
 niet hun historische bewijs. Geen productieautorisatie is met dit rapport verleend.
-Alle genoemde toekomstige handelingen zijn voorstellen.
+De historische voorstellen hieronder worden voor D1-P/D2-R aangevuld door het
+expliciete Product Owner-akkoord en het uitvoeringsverslag in deze eerste sectie.
+Overige voorstellen blijven ongeautoriseerd.
+
+## Uitvoering D1-P / D2-R — 29 oktober 2026
+
+Het Product Owner-akkoord betreft uitsluitend de gereviewde runtimecode
+`48a49727acfbcee0bf5760a6fb58a0175361b658`, maximaal twee D1-P-deployments en
+één tijdelijke D2-R-herstelbranch met maximaal 24 uur bewaring. Geen merge,
+productiemigratie, Preview-vrijgave of aanvullende productiehandeling is toegestaan.
+[Gefilterd uitvoeringsbewijs](evidence/d1-d2/authorized-execution.json).
+
+### PR #75 en D1-P
+
+- PR #75 is OPEN/Draft, MERGEABLE, niet gemerged. Gereviewde head exact bevestigd;
+  alle vier GitHub-checks SUCCESS. Geen codewijzigingen in deze uitvoeringsronde.
+- Actuele main/Production blijft `c09e740df650d4bc9ef957b10d60ecd152b960c4`,
+  READY `dpl_2tLMu9SbDxGABX3XSXZgWEz9iCej`. De TLS-correctie is nog niet live.
+- De bestaande gate is false en UNTIL is verlopen. F4/LMS-configuratie is niet
+  aangezet. De defaults en tests van de gereviewde code zijn ongewijzigd.
+- De geautoriseerde Vercel-connector bevestigt de sensitive Production-CRON_SECRET,
+  maar retourneert geen waarde, ook niet bij gericht ophalen. De eerder lokaal
+  beschikbare waarde leverde 401 en is niet als geldig bewezen. Geen alternatieve
+  auth, rotatie of herhaalde authpoging uitgevoerd.
+- **D1-P geblokkeerd vóór activering door ontbrekende geldige operatorcredential.**
+  Geen T0 gestart, geen flags gewijzigd, nul deployments en nul geauthenticeerde probes.
+  Via het bestaande veilige beheer moet de geldige secret lokaal beschikbaar komen;
+  alleen een bestandspad of een operatorbevestiging delen, nooit de waarde in chat.
+- De nu toegestane ongeauthenticeerde gesloten-controle is uitgevoerd op
+  **2026-10-29T10:44:34.936Z**: HTTP404, Cache-Control no-store, geen identiteit.
+  Dit bewijst de huidige publieke sluiting; niet de geauthenticeerde afsluitcontrole
+  na een succesvolle D1-P-cyclus. Die blijft NIET UITGEVOERD.
+- De eerdere automatische weigering van deze gesloten-controle geldt als historisch
+  bewijs; met het nieuwe expliciete akkoord is deze aanvraag nu wel uitgevoerd.
+
+**Mergebeslissing:** technisch zijn de gereviewde code en checks geschikt voor review.
+Het concrete object is PR #75, runtimehead `48a4972…`, basis `c09e740…`, uitsluitend
+de dertien gecontroleerde bestanden. Merge naar main vereist een afzonderlijk
+besluit; de bestaande main-deploymenttrigger moet daarbij expliciet worden meegenomen.
+De reeds toegestane D1-P-uitrol van de exacte runtime-SHA vereist geen impliciete merge.
+Een merge met een extra reguliere productie-uitrol wordt niet aan dit akkoord toegevoegd.
+Deze rapportage actualiseert alleen bewijs, niet de geautoriseerde runtimecode.
+
+### D2-R: aangemaakt, veilig afgebroken en opgeruimd
+
+Vooraf opnieuw bevestigd: hetzelfde productieproject/branch, ADMIN-toegang,
+één projectlid met adminrol, Free-plan, één van tien branchplaatsen gebruikt,
+193.486.848 bytes logische data, zes uur history en de ongewijzigde snapshot van
+16 oktober. Geen Neon Auth/Data API, Functions of customer-issued credentials
+aangetroffen; de aparte triggerinventaris gaf 404 en geldt niet als zelfstandig
+bewijs van afwezigheid. PostgreSQL heeft geen pg_cron/pg_net/http-extensies.
+De nieuwe branch kreeg geen app-, Preview-, provider-, worker- of computeverbinding.
+
+| Gebeurtenis | Waarde |
+|---|---|
+| Bron | billowing-term-15867762 / br-odd-smoke-agf0wj9j / neondb |
+| Start | 2026-10-29T10:50:10.571Z |
+| Eigen branch | br-flat-star-ag34oo0k |
+| Naam | d1d2-recovery-check-20261029T105010Z |
+| Herstelmoment | Actuele parent HEAD; parent_timestamp 2026-10-29T10:50:10Z; parent_lsn 0/29129D58 |
+| Aanmaak | 2.935 ms, eerst zonder compute |
+| Vervaltijd | 2026-10-29T11:50:10Z, bevestigd vóór compute-aanvraag |
+| Compute-aanvraag | 0,25–0,25 CU, 60s suspend, pooler=false, passwordless_access=false |
+| Afwijzing | HTTP400 / INVALID_ARGUMENT: `creating an endpoint with passwordless access disabled is currently not supported` |
+| SQL op herstelbranch | Niet uitgevoerd; geen compute aangemaakt |
+| Verwijdering | delete_timeline ee83f03e-c807-4af6-870c-4576537d9793 finished; 10:50:27–10:50:29Z |
+| Opruimverificatie | 2026-10-29T10:50:31.872Z; uitsluitend oorspronkelijke productiebranch resteert |
+| Totale looptijd | 21.301 ms; geen gemeten volledige hersteltijd/RTO |
+
+De concrete afwijzing is veroorzaakt door de aangevraagde endpointconfiguratie,
+niet door een aangetoonde schema- of datafout. De herstelbranch is in de finally-
+opruimroute verwijderd. Er is geen tweede branch gemaakt: het akkoord begrenst
+dit tot maximaal één productiedatakopie. Geen herstel-PASS of RPO/RTO-garantie claimen.
+
+De aanvullende read-only documentatiecontrole verklaart deze fout:
+[Neons endpoint-API](https://neon.com/docs/reference/api/endpoints/create-project-endpoint)
+markeert `passwordless_access` als **NOT YET IMPLEMENTED**. Deze optie dus niet
+gebruiken als toegangsbeveiliging. `suspend_timeout_seconds=0` gebruikt de
+planstandaard; Free staat geen aangepaste termijn toe. Free heeft vijf minuten
+autosuspend volgens de [planvoorwaarden](https://neon.com/docs/introduction/plans).
+De aangevraagde 60s was daarom evenmin een geschikte Free-configuratie.
+[Passwordless auth](https://neon.com/docs/connect/passwordless-connect) vereist
+volgens de documentatie een ingelogde Neon-gebruiker en account-/projectselectie;
+het is geen bewijs van anonieme publieke databasetoegang.
+
+Een eventueel nieuw voorstel gebruikt een compute van 0,25 CU met de
+planstandaard (`suspend_timeout_seconds=0`), zonder de niet-ondersteunde
+`passwordless_access`-override en zonder de verouderde pooleroptie. Verder dezelfde
+branch-TTL, begrensde READ ONLY-transacties en verplichte finally-opruiming.
+Dit is alleen een voorbereid voorstel, niet uitgevoerd. Vóór een nieuwe kopie
+opnieuw beheerderstoegang en eventuele gedeelde/inherited databasecredentials
+beoordelen: één Neon-admin en afwezigheid van appkoppelingen bewijzen niet op
+zichzelf dat niemand een bestaande databaserolcredential kent. Geen credential
+exporteren, delen of stilzwijgend roteren. Een nieuwe branch valt buiten de nu
+verbruikte één-branchautorisatie.
+
+### Integriteit en resterende besluiten
+
+De read-only productievoorcontrole (10:49:12.933Z) en nacontrole (10:53:22.186Z)
+komen overeen: 85 registraties, nul onafgemaakt, ongewijzigde checksums; vier runs,
+38 resultaatregels, twee Requests en twee Assignments. Digests van 2.265 kolommen,
+2.643 constraints, 915 indexes, 187 triggers, 99 functies, 207 relationele
+objecten/eigenaren/ACL's en 17 rollen zijn gelijk. Dit betreft metadata en genoemde
+aggregaten, niet een vergelijking van iedere zakelijke rij.
+De bodyhash, eigenaar en SECURITY INVOKER van show_db_tree() zijn ongewijzigd.
+De bestaande snapshot is behouden; geen abonnement- of productieprivilegewijziging.
+
+1. D1: geldige bestaande operatorauth via veilig beheer. De begrensde D1-P-toestemming
+   wordt niet opnieuw gevraagd; de ongebruikte deployments/probe blijven binnen die scope.
+2. Merge #75: uitsluitend na afzonderlijk merge-/releasebesluit.
+3. D2: het gecorrigeerde Free-planvoorstel is voorbereid; afscherming van
+   overgenomen rolcredentials vooraf bevestigen en afzonderlijk toestemming voor
+   één vervangende proefkopie verkrijgen. De herstelproef zelf is niet bewezen.
+4. Preview blijft niet vrijgegeven. Volledige schrijfpauze en actueel migratiecheckpoint
+   blijven open. Geen productiemigratie uitgevoerd; productiemigratie blijft NO-GO.
+
+### Controle van deze rapportagewijziging
+
+Uitsluitend dit rapport en `docs/evidence/d1-d2/authorized-execution.json` gewijzigd.
+JSON-validatie en bewijsasserties PASS: 85 afgeronde registraties, D1 niet geactiveerd,
+één eigen herstelbranch aangemaakt en verwijderd, geen geslaagde herstel-SQL geclaimd.
+`git diff --check` PASS en gerichte secrets-patterncontrole op beide bestanden PASS.
+De eerder groene code-, lint-, TypeScript-, build- en PostgreSQL-controles op
+`48a4972…` blijven het technische bewijs; geen runtimecode aangepast en daarom
+geen onnodige lokale herhaling van de brede suites. Eventuele nieuwe rapportagecommit
+wijzigt niet de expliciet geautoriseerde runtime-SHA.
+
+Onderstaande secties bewaren de oorspronkelijke preflight en voorstellen. Waar zij
+nog over een toekomstige toestemming of ontbrekende publieke sluitcontrole spreken,
+is dit uitvoeringsverslag leidend.
 
 ## 1. Basis, bronnen en uitgevoerde grenzen
 
@@ -416,8 +545,8 @@ Lokale synthetische credentials en hulpscript blijven genegeerd.
 
 - PRODUCTION RUNTIME IDENTITY: **NOT VERIFIED**
 - PREVIEW ISOLATION: **NOT VERIFIED**
-- DIAGNOSTIC CLOSED: **YES** — configuratie/code; actuele HTTP-sluitcontrole nog OPEN
-- RECOVERY CAPABILITY: **NOT VERIFIED** — synthetische SQL-restore wel PASS, productie-Neonherstel niet bewezen
+- DIAGNOSTIC CLOSED: **YES** — configuratie/code en actuele publieke404; geauthenticeerde afsluitcyclus niet uitgevoerd
+- RECOVERY CAPABILITY: **NOT VERIFIED** — tijdelijke kopie en opruiming bewezen; compute-aanvraag afgewezen, herstel-SQL niet uitgevoerd
 - CURRENT RECOVERY POINT: **NOT VERIFIED**
 - WRITE PAUSE READY: **NO**
 - D1/D2 READY: **NO-GO**
