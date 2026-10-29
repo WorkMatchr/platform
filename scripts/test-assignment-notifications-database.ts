@@ -2,12 +2,22 @@ import type { Assignment, ProviderInvitation, NotificationOutbox, PrismaClient }
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { spawnSync } from 'node:child_process'
+import { registerHooks } from 'node:module'
 import { Client } from 'pg'
 import type { AuthEmail } from '../src/lib/email'
+import { fundCommercialFixture } from './fixtures/commercial-payment-database'
+
+registerHooks({ resolve(specifier, context, nextResolve) {
+  if (specifier === 'server-only') return { url: 'data:text/javascript,export default {}', shortCircuit: true }
+  return nextResolve(specifier, context)
+} })
 
 // This suite never loads .env: require an explicit local database connection.
 const source = new URL(process.env.DATABASE_URL ?? '')
 if (!['localhost', '127.0.0.1', '::1'].includes(source.hostname)) throw new Error('LOCAL_DATABASE_REQUIRED')
+if (!['postgres:', 'postgresql:'].includes(source.protocol) || [...source.searchParams.keys()].some(key => key !== 'schema') || (source.searchParams.has('schema') && source.searchParams.get('schema') !== 'public')) throw new Error('LOCAL_DATABASE_WITHOUT_OVERRIDES_REQUIRED')
+assert.ok(!process.env.RESEND_API_KEY && !process.env.MOLLIE_API_KEY && !process.env.JORTT_CLIENT_SECRET)
+globalThis.fetch = async () => { throw new Error('EXTERNAL_TRANSPORT_DISABLED_IN_WP16') }
 const databaseName = `workmatchr_notifications_test_${process.pid}_${Date.now()}`
 const adminUrl = new URL(source); adminUrl.pathname = '/postgres'; adminUrl.search = ''
 const testUrl = new URL(source); testUrl.pathname = `/${databaseName}`
@@ -165,8 +175,7 @@ try {
   const newer = await fixture()
   assert.equal(newer.invitation.creditCost, 42)
   assert.equal((await getProviderInvitationDetail(user.id, providerOrg.id, initial.invitation.id)).invitation.preview.priceCredits, 27)
-  const account = await db.creditAccount.create({ data: { organizationId: providerOrg.id } })
-  await db.creditTransaction.create({ data: { creditAccountId: account.id, type: 'ADMIN_GRANT', amount: 100, totalDelta: 100, reservedDelta: 0, balanceAfter: 100, reason: 'Isolated test credits', createdByUserId: user.id, idempotencyKey: randomUUID() } })
+  const commercialPurchase = await fundCommercialFixture(db, user, providerOrg.id, client.id)
   const purchaseInput = { actorUserId: user.id, providerOrganizationId: providerOrg.id, invitationId: initial.invitation.id, idempotencyKey: randomUUID() }
   await Promise.all([acceptProviderInvitation(purchaseInput), acceptProviderInvitation(purchaseInput)])
   await assert.rejects(acceptProviderInvitation({ ...purchaseInput, actorUserId: client.id }))
@@ -184,7 +193,15 @@ try {
   const { publishSimpleAdviceRequest } = await import('../src/lib/requests/simple-advice-service')
   const viewer = { userId: client.id, organizationId: clientOrg.id, organizationRole: 'OWNER' as const, isPlatformAdministrator: false }
   const basic = { routeChoice: 'KNOWS_EXPERTISE', requestedExpertise: 'BEDRIJFSARTS', additionalExpertises: ['CASEMANAGER_VERZUIM'], requestTitle: 'Fictieve vertrouwelijke klantnaam', requestDescription: 'Wij willen advies over gezondheid op het werk.', desiredOutcome: 'ADVICE', workLocationMode: 'REMOTE', desiredStartMode: 'WITHIN_ONE_MONTH' }
-  const published = await publishSimpleAdviceRequest(viewer, randomUUID(), basic)
+  const dossierId = randomUUID()
+  const published = await publishSimpleAdviceRequest(viewer, dossierId, basic)
+  assert.equal((await publishSimpleAdviceRequest(viewer, dossierId, basic)).id, published.id)
+  const canonicalRequest = await db.request.findUniqueOrThrow({ where: { adviceDossierId: dossierId } })
+  assert.equal(canonicalRequest.status, 'PUBLISHED')
+  assert.equal(published.id, canonicalRequest.id, 'Request.id remains the external identifier')
+  assert.equal(await db.requestAssignmentHandoff.count({ where: { requestId: canonicalRequest.id } }), 1)
+  const handoff = await db.requestAssignmentHandoff.findFirstOrThrow({ where: { requestId: canonicalRequest.id } })
+  const immutableVersion = await db.adviceDossierVersion.findFirstOrThrow({ where: { adviceDossierId: dossierId } })
   const matched = await runMarketplaceMatching({ actorUserId: client.id, organizationId: clientOrg.id, assignmentId: published.id, expectedAssignmentVersion: 1, idempotencyKey: randomUUID() })
   assert.equal(matched.invitations.length, 2)
   const additionalInvitation = matched.invitations.find(inv => inv.providerProfileId === additionalProfile.id)!
@@ -209,6 +226,29 @@ try {
     assert.equal(await db.notificationOutbox.count({ where: { eventId: `INVITATION:${invitation.id}`, recipientUserId: recipient.id, status: 'SENT' } }), 1)
   }
   assert.equal((await deliverAssignmentEmails({ send: async () => { throw new Error('Duplicate delivery') } })).claimed, 0)
+  const invitationInput = { actorUserId: user.id, providerOrganizationId: providerOrg.id, invitationId: primaryInvitation.id, idempotencyKey: randomUUID() }
+  const [participation, replay] = await Promise.all([acceptProviderInvitation(invitationInput), acceptProviderInvitation(invitationInput)])
+  assert.equal(participation.id, replay.id)
+  await assert.rejects(acceptProviderInvitation({ ...invitationInput, actorUserId: additionalUser.id }), { code: 'ACCESS_DENIED' })
+  assert.equal(await db.creditTransaction.count({ where: { referenceId: participation.id, type: 'PARTICIPATION_PAYMENT' } }), 1)
+  assert.equal((await db.creditAccount.findUniqueOrThrow({ where: { organizationId: providerOrg.id } })).availableBalance, 100 - initial.invitation.creditCost - primaryInvitation.creditCost)
+  assert.equal(await db.creditTransaction.count({ where: { referenceId: commercialPurchase.id, type: 'PURCHASE' } }), 1)
+  const { saveQuoteDraft, submitQuote } = await import('../src/lib/marketplace/quote-service')
+  const { awardMarketplaceQuote } = await import('../src/lib/marketplace/award-service')
+  const quote = await saveQuoteDraft({ actorUserId: user.id, providerOrganizationId: providerOrg.id, participationId: participation.id, expectedQuoteVersion: 0, content: { priceCents: 25000, priceExplanation: 'Synthetische offerteprijs.', approach: 'Een concrete synthetische aanpak voor deze opdracht.', planning: 'Binnen vier weken.' } })
+  const submit = { actorUserId: user.id, providerOrganizationId: providerOrg.id, quoteId: quote.id, expectedQuoteVersion: 1, idempotencyKey: randomUUID() }
+  await submitQuote(submit)
+  await submitQuote(submit)
+  const award = { actorUserId: client.id, clientOrganizationId: clientOrg.id, assignmentId: published.id, quoteId: quote.id, motivation: 'Synthetische acceptatie van deze offerte.', idempotencyKey: randomUUID() }
+  await awardMarketplaceQuote(award)
+  await awardMarketplaceQuote(award)
+  await assert.rejects(awardMarketplaceQuote({ ...award, actorUserId: additionalUser.id }), { code: 'ACCESS_DENIED' })
+  assert.equal((await db.quote.findUniqueOrThrow({ where: { id: quote.id } })).status, 'AWARDED')
+  assert.equal(quote.assignmentId, handoff.assignmentId)
+  assert.equal((await db.assignment.findUniqueOrThrow({ where: { id: handoff.assignmentId } })).status, 'AWARDED')
+  assert.equal(await db.marketplaceAuditEvent.count({ where: { action: 'QUOTE_SUBMITTED', entityId: quote.id } }), 1)
+  assert.deepEqual(await db.adviceDossierVersion.findUniqueOrThrow({ where: { id: immutableVersion.id } }), immutableVersion)
+  console.log('WP16 PASS: purchased credits -> canonical dossier/request/handoff -> PRIMARY/ADDITIONAL -> fake SENT -> one unlock -> quote/award/replay -> immutable snapshot; cross-tenant denied')
   const beforeUnknown = await db.providerInvitation.count()
   const unknown = await publishSimpleAdviceRequest(viewer, randomUUID(), { ...basic, routeChoice: 'NEEDS_TOPIC', requestedExpertise: null, additionalExpertises: [], helpTopic: 'UNKNOWN' })
   await assert.rejects(runMarketplaceMatching({ actorUserId: client.id, organizationId: clientOrg.id, assignmentId: unknown.id, expectedAssignmentVersion: 1, idempotencyKey: randomUUID() }))

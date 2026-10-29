@@ -1,6 +1,6 @@
 import 'server-only'
 
-import createMollieClient, { PaymentMethod, SequenceType } from '@mollie/api-client'
+import { createMollieClient, PaymentMethod, SequenceType } from '@mollie/api-client'
 import { z } from 'zod'
 
 export type MolliePaymentState =
