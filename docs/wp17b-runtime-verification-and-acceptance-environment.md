@@ -95,9 +95,63 @@ blijft gelden voor ongewijzigde migratiebytes.
 - Volledige repository-lint: PASS met uitsluitend genegeerde `.local-storage`-cache
   uitgesloten; bestaande waarschuwingen afzonderlijk in uitvoer. Sandbox-Vitest had
   eerst EPERM op tijdelijke cache; dezelfde tests buiten sandbox PASS.
-- Preview-deployment, echte ingelogde browserflows en exact-head CI: nog te vervolgen.
+- Exact-head CI op `b281ffd4ef34330dc2cf4c76ed9227c18b8b6203`: beide workflows,
+  zowel push als PR, geslaagd. [PostgreSQL-log](https://github.com/WorkMatchr/platform/actions/runs/40761173016):
+  93-migratie clean/upgrade/replay, 112 geweigerde mutaties, 13+13 rolchecks,
+  synthetische restore 1738 ms, sessiefoutinjectie/tenantisolatie, F2/F4-concurrency,
+  finance/matching/learning. 22 gerichte, 264 gesloten-gate/auth/maintenance en 864
+  regressies geslaagd; 14 databasegebonden unitgevallen overgeslagen en afzonderlijk
+  door PostgreSQL-harnassen gedekt. Geen gemeten Neon-herstel-RTO.
 - F4 blijft uit wegens ontbrekende juridische claimvrijgave; WL-002 heeft geen runtime.
 - Geen echte mails/betalingen, productiegegevens, migraties, ACLs of providerinstellingen gewijzigd.
 
-**Voorlopig: WP17B gedeeltelijk, Production NO-GO.** Browserbewijs wordt uitsluitend
-na werkelijke uitvoering hieronder toegevoegd; service-/CI-tests vervangen dat niet.
+## Afgeronde browseracceptatie en grenzen — 28/29 oktober
+
+Lokale productiebuild op `127.0.0.1:3061`, gepind op uitsluitend de nieuwe
+synthetische acceptatiebranch. De lokale diagnose gaf 200 met de beperkte rol,
+TLSv1.3 en READ ONLY. Dit bewijst geen Vercel-runtimebinding.
+
+| Uitgevoerd in de browser | Resultaat |
+|---|---|
+| Opdrachtgever inloggen; Bedrijfsarts + Casemanager verzuim; publiceren | PASS: één Request, Assignment, handoff, dossier en snapshot |
+| Selectie starten, uitloggen, professional opnieuw inloggen | PASS: één invitation; preview vóór ontgrendelen zonder opdrachtgeveridentiteit |
+| Ontgrendelen met synthetisch gefinancierde wallet | PASS: 100 → 70 credits, één deelname |
+| Offerte indienen, professional uitloggen, opdrachtgever opnieuw inloggen, gunnen | PASS: één ingediende offerte en gunning, zichtbaar Gegund |
+| WL-001 starten; eerste blok; herladen | PASS: voortgang 0 → 3%, blijft bewaard |
+| Mobiel 390×844 en toetsenbordfocus | PASS: geen waargenomen horizontale overflow, zichtbare focus op Volgende |
+| Eindtoets starten/inleveren en certificaat aanvragen | PASS op expliciete synthetische hoofdstuk-/antwoordfixture; 50/50 en één certificaat |
+
+De financiering gebruikt bestaande financiële services met fake Mollie en fake
+Resend: zes herhalingen geven één ledgerbijschrijving/factuur; foutmail verliest
+geen betaalcommit; vertraagd pending maakt paid niet ongedaan; failed/canceled/
+expired geven geen credits; onbevoegde herhaling geweigerd. Geen echte providercall.
+De tien afgeronde hoofdstukken en toetsantwoorden zijn bewust fixturedata via
+de bestaande test-/servicestructuur: **geen bewijs van volledige menselijke
+cursusdoorloop, examennorm of inhoudelijke cursusacceptatie**.
+
+Bewijs: [publicatie](evidence/wp17b/browser-publication.png),
+[gunning](evidence/wp17b/browser-award.png),
+[mobiele focus](evidence/wp17b/browser-lms-mobile-focus.png).
+Read-only nacontrole 29 oktober: 1/1/1 Request/Assignment/handoff, één dossier/snapshot,
+één invitation, saldo70, vier synthetische purchases, één enrollment, nul echte
+gebruikers. Twee outboxrecords PENDING; niet dispatched of als afgeleverd geclaimd.
+
+Vercel maakte de eerste expliciet als preview aangevraagde deployment van het
+nieuwe project toch target=production. `dpl_G8LqP1DnRt2E9kR2MtrUPRfAvFRA` is vóór
+READY geannuleerd. Geen platform-productiealias geraakt. Een buildguard weigert
+nu ieder niet-previewtarget. Er is **geen bruikbare Vercel-acceptatiepreview**.
+Geen nieuwe poging/deployment uitgevoerd. Beide diagnoseflags zijn gesloten.
+
+De browsertool verdween tijdens het openen van de certificaat-PDF. De vervangende
+Windows Computer Use-kernel faalt ook na reset vóór initialisatie met
+`failed to write kernel assets` (OS error3). Daarom blijven browser-PDF/download,
+beheerderlogin, tweede-organisatiecontrole, laatste logout en echte 200%-zoom open;
+service-/CI-bewijs wordt daar niet als browserbewijs voor gebruikt. De lokale
+server luisterde op 29 oktober niet meer; geen bereikbare URL beloofd.
+Er resteerde bij nacontrole één uitsluitend synthetische sessie; geen claim van
+volledige browsercleanup. De afzonderlijke acceptatieresources blijven herkenbaar
+behouden voor vervolgacceptatie, zonder echte accounts of actieve providerkeys.
+
+**WP17B: technische kandidaat getest; aanvullende browser-/Previewacceptatie
+geblokkeerd. Production NO-GO.** Dit is geen toestemming voor een nieuwe diagnose,
+deployment, echte mail/betaling of moduleactivering.
