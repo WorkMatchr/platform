@@ -1,6 +1,13 @@
 # D1/D2 — productie-identiteit en herstelbaarheid
 
 **Peildatum: 29 oktober 2026. D1/D2 en productiemigratie: NO-GO.**
+**Nieuw voorbereidingsvoorstel:** [afzonderlijke D1-diagnosesleutel en één
+vervangende D2-herstelproef](d1-auth-d2-replacement-proposal.md).
+Dit voorstel vervangt de oude CRON_SECRET-afhankelijkheid voor de diagnose in de
+reviewcode, niet de bestaande cron-/finance-autorisatie. Het vereist nieuw akkoord;
+de historische uitvoering hieronder en de oorspronkelijke runtime-SHA zijn geen
+toestemming voor de aangepaste scope. Geen nieuwe productiehandeling uitgevoerd.
+
 Dit dossier vervangt de verouderde actuele-statusregels in DB-01–05/WP15–17B/ABC,
 niet hun historische bewijs. Geen productieautorisatie is met dit rapport verleend.
 De historische voorstellen hieronder worden voor D1-P/D2-R aangevuld door het
