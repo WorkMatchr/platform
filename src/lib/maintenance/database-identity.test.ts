@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-const mocks = vi.hoisted(() => ({ transaction: vi.fn(), execute: vi.fn(), query: vi.fn() }))
-vi.mock('@/lib/prisma', () => ({ getPrisma: () => ({ $transaction: mocks.transaction }) }))
+const mocks = vi.hoisted(() => ({ transaction: vi.fn(), execute: vi.fn(), query: vi.fn(), pool: vi.fn(), previewQuery: vi.fn(), release: vi.fn() }))
+vi.mock('@/lib/prisma', () => ({ getPreviewRuntimePool: mocks.pool, getPrisma: () => ({ $transaction: mocks.transaction }) }))
 import { isDatabaseIdentityDiagnosticEnabled, readDatabaseIdentity } from './database-identity'
 
 const now = Date.parse('2026-10-27T10:00:00Z')
@@ -8,6 +8,7 @@ const url = 'postgresql://synthetic_role:synthetic-password@ep-synthetic-pooler.
 const row = { database_name: 'neondb', database_role: 'synthetic_role', endpoint_id: 'ep-synthetic', branch_id: 'br-synthetic', ssl: true, tls_version: 'TLSv1.3', read_only: 'on', superuser: false, create_database: false, create_role: false, bypass_rls: false }
 beforeEach(() => {
   vi.clearAllMocks()
+  mocks.pool.mockReturnValue(null)
   vi.stubEnv('DATABASE_URL', url)
   vi.stubEnv('DATABASE_IDENTITY_DIAGNOSTIC_ENABLED', '')
   vi.stubEnv('DATABASE_IDENTITY_DIAGNOSTIC_UNTIL', '')
@@ -65,5 +66,26 @@ describe('temporary database identity diagnostic', () => {
   it.each([{ rows: [] }, { rows: [row, row] }])('requires exactly one metadata row', async ({ rows }) => {
     mocks.query.mockResolvedValue(rows)
     await expect(readDatabaseIdentity()).rejects.toThrow('DATABASE_IDENTITY_UNAVAILABLE')
+  })
+})
+
+
+describe('Preview runtime diagnostic transport', () => {
+  it('uses the same guarded pool, read-only SQL and verified socket behind the Neon proxy', async () => {
+    const client = {
+      connection: { stream: { encrypted: true, authorized: true, getProtocol: () => 'TLSv1.3', getPeerCertificate: () => ({ subjectaltname: 'DNS:ep-synthetic-pooler.c-2.eu-central-1.aws.neon.tech' }) } },
+      query: mocks.previewQuery, release: mocks.release,
+    }
+    mocks.previewQuery.mockResolvedValue({ rows: [{ ...row, ssl: false, tls_version: null }] })
+    mocks.pool.mockReturnValue({ connect: vi.fn().mockResolvedValue(client) })
+    const result = await readDatabaseIdentity()
+    expect(result.tlsVersion).toBe('TLSv1.3')
+    expect(result.tlsEvidence).toBe('verified-runtime-client-socket')
+    expect(mocks.transaction).not.toHaveBeenCalled()
+    expect(mocks.previewQuery.mock.calls[0][0]).toBe('BEGIN READ ONLY')
+    expect(mocks.previewQuery.mock.calls.at(-1)?.[0]).toBe('ROLLBACK')
+    expect(mocks.release).toHaveBeenCalledExactlyOnceWith(true)
+    client.connection.stream.authorized = false
+    await expect(readDatabaseIdentity()).rejects.toThrow('DATABASE_CLIENT_TLS_UNVERIFIED')
   })
 })

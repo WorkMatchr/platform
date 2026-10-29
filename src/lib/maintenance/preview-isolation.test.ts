@@ -14,6 +14,7 @@ const environment = {
   PREVIEW_DATABASE_NAME: 'neondb', PREVIEW_DATABASE_ROLE: 'workmatchr_preview_runtime',
   DATABASE_URL: 'postgresql://workmatchr_preview_runtime:synthetic@ep-synthetic-test.eu-central-1.aws.neon.tech/neondb?sslmode=require',
 }
+const connection = { stream: { encrypted: true, authorized: true, getProtocol: () => 'TLSv1.3', getPeerCertificate: () => ({ subjectaltname: 'DNS:ep-synthetic-test.eu-central-1.aws.neon.tech' }) } }
 const identity = {
   database: 'neondb', role: 'workmatchr_preview_runtime', login: 'workmatchr_preview_runtime',
   endpoint: 'ep-synthetic-test', branch: 'br-synthetic-test', ssl: true, tls: 'TLSv1.3',
@@ -51,17 +52,22 @@ describe('Preview isolation before any application query', () => {
     const pool = new PreviewDatabasePool(policy)
     expect(pool.options.ssl).toEqual({ rejectUnauthorized: true })
   })
-  it.each(['branch', 'endpoint', 'database', 'role', 'login', 'ssl', 'tls', 'privileged', 'memberships', 'database_create', 'schema_create', 'owns_objects', 'registry_write'])('destroys client on live %s mismatch', async key => {
+  it.each(['branch', 'endpoint', 'database', 'role', 'login', 'privileged', 'memberships', 'database_create', 'schema_create', 'owns_objects', 'registry_write'])('destroys client on live %s mismatch', async key => {
     const row = { ...identity, [key]: typeof identity[key as keyof typeof identity] === 'boolean' ? !identity[key as keyof typeof identity] : null }
-    const client = { query: vi.fn().mockResolvedValue({ rows: [row] }), release: vi.fn() }
+    const client = { connection, query: vi.fn().mockResolvedValue({ rows: [row] }), release: vi.fn() }
     vi.spyOn(Pool.prototype, 'connect').mockImplementation(() => Promise.resolve(client as unknown as PoolClient))
     const pool = new PreviewDatabasePool(previewDatabasePolicy(environment)!)
     await expect(pool.connect()).rejects.toThrow(/^PREVIEW_DATABASE_ISOLATION_REQUIRED$/)
     expect(client.release).toHaveBeenCalledExactlyOnceWith(true)
     expect(client.query).toHaveBeenCalledExactlyOnceWith({ text: PREVIEW_IDENTITY_SQL, query_timeout: 5000 })
   })
+  it('accepts verified client TLS when Neon reports an unencrypted backend hop', async () => {
+    const client = { connection, query: vi.fn().mockResolvedValue({ rows: [{ ...identity, ssl: false, tls: null }] }), release: vi.fn() }
+    vi.spyOn(Pool.prototype, 'connect').mockImplementation(() => Promise.resolve(client as unknown as PoolClient))
+    expect(await new PreviewDatabasePool(previewDatabasePolicy(environment)!).connect()).toBe(client)
+  })
   it('checks every checkout including reuse, and returns the same verified transaction client', async () => {
-    const client = { query: vi.fn().mockResolvedValue({ rows: [identity] }), release: vi.fn() }
+    const client = { connection, query: vi.fn().mockResolvedValue({ rows: [identity] }), release: vi.fn() }
     vi.spyOn(Pool.prototype, 'connect').mockImplementation(() => Promise.resolve(client as unknown as PoolClient))
     const pool = new PreviewDatabasePool(previewDatabasePolicy(environment)!)
     expect(await pool.connect()).toBe(client)
@@ -69,7 +75,7 @@ describe('Preview isolation before any application query', () => {
     expect(client.query).toHaveBeenCalledTimes(2)
   })
   it('blocks Pool.query callback path without executing the application SQL', async () => {
-    const client = { query: vi.fn().mockResolvedValue({ rows: [] }), release: vi.fn() }
+    const client = { connection, query: vi.fn().mockResolvedValue({ rows: [] }), release: vi.fn() }
     vi.spyOn(Pool.prototype, 'connect').mockImplementation(() => Promise.resolve(client as unknown as PoolClient))
     const pool = new PreviewDatabasePool(previewDatabasePolicy(environment)!)
     await expect(pool.query('SELECT 42 AS application_query')).rejects.toThrow('PREVIEW_DATABASE_ISOLATION_REQUIRED')
@@ -77,7 +83,7 @@ describe('Preview isolation before any application query', () => {
   })
   it('executes normal Pool.query only after a successful check on the same client', async () => {
     const client = Object.assign(new EventEmitter(), {
-      release: vi.fn(),
+      connection, release: vi.fn(),
       query: vi.fn((query: { text: string } | string, values?: unknown, callback?: (error: null, result: unknown) => void) => {
         if (typeof query === 'object' && query.text === PREVIEW_IDENTITY_SQL) return Promise.resolve({ rows: [identity] })
         callback!(null, { rows: [{ answer: 42 }] })

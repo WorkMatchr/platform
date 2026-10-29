@@ -1,5 +1,6 @@
 import { Pool, type PoolClient } from 'pg'
 import { PREVIEW_ISOLATION_ERROR, previewDatabasePolicy } from './preview-isolation'
+import { verifiedDatabaseClientTls } from './database-client-tls'
 
 export const PREVIEW_IDENTITY_SQL = `SELECT
   current_database() AS database, current_user::text AS role,
@@ -34,6 +35,7 @@ export class PreviewDatabasePool extends Pool {
     let client: PoolClient | undefined
     try {
       client = await super.connect()
+      verifiedDatabaseClientTls(client, new URL(this.policy.connectionString).hostname)
       // pg supports per-query query_timeout; its published QueryConfig type omits it.
       const query = { text: PREVIEW_IDENTITY_SQL, query_timeout: 5000 }
       const { rows } = await client.query(query)
@@ -41,7 +43,6 @@ export class PreviewDatabasePool extends Pool {
       if (rows.length !== 1 || !row || row.database !== this.policy.database
         || row.role !== this.policy.role || row.login !== this.policy.role
         || row.endpoint !== this.policy.endpoint || row.branch !== this.policy.branch
-        || row.ssl !== true || !row.tls
         || ['privileged', 'memberships', 'database_create', 'schema_create', 'owns_objects', 'registry_write']
           .some(key => row[key] !== false)) throw new Error(PREVIEW_ISOLATION_ERROR)
       return client
