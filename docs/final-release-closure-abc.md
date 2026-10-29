@@ -214,7 +214,9 @@ productverwachtingsbesluiten, zie [WP15 B](wp15-integrated-commercial-release-re
 [WP17B](wp17b-runtime-verification-and-acceptance-environment.md#afgeronde-browseracceptatie-en-grenzen--2829-oktober)
 legt echte lokale browserpublicatie→selectie→privacy-preview→30creditontgrendeling→
 offerte→gunning vast. Eén Request/Assignment/handoff/dossier/snapshot/invitation.
-Wallet100→70; vier aankopen waarvan alleen één fake PAID credits/factuur oplevert.
+Wallet 100→70; vier aankopen waarvan alleen één fake PAID credits/factuur oplevert.
+Een aanvullende read-only nacontrole bevestigt één offerte, één gunning, één
+certificaat, één ingeleverde toetspoging, één factuur en één PURCHASE-ledgerregel.
 Registratie/accountopbouw gebeurde via synthetische fixture, niet opnieuw via
 browserregistratie. Examenfixture is geen commerciële of juridische beoordeling.
 
@@ -349,33 +351,38 @@ Geen refund, tweede poging of andere ontvanger op basis van eerdere toestemming.
 
 ## 7. Validatie, beperkingen en vervolgstappen
 
-Hergebruikt bewijs is aan de bron gebonden:93 migraties ongewijzigd tegenovermain;
-WP17B110 tests opnieuw PASS (99+11); PostgreSQL-CI op b281ffd alle clean/upgrade/
-restore/leastprivilege/finance/notification/compliance/session/LMScontroles groen.
+Hergebruikt bewijs is aan de bron gebonden: 93 migraties ongewijzigd tegenover main;
+WP17B: 110 tests opnieuw PASS (99+11). PostgreSQL-CI op b281ffd bewijst de schone
+opbouw, upgrade, restore, beperkte rollen, financiën, notificaties, Compliance,
+sessies en LMS. Deze controles zijn groen.
 Laatste #73-commit voegt uitsluitend twee operatorfixtures en browserrapport toe;
 de applicatie-/migratiebytes zijn gelijk. Ook alle vier checks op exacte head
 `a64c9ca` zijn SUCCESS: [PostgreSQL](https://github.com/WorkMatchr/platform/actions/runs/40839779591),
 [lint/build](https://github.com/WorkMatchr/platform/actions/runs/40839779522).
-PR64:14 gerichte juridischetests PASS; volledigelint nulerrors/vierbestaandewarnings.
-Eerste standaloneTypeScript liep vóór ontbrekende Prismageneratie; eerste build
-weigerde een node_modulesjunction buiten de worktreeroot. Dit zijn lokale setupfouten,
-geen productbaseline: eigenlockfile-installatie en generatie, daarna hertest.
+PR64: 14 gerichte juridische tests PASS; volledige lint nul fouten en vier bestaande
+waarschuwingen. De eerste TypeScript-check liep vóór de ontbrekende Prisma-generatie;
+de eerste build weigerde een node_modules-junction buiten de worktreeroot. Dit zijn
+lokale inrichtingsfouten, geen productbaseline: hersteld met een eigen installatie
+uit de bestaande lockfile en generatie, daarna opnieuw getest.
 Na herstel zijn standalone TypeScript en productiebuild beide PASS. Geen nieuwe of
 oude TypeScriptfout op deze kandidaat. Alle vier checks op PR64-head `74c6b20` zijn
 SUCCESS: [PostgreSQL](https://github.com/WorkMatchr/platform/actions/runs/40841087301),
 [lint/build](https://github.com/WorkMatchr/platform/actions/runs/40841087417).
-een bewust uitgesloten Previewdeployment wordt niet als READY geclaimd.
-Diff/secretscontrole op expliciete bestanden; lokale credentials/rawlogs buitenGit.
+Een bewust uitgesloten Previewdeployment wordt niet als READY geclaimd.
+Diff- en secretscontrole op expliciete bestanden; lokale credentials en ruwe logs
+blijven buiten Git. Dit ABC-pakket wijzigt alleen vier documentatie-/evidence- en
+branchconfiguratiebestanden; de bovenstaande applicatieproeven blijven geldig.
 
-Geen productiemutatie/deployment, echteprovideractie of juridischevrijgave inABC.
-Oude begrensde diagnose staat gesloten. Eigenacceptatieresources zijn synthetisch;
-geen productiekopie, geen bestaandeDB/snapshot verwijderd. Runtimeoperatorscripts
-zijn op exact die acceptatie-identiteit begrensd en geen algemeen productietool.
+Geen productiemutatie, deployment, echte provideractie of juridische vrijgave in ABC.
+De oude begrensde diagnose staat gesloten. Eigen acceptatieresources zijn synthetisch;
+geen productiekopie of verwijdering van bestaande databases/snapshots. Operatorscripts
+zijn op exact die acceptatie-identiteit begrensd en geen algemeen productiegereedschap.
 
-Eerst uitvoerbaar: PR64review en gescheiden #70–73/ABCcodereview; beheerder verifieert
-bestaande maintenance-auth/Previewtarget en herstelquota; PO benoemt achtervang,
-writerspauze en neemt concrete besluiten. Browserrestacceptatie hervatten zodra
-tool/veiligePreview bruikbaar is. Geen nieuwe algemene audit nodig.
+Eerst uitvoerbaar: review van PR64 en de gescheiden #70–73/ABC-kandidaten. Beheerder
+verifieert bestaande maintenance-auth, Previewtarget en herstelquota. PO benoemt
+achtervang, bevestigt de schrijfpauze en neemt de concrete besluiten. Resterende
+browseracceptatie hervatten zodra browserbediening of veilige Preview bruikbaar is.
+Geen nieuwe algemene audit nodig.
 
 **Eindadvies: voorbereidingsdossier afgerond; productiemigratie NO-GO.**
 Uitvoering wacht deels op specifieke toestemming, deels op nog ontbrekend bewijs
