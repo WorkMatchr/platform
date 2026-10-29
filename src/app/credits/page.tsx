@@ -12,6 +12,7 @@ import {
   calculateAuthoritativeMollieCreditPrice,
   usesMollieTestAcceptancePrice,
 } from '@/lib/finance/mollie-test-pricing'
+import { creditTransactionTypeLabels } from '@/lib/marketplace/marketplace-presentation'
 import { getProviderCreditOverview } from '@/lib/marketplace/credit-service'
 import { requireOrganizationMembership } from '@/lib/organizations/organization-authorization'
 import { getPrisma } from '@/lib/prisma'
@@ -79,6 +80,6 @@ export default async function CreditsPage({ searchParams }: { searchParams: Prom
       />
     </Card>
     <Card className="mt-6"><h2 className="text-lg font-semibold">Aankopen en facturen</h2><ul className="mt-4 divide-y divide-border">{purchases.map((purchase) => <li key={purchase.id} className="grid gap-2 py-4 sm:grid-cols-[1fr_auto]"><div><p className="font-semibold">{purchase.packageLabel}{purchase.pricingMode === 'MOLLIE_TEST_ACCEPTANCE' ? ' · Sandbox-testbetaling' : ''}</p><p className="text-sm text-text-secondary">{purchase.createdAt.toLocaleString('nl-NL')} · {formatEuro(purchase.amountInclVatCents)} incl. btw · {purchase.status}</p></div>{purchase.invoice ? <Link className="font-semibold underline" href={`/credits/facturen/${purchase.invoice.id}`}>{purchase.invoice.invoiceNumber}</Link> : <Link className="font-semibold underline" href={`/credits/betaling/${purchase.id}`}>Bekijk status</Link>}</li>)}{purchases.length === 0 ? <li className="py-4 text-text-secondary">Er zijn nog geen aankopen.</li> : null}</ul></Card>
-    <Card className="mt-6"><h2 className="text-lg font-semibold">Recente creditmutaties</h2><ul className="mt-4 divide-y divide-border">{overview.transactions.map((transaction) => <li key={transaction.id} className="grid gap-1 py-4 sm:grid-cols-[1fr_auto]"><div><p className="font-semibold">{transaction.type}</p><p className="text-sm text-text-secondary">{transaction.reason ?? 'Creditmutatie'} · {transaction.createdAt.toLocaleString('nl-NL')}</p></div><span className="font-semibold">{transaction.amount > 0 ? '+' : ''}{transaction.amount}</span></li>)}{overview.transactions.length === 0 && <li className="py-4 text-text-secondary">Er zijn nog geen creditmutaties.</li>}</ul></Card>
+    <Card className="mt-6"><h2 className="text-lg font-semibold">Recente creditmutaties</h2><ul className="mt-4 divide-y divide-border">{overview.transactions.map((transaction) => <li key={transaction.id} className="grid gap-1 py-4 sm:grid-cols-[1fr_auto]"><div><p className="font-semibold">{creditTransactionTypeLabels[transaction.type] ?? 'Status niet beschikbaar'}</p><p className="text-sm text-text-secondary">{transaction.reason ?? 'Creditmutatie'} · {transaction.createdAt.toLocaleString('nl-NL')}</p></div><span className="font-semibold">{transaction.amount > 0 ? '+' : ''}{transaction.amount}</span></li>)}{overview.transactions.length === 0 && <li className="py-4 text-text-secondary">Er zijn nog geen creditmutaties.</li>}</ul></Card>
   </Section>
 }

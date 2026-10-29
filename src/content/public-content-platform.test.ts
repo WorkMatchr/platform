@@ -65,14 +65,23 @@ describe('Public Content Platform v1', () => {
       expect(wordCount, item.id).toBeLessThanOrEqual(575)
     }
 
-    for (const item of knowledgeArticles) {
-      const wordCount = countWords([
-        item.summary, item.shortAnswer, item.relevantWhen, item.context, item.practiceExample,
-        item.practicalPoints, item.rieRelationship, item.supportWhen, item.nextStep, item.legalContext, item.faq,
-      ])
-      expect(wordCount, item.id).toBeGreaterThanOrEqual(425)
-      expect(wordCount, item.id).toBeLessThanOrEqual(575)
-    }
+  })
+
+  // Batch 2 (d277274), followed by A05 (#38), was accepted with these longer
+  // distinctions. Keep approved legal content intact and the v1 budget elsewhere.
+  const reviewedArticleBudgets: Readonly<Record<string, number>> = {
+    'knowledge:occupational-physician': 750,
+    'knowledge:psa': 750,
+    'knowledge:occupational-hygienist': 750,
+    'knowledge:incident-investigation': 1150,
+  }
+  it.each(knowledgeArticles)('bewaakt het redactionele budget van $id', (item) => {
+    const wordCount = countWords([
+      item.summary, item.shortAnswer, item.relevantWhen, item.context, item.practiceExample,
+      item.practicalPoints, item.rieRelationship, item.supportWhen, item.nextStep, item.legalContext, item.faq,
+    ])
+    expect(wordCount, item.id).toBeGreaterThanOrEqual(425)
+    expect(wordCount, item.id).toBeLessThanOrEqual(reviewedArticleBudgets[item.id] ?? 575)
   })
 
   it('valideert bronnen, content en relaties fail closed', () => {

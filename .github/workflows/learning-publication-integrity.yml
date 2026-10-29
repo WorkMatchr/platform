@@ -1,0 +1,32 @@
+name: Learning publication integrity
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  postgres-integrity:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: synthetic-local-test-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:synthetic-local-test-only@127.0.0.1:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run test:db:learning-integrity
+      - name: Restricted metadata helper and read-only diagnostic SQL
+        run: node scripts/test-show-db-tree-privileges.mjs
+      - run: npm run db:generate
+      - name: Closed database diagnostic and maintenance authentication
+        run: npx vitest run src/lib/maintenance/database-identity.test.ts src/app/api/maintenance/database-identity/route.test.ts src/lib/finance/financial-maintenance-auth.test.ts src/app/api/maintenance/marketplace/route.test.ts src/lib/learning/learning-runtime-gate.test.ts --maxWorkers=2

@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — WP14 productievoorbereiding
+
+- Security-dependencies binnen bestaande hoofdversies bijgewerkt, centrale anti-framing/nosniff/referrer-headers toegevoegd.
+- Readonly-testfixture en verouderde contentbudgettests afgestemd op bestaande contracten; geen juridische content of beslisregels gewijzigd.
+- Read-only productiecontrole, tijdelijke PostgreSQL-regressies en afzonderlijke technische/juridische/operationele vrijgavebesluiten vastgelegd in `docs/wp14-production-readiness.md`.
+
+
 ## Unreleased — thema-afhankelijke situaties
 
 - De onderwerp-route van Opdracht starten vraagt welke situaties de bezoeker herkent, met meerdere checkboxkeuzes, exclusief onbekend en een toelichting bij Anders.

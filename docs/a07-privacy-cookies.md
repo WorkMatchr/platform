@@ -1,3 +1,36 @@
+# Actuele reviewbasis — 29 oktober 2026
+
+PR #64 wordt opnieuw gericht op main `46962cff1724e87e5f33697173cbb9168d6f9da3`.
+De technische A07-opvolger is al geïntegreerd. De lokale integratiemerge behoudt
+alle actuele auth-, F3-, F4-, opdrachtstart-, LMS- en financiële code bytegelijk aan
+main. Alleen de negen juridische/documentatiebestanden verschillen; daarnaast sluit
+`vercel.json` uitsluitend `codex/a07-legal-review` uit van automatische deployments.
+Deze reviewpush publiceert dus geen onbeoordeelde tekst. PR #40 blijft auditspoor.
+
+De oudere tijdgebonden bevindingen hieronder blijven als historie staan. Hun
+uitspraken over een nog ontbrekende migratiereparatie, vier TypeScript-fouten,
+F3-mergeafhankelijkheid en nog niet geïmplementeerde sessie/opslagkeuzes zijn geen
+actuele blockers meer. Zie `a07-technical-split.md`, de gemergede F1/F3-rapporten en
+de nieuwe validatie in de PR-beschrijving. Het juridische oordeel is daarmee niet
+ingevuld. Ook deze ronde verandert geen juridische identiteit, termijn of bronclaim.
+
+## Nog te besluiten vóór juridische publicatie
+
+| Onderwerp | Bevestigd / gereed voor review | Ontbrekende beslissing of bewijs |
+|---|---|---|
+| Identiteit/adres | Voorlopige FSC/WorkMatchr-gegevens centraal; privacycontact PO-bevestigd | Definitief postadres Zwolle en expliciete identiteitsvalidatie door PO |
+| Doeleinden/rechtsgronden | Verwerkingstabel en conceptteksten behouden | Menselijke toets per verwerking, belangenafweging waar vereist; geen generieke goedkeuring |
+| Leveranciers/doorgifte | Vercel, Neon, uitgaand Resend, inkomend Vimexx, Mollie en Jortt onderscheiden | Werkelijke afspraken, regio's, subprocessors/doorgiftemechanismen en bewaartermijnen door beheer/PO aantonen |
+| Cookies/opslag | Native Better Auth 24 uur/7 dagen; expliciete Compliance-opslag 24 uur; opdracht-sessionStorage afzonderlijk | Productieruntime/netwerk en providercheckout nog niet volledig gemeten; geen algemene toestemmingsvrijstelling claimen |
+| Mailbewaring | PO-beleid: één jaar vanaf ontvangst, gemotiveerde noodzakelijke uitzonderingen, jaarlijkse handmatige controle door eigenaar | Uitvoeringsregistratie zonder persoonsgegevens; Vimexx-prullenbak/backups/MFA/forwarderlogs nog verifiëren |
+| Rechten/contact | contact@workmatchr.nl → Vimexx → info@workmatchr.nl PO-bevestigd | Ontvangst, bevoegd beheer, termijnen en verwijder-/inzageprocedure aantoonbaar beproeven |
+
+Juridische teksten blijven zichtbaar **Concept — nog niet vastgesteld**, noindex.
+Geen merge-, publicatie-, mailbox- of mailverzendtoestemming. A06 blijft buiten deze
+PR en standaard uit; F4 en LMS houden hun eigen inhoudelijke/gatebesluiten.
+
+---
+
 # A07 fase 1 — verwerkingen, privacy en cookies (concept)
 
 ## Eindacceptatie 25 oktober 2026

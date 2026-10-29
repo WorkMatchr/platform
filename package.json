@@ -13,7 +13,8 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "npm run test:scheduler && vitest run",
+    "test:scheduler": "node --test ops/marketplace-notifications/dispatch.test.mjs",
     "test:db": "npm run test:db:core && npm run test:db:public-intake && npm run test:db:advice-dossiers && npm run test:db:requests && npm run test:db:request-interests && npm run test:db:request-offer-slots && npm run test:db:providers && npm run test:db:accounts && npm run test:db:account-lifecycle && npm run test:db:credits && npm run test:db:finance && npm run test:db:marketplace && npm run test:db:marketplace-concurrency && npm run test:db:compliance-domain",
     "test:db:core": "tsx scripts/test-intake-database.ts",
     "test:db:public-intake": "tsx scripts/test-public-intake-database.ts",
@@ -67,20 +68,21 @@
     "seed:learning": "tsx scripts/seed-learning.ts",
     "seed:learning:exam": "tsx scripts/seed-learning-final-exam.ts",
     "seed:learning:exam:v1.1": "tsx scripts/seed-learning-final-exam-v1-1.ts",
-    "test:db:learning": "tsx scripts/test-learning-database.ts"
+    "test:db:learning": "tsx scripts/test-learning-database.ts",
+    "test:db:learning-integrity": "tsx scripts/test-learning-publication-integrity-database.ts"
   },
   "dependencies": {
     "@better-auth/prisma-adapter": "^1.6.23",
     "@mollie/api-client": "^4.6.0",
     "@napi-rs/canvas": "1.0.6",
-    "@prisma/adapter-pg": "^7.7.0",
-    "@prisma/client": "7.8.0",
+    "@prisma/adapter-pg": "^7.10.1",
+    "@prisma/client": "7.10.1",
     "@types/qrcode": "^1.5.6",
     "@vercel/blob": "^2.8.0",
     "@vercel/oidc": "^3.8.5",
     "better-auth": "^1.6.23",
     "dotenv": "^17.0.0",
-    "next": "^16.2.0",
+    "next": "^16.4.1",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^6.2.108",
     "pdfkit": "0.20.2",
@@ -89,9 +91,9 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "resend": "^6.17.2",
-    "sharp": "^0.35.3",
+    "sharp": "^0.35.5",
     "word-extractor": "^1.0.4",
-    "zod": "^4.4.3"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.0",
@@ -104,19 +106,22 @@
     "@types/react-dom": "^19.2.0",
     "@types/word-extractor": "^1.0.4",
     "eslint": "^9.0.0",
-    "eslint-config-next": "^16.2.0",
+    "eslint-config-next": "^16.4.1",
     "jsdom": "^29.1.1",
-    "prisma": "7.8.0",
+    "prisma": "7.10.1",
     "tailwindcss": "^4.3.0",
     "tsx": "^4.20.0",
     "typescript": "^5.9.0",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.12"
   },
   "overrides": {
     "@hono/node-server": "2.0.11",
     "find-my-way": "9.7.0",
-    "postcss": "8.5.22",
-    "sharp": "$sharp"
+    "postcss": "8.5.31",
+    "sharp": "$sharp",
+    "@vercel/cli-config": {
+      "zod": "$zod"
+    }
   },
   "optionalDependencies": {
     "@napi-rs/canvas-linux-x64-gnu": "^1.0.6"
