@@ -2,7 +2,8 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "git": {
     "deploymentEnabled": {
-      "codex/db05-runtime-preflight": false
+      "codex/db05-runtime-preflight": false,
+      "codex/a07-legal-review": false
     }
   },
   "crons": [
