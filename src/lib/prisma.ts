@@ -1,9 +1,12 @@
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '@/generated/prisma/client'
+import { previewDatabasePolicy } from '@/lib/maintenance/preview-isolation'
+import { PreviewDatabasePool } from '@/lib/maintenance/preview-database-pool'
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient }
 
 export function getPrisma(): PrismaClient {
+  const preview = previewDatabasePolicy()
   if (!globalForPrisma.prisma) {
     const connectionString = process.env.DATABASE_URL
 
@@ -12,7 +15,9 @@ export function getPrisma(): PrismaClient {
     }
 
     globalForPrisma.prisma = new PrismaClient({
-      adapter: new PrismaPg({ connectionString }),
+      adapter: preview
+        ? new PrismaPg(new PreviewDatabasePool(preview), { disposeExternalPool: true })
+        : new PrismaPg({ connectionString }),
     })
   }
 

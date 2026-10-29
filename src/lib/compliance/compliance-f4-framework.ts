@@ -4,8 +4,9 @@ import { loadComplianceV2Framework } from './compliance-v2-framework'
 import { complianceChecksum } from './compliance-v2'
 import { buildF4Definition, type F4SourceBindings } from './compliance-f4-definition'
 import { F4_BINDING } from './compliance-f4-catalog'
+import { isPreviewInfrastructureAccepted } from '@/lib/maintenance/preview-isolation'
 
-export const isF4Enabled = () => process.env.COMPLIANCE_F4_ENABLED === 'true'
+export const isF4Enabled = () => isPreviewInfrastructureAccepted() && process.env.COMPLIANCE_F4_ENABLED === 'true'
 
 export async function loadF4Framework() {
   const definition = await loadComplianceV2Framework(getPrisma(), F4_BINDING.id)

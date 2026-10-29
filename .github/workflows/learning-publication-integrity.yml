@@ -31,10 +31,14 @@ jobs:
         run: node scripts/test-show-db-tree-privileges.mjs
       - run: npm run db:generate
       - name: Closed database diagnostic and maintenance authentication
-        run: npx vitest run src/lib/maintenance/database-identity.test.ts src/app/api/maintenance/database-identity/route.test.ts src/lib/finance/financial-maintenance-auth.test.ts src/app/api/maintenance/marketplace/route.test.ts src/lib/learning/learning-runtime-gate.test.ts src/app/featuregate-isolation.test.ts --maxWorkers=2
+        run: npx vitest run scripts/wp17-acceptance-preflight.test.ts src/lib/maintenance/preview-isolation.test.ts src/lib/maintenance/database-identity.test.ts src/app/api/maintenance/database-identity/route.test.ts src/lib/finance/financial-maintenance-auth.test.ts src/app/api/maintenance/marketplace/route.test.ts src/lib/learning/learning-runtime-gate.test.ts src/app/featuregate-isolation.test.ts --maxWorkers=2
       - name: Combined synthetic commercial chain and notification recovery
         run: npm run test:db:assignment-notifications
       - name: Financial concurrency and tenant authorization
         run: npm run test:db:finance && npm run test:db:marketplace-concurrency
       - name: Versioned Compliance and personal learning history
         run: npm run test:db:compliance-runs && npm run test:db:learning
+      - name: Session security and synthetic account isolation
+        run: npm run test:db:auth-sessions
+      - name: Infrastructure and application regressions
+        run: npx vitest run src/lib/compliance src/lib/learning src/lib/finance src/lib/credits src/lib/email.test.ts src/components/compliance src/components/arbo-guide --maxWorkers=2
