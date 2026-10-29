@@ -1,5 +1,6 @@
 # Documentatie WorkMatchr
 
+- [WP15 — integraal commercieel release- en beslisdossier](wp15-integrated-commercial-release-readiness.md)
 - [DB-05 — runtime-identiteit, rechtenbeperking en herstelvoorbereiding](db05-runtime-and-recovery-preparation.md)
 - [DB-02/03 — migratiereparatie, databaseveiligheid en uitvoeringsplan](db02-db03-migration-repair-and-release.md)
 - [DB-01 — read-only productiemigratiecontrole](db01-production-migration-readiness.md)
