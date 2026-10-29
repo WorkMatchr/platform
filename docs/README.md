@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [Gecombineerde afronding A/B/C — bewijs, vrijgavebesluiten en uitvoering](final-release-closure-abc.md)
+
 - [WP17B — runtimeverificatie en geïsoleerde acceptatieomgeving](wp17b-runtime-verification-and-acceptance-environment.md)
 
 - [WP17 — infrastructuur, Preview-isolatie en rollen/herstelacceptatie](wp17-production-infrastructure-readiness.md)
