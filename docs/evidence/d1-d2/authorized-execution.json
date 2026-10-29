@@ -1,5 +1,66 @@
 {
   "scope": "D1-P / D2-R authorized bounded execution; no production migration or application deployment",
+  "officialSecretRetrievalFollowup": {
+    "checkedAt": "2026-10-29T17:47:53.010Z",
+    "secretRetrieval": {
+      "id": "p4KK8lY3J4mxUFoJ",
+      "key": "CRON_SECRET",
+      "type": "sensitive",
+      "visibility": "secret",
+      "target": [
+        "production"
+      ],
+      "valueFieldPresent": false,
+      "nonemptyValueReturned": false,
+      "sharedEnvId": null,
+      "createdAt": "2026-09-03T06:09:51.513Z",
+      "updatedAt": "2026-09-20T18:26:07.657Z",
+      "valueWrittenLocally": false,
+      "rotationPerformed": false,
+      "diagnosticRequests": 0,
+      "reason": "Production sensitive/secret is write-only after saving; targeted official get_project_env returned no value field",
+      "sources": [
+        "https://vercel.com/docs/environment-variables/sensitive-environment-variables",
+        "https://vercel.com/docs/cli/env"
+      ]
+    },
+    "d2ReadOnly": {
+      "identity": {
+        "checked_at": "2026-10-29T17:47:53.010Z",
+        "database": "neondb",
+        "operator_role": "neondb_owner",
+        "read_only": "on"
+      },
+      "roleAggregates": {
+        "customer_roles": 1,
+        "customer_login_roles": 1,
+        "other_customer_login_roles": 0,
+        "owner_login": true,
+        "owner_superuser": false,
+        "owner_bypassrls": true
+      },
+      "migrationCounts": {
+        "successful_migrations": 85,
+        "unfinished_migrations": 0
+      },
+      "activeBranches": [
+        {
+          "id": "br-odd-smoke-agf0wj9j",
+          "name": "production",
+          "default": true
+        }
+      ],
+      "projectMemberCount": 1,
+      "additionalBranchCreated": false,
+      "roleCredentialsRead": false,
+      "roleCredentialsChanged": false
+    },
+    "scope": {
+      "productionSqlWrites": false,
+      "productionConfigurationChanges": false,
+      "deployments": 0
+    }
+  },
   "followupEndpointDocumentation": {
     "api": "https://neon.com/docs/reference/api/endpoints/create-project-endpoint",
     "passwordlessOverride": "not implemented; omit in a future proposal",

@@ -9,6 +9,72 @@ Overige voorstellen blijven ongeautoriseerd.
 
 ## Uitvoering D1-P / D2-R — 29 oktober 2026
 
+### Vervolg: officiële secret-ophaalroute en D2-afscherming
+
+De Product Owner heeft aanvullend uitsluitend onderzoek naar veilig ophalen van de
+bestaande Production-secret toegestaan. Rotatie, wijzigingen en ongeauthenticeerde
+diagnoseaanvragen blijven in deze vervolgcontrole uitgesloten.
+
+**D1-conclusie: de bestaande waarde is via de beschikbare officiële Vercel-
+beheerfuncties niet terugleesbaar.** De gerichte `get_project_env`-aanvraag op
+`platform`, team `workmatchrs-projects`, retourneert voor `CRON_SECRET`
+`type=sensitive`, `visibility=secret`, target uitsluitend `production`, geen
+`value`-veld en geen shared-variablekoppeling. Dit is het gedocumenteerde
+write-only gedrag, niet alleen een beperking van het dashboardbewerkvenster.
+Volgens [Vercels Secret-documentatie](https://vercel.com/docs/environment-variables/sensitive-environment-variables)
+blijven opgeslagen Secrets verborgen. De [CLI-documentatie](https://vercel.com/docs/cli/env)
+bevestigt dat `env pull` geen ontbrekende secretwaarde terughaalt: een bestaande
+lokale waarde blijft behouden, anders ontstaat een placeholder. Daarom geen brede
+env-export, gewijzigde classificatie of runtimecode gebruikt om de waarde alsnog
+zichtbaar te maken. Geen secret op schijf opgeslagen, geroteerd of gelogd.
+
+Metadata: aangemaakt op **2026-09-03T06:09:51.513Z**, laatst bijgewerkt op
+**2026-09-20T18:26:07.657Z**. Dit bewijst niet welke aanmaakmethode is gebruikt
+of dat de laatste update een secretrotatie was. De waarde is niet gereconstrueerd.
+
+**Kleinste veilige vervolgstap:** gebruik uitsluitend een oorspronkelijke kopie uit
+het bestaande geautoriseerde secretbeheer als die nog bestaat. Als die ontbreekt,
+is een afzonderlijk goedgekeurde, gecoördineerde rotatie de bestaande route zonder
+nieuwe authenticatiebypass. Voorstel, nu niet uitgevoerd:
+
+1. Breng de aanroepers in kaart en plan hun gecontroleerde pauze/overgang. De
+   repository gebruikt dezelfde naam voor de GitHub-marketplace-dispatcher,
+   Vercel-finance-cron en database-identiteitsdiagnose. Of de GitHub-secretwaarde
+   daadwerkelijk gelijk is aan Vercel is hiermee niet bewezen.
+2. Genereer een sterke nieuwe waarde in beveiligd beheer en bewaar daar het
+   herstel-/operatorexemplaar. Stem Vercel Production en de bevoegde externe
+   aanroepers op dezelfde waarde af; wijzig Preview niet.
+3. Rol de afgesproken code/configuratie gecontroleerd uit, voorkom een overgang
+   waarin oude en nieuwe aanroepers elkaar missen, en hervat de bestaande cadans
+   pas nadat de configuratieafstemming is bevestigd. Geen echte onderhoudsrun met
+   mail/financiële side effects gebruiken als autorisatietest.
+4. Voer daarna uitsluitend de begrensde, geauthenticeerde D1-P-diagnose en
+   afsluitprocedure uit. De rotatie/overgang is een aanvullend productiebeheerbesluit;
+   de oorspronkelijke D1-toestemming zelf hoeft niet opnieuw te worden gevraagd.
+
+**D2-vervolg read-only om 17:47:53Z:** alleen de oorspronkelijke productiebranch
+resteert. Eén Neon-projectlid met adminrol en precies één niet-platform-
+database-inlogrol (`neondb_owner`), nul andere eigen inlogrollen. De eigenaar heeft
+NOSUPERUSER maar wel BYPASSRLS en is geen beperkte read-only rol; deze controles
+draaiden daarom expliciet in een READ ONLY-transactie met 5s statementtimeout.
+85 migratieregistraties en nul onafgemaakte migraties bevestigd. Geen wachtwoord,
+wachtwoordhash, gebruikersrecord of tweede herstelbranch opgehaald/aangemaakt.
+
+[Neon kopieert rollen mee naar een child branch](https://neon.com/docs/manage/roles).
+De rol-/ledeninventaris maakt de afschermingsvoorwaarde concreet: bevestig vóór
+een eventueel nieuw goedgekeurde proef dat de eigenaarcredential uitsluitend bij
+bevoegde beheerders/beheerde systemen berust en dat de kopie geen appkoppeling
+krijgt. Uit catalogi is niet bewijsbaar wie een credential buiten Neon bezit.
+Geen stilzwijgende branch- of productierotatie; als deze afscherming niet kan worden
+bevestigd, blijft ook de nieuwe proef geblokkeerd. Het gecorrigeerde computevoorstel
+staat hieronder klaar; de bestaande één-branchautorisatie is al verbruikt.
+
+De checks op rapportagehead `d5d45e248bcf47cd24fc85340b40a9dc58430790` zijn inmiddels
+SUCCESS: [Learning publication integrity](https://github.com/WorkMatchr/platform/actions/runs/40862243905)
+en [Trading access](https://github.com/WorkMatchr/platform/actions/runs/40862243880).
+Geen codewijzigingen in deze vervolgcontrole. D1-runtimebewijs en D2-herstelbewijs
+blijven OPEN; productiemigraties blijven NO-GO.
+
 Het Product Owner-akkoord betreft uitsluitend de gereviewde runtimecode
 `48a49727acfbcee0bf5760a6fb58a0175361b658`, maximaal twee D1-P-deployments en
 één tijdelijke D2-R-herstelbranch met maximaal 24 uur bewaring. Geen merge,
