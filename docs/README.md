@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [D1/D2 — runtime-identiteit, herstelbaarheid en begrensde beheerbesluiten](d1-d2-production-identity-and-recovery.md)
+
 - [Gecombineerde afronding A/B/C — bewijs, vrijgavebesluiten en uitvoering](final-release-closure-abc.md)
 
 - [WP17B — runtimeverificatie en geïsoleerde acceptatieomgeving](wp17b-runtime-verification-and-acceptance-environment.md)

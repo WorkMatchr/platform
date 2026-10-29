@@ -1,0 +1,21 @@
+{
+  "scope": "Existing synthetic WP17B database; Neon connector, not deployed Preview",
+  "project": "polished-truth-73185704",
+  "identity": {
+    "database": "workmatchr_wp17b",
+    "role": "workmatchr_preview_wp17b",
+    "login": "workmatchr_preview_wp17b",
+    "endpoint": "ep-dry-hat-bao6j8me",
+    "branch": "br-steep-base-bamb189s",
+    "read_only": "on",
+    "rolsuper": false,
+    "rolcreatedb": false,
+    "rolcreaterole": false,
+    "rolreplication": false,
+    "rolbypassrls": false,
+    "memberships": false,
+    "database_create": false,
+    "database_temp": false,
+    "registry_write": false
+  }
+}
