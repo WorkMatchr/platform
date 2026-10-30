@@ -1,5 +1,9 @@
 # Documentatie WorkMatchr
 
+- [D2D/D3/D4 — publieke herstelvoorbereiding en productievoorwaarden](d2d-d3-d4-final-production-migration-readiness.md)
+- [D2C/D3 — gesloten operatorroute en migratiepreflight](d2c-d3-production-backup-and-migration-preflight.md)
+- [D2B — versleutelde back-up en synthetisch herstel](d2b-postgresql-backup-recovery-decision.md)
+
 - [D1/D2 — runtime-identiteit, herstelbaarheid en begrensde beheerbesluiten](d1-d2-production-identity-and-recovery.md)
 
 - [Gecombineerde afronding A/B/C — bewijs, vrijgavebesluiten en uitvoering](final-release-closure-abc.md)
