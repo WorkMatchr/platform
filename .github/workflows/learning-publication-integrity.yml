@@ -24,6 +24,8 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci
+      - name: Offline recovery guards and synthetic target-policy tests
+        run: node --test ops/recovery/*.test.mjs scripts/audit-d2c-preflight.test.mjs scripts/d2c-archive-stage.test.mjs
       - run: npm run test:db:learning-integrity
         env:
           WP16_POSTGRES_CONTAINER_ID: ${{ job.services.postgres.id }}

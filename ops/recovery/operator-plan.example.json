@@ -1,0 +1,20 @@
+{
+  "scope": "D2C_SINGLE_BACKUP_AND_ISOLATED_RESTORE",
+  "project": null,
+  "branch": null,
+  "approvalReference": null,
+  "until": null,
+  "runId": null,
+  "hostSecurityVerified": false,
+  "keyCustodyVerified": false,
+  "writerPauseVerified": false,
+  "cleanupBackstopVerified": false,
+  "preflight85Verified": false,
+  "publicKeyring": null,
+  "privateKeyring": null,
+  "fingerprint": null,
+  "host": null,
+  "database": null,
+  "backupRole": null,
+  "restoreOwner": null
+}
