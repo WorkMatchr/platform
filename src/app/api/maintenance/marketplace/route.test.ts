@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 const worker = vi.hoisted(() => vi.fn(async () => ({ claimed: 1, sent: 1, retry: 0, failed: 0 })))
 vi.mock('@/lib/marketplace/assignment-email-worker', () => ({ deliverAssignmentEmails: worker }))
+const contactWorker = vi.hoisted(() => vi.fn(async () => ({ claimed: 1, sent: 1, retry: 0, failed: 0, redacted: 0 })))
+vi.mock('@/lib/contact/contact-email-worker', () => ({ deliverContactEmails: contactWorker }))
 import { GET, POST } from './route'
 
-afterEach(() => { vi.unstubAllEnvs(); worker.mockClear() })
+afterEach(() => { vi.unstubAllEnvs(); worker.mockClear(); contactWorker.mockClear() })
 describe('marketplace maintenance authorization', () => {
   it('rejects requests without configured secret before claiming any mail', async () => {
     vi.stubEnv('CRON_SECRET', '')
@@ -39,4 +41,39 @@ describe('marketplace maintenance authorization', () => {
     expect((await POST(new Request('http://localhost/api/maintenance/marketplace', { method: 'POST', headers: { authorization: `Bearer ${secret}` } }))).status).toBe(200)
     expect(worker).toHaveBeenCalledExactlyOnceWith({ limit: 10 })
   })
+})
+
+it('dispatches contact only behind its explicit gate and authenticated maintenance', async () => {
+  vi.stubEnv('CONTACT_OUTBOX_ENABLED', 'true')
+  vi.stubEnv('CRON_SECRET', 'synthetic-maintenance-test-secret-for-unit-tests')
+  expect((await POST(new Request('http://localhost/api/maintenance/marketplace', { method: 'POST' }))).status).toBe(401)
+  expect(contactWorker).not.toHaveBeenCalled()
+  const r = await POST(new Request('http://localhost/api/maintenance/marketplace', { method: 'POST', headers: { authorization: 'Bearer synthetic-maintenance-test-secret-for-unit-tests' } }))
+  expect(r.status).toBe(200); expect((await r.json()).contact.sent).toBe(1)
+  expect(contactWorker).toHaveBeenCalledExactlyOnceWith({ limit: 5 })
+})
+it('keeps independent consumers running and exposes only generic failure metadata', async () => {
+  vi.stubEnv('CONTACT_OUTBOX_ENABLED', 'true')
+  vi.stubEnv('CRON_SECRET', 'synthetic-maintenance-test-secret-for-unit-tests')
+  worker.mockRejectedValueOnce(new Error('sensitive-private-message@example.invalid'))
+  const r = await POST(new Request('http://localhost/api/maintenance/marketplace', { method: 'POST', headers: { authorization: 'Bearer synthetic-maintenance-test-secret-for-unit-tests' } }))
+  expect(r.status).toBe(503)
+  expect(await r.text()).not.toContain('sensitive-private')
+  expect(contactWorker).toHaveBeenCalledTimes(1)
+})
+
+it('does not claim contact when its gate is absent', async () => {
+  vi.stubEnv('CONTACT_OUTBOX_ENABLED', '')
+  vi.stubEnv('CRON_SECRET', 'synthetic-maintenance-test-secret-for-unit-tests')
+  expect((await POST(new Request('http://localhost/api/maintenance/marketplace', { method: 'POST', headers: { authorization: 'Bearer synthetic-maintenance-test-secret-for-unit-tests' } }))).status).toBe(200)
+  expect(contactWorker).not.toHaveBeenCalled()
+})
+it('a broken contact consumer does not prevent assignment dispatch', async () => {
+  vi.stubEnv('CONTACT_OUTBOX_ENABLED', 'true')
+  vi.stubEnv('CRON_SECRET', 'synthetic-maintenance-test-secret-for-unit-tests')
+  contactWorker.mockRejectedValueOnce(new Error('CONTACT_CONFIGURATION_REQUIRED'))
+  const r = await POST(new Request('http://localhost/api/maintenance/marketplace', { method: 'POST', headers: { authorization: 'Bearer synthetic-maintenance-test-secret-for-unit-tests' } }))
+  expect(r.status).toBe(503)
+  expect(worker).toHaveBeenCalledExactlyOnceWith({ limit: 10 })
+  expect(await r.json()).toEqual({ error: 'NOTIFICATION_DISPATCH_INCOMPLETE' })
 })

@@ -84,3 +84,25 @@ test('scheduled workflow uses 15 minutes, serialized runs and only endpoint auth
   assert.deepEqual(commands[0].env, { CRON_SECRET: '${{ secrets.CRON_SECRET }}' })
   assert.equal(commands[0].run, 'node ops/marketplace-notifications/dispatch.mjs')
 })
+
+test('drains contact backlog even when assignment queue is empty', async () => {
+  let batches = 0
+  const result = await drain({ secret: 'synthetic', fetchImpl: async () => {
+    batches++
+    const claimed = batches === 1 ? 5 : 2
+    return { status: 200, json: async () => ({ claimed: 0, sent: 0, retry: 0, failed: 0,
+      contact: { claimed, sent: claimed, retry: 0, failed: 0, privatePayload: 'not logged' } }) }
+  } })
+  assert.equal(batches, 2); assert.equal(result.contact.sent, 7)
+  assert.equal(JSON.stringify(result).includes('privatePayload'), false)
+})
+test('contact failures fail the existing scheduler; malformed contact counters rejected', async () => {
+  const logs = []
+  assert.equal(await run({ secret: 'synthetic', log: value => logs.push(value), fetchImpl: async () => ({
+    status: 200, json: async () => ({ claimed: 0, sent: 0, retry: 0, failed: 0, contact: { claimed: 1, sent: 0, retry: 0, failed: 1 } }),
+  }) }), 1)
+  await assert.rejects(dispatch({ secret: 'synthetic', fetchImpl: async () => ({
+    status: 200, json: async () => ({ claimed: 0, sent: 0, retry: 0, failed: 0, contact: { claimed: 0, sent: 1, retry: 0, failed: 0 } }),
+  }) }), /RESPONSE_INVALID/)
+  assert.equal(logs.length, 1)
+})
