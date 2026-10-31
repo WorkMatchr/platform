@@ -1,12 +1,24 @@
 import 'server-only'
 import { createHash, randomUUID } from 'node:crypto'
 import { getPrisma } from '@/lib/prisma'
-import { sendAuthEmail } from '@/lib/email'
+import { AuthEmailDeliveryError, sendAuthEmail } from '@/lib/email'
 import { assignmentEmailFailure, ASSIGNMENT_EMAIL_LEASE_MS, ASSIGNMENT_EMAIL_MAX_ATTEMPTS, ASSIGNMENT_EMAIL_RETRY_WINDOW_MS } from '@/lib/marketplace/assignment-email-worker'
 import { CONTACT_TEMPLATE, CONTACT_RETENTION_MS, contactConfiguration } from './contact-configuration'
 import { openContact, renderContactEmail } from './contact-envelope'
 
 const backoff = [60_000, 5 * 60_000, 15 * 60_000, 60 * 60_000]
+// Five contact attempts fit inside the 60-second route budget, leaving DB headroom.
+const providerWaitMs = 8_000
+async function sendWithDeadline(send: typeof sendAuthEmail, email: Parameters<typeof sendAuthEmail>[0]) {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  try {
+    return await Promise.race([send(email), new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new AuthEmailDeliveryError('EMAIL_PROVIDER_UNAVAILABLE', 'De provideruitkomst is nog onbekend.')), providerWaitMs)
+    })])
+  } finally { clearTimeout(timer) }
+  // Timeout cannot revoke a provider acceptance. Retry only with the frozen payload/key;
+  // a late completion cannot update this record. Existing 23h reconciliation limit applies.
+}
 /** Template consumer of the existing outbox; no external call in a transaction. */
 export async function deliverContactEmails(input: { limit?: number; now?: () => Date; send?: typeof sendAuthEmail } = {}) {
   const report = { claimed: 0, sent: 0, retry: 0, failed: 0, redacted: 0 }
@@ -64,7 +76,7 @@ export async function deliverContactEmails(input: { limit?: number; now?: () => 
     if (!ready.count) continue
     let providerAccepted = false
     try {
-      const result = await send(email)
+      const result = await sendWithDeadline(send, email)
       if (result.status !== 'ACCEPTED' || result.transport !== 'RESEND') { await finish('FAILED', 'DEVELOPMENT_ONLY'); continue }
       providerAccepted = true
       await finish('SENT', null, result.messageId)

@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [WP19 — commerciële acceptatie en gefaseerde releasevoorbereiding](wp19-commercial-release-acceptance.md)
+
 - [D2D/D3/D4 — publieke herstelvoorbereiding en productievoorwaarden](d2d-d3-d4-final-production-migration-readiness.md)
 - [D2C/D3 — gesloten operatorroute en migratiepreflight](d2c-d3-production-backup-and-migration-preflight.md)
 - [D2B — versleutelde back-up en synthetisch herstel](d2b-postgresql-backup-recovery-decision.md)
