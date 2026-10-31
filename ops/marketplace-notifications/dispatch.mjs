@@ -15,6 +15,15 @@ export async function dispatch({ secret, fetchImpl = fetch }) {
     report[key] = data[key]
   }
   if (report.sent + report.retry + report.failed > report.claimed) throw new Error('DISPATCH_RESPONSE_INVALID')
+  if (data.contact !== undefined) {
+    const contact = {}
+    for (const key of ['claimed', 'sent', 'retry', 'failed']) {
+      if (!Number.isInteger(data.contact?.[key]) || data.contact[key] < 0 || data.contact[key] > 5) throw new Error('DISPATCH_RESPONSE_INVALID')
+      contact[key] = data.contact[key]
+    }
+    if (contact.sent + contact.retry + contact.failed > contact.claimed) throw new Error('DISPATCH_RESPONSE_INVALID')
+    report.contact = contact
+  }
   return report
 }
 
@@ -25,8 +34,12 @@ export async function drain({ secret, fetchImpl = fetch, now = Date.now, maxBatc
   const total = { claimed: 0, sent: 0, retry: 0, failed: 0 }
   for (let batch = 0; batch < maxBatches && now() < deadline; batch++) {
     const report = await dispatch({ secret, fetchImpl })
-    for (const key of Object.keys(total)) total[key] += report[key]
-    if (report.claimed < 10) return total
+    for (const key of ['claimed', 'sent', 'retry', 'failed']) total[key] += report[key]
+    if (report.contact) {
+      total.contact ??= { claimed: 0, sent: 0, retry: 0, failed: 0 }
+      for (const key of Object.keys(total.contact)) total.contact[key] += report.contact[key]
+    }
+    if (report.claimed < 10 && (!report.contact || report.contact.claimed < 5)) return total
   }
   throw new Error('DISPATCH_BACKLOG_REMAINING')
 }
@@ -35,7 +48,7 @@ export async function run({ secret, fetchImpl = fetch, log = console.log, error 
   try {
     const report = await drain({ secret, fetchImpl })
     log(JSON.stringify(report))
-    return report.failed ? 1 : 0
+    return report.failed || report.contact?.failed ? 1 : 0
   } catch {
     // Never log credentials, arbitrary response bodies or raw transport errors.
     error('MARKETPLACE_DISPATCH_FAILED')

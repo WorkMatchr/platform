@@ -9,7 +9,8 @@
       "codex/wp17b-runtime-acceptance": false,
       "codex/final-release-closure-abc": false,
       "codex/d1-d2-runtime-recovery": false,
-      "codex/d2d-public-recovery": false
+      "codex/d2d-public-recovery": false,
+      "codex/commercial-launch-finalization": false
     }
   },
   "crons": [
