@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [Commerciële vrijgave — definitieve besluiten en gerichte correcties](commercial-final-release-decisions.md)
+
 - [WP21 — definitieve commerciële vrijgave, providers en acceptatie](wp21-final-commercial-release-readiness.md)
 
 - [WP20 — commerciële kern, foutinjectie en integratieacceptatie](wp20-commercial-core-completion.md)

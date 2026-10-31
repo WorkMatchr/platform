@@ -6,7 +6,7 @@ import { deliverAssignmentEmails } from '@/lib/marketplace/assignment-email-work
 export const maxDuration = 60
 export async function POST(request: Request) {
   if (!isFinancialMaintenanceCronAuthorized(request.headers.get('authorization'))) return NextResponse.json({ error: 'Niet geautoriseerd.' }, { status: 401 })
-  if (process.env.CONTACT_OUTBOX_ENABLED !== 'true') return NextResponse.json(await deliverAssignmentEmails({ limit: 10 }))
+  // The contact worker always enforces retention; its delivery gate remains closed by default.
   // Independent consumers: one template failure must not starve the other queue.
   const [assignment, contact] = await Promise.allSettled([deliverAssignmentEmails({ limit: 10 }), deliverContactEmails({ limit: 5 })])
   if (assignment.status === 'rejected' || contact.status === 'rejected') {

@@ -47,7 +47,7 @@ export default async function PlatformFinancialPage() {
     <AdminSection title="Jortt-synchronisatie" description="Een storing in Jortt verandert nooit betaling, factuur of credits.">
       <AdminTable headers={['Status', 'Aantal']}>{data.jortt.map((item) => <tr key={item.status}><td className="px-4 py-3">{item.status}</td><td className="px-4 py-3">{item._count}</td></tr>)}</AdminTable>
     </AdminSection>
-    <AdminSection title="Financieel onderhoud" description="Uurlijkse controle op terugbetalingen, Pro-statusovergangen en boekhoudsynchronisatie.">
+    <AdminSection title="Financieel onderhoud" description="Dagelijkse controle op terugbetalingen, Pro-statusovergangen en boekhoudsynchronisatie.">
       <div className="rounded-card border border-border bg-surface p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div><p className="text-sm font-semibold text-brand-dark">Laatste onderhoudsrun</p><p className="mt-1 text-sm text-text-secondary">{formatDateTime(maintenance.latestRun?.finishedAt ?? maintenance.latestRun?.startedAt)}</p></div>
