@@ -1,5 +1,7 @@
 # Commerciële vrijgave: definitieve besluiten en gerichte correcties
 
+> Actuele beslisstatus na de merge van PR #81: zie §9. Paragrafen 1–8 behouden het eerdere uitvoeringsbewijs.
+
 Peildatum: 31 oktober 2026. Basis/main en bevestigde READY Production-commit:
 `85426f886bee2820433c268d92b5d7f7624ab861`. Dit dossier is geen uitvoeringsautorisatie.
 Het bouwt voort op [WP21](wp21-final-commercial-release-readiness.md), WP19/WP20 en het A/B/C-dossier.
@@ -267,3 +269,129 @@ Beoordeel afzonderlijk binnen dit ene voorstel:
    dit voorstel geeft daarvoor geen impliciete toestemming. De acht migraties zijn niet nodig om deze fixes te reviewen.
 
 Geen aanvullend algemeen onderzoekswerkpakket nodig. De resterende punten zijn concrete bewijs-/uitvoeringsbesluiten.
+
+## 9. Laatste vrijgavepunten na merge van PR #81
+
+Peildatum: 31 oktober 2026. Actuele main: `6a00bd4850e93fbeffe8e4c0c301466fe38563b0`.
+PR #81 is gemerged; de volledige tree is gelijk aan de eerder geteste head
+`88d711f4ca42048f9567120d46662f35479754d0`. De eerdere technische herstel-PR is dus geen open
+mergevoorwaarde meer. Dit onderdeel actualiseert de besluitstatus uit paragrafen 2–8; historische
+metingen blijven herkenbaar als eerder uitgevoerd. Geen nieuwe algemene audit of productwijziging.
+
+### Compacte beslismatrix
+
+| Onderdeel | Resterende concrete blokkade | Product Owner-besluit / directe volgende handeling | Status |
+|---|---|---|---|
+| Academy | Persoonlijk inloggen en de ingelogde eindacceptatie zijn **NOT VERIFIED**. Lokale techniek is getest; dat is geen Academy-productievrijgave | Bestaand PO-akkoord om onafhankelijk commercieel werk voort te zetten is geregistreerd. Later persoonlijk inloggen met bestaand bevoegd account; geen reset, herstelmail of accountaanpassing | **GO** voor onafhankelijk vervolg; **NO-GO** voor Academy-activering |
+| Resend | Exact From, verified afzenderdomein, sleutelrechten/quotum en applicatiebezorging via Resend nog niet bewezen. Eén echte mail nog niet toegestaan | Operator bevestigt uitsluitend deze configuratie in bestaand Resend-beheer en stelt de bestaande send-only toegang veilig beschikbaar. Daarna afzonderlijk akkoord voor exact één bericht volgens §3; publieke contactgates blijven UIT | **NO-GO verzending** |
+| Mollie | Een bestaande bevoegde koper is gevonden; de private identiteits-/factuur- en prijscontrole levert twee blokkerende afwijkingen op | Eerst administratief juiste koper/verkoper en factuurgegevens vaststellen. Voor precies EUR30,25: een andere bestaande, bevoegde koper zonder effectief Pro-recht aanwijzen en read-only controleren. Geen korting, identiteit of bestaande rechten aanpassen om deze proef te laten passen | **NO-GO betaling** |
+| Privacy / PR #64 | Contactoutbox en metadataretentie ontbreken nog in de oude conceptcontext; definitieve identiteit/adres, rechtsgronden, afspraken/doorgifte en uitvoerbare rechten-/retentieprocedure vragen menselijke review | Onderstaande gerichte contactaanvulling en de open besluiten uit §2 inhoudelijk beoordelen, daarna uitsluitend PR #64 bijwerken; geen concepten via deze PR publiceren | **NO-GO juridische publicatie / publiek contact** |
+| Operations | Geen bewezen onafhankelijke detectie van ontbrekende runs. Achtervang is voorgesteld, nog niet ingestemd/geïnstrueerd. Dagelijkse financecron en bestaande alarmdrempels zijn niet op elkaar afgestemd | Onderstaand begrensd beheerrooster, escalatie, toegangsvoorstel en maximale vertraging vaststellen; achtervang laten instemmen/instrueren. Apart besluit over financieel onderhoud versus alarmdrempels | **NO-GO onbeheerde commerciële openstelling** |
+| Commerciële kern op bestaand schema | Techniek op de 85-migratiebasis bewezen; echte provideracceptatie, privacy en operationele opvolging nog open | Bestaand bewijs hergebruiken; beperkte providerproeven pas na hun eigen voorwaarden en uitvoeringsakkoord | **GO technisch**, **NO-GO commerciële vrijgave** |
+| Acht productiemigraties | Herstelbaarheid en volledige schrijfpauze nog niet bewezen/vrijgegeven | Afzonderlijk herstel-/schrijfpauze- en migratiebesluit. Geen afhankelijkheid toevoegen aan de reeds bewezen contact-/marketplace-/financiële herstelcode | **NO-GO migraties** |
+
+### Koperidentificatie: voorbereiding voltooid, uitvoering geblokkeerd
+
+De PO heeft een bestaande koperorganisatie aangewezen. Een begrensde transactie bevestigde
+`transaction_read_only=on` op de eerder geverifieerde productiebranch. De bestaande aankoopautorisatie,
+organisatie-/accountkoppeling, factuurgegevens en `findEffectiveProSubscription` zijn gecontroleerd.
+De identificaties, concrete factuur-/abonnementsbevindingen en de persoonlijke achtervang blijven
+uitsluitend in het private bewijsdossier en de terugkoppeling aan de PO; geen accountgegevens publiceren.
+
+De proef blijft geblokkeerd op administratieve koper/verkoper-scheiding en het exact gevraagde bedrag.
+Volledig ingevulde velden bewijzen geen juiste factuuridentiteit. Een inhoudelijk bevoegde financiële
+beoordeling of een andere passende bestaande koper is nodig. Het bestaande prijscontract blijft leidend:
+CREDITS_25 kost standaard EUR30,25 inclusief btw; effectief Pro levert 10% korting en EUR27,23 op.
+Een verstreken `currentPeriodEnd` beëindigt volgens het bestaande contract niet op zichzelf het Pro-recht.
+Geen prijsbypass, abonnementswijziging, fictieve factuuridentiteit of refund voorstellen.
+
+Na een passend koperbesluit blijven de stappen uit §4 gelden: één normale checkout; liveprofiel/methode,
+exact bedrag, webhook-/redirectbestemming en factuurontvanger vooraf vergelijken. De betaling omvat
+providerkosten, +25 credits, ledger/factuur en mogelijke automatische factuurmail/Jortt-verwerking.
+Daarvoor is nog afzonderlijk akkoord nodig. Geen purchase, betaling, ledger, factuur, mail of refund aangemaakt.
+
+### Resend: exacte proef en configuratiegrens
+
+Opnieuw uitsluitend metadata gecontroleerd: Production bevat `RESEND_API_KEY` en `AUTH_EMAIL_FROM`.
+De officiële gerichte uitlezing van alleen `AUTH_EMAIL_FROM` geeft type `sensitive` zonder waarde.
+Geen sleutel opgehaald, geroteerd of gelogd. `CONTACT_FORM_ENABLED`, `CONTACT_OUTBOX_ENABLED`,
+`CONTACT_MESSAGE_ENCRYPTION_KEY` en `CONTACT_EMAIL_TO` ontbreken in de zichtbare Production-configuratie:
+de bestaande fail-closed code houdt het formulier dicht. Dit is configuratiebewijs, geen nieuwe runtimeproef.
+
+De inhoud uit §3 blijft exact: onderwerp **Algemene vraag | WorkMatchr**, synthetische afzender
+`acceptatie@example.invalid`, uitsluitend `contact@workmatchr.nl` als ontvanger, bestaande forwardroute
+naar de eigen mailbox. Geen CC/BCC of automatische bevestiging aan de inzender.
+Na expliciet verzendakkoord: één lege geïsoleerde lokale database, één via het bestaande formulier aangemaakt
+CONTACT_MESSAGE-event, geen scheduler, één aanroep van `deliverContactEmails({ limit: 1 })`.
+Dit begrenst deze uitvoering tot één providerpoging; de algemene retry-instellingen worden niet gewijzigd.
+Een PENDING/timeout/late acceptatie krijgt geen tweede aanroep: eerst dezelfde providerreferentie read-only
+onderzoeken. SENT/provideracceptatie en feitelijke mailboxontvangst apart bewijzen. Geen globale outbox-run.
+
+Bestaand Academy-D01-bewijs bevat zes op 31 oktober door de eigenaar bevestigde mailboxcontroles:
+login, ontvangst van een echte mail, MFA waar beschikbaar, bevoegde toegang, geen onbekende
+forwardregels en vertrouwelijke privacyafhandeling. Dit wordt hergebruikt als **OWNER-ATTESTED PASS**,
+niet als zelfstandig gecontroleerde instellingen of bewijs van deze applicatie-Resend-proef.
+Actieve DKIM-ondertekening, exacte Resend-accountbinding en prullenbak-/back-upretentie blijven open.
+
+### Gerichte contactaanvulling voor PR #64 — concept, nog niet publiceren
+
+Reviewvoorstel: “Bij gebruik van het contactformulier verwerken wij uw naam, e-mailadres, onderwerp
+en bericht om uw vraag te behandelen. Het bericht wordt tijdelijk versleuteld in de verzendwachtrij
+opgeslagen. Na bevestigde acceptatie door de e-mailprovider verwijderen wij de berichtinhoud uit die
+wachtrij. Niet-verwerkte inhoud wordt na zeven dagen bij de eerstvolgende geslaagde onderhoudsrun
+verwijderd; een nog actieve verzendpoging wordt eerst afgerond of vrijgegeven. Een onderhoudsstoring
+kan de verwijdering vertragen. Beperkte technische gegevens blijven voor bezorgcontrole en het
+voorkomen van dubbele verzending beschikbaar; de passende eindtermijn moet vóór publicatie worden vastgesteld.”
+
+De concepttekst vraagt nog juridische/copyacceptatie en een onderbouwde metadata-eindtermijn;
+geen claim van precies-op-de-klok-verwijdering, onleesbaarheid voor alle beheerders of reeds getekende
+verwerkersafspraken. Resend is applicatietransport; Vimexx ontvangt/forwardt de mailboxmail.
+Het reeds vastgestelde mailboxbeleid blijft maximaal één jaar vanaf ontvangst, met noodzakelijke,
+gemotiveerde uitzonderingen en handmatige verwijdering door de eigenaar, voor inbox én archief.
+Jaarlijkse procedurecontrole en voorgestelde maandelijkse ouderdomscontrole onderscheiden.
+Providerprullenbak/back-ups, bron/logretentie en daadwerkelijke uitvoering afzonderlijk aantonen.
+PR #64 blijft Draft; geen wijzigingen aan juridische pagina's, centrale identiteit of historische facturen.
+
+### Kort operationeel voorstel — nog te accepteren en uit te voeren
+
+- Primaire beheerder: Product Owner. Eén door de PO voorgestelde achtervang is privaat vastgelegd;
+  instemming en aantoonbare instructie ontbreken nog. Taken: signaleren, eerste triage en escaleren.
+- Voorstel voor een beperkte start: elke dag 09:00–18:00 Europe/Amsterdam elk heel uur handmatig de
+  tijd van de laatste geslaagde marketplace-run en oudste due-record controleren, onafhankelijk van die
+  scheduler. Meer dan 45 minuten sinds succes: waarschuwing; meer dan 60 minuten: binnen 15 minuten
+  escaleren naar PO/achtervang. Een uurlijkse controle kan dit pas later waarnemen; dit is geen
+  gegarandeerde detectietijd. Buiten dit rooster beoordeling om 09:00, geen 24/7- of 15-minuten-SLA.
+  Als nachtelijke vertraging onaanvaardbaar is, eerst afzonderlijke onafhankelijke bewaking organiseren.
+- Het eerder gemeten gat van **7u12m35s** blijft bewijs van ontbrekende scheduler-events.
+  Groene bestaande runs of meldingen van gefaalde jobs detecteren zo'n gat niet. Catchup voorkomt
+  dat due-records door alleen een gemiste run worden overgeslagen, maar garandeert geen bezorgtijd.
+- Dagelijks om 09:00 controle van de financiële run van 03:00 UTC, open providerbetalingen,
+  ledger-/factuurafwijkingen, FAILED-notificaties en vertraagde boekhouding. Dagelijkse cron versus
+  bestaande 3-uurs-/2-uurswaarschuwingen vraagt nog een cadence/alertbesluit; geen alarm verzwakt.
+- Incidentprocedure: noteer tijd, categorie, veilige foutcode en aantallen; geen inhoud, tokens of
+  persoonsgegevens. Controleer oorspronkelijke provider-/eventreferentie via bevoegde beheerder.
+  Bij onzekere betaling of mailacceptatie geen nieuwe checkout/verzending, creditscorrectie of refund.
+  PO bepaalt vervolg en afzonderlijke autorisatie. Sluiting: uitkomst en controle door bevoegde operator registreren.
+- Minimale toegang voor de achtervang: bestaande openbare workflowstatus of geschoonde statusmelding
+  en incidentprocedure. Geen platform-ADMIN, klant-/financiële gegevens, database, providercredentials
+  of wijzigrechten. Vertrouwelijke diagnose via de PO. Eventueel later persoonlijk read-only statusrecht
+  met MFA apart beoordelen/provisioneren; zo'n afgeschermde statusrol wordt niet als bestaand voorgesteld.
+
+### Hergebruikt bewijs en exacte wijzigingsgrens
+
+Academy: bestaand lokaal kandidaatbewijs (3.855 geslaagde tests, 92 overgeslagen, 34 PostgreSQL-controles,
+lint/TypeScript/build) blijft beperkt tot die Academy-kandidaat. Geen Academy-code naar main overgenomen,
+geen productiecompatibiliteit met 85 migraties of persoonlijk inloggen daaruit afgeleid.
+De PO heeft voortzetting van onafhankelijk werk expliciet toegestaan ondanks **NOT VERIFIED** persoonlijk inloggen.
+
+Voor de commerciële kern blijven de tests in §6 geldig: de app-, test- en migratiebestanden zijn exact
+ongewijzigd ten opzichte van PR #81. De bestaande 85-basis ondersteunt de bewezen account-/organisatie-,
+opdracht-/matching-, credits-/ledger-/factuur- en contactoutboxketen. De acht pending migraties geven
+geen vrijgave voor F4, LMS/Academy of nieuwe reminderfunctionaliteit; die blijven gesloten.
+
+Deze actualisatie wijzigt alleen dit document en de automatische-deploymentuitsluiting voor de
+nieuwe reviewbranch in `vercel.json`. Geen applicatie-, prijs-, auth-, schema-, privacy-/cookiepagina-
+of productieconfiguratiewijziging. Validatie: gerichte bron-/autorisatievergelijking, read-only
+kopercontrole, Vercel-metadata, volledige diff, JSON-/branchguard-, secrets-/metadata- en scopecontrole.
+Geen nieuwe lint-/build-/databaseproef nodig voor ongewijzigde appcode; eerdere PASS niet als nieuwe run geteld.
+Geen provideractie of publieke activering uitgevoerd.

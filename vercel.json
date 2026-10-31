@@ -14,7 +14,8 @@
       "codex/wp19-commercial-acceptance": false,
       "codex/wp20-commercial-core": false,
       "codex/wp21-commercial-release": false,
-      "codex/commercial-final-decisions": false
+      "codex/commercial-final-decisions": false,
+      "codex/commercial-release-decisions-final": false
     }
   },
   "crons": [
