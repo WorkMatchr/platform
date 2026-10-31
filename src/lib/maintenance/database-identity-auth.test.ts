@@ -1,11 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const services = vi.hoisted(() => ({
+  contact: vi.fn(async () => ({ claimed: 0, sent: 0, retry: 0, failed: 0, redacted: 0 })),
   finance: vi.fn(async () => ({ status: 'SUCCEEDED' })),
   mail: vi.fn(async () => ({ claimed: 0, sent: 0, retry: 0, failed: 0 })),
 }))
 vi.mock('@/lib/finance/financial-maintenance-service', () => ({ runFinancialMaintenance: services.finance }))
 vi.mock('@/lib/marketplace/assignment-email-worker', () => ({ deliverAssignmentEmails: services.mail }))
+vi.mock('@/lib/contact/contact-email-worker', () => ({ deliverContactEmails: services.contact }))
 import { isDatabaseIdentityDiagnosticAuthorized } from './database-identity-auth'
 import { GET as financeCron, POST as financeManual } from '@/app/api/maintenance/finance/route'
 import { GET as mailCron, POST as mailDispatch } from '@/app/api/maintenance/marketplace/route'
@@ -73,6 +75,7 @@ describe('isolation from unchanged financial and mail maintenance routes', () =>
     }
     expect(services.finance).not.toHaveBeenCalled()
     expect(services.mail).not.toHaveBeenCalled()
+    expect(services.contact).not.toHaveBeenCalled()
   })
   it('does not supply a fallback when ordinary maintenance secrets are absent', async () => {
     vi.stubEnv('CRON_SECRET', '')
@@ -82,6 +85,7 @@ describe('isolation from unchanged financial and mail maintenance routes', () =>
     expect((await mailDispatch(request(diagnostic))).status).toBe(401)
     expect(services.finance).not.toHaveBeenCalled()
     expect(services.mail).not.toHaveBeenCalled()
+    expect(services.contact).not.toHaveBeenCalled()
   })
   it('preserves existing cron and financial authorization after diagnostic expiry', async () => {
     vi.setSystemTime(new Date('2026-10-29T10:15:00Z'))
@@ -92,5 +96,6 @@ describe('isolation from unchanged financial and mail maintenance routes', () =>
     expect((await mailDispatch(request(cron))).status).toBe(200)
     expect(services.finance).toHaveBeenCalledTimes(2)
     expect(services.mail).toHaveBeenCalledTimes(2)
+    expect(services.contact).toHaveBeenCalledTimes(2)
   })
 })

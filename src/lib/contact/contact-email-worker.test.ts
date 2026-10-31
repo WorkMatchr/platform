@@ -52,3 +52,25 @@ it('ruimt de timer op na tijdige acceptatie zonder een tweede statusupdate', asy
   await vi.advanceTimersByTimeAsync(60_000)
   expect(db.notificationOutbox.updateMany).toHaveBeenCalledTimes(updates)
 })
+
+
+it('handhaaft retentie met gesloten verzendgate en ontbrekende sleutel, zonder claim of providercall', async () => {
+  vi.stubEnv('CONTACT_OUTBOX_ENABLED', '')
+  vi.stubEnv('CONTACT_MESSAGE_ENCRYPTION_KEY', '')
+  db.$executeRaw.mockResolvedValue(2)
+  const send = vi.fn()
+  expect(await deliverContactEmails({ send })).toEqual({ claimed: 0, sent: 0, retry: 0, failed: 0, redacted: 2 })
+  expect(db.$executeRaw).toHaveBeenCalledOnce()
+  expect(db.$queryRaw).not.toHaveBeenCalled()
+  expect(db.notificationOutbox.updateMany).not.toHaveBeenCalled()
+  expect(send).not.toHaveBeenCalled()
+})
+
+it('ruimt verlopen inhoud op voordat een ongeldige verzendconfiguratie gesloten faalt', async () => {
+  vi.stubEnv('CONTACT_MESSAGE_ENCRYPTION_KEY', '')
+  const send = vi.fn()
+  await expect(deliverContactEmails({ send })).rejects.toThrow('CONTACT_CONFIGURATION_REQUIRED')
+  expect(db.$executeRaw).toHaveBeenCalledOnce()
+  expect(db.$queryRaw).not.toHaveBeenCalled()
+  expect(send).not.toHaveBeenCalled()
+})

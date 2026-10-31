@@ -290,7 +290,28 @@ try {
   check('future due time and active leases prevent premature send or purge')
   process.env.CONTACT_OUTBOX_ENABLED = 'false'
   assert.equal((await deliverContactEmails({ send })).claimed, 0)
-  check('retention removes ciphertext; worker default-off is inert')
+  check('retention removes ciphertext; worker default-off cannot send')
+  process.env.CONTACT_OUTBOX_ENABLED = 'true'
+  await reset()
+  const expiredClosed = await enqueue(), unexpiredClosed = await enqueue(), leasedClosed = await enqueue()
+  const cleanupNow = new Date(), old = new Date(cleanupNow.getTime() - 8 * 86400000)
+  await db.notificationOutbox.update({ where: { id: expiredClosed.id }, data: { createdAt: old } })
+  await db.notificationOutbox.update({ where: { id: leasedClosed.id }, data: { createdAt: old, status: 'PROCESSING', leaseUntil: new Date(cleanupNow.getTime() + 60000) } })
+  const keyBeforeCleanup = process.env.CONTACT_MESSAGE_ENCRYPTION_KEY
+  process.env.CONTACT_OUTBOX_ENABLED = 'false'; delete process.env.CONTACT_MESSAGE_ENCRYPTION_KEY
+  const purges = await Promise.all([deliverContactEmails({ now: () => cleanupNow, send }), deliverContactEmails({ now: () => cleanupNow, send })])
+  assert.equal(purges.reduce((sum, report) => sum + report.redacted, 0), 1)
+  assert.equal(purges.reduce((sum, report) => sum + report.claimed, 0), 0); assert.equal(calls.length, 0)
+  const closedTombstone = await db.notificationOutbox.findUniqueOrThrow({ where: { id: expiredClosed.id } })
+  assert.equal(closedTombstone.status, 'FAILED'); assert.equal(closedTombstone.lastErrorCode, 'CONTACT_RETENTION_EXPIRED')
+  assert.equal(closedTombstone.attemptCount, 0); assert.deepEqual(Object.keys(closedTombstone.payload as object).sort(), ['digest', 'redacted'])
+  for (const id of [unexpiredClosed.id, leasedClosed.id]) {
+    assert.ok('ciphertext' in ((await db.notificationOutbox.findUniqueOrThrow({ where: { id } })).payload as object))
+  }
+  assert.equal((await deliverContactEmails({ now: () => new Date(cleanupNow.getTime() + 60001), send })).redacted, 1)
+  assert.equal(calls.length, 0)
+  process.env.CONTACT_MESSAGE_ENCRYPTION_KEY = keyBeforeCleanup
+  check('closed delivery and missing key: concurrent retention, active lease protection and later cleanup; no mail')
   console.log(`CONTACT_DATABASE_PASS cases=${cases}; real provider calls=0`)
 } finally {
   await sql?.end(); await db?.$disconnect()

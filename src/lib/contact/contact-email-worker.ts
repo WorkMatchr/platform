@@ -22,11 +22,9 @@ async function sendWithDeadline(send: typeof sendAuthEmail, email: Parameters<ty
 /** Template consumer of the existing outbox; no external call in a transaction. */
 export async function deliverContactEmails(input: { limit?: number; now?: () => Date; send?: typeof sendAuthEmail } = {}) {
   const report = { claimed: 0, sent: 0, retry: 0, failed: 0, redacted: 0 }
-  if (process.env.CONTACT_OUTBOX_ENABLED !== 'true') return report
-  const config = contactConfiguration()
-  if (!config) throw new Error('CONTACT_CONFIGURATION_REQUIRED')
   const db = getPrisma(), clock = input.now ?? (() => new Date()), send = input.send ?? sendAuthEmail
   const cleanupTime = clock()
+  // Retention is independent of delivery permission and decryption configuration.
   // Keep only a keyed digest for replay protection; never clean an active lease.
   report.redacted = await db.$executeRaw`
     UPDATE "NotificationOutbox" SET "payload" = jsonb_build_object('digest', "payload"->>'digest', 'redacted', true),
@@ -36,6 +34,9 @@ export async function deliverContactEmails(input: { limit?: number; now?: () => 
     WHERE "templateKey" = ${CONTACT_TEMPLATE} AND "channel" = 'EMAIL' AND "payload" ? 'ciphertext'
       AND "createdAt" <= ${new Date(cleanupTime.getTime() - CONTACT_RETENTION_MS)}
       AND ("leaseUntil" IS NULL OR "leaseUntil" <= ${cleanupTime})`
+  if (process.env.CONTACT_OUTBOX_ENABLED !== 'true') return report
+  const config = contactConfiguration()
+  if (!config) throw new Error('CONTACT_CONFIGURATION_REQUIRED')
   for (let i = 0; i < Math.min(10, Math.max(0, input.limit ?? 5)); i++) {
     const now = clock(), token = randomUUID()
     const rows = await db.$queryRaw<{ id: string }[]>`
