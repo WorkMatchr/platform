@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [WP21 — definitieve commerciële vrijgave, providers en acceptatie](wp21-final-commercial-release-readiness.md)
+
 - [WP20 — commerciële kern, foutinjectie en integratieacceptatie](wp20-commercial-core-completion.md)
 
 - [WP19 — commerciële acceptatie en gefaseerde releasevoorbereiding](wp19-commercial-release-acceptance.md)
