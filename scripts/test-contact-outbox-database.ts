@@ -44,6 +44,56 @@ try {
   }
   const reset = async () => { await db!.notificationOutbox.deleteMany(); await db!.rateLimit.deleteMany({ where: { key: { startsWith: 'contact:' } } }); calls.length = 0; accepted.clear() }
   const enqueue = async () => { const p = payload(); assert.equal((await submitContact(p, randomUUID())).status, 202); return (await db!.notificationOutbox.findUniqueOrThrow({ where: { idempotencyKey: `contact:${p.requestId}` } })) }
+  // Real HTTP handler -> validation -> DB -> real SDK adapter, with fetch stubbed in-process.
+  const { POST } = await import('../src/app/api/contact/route')
+  const { sendAuthEmail } = await import('../src/lib/email')
+  process.env.CONTACT_FORM_ENABLED = 'true'; process.env.BETTER_AUTH_URL = 'http://127.0.0.1:3071'
+  process.env.RESEND_API_KEY = 'synthetic-not-a-provider-key'; process.env.AUTH_EMAIL_FROM = 'WorkMatchr <contact@example.invalid>'
+  const httpPayload = payload()
+  const request = () => new Request('http://127.0.0.1:3071/api/contact', { method: 'POST', headers: { origin: 'http://127.0.0.1:3071', 'content-type': 'application/json' }, body: JSON.stringify(httpPayload) })
+  assert.equal((await POST(request())).status, 202); assert.equal((await POST(request())).status, 202)
+  assert.equal(await db.notificationOutbox.count(), 1)
+  const sdkRequests: string[] = []
+  globalThis.fetch = async (url, init) => {
+    assert.equal(String(url), 'https://api.resend.com/emails')
+    const body = JSON.parse(String(init?.body)); assert.equal(body.to, 'contact-acceptance@example.invalid')
+    assert.equal(body.subject, 'Algemene vraag | WorkMatchr'); assert.equal(body.text.includes(httpPayload.message), true)
+    sdkRequests.push(new Headers(init?.headers).get('Idempotency-Key')!)
+    return Response.json({ id: 'synthetic-sdk-accepted' })
+  }
+  assert.equal((await deliverContactEmails({ send: sendAuthEmail })).sent, 1)
+  assert.deepEqual(sdkRequests, [`contact:${httpPayload.requestId}`])
+  const httpSent = await db.notificationOutbox.findFirstOrThrow()
+  assert.equal(httpSent.status, 'SENT'); assert.equal(httpSent.attemptCount, 1)
+  assert.equal(httpSent.providerMessageId, 'synthetic-sdk-accepted'); assert.equal((httpSent.payload as { redacted: boolean }).redacted, true)
+  globalThis.fetch = async () => { throw new Error('EXTERNAL_TRANSPORT_DISABLED') }
+  delete process.env.RESEND_API_KEY
+  await reset()
+  check('real HTTP handler through encrypted PostgreSQL and Resend SDK with local fetch stub, one replay-safe delivery')
+
+  // A provider may accept while its response is lost; timeout must not invent success.
+  const timeoutJob = await enqueue()
+  let lateResult!: (value: Awaited<ReturnType<typeof send>>) => void
+  const started = performance.now()
+  assert.equal((await deliverContactEmails({ send: async email => {
+    const receipt = await send(email)
+    return new Promise(resolve => { lateResult = () => resolve(receipt) })
+  } })).retry, 1)
+  const elapsed = performance.now() - started
+  assert.ok(elapsed >= 8_000 && elapsed < 15_000)
+  let timeoutState = await db.notificationOutbox.findUniqueOrThrow({ where: { id: timeoutJob.id } })
+  assert.equal(timeoutState.status, 'PENDING'); assert.equal(timeoutState.lastErrorCode, 'EMAIL_PROVIDER_UNAVAILABLE')
+  lateResult({ accepted: true, transport: 'RESEND', status: 'ACCEPTED', messageId: 'ignored' })
+  await new Promise(resolve => setImmediate(resolve))
+  timeoutState = await db.notificationOutbox.findUniqueOrThrow({ where: { id: timeoutJob.id } })
+  assert.equal(timeoutState.status, 'PENDING')
+  assert.equal((await deliverContactEmails({ send, now: () => new Date(Date.now() + 15 * 60_000) })).sent, 1)
+  assert.equal(calls.length, 2); assert.equal(accepted.size, 1)
+  assert.equal(calls[0].idempotencyKey, calls[1].idempotencyKey)
+  console.log(`CONTACT_TIMEOUT elapsed_ms=${Math.round(elapsed)}; attempts=2; provider_acceptances=1`)
+  await reset()
+  check('real PostgreSQL timeout, late response and retry retain one provider acceptance')
+
   assert.equal((await submitContact(payload({ website: 'bot' }), 'ip')).status, 400)
   assert.equal((await submitContact(payload({ email: 'bad' }), 'ip')).status, 400)
   assert.equal(await db.notificationOutbox.count(), 0); assert.equal(await db.rateLimit.count(), 0)
