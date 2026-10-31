@@ -1,8 +1,11 @@
 import assert from 'node:assert/strict'
-import { randomBytes, randomUUID } from 'node:crypto'
+import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import { spawnSync } from 'node:child_process'
 import { registerHooks } from 'node:module'
+import { copyFileSync, cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import path from 'node:path'
 import { Client } from 'pg'
+import { pendingMigrations } from './audit-d2c-preflight.mjs'
 import type { PrismaClient } from '../src/generated/prisma/client'
 import type { AuthEmail } from '../src/lib/email'
 
@@ -18,20 +21,58 @@ const testUrl = new URL(source); testUrl.pathname = `/${databaseName}`
 const admin = new Client({ connectionString: adminUrl.href })
 await admin.connect()
 let db: PrismaClient | undefined, sql: Client | undefined
+let migrationStage: string | undefined
 let cases = 0
 const check = (name: string) => { cases++; console.log(`PASS ${name}`) }
 try {
   await admin.query(`CREATE DATABASE "${databaseName}"`)
   process.env.DATABASE_URL = testUrl.href
-  const migration = spawnSync(process.execPath, [process.env.npm_execpath!, 'run', 'db:deploy'], { env: process.env, encoding: 'utf8' })
-  if (migration.status !== 0) throw new Error('CONTACT_TEST_MIGRATION_FAILED')
+  const baseline = process.argv.includes('--baseline-85')
+  const migrationRoot = path.resolve('prisma/migrations')
+  const allMigrations = readdirSync(migrationRoot).filter(name => /^\d/.test(name)).sort()
+  assert.equal(allMigrations.length, 93)
+  const expectedMigrations = allMigrations.filter(name => !baseline || !pendingMigrations.includes(name))
+  const migrateArgs = [process.env.npm_execpath!, 'run', 'db:deploy']
+  if (baseline) {
+    // Reconstruct the documented 85-migration state only in this newly created DB.
+    // No resolve, fabricated registry entries or changes to repository migrations.
+    assert.equal(expectedMigrations.length, 85)
+    const stageRoot = path.resolve('.local-storage')
+    mkdirSync(stageRoot, { recursive: true })
+    migrationStage = mkdtempSync(path.join(stageRoot, 'contact-schema-'))
+    mkdirSync(path.join(migrationStage, 'migrations'))
+    copyFileSync('prisma/schema.prisma', path.join(migrationStage, 'schema.prisma'))
+    copyFileSync(path.join(migrationRoot, 'migration_lock.toml'), path.join(migrationStage, 'migrations/migration_lock.toml'))
+    for (const name of expectedMigrations) cpSync(path.join(migrationRoot, name), path.join(migrationStage, 'migrations', name), { recursive: true })
+    writeFileSync(path.join(migrationStage, 'prisma.config.ts'), "import { defineConfig, env } from 'prisma/config'\nexport default defineConfig({schema:'schema.prisma',migrations:{path:'migrations'},datasource:{url:env('DATABASE_URL')}})\n")
+    migrateArgs.push('--', '--config', path.join(migrationStage, 'prisma.config.ts'))
+  }
+  const migrate = () => {
+    const result = spawnSync(process.execPath, migrateArgs, { env: process.env, encoding: 'utf8' })
+    if (result.status !== 0) throw new Error('CONTACT_TEST_MIGRATION_FAILED')
+  }
+  migrate()
   sql = new Client({ connectionString: testUrl.href }); await sql.connect()
-  const registry = await sql.query('SELECT count(*)::int AS n FROM "_prisma_migrations" WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL')
-  assert.equal(registry.rows[0].n, 93); check('93 existing migrations; no new schema')
+  const registry = await sql.query('SELECT id, migration_name, checksum, finished_at, rolled_back_at FROM "_prisma_migrations" ORDER BY migration_name')
+  assert.deepEqual(registry.rows.map(row => row.migration_name), expectedMigrations)
+  for (const row of registry.rows) {
+    assert.ok(row.finished_at); assert.equal(row.rolled_back_at, null)
+    assert.equal(row.checksum, createHash('sha256').update(readFileSync(path.join(migrationRoot, row.migration_name, 'migration.sql'))).digest('hex'))
+  }
+  migrate()
+  assert.deepEqual((await sql.query('SELECT id, migration_name, checksum, finished_at, rolled_back_at FROM "_prisma_migrations" ORDER BY migration_name')).rows, registry.rows)
+  check(`${expectedMigrations.length} exact migration checksums; repeated deploy changes no registry; no new schema`)
   process.env.CONTACT_MESSAGE_ENCRYPTION_KEY = randomBytes(32).toString('hex')
   process.env.CONTACT_EMAIL_TO = 'contact-acceptance@example.invalid'
   process.env.CONTACT_OUTBOX_ENABLED = 'true'
   const { getPrisma } = await import('../src/lib/prisma'); db = getPrisma()
+  const freshClient = async () => {
+    await db!.$disconnect()
+    // Test a cold runtime connection without reusing a disposed PrismaPg pool.
+    const cache = globalThis as unknown as { prisma?: PrismaClient; runtimePool?: unknown }
+    delete cache.prisma; delete cache.runtimePool
+    db = getPrisma()
+  }
   const { submitContact } = await import('../src/lib/contact/contact-service')
   const { deliverContactEmails } = await import('../src/lib/contact/contact-email-worker')
   const { AuthEmailDeliveryError } = await import('../src/lib/email')
@@ -151,6 +192,46 @@ try {
   await sql.query('DROP TRIGGER test_contact_fail ON "NotificationOutbox"; DROP FUNCTION test_contact_fail()')
   check('enqueue fault rolls back quotas and no receipt is promised')
 
+  await reset(); const preserved = await enqueue(); const unavailablePayload = payload()
+  const beforeOutage = await db.notificationOutbox.findUniqueOrThrow({ where: { id: preserved.id } })
+  await sql.end(); sql = undefined; await freshClient()
+  process.env.RESEND_API_KEY = 'synthetic-not-a-provider-key'
+  const { contactFormEnabled } = await import('../src/lib/contact/contact-configuration')
+  assert.equal(contactFormEnabled(), true)
+  // A real connection refusal, confined to this harness's generated database.
+  await admin.query(`ALTER DATABASE "${databaseName}" ALLOW_CONNECTIONS false`)
+  try {
+    const response = await POST(new Request('http://127.0.0.1:3071/api/contact', { method: 'POST', headers: { origin: 'http://127.0.0.1:3071', 'content-type': 'application/json' }, body: JSON.stringify(unavailablePayload) }))
+    assert.equal(response.status, 503); assert.equal(response.headers.get('cache-control'), 'no-store')
+    assert.deepEqual(await response.json(), (await import('../src/lib/contact/contact-service')).unavailable().body)
+    await assert.rejects(deliverContactEmails({ send }))
+    assert.equal(calls.length, 0)
+  } finally {
+    await admin.query(`ALTER DATABASE "${databaseName}" ALLOW_CONNECTIONS true`)
+    await freshClient()
+    sql = new Client({ connectionString: testUrl.href }); await sql.connect()
+    delete process.env.RESEND_API_KEY
+  }
+  assert.deepEqual(await db.notificationOutbox.findUniqueOrThrow({ where: { id: preserved.id } }), beforeOutage)
+  assert.equal(await db.notificationOutbox.count(), 1)
+  assert.equal((await submitContact(unavailablePayload, 'recovered')).status, 202)
+  assert.equal((await submitContact(unavailablePayload, 'recovered')).status, 202)
+  assert.equal((await deliverContactEmails({ send })).sent, 2)
+  assert.equal(accepted.size, 2)
+  check('real database outage: generic HTTP503, no provider call or data loss, same request recovers once')
+
+  await reset(); const interrupted = await enqueue()
+  await sql.query(`CREATE FUNCTION test_contact_worker() RETURNS trigger LANGUAGE plpgsql AS $test$ BEGIN IF NEW."deliveryFingerprint" IS NOT NULL THEN RAISE EXCEPTION 'synthetic worker interruption'; END IF; RETURN NEW; END $test$; CREATE TRIGGER test_contact_worker BEFORE UPDATE ON "NotificationOutbox" FOR EACH ROW EXECUTE FUNCTION test_contact_worker()`)
+  await assert.rejects(deliverContactEmails({ send }))
+  const interruptedState = await db.notificationOutbox.findUniqueOrThrow({ where: { id: interrupted.id } })
+  assert.equal(interruptedState.status, 'PROCESSING'); assert.equal(interruptedState.attemptCount, 1)
+  assert.equal(calls.length, 0); assert.ok((interruptedState.payload as { ciphertext?: string }).ciphertext)
+  await sql.query('DROP TRIGGER test_contact_worker ON "NotificationOutbox"; DROP FUNCTION test_contact_worker()')
+  assert.equal((await deliverContactEmails({ send })).claimed, 0)
+  assert.equal((await deliverContactEmails({ send, now: () => new Date(Date.now() + 6 * 60_000) })).sent, 1)
+  assert.equal(calls.length, 1); assert.equal(accepted.size, 1)
+  check('worker interruption after claim: active lease retained, expired lease resumes exactly once')
+
   await reset(); const retry = await enqueue()
   assert.equal((await deliverContactEmails({ send: async () => { throw new AuthEmailDeliveryError('EMAIL_PROVIDER_UNAVAILABLE', 'not logged') } })).retry, 1)
   const later = new Date(Date.now() + 15 * 60_000)
@@ -215,5 +296,10 @@ try {
   await sql?.end(); await db?.$disconnect()
   await admin.query(`DROP DATABASE IF EXISTS "${databaseName}" WITH (FORCE)`)
   await admin.end()
+  if (migrationStage) {
+    assert.equal(path.dirname(migrationStage), path.resolve('.local-storage'))
+    assert.ok(path.basename(migrationStage).startsWith('contact-schema-'))
+    rmSync(migrationStage, { recursive: true })
+  }
   console.log('CONTACT_TEST_DATABASE_REMOVED')
 }

@@ -39,9 +39,11 @@ jobs:
       - name: Combined synthetic commercial chain and notification recovery
         run: npm run test:db:assignment-notifications
       - name: Durable contact admission, encryption and isolated outbox recovery
-        run: npm run test:db:contact
-      - name: Contact HTTP, UI and scheduler regressions
-        run: npx vitest run src/lib/contact src/app/api/contact src/components/public/contact-form.test.tsx src/app/contact/page.test.tsx --maxWorkers=2
+        run: |
+          npm run test:db:contact
+          npm run test:db:contact -- --baseline-85
+      - name: Contact and payment HTTP, UI and scheduler regressions
+        run: npx vitest run src/lib/contact src/app/api/contact src/app/api/payments/mollie/webhook src/components/public/contact-form.test.tsx src/app/contact/page.test.tsx --maxWorkers=2
       - run: node --test ops/marketplace-notifications/dispatch.test.mjs
       - name: Financial concurrency and tenant authorization
         run: npm run test:db:finance && npm run test:db:marketplace-concurrency

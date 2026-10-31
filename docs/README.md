@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [WP20 — commerciële kern, foutinjectie en integratieacceptatie](wp20-commercial-core-completion.md)
+
 - [WP19 — commerciële acceptatie en gefaseerde releasevoorbereiding](wp19-commercial-release-acceptance.md)
 
 - [D2D/D3/D4 — publieke herstelvoorbereiding en productievoorwaarden](d2d-d3-d4-final-production-migration-readiness.md)

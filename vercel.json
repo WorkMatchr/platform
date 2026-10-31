@@ -11,7 +11,8 @@
       "codex/d1-d2-runtime-recovery": false,
       "codex/d2d-public-recovery": false,
       "codex/commercial-launch-finalization": false,
-      "codex/wp19-commercial-acceptance": false
+      "codex/wp19-commercial-acceptance": false,
+      "codex/wp20-commercial-core": false
     }
   },
   "crons": [
