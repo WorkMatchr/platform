@@ -13,11 +13,14 @@ Provideridentiteiten, sleutelnamen en gedetailleerd beheersbewijs blijven uitslu
   De alignment van een werkelijk verzonden bericht is nog niet gemeten.
 - Het actuele accountquotum biedt ruimte voor één bericht. Vóór uitvoering opnieuw controleren;
   geen betaalde upgrade nodig voor deze proef.
-- De exacte Production-`AUTH_EMAIL_FROM` en de binding van Production-`RESEND_API_KEY` aan een
-  specifieke Resend-sleutel zijn **niet bewezen**. De variabelen bestaan, maar afgeschermde metadata
-  bewijst hun waarden niet. Een zichtbare WorkMatchr-sleutel heeft ruimere rechten dan alleen verzenden;
-  dit bewijst niet dat Production die sleutel gebruikt. Operator moet uitsluitend afzender en sleutelnaam
-  bevestigen, geen sleutelwaarde delen.
+- **PO-bevestiging, 1 november 2026:** Production-`AUTH_EMAIL_FROM` en de binding van
+  Production-`RESEND_API_KEY` aan een specifieke Resend-sleutel blijven **NOT VERIFIED**.
+  De PO ziet alleen een Preview-afzenderinstelling en geen afzonderlijk herkenbare Production-sleutel.
+  Eerdere connector-metadata over variabelen is geen bewijs van de Production-waarde of runtimebinding.
+  De zichtbare ruimere rechten van een sleutel mogen niet aan Production worden toegeschreven.
+  Geen verdere wijziging van productievariabelen of sleutels en geen verzending toegestaan.
+  Een volgende providerstap vereist bewezen identiteit/scope en afzonderlijk uitvoeringsakkoord;
+  geen bestaande sleutel raden, hergebruiken of vervangen op basis van alleen een naam.
 - De domeininstelling gebruikt opportunistische TLS. Dit garandeert geen versleuteling tot iedere
   ontvangende mailserver. Vóór vrijgave een onderbouwd besluit over afgedwongen TLS; niet gewijzigd.
   Het tracking-scherm is een nieuw-configuratieformulier: de daar voorgeselecteerde checkbox is
@@ -97,6 +100,43 @@ De bestaande implementatie is ongewijzigd:
 Inhoudsretentie is technisch getest; volledige eindretentie blijft BLOCKED zolang metadata en
 periodieke telleropruiming niet zijn begrensd. Er is nu niets verwijderd en geen termijn geactiveerd.
 
+### Aanvullende controles na de PO-bevestiging
+
+- De consumer, maintenance-auth, schoonmaakvoorwaarden en bestaande PostgreSQL-asserties zijn
+  gericht nagelopen. Cleanup blijft vóór de verzendgate/sleutelvalidatie staan. Alleen CONTACT_MESSAGE
+  wordt geredigeerd; recente inhoud en actieve leases blijven behouden. Bij verlopen lease kan
+  de volgende run alsnog opruimen. Geen nieuwe codefout in deze reeds geteste bescherming gevonden.
+- De laatste vijf geplande GitHub-runs waren succesvol. Bij de laatste run zijn zowel de dispatchjob
+  als de stap die de beveiligde maintenance-route aanroept daadwerkelijk uitgevoerd, niet overgeslagen.
+  Er liggen echter meerdere uren tussen runs; ook op het controlemoment lag de laatste run uren terug.
+  De ingestelde kwartiercadans is dus geen bewezen operationele garantie. Gedetailleerde tijden/run-ID's
+  staan in het private dossier. Geen workflow gestart en geen maintenance-endpoint aangeroepen.
+- De scheduler publiceert bezorgtellers, maar neemt de bestaande `redacted`-teller niet over.
+  Alleen een groene workflow bewijst daarom niet hoeveel inhoud verwijderd is of dat geen oude
+  inhoud achterblijft. Er is geen productie-inhoud geopend en geen dergelijke databasecontrole uitgevoerd.
+- De resterende privacyclaims uit §3 zijn inhoudelijke besluiten of nog te bewijzen provider-/beheerafspraken.
+  De PO-bevestiging van de onbekende afzender/sleutel geeft geen instemming met bewaartermijnen,
+  doorgifte, cookieclaims of juridische publicatie. De bestaande concepten blijven geblokkeerd.
+
+**Uitvoerbare vervolgcriteria voor retentievrijgave, zonder nu beleid te activeren:**
+
+1. Beoordeel de voorgestelde zeven dagen inhoud, 30 dagen terminale metadata en 24 uur tellers
+   afzonderlijk. Het reeds vastgestelde mailboxjaar blijft ongewijzigd.
+2. Leg voor metadata eerst een begrensde geldigheid van aanvragen en weigering van verlopen
+   herhalingen vast. Test daarna replay na purge, dubbele cleanup en gelijktijdige verzending;
+   een verwijderde deduplicatierij mag geen tweede mail mogelijk maken.
+3. Laat telleropruiming en inhoudsretentie ook zonder nieuwe contactaanvragen werken via het
+   bestaande onderhoud. Behoud authenticatie, templatefilter, gesloten verzendgate en leasebescherming.
+   Controleer uitsluitend aantallen oude ciphertextrecords, actieve leases en verwijderde records.
+4. Gebruik de eerder voorgestelde Product Owner als primaire beheerder; instemming en instructie
+   van de voorgestelde achtervang blijven open. Voorstel: signalering wanneer
+   één uur geen succesvolle onderhoudsrun is gezien, dagelijkse controle van oude inhoud en een
+   jaarlijkse beleidscontrole. Deze drempel is een voorstel, geen bestaand alarm. Laat een gemiste run
+   opvolgen zonder automatisch opnieuw mails te sturen. Geen betaalde dienst of configuratiewijziging.
+
+Deze nog te implementeren grenzen en operationele bewijzen blijven expliciete releasevoorwaarden.
+Geen onderhoudsaanroep gebruikt als proef: de normale route kan ook andere notificaties verzenden.
+
 ## 3. PR #64: gerichte conceptaanvulling en open juridische claims
 
 PR #64 is OPEN/Draft op `74c6b2077ebdf1d75b55e6dd004b66545c632c47`, met bekende main-conflicten.
@@ -158,6 +198,7 @@ Nog benodigde besluiten, per bestaande claim:
   Dit betreft bestaande echte SQL-/concurrency-/idempotentietests met synthetische data,
   inclusief gesloten-gatecleanup zonder sleutel. Geen nieuwe database of onnodige migratietest gestart.
 - Volledige lint: nul fouten; vier bestaande Next.js-waarschuwingen. Nieuwe test afzonderlijk lintvrij na correctie van een ongebruikte testvariabele. Standalone TypeScript: PASS; de nieuwe werkboom vereiste eerst lokale Prisma-clientgeneratie, zonder databaseverbinding. Finale drie privacytests opnieuw PASS. Productiebuild: PASS met drie bestaande filesystem-tracingwaarschuwingen. De nieuwe werkboom gebruikt een node_modules-junction buiten de Turbopack-root en kon daardoor niet rechtstreeks bouwen. De finale build is uitgevoerd in de bestaande werkboom met aantoonbaar identieke applicatiebron, migraties, packagebestanden en buildconfiguratie; de nieuwe test is afzonderlijk op deze branch getypecheckt. Geen productconfiguratie aangepast om de lokale beperking te omzeilen. Diff-check en secrets-/private-metadatacontrole: PASS.
+- GitHub CI op technische commit `a56283e7`: Trading access en Learning publication integrity PASS. De PO-aanvulling wijzigt alleen dit dossier; bestaande tests/build behouden hun geldigheid en zijn niet onnodig herhaald.
 - Geen runtimefix nodig gevonden; uitsluitend privacyregressies en documentatie toegevoegd.
   Geen wijziging aan beslisregels, schema, contactgates, providerconfiguratie of juridische pagina's.
 
@@ -168,7 +209,7 @@ Nog benodigde besluiten, per bestaande claim:
 | Resend-domein | Verified; SPF/DKIM bevestigd; DMARC aanwezig; quotum beschikbaar. Production-From/sleutelbinding ontbreekt | Afzender/sleutelbinding bevestigen; passende sleutelrechten/TLS en provideracceptatie |
 | Testontvanger | PO-bevestigd contact@workmatchr.nl via Vimexx naar eigen mailbox; daadwerkelijke ontvangst nog niet getest | Afzonderlijk akkoord voor exact één niet-gevoelige mail en mailboxcontrole |
 | Contactencryptie | PASS voor implementatie; Production-sleutel niet ingericht, contact gesloten | Bevoegd sleutelbeheer en afzonderlijke toekomstige provisioning goedkeuren |
-| Contactretentie | Inhoudsopruiming PASS; volledige technische eindretentie BLOCKED | Zeven/30 dagen en 24 uur beoordelen; veilige metadata-/telleropruiming daarna implementeren |
+| Contactretentie | Inhoudsopruiming PASS; volledige technische eindretentie BLOCKED | Zeven/30 dagen en 24 uur beoordelen; veilige metadata-/telleropruiming en monitoring van gemiste runs afronden |
 | Privacyverklaring | Concept; contactaanvulling en concrete open claims vastgelegd | Menselijke inhoudelijke acceptatie, identiteit/adres, gronden, afspraken en uitvoering |
 | Cookieverklaring | Concept; huidige functionele opslag behouden | Menselijke acceptatie van inventaris, uitleg en toepasselijke vrijstellingen |
 
@@ -203,7 +244,7 @@ Nog benodigde besluiten, per bestaande claim:
 
 ## Eindstatus
 
-- RESEND CONFIGURATION: **BLOCKED** — Production-afzender en sleutelbinding nog niet bevestigd.
+- RESEND CONFIGURATION: **BLOCKED** — Production-afzender en sleutelbinding door PO als NOT VERIFIED bevestigd.
 - RESEND REAL DELIVERY: **NO-GO** — uitvoering niet geautoriseerd.
 - CONTACT ENCRYPTION: **PASS** — implementatie; Production-sleutelbeheer nog niet vrijgegeven.
 - CONTACT RETENTION TECHNICAL: **BLOCKED** — inhoudsopruiming PASS, volledige metadata-/tellerretentie open.
