@@ -18,7 +18,8 @@
       "codex/commercial-release-decisions-final": false,
       "codex/resend-privacy-final-acceptance": false,
       "codex/contact-retention": false,
-      "codex/contact-operations": false
+      "codex/contact-operations": false,
+      "codex/contact-monitor-finalization": false
     }
   },
   "crons": [

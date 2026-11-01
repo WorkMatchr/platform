@@ -1,6 +1,7 @@
 import 'server-only'
 import { Prisma } from '@/generated/prisma/client'
 import { getPrisma } from '@/lib/prisma'
+import { reconciledContactRejection } from './contact-final-state'
 import { CONTACT_TEMPLATE, CONTACT_RETENTION_MS, CONTACT_METADATA_RETENTION_MS, CONTACT_RATE_LIMIT_RETENTION_MS } from './contact-configuration'
 
 const hour = 60 * 60_000
@@ -14,9 +15,9 @@ export type ContactHealthCounts = {
 export async function readContactHealth(now = new Date()) {
   const scope = Prisma.sql`"templateKey" = ${CONTACT_TEMPLATE} AND "channel" = 'EMAIL' AND "recipientUserId" IS NULL`
   const noAttempt = Prisma.sql`"attemptCount" = 0 AND "firstAttemptAt" IS NULL AND "deliveryFingerprint" IS NULL AND "providerMessageId" IS NULL`
-  const final = Prisma.sql`("status" = 'SENT' OR ("status" = 'FAILED' AND ${noAttempt}))
+  const final = Prisma.sql`("status" = 'SENT' OR ("status" = 'FAILED' AND (${noAttempt} OR ${reconciledContactRejection})))
     AND "processedAt" IS NOT NULL AND "processedAt" >= "createdAt"`
-  const review = Prisma.sql`("status" = 'FAILED' AND NOT (${noAttempt}))
+  const review = Prisma.sql`("status" = 'FAILED' AND NOT (${noAttempt}) AND NOT (${reconciledContactRejection}))
     OR ("status" IN ('SENT', 'FAILED') AND ("processedAt" IS NULL OR "processedAt" < "createdAt"))
     OR ("status" = 'PENDING' AND "lastErrorCode" IN ('EMAIL_PROVIDER_UNAVAILABLE', 'EMAIL_PROVIDER_RESPONSE_INVALID',
       'EMAIL_PROVIDER_REJECTED', 'DELIVERY_INTERNAL_ERROR', 'DELIVERY_RECONCILIATION_REQUIRED'))

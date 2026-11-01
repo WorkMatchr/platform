@@ -143,5 +143,5 @@ export async function runMonitor({ stateFile, secret, log = console.log, error =
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  process.exitCode = await runMonitor({ stateFile: process.env.CONTACT_MONITOR_STATE_FILE, secret: process.env.CRON_SECRET })
+  process.exitCode = await runMonitor({ stateFile: process.env.CONTACT_MONITOR_STATE_FILE, secret: process.env.CONTACT_MONITOR_SECRET })
 }
