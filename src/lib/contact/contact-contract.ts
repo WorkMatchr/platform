@@ -8,7 +8,8 @@ export const contactSchema = z.object({
   subject: z.enum(['GENERAL', 'TECHNICAL', 'PRIVACY', 'OTHER'], { error: 'Kies een onderwerp.' }),
   message: z.string().trim().min(10, 'Beschrijf uw vraag in minimaal 10 tekens.').max(4000, 'Gebruik maximaal 4000 tekens.'),
   website: z.string().max(200).default(''),
-  requestId: z.uuid(),
+  // Legacy UUIDs are accepted only for lookup of an already recorded submission.
+  requestId: z.union([z.uuid(), z.string().regex(/^v1\.[0-9a-z]{1,11}\.[0-9a-f-]{36}\.[A-Za-z0-9_-]{43}$/)]),
 }).strict()
 export type ContactInput = z.infer<typeof contactSchema>
 export type ContactResult = { ok: boolean; message: string; errors?: Partial<Record<'name' | 'email' | 'subject' | 'message', string>> }

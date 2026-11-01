@@ -49,6 +49,21 @@ test('transport failure makes one attempt; next schedule handles catch-up', asyn
 })
 
 const response = data => ({ status: 200, json: async () => data })
+const retentionResponse = (pending, reviewRequired = 0) => response({ claimed: 0, sent: 0, retry: 0, failed: 0,
+  contact: { claimed: 0, sent: 0, retry: 0, failed: 0, retention: { enabled: true, pending, reviewRequired, redacted: 0, metadataDeleted: 1, countersDeleted: 2 } } })
+
+test('drains retention backlog with closed mail queues after a missed run', async () => {
+  let calls = 0
+  const result = await drain({ secret: 'synthetic', fetchImpl: async () => retentionResponse(++calls < 3) })
+  assert.equal(calls, 3); assert.equal(result.contact.retention.pending, false)
+  assert.equal(result.contact.retention.metadataDeleted, 3); assert.equal(result.contact.retention.countersDeleted, 6)
+})
+
+test('retention contention/backlog and unresolved records cannot produce a green run', async () => {
+  await assert.rejects(drain({ secret: 'synthetic', maxBatches: 2, fetchImpl: async () => retentionResponse(true) }), /BACKLOG_REMAINING/)
+  assert.equal(await run({ secret: 'synthetic', log: () => {}, fetchImpl: async () => retentionResponse(false, 1) }), 1)
+  await assert.rejects(dispatch({ secret: 'synthetic', fetchImpl: async () => retentionResponse('bad') }), /RESPONSE_INVALID/)
+})
 test('zero due records completes without additional calls', async () => {
   let calls = 0
   assert.deepEqual(await drain({ secret: 'synthetic', fetchImpl: async () => { calls++; return response({ claimed: 0, sent: 0, retry: 0, failed: 0 }) } }), { claimed: 0, sent: 0, retry: 0, failed: 0 })

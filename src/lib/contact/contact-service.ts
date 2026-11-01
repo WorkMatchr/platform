@@ -4,6 +4,7 @@ import { getPrisma } from '@/lib/prisma'
 import { contactSchema, type ContactResult } from './contact-contract'
 import { CONTACT_TEMPLATE, contactConfiguration } from './contact-configuration'
 import { contactDigest, sealContact } from './contact-envelope'
+import { isFreshContactRequest } from './contact-request-token'
 
 export function unavailable() {
   return { status: 503, body: { ok: false, message: 'Ontvangen is nu niet gelukt. Uw invoer blijft staan. Probeer het later opnieuw of mail contact@workmatchr.nl.' } satisfies ContactResult }
@@ -37,6 +38,8 @@ export async function submitContact(payload: unknown, clientAddress: string): Pr
         return prior.status === 'FAILED' ? 'FAILED' : 'ACCEPTED'
       }
       const now = Date.now()
+      // Purged/legacy requests must never enqueue again. Check under the lock.
+      if (!isFreshContactRequest(requestId, config.key, now)) return 'EXPIRED'
       const limits = [
         { key: 'contact:global', limit: 30, windowMs: 600000 },
         { key: `contact:ip:${hash(clientAddress)}`, limit: 5, windowMs: 600000 },
@@ -59,6 +62,7 @@ export async function submitContact(payload: unknown, clientAddress: string): Pr
       body: { ok: false, message: result === 'BUSY' ? 'Het contactformulier is momenteel druk. Uw invoer blijft staan. Probeer het over enkele seconden opnieuw.' : 'Er zijn te veel berichten ontvangen. Uw invoer blijft staan. Probeer het over een uur opnieuw of mail contact@workmatchr.nl.' } }
     if (result === 'CONFLICT') return { status: 409, body: { ok: false, message: 'Een eerder bericht is al met dit formulier ontvangen. Bewaar uw tekst en open het formulier opnieuw voor een ander bericht.' } }
     if (result === 'FAILED') return unavailable()
+    if (result === 'EXPIRED') return { status: 410, body: { ok: false, message: 'Dit formulier kan niet meer worden verstuurd. Uw invoer blijft staan. Controleer eerst of uw eerdere bericht is ontvangen. Open alleen voor een nieuw bericht het formulier opnieuw.' } }
     return { status: 202, body: { ok: true, message: 'Uw bericht is ontvangen en staat klaar voor verwerking. U hoeft het niet opnieuw te versturen.' } }
   } catch { return unavailable() } // Never log raw database errors or contact data.
 }
