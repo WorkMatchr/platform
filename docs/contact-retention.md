@@ -1,5 +1,11 @@
 # Contactretentie — technische kandidaat, geen productieactivering
 
+Aanvulling: [operationele monitoring en reconciliatie](contact-operations.md) op main na PR #84.
+De PO heeft inmiddels triage binnen 24 uur, escalatie na 72 uur en een expliciet besluit uiterlijk
+dag 7 bevestigd, met WorkMatchr-platformbeheer als primaire verantwoordelijke. De hieronder
+historisch als voorstel beschreven termijnen zijn daarmee bevestigd; de uitzonderingsduur,
+daadwerkelijke uitvoering en productieactivering blijven afzonderlijk open.
+
 Basis: main `6681319ac0bb1e09c210380d5526087de63bf2d2` (PR #83).
 De PO heeft 30 dagen metadata na definitieve afhandeling en maximaal 24 uur contacttellers
 goedgekeurd. Dit actualiseert [het Resend-/privacydossier](resend-privacy-final-acceptance.md)
