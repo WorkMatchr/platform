@@ -13,7 +13,7 @@ export default defineConfig({
     // node:test suites run separately (scheduler script and recovery CI step).
     exclude: [
       ...configDefaults.exclude,
-      'ops/marketplace-notifications/dispatch.test.mjs',
+      'ops/marketplace-notifications/*.test.mjs',
       'ops/recovery/*.test.mjs',
       'scripts/audit-d2c-preflight.test.mjs',
       'scripts/d2c-archive-stage.test.mjs',
