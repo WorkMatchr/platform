@@ -6,6 +6,7 @@ import { copyFileSync, cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync
 import path from 'node:path'
 import { Client } from 'pg'
 import { pendingMigrations } from './audit-d2c-preflight.mjs'
+import { contactRetentionFixture } from './fixtures/contact-retention-database'
 import type { PrismaClient } from '../src/generated/prisma/client'
 import type { AuthEmail } from '../src/lib/email'
 
@@ -27,6 +28,19 @@ const check = (name: string) => { cases++; console.log(`PASS ${name}`) }
 try {
   await admin.query(`CREATE DATABASE "${databaseName}"`)
   process.env.DATABASE_URL = testUrl.href
+  if (process.argv.includes('--retention-schema')) {
+    sql = new Client({ connectionString: testUrl.href }); await sql.connect()
+    await sql.query(contactRetentionFixture)
+    const schema = readFileSync('prisma/schema.prisma', 'utf8')
+    for (const model of ['NotificationOutbox', 'RateLimit']) {
+      const block = schema.match(new RegExp(`model ${model} \\{([^}]+)\\}`))![1]
+      const fields = [...block.matchAll(/^\s+(\w+)\s+\w+/gm)].map(match => match[1]).sort()
+      const columns = (await sql.query('SELECT column_name FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2', ['public', model])).rows.map(row => row.column_name).sort()
+      assert.deepEqual(columns, fields)
+    }
+    assert.equal((await sql.query(`SELECT to_regclass('public._prisma_migrations') AS registry`)).rows[0].registry, null)
+    check('isolated two-model PostgreSQL fixture; no migrations or existing database changes')
+  } else {
   const baseline = process.argv.includes('--baseline-85')
   const migrationRoot = path.resolve('prisma/migrations')
   const allMigrations = readdirSync(migrationRoot).filter(name => /^\d/.test(name)).sort()
@@ -62,9 +76,11 @@ try {
   migrate()
   assert.deepEqual((await sql.query('SELECT id, migration_name, checksum, finished_at, rolled_back_at FROM "_prisma_migrations" ORDER BY migration_name')).rows, registry.rows)
   check(`${expectedMigrations.length} exact migration checksums; repeated deploy changes no registry; no new schema`)
+  }
   process.env.CONTACT_MESSAGE_ENCRYPTION_KEY = randomBytes(32).toString('hex')
   process.env.CONTACT_EMAIL_TO = 'contact-acceptance@example.invalid'
   process.env.CONTACT_OUTBOX_ENABLED = 'true'
+  process.env.CONTACT_RETENTION_ENABLED = 'true'
   const { getPrisma } = await import('../src/lib/prisma'); db = getPrisma()
   const freshClient = async () => {
     await db!.$disconnect()
@@ -74,9 +90,10 @@ try {
     db = getPrisma()
   }
   const { submitContact } = await import('../src/lib/contact/contact-service')
+  const { issueContactRequest } = await import('../src/lib/contact/contact-request-token')
   const { deliverContactEmails } = await import('../src/lib/contact/contact-email-worker')
   const { AuthEmailDeliveryError } = await import('../src/lib/email')
-  const payload = (extra = {}) => ({ name: 'Synthetic Contact', email: `${randomUUID()}@example.invalid`, subject: 'GENERAL', message: 'Een uitsluitend synthetisch testbericht.', requestId: randomUUID(), ...extra })
+  const payload = (extra = {}) => ({ name: 'Synthetic Contact', email: `${randomUUID()}@example.invalid`, subject: 'GENERAL', message: 'Een uitsluitend synthetisch testbericht.', requestId: issueContactRequest(Buffer.from(process.env.CONTACT_MESSAGE_ENCRYPTION_KEY!, 'hex')), ...extra })
   const accepted = new Map<string, string>(), calls: AuthEmail[] = []
   const send = async (email: AuthEmail) => {
     assert.equal(email.to, process.env.CONTACT_EMAIL_TO); calls.push(email)
@@ -119,21 +136,20 @@ try {
   assert.equal((await deliverContactEmails({ send: async email => {
     const receipt = await send(email)
     return new Promise(resolve => { lateResult = () => resolve(receipt) })
-  } })).retry, 1)
+  } })).failed, 1)
   const elapsed = performance.now() - started
   assert.ok(elapsed >= 8_000 && elapsed < 15_000)
   let timeoutState = await db.notificationOutbox.findUniqueOrThrow({ where: { id: timeoutJob.id } })
-  assert.equal(timeoutState.status, 'PENDING'); assert.equal(timeoutState.lastErrorCode, 'EMAIL_PROVIDER_UNAVAILABLE')
+  assert.equal(timeoutState.status, 'FAILED'); assert.equal(timeoutState.lastErrorCode, 'DELIVERY_RECONCILIATION_REQUIRED')
   lateResult({ accepted: true, transport: 'RESEND', status: 'ACCEPTED', messageId: 'ignored' })
   await new Promise(resolve => setImmediate(resolve))
   timeoutState = await db.notificationOutbox.findUniqueOrThrow({ where: { id: timeoutJob.id } })
-  assert.equal(timeoutState.status, 'PENDING')
-  assert.equal((await deliverContactEmails({ send, now: () => new Date(Date.now() + 15 * 60_000) })).sent, 1)
-  assert.equal(calls.length, 2); assert.equal(accepted.size, 1)
-  assert.equal(calls[0].idempotencyKey, calls[1].idempotencyKey)
-  console.log(`CONTACT_TIMEOUT elapsed_ms=${Math.round(elapsed)}; attempts=2; provider_acceptances=1`)
+  assert.equal(timeoutState.status, 'FAILED')
+  assert.equal((await deliverContactEmails({ send, now: () => new Date(Date.now() + 15 * 60_000) })).claimed, 0)
+  assert.equal(calls.length, 1); assert.equal(accepted.size, 1)
+  console.log(`CONTACT_TIMEOUT elapsed_ms=${Math.round(elapsed)}; attempts=1; provider_acceptances=1`)
   await reset()
-  check('real PostgreSQL timeout, late response and retry retain one provider acceptance')
+  check('real PostgreSQL timeout and late acceptance block resend pending reconciliation; one provider acceptance')
 
   assert.equal((await submitContact(payload({ website: 'bot' }), 'ip')).status, 400)
   assert.equal((await submitContact(payload({ email: 'bad' }), 'ip')).status, 400)
@@ -233,7 +249,7 @@ try {
   check('worker interruption after claim: active lease retained, expired lease resumes exactly once')
 
   await reset(); const retry = await enqueue()
-  assert.equal((await deliverContactEmails({ send: async () => { throw new AuthEmailDeliveryError('EMAIL_PROVIDER_UNAVAILABLE', 'not logged') } })).retry, 1)
+  assert.equal((await deliverContactEmails({ send: async () => { throw new AuthEmailDeliveryError('EMAIL_PROVIDER_REJECTED', 'not logged', 429) } })).retry, 1)
   const later = new Date(Date.now() + 15 * 60_000)
   assert.equal((await deliverContactEmails({ send, now: () => later })).sent, 1)
   assert.equal((await db.notificationOutbox.findUniqueOrThrow({ where: { id: retry.id } })).attemptCount, 2)
@@ -244,9 +260,10 @@ try {
   await assert.rejects(deliverContactEmails({ send }), /DELIVERY_ACKNOWLEDGEMENT_FAILED/)
   assert.equal((await db.notificationOutbox.findUniqueOrThrow({ where: { id: ack.id } })).status, 'PROCESSING')
   await sql.query('DROP TRIGGER test_contact_ack ON "NotificationOutbox"; DROP FUNCTION test_contact_ack()')
-  assert.equal((await deliverContactEmails({ send, now: () => new Date(Date.now() + 6 * 60_000) })).sent, 1)
-  assert.equal(calls.length, 2); assert.equal(accepted.size, 1); assert.equal(calls[0].idempotencyKey, calls[1].idempotencyKey)
-  check('lost acknowledgement recovers via expired lease without second provider acceptance')
+  assert.equal((await deliverContactEmails({ send, now: () => new Date(Date.now() + 6 * 60_000) })).failed, 1)
+  assert.equal(calls.length, 1); assert.equal(accepted.size, 1)
+  assert.equal((await db.notificationOutbox.findUniqueOrThrow({ where: { id: ack.id } })).lastErrorCode, 'DELIVERY_RECONCILIATION_REQUIRED')
+  check('lost acknowledgement blocks expired lease for reconciliation; no second provider call or acceptance')
 
   await reset(); const uncertain = await enqueue()
   await db.notificationOutbox.update({ where: { id: uncertain.id }, data: { status: 'PROCESSING', leaseUntil: new Date(0), firstAttemptAt: new Date(Date.now() - 24 * 3600000) } })
@@ -312,6 +329,8 @@ try {
   assert.equal(calls.length, 0)
   process.env.CONTACT_MESSAGE_ENCRYPTION_KEY = keyBeforeCleanup
   check('closed delivery and missing key: concurrent retention, active lease protection and later cleanup; no mail')
+  const { contactRetentionChecks } = await import('./fixtures/contact-retention-checks')
+  await contactRetentionChecks(db, sql!, check)
   console.log(`CONTACT_DATABASE_PASS cases=${cases}; real provider calls=0`)
 } finally {
   await sql?.end(); await db?.$disconnect()

@@ -16,8 +16,7 @@ export function ContactForm({ enabled }: { enabled: boolean }) {
     event.preventDefault()
     if (!enabled || active.current || result?.ok) return
     const form = event.currentTarget
-    requestId.current ??= crypto.randomUUID()
-    const payload = { ...Object.fromEntries(new FormData(form)), requestId: requestId.current }
+    const payload = { ...Object.fromEntries(new FormData(form)), requestId: requestId.current ?? crypto.randomUUID() }
     const parsed = contactSchema.safeParse(payload)
     if (!parsed.success) {
       const errors: ContactResult['errors'] = {}
@@ -34,7 +33,14 @@ export function ContactForm({ enabled }: { enabled: boolean }) {
     setPending(true)
     setResult(null)
     try {
-      const response = await fetch('/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(parsed.data) })
+      if (!requestId.current) {
+        const admission = await fetch('/api/contact/request', { method: 'POST' })
+        const body = await admission.json() as { requestId?: unknown }
+        if (!admission.ok || typeof body.requestId !== 'string' || !contactSchema.shape.requestId.safeParse(body.requestId).success) throw new Error('CONTACT_REQUEST_UNAVAILABLE')
+        requestId.current = body.requestId
+      }
+      // Never replace this identity after POST, even on expiry or lost response.
+      const response = await fetch('/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...parsed.data, requestId: requestId.current }) })
       const body = await response.json() as ContactResult
       const safeResult = body && typeof body.message === 'string' ? { ...body, ok: response.ok && body.ok === true } : { ok: false, message: 'Versturen is niet gelukt. Uw invoer blijft staan. Probeer het later opnieuw.' }
       setResult(safeResult)

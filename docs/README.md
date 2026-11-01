@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [Contactretentie — 30 dagen metadata, 24 uur tellers en reconciliatie](contact-retention.md)
+
 - [Resend en privacy — gerichte eindacceptatie](resend-privacy-final-acceptance.md)
 
 - [Commerciële vrijgave — definitieve besluiten en gerichte correcties](commercial-final-release-decisions.md)

@@ -16,7 +16,8 @@
       "codex/wp21-commercial-release": false,
       "codex/commercial-final-decisions": false,
       "codex/commercial-release-decisions-final": false,
-      "codex/resend-privacy-final-acceptance": false
+      "codex/resend-privacy-final-acceptance": false,
+      "codex/contact-retention": false
     }
   },
   "crons": [

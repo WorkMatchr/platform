@@ -1,5 +1,10 @@
 # Resend en privacy: gerichte eindacceptatie
 
+**Vervolg na merge van PR #83:** de PO heeft de voorgestelde 30 dagen metadata en 24 uur
+contacttellers goedgekeurd. Implementatie, uitzonderingen/reconciliatie en de nog niet geactiveerde
+productieretentie staan in [contact-retention.md](contact-retention.md). De onderstaande oorspronkelijke
+onderzoeksbevindingen blijven als historische nulmeting behouden; juridische PR #64 blijft concept.
+
 Peildatum: 1 november 2026. Basis: main `ac9b71f010fe1b6c0779d4fda1563d6cb0d831a8`.
 Aanvulling op [het commerciële vrijgavedossier](commercial-final-release-decisions.md), WP19–WP21 en PR #81/#82.
 Dit dossier geeft geen toestemming voor verzending, contactactivering of juridische publicatie.
