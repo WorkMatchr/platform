@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [Resend en privacy — gerichte eindacceptatie](resend-privacy-final-acceptance.md)
+
 - [Commerciële vrijgave — definitieve besluiten en gerichte correcties](commercial-final-release-decisions.md)
 
 - [WP21 — definitieve commerciële vrijgave, providers en acceptatie](wp21-final-commercial-release-readiness.md)
