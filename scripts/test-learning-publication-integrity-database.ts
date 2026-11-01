@@ -4,6 +4,7 @@ import { createHash, randomUUID } from 'node:crypto'
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { Client } from 'pg'
+import { assertSyntheticRoles, configureSyntheticRoles, roleAclSnapshot } from './fixtures/database-role-policy'
 
 // Never migrates the supplied database. Only connects to postgres to create unique,
 // process-owned databases/roles, then removes exactly those objects in finally.
@@ -27,6 +28,8 @@ adminUrl.pathname = '/postgres'
 const suffix = `${process.pid}_${Date.now()}`
 const writer = `db02_writer_${suffix}`
 const outsider = `db02_outsider_${suffix}`
+const runtime = `wp17_runtime_${suffix}`
+const diagnostic = `wp17_diagnostic_${suffix}`
 const correction = '20261026090000_restore_learning_exam_question_immutability'
 const retention = '20260930100000_add_learning_retention'
 const finalExam = '20260927210000_add_learning_final_exam'
@@ -104,6 +107,56 @@ async function dataSnapshot(db: Client) {
     snapshots[tablename] = (await db.query(`SELECT md5(coalesce(string_agg(row_to_json(t)::text, '|' ORDER BY row_to_json(t)::text),'')) AS digest FROM public."${tablename}" t`)).rows[0].digest
   }
   return snapshots
+}
+
+// Optional CI-only recovery drill using the same PostgreSQL service's pg_dump /
+// pg_restore binaries. It never reads a supplied database: runDatabase created
+// the source below, and this function owns the new restore destination.
+async function restoreSyntheticDatabase(admin: Client, db: Client, database: string, exams: Exam[]) {
+  const container = process.env.WP16_POSTGRES_CONTAINER_ID
+  if (!container) return
+  assert.equal(process.env.GITHUB_ACTIONS, 'true')
+  assert.match(container, /^[a-f0-9]{12,64}$/)
+  assert.equal(database, `workmatchr_db02_fresh_${suffix}`)
+  assert.equal((await db.query('SELECT current_database() AS name')).rows[0].name, database)
+  const restoredName = `workmatchr_wp16_restore_${suffix}`
+  const url = new URL(source); url.pathname = `/${restoredName}`
+  const restored = new Client({ connectionString: url.href, connectionTimeoutMillis: 5000 })
+  const dataBefore = await dataSnapshot(db)
+  const registry = (await db.query('SELECT * FROM _prisma_migrations ORDER BY migration_name')).rows
+  const functions = async (client: Client) => (await client.query(`SELECT p.proname, pg_get_function_identity_arguments(p.oid) AS args,
+    pg_get_userbyid(p.proowner) AS owner, p.proacl::text, p.prosecdef, p.provolatile, md5(pg_get_functiondef(p.oid)) AS body
+    FROM pg_proc p JOIN pg_namespace n ON p.pronamespace=n.oid WHERE n.nspname='public' ORDER BY p.proname,args`)).rows
+  const functionsBefore = await functions(db)
+  const aclsBefore = await roleAclSnapshot(db)
+  const started = Date.now()
+  let created = false
+  try {
+    const dump = spawnSync('docker', ['exec', container, 'pg_dump', '-U', 'postgres', '--format=custom', '--dbname', database], { timeout: 120000, maxBuffer: 64 * 1024 * 1024 })
+    assert.equal(dump.status, 0, 'Synthetic pg_dump failed; no provider data printed')
+    assert.ok(dump.stdout.length > 0)
+    await admin.query(`CREATE DATABASE "${restoredName}"`)
+    created = true
+    const restore = spawnSync('docker', ['exec', '-i', container, 'pg_restore', '-U', 'postgres', '--exit-on-error', '--single-transaction', '--dbname', restoredName], { input: dump.stdout, timeout: 120000, maxBuffer: 1024 * 1024 })
+    assert.equal(restore.status, 0, 'Synthetic pg_restore failed; no provider data printed')
+    await restored.connect()
+    // Database-level ACLs and login roles are not part of pg_dump. Reapply the
+    // separately reviewed database boundary, never repair table ACLs after restore.
+    await restored.query(`REVOKE CREATE, TEMPORARY ON DATABASE "${restoredName}" FROM PUBLIC`)
+    assert.deepEqual(await dataSnapshot(restored), dataBefore, 'Restored row digests differ')
+    assert.deepEqual((await restored.query('SELECT * FROM _prisma_migrations ORDER BY migration_name')).rows, registry)
+    assert.deepEqual(await functions(restored), functionsBefore, 'Restored function body/security/ACL differs')
+    assert.deepEqual(await roleAclSnapshot(restored), aclsBefore, 'Restored table/sequence owners or ACLs differ')
+    await assertSyntheticRoles(restored, runtime, diagnostic)
+    for (const exam of exams) await assertProtected(restored, exam)
+    await restored.query(`SET ROLE "${writer}"`)
+    try { for (const exam of exams) await assertProtected(restored, exam) } finally { await restored.query('RESET ROLE') }
+    assert.deepEqual(await dataSnapshot(restored), dataBefore)
+    console.log(`WP16 RESTORE PASS: ${registry.length} migration records, all table digests, function definitions/owners/ACLs and owner/restricted-role history guards; ${Date.now() - started} ms (synthetic only, not Neon RTO)`)
+  } finally {
+    await restored.end()
+    if (created) await admin.query(`DROP DATABASE "${restoredName}" WITH (FORCE)`)
+  }
 }
 
 async function functionIdentity(db: Client) {
@@ -254,6 +307,16 @@ async function runDatabase(admin: Client, mode: 'upgrade' | 'fresh') {
     deploy()
     assert.deepEqual((await db.query('SELECT id,migration_name,checksum,finished_at,rolled_back_at FROM _prisma_migrations ORDER BY migration_name')).rows, rows)
     assert.equal((await db.query('SELECT count(*)::int AS n FROM pg_index WHERE NOT indisvalid OR NOT indisready')).rows[0].n, 0)
+    if (mode === 'fresh') {
+      const acceptance = spawnSync(process.execPath, ['node_modules/tsx/dist/cli.mjs', 'scripts/wp17-acceptance-preflight.ts', '--check'], {
+        env: { ...process.env, DATABASE_URL: '', WP17_ACCEPTANCE_DATABASE_URL: target.toString() }, encoding: 'utf8', timeout: 30000,
+      })
+      assert.equal(acceptance.status, 0, 'WP17 read-only acceptance preflight failed')
+      console.log('WP17 ACCEPTANCE PREFLIGHT PASS: actual isolated 93-migration database; closed gates/no external credentials')
+      await configureSyntheticRoles(db, runtime, diagnostic)
+      await assertSyntheticRoles(db, runtime, diagnostic)
+      await restoreSyntheticDatabase(admin, db, database, exams)
+    }
     console.log(`PASS: ${mode}; ${names.length}/${names.length} migrations, checksums/repeat, least privilege, exam history and retention protection`)
   } finally {
     await db.end()
@@ -270,7 +333,7 @@ async function main() {
   const rolesBefore = (await admin.query('SELECT rolname FROM pg_roles ORDER BY rolname')).rows
   const createdRoles: string[] = []
   try {
-    for (const role of [writer, outsider]) {
+    for (const role of [writer, outsider, runtime, diagnostic]) {
       await admin.query(`CREATE ROLE "${role}" NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS`)
       createdRoles.push(role)
     }

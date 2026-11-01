@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { ContactForm } from '@/components/public/contact-form'
+import { contactFormEnabled } from '@/lib/contact/contact-configuration'
 import { Section } from '@/components/layout/section'
 import { PublicPageLayout } from '@/components/public/public-page-layout'
 import { Card } from '@/components/ui/card'
@@ -61,6 +63,7 @@ export default function ContactPage() {
       compactHero
     >
       <Section spacing="compact" containerClassName="space-y-8">
+        <ContactForm enabled={contactFormEnabled()} />
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3" data-contact-layout="responsive">
           {contactOptions.map((option) => (
             <Card key={option.title} className="flex h-full min-w-0 flex-col !p-5 shadow-none sm:!p-6">

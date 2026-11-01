@@ -112,6 +112,25 @@ describe('A07 juridische conceptpagina’s', () => {
     expect(html).toContain('synthetische accounts in een geïsoleerde testomgeving')
     expect(html).not.toContain('Controle na inloggen en van productie-instellingen staat nog open')
   })
+  it('onderscheidt vastgesteld contactbeleid van nog niet geactiveerde uitvoering', () => {
+    const html = renderToStaticMarkup(<PrivacyPage />)
+    const contact = html.match(/<section[^>]*aria-labelledby="contact-platform-retention">([\s\S]*?)<\/section>/)?.[1] ?? ''
+    for (const text of ['maximaal 30 dagen na definitieve afhandeling', 'maximaal 24 uur vanaf het vastgelegde venstermoment', 'nog niet geactiveerd', 'nog geen aantoonbaar gegarandeerde uitvoering', 'niet vanzelf anoniem', 'geen end-to-endversleuteling']) expect(contact).toContain(text)
+    expect(contact).not.toContain('één jaar')
+    expect(contact).toContain('handmatig bevestigd verzendresultaat verwijdert de inhoud niet direct')
+  })
+  it('belooft geen automatische afhandeling, uitzonderingsretentie of auditverwijdering', () => {
+    const html = renderToStaticMarkup(<PrivacyPage />)
+    for (const text of ['Provideracceptatie bewijst nog geen mailboxontvangst', 'niet automatisch afgerond, opnieuw verzonden of verwijderd', '48 extra uren', 'niet goedgekeurd', 'Verwijdering van een contactrecord wist deze audit niet', 'blijft de afhandelroute gesloten']) expect(html).toContain(text)
+  })
+  it('onderscheidt provider-, mailbox- en back-upkopieën bij verwijdering', () => {
+    const html = renderToStaticMarkup(<PrivacyPage />)
+    expect(html).toContain('providerverklaringen, geen bewijs van onze actuele accountinstellingen')
+    expect(html).toContain('verwijdert niet automatisch providerlogs, mailboxkopieën of back-ups')
+    expect(html).toContain('https://resend.com/security/gdpr')
+    expect(html).toContain('besluit, tijdstip en bewijsreferenties')
+    expect(html).toContain('geen berichtinhoud of afzenderadres')
+  })
   it('toont ieder opslagitem uniek met doel, aanbieder, duur en toestemmingsbeoordeling', () => {
     const html = renderToStaticMarkup(<CookiesPage />)
     expect(new Set(browserStorageInventory.map(item => item.name)).size).toBe(browserStorageInventory.length)

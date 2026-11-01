@@ -125,14 +125,10 @@ describe.skipIf(!databaseUrl)('WL-001 kennisbehoud runtime op geïsoleerde Postg
     await expect(getMyRetentionWeeklyCheck(outsiderId, participation.id, week1.id, startAt)).resolves.toBeNull()
     expect(await prisma!.notificationOutbox.count({ where: { templateKey: 'LEARNING_RETENTION_WEEK_READY', payload: { path: ['weeklyCheckId'], equals: week1.id } } })).toBe(1)
 
-    let sawMulti = false
-    let sawSingle = false
     for (const [index, assignment] of week1.questions.entries()) {
       const q = assignment.retentionQuestion.question
       const correct = q.correctAnswer as string[]
       const rawAnswer = q.type === 'SINGLE_CHOICE' ? correct[0]! : correct
-      if (q.type === 'SINGLE_CHOICE') sawSingle = true
-      if (q.type === 'MULTI_CHOICE') sawMulti = true
       const saved = await answerMyRetentionQuestion(userId, participation.id, week1.id, assignment.id, rawAnswer, startAt)
       expect(saved.idempotent).toBe(false)
       expect(saved.correct).toBe(true)
@@ -146,10 +142,41 @@ describe.skipIf(!databaseUrl)('WL-001 kennisbehoud runtime op geïsoleerde Postg
         expect(resumed?.questions[1]).toMatchObject({ answered: false, presentation: { feedback: null } })
       }
     }
-    expect(sawSingle).toBe(true)
-    expect(sawMulti).toBe(true)
     const completedWeek = await getMyRetentionWeeklyCheck(userId, participation.id, week1.id, startAt)
     expect(completedWeek?.result).toMatchObject({ correct: 5, maxScore: 5, score: '5 van 5 goed' })
+
+    // The real selector guarantees PERSONAL/CORE/SPREAD slots, not an answer-type
+    // mix. Cover both types explicitly on a separate synthetic participation;
+    // do not depend on the random participation UUID or change selection policy.
+    const typedParticipation = await startMyRetentionParticipation(revocationUserId, true, startAt)
+    const bank = await prisma!.learningRetentionQuestion.findMany({
+      where: { bankVersion, status: 'PUBLISHED' }, include: { question: true }, orderBy: { id: 'asc' },
+    })
+    const typedQuestions = ['SINGLE_CHOICE', 'MULTI_CHOICE'].map(type => {
+      const row = bank.find(item => item.question.type === type)
+      expect(row).toBeDefined()
+      return row!
+    })
+    typedQuestions.push(...bank.filter(row => !typedQuestions.some(chosen => chosen.id === row.id)).slice(0, 3))
+    const typedCheck = await prisma!.learningRetentionWeeklyCheck.create({ data: {
+      participationId: typedParticipation.id, userId: revocationUserId, weekNumber: 1,
+      availableAt: startAt, closesAt: week1.closesAt,
+      questions: { create: typedQuestions.map((row, index) => ({
+        retentionQuestionId: row.id, position: index + 1, selectionReason: 'CORE',
+      })) },
+    }, include: { questions: { orderBy: { position: 'asc' } } } })
+    expect(new Set(typedQuestions.map(row => row.question.type))).toEqual(new Set(['SINGLE_CHOICE', 'MULTI_CHOICE']))
+    for (const [index, assignment] of typedCheck.questions.entries()) {
+      const question = typedQuestions[index]!.question
+      const correct = question.correctAnswer as string[]
+      const answer = question.type === 'SINGLE_CHOICE' ? correct[0]! : correct
+      const saved = await answerMyRetentionQuestion(revocationUserId, typedParticipation.id, typedCheck.id, assignment.id, answer, startAt)
+      expect(saved).toMatchObject({ idempotent: false, correct: true })
+      expect(saved.feedback.length).toBeGreaterThan(0)
+    }
+    expect((await getMyRetentionWeeklyCheck(revocationUserId, typedParticipation.id, typedCheck.id, startAt))?.result)
+      .toMatchObject({ correct: 5, maxScore: 5, score: '5 van 5 goed' })
+    await stopMyRetentionParticipation(revocationUserId, typedParticipation.id, startAt)
 
     const week2At = new Date(startAt.getTime() + 8 * 24 * 60 * 60 * 1000)
     const week2Checks = await ensureMyRetentionWeeklyChecks(userId, participation.id, week2At)

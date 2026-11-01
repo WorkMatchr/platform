@@ -4,6 +4,7 @@ vi.mock('server-only', () => ({}))
 
 const mocks = vi.hoisted(() => ({
   createPayment: vi.fn(),
+  getPayment: vi.fn(),
   createSubscription: vi.fn(),
   iterateSubscriptions: vi.fn(),
   listMethods: vi.fn(),
@@ -11,8 +12,8 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@mollie/api-client', () => ({
-  default: () => ({
-    payments: { create: mocks.createPayment },
+  createMollieClient: () => ({
+    payments: { create: mocks.createPayment, get: mocks.getPayment },
     methods: { list: mocks.listMethods },
     customerMandates: { page: mocks.listMandates },
     customerSubscriptions: {
@@ -42,6 +43,12 @@ function remoteSubscription() {
 }
 
 describe('Mollie-bedragconversie', () => {
+  it('kan de echte SDK via de benoemde factory importeren zonder een request uit te voeren', async () => {
+    const sdk = await vi.importActual<typeof import('@mollie/api-client')>('@mollie/api-client')
+    expect(typeof sdk.createMollieClient).toBe('function')
+    const client = sdk.createMollieClient({ apiKey: 'test_' + '0'.repeat(30) })
+    expect(typeof client.payments.create).toBe('function')
+  })
   beforeEach(() => {
     vi.clearAllMocks()
     vi.stubEnv('MOLLIE_API_KEY', 'test_fictief')
@@ -65,6 +72,11 @@ describe('Mollie-bedragconversie', () => {
   })
 
   afterEach(() => vi.unstubAllEnvs())
+
+  it.each(['authorized', 'unknown', 'PAID', '', null])('weigert onbekende of niet-ondersteunde providerstatus %s vóór financiële verwerking', async status => {
+    mocks.getPayment.mockResolvedValue({ id: 'tr_synthetic', status, amount: { value: '30.25', currency: 'EUR' }, metadata: {}, getCheckoutUrl: () => null })
+    await expect(createMollieGateway().getPayment('tr_synthetic')).rejects.toThrow()
+  })
 
   it.each([[0, '0.00'], [1, '0.01'], [121, '1.21'], [3_025, '30.25'], [5_929, '59.29']])(
     'converteert %i cent verliesvrij naar %s',

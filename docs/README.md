@@ -1,5 +1,34 @@
 # Documentatie WorkMatchr
 
+- [Afgescheiden contactmonitoring en auditbare reconciliatie](contact-monitor-finalization.md)
+
+- [Operationele contactmonitoring en reconciliatie](contact-operations.md)
+
+- [Contactretentie — 30 dagen metadata, 24 uur tellers en reconciliatie](contact-retention.md)
+
+- [Resend en privacy — gerichte eindacceptatie](resend-privacy-final-acceptance.md)
+
+- [Commerciële vrijgave — definitieve besluiten en gerichte correcties](commercial-final-release-decisions.md)
+
+- [WP21 — definitieve commerciële vrijgave, providers en acceptatie](wp21-final-commercial-release-readiness.md)
+
+- [WP20 — commerciële kern, foutinjectie en integratieacceptatie](wp20-commercial-core-completion.md)
+
+- [WP19 — commerciële acceptatie en gefaseerde releasevoorbereiding](wp19-commercial-release-acceptance.md)
+
+- [D2D/D3/D4 — publieke herstelvoorbereiding en productievoorwaarden](d2d-d3-d4-final-production-migration-readiness.md)
+- [D2C/D3 — gesloten operatorroute en migratiepreflight](d2c-d3-production-backup-and-migration-preflight.md)
+- [D2B — versleutelde back-up en synthetisch herstel](d2b-postgresql-backup-recovery-decision.md)
+
+- [D1/D2 — runtime-identiteit, herstelbaarheid en begrensde beheerbesluiten](d1-d2-production-identity-and-recovery.md)
+
+- [Gecombineerde afronding A/B/C — bewijs, vrijgavebesluiten en uitvoering](final-release-closure-abc.md)
+
+- [WP17B — runtimeverificatie en geïsoleerde acceptatieomgeving](wp17b-runtime-verification-and-acceptance-environment.md)
+
+- [WP17 — infrastructuur, Preview-isolatie en rollen/herstelacceptatie](wp17-production-infrastructure-readiness.md)
+- [WP16 — productievoorbereiding en acceptatie](wp16-production-readiness-and-acceptance.md)
+- [WP15 — integraal commercieel release- en beslisdossier](wp15-integrated-commercial-release-readiness.md)
 - [DB-05 — runtime-identiteit, rechtenbeperking en herstelvoorbereiding](db05-runtime-and-recovery-preparation.md)
 - [DB-02/03 — migratiereparatie, databaseveiligheid en uitvoeringsplan](db02-db03-migration-repair-and-release.md)
 - [DB-01 — read-only productiemigratiecontrole](db01-production-migration-readiness.md)
@@ -213,3 +242,5 @@ Zie [legacy intake naar gedeelde Simple Advice Flow](legacy-intake-unification.m
 - [Compliance F4 — juridische vraag- en regelmatrix](compliance-f4-legal-matrix.md)
 - [Compliance F4 — bronbinding en frameworkvrijgaveplan](compliance-f4-publication-plan.md)
 - [Compliance F4 — 46 claimreviews en read-only publicatiecontrole](compliance-f4-knowledge-publication.md)
+
+- [Commerciële afronding: contactoutbox, ketenacceptatie en beheervoorwaarden](commercial-launch-finalization.md)

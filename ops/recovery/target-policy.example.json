@@ -1,0 +1,11 @@
+{
+  "scope": "D2D_PRIVATE_TARGET_POLICY",
+  "approved": false,
+  "approvalReference": null,
+  "project": null,
+  "branch": null,
+  "host": null,
+  "database": null,
+  "backupRole": null,
+  "restoreOwner": null
+}

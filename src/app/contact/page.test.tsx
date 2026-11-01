@@ -24,7 +24,7 @@ describe('publieke contactpagina', () => {
 
   it('behoudt een logische headingstructuur en responsieve DOM-volgorde', () => {
     expect(html.match(/<h1(?:\s|>)/g)).toHaveLength(1)
-    expect(html.match(/<h2(?:\s|>)/g)).toHaveLength(7)
+    expect(html.match(/<h2(?:\s|>)/g)).toHaveLength(8)
     expect(html).toContain('md:grid-cols-2')
     expect(html).toContain('xl:grid-cols-3')
     expect(html).toContain('min-w-0')

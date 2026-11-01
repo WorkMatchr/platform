@@ -1,4 +1,79 @@
-# Actuele reviewbasis — 29 oktober 2026
+# Actuele aanvulling WP-A/WP-B — 1 november 2026
+
+PR #64 blijft uitsluitend juridisch concept. Reviewbasis: main
+`aa7ad38171b50f9e92aae7c920ad63ffe2eac671`, inclusief PR #82–#86.
+Main is lokaal geïntegreerd; het enige conflict betrof `vercel.json`. Alle main-exclusies
+zijn behouden plus de bestaande uitsluiting van deze juridische reviewbranch.
+Geen productieactivatie, nieuwe bronclaim, bedrijfsgegeven of juridische goedkeuring.
+De technisch bijgewerkte conceptversie 0.4 is geen menselijke juridische reviewdatum.
+
+De onderstaande actuele matrix vervangt oudere uitspraken dat A06 nog uitsluitend een toekomstig
+formulier is of metadata-/tellerretentie nog niet is geïmplementeerd. Oudere verslagen blijven
+gedateerd bewijs. Functionele runtimecode is bytegelijk aan deze main-basis behouden.
+
+## Actuele contactverwerkingen en nog ontbrekende besluiten
+
+| Verwerking | Feitelijke implementatie / vastgesteld beleid | Nog te accepteren of bewijzen |
+|---|---|---|
+| Contactinhoud | Naam, e-mail, onderwerp, bericht en ontvanger als AES-256-GCM-ciphertext in bestaande NotificationOutbox; sleutel gescheiden; server/Resend/mailbox kunnen inhoud lezen | Doel en rechtsgrond per soort vraag; noodzaak zeven dagen inhoud; veilige sleuteluitgifte, providerbinding en echte ontvangst; geen end-to-endclaim |
+| Inhoudsopruiming | Worker redigeert na SENT; overige ciphertext vanaf zeven dagen bij geslaagde cleanup, actieve lease beschermd. Reconciliatie schrijft geen payload: ook handmatig SENT wacht op deze cleanup | Deze technische termijn is geen nieuw PO-besluit; fysieke maximumgarantie en uitzonderingen niet bewezen |
+| Contactmetadata | ID/idempotentie-ID, digest, status, pogingen, tijden, lease/fingerprint en provider-ID; PO: maximaal 30 dagen na definitieve afhandeling. Periodieke purge standaard uit | Operationele uitvoering en uitvalmaatregelen; technische identifiers blijven mogelijk persoonsgegevens |
+| Contact-rate-limits | HMAC van IP/e-mail en venstertellers; PO: maximaal 24 uur vanaf opgeslagen vensterstart; cleanup ook mogelijk zonder nieuwe inzendingen | Productiepurge nog uit; periodieke cadans, locks, achterstand of uitval kunnen overschrijding geven; geen harde garantie |
+| Onzekere Resend-uitkomst | Geen automatische retry/purge; triage 24 uur, escalatie 72 uur, expliciet besluit dag 7. Definitieve afwijzing na poging vereist geautoriseerd bewijs | Dag 7 is geen onbeperkte bewaartoestemming; individuele maximaal 48 extra uren NIET goedgekeurd; noodzaak en grondslag per geval vaststellen |
+| Privébesluitregister | Incident-ID, bevoegde behandelaar, tijden, provideruitkomst, bewijsreferentie/hash, motivering en auditspoor; geen berichtinhoud, afzender, IP of credentials | Voorstel: minimaliseren bij afsluiting, identificeerbaar dossier uiterlijk 30 dagen daarna verwijderen; nog niet vastgesteld. Beveiligde opslag, versiehistorie, back-ups en toegangscontrole bewijzen |
+| Databaseaudit | Bestaande append-only MarketplaceAuditEvent; behandelaar/record/bewijs-ID's zijn herleidbaar. Outboxpurge wist dit auditrecord niet | Afzonderlijke termijn en technisch afdwingbare beperkte verwijderroute ontbreken. Reconciliatie blijft operationeel geblokkeerd; geen algemene audittrigger uitschakelen |
+| Provider en mailbox | Resend uitgaand; PO-bevestigd contact@ → Vimexx-forwarder → ontvangende Vimexx-mailbox. Algemene mailboxmail maximaal één jaar vanaf ontvangst | Resend verklaart 30 dagen e-mail/logs en 7 dagen back-ups; contract/account/doorgifte verifiëren. Vimexx-trash/backups/forwarderlogs en uitvoering mailboxbeleid nog open |
+| Monitoring | Afgescheiden read-only auth en alleen geaggregeerde gezondheid; geen inhoud nodig | Nieuwe monitor/watchdog/ontvanger nog niet gecontracteerd of ingericht; voeg pas feitelijke leveranciers toe na besluit; geen Resend-afhankelijk alarmkanaal |
+| Verwijderverzoeken / herstel | Applicatiepurge raakt geen reeds gemaakte provider-, mailbox- of back-upkopieën | Verifieer alle kopieën, bewaarbeperkingen en opvolging van eerdere verwijderingen bij herstel. Geen onbewezen onmiddellijke fysieke verwijdering beloven |
+
+Rechtsgrondvoorstel blijft AVG 6(1)(b) alleen bij een natuurlijke contractspartij/precontractuele
+aanvraag; anders een aantoonbaar afgewogen 6(1)(f) voor zakelijke correspondentie, beveiliging
+en bewijscontrole. Een specifieke wettelijke plicht vereist een concrete grondslag. Een technische
+hash of append-only tabel schept geen wettelijke bewaarplicht. De 48 uur is geen wettelijke norm.
+Primaire beoordeling: [AP grondslagen](https://autoriteitpersoonsgegevens.nl/nl/onderwerpen/avg-europese-privacywetgeving/mag-u-persoonsgegevens-verwerken),
+[AVG](https://eur-lex.europa.eu/eli/reg/2016/679/oj),
+[Resend providerverklaring](https://resend.com/security/gdpr) (geraadpleegd 1 november 2026).
+Het bestaan van de door Resend beschikbaar gestelde DPA is geen afgeronde beoordeling van de
+WorkMatchr-contractpartij, subverwerkers en internationale doorgifte.
+
+## Menselijke beslislijst vóór publicatie
+
+1. Definitieve ondernemingsidentiteit en postadres Zwolle; privacycontact blijft contact@workmatchr.nl.
+2. Rechtsgronden/belangenafweging per verwerking en rechtenprocedure (identiteitscontrole,
+   ontvangst, éénmaandstermijn, escalatie en downstream verwijdering).
+3. Contracten/DPA's, zelfstandige Mollie-rol, internationale doorgifte en concrete provider-/mailbox-
+   en back-upretentie; nieuwe monitoringpartijen pas na afzonderlijk leveranciersbesluit opnemen.
+4. Zeven dagen inhoud, onzekere uitzonderingen en afzonderlijke register-/auditretentie met
+   afdwingbare uitvoering. Reeds goedgekeurde 30 dagen/24 uur en mailboxjaar niet opnieuw wijzigen.
+5. Cookie-eindacceptatie op werkelijke productietechnieken. PR #82–#86 voegt in de contactketen
+   geen browsercookie, localStorage of externe browsertracker toe. Geen nieuwe cookiebanner nodig
+   op grond van deze serverwijzigingen alleen; eerder open runtime-/checkoutbewijs blijft open.
+
+Jaarlijkse mailboxbeleidscontrole alleen waarborgt geen maximumjaar. Voorstel: maandelijkse
+uitvoering met vooruitblik op de volgende controle en jaarlijkse beleidsreview, zonder de
+vastgestelde termijn stilzwijgend te verlengen. Geen mailboxinhoud of instellingen gewijzigd.
+
+### Validatie van deze conceptaanpassing
+
+- 56/56 gerichte tests PASS: juridische pagina's (inclusief drie nieuwe controles), gescheiden
+  monitorautorisatie, gesloten reconciliatieroute en bestaande Resend-transportmocks.
+- Volledige lint PASS: nul fouten, vier bestaande interne-navigatiewaarschuwingen.
+- Standalone TypeScript PASS; productiebuild PASS. De eerste sandboxbuild bleef tijdens compilatie
+  zonder uitvoer hangen; alleen die eigen build gestopt. Dezelfde build buiten de sandbox slaagt,
+  met synthetische procesconfiguratie en gesloten gates. Geen broncodeworkaround.
+- Diff-/secrets-/metadata- en scopecontrole: uitsluitend de tien bestaande juridische PR-bestanden
+  verschillen van main. De gegenereerde `next-env.d.ts` is hersteld; geen runtime, schema, migratie,
+  package, lockfile of providerconfiguratie toegevoegd. Vercel-reviewdeployment blijft uitgeschakeld.
+- Geen nieuwe browser- of echte mailacceptatie geclaimd; de conceptpagina's zijn server-side
+  gerenderd in tests. Operationele en juridische blokkades blijven expliciet open.
+
+De bestaande
+85 unit-/routeregressies, 24 monitortests en 43 PostgreSQL-groepen uit PR #86 worden hergebruikt:
+de runtimebestanden zijn ongewijzigd. Geen onnodige herhaling of echte provideracceptatie geclaimd.
+
+---
+
+# Historische reviewbasis — 29 oktober 2026
 
 PR #64 wordt opnieuw gericht op main `46962cff1724e87e5f33697173cbb9168d6f9da3`.
 De technische A07-opvolger is al geïntegreerd. De lokale integratiemerge behoudt

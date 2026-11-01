@@ -33,7 +33,9 @@ async function main() {
     const target = new URL(source); target.pathname = `/${name}`
     db = new Client({ connectionString: target.toString(), connectionTimeoutMillis: 5000 }); await db.connect()
     const sourceCode = readFileSync('src/lib/maintenance/database-identity.ts', 'utf8')
-    const metadataSql = sourceCode.match(/const rows = await transaction\.\$queryRaw<Identity\[\]>`([\s\S]*?)`/)[1]
+    const metadataQuery = sourceCode.match(/acquired\.query<Identity>\(\{ text: `([\s\S]*?)`, query_timeout: 5000/)
+    assert.ok(metadataQuery, 'Exact runtime diagnostic SQL must be found before the PostgreSQL test')
+    const metadataSql = metadataQuery[1]
     await db.query('BEGIN READ ONLY')
     await db.query("SET LOCAL neon.endpoint_id = 'ep-synthetic'")
     await db.query("SET LOCAL neon.branch_id = 'br-synthetic'")

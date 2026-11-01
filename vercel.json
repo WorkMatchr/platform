@@ -3,7 +3,24 @@
   "git": {
     "deploymentEnabled": {
       "codex/db05-runtime-preflight": false,
-      "codex/a07-legal-review": false
+      "codex/a07-legal-review": false,
+      "codex/wp15-integrated-readiness": false,
+      "codex/wp16-production-readiness": false,
+      "codex/wp17-infrastructure-readiness": false,
+      "codex/wp17b-runtime-acceptance": false,
+      "codex/final-release-closure-abc": false,
+      "codex/d1-d2-runtime-recovery": false,
+      "codex/d2d-public-recovery": false,
+      "codex/commercial-launch-finalization": false,
+      "codex/wp19-commercial-acceptance": false,
+      "codex/wp20-commercial-core": false,
+      "codex/wp21-commercial-release": false,
+      "codex/commercial-final-decisions": false,
+      "codex/commercial-release-decisions-final": false,
+      "codex/resend-privacy-final-acceptance": false,
+      "codex/contact-retention": false,
+      "codex/contact-operations": false,
+      "codex/contact-monitor-finalization": false
     }
   },
   "crons": [
