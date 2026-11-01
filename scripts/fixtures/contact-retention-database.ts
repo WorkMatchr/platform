@@ -1,4 +1,4 @@
-// Isolated test fixture for the two existing models only. No migration runner,
+// Isolated fixture for existing contact models and their audit relation. No migration runner,
 // migration registry, accounts, provider configuration or copied database data.
 export const contactRetentionFixture = `
 CREATE TYPE "NotificationOutboxStatus" AS ENUM ('PENDING', 'PROCESSING', 'SENT', 'FAILED');
@@ -18,4 +18,10 @@ CREATE INDEX ON "NotificationOutbox" ("eventId");
 CREATE TABLE "RateLimit" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(), "key" text NOT NULL UNIQUE,
   "count" integer NOT NULL, "lastRequest" bigint NOT NULL
+);
+CREATE TABLE "MarketplaceAuditEvent" (
+  "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(), "actorUserId" uuid, "actorRole" varchar(80) NOT NULL,
+  "organizationId" uuid, "action" varchar(100) NOT NULL, "entityType" varchar(80) NOT NULL, "entityId" uuid NOT NULL,
+  "previousState" varchar(80), "nextState" varchar(80), "reason" varchar(500),
+  "correlationKey" varchar(160) UNIQUE, "metadata" jsonb, "createdAt" timestamptz(3) NOT NULL DEFAULT now()
 );`

@@ -11,6 +11,13 @@ De PO heeft 30 dagen metadata na definitieve afhandeling en maximaal 24 uur cont
 goedgekeurd. Dit actualiseert [het Resend-/privacydossier](resend-privacy-final-acceptance.md)
 binnen de [A06-contactarchitectuur](commercial-launch-finalization.md). PR #64 blijft concept.
 
+## Gesloten opvolging
+
+Zie [afgescheiden monitoring en reconciliatie](contact-monitor-finalization.md): een bewezen
+providerafwijzing na een poging kan uitsluitend via expliciet geautoriseerde afhandeling met
+atomair auditbewijs definitief worden. Een errorcode of handmatig verlaagde attemptCount is
+geen bewijs. De nieuwe route blijft uit tot operationele en auditretentieacceptatie.
+
 ## Definitieve afhandeling
 
 | Toestand | Begin van 30 dagen | Automatische metadata-purge |

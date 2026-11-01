@@ -1,6 +1,7 @@
 import 'server-only'
 import { Prisma } from '@/generated/prisma/client'
 import { getPrisma } from '@/lib/prisma'
+import { reconciledContactRejection } from './contact-final-state'
 import { CONTACT_TEMPLATE, CONTACT_RETENTION_MS, CONTACT_METADATA_RETENTION_MS, CONTACT_RATE_LIMIT_RETENTION_MS } from './contact-configuration'
 
 /** Bounded maintenance in the existing outbox; never requires delivery secrets. */
@@ -18,7 +19,7 @@ export async function cleanContactRetention(now = new Date()) {
     const scope = Prisma.sql`"templateKey" = ${CONTACT_TEMPLATE} AND "channel" = 'EMAIL' AND "recipientUserId" IS NULL`
     const inactive = Prisma.sql`("leaseUntil" IS NULL OR "leaseUntil" <= ${now})`
     const noAttempt = Prisma.sql`"attemptCount" = 0 AND "firstAttemptAt" IS NULL AND "deliveryFingerprint" IS NULL AND "providerMessageId" IS NULL`
-    const final = Prisma.sql`("status" = 'SENT' OR ("status" = 'FAILED' AND ${noAttempt}))
+    const final = Prisma.sql`("status" = 'SENT' OR ("status" = 'FAILED' AND (${noAttempt} OR ${reconciledContactRejection})))
       AND "processedAt" IS NOT NULL AND "processedAt" >= "createdAt"`
     const expiredContent = Prisma.sql`${scope} AND "payload" ? 'ciphertext' AND "createdAt" <= ${contentDeadline} AND ${inactive}`
     const expiredMetadata = Prisma.sql`${scope} AND ${final} AND "processedAt" <= ${metadataDeadline}
@@ -45,7 +46,7 @@ export async function cleanContactRetention(now = new Date()) {
       SELECT (EXISTS (SELECT 1 FROM "NotificationOutbox" WHERE ${expiredContent} OR (${enabled} AND ${expiredMetadata}))
         OR (${enabled} AND EXISTS (SELECT 1 FROM "RateLimit" WHERE "key" LIKE 'contact:%' AND "lastRequest" <= ${counterDeadline}))) AS pending,
         (SELECT count(*)::int FROM "NotificationOutbox" WHERE ${scope}
-          AND (("status" = 'FAILED' AND NOT (${noAttempt}))
+          AND (("status" = 'FAILED' AND NOT (${noAttempt}) AND NOT (${reconciledContactRejection}))
             OR ("status" IN ('SENT', 'FAILED') AND ("processedAt" IS NULL OR "processedAt" < "createdAt"))
             OR ("leaseUntil" > ${now} AND "createdAt" <= ${contentDeadline}))) AS "reviewRequired"`
     return { enabled, redacted, metadataDeleted, countersDeleted, pending: state.pending, reviewRequired: state.reviewRequired }

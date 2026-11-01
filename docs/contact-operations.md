@@ -4,6 +4,14 @@ Basis: main `e922312e87ae4581a0d003939daaf977a673ee7c` (PR #84).
 Dit vult [contactretentie](contact-retention.md) gericht aan. Geen nieuwe provider,
 migratie, verzendroute of wijziging aan afhandeling/deduplicatie. Geen productieactivering.
 
+## Gerichte opvolging: afgescheiden autorisatie en finalisatie
+
+De [gesloten technische kandidaat](contact-monitor-finalization.md) vervangt hieronder genoemde
+CRON-auth voor contact-health door uitsluitend CONTACT_MONITOR_SECRET. De cronroutes zelf
+blijven ongewijzigd. Zij voegt een apart geautoriseerde menselijke finalisatie met atomair
+bestaand auditspoor toe. Deze wijzigingen zijn geen productieactivatie. De eerdere zeven extra
+dagen blijven NIET goedgekeurd; het individuele 48-uursvoorstel staat uitsluitend ter beoordeling.
+
 ## Feitelijke nulmeting — 1 november 2026
 
 De bestaande GitHub-workflow is actief, met kwartierplanning. De gecontroleerde laatste run

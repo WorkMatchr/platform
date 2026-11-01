@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [Afgescheiden contactmonitoring en auditbare reconciliatie](contact-monitor-finalization.md)
+
 - [Operationele contactmonitoring en reconciliatie](contact-operations.md)
 
 - [Contactretentie — 30 dagen metadata, 24 uur tellers en reconciliatie](contact-retention.md)
