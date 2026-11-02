@@ -44,8 +44,9 @@ try {
   const baseline = process.argv.includes('--baseline-85')
   const migrationRoot = path.resolve('prisma/migrations')
   const allMigrations = readdirSync(migrationRoot).filter(name => /^\d/.test(name)).sort()
-  assert.equal(allMigrations.length, 93)
-  const expectedMigrations = allMigrations.filter(name => !baseline || !pendingMigrations.includes(name))
+  assert.equal(allMigrations.length, 94)
+  const expectedMigrations = allMigrations.filter(name => !baseline || (!pendingMigrations.includes(name)
+    && name !== '20261102120000_add_closed_contact_audit_retention'))
   const migrateArgs = [process.env.npm_execpath!, 'run', 'db:deploy']
   if (baseline) {
     // Reconstruct the documented 85-migration state only in this newly created DB.
@@ -75,7 +76,7 @@ try {
   }
   migrate()
   assert.deepEqual((await sql.query('SELECT id, migration_name, checksum, finished_at, rolled_back_at FROM "_prisma_migrations" ORDER BY migration_name')).rows, registry.rows)
-  check(`${expectedMigrations.length} exact migration checksums; repeated deploy changes no registry; no new schema`)
+  check(`${expectedMigrations.length} exact migration checksums; repeated deploy changes no registry`)
   }
   process.env.CONTACT_MESSAGE_ENCRYPTION_KEY = randomBytes(32).toString('hex')
   process.env.CONTACT_EMAIL_TO = 'contact-acceptance@example.invalid'

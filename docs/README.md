@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [Gesloten contactaudit-verwijderroute en registergrens](contact-audit-retention.md)
+
 - [Afgescheiden contactmonitoring en auditbare reconciliatie](contact-monitor-finalization.md)
 
 - [Operationele contactmonitoring en reconciliatie](contact-operations.md)
