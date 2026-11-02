@@ -1,3 +1,207 @@
+# Gerichte afronding cookies en retentie — 2 november 2026
+
+Status: **concept / menselijke eindacceptatie vereist**. PR #64 blijft Draft.
+Actuele main: `aa7ad38171b50f9e92aae7c920ad63ffe2eac671`, inclusief #82–#86;
+fetch bevestigt dezelfde basis als de vorige ronde. Vercel meldt een READY
+Production-deployment van die main. Geen nieuwe audit, productieactivatie of technische
+opslagimplementatie. De onderstaande aanvulling heeft voorrang op oudere momentopnamen.
+
+## Cookiebewijs en grenzen
+
+| Controle | Waarneming / bewijs |
+|---|---|
+| Publieke HTTP-steekproef | Homepage, diensten, wettelijke verplichtingen, sectoren, kenniscentrum, opdrachtstart, gratis Compliance-intake, privacy, cookies en inloggen: HTTP 200, geen Set-Cookie op de opgehaalde documentrespons, geen extern script of iframe in de HTML |
+| Hydratatie / geladen DOM | Tien extra routes in de echte browser gecontroleerd: diensten, wettelijke verplichtingen, sectoren, kenniscentrum, privacy, cookies, inloggen en de drie beschermde accountingangen. Geen externe scripts/iframes in de geladen DOM |
+| Beschermde ingangen | /opdrachten, /professional/opdrachten en /platformbeheer tonen anoniem de inlogpagina. Een HTTP 200 is hier geen bewijs van ingelogde toegang; Next kan de loginredirect in de documentstream afhandelen |
+| Login | Ingelogd blijven staat in de productie-DOM uit. Geen formulier ingediend, geen echte accountgegevens gebruikt |
+| Homepage in nieuw Edge InPrivate-venster | Geen JavaScript-leesbare cookies, localStorage of sessionStorage. Resource Timing rapporteert alleen de eigen WorkMatchr-origin |
+| Overige publieke pagina’s in InPrivate | Diensten, wettelijke verplichtingen, sectoren, kenniscentrum, privacy, cookies en inloggen: geen JavaScript-leesbare cookies, lege localStorage, alleen de eerder aangemaakte opdracht-sessionStorage. Resource Timing telkens alleen WorkMatchr, nul externe scripts/iframes |
+| Opdrachtstart in datzelfde venster | Automatisch één sessionStorage-sleutel workmatchr-simple-advice:v1:anonymous; geen localStorage of JavaScript-leesbare cookie. Alleen eigen resource-origin, nul externe scripts/iframes |
+| Compliance vóór bewaren | Lege localStorage, ook na de uitsluitend synthetische keuze Onbekend. De opdracht-sessionStorage blijft afzonderlijk bestaan; die is niet door Compliance aangemaakt |
+| Compliance na expliciet bewaren | Alleen workmatchr:compliance-free-intake:v2 toegevoegd; payloadversie 3, expiresAt minus savedAt exact 86.400.000 ms. Geen antwoorden, tokens of persoonsgegevens in meetrapportage |
+| Herladen en verwijderen | Na herladen exact dezelfde savedAt/expiresAt. Verwijderen maakt localStorage leeg en behoudt actieve invoer. Alleen de eigen testkopie verwijderd; het eigen InPrivate-venster daarna gesloten, inclusief tijdelijke opdracht-sessionStorage |
+| Legacy-route | /advieswijzer redirect naar /opdracht-starten. De oude 90-dagen-cookie wordt niet bij deze navigatie geplaatst. Code en oude browserkopieën zijn daarmee niet verdwenen |
+| Eerder ingelogd bewijs | Hergebruikt: lokale synthetische opdrachtgever, professional en platformbeheerder; korte/rollende sessies, logout, cross-tenantweigering, foutinjectie en browseropslag. De runtimebestanden zijn ongewijzigd. Dit is geen nieuwe ingelogde productieproef |
+
+De meting gebruikt geen betalingen, mailboxen, productieaccounts of echte aanvragen.
+Document.cookie ziet geen HttpOnly-cookies; de afzonderlijke HTTP-documentcontrole is
+hierop aanvullend, maar geen volledige capture van alle responsheaders. InPrivate kan
+browserbeveiligingen toepassen. Resource Timing is geen volledige HAR of packet capture.
+De codezoekactie naar cookies, storage, externe scripts/iframes en analytics bevestigt de
+bestaande inventaris; geen analyticsdependency of browserintegratie gevonden. Serverlogs
+zijn geen bewijs van browsertracking en vallen onder afzonderlijke privacyretentie.
+Er is geen universele uitspraak over alle mogelijke browser-/providerconfiguraties gedaan.
+Gedetailleerd uitvoeringsbewijs blijft privé, buiten Git en synchronisatiemappen.
+
+Productie toont voor /cookies en /privacy nog de bestaande voorbereidingspagina’s; de
+uitgebreide verklaring van PR #64 is dus nog niet gepubliceerd. Geen banner nodig hebben
+ontheft WorkMatchr niet van de informatieplicht. De nog goed te keuren en gecontroleerd
+te publiceren verklaring is een concrete juridische vrijgavevoorwaarde.
+
+## Classificatie en bannerbesluit
+
+| Techniek | Classificatie / concrete reden | Nog nodig |
+|---|---|---|
+| Better Auth session_token, korte sessie | Strikt noodzakelijk om de gekozen login te gebruiken; browsercookie zonder permanente vervaldatum, server maximaal 24 uur, niet verlengen | Bestaand synthetisch bewijs hergebruikt; geldigheid niet verwarren met fysieke opschoning van database-sessierijen |
+| Dezelfde cookie met Ingelogd blijven | Langdurige authenticatie: afzonderlijke toestemming/expliciete keuze, standaard uit; zeven dagen rollend. Niet automatisch vrijgesteld omdat het om login gaat | PO/juridisch beoordeelt de bestaande keuze met toelichting en historische sessies; geen massale intrekking |
+| dont_remember | Strikt noodzakelijke bescherming van de gekozen korte sessie | Geen trackingdoel, server weigert ook promotie wanneer marker ontbreekt |
+| platform-admin-view | Strikt noodzakelijk voor expliciet gekozen beheerweergave; sessie/pad beperkt | Geen nieuw doel of extra duur |
+| Opdracht-sessionStorage | Functioneel voor behoud van invoer over de stappen en login. Vrijstellingsvoorstel binnen de gevraagde tabbladsessie (WP194 3.1) | Geen eigen TTL of logoutwissen. Vrije tekst en browserherstel verdienen een afzonderlijk bewaarbeleid; geen fictieve 24-uursgarantie |
+| Login-overdrachtsmarker | Functioneel voor de expliciete overdracht van het anonieme concept | Geen analytics; verdwijnt na hervatten, niet algemeen na logout |
+| Compliance v2-sleutel / payload v3 | Optioneel functioneel; specifieke bewaaractie met 24-uursuitleg en verwijderknop. Geen automatische persistentie of blanket-vrijstelling | Broncode beperkt hergebruik tot 24 uur. Fysiek wissen pas bij relevante browseractie; op een gesloten apparaat geen exacte wisgarantie |
+| Compliance v1-overgang | Historische opslag zonder betrouwbare datum: niet stilzwijgend als rechtmatige nieuwe opslag classificeren | Expliciet hervatten/verwijderen, geen verzonnen startdatum; geen automatische bulkverwijdering |
+| clear / BroadcastChannel | Strikt noodzakelijke coördinatie van de gekozen wisactie; geen antwoordinhoud | Tijdelijk signaal; geen tracking-ID |
+| wm_public_intake | Historische, niet in de actuele flow waargenomen opslag | Geen toestemming of noodzakelijkheid voor nieuwe 90-dagen-plaatsing afleiden; bij heractivering opnieuw beoordelen |
+| Beperkt analytisch / tracking | Geen toepassing aangetroffen in onderzochte code en steekproef | Niet toevoegen. Bij wijziging opnieuw toetsen vóór laden |
+
+**Banneradvies: geen algemene cookiebanner toevoegen voor de onderzochte inrichting.**
+Dit betekent niet dat iedere permanente opslag toestemmingsvrij is: de specifieke keuzes
+voor langdurig inloggen en Compliance bewaren blijven vereist. Een algemene banner lost
+historische opslag, te lange bewaring of ontbrekende informatie niet op. Mocht later een
+niet-vrijgestelde tracker blijken te laden, eerst blokkeren; daarna voorafgaande,
+gelijkwaardige keuze en eenvoudig intrekken ontwerpen. Geen dergelijke voorziening nodig
+bevonden of geactiveerd in deze ronde.
+
+Neon, Resend en Jortt worden server-side aangeroepen. Better Auth is een bibliotheek,
+geen externe browseridentityprovider. Mollie-checkout is een externe navigatie, geen
+waargenomen ingebedde widget. Geen checkout gestart. Eventuele cookies daar moeten apart
+worden beoordeeld; dit is geen bewijs voor een WorkMatchr-brede trackingbanner.
+Vercel-metadata bewijst op zichzelf niet dat analytics wel/niet geladen wordt; daarvoor
+is bovenstaand browser- en codebewijs gebruikt.
+
+Bronnen, gecontroleerd 2 november 2026:
+- [ACM: cookies plaatsen](https://www.acm.nl/nl/verkoop-aan-consumenten/reclame-en-verleiden/online-beinvloeden/cookies-plaatsen): noodzakelijke en beperkte analytische technieken versus toestemming.
+- [WP194, paragrafen 3.1/3.2/3.6](https://ec.europa.eu/justice/article-29/documentation/opinion-recommendation/files/2012/wp194_en.pdf): invoer tijdens een sessie, authenticatie en specifieke keuzes voor langer bewaren. Historische uitleg, geen vervanging van de actuele Nederlandse regels.
+- [AP: heldere en misleidende cookiebanners](https://autoriteitpersoonsgegevens.nl/themas/internet-slimme-apparaten/cookies/heldere-en-misleidende-cookiebanners): actuele zoekindex beschikbaar; direct ophalen gaf 403. Geen volledige nieuwe directe bronreview geclaimd.
+- De eerdere Rijksoverheid-URL gaf bij direct ophalen 404 ondanks een geïndexeerde kopie. De zichtbare conceptverklaring verwijst daarom nu naar de bereikbare ACM-bron.
+
+## Retentie: vast beleid, implementatie en voorstel apart
+
+Geen termijn is in deze ronde geactiveerd of stilzwijgend verlengd. Bevestigd blijven:
+contactmetadata maximaal 30 dagen na definitieve afhandeling, contact-rate-limittellers
+maximaal 24 uur; mailboxbeleid één jaar vanaf ontvangst met gemotiveerde noodzakelijke
+uitzonderingen. De tellertermijn betreft contacttellers, niet zonder onderzoek alle
+Better Auth- of andere RateLimit-rijen.
+
+| Gegeven | Daadwerkelijke verwerking | Vrijgavevoorwaarde |
+|---|---|---|
+| Contactinhoud | Versleutelde outboxpayload. Worker redigeert bij SENT; overige inhoud vanaf zeven dagen in batches, niet onder actieve lease. Handmatige reconciliatie redigeert niet direct | Zeven dagen is bestaande techniek, geen stilzwijgend vastgesteld nieuw beleid. Voorstel: verwijderen bij definitieve afhandeling; uiterlijk zeven dagen na ontvangst als technische bovengrens, bewijs uitsluitend geminimaliseerde referenties. Vóór uitvoering beleid en scheduler/leasegrens aantonen; aanpassing bij handmatige finalisatie apart reviewen |
+| Metadata | Alleen SENT of aantoonbaar niet-verzonden FAILED is finaal; afwijzing na providerpoging vereist bewijs-audit. processedAt start eenmaal de 30 dagen | Unknown geen finalisatie. Geen retry of automatische purge. Geen 48-uursuitzondering goedgekeurd of geïmplementeerd |
+| Contacttellers | HMAC-identificatie is pseudoniem, niet anoniem. Selectie vanaf 24 uur op opgeslagen vensterstart; ook zonder nieuwe inzendingen/gesloten formulier | Purgegate gesloten; geplande uitvoering en grensoverschrijding blijven operationeel BLOCKED |
+| Sessies | Browser/servergeldigheid 24 uur of zeven dagen rollend; logout trekt server-side in | Geen algemene periodieke opschoning van alle verlopen Session-rijen aangetroffen. Better Auth kan bij raadpleging opschonen; dit bewijst geen fysieke maximumtermijn voor nooit meer gebruikte rijen. Afzonderlijk minimaliseringsvoorstel: verlopen/ingetrokken sessies bij onderhoud verwijderen, benodigde beveiligingsregistratie apart begrenzen; niet implementeren zonder scopebesluit |
+| Lokale concepten | Compliance logische TTL exact 24 uur, verwijderen bij relevante actie; legacy en opdracht-sessionStorage hebben andere lifecycle | Geen garantie dat offline/gesloten browsers fysiek tijdig wissen. Nieuwe opdracht-TTL of logoutwijziging niet zonder dataverliesafweging invoeren |
+| Kopieën | Applicatieverwijdering verwijdert geen providerlogs, mailboxkopieën of back-ups | Resend noemt 30 dagen logs/e-mail en zeven dagen back-ups; account/contract nog aantonen. Vimexx-trash, back-ups en forwardinglogs niet onafhankelijk bevestigd. Herstel mag eerdere verwijderingen niet ongemerkt ongedaan maken |
+
+Een cleanup die pas op/na de grens selecteert kan zelfs bij normale schedulerwerking
+later fysiek wissen. Extra risico's: gesloten gate, gemiste run, databasefout, actieve
+lease, lock/skipped row en batchachterstand. Een monitor bewijst detectie, geen tijdige
+verwijdering. Mitigatievoorstel voor een afzonderlijk technisch herstel: vroegere interne
+verwijdergrens waar gegevens niet meer nodig zijn, achterstand leegwerken binnen begrensde
+runs, meetbare oudste-leeftijdcontrole en een onafhankelijke geautoriseerde herstelroute.
+Voor tellers mag eerder wissen nooit rate-limiting omzeilen; uitsluitend afgelopen
+handhavingsvensters kunnen hiervoor in aanmerking komen. Ook dat levert bij onbeperkte
+infrastructuuruitval geen absolute fysieke garantie op. **Harde maximale uitvoering blijft
+BLOCKED; geen nieuwe termijn of betaalde monitoring als workaround.**
+
+### Afzonderlijk voorstel: privéregister en contactaudit
+
+Dit zijn **twee nog niet goedgekeurde retentieregels**, niet automatisch onderdeel van de
+al goedgekeurde contactmetadataregel:
+
+1. Privébesluitregister: alleen case-ID, bevoegde behandelaar, tijdstippen, uitkomst,
+   noodzakelijke bewijsreferentie/hash en korte motivering; geen berichttekst, afzender,
+   IP, wachtwoord of providercredential. Minimaliseer bij definitieve afhandeling en wis
+   de herleidbare case uiterlijk 30 dagen daarna, inclusief versiehistorie/exports.
+2. Databasecontactaudit: dezelfde voorgestelde uiterste 30 dagen vanaf bewezen definitieve
+   afhandeling, ook voor de gekoppelde contact-reconciliatiegebeurtenis. De korte
+   controleperiode dient herstel van fouten in de afhandeling; geen algemene wettelijke
+   bewaarplicht gevonden die deze gegevens langer vereist. Noodzaak/rechtsgrond per doel
+   nog door PO beoordelen. Er is geen reden om hiervoor alle marketplace-auditregels te wijzigen.
+
+Dagelijkse controle van open gevallen; triage binnen 24 uur, escalatie 72 uur, besluit
+uiterlijk dag 7 blijven staan. Bij onzekerheid op dag 7: blokkade en expliciet besluit
+van de bevoegde eigenaar op basis van bewijs; geen fictief SENT/FAILED en geen
+stilzwijgende verlenging. Een concreet juridisch bewijsbehoud vereist zaakgebonden
+noodzaak, minimaal gegevensbereik, eind-/reviewdatum en bevoegde motivering. Zonder zo'n
+besluit is langere bewaring niet vrijgegeven. De 48 uur wordt niet ingevoerd. Dagelijks
+escaleren is op zichzelf geen grondslag voor onbeperkt bewaren.
+
+Voor **overige** MarketplaceAuditEvent-/financiële/Knowledge/Compliance-append-only
+registraties geldt geen automatische contacttermijn. Hun zakelijke/historische betekenis
+en eventuele wettelijke documentplicht moeten afzonderlijk worden vastgesteld; geen
+generieke zeven jaar of onbeperkt bewaren claimen. Deze opdracht verandert die gegevens
+noch de algemene append-onlybescherming.
+
+### Ontwerp beperkte verwijderroute — niet uitgevoerd
+
+De bestaande append-only audit blijft nu intact. Een latere route vereist een afzonderlijk
+gereviewde additieve migratie en tijdelijke PostgreSQL-tests:
+
+- Alleen CONTACT_RECONCILED, de bijbehorende policyversie/correlatie en contact-outboxscope.
+  Geen vrije SQL, willekeurige audit-ID's, gebruikercriteria of algemene DELETE-bevoegdheid.
+- Afzonderlijke expliciet bevoegde purgeoperator; normale runtime/CRON/monitor krijgt deze
+  bevoegdheid niet. SECURITY DEFINER-functie met NOLOGIN-owner, vaste search_path,
+  volledig gekwalificeerde objecten, PUBLIC EXECUTE ingetrokken. Geen door de client
+  instelbare GUC als bewijs van bevoegdheid. Reële runtime mag geen owner-/DDL-bypass hebben.
+- Alleen nauwe, gecontroleerde uitzondering in de specifieke contact-auditverwijdering;
+  algemene prevent_append_only_change en overige audittriggers behouden. Geen trigger
+  uitschakelen of algemene marketplace-audit kunnen herschrijven. Als dit niet klein en
+  afdwingbaar kan: geen verwijdering, afzonderlijke architectuurreview.
+- Controleer finalisatie, termijn, lege ciphertext, geen actieve lease en geen geldige
+  specifieke hold. Zelfde lock als admission/reconciliatie. Bij afgewezen verzending moet
+  het bewijs blijven bestaan zolang outboxpurge dit nodig heeft: eerst outbox verwijderen
+  en daarna gekoppelde audit atomair, of audit pas na bewezen eerdere outboxpurge.
+- Alle controles en mutaties in één transactie; bij fout alles terugrollen. Bounded batches,
+  dry-run alleen aantallen. Bewijs van uitvoering: tijd, beleidsversie, aantallen en bevoegde
+  operator in het beveiligde register; ook dit ontvangstbewijs krijgt een vastgestelde
+  termijn, geen eindeloze keten van nieuwe herleidbare verwijderauditrecords.
+- Verplichte regressies: onbevoegde/gewone DELETE geweigerd, overige audits bytegelijk,
+  deadlinegrenzen, actieve lease, onbekende uitkomst, hold, foutinjectie, concurrency,
+  dubbele uitvoering en restoreprocedure. Geen productiehandeling in deze opdracht.
+
+Deduplicatie blijft haalbaar zonder eeuwige tombstone: nieuwe contactinzendingen vereisen
+het bestaande ondertekende requesttoken jonger dan 24 uur; na 30-dagen-purge is het oude
+token verlopen. De huidige PostgreSQL-tests bewijzen weigering van replay na purge.
+Na auditverwijdering moet een oude reconciliatieaanvraag veilig worden geweigerd als de
+outbox niet meer bestaat; nooit opnieuw enqueue of verzenden. Dit hoort bij de toekomstige
+purgetest, niet bij een automatische bewaartermijnverlenging.
+
+## Vrijgave en resterende beslissingen
+
+- **COOKIES:** technisch geen algemene banner nodig bevonden voor de onderzochte inrichting;
+  definitieve juridische publicatie **NO-GO** tot menselijke beoordeling van de concepttekst,
+  specifieke toestemmingskeuzes, historische opslag en de genoemde meetgrenzen.
+- **RETENTIE: NO-GO** voor activering: content/register/auditbeleid deels open, fysieke
+  auditverwijdering ontbreekt, harde maximumtermijnen en kopieën niet operationeel bewezen.
+- Maximaal drie gebundelde PO-besluiten: (1) cookieconcept en specifieke keuzes beoordelen;
+  (2) zeven-dagen-contentvoorstel en de afzonderlijke 30-dagen-register/contactauditregels
+  plus zaakgebonden uitzonderingscriteria beoordelen, zonder automatische 48 uur;
+  (3) pas na apart getest verwijderontwerp en uitvoerings-/kopieënbewijs een afzonderlijke
+  technische uitvoering/activatie autoriseren. Bestaande 30 dagen/24 uur niet herbeslissen.
+
+## Gerichte validatie en scope
+
+- **61/61 tests PASS**, vijf suites: juridische conceptpagina’s (twee nieuwe controles),
+  sessiekeuze, Compliance-opslaghelper, browsercomponent/opslag en logoutwaarschuwing.
+  Dekking omvat de bestaande TTL-/legacy-/tabblad-/hydratatiegevallen; geen nieuwe
+  productieaccountproef of databasewijziging geclaimd.
+- Volledige lint PASS: nul fouten, vier bestaande window.location-navigatiewaarschuwingen.
+  Standalone TypeScript PASS. Productiebuild PASS, 172 pagina’s; drie bekende dynamische
+  filesystemtracingwaarschuwingen. Alleen synthetische procesconfiguratie, alle gates uit.
+- De 43 PostgreSQL-groepen en replay-na-purge-/fault-injectionbewijzen van #86, plus het
+  eerdere drie-rollen-sessiebewijs, zijn hergebruikt: geen runtime/schemawijziging nodig.
+- Alleen vier bestanden in deze aanvulling: docs/a07-privacy-cookies.md,
+  src/app/cookies/page.tsx, src/content/public-legal.ts,
+  src/app/public-legal-pages.test.tsx. Gegenereerd next-env hersteld.
+- Product Constitution: concept/noindex, geen garantie of juridische goedkeuring,
+  dezelfde componenten, focusstijlen, kopstructuur en responsive layout. Bestaande
+  handmatige 200%-acceptatie hergebruikt; geen nieuwe volledige visuele hertest geclaimd.
+- Geen nieuwe technische PR: de noodzakelijke correcties zijn classificatie, bronlink,
+  waarheidsgetrouwe bewijstekst en regressietests in de juridische Draft PR #64.
+  Alle niet-juridische runtimecode blijft bytegelijk aan main. Geen gate gewijzigd.
+
+---
+
 # Actuele aanvulling WP-A/WP-B — 1 november 2026
 
 PR #64 blijft uitsluitend juridisch concept. Reviewbasis: main

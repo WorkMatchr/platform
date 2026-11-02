@@ -143,6 +143,22 @@ describe('A07 juridische conceptpagina’s', () => {
     expect(html).toContain('Geen betrouwbare vervaldatum')
     expect(html).toContain('href="/privacy"')
   })
+  it('onderscheidt noodzakelijke sessies van de specifieke keuze voor langdurige opslag', () => {
+    const session = browserStorageInventory.find(item => item.name.endsWith('session_token'))!
+    expect(session.category).toContain('toestemmingsplichtig voor langdurig ingelogd blijven')
+    expect(session.consent).toContain('WP194, paragraaf 3.2')
+    const draft = browserStorageInventory.find(item => item.name === 'workmatchr:compliance-free-intake:v2')!
+    expect(draft.consent).toContain('geen algemene vrijstelling voor alle permanente opslag')
+    const html = renderToStaticMarkup(<CookiesPage />)
+    expect(html).toContain('Voor deze onderzochte inrichting is geen algemene cookiebanner nodig')
+    expect(html).toContain('geen vrijstelling voor onbekende of later toegevoegde technieken')
+  })
+  it('maakt de productie-steekproef en haar grenzen expliciet zonder juridische goedkeuring te suggereren', () => {
+    const html = renderToStaticMarkup(<CookiesPage />)
+    for (const text of ['technisch bijgewerkt op', 'technische momentopname, geen juridische goedkeuring', 'Ingelogde productieaccounts en externe betaalpagina’s zijn niet onderzocht', 'Neon voor databaseopslag', 'Vercel Analytics- of Speed Insights-script']) expect(html).toContain(text)
+    expect(html).toContain('https://www.acm.nl/nl/verkoop-aan-consumenten/reclame-en-verleiden/online-beinvloeden/cookies-plaatsen')
+    expect(html).not.toContain('mag-een-website-ongevraagd-cookies-plaatsen')
+  })
   it('beschrijft de bestaande maar standaard gesloten LMS-runtime zonder ongeverifieerde verwerking te ontkennen', () => {
     const html = renderToStaticMarkup(<PrivacyPage />)
     expect(html).toContain('studievoortgang, toetsantwoorden, resultaten en certificaatgegevens')
