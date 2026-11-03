@@ -1,5 +1,8 @@
 # Documentatie WorkMatchr
 
+- [Gecombineerde eindacceptatie en gesloten besluitregister](combined-final-acceptance.md)
+- [Contactbesluitregister: operatorcontract en vrijgavegrenzen](contact-decision-register.md)
+
 - [Nachtuitvoering — gerichte securitycorrectie en commerciële vrijgavegrenzen](commercial-overnight-finalization.md)
 
 - [Gesloten contactaudit-verwijderroute en registergrens](contact-audit-retention.md)

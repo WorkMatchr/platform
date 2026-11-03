@@ -20,7 +20,8 @@
       "codex/contact-retention": false,
       "codex/contact-operations": false,
       "codex/contact-monitor-finalization": false,
-      "codex/contact-audit-retention": false
+      "codex/contact-audit-retention": false,
+      "codex/combined-final-acceptance": false
     }
   },
   "crons": [
