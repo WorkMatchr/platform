@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [Productiedatabase: schrijfpauze, herstel en migratieacceptatie](database-upgrade-preparation.md)
+
 - [Gecombineerde eindacceptatie en gesloten besluitregister](combined-final-acceptance.md)
 - [Contactbesluitregister: operatorcontract en vrijgavegrenzen](contact-decision-register.md)
 
