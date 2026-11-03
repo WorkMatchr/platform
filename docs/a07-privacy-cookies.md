@@ -1,3 +1,63 @@
+# Besliskaart beperkte commerciële basisrelease — 3 november 2026
+
+Status: **concept; geen juridische of operationele vrijgave**. Deze kaart begrenst
+de eerstvolgende inhoudelijke review. Zij vervangt geen menselijke goedkeuring en
+wijzigt geen publieke tekst, bedrijfsgegeven, bewaartermijn of productiegate.
+Reviewbasis: main `9f22a67a7308b971b84b3c70bbcd09cebe37221a`, inclusief PR #89.
+
+## Afbakening en feitelijke correctie
+
+De basisrelease omvat publieke informatie, accounts/login, organisaties en
+dienstverleners, opdrachten/offertes, marketplace, credits/betalingen, facturatie
+en noodzakelijke applicatiemails. De bestaande gratis F3-intake en browseropslag
+blijven transparant beschreven. LMS, F4 en de gesloten contactuitbreidingen zijn
+geen actieve dienstverlening in deze releasebeschrijving. Reeds aanwezige gegevens
+of gewone e-mailcontacten vallen niet buiten de privacyinformatie omdat een nieuwe
+functie gesloten blijft.
+
+De hieronder historisch als afzonderlijke kandidaat beschreven registerroute is
+inmiddels via PR #88 gemerged. Migratie 95 is daarmee onderdeel van main, maar
+niet van de productieomgeving met 85 toegepaste migraties. De contactauditmigratie
+uit PR #87 ontbreekt daar eveneens. Code aanwezig betekent geen operatorbevoegdheid,
+productieregister, verwijdering of goedgekeurd retentiebeleid. PR #89 verandert deze
+juridische grens niet. Geen herstel- of migratietraject in deze review heropenen.
+
+## Juridische besliskaart
+
+| Onderdeel | Gereed of bevestigd | Minimaal nog nodig voor publicatie |
+|---|---|---|
+| Identiteit | Centrale conceptconfiguratie voor exploitant/handelsnaam/KvK bestaat; status blijft TO_BE_CONFIRMED | PO bevestigt identiteit en het definitieve correspondentieadres; het eerder vereiste postadres in Zwolle is niet aangeleverd |
+| Privacycontact | contact@workmatchr.nl en de Vimexx-forward naar de Vimexx-mailbox zijn door PO bevestigd | Ontvangst en bevoegde behandeling aantonen; configuratiebevestiging is geen bezorgbewijs |
+| Doelen/rechtsgronden | Bestaande verwerkingstabel dekt registratie, organisaties, opdrachten, profielen, offertes, betalingen, facturatie en beveiliging | Menselijke beoordeling per doel; een organisatiecontract maakt verwerking van alle werknemersgegevens niet automatisch noodzakelijk voor een overeenkomst met die personen |
+| Leveranciers/rollen | Vercel/Neon, uitgaand Resend, inkomend Vimexx, Mollie en Jortt zijn onderscheiden; Mollie heeft voor eigen doeleinden een zelfstandige rol | Werkelijke afspraken, subprocessors, doorgifte en waarborgen aantonen; geen gesloten verwerkersovereenkomst claimen zonder bewijs |
+| Rechten | Bestaande concepttekst en privacycontact beschikbaar | Uitvoerbare inzage-, correctie-, bezwaar-, verwijder- en klachtenprocedure en verantwoordelijke bevestigen; geen verwijderbelofte in strijd met noodzakelijke wettelijke administratie |
+| Cookies | Eerdere publieke meting en sessie-/opslagbewijzen behouden; geen nieuwe tracking aangetroffen | Doelgebonden beoordeling, specifieke keuzes voor blijven-inloggen/conceptbewaring behouden; externe checkout en volledige ingelogde productiecapture zijn niet bewezen |
+| Algemene mail | Eén jaar vanaf ontvangst, noodzakelijke lopende zaken afzonderlijk beoordelen; handmatige controle door eigenaar; inbox en archief gelijk | Uitvoering vastleggen; prullenbak, providerkopieën en back-uptermijnen niet als geverifieerd presenteren |
+| Account-/opdracht-/auditretentie | Gegevenscategorieën en bestaande lifecycle zijn geïnventariseerd | Doelgebonden termijnen of vaststellingscriteria en daadwerkelijke verwijdering vaststellen; geen generieke contacttermijn voor alle marketplace- of beveiligingsgegevens |
+| Financiële administratie | Afzonderlijke wettelijke administratieplicht; contactretentie is hierop niet van toepassing | Toepasselijke fiscale categorieën en startmoment laten bevestigen; zeven jaar voor gewone facturen niet vertalen naar alle persoonsgegevens of alle uitzonderingen |
+| Gesloten contactuitbreiding | 30 dagen metadata en 24 uur tellers zijn al PO-goedgekeurd | Inhouds-, register-/auditvoorstellen en operationele uitvoering blijven afzonderlijk open; geen automatische 48-uursuitzondering |
+
+De publiceerbare basisverklaring moet deze actieve verwerkingen en rechten volledig
+dekken. Alleen verwijzingen naar niet-actieve producten uitstellen lost ontbrekende
+identiteit, rechtsgronden, leveranciersafspraken of retentie niet op. De huidige
+voorbereidingspagina's op main zijn geen definitieve informatievoorziening.
+
+**Banneradvies blijft beperkt tot de onderzochte inrichting:** geen algemene banner
+toevoegen zonder een toestemmingsplichtige techniek. Specifieke bewaar-/loginopties
+blijven bestaan. Geen verklaring dat externe betaaldiensten geen cookies plaatsen.
+
+Bronnen voor de menselijke review:
+- [AP: recht op informatie](https://autoriteitpersoonsgegevens.nl/nl/zelf-doen/privacyrechten/recht-op-informatie).
+- [Belastingdienst: facturen bewaren](https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/belastingdienst/zakelijk/btw/administratie_bijhouden/facturen_maken/uw_facturen_bewaren).
+- De reeds vastgelegde cookiebronnen en technische bewijsgrenzen hieronder.
+
+Alleen deze documentaanvulling is gewijzigd. Geen juridische acceptatie ingevuld;
+PR #64 blijft Draft. De bestaande testresultaten hieronder zijn historisch bewijs,
+geen in deze documentronde opnieuw uitgevoerde suites. Provider- en koperbewijs
+blijft uitsluitend in het private acceptatiedossier.
+
+---
+
 # Gerichte afronding cookies en retentie — 2 november 2026
 
 Status: **concept / menselijke eindacceptatie vereist**. PR #64 blijft Draft.
