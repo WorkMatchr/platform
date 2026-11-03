@@ -132,10 +132,14 @@ en eventuele wettelijke documentplicht moeten afzonderlijk worden vastgesteld; g
 generieke zeven jaar of onbeperkt bewaren claimen. Deze opdracht verandert die gegevens
 noch de algemene append-onlybescherming.
 
-### Ontwerp beperkte verwijderroute — niet uitgevoerd
+### Beperkte verwijderroute — code gemerged, productie niet geactiveerd
 
-De bestaande append-only audit blijft nu intact. Een latere route vereist een afzonderlijk
-gereviewde additieve migratie en tijdelijke PostgreSQL-tests:
+Actualisatie 3 november 2026: PR87 is gemerged in main abfb6d6. Migratie94 en de
+beperkte operatorroute zijn met synthetische PostgreSQL-gegevens getest, inclusief
+de aanvullende trigger-/rechtenbeveiliging. De onderstaande ontwerpvoorwaarden zijn
+dus niet langer allemaal ontbrekende implementatie. Productiemigratie, beleid,
+operatorprovisioning en uitvoering zijn nog niet vrijgegeven. De append-only audit
+en overige marketplace-/financiële registraties blijven beschermd:
 
 - Alleen CONTACT_RECONCILED, de bijbehorende policyversie/correlatie en contact-outboxscope.
   Geen vrije SQL, willekeurige audit-ID's, gebruikercriteria of algemene DELETE-bevoegdheid.
@@ -163,8 +167,8 @@ Deduplicatie blijft haalbaar zonder eeuwige tombstone: nieuwe contactinzendingen
 het bestaande ondertekende requesttoken jonger dan 24 uur; na 30-dagen-purge is het oude
 token verlopen. De huidige PostgreSQL-tests bewijzen weigering van replay na purge.
 Na auditverwijdering moet een oude reconciliatieaanvraag veilig worden geweigerd als de
-outbox niet meer bestaat; nooit opnieuw enqueue of verzenden. Dit hoort bij de toekomstige
-purgetest, niet bij een automatische bewaartermijnverlenging.
+outbox niet meer bestaat; nooit opnieuw enqueue of verzenden. Dit is in PR87 getest,
+zonder automatische bewaartermijnverlenging of operationele activering.
 
 ## Vrijgave en resterende beslissingen
 
@@ -172,7 +176,7 @@ purgetest, niet bij een automatische bewaartermijnverlenging.
   definitieve juridische publicatie **NO-GO** tot menselijke beoordeling van de concepttekst,
   specifieke toestemmingskeuzes, historische opslag en de genoemde meetgrenzen.
 - **RETENTIE: NO-GO** voor activering: content/register/auditbeleid deels open, fysieke
-  auditverwijdering ontbreekt, harde maximumtermijnen en kopieën niet operationeel bewezen.
+  auditverwijdering niet geactiveerd, harde maximumtermijnen en kopieën niet operationeel bewezen.
 - Maximaal drie gebundelde PO-besluiten: (1) cookieconcept en specifieke keuzes beoordelen;
   (2) zeven-dagen-contentvoorstel en de afzonderlijke 30-dagen-register/contactauditregels
   plus zaakgebonden uitzonderingscriteria beoordelen, zonder automatische 48 uur;
@@ -225,7 +229,7 @@ gedateerd bewijs. Functionele runtimecode is bytegelijk aan deze main-basis beho
 | Contact-rate-limits | HMAC van IP/e-mail en venstertellers; PO: maximaal 24 uur vanaf opgeslagen vensterstart; cleanup ook mogelijk zonder nieuwe inzendingen | Productiepurge nog uit; periodieke cadans, locks, achterstand of uitval kunnen overschrijding geven; geen harde garantie |
 | Onzekere Resend-uitkomst | Geen automatische retry/purge; triage 24 uur, escalatie 72 uur, expliciet besluit dag 7. Definitieve afwijzing na poging vereist geautoriseerd bewijs | Dag 7 is geen onbeperkte bewaartoestemming; individuele maximaal 48 extra uren NIET goedgekeurd; noodzaak en grondslag per geval vaststellen |
 | Privébesluitregister | Incident-ID, bevoegde behandelaar, tijden, provideruitkomst, bewijsreferentie/hash, motivering en auditspoor; geen berichtinhoud, afzender, IP of credentials | Voorstel: minimaliseren bij afsluiting, identificeerbaar dossier uiterlijk 30 dagen daarna verwijderen; nog niet vastgesteld. Beveiligde opslag, versiehistorie, back-ups en toegangscontrole bewijzen |
-| Databaseaudit | Bestaande append-only MarketplaceAuditEvent; behandelaar/record/bewijs-ID's zijn herleidbaar. Outboxpurge wist dit auditrecord niet | Afzonderlijke termijn en technisch afdwingbare beperkte verwijderroute ontbreken. Reconciliatie blijft operationeel geblokkeerd; geen algemene audittrigger uitschakelen |
+| Databaseaudit | Bestaande append-only MarketplaceAuditEvent; behandelaar/record/bewijs-ID's zijn herleidbaar. Outboxpurge wist dit auditrecord niet. Beperkte verwijderroute PR87 gemerged en synthetisch getest, niet op productie geactiveerd | Afzonderlijke termijn, migratievrijgave, bevoegde uitvoering en kopieëncontrole ontbreken. Reconciliatie blijft operationeel geblokkeerd; geen algemene audittrigger uitschakelen |
 | Provider en mailbox | Resend uitgaand; PO-bevestigd contact@ → Vimexx-forwarder → ontvangende Vimexx-mailbox. Algemene mailboxmail maximaal één jaar vanaf ontvangst | Resend verklaart 30 dagen e-mail/logs en 7 dagen back-ups; contract/account/doorgifte verifiëren. Vimexx-trash/backups/forwarderlogs en uitvoering mailboxbeleid nog open |
 | Monitoring | Afgescheiden read-only auth en alleen geaggregeerde gezondheid; geen inhoud nodig | Nieuwe monitor/watchdog/ontvanger nog niet gecontracteerd of ingericht; voeg pas feitelijke leveranciers toe na besluit; geen Resend-afhankelijk alarmkanaal |
 | Verwijderverzoeken / herstel | Applicatiepurge raakt geen reeds gemaakte provider-, mailbox- of back-upkopieën | Verifieer alle kopieën, bewaarbeperkingen en opvolging van eerdere verwijderingen bij herstel. Geen onbewezen onmiddellijke fysieke verwijdering beloven |
@@ -274,6 +278,35 @@ vastgestelde termijn stilzwijgend te verlengen. Geen mailboxinhoud of instelling
 De bestaande
 85 unit-/routeregressies, 24 monitortests en 43 PostgreSQL-groepen uit PR #86 worden hergebruikt:
 de runtimebestanden zijn ongewijzigd. Geen onnodige herhaling of echte provideracceptatie geclaimd.
+
+---
+
+# Aanvulling gecombineerde eindacceptatie — 3 november 2026
+
+- Reviewbasis main abfb6d6 inclusief PR87; geen juridische acceptatie of productiehandeling.
+- Nieuwe technische registerkandidaat op afzonderlijke branch codex/combined-final-acceptance:
+  gesloten native PostgreSQL-operatorroute, immutable revisies, beperkte bewijsreferenties,
+  vaste triage24h/escalatie72h/besluitdag7, finale status alleen na bewezen reconciliatie.
+  Geen productieregister, nieuwe provider of automatische retentieverlenging. Migratie95,
+  beleidsbesluit en persoonlijke bevoegdheden blijven afzonderlijk vereist.
+- Browser: synthetische opdrachtgever bewaart expliciet, herlaadt, annuleert logout met behoud
+  van invoer en bevestigt daarna wissen/logout. Professional kiest blijvend inloggen (168uur),
+  beheerder standaard24uur. Eigen verlopen beheerderssessie geweigerd; opnieuw inloggen/logout.
+  Eindcontrole:0sessies; intake zonder opgeslagen antwoorden; tijdelijke database/accounts,
+  server en credentialfixture opgeruimd. Desktop en390px, zichtbare focus, geen console-errors.
+- Geen volledige browsercookiejar/netwerkexport beschikbaar. Native HTTP/PostgreSQL-tests
+  onderbouwen attributen/duur; eerdere anonieme productiemeting blijft geldig. Synthetische
+  checkout toont€30,25 voor25credits zonderPro; geen providerredirect gestart. Externe
+  betaalpagina en ingelogde productiecookies blijven NOT VERIFIED.
+- Resend-domein opnieuw Verified via bestaande providersessie. Production-afzender/sleutelbinding
+  en Preview-isolatie blijven onbewezen; metadata is geen bewijs van afgeschermde waarden.
+- Alleen feitelijke juridische conceptcorrecties; geen nieuwe termijn, bedrijfsgegevens,
+  leveranciersafspraak, cookie of tracking. Versie0.6 is een technische actualisatie.
+  De bestaande menselijke beslislijst hierboven blijft het enige juridische besluitoverzicht.
+- Finale gerichte validatie:18/18 juridische paginatests PASS, volledige lint0fouten/
+  4bestaande waarschuwingen, standalone TypeScript PASS en productiebuild PASS
+  (172pagina's,3bestaande filesystemtracingwaarschuwingen). Alleen de eigen gegenereerde
+  next-envwijziging hersteld. Diff-/secrets-/scopecontrole vóór commit; geen runtimewijziging.
 
 ---
 

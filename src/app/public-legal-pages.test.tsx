@@ -12,6 +12,12 @@ const pages = [
 ] as const
 
 describe('A07 juridische conceptpagina’s', () => {
+  it('onderscheidt voorbereide contactauditcode van goedgekeurde en geactiveerde verwijdering', () => {
+    const html = renderToStaticMarkup(<PrivacyPage />)
+    expect(html).toContain('Een beperkte technische verwijderroute voor contactaudit is voorbereid, maar niet geactiveerd')
+    expect(html).toContain('de afzonderlijke bewaartermijn en de bevoegde uitvoering niet zijn goedgekeurd en gecontroleerd')
+    expect(html).toContain('blijft de afhandelroute gesloten')
+  })
   for (const { Page, metadata, route } of pages) {
     it(`${route}: herkenbaar concept, één h1, geldige sectielabels en geen publicatieclaim`, () => {
       const html = renderToStaticMarkup(<Page />)

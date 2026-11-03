@@ -1,4 +1,4 @@
-export const legalDraft = { version: '0.5', reviewedOn: '2026-11-02', reviewedOnLabel: '2 november 2026' } as const
+export const legalDraft = { version: '0.6', reviewedOn: '2026-11-03', reviewedOnLabel: '3 november 2026' } as const
 
 export const privacyProcessing = [
   { title: 'Website en contact', text: 'Bij een websitebezoek worden technische verzoekgegevens verwerkt, zoals het IP-adres en informatie over de browser. Als u ons mailt, verwerken wij uw naam, e-mailadres, bericht en eventuele bijlagen om uw vraag te beantwoorden. De door de Product Owner bevestigde e-mailroute gebruikt Vimexx voor forwarding en de ontvangende mailbox. Uitgaande applicatiemails gebruiken Resend. Het nieuwe contactformulier is nog niet geactiveerd. Voorgestelde grondslag: gerechtvaardigd belang bij een werkende, beveiligde website en het beantwoorden van vragen; bij een concrete aanvraag van een natuurlijke persoon eventueel voorbereiding van een overeenkomst. De belangenafweging moet nog worden vastgesteld.' },
