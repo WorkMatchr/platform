@@ -23,6 +23,14 @@ Branch: codex/combined-final-acceptance. PR64 blijft afzonderlijk juridisch Draf
   eigen database/rollen/artifacts opgeruimd. Geen veiligheidscheck versoepeld.
   Technische applicatiebuild PASS(172); juridische build PASS(172). Beide drie bestaande tracingwaarschuwingen.
 
+Opgeleverd: technische [Draft PR88](https://github.com/WorkMatchr/platform/pull/88),
+codecommit3c0e3718943ba832e3718ab7191c187096299b6c. Juridische [Draft PR64](https://github.com/WorkMatchr/platform/pull/64)
+bijgewerkt naar0ba04b639be6dbabc900ee9e0a1b43272bb3281e. Staged scope, diff/secrets en
+de nieuwe pushcommits gecontroleerd. Geen force-push; oorspronkelijke worktrees schoon.
+GitHub CI liep bij overdracht nog; geen volledige CI-PASS of mergevrijgave geclaimd.
+Vercel-reviewdeployment op beide branches bewust uitgeschakeld.
+
 Alle gates blijven gesloten. Geen productiehandeling, provideractie of juridische
-goedkeuring. Volgende stap: staged scope/secrets controleren,
-één technische Draft PR maken en uitsluitend bestaande juridische PR64 bijwerken.
+goedkeuring. Volgende stap: actuele CI op beide heads lezen en uitsluitend eventuele
+concrete regressie afhandelen. Daarna de vijf besluiten in combined-final-acceptance.md;
+geen algemene audit herhalen en geen extra technische PR maken.
