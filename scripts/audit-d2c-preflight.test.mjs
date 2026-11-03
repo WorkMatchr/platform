@@ -8,7 +8,9 @@ import { auditPreflight as checkPreflight, pendingMigrations } from './audit-d2c
 
 // Preserve the approved historical eight-migration plan. The new candidate is NOT authorized by it.
 const migrationRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'workmatchr-historical-preflight-'))
-for (const name of fs.readdirSync('prisma/migrations').filter(n => /^\d/.test(n) && n !== '20261102120000_add_closed_contact_audit_retention')) {
+for (const name of fs.readdirSync('prisma/migrations').filter(n => /^\d/.test(n)
+  && n !== '20261102120000_add_closed_contact_audit_retention'
+  && n !== '20261103100000_add_closed_contact_decision_register')) {
   fs.mkdirSync(path.join(migrationRoot, name))
   fs.copyFileSync(path.join('prisma/migrations', name, 'migration.sql'), path.join(migrationRoot, name, 'migration.sql'))
 }
