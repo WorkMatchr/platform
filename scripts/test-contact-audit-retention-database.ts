@@ -55,6 +55,16 @@ try {
   assert.equal((await db.query(`SELECT to_regnamespace('contact_audit_retention') AS value`)).rows[0].value, null)
   await db.query(`ALTER DEFAULT PRIVILEGES REVOKE SELECT ON TABLES FROM "${app}"`)
   await db.query(migration)
+  // Rehearse a schema rollback before first use, without editing migration history.
+  await db.query(`BEGIN;
+    DROP TRIGGER "MarketplaceAuditEvent_append_only" ON "MarketplaceAuditEvent";
+    CREATE TRIGGER "MarketplaceAuditEvent_append_only" BEFORE UPDATE OR DELETE ON "MarketplaceAuditEvent"
+      FOR EACH ROW EXECUTE FUNCTION "workmatchr_prevent_marketplace_history_mutation"();
+    DROP SCHEMA contact_audit_retention CASCADE;`)
+  assert.equal((await db.query(`SELECT to_regnamespace('contact_audit_retention') AS value`)).rows[0].value, null)
+  assert.equal((await db.query(`SELECT tgfoid::regprocedure::text AS value FROM pg_trigger WHERE tgname='MarketplaceAuditEvent_append_only'`)).rows[0].value,
+    'workmatchr_prevent_marketplace_history_mutation()')
+  await db.query('ROLLBACK')
   assert.equal((await db.query(`SELECT pg_get_functiondef('workmatchr_prevent_marketplace_history_mutation'::regproc) AS value`)).rows[0].value, generalGuard)
   assert.equal((await db.query('SELECT count(*) FROM contact_audit_retention.approval')).rows[0].count, '0')
   check('unsafe default privileges roll back migration; clean install closed, history unchanged, zero approvals')
@@ -72,6 +82,11 @@ try {
   await assert.rejects(run(op, randomUUID()), /CONTACT_AUDIT_PURGE_CLOSED/)
   await assert.rejects(run(db, randomUUID()), /CONTACT_AUDIT_PURGE_FORBIDDEN/)
   await assert.rejects(run(application, randomUUID()))
+  await assert.rejects(op.query(`SET ROLE "${app}"`))
+  await assert.rejects(application.query(`SET ROLE "${operator}"`))
+  await assert.rejects(op.query(`INSERT INTO contact_audit_retention.approval
+    (run_id,operator_oid,policy_reference,expires_at,targets,register_reviewed,no_legal_hold)
+    VALUES (gen_random_uuid(),current_user::regrole,gen_random_uuid(),now()+interval '1 minute','[]',true,true)`), /permission denied/)
   check('no PUBLIC execution; separate LOGIN required; absent approval, runtime and privileged owner refused')
   const actor = randomUUID(), policy = randomUUID(), hash = 'a'.repeat(64)
   type Pair = { id: string; entityId: string; hash: string }
@@ -101,6 +116,8 @@ try {
   const snapshot = async () => JSON.stringify((await db!.query(`SELECT * FROM "MarketplaceAuditEvent" ORDER BY "id"`)).rows)
   const rejected = async (id: string) => { const before = await snapshot(); await assert.rejects(run(op!, id)); assert.equal(await snapshot(), before); assert.equal(await count('contact_audit_retention.permit'), 0) }
   const sent = await insert(), failed = await insert({ outcome: 'NOT_ACCEPTED' })
+  await assert.rejects(authorize([]), /check constraint/)
+  await assert.rejects(authorize(Array.from({ length: 101 }, () => sent)), /check constraint/)
   await rejected(await authorize([sent], operator, true))
   await rejected(await authorize([sent], app))
   await rejected(await authorize([{ ...sent, hash: 'b'.repeat(64) }]))
@@ -142,11 +159,10 @@ try {
   const beforeMixed = await insert()
   await rejected(await authorize([beforeMixed, financial]))
   const fault = await insert(), faultRun = await authorize([fault])
-  await db.query(`CREATE FUNCTION test_receipt_failure() RETURNS trigger AS $$ BEGIN RAISE EXCEPTION 'synthetic_receipt_failure'; END $$ LANGUAGE plpgsql;
-    CREATE TRIGGER test_receipt_failure BEFORE INSERT ON contact_audit_retention.receipt FOR EACH ROW EXECUTE FUNCTION test_receipt_failure()`)
+  await db.query(`ALTER TABLE contact_audit_retention.receipt ADD CONSTRAINT test_receipt_failure CHECK (false) NOT VALID`)
   await rejected(faultRun)
   assert.equal((await db.query('SELECT 1 FROM contact_audit_retention.approval WHERE run_id=$1', [faultRun])).rowCount, 1)
-  await db.query('DROP TRIGGER test_receipt_failure ON contact_audit_retention.receipt')
+  await db.query('ALTER TABLE contact_audit_retention.receipt DROP CONSTRAINT test_receipt_failure')
   assert.equal((await run(op, faultRun)).rows[0].deleted_count, 1)
   check('mixed batch and receipt fault roll back deletion and capability; same authorized run recovers')
   const rollback = await insert(), rollbackRun = await authorize([rollback])
@@ -210,6 +226,48 @@ try {
   await assert.rejects(reconcileContact(identity, decision), /CONTACT_RECONCILIATION_CONFLICT/)
   assert.equal(await snapshot(), afterPurge); assert.equal(await count('"NotificationOutbox"'), outboxCount)
   check('real reconciliation service replay after audit purge refuses; no new outbox/audit/send')
+  // A trigger is executable code: SECURITY INVOKER runs as the enclosing definer.
+  // This attack uses only this harness's synthetic database and limited operator.
+  const attack = await insert(), attackRun = await authorize([attack])
+  const activeVictim = await insert({ outbox: 'PROCESSING' })
+  await db.query(`CREATE SCHEMA contact_attack AUTHORIZATION "${operator}";
+    GRANT TRIGGER ON "MarketplaceAuditEvent" TO "${operator}"`)
+  await op.query(`CREATE FUNCTION contact_attack.side_effect() RETURNS trigger LANGUAGE plpgsql AS $$
+    BEGIN DELETE FROM public."NotificationOutbox" WHERE "id"='${activeVictim.entityId}'::uuid; RETURN OLD; END $$;
+    CREATE TRIGGER contact_attack BEFORE DELETE ON public."MarketplaceAuditEvent"
+    FOR EACH ROW EXECUTE FUNCTION contact_attack.side_effect()`)
+  let attackBlocked = false
+  try {
+    await run(op, attackRun)
+    const remaining = (await db.query('SELECT 1 FROM "NotificationOutbox" WHERE "id"=$1', [activeVictim.entityId])).rowCount
+    console.log(`SYNTHETIC_ATTACK_UNEXPECTED_SUCCESS activeOutboxDeleted=${remaining === 0}`)
+  } catch (error) { assert.match(String(error), /CONTACT_AUDIT_PURGE_(FORBIDDEN|INTEGRITY)/); attackBlocked = true }
+  assert.equal(attackBlocked, true, 'Synthetic trigger escalation must fail closed')
+  await db.query(`REVOKE TRIGGER ON "MarketplaceAuditEvent" FROM "${operator}"`)
+  await assert.rejects(run(op, attackRun), /CONTACT_AUDIT_PURGE_INTEGRITY/)
+  assert.equal((await db.query('SELECT 1 FROM "NotificationOutbox" WHERE "id"=$1', [activeVictim.entityId])).rowCount, 1)
+  await db.query('DROP TRIGGER contact_attack ON public."MarketplaceAuditEvent"')
+  assert.equal((await run(op, attackRun)).rows[0].deleted_count, 1)
+  check('TRIGGER escalation and already-planted side-effect trigger refused; active outbox protected')
+  for (const grant of ['REFERENCES ON "MarketplaceAuditEvent"', 'REFERENCES("id") ON "NotificationOutbox"',
+    'INSERT ON contact_audit_retention.receipt', 'CREATE ON SCHEMA public', 'CREATE ON SCHEMA contact_audit_retention']) {
+    await db.query(`GRANT ${grant} TO "${operator}"`)
+    await assert.rejects(run(op, runId), /CONTACT_AUDIT_PURGE_FORBIDDEN/)
+    await db.query(`REVOKE ${grant} FROM "${operator}"`)
+  }
+  const indirect = await insert(), indirectRun = await authorize([indirect])
+  await db.query(`CREATE TABLE contact_attack.child (audit_id uuid REFERENCES "MarketplaceAuditEvent"("id") ON DELETE CASCADE)`)
+  await db.query('INSERT INTO contact_attack.child VALUES ($1)', [indirect.id])
+  await assert.rejects(run(op, indirectRun), /CONTACT_AUDIT_PURGE_INTEGRITY/)
+  assert.equal(await count('contact_attack.child'), 1)
+  await db.query('DROP TABLE contact_attack.child')
+  await op.query('BEGIN'); await run(op, indirectRun)
+  await db.query(`SET lock_timeout='100ms'`)
+  await assert.rejects(db.query(`CREATE TRIGGER concurrent_side_effect BEFORE DELETE ON "MarketplaceAuditEvent"
+    FOR EACH ROW EXECUTE FUNCTION contact_attack.side_effect()`), /lock timeout/)
+  await db.query('RESET lock_timeout'); await op.query('ROLLBACK')
+  assert.equal((await run(op, indirectRun)).rows[0].deleted_count, 1)
+  check('schema/receipt/reference overgrants, cascading foreign key and concurrent trigger DDL fail closed')
   // Temporary-name shadowing cannot redirect any qualified table access.
   await op.query('CREATE TEMP TABLE permit(audit_id uuid); CREATE TEMP TABLE approval(run_id uuid)')
   const shadow = await insert()

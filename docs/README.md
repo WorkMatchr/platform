@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [Nachtuitvoering — gerichte securitycorrectie en commerciële vrijgavegrenzen](commercial-overnight-finalization.md)
+
 - [Gesloten contactaudit-verwijderroute en registergrens](contact-audit-retention.md)
 
 - [Afgescheiden contactmonitoring en auditbare reconciliatie](contact-monitor-finalization.md)

@@ -60,6 +60,7 @@ DECLARE
   item record;
   audit public."MarketplaceAuditEvent"%ROWTYPE;
   operator_id oid;
+  relation_name text;
   total integer := 0;
 BEGIN
   -- Native individual DB authentication; SET ROLE, web sessions and bearer tokens confer no authority.
@@ -67,18 +68,42 @@ BEGIN
     AND rolcanlogin AND NOT rolsuper AND NOT rolcreatedb AND NOT rolcreaterole AND NOT rolbypassrls AND NOT rolreplication;
   IF operator_id IS NULL OR pg_has_role(operator_id, current_user::regrole, 'MEMBER')
     OR EXISTS (SELECT 1 FROM pg_auth_members WHERE member = operator_id)
-    OR has_table_privilege(session_user, 'contact_audit_retention.approval', 'INSERT,UPDATE,DELETE,TRUNCATE')
-    OR has_table_privilege(session_user, 'contact_audit_retention.permit', 'INSERT,UPDATE,DELETE,TRUNCATE')
-    OR has_table_privilege(session_user, 'public."MarketplaceAuditEvent"', 'INSERT,UPDATE,DELETE,TRUNCATE')
-    OR has_table_privilege(session_user, 'public."NotificationOutbox"', 'INSERT,UPDATE,DELETE,TRUNCATE')
-    OR has_any_column_privilege(session_user, 'contact_audit_retention.approval', 'INSERT,UPDATE')
-    OR has_any_column_privilege(session_user, 'contact_audit_retention.permit', 'INSERT,UPDATE')
-    OR has_any_column_privilege(session_user, 'public."MarketplaceAuditEvent"', 'INSERT,UPDATE')
-    OR has_any_column_privilege(session_user, 'public."NotificationOutbox"', 'INSERT,UPDATE') THEN
+    OR has_schema_privilege(session_user, 'contact_audit_retention', 'CREATE')
+    OR has_schema_privilege(session_user, 'public', 'CREATE') THEN
     RAISE EXCEPTION 'CONTACT_AUDIT_PURGE_FORBIDDEN' USING ERRCODE = '42501';
   END IF;
+  FOREACH relation_name IN ARRAY ARRAY['contact_audit_retention.approval', 'contact_audit_retention.permit',
+    'contact_audit_retention.receipt', 'public."MarketplaceAuditEvent"', 'public."NotificationOutbox"'] LOOP
+    -- TRIGGER/REFERENCES can introduce code executed under this definer, even without DML grants.
+    IF has_table_privilege(session_user, relation_name, 'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
+      OR has_any_column_privilege(session_user, relation_name, 'INSERT,UPDATE,REFERENCES') THEN
+      RAISE EXCEPTION 'CONTACT_AUDIT_PURGE_FORBIDDEN' USING ERRCODE = '42501';
+    END IF;
+  END LOOP;
   IF NOT pg_try_advisory_xact_lock(310034) THEN
     RAISE EXCEPTION 'CONTACT_AUDIT_PURGE_BUSY' USING ERRCODE = '55P03';
+  END IF;
+  -- Prevent a concurrent DDL/trigger installation between inspection and execution.
+  -- SHARE UPDATE EXCLUSIVE remains compatible with ordinary ROW EXCLUSIVE DML.
+  LOCK TABLE public."MarketplaceAuditEvent", contact_audit_retention.approval,
+    contact_audit_retention.permit, contact_audit_retention.receipt IN SHARE UPDATE EXCLUSIVE MODE NOWAIT;
+  IF current_setting('session_replication_role') <> 'origin'
+    OR NOT EXISTS (SELECT 1 FROM pg_trigger t JOIN pg_proc p ON p.oid = t.tgfoid
+      WHERE t.tgrelid = 'public."MarketplaceAuditEvent"'::regclass
+        AND t.tgname = 'MarketplaceAuditEvent_append_only' AND NOT t.tgisinternal
+        AND t.tgfoid = 'contact_audit_retention.guard_audit()'::regprocedure
+        AND t.tgenabled = 'O' AND t.tgtype = 27 AND t.tgqual IS NULL AND t.tgnargs = 0
+        AND p.proowner = current_user::regrole AND p.prosecdef
+        AND p.proconfig = ARRAY['search_path=pg_catalog, pg_temp'])
+    OR EXISTS (SELECT 1 FROM pg_trigger t WHERE
+      (t.tgrelid = 'public."MarketplaceAuditEvent"'::regclass
+        AND t.tgname <> 'MarketplaceAuditEvent_append_only' AND (NOT t.tgisinternal OR (t.tgtype::int & 8) <> 0))
+      OR t.tgrelid IN ('contact_audit_retention.approval'::regclass,
+        'contact_audit_retention.permit'::regclass, 'contact_audit_retention.receipt'::regclass))
+    OR EXISTS (SELECT 1 FROM pg_rewrite WHERE ev_class IN ('public."MarketplaceAuditEvent"'::regclass,
+      'contact_audit_retention.approval'::regclass, 'contact_audit_retention.permit'::regclass,
+      'contact_audit_retention.receipt'::regclass)) THEN
+    RAISE EXCEPTION 'CONTACT_AUDIT_PURGE_INTEGRITY';
   END IF;
   -- A retry of a completed run only returns its aggregate receipt, never deletes a different batch.
   RETURN QUERY SELECT r.run_id, r.policy_reference, r.completed_at, r.deleted_count

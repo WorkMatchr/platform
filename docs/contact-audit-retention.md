@@ -169,7 +169,8 @@ activeert of financiert niets. Tot die uitvoering bewezen is: geen operationele 
 
 ## Gerichte verificatie
 
-Definitieve lokale resultaten (2 november 2026):
+Eerdere lokale resultaten (2 november 2026); de aanvullende securityreview hieronder
+vervangt de toenmalige conclusie over de volledige privilegeafscherming:
 
 - 14/14 nieuwe PostgreSQL-groepen: gesloten installatie, negatieve default-ACL-proef,
   beperkte rollen/kolomrechten/lidmaatschap, bevoegdheid, termijnen en hold/register-
@@ -240,3 +241,40 @@ compliance-/financiële beslisregel. Eén afzonderlijke technische Draft PR.
 Productreview: geen publieke UX, authflow, financiële logica, Compliance-regels of
 juridische concepttekst gewijzigd. Contactmail, reconciliatie, fysieke purge, F4/LMS
 blijven gesloten. Vercel Git-deployment voor deze technische branch is uitgeschakeld.
+
+## Aanvullende adversariële review — 3 november 2026
+
+**Bevestigd defect, hersteld in deze nog niet gemergede kandidaat:** een afzonderlijke
+TRIGGER-grant gaf de beperkte operator de mogelijkheid een eigen SECURITY INVOKER-
+trigger te plaatsen. Tijdens de SECURITY DEFINER-purge draaide die trigger onder de
+functie-eigenaar. De reproductie verwijderde een actieve, uitsluitend synthetische
+outboxrij. Dat was een kritieke releaseblokkade; de eerdere groene CI dekte dit niet.
+
+De purge weigert nu ook TRIGGER/REFERENCES, kolom-REFERENCES, schrijfrechten op receipts
+en CREATE op beide betrokken schema's. Vóór mutaties controleert zij de exacte guard,
+owner, security mode, search_path, triggerconditie en activatiestatus. Extra triggers,
+inkomende DELETE-cascades en rewrite rules worden geweigerd, ook nadat de oorspronkelijke
+grant is ingetrokken. Een SHARE UPDATE EXCLUSIVE-lock sluit de DDL-race tussen deze
+inspectie en de DELETE. Normale ROW EXCLUSIVE-applicatiemutaties blijven compatibel;
+de bestaande advisorylock en rijlocks blijven de inhoudelijke serialisatie verzorgen.
+Zie [PostgreSQL-locks](https://www.postgresql.org/docs/17/explicit-locking.html) en
+[triggerrechten](https://www.postgresql.org/docs/17/sql-createtrigger.html).
+
+16/16 gerichte PostgreSQL-groepen PASS. Nieuwe aanvallen tonen aan dat de actieve outbox
+behouden blijft, een al geplaatste trigger/cascade wordt geweigerd en een gelijktijdige
+triggerinstallatie geen toegang krijgt. Een CHECK-fout bij receiptinsert test nog steeds
+rollback **na** de DELETE; de foutinjectie leunt niet meer op een extra trigger die de
+nieuwe integriteitscontrole terecht eerder weigert. De rollbackvorm vóór eerste gebruik
+is transactioneel gerepeteerd: oorspronkelijke immutable guard terug, private schema
+weg, vervolgens ROLLBACK; geen migratieregistratie handmatig gewijzigd.
+
+Alleen migratie 94 uit deze Draft PR is aangescherpt. Zij staat niet op main en is alleen
+in eigen tijdelijke testdatabases gebruikt, die zijn verwijderd. Migraties 1–93 blijven
+bytegelijk aan main. Een eventuele reeds toegepaste externe kopie van 94 mag niet worden
+overschreven: vóór zo'n toepassing STOP en een afzonderlijke additieve strategie reviewen.
+De vertrouwde DBA kan objecten wijzigen; onafhankelijke runtime-/operatorafscherming blijft
+een productievoorwaarde. Dit is geen bewijs van huidige productierollen of toestemming
+voor een databasewijziging.
+
+De sequentiële eindcontrole, commerciële afhankelijkheden en resterende acceptatie staan
+in [de geconsolideerde nachtrapportage](commercial-overnight-finalization.md).
