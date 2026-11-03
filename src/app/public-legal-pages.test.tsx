@@ -12,6 +12,20 @@ const pages = [
 ] as const
 
 describe('A07 juridische conceptpagina’s', () => {
+  it('begrenst de basisrelease zonder bestaande verwerking of contractacceptatie weg te schrijven', () => {
+    const html = renderToStaticMarkup(<PrivacyPage />)
+    const scope = html.match(/<section[^>]*aria-labelledby="release-scope">([\s\S]*?)<\/section>/)?.[1] ?? ''
+    for (const text of [
+      'beperkte commerciële basisrelease', 'noodzakelijke applicatiemails',
+      'bestaande gratis Compliance-intake', 'vallen buiten deze vrijgave en blijven gesloten',
+      'Vermelding van deze voorbereide functies is geen activering of goedkeuring',
+      'historische beoordelingen en gewone e-mailcontacten',
+      'vervangt geen overeenkomst of algemene voorwaarden', 'registratie- en aankoopflow',
+    ]) expect(scope).toContain(text)
+    expect(legalIdentityDraft.status).toBe('TO_BE_CONFIRMED')
+    expect(html).toContain('Voorgestelde grondslag')
+    expect(html).toContain('Concept — nog niet vastgesteld')
+  })
   it('onderscheidt voorbereide contactauditcode van goedgekeurde en geactiveerde verwijdering', () => {
     const html = renderToStaticMarkup(<PrivacyPage />)
     expect(html).toContain('Een beperkte technische verwijderroute voor contactaudit is voorbereid, maar niet geactiveerd')

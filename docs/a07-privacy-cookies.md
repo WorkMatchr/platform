@@ -2,7 +2,7 @@
 
 Status: **concept; geen juridische of operationele vrijgave**. Deze kaart begrenst
 de eerstvolgende inhoudelijke review. Zij vervangt geen menselijke goedkeuring en
-wijzigt geen publieke tekst, bedrijfsgegeven, bewaartermijn of productiegate.
+publiceert geen juridische tekst en wijzigt geen bedrijfsgegeven, bewaartermijn of productiegate.
 Reviewbasis: main `9f22a67a7308b971b84b3c70bbcd09cebe37221a`, inclusief PR #89.
 
 ## Afbakening en feitelijke correctie
@@ -23,6 +23,22 @@ productieregister, verwijdering of goedgekeurd retentiebeleid. PR #89 verandert 
 juridische grens niet. Geen herstel- of migratietraject in deze review heropenen.
 
 ## Juridische besliskaart
+
+De te beoordelen set is versie 0.7 van `src/app/privacy/page.tsx` en
+`src/app/cookies/page.tsx`, met de bestaande centrale identiteit en
+`src/content/public-legal.ts`. Het privacyconcept noemt de beperkte releasescope
+nu expliciet; de cookie-inventaris en alle bestaande voorbehouden blijven behouden.
+De gegevens zijn niet door deze technische actualisatie juridisch bevestigd.
+
+**Aanvullende consistentiebevinding:** `register-form.tsx` vereist akkoord op
+tijdelijke privacyinformatie en algemene voorwaarden, terwijl
+`src/app/algemene-voorwaarden/page.tsx` nog expliciet meldt dat geen juridisch
+geldende voorwaarden zijn gepubliceerd. Dat is geen afgeronde contractacceptatie.
+De bevoegde reviewer moet de toepasselijke afspraken en de registratieformulering
+samen vaststellen; een privacyverklaring is geen vervangende overeenkomst.
+Geen fictieve voorwaarden toevoegen, checkbox verwijderen of authenticatie wijzigen
+om deze blokkade technisch groen te maken. Dit betreft een inhoudelijke vrijgavekeuze,
+niet een reeds uitgevoerde registratiecorrectie.
 
 | Onderdeel | Gereed of bevestigd | Minimaal nog nodig voor publicatie |
 |---|---|---|
@@ -51,10 +67,29 @@ Bronnen voor de menselijke review:
 - [Belastingdienst: facturen bewaren](https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/belastingdienst/zakelijk/btw/administratie_bijhouden/facturen_maken/uw_facturen_bewaren).
 - De reeds vastgelegde cookiebronnen en technische bewijsgrenzen hieronder.
 
-Alleen deze documentaanvulling is gewijzigd. Geen juridische acceptatie ingevuld;
-PR #64 blijft Draft. De bestaande testresultaten hieronder zijn historisch bewijs,
-geen in deze documentronde opnieuw uitgevoerde suites. Provider- en koperbewijs
-blijft uitsluitend in het private acceptatiedossier.
+Deze aanvulling wijzigt uitsluitend de conceptreikwijdte, versiemarkering,
+bijbehorende regressiecontrole en deze documentatie. Geen juridische acceptatie
+ingevuld; PR #64 blijft Draft. De bestaande testresultaten verderop zijn historisch
+bewijs. Provider- en koperbewijs blijft uitsluitend in het private acceptatiedossier.
+
+Gerichte validatie van conceptversie 0.7: 19/19 juridische paginatests PASS,
+standalone TypeScript PASS en volledige lint PASS (nul fouten; vier bestaande
+`no-location-assign`-waarschuwingen in authenticatiecomponenten). De sectie blijft
+servergerenderd met bestaande typografie en een benoemde heading; geen nieuwe
+scripts, opslag, authlogica of tracking. De standaard productiebuild strandt lokaal
+in Turbopack bij het starten/verbinden van het CSS-helperproces, ook buiten de
+sandbox. Dit is geen bewezen inhoudelijke regressie, maar ook geen build-PASS.
+De aanvullende productiebuild `npm run build -- --webpack` is PASS: compilatie,
+buildtypecontrole en alle 172 statische pagina's voltooid, exitcode 0. Geen wijziging
+van de standaardbundler of dependencies. Gegenereerde Next-typesverwijzingen niet
+meegenomen. Diff-check en gerichte secrets-/metadatacontrole van de nieuwe diff PASS.
+
+De juridische branch loopt drie main-commits achter. De mail-, contact-, financiële,
+marketplace- en onderzochte registratie/voorwaardenbroncode is gelijk aan actuele
+main. De PR-diff vanaf de gemeenschappelijke basis bevat geen verwijdering van de
+nieuwere migraties; een tweepuntsvergelijking met main zou die achterstand ten
+onrechte als deze wijziging kunnen presenteren. Geen rebase, runtime-overname of
+merge uitgevoerd voor deze beperkte conceptcorrectie.
 
 ---
 
