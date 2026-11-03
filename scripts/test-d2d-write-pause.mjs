@@ -21,14 +21,18 @@ async function run(args,input) {
 const sqlArgs=user=>['exec','-i',id,'psql','-X','-qAt','-v','ON_ERROR_STOP=1','-U',user,'-d','d2d_fixture']
 async function sql(text,user='d2d_operator') {const r=await run(sqlArgs(user),text);assert.equal(r.code,0,'Synthetic SQL failed; raw output suppressed');return r.out}
 const evidence={runId:id,syntheticOnly:true,productionAccess:false,startedAt:new Date().toISOString(),checks:{}}
-let created=false,server,writer
+let created=false,server,writer,databaseAvailable=true
 const before=await run(['ps','-aq','--no-trunc']);assert.equal(before.code,0)
+const volumesBefore=await run(['volume','ls','-q']);assert.equal(volumesBefore.code,0)
 const plan={scope:'D2D_DATABASE_LOGIN_FENCE',approved:true,approvalReference:'synthetic-only-fixture',database:'d2d_fixture',operator:'d2d_operator',writers:[{name:'d2d_writer',originalLogin:true}]}
 try {
  const c=await run(['run','--detach','--name',id,'--label',`workmatchr.d2d=${id}`,'--network','none','--memory','512m','--cpus','1','--tmpfs','/var/lib/postgresql:rw,noexec,nosuid,size=384m','--env','POSTGRES_HOST_AUTH_METHOD=trust',image]);assert.equal(c.code,0);created=true
  for(let n=0;n<60;n++){const r=await run(['exec',id,'pg_isready','-U','postgres']);if(r.code===0)break;await new Promise(r=>setTimeout(r,300))}
  const setup=await run(['exec','-i',id,'psql','-X','-qAt','-v','ON_ERROR_STOP=1','-U','postgres','-d','postgres'],`CREATE ROLE d2d_operator LOGIN CREATEROLE CREATEDB; CREATE ROLE d2d_writer LOGIN; GRANT d2d_writer TO d2d_operator WITH ADMIN TRUE; GRANT pg_read_all_stats TO d2d_operator; CREATE DATABASE d2d_fixture OWNER d2d_operator;`);assert.equal(setup.code,0)
  await sql(`CREATE TABLE ledger(provider_id text PRIMARY KEY, amount integer CHECK(amount>0)); GRANT SELECT,INSERT ON ledger TO d2d_writer;`)
+ await sql('CREATE TABLE session_fixture(id integer PRIMARY KEY, renewals integer NOT NULL); INSERT INTO session_fixture VALUES(1,0); CREATE TABLE scheduler_fixture(id integer PRIMARY KEY, attempts integer NOT NULL); INSERT INTO scheduler_fixture VALUES(1,0); GRANT SELECT,UPDATE ON session_fixture,scheduler_fixture TO d2d_writer;')
+ await sql("INSERT INTO ledger VALUES ('normal_before',1);",'d2d_writer')
+ evidence.checks.normalWriteBeforePause=true
  writer=launch(sqlArgs('d2d_writer'));writer.stderr.resume()
  const q=text=>new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('Writer timeout')),10000);const f=b=>{clearTimeout(timer);writer.stdout.off('data',f);resolve(b.toString().trim())};writer.stdout.on('data',f);writer.stdin.write(text+'\n')})
  await q("BEGIN; INSERT INTO ledger VALUES ('in_flight',10); SELECT 'transaction_started';")
@@ -39,19 +43,48 @@ try {
  const ended=new Promise(r=>writer.on('close',r));writer.stdin.end();await ended;writer=null
  await sql(fenceSql(plan,'verify'))
  evidence.checks.newLoginBlockedExistingTransactionCommittedIdlePoolDetected=true
+ await sql('CREATE ROLE d2d_late LOGIN; GRANT INSERT ON ledger TO d2d_late;')
+ for(const phase of ['verify','open']) assert.notEqual((await run(sqlArgs('d2d_operator'),fenceSql(plan,phase))).code,0)
+ assert.equal(await sql("SELECT rolcanlogin FROM pg_roles WHERE rolname='d2d_writer';"),'f')
+ await sql('REVOKE INSERT ON ledger FROM d2d_late; DROP ROLE d2d_late;')
+ await sql(fenceSql(plan,'verify'))
+ evidence.checks.lateDirectGrantBlocksVerificationAndResume=true
  // Same database credential beneath all adapters: a path/method cannot bypass DB login denial.
- server=http.createServer(async(req,res)=>{
-  const r=await run(sqlArgs('d2d_writer'),"INSERT INTO ledger VALUES ('webhook_payment',25) ON CONFLICT DO NOTHING;")
+ const startAdapter=async()=>{server=http.createServer(async(req,res)=>{
+  const statement=req.url==='/auth'?'UPDATE session_fixture SET renewals=renewals+1 WHERE id=1;':req.url==='/maintenance'?'UPDATE scheduler_fixture SET attempts=attempts+1 WHERE id=1;':"INSERT INTO ledger VALUES ('webhook_payment',25) ON CONFLICT DO NOTHING;"
+  const args=sqlArgs('d2d_writer');if(!databaseAvailable)args.push('-p','1')
+  const r=await run(args,statement)
   res.writeHead(r.code===0?200:503,{'Cache-Control':'no-store','Retry-After':'60'});res.end(r.code===0?'OK':'Unavailable')
- });await new Promise(r=>server.listen(0,'127.0.0.1',r));const url=`http://127.0.0.1:${server.address().port}`
+ });await new Promise(r=>server.listen(0,'127.0.0.1',r));return `http://127.0.0.1:${server.address().port}`}
+ let url=await startAdapter()
  for(const route of ['/api','/server-action','/webhook','/maintenance','/auth','/legacy']) assert.equal((await fetch(url+route,{method:'POST'})).status,503)
  assert.equal((await fetch(url+'/get-with-write')).status,503)
- assert.equal(await sql('SELECT count(*) FROM ledger;'),'1')
+ assert.equal(await sql('SELECT count(*) FROM ledger;'),'2')
+ assert.equal(await sql('SELECT renewals FROM session_fixture;'),'0');assert.equal(await sql('SELECT attempts FROM scheduler_fixture;'),'0')
  evidence.checks.syntheticHttpAdaptersCannotBypassFence=true
+ await new Promise(r=>server.close(r));url=await startAdapter()
+ assert.equal((await fetch(url+'/auth',{method:'POST'})).status,503)
+ await sql(fenceSql(plan,'verify'))
+ evidence.checks.applicationAdapterRestartKeepsDatabaseFence=true
+ databaseAvailable=false
+ assert.equal((await fetch(url+'/webhook',{method:'POST'})).status,503)
+ assert.equal(await sql('SELECT count(*) FROM ledger;'),'2')
+ databaseAvailable=true
+ evidence.checks.databaseConnectionFailureNeverAcknowledgesPayment=true
  await sql(fenceSql(plan,'open'))
  const results=await Promise.all(Array.from({length:6},()=>fetch(url+'/webhook',{method:'POST'})))
- assert.ok(results.every(r=>r.status===200));assert.equal(await sql('SELECT count(*),sum(amount) FROM ledger;'),'2|35')
+ assert.ok(results.every(r=>r.status===200));assert.equal(await sql('SELECT count(*),sum(amount) FROM ledger;'),'3|36')
+ for(const route of ['/auth','/maintenance'])assert.equal((await fetch(url+route,{method:'POST'})).status,200)
+ assert.equal(await sql('SELECT renewals FROM session_fixture;'),'1');assert.equal(await sql('SELECT attempts FROM scheduler_fixture;'),'1')
+ evidence.checks.sessionAndSchedulerFixturesResumeExactlyOnce=true
  evidence.checks.resumeAndSixDuplicateSyntheticWebhooksSingleLedgerEntry=true
+ // A direct grant is a writer too, even without membership in the listed writer role.
+ await sql('CREATE ROLE d2d_direct LOGIN; GRANT INSERT ON ledger TO d2d_direct;')
+ const directClose=await run(sqlArgs('d2d_operator'),fenceSql(plan,'close'))
+ assert.notEqual(directClose.code,0,'Unlisted direct-grant login must block close')
+ assert.equal(await sql("SELECT rolcanlogin FROM pg_roles WHERE rolname='d2d_writer';"),'t')
+ await sql('REVOKE INSERT ON ledger FROM d2d_direct; DROP ROLE d2d_direct;')
+ evidence.checks.unlistedDirectGrantFailsBeforeRoleMutation=true
  // These are fixture semantics; actual finance service has its own regression suite.
  await sql("CREATE ROLE d2d_bypass LOGIN; GRANT d2d_writer TO d2d_bypass;")
  assert.notEqual((await run(sqlArgs('d2d_operator'),fenceSql(plan,'close'))).code,0)
@@ -69,6 +102,7 @@ finally {
  if(server)await new Promise(r=>server.close(r));if(writer){writer.stdin.destroy();writer.kill()}
  if(created){const m=JSON.parse((await run(['inspect',id])).out)[0];assert.equal(m.Config.Labels['workmatchr.d2d'],id);assert.equal((await run(['rm','--force',id])).code,0)}
  const after=await run(['ps','-aq','--no-trunc']);assert.deepEqual(after.out.split('\n').sort(),before.out.split('\n').sort())
- evidence.cleanup={ownContainerAndRolesRemoved:true,existingContainersUnchanged:true};evidence.finishedAt=new Date().toISOString()
- const evidenceDir=path.join(process.env.LOCALAPPDATA,'WorkMatchr','private-evidence','synthetic');fs.mkdirSync(evidenceDir,{recursive:true});fs.writeFileSync(path.join(evidenceDir,id+'.json'),JSON.stringify(evidence,null,2)+'\n',{flag:'wx'});console.log(JSON.stringify({syntheticOnly:true,checks:evidence.checks,cleanup:evidence.cleanup}))
+ const volumesAfter=await run(['volume','ls','-q']);assert.equal(volumesAfter.code,0);assert.deepEqual(volumesAfter.out.split('\n').sort(),volumesBefore.out.split('\n').sort())
+ evidence.cleanup={ownContainerAndRolesRemoved:true,existingContainersUnchanged:true,existingVolumesUnchanged:true};evidence.finishedAt=new Date().toISOString()
+ const evidenceDir=path.join(process.env.LOCALAPPDATA,'WorkMatchr','private-evidence','synthetic');fs.mkdirSync(evidenceDir,{recursive:true});fs.writeFileSync(path.join(evidenceDir,id+'.json'),JSON.stringify(evidence,null,2)+'\n',{flag:'wx'});console.log(JSON.stringify({status:evidence.status,syntheticOnly:true,checks:evidence.checks,cleanup:evidence.cleanup}))
 }

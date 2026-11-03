@@ -15,3 +15,10 @@ for(const [name,change] of [
   ['SQL injection',p=>p.database="fixture_db'; DROP"],['unknown login state',p=>delete p.writers[0].originalLogin],
 ]) test(`refuses ${name}`,()=>{const p=plan();change(p);assert.throws(()=>fenceSql(p,'close'))})
 test('preserves originally closed role on resume',()=>{const p=plan();p.writers[0].originalLogin=false;assert.match(fenceSql(p,'open'),/ALTER ROLE "d2d_writer" NOLOGIN/)})
+test('all phases reject unlisted CONNECT logins, not just writer membership',()=>{
+  for(const phase of ['close','verify','open']) {
+    const sql=fenceSql(plan(),phase)
+    assert.match(sql,/has_database_privilege\(r\.oid,current_database\(\),'CONNECT'\)/)
+    assert.match(sql,/Unaccounted database login/)
+  }
+})

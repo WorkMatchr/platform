@@ -21,6 +21,10 @@ BEGIN
  IF current_database() <> ${literal(plan.database)} OR session_user <> ${literal(plan.operator)} THEN RAISE EXCEPTION 'Fence identity mismatch'; END IF;
  IF EXISTS (SELECT 1 FROM (VALUES ${expected}) AS expected(name, login) LEFT JOIN pg_roles r ON r.rolname=expected.name WHERE r.oid IS NULL OR r.rolcanlogin<>expected.login) THEN RAISE EXCEPTION 'Unexpected role state'; END IF;
  IF EXISTS (SELECT 1 FROM pg_roles r WHERE r.rolcanlogin AND r.rolname NOT IN (${names},${literal(plan.operator)},'postgres','cloud_admin','neon_service') AND EXISTS (SELECT 1 FROM pg_roles w WHERE w.rolname IN (${names}) AND pg_has_role(r.oid,w.oid,'MEMBER'))) THEN RAISE EXCEPTION 'Unfenced membership bypass'; END IF;
+ -- Direct object grants, SECURITY DEFINER functions and PUBLIC grants need not
+ -- involve membership in a listed writer role. Refuse every unaccounted login
+ -- that can connect; do not guess whether its current privileges are read-only.
+ IF EXISTS (SELECT 1 FROM pg_roles r WHERE r.rolcanlogin AND r.rolname NOT IN (${names},${literal(plan.operator)},'postgres','cloud_admin','neon_service') AND has_database_privilege(r.oid,current_database(),'CONNECT')) THEN RAISE EXCEPTION 'Unaccounted database login'; END IF;
 END $fence$;`
   if (phase === 'verify') return `BEGIN READ ONLY; SET LOCAL statement_timeout='5s';\n${check}
 DO $fence$ BEGIN
