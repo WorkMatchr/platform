@@ -1,5 +1,81 @@
 # Platformbeheer v0.2 — vergelijking
 
+## Actuele navigatieaanpassing — 4 november 2026
+
+Basis: main `a315db8`; afzonderlijke branch `codex/admin-academy-navigation`.
+De overige paragrafen in dit document zijn historisch. Actuele main kiest v0.2
+standaard; alleen een bestaande expliciete `v01`-voorkeur kiest de oude shell.
+Deze selectie en de historische componenten/versieroutes blijven ongewijzigd.
+
+- Alleen de bovenbalklink **Vergelijk met v0.1** is verwijderd. Account en de
+  bestaande gedeelde LogoutButton blijven behouden, zonder extra uitlogactie.
+- **Academy / E-learning** is een zelfstandig, met het toetsenbord inklapbaar
+  navigatieonderdeel via de bestaande `sidebarExtra`-voorziening. Geen tweede
+  beheersysteem, nieuwe pagina of databasequery.
+- De bestaande platformoperatorregel toont dit onderdeel alleen aan platform-
+  OWNER/ADMIN. MEMBER houdt uitsluitend de bestaande auditnavigatie. De serverlayout
+  blijft de actieve gebruiker, platformorganisatie en membership controleren.
+- De zes onderdelen zijn zichtbaar als **Nog niet beschikbaar**, zonder href,
+  button of formulier. Ook een gewijzigde omgevingsvariabele opent hier geen
+  ontbrekende beheerroutes. LEARNING_RUNTIME_ENABLED wordt niet geactiveerd.
+
+### Daadwerkelijke route- en vrijgavegrenzen
+
+| Onderdeel | Actuele main | Aangetroffen in lopende LMS-kandidaat |
+| --- | --- | --- |
+| Cursussen | Geen beheerroute | `/platformbeheer/academy/cursussen` en `/{versionId}` |
+| Hoofdstukken en lessen | Geen beheerroute | Onderdeel van de cursusversie-editor, geen zelfstandig overzicht |
+| Vragenbanken | Geen beheerroute | `/platformbeheer/academy/vragen` |
+| Eindtoetsen | Geen beheerroute | Eindtoetsinhoud binnen cursusversie; deelnemersroute is geen beheerroute |
+| Deelnemers en resultaten | Geen passend beheeroverzicht | Geen zelfstandige deelnemers/resultatenroute aangetoond; `beoordelingen` betreft beoordelingsverzoeken |
+| Certificaten | Geen beheerroute | `/platformbeheer/academy/certificaten` en `/{certificateId}` |
+
+Read-only bekeken kandidaat: `7434ae2` in de bestaande Academy-ontwikkelbranch.
+Geen code of route uit die branch overgenomen. De kandidaat gebruikt de bestaande
+Learning-gate en `requireAuthor` → `getPlatformOperatorContext`; de featuregate
+verleent op zichzelf geen rechten. Main bevat wel `/e-learnings/...` en de
+certificaatroute, maar dat zijn geen vervangende beheerbestemmingen.
+
+De laatst vastgelegde productiebasis in het database-upgrade-runbook bevat 85
+migraties tegenover 95 in deze main. Dit is bestaand bewijs, geen nieuwe live
+productiecontrole. Learning vertical slice, final exam, certificates, retention,
+retention-publication-policy, annual-reminder-reconsent en de examenvraag-
+immutabilitycorrectie staan in de ontbrekende bundel. Daardoor is alleen een
+navigatielink toevoegen geen veilige Academy-vrijgave. Geen migratie uitgevoerd.
+
+Bij latere integratie: de LMS-kandidaat bevat al een hoofdstuk **Academy**.
+Vervang deze tijdelijke beschikbaarheidsweergave en dat kandidaatmenu in één
+review door één rol- en beschikbaarheidsbewuste navigatie; voeg ze niet beide toe.
+Koppel pas na bewezen route-, autorisatie-, schema- en runtimevrijgave. Geen
+algemene gate, autorisatie of databasecontrole wordt in deze presentatie-PR aangepast.
+
+### Validatie
+
+- 41 gerichte tests in zeven suites PASS: beheerheader, OWNER/ADMIN/MEMBER,
+  ontbreken van onveilige Academy-links, actuele route, versievoorkeur,
+  serverautorisatie, gedeelde klant-shell en gesloten Learning-gate.
+- De bestaande volledige shell-snapshot is uitsluitend aangepast voor de
+  verwijderde vergelijkingslink en het nieuwe Academy-beschikbaarheidsblok.
+- Eerste testrun: verwachte snapshotafwijking en nog niet gegenereerde lokale
+  Prisma-client. Na lokale clientgeneratie en review van de snapshot: PASS.
+- Volledige lint PASS (bestaande vier no-location-assign-waarschuwingen in authcode);
+  standalone TypeScript PASS; productiebuild PASS (172 paginas; drie bestaande
+  Knowledge filesystem-tracing-waarschuwingen). Geen nieuwe fout.
+- Browser: echte shellmarkup met productie-CSS, uitsluitend synthetische data,
+  OWNER/ADMIN/MEMBER. Desktop 1440 en mobiel 390/320 pixels zonder horizontale
+  overflow. Academy met Enter dicht en Spatie open; zichtbare focusrand.
+  Account en precies een uitlogknop behouden. MEMBER toont alleen Audit.
+- De browserpreview is statisch en bewijst presentatie en native details-bediening,
+  niet een nieuwe ingelogde sessie of daadwerkelijke logout. Serverautorisatie,
+  versievoorkeur en rollen zijn door de gerichte regressies gecontroleerd.
+- Echte 200%-browserzoom: handmatige acceptatie gevraagd, nog OPEN.
+- Diff-check, beperkte secrets-/metadatareview en controle tegen actuele main PASS.
+  Geen lokale fixtures, credentials of gegenereerde buildbestanden in de PR.
+
+Geen productieaccount, sessie, database of LMS-branch gewijzigd; geen merge,
+productiedeployment, migratie of featuregate-activering.
+
+
 Basis: origin/main f297831. Presentatie en generieke landingskeuze; geen business-, database- of auditwijzigingen.
 
 ## Bereikbaarheid
