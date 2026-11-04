@@ -103,6 +103,7 @@ export class JorttApiGateway implements JorttGateway {
   }
 
   async submitInvoice(payload: JorttInvoicePayload, _idempotencyKey: string) {
+    assertJorttAccountingContext(payload)
     void _idempotencyKey
     if (payload.documentType === 'INVOICE') {
       const lineExclVat = payload.lines.reduce((total, line) => total + line.netAmountExclVatCents, 0)
@@ -142,6 +143,7 @@ export class JorttApiGateway implements JorttGateway {
       await this.request(`/invoices/${remoteId}`, accessToken, { method: 'PUT', body: JSON.stringify({ reference: payload.invoiceNumber, remarks: `WorkMatchr creditnota ${payload.invoiceNumber}; ${payload.technicalReference}` }) })
       await this.sendSelf(remoteId, accessToken)
     } else {
+      assertJorttAccountingContext(payload)
       const customerReference = `workmatchr-org:${payload.organizationId}`
       let customer = await this.findExact('customers', customerReference, accessToken)
       if (!customer) {
@@ -163,4 +165,11 @@ export class JorttApiGateway implements JorttGateway {
 
 export function createJorttGateway(): JorttGateway {
   return new JorttApiGateway()
+}
+
+
+// Keep the same fail-closed guard at both provider boundaries; do not rely on
+// TypeScript control-flow narrowing as runtime protection.
+function assertJorttAccountingContext(payload: JorttInvoicePayload): void {
+  if (!payload.organizationId || payload.pricingMode === 'ACADEMY_SANDBOX') throw new Error('JORTT_ACADEMY_FISCAL_REVIEW_REQUIRED')
 }

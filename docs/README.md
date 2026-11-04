@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [LMS 2.0 — geïntegreerde releasekandidaat en acceptatie](lms-20-platform-release.md)
+
 - [Productiedatabase: schrijfpauze, herstel en migratieacceptatie](database-upgrade-preparation.md)
 
 - [Gecombineerde eindacceptatie en gesloten besluitregister](combined-final-acceptance.md)

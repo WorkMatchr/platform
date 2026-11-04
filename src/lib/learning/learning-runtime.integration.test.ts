@@ -27,6 +27,8 @@ describe.skipIf(!databaseUrl)('Learning-runtime op geïsoleerde database', () =>
     const outsider = randomUUID()
     for (const id of [owner, outsider]) await prisma!.user.create({ data: { id, email: `${id}@example.invalid`, displayName: 'Learning test', status: 'ACTIVE' } })
     state.userId = owner
+    const courseVersion = await prisma!.learningCourseVersion.findFirstOrThrow({ where: { version: 'prototype-0.17', course: { code: 'WL-001' } } })
+    await prisma!.learningEnrollment.create({ data: { userId: owner, courseVersionId: courseVersion.id } })
     const form = new FormData()
     form.set('courseSlug', 'rie-in-de-praktijk')
     form.set('chapterSlug', slug)

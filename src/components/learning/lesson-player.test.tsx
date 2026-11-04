@@ -50,6 +50,12 @@ describe('Learning-contentrenderer', () => {
     mocks.complete.mockReset().mockResolvedValue({ ok: true })
   })
 
+  it('uses the configured chapter count for a generic course', () => {
+    const html = renderToStaticMarkup(createElement(LessonPlayer, { ...playerProps, chapterPosition: 1, chapterCount: 1, chapterNavigation: [{id:'one',slug:'one',title:'Enige hoofdstuk',position:1,progressStatus:null}] }))
+    expect(html).toContain('Enige hoofdstuk')
+    expect(html).not.toContain('Nog niet beschikbaar')
+  })
+
   it.each([{ correctQuestionIds: [] }, { correctQuestionIds: ['q-1'] }])('actualiseert het eindresultaat na retries zonder refresh of dubbeltelling (%j)', async ({ correctQuestionIds }) => {
     mocks.submit
       .mockResolvedValueOnce({ ok: true, correct: false, feedback: 'Probeer opnieuw.' })

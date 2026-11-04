@@ -47,3 +47,19 @@ export function mirrorCreditNoteSnapshot(original: Source) {
   })
   return { lines, vatSummaries }
 }
+
+/** Sandbox-only, one original VAT group. Approved amounts, never current price/tax configuration. */
+export function legalPartialCreditNoteSnapshot(original: Source, approved: { amountInclVatCents: number; amountExclVatCents: number; vatAmountCents: number }) {
+  mirrorCreditNoteSnapshot(original)
+  if (original.pricingMode !== 'ACADEMY_SANDBOX' || original.vatSummaries.length !== 1
+    || original.vatSummaries[0].vatRateBps !== original.vatRateBps
+    || ![approved.amountInclVatCents, approved.amountExclVatCents, approved.vatAmountCents].every(n => Number.isSafeInteger(n) && n >= 0)
+    || approved.amountInclVatCents <= 0 || approved.amountInclVatCents > original.amountInclVatCents
+    || approved.amountExclVatCents > original.amountExclVatCents || approved.vatAmountCents > original.vatAmountCents
+    || approved.amountInclVatCents !== approved.amountExclVatCents + approved.vatAmountCents) throw new Error('ACADEMY_LEGAL_CREDIT_ALLOCATION_REQUIRED')
+  return { lines: [{ position: 1, description: `Wettelijke deelcorrectie ${original.invoiceNumber} (TAX REVIEW REQUIRED)`, quantity: 1, unit: 'correctie',
+    unitPriceExclVatCents: -approved.amountExclVatCents, grossAmountExclVatCents: -approved.amountExclVatCents, discountAmountCents: 0,
+    netAmountExclVatCents: -approved.amountExclVatCents, vatRateBps: original.vatRateBps, vatAmountCents: -approved.vatAmountCents,
+    amountInclVatCents: -approved.amountInclVatCents, servicePeriodStart: original.servicePeriodStart, servicePeriodEnd: original.servicePeriodEnd }],
+    vatSummaries: [{ vatRateBps: original.vatRateBps, taxableAmountExclVatCents: -approved.amountExclVatCents, vatAmountCents: -approved.vatAmountCents, amountInclVatCents: -approved.amountInclVatCents }] }
+}

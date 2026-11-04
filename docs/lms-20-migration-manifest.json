@@ -1,0 +1,92 @@
+{
+  "base_count": 95,
+  "candidate_count": 109,
+  "historical_main_migrations_modified": false,
+  "additions": [
+    {
+      "migration": "20261024190000_restore_exam_question_immutability",
+      "origin": "academy-latest",
+      "sha256_git_lf": "48bbc99a444c95e52c7aadf12296ddfc9686b7680b3cecd17330e15b91464f45",
+      "sha256_tested_windows_bytes": "5b5e77906d988ac05d51fcbf3e32b46876ee8d73d19d4055c59a9ddb4079079a"
+    },
+    {
+      "migration": "20261024191000_add_academy_course_isolation",
+      "origin": "academy-latest",
+      "sha256_git_lf": "8bc7f9c9f71b9fd9113da405906fa308f0883c68098c8fdaa45bb016d7e2b823",
+      "sha256_tested_windows_bytes": "453246f26803fdc843d24577328bb17aeb11671acb1cba49a4fc3193e049e9c6"
+    },
+    {
+      "migration": "20261024204000_allow_academy_certificate_numbers",
+      "origin": "academy-latest",
+      "sha256_git_lf": "7872dcad266fe1ae77eb8840b1d304f1403cfd3bbf9b541434e461fe816324e9",
+      "sha256_tested_windows_bytes": "0d49a7e052f5a58c8b08d589cffcf202c822fb4850d1eb78f958e838fbbad7fa"
+    },
+    {
+      "migration": "20261026100000_add_academy_commerce",
+      "origin": "academy-latest",
+      "sha256_git_lf": "a7ef0beedf543081ac4f3b914fea2f46db90210e87e495ed5004dad2144d7531",
+      "sha256_tested_windows_bytes": "79e291bf88e4d52e4191c35c1c1fed4f45547332da0253637da6e6fcd3f8e11a"
+    },
+    {
+      "migration": "20261026110000_allow_academy_sandbox_pricing",
+      "origin": "academy-latest",
+      "sha256_git_lf": "cb5a6daa7d44cde32b7da2a085caa7ccf58c25721fc978982796e7ef1da52c44",
+      "sha256_tested_windows_bytes": "27332bbdcf0255266fd794f0672afb4002b51bebbcb0c761a250062ac1b3ff4e"
+    },
+    {
+      "migration": "20261029100000_add_academy_pricing_promotions",
+      "origin": "academy-latest",
+      "sha256_git_lf": "34de3ea7fbbc5e8af26b234b3f624e7ce142921d8d2931d36354fd17d9630ec4",
+      "sha256_tested_windows_bytes": "feadd2dc9fca1ed899b8511106e4bb244e38151b45bb8ddcacc82588bda4bdcd"
+    },
+    {
+      "migration": "20261029210000_restore_integrated_learning_question_policy",
+      "origin": "academy-latest",
+      "sha256_git_lf": "ec7e13fe7267b52e0c949e8ac77dbf15e57bca9b00fea95393875e152cb85eea",
+      "sha256_tested_windows_bytes": "45c7d859478b63b3b3c9a6f0352e93f7783e901e18721304cd4f5d8e18b46abf"
+    },
+    {
+      "migration": "20261030120000_academy_legal_commercial_decisions",
+      "origin": "academy-latest",
+      "sha256_git_lf": "15b4e6f6accfa9462da1d1273208cd7b045b676ffe7ba0ba3835fb438fcc1ef5",
+      "sha256_tested_windows_bytes": "96cae51a8254d76b208783d6bfe6917c5e12a2b502525cd8eb507875c863b876"
+    },
+    {
+      "migration": "20261030140000_academy_seat_transfer_consideration",
+      "origin": "academy-latest",
+      "sha256_git_lf": "04349c7d5d37d6710960b39200fc23d51e7d06bcb5c70c28a64fcea7ba467f1a",
+      "sha256_tested_windows_bytes": "bf4550c4ed66efdd01b189799705f8249cd35b9e8c117eccb0d6c6e074adc60c"
+    },
+    {
+      "migration": "20261030160000_academy_legal_partial_refunds",
+      "origin": "academy-latest",
+      "sha256_git_lf": "64d57be7a2832f9d4b0fb69ddb6ba8906c87b46879d5e5e374c0113812957da5",
+      "sha256_tested_windows_bytes": "924dec6109968f39803b09dee35d5de307aa0f802bae3db2be7820cfd7677f34"
+    },
+    {
+      "migration": "20261030170000_academy_legal_credit_note_validation",
+      "origin": "academy-latest",
+      "sha256_git_lf": "551ae9db19dcf5a0ff0ec37c00d15be85c8c6eecb6fc1f35be8020c16e046381",
+      "sha256_tested_windows_bytes": "784ad1b1bc7f92afcc2f117ded65319a32983111fea4186627355459c4333cfa"
+    },
+    {
+      "migration": "20261030180000_academy_refund_seat_allocations",
+      "origin": "academy-latest",
+      "sha256_git_lf": "684923cdfb2cb61389a2181773ab37bcf8548419cdc638029b4a40dd719c9423",
+      "sha256_tested_windows_bytes": "a75e64e27976958f8282e4e495c27613e9e03406d9b3823d2605ad02d830b90f"
+    },
+    {
+      "migration": "20261104180000_add_learning_authoring_media",
+      "origin": "new-lms20",
+      "sha256_git_lf": "ba9580260e5f5dd1a0c9ad9bbe2a1ba98881a63d10e3924a7ede5a6e1f8b2052",
+      "sha256_tested_windows_bytes": "ba9580260e5f5dd1a0c9ad9bbe2a1ba98881a63d10e3924a7ede5a6e1f8b2052"
+    },
+    {
+      "migration": "20261104190000_allow_operator_certificate_review",
+      "origin": "new-lms20",
+      "sha256_git_lf": "5d61c81845856498fd3201e0dadab347736e786dbc9fb7a9c839ba836f9a10ea",
+      "sha256_tested_windows_bytes": "4565280a18793c9465875ff832c3b809462a382e49f34e70e36d9d8df7f08eee"
+    }
+  ],
+  "checksum_strategy": "SHA-256 of Git LF bytes and separately actual Windows bytes used in the isolated PostgreSQL tests; line endings are explicit, no historical main SQL was rewritten."
+}

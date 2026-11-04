@@ -1,6 +1,8 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
+import { safeLearningMedia } from '@/lib/learning/learning-media-policy'
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -185,15 +187,17 @@ export function LessonContent({ block, index, onAnswered, readOnly = false }: { 
   if (block.type === 'CALLOUT') return <aside className="rounded-card border border-brand-primary/25 bg-brand-primary-subtle p-5 sm:p-7" aria-label={text(data, 'label') || 'Toelichting'}><p className="mb-2 text-xs font-bold tracking-wider text-brand-primary">{text(data, 'label')}</p>{text(data, 'title') && <h2 className="mb-2 text-xl font-bold text-brand-dark">{text(data, 'title')}</h2>}{text(data, 'body') && <p className="leading-7">{text(data, 'body')}</p>}{strings(data.items).length > 0 && <ul className="mt-3 list-disc space-y-2 pl-5">{strings(data.items).map((item) => <li key={item}>{item}</li>)}</ul>}</aside>
   if (block.type === 'PROCESS') return <div className="space-y-7"><section className="space-y-4"><h2 className="text-2xl font-bold text-brand-dark">{text(data, 'title') || 'De stappen'}</h2><ol className="space-y-3">{strings(data.steps).map((step, position) => <li key={`${position}-${step}`} className="flex items-start gap-3 rounded-control border border-border bg-surface-subtle p-3"><span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-dark font-bold text-text-on-dark">{position + 1}</span><span className="pt-1 leading-6">{step}</span></li>)}</ol>{text(data, 'footer') && <p className="leading-7 text-text-secondary">{text(data, 'footer')}</p>}</section>{block.question && <QuestionInteraction block={block} onAnswered={onAnswered} readOnly={readOnly} />}</div>
   if (block.type === 'SUMMARY') return <section className="space-y-4"><h2 className="text-2xl font-bold text-brand-dark">{text(data, 'title') || 'Samenvatting'}</h2><ul className="space-y-3">{strings(data.items).map((item) => <li key={item} className="flex items-start gap-3"><span aria-hidden="true" className="mt-2 size-2 shrink-0 rounded-full bg-brand-primary" /><span className="leading-7">{item}</span></li>)}</ul></section>
+  if (block.type === 'VIDEO' && safeLearningMedia(data.src)) return <figure><video controls preload="none" className="aspect-video w-full" aria-label={text(data,'alt')}><source src={safeLearningMedia(data.src)!}/><track kind="captions" src={safeLearningMedia(data.captions) ?? undefined} srcLang="nl" label="Nederlands" default /></video><figcaption>{text(data,'alt')}</figcaption><details><summary>Transcript lezen</summary><p className="whitespace-pre-wrap">{text(data,'transcript')}</p></details></figure>
+  if (block.type === 'IMAGE' && safeLearningMedia(data.src)) return <figure><Image src={safeLearningMedia(data.src)!} alt={text(data,'alt')} width={1200} height={800} className="h-auto w-full" unoptimized/><figcaption>{text(data,'alt')}</figcaption></figure>
   if (block.type === 'IMAGE') return <figure className="rounded-card border border-border bg-surface-subtle p-6"><p className="text-sm text-text-secondary">{text(data, 'alt') || 'Illustratie volgt na contentreview.'}</p></figure>
   return <p role="status" className="rounded-control border border-border bg-surface-subtle p-4">Dit contentonderdeel kan niet worden weergegeven.</p>
 }
 
 export function LessonPlayer({
-  courseTitle,
+  courseTitle, prototypeContent = true,
   chapterId,
   chapterTitle,
-  chapterPosition,
+  chapterPosition, chapterCount = 10,
   courseSlug,
   courseVersion,
   chapterNavigation,
@@ -206,9 +210,11 @@ export function LessonPlayer({
   questionStats,
   readOnly = false,
 }: {
+  prototypeContent?: boolean
   courseTitle: string
   chapterId: string
   chapterTitle: string
+  chapterCount?: number
   chapterPosition: number
   courseSlug: string
   courseVersion: string
@@ -240,7 +246,7 @@ export function LessonPlayer({
     }
   }, [index, chapterCompleted])
   const chaptersByPosition = new Map(chapterNavigation.map((chapter) => [chapter.position, chapter]))
-  const navigationItems = Array.from({ length: 10 }, (_, index) => {
+  const navigationItems = Array.from({ length: chapterCount }, (_, index) => {
     const position = index + 1
     const chapter = chaptersByPosition.get(position)
     return chapter
@@ -292,7 +298,7 @@ export function LessonPlayer({
           <p className="mt-1">{correctQuestionIds.size} van {questionStats.total} onderwerpen laatst correct beantwoord</p>
         </div>
         <div className="flex flex-wrap gap-3"><Link href={`/e-learnings/${courseSlug}`} className="inline-flex min-h-11 items-center rounded-control bg-brand-primary px-5 font-semibold text-text-on-dark">Terug naar de cursus</Link><Link href="/e-learnings/mijn" className="inline-flex min-h-11 items-center rounded-control border border-border px-5 font-semibold text-brand-dark">Mijn e-learnings</Link></div>
-        <p className="rounded-control border border-border bg-surface-subtle p-4 text-sm text-text-secondary">Andere hoofdstukken zijn nog in ontwikkeling. Deze prototypecursus is geen certificering of bewijs van een professionele kwalificatie.</p>
+        {prototypeContent && <p className="rounded-control border border-border bg-surface-subtle p-4 text-sm text-text-secondary">Andere hoofdstukken zijn nog in ontwikkeling. Deze prototypecursus is geen certificering of bewijs van een professionele kwalificatie.</p>}
       </Card>
     )
   }
@@ -305,7 +311,7 @@ export function LessonPlayer({
         <nav aria-label="Hoofdstuknavigatie" className="hidden rounded-card border border-border bg-surface p-4 lg:block"><p className="mb-3 text-xs font-bold uppercase tracking-wide text-text-secondary">Deze cursus</p><ol className="space-y-3 text-sm">{navigationItems}</ol></nav>
       </aside>
       <main ref={lessonRef} className="min-w-0">
-        <div className="mb-6 space-y-2"><div className="flex items-center justify-between gap-3 text-sm"><span>Hoofdstuk {chapterPosition} van 10</span><span>{estimatedDurationLabel}</span></div><div className="h-2 overflow-hidden rounded-full bg-brand-primary-subtle" role="progressbar" aria-label="Hoofdstukvoortgang" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><div className="h-full bg-brand-primary transition-[width]" style={{ width: `${progress}%` }} /></div><p className="text-sm text-text-secondary">{progress}% van dit hoofdstuk doorlopen</p></div>
+        <div className="mb-6 space-y-2"><div className="flex items-center justify-between gap-3 text-sm"><span>Hoofdstuk {chapterPosition} van {chapterCount}</span><span>{estimatedDurationLabel}</span></div><div className="h-2 overflow-hidden rounded-full bg-brand-primary-subtle" role="progressbar" aria-label="Hoofdstukvoortgang" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><div className="h-full bg-brand-primary transition-[width]" style={{ width: `${progress}%` }} /></div><p className="text-sm text-text-secondary">{progress}% van dit hoofdstuk doorlopen</p></div>
         {current ? <Card className="mx-auto max-w-3xl space-y-7" key={current.id}><LessonContent block={current} index={index} readOnly={readOnly} onAnswered={({ correct }) => {
           setCorrectQuestionIds((previous) => {
             const updated = new Set(previous)

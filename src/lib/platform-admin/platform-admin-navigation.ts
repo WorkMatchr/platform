@@ -47,6 +47,12 @@ const operatorNavigationGroups = [
     ],
   },
   {
+    key: 'academy',
+    label: 'Academy',
+    tone: 'insight',
+    items: [{ href: '/platformbeheer/academy/cursussen', label: 'Cursussen' }, { href: '/platformbeheer/academy/vragen', label: 'Vragen & antwoorden' }, { href: '/platformbeheer/academy/certificaten', label: 'Certificaten' }, { href: '/platformbeheer/academy/beoordelingen', label: 'Beoordelingsverzoeken' }, { href: '/platformbeheer/academy/prijzen', label: 'Prijzen & kortingen' }],
+  },
+  {
     key: 'trading',
     label: 'Trading',
     tone: 'system',
@@ -86,6 +92,7 @@ export const platformAdminNavigation = [
   ...operatorNavigationGroups[3].items,
   ...operatorNavigationGroups[4].items,
   ...operatorNavigationGroups[5].items,
+  ...operatorNavigationGroups[6].items,
 ] as const
 
 export type PlatformAdminRoute = (typeof platformAdminNavigation)[number]['href']

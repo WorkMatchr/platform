@@ -31,7 +31,7 @@ export default async function PlatformFinancialRefundsPage({ searchParams }: { s
       {data.items.length === 0 ? <EmptyState>Geen terugbetalingen gevonden met deze filters.</EmptyState> : <AdminTable headers={['Datum', 'Organisatie', 'Status', 'Bedrag', 'Oorspronkelijke betaling', 'Mollie refund-id', 'Oorspronkelijke factuur', 'Creditnota']}>
         {data.items.map((refund) => <tr key={refund.id}>
           <td className="whitespace-nowrap px-4 py-3">{formatPlatformDate(refund.completedAt ?? refund.requestedAt)}</td>
-          <td className="px-4 py-3 font-medium text-brand-dark">{refund.purchase.organization.name}</td>
+          <td className="px-4 py-3 font-medium text-brand-dark">{(refund.purchase.organization?.name ?? refund.purchase.billingOrganizationName)}</td>
           <td className="px-4 py-3"><StatusPill tone={financialStatusTone(refund.purchase.status === 'REFUND_REVIEW_REQUIRED' ? refund.purchase.status : refund.status)}>{refund.purchase.status === 'REFUND_REVIEW_REQUIRED' ? financialPurchaseStatusLabels.REFUND_REVIEW_REQUIRED : financialPaymentStatusLabels[refund.status]}</StatusPill></td>
           <td className="whitespace-nowrap px-4 py-3">{formatEuro(refund.amountCents)}</td>
           <td className="px-4 py-3 font-mono text-xs">{refund.purchase.molliePaymentId ?? '—'}</td>

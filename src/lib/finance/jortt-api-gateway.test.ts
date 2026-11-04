@@ -23,6 +23,12 @@ function payload(overrides: Partial<JorttInvoicePayload> = {}): JorttInvoicePayl
 }
 
 describe('Jortt API gateway', () => {
+  it.each([{ pricingMode: 'ACADEMY_SANDBOX' as const }, { organizationId: null }])('weigert Academy/persoonlijke context vóór iedere providercall', async overrides => {
+    const fetcher = vi.fn()
+    await expect(new JorttApiGateway(fetcher as typeof fetch).submitInvoice(payload(overrides), 'academy-refused')).rejects.toThrow('JORTT_ACADEMY_FISCAL_REVIEW_REQUIRED')
+    expect(fetcher).not.toHaveBeenCalled()
+  })
+
   it.each(['AUTH', 'INVOICE_LOOKUP', 'CUSTOMER_LOOKUP', 'CUSTOMER_CREATE', 'INVOICE_CREATE', 'INVOICE_FINALIZE', 'INVOICE_READ'])('behoudt de echte gatewayfase %s bij afwijzing en stopt zonder vervolgaanroep', async (failedStage) => {
     const stages: string[] = []
     const fetcher = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {

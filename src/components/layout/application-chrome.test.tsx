@@ -7,6 +7,7 @@ vi.mock('next/navigation', () => ({
   usePathname: () => mocks.pathname,
 }))
 
+import { AuthShell } from '@/components/auth/auth-shell'
 import { ApplicationChrome, usesAuthenticatedWorkspace } from './application-chrome'
 import type { HeaderViewModel } from './header-model'
 
@@ -52,6 +53,21 @@ describe('routebewuste applicatiechrome', () => {
       expect(renderChrome()).toMatch(/<main[^>]+class="flex-1"/)
     }
   })
+  it.each(['/inloggen', '/registreren'])('behoudt één hoofdlandmark rond het authenticatieformulier op %s', (route) => {
+    mocks.pathname = route
+    const html = renderToStaticMarkup(
+      <ApplicationChrome header={null} banner={null} compactFooter={null} footer={null} headerModel={anonymousModel}>
+        <AuthShell title="Account" intro="Uw accountgegevens">
+          <form aria-label="Accountformulier"><label htmlFor="email">E-mailadres</label><input id="email" type="email" /></form>
+        </AuthShell>
+      </ApplicationChrome>,
+    )
+    expect(html.match(/<main\b/g)).toHaveLength(1)
+    expect(html).toContain('id="main-content"')
+    expect(html).toContain('aria-label="Accountformulier"')
+    expect(html).toContain('E-mailadres')
+  })
+
   it('verbergt publieke chrome op alle platformbeheerroutes', () => {
     mocks.pathname = '/platformbeheer/gebruikers'
     const html = renderChrome()

@@ -24,6 +24,7 @@ export const financialPaymentStatusLabels: Record<FinancialPaymentStatus, string
 }
 
 export const financialPurchaseKindLabels: Record<FinancialPurchaseKind, string> = {
+  ACADEMY_COURSE: 'Academy-opleiding',
   CREDIT_PACKAGE: 'Credits',
   PRO_SUBSCRIPTION: 'WorkMatchr Pro',
 }

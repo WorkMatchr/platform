@@ -35,10 +35,16 @@ const retention = '20260930100000_add_learning_retention'
 const finalExam = '20260927210000_add_learning_final_exam'
 const migrationRoot = path.resolve('prisma/migrations')
 const names = readdirSync(migrationRoot).filter((name) => /^\d/.test(name)).sort()
-assert.equal(names.at(-1), '20261103100000_add_closed_contact_decision_register', 'Review this staged regression when adding later migrations')
+assert.ok(names.includes(correction), 'The forward-only publication correction is required')
 const manifest = JSON.parse(readFileSync('docs/evidence/wp14/migration-checksums.json', 'utf8')) as {
   migrations: { name: string; lfSha256: string; productionChecksum: string | null }[]
 }
+// Reproduce the original main regression against its own historical chain.
+// Academy has an earlier repair and later commerce migrations: including those
+// in this staged reproduction would change the defect being tested. Fresh mode
+// below still deploys and verifies the complete current migration chain.
+const historicalNames = [...manifest.migrations.map((entry) => entry.name), correction].sort()
+assert.ok(historicalNames.every((name) => names.includes(name)))
 const productionNames = manifest.migrations.filter((entry) => entry.productionChecksum).map((entry) => entry.name)
 assert.equal(productionNames.length, 85)
 const hash = (bytes: string | Buffer) => createHash('sha256').update(bytes).digest('hex')
@@ -232,6 +238,7 @@ async function integrityChecks(db: Client, exams: Exam[]) {
 }
 
 async function runDatabase(admin: Client, mode: 'upgrade' | 'fresh') {
+  const appliedNames = mode === 'upgrade' ? historicalNames : names
   const database = `workmatchr_db02_${mode}_${suffix}`
   const target = new URL(source)
   target.pathname = `/${database}`
@@ -261,7 +268,7 @@ async function runDatabase(admin: Client, mode: 'upgrade' | 'fresh') {
       productionNames.forEach(copy)
       deploy()
       assert.equal((await db.query('SELECT count(*)::int AS n FROM _prisma_migrations')).rows[0].n, 85)
-      for (const name of names.filter((n) => !productionNames.includes(n))) {
+      for (const name of appliedNames.filter((n) => !productionNames.includes(n))) {
         let dataBefore: Record<string, string> | undefined
         let identityBefore: Awaited<ReturnType<typeof functionIdentity>>
         if (name === correction) {
@@ -293,13 +300,13 @@ async function runDatabase(admin: Client, mode: 'upgrade' | 'fresh') {
         }
       }
     } else {
-      names.forEach(copy)
+      appliedNames.forEach(copy)
       deploy()
       exams = [await newExam(db, 'PUBLISHED'), await newExam(db, 'RETIRED')]
     }
     await integrityChecks(db, exams)
     const rows = (await db.query('SELECT id,migration_name,checksum,finished_at,rolled_back_at FROM _prisma_migrations ORDER BY migration_name')).rows
-    assert.deepEqual(rows.map((r) => r.migration_name), names)
+    assert.deepEqual(rows.map((r) => r.migration_name), appliedNames)
     for (const row of rows) {
       assert.ok(row.finished_at && !row.rolled_back_at)
       assert.equal(row.checksum, hash(readFileSync(path.join(migrationRoot, row.migration_name, 'migration.sql'))))
@@ -312,12 +319,12 @@ async function runDatabase(admin: Client, mode: 'upgrade' | 'fresh') {
         env: { ...process.env, DATABASE_URL: '', WP17_ACCEPTANCE_DATABASE_URL: target.toString() }, encoding: 'utf8', timeout: 30000,
       })
       assert.equal(acceptance.status, 0, 'WP17 read-only acceptance preflight failed')
-      console.log('WP17 ACCEPTANCE PREFLIGHT PASS: actual isolated 95-migration database; closed gates/no external credentials')
+      console.log('WP17 ACCEPTANCE PREFLIGHT PASS: actual isolated migration database; closed gates/no external credentials')
       await configureSyntheticRoles(db, runtime, diagnostic)
       await assertSyntheticRoles(db, runtime, diagnostic)
       await restoreSyntheticDatabase(admin, db, database, exams)
     }
-    console.log(`PASS: ${mode}; ${names.length}/${names.length} migrations, checksums/repeat, least privilege, exam history and retention protection`)
+    console.log(`PASS: ${mode}; ${appliedNames.length}/${appliedNames.length} migrations, checksums/repeat, least privilege, exam history and retention protection`)
   } finally {
     await db.end()
     if (created) await admin.query(`DROP DATABASE "${database}" WITH (FORCE)`)

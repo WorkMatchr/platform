@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
+import { requestAcademyRefund } from '@/lib/learning/academy-commerce-refund'
 import { refundWorkmatchrError } from '@/lib/finance/refund-service'
 import { createJorttGateway } from '@/lib/finance/jortt-api-gateway'
 import { syncFinancialInvoiceToJortt } from '@/lib/finance/jortt-sync-service'
@@ -65,4 +66,17 @@ export async function retryPlatformJorttSyncAction(formData: FormData) {
   revalidatePath('/platformbeheer/financien')
   revalidatePath(returnTo)
   redirect(`${returnTo}?resultaat=jortt-gesynchroniseerd`)
+}
+
+
+export async function startPlatformAcademyRefundAction(formData: FormData) {
+  const parsed = z.object({ purchaseId: z.string().uuid(), reason: z.string().trim().min(10).max(500), confirmed: z.literal('on') }).safeParse(Object.fromEntries(formData))
+  const returnTo = parsed.success ? `/platformbeheer/financien/betalingen/${parsed.data.purchaseId}` : '/platformbeheer/financien/betalingen'
+  const actor = await requirePlatformAdministrator(returnTo)
+  if (!parsed.success) redirect(`${returnTo}?fout=ongeldige-terugbetaling`)
+  try { await requestAcademyRefund(actor.id, parsed.data.purchaseId, parsed.data.reason) }
+  catch { redirect(`${returnTo}?fout=terugbetaling-niet-gestart`) }
+  revalidatePath(returnTo)
+  revalidatePath('/platformbeheer/financien/terugbetalingen')
+  redirect(`${returnTo}?resultaat=terugbetaling-gestart`)
 }

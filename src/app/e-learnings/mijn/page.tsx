@@ -1,3 +1,5 @@
+import { startLearningCourseAction } from '@/app/e-learnings/actions'
+import { academyAccessExpired } from '@/lib/learning/academy-access-policy'
 import Link from 'next/link'
 import { Container } from '@/components/layout/container'
 import { Card } from '@/components/ui/card'
@@ -16,19 +18,31 @@ function statusLabel(status: string) {
 
 export default async function MyLearningPage() {
   const user = await requireLearningUser('/e-learnings/mijn')
-  const [enrollments, examOverview, retentionOverview] = await Promise.all([
-    getMyLearningEnrollments(user.id),
-    getFinalExamOverview(user.id),
-    getMyRetentionOverview(user.id),
-  ])
-  const certificate = await getMyLearningCertificate(user.id)
+  const enrollments = await getMyLearningEnrollments(user.id)
+  const details = await Promise.all(enrollments.map(async (enrollment) => {
+    const course = enrollment.courseVersion.course
+    const [examOverview, retentionOverview, certificate] = await Promise.all([
+      getFinalExamOverview(user.id, course.slug, enrollment.courseVersionId),
+      getMyRetentionOverview(user.id, new Date(), course.slug),
+      getMyLearningCertificate(user.id, course.code),
+    ])
+    return { examOverview, retentionOverview, certificate }
+  }))
   return <Container className="py-10 sm:py-14">
     <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-brand-primary">E-learnings</p>
     <h1 className="text-3xl font-bold text-brand-dark sm:text-4xl">Mijn e-learnings</h1>
     <p className="mt-4 max-w-2xl text-lg leading-8 text-text-secondary">U kunt hier verdergaan met uw opleidingen en afgeronde hoofdstukken terugvinden.</p>
+    <Link className="mt-4 inline-flex min-h-11 items-center underline" href="/e-learnings/beoordeling">Correctie of examenbezwaar aanvragen</Link>
     <div className="mt-8 space-y-5">
-      {enrollments.map((enrollment) => {
+      {enrollments.map((enrollment, index) => {
+        const { examOverview, retentionOverview, certificate } = details[index]
         const course = enrollment.courseVersion.course
+        if (academyAccessExpired(enrollment)) return <Card key={enrollment.id} className="space-y-4">
+          <h2 className="text-xl font-bold">{course.title}</h2>
+          <p>Uw toegang tot de lesstof is verlopen. Uw eerdere resultaten blijven bewaard.</p>
+          {certificate && <div className="space-y-2"><p>Certificaat van afronding · {certificate.certificateNumber}</p><a className="inline-flex min-h-11 items-center underline" href={`/api/learning/certificates/${certificate.id}/pdf`}>Certificaat downloaden</a></div>}
+          {retentionOverview.eligible && <Link className="inline-flex min-h-11 items-center underline" href={`/e-learnings/${course.slug}/kennisbehoud`}>Kennisbehoud en jaarcheck bekijken</Link>}
+        </Card>
         const chapters = enrollment.courseVersion.chapters
         const chapter = chapters.find((item) => item.progress[0]?.status === 'IN_PROGRESS')
           ?? chapters.find((item) => item.progress[0]?.status !== 'COMPLETED')
@@ -45,14 +59,14 @@ export default async function MyLearningPage() {
             <p className="mt-2 text-sm text-text-secondary">{chapter ? `Hoofdstuk ${chapter.position} · ` : ''}{statusLabel(progress?.status ?? 'NOT_STARTED')} · {progress?.progressPercentage ?? 0}% hoofdstukvoortgang</p>
             {enrollment.status === 'COMPLETED' && <p className="mt-2 text-sm text-text-secondary">Deze cursusversie is afgerond.</p>}
             {examOverview?.enrollment?.id === enrollment.id && <section className="mt-4 rounded-card border border-brand-primary/20 bg-brand-primary/5 p-4" aria-label="Eindtoetsstatus">
-              <p className="font-semibold text-brand-dark">Eindtoets — RI&E in de praktijk</p>
-              {!examOverview.eligible && <p className="mt-1 text-sm text-text-secondary">Beschikbaar na afronding van alle tien hoofdstukken ({examOverview.completedChapters}/10 afgerond).</p>}
+              <p className="font-semibold text-brand-dark">Eindtoets — {course.title}</p>
+              {!examOverview.eligible && <p className="mt-1 text-sm text-text-secondary">Beschikbaar na afronding van alle hoofdstukken ({examOverview.completedChapters}/{examOverview.chapterCount} afgerond).</p>}
               {examOverview.eligible && !examOverview.attempts.some((attempt) => attempt.passed) && <p className="mt-1 text-sm text-text-secondary">Een certificaat van afronding is beschikbaar na het behalen van de eindtoets.</p>}
               {examOverview.eligible && examOverview.attempts.some((attempt) => attempt.passed) && <p className="mt-1 text-sm text-text-secondary">Behaald — beste geslaagde score {Math.max(...examOverview.attempts.filter((attempt) => attempt.passed).map((attempt) => attempt.percentage ?? 0))}%.</p>}
               {certificate && <div className="mt-3 space-y-3 rounded-card border border-border p-4">
                 <div>
                   <p className="font-semibold text-brand-dark">Certificaat van afronding</p>
-                  <p className="text-sm text-text-secondary">RI&E in de praktijk · behaald op {new Intl.DateTimeFormat('nl-NL', { dateStyle: 'long', timeZone: 'Europe/Amsterdam' }).format(certificate.issuedAt)}</p>
+                  <p className="text-sm text-text-secondary">{certificate.courseTitle} · behaald op {new Intl.DateTimeFormat('nl-NL', { dateStyle: 'long', timeZone: 'Europe/Amsterdam' }).format(certificate.issuedAt)}</p>
                   <p className="mt-1 text-sm text-text-secondary">Certificaatnummer <span className="font-mono">{certificate.certificateNumber}</span></p>
                 </div>
                 <div className="flex flex-wrap gap-x-4 gap-y-2">
@@ -73,7 +87,7 @@ export default async function MyLearningPage() {
               return <Link key={item.id} className="font-semibold text-brand-primary hover:underline" href={`/e-learnings/${course.slug}/leren/${item.slug}?${versionQuery}${itemProgress?.status === 'COMPLETED' ? '&opnieuw=1' : ''}`}>Hoofdstuk {item.position}: {item.title}{itemProgress?.status === 'COMPLETED' ? ' — Afgerond' : ''}</Link>
             })}</nav>}
           </div>
-          <Link className="inline-flex min-h-11 items-center justify-center rounded-control bg-brand-primary px-5 font-semibold text-text-on-dark" href={resumeHref}>{progress?.status === 'COMPLETED' ? 'Hoofdstuk opnieuw bekijken' : 'Verder waar u gebleven was'}</Link>
+          {enrollment.status === 'NOT_STARTED' ? <form action={startLearningCourseAction}><input type="hidden" name="courseSlug" value={course.slug}/><input type="hidden" name="courseVersionId" value={enrollment.courseVersionId}/><input type="hidden" name="chapterSlug" value={chapter?.slug ?? ''}/><button type="submit" className="inline-flex min-h-11 items-center justify-center rounded-control bg-brand-primary px-5 font-semibold text-text-on-dark">Start deze e-learning</button></form> : <Link className="inline-flex min-h-11 items-center justify-center rounded-control bg-brand-primary px-5 font-semibold text-text-on-dark" href={resumeHref}>{progress?.status === 'COMPLETED' ? 'Hoofdstuk opnieuw bekijken' : 'Verder waar u gebleven was'}</Link>}
         </Card>
       })}
       {enrollments.length === 0 && <Card className="space-y-4"><h2 className="text-xl font-bold text-brand-dark">U bent nog niet gestart</h2><p>Bekijk het opleidingsaanbod en kies een e-learning om te beginnen.</p><Link className="inline-flex min-h-11 items-center rounded-control bg-brand-primary px-5 font-semibold text-text-on-dark" href="/e-learnings/aanbod">Bekijk opleidingsaanbod</Link></Card>}

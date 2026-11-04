@@ -16,6 +16,7 @@ const nextConfig: NextConfig = {
       ],
     }]
   },
+  ...(process.env.ACADEMY_LOCAL_MAIL === '1' ? { logging: { incomingRequests: false, fetches: { fullUrl: false } } } : {}),
   serverExternalPackages: ['pdfjs-dist', '@napi-rs/canvas', 'sharp'],
   outputFileTracingIncludes: {
     '/organisatie/*': ['./node_modules/sharp/**/*', './node_modules/@img/sharp-linux-x64/**/*', './node_modules/@img/sharp-libvips-linux-x64/**/*'],

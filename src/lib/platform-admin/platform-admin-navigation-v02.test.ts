@@ -4,9 +4,9 @@ import { platformAdminNavigation } from './platform-admin-navigation'
 import { getPlatformAdminActiveItem, getPlatformAdminChapters, platformAdminChapters } from './platform-admin-navigation-v02'
 
 describe('Platformbeheer v0.2 navigation', () => {
-  it('retains every v0.1 navigation destination in seven chapters', () => {
+  it('retains every v0.1 navigation destination plus Academy in eight chapters', () => {
     const routes = platformAdminChapters.flatMap((chapter) => chapter.items.map((item) => item.href))
-    expect(platformAdminChapters).toHaveLength(7)
+    expect(platformAdminChapters).toHaveLength(8)
     expect(new Set(routes).size).toBe(routes.length)
     for (const item of platformAdminNavigation) expect(routes).toContain(item.href)
   })

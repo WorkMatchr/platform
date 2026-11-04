@@ -1,0 +1,70 @@
+{
+  "scope": "Isolated synthetic local acceptance; suites overlap and must not be summed",
+  "results": [
+    {
+      "suite": "regressions-final",
+      "passed": 1014,
+      "failed": 0,
+      "skipped": 84
+    },
+    {
+      "suite": "integration-regressions",
+      "passed": 142,
+      "failed": 0,
+      "skipped": 3
+    },
+    {
+      "suite": "pg-final",
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "pg-commerce",
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "media-tests",
+      "passed": 47,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "closed-gate",
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "retry-ui",
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0
+    }
+  ],
+  "postgresql": {
+    "major": 18,
+    "migrations": 109,
+    "failures": 0,
+    "mainUpgrade": true,
+    "repeatNoPending": true
+  },
+  "cleanup": {
+    "ownDatabasesRemoved": 2,
+    "ownContainerRemoved": true,
+    "existingContainersPreserved": 3,
+    "existingVolumesPreserved": 27,
+    "testCredentialRemoved": true,
+    "syntheticDownloadedPdf": "retained outside Git because another process holds the file"
+  },
+  "quality": {
+    "lintErrors": 0,
+    "existingLintWarnings": 4,
+    "standaloneTypeScript": "PASS",
+    "productionBuild": "PASS",
+    "stagedSecretMetadataScan": "PASS",
+    "historicalMainMigrationsChanged": false
+  }
+}

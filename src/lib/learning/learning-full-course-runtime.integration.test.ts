@@ -24,6 +24,9 @@ describe.skipIf(!databaseUrl)('Complete course through production services', () 
     actor.id = process.env.LEARNING_TEST_FLOW_USER_ID ?? randomUUID()
     if (!process.env.LEARNING_TEST_FLOW_USER_ID) await db!.user.create({ data: { id: actor.id, email: `${actor.id}@example.invalid`, status: 'ACTIVE' } })
     const ownerId = actor.id
+    // Provision the fixture entitlement explicitly; course start must not grant access.
+    const fixtureVersion=await db!.learningCourseVersion.findFirstOrThrow({where:{status:'PUBLISHED',course:{code:'WL-001',status:'PUBLISHED'}}})
+    await db!.learningEnrollment.upsert({where:{userId_courseVersionId:{userId:actor.id,courseVersionId:fixtureVersion.id}},update:{},create:{userId:actor.id,courseVersionId:fixtureVersion.id}})
     const form = new FormData()
     form.set('courseSlug', 'rie-in-de-praktijk')
     await expect(startLearningCourseAction(form)).rejects.toThrow('REDIRECT:')
