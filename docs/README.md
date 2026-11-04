@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [Homepage 2.0 — compacte lay-out en acceptatie](homepage-compact-v2.md)
+
 - [Productiedatabase: schrijfpauze, herstel en migratieacceptatie](database-upgrade-preparation.md)
 
 - [Gecombineerde eindacceptatie en gesloten besluitregister](combined-final-acceptance.md)
