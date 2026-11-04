@@ -1,0 +1,1144 @@
+{
+  "courseCode": "WL-002",
+  "title": "Preventiemedewerker in de praktijk",
+  "sourceVersion": "WL-002-COURSE-1.2",
+  "candidateVersion": "WL-002-COURSE-1.3",
+  "reviewStatus": "OPEN",
+  "checkedAt": "2026-11-04",
+  "audience": [
+    "Aankomende en huidige preventiemedewerkers",
+    "Werkgevers en leidinggevenden die met preventiemedewerkers samenwerken"
+  ],
+  "prerequisites": [
+    "Geen verplichte WL-001-vooropleiding",
+    "Basale vertrouwdheid met een werkomgeving; alle kernbegrippen worden uitgelegd"
+  ],
+  "learningObjectives": [
+    "De drie wettelijke kerntaken onderscheiden van aanvullende organisatieafspraken.",
+    "Uitleggen waarom de werkgever verantwoordelijk blijft voor het arbobeleid.",
+    "Een werkbare rolafspraak maken over tijd, middelen, overleg en escalatie.",
+    "De grens tussen opleidingsafronding en formele deskundigenkwalificatie herkennen.",
+    "Gevaar, blootstelling en risico onderscheiden.",
+    "Ontbrekende informatie herkennen voordat u een risico beoordeelt.",
+    "Een risico vertalen naar een concrete PvA-actie met eigenaar en controle.",
+    "Actualisatie en voorwaarden rond deskundige toetsing zorgvuldig bespreken.",
+    "Een rondgang voorbereiden met relevante risico’s en representatieve werkmomenten.",
+    "Waarneming, interpretatie en ontbrekende informatie onderscheiden.",
+    "Open vragen stellen zonder medewerkers als probleem te behandelen.",
+    "Bevindingen omzetten in beoordeelbare en opvolgbare acties.",
+    "Open gesprekken voeren over feitelijk werk en knelpunten.",
+    "Bijna-ongevallen en terugkerende signalen als onderzoeksvraag benutten.",
+    "Meldroutes en terugkoppeling praktisch organiseren.",
+    "Werkgerichte informatie onderscheiden van onnodige medische persoonsgegevens.",
+    "Informatie, instructie en beheersing van een handeling onderscheiden.",
+    "Uitleg afstemmen op taak, risico en mogelijkheden van de medewerker.",
+    "Ook tijdelijke medewerkers en afwijkende situaties meenemen.",
+    "Toepassing na een instructie evalueren zonder alleen op handtekeningen te vertrouwen.",
+    "Uitvoering onderscheiden van effectiviteit en borging.",
+    "Een passende effectcontrole voorbereiden met verantwoordelijke en moment.",
+    "Vertraging en tijdelijke bescherming opvolgbaar maken.",
+    "Maatregelen evalueren bij verschillende taken en gebruikers.",
+    "De rollen van werkgever, OR/PVT en deskundigen in preventie onderscheiden.",
+    "De medezeggenschap tijdig en passend betrekken.",
+    "Een deskundigheidsvraag afbakenen en bruikbare informatie delen.",
+    "Adviezen vertalen naar werkbare besluiten en opvolging.",
+    "Een deskundigheidsgrens onderscheiden van een administratief knelpunt.",
+    "Een open onderzoeksvraag met context en tijdelijke bescherming formuleren.",
+    "Scope en toepasbaarheid van rapporten kritisch lezen.",
+    "Medische, technische en formele toetsrollen zorgvuldig begrenzen.",
+    "Een risicogestuurde planning maken met uitvoering en effectcontrole.",
+    "Activiteiten en resultaten onderscheiden in evaluaties.",
+    "Overdracht, beheer en inwerken als borgingsonderdelen organiseren.",
+    "Veranderingen verwerken zonder op een vaste kalendertermijn te wachten.",
+    "Meerdere veranderingen vertalen naar een samenhangende preventieaanpak.",
+    "Ontbrekende informatie, deskundigheid en tijdelijke bescherming organiseren.",
+    "Werkgever, medewerkers, medezeggenschap en deskundigen doelgericht betrekken.",
+    "Uitvoering, effect en borging als één verbetercyclus evalueren."
+  ],
+  "studyPlan": {
+    "chapterMinutes": [
+      25,
+      25,
+      25,
+      25,
+      25,
+      25,
+      25,
+      25,
+      25,
+      25
+    ],
+    "examMinutes": 45,
+    "totalMinutes": 295,
+    "measured": false,
+    "rationale": "250 minuten hoofdstukken + 45 minuten eindtoets = 295 minuten (4u55). Expliciete planningsaanname: 180 woorden/minuut voor lesproza, afgerond per hoofdstuk; zes lesvragen met feedback 6 minuten, drie hoofdstukchecks 4 minuten, korte fictieve portfolio-opdracht 5 minuten, resterende hoofdstuktijd voor reflectie. De praktijkopdrachten vallen binnen de 25 minuten en zijn niet bovenop de raming gezet. Examen 50 vragen in circa 45 minuten is een raming, geen limiet. Geen gemeten leertijdbewijs: gebruikerstiming en begripstoets moeten vóór een definitieve duurclaim worden geaccepteerd. Vrijwillige retentie en uitvoering op de eigen werkplek zijn uitgesloten.",
+    "wordCountMethod": "Alle zichtbare strings in niet-vraaggebonden lesblokken, gesplitst op witruimte; exclusief vraagstammen, opties en feedback (apart begroot).",
+    "readingWordsPerMinuteAssumption": 180,
+    "chapterBreakdown": [
+      {
+        "chapter": 1,
+        "visibleProseWords": 1552,
+        "readingMinutes": 9,
+        "lessonQuestionsWithFeedbackMinutes": 6,
+        "chapterCheckMinutes": 4,
+        "portfolioExecutionMinutes": 5,
+        "reflectionMinutes": 1,
+        "totalMinutes": 25
+      },
+      {
+        "chapter": 2,
+        "visibleProseWords": 1491,
+        "readingMinutes": 9,
+        "lessonQuestionsWithFeedbackMinutes": 6,
+        "chapterCheckMinutes": 4,
+        "portfolioExecutionMinutes": 5,
+        "reflectionMinutes": 1,
+        "totalMinutes": 25
+      },
+      {
+        "chapter": 3,
+        "visibleProseWords": 1385,
+        "readingMinutes": 8,
+        "lessonQuestionsWithFeedbackMinutes": 6,
+        "chapterCheckMinutes": 4,
+        "portfolioExecutionMinutes": 5,
+        "reflectionMinutes": 2,
+        "totalMinutes": 25
+      },
+      {
+        "chapter": 4,
+        "visibleProseWords": 1312,
+        "readingMinutes": 8,
+        "lessonQuestionsWithFeedbackMinutes": 6,
+        "chapterCheckMinutes": 4,
+        "portfolioExecutionMinutes": 5,
+        "reflectionMinutes": 2,
+        "totalMinutes": 25
+      },
+      {
+        "chapter": 5,
+        "visibleProseWords": 1270,
+        "readingMinutes": 8,
+        "lessonQuestionsWithFeedbackMinutes": 6,
+        "chapterCheckMinutes": 4,
+        "portfolioExecutionMinutes": 5,
+        "reflectionMinutes": 2,
+        "totalMinutes": 25
+      },
+      {
+        "chapter": 6,
+        "visibleProseWords": 1242,
+        "readingMinutes": 7,
+        "lessonQuestionsWithFeedbackMinutes": 6,
+        "chapterCheckMinutes": 4,
+        "portfolioExecutionMinutes": 5,
+        "reflectionMinutes": 3,
+        "totalMinutes": 25
+      },
+      {
+        "chapter": 7,
+        "visibleProseWords": 1259,
+        "readingMinutes": 7,
+        "lessonQuestionsWithFeedbackMinutes": 6,
+        "chapterCheckMinutes": 4,
+        "portfolioExecutionMinutes": 5,
+        "reflectionMinutes": 3,
+        "totalMinutes": 25
+      },
+      {
+        "chapter": 8,
+        "visibleProseWords": 1245,
+        "readingMinutes": 7,
+        "lessonQuestionsWithFeedbackMinutes": 6,
+        "chapterCheckMinutes": 4,
+        "portfolioExecutionMinutes": 5,
+        "reflectionMinutes": 3,
+        "totalMinutes": 25
+      },
+      {
+        "chapter": 9,
+        "visibleProseWords": 1221,
+        "readingMinutes": 7,
+        "lessonQuestionsWithFeedbackMinutes": 6,
+        "chapterCheckMinutes": 4,
+        "portfolioExecutionMinutes": 5,
+        "reflectionMinutes": 3,
+        "totalMinutes": 25
+      },
+      {
+        "chapter": 10,
+        "visibleProseWords": 1356,
+        "readingMinutes": 8,
+        "lessonQuestionsWithFeedbackMinutes": 6,
+        "chapterCheckMinutes": 4,
+        "portfolioExecutionMinutes": 5,
+        "reflectionMinutes": 2,
+        "totalMinutes": 25
+      }
+    ],
+    "totalVisibleProseWords": 13333
+  },
+  "certificate": {
+    "passingScore": 40,
+    "questionCount": 50,
+    "attemptLimit": null,
+    "legalQualification": false,
+    "expiry": "Geen wettelijke geldigheidsduur toegekend",
+    "conditions": [
+      "Verplichte cursusonderdelen afronden volgens de bestaande LMS-voortgangscontrole",
+      "Eindtoets behalen met minimaal 40/50",
+      "Bestaande certificaatuitgifte en heruitgifte blijven ongewijzigd"
+    ],
+    "templateVersion": "ACADEMY-CERT-1.0"
+  },
+  "objectiveCoverage": [
+    {
+      "objective": "De drie wettelijke kerntaken onderscheiden van aanvullende organisatieafspraken.",
+      "chapters": [
+        1
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E03"
+      ],
+      "practiceBlockCodes": [
+        "H1-L2-application",
+        "WL002-H1-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H1-Q09"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Uitleggen waarom de werkgever verantwoordelijk blijft voor het arbobeleid.",
+      "chapters": [
+        1
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E01"
+      ],
+      "practiceBlockCodes": [
+        "H1-L1-application",
+        "WL002-H1-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H1-Q09"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Een werkbare rolafspraak maken over tijd, middelen, overleg en escalatie.",
+      "chapters": [
+        1
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E02",
+        "WL002-EX-E04"
+      ],
+      "practiceBlockCodes": [
+        "H1-L4-application",
+        "H1-L5-application",
+        "H1-L6-application",
+        "WL002-H1-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H1-Q08",
+        "WL002-H1-Q09"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "De grens tussen opleidingsafronding en formele deskundigenkwalificatie herkennen.",
+      "chapters": [
+        1
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E05"
+      ],
+      "practiceBlockCodes": [
+        "H1-L2-application",
+        "H1-L6-application",
+        "WL002-H1-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H1-Q07"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Gevaar, blootstelling en risico onderscheiden.",
+      "chapters": [
+        2
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E07"
+      ],
+      "practiceBlockCodes": [
+        "H2-L1-application",
+        "H2-L2-application",
+        "WL002-H2-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H2-Q08"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Ontbrekende informatie herkennen voordat u een risico beoordeelt.",
+      "chapters": [
+        2
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E07"
+      ],
+      "practiceBlockCodes": [
+        "H2-L2-application",
+        "WL002-H2-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H2-Q08"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Een risico vertalen naar een concrete PvA-actie met eigenaar en controle.",
+      "chapters": [
+        2
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E06",
+        "WL002-EX-E08",
+        "WL002-EX-E10"
+      ],
+      "practiceBlockCodes": [
+        "H2-L3-application",
+        "H2-L4-application",
+        "WL002-H2-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H2-Q07"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Actualisatie en voorwaarden rond deskundige toetsing zorgvuldig bespreken.",
+      "chapters": [
+        2
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E09"
+      ],
+      "practiceBlockCodes": [
+        "H2-L5-application",
+        "H2-L6-application",
+        "WL002-H2-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H2-Q09"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Een rondgang voorbereiden met relevante risico’s en representatieve werkmomenten.",
+      "chapters": [
+        3
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E11"
+      ],
+      "practiceBlockCodes": [
+        "H3-L1-application",
+        "WL002-H3-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H3-Q09"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Waarneming, interpretatie en ontbrekende informatie onderscheiden.",
+      "chapters": [
+        3
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E11",
+        "WL002-EX-E13"
+      ],
+      "practiceBlockCodes": [
+        "H3-L2-application",
+        "H3-L4-application",
+        "WL002-H3-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H3-Q08",
+        "WL002-H3-Q09"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Open vragen stellen zonder medewerkers als probleem te behandelen.",
+      "chapters": [
+        3
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E14"
+      ],
+      "practiceBlockCodes": [
+        "H3-L3-application",
+        "WL002-H3-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H3-Q07"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Bevindingen omzetten in beoordeelbare en opvolgbare acties.",
+      "chapters": [
+        3
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E12",
+        "WL002-EX-E15"
+      ],
+      "practiceBlockCodes": [
+        "H3-L6-application",
+        "WL002-H3-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H3-Q07"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Open gesprekken voeren over feitelijk werk en knelpunten.",
+      "chapters": [
+        4
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E16"
+      ],
+      "practiceBlockCodes": [
+        "H4-L2-application",
+        "H4-L4-application",
+        "WL002-H4-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H4-Q09"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Bijna-ongevallen en terugkerende signalen als onderzoeksvraag benutten.",
+      "chapters": [
+        4
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E19"
+      ],
+      "practiceBlockCodes": [
+        "H4-L1-application",
+        "H4-L3-application",
+        "WL002-H4-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H4-Q08"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Meldroutes en terugkoppeling praktisch organiseren.",
+      "chapters": [
+        4
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E17",
+        "WL002-EX-E18"
+      ],
+      "practiceBlockCodes": [
+        "H4-L4-application",
+        "H4-L6-application",
+        "WL002-H4-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H4-Q09"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Werkgerichte informatie onderscheiden van onnodige medische persoonsgegevens.",
+      "chapters": [
+        4
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E20"
+      ],
+      "practiceBlockCodes": [
+        "H4-L5-application",
+        "WL002-H4-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H4-Q09"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Informatie, instructie en beheersing van een handeling onderscheiden.",
+      "chapters": [
+        5
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E21",
+        "WL002-EX-E23"
+      ],
+      "practiceBlockCodes": [
+        "H5-L1-application",
+        "H5-L2-application",
+        "WL002-H5-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H5-Q08"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Uitleg afstemmen op taak, risico en mogelijkheden van de medewerker.",
+      "chapters": [
+        5
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E22"
+      ],
+      "practiceBlockCodes": [
+        "H5-L3-application",
+        "WL002-H5-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H5-Q09"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Ook tijdelijke medewerkers en afwijkende situaties meenemen.",
+      "chapters": [
+        5
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E23",
+        "WL002-EX-E24"
+      ],
+      "practiceBlockCodes": [
+        "H5-L3-application",
+        "H5-L5-application",
+        "WL002-H5-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H5-Q08"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Toepassing na een instructie evalueren zonder alleen op handtekeningen te vertrouwen.",
+      "chapters": [
+        5
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E25"
+      ],
+      "practiceBlockCodes": [
+        "H5-L4-application",
+        "H5-L6-application",
+        "WL002-H5-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H5-Q07"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Uitvoering onderscheiden van effectiviteit en borging.",
+      "chapters": [
+        6
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E26",
+        "WL002-EX-E28"
+      ],
+      "practiceBlockCodes": [
+        "H6-L1-application",
+        "H6-L6-application",
+        "WL002-H6-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H6-Q07",
+        "WL002-H6-Q09"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Een passende effectcontrole voorbereiden met verantwoordelijke en moment.",
+      "chapters": [
+        6
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E27",
+        "WL002-EX-E28"
+      ],
+      "practiceBlockCodes": [
+        "H6-L2-application",
+        "WL002-H6-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H6-Q07"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Vertraging en tijdelijke bescherming opvolgbaar maken.",
+      "chapters": [
+        6
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E30"
+      ],
+      "practiceBlockCodes": [
+        "H6-L4-application",
+        "WL002-H6-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H6-Q09"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Maatregelen evalueren bij verschillende taken en gebruikers.",
+      "chapters": [
+        6
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E29"
+      ],
+      "practiceBlockCodes": [
+        "H6-L3-application",
+        "H6-L5-application",
+        "WL002-H6-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H6-Q08"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "De rollen van werkgever, OR/PVT en deskundigen in preventie onderscheiden.",
+      "chapters": [
+        7
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E31",
+        "WL002-EX-E32"
+      ],
+      "practiceBlockCodes": [
+        "H7-L1-application",
+        "WL002-H7-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H7-Q07"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "De medezeggenschap tijdig en passend betrekken.",
+      "chapters": [
+        7
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E31",
+        "WL002-EX-E35"
+      ],
+      "practiceBlockCodes": [
+        "H7-L2-application",
+        "WL002-H7-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H7-Q08"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Een deskundigheidsvraag afbakenen en bruikbare informatie delen.",
+      "chapters": [
+        7
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E32",
+        "WL002-EX-E33"
+      ],
+      "practiceBlockCodes": [
+        "H7-L3-application",
+        "H7-L4-application",
+        "WL002-H7-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H7-Q09"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Adviezen vertalen naar werkbare besluiten en opvolging.",
+      "chapters": [
+        7
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E34"
+      ],
+      "practiceBlockCodes": [
+        "H7-L5-application",
+        "H7-L6-application",
+        "WL002-H7-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H7-Q07",
+        "WL002-H7-Q09"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Een deskundigheidsgrens onderscheiden van een administratief knelpunt.",
+      "chapters": [
+        8
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E38"
+      ],
+      "practiceBlockCodes": [
+        "H8-L1-application",
+        "H8-L2-application",
+        "WL002-H8-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H8-Q08"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Een open onderzoeksvraag met context en tijdelijke bescherming formuleren.",
+      "chapters": [
+        8
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E38"
+      ],
+      "practiceBlockCodes": [
+        "H8-L2-application",
+        "H8-L5-application",
+        "WL002-H8-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H8-Q08"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Scope en toepasbaarheid van rapporten kritisch lezen.",
+      "chapters": [
+        8
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E36",
+        "WL002-EX-E39"
+      ],
+      "practiceBlockCodes": [
+        "H8-L3-application",
+        "WL002-H8-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H8-Q09"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Medische, technische en formele toetsrollen zorgvuldig begrenzen.",
+      "chapters": [
+        8
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E37",
+        "WL002-EX-E40"
+      ],
+      "practiceBlockCodes": [
+        "H8-L4-application",
+        "H8-L6-application",
+        "WL002-H8-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H8-Q09"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Een risicogestuurde planning maken met uitvoering en effectcontrole.",
+      "chapters": [
+        9
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E41"
+      ],
+      "practiceBlockCodes": [
+        "H9-L1-application",
+        "H9-L4-application",
+        "WL002-H9-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H9-Q09"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Activiteiten en resultaten onderscheiden in evaluaties.",
+      "chapters": [
+        9
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E43"
+      ],
+      "practiceBlockCodes": [
+        "H9-L2-application",
+        "H9-L6-application",
+        "WL002-H9-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H9-Q08",
+        "WL002-H9-Q09"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Overdracht, beheer en inwerken als borgingsonderdelen organiseren.",
+      "chapters": [
+        9
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E42",
+        "WL002-EX-E45"
+      ],
+      "practiceBlockCodes": [
+        "H9-L3-application",
+        "WL002-H9-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H9-Q07"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Veranderingen verwerken zonder op een vaste kalendertermijn te wachten.",
+      "chapters": [
+        9
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E44"
+      ],
+      "practiceBlockCodes": [
+        "H9-L4-application",
+        "WL002-H9-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H9-Q07"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Meerdere veranderingen vertalen naar een samenhangende preventieaanpak.",
+      "chapters": [
+        10
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E46"
+      ],
+      "practiceBlockCodes": [
+        "H10-L1-application",
+        "H10-L3-application",
+        "WL002-H10-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H10-Q07"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Ontbrekende informatie, deskundigheid en tijdelijke bescherming organiseren.",
+      "chapters": [
+        10
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E49"
+      ],
+      "practiceBlockCodes": [
+        "H10-L2-application",
+        "WL002-H10-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H10-Q08"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Werkgever, medewerkers, medezeggenschap en deskundigen doelgericht betrekken.",
+      "chapters": [
+        10
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E47"
+      ],
+      "practiceBlockCodes": [
+        "H10-L3-application",
+        "H10-L4-application",
+        "WL002-H10-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H10-Q07"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    },
+    {
+      "objective": "Uitvoering, effect en borging als één verbetercyclus evalueren.",
+      "chapters": [
+        10
+      ],
+      "examQuestionCodes": [
+        "WL002-EX-E48",
+        "WL002-EX-E50"
+      ],
+      "practiceBlockCodes": [
+        "H10-L5-application",
+        "H10-L6-application",
+        "WL002-H10-portfolio-task"
+      ],
+      "chapterCheckCodes": [
+        "WL002-H10-Q09"
+      ],
+      "reviewStatus": "OPEN",
+      "note": "Inhoudelijk voorstel; verwijzing naar een vraag is geen gevalideerd bewijs dat het volledige leerdoel summatief wordt gemeten."
+    }
+  ],
+  "statistics": {
+    "courseCode": "WL-002",
+    "status": "DRAFT",
+    "chapters": 10,
+    "contentBlocks": 342,
+    "formativeQuestions": 90,
+    "chapterCheckQuestions": 30,
+    "examQuestions": 50,
+    "retentionQuestions": 100,
+    "examQuality": {
+      "uniquelyShortest": 10,
+      "uniquelyShortestPercentage": 25,
+      "singleChoice": 40,
+      "multiChoice": 10,
+      "uniquelyLongest": 14,
+      "uniquelyLongestPercentage": 35,
+      "correctPositions": {
+        "A": 12,
+        "B": 9,
+        "C": 11,
+        "D": 8,
+        "E": 0
+      },
+      "longestCorrectPositionRun": 3
+    },
+    "retentionQuality": {
+      "uniquelyShortest": 30,
+      "uniquelyShortestPercentage": 37.5,
+      "singleChoice": 80,
+      "multiChoice": 20,
+      "uniquelyLongest": 8,
+      "uniquelyLongestPercentage": 10,
+      "correctPositions": {
+        "A": 17,
+        "B": 17,
+        "C": 24,
+        "D": 22,
+        "E": 0
+      },
+      "longestCorrectPositionRun": 3
+    }
+  },
+  "questionQuality": {
+    "uniquelyShortest": 50,
+    "uniquelyShortestPercentage": 26.3,
+    "singleChoice": 190,
+    "multiChoice": 50,
+    "uniquelyLongest": 46,
+    "uniquelyLongestPercentage": 24.2,
+    "correctPositions": {
+      "A": 44,
+      "B": 40,
+      "C": 56,
+      "D": 50,
+      "E": 0
+    },
+    "longestCorrectPositionRun": 4
+  },
+  "questionSemanticHash": "ce8b77dbdc2c8daf488668d0495d2fcdcae35d62db2873122d15916fb7578604",
+  "contentSha256": "fde8d07e0dbc4dd2b81327bdf5681f51b870fed44a24f09abb56b093d8382b41",
+  "sourceEvidence": [
+    {
+      "id": "arbo13",
+      "title": "Arboportaal — wettelijke positie en taken preventiemedewerker",
+      "url": "https://www.arboportaal.nl/onderwerpen/ondersteuning-bij-arbowet/preventiemedewerker/wat-zegt-de-wet-over-de-preventiemedewerker",
+      "status": "CHECKED",
+      "scope": "Artikel 13, deskundigheid, taken, tijd en middelen, medezeggenschap en kleine werkgever. Formele juridische review blijft vereist.",
+      "retrievedAt": "2026-11-04",
+      "humanApproval": false
+    },
+    {
+      "id": "arbo8",
+      "title": "Arbowet — artikel 8 voorlichting en onderricht",
+      "url": "https://wetten.overheid.nl/BWBR0010346/",
+      "status": "MANUAL_REVIEW_REQUIRED",
+      "scope": "2026-11-04: actuele geconsolideerde wettekst niet volledig toegankelijk via de broncontrole. Controleer artikelen 3, 5, 8, 12, 13 en 14 formeel vóór publicatie; geen juridische goedkeuring afgeleid uit voorlichtingspagina’s.",
+      "retrievedAt": "2026-11-04",
+      "humanApproval": false
+    },
+    {
+      "id": "rie",
+      "title": "Ondernemersplein — risico-inventarisatie en -evaluatie voor personeel",
+      "url": "https://ondernemersplein.overheid.nl/wetten-en-regels/risico-inventarisatie-rie-voor-personeel/",
+      "status": "CHECKED",
+      "scope": "RI&E, Plan van Aanpak, actualisatie en voorwaardelijke toetsingsuitzonderingen; geen algemene vijfjaarsgeldigheid.",
+      "retrievedAt": "2026-11-04",
+      "humanApproval": false
+    },
+    {
+      "id": "inspectie",
+      "title": "Nederlandse Arbeidsinspectie — RI&E en Plan van Aanpak",
+      "url": "https://www.nlarbeidsinspectie.nl/onderwerpen/arbeidsomstandighedenwet/risico-inventarisatie-evaluatie-en-plan-van-aanpak",
+      "status": "CHECKED",
+      "scope": "Risico-informatie verbinden aan maatregelen en uitvoering. Rondgangen zijn geen automatische formele toetsing.",
+      "retrievedAt": "2026-11-04",
+      "humanApproval": false
+    },
+    {
+      "id": "ser",
+      "title": "SER — handreiking preventiemedewerker",
+      "url": "https://www.ser.nl/-/media/ser/downloads/overige-publicaties/2020/preventiemedewerker-handreiking.pdf",
+      "status": "MANUAL_REVIEW_REQUIRED",
+      "scope": "Aanvullende reviewbron voor praktische positie en samenwerking; geen onbeperkte ontslagbescherming afleiden.",
+      "retrievedAt": "2026-11-04",
+      "humanApproval": false
+    },
+    {
+      "id": "arbo12-wet",
+      "title": "Staatsblad 2026, 18 — artikel III, wijziging Arbowet artikel 12",
+      "url": "https://zoek.officielebekendmakingen.nl/stb-2026-18.html",
+      "status": "CHECKED",
+      "scope": "Wet 28 januari 2026, gepubliceerd 3 februari 2026. Primaire wijzigingstekst artikel 12; ingangsdatum aanvullend bevestigd met Arboportaal. Geen integraal geconsolideerde Arbowet.",
+      "retrievedAt": "2026-11-04",
+      "humanApproval": false
+    },
+    {
+      "id": "arbo12-2026",
+      "title": "Arboportaal — werknemersraadpleging vanaf 1 juli 2026",
+      "url": "https://www.arboportaal.nl/actueel/nieuws/2026/06/29/regels-voor-raadpleging-van-werknemers-aangepast-per-1-juli-2026",
+      "status": "CHECKED",
+      "scope": "Publicatie 29 juni 2026; raadpleging onderscheiden van instemming. Geconsolideerde wettekst blijft formeel te controleren.",
+      "retrievedAt": "2026-11-04",
+      "humanApproval": false
+    },
+    {
+      "id": "rie-toetsing",
+      "title": "Steunpunt RI&E — toetsing en erkende instrumenten",
+      "url": "https://www.rie.nl/over-rie/toetsen",
+      "status": "CHECKED",
+      "scope": "Toepasselijke branche en erkend instrument op het relevante moment; geen vrijstelling door personeelsaantal alleen.",
+      "retrievedAt": "2026-11-04",
+      "humanApproval": false
+    },
+    {
+      "id": "ap-gezondheid",
+      "title": "Autoriteit Persoonsgegevens — regels bij zieke werknemers",
+      "url": "https://autoriteitpersoonsgegevens.nl/themas/werk-en-uitkering/zieke-werknemers/regels-voor-werkgevers-bij-zieke-werknemers",
+      "status": "MANUAL_REVIEW_REQUIRED",
+      "scope": "2026-11-04: volledige AP-bron gaf HTTP 403; eerdere inhoud behouden maar niet opnieuw volledig geverifieerd. Controleer actuele privacygrondslag en casustoepassing vóór publicatie. Medische rolgrens aanvullend getoetst aan Arboportaal bedrijfsarts.",
+      "retrievedAt": "2026-11-04",
+      "humanApproval": false
+    },
+    {
+      "id": "bedrijfsarts",
+      "title": "Arboportaal — bedrijfsarts en medisch beroepsgeheim",
+      "url": "https://www.arboportaal.nl/onderwerpen/ondersteuning-bij-arbowet/bedrijfsarts",
+      "status": "CHECKED",
+      "scope": "2026-11-04: onafhankelijk medisch specialisme, samenwerking en beroepsgeheim. Ondersteunt de grens tussen werkgerichte preventie en medische beoordeling; geen volledige AVG-review.",
+      "retrievedAt": "2026-11-04",
+      "humanApproval": false
+    }
+  ],
+  "historicalSource": {
+    "title": "AI-1 Arbo- en verzuimbeleid",
+    "edition": "Derde herziene druk, Sdu 2002, ISBN 90 12 09328 7",
+    "reviewedPages": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      41,
+      42,
+      43
+    ],
+    "use": "Historische achtergrond voor planning-uitvoering-controle-bijsturing; geen actuele wettelijke bron. Geen PDF of tekstextract overgenomen in Git.",
+    "excluded": "Verouderde termijnen en wetsverwijzingen rond verzuim, wettelijke jaarrapportage en re-integratie niet als actueel overgenomen."
+  },
+  "remainingDecisions": [
+    "Menselijke juridische controle van actuele geconsolideerde Arbowet, AVG-casussen en bronnen met MANUAL_REVIEW_REQUIRED",
+    "Didactische toetsvalidatie van 240 vragen en 40 leerdoelkoppelingen; observeer studieduur bij representatieve cursisten",
+    "Afzonderlijke preview-/importacceptatie en Product Owner-vrijgave vóór cursuspublicatie"
+  ],
+  "checkpoint": {
+    "state": "CONTENT_REVIEW_CANDIDATE_COMPLETE",
+    "runtimeChanges": false,
+    "databaseWrites": false,
+    "published": false,
+    "oldContentPreserved": true
+  }
+}

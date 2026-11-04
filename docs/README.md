@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [Academy WL-001, WL-002 en WL-003 — contentkandidaten en acceptatie](academy-content/README.md)
+
 - [LMS 2.0 — geïntegreerde releasekandidaat en acceptatie](lms-20-platform-release.md)
 
 - [Productiedatabase: schrijfpauze, herstel en migratieacceptatie](database-upgrade-preparation.md)
