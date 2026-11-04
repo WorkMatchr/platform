@@ -68,3 +68,7 @@ De richtwaarde 20–25% is niet kunstmatig afgedwongen. Op mobiel neemt ongewijz
 ## Release en rollback
 
 Eén Draft PR vanaf main. Alleen na afzonderlijke merge-/releasebeslissing opnemen. Een terugdraaiing van de homepagecomponent herstelt de vorige presentatie; er zijn geen gegevens-, configuratie- of migratieafhankelijkheden. De eerdere lokale knopverwijdering in de LMS-worktree is niet gewijzigd; dezelfde bedoelde verwijdering zit zelfstandig in deze main-gebaseerde PR.
+
+## Main-integratie tijdens oplevering
+
+Tijdens PR-aanmaak verscheen main-commit a315db8 (uitsluitend dezelfde verwijdering van de dubbele stappen-CTA). Deze is zonder force-push geïntegreerd. Het ene overlapconflict is opgelost met behoud van de compactere spacing en dezelfde verwijderde knop. De runtimecomponent is byte-inhoudelijk gelijk aan de reeds geteste b704b3b-versie; de gerichte 86 tests zijn na integratie opnieuw uitgevoerd. De voor-meting blijft expliciet de oorspronkelijke 9f22a67-nulmeting, inclusief de toen nog aanwezige dubbele knop.
