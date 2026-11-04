@@ -63,7 +63,7 @@ export function PublicHomepageV02() {
         <span className="inline-grid size-10 place-items-center rounded-full bg-brand-primary-subtle font-bold text-brand-primary-hover" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
         <Heading as="h3" size="h3" className="mt-4">{step.title}</Heading><p className="mt-3 leading-7 text-text-secondary">{step.description}</p>
         {index === 1 && <p className="mt-4 text-sm leading-6 text-text-secondary"><span className="font-semibold">Optioneel</span> — Selecteer externe ondersteuners die u voor de opdracht wilt uitnodigen.</p>}
-      </li>)}</ol><div className="mt-8"><LinkButton href={publicRoutes.adviceGuide}>Start uw opdracht</LinkButton></div>
+      </li>)}</ol>
     </Band>
     <Band className="bg-surface-subtle">
       <Eyebrow>WAARMEE KUNNEN WIJ U HELPEN?</Eyebrow><Heading className="max-w-3xl">Deskundigheid voor verschillende Arbo- en veiligheidsvragen</Heading>
