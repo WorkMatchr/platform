@@ -79,13 +79,13 @@
       "migration": "20261104180000_add_learning_authoring_media",
       "origin": "new-lms20",
       "sha256_git_lf": "ba9580260e5f5dd1a0c9ad9bbe2a1ba98881a63d10e3924a7ede5a6e1f8b2052",
-      "sha256_tested_windows_bytes": "ba9580260e5f5dd1a0c9ad9bbe2a1ba98881a63d10e3924a7ede5a6e1f8b2052"
+      "sha256_tested_windows_bytes": "21a9306e64a422f5b2331d7168fc425bc6ee9e84eddca2d25aaa552540d4bd23"
     },
     {
       "migration": "20261104190000_allow_operator_certificate_review",
       "origin": "new-lms20",
       "sha256_git_lf": "5d61c81845856498fd3201e0dadab347736e786dbc9fb7a9c839ba836f9a10ea",
-      "sha256_tested_windows_bytes": "4565280a18793c9465875ff832c3b809462a382e49f34e70e36d9d8df7f08eee"
+      "sha256_tested_windows_bytes": "f95e41abde58a186dd036206da79f3f3a65e3ce8b0c2b949dc28c572c35eecfc"
     }
   ],
   "checksum_strategy": "SHA-256 of Git LF bytes and separately actual Windows bytes used in the isolated PostgreSQL tests; line endings are explicit, no historical main SQL was rewritten."

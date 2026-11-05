@@ -24,7 +24,7 @@ describe('LMS media and immutable version boundaries',()=>{
    await expect(prepareLearningMedia(new File(['WEBVTT\n<script>bad</script>'],'captions.vtt'))).rejects.toThrow('MEDIA_FORMAT')
    await expect(prepareLearningMedia(new File([new Uint8Array(learningMediaLimit+1)],'large.mp4',{type:'video/mp4'}))).rejects.toThrow('MEDIA_SIZE')
  })
- it('accepts captions without external resources',async()=>expect((await prepareLearningMedia(new File(['WEBVTT\n\n00:00.000 --> 00:01.000\nSynthetisch'],'test.vtt',{type:'text/vtt'}))).mediaType).toBe('text/vtt'))
+ it.each([['video/mp4','0000ftyp'],['video/webm','synthetic'],['text/vtt','WEBVTT']])('rejects unsupported media %s',async(type,bytes)=>{await expect(prepareLearningMedia(new File([bytes],'synthetic',{type}))).rejects.toThrow('MEDIA_FORMAT')})
  it('blocks cross-origin and unauthenticated uploads before storage',async()=>{
    vi.stubEnv('NEXT_PUBLIC_APP_URL','http://127.0.0.1:3072')
    const forbidden=await POST(new Request('http://127.0.0.1:3072/platformbeheer/academy/media',{method:'POST',headers:{origin:'https://untrusted.example'}}))

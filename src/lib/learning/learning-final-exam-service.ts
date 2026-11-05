@@ -24,7 +24,9 @@ async function findPublishedExam(userId: string, courseSlug: string, courseVersi
   const { enrollment, definition } = context
   const examVersion = await getPrisma().learningExamVersion.findFirst({
     where: {
-      status: { in: ['PUBLISHED', 'RETIRED'] },
+      // New attempts may only use the published exam for this enrolled course version.
+      // Historical attempt/result readers resolve their immutable version by ID separately.
+      status: 'PUBLISHED',
       courseVersionId: enrollment.courseVersionId,
       exam: { code: definition.exam.code, course: { code: definition.courseCode, slug: courseSlug, status: 'PUBLISHED' } },
       courseVersion: { status: { in: ['PUBLISHED', 'RETIRED'] } },

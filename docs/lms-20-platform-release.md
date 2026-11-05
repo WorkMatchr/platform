@@ -1,6 +1,6 @@
 # LMS 2.0 — geïntegreerde releasekandidaat
 
-Datum: 4 november 2026. Status: **reviewkandidaat; geen productie- of mergevrijgave**.
+Datum oorspronkelijke acceptatie: 4 november 2026. Publicatievoorbereiding: 5 november 2026; zie [definitieve releasechecklist](academy-20-publication-checklist.md). Status: **reviewkandidaat; geen productie- of mergevrijgave**.
 Branch: `codex/lms-20-platform-release`. Alle nieuwe browser- en databasebewijzen gebruiken uitsluitend synthetische gegevens. Geen productie, providerbetaling, mail of inhoudelijke cursusvrijgave uitgevoerd.
 
 ## Herkomst en scope
@@ -19,7 +19,7 @@ De algemene registratieflow, `src/lib/auth.ts`, privacy- en voorwaardenpagina’
 
 ## Geïntegreerde functionaliteit
 
-- `/platformbeheer/academy/cursussen`: titel, omschrijving, categorie, niveau, afbeelding, versie, studieduur per hoofdstuk, ordenbare hoofdstukken en lessen, tekst/afbeelding/video, hoofdstukchecks, examenvragen, antwoorden/toelichtingen, cesuur, pogingenlimiet, preview, deelnemers/resultaten en archivering.
+- `/platformbeheer/academy/cursussen`: titel, omschrijving, categorie, niveau, afbeelding, versie, studieduur per hoofdstuk, ordenbare hoofdstukken en lessen, tekst/afbeelding, hoofdstukchecks, examenvragen, antwoorden/toelichtingen, cesuur, pogingenlimiet, preview, deelnemers/resultaten en archivering.
 - Workflow: Concept → Review → Goedgekeurd → Gepubliceerd → Gearchiveerd. Revisiecontrole en serialiseerbare transacties voorkomen concurrerende overschrijving. Review bindt SHA-256 aan de genormaliseerde vragen, opties, lessen en exameninstellingen; afwijkende opslag of ontbrekende media blokkeert publicatie. Reviewer, tijdstip en reden worden vastgelegd. Menselijke inhoudelijke review is niet door deze technische test vervangen.
 - Gepubliceerde inhoud wordt niet in-place herschreven. Nieuwe inhoud vereist een nieuwe cursusversie. Oude inschrijvingen/resultaten blijven versiegebonden. De oorspronkelijke v1- en certificaatcontracten blijven ondersteund.
 - Catalogus toont ook nog niet ingeschreven gepubliceerde cursussen. De bestaande sandbox-commerce regelt prijsversies, gratis/betaalde inschrijving, seats, factuur/outbox, annulering en gecontroleerde refunds.
@@ -28,9 +28,11 @@ De algemene registratieflow, `src/lib/auth.ts`, privacy- en voorwaardenpagina’
 
 ## Media en concrete beperking
 
-Media gebruikt dezelfde applicatie en bestaande Blob-library. Alleen content-gehashte lokale paden; geen willekeurige externe embeds. Afbeeldingen worden opnieuw gecodeerd; video vereist ondertiteling en transcript. Upload verlangt bevoegde actieve operator, juiste origin en begrensde payload. Lezen verlangt geldige inschrijving of beheerrecht; private responses zijn `no-store`. Publicatie controleert opgeslagen bytes en checksums.
+Media gebruikt dezelfde applicatie en bestaande Blob-library. Alleen content-gehashte lokale paden; geen willekeurige externe embeds. Afbeeldingen worden opnieuw gecodeerd. Product Owner-besluit: Academy biedt geen video. De editor, uploadvalidatie en lesweergave ondersteunen daarom uitsluitend tekst en afbeeldingen naast kennisvragen, eindtoetsen en certificaten. Upload verlangt bevoegde actieve operator, juiste origin en begrensde payload. Lezen verlangt geldige inschrijving of beheerrecht; private responses zijn `no-store`. Publicatie controleert opgeslagen bytes en checksums.
 
-**De veilige route accepteert momenteel maximaal 3 MiB per bestand.** Kleine clips worden technisch ondersteund; lange cursusvideo’s zijn hiermee niet afgedekt. Grotere uploads/streaming en daadwerkelijke private Blob-configuratie zijn geen bewezen productievoorziening. Geen betaalde opslag is aangezet. Media-upload en afspelen zijn nog niet volledig met echte browserbestanden geaccepteerd. Dit verhindert de claim dat alle reguliere videocursussen definitief gereed zijn.
+**De veilige route accepteert maximaal 3 MiB per afbeelding.** PNG/JPEG/WebP worden veilig opnieuw gecodeerd naar WebP; MP4, WebM en VTT worden geweigerd. Video-upload, streaming, ondertiteling en videoacceptatie zijn geen releasecriteria. De bestaande private Blob-configuratie moet afzonderlijk voor de productieomgeving worden geaccepteerd; er is geen betaalde opslag aangezet. Op 5 november is een synthetische afbeelding via de echte lokale browsereditor geüpload, opgeslagen, opnieuw geopend en met tekstalternatief weergegeven.
+
+Het bestaande VIDEO-enum in migratie 108 blijft ongewijzigd voor migratiehistoriecompatibiliteit. Het is geen vrijgegeven contenttype; authoringvalidatie weigert nieuwe videolessen. Er zijn geen historische cursusgegevens verwijderd.
 
 ## Migraties
 
@@ -70,7 +72,7 @@ Uitgevoerd op de eigen lokale server, met echte Better Auth-sessies van syntheti
 6. Beheerder ziet het certificaat, trekt het met reden/bevestiging in; publieke lokale verificatie wordt ongeldig en downloadactie verdwijnt. Uitloggen en daarna afgeschermde resultaatroute geeft inloggen, geen resultaatgegevens.
 7. Desktop en mobiel 390×844 bekeken; mobiel resultaat zonder afgesneden CTA. Toetsenbordactie/focus en toegankelijkheidsboom gecontroleerd; geen consoleerrors in de laatste browserronde.
 
-Niet bewezen: echte 200%-browserzoom, bediening met een zelfstandige schermlezer, volledige PDF/UA-conformiteit, browserupload/afspelen van afbeeldingen en video, volledige WL-001/WL-002-inhoud. Synthetische servicechecks vervangen deze niet.
+Niet bewezen: echte 200%-browserzoom, bediening met een zelfstandige schermlezer, volledige PDF/UA-conformiteit, (op 4 november) browserupload van afbeeldingen, volledige WL-001/WL-002-inhoud. Synthetische servicechecks vervangen deze niet.
 
 Screenshots: `evidence/lms20/mobile-result.jpg`, `evidence/lms20/admin-revoked.jpg`, `evidence/lms20/certificate.png` (uitsluitend synthetisch).
 
@@ -99,9 +101,9 @@ LMS, contact en F4 blijven op productie uitgeschakeld. Er is geen deployment ged
 
 Rollback: runtimegate gesloten houden en applicatie terugzetten naar voorafgaande release. Geen migraties terugdraaien of historie verwijderen; additieve tabellen/velden mogen ongebruikt blijven. Nieuwe authoring-/operatorreviewfunctionaliteit vereist eerst de volledige goedgekeurde migratieketen. Databasesnapshot/herstelprocedure en uitvoeringsautorisatie zijn afzonderlijke voorwaarden.
 
-De releasebranch wordt lokaal reviewbaar opgeleverd; geen push/Preview, CI-run, merge of productiepublicatie als bewijs geclaimd. Werkelijke veranderde bestanden staan in `lms-20-change-manifest.txt`; geschoonde testtotalen in `lms-20-test-results.json`. Samenvoegen is nog niet vrijgegeven: media, volledige toegankelijkheid en inhoudelijke acceptatie zijn niet compleet.
+Deze paragraaf beschrijft de oorspronkelijke lokale oplevering van 4 november. De actuele push-, CI- en Draft-PR-status van de geautoriseerde publicatievoorbereiding staat in de nieuwe releasechecklist; geen merge of productiepublicatie is toegestaan. Werkelijke veranderde bestanden staan in `lms-20-change-manifest.txt`; geschoonde testtotalen in `lms-20-test-results.json`. Samenvoegen is nog niet vrijgegeven: media, volledige toegankelijkheid en inhoudelijke acceptatie zijn niet compleet.
 
 Maximaal drie vervolgstappen:
-1. Review van deze kandidaat, volledige media-/toegankelijkheidsacceptatie en besluit over grotere private video-upload/streaming.
+1. Review van deze kandidaat en resterende echte 200%-zoom-, schermlezer- en PDF-toegankelijkheidsacceptatie; video is op besluit van de Product Owner vervallen.
 2. Inhoudelijke/fiscale/juridische cursusacceptatie en geïsoleerde provider-/media-acceptatie; geen echte betaling/mail zonder akkoord.
 3. Afzonderlijk herstel- en migratievenster autoriseren; pas daarna gecontroleerde featurevrijgave en productieacceptatie.

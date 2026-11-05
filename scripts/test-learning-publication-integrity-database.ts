@@ -153,7 +153,7 @@ async function restoreSyntheticDatabase(admin: Client, db: Client, database: str
     assert.deepEqual((await restored.query('SELECT * FROM _prisma_migrations ORDER BY migration_name')).rows, registry)
     assert.deepEqual(await functions(restored), functionsBefore, 'Restored function body/security/ACL differs')
     assert.deepEqual(await roleAclSnapshot(restored), aclsBefore, 'Restored table/sequence owners or ACLs differ')
-    await assertSyntheticRoles(restored, runtime, diagnostic)
+    await assertSyntheticRoles(restored, runtime, diagnostic, names.length)
     for (const exam of exams) await assertProtected(restored, exam)
     await restored.query(`SET ROLE "${writer}"`)
     try { for (const exam of exams) await assertProtected(restored, exam) } finally { await restored.query('RESET ROLE') }
@@ -321,7 +321,7 @@ async function runDatabase(admin: Client, mode: 'upgrade' | 'fresh') {
       assert.equal(acceptance.status, 0, 'WP17 read-only acceptance preflight failed')
       console.log('WP17 ACCEPTANCE PREFLIGHT PASS: actual isolated migration database; closed gates/no external credentials')
       await configureSyntheticRoles(db, runtime, diagnostic)
-      await assertSyntheticRoles(db, runtime, diagnostic)
+      await assertSyntheticRoles(db, runtime, diagnostic, names.length)
       await restoreSyntheticDatabase(admin, db, database, exams)
     }
     console.log(`PASS: ${mode}; ${appliedNames.length}/${appliedNames.length} migrations, checksums/repeat, least privilege, exam history and retention protection`)

@@ -70,7 +70,7 @@ export async function deliverLearningCertificateEmails(input: { limit?: number; 
     const certificate = await db.learningCertificate.findFirst({
       where: { id: payload.certificateId, userId: job.recipientUserId, status: 'ACTIVE' },
       select: {
-        certificateNumber: true, courseTitle: true, firstName: true, lastName: true, issuedAt: true, templateVersion: true,
+        certificateNumber: true, courseTitle: true, courseVersion: true, firstName: true, lastName: true, issuedAt: true, templateVersion: true,
         user: { select: { email: true, emailVerified: true, status: true } },
       },
     })
@@ -80,6 +80,7 @@ export async function deliverLearningCertificateEmails(input: { limit?: number; 
       firstName: certificate.firstName,
       lastName: certificate.lastName,
       courseTitle: certificate.courseTitle,
+      courseVersion: certificate.courseVersion,
       certificateNumber: certificate.certificateNumber,
       issuedAt: certificate.issuedAt,
     })
@@ -180,7 +181,7 @@ async function deliverCertificateResendJob(
     const { getPlatformOperatorContext } = await import('@/lib/platform-admin/platform-admin-authorization')
     try { await getPlatformOperatorContext(payload.data.requestedByUserId) } catch { return await finish('FAILED','CERTIFICATE_REQUESTER_NO_LONGER_AUTHORIZED') }
     const certificate = await db.learningCertificate.findFirst({ where: { id: payload.data.certificateId, userId: job.recipientUserId, status: 'ACTIVE' },
-      select: { certificateNumber: true, courseTitle: true, firstName: true, lastName: true, issuedAt: true, templateVersion: true,
+      select: { certificateNumber: true, courseTitle: true, courseVersion: true, firstName: true, lastName: true, issuedAt: true, templateVersion: true,
         user: { select: { email: true, emailVerified: true, status: true } } } })
     if (!certificate || certificate.user.status !== 'ACTIVE' || !certificate.user.emailVerified
       || certificateRecipientFingerprint(payload.data.certificateId, certificate.user.email) !== payload.data.recipientFingerprint) return await finish('FAILED','CERTIFICATE_NOT_DELIVERABLE')

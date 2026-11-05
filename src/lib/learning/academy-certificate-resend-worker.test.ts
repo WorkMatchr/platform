@@ -10,7 +10,7 @@ import {AuthEmailDeliveryError} from '@/lib/email'
 const ids={certificate:randomUUID(),user:randomUUID(),actor:randomUUID(),organization:randomUUID(),job:randomUUID()}
 const tick=new Date('2026-10-25T12:00:00Z')
 function setup(){
- const certificate={certificateNumber:'WM-RIE-2026-0123456789ABCDEF01234567',courseTitle:'RI&E in de praktijk',firstName:'Historische',lastName:'Naam',issuedAt:new Date('2026-01-01T12:00:00Z'),templateVersion:'WL-001-CERT-1.0',user:{email:'student@example.invalid',emailVerified:true,status:'ACTIVE'}}
+ const certificate={certificateNumber:'WM-RIE-2026-0123456789ABCDEF01234567',courseTitle:'RI&E in de praktijk',firstName:'Historische',lastName:'Naam',issuedAt:new Date('2026-01-01T12:00:00Z'),templateVersion:'ACADEMY-CERT-2.0',courseVersion:'2.0',user:{email:'student@example.invalid',emailVerified:true,status:'ACTIVE'}}
  const payload={certificateId:ids.certificate,requestedByUserId:ids.actor,platformOrganizationId:ids.organization,actorRole:'PLATFORM_OWNER',recipientFingerprint:certificateRecipientFingerprint(ids.certificate,certificate.user.email)}
  const job={id:ids.job,templateKey:'LEARNING_CERTIFICATE_RESEND',channel:'EMAIL',status:'PROCESSING',recipientUserId:ids.user,payload,idempotencyKey:'EMAIL:ACADEMY_RESEND:test',attemptCount:1,firstAttemptAt:tick,deliveryFingerprint:null}
  const audits:unknown[]=[]
@@ -41,6 +41,13 @@ describe('explicit certificate resend worker, fake delivery only',()=>{
   expect(state.pdf).toHaveBeenCalledWith(certificate);expect(JSON.stringify(certificate)).toBe(before)
   expect(audits).toEqual([expect.objectContaining({actorUserId:ids.actor,entityId:ids.certificate,action:'ACADEMY_CERTIFICATE_RESEND_SENT',metadata:expect.objectContaining({result:'SENT'})})])
   expect(db.$transaction).toHaveBeenCalled()
+ })
+ it('passes the stored course version to the first-delivery PDF renderer',async()=>{
+  const {db,job,send,certificate}=setup()
+  job.templateKey='LEARNING_CERTIFICATE_ISSUED'
+  expect(await deliverLearningCertificateEmails({send,limit:1,now:()=>tick})).toMatchObject({sent:1,failed:0})
+  expect(db.learningCertificate.findFirst).toHaveBeenCalledWith(expect.objectContaining({select:expect.objectContaining({courseVersion:true})}))
+  expect(state.pdf).toHaveBeenCalledWith(expect.objectContaining({courseVersion:certificate.courseVersion,templateVersion:'ACADEMY-CERT-2.0'}))
  })
  it.each(['REVOKED','UNVERIFIED','INACTIVE','CHANGED_EMAIL','ACTOR_REVOKED'])('fails closed for %s and audits without provider call',async condition=>{
   const {db,certificate,send,audits}=setup()
