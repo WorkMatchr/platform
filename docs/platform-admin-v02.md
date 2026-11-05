@@ -1,5 +1,88 @@
 # Platformbeheer v0.2 — vergelijking
 
+## Afrondingscontrole PR #91 — 5 november 2026
+
+Gecontroleerde PR-head: `855bfa89cd4b4a8a778e4daf717abeb7414a17ce`.
+Actuele origin/main: `a315db8c7738b8862a92d9f8517b0315e3b14d1f`; de PR
+staat één commit voor en nul achter. Geen mergeconflict of LMS-overname.
+
+### Vercel Preview: configuratieblokkade
+
+De volledige buildlog is in tijdvakken zonder afkapping gecontroleerd (182 events).
+Deployment: `dpl_GbXJnCwt6zhMHrKzZyFAmzTGXpMT`.
+Compilatie slaagt in 6,5 s en TypeScript in 13,5 s. Vervolgens faalt het verzamelen
+van pagina/configuratiegegevens voor `/_not-found` met
+`PREVIEW_DATABASE_ISOLATION_REQUIRED`, vanuit
+`src/lib/maintenance/preview-isolation.ts:48` via Prisma/auth.
+`BUILD_UTILS_SPAWN_1` is de afsluitmelding, niet de primaire oorzaak.
+
+Dit bewijst dat de bestaande Preview-configuratie niet aan het isolatiecontract
+voldoet. De generieke fout bewijst niet welke afzonderlijke variabele ontbreekt
+of afwijkt. Geen secretwaarde opgevraagd of gepubliceerd. Geen bewezen fout in
+de navigatiewijziging; de beveiliging, configuratie en featuregates zijn behouden.
+
+Veilige vervolgstap: een bevoegde operator moet voor deze Preview de bestaande
+isolatievoorwaarden aantonen (afzonderlijke database en rol, kloppende metadata,
+TLS, expliciete infrastructuuracceptatie en geen verboden overgeërfde provider-
+of alternatieve databasecredentials). Pas daarna Preview opnieuw laten bouwen.
+Geen placeholderwaarde, `VERCEL_ENV`-omzeiling of gedeelde productiedatabase gebruiken.
+
+De Node-enginewaarschuwing (Vercel kiest 26.x bij `>=24.0.0` ondanks projectinstelling
+24.x) en drie dynamische filesystem-tracingwaarschuwingen zijn afzonderlijke
+bestaande aandachtspunten; zij veroorzaken de aangetroffen afbreking niet.
+GitHub Actions op de gecontroleerde head zijn geslaagd; Vercel is FAILURE.
+
+### Aanvullende acceptatie: werkelijk uitgevoerd
+
+- 126/126 gerichte tests in 16 suites PASS: v0.2-shell, gedeelde shell, navigatie,
+  platformautorisatie, versievoorkeur en Preview-isolatie.
+- Volledige lint: nul fouten, vier bestaande authnavigatiewaarschuwingen.
+- Standalone `npm run typecheck`: PASS.
+- Productiebuild PASS (172 paginas), met drie bestaande filesystem-tracingwaarschuwingen.
+  Hiervoor uitsluitend lokale buildconfiguratie gebruikt; geen databaseverbinding.
+- Diff-check en controle van toegevoegde regels op secrets/private metadata PASS.
+- Bestaande authharness met uitsluitend een nieuwe lokale synthetische PostgreSQL-
+  omgeving: 95/95 migraties, checksums en ongewijzigde tweede deploy PASS.
+- Opdrachtgever/professional/platformbeheer: sessieduur, sessievernieuwing,
+  daadwerkelijke DB-intrekking, deactivering, autorisatie en tenantisolatie PASS.
+  PostgreSQL-foutinjectie bij logout, gelijktijdige retry, ongeldige/verlopen
+  sessies PASS. Dit zijn integratietests, geen vervanging van browseracceptatie.
+- Echte browserlogin als synthetische platform-OWNER: PASS. Academy toont alle
+  zes niet-beschikbare rubrieken zonder links; vergelijkingslink ontbreekt,
+  Account en één Uitloggen-actie zijn zichtbaar.
+- Desktop 1440 px en mobiel 390 px: geen horizontale overflow; mobiele header
+  breekt naar twee regels. Enter sluit Academy, Spatie opent; zichtbare focus
+  met een gemeten blauwe outline van 2,4 px: PASS.
+- Account met Enter geactiveerd; bestemmingspagina niet meer geverifieerd.
+- De Windows-browserbediening stopte wegens onvoldoende betrouwbare herkenning
+  van de actuele browser-URL. Daarom blijven echte 200%-zoom, de volledige
+  Account/logout-browserflow en ingelogde ADMIN/MEMBER-browseracceptatie OPEN.
+  De bestaande OWNER/ADMIN/MEMBER-regressietests zijn wel groen.
+- De onderbroken browserflow liet één synthetische sessie achter. De harness
+  meldde terecht een mislukte eindassertie voor nul sessies; dit is geen PASS
+  voor browserlogout. De finally-cleanup verwijderde de eigen testdatabase met
+  die sessie en testaccounts, het credentialbestand, de tijdelijke server en
+  uitsluitend de eigen gelabelde container. Bestaande databases/container behouden.
+- Contact, F4 en Learning bleven in de lokale testomgeving uitgeschakeld.
+
+### Academy-integratiebesluit
+
+De kandidaat `codex/academy-content-approval` op `7434ae2` bevat zelf al een
+Academy-hoofdstuk. Neem bij een latere afzonderlijke review één menu op en vervang
+zowel dat hoofdstuk als dit tijdelijke sidebarblok. Behoud de zes rubrieken:
+Cursussen, Hoofdstukken en lessen, Vragenbanken, Eindtoetsen, Deelnemers en
+resultaten, Certificaten. Gebruik de hierboven geïnventariseerde werkelijke
+routes; hoofdstukken/lessen en eindtoetsen zijn cursusversieonderdelen.
+`beoordelingen` is geen deelnemers/resultatenoverzicht. Behoud ook bestaande
+beoordelingsverzoeken en prijsbeheer op hun bevoegde plek; verwijder die functies
+niet bij het samenbrengen van menu's. Ontbrekende rubrieken blijven zonder link.
+De Learning-layoutgate en server-side platformoperatorautorisatie blijven beide
+nodig; een zichtbare link of ingeschakelde gate verleent geen bevoegdheid.
+
+**Mergeadvies: NO-GO** zolang Preview-isolatie en de hierboven expliciet open
+browseracceptatie niet zijn afgerond. Geen aangetoonde navigatiecodefout om te
+herstellen. Geen merge, productiehandeling of LMS-integratie uitgevoerd.
+
 ## Actuele navigatieaanpassing — 4 november 2026
 
 Basis: main `a315db8`; afzonderlijke branch `codex/admin-academy-navigation`.
