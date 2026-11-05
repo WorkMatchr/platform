@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [Arbo Compliance en Kenniscentrum: afronding en acceptatiegrenzen](compliance/arbo-compliance-knowledge-completion.md)
+
 - [Productiedatabase: schrijfpauze, herstel en migratieacceptatie](database-upgrade-preparation.md)
 
 - [Gecombineerde eindacceptatie en gesloten besluitregister](combined-final-acceptance.md)
