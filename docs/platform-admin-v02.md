@@ -1,5 +1,118 @@
 # Platformbeheer v0.2 — vergelijking
 
+## Final Admin Acceptance PR #91 — 5 november 2026
+
+Deze hercontrole geldt voor head `e4352e4cab9b0defbaef84e7d31a85a62744be69`.
+Na fetch is main `a315db8c7738b8862a92d9f8517b0315e3b14d1f`: nul commits
+achter, twee voor. Deze actuele resultaten gaan vóór de historische notities
+hieronder. Geen aangetoond code- of autorisatiedefect gewijzigd; uitsluitend dit verslag.
+
+### Werkelijke browseracceptatie
+
+Een afzonderlijke Edge-testsessie gebruikte een nieuwe lokale PostgreSQL 18-
+database met uitsluitend synthetische accounts en een tijdelijk credential.
+Contactmail, F4, Learning en de testaccountwisselaar bleven uit.
+Geen productie-/Preview-verbinding of provideractie.
+
+| Controle | Resultaat deze uitvoering | Bewijs / beperking |
+| --- | --- | --- |
+| OWNER inloggen | PASS | Echt inlogformulier, redirect naar /platformbeheer; één sessie in de tijdelijke database. |
+| OWNER Academy / header | PASS voor DOM-controle | Zes rubrieken met ‘Nog niet beschikbaar’, geen Academy-links; vergelijkingslink ontbreekt, Account en Uitloggen aanwezig. |
+| OWNER Account openen | BLOCKED | Niet uitgevoerd vóór stop van de browserbediening. |
+| OWNER uitloggen, intrekking en beveiligde pagina opnieuw bezoeken | BLOCKED | Browserlogout niet uitgevoerd. Eén sessie over bij onderbreking; geen geslaagde intrekking geclaimd. |
+| ADMIN inloggen en zes rubrieken | BLOCKED | Synthetisch account gereed, browserflow niet uitgevoerd. |
+| MEMBER inloggen en uitsluitend auditnavigatie | BLOCKED | Synthetisch account gereed, browserflow niet uitgevoerd. |
+| Afgeschermde routes via ingelogde browser | BLOCKED | Serverautorisatie apart getest; geen vervanging van de browserproef. |
+| Desktop, mobiel en horizontale overflow | BLOCKED | Geen nieuwe volledige visuele controle. Eerdere viewportmetingen blijven historisch bewijs. |
+| Toetsenbord, zichtbare focus, geen dubbele logout | BLOCKED | Componentregressies slagen; actuele native interactiecontrole niet afgerond. |
+| Echte 200% browserzoom | BLOCKED | Geen zoomactie of nieuwe menselijke acceptatie voor deze uitvoering. Acceptatie van andere PR's telt niet voor #91. |
+
+De eerste browserstart binnen de afgeschermde toolruntime kon Edge niet starten;
+het expliciete Edge-pad gaf een beëindigde pipe. Een eigen lokale Edge-testsessie
+buiten die runtime startte wel. CDP vanuit de toolruntime gaf EACCES op loopback;
+de geautoriseerde lokale harness kon dezelfde eigen browser wel bereiken en de
+OWNER-login uitvoeren.
+
+Bij het bekijken van dat testvenster beëindigde Windows Computer Use de bediening:
+“could not determine the current browser URL on Windows with enough confidence
+to enforce policy”. Hierna is geen verdere browserbediening uitgevoerd en geen
+veiligheidscontrole omzeild. Dit is een testuitvoerbeperking, geen bewezen
+applicatiefout. Geen nieuwe screenshots of geslaagde zoommetingen te rapporteren.
+
+De eindassertie van de browserharness faalde terecht met
+`Browser acceptance must finish logged out: 1 !== 0`. De finally-cleanup verwijderde
+de eigen database inclusief die sessie en alle synthetische accounts, de tijdelijke
+credentialfixture en uitsluitend de eigen container. De eigen browser, het profiel
+en de acceptatieserver zijn gesloten/verwijderd. Bestaande containers/databases
+behouden. Cleanup is **geen** bewijs van geslaagde browserlogout.
+
+### Gerichte validatie
+
+- **155/155 tests in 34 suites PASS**: platformbeheerpolicy/autorisatie,
+  OWNER/ADMIN/MEMBER-navigatie, shells, acties, versievoorkeur, testaccountwisselaar,
+  auth/sessies, logout met Compliance-concepten en organisatieautorisatie.
+- Bestaande authharness op eigen PostgreSQL 18: **95/95 migraties** met correcte
+  checksums; herhaalde deploy ongewijzigd. Uitsluitend de lokale testdatabase.
+- Opdrachtgever, professional en platform-OWNER: sessiecookie/maximaal 24 uur,
+  expliciet blijvende sessie/zeven dagen en vernieuwing, serverautorisatie,
+  tenantisolatie, deactivering en database-intrekking PASS.
+- Werkelijke PostgreSQL-foutinjectie bij sessieverwijdering: 503 zonder vals
+  logoutsucces; retry en gelijktijdige logout geven nul sessies; ongeldige en
+  verlopen sessies geweigerd. Integratietest PASS, onafhankelijk van browseracceptatie.
+- Volledige lint PASS: nul fouten, vier bestaande authnavigatiewaarschuwingen.
+- Standalone TypeScript PASS: nul fouten.
+- Productiebuild PASS: 172 pagina's, drie bestaande dynamische filesystem-tracingwaarschuwingen. Uitsluitend lokale buildconfiguratie, geen databaseverbinding.
+- Diff-check en secrets-/metadatacontrole van het staged document: PASS.
+
+### Academy-integratiematrix op daadwerkelijke PR-heads
+
+Read-only vergeleken:
+
+- PR #93: `a7c903130771ca8302536ea6df6055b76fe22fd4`.
+- PR #94: `19ba769a920125f8c22f74e89b1aab11f6f24d00`, gestapeld op #93.
+
+| Rubriek | Bestaande beheerroute in #93 / #94 | Integratievoorwaarde |
+| --- | --- | --- |
+| Cursussen | /platformbeheer/academy/cursussen en /platformbeheer/academy/cursussen/[versionId] | Bestaande cursuskeuze en versie-editor gebruiken. |
+| Hoofdstukken en lessen | Binnen /platformbeheer/academy/cursussen/[versionId] | Geen losse hoofdstukkenroute. #94 gebruikt voor bundles de volledige bundle-editor; eerst cursusversie kiezen. |
+| Vragenbanken | /platformbeheer/academy/vragen; reviewexport onder /vragen/export | Bestaande beschermde beheerfunctie, geen deelnemersvragenroute. |
+| Eindtoetsen | Cursusversie-editor; review via /platformbeheer/academy/vragen | Geen losse eindtoetsbeheerroute verzinnen. Bestaande bankfilters gebruiken. |
+| Deelnemers en resultaten | Sectie binnen /platformbeheer/academy/cursussen/[versionId] | Beide heads lezen enrollments/examAttempts via de beschermde authoringservice. Geen los totaaloverzicht aangetoond. Geen deelnemersroute als vervanging. |
+| Certificaten | /platformbeheer/academy/certificaten, /[certificateId], /[certificateId]/pdf en /zoeken | Bestaande operatorautorisatie/gate behouden. Niet vooruitlopen op latere certificaatontwerper-PR's. |
+
+#93 en #94 voegen zelf een Academy-hoofdstuk toe in
+`platform-admin-navigation-v02.ts`, inclusief bestaande routes voor
+beoordelingsverzoeken en prijzen. Een ongewijzigde combinatie met de sidebar van
+#91 levert twee Academy-menu's op. Bij de afzonderlijke integratiereview moet één
+bestaande navigatiepresentatie overblijven, met alle zes afgesproken rubrieken en
+behoud van bestaande functies. Dit verslag importeert of activeert geen LMS-code.
+
+De Academy-layout faalt gesloten wanneer `LEARNING_RUNTIME_ENABLED` niet aanstaat.
+De authoringservice controleert de actuele gebruiker en
+`getPlatformOperatorContext`; certificaatbeheer gebruikt
+`requirePlatformOperator`. MEMBER behoudt uitsluitend auditnavigatie.
+#93/#94 hebben 109 migraties tegenover 95 in #91. Routeaanwezigheid is geen bewijs
+van een gemigreerde of vrijgegeven productieomgeving. Alle zes rubrieken blijven
+in #91 niet-navigeerbaar ‘Nog niet beschikbaar’.
+
+### WP20 en definitief advies
+
+`PREVIEW_DATABASE_ISOLATION_REQUIRED` blijft een infrastructuurafhankelijkheid
+van WP20. Preview-beveiliging, productieconfiguratie en featuregates ongewijzigd.
+Op de gecontroleerde head zijn de GitHub-checks groen en is Vercel FAILURE;
+de eerdere oorzaakanalyse staat hieronder. Groen GitHub CI is geen Preview-PASS.
+
+**Technisch acceptatieadvies: NO-GO.** Resterend:
+
+1. De geblokkeerde browsercontroles hierboven, waaronder ADMIN/MEMBER,
+   Account/logout, routeafscherming en echte 200%-zoom.
+2. Een aantoonbaar geïsoleerde, succesvolle Preview via WP20.
+
+Een volgende browserproef vereist werkende URL-herkenning/bediening van het
+lokale testvenster of expliciete handmatige uitvoering door de Product Owner.
+De browserblokkade is geen PASS en geen uitsluitend externe WP20-afhankelijkheid.
+PR #91 blijft Draft; geen merge of productiedeployment.
+
 ## Afrondingscontrole PR #91 — 5 november 2026
 
 Gecontroleerde PR-head: `855bfa89cd4b4a8a778e4daf717abeb7414a17ce`.
