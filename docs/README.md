@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [Compliance F4: duurzame concepten, prijscontract en functionele acceptatie](compliance/f4-functional-completion.md)
+
 - [Arbo Compliance en Kenniscentrum: afronding en acceptatiegrenzen](compliance/arbo-compliance-knowledge-completion.md)
 
 - [Productiedatabase: schrijfpauze, herstel en migratieacceptatie](database-upgrade-preparation.md)

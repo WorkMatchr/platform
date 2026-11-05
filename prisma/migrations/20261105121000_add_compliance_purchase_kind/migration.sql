@@ -1,0 +1,1 @@
+ALTER TYPE "FinancialPurchaseKind" ADD VALUE 'COMPLIANCE_SCAN';

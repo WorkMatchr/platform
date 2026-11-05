@@ -28,6 +28,7 @@ export function LogoutButton({ className = '', variant = 'outline' }: LogoutButt
         setError('De sessie is beëindigd, maar de browser kon de lokale conceptopslag niet verwijderen. Wis deze via uw browserinstellingen op dit apparaat.')
         return
       }
+      window.dispatchEvent(new Event('workmatchr:signed-out'))
       window.location.assign('/')
     } catch {
       setError('Uitloggen is niet gelukt. Probeer het opnieuw. Het wissen van uw lokale Compliance-concept is al uitgevoerd of geprobeerd.')
@@ -36,6 +37,7 @@ export function LogoutButton({ className = '', variant = 'outline' }: LogoutButt
 
   async function requestLogout() {
     if (active.current) return
+    if (!window.dispatchEvent(new Event('workmatchr:before-sign-out', { cancelable: true }))) return
     active.current = true; setLoading(true); setError('')
     const hasDraft = await hasComplianceDraft()
     active.current = false; setLoading(false)

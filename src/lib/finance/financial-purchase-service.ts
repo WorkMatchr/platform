@@ -204,12 +204,16 @@ export async function createCreditPurchase(
     return created
   })
 
+  return createFinancialPurchaseCheckout(purchase, gateway)
+}
+
+export async function createFinancialPurchaseCheckout(purchase: Awaited<ReturnType<Transaction['financialPurchase']['findUniqueOrThrow']>>, gateway: MollieGateway, returnPath?: string) {
   if (purchase.molliePaymentId && purchase.mollieCheckoutUrl) return purchase
   let redirectUrl: string
   let webhookUrl: string
   try {
     const { webhookBaseUrl, redirectBaseUrl } = getMollieUrls()
-    redirectUrl = new URL(`/credits/betaling/${purchase.id}`, redirectBaseUrl).toString()
+    redirectUrl = new URL(returnPath ?? `/credits/betaling/${purchase.id}`, redirectBaseUrl).toString()
     webhookUrl = new URL('/api/payments/mollie/webhook', webhookBaseUrl).toString()
   } catch (error) {
     logCreditPaymentFailure({
