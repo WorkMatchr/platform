@@ -255,3 +255,4 @@ Zie [legacy intake naar gedeelde Simple Advice Flow](legacy-intake-unification.m
 - [Compliance F4 — 46 claimreviews en read-only publicatiecontrole](compliance-f4-knowledge-publication.md)
 
 - [Commerciële afronding: contactoutbox, ketenacceptatie en beheervoorwaarden](commercial-launch-finalization.md)
+- [Academy — visuele certificaatontwerper en veilige versies](academy-certificate-designer.md)

@@ -2,6 +2,7 @@ import 'server-only'
 import { randomBytes } from 'node:crypto'
 import { Prisma } from '@/generated/prisma/client'
 import { getPrisma } from '@/lib/prisma'
+import { certificateDesignForIssue } from './certificate-design-service'
 import { resolveAcademyDefinition } from './academy-course-definition'
 
 export { LEARNING_CERTIFICATE_TEMPLATE_VERSION } from './learning-certificate-template'
@@ -53,6 +54,7 @@ export async function ensureCertificateForPassedExam(userId: string, courseCode 
     const certificate = await db.$transaction(async (transaction) => {
       const current = await transaction.learningCertificate.findUnique({ where: { courseId_userId: { courseId: eligibility.examVersion.courseVersion.course.id, userId } } })
       if (current) return current
+      const design = await certificateDesignForIssue(transaction, eligibility.examVersion.courseVersion.course.id, courseCode)
       const created = await transaction.learningCertificate.create({
         data: {
           userId,
@@ -65,7 +67,8 @@ export async function ensureCertificateForPassedExam(userId: string, courseCode 
           courseTitle: eligibility.examVersion.courseVersion.course.title,
           courseVersion: eligibility.examVersion.courseVersion.version,
           examVersion: eligibility.examVersion.version,
-          templateVersion: resolveAcademyDefinition(eligibility.examVersion.courseVersion.course, eligibility.examVersion.courseVersion.sourceMetadata).certificateTemplateVersion,
+          designSnapshot: design ? design as Prisma.InputJsonValue : undefined,
+          templateVersion: design ? 'ACADEMY-DESIGN-1' : resolveAcademyDefinition(eligibility.examVersion.courseVersion.course, eligibility.examVersion.courseVersion.sourceMetadata).certificateTemplateVersion,
           issuedAt: eligibility.submittedAt!,
         },
       })
