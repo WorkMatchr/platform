@@ -1,3 +1,4 @@
+import { complianceReportSources } from '@/lib/compliance/compliance-report-sources'
 import type { ComplianceV2Report } from '@/lib/compliance/compliance-v2'
 
 export function ComplianceV2ReportView({ report }: { report: ComplianceV2Report }) {
@@ -5,7 +6,7 @@ export function ComplianceV2ReportView({ report }: { report: ComplianceV2Report 
     <section className="rounded-card border border-brand-primary/20 bg-brand-primary-subtle p-6">
       <h2 className="text-xl font-bold text-brand-dark">Samenvatting</h2>
       <p className="mt-3 text-text-secondary">{report.summary.order} op orde · {report.summary.attention} aandacht nodig · {report.summary.action} actie vereist · {report.summary.notAssessed} niet beoordeeld · {report.summary.notApplicable} niet van toepassing</p>
-      <p className="mt-2 text-sm text-text-secondary">Beoordelingsversie {report.assessmentVersion} · rapportversie {report.reportVersion}</p>
+      <p className="mt-2 text-sm text-text-secondary">Beoordelingsmethode {report.framework.frameworkCode} / {report.framework.version} · rapportversie {report.reportVersion}</p>
     </section>
     {report.results.map(result => <article key={result.id} className="rounded-card border border-border bg-surface p-6 shadow-card">
       <h2 className="text-xl font-bold text-brand-dark">{result.title}</h2>
@@ -18,8 +19,9 @@ export function ComplianceV2ReportView({ report }: { report: ComplianceV2Report 
       <ul className="mt-4 space-y-2 text-text-secondary">{result.evidence.map(e => <li key={e.ruleId}>
         <strong>{e.basis === 'LEGAL_REQUIREMENT' ? 'Wettelijke verplichting' : 'Praktische aanbeveling'}:</strong> {e.explanation}
       </li>)}</ul>
-      <ul className="mt-4 space-y-2 text-sm">{result.sources.map(source => <li key={`${source.id}-${source.claimId}`}>
+      <ul className="mt-4 space-y-2 text-sm">{complianceReportSources(report, result.id).map(source => <li key={`${source.id}-${source.sourceVersionId}-${source.claimId}-${source.claimChecksum}`}>
         <a href={source.url} target="_blank" rel="noopener noreferrer" className="text-brand-primary underline focus-visible:outline-2 focus-visible:outline-offset-4">{source.title}</a> · {source.publisher} · beoordeeld {source.reviewedAt}
+        <details className="mt-1 break-words"><summary className="cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4">Bronverantwoording</summary><p>Bronrevisie: {source.sourceVersionId}</p><p>Claimreferentie: {source.claimId}</p></details>
       </li>)}</ul>
     </article>)}
     <p className="text-sm text-text-secondary">{report.disclaimer}</p>

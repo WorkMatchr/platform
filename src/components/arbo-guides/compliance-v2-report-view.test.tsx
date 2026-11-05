@@ -1,3 +1,5 @@
+import { multiSourceReport } from '@/test-fixtures/compliance-multi-source'
+import { PDFDocument, PDFName, PDFString } from 'pdf-lib'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import { describe, expect, it, vi } from 'vitest'
@@ -53,4 +55,26 @@ describe('Versiegebonden historische rapportlezers', () => {
     expect(text).toContain('Wettelijke verplichting')
     expect(JSON.stringify(r)).toBe(before)
   })
+})
+
+it('behoudt alle snapshot-claimbindings in HTML en PDF, inclusief meerdere richtlijnen', async () => {
+  const report = multiSourceReport(), before = JSON.stringify(report)
+  const html = renderToStaticMarkup(<ArboGuideReportView report={report} />)
+  const bytes = await buildComplianceReportPdf(report)
+  const metadata = await PDFDocument.load(bytes)
+  expect(metadata.catalog.lookup(PDFName.of('Lang'), PDFString).decodeText()).toBe('nl-NL')
+  const task = getDocument({ data: bytes, disableFontFace: true, useSystemFonts: false, verbosity: 0 })
+  const pdf = await task.promise, pages: string[] = []
+  try {
+    for (let i = 1; i <= pdf.numPages; i++) pages.push((await (await pdf.getPage(i)).getTextContent()).items.map(item => 'str' in item ? item.str : '').join(' '))
+  } finally { await task.destroy() }
+  for (const title of ['Tweede beoordeelde claim', 'Andere bronrevisie', 'Tweede richtlijn']) {
+    expect(html).toContain(title)
+    expect(pages.join(' ')).toContain(title)
+  }
+  expect(html).toContain('NL_ARBO_GUIDE / 2.1')
+  expect(pages.join(' ')).toContain('NL_ARBO_GUIDE / 2.1')
+  expect(pages.join(' ')).toContain('50000000-0000-4000-8000-000000000002')
+  expect(pages.join(' ')).toContain('40000000-0000-4000-8000-000000000002')
+  expect(JSON.stringify(report)).toBe(before)
 })

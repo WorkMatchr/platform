@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib'
 import type { ArboGuideReportSnapshot } from '@/lib/arbo-guides/arbo-guide-run-service'
 import { groupArboGuideSources, normalizeArboGuideReportSource } from '@/lib/arbo-guides/arbo-guide-sources'
+import { complianceReportSources } from '@/lib/compliance/compliance-report-sources'
 import type { ComplianceReportData } from './compliance-report'
 
 const PAGE_WIDTH = 595.28
@@ -64,6 +65,7 @@ export async function buildComplianceReportPdf(report: ArboGuideReportSnapshot |
   const guideTitle = options.guideTitle ?? 'Compliance-wijzer'
   document.setTitle(`WorkMatchr ${guideTitle} rapport`)
   document.setAuthor('WorkMatchr')
+  document.setLanguage('nl-NL')
   document.setSubject(`Indicatieve ${guideTitle}, beoordelingsset versie ${report.assessmentVersion}`)
   document.setCreationDate(new Date(report.scannedAt))
   const regular = await document.embedFont(StandardFonts.Helvetica)
@@ -143,6 +145,7 @@ export async function buildComplianceReportPdf(report: ArboGuideReportSnapshot |
   if (options.reportNumber) text(`Rapportnummer: ${options.reportNumber}`, { font: bold, gapAfter: 3 })
   text(`Datum van de scan: ${scanDate}`, { color: muted, gapAfter: 3 })
   text(`Beoordelingsset: versie ${report.assessmentVersion}`, { color: muted, gapAfter: 18 })
+  if ('framework' in report) text(`Beoordelingsmethode: ${report.framework.frameworkCode} / ${report.framework.version}`, { color: muted, gapAfter: 3 })
   text(`Rapportstructuur: versie ${report.reportVersion}`, { color: muted, gapAfter: 18 })
   text(`Dit rapport vat de uitkomst van de gratis ${guideTitle} samen. Het bevat geen formele goedkeuring, score of certificaat.`, { color: muted })
 
@@ -199,13 +202,19 @@ export async function buildComplianceReportPdf(report: ArboGuideReportSnapshot |
   }
 
   heading('Geraadpleegde bronnen')
-  const sourceGroups = groupArboGuideSources(report.sources.map(normalizeArboGuideReportSource))
+  const sourceGroups = v2
+    ? [{ label: 'Bronbindingen van deze beoordeling', sources: complianceReportSources(v2) }]
+    : groupArboGuideSources(report.sources.map(normalizeArboGuideReportSource))
   for (const group of sourceGroups) {
     text(group.label, { font: bold, size: 11, color: brandDark, gapAfter: 3 })
     for (const source of group.sources) {
       text(`${source.title} - ${source.publisher}`, { font: bold, gapAfter: 1 })
       text(source.url, { color: brandBlue, gapAfter: 1 })
       text(`Door WorkMatchr gecontroleerd op ${source.reviewedAt}`, { size: 8.5, color: muted, gapAfter: 6 })
+      if ('sourceVersionId' in source && 'claimId' in source) {
+        text(`Bronrevisie: ${source.sourceVersionId}`, { size: 8.5, color: muted })
+        text(`Claimreferentie: ${source.claimId}`, { size: 8.5, color: muted })
+      }
     }
   }
 
