@@ -88,6 +88,20 @@ Reproduceerbaar met `npm run test:db:compliance-runs -- --browser`: expliciete l
 3. Handmatige echte 200%-zoom, schermlezer en onafhankelijke PDF-toegankelijkheidsacceptatie.
 4. Afzonderlijke migratie-/releaseautorisatie en Preview-integratie via WP20. Geen automatische publicatie.
 
+## Aanvullende CI-correctie
+
+De eerste GitHub PostgreSQL-job stopte vóór de databasetests: de historische D2C-testfixture bouwde zijn 85 reeds toegepaste migraties uit alle huidige bestanden behalve twee bekende uitzonderingen. De drie nieuwe F4-migraties werden daardoor ten onrechte als historische registraties geteld (88 versus 85). Uitsluitend `scripts/audit-d2c-preflight.test.mjs` is begrensd op de laatste migratie van het historische plan. De echte `audit-d2c-preflight.mjs`, het 85/93-contract en de weigering van alle latere ongeautoriseerde migraties blijven ongewijzigd. Alle **70/70** bijbehorende offline recovery-/preflight-/archiveguardtests slagen. Dit is een door de nieuwe migraties blootgelegde fixturefout, geen productievrijgave.
+
+Dezelfde migratie-uitbreiding vereiste gerichte afstemming van de synthetische contact- en rolfixtures: de volledige registry wordt nu op alle actuele bestandsnamen/checksums vergeleken, terwijl de historische contactbaseline exact 85 blijft. De expliciete laatste-migratieguard in de integriteitsharness en de uitsluitend lokale WP17-preflight zijn op 98 gezet. Geen productiepreflight of veiligheidscheck is verruimd. WP20 moet bij integratie deze lokale scriptwijzigingen behouden/afstemmen; Preview-infrastructuur is niet aangepast.
+
+Aanvullend PostgreSQL-bewijs: 17 commerciële matchingfixtures en de fake betaling → ledger → ontgrendeling → offerte/gunning-keten onder beperkte runtime-rol PASS. Contact: **27/27 PASS op 98 migraties én 27/27 PASS op de synthetische 85-baseline**, inclusief 100 dagen scheduleronderbreking, concurrentie en rollback; nul externe provideracties.
+
+Integriteitsharness: **upgrade en fresh beide 98/98 PASS**, 96 expliciet geweigerde mutatie-/privilegepogingen, historische examenvraag- en retentiebeveiliging behouden. Beperkte runtime-/diagnoserollen: 13 verboden operaties geweigerd. Read-only lokale preflight PASS, bestaande database-/rolinventaris na cleanup ongewijzigd. Een eerste lokale poging weigerde terecht een geërfde maintenance-omgevingsvariabele; de herhaling gebruikte een expliciet geschoonde testprocesomgeving. Er is geen bestaande credential gewijzigd en geen externe verbinding gebruikt. De optionele CI-only dump/restore-uitbreiding is lokaal niet herhaald.
+
+Lint, standalone TypeScript en production build zijn na deze fixturecorrecties opnieuw PASS (dezelfde bestaande waarschuwingen). De laatste eigen testcontainer/volume en credentials zijn eveneens verwijderd.
+
+Vercel op commit `508490a` blokkeert tijdens page-data-collectie met **PREVIEW_DATABASE_ISOLATION_REQUIRED**. TypeScript-compilatie was daar afgerond. Dit is de bestaande Preview-isolatieguard, geen reden om de guard te omzeilen. Veilige Preview-inrichting blijft bij WP20. Lokale production build slaagt; externe Preview-acceptatie is BLOCKED totdat de infrastructuur onafhankelijk is vrijgegeven.
+
 ## Definitieve kwaliteitscontrole en cleanup
 
 - Volledige `npm run lint`: PASS, nul fouten; vier bestaande `location.assign`-waarschuwingen.
@@ -109,12 +123,17 @@ Reproduceerbaar met `npm run test:db:compliance-runs -- --browser`: expliciete l
 - `prisma/migrations/20261105121000_add_compliance_purchase_kind/migration.sql`
 - `prisma/migrations/20261105122000_bind_compliance_purchase/migration.sql`
 - `prisma/schema.prisma`
+- `scripts/audit-d2c-preflight.test.mjs`
 - `scripts/fixtures/compliance-f4-browser.ts`
 - `scripts/fixtures/compliance-f4-database.ts`
 - `scripts/fixtures/compliance-f4-drafts-database.ts`
 - `scripts/fixtures/compliance-f4-payment-database.ts`
+- `scripts/fixtures/database-role-policy.ts`
 - `scripts/test-compliance-f4-browser.mjs`
 - `scripts/test-compliance-runs-database.ts`
+- `scripts/test-contact-outbox-database.ts`
+- `scripts/test-learning-publication-integrity-database.ts`
+- `scripts/wp17-acceptance-preflight.ts`
 - `src/app/wijzers/compliance/scan/page.tsx`
 - `src/app/wijzers/compliance/v2/drafts/route.test.ts`
 - `src/app/wijzers/compliance/v2/drafts/route.ts`

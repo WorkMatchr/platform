@@ -44,10 +44,8 @@ try {
   const baseline = process.argv.includes('--baseline-85')
   const migrationRoot = path.resolve('prisma/migrations')
   const allMigrations = readdirSync(migrationRoot).filter(name => /^\d/.test(name)).sort()
-  assert.equal(allMigrations.length, 95)
-  const expectedMigrations = allMigrations.filter(name => !baseline || (!pendingMigrations.includes(name)
-    && name !== '20261102120000_add_closed_contact_audit_retention'
-    && name !== '20261103100000_add_closed_contact_decision_register'))
+  assert.ok(allMigrations.length >= 93, 'Historical chain must remain present; full registry is compared below')
+  const expectedMigrations = allMigrations.filter(name => !baseline || (!pendingMigrations.includes(name) && name <= pendingMigrations.at(-1)!))
   const migrateArgs = [process.env.npm_execpath!, 'run', 'db:deploy']
   if (baseline) {
     // Reconstruct the documented 85-migration state only in this newly created DB.
