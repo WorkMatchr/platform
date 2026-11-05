@@ -5,6 +5,8 @@ import { renderToString } from 'react-dom/server'
 import { hydrateRoot } from 'react-dom/client'
 import { StrictMode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { measure } from '@/lib/marketing/measurement'
+vi.mock('@/lib/marketing/measurement', () => ({ measure: vi.fn() }))
 import { ComplianceFreeIntake } from './compliance-free-intake'
 import { COMPLIANCE_DRAFT_KEY as KEY, COMPLIANCE_LEGACY_KEY as LEGACY, COMPLIANCE_CLEAR_KEY, DRAFT_TTL, setMemoryDraft } from '@/lib/compliance/free-intake-storage'
 
@@ -17,6 +19,7 @@ beforeEach(() => {
   const browser = new JSDOM('', { url: 'http://localhost' }).window
   vi.stubGlobal('localStorage', browser.localStorage); vi.stubGlobal('sessionStorage', browser.sessionStorage)
   setMemoryDraft(null)
+  vi.mocked(measure).mockClear()
   vi.stubGlobal('matchMedia', () => ({ matches: true }))
   Element.prototype.scrollIntoView = vi.fn()
 })
@@ -104,6 +107,7 @@ describe('F3 browsercontract', () => {
   it('werkt anoniem van vijf vragen tot oriëntatie, zonder netwerk of automatische opslag', async () => {
     const fetch = vi.fn(); vi.stubGlobal('fetch', fetch)
     await mount(); click('Volgende')
+    expect(measure).not.toHaveBeenCalled()
     expect(screen.getByRole('alert').textContent).toContain('Kies een antwoord')
     fireEvent.click(screen.getByLabelText(employee)); click('Volgende')
     fireEvent.click(screen.getByLabelText('Industrie')); click('Volgende')
@@ -114,6 +118,7 @@ describe('F3 browsercontract', () => {
     expect(screen.getByRole('link', { name: 'Naar de Compliance-wijzer' }).getAttribute('href')).toBe('/wijzers/compliance')
     expect(screen.queryByText('Op orde')).toBeNull(); expect(screen.queryByText('Actie vereist')).toBeNull()
     expect(localStorage.length).toBe(0); expect(fetch).not.toHaveBeenCalled()
+    expect(vi.mocked(measure).mock.calls).toEqual([['compliance_intake_start'], ['free_intake_complete']])
     expect(screen.queryByRole('button', { name: 'Concept 24 uur op dit apparaat bewaren' })).toBeNull()
   })
   it('behoudt antwoorden bij teruggaan en wist opgeslagen gegevens bij afronden en opnieuw beginnen', async () => {

@@ -1,5 +1,7 @@
 'use client'
 
+import { measure } from '@/lib/marketing/measurement'
+
 import { usePendingAction } from '@/components/ui/use-pending-action'
 
 import { useRouter } from 'next/navigation'
@@ -30,6 +32,10 @@ export function SimpleAdviceForm({ action, viewerId, locations = [], draftId, in
   saveAction?: (payload: unknown, expectedVersion: number) => Promise<{ version?: number; message?: string }>
 }) {
   const router = useRouter()
+  const measured = useRef(new Set<string>())
+  const measureOnce = (name: 'advice_start' | 'advice_complete' | 'assignment_start' | 'assignment_published') => {
+    if (!measured.current.has(name)) { measured.current.add(name); measure(name) }
+  }
   const startChoice = start === 'deskundigheid' ? 'KNOWS_EXPERTISE' : start === 'onderwerp' ? 'NEEDS_TOPIC' : undefined
   const pendingStartFocus = useRef<string | null>(null)
   const [v, setV] = useState<Draft>({ ...empty })
@@ -101,11 +107,13 @@ export function SimpleAdviceForm({ action, viewerId, locations = [], draftId, in
   }, [ready, step, v.routeChoice])
   useEffect(() => {
     if (!state.requestId) return
+    if (!measured.current.has('assignment_published')) { measured.current.add('assignment_published'); measure('assignment_published') }
     try { sessionStorage.removeItem(storageKey) } catch { /* Optional browser persistence. */ }
     router.push(`/aanvragen/${state.requestId}/gepubliceerd`)
   }, [state.requestId, storageKey, router])
   const shownErrors = { ...errors, ...state.errors }
   const update = (key: string, value: string) => {
+    if (!draftId) { measureOnce('advice_start'); measureOnce('assignment_start') }
     if (key === 'routeChoice') setTopicSituations(undefined)
     if (key === 'helpTopic') setTopicSituations(hasTopicSituations(value) ? { version: 1, topic: value, selected: [], otherText: '' } : undefined)
     if (key === 'routeChoice') setAdditionalExpertises([])
@@ -141,6 +149,7 @@ export function SimpleAdviceForm({ action, viewerId, locations = [], draftId, in
       } catch { setSaveMessage('Opslaan is niet gelukt. Uw invoer blijft in dit tabblad bewaard. Probeer het opnieuw.'); return }
       finally { saveActive.current = false; setSaving(null) }
     }
+    if (next === 2 && !draftId) measureOnce('advice_complete')
     setStep(next)
   }
   const context = getSimpleAdviceContext(v, step)

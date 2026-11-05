@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [SEO & Analytics — launch readiness en campagnevoorstel](marketing/seo-analytics-launch-readiness.md)
+
 - [Productiedatabase: schrijfpauze, herstel en migratieacceptatie](database-upgrade-preparation.md)
 
 - [Gecombineerde eindacceptatie en gesloten besluitregister](combined-final-acceptance.md)

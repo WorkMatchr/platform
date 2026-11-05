@@ -1,5 +1,7 @@
 'use client'
 
+import { measure } from '@/lib/marketing/measurement'
+
 import Link from 'next/link'
 import { useState, useRef, type FormEvent } from 'react'
 import { Button } from '@/components/ui/button'
@@ -51,6 +53,8 @@ export function RegisterForm() {
     if (requestResult === 'password_rejected') return setMessage(PASSWORD_REJECTED_MESSAGE)
     if (requestResult === 'password_check_unavailable') return setMessage(PASSWORD_CHECK_UNAVAILABLE_MESSAGE)
     if (requestResult === 'technical_error') return setMessage(GENERIC_AUTH_REQUEST_ERROR)
+    // Accepted request is NOT proof of a newly created or verified account.
+    measure(result.data.accountType === 'CLIENT' ? 'client_registration_request_accepted' : 'professional_registration_request_accepted')
     window.location.assign('/registreren/controleer-email')
   }
 
