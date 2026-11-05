@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [Academy — complete cursusintegratie en WL-001-toetsbindingen](academy-complete-course-integration.md)
+
 - [Academy — contentintegratie en publicatiegereedheid](academy-content-integration-and-publication-readiness.md)
 
 - [Academy WL-001, WL-002 en WL-003 — contentkandidaten en acceptatie](academy-content/README.md)

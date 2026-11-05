@@ -1,5 +1,7 @@
 # Academy — drie cursuscontentkandidaten
 
+**Actuele vervolgstatus:** zie [complete cursusintegratie](../academy-complete-course-integration.md) voor de nieuwe WL-001 1.2-conceptversie en opnieuw geteste editor/import. Onderstaand dossier bewaart de eerdere inhoudelijke nulmeting; menselijke goedkeuring blijft open.
+
 Controle op 4 november 2026. Branch `codex/academy-content-approval`, gebaseerd op de afzonderlijke lokale LMS-kandidaat `c7e71db1f2850fbee50757b57c84ccf2607e6762`. Dit pakket verandert uitsluitend content, reviewdocumentatie en contenttests. Geen runtime-, schema-, seed- of productieaanpassing.
 
 De drie concepten zijn volledig beschikbaar voor inhoudelijke beoordeling, maar **nog niet integraal READY FOR CONTENT APPROVAL volgens alle technische criteria van de opdracht**. De verliesvrije Academy-beheerintegratie is geblokkeerd. Bij WL-001 zijn bovendien expliciete summatieve dekkingshiaten zichtbaar. Menselijke inhoudelijke/juridische en toetskundige vrijgave blijft OPEN; cursuspublicatie NO-GO.
