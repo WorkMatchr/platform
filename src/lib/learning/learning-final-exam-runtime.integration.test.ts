@@ -67,7 +67,7 @@ describe.skipIf(!databaseUrl)('WL-001 eindtoets runtime op geïsoleerde database
     expect(player?.questions).toHaveLength(50)
     expect(JSON.stringify(player?.questions)).not.toMatch(/correctAnswer|isCorrect|explanation|feedback/i)
     expect(await getFinalExamPlayer(outsiderId, attempt1.id)).toBeNull()
-    expect((await getFinalExamOverview(outsiderId))?.enrollment).toBeNull()
+    expect(await getFinalExamOverview(outsiderId)).toBeNull()
     await updateFinalExamPosition(ownerId, attempt1.id, 12)
     expect((await getFinalExamPlayer(ownerId, attempt1.id))?.currentPosition).toBe(12)
     await expect(updateFinalExamPosition(ownerId, attempt1.id, 51)).rejects.toThrow('INVALID_POSITION')

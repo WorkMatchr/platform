@@ -1,3 +1,4 @@
+import { getPublicAcademyCorrection } from '@/lib/learning/academy-review-service'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { isLearningRuntimeEnabled } from '@/lib/learning/learning-runtime-policy'
@@ -16,6 +17,7 @@ export default async function PublicCertificatePage({ params }: { params: Promis
   if (!isLearningRuntimeEnabled()) notFound()
   const { code } = await params
   const certificate = await getPublicLearningCertificate(code)
+  const correction = certificate?.status === 'ACTIVE' ? await getPublicAcademyCorrection(code) : null
   return <Container className="py-10 sm:py-14">
     <Card className="mx-auto max-w-2xl space-y-5">
       <p className="text-sm font-semibold uppercase tracking-wide text-brand-primary">WorkMatchr Learning</p>
@@ -30,6 +32,7 @@ export default async function PublicCertificatePage({ params }: { params: Promis
           <div><dt className="text-sm text-text-secondary">Uitgegeven door</dt><dd className="font-semibold">WorkMatchr Learning</dd></div>
           <div className="sm:col-span-2"><dt className="text-sm text-text-secondary">Certificaatnummer</dt><dd className="font-mono font-semibold">{certificate.certificateNumber}</dd></div>
         </dl>
+        <p>{correction && <>Afzonderlijke naamcorrectie van {dateLabel(correction.correctedAt)}: {correction.firstName} {correction.lastName}. De oorspronkelijke gegevens hierboven blijven historisch bewaard.</>}</p>
         <p className="border-t border-border pt-4 text-sm leading-6 text-text-secondary">Deze pagina toont uitsluitend gegevens die nodig zijn om de echtheid van het certificaat te controleren.</p>
       </>}
     </Card>

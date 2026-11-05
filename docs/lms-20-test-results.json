@@ -1,0 +1,157 @@
+{
+  "scope": "Isolated synthetic local acceptance; suites overlap and must not be summed",
+  "results": [
+    {
+      "suite": "regressions-final",
+      "passed": 1014,
+      "failed": 0,
+      "skipped": 84
+    },
+    {
+      "suite": "integration-regressions",
+      "passed": 142,
+      "failed": 0,
+      "skipped": 3
+    },
+    {
+      "suite": "pg-final",
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "pg-commerce",
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "media-tests",
+      "passed": 47,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "closed-gate",
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "retry-ui",
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0
+    }
+  ],
+  "postgresql": {
+    "major": 18,
+    "migrations": 109,
+    "failures": 0,
+    "mainUpgrade": true,
+    "repeatNoPending": true
+  },
+  "cleanup": {
+    "ownDatabasesRemoved": 2,
+    "ownContainerRemoved": true,
+    "existingContainersPreserved": 3,
+    "existingVolumesPreserved": 27,
+    "testCredentialRemoved": true,
+    "syntheticDownloadedPdf": "retained outside Git because another process holds the file"
+  },
+  "quality": {
+    "lintErrors": 0,
+    "existingLintWarnings": 4,
+    "standaloneTypeScript": "PASS",
+    "productionBuild": "PASS",
+    "stagedSecretMetadataScan": "PASS",
+    "historicalMainMigrationsChanged": false
+  },
+  "historicalAcceptanceDate": "2026-11-04",
+  "publicationPreparation": {
+    "date": "2026-11-05",
+    "main": "a315db8c7738b8862a92d9f8517b0315e3b14d1f",
+    "noVideo": true,
+    "mainMigrationsUnchanged": 95,
+    "migrationCount": 109,
+    "fullRegressionRun": {
+      "passed": 3991,
+      "failed": 0,
+      "skipped": 99,
+      "note": "Final complete run passed after the asynchronous focus test correction; 460 files passed, 22 skipped.",
+      "command": "npm test -- --maxWorkers=2 --testTimeout=20000"
+    },
+    "correctedTestsFinal": {
+      "passed": 39,
+      "failed": 0
+    },
+    "scheduler": {
+      "passed": 14,
+      "failed": 0
+    },
+    "authoringPostgresql": {
+      "passed": 4,
+      "failed": 0
+    },
+    "commercePostgresql": {
+      "passed": 2,
+      "failed": 0
+    },
+    "offlineHistoricalPreflight": {
+      "passed": 17,
+      "failed": 0
+    },
+    "typecheck": "PASS",
+    "productionBuild": "PASS",
+    "browser": {
+      "adminLogin": "PASS",
+      "imageUpload": "PASS",
+      "textEditSaveReload": "PASS",
+      "imagePreviewAlt": "PASS",
+      "mobileDocumentOverflow": "PASS",
+      "keyboardFocus": "PASS",
+      "actual200Percent": "OPEN_BROWSER_CONTROL_STOPPED",
+      "screenReader": "OPEN",
+      "fullPdfUa": "OPEN"
+    },
+    "productionActivation": false,
+    "fullCoursePostgresql": "PASS: 109 migrations, versioned exam selection, historical results, concurrency and retention",
+    "authenticationPostgresql": "PASS: client, professional, admin; session expiry/refresh, logout failure injection and tenant isolation",
+    "contactPostgresql": {
+      "currentChainCases": 27,
+      "historical85Cases": 27,
+      "failed": 0,
+      "providerCalls": 0
+    },
+    "syntheticRestore": "NOT EXECUTED locally: CI-only guard respected; exact-head GitHub service-container test required",
+    "migrationIntegrity": {
+      "status": "PASS",
+      "freshMigrations": 109,
+      "historicalUpgradeMigrations": 93,
+      "deniedMutationsAndPrivilegeAttempts": 96,
+      "repeatedDeploymentUnchanged": true,
+      "existingDatabaseAndRoleInventoriesUnchanged": true
+    },
+    "cleanup": {
+      "serverStopped": true,
+      "ownContainerRemoved": true,
+      "ownVolumeRemoved": true,
+      "testDatabaseAccountsSessionsRemoved": true,
+      "localCredentialsRemoved": true,
+      "existingContainersPreserved": 3,
+      "existingVolumesPreserved": 27,
+      "localGate": "closed: process stopped"
+    },
+    "diffAndOutgoingHistoryScan": "PASS; no credentials or private production metadata found",
+    "qualityExitCodes": {
+      "tests": 0,
+      "typecheck": 0,
+      "build": 0,
+      "lint": 0
+    },
+    "lint": {
+      "errors": 0,
+      "existingWarnings": 4
+    }
+  }
+}

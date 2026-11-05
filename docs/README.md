@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [LMS 2.0 — geïntegreerde releasekandidaat en acceptatie](lms-20-platform-release.md)
+
 - [Productiedatabase: schrijfpauze, herstel en migratieacceptatie](database-upgrade-preparation.md)
 
 - [Gecombineerde eindacceptatie en gesloten besluitregister](combined-final-acceptance.md)
@@ -251,3 +253,5 @@ Zie [legacy intake naar gedeelde Simple Advice Flow](legacy-intake-unification.m
 - [Compliance F4 — 46 claimreviews en read-only publicatiecontrole](compliance-f4-knowledge-publication.md)
 
 - [Commerciële afronding: contactoutbox, ketenacceptatie en beheervoorwaarden](commercial-launch-finalization.md)
+
+- [Academy 2.0 — publicatiechecklist zonder video](academy-20-publication-checklist.md)

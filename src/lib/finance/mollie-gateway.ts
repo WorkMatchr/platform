@@ -49,6 +49,9 @@ export type MollieRefundState = 'queued' | 'pending' | 'processing' | 'refunded'
 
 export type MollieRefundSnapshot = Readonly<{
   id: string
+  amountValue?: string
+  currency?: string
+  paymentId?: string
   status: MollieRefundState
 }>
 
@@ -59,7 +62,7 @@ export interface MollieGateway {
     description: string
     redirectUrl: string
     webhookUrl: string
-    metadata: { purchaseId: string; organizationId: string; subscriptionId?: string }
+    metadata: { purchaseId: string; organizationId?: string; subscriptionId?: string }
     idempotencyKey: string
     customerId?: string
     sequenceType?: 'oneoff' | 'first' | 'recurring'
@@ -231,11 +234,11 @@ export function createMollieGateway(): MollieGateway {
         metadata: input.metadata,
         idempotencyKey: input.idempotencyKey,
       })
-      return { id: refund.id, status: refund.status }
+      return { id: refund.id, status: refund.status, amountValue: refund.amount.value, currency: refund.amount.currency, paymentId: input.paymentId }
     },
     async getRefund(input) {
       const refund = await client.paymentRefunds.get(input.refundId, { paymentId: input.paymentId })
-      return { id: refund.id, status: refund.status }
+      return { id: refund.id, status: refund.status, amountValue: refund.amount.value, currency: refund.amount.currency, paymentId: input.paymentId }
     },
     async createCustomer(input) {
       const customer = await client.customers.create({

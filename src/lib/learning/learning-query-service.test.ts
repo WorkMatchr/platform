@@ -32,7 +32,7 @@ describe('Learning-queryservice en eigenaarsgrenzen', () => {
     const catalogQuery = mocks.courseFindMany.mock.calls[0]?.[0]
     expect(catalogQuery.include.versions.include.enrollments).toMatchObject({ where: { userId: 'user-a' } })
     expect(catalogQuery.include.versions.include.chapters.include.progress).toMatchObject({ where: { enrollment: { userId: 'user-a' } } })
-    expect(mocks.enrollmentFindMany).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: 'user-a' } }))
+    expect(mocks.enrollmentFindMany).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ userId: 'user-a', courseVersion: { status: { in: ['PUBLISHED', 'RETIRED'] }, course: { status: 'PUBLISHED' } } }) }))
     expect(mocks.enrollmentFindMany.mock.calls[0]?.[0].include.courseVersion.include.chapters.include.progress).toMatchObject({ where: { enrollment: { userId: 'user-a' } } })
   })
 
@@ -46,7 +46,7 @@ describe('Learning-queryservice en eigenaarsgrenzen', () => {
     mocks.enrollmentFindFirst.mockResolvedValue(null)
 
     await expect(getLearningChapter('rie-in-de-praktijk', 'waarom-een-rie', 'user-a')).resolves.toBeNull()
-    expect(mocks.enrollmentFindFirst).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: 'user-a', courseVersionId: 'version-1' } }))
+    expect(mocks.enrollmentFindFirst).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: 'user-a', courseVersionId: 'version-1', accessRevokedAt: null, OR: [{ accessExpiresAt: null }, { accessExpiresAt: { gt: expect.any(Date) } }] } }))
     const query = mocks.chapterFindFirst.mock.calls[0]?.[0]
     expect(query.include.progress).toMatchObject({ where: { enrollment: { userId: 'user-a' } } })
     expect(query.include.contentBlocks.include.question.select).not.toHaveProperty('correctAnswer')

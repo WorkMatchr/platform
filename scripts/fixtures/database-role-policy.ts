@@ -22,7 +22,8 @@ export async function configureSyntheticRoles(db: Client, runtime: string, diagn
   await db.query(`GRANT SELECT ON public._prisma_migrations TO "${diagnostic}"`)
 }
 
-export async function assertSyntheticRoles(db: Client, runtime: string, diagnostic: string) {
+export async function assertSyntheticRoles(db: Client, runtime: string, diagnostic: string, expectedMigrationCount: number) {
+  assert.ok(Number.isInteger(expectedMigrationCount) && expectedMigrationCount > 0)
   for (const role of [runtime, diagnostic]) assert.match(role, /^wp17_(runtime|diagnostic)_\d+_\d+$/)
   const capabilities = (await db.query(`SELECT rolname,rolsuper,rolcreatedb,rolcreaterole,rolreplication,rolbypassrls,rolcanlogin
     FROM pg_roles WHERE rolname=ANY($1::text[]) ORDER BY rolname`, [[runtime, diagnostic]])).rows
@@ -60,7 +61,7 @@ export async function assertSyntheticRoles(db: Client, runtime: string, diagnost
   } finally { await db.query('RESET ROLE') }
   await db.query(`SET ROLE "${diagnostic}"`)
   try {
-    assert.equal((await db.query('SELECT count(*)::int AS n FROM _prisma_migrations')).rows[0].n, 95)
+    assert.equal((await db.query('SELECT count(*)::int AS n FROM _prisma_migrations')).rows[0].n, expectedMigrationCount)
     await db.query('SELECT current_database(),current_user FROM pg_catalog.pg_roles WHERE rolname=current_user')
     await deny('SELECT * FROM "User"')
     await deny('SELECT * FROM "Session"')

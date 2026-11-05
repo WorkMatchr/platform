@@ -1,4 +1,5 @@
 import 'server-only'
+import { resolveAcademyDefinition } from './academy-course-definition'
 import { Prisma } from '@/generated/prisma/client'
 import { getPrisma } from '@/lib/prisma'
 import type { RetentionQuestion } from './learning-retention-content'
@@ -8,7 +9,6 @@ import { isRetentionQuestionSelectable, LEARNING_QUESTION_PUBLISHED_STATUS, RETE
 
 const COURSE_SLUG = 'rie-in-de-praktijk'
 const RETENTION_BANK_VERSION = 'WL-001-RETENTION-1.0'
-const ANNUAL_CHECK_VERSION = 'WL-001-ANNUAL-CHECK-1.0'
 const ANNUAL_CONSENT_VERSION = 'WL-001-ANNUAL-REMINDER-CONSENT-1.0'
 
 type Db = Prisma.TransactionClient
@@ -41,7 +41,7 @@ export function toRetentionQuestion(row: {
   if (row.question.status !== 'DRAFT' && row.question.status !== LEARNING_QUESTION_PUBLISHED_STATUS) throw new Error('INVALID_LEARNING_QUESTION_STATUS')
   if (!['B', 'T', 'A'].includes(row.cognitiveLevel) || ![1, 2, 3].includes(row.question.difficulty)) throw new Error('INVALID_RETENTION_QUESTION_METADATA')
   return {
-    code: row.question.code as `R${string}`,
+    code: row.question.code,
     questionVersion: row.question.version,
     chapterNumber: row.chapterNumber,
     knowledgeArea: row.question.knowledgeArea,
@@ -60,10 +60,10 @@ export function toRetentionQuestion(row: {
   }
 }
 
-async function getPublishedBank(transaction: Db) {
+async function getPublishedBank(transaction: Db, bankVersion: string) {
   const rows = await transaction.learningRetentionQuestion.findMany({
     where: {
-      bankVersion: RETENTION_BANK_VERSION,
+      bankVersion,
       status: RETENTION_BANK_PUBLISHED_STATUS,
       question: { status: LEARNING_QUESTION_PUBLISHED_STATUS },
     },
@@ -73,13 +73,13 @@ async function getPublishedBank(transaction: Db) {
     .filter(({ question }) => isRetentionQuestionSelectable({ retentionStatus: question.status, learningQuestionStatus: question.learningQuestionStatus }))
 }
 
-async function findDueReminder(transaction: Db, userId: string, now: Date) {
+async function findDueReminder(transaction: Db, userId: string, now: Date, courseSlug: string) {
   return transaction.learningAnnualReminder.findFirst({
     where: {
       userId,
       revokedAt: null,
       scheduledFor: { lte: now },
-      enrollment: { userId, courseVersion: { course: { slug: COURSE_SLUG, status: 'PUBLISHED' } } },
+      enrollment: { userId, accessRevokedAt: null, courseVersion: { course: { slug: courseSlug, status: 'PUBLISHED' } } },
     },
     orderBy: [{ scheduledFor: 'desc' }, { createdAt: 'desc' }],
     select: { id: true, userId: true, scheduledFor: true },
@@ -92,14 +92,19 @@ async function createAnnualCheck(transaction: Db, reminder: { id: string; userId
   if (reminder.scheduledFor > now) throw new Error('ANNUAL_CHECK_NOT_AVAILABLE')
     const locked = await transaction.$queryRaw<Array<{ id: string }>>`SELECT "id" FROM "LearningAnnualReminder" WHERE "id" = ${reminder.id}::uuid AND "userId" = ${reminder.userId}::uuid AND "revokedAt" IS NULL AND "scheduledFor" <= ${now} FOR UPDATE`
   if (!locked.length) throw new Error('ANNUAL_CHECK_NOT_AVAILABLE')
-  const questions = await getPublishedBank(transaction)
+  const context = await transaction.learningAnnualReminder.findUniqueOrThrow({ where: { id: reminder.id }, include: { enrollment: { include: { courseVersion: { include: { course: true } } } } } })
+  const definition = resolveAcademyDefinition(context.enrollment.courseVersion.course, context.enrollment.courseVersion.sourceMetadata)
+  const program = await transaction.learningRetentionProgramVersion.findFirst({ where: { version: definition.retention.programVersion, courseId: context.enrollment.courseVersion.courseId, status: 'PUBLISHED' } })
+  if (!program) throw new Error('ANNUAL_PROGRAM_NOT_AVAILABLE')
+  const questions = await getPublishedBank(transaction, program.bankVersion ?? RETENTION_BANK_VERSION)
   const selected = selectRetentionAnnualQuestions({ questions: questions.map(({ question }) => question), reminderKey: reminder.id, knowledgeSignals: [] })
   const idByCode = new Map(questions.map(({ id, question }) => [question.code, id]))
   const check = await transaction.learningRetentionAnnualCheck.create({
     data: {
       reminderId: reminder.id,
       userId: reminder.userId,
-      checkVersion: ANNUAL_CHECK_VERSION,
+      checkVersion: definition.retention.annualCheckVersion,
+      programVersionId: program.id,
       availableAt: reminder.scheduledFor,
       questions: { create: selected.map((question, index) => {
         const retentionQuestionId = idByCode.get(question.code)
@@ -118,9 +123,9 @@ function finalAnswerValue(value: Prisma.JsonValue | undefined): string | string[
   return null
 }
 
-export async function getMyAnnualRetentionCheck(userId: string, now = new Date()) {
+export async function getMyAnnualRetentionCheck(userId: string, now = new Date(), courseSlug = COURSE_SLUG) {
   const prisma = getPrisma()
-  const reminder = await findDueReminder(prisma, userId, now)
+  const reminder = await findDueReminder(prisma, userId, now, courseSlug)
   if (!reminder) return null
   let checkId: string
   try {
@@ -139,7 +144,7 @@ export async function getMyAnnualRetentionCheck(userId: string, now = new Date()
       id: checkId,
       userId,
       availableAt: { lte: now },
-      reminder: { userId, revokedAt: null, enrollment: { userId, courseVersion: { course: { slug: COURSE_SLUG } } } },
+      reminder: { userId, revokedAt: null, enrollment: { userId, accessRevokedAt: null, courseVersion: { course: { slug: courseSlug } } } },
     },
     include: {
       reminder: {
@@ -202,7 +207,7 @@ export async function getMyAnnualRetentionCheck(userId: string, now = new Date()
       knowledgeArea: assignment.retentionQuestion.question.knowledgeArea,
       correct: Boolean(assignment.answers[0]?.correct),
     }
-  })) : null
+  }), courseSlug, check.reminder.enrollment.courseVersion.version) : null
   return {
     checkVersion: check.checkVersion,
     startedAt: check.startedAt,
@@ -215,10 +220,10 @@ export async function getMyAnnualRetentionCheck(userId: string, now = new Date()
   }
 }
 
-export async function answerMyAnnualRetentionQuestion(userId: string, position: number, rawAnswer: unknown, now = new Date()) {
+export async function answerMyAnnualRetentionQuestion(userId: string, position: number, rawAnswer: unknown, now = new Date(), courseSlug = COURSE_SLUG) {
   if (!Number.isInteger(position) || position < 1 || position > 10) throw new Error('INVALID_ANNUAL_QUESTION_POSITION')
   const prisma = getPrisma()
-  const reminder = await findDueReminder(prisma, userId, now)
+  const reminder = await findDueReminder(prisma, userId, now, courseSlug)
   if (!reminder) throw new Error('ANNUAL_CHECK_NOT_AVAILABLE')
   const check = await prisma.learningRetentionAnnualCheck.findFirst({ where: { reminderId: reminder.id, userId, availableAt: { lte: now } }, select: { id: true } })
   if (!check) throw new Error('ANNUAL_CHECK_NOT_AVAILABLE')
@@ -288,14 +293,19 @@ export async function answerMyAnnualRetentionQuestion(userId: string, position: 
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 15_000 })
 }
 
-export async function setMyAnnualReminderConsent(userId: string, consent: boolean, now = new Date()) {
+export async function setMyAnnualReminderConsent(userId: string, consent: boolean, now = new Date(), courseSlug = COURSE_SLUG) {
   const db = getPrisma()
+  const course = await db.learningCourse.findUnique({ where: { slug: courseSlug }, select: { code: true, status: true } })
+  if (!course || course.status !== 'PUBLISHED') throw new Error('ANNUAL_REMINDER_NOT_ELIGIBLE')
   const attempt = await db.learningExamAttempt.findFirst({
-    where: { userId, status: 'SUBMITTED', passed: true, submittedAt: { not: null }, examVersion: { status: { in: ['PUBLISHED', 'RETIRED'] }, exam: { code: 'WL-001-FINAL', course: { code: 'WL-001', status: 'PUBLISHED' } }, courseVersion: { status: { in: ['PUBLISHED', 'RETIRED'] } } } },
+    where: { userId, enrollment: { accessRevokedAt: null }, status: 'SUBMITTED', passed: true, submittedAt: { not: null }, examVersion: { status: { in: ['PUBLISHED', 'RETIRED'] }, exam: { code: `${course.code}-FINAL`, course: { slug: courseSlug, status: 'PUBLISHED' } }, courseVersion: { status: { in: ['PUBLISHED', 'RETIRED'] } } } },
     orderBy: [{ submittedAt: 'asc' }, { attemptNumber: 'asc' }],
     select: { id: true, userId: true, enrollmentId: true, submittedAt: true, courseVersionId: true },
   })
   if (!attempt?.submittedAt) throw new Error('ANNUAL_REMINDER_NOT_ELIGIBLE')
+  const courseVersion = await db.learningCourseVersion.findUnique({ where: { id: attempt.courseVersionId }, include: { course: true } })
+  const consentVersion = courseVersion ? resolveAcademyDefinition(courseVersion.course, courseVersion.sourceMetadata).retention.annualConsentVersion : ANNUAL_CONSENT_VERSION
+  if (!courseVersion) throw new Error('ANNUAL_REMINDER_NOT_ELIGIBLE')
   const [completed, total] = await Promise.all([
     db.learningChapterProgress.count({ where: { enrollmentId: attempt.enrollmentId, courseVersionId: attempt.courseVersionId, status: 'COMPLETED' } }),
     db.learningChapter.count({ where: { courseVersionId: attempt.courseVersionId } }),
@@ -317,10 +327,10 @@ export async function setMyAnnualReminderConsent(userId: string, consent: boolea
         if (existing.sentAt) return { enabled: false, scheduledFor: existing.scheduledFor }
         if (!existing.revokedAt) return { enabled: true, scheduledFor: existing.scheduledFor }
         await transaction.learningAnnualReminderConsentEvent.create({ data: {
-          reminderId: existing.id, eventType: 'CONSENTED', occurredAt: now, consentVersion: ANNUAL_CONSENT_VERSION,
+          reminderId: existing.id, eventType: 'CONSENTED', occurredAt: now, consentVersion,
         } })
         const restored = await transaction.learningAnnualReminder.update({ where: { id: existing.id }, data: {
-          revokedAt: null, consentedAt: now, consentVersion: ANNUAL_CONSENT_VERSION,
+          revokedAt: null, consentedAt: now, consentVersion,
         } })
         await transaction.notificationOutbox.updateMany({
           where: {
@@ -334,10 +344,10 @@ export async function setMyAnnualReminderConsent(userId: string, consent: boolea
       }
       const reminder = await transaction.learningAnnualReminder.create({ data: {
         userId, enrollmentId: attempt.enrollmentId, qualifyingAttemptId: attempt.id,
-        consentedAt: now, consentVersion: ANNUAL_CONSENT_VERSION, scheduledFor: addCalendarYear(attempt.submittedAt!),
+        consentedAt: now, consentVersion, scheduledFor: addCalendarYear(attempt.submittedAt!),
       } })
       await transaction.learningAnnualReminderConsentEvent.create({ data: {
-        reminderId: reminder.id, eventType: 'CONSENTED', occurredAt: now, consentVersion: ANNUAL_CONSENT_VERSION,
+        reminderId: reminder.id, eventType: 'CONSENTED', occurredAt: now, consentVersion,
       } })
       return { enabled: true, scheduledFor: reminder.scheduledFor }
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 15_000 })
@@ -353,7 +363,7 @@ export async function setMyAnnualReminderConsent(userId: string, consent: boolea
 /** Schedule-agnostic hook: creates at most one outbox intent; it never sends mail itself. */
 export async function ensureDueAnnualReminderIntents(now = new Date()) {
   const db = getPrisma()
-  const due = await db.learningAnnualReminder.findMany({ where: { revokedAt: null, sentAt: null, scheduledFor: { lte: now } }, select: { id: true, userId: true, scheduledFor: true } })
+  const due = await db.learningAnnualReminder.findMany({ where: { enrollment: { accessRevokedAt: null }, revokedAt: null, sentAt: null, scheduledFor: { lte: now } }, select: { id: true, userId: true, scheduledFor: true } })
   let queued = 0
   for (const reminder of due) {
     const eventId = `LEARNING_RETENTION_ANNUAL_READY:${reminder.id}`

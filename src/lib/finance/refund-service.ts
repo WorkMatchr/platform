@@ -1,4 +1,7 @@
 import 'server-only'
+import { applyAcademyRefundInTransaction } from '@/lib/learning/academy-commerce-refund'
+import { assertAcademyCommerceSandbox } from '@/lib/learning/academy-commerce-environment'
+import { requireFinancialOrganizationId } from '@/lib/finance/financial-organization'
 
 import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
@@ -43,6 +46,7 @@ export async function applyMollieRefundSnapshot(refundId: string, snapshot: Moll
       where: { id: refundId },
       include: { purchase: true, creditNote: true },
     })
+    if (current.purchase.kind === 'ACADEMY_COURSE') return applyAcademyRefundInTransaction(transaction, current, snapshot)
     if (current.mollieRefundId && current.mollieRefundId !== snapshot.id) throw new Error('MOLLIE_REFUND_MISMATCH')
     const status = mapMollieRefundStatus(snapshot.status)
     const eventKey = `mollie-refund-status:${current.id}:${snapshot.status}`
@@ -73,7 +77,7 @@ export async function applyMollieRefundSnapshot(refundId: string, snapshot: Moll
     if (status === 'REFUNDED') {
       const ledger = await recordFinancialRefundCreditPhaseInTransaction(transaction, {
         refundId: current.id,
-        organizationId: current.purchase.organizationId,
+        organizationId: requireFinancialOrganizationId(current.purchase.organizationId),
         actorUserId: current.approvedByUserId,
         credits: current.credits,
         phase: 'COMPLETE',
@@ -107,7 +111,7 @@ export async function applyMollieRefundSnapshot(refundId: string, snapshot: Moll
 
     await recordFinancialRefundCreditPhaseInTransaction(transaction, {
       refundId: current.id,
-      organizationId: current.purchase.organizationId,
+      organizationId: requireFinancialOrganizationId(current.purchase.organizationId),
       actorUserId: current.approvedByUserId,
       credits: current.credits,
       phase: 'RELEASE',
@@ -132,6 +136,7 @@ export async function applyMollieRefundSnapshot(refundId: string, snapshot: Moll
     })
     return { refund, creditNote: null, reviewRequired: false }
   })
+  if ('academySandbox' in result) return result
   await deliverCompletedRefundCreditNote(result)
   return result
 }
@@ -187,7 +192,7 @@ export async function refundWorkmatchrError(input: unknown, gateway: MollieGatew
       data: { id: refundId, purchaseId: purchase.id, approvedByUserId: values.actorUserId, reason: `${values.reasonCode}: ${values.reason}`, amountCents: purchase.amountInclVatCents, credits: purchase.credits, idempotencyKey: values.idempotencyKey },
       include: { purchase: true },
     })
-    await recordFinancialRefundCreditPhaseInTransaction(transaction, { refundId, organizationId: purchase.organizationId, actorUserId: values.actorUserId, credits: purchase.credits, phase: 'RESERVE', reason: 'Credits gereserveerd voor goedgekeurde WorkMatchr-terugbetaling.' })
+    await recordFinancialRefundCreditPhaseInTransaction(transaction, { refundId, organizationId: requireFinancialOrganizationId(purchase.organizationId), actorUserId: values.actorUserId, credits: purchase.credits, phase: 'RESERVE', reason: 'Credits gereserveerd voor goedgekeurde WorkMatchr-terugbetaling.' })
     await transaction.financialEvent.upsert({
       where: { idempotencyKey: `workmatchr-refund-requested:${refund.id}` },
       create: {
@@ -228,7 +233,7 @@ export async function refundWorkmatchrError(input: unknown, gateway: MollieGatew
     })
   } catch (error) {
     await getPrisma().$transaction(async (transaction) => {
-      await recordFinancialRefundCreditPhaseInTransaction(transaction, { refundId: prepared.refund.id, organizationId: purchase.organizationId, actorUserId: values.actorUserId, credits: prepared.refund.credits, phase: 'RELEASE', reason: 'Creditreservering vrijgegeven omdat de terugbetaling niet is bevestigd.' })
+      await recordFinancialRefundCreditPhaseInTransaction(transaction, { refundId: prepared.refund.id, organizationId: requireFinancialOrganizationId(purchase.organizationId), actorUserId: values.actorUserId, credits: prepared.refund.credits, phase: 'RELEASE', reason: 'Creditreservering vrijgegeven omdat de terugbetaling niet is bevestigd.' })
       await transaction.financialRefund.update({ where: { id: prepared.refund.id }, data: { status: 'FAILED' } })
       await transaction.financialEvent.upsert({
         where: { idempotencyKey: `mollie-refund-request-failed:${prepared.refund.id}` },
@@ -251,10 +256,12 @@ export async function refundWorkmatchrError(input: unknown, gateway: MollieGatew
 export async function reconcileMollieRefund(refundId: string, gateway: MollieGateway = createMollieGateway()) {
   const refund = await getPrisma().financialRefund.findUnique({
     where: { id: refundId },
-    include: { purchase: { select: { molliePaymentId: true } }, creditNote: true },
+    include: { purchase: { select: { molliePaymentId: true, kind: true } }, creditNote: true },
   })
   if (!refund) throw new Error('PENDING_MOLLIE_REFUND_REQUIRED')
+  if (refund.purchase.kind === 'ACADEMY_COURSE') assertAcademyCommerceSandbox()
   if (refund.status === 'REFUNDED') {
+    if (refund.purchase.kind === 'ACADEMY_COURSE') return { refund, creditNote: refund.creditNote, reviewRequired: false }
     await deliverCompletedRefundCreditNote({ refund, creditNote: refund.creditNote })
     return { refund, creditNote: refund.creditNote, reviewRequired: false }
   }

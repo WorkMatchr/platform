@@ -8,9 +8,11 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('server-only', () => ({}))
 vi.mock('@/lib/prisma', () => ({ getPrisma: () => ({
+  learningCourse: { findUnique: vi.fn(async () => ({ code: 'WL-001', status: 'PUBLISHED' })) },
   learningExamAttempt: { findFirst: mocks.findPassedAttempt },
   learningChapterProgress: { count: mocks.chapterProgressCount },
   learningChapter: { count: mocks.chapterCount },
+  learningCourseVersion: { findUnique: vi.fn(async () => ({ sourceMetadata: null, course: { code: 'WL-001', slug: 'rie-in-de-praktijk', title: 'RI&E in de praktijk' } })) },
   $transaction: (callback: (transaction: unknown) => unknown) => callback({
     learningAnnualReminder: { findUnique: mocks.findReminder, create: mocks.createReminder, update: mocks.updateReminder },
     learningAnnualReminderConsentEvent: { create: mocks.createConsentEvent },

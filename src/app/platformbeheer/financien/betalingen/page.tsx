@@ -43,7 +43,7 @@ export default async function PlatformFinancialPaymentsPage({ searchParams }: { 
       {data.items.length === 0 ? <EmptyState>Geen betalingen gevonden met deze filters.</EmptyState> : <AdminTable headers={['Datum', 'Organisatie / klant', 'Type', 'Mollie payment-id', 'Incl. btw', 'Status', 'Factuur', 'Actie']}>
         {data.items.map((payment) => <tr key={payment.id}>
           <td className="whitespace-nowrap px-4 py-3">{formatPlatformDate(payment.createdAt)}</td>
-          <td className="px-4 py-3 font-medium text-brand-dark">{payment.organization.name}</td>
+          <td className="px-4 py-3 font-medium text-brand-dark">{(payment.organization?.name ?? payment.billingOrganizationName)}</td>
           <td className="px-4 py-3">{financialPurchaseKindLabels[payment.kind]}</td>
           <td className="px-4 py-3 font-mono text-xs">{payment.molliePaymentId ?? '—'}</td>
           <td className="whitespace-nowrap px-4 py-3">{formatEuro(payment.amountInclVatCents)}</td>
