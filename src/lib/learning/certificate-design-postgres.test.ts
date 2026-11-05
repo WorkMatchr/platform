@@ -92,7 +92,11 @@ describe.skipIf(!enabled)('Certificate designer isolated PostgreSQL acceptance',
   const duplicate=await duplicateCertificateDesign(designId,false)
   expect((await db.learningCertificateDesign.findUniqueOrThrow({where:{id:duplicate.id}})).state).toBe('DRAFT')
   expect(await db.learningCertificate.count({where:{userId:student}})).toBe(0)
-  expect(await db.marketplaceAuditEvent.count({where:{entityType:'LearningCertificateDesign'}})).toBeGreaterThan(8)
+  const audit=await db.marketplaceAuditEvent.findMany({where:{entityType:'LearningCertificateDesign',actorUserId:admin},select:{entityId:true,action:true}})
+  expect(audit.map(e=>e.entityId+':'+e.action).sort()).toEqual([
+   ...['SAVED','SAVED','REVIEW','APPROVED','ACTIVE','BOUND','BOUND'].map(action=>designId+':CERTIFICATE_DESIGN_'+action),
+   duplicate.id+':CERTIFICATE_DESIGN_DUPLICATED',
+  ].sort())
  },60000)
  it('fails without certificate, passes once, isolates owners and preserves certificate/PDF history',async()=>{
   const enrollment=await db.learningEnrollment.create({data:{userId:student,courseVersionId:versionId,status:'NOT_STARTED'}})

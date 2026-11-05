@@ -148,6 +148,23 @@ De harness negeert bestaande DATABASE_URL, bindt uitsluitend loopback en weigert
 productie/Preview. Bestaande learning-publication CI voert de uitgebreide harness
 uit. Ontwerper-CI is behouden. Remote checks worden op de exacte PR-head vermeld.
 
+## Aanvullende CI-bevinding
+
+De eerste zelfstandige ontwerper-CI vond een verouderde globale audit-countassertie:
+na het weghalen van dubbele cursusfixtures waren acht eigen gebeurtenissen correct,
+maar de test eiste meer dan acht. De lokale uitvoeringsvolgorde maskeerde dit met audits
+van andere tests. De regressie controleert nu exact alle acht verwachte acties en
+ontwerpidentiteiten van de eigen testbeheerder, onafhankelijk van andere fixtures.
+Geen runtime-auditlogica gewijzigd. De volledige gecombineerde suite blijft behouden;
+de zelfstandige CI-suite voert dezelfde controle uit op een lege database.
+Na correctie lokaal opnieuw 16/16 PASS en 110/110 migraties; cleanup PASS.
+
+Vercel Preview op de eerste integratiehead compileerde en doorliep TypeScript,
+maar stopt bij pagina-configuratie met `PREVIEW_DATABASE_ISOLATION_REQUIRED`.
+De bestaande afscherming blijft intact. Dit vereist bewezen Preview-isolatie,
+geen uitschakeling van de controle. De finale remote resultaten worden bij de
+exacte PR-head vastgelegd; geen Preview/Production-configuratie aangepast.
+
 ## Integratie, release en rollback
 
 Reviewvolgorde: #93 → #94 → #98 → deze integratie van #92. #92 daarna niet nogmaals
