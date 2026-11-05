@@ -413,6 +413,49 @@ async function main() {
     assert.equal(fakeDeliveries, 1)
     assert.equal(await prisma.financialEvent.count({ where: { purchaseId: simulatedPurchase.id, eventType: 'INVOICE_EMAIL_SENT' } }), 1)
     const paidBefore = await prisma.financialPurchase.findUniqueOrThrow({ where: { id: simulatedPurchase.id } })
+    // WP19: durable first attempt, acknowledgement loss, expiry and concurrency.
+    const recoveryInvoice = invoices[2]
+    let uncertainCalls = 0
+    await assert.rejects(deliverFinancialInvoiceEmail(recoveryInvoice.id, async () => { uncertainCalls++; throw new Error('SYNTHETIC_TIMEOUT') }), /SYNTHETIC_TIMEOUT/)
+    const startEvidence = await prisma.financialEvent.findUniqueOrThrow({ where: { idempotencyKey: `invoice-email-started:${recoveryInvoice.id}` } })
+    assert.equal(startEvidence.eventType, 'INVOICE_EMAIL_ATTEMPT_STARTED')
+    assert.deepEqual(Object.keys(startEvidence.metadata as object).sort(), ['fingerprint', 'version'])
+    const realNow = Date.now
+    try {
+      Date.now = () => startEvidence.createdAt.getTime() + 23 * 3600000
+      await assert.rejects(deliverFinancialInvoiceEmail(recoveryInvoice.id, async () => { uncertainCalls++; throw new Error('MUST_NOT_SEND') }), /INVOICE_EMAIL_RECONCILIATION_REQUIRED/)
+    } finally { Date.now = realNow }
+    assert.equal(uncertainCalls, 1)
+    assert.equal(await prisma.financialEvent.count({ where: { invoiceId: recoveryInvoice.id, eventType: 'INVOICE_EMAIL_SENT' } }), 0)
+
+    const acknowledgementInvoice = invoices[1]
+    const injection = new Client({ connectionString: testUrl.toString() }); await injection.connect()
+    let providerRequests = 0; let providerAcceptances = 0
+    const acceptedKeys = new Set<string>()
+    const deduplicatingSender: typeof fakeSender = async email => {
+      providerRequests++
+      assert.equal(email.idempotencyKey, `invoice-email:${acknowledgementInvoice.id}`)
+      if (!acceptedKeys.has(email.idempotencyKey!)) { acceptedKeys.add(email.idempotencyKey!); providerAcceptances++ }
+      return { accepted: true, status: 'ACCEPTED', transport: 'RESEND', messageId: 'synthetic-wp19-accepted' }
+    }
+    try {
+      await injection.query(`CREATE FUNCTION wp19_fail_ack() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW."eventType"='INVOICE_EMAIL_SENT' AND NEW."invoiceId"='${acknowledgementInvoice.id}'::uuid THEN RAISE EXCEPTION 'SYNTHETIC_ACK_FAILURE'; END IF; RETURN NEW; END $$`)
+      await injection.query('CREATE TRIGGER wp19_fail_ack BEFORE INSERT ON "FinancialEvent" FOR EACH ROW EXECUTE FUNCTION wp19_fail_ack()')
+      await assert.rejects(deliverFinancialInvoiceEmail(acknowledgementInvoice.id, deduplicatingSender), /SYNTHETIC_ACK_FAILURE/)
+      assert.equal(await prisma.financialEvent.count({ where: { invoiceId: acknowledgementInvoice.id, eventType: 'INVOICE_EMAIL_ATTEMPT_STARTED' } }), 1)
+      assert.equal(await prisma.financialEvent.count({ where: { invoiceId: acknowledgementInvoice.id, eventType: 'INVOICE_EMAIL_SENT' } }), 0)
+    } finally {
+      await injection.query('DROP TRIGGER IF EXISTS wp19_fail_ack ON "FinancialEvent"')
+      await injection.query('DROP FUNCTION IF EXISTS wp19_fail_ack()')
+      await injection.end()
+    }
+    const replays = await Promise.all(Array.from({ length: 6 }, () => deliverFinancialInvoiceEmail(acknowledgementInvoice.id, deduplicatingSender)))
+    assert.ok(replays.every(result => result.delivered))
+    assert.equal(providerRequests, 2); assert.equal(providerAcceptances, 1)
+    assert.equal(await prisma.financialEvent.count({ where: { invoiceId: acknowledgementInvoice.id, eventType: 'INVOICE_EMAIL_SENT' } }), 1)
+    assert.equal(await prisma.financialEvent.count({ where: { invoiceId: acknowledgementInvoice.id, eventType: 'INVOICE_EMAIL_ATTEMPT_STARTED' } }), 1)
+    console.log('WP19 PASS: durable attempt survives provider timeout and SQL acknowledgement failure; exact 23h boundary blocked; six concurrent retries, one provider acceptance, one SENT; no message content in attempt metadata')
+
     providerState = 'pending'
     await processMolliePayment(simulatedPurchase.molliePaymentId!, gateway)
     assert.equal((await prisma.financialPurchase.findUniqueOrThrow({ where: { id: simulatedPurchase.id } })).status, 'PAID')

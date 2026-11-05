@@ -37,13 +37,18 @@ export default async function ClientQuotesPage({ params }: { params: Promise<{ a
             <h2 className="text-xl font-semibold">{quote.providerOrganization.name}</h2>
             <Link className="mt-2 inline-block font-semibold underline" href={`/opdrachten/${assignment.id}/dienstverleners/${quote.providerProfileId}`}>Dienstverlenersprofiel bekijken</Link>
             <p className="mt-3 text-2xl font-bold">€ {(Number(quote.submittedVersion.priceCents) / 100).toLocaleString('nl-NL', { minimumFractionDigits: 2 })}</p>
-            <p className="mt-3 whitespace-pre-wrap text-text-secondary">{quote.submittedVersion.approach}</p>
+            <h3 className="mt-5 font-semibold">Toelichting op de prijs</h3>
+            <p className="mt-1 whitespace-pre-wrap">{quote.submittedVersion.priceExplanation}</p>
+            <h3 className="mt-5 font-semibold">Aanpak</h3>
+            <p className="mt-1 whitespace-pre-wrap text-text-secondary">{quote.submittedVersion.approach}</p>
+            {quote.submittedVersion.validUntil ? <p className="mt-3 text-sm">Geldig tot: {quote.submittedVersion.validUntil.toLocaleString('nl-NL')}{quote.submittedVersion.validUntil <= new Date() ? ' (verstreken)' : ''}</p> : null}
             <h3 className="mt-5 font-semibold">Planning</h3>
             <p className="mt-1 whitespace-pre-wrap">{quote.submittedVersion.planning}</p>
+            {quote.submittedVersion.terms ? <div className="mt-5"><h3 className="font-semibold">Voorwaarden</h3><p className="mt-1 whitespace-pre-wrap">{quote.submittedVersion.terms}</p></div> : null}
             {quote.participation.messageChannel ? (
               <Link className="mt-5 inline-block font-semibold underline" href={`/berichten/${quote.participation.messageChannel.id}`}>Berichten openen</Link>
             ) : null}
-            {quote.status === 'SUBMITTED' && assignment.status === 'IN_SELECTION' && !assignment.awardDecision ? (
+            {quote.status === 'SUBMITTED' && assignment.status === 'IN_SELECTION' && !assignment.awardDecision && (!quote.submittedVersion.validUntil || quote.submittedVersion.validUntil > new Date()) ? (
               <ActionForm action={awardQuoteAction} className="mt-6 grid gap-3 border-t border-border pt-5">
                 <input type="hidden" name="assignmentId" value={assignment.id} />
                 <input type="hidden" name="quoteId" value={quote.id} />

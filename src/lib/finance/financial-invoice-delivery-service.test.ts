@@ -16,12 +16,13 @@ const transaction = {
   financialInvoice: { findUnique: mocks.invoiceFind },
 }
 
-vi.mock('@/lib/prisma', () => ({ getPrisma: () => ({ financialEvent: { upsert: mocks.eventUpsert } }) }))
+vi.mock('@/lib/prisma', () => ({ getPrisma: () => ({ $transaction: (operation: (tx: typeof transaction) => unknown) => operation(transaction), financialEvent: { upsert: mocks.eventUpsert } }) }))
 vi.mock('./financial-transaction', () => ({ runSerializableFinancialTransaction: (operation: (tx: typeof transaction) => unknown) => operation(transaction) }))
 
 const invoice = {
   id: '60000000-0000-4000-8000-000000000001',
   invoiceNumber: 'WM-26085001',
+  issuedAt: new Date(),
   amountInclVatCents: 3_025,
   purchaseId: '50000000-0000-4000-8000-000000000001',
   purchase: {
@@ -39,7 +40,7 @@ describe('factuurmailbezorging', () => {
     vi.clearAllMocks()
     mocks.eventFind.mockResolvedValue(null)
     mocks.invoiceFind.mockResolvedValue(invoice)
-    mocks.eventCreate.mockResolvedValue({ id: 'event-id' })
+    mocks.eventCreate.mockImplementation(async ({ data }) => ({ id: 'event-id', ...data, createdAt: new Date() }))
     mocks.eventUpsert.mockResolvedValue({ id: 'failure-event' })
   })
 
@@ -69,7 +70,7 @@ describe('factuurmailbezorging', () => {
     const sender = vi.fn().mockResolvedValue({ accepted: true, transport: 'DEVELOPMENT_LOG', status: 'DEVELOPMENT_ONLY', messageId: 'development-only' })
     const { deliverFinancialInvoiceEmail } = await import('./financial-invoice-delivery-service')
     await expect(deliverFinancialInvoiceEmail(invoice.id, sender)).rejects.toThrow('INVOICE_EMAIL_NOT_ACCEPTED')
-    expect(mocks.eventCreate).not.toHaveBeenCalled()
+    expect(mocks.eventCreate).not.toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ eventType: 'INVOICE_EMAIL_SENT' }) }))
   })
 
   it('herhaalt een al bezorgde factuurmail niet', async () => {
@@ -82,7 +83,7 @@ describe('factuurmailbezorging', () => {
 
   function creditNote(status = 'REFUNDED') {
     return { ...invoice, documentType: 'CREDIT_NOTE', purchaseId: null, purchase: null,
-      organizationId: 'org', issuedAt: new Date('2026-09-06'), amountInclVatCents: -3025,
+      organizationId: 'org', issuedAt: new Date(), amountInclVatCents: -3025,
       refundId: 'refund', originalInvoice: { purchaseId: invoice.purchaseId, organizationId: 'org' },
       refund: { status, completedAt: new Date('2026-09-06'), amountCents: 3025,
         purchase: { ...invoice.purchase, id: invoice.purchaseId, organizationId: 'org', status: 'REFUNDED' } } }
@@ -90,7 +91,7 @@ describe('factuurmailbezorging', () => {
 
   it('bezorgt creditnota via completed refund zonder directe purchase', async () => {
     mocks.invoiceFind.mockResolvedValue(creditNote())
-    const sender = vi.fn().mockResolvedValue({ transport: 'RESEND', status: 'ACCEPTED' })
+    const sender = vi.fn().mockResolvedValue({ transport: 'RESEND', status: 'ACCEPTED', messageId: 'synthetic-message' })
     const { deliverFinancialInvoiceEmail } = await import('./financial-invoice-delivery-service')
     await deliverFinancialInvoiceEmail(invoice.id, sender)
     expect(sender).toHaveBeenCalledOnce()
@@ -128,6 +129,6 @@ describe('factuurmailbezorging', () => {
     await expect(deliverFinancialInvoiceEmail(invoice.id, sender)).rejects.toThrow('PAID_PURCHASE_INVOICE_REQUIRED')
     expect(sender).not.toHaveBeenCalled()
     await recordFinancialInvoiceEmailFailure(invoice.id, invoice.purchaseId, invoice.purchase.createdByUserId)
-    expect(mocks.eventUpsert).toHaveBeenCalledWith(expect.objectContaining({ create: expect.objectContaining({ eventType: 'INVOICE_EMAIL_FAILED', metadata: { retryable: true } }) }))
+    expect(mocks.eventUpsert).toHaveBeenCalledWith(expect.objectContaining({ create: expect.objectContaining({ eventType: 'INVOICE_EMAIL_FAILED', metadata: { boundedRetry: true } }) }))
   })
 })
