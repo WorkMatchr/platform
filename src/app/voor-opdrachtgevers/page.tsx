@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { PublicPageLayout } from '@/components/public/public-page-layout'
 import { Section } from '@/components/layout/section'
 import { Card } from '@/components/ui/card'
@@ -27,6 +28,18 @@ export default function ClientsPage() {
         <Card><Heading as="h3" size="h3">Vind professionele ondersteuning</Heading><Text className="mt-3 text-text-secondary">Via WorkMatchr brengt u uw opdracht onder de aandacht van passende professionals. U houdt zelf de regie over uw keuze.</Text></Card>
       </div>
       <Text className="mt-6 max-w-3xl text-text-secondary">WorkMatchr brengt vraag en expertise bij elkaar. De definitieve aanpak, prijs en planning spreekt u af met de professional.</Text>
+      <Heading as="h2" size="h2" className="mt-8">Ondersteuning bij arbo, operationele veiligheid en HSE</Heading>
+      <Text className="mt-3 max-w-3xl text-text-secondary">Zoekt u een HSE-professional of arbo-advies? Verken hieronder welke deskundigheid bij uw vraag past. HSE staat voor gezondheid, veiligheid en milieu; de beschikbare deskundigheden en uw opdracht bepalen de passende ondersteuning.</Text>
+      <ul className="mt-4 grid list-disc gap-3 pl-5 sm:grid-cols-2">
+        {[
+          ['RI&E laten uitvoeren', publicRoutes.rieService],
+          ['Veiligheidskundige inhuren', publicRoutes.safetyExpertService],
+          ['Ondersteuning voor de preventiemedewerker', publicRoutes.preventionOfficerService],
+          ['Incidentonderzoek', publicRoutes.incidentInvestigationService],
+          ['Arbo-advies en deskundigheden', publicRoutes.services],
+          ['Gratis Compliance-intake: eerste oriëntatie', publicRoutes.complianceScan],
+        ].map(([label, href]) => <li key={href}><Link href={href} className="text-brand-primary-hover underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-primary">{label}</Link></li>)}
+      </ul>
     </Section>
   </PublicPageLayout>
 }
