@@ -32,6 +32,8 @@ jobs:
       - name: Restricted metadata helper and read-only diagnostic SQL
         run: node scripts/test-show-db-tree-privileges.mjs
       - run: npm run db:generate
+      - name: Complete course bundles on isolated PostgreSQL 18
+        run: node scripts/test-academy-content-database.mjs --local-synthetic
       - name: Real-client TLS and isolated WP17B target validation
         run: npx vitest run src/lib/maintenance/database-client-tls.test.ts scripts/wp17b-acceptance-target.test.ts --maxWorkers=2
       - name: Closed database diagnostic and maintenance authentication

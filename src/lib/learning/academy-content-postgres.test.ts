@@ -16,7 +16,7 @@ import { startLearningCourseAction, finishLearningBlockAction, submitLearningAns
 import { getFinalExamOverview, startFinalExamAttempt, saveFinalExamAnswer, submitFinalExamAttempt, getFinalExamPlayer } from './learning-final-exam-service'
 import { ensureCertificateForPassedExam, getOwnedLearningCertificate, getPublicLearningCertificate } from './learning-certificate-service'
 const enabled=process.env.ACADEMY_CONTENT_POSTGRES_TEST==='true'
-const bundles=['WL-001_COURSE_1.1_DRAFT.json','WL-002_COURSE_1.3_DRAFT.json','WL-003_COURSE_1.1_DRAFT.json'].map(f=>validateAcademyBundle(JSON.parse(readFileSync(`content/academy/${f}`,'utf8'))))
+const bundles=['WL-001_COURSE_1.2_DRAFT.json','WL-002_COURSE_1.3_DRAFT.json','WL-003_COURSE_1.1_DRAFT.json'].map(f=>validateAcademyBundle(JSON.parse(readFileSync(`content/academy/${f}`,'utf8'))))
 describe.skipIf(!enabled)('full Academy content PostgreSQL 18 integration',()=>{
  let db:PrismaClient,admin:string,student:string,outsider:string
  const imports=new Map<string,string>(),edits=new Map<string,string>()
