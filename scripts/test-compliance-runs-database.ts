@@ -169,6 +169,7 @@ async function main() {
     fixture.complianceTestContext = context
     const { verifyComplianceF4Database } = await import('./fixtures/compliance-f4-database')
     await verifyComplianceF4Database(db, { userId: user.id, organizationId: organization.id }, { userId: otherUser.id, organizationId: other.id })
+    if (process.argv.includes('--browser')) await (await import('./fixtures/compliance-f4-browser')).verifyF4Browser(db, { userId: user.id, organizationId: organization.id }, { userId: otherUser.id, organizationId: other.id })
   } finally {
     fixture.complianceTestContext = null
     await db?.$disconnect()

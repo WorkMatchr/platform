@@ -1,7 +1,9 @@
 import 'server-only'
+import { assertF4PaidAccess } from '@/lib/compliance/compliance-f4-purchase'
+import { assertF4DraftActor } from '@/lib/compliance/compliance-f4-draft-authorization'
 import { COMPLIANCE_FRAMEWORK_BINDING } from '@/lib/compliance-guide/compliance-framework-binding'
 
-import { buildComplianceV2Report, canonicalJson, complianceV2ReportSchema, normalizeComplianceV2Answers, complianceV2AnswersSchema } from '@/lib/compliance/compliance-v2'
+import { buildComplianceV2Report, canonicalJson, complianceChecksum, complianceV2ReportSchema, normalizeComplianceV2Answers, complianceV2AnswersSchema } from '@/lib/compliance/compliance-v2'
 import { loadComplianceV2Framework } from '@/lib/compliance/compliance-v2-framework'
 
 import { createHash } from 'node:crypto'
@@ -57,7 +59,7 @@ export type ArboGuideCompletionInput = z.input<typeof completionSchema>
 export type ArboGuideReportSnapshot = z.output<typeof arboGuideReportSnapshotSchema>
 
 export class ArboGuideRunError extends Error {
-  constructor(public readonly code: 'ACCESS_DENIED' | 'NOT_FOUND' | 'INVALID_INPUT' | 'CONFLICT' | 'EXPIRED_COMPLETION') { super(code) }
+  constructor(public readonly code: 'ACCESS_DENIED' | 'NOT_FOUND' | 'INVALID_INPUT' | 'CONFLICT' | 'EXPIRED_COMPLETION' | 'PAYMENT_REQUIRED') { super(code) }
 }
 
 function stable(value: unknown): unknown {
@@ -75,7 +77,9 @@ const prefixes = { COMPLIANCE: 'CW', BHV: 'BHV', RIE: 'RIE', RISK: 'RSK' } as co
 const MAX_SERIALIZABLE_ATTEMPTS = 5
 
 function isRetryableTransactionConflict(error: unknown) {
-  return Boolean(error && typeof error === 'object' && 'code' in error && error.code === 'P2034')
+  if (!error || typeof error !== 'object') return false
+  const message = 'message' in error ? String(error.message) : ''
+  return ('code' in error && error.code === 'P2034') || message.includes('40001') || message.includes('40P01')
 }
 
 async function allocateReportNumber(tx: Prisma.TransactionClient, guideType: keyof typeof prefixes, year: number) {
@@ -90,7 +94,7 @@ async function allocateReportNumber(tx: Prisma.TransactionClient, guideType: key
   return `${prefixes[guideType]}-${year}-${String(rows[0].nextNumber).padStart(6, '0')}`
 }
 
-export async function completeArboGuideRun(raw: unknown, options: { maxCompletionAgeMs?: number } = {}) {
+export async function completeArboGuideRun(raw: unknown, options: { maxCompletionAgeMs?: number; draftRevision?: number } = {}) {
   if (options.maxCompletionAgeMs !== undefined && (!Number.isFinite(options.maxCompletionAgeMs) || options.maxCompletionAgeMs <= 0)) throw new ArboGuideRunError('INVALID_INPUT')
   const parsed = completionSchema.safeParse(raw)
   if (!parsed.success || parsed.data.completedAt < parsed.data.startedAt) throw new ArboGuideRunError('INVALID_INPUT')
@@ -117,10 +121,16 @@ export async function completeArboGuideRun(raw: unknown, options: { maxCompletio
         if (!membership || membership.organizationId !== input.organizationId || membership.status !== 'ACTIVE' || membership.user.status !== 'ACTIVE' || membership.organization.status !== 'ACTIVE' || membership.organization.organizationType === 'PLATFORM_OPERATOR') throw new ArboGuideRunError('ACCESS_DENIED')
 
         const existing = await tx.arboGuideRun.findUnique({ where: { organizationId_idempotencyKey: { organizationId: input.organizationId, idempotencyKey: input.idempotencyKey } } })
+        if (existing?.draftRevision !== null && existing?.draftRevision !== undefined) {
+          await assertF4DraftActor(tx, { userId: input.completedByUserId, organizationId: input.organizationId })
+          if (existing.completedByUserId !== input.completedByUserId) throw new ArboGuideRunError('ACCESS_DENIED')
+          if (options.draftRevision !== existing.draftRevision || input.startedAt.getTime() !== existing.startedAt.getTime()) throw new ArboGuideRunError('CONFLICT')
+        } else if (options.draftRevision !== undefined) throw new ArboGuideRunError('CONFLICT')
         if (existing?.status === 'COMPLETED') {
           if (existing.snapshotFingerprint !== fingerprint) throw new ArboGuideRunError('CONFLICT')
           return { id: existing.id, reportNumber: existing.reportNumber!, created: false }
         }
+        if (existing?.draftRevision !== null && existing?.draftRevision !== undefined) await assertF4PaidAccess(tx, existing)
         if (existing && JSON.stringify(stable(existing.answersSnapshot)) !== JSON.stringify(stable(input.answersSnapshot))) throw new ArboGuideRunError('CONFLICT')
 
         // Check freshness under the same lock, after immutable replay. A lost response
@@ -132,6 +142,7 @@ export async function completeArboGuideRun(raw: unknown, options: { maxCompletio
         if (input.reportSnapshot.schemaVersion === 2) {
           try {
             const definition = await loadComplianceV2Framework(tx, input.complianceFrameworkVersionId!)
+            if (existing?.draftDefinitionChecksum && existing.draftDefinitionChecksum !== complianceChecksum(definition)) throw new Error('Gewijzigde conceptversie')
             const expected = buildComplianceV2Report(definition, input.answersSnapshot, { organizationName: input.reportSnapshot.organizationName, scannedAt: input.reportSnapshot.scannedAt })
             if (canonicalJson(expected) !== canonicalJson(input.reportSnapshot)) throw new Error('Afwijkend serverresultaat')
             if (existing && existing.complianceFrameworkVersionId !== definition.id) throw new Error('Afwijkende frameworkbinding')

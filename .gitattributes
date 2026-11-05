@@ -1,0 +1,4 @@
+# Keep checksums of these new migrations identical on Windows and Linux.
+prisma/migrations/20261105120000_add_versioned_compliance_drafts/migration.sql text eol=lf
+prisma/migrations/20261105121000_add_compliance_purchase_kind/migration.sql text eol=lf
+prisma/migrations/20261105122000_bind_compliance_purchase/migration.sql text eol=lf

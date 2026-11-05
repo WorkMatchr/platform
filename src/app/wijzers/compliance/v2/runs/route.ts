@@ -5,7 +5,7 @@ import { buildComplianceV2Report, complianceV2AnswersSchema } from '@/lib/compli
 import { isF4Enabled, loadF4Framework } from '@/lib/compliance/compliance-f4-framework'
 
 export const runtime = 'nodejs'
-const payload = z.object({ answers: complianceV2AnswersSchema, idempotencyKey: z.string().uuid(), startedAt: z.string().datetime(), completedAt: z.string().datetime() }).strict()
+const payload = z.object({ answers: complianceV2AnswersSchema, idempotencyKey: z.string().uuid(), startedAt: z.string().datetime(), completedAt: z.string().datetime(), draftRevision: z.number().int().nonnegative() }).strict()
 export async function POST(request: Request) {
   if (!isF4Enabled()) return Response.json({ saved: false }, { status: 404 })
   const access = await getArboGuideApiAccess()
@@ -17,14 +17,15 @@ export async function POST(request: Request) {
     if (new TextEncoder().encode(raw).length > 16_384) return Response.json({ saved: false }, { status: 413 })
     const body = payload.parse(JSON.parse(raw))
     const startedAt = new Date(body.startedAt), completedAt = new Date(body.completedAt), now = Date.now()
-    if (completedAt < startedAt || completedAt.getTime() > now + 60_000 || completedAt.getTime() - startedAt.getTime() > 86_400_000) throw new Error('Ongeldige periode.')
+    if (completedAt < startedAt || completedAt.getTime() > now + 60_000) throw new Error('Ongeldige periode.')
     const definition = await loadF4Framework()
     const report = buildComplianceV2Report(definition, body.answers, { organizationName: access.organizationName, scannedAt: body.completedAt })
     const run = await completeArboGuideRun({ guideType: 'COMPLIANCE', guideVersion: '2', reportVersion: '2.0', complianceFrameworkVersionId: definition.id,
       organizationId: access.organizationId, completedByUserId: access.userId, idempotencyKey: body.idempotencyKey,
-      startedAt, completedAt, answersSnapshot: body.answers, reportSnapshot: report }, { maxCompletionAgeMs: 300_000 })
+      startedAt, completedAt, answersSnapshot: body.answers, reportSnapshot: report }, { maxCompletionAgeMs: 300_000, draftRevision: body.draftRevision })
     return Response.json({ saved: true, runId: run.id, report }, { status: run.created ? 201 : 200 })
   } catch (error) {
+    if (error instanceof ArboGuideRunError && error.code === 'PAYMENT_REQUIRED') return Response.json({ saved: false, code: 'PAYMENT_REQUIRED' }, { status: 402 })
     if (error instanceof ArboGuideRunError && error.code === 'EXPIRED_COMPLETION') return Response.json({ saved: false, code: 'EXPIRED_COMPLETION' }, { status: 409 })
     const status = error instanceof ArboGuideRunError && error.code === 'ACCESS_DENIED' ? 403 : error instanceof ArboGuideRunError && error.code === 'CONFLICT' ? 409 : 400
     return Response.json({ saved: false, message: 'Het resultaat kon niet veilig worden opgeslagen. Uw antwoorden blijven op deze pagina beschikbaar.' }, { status })

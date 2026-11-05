@@ -41,13 +41,18 @@ export async function verifyComplianceF4Database(db: PrismaClient, viewer: ArboG
   assert.equal(inspection.status, 'DRAFT')
   assert.equal(inspection.rules.length, 141)
   assert.deepEqual(await db.complianceFrameworkVersion.findUniqueOrThrow({ where: { id: d.id } }), beforeInspection)
-  const payload = { idempotencyKey: randomUUID(), startedAt: new Date(Date.now() - 60_000).toISOString(), completedAt: new Date().toISOString(), answers: f4PositiveAnswers }
+  const payload = { draftRevision: 0, idempotencyKey: randomUUID(), startedAt: new Date(Date.now() - 60_000).toISOString(), completedAt: new Date().toISOString(), answers: f4PositiveAnswers }
   const post = (body: unknown = payload) => POST(new Request('http://localhost/wijzers/compliance/v2/runs', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }))
   delete process.env.COMPLIANCE_F4_ENABLED
   assert.equal((await post()).status, 404)
   process.env.COMPLIANCE_F4_ENABLED = 'true'
   assert.equal((await post()).status, 400, 'DRAFT cannot be used')
   await db.complianceFrameworkVersion.update({ where: { id: d.id }, data: { status: 'PUBLISHED', publishedAt: new Date() } })
+  await db.organizationMembership.update({ where: { userId: viewer.userId }, data: { role: 'OWNER' } })
+  const draft = await (await import('../../src/lib/compliance/compliance-f4-drafts')).saveF4Draft(viewer, { idempotencyKey: payload.idempotencyKey, revision: null, answers: payload.answers })
+  payload.startedAt = draft.startedAt
+  await (await import('./compliance-f4-payment-database')).fundF4Draft(db, viewer, draft.id)
+  payload.completedAt = new Date().toISOString()
   assert.equal((await post({ ...payload, organizationId: other.organizationId })).status, 400)
   assert.equal((await post({ ...payload, answers: { rie: 'INVALID' } })).status, 400)
   const responses = await Promise.all(Array.from({ length: 6 }, () => post()))
@@ -66,7 +71,7 @@ export async function verifyComplianceF4Database(db: PrismaClient, viewer: ArboG
     assert.equal((await replay.json()).runId, run.id)
     const expired = await post({ ...payload, idempotencyKey: randomUUID() })
     assert.equal(expired.status, 409, 'An expired new submission must not create a run')
-    assert.equal((await expired.json()).code, 'EXPIRED_COMPLETION')
+    assert.equal((await expired.json()).saved, false)
     assert.equal(await db.arboGuideRun.count(), historical.length + 1)
     assert.deepEqual(await db.arboGuideRun.findUniqueOrThrow({ where: { id: run.id }, include: { results: true } }), run)
   } finally { Date.now = realNow }
@@ -75,7 +80,7 @@ export async function verifyComplianceF4Database(db: PrismaClient, viewer: ArboG
   await assert.rejects(db.complianceQuestionDefinition.update({ where: { id: d.modules[0].questions[1].id }, data: { visibilityCondition: { question: 'hasEmployees', equals: 'NO' } } }))
   for (const role of ['OWNER', 'ADMIN', 'MEMBER'] as const) {
     await db.organizationMembership.update({ where: { userId: viewer.userId }, data: { role } })
-    assert.equal((await post()).status, 200)
+    assert.equal((await post()).status, role === 'MEMBER' ? 403 : 200)
   }
   await db.organizationMembership.update({ where: { userId: viewer.userId }, data: { status: 'SUSPENDED' } })
   assert.equal((await post()).status, 403)
@@ -84,10 +89,12 @@ export async function verifyComplianceF4Database(db: PrismaClient, viewer: ArboG
   assert.equal((await post({ ...payload, idempotencyKey: randomUUID() })).status, 400, 'Withdrawn evidence blocks new runs')
   assert.deepEqual((await service.getArboGuideRun(viewer, run.id)).reportSnapshot, bodies[0].report, 'Historical report remains readable')
   await db.knowledgeSource.update({ where: { id: source.id }, data: { temporalStatus: 'CURRENT' } })
+  await db.organizationMembership.update({ where: { userId: viewer.userId }, data: { role: 'OWNER' } })
+  await (await import('./compliance-f4-drafts-database')).verifyF4Drafts(db, viewer, other)
   await db.knowledgeSource.update({ where: { id: source.id }, data: { title: 'Gewijzigde testbron' } })
   assert.equal((await post({ ...payload, idempotencyKey: randomUUID() })).status, 400)
   for (const old of historical) assert.deepEqual(await db.arboGuideRun.findUniqueOrThrow({ where: { id: old.id }, include: { results: true } }), old)
-  assert.equal(await db.arboGuideRun.count(), historical.length + 1)
+  assert.equal(await db.arboGuideRun.count(), historical.length + 2)
   delete process.env.COMPLIANCE_F4_ENABLED
   console.log('F4 PostgreSQL PASS: real route/service, 48 fields, 10 results, six requests/one run; roles/tenant/membership; immutable visibility; source drift denied; historical runs unchanged.')
 }
