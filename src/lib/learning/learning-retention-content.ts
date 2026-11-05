@@ -5,7 +5,7 @@
  * not copied from the separate E01–E50 summative exam bank.
  */
 export type RetentionQuestion = {
-  code: `R${string}`
+  code: string
   questionVersion: number
   chapterNumber: number
   knowledgeArea: string

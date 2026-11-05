@@ -1,4 +1,5 @@
 import 'server-only'
+import { requireFinancialOrganizationId } from '@/lib/finance/financial-organization'
 
 import { createHash } from 'node:crypto'
 import { Prisma } from '@/generated/prisma/client'
@@ -23,6 +24,7 @@ import {
   type MollieGateway,
   type MolliePaymentSnapshot,
 } from './mollie-gateway'
+import { processAcademyMolliePayment } from '@/lib/learning/academy-commerce-service'
 import { issueInvoiceForPaidPurchase } from './invoice-service'
 import { deliverFinancialInvoiceEmail, recordFinancialInvoiceEmailFailure } from './financial-invoice-delivery-service'
 import { activateProAfterFirstPayment, processRecurringProPayment } from './subscription-service'
@@ -230,7 +232,7 @@ export async function createCreditPurchase(
         : `WorkMatchr ${purchase.packageLabel}`,
       redirectUrl,
       webhookUrl,
-      metadata: { purchaseId: purchase.id, organizationId: purchase.organizationId },
+      metadata: { purchaseId: purchase.id, organizationId: requireFinancialOrganizationId(purchase.organizationId) },
       idempotencyKey: `mollie-purchase-${purchase.id}`,
     })
   } catch (error) {
@@ -317,6 +319,7 @@ export async function processMolliePayment(
   if (payment.id !== paymentId) throw new Error('MOLLIE_PAYMENT_MISMATCH')
   const purchase = await getPrisma().financialPurchase.findUnique({ where: { molliePaymentId: payment.id } })
   if (!purchase) return processRecurringProPayment(payment)
+  if (purchase.kind === 'ACADEMY_COURSE') return processAcademyMolliePayment(payment)
   const amountCents = mollieValueToCents(payment.amountValue)
   const valid = payment.metadata.purchaseId === purchase.id
     && payment.metadata.organizationId === purchase.organizationId

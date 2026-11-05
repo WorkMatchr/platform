@@ -1,3 +1,4 @@
+import { findAcademyEnrollment } from '@/lib/learning/academy-course-service'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Card } from '@/components/ui/card'
@@ -7,12 +8,14 @@ import { getMyRetentionOverview, ensureMyRetentionWeeklyChecks } from '@/lib/lea
 
 export default async function RetentionProgramPage({ params }: { params: Promise<{ courseSlug: string }> }) {
   const { courseSlug } = await params
-  if (courseSlug !== 'rie-in-de-praktijk') notFound()
+  if (!/^[a-z0-9-]{1,120}$/.test(courseSlug)) notFound()
   const user = await requireLearningUser(`/e-learnings/${courseSlug}/kennisbehoud`)
-  let overview = await getMyRetentionOverview(user.id)
+  const context = await findAcademyEnrollment(user.id, { courseSlug })
+  if (!context) notFound()
+  let overview = await getMyRetentionOverview(user.id, new Date(), courseSlug)
   if (overview.participation && !overview.participation.stoppedAt) {
     try { await ensureMyRetentionWeeklyChecks(user.id, overview.participation.id) } catch { /* Draft content or a closed program stays unavailable; never expose a partial check. */ }
-    overview = await getMyRetentionOverview(user.id)
+    overview = await getMyRetentionOverview(user.id, new Date(), courseSlug)
   }
   if (!overview.eligible) return <main className="mx-auto max-w-3xl space-y-5 px-4 py-10 sm:px-6">
     <h1 className="text-3xl font-bold text-brand-dark">Kennisbehoud</h1>
@@ -21,10 +24,10 @@ export default async function RetentionProgramPage({ params }: { params: Promise
 
   const participation = overview.participation
   return <main className="mx-auto w-full max-w-4xl space-y-6 px-4 py-10 sm:px-6">
-    <p className="text-sm font-semibold uppercase tracking-wide text-brand-primary">WL-001 · RI&E in de praktijk</p>
+    <p className="text-sm font-semibold uppercase tracking-wide text-brand-primary">{context.definition.courseCode} · {context.definition.title}</p>
     <h1 className="text-3xl font-bold text-brand-dark">Kennisbehoud</h1>
     <Card className="space-y-5">
-      {!participation && overview.programAvailable && <RetentionOptIn />}
+      {!participation && overview.programAvailable && <RetentionOptIn courseSlug={courseSlug} courseTitle={context.definition.title} />}
       {!participation && !overview.programAvailable && <div className="space-y-2"><h2 className="text-xl font-bold text-brand-dark">12 weken kennisbehoud</h2><p className="text-text-secondary">De vrijwillige kennischecks zijn op dit moment nog niet beschikbaar.</p></div>}
       {participation && <section className="space-y-4" aria-labelledby="retention-status-title">
         <h2 id="retention-status-title" className="text-xl font-bold text-brand-dark">Uw deelname</h2>
@@ -42,7 +45,7 @@ export default async function RetentionProgramPage({ params }: { params: Promise
         </ol>
         {participation.status === 'ACTIVE' && <StopRetention participationId={participation.id} />}
       </section>}
-      <AnnualReminderConsent enabled={Boolean(overview.annualReminder && !overview.annualReminder.revokedAt && !overview.annualReminder.sentAt)} scheduledFor={overview.annualReminder?.scheduledFor?.toISOString() ?? null} sent={Boolean(overview.annualReminder?.sentAt)} />
+      <AnnualReminderConsent courseSlug={courseSlug} courseTitle={context.definition.title} enabled={Boolean(overview.annualReminder && !overview.annualReminder.revokedAt && !overview.annualReminder.sentAt)} scheduledFor={overview.annualReminder?.scheduledFor?.toISOString() ?? null} sent={Boolean(overview.annualReminder?.sentAt)} />
       <Link className="inline-flex min-h-11 items-center font-semibold text-brand-primary underline" href="/e-learnings/mijn">Terug naar Mijn e-learnings</Link>
     </Card>
   </main>

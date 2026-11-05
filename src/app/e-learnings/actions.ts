@@ -1,5 +1,6 @@
 'use server'
 
+import { currentAcademyAccess } from '@/lib/learning/academy-access-policy'
 import { Prisma } from '@/generated/prisma/client'
 import { redirect } from 'next/navigation'
 import { requireLearningUser } from '@/lib/learning/learning-authorization'
@@ -13,12 +14,14 @@ export type LearningAnswerResult = { ok: true; correct: boolean; feedback: strin
 export async function startLearningCourseAction(formData: FormData) {
   const courseSlug = formData.get('courseSlug')
   if (typeof courseSlug !== 'string' || !/^[a-z0-9-]{1,120}$/.test(courseSlug)) return
+  const requestedVersionId = formData.get('courseVersionId')
+  if (requestedVersionId !== null && (typeof requestedVersionId !== 'string' || !/^[0-9a-f-]{36}$/i.test(requestedVersionId))) return
   const requestedChapterSlug = formData.get('chapterSlug')
   if (requestedChapterSlug !== null && (typeof requestedChapterSlug !== 'string' || !/^[a-z0-9-]{1,120}$/.test(requestedChapterSlug))) return
   const user = await requireLearningUser(coursePath(courseSlug))
   const prisma = getPrisma()
   const version = await prisma.learningCourseVersion.findFirst({
-    where: { status: 'PUBLISHED', course: { slug: courseSlug, status: 'PUBLISHED' } },
+    where: { ...(requestedVersionId ? { id: requestedVersionId } : {}), status: { in: ['PUBLISHED', 'RETIRED'] }, course: { slug: courseSlug, status: 'PUBLISHED' }, enrollments: { some: { userId: user.id, ...currentAcademyAccess() } } },
     orderBy: { publishedAt: 'desc' },
     include: { chapters: { orderBy: { position: 'asc' } } },
   })
@@ -29,15 +32,14 @@ export async function startLearningCourseAction(formData: FormData) {
     : firstChapter
   if (requestedChapterSlug && !selectedChapter) redirect(coursePath(courseSlug))
 
-  await prisma.$transaction(async (transaction) => {
-    // Serialize enrollment initialization for this user, including the first chapter.
+  const started = await prisma.$transaction(async (transaction) => {
+    // Preserve main concurrency protection without granting a new entitlement.
     await transaction.$queryRaw`SELECT id FROM "User" WHERE id = ${user.id}::uuid FOR UPDATE`
-    await transaction.learningProfile.upsert({ where: { userId: user.id }, update: {}, create: { userId: user.id } })
-    const enrollment = await transaction.learningEnrollment.upsert({
-      where: { userId_courseVersionId: { userId: user.id, courseVersionId: version.id } },
-      update: {},
-      create: { userId: user.id, courseVersionId: version.id, status: 'IN_PROGRESS', startedAt: new Date() },
+    const enrollment = await transaction.learningEnrollment.findUnique({
+      where: { userId_courseVersionId: { userId: user.id, courseVersionId: version.id }, ...currentAcademyAccess() },
     })
+    if (!enrollment) return false
+    await transaction.learningProfile.upsert({ where: { userId: user.id }, update: {}, create: { userId: user.id } })
     if (enrollment.status === 'NOT_STARTED') {
       await transaction.learningEnrollment.update({
         where: { id: enrollment.id },
@@ -59,7 +61,9 @@ export async function startLearningCourseAction(formData: FormData) {
         })
       }
     }
+    return true
   })
+  if (!started) redirect('/e-learnings/mijn?melding=geen-toegang')
   if (selectedChapter) {
     redirect(`${coursePath(courseSlug)}/leren/${encodeURIComponent(selectedChapter.slug)}?version=${encodeURIComponent(version.version)}`)
   }
@@ -124,7 +128,7 @@ export async function finishLearningBlockAction(blockId: string) {
     })
     if (!block || block.questionId) return null
     const enrollment = await transaction.learningEnrollment.findFirst({
-      where: { userId: user.id, courseVersionId: block.chapter.courseVersionId, status: 'IN_PROGRESS' },
+      where: { userId: user.id, ...currentAcademyAccess(), courseVersionId: block.chapter.courseVersionId, status: 'IN_PROGRESS' },
       select: { id: true },
     })
     if (!enrollment) return null
@@ -151,7 +155,7 @@ export async function submitLearningAnswerAction(blockId: string, answer: unknow
       })
       if (!block?.question) return { ok: false as const, message: 'Deze oefenvraag is niet beschikbaar.' }
       const enrollment = await transaction.learningEnrollment.findFirst({
-        where: { userId: user.id, courseVersionId: block.chapter.courseVersionId, status: 'IN_PROGRESS' },
+        where: { userId: user.id, ...currentAcademyAccess(), courseVersionId: block.chapter.courseVersionId, status: 'IN_PROGRESS' },
         select: { id: true },
       })
       if (!enrollment) return { ok: false as const, message: 'Uw inschrijving is niet beschikbaar.' }
@@ -203,7 +207,7 @@ export async function completeLearningChapterAction(chapterId: string) {
     })
     if (!chapter) return null
     const enrollment = await transaction.learningEnrollment.findFirst({
-      where: { userId: user.id, courseVersionId: chapter.courseVersionId, status: 'IN_PROGRESS' },
+      where: { userId: user.id, ...currentAcademyAccess(), courseVersionId: chapter.courseVersionId, status: 'IN_PROGRESS' },
       select: { id: true },
     })
     if (!enrollment) return null

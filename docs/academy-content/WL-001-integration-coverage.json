@@ -1,0 +1,3562 @@
+{
+  "courseCode": "WL-001",
+  "sourceVersion": "1.0",
+  "candidateVersion": "1.1",
+  "humanPublicationApproval": "OPEN",
+  "selection": {
+    "questionCount": 50,
+    "policy": "All 50 version-bound questions, stable exam position order; no random pool selection.",
+    "passingScore": 40,
+    "attemptLimit": "existing runtime default until explicitly configured",
+    "chapterCounts": {
+      "1": 3,
+      "2": 4,
+      "3": 5,
+      "4": 6,
+      "5": 6,
+      "6": 5,
+      "7": 5,
+      "8": 4,
+      "9": 4,
+      "10": 8
+    }
+  },
+  "assessmentCounts": {
+    "DIRECT": 61,
+    "DIRECT_PROPOSED": 6,
+    "NOT_EXPLICIT": 13,
+    "PARTIAL": 24
+  },
+  "objectives": [
+    {
+      "objectiveCode": "WL001-H1-LO01",
+      "objective": "Uitleggen waarvoor een RI&E wordt gebruikt",
+      "chapters": [
+        1
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E01"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E01",
+          "version": 2,
+          "stem": "Een directeur zegt: \"Het belangrijkste is dat we een RI&E-document kunnen laten zien als de Arbeidsinspectie ernaar vraagt.\" Welke reactie past het beste bij het doel van een RI&E?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H1-LO02",
+      "objective": "Het verschil tussen gevaar en risico herkennen",
+      "chapters": [
+        1
+      ],
+      "previousCoverage": "NOT_EXPLICIT",
+      "questionCodes": [
+        "WL001-EX-E08"
+      ],
+      "assessment": "DIRECT_PROPOSED",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "Het juiste antwoord onderscheidt expliciet de gevaarlijke eigenschap van de contextafhankelijke blootstelling.",
+      "action": "Valideer de gevolgtrekking, distractoren en moeilijkheid; geen automatische menselijke goedkeuring.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E08",
+          "version": 2,
+          "stem": "Een schadelijke stof staat in een opslagruimte. Welk onderscheid tussen gevaar en risico helpt om de situatie voor medewerkers te beoordelen?",
+          "correctAnswers": [
+            "B"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H1-LO03",
+      "objective": "Uitleggen waarom inventariseren alleen onvoldoende is",
+      "chapters": [
+        1
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E03"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E03",
+          "version": 2,
+          "stem": "Een bedrijf heeft een uitgebreide lijst gemaakt van alle gevaren die medewerkers tijdens hun werk kunnen tegenkomen. Wat is de belangrijkste reden dat dit alleen nog geen volledige aanpak van de RI&E vormt?",
+          "correctAnswers": [
+            "A"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H1-LO04",
+      "objective": "De relatie tussen RI&E, Plan van Aanpak, maatregelen en evalueren herkennen",
+      "chapters": [
+        1
+      ],
+      "previousCoverage": "PARTIAL",
+      "questionCodes": [
+        "WL001-EX-E03"
+      ],
+      "assessment": "PARTIAL",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "Vraag E03 toetst vervolgstappen na inventariseren; de complete terugkoppeling via evaluatie wordt niet afzonderlijk uitgevraagd.",
+      "action": "Beslis expliciet of gedeeltelijke eindtoetsdekking volstaat naast formatieve toetsing, of vervang een vraag met herbeoordeling van alle geraakte leerdoelen.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E03",
+          "version": 2,
+          "stem": "Een bedrijf heeft een uitgebreide lijst gemaakt van alle gevaren die medewerkers tijdens hun werk kunnen tegenkomen. Wat is de belangrijkste reden dat dit alleen nog geen volledige aanpak van de RI&E vormt?",
+          "correctAnswers": [
+            "A"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H1-LO05",
+      "objective": "Herkennen dat veranderingen aanleiding kunnen zijn de RI&E te actualiseren",
+      "chapters": [
+        1
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E36"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E36",
+          "version": 2,
+          "stem": "Welke ontwikkelingen kunnen duidelijk aanleiding geven om te beoordelen of de RI&E nog aansluit?",
+          "correctAnswers": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H2-LO01",
+      "objective": "Uitleggen waarom de werkgever verantwoordelijk blijft.",
+      "chapters": [
+        2
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E04",
+        "WL001-EX-E05"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E04",
+          "version": 2,
+          "stem": "Een werkgever laat de RI&E volledig begeleiden door een externe arbodeskundige. Wie blijft verantwoordelijk voor het arbeidsomstandighedenbeleid binnen de organisatie?",
+          "correctAnswers": [
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbowet",
+            "arbo-preventie"
+          ]
+        },
+        {
+          "code": "WL001-EX-E05",
+          "version": 2,
+          "stem": "Een manager zegt: \"We hebben een preventiemedewerker aangewezen. Alles wat met de RI&E en veiligheid te maken heeft, is vanaf nu zijn verantwoordelijkheid.\" Welke reactie is het meest juist?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbowet",
+            "arbo-preventie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H2-LO02",
+      "objective": "De rol van de preventiemedewerker herkennen.",
+      "chapters": [
+        2
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E05"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E05",
+          "version": 2,
+          "stem": "Een manager zegt: \"We hebben een preventiemedewerker aangewezen. Alles wat met de RI&E en veiligheid te maken heeft, is vanaf nu zijn verantwoordelijkheid.\" Welke reactie is het meest juist?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbowet",
+            "arbo-preventie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H2-LO03",
+      "objective": "Uitleggen waarom werknemers worden betrokken.",
+      "chapters": [
+        2
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E06"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E06",
+          "version": 2,
+          "stem": "Een organisatie actualiseert haar RI&E na een grote verandering van het productieproces. Welke uitgangspunten zijn juist?",
+          "correctAnswers": [
+            "A",
+            "B",
+            "C",
+            "E"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbowet",
+            "arbo-preventie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H2-LO04",
+      "objective": "De rol van OR/PVT herkennen.",
+      "chapters": [
+        2
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E06"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E06",
+          "version": 2,
+          "stem": "Een organisatie actualiseert haar RI&E na een grote verandering van het productieproces. Welke uitgangspunten zijn juist?",
+          "correctAnswers": [
+            "A",
+            "B",
+            "C",
+            "E"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbowet",
+            "arbo-preventie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H2-LO05",
+      "objective": "Arbodienst, bedrijfsarts en arbokerndeskundigen onderscheiden.",
+      "chapters": [
+        2
+      ],
+      "previousCoverage": "NOT_EXPLICIT",
+      "questionCodes": [],
+      "assessment": "NOT_EXPLICIT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "Geen examenvraag vraagt deze specifieke handeling of dit onderscheid expliciet. Formatieve dekking is geen vervanging van summatieve dekking.",
+      "action": "Toetsdeskundige moet een expliciete examenvraag of gemotiveerde acceptatie van uitsluitend formatieve dekking vastleggen.",
+      "questionEvidence": []
+    },
+    {
+      "objectiveCode": "WL001-H2-LO06",
+      "objective": "De vier arbokerndeskundigheden herkennen.",
+      "chapters": [
+        2
+      ],
+      "previousCoverage": "NOT_EXPLICIT",
+      "questionCodes": [],
+      "assessment": "NOT_EXPLICIT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "Geen examenvraag vraagt deze specifieke handeling of dit onderscheid expliciet. Formatieve dekking is geen vervanging van summatieve dekking.",
+      "action": "Toetsdeskundige moet een expliciete examenvraag of gemotiveerde acceptatie van uitsluitend formatieve dekking vastleggen.",
+      "questionEvidence": []
+    },
+    {
+      "objectiveCode": "WL001-H2-LO07",
+      "objective": "Deskundigheid bij toetsing laten aansluiten op de risico’s.",
+      "chapters": [
+        2
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E07",
+        "WL001-EX-E33"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E07",
+          "version": 2,
+          "stem": "Een metaalbedrijf actualiseert de RI&E. Er spelen onder meer vraagstukken rond lasrook, hoge geluidsniveaus, machineveiligheid en werkdruk. De interne preventiemedewerker kent de werkzaamheden goed, maar heeft niet voor ieder onderwerp specialistische expertise. Welke aanpak is het meest passend?",
+          "correctAnswers": [
+            "B"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbowet",
+            "arbo-preventie"
+          ]
+        },
+        {
+          "code": "WL001-EX-E33",
+          "version": 3,
+          "stem": "Productiebedrijf heeft complexe vraagstukken over gevaarlijke stoffen, machineveiligheid en PSA. Directeur denkt dat één arbokerndeskundige automatisch alles kan toetsen. Beste reactie?",
+          "correctAnswers": [
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbowet",
+            "arbobesluit",
+            "nla-rie",
+            "erkenning-2026",
+            "steunpunt-toetsing"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H2-LO08",
+      "objective": "Samenwerking rond de RI&E organiseren.",
+      "chapters": [
+        2
+      ],
+      "previousCoverage": "PARTIAL",
+      "questionCodes": [
+        "WL001-EX-E06",
+        "WL001-EX-E07"
+      ],
+      "assessment": "PARTIAL",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "Vragen E06/E07 toetsen betrokkenheid en aanvullende deskundigheid, niet het zelfstandig organiseren van rollen, overleg en terugkoppeling.",
+      "action": "Beslis expliciet of gedeeltelijke eindtoetsdekking volstaat naast formatieve toetsing, of vervang een vraag met herbeoordeling van alle geraakte leerdoelen.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E06",
+          "version": 2,
+          "stem": "Een organisatie actualiseert haar RI&E na een grote verandering van het productieproces. Welke uitgangspunten zijn juist?",
+          "correctAnswers": [
+            "A",
+            "B",
+            "C",
+            "E"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbowet",
+            "arbo-preventie"
+          ]
+        },
+        {
+          "code": "WL001-EX-E07",
+          "version": 2,
+          "stem": "Een metaalbedrijf actualiseert de RI&E. Er spelen onder meer vraagstukken rond lasrook, hoge geluidsniveaus, machineveiligheid en werkdruk. De interne preventiemedewerker kent de werkzaamheden goed, maar heeft niet voor ieder onderwerp specialistische expertise. Welke aanpak is het meest passend?",
+          "correctAnswers": [
+            "B"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbowet",
+            "arbo-preventie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H3-LO01",
+      "objective": "Arbeidsrisico’s systematisch opsporen",
+      "chapters": [
+        3
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E09"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E09",
+          "version": 2,
+          "stem": "In een distributiecentrum ziet u: heftrucks en voetgangers gebruiken deels dezelfde route; medewerkers tillen regelmatig zware dozen; de avondploeg meldt structurele tijdsdruk; de nooduitgang is vrij en duidelijk gemarkeerd; een defecte pallettruck is buiten gebruik gesteld. Welke onderwerpen geven duidelijk aanleiding tot verdere inventarisatie of beoordeling?",
+          "correctAnswers": [
+            "A",
+            "B",
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H3-LO02",
+      "objective": "Uitleggen waarom een werkplekrondgang niet voldoende is",
+      "chapters": [
+        3
+      ],
+      "previousCoverage": "PARTIAL",
+      "questionCodes": [
+        "WL001-EX-E12"
+      ],
+      "assessment": "PARTIAL",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "E12 vraagt praktijkbewijs naast een procedure; de beperking van alleen een rondgang wordt niet rechtstreeks bevraagd.",
+      "action": "Beslis expliciet of gedeeltelijke eindtoetsdekking volstaat naast formatieve toetsing, of vervang een vraag met herbeoordeling van alle geraakte leerdoelen.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E12",
+          "version": 2,
+          "stem": "Een magazijnmanager zegt dat intern transport goed is geregeld omdat verkeersregels in een procedure staan. Welke aanvullende informatie helpt de praktijk te beoordelen?",
+          "correctAnswers": [
+            "A",
+            "B",
+            "C",
+            "E"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H3-LO03",
+      "objective": "Relevante informatiebronnen herkennen",
+      "chapters": [
+        3
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E11",
+        "WL001-EX-E12"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E11",
+          "version": 2,
+          "stem": "Dagelijks wordt een reinigingsmiddel gebruikt. In de RI&E staat \"Chemische middelen --- laag risico\", maar product, hoeveelheid en blootstelling zijn onduidelijk. Wat is de meest passende vervolgstap?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        },
+        {
+          "code": "WL001-EX-E12",
+          "version": 2,
+          "stem": "Een magazijnmanager zegt dat intern transport goed is geregeld omdat verkeersregels in een procedure staan. Welke aanvullende informatie helpt de praktijk te beoordelen?",
+          "correctAnswers": [
+            "A",
+            "B",
+            "C",
+            "E"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H3-LO04",
+      "objective": "Werkzaamheden en processen als uitgangspunt gebruiken",
+      "chapters": [
+        3
+      ],
+      "previousCoverage": "PARTIAL",
+      "questionCodes": [
+        "WL001-EX-E11",
+        "WL001-EX-E12"
+      ],
+      "assessment": "PARTIAL",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "E11/E12 bevatten werkzaamheden als context, maar toetsen niet de keuze om de volledige inventarisatie procesgericht op te bouwen.",
+      "action": "Beslis expliciet of gedeeltelijke eindtoetsdekking volstaat naast formatieve toetsing, of vervang een vraag met herbeoordeling van alle geraakte leerdoelen.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E11",
+          "version": 2,
+          "stem": "Dagelijks wordt een reinigingsmiddel gebruikt. In de RI&E staat \"Chemische middelen --- laag risico\", maar product, hoeveelheid en blootstelling zijn onduidelijk. Wat is de meest passende vervolgstap?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        },
+        {
+          "code": "WL001-EX-E12",
+          "version": 2,
+          "stem": "Een magazijnmanager zegt dat intern transport goed is geregeld omdat verkeersregels in een procedure staan. Welke aanvullende informatie helpt de praktijk te beoordelen?",
+          "correctAnswers": [
+            "A",
+            "B",
+            "C",
+            "E"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H3-LO05",
+      "objective": "Normale en afwijkende werkzaamheden meenemen",
+      "chapters": [
+        3
+      ],
+      "previousCoverage": "NOT_EXPLICIT",
+      "questionCodes": [],
+      "assessment": "NOT_EXPLICIT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "Geen examenvraag vraagt deze specifieke handeling of dit onderscheid expliciet. Formatieve dekking is geen vervanging van summatieve dekking.",
+      "action": "Toetsdeskundige moet een expliciete examenvraag of gemotiveerde acceptatie van uitsluitend formatieve dekking vastleggen.",
+      "questionEvidence": []
+    },
+    {
+      "objectiveCode": "WL001-H3-LO06",
+      "objective": "Mogelijk blootgestelde groepen herkennen",
+      "chapters": [
+        3
+      ],
+      "previousCoverage": "PARTIAL",
+      "questionCodes": [
+        "WL001-EX-E08"
+      ],
+      "assessment": "PARTIAL",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "E08 onderscheidt blootstelling; de leerling hoeft niet alle mogelijk blootgestelde groepen te identificeren.",
+      "action": "Beslis expliciet of gedeeltelijke eindtoetsdekking volstaat naast formatieve toetsing, of vervang een vraag met herbeoordeling van alle geraakte leerdoelen.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E08",
+          "version": 2,
+          "stem": "Een schadelijke stof staat in een opslagruimte. Welk onderscheid tussen gevaar en risico helpt om de situatie voor medewerkers te beoordelen?",
+          "correctAnswers": [
+            "B"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H3-LO07",
+      "objective": "Bestaande beheersmaatregelen meenemen",
+      "chapters": [
+        3
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E10"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E10",
+          "version": 2,
+          "stem": "Tijdens een werkplekrondgang ziet u dat medewerkers een beschikbaar tilhulpmiddel nauwelijks gebruiken. Welke conclusie is op dat moment het meest verantwoord?",
+          "correctAnswers": [
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H3-LO08",
+      "objective": "Inventariseren onderscheiden van beoordelen",
+      "chapters": [
+        3
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E10",
+        "WL001-EX-E13"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E10",
+          "version": 2,
+          "stem": "Tijdens een werkplekrondgang ziet u dat medewerkers een beschikbaar tilhulpmiddel nauwelijks gebruiken. Welke conclusie is op dat moment het meest verantwoord?",
+          "correctAnswers": [
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        },
+        {
+          "code": "WL001-EX-E13",
+          "version": 2,
+          "stem": "Tijdens de RI&E blijkt dat medewerkers mogelijk worden blootgesteld aan een schadelijke stof. De beschikbare informatie is onvoldoende voor een betrouwbare beoordeling van het risico of de blootstelling. Wat is de meest passende aanpak?",
+          "correctAnswers": [
+            "B"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H4-LO01",
+      "objective": "Inventariseren en beoordelen van elkaar onderscheiden",
+      "chapters": [
+        4
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E13",
+        "WL001-EX-E16"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E13",
+          "version": 2,
+          "stem": "Tijdens de RI&E blijkt dat medewerkers mogelijk worden blootgesteld aan een schadelijke stof. De beschikbare informatie is onvoldoende voor een betrouwbare beoordeling van het risico of de blootstelling. Wat is de meest passende aanpak?",
+          "correctAnswers": [
+            "B"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        },
+        {
+          "code": "WL001-EX-E16",
+          "version": 2,
+          "stem": "Medewerkers melden hoofdpijn; stoffen, concentraties, moment van klachten en ventilatiewerking zijn onbekend. De manager wil \"middel\" scoren. Beste reactie?",
+          "correctAnswers": [
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H4-LO02",
+      "objective": "Relevante beoordelingsfactoren herkennen",
+      "chapters": [
+        4
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E14",
+        "WL001-EX-E15"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E14",
+          "version": 2,
+          "stem": "Twee machines kunnen even ernstig letsel veroorzaken. Bij machine 1 werkt één onderhoudsmedewerker vijf minuten per maand achter een afscherming. Bij machine 2 werken acht medewerkers dagelijks meerdere uren dichtbij bewegende delen. Welke beoordeling is passend?",
+          "correctAnswers": [
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        },
+        {
+          "code": "WL001-EX-E15",
+          "version": 2,
+          "stem": "Situatie 1: klein beschadigd maar leesbaar nooduitgangbord; uitgang vrij. Situatie 2: dagelijks onoverzichtelijke kruising van heftrucks en voetgangers; twee bijna-aanrijdingen. Wat past?",
+          "correctAnswers": [
+            "A"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H4-LO03",
+      "objective": "Aantal blootgestelde personen meenemen",
+      "chapters": [
+        4
+      ],
+      "previousCoverage": "NOT_EXPLICIT",
+      "questionCodes": [
+        "WL001-EX-E14"
+      ],
+      "assessment": "DIRECT_PROPOSED",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De casus en het juiste antwoord maken het aantal blootgestelde personen onderdeel van de beoordeling.",
+      "action": "Valideer de gevolgtrekking, distractoren en moeilijkheid; geen automatische menselijke goedkeuring.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E14",
+          "version": 2,
+          "stem": "Twee machines kunnen even ernstig letsel veroorzaken. Bij machine 1 werkt één onderhoudsmedewerker vijf minuten per maand achter een afscherming. Bij machine 2 werken acht medewerkers dagelijks meerdere uren dichtbij bewegende delen. Welke beoordeling is passend?",
+          "correctAnswers": [
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H4-LO04",
+      "objective": "Duur en frequentie van blootstelling meenemen",
+      "chapters": [
+        4
+      ],
+      "previousCoverage": "PARTIAL",
+      "questionCodes": [
+        "WL001-EX-E14"
+      ],
+      "assessment": "DIRECT_PROPOSED",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De casus vergelijkt duur én frequentie; het juiste antwoord vereist beide factoren.",
+      "action": "Valideer de gevolgtrekking, distractoren en moeilijkheid; geen automatische menselijke goedkeuring.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E14",
+          "version": 2,
+          "stem": "Twee machines kunnen even ernstig letsel veroorzaken. Bij machine 1 werkt één onderhoudsmedewerker vijf minuten per maand achter een afscherming. Bij machine 2 werken acht medewerkers dagelijks meerdere uren dichtbij bewegende delen. Welke beoordeling is passend?",
+          "correctAnswers": [
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H4-LO05",
+      "objective": "Waarschijnlijkheid meenemen",
+      "chapters": [
+        4
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E14"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E14",
+          "version": 2,
+          "stem": "Twee machines kunnen even ernstig letsel veroorzaken. Bij machine 1 werkt één onderhoudsmedewerker vijf minuten per maand achter een afscherming. Bij machine 2 werken acht medewerkers dagelijks meerdere uren dichtbij bewegende delen. Welke beoordeling is passend?",
+          "correctAnswers": [
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H4-LO06",
+      "objective": "Mogelijke gevolgen meenemen",
+      "chapters": [
+        4
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E15"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E15",
+          "version": 2,
+          "stem": "Situatie 1: klein beschadigd maar leesbaar nooduitgangbord; uitgang vrij. Situatie 2: dagelijks onoverzichtelijke kruising van heftrucks en voetgangers; twee bijna-aanrijdingen. Wat past?",
+          "correctAnswers": [
+            "A"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H4-LO07",
+      "objective": "Bestaande maatregelen bij de beoordeling betrekken",
+      "chapters": [
+        4
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E17"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E17",
+          "version": 2,
+          "stem": "Ernstig knelgevaar is tijdens normaal gebruik afgeschermd met vaste afscherming. Hoe meenemen?",
+          "correctAnswers": [
+            "B"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H4-LO08",
+      "objective": "Restrisico herkennen",
+      "chapters": [
+        4
+      ],
+      "previousCoverage": "PARTIAL",
+      "questionCodes": [
+        "WL001-EX-E17"
+      ],
+      "assessment": "PARTIAL",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "E17 behandelt bestaande afscherming; het begrip resterend risico na alle maatregelen blijft impliciet.",
+      "action": "Beslis expliciet of gedeeltelijke eindtoetsdekking volstaat naast formatieve toetsing, of vervang een vraag met herbeoordeling van alle geraakte leerdoelen.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E17",
+          "version": 2,
+          "stem": "Ernstig knelgevaar is tijdens normaal gebruik afgeschermd met vaste afscherming. Hoe meenemen?",
+          "correctAnswers": [
+            "B"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H4-LO09",
+      "objective": "Beperkingen van risicoscores en matrices uitleggen",
+      "chapters": [
+        4
+      ],
+      "previousCoverage": "PARTIAL",
+      "questionCodes": [
+        "WL001-EX-E16"
+      ],
+      "assessment": "PARTIAL",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "E16 weigert ongefundeerd scoren; beperkingen van verschillende matrices worden niet vergeleken.",
+      "action": "Beslis expliciet of gedeeltelijke eindtoetsdekking volstaat naast formatieve toetsing, of vervang een vraag met herbeoordeling van alle geraakte leerdoelen.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E16",
+          "version": 2,
+          "stem": "Medewerkers melden hoofdpijn; stoffen, concentraties, moment van klachten en ventilatiewerking zijn onbekend. De manager wil \"middel\" scoren. Beste reactie?",
+          "correctAnswers": [
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H4-LO10",
+      "objective": "Herkennen wanneer informatie onvoldoende is",
+      "chapters": [
+        4
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E13",
+        "WL001-EX-E16"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E13",
+          "version": 2,
+          "stem": "Tijdens de RI&E blijkt dat medewerkers mogelijk worden blootgesteld aan een schadelijke stof. De beschikbare informatie is onvoldoende voor een betrouwbare beoordeling van het risico of de blootstelling. Wat is de meest passende aanpak?",
+          "correctAnswers": [
+            "B"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        },
+        {
+          "code": "WL001-EX-E16",
+          "version": 2,
+          "stem": "Medewerkers melden hoofdpijn; stoffen, concentraties, moment van klachten en ventilatiewerking zijn onbekend. De manager wil \"middel\" scoren. Beste reactie?",
+          "correctAnswers": [
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H4-LO11",
+      "objective": "Herkennen wanneer verdiepend onderzoek nodig kan zijn",
+      "chapters": [
+        4
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E13"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E13",
+          "version": 2,
+          "stem": "Tijdens de RI&E blijkt dat medewerkers mogelijk worden blootgesteld aan een schadelijke stof. De beschikbare informatie is onvoldoende voor een betrouwbare beoordeling van het risico of de blootstelling. Wat is de meest passende aanpak?",
+          "correctAnswers": [
+            "B"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H4-LO12",
+      "objective": "Risico’s onderbouwd prioriteren",
+      "chapters": [
+        4
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E15",
+        "WL001-EX-E45"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E15",
+          "version": 2,
+          "stem": "Situatie 1: klein beschadigd maar leesbaar nooduitgangbord; uitgang vrij. Situatie 2: dagelijks onoverzichtelijke kruising van heftrucks en voetgangers; twee bijna-aanrijdingen. Wat past?",
+          "correctAnswers": [
+            "A"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        },
+        {
+          "code": "WL001-EX-E45",
+          "version": 3,
+          "stem": "Bevindingen: 1) klein beschadigd maar leesbaar informatiebord; 2) drie bijna-aanrijdingen op dezelfde drukke kruising; 3) typefout zonder inhoudelijk effect; 4) defecte lamp in ongebruikte vergaderruimte. Welke verdient eerst serieuze risicogerichte aandacht?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H5-LO01",
+      "objective": "De maatregelenhiërarchie herkennen",
+      "chapters": [
+        5
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E19"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E19",
+          "version": 2,
+          "stem": "Bij werk met een schadelijke stof onderzoekt u maatregelen volgens de STOP-denkwijze. Welke volgorde drukt de voorkeur voor aanpak aan de bron en vervolgens lagere niveaus het beste uit?",
+          "correctAnswers": [
+            "A"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-stop-integration"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H5-LO02",
+      "objective": "Bronmaatregelen herkennen",
+      "chapters": [
+        5
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E20"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E20",
+          "version": 2,
+          "stem": "Een reinigingsmiddel kan schadelijke dampen veroorzaken. Wat past het duidelijkst bij bronaanpak?",
+          "correctAnswers": [
+            "B"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H5-LO03",
+      "objective": "Technische/collectieve maatregelen herkennen",
+      "chapters": [
+        5
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E21",
+        "WL001-EX-E24"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E21",
+          "version": 2,
+          "stem": "Bij normaal gebruik kunnen handen nabij een bewegend machinedeel komen. Beste aanpak?",
+          "correctAnswers": [
+            "A"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        },
+        {
+          "code": "WL001-EX-E24",
+          "version": 2,
+          "stem": "Op druk laadperron bestaat aanrijdgevaar; voertuigbewegingen kunnen niet volledig verdwijnen. Welke maatregelen kunnen gecombineerd relevant zijn?",
+          "correctAnswers": [
+            "A",
+            "B",
+            "C",
+            "E"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H5-LO04",
+      "objective": "Organisatorische/individuele maatregelen herkennen",
+      "chapters": [
+        5
+      ],
+      "previousCoverage": "PARTIAL",
+      "questionCodes": [
+        "WL001-EX-E24"
+      ],
+      "assessment": "PARTIAL",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "E24 bevat organisatorische afspraken, maar vraagt geen expliciet onderscheid tussen organisatorische en individuele maatregelen.",
+      "action": "Beslis expliciet of gedeeltelijke eindtoetsdekking volstaat naast formatieve toetsing, of vervang een vraag met herbeoordeling van alle geraakte leerdoelen.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E24",
+          "version": 2,
+          "stem": "Op druk laadperron bestaat aanrijdgevaar; voertuigbewegingen kunnen niet volledig verdwijnen. Welke maatregelen kunnen gecombineerd relevant zijn?",
+          "correctAnswers": [
+            "A",
+            "B",
+            "C",
+            "E"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H5-LO05",
+      "objective": "PBM correct positioneren",
+      "chapters": [
+        5
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E22"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E22",
+          "version": 2,
+          "stem": "Medewerkers kunnen schadelijke dampen inademen; ademhalingsbescherming kan helpen. Beste aanpak?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H5-LO06",
+      "objective": "STOP herkennen en uitleggen",
+      "chapters": [
+        5
+      ],
+      "previousCoverage": "NOT_EXPLICIT",
+      "questionCodes": [
+        "WL001-EX-E19"
+      ],
+      "assessment": "DIRECT_PROPOSED",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De juiste optie benoemt de vier STOP-niveaus en hun volgorde, zonder bedrijfsspecifieke juridische vrijstelling.",
+      "action": "Valideer de gevolgtrekking, distractoren en moeilijkheid; geen automatische menselijke goedkeuring.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E19",
+          "version": 2,
+          "stem": "Bij werk met een schadelijke stof onderzoekt u maatregelen volgens de STOP-denkwijze. Welke volgorde drukt de voorkeur voor aanpak aan de bron en vervolgens lagere niveaus het beste uit?",
+          "correctAnswers": [
+            "A"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-stop-integration"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H5-LO07",
+      "objective": "Maatregelen volgens voorkeursvolgorde onderzoeken",
+      "chapters": [
+        5
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E19",
+        "WL001-EX-E20",
+        "WL001-EX-E22"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E19",
+          "version": 2,
+          "stem": "Bij werk met een schadelijke stof onderzoekt u maatregelen volgens de STOP-denkwijze. Welke volgorde drukt de voorkeur voor aanpak aan de bron en vervolgens lagere niveaus het beste uit?",
+          "correctAnswers": [
+            "A"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-stop-integration"
+          ]
+        },
+        {
+          "code": "WL001-EX-E20",
+          "version": 2,
+          "stem": "Een reinigingsmiddel kan schadelijke dampen veroorzaken. Wat past het duidelijkst bij bronaanpak?",
+          "correctAnswers": [
+            "B"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        },
+        {
+          "code": "WL001-EX-E22",
+          "version": 2,
+          "stem": "Medewerkers kunnen schadelijke dampen inademen; ademhalingsbescherming kan helpen. Beste aanpak?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H5-LO08",
+      "objective": "Herkennen dat één maatregel soms onvoldoende is",
+      "chapters": [
+        5
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E24"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E24",
+          "version": 2,
+          "stem": "Op druk laadperron bestaat aanrijdgevaar; voertuigbewegingen kunnen niet volledig verdwijnen. Welke maatregelen kunnen gecombineerd relevant zijn?",
+          "correctAnswers": [
+            "A",
+            "B",
+            "C",
+            "E"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H5-LO09",
+      "objective": "Nieuwe risico’s door een maatregel herkennen",
+      "chapters": [
+        5
+      ],
+      "previousCoverage": "NOT_EXPLICIT",
+      "questionCodes": [],
+      "assessment": "NOT_EXPLICIT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "Geen examenvraag vraagt deze specifieke handeling of dit onderscheid expliciet. Formatieve dekking is geen vervanging van summatieve dekking.",
+      "action": "Toetsdeskundige moet een expliciete examenvraag of gemotiveerde acceptatie van uitsluitend formatieve dekking vastleggen.",
+      "questionEvidence": []
+    },
+    {
+      "objectiveCode": "WL001-H5-LO10",
+      "objective": "De effectiviteit van een maatregel beoordelen",
+      "chapters": [
+        5
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E29"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E29",
+          "version": 2,
+          "stem": "Geluidsschermen zijn geplaatst en PvA staat op gereed; medewerkers melden nauwelijks verbetering. Beste vervolgstap?",
+          "correctAnswers": [
+            "B"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H5-LO11",
+      "objective": "Uitleggen waarom instructie niet automatisch voldoende is",
+      "chapters": [
+        5
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E23"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E23",
+          "version": 2,
+          "stem": "Zware dozen worden handmatig getild; tilhulpmiddel staat tientallen meters verder. Teamleider wil opnieuw instrueren. Beste beoordeling?",
+          "correctAnswers": [
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H5-LO12",
+      "objective": "De overgang naar het Plan van Aanpak herkennen",
+      "chapters": [
+        5
+      ],
+      "previousCoverage": "PARTIAL",
+      "questionCodes": [
+        "WL001-EX-E25"
+      ],
+      "assessment": "PARTIAL",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "E25 verbindt maatregelen en uitvoering, maar toetst niet het overdragen naar een volledig plan van aanpak.",
+      "action": "Beslis expliciet of gedeeltelijke eindtoetsdekking volstaat naast formatieve toetsing, of vervang een vraag met herbeoordeling van alle geraakte leerdoelen.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E25",
+          "version": 2,
+          "stem": "Welke omschrijving past het beste?",
+          "correctAnswers": [
+            "A"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H6-LO01",
+      "objective": "De functie van het Plan van Aanpak uitleggen",
+      "chapters": [
+        6
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E25"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E25",
+          "version": 2,
+          "stem": "Welke omschrijving past het beste?",
+          "correctAnswers": [
+            "A"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H6-LO02",
+      "objective": "Een risico vertalen naar concrete acties",
+      "chapters": [
+        6
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E26"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E26",
+          "version": 2,
+          "stem": "Onveilig kruispunt heftrucks/voetgangers. Welk PvA-punt is meest opvolgbaar?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H6-LO03",
+      "objective": "De wettelijke kern onderscheiden van praktische borging",
+      "chapters": [
+        6
+      ],
+      "previousCoverage": "NOT_EXPLICIT",
+      "questionCodes": [],
+      "assessment": "NOT_EXPLICIT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "Geen examenvraag vraagt deze specifieke handeling of dit onderscheid expliciet. Formatieve dekking is geen vervanging van summatieve dekking.",
+      "action": "Toetsdeskundige moet een expliciete examenvraag of gemotiveerde acceptatie van uitsluitend formatieve dekking vastleggen.",
+      "questionEvidence": []
+    },
+    {
+      "objectiveCode": "WL001-H6-LO04",
+      "objective": "Actie-eigenaarschap duidelijk maken zonder werkgeversverantwoordelijkheid te verwarren",
+      "chapters": [
+        6
+      ],
+      "previousCoverage": "PARTIAL",
+      "questionCodes": [
+        "WL001-EX-E28"
+      ],
+      "assessment": "PARTIAL",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "E28 vraagt actie-eigenaarschap; het blijvend werkgeverschap is geen afzonderlijk onderdeel van de antwoordkeuze.",
+      "action": "Beslis expliciet of gedeeltelijke eindtoetsdekking volstaat naast formatieve toetsing, of vervang een vraag met herbeoordeling van alle geraakte leerdoelen.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E28",
+          "version": 2,
+          "stem": "Hoe maak je een belangrijk PvA-punt goed opvolgbaar?",
+          "correctAnswers": [
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H6-LO05",
+      "objective": "Een passende en opvolgbare termijn herkennen",
+      "chapters": [
+        6
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E26",
+        "WL001-EX-E28"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E26",
+          "version": 2,
+          "stem": "Onveilig kruispunt heftrucks/voetgangers. Welk PvA-punt is meest opvolgbaar?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        },
+        {
+          "code": "WL001-EX-E28",
+          "version": 2,
+          "stem": "Hoe maak je een belangrijk PvA-punt goed opvolgbaar?",
+          "correctAnswers": [
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H6-LO06",
+      "objective": "Prioriteit en uitvoeringstermijn uit elkaar houden",
+      "chapters": [
+        6
+      ],
+      "previousCoverage": "NOT_EXPLICIT",
+      "questionCodes": [],
+      "assessment": "NOT_EXPLICIT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "Geen examenvraag vraagt deze specifieke handeling of dit onderscheid expliciet. Formatieve dekking is geen vervanging van summatieve dekking.",
+      "action": "Toetsdeskundige moet een expliciete examenvraag of gemotiveerde acceptatie van uitsluitend formatieve dekking vastleggen.",
+      "questionEvidence": []
+    },
+    {
+      "objectiveCode": "WL001-H6-LO07",
+      "objective": "Onderzoek als mogelijke tussenstap herkennen",
+      "chapters": [
+        6
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E27"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E27",
+          "version": 2,
+          "stem": "PvA: \"Onderzoeken welke afzuiging nodig is.\" Onderzoek adviseert technische aanpassing; organisatie sluit actie zonder uitvoering. Probleem?",
+          "correctAnswers": [
+            "B"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H6-LO08",
+      "objective": "Tijdelijke en definitieve maatregelen onderscheiden",
+      "chapters": [
+        6
+      ],
+      "previousCoverage": "PARTIAL",
+      "questionCodes": [
+        "WL001-EX-E44"
+      ],
+      "assessment": "PARTIAL",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "E44 toetst onmiddellijk veilig handelen bij onzekerheid; een volledige keuze tussen tijdelijke en definitieve maatregelen ontbreekt.",
+      "action": "Beslis expliciet of gedeeltelijke eindtoetsdekking volstaat naast formatieve toetsing, of vervang een vraag met herbeoordeling van alle geraakte leerdoelen.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E44",
+          "version": 2,
+          "stem": "Tijdens een nieuw productieproces melden meerdere medewerkers hoofdpijn en irritatie aan ogen en luchtwegen. Het is nog niet duidelijk welke stoffen tijdens het proces vrijkomen. De leidinggevende wil het proces laten doorgaan terwijl eerst wordt uitgezocht wat de oorzaak is. Welke aanpak is het meest passend?",
+          "correctAnswers": [
+            "B"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H6-LO09",
+      "objective": "Voortgang en status praktisch volgen",
+      "chapters": [
+        6
+      ],
+      "previousCoverage": "PARTIAL",
+      "questionCodes": [
+        "WL001-EX-E28"
+      ],
+      "assessment": "PARTIAL",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "E28 vraagt volgen van uitvoering en effect, niet het herkennen van concrete voortgangsstatussen.",
+      "action": "Beslis expliciet of gedeeltelijke eindtoetsdekking volstaat naast formatieve toetsing, of vervang een vraag met herbeoordeling van alle geraakte leerdoelen.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E28",
+          "version": 2,
+          "stem": "Hoe maak je een belangrijk PvA-punt goed opvolgbaar?",
+          "correctAnswers": [
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H6-LO10",
+      "objective": "Uitvoering onderscheiden van effectiviteit",
+      "chapters": [
+        6
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E29"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E29",
+          "version": 2,
+          "stem": "Geluidsschermen zijn geplaatst en PvA staat op gereed; medewerkers melden nauwelijks verbetering. Beste vervolgstap?",
+          "correctAnswers": [
+            "B"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H6-LO11",
+      "objective": "Controleren en bijsturen wanneer een maatregel onvoldoende werkt",
+      "chapters": [
+        6
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E29"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E29",
+          "version": 2,
+          "stem": "Geluidsschermen zijn geplaatst en PvA staat op gereed; medewerkers melden nauwelijks verbetering. Beste vervolgstap?",
+          "correctAnswers": [
+            "B"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H6-LO12",
+      "objective": "Het Plan van Aanpak als actief instrument gebruiken",
+      "chapters": [
+        6
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E27",
+        "WL001-EX-E29"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E27",
+          "version": 2,
+          "stem": "PvA: \"Onderzoeken welke afzuiging nodig is.\" Onderzoek adviseert technische aanpassing; organisatie sluit actie zonder uitvoering. Probleem?",
+          "correctAnswers": [
+            "B"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        },
+        {
+          "code": "WL001-EX-E29",
+          "version": 2,
+          "stem": "Geluidsschermen zijn geplaatst en PvA staat op gereed; medewerkers melden nauwelijks verbetering. Beste vervolgstap?",
+          "correctAnswers": [
+            "B"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H7-LO01",
+      "objective": "Uitleggen wanneer toetsing van de RI&E in beginsel nodig is",
+      "chapters": [
+        7
+      ],
+      "previousCoverage": "PARTIAL",
+      "questionCodes": [
+        "WL001-EX-E30",
+        "WL001-EX-E31"
+      ],
+      "assessment": "PARTIAL",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "E30/E31 bevatten toetsingscontext; de volledige wettelijke toepasselijkheid en uitzonderingen vereisen juridische review.",
+      "action": "Beslis expliciet of gedeeltelijke eindtoetsdekking volstaat naast formatieve toetsing, of vervang een vraag met herbeoordeling van alle geraakte leerdoelen.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E30",
+          "version": 2,
+          "stem": "Welke omschrijving past het beste bij toetsing van een RI&E?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbowet",
+            "arbobesluit",
+            "nla-rie",
+            "erkenning-2026",
+            "steunpunt-toetsing"
+          ]
+        },
+        {
+          "code": "WL001-EX-E31",
+          "version": 3,
+          "stem": "Onderneming met 19 werknemers heeft zelf RI&E opgesteld. Directeur wil weten of toetsing nodig is. Beste aanpak?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbowet",
+            "arbobesluit",
+            "nla-rie",
+            "erkenning-2026",
+            "steunpunt-toetsing"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H7-LO02",
+      "objective": "De uitzonderingen op de toetsingsplicht herkennen en voorwaarden controleren",
+      "chapters": [
+        7
+      ],
+      "previousCoverage": "PARTIAL",
+      "questionCodes": [
+        "WL001-EX-E31",
+        "WL001-EX-E32"
+      ],
+      "assessment": "PARTIAL",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "E31/E32 waarschuwen tegen vrijstelling op alleen omvang/instrument. Zij bewijzen niet iedere cumulatieve voorwaarde van beide uitzonderingen.",
+      "action": "Beslis expliciet of gedeeltelijke eindtoetsdekking volstaat naast formatieve toetsing, of vervang een vraag met herbeoordeling van alle geraakte leerdoelen.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E31",
+          "version": 3,
+          "stem": "Onderneming met 19 werknemers heeft zelf RI&E opgesteld. Directeur wil weten of toetsing nodig is. Beste aanpak?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbowet",
+            "arbobesluit",
+            "nla-rie",
+            "erkenning-2026",
+            "steunpunt-toetsing"
+          ]
+        },
+        {
+          "code": "WL001-EX-E32",
+          "version": 2,
+          "stem": "Bedrijf met 21 werknemers downloadt RI&E-checklist van branchevereniging en concludeert dat toetsing niet nodig is. Beste reactie?",
+          "correctAnswers": [
+            "A"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbowet",
+            "arbobesluit",
+            "nla-rie",
+            "erkenning-2026",
+            "steunpunt-toetsing"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H7-LO03",
+      "objective": "De route voor maximaal 25 medewerkers niet als automatische vrijstelling zien",
+      "chapters": [
+        7
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E31"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E31",
+          "version": 3,
+          "stem": "Onderneming met 19 werknemers heeft zelf RI&E opgesteld. Directeur wil weten of toetsing nodig is. Beste aanpak?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbowet",
+            "arbobesluit",
+            "nla-rie",
+            "erkenning-2026",
+            "steunpunt-toetsing"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H7-LO04",
+      "objective": "Een erkend en passend branche-RI&E-instrument herkennen",
+      "chapters": [
+        7
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E32"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E32",
+          "version": 2,
+          "stem": "Bedrijf met 21 werknemers downloadt RI&E-checklist van branchevereniging en concludeert dat toetsing niet nodig is. Beste reactie?",
+          "correctAnswers": [
+            "A"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbowet",
+            "arbobesluit",
+            "nla-rie",
+            "erkenning-2026",
+            "steunpunt-toetsing"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H7-LO05",
+      "objective": "Bedrijfsspecifieke risico’s in de RI&E blijven meenemen",
+      "chapters": [
+        7
+      ],
+      "previousCoverage": "NOT_EXPLICIT",
+      "questionCodes": [],
+      "assessment": "NOT_EXPLICIT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "Geen examenvraag vraagt deze specifieke handeling of dit onderscheid expliciet. Formatieve dekking is geen vervanging van summatieve dekking.",
+      "action": "Juridisch deskundige moet eerst toepasselijkheid, uitzonderingen en actuele bronnen vaststellen; daarna een toetsdeskundige een vraag laten beoordelen.",
+      "questionEvidence": []
+    },
+    {
+      "objectiveCode": "WL001-H7-LO06",
+      "objective": "De uitzondering voor uitsluitend vrijwilligers en maximaal 40 uur betaald personeel herkennen",
+      "chapters": [
+        7
+      ],
+      "previousCoverage": "NOT_EXPLICIT",
+      "questionCodes": [],
+      "assessment": "NOT_EXPLICIT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "Geen examenvraag vraagt deze specifieke handeling of dit onderscheid expliciet. Formatieve dekking is geen vervanging van summatieve dekking.",
+      "action": "Juridisch deskundige moet eerst toepasselijkheid, uitzonderingen en actuele bronnen vaststellen; daarna een toetsdeskundige een vraag laten beoordelen.",
+      "questionEvidence": []
+    },
+    {
+      "objectiveCode": "WL001-H7-LO07",
+      "objective": "De vier relevante deskundigheidsrichtingen herkennen",
+      "chapters": [
+        7
+      ],
+      "previousCoverage": "NOT_EXPLICIT",
+      "questionCodes": [],
+      "assessment": "NOT_EXPLICIT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "Geen examenvraag vraagt deze specifieke handeling of dit onderscheid expliciet. Formatieve dekking is geen vervanging van summatieve dekking.",
+      "action": "Juridisch deskundige moet eerst toepasselijkheid, uitzonderingen en actuele bronnen vaststellen; daarna een toetsdeskundige een vraag laten beoordelen.",
+      "questionEvidence": []
+    },
+    {
+      "objectiveCode": "WL001-H7-LO08",
+      "objective": "Certificering en BIG-registratie van elkaar onderscheiden",
+      "chapters": [
+        7
+      ],
+      "previousCoverage": "NOT_EXPLICIT",
+      "questionCodes": [],
+      "assessment": "NOT_EXPLICIT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "Geen examenvraag vraagt deze specifieke handeling of dit onderscheid expliciet. Formatieve dekking is geen vervanging van summatieve dekking.",
+      "action": "Juridisch deskundige moet eerst toepasselijkheid, uitzonderingen en actuele bronnen vaststellen; daarna een toetsdeskundige een vraag laten beoordelen.",
+      "questionEvidence": []
+    },
+    {
+      "objectiveCode": "WL001-H7-LO09",
+      "objective": "Deskundigheidsscope laten aansluiten op aanwezige risico’s",
+      "chapters": [
+        7
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E33"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E33",
+          "version": 3,
+          "stem": "Productiebedrijf heeft complexe vraagstukken over gevaarlijke stoffen, machineveiligheid en PSA. Directeur denkt dat één arbokerndeskundige automatisch alles kan toetsen. Beste reactie?",
+          "correctAnswers": [
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbowet",
+            "arbobesluit",
+            "nla-rie",
+            "erkenning-2026",
+            "steunpunt-toetsing"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H7-LO10",
+      "objective": "Opstellen en toetsen onderscheiden",
+      "chapters": [
+        7
+      ],
+      "previousCoverage": "PARTIAL",
+      "questionCodes": [
+        "WL001-EX-E30"
+      ],
+      "assessment": "PARTIAL",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "E30 beoordeelt de toetsfunctie, maar laat opstellen en toetsen niet afzonderlijk vergelijken.",
+      "action": "Beslis expliciet of gedeeltelijke eindtoetsdekking volstaat naast formatieve toetsing, of vervang een vraag met herbeoordeling van alle geraakte leerdoelen.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E30",
+          "version": 2,
+          "stem": "Welke omschrijving past het beste bij toetsing van een RI&E?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbowet",
+            "arbobesluit",
+            "nla-rie",
+            "erkenning-2026",
+            "steunpunt-toetsing"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H7-LO11",
+      "objective": "Systeemtoets en scopetoets op hoofdlijnen begrijpen",
+      "chapters": [
+        7
+      ],
+      "previousCoverage": "NOT_EXPLICIT",
+      "questionCodes": [],
+      "assessment": "NOT_EXPLICIT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "Geen examenvraag vraagt deze specifieke handeling of dit onderscheid expliciet. Formatieve dekking is geen vervanging van summatieve dekking.",
+      "action": "Juridisch deskundige moet eerst toepasselijkheid, uitzonderingen en actuele bronnen vaststellen; daarna een toetsdeskundige een vraag laten beoordelen.",
+      "questionEvidence": []
+    },
+    {
+      "objectiveCode": "WL001-H7-LO12",
+      "objective": "Een toets- en adviesrapport gebruiken voor passende opvolging",
+      "chapters": [
+        7
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E34"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E34",
+          "version": 2,
+          "stem": "Deskundige adviseert blootstellingsonderzoek, herbeoordeling van een risico en concretisering van twee PvA-acties. Wat nu?",
+          "correctAnswers": [
+            "B"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbowet",
+            "arbobesluit",
+            "nla-rie",
+            "erkenning-2026",
+            "steunpunt-toetsing"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H7-LO13",
+      "objective": "Herkennen dat de werkgever verantwoordelijk blijft",
+      "chapters": [
+        7
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E34"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E34",
+          "version": 2,
+          "stem": "Deskundige adviseert blootstellingsonderzoek, herbeoordeling van een risico en concretisering van twee PvA-acties. Wat nu?",
+          "correctAnswers": [
+            "B"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbowet",
+            "arbobesluit",
+            "nla-rie",
+            "erkenning-2026",
+            "steunpunt-toetsing"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H7-LO14",
+      "objective": "De RI&E na een toetsing actueel houden",
+      "chapters": [
+        7
+      ],
+      "previousCoverage": "PARTIAL",
+      "questionCodes": [
+        "WL001-EX-E35",
+        "WL001-EX-E38"
+      ],
+      "assessment": "PARTIAL",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "E35/E38 vragen actualisatie; actualisatie na een specifieke toetsing wordt niet apart beoordeeld.",
+      "action": "Beslis expliciet of gedeeltelijke eindtoetsdekking volstaat naast formatieve toetsing, of vervang een vraag met herbeoordeling van alle geraakte leerdoelen.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E35",
+          "version": 2,
+          "stem": "\"Na hoeveel jaar verloopt onze RI&E automatisch?\" Beste reactie?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        },
+        {
+          "code": "WL001-EX-E38",
+          "version": 2,
+          "stem": "RI&E is twee jaar oud; sindsdien nachtdienst, nieuwe stof, twee bijna-ongevallen en nieuwe kennis over ernst van bestaand risico. Beste conclusie?",
+          "correctAnswers": [
+            "A"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H8-LO01",
+      "objective": "Uitleggen dat er niet simpelweg een algemene vaste geldigheidsduur voor een RI&E geldt",
+      "chapters": [
+        8
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E35"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E35",
+          "version": 2,
+          "stem": "\"Na hoeveel jaar verloopt onze RI&E automatisch?\" Beste reactie?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H8-LO02",
+      "objective": "Fysieke en organisatorische veranderingen herkennen die aanleiding geven tot impactbeoordeling",
+      "chapters": [
+        8
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E36",
+        "WL001-EX-E37"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E36",
+          "version": 2,
+          "stem": "Welke ontwikkelingen kunnen duidelijk aanleiding geven om te beoordelen of de RI&E nog aansluit?",
+          "correctAnswers": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        },
+        {
+          "code": "WL001-EX-E37",
+          "version": 2,
+          "stem": "Productiemachine wordt vervangen; onderhoudshandelingen en werkplek veranderen. Beste RI&E-aanpak?",
+          "correctAnswers": [
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H8-LO03",
+      "objective": "Incidenten, bijna-ongevallen en werknemerssignalen benutten als informatie",
+      "chapters": [
+        8
+      ],
+      "previousCoverage": "PARTIAL",
+      "questionCodes": [
+        "WL001-EX-E38"
+      ],
+      "assessment": "PARTIAL",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "E38 bevat bijna-ongevallen en nieuwe informatie; de verschillende soorten signalen worden niet afzonderlijk beoordeeld.",
+      "action": "Beslis expliciet of gedeeltelijke eindtoetsdekking volstaat naast formatieve toetsing, of vervang een vraag met herbeoordeling van alle geraakte leerdoelen.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E38",
+          "version": 2,
+          "stem": "RI&E is twee jaar oud; sindsdien nachtdienst, nieuwe stof, twee bijna-ongevallen en nieuwe kennis over ernst van bestaand risico. Beste conclusie?",
+          "correctAnswers": [
+            "A"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H8-LO04",
+      "objective": "Nieuwe kennis en inzichten meenemen, ook wanneer werkzaamheden gelijk blijven",
+      "chapters": [
+        8
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E36",
+        "WL001-EX-E38"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E36",
+          "version": 2,
+          "stem": "Welke ontwikkelingen kunnen duidelijk aanleiding geven om te beoordelen of de RI&E nog aansluit?",
+          "correctAnswers": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        },
+        {
+          "code": "WL001-EX-E38",
+          "version": 2,
+          "stem": "RI&E is twee jaar oud; sindsdien nachtdienst, nieuwe stof, twee bijna-ongevallen en nieuwe kennis over ernst van bestaand risico. Beste conclusie?",
+          "correctAnswers": [
+            "A"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H8-LO05",
+      "objective": "Bepalen welke RI&E-onderdelen opnieuw moeten worden beoordeeld en zo nodig aangepast",
+      "chapters": [
+        8
+      ],
+      "previousCoverage": "PARTIAL",
+      "questionCodes": [
+        "WL001-EX-E37",
+        "WL001-EX-E38"
+      ],
+      "assessment": "PARTIAL",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "E37/E38 kiezen relevante aanpassing, maar vragen niet de leerling concreet elk geraakt RI&E-onderdeel te selecteren.",
+      "action": "Beslis expliciet of gedeeltelijke eindtoetsdekking volstaat naast formatieve toetsing, of vervang een vraag met herbeoordeling van alle geraakte leerdoelen.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E37",
+          "version": 2,
+          "stem": "Productiemachine wordt vervangen; onderhoudshandelingen en werkplek veranderen. Beste RI&E-aanpak?",
+          "correctAnswers": [
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        },
+        {
+          "code": "WL001-EX-E38",
+          "version": 2,
+          "stem": "RI&E is twee jaar oud; sindsdien nachtdienst, nieuwe stof, twee bijna-ongevallen en nieuwe kennis over ernst van bestaand risico. Beste conclusie?",
+          "correctAnswers": [
+            "A"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H8-LO06",
+      "objective": "De gevolgen voor bestaande maatregelen en het Plan van Aanpak beoordelen",
+      "chapters": [
+        8
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E37",
+        "WL001-EX-E42"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E37",
+          "version": 2,
+          "stem": "Productiemachine wordt vervangen; onderhoudshandelingen en werkplek veranderen. Beste RI&E-aanpak?",
+          "correctAnswers": [
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        },
+        {
+          "code": "WL001-EX-E42",
+          "version": 2,
+          "stem": "Technische PvA-maatregel is uitgevoerd; observaties en twee bijna-ongevallen tonen nog blootstelling. Beste aanpak?",
+          "correctAnswers": [
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H8-LO07",
+      "objective": "Werknemers raadplegen en hun praktijkervaring benutten",
+      "chapters": [
+        8
+      ],
+      "previousCoverage": "NOT_EXPLICIT",
+      "questionCodes": [
+        "WL001-EX-E40"
+      ],
+      "assessment": "DIRECT_PROPOSED",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De juiste optie vereist onderzoek samen met medewerkers; dit is expliciet aanwezig en was niet gekoppeld.",
+      "action": "Valideer de gevolgtrekking, distractoren en moeilijkheid; geen automatische menselijke goedkeuring.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E40",
+          "version": 2,
+          "stem": "Bij toezicht op een nieuwe werkwijze blijkt dat veel medewerkers dezelfde veiligheidsstap overslaan. Hoe gebruikt u deze waarneming zowel voor naleving als voor verbetering van het werk?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H8-LO08",
+      "objective": "Periodieke review onderscheiden van actualisatie naar aanleiding van ontwikkelingen",
+      "chapters": [
+        8
+      ],
+      "previousCoverage": "PARTIAL",
+      "questionCodes": [
+        "WL001-EX-E35"
+      ],
+      "assessment": "PARTIAL",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "E35 weigert een universele vervaldatum; het onderscheid tussen een geplande review en een gebeurtenisgestuurde aanpassing is niet volledig uitgewerkt.",
+      "action": "Beslis expliciet of gedeeltelijke eindtoetsdekking volstaat naast formatieve toetsing, of vervang een vraag met herbeoordeling van alle geraakte leerdoelen.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E35",
+          "version": 2,
+          "stem": "\"Na hoeveel jaar verloopt onze RI&E automatisch?\" Beste reactie?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbo-opbouw"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H8-LO09",
+      "objective": "Management of Change herkennen als methodische denkwijze en geen universele wettelijke procedure",
+      "chapters": [
+        8
+      ],
+      "previousCoverage": "NOT_EXPLICIT",
+      "questionCodes": [],
+      "assessment": "NOT_EXPLICIT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "Geen examenvraag vraagt deze specifieke handeling of dit onderscheid expliciet. Formatieve dekking is geen vervanging van summatieve dekking.",
+      "action": "Toetsdeskundige moet een expliciete examenvraag of gemotiveerde acceptatie van uitsluitend formatieve dekking vastleggen.",
+      "questionEvidence": []
+    },
+    {
+      "objectiveCode": "WL001-H8-LO10",
+      "objective": "PDCA herkennen als hulpmiddel voor doorlopende verbetering",
+      "chapters": [
+        8
+      ],
+      "previousCoverage": "NOT_EXPLICIT",
+      "questionCodes": [],
+      "assessment": "NOT_EXPLICIT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "Geen examenvraag vraagt deze specifieke handeling of dit onderscheid expliciet. Formatieve dekking is geen vervanging van summatieve dekking.",
+      "action": "Toetsdeskundige moet een expliciete examenvraag of gemotiveerde acceptatie van uitsluitend formatieve dekking vastleggen.",
+      "questionEvidence": []
+    },
+    {
+      "objectiveCode": "WL001-H9-LO01",
+      "objective": "Onderscheid maken tussen een maatregel invoeren en duurzaam borgen",
+      "chapters": [
+        9
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E41",
+        "WL001-EX-E42"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E41",
+          "version": 2,
+          "stem": "Nieuwe veilige werkwijze is ingevoerd en medewerkers zijn geïnstrueerd. Welke factoren kunnen daarnaast relevant zijn voor duurzame borging?",
+          "correctAnswers": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        },
+        {
+          "code": "WL001-EX-E42",
+          "version": 2,
+          "stem": "Technische PvA-maatregel is uitgevoerd; observaties en twee bijna-ongevallen tonen nog blootstelling. Beste aanpak?",
+          "correctAnswers": [
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H9-LO02",
+      "objective": "Onderzoeken waarom werkafspraken en dagelijkse praktijk uiteenlopen",
+      "chapters": [
+        9
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E40"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E40",
+          "version": 2,
+          "stem": "Bij toezicht op een nieuwe werkwijze blijkt dat veel medewerkers dezelfde veiligheidsstap overslaan. Hoe gebruikt u deze waarneming zowel voor naleving als voor verbetering van het werk?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H9-LO03",
+      "objective": "Praktische uitvoerbaarheid van maatregelen beoordelen",
+      "chapters": [
+        9
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E41",
+        "WL001-EX-E49"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E41",
+          "version": 2,
+          "stem": "Nieuwe veilige werkwijze is ingevoerd en medewerkers zijn geïnstrueerd. Welke factoren kunnen daarnaast relevant zijn voor duurzame borging?",
+          "correctAnswers": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        },
+        {
+          "code": "WL001-EX-E49",
+          "version": 2,
+          "stem": "Afgescheiden voetgangersroute is aangelegd. Na drie maanden gebruiken medewerkers tijdens pieken nog shortcut door heftruckgebied; veilige route kost meer tijd en teamleider stuurt sterk op snelheid. Beste conclusie?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H9-LO04",
+      "objective": "Passende voorlichting en instructie herkennen",
+      "chapters": [
+        9
+      ],
+      "previousCoverage": "PARTIAL",
+      "questionCodes": [
+        "WL001-EX-E39"
+      ],
+      "assessment": "PARTIAL",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "E39 vraagt passende aandacht voor uitzendkrachten, maar toetst niet de kwaliteit van de concrete instructie.",
+      "action": "Beslis expliciet of gedeeltelijke eindtoetsdekking volstaat naast formatieve toetsing, of vervang een vraag met herbeoordeling van alle geraakte leerdoelen.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E39",
+          "version": 2,
+          "stem": "Een distributiecentrum werkt tijdens piekperioden met uitzendkrachten. Zij voeren dezelfde magazijnwerkzaamheden uit als vaste medewerkers en komen in dezelfde verkeerszones. Welke aanpak past het beste?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie",
+            "arbowet",
+            "nla-uitzend"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H9-LO05",
+      "objective": "Beschikbaarheid van middelen en randvoorwaarden beoordelen",
+      "chapters": [
+        9
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E41"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E41",
+          "version": 2,
+          "stem": "Nieuwe veilige werkwijze is ingevoerd en medewerkers zijn geïnstrueerd. Welke factoren kunnen daarnaast relevant zijn voor duurzame borging?",
+          "correctAnswers": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H9-LO06",
+      "objective": "De invloed van leidinggeven en doelen op de praktijk herkennen",
+      "chapters": [
+        9
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E49"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E49",
+          "version": 2,
+          "stem": "Afgescheiden voetgangersroute is aangelegd. Na drie maanden gebruiken medewerkers tijdens pieken nog shortcut door heftruckgebied; veilige route kost meer tijd en teamleider stuurt sterk op snelheid. Beste conclusie?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H9-LO07",
+      "objective": "Toezicht zien als naleving én informatiebron",
+      "chapters": [
+        9
+      ],
+      "previousCoverage": "NOT_EXPLICIT",
+      "questionCodes": [
+        "WL001-EX-E40"
+      ],
+      "assessment": "DIRECT_PROPOSED",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De gewijzigde vraag vraagt expliciet naar de dubbelrol van toezicht: naleving en verbeterinformatie.",
+      "action": "Valideer de gevolgtrekking, distractoren en moeilijkheid; geen automatische menselijke goedkeuring.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E40",
+          "version": 2,
+          "stem": "Bij toezicht op een nieuwe werkwijze blijkt dat veel medewerkers dezelfde veiligheidsstap overslaan. Hoe gebruikt u deze waarneming zowel voor naleving als voor verbetering van het werk?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H9-LO08",
+      "objective": "Medewerkers betrekken bij het begrijpen en verbeteren van werk",
+      "chapters": [
+        9
+      ],
+      "previousCoverage": "PARTIAL",
+      "questionCodes": [
+        "WL001-EX-E40"
+      ],
+      "assessment": "PARTIAL",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "E40 vereist onderzoek met medewerkers; hun blijvende rol bij ontwerp en evaluatie van verbeteringen is niet volledig getoetst.",
+      "action": "Beslis expliciet of gedeeltelijke eindtoetsdekking volstaat naast formatieve toetsing, of vervang een vraag met herbeoordeling van alle geraakte leerdoelen.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E40",
+          "version": 2,
+          "stem": "Bij toezicht op een nieuwe werkwijze blijkt dat veel medewerkers dezelfde veiligheidsstap overslaan. Hoe gebruikt u deze waarneming zowel voor naleving als voor verbetering van het werk?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H9-LO09",
+      "objective": "Observaties, afwijkingen en meldingen als informatie gebruiken",
+      "chapters": [
+        9
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E42"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E42",
+          "version": 2,
+          "stem": "Technische PvA-maatregel is uitgevoerd; observaties en twee bijna-ongevallen tonen nog blootstelling. Beste aanpak?",
+          "correctAnswers": [
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H9-LO10",
+      "objective": "Gedrag en achterliggende omstandigheden samen onderzoeken",
+      "chapters": [
+        9
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E40",
+        "WL001-EX-E49"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E40",
+          "version": 2,
+          "stem": "Bij toezicht op een nieuwe werkwijze blijkt dat veel medewerkers dezelfde veiligheidsstap overslaan. Hoe gebruikt u deze waarneming zowel voor naleving als voor verbetering van het werk?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        },
+        {
+          "code": "WL001-EX-E49",
+          "version": 2,
+          "stem": "Afgescheiden voetgangersroute is aangelegd. Na drie maanden gebruiken medewerkers tijdens pieken nog shortcut door heftruckgebied; veilige route kost meer tijd en teamleider stuurt sterk op snelheid. Beste conclusie?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H9-LO11",
+      "objective": "Effectiviteit van maatregelen blijven controleren",
+      "chapters": [
+        9
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E42"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E42",
+          "version": 2,
+          "stem": "Technische PvA-maatregel is uitgevoerd; observaties en twee bijna-ongevallen tonen nog blootstelling. Beste aanpak?",
+          "correctAnswers": [
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H9-LO12",
+      "objective": "Verbeteringen terugkoppelen naar RI&E en Plan van Aanpak",
+      "chapters": [
+        9
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E42",
+        "WL001-EX-E50"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E42",
+          "version": 2,
+          "stem": "Technische PvA-maatregel is uitgevoerd; observaties en twee bijna-ongevallen tonen nog blootstelling. Beste aanpak?",
+          "correctAnswers": [
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        },
+        {
+          "code": "WL001-EX-E50",
+          "version": 2,
+          "stem": "Aanrijdgevaar is beoordeeld; afgescheiden route, instructies en verkeersafspraken ingevoerd. Zes maanden later: shortcuts tijdens pieken, twee bijna-aanrijdingen, minder personeel avonddienst, sterke sturing op doorlooptijd, geen letsel. Welke aanpak past bij volledige RI&E-cyclus?",
+          "correctAnswers": [
+            "A"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H10-LO01",
+      "objective": "Informatie uit een RI&E-dossier en werkplekrondgang combineren",
+      "chapters": [
+        10
+      ],
+      "previousCoverage": "PARTIAL",
+      "questionCodes": [
+        "WL001-EX-E43"
+      ],
+      "assessment": "PARTIAL",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "E43 combineert observaties, maar bevat geen daadwerkelijk dossierfragment dat naast de rondgang moet worden gewogen.",
+      "action": "Beslis expliciet of gedeeltelijke eindtoetsdekking volstaat naast formatieve toetsing, of vervang een vraag met herbeoordeling van alle geraakte leerdoelen.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E43",
+          "version": 2,
+          "stem": "Distributiebedrijf: dagelijkse kruising heftrucks/voetgangers + twee bijna-aanrijdingen; regelmatig zware dozen; vrije nooduitgang; structurele tijdsdruk avondploeg; defect arbeidsmiddel direct buiten gebruik. Welke onderwerpen vragen duidelijk verdere beoordeling?",
+          "correctAnswers": [
+            "A",
+            "B",
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H10-LO02",
+      "objective": "Nieuwe risico’s en veranderingen herkennen zonder automatisch alles opnieuw te doen",
+      "chapters": [
+        10
+      ],
+      "previousCoverage": "PARTIAL",
+      "questionCodes": [
+        "WL001-EX-E43"
+      ],
+      "assessment": "PARTIAL",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "E43 toont signalen; de keuze welke bestaande delen ongewijzigd mogen blijven wordt niet rechtstreeks beoordeeld.",
+      "action": "Beslis expliciet of gedeeltelijke eindtoetsdekking volstaat naast formatieve toetsing, of vervang een vraag met herbeoordeling van alle geraakte leerdoelen.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E43",
+          "version": 2,
+          "stem": "Distributiebedrijf: dagelijkse kruising heftrucks/voetgangers + twee bijna-aanrijdingen; regelmatig zware dozen; vrije nooduitgang; structurele tijdsdruk avondploeg; defect arbeidsmiddel direct buiten gebruik. Welke onderwerpen vragen duidelijk verdere beoordeling?",
+          "correctAnswers": [
+            "A",
+            "B",
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H10-LO03",
+      "objective": "Onzekerheid herkennen en ontbrekende informatie gericht verzamelen",
+      "chapters": [
+        10
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E44"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E44",
+          "version": 2,
+          "stem": "Tijdens een nieuw productieproces melden meerdere medewerkers hoofdpijn en irritatie aan ogen en luchtwegen. Het is nog niet duidelijk welke stoffen tijdens het proces vrijkomen. De leidinggevende wil het proces laten doorgaan terwijl eerst wordt uitgezocht wat de oorzaak is. Welke aanpak is het meest passend?",
+          "correctAnswers": [
+            "B"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H10-LO04",
+      "objective": "Risico’s op hoofdlijnen onderbouwen en prioriteren",
+      "chapters": [
+        10
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E45"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E45",
+          "version": 3,
+          "stem": "Bevindingen: 1) klein beschadigd maar leesbaar informatiebord; 2) drie bijna-aanrijdingen op dezelfde drukke kruising; 3) typefout zonder inhoudelijk effect; 4) defecte lamp in ongebruikte vergaderruimte. Welke verdient eerst serieuze risicogerichte aandacht?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H10-LO05",
+      "objective": "De maatregelenhiërarchie toepassen op een praktijksituatie",
+      "chapters": [
+        10
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E46"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E46",
+          "version": 2,
+          "stem": "Voetgangers en heftrucks gebruiken dagelijks dezelfde smalle kruising. Manager stelt extra instructie en opvallender hesjes voor. Beste reactie?",
+          "correctAnswers": [
+            "A"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H10-LO06",
+      "objective": "Onderzoek, tijdelijke beheersing en definitieve maatregelen onderscheiden",
+      "chapters": [
+        10
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E44"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E44",
+          "version": 2,
+          "stem": "Tijdens een nieuw productieproces melden meerdere medewerkers hoofdpijn en irritatie aan ogen en luchtwegen. Het is nog niet duidelijk welke stoffen tijdens het proces vrijkomen. De leidinggevende wil het proces laten doorgaan terwijl eerst wordt uitgezocht wat de oorzaak is. Welke aanpak is het meest passend?",
+          "correctAnswers": [
+            "B"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H10-LO07",
+      "objective": "Een concreet en opvolgbaar Plan van Aanpak herkennen",
+      "chapters": [
+        10
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E47"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E47",
+          "version": 2,
+          "stem": "Organisatie pakt onveilige verkeerssituatie aan. Welk PvA-punt is meest bruikbaar?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H10-LO08",
+      "objective": "Toetsing en passende deskundigheid zorgvuldig positioneren",
+      "chapters": [
+        10
+      ],
+      "previousCoverage": "PARTIAL",
+      "questionCodes": [
+        "WL001-EX-E48"
+      ],
+      "assessment": "PARTIAL",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "E48 kiest passende aanvullende deskundigheid, niet alle voorwaarden voor formele toetsing.",
+      "action": "Beslis expliciet of gedeeltelijke eindtoetsdekking volstaat naast formatieve toetsing, of vervang een vraag met herbeoordeling van alle geraakte leerdoelen.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E48",
+          "version": 2,
+          "stem": "RI&E bevat complexe vraagstukken over stoffen, machineveiligheid en PSA; preventiemedewerker heeft vooral algemene veiligheidskennis. Beste aanpak?",
+          "correctAnswers": [
+            "D"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H10-LO09",
+      "objective": "Uitvoering onderscheiden van borging en effectiviteit",
+      "chapters": [
+        10
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E49"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E49",
+          "version": 2,
+          "stem": "Afgescheiden voetgangersroute is aangelegd. Na drie maanden gebruiken medewerkers tijdens pieken nog shortcut door heftruckgebied; veilige route kost meer tijd en teamleider stuurt sterk op snelheid. Beste conclusie?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H10-LO10",
+      "objective": "Gedrag en omstandigheden samen onderzoeken",
+      "chapters": [
+        10
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E49"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E49",
+          "version": 2,
+          "stem": "Afgescheiden voetgangersroute is aangelegd. Na drie maanden gebruiken medewerkers tijdens pieken nog shortcut door heftruckgebied; veilige route kost meer tijd en teamleider stuurt sterk op snelheid. Beste conclusie?",
+          "correctAnswers": [
+            "C"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    },
+    {
+      "objectiveCode": "WL001-H10-LO11",
+      "objective": "Bijna-ongevallen benutten om de RI&E-cyclus te verbeteren",
+      "chapters": [
+        10
+      ],
+      "previousCoverage": "DIRECT",
+      "questionCodes": [
+        "WL001-EX-E50"
+      ],
+      "assessment": "DIRECT",
+      "humanApproval": "OPEN",
+      "reviewer": null,
+      "reviewedAt": null,
+      "evidence": "De genoemde vraag beoordeelt de beschreven kernhandeling; deze inhoudelijke koppeling is een reviewvoorstel, geen menselijke goedkeuring.",
+      "action": "Bestaande directe koppeling behouden als reviewvoorstel; beoordeel inhoud en distractoren voordat publicatie wordt vrijgegeven.",
+      "questionEvidence": [
+        {
+          "code": "WL001-EX-E50",
+          "version": 2,
+          "stem": "Aanrijdgevaar is beoordeeld; afgescheiden route, instructies en verkeersafspraken ingevoerd. Zes maanden later: shortcuts tijdens pieken, twee bijna-aanrijdingen, minder personeel avonddienst, sterke sturing op doorlooptijd, geen letsel. Welke aanpak past bij volledige RI&E-cyclus?",
+          "correctAnswers": [
+            "A"
+          ],
+          "sourceIds": [
+            "wl001-prototype",
+            "arbo-rie"
+          ]
+        }
+      ]
+    }
+  ]
+}

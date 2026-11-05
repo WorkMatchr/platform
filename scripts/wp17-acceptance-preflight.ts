@@ -32,7 +32,9 @@ async function check() {
     assert.equal(identity.database, url.pathname.slice(1))
     const rows = (await db.query('SELECT migration_name,checksum,finished_at,rolled_back_at FROM _prisma_migrations ORDER BY migration_name')).rows
     const names = readdirSync('prisma/migrations').filter(name => /^\d/.test(name)).sort()
-    assert.equal(names.length, 95); assert.deepEqual(rows.map(row => row.migration_name), names)
+    // The complete checked-out chain is authoritative; Academy adds migrations.
+    // Exact identities below still reject missing, additional or duplicate rows.
+    assert.ok(names.length > 0); assert.deepEqual(rows.map(row => row.migration_name), names)
     for (const row of rows) {
       assert.ok(row.finished_at && !row.rolled_back_at)
       const sql = readFileSync(`prisma/migrations/${row.migration_name}/migration.sql`, 'utf8')

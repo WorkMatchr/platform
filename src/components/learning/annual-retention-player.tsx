@@ -20,24 +20,30 @@ type AnnualCheck = {
   }>
 }
 
-export function AnnualRetentionPlayer({ check }: { check: AnnualCheck }) {
+export function AnnualRetentionPlayer({ check, courseSlug = 'rie-in-de-praktijk' }: { check: AnnualCheck; courseSlug?: string }) {
   const router = useRouter()
   const [position, setPosition] = useState(check.nextPosition ?? 1)
   const [selection, setSelection] = useState<string[]>([])
-  const [feedback, setFeedback] = useState<{ isCorrect: boolean; label: string; explanation: string } | null>(null)
+  const [localAnswers, setLocalAnswers] = useState<Record<number, { selection: string[]; feedback: { isCorrect: boolean; label: string; explanation: string } }>>({})
   const [error, setError] = useState('')
   const [answeredPositions, setAnsweredPositions] = useState(() => new Set(check.questions.filter((item) => item.answered).map((item) => item.position)))
   const [isPending, startTransition] = useTransition()
   const headingRef = useRef<HTMLHeadingElement>(null)
   const feedbackRef = useRef<HTMLDivElement>(null)
   const current = check.questions[position - 1]
-  const selectedValues = current?.answered ? current.presentation.options.filter((option) => option.selected).map((option) => option.value) : selection
+  const localAnswer = localAnswers[position]
+  const answered = Boolean(current?.answered || localAnswer)
+  const selectedValues = localAnswer?.selection ?? (current?.answered ? current.presentation.options.filter((option) => option.selected).map((option) => option.value) : selection)
+  const visibleFeedback = localAnswer?.feedback ?? current?.presentation.feedback
   const answeredCount = answeredPositions.size
 
-  useEffect(() => { headingRef.current?.focus() }, [position])
+  useEffect(() => {
+    if (visibleFeedback) feedbackRef.current?.focus()
+    else headingRef.current?.focus()
+  }, [position, visibleFeedback])
 
   function toggle(value: string) {
-    if (!current || current.answered || isPending) return
+    if (!current || answered || isPending) return
     setSelection((values) => current.presentation.type === 'SINGLE_CHOICE'
       ? [value]
       : values.includes(value) ? values.filter((item) => item !== value) : [...values, value])
@@ -45,37 +51,37 @@ export function AnnualRetentionPlayer({ check }: { check: AnnualCheck }) {
   }
 
   function checkAnswer() {
-    if (!current || current.answered || selectedValues.length === 0 || isPending) return
+    if (!current || answered || selectedValues.length === 0 || isPending) return
     setError('')
     const answer: string | string[] = current.presentation.type === 'SINGLE_CHOICE' ? selectedValues[0]! : selectedValues
     startTransition(async () => {
-      const result = await answerAnnualRetentionQuestionAction(position, answer)
+      const result = await answerAnnualRetentionQuestionAction(position, answer, courseSlug)
       if (!result.ok) {
         setError(result.message)
         return
       }
-      setFeedback({
-        isCorrect: result.result.isCorrect,
-        label: result.result.isCorrect ? 'Goed' : 'Niet helemaal',
-        explanation: result.result.feedback,
-      })
+      // A successful server response is final even before refreshed props arrive.
+      setLocalAnswers((previous) => ({ ...previous, [position]: {
+        selection: [...selectedValues],
+        feedback: {
+          isCorrect: result.result.isCorrect,
+          label: result.result.isCorrect ? 'Goed' : 'Niet helemaal',
+          explanation: result.result.feedback,
+        },
+      } }))
       setAnsweredPositions((previous) => new Set(previous).add(position))
-      window.setTimeout(() => feedbackRef.current?.focus(), 0)
       if (result.result.progress?.completed) router.refresh()
     })
   }
 
   function goTo(nextPosition: number) {
     if (nextPosition < 1 || nextPosition > check.questions.length) return
-    setFeedback(check.questions[nextPosition - 1]?.presentation.feedback ?? null)
     setSelection(check.questions[nextPosition - 1]?.presentation.options.filter((option) => option.selected).map((option) => option.value) ?? [])
     setError('')
     setPosition(nextPosition)
   }
 
   if (!current) return <Card><p>Deze jaarlijkse kennischeck is niet beschikbaar.</p></Card>
-  const existingFeedback = current.presentation.feedback
-  const visibleFeedback = existingFeedback ?? feedback
 
   return <div className="space-y-5">
     <Card className="space-y-5">
@@ -90,7 +96,7 @@ export function AnnualRetentionPlayer({ check }: { check: AnnualCheck }) {
       </div>
       <h1 ref={headingRef} tabIndex={-1} className="text-2xl font-bold leading-tight text-brand-dark outline-none">{current.presentation.questionText}</h1>
       {current.presentation.multiSelectInstruction && <p className="rounded-card border border-brand-primary/20 bg-brand-primary/5 p-3 text-sm font-medium leading-6 text-brand-dark">{current.presentation.multiSelectInstruction}</p>}
-      <fieldset className="space-y-3" disabled={current.answered || isPending}>
+      <fieldset className="space-y-3" disabled={answered || isPending}>
         <legend className="sr-only">{current.presentation.type === 'MULTI_CHOICE' ? 'Meerdere antwoorden mogelijk' : 'Kies één antwoord'}</legend>
         {current.presentation.options.map((option) => <label key={option.value} className="flex min-h-14 cursor-pointer items-start gap-3 rounded-card border border-border p-4 hover:border-brand-primary focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-brand-primary">
           <input
@@ -110,7 +116,7 @@ export function AnnualRetentionPlayer({ check }: { check: AnnualCheck }) {
         <p className="font-semibold text-brand-dark">{visibleFeedback.label}</p>
         <p className="text-sm leading-6 text-brand-dark">{visibleFeedback.explanation}</p>
       </div>}
-      {!current.answered && <button type="button" onClick={checkAnswer} disabled={selectedValues.length === 0 || isPending} aria-busy={isPending} className="min-h-11 rounded-control bg-brand-primary px-5 font-semibold text-text-on-dark disabled:opacity-50">{isPending ? 'Antwoord controleren…' : 'Controleer antwoord'}</button>}
+      {!answered && <button type="button" onClick={checkAnswer} disabled={selectedValues.length === 0 || isPending} aria-busy={isPending} className="min-h-11 rounded-control bg-brand-primary px-5 font-semibold text-text-on-dark disabled:opacity-50">{isPending ? 'Antwoord controleren…' : 'Controleer antwoord'}</button>}
     </Card>
   </div>
 }

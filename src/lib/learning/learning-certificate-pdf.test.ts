@@ -6,6 +6,34 @@ import { LEARNING_CERTIFICATE_TEMPLATE_VERSION } from './learning-certificate-te
 vi.mock('server-only', () => ({}))
 
 describe('Learning-certificaat-PDF', () => {
+  it('marks a separate name correction without losing the original certificate identity or PDF structure', async()=>{
+    const bytes=await buildLearningCertificatePdf({templateVersion:'ACADEMY-CERT-1.0',firstName:'Johannes Cornelis',lastName:'van den Berg-Smit',courseTitle:'RI&E in de praktijk',certificateNumber:'WM-ACA-2026-0123456789ABCDEF01234567',issuedAt:new Date('2026-10-24'),correctionNotice:'Naamcorrectie van 2026-10-30; het oorspronkelijke certificaat blijft bewaard.'})
+    const pdf=await PDFDocument.load(bytes);expect(pdf.getPageCount()).toBe(1)
+    const pdfjs=await import('pdfjs-dist/legacy/build/pdf.mjs'),loading=pdfjs.getDocument({data:new Uint8Array(bytes),useSystemFonts:true}),doc=await loading.promise,page=await doc.getPage(1),content=await page.getTextContent()
+    const text=content.items.flatMap(i=>'str' in i?[i.str]:[]).join(' ')
+    expect(text).toContain('Naamcorrectie van 2026-10-30');expect(text).toContain('Johannes Cornelis van den Berg-Smit');expect(text).toContain('WM-ACA-2026-0123456789ABCDEF01234567');expect(text).not.toMatch(/@|Score/);expect(content.lang).toBe('nl');expect(await page.getStructTree()).not.toBeNull()
+    await loading.destroy()
+  },30000)
+
+  it('uses the shared Academy template with the actual course title, tags and no WL-001 qualification copy', async () => {
+    const title = 'Preventiemedewerker in de praktijk'
+    const bytes = await buildLearningCertificatePdf({ templateVersion: 'ACADEMY-CERT-1.0', firstName: 'Johannes Cornelis', lastName: 'van den Berg-Smit', courseTitle: title, certificateNumber: 'WM-ACA-2026-0123456789ABCDEF01234567', issuedAt: new Date('2026-10-24T12:00:00Z') })
+    const pdf = await PDFDocument.load(bytes)
+    expect(pdf.getPageCount()).toBe(1); expect(pdf.getTitle()).toBe(`Certificaat ${title}`)
+    const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
+    const loading = pdfjs.getDocument({ data: new Uint8Array(bytes), useSystemFonts: true })
+    const document = await loading.promise
+    const page = await document.getPage(1), content = await page.getTextContent()
+    const text = content.items.flatMap((item) => 'str' in item ? [item.str] : []).join(' ')
+    expect(content.lang).toBe('nl'); expect(await page.getStructTree()).not.toBeNull()
+    expect(text).toContain(title.toLocaleUpperCase('nl'))
+    expect(text).toContain('Johannes Cornelis van den Berg-Smit')
+    expect(text).toContain('WM-ACA-2026-0123456789ABCDEF01234567')
+    expect(text).toContain('geen wettelijke beroepskwalificatie')
+    expect(text).not.toMatch(/@|score|RI&E IN DE PRAKTIJK/)
+    expect(learningCertificateFilename('Ada', 'Voorbeeld', title)).toBe('Certificaat-Preventiemedewerker-in-de-praktijk-Ada-Voorbeeld.pdf')
+    await loading.destroy()
+  }, 30_000)
   it('genereert een A4-landscape-pdf van één pagina met metadata en verificatie-QR', async () => {
     const date = new Date('2026-09-29T12:00:00.000Z')
     const bytes = await buildLearningCertificatePdf({

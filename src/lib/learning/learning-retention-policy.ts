@@ -166,7 +166,7 @@ export type AnnualRetentionResultItem = {
   correct: boolean
 }
 
-export function scoreAnnualRetentionCheck(items: AnnualRetentionResultItem[]) {
+export function scoreAnnualRetentionCheck(items: AnnualRetentionResultItem[], courseSlug = 'rie-in-de-praktijk', courseVersion?: string) {
   if (items.length !== 10 || new Set(items.map((item) => item.position)).size !== 10
     || new Set(items.map((item) => item.chapterNumber)).size !== 10
     || items.some((item) => !Number.isInteger(item.position) || item.position < 1 || item.position > 10
@@ -196,7 +196,7 @@ export function scoreAnnualRetentionCheck(items: AnnualRetentionResultItem[]) {
     chapterLinks: attention.flatMap(([knowledgeArea, result]) => [...result.chapters.entries()].map(([chapterTitle, chapterSlug]) => ({
       knowledgeArea,
       chapterTitle,
-      href: `/e-learnings/rie-in-de-praktijk/leren/${encodeURIComponent(chapterSlug)}`,
+      href: `/e-learnings/${courseSlug}/leren/${encodeURIComponent(chapterSlug)}${courseVersion ? `?version=${encodeURIComponent(courseVersion)}` : ''}`,
     }))),
   }
 }

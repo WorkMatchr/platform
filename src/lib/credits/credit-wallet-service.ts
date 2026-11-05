@@ -1,3 +1,4 @@
+import { requireFinancialOrganizationId } from '@/lib/finance/financial-organization'
 import { Prisma } from '@/generated/prisma/client'
 import type { CreditTransactionType } from '@/generated/prisma/client'
 import { getPrisma } from '@/lib/prisma'
@@ -272,11 +273,11 @@ export async function recordVerifiedPurchaseCreditsInTransaction(
       creditedTransactionId: true,
     },
   })
-  if (!purchase || purchase.status !== 'PAID') throw new MarketplaceServiceError('CONFLICT')
+  if (!purchase || purchase.status !== 'PAID' || purchase.credits < 1) throw new MarketplaceServiceError('CONFLICT')
   if (purchase.creditedTransactionId) {
     return transaction.creditTransaction.findUniqueOrThrow({ where: { id: purchase.creditedTransactionId } })
   }
-  const wallet = await ensureAndLockWallet(transaction, purchase.organizationId)
+  const wallet = await ensureAndLockWallet(transaction, requireFinancialOrganizationId(purchase.organizationId))
   const repeated = await transaction.creditTransaction.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
   if (repeated) {
     if (repeated.referenceType !== 'FinancialPurchase' || repeated.referenceId !== purchase.id || repeated.totalDelta !== purchase.credits) {
@@ -315,7 +316,7 @@ export async function recordVerifiedPurchaseCreditsInTransaction(
   await writeMarketplaceAudit(transaction, {
     actorUserId: purchase.createdByUserId,
     actorRole: 'VERIFIED_PAYMENT',
-    organizationId: purchase.organizationId,
+    organizationId: requireFinancialOrganizationId(purchase.organizationId),
     action: 'CREDIT_PURCHASE_RECORDED',
     entityType: 'CreditTransaction',
     entityId: ledger.id,
@@ -432,7 +433,7 @@ export async function recordVerifiedDiscountBonusInTransaction(
   })
   const redemption = purchase?.discountRedemption
   if (!purchase || purchase.status !== 'PAID' || !redemption || redemption.bonusCredits < 1) return null
-  const wallet = await ensureAndLockWallet(transaction, purchase.organizationId)
+  const wallet = await ensureAndLockWallet(transaction, requireFinancialOrganizationId(purchase.organizationId))
   const repeated = await transaction.creditTransaction.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
   if (repeated) return repeated
   const before = await deriveWalletBalance(transaction, wallet.id)

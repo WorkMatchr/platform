@@ -1,0 +1,283 @@
+{
+  "checkedAt": "2026-11-04",
+  "branch": "codex/academy-content-approval",
+  "baseCommit": "c7e71db1f2850fbee50757b57c84ccf2607e6762",
+  "status": "CONTENT_CANDIDATES_PREPARED_PUBLICATION_BLOCKED",
+  "courses": [
+    {
+      "file": "content/academy/WL-001_COURSE_1.0_DRAFT.json",
+      "fileSha256": "4474134f46cac62f4123fb247f8998ab0c6a5ae833e1d651411f3cc7d87bf3dd",
+      "importMode": "DRY_RUN",
+      "importBundleHash": "a2e83ba22c1c5e4043f970602c4b3c18b8e15f1d095ce75137e37a921e7bc109",
+      "statistics": {
+        "courseCode": "WL-001",
+        "status": "DRAFT",
+        "chapters": 10,
+        "contentBlocks": 457,
+        "formativeQuestions": 214,
+        "chapterCheckQuestions": 51,
+        "examQuestions": 50,
+        "retentionQuestions": 100,
+        "examQuality": {
+          "uniquelyShortest": 3,
+          "uniquelyShortestPercentage": 7.1,
+          "singleChoice": 42,
+          "multiChoice": 8,
+          "uniquelyLongest": 10,
+          "uniquelyLongestPercentage": 23.8,
+          "correctPositions": {
+            "A": 9,
+            "B": 9,
+            "C": 14,
+            "D": 10,
+            "E": 0
+          },
+          "longestCorrectPositionRun": 2
+        },
+        "retentionQuality": {
+          "uniquelyShortest": 16,
+          "uniquelyShortestPercentage": 25.4,
+          "singleChoice": 63,
+          "multiChoice": 37,
+          "uniquelyLongest": 21,
+          "uniquelyLongestPercentage": 33.3,
+          "correctPositions": {
+            "A": 61,
+            "B": 2,
+            "C": 0,
+            "D": 0,
+            "E": 0
+          },
+          "longestCorrectPositionRun": 39
+        }
+      },
+      "visualAnswerPositions": {
+        "exam": {
+          "counts": {
+            "1": 9,
+            "2": 9,
+            "3": 14,
+            "4": 10
+          },
+          "longestRun": 2
+        },
+        "retention": {
+          "counts": {
+            "1": 14,
+            "2": 14,
+            "3": 16,
+            "4": 19
+          },
+          "longestRun": 2
+        }
+      },
+      "courseVersion": "WL-001-COURSE-1.0-DRAFT",
+      "examVersion": "WL-001-EXAM-1.2-DRAFT",
+      "retentionVersion": "WL-001-RETENTION-1.1-DRAFT",
+      "reviewStatus": "OPEN",
+      "objectives": 104,
+      "estimatedMinutes": 300,
+      "measured": false,
+      "fileSha256Normalization": "RAW_WORKTREE_BYTES",
+      "canonicalLfFileSha256": "53813fc4fb9d0bd337435b4433c1443586cac24efcacae4f3d55494b9728437b"
+    },
+    {
+      "file": "content/academy/WL-002_COURSE_1.3_DRAFT.json",
+      "fileSha256": "2188a6db243f81ca427ec357082d9dff2fc8e5319fbe83f23b608075cb7e701b",
+      "importMode": "DRY_RUN",
+      "importBundleHash": "64ed560203a6531b0072878f5385f9eba773289e6344c49cca41ce4fd1832ca5",
+      "statistics": {
+        "courseCode": "WL-002",
+        "status": "DRAFT",
+        "chapters": 10,
+        "contentBlocks": 342,
+        "formativeQuestions": 90,
+        "chapterCheckQuestions": 30,
+        "examQuestions": 50,
+        "retentionQuestions": 100,
+        "examQuality": {
+          "uniquelyShortest": 10,
+          "uniquelyShortestPercentage": 25,
+          "singleChoice": 40,
+          "multiChoice": 10,
+          "uniquelyLongest": 14,
+          "uniquelyLongestPercentage": 35,
+          "correctPositions": {
+            "A": 12,
+            "B": 9,
+            "C": 11,
+            "D": 8,
+            "E": 0
+          },
+          "longestCorrectPositionRun": 3
+        },
+        "retentionQuality": {
+          "uniquelyShortest": 30,
+          "uniquelyShortestPercentage": 37.5,
+          "singleChoice": 80,
+          "multiChoice": 20,
+          "uniquelyLongest": 8,
+          "uniquelyLongestPercentage": 10,
+          "correctPositions": {
+            "A": 17,
+            "B": 17,
+            "C": 24,
+            "D": 22,
+            "E": 0
+          },
+          "longestCorrectPositionRun": 3
+        }
+      },
+      "visualAnswerPositions": {
+        "exam": {
+          "counts": {
+            "1": 12,
+            "2": 9,
+            "3": 11,
+            "4": 8
+          },
+          "longestRun": 3
+        },
+        "retention": {
+          "counts": {
+            "1": 17,
+            "2": 17,
+            "3": 24,
+            "4": 22
+          },
+          "longestRun": 3
+        }
+      },
+      "courseVersion": "WL-002-COURSE-1.3",
+      "examVersion": "WL-002-EXAM-1.3",
+      "retentionVersion": "WL-002-RETENTION-1.3",
+      "reviewStatus": "OPEN",
+      "objectives": 40,
+      "estimatedMinutes": 295,
+      "measured": false,
+      "fileSha256Normalization": "RAW_WORKTREE_BYTES",
+      "canonicalLfFileSha256": "2188a6db243f81ca427ec357082d9dff2fc8e5319fbe83f23b608075cb7e701b"
+    },
+    {
+      "file": "content/academy/WL-003_COURSE_1.1_DRAFT.json",
+      "fileSha256": "b38f41d36c688309e9711753bf63c7d5dca62a38b7d8378d7b200d5db4646445",
+      "importMode": "DRY_RUN",
+      "importBundleHash": "4de48b398d950f1ddf8f69d3e5218e63c659f5d96829747b42a15606c1074c60",
+      "statistics": {
+        "courseCode": "WL-003",
+        "status": "DRAFT",
+        "chapters": 10,
+        "contentBlocks": 321,
+        "formativeQuestions": 90,
+        "chapterCheckQuestions": 30,
+        "examQuestions": 50,
+        "retentionQuestions": 100,
+        "examQuality": {
+          "uniquelyShortest": 11,
+          "uniquelyShortestPercentage": 27.5,
+          "singleChoice": 40,
+          "multiChoice": 10,
+          "uniquelyLongest": 4,
+          "uniquelyLongestPercentage": 10,
+          "correctPositions": {
+            "A": 8,
+            "B": 7,
+            "C": 9,
+            "D": 16,
+            "E": 0
+          },
+          "longestCorrectPositionRun": 3
+        },
+        "retentionQuality": {
+          "uniquelyShortest": 14,
+          "uniquelyShortestPercentage": 17.5,
+          "singleChoice": 80,
+          "multiChoice": 20,
+          "uniquelyLongest": 26,
+          "uniquelyLongestPercentage": 32.5,
+          "correctPositions": {
+            "A": 20,
+            "B": 26,
+            "C": 18,
+            "D": 16,
+            "E": 0
+          },
+          "longestCorrectPositionRun": 3
+        }
+      },
+      "visualAnswerPositions": {
+        "exam": {
+          "counts": {
+            "1": 8,
+            "2": 7,
+            "3": 9,
+            "4": 16
+          },
+          "longestRun": 3
+        },
+        "retention": {
+          "counts": {
+            "1": 20,
+            "2": 26,
+            "3": 18,
+            "4": 16
+          },
+          "longestRun": 3
+        }
+      },
+      "courseVersion": "WL-003-COURSE-1.1",
+      "examVersion": "WL-003-EXAM-1.1",
+      "retentionVersion": "WL-003-RETENTION-1.1",
+      "reviewStatus": "OPEN",
+      "objectives": 40,
+      "estimatedMinutes": 288,
+      "measured": false,
+      "fileSha256Normalization": "RAW_WORKTREE_BYTES",
+      "canonicalLfFileSha256": "bd0025684f7aeb85a8b1bc1221dc0338958f677a4e2ff9907a20f4f36d8019ef"
+    }
+  ],
+  "validation": {
+    "targetedTests": {
+      "passed": 29,
+      "failed": 0,
+      "files": [
+        "src/lib/learning/academy-content-release.test.tsx",
+        "src/lib/learning/wl002-content-remediation.test.ts"
+      ]
+    },
+    "lint": {
+      "errors": 0,
+      "existingWarnings": 4
+    },
+    "typescript": {
+      "errors": 0
+    },
+    "productionBuild": {
+      "exitCode": 0,
+      "staticPages": 176,
+      "existingTracingWarnings": 3,
+      "usedProductionCredentials": false
+    },
+    "browser": {
+      "kind": "READ_ONLY_EXISTING_LESSON_RENDERER",
+      "desktopWidth": 1280,
+      "mobileWidth": 390,
+      "courses": 3,
+      "horizontalDocumentOverflow": false,
+      "keyboardChapterNavigation": "PASS",
+      "authenticatedAcademyAcceptance": "BLOCKED",
+      "real200PercentZoom": "NOT_TESTED",
+      "screenReader": "NOT_TESTED"
+    },
+    "ci": "NOT_RUN",
+    "databaseWrites": false,
+    "publication": false
+  },
+  "blockers": [
+    "Menselijke inhoudelijke/juridische en toetskundige goedkeuring OPEN.",
+    "WL-001: 18 specifieke doelen zonder expliciete eindtoetsbinding, 25 gedeeltelijk; gerichte reviewerbeslissing nodig.",
+    "Rijke AcademyCourseBundle niet verliesvrij bewerkbaar in huidige AuthoringCourse-editor.",
+    "Importservice-identity vereist PostgreSQL17/neondb en past niet bij de bestaande lokale PostgreSQL18-testdoelomgeving.",
+    "Werkelijke studieduur nog met doelgroep te meten."
+  ]
+}

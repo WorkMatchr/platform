@@ -3,6 +3,8 @@ import type { NextConfig } from 'next'
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Full Academy bundles require more than the default 1 MB action body.
+  experimental: { serverActions: { bodySizeLimit: '2mb' } },
   async headers() {
     return [{
       source: '/:path*',
@@ -16,8 +18,10 @@ const nextConfig: NextConfig = {
       ],
     }]
   },
+  ...(process.env.ACADEMY_LOCAL_MAIL === '1' ? { logging: { incomingRequests: false, fetches: { fullUrl: false } } } : {}),
   serverExternalPackages: ['pdfjs-dist', '@napi-rs/canvas', 'sharp'],
   outputFileTracingIncludes: {
+    '/platformbeheer/academy/certificaten/sjablonen/preview': ['./node_modules/pdfjs-dist/standard_fonts/**/*', './node_modules/@napi-rs/canvas/**/*', './node_modules/@napi-rs/canvas-linux-x64-gnu/**/*'],
     '/organisatie/*': ['./node_modules/sharp/**/*', './node_modules/@img/sharp-linux-x64/**/*', './node_modules/@img/sharp-libvips-linux-x64/**/*'],
     '/wijzers/*/pdf': ['./public/branding/workmatchr-logo.png'],
     '/mijn-arbo-wijzers/*/pdf': ['./public/branding/workmatchr-logo.png'],

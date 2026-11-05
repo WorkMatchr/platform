@@ -18,9 +18,12 @@ const db = databaseUrl ? new PrismaClient({ adapter: new PrismaPg({ connectionSt
 afterAll(async () => { await db?.$disconnect() })
 
 describe.skipIf(!databaseUrl)('Learning concurrency on disposable PostgreSQL', () => {
-it('six concurrent course starts produce one enrollment and normal redirects', async () => {
+it('six concurrent course starts preserve one provisioned enrollment and normal redirects', async () => {
   actor.id = randomUUID()
   await db!.user.create({ data: { id: actor.id, email: `${actor.id}@example.invalid`, status: 'ACTIVE', displayName: 'WP10 synthetic' } })
+  // Provision the fixture entitlement explicitly; course start must not grant access.
+  const fixtureVersion=await db!.learningCourseVersion.findFirstOrThrow({where:{status:'PUBLISHED',course:{code:'WL-001',status:'PUBLISHED'}}})
+  await db!.learningEnrollment.upsert({where:{userId_courseVersionId:{userId:actor.id,courseVersionId:fixtureVersion.id}},update:{},create:{userId:actor.id,courseVersionId:fixtureVersion.id}})
   const input = new FormData()
   input.set('courseSlug', 'rie-in-de-praktijk')
   const outcomes = await Promise.allSettled(Array.from({ length: 6 }, () => startLearningCourseAction(input)))
@@ -32,6 +35,9 @@ it('six concurrent course starts produce one enrollment and normal redirects', a
 it('concurrent completed blocks leave percentage consistent with stored interactions', async () => {
   actor.id = randomUUID()
   await db!.user.create({ data: { id: actor.id, email: `${actor.id}@example.invalid`, status: 'ACTIVE', displayName: 'WP10 synthetic' } })
+  // Provision the fixture entitlement explicitly; course start must not grant access.
+  const fixtureVersion=await db!.learningCourseVersion.findFirstOrThrow({where:{status:'PUBLISHED',course:{code:'WL-001',status:'PUBLISHED'}}})
+  await db!.learningEnrollment.upsert({where:{userId_courseVersionId:{userId:actor.id,courseVersionId:fixtureVersion.id}},update:{},create:{userId:actor.id,courseVersionId:fixtureVersion.id}})
   const input = new FormData()
   input.set('courseSlug', 'rie-in-de-praktijk')
   await expect(startLearningCourseAction(input)).rejects.toThrow('REDIRECT:')

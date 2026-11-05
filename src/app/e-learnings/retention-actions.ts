@@ -4,13 +4,13 @@ import { requireLearningUser } from '@/lib/learning/learning-authorization'
 import { answerMyAnnualRetentionQuestion, setMyAnnualReminderConsent } from '@/lib/learning/learning-retention-annual-service'
 import { answerMyRetentionQuestion, startMyRetentionParticipation, stopMyRetentionParticipation } from '@/lib/learning/learning-retention-service'
 
-export async function answerAnnualRetentionQuestionAction(position: number, answer: unknown) {
+export async function answerAnnualRetentionQuestionAction(position: number, answer: unknown, courseSlug = 'rie-in-de-praktijk') {
   if (!Number.isInteger(position) || position < 1 || position > 10) {
     return { ok: false as const, message: 'Deze vraag is niet beschikbaar.' }
   }
   const user = await requireLearningUser('/e-learnings/mijn')
   try {
-    return { ok: true as const, result: await answerMyAnnualRetentionQuestion(user.id, position, answer) }
+    return { ok: true as const, result: await answerMyAnnualRetentionQuestion(user.id, position, answer, new Date(), courseSlug) }
   } catch (error) {
     if (error instanceof Error && error.message === 'ANNUAL_ANSWER_ALREADY_FINAL') {
       return { ok: false as const, message: 'Dit antwoord is al definitief opgeslagen en kan niet meer worden gewijzigd.' }
@@ -26,7 +26,7 @@ export async function startRetentionParticipationAction(formData: FormData) {
   const user = await requireLearningUser('/e-learnings/mijn')
   const consent = formData.get('consent') === 'yes'
   try {
-    const participation = await startMyRetentionParticipation(user.id, consent)
+    const participation = await startMyRetentionParticipation(user.id, consent, new Date(), String(formData.get('courseSlug') ?? 'rie-in-de-praktijk'))
     const message = participation.status === 'STOPPED'
       ? 'Deze deelname is eerder gestopt en wordt niet automatisch opnieuw gestart.'
       : participation.status === 'COMPLETED' ? 'Uw kennisbehoudprogramma is afgerond.' : 'Uw deelname is gestart.'
@@ -72,10 +72,10 @@ export async function stopRetentionParticipationAction(participationId: string) 
   }
 }
 
-export async function setAnnualReminderConsentAction(consent: boolean) {
+export async function setAnnualReminderConsentAction(consent: boolean, courseSlug = 'rie-in-de-praktijk') {
   const user = await requireLearningUser('/e-learnings/mijn')
   try {
-    const result = await setMyAnnualReminderConsent(user.id, consent)
+    const result = await setMyAnnualReminderConsent(user.id, consent, new Date(), courseSlug)
     return { ok: true as const, result }
   } catch {
     return { ok: false as const, message: 'De jaarherinnering kon niet worden aangepast. Controleer uw opleidingsstatus en probeer het opnieuw.' }

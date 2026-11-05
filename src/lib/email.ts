@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import { academyLocalMailSelected, AcademyLocalMailError } from './academy-local-mail-policy'
 
 export type AuthEmail = {
   kind:
@@ -25,7 +26,7 @@ export type AuthEmail = {
 
 export type AuthEmailDeliveryResult = {
   accepted: true
-  transport: 'RESEND' | 'DEVELOPMENT_LOG'
+  transport: 'RESEND' | 'DEVELOPMENT_LOG' | 'LOCAL_MAILPIT'
   status: 'ACCEPTED' | 'DEVELOPMENT_ONLY'
   messageId: string
   previewRecipientOverrideUsed?: boolean
@@ -100,25 +101,7 @@ function resolvePreviewInvoiceRecipientOverride(email: AuthEmail) {
 
 function logDevelopmentAuthLink(email: AuthEmail): void {
   if (process.env.NODE_ENV !== 'development' || !email.developmentUrl) return
-
-  const passwordReset = email.kind === 'PASSWORD_RESET'
-  const accountActivation = email.kind === 'INVITATION'
-  const heading = accountActivation
-    ? 'Development account activation email'
-    : passwordReset
-      ? 'Development password reset email'
-      : 'Development verification email'
-  const urlLabel = accountActivation ? 'Activation URL:' : passwordReset ? 'Reset URL:' : 'Verify URL:'
-  const block = [
-    '--------------------------------------------------',
-    heading,
-    `To: ${email.to}`,
-    urlLabel,
-    email.developmentUrl,
-    '--------------------------------------------------',
-  ].join('\n')
-
-  process.stdout.write(`${block}\n`)
+  console.info('Ontwikkelmail verwerkt; gevoelige inhoud wordt niet gelogd.')
 }
 
 export function getAuthEmailConfigurationStatus() {
@@ -137,6 +120,12 @@ export function parseEmailRetryAfter(value: string | undefined, now = Date.now()
 }
 
 export async function sendAuthEmail(email: AuthEmail): Promise<AuthEmailDeliveryResult> {
+  if (academyLocalMailSelected()) {
+    // Next replaces NODE_ENV at build time: local files and tooling are not a production transport.
+    if (process.env.NODE_ENV === 'production') throw new AcademyLocalMailError()
+    const { captureAcademyLocalMail } = await import('./academy-local-mail')
+    return captureAcademyLocalMail(email)
+  }
   const resolved = resolvePreviewInvoiceRecipientOverride(email)
   const deliveryEmail = resolved.email
   const apiKey = process.env.RESEND_API_KEY

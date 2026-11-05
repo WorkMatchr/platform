@@ -1,0 +1,487 @@
+{
+  "version": "1.2",
+  "humanApproval": "OPEN",
+  "changes": [
+    [
+      3,
+      "Een bedrijf heeft gevaren geïnventariseerd, maar nog geen risico’s beoordeeld. Welke vervolgstappen horen bij een volledige RI&E-cyclus?",
+      [
+        "Beoordeel risico’s, kies passende maatregelen en leg uitvoeringstermijnen vast in het Plan van Aanpak; voer uit en evalueer het effect.",
+        "Laat de lijst eerst standaard goedkeuren door de Arbeidsinspectie; pas daarna kunnen risico’s worden beoordeeld.",
+        "Neem alleen gevaren mee die al tot letsel hebben geleid; andere onderwerpen kunnen wachten.",
+        "Beschouw inventarisatie als eindpunt; evaluatie is alleen nodig na een ongeval."
+      ],
+      [
+        0
+      ],
+      "Inventarisatie, beoordeling, Plan van Aanpak, uitvoering en evaluatie vormen samen de cyclus. Een lijst gevaren zonder beoordeling en opvolging is onvoldoende.",
+      [
+        "H1-LO03",
+        "H1-LO04"
+      ]
+    ],
+    [
+      4,
+      "Een werkgever schakelt ondersteuning in voor de RI&E. Welke uitspraken over rollen en verantwoordelijkheid zijn juist?",
+      [
+        "Een arbodienst is een dienstverlenende organisatie; een bedrijfsarts is een medisch specialist en een van de kerndeskundigen.",
+        "De werkgever houdt de verantwoordelijkheid, ook wanneer externe deskundigen het werk ondersteunen.",
+        "De externe adviseur wordt door de opdracht automatisch de wettelijk verantwoordelijke werkgever.",
+        "Hogere veiligheidskundige, arbeidshygiënist, arbeids- en organisatiedeskundige en bedrijfsarts zijn vier kerndeskundigheden.",
+        "Een arbodienst en een bedrijfsarts zijn twee namen voor hetzelfde beroep."
+      ],
+      [
+        0,
+        1,
+        3
+      ],
+      "Dienstverlening, individuele deskundigheid en werkgeversverantwoordelijkheid zijn verschillende rollen. Voor de drie niet-medische kerndeskundigheden geldt certificering; bij de bedrijfsarts is registratie relevant.",
+      [
+        "H2-LO01",
+        "H2-LO05",
+        "H2-LO06",
+        "H7-LO07"
+      ],
+      true
+    ],
+    [
+      6,
+      "Een bedrijf actualiseert de RI&E. Welke afspraken helpen de samenwerking goed te organiseren?",
+      [
+        "Werknemers leveren ervaringen uit de praktijk en bespreken of voorgestelde maatregelen uitvoerbaar zijn.",
+        "De werkgever bepaalt samen met betrokkenen wie informatie verzamelt, deskundigheid inbrengt en acties opvolgt.",
+        "De preventiemedewerker ondersteunt de RI&E; OR/PVT wordt waar van toepassing bij het beleid betrokken.",
+        "Na inschakeling van een externe deskundige vervalt de noodzaak om intern informatie te verzamelen.",
+        "Alleen managers worden geraadpleegd om verschillen tussen de procedure en het werk te voorkomen."
+      ],
+      [
+        0,
+        1,
+        2
+      ],
+      "Een werkbare taakverdeling combineert praktijkervaring, preventie, medezeggenschap en passende deskundigheid. De werkgever blijft verantwoordelijk.",
+      [
+        "H2-LO02",
+        "H2-LO03",
+        "H2-LO04",
+        "H2-LO08"
+      ],
+      true
+    ],
+    [
+      9,
+      "Bij een inventarisatie ziet u alleen de dagploeg tijdens normaal productiebedrijf. Welke uitbreidingen zijn nodig om arbeidsrisico’s systematisch te vinden?",
+      [
+        "Neem ook schoonmaak, onderhoud, storingen en afwijkende werkzaamheden mee.",
+        "Breng per proces en taak in kaart wie kan worden blootgesteld, waaronder tijdelijke krachten en andere ploegen.",
+        "Beperk de RI&E tot werkzaamheden die tijdens de rondgang zichtbaar waren.",
+        "Combineer de rondgang met meldingen, documentatie en gesprekken over het werk.",
+        "Beschouw een afwezige werknemer als niet-blootgesteld zonder diens werkzaamheden te onderzoeken."
+      ],
+      [
+        0,
+        1,
+        3
+      ],
+      "Een momentopname mist taken en groepen. Systematisch inventariseren gebruikt processen, normale en afwijkende werkzaamheden en meerdere informatiebronnen.",
+      [
+        "H3-LO01",
+        "H3-LO02",
+        "H3-LO04",
+        "H3-LO05",
+        "H3-LO06"
+      ]
+    ],
+    [
+      10,
+      "Een tilhulpmiddel staat klaar maar wordt nauwelijks gebruikt. Welke aanpak onderscheidt inventariseren van beoordelen en betrekt bestaande maatregelen?",
+      [
+        "Noteer taak, blootstelling, hulpmiddel en feitelijk gebruik; onderzoek met medewerkers waarom het ongebruikt blijft en beoordeel daarna risico en werking.",
+        "Stel direct vast dat medewerkers onwillig zijn en laat een verdere beoordeling achterwege.",
+        "Verwijder het onderwerp uit de RI&E omdat er al een technische maatregel is.",
+        "Beoordeel uitsluitend de aanwezigheid van een handleiding; gebruik in de praktijk is niet relevant."
+      ],
+      [
+        0
+      ],
+      "Inventariseren beschrijft de situatie en bestaande maatregelen. Beoordelen vraagt vervolgens of de feitelijke blootstelling voldoende wordt beheerst; aanwezigheid alleen is geen bewijs.",
+      [
+        "H3-LO07",
+        "H3-LO08"
+      ]
+    ],
+    [
+      14,
+      "Twee machines kunnen even ernstig letsel veroorzaken. Eén persoon komt maandelijks kort bij machine 1; acht personen werken dagelijks uren bij machine 2. Welke beoordeling is verantwoord?",
+      [
+        "Alleen de maximale ernst bepaalt de score; blootstelling maakt geen verschil.",
+        "Machine 1 heeft altijd prioriteit omdat daar minder mensen werken.",
+        "Machine 2 is zonder nader onderzoek automatisch onaanvaardbaar.",
+        "Weeg mogelijke gevolgen, kans op een gebeurtenis, aantal blootgestelden, blootstellingsduur en frequentie, samen met de feitelijke beheersing."
+      ],
+      [
+        3
+      ],
+      "Risico vraagt een samenhangende beoordeling van kans, gevolgen en blootstelling. Het voorbeeld levert zonder aanvullende gegevens geen automatische vaste score op.",
+      [
+        "H4-LO02",
+        "H4-LO03",
+        "H4-LO04",
+        "H4-LO05",
+        "H4-LO06"
+      ]
+    ],
+    [
+      16,
+      "Een risicomatrix geeft dezelfde middenscore voor twee taken, maar bij één taak zijn stofconcentraties en ventilatiewerking onbekend. Wat kunt u uit de score afleiden?",
+      [
+        "De score bewijst dat beide taken even veilig zijn.",
+        "Elke onbekende waarde betekent automatisch het hoogst mogelijke risico.",
+        "Een middenscore vervangt nader onderzoek naar blootstelling.",
+        "De matrix ondersteunt ordening, maar compenseert ontbrekende gegevens niet; maak onzekerheid zichtbaar en verzamel relevante informatie voor de beoordeling."
+      ],
+      [
+        3
+      ],
+      "Een score is een hulpmiddel en geen meting of zekerheid. Eerst gegevens inventariseren en de beperkingen benoemen, daarna onderbouwd beoordelen.",
+      [
+        "H4-LO01",
+        "H4-LO09",
+        "H4-LO10"
+      ]
+    ],
+    [
+      17,
+      "Een vaste afscherming beheerst knelgevaar tijdens normaal gebruik; bij onderhoud kan zij worden verwijderd. Welke beoordeling is juist?",
+      [
+        "De afscherming maakt het mogelijke letsel minder ernstig, ongeacht gebruik.",
+        "Beoordeel de werking per taak en het resterende risico na de maatregel, ook wanneer de afscherming bij onderhoud ontbreekt.",
+        "Een maatregel betekent dat het gevaar uit de RI&E mag worden geschrapt.",
+        "Wacht met beoordelen tot er ondanks de afscherming een incident ontstaat."
+      ],
+      [
+        1
+      ],
+      "Restrisico is het risico dat resteert na maatregelen. De feitelijke werking en omstandigheden per taak tellen mee, niet alleen de aanwezigheid van de afscherming.",
+      [
+        "H4-LO07",
+        "H4-LO08"
+      ]
+    ],
+    [
+      20,
+      "Een bedrijf wil een vluchtig reinigingsmiddel vervangen door een minder vluchtig middel dat huidirritatie kan veroorzaken. Wat past bij bronaanpak?",
+      [
+        "Beperk de wijziging tot nieuwe instructies over het oude middel.",
+        "Onderzoek of vervanging het oorspronkelijke gevaar vermindert én welke nieuwe risico’s en aanvullende maatregelen het alternatief vraagt.",
+        "Kies het goedkoopste middel; een vervangend product is per definitie veiliger.",
+        "Voer direct alleen persoonlijke bescherming in zonder alternatieven te beoordelen."
+      ],
+      [
+        1
+      ],
+      "Substitutie kan een bronmaatregel zijn, maar een alternatief kan nieuwe gevaren introduceren. Beoordeel geschiktheid en de totale risicosituatie.",
+      [
+        "H5-LO02",
+        "H5-LO09"
+      ]
+    ],
+    [
+      24,
+      "Op een laadperron blijft aanrijdgevaar bestaan. Welke indelingen van mogelijke, samen te beoordelen maatregelen zijn juist?",
+      [
+        "Een fysieke afscheiding beschermt meerdere personen en is een technische/collectieve maatregel.",
+        "Verkeersafspraken en een planning die gelijktijdige bewegingen beperkt zijn organisatorische maatregelen.",
+        "Passende individuele instructie kan nodig zijn naast fysieke en organisatorische maatregelen.",
+        "Met instructie vervalt de noodzaak om bronaanpak of fysieke scheiding te onderzoeken.",
+        "Eén maatregel is altijd genoeg zodra zij in een procedure staat."
+      ],
+      [
+        0,
+        1,
+        2
+      ],
+      "Verschillende niveaus kunnen elkaar aanvullen. De hiërarchie en het concrete risico blijven leidend; instructie is geen automatische vervanging voor structurele beheersing.",
+      [
+        "H5-LO03",
+        "H5-LO04",
+        "H5-LO08"
+      ]
+    ],
+    [
+      25,
+      "De RI&E leidt tot een Plan van Aanpak. Welke uitspraken onderscheiden de wettelijke kern van praktische borging?",
+      [
+        "Het plan beschrijft te nemen maatregelen in verband met vastgestelde risico’s en hun samenhang, met termijnen voor uitvoering.",
+        "Een gekozen maatregel hoort terug te voeren te zijn op een beoordeeld risico.",
+        "Een actiehouder en voortgangsstatus helpen de uitvoering organiseren; deze hulpmiddelen vervangen maatregelen en termijnen niet.",
+        "Een volledig ingevulde statuskolom maakt een inhoudelijke risicobeoordeling overbodig.",
+        "Iedere organisatie moet wettelijk exact dezelfde kleurcodering voor voortgang gebruiken."
+      ],
+      [
+        0,
+        1,
+        2
+      ],
+      "Artikel 5 Arbowet verbindt maatregelen en termijnen aan de RI&E. Een actiehouder of status is praktische borging; een specifiek werkformat is daarmee niet automatisch een wettelijke verplichting.",
+      [
+        "H5-LO12",
+        "H6-LO01",
+        "H6-LO03"
+      ],
+      true
+    ],
+    [
+      28,
+      "Een urgent risico krijgt een actiehouder en een uitvoeringsdatum. Welke afspraken maken opvolging controleerbaar?",
+      [
+        "Prioriteit drukt urgentie uit; de uitvoeringstermijn zegt wanneer een actie moet zijn uitgevoerd.",
+        "Een actiehouder neemt door toewijzing automatisch de wettelijke werkgeversverantwoordelijkheid over.",
+        "Leg eigenaar, datum en voortgang vast; controleer uitvoering én effect voordat de actie als afgerond wordt beschouwd.",
+        "Een hoge prioriteit mag zonder datum en opvolging in het plan blijven staan.",
+        "Bij vertraging moet de verantwoordelijke de aanpak en noodzakelijke tussentijdse beheersing beoordelen."
+      ],
+      [
+        0,
+        2,
+        4
+      ],
+      "Actie-eigenaarschap organiseert uitvoering zonder werkgeversverantwoordelijkheid over te dragen. Urgentie en datum zijn verschillende begrippen; status vraagt toetsbaar bewijs.",
+      [
+        "H6-LO04",
+        "H6-LO05",
+        "H6-LO06",
+        "H6-LO09"
+      ]
+    ],
+    [
+      30,
+      "Een organisatie heeft een RI&E opgesteld en kent geen toepasselijke toetsingsuitzondering. Wat is de juiste vervolgstap?",
+      [
+        "Alleen controleren of alle vakjes en handtekeningen zijn ingevuld.",
+        "De Arbeidsinspectie vragen om iedere RI&E vooraf goed te keuren.",
+        "De toepasselijke deskundige toetsing organiseren: opstellen legt risico’s en aanpak vast; toetsen beoordeelt de kwaliteit en geeft advies.",
+        "De werkgeversverantwoordelijkheid overdragen aan degene die de toets uitvoert."
+      ],
+      [
+        2
+      ],
+      "Opstellen en deskundig toetsen hebben verschillende functies. Beoordeel eerst de toepasselijkheid van de toetsingsplicht en eventuele uitzondering; uitbesteden is zelf geen vrijstelling.",
+      [
+        "H7-LO01",
+        "H7-LO10"
+      ],
+      true
+    ],
+    [
+      31,
+      "Welke uitspraken over RI&E-toetsingsuitzonderingen zijn juist? Maak onderscheid tussen toetsing en overige arboplichten.",
+      [
+        "Bij maximaal 25 werknemers geeft het aantal alleen nog geen vrijstelling; controleer ook het toepasselijke erkende instrument en de voorwaarden.",
+        "Bij betaald personeel gaat de 40-urengrens over de gezamenlijke arbeidsduur per week, niet 40 uur per werknemer.",
+        "Uitsluitend vrijwilligers en betaald personeel zijn verschillende situaties; risicospecifieke verplichtingen kunnen ook voor vrijwilligers blijven gelden.",
+        "Iedere organisatie met vrijwilligers is vrijgesteld van alle arboregels.",
+        "Een uitbestede RI&E hoeft nooit te worden getoetst, ongeacht omvang of instrument."
+      ],
+      [
+        0,
+        1,
+        2
+      ],
+      "De uitzonderingen moeten afzonderlijk worden onderzocht. Verwar een uitzondering op deskundige toetsing niet met het ontbreken van risico’s of alle overige verplichtingen. Bij onbekende omstandigheden is nader onderzoek nodig.",
+      [
+        "H7-LO02",
+        "H7-LO03",
+        "H7-LO06"
+      ],
+      true
+    ],
+    [
+      32,
+      "Een bedrijf met 21 werknemers gebruikt een branchechecklist, maar heeft ook een afwijkend productieproces. Welke aanpak past?",
+      [
+        "Controleer erkenning, versie/geldigheid en toepasselijkheid van het instrument en neem alle bedrijfsspecifieke risico’s mee; onderzoek daarna of een toetsingsuitzondering geldt.",
+        "Elke checklist met een branchelogo stelt automatisch vrij van toetsing.",
+        "Laat afwijkende processen weg, omdat ze niet in de standaardvragen staan.",
+        "Een erkend instrument maakt beoordeling van de eigen werkzaamheden overbodig."
+      ],
+      [
+        0
+      ],
+      "Het gebruik van een passend instrument vervangt de bedrijfsspecifieke inventarisatie niet. Aantal werknemers, geldigheid en overige voorwaarden moeten worden vastgesteld.",
+      [
+        "H7-LO04",
+        "H7-LO05"
+      ],
+      true
+    ],
+    [
+      33,
+      "Een bedrijf organiseert deskundige toetsing. Welke uitspraken over deskundigheid en scope zijn juist?",
+      [
+        "Een systeemtoets kijkt naar algemene kwaliteit en samenhang; een scopetoets beoordeelt risico’s binnen de relevante deskundigheid.",
+        "Hogere veiligheidskunde, arbeidshygiëne, arbeids- en organisatiekunde en bedrijfsgeneeskunde zijn onderscheiden kerndeskundigheden.",
+        "Een BIG-registratie van een bedrijfsarts is hetzelfde als een certificaat arbeidshygiëne.",
+        "Controleer voor de gekozen deskundige het toepasselijke certificaat of de registratie én aansluiting op de te beoordelen risico’s.",
+        "Een gecertificeerde deskundige kan daardoor zonder beperkingen ieder specialistisch risico toetsen."
+      ],
+      [
+        0,
+        1,
+        3
+      ],
+      "Certificering, medische registratie en inhoudelijke deskundigheid mogen niet worden gelijkgesteld. De concrete toetsopdracht vraagt passende scope en zo nodig samenwerking; de geldende regels vereisen menselijke review.",
+      [
+        "H2-LO07",
+        "H7-LO07",
+        "H7-LO08",
+        "H7-LO09",
+        "H7-LO11",
+        "H10-LO08"
+      ],
+      true
+    ],
+    [
+      35,
+      "Een organisatie plant jaarlijks een RI&E-review en gebruikt Management of Change bij wijzigingen. Welke uitspraken zijn juist?",
+      [
+        "De jaarlijkse afspraak geeft de RI&E automatisch een wettelijke geldigheidsduur van één jaar.",
+        "Er is geen algemene vaste vervaldatum; ook na toetsing kunnen veranderingen tussentijdse actualisatie vragen.",
+        "Een periodieke review vervangt onderzoek na een relevant incident of wijziging.",
+        "Management of Change is een methodische manier om wijzigingsgevolgen te beoordelen, geen universeel voorgeschreven RI&E-formulier.",
+        "Wachten op de reviewdatum is steeds voldoende, ook bij nieuwe ernstige risico’s."
+      ],
+      [
+        1,
+        3
+      ],
+      "Een geplande review helpt organiseren, maar relevante ontwikkelingen vragen tijdige beoordeling. Management of Change is hier een praktische methode, geen algemene zelfstandige wettelijke procedure.",
+      [
+        "H7-LO14",
+        "H8-LO01",
+        "H8-LO08",
+        "H8-LO09"
+      ],
+      true
+    ],
+    [
+      38,
+      "Na toetsing van de RI&E veranderen ploegendienst en stoffen; werknemers melden bijna-ongevallen. Welke vervolgstappen zijn passend?",
+      [
+        "Gebruik meldingen, bijna-ongevallen en werknemerservaringen om te bepalen welke risico’s opnieuw moeten worden beoordeeld.",
+        "Neem nieuwe kennis mee en pas de betrokken RI&E-onderdelen en maatregelen waar nodig aan.",
+        "Een eerdere toets betekent dat actualisatie tot de vaste vervaldatum kan wachten.",
+        "Werk iedere paragraaf zonder onderzoek opnieuw uit, ook als er geen verband met de wijziging is.",
+        "Een bijna-ongeval zonder letsel is geen bruikbare informatie."
+      ],
+      [
+        0,
+        1
+      ],
+      "Toetsing geeft geen blijvende garantie. Nieuwe signalen, ervaringen en kennis helpen de impact afbakenen; gerichte actualisatie kan nodig zijn zonder automatisch alles opnieuw te doen.",
+      [
+        "H7-LO14",
+        "H8-LO03",
+        "H8-LO04",
+        "H8-LO05"
+      ]
+    ],
+    [
+      39,
+      "Tijdelijke medewerkers gaan in verkeerszones werken. Welke informatie- en instructieaanpak is passend?",
+      [
+        "Vertrouw uitsluitend op algemene instructie door het uitzendbureau.",
+        "Geef pas instructie nadat zij een maand hebben gewerkt.",
+        "Geef vóór aanvang en bij relevante veranderingen begrijpelijke, taakgerichte uitleg en middelen; controleer of de instructie wordt begrepen en in de praktijk werkt.",
+        "Laat hen eerst zonder uitleg meedraaien en onderzoek alleen na een ongeval wat ontbrak."
+      ],
+      [
+        2
+      ],
+      "Passende voorlichting sluit aan op taken, risico’s en begrip van de medewerkers. Beschikbare middelen, begeleiding waar nodig en controle van toepassing maken deel uit van de aanpak.",
+      [
+        "H9-LO04"
+      ],
+      true
+    ],
+    [
+      40,
+      "Bij toezicht slaan meerdere medewerkers dezelfde veiligheidsstap over. Wat is een passende reactie?",
+      [
+        "Beperk de aanpak tot individuele waarschuwingen; de werkorganisatie speelt geen rol.",
+        "Schrap de stap omdat de meeste medewerkers deze overslaan.",
+        "Beheers direct gevaar, onderzoek met medewerkers de oorzaken en uitvoerbaarheid, verbeter de werkwijze en koppel terug wat verandert.",
+        "Wacht af tot letsel ontstaat, zodat zeker is dat de afwijking een risico vormt."
+      ],
+      [
+        2
+      ],
+      "Toezicht helpt naleving én leren. Praktijkervaring, achterliggende omstandigheden, uitvoerbaarheid en terugkoppeling zijn nodig voor een gerichte verbetering.",
+      [
+        "H8-LO07",
+        "H9-LO02",
+        "H9-LO07",
+        "H9-LO08",
+        "H9-LO10"
+      ]
+    ],
+    [
+      43,
+      "In het RI&E-dossier staat dat vaste looproutes het verkeer beheersen. Tijdens een rondgang na uitbreiding van de avondploeg ziet u nieuwe kruisingen; medewerkers melden bijna-aanrijdingen. Welke aanpak past?",
+      [
+        "Vergelijk dossier, feitelijke inrichting, taken en meldingen om veranderingen en ontbrekende informatie vast te stellen.",
+        "Beoordeel de gewijzigde verkeerssituatie en eventuele bredere gevolgen; actualiseer betrokken onderdelen zonder automatisch de gehele RI&E te vervangen.",
+        "De aanwezigheid van een ondertekend dossier bewijst dat het werk voldoende veilig is.",
+        "Een vrije nooduitgang bewijst dat ook het interne verkeer veilig is.",
+        "Nieuwe risico’s hoeven pas in het dossier als er daadwerkelijk letsel is."
+      ],
+      [
+        0,
+        1
+      ],
+      "Een document en rondgang vullen elkaar aan. Verschillen vragen gerichte impactbeoordeling en opvolging; niet iedere verandering maakt de gehele RI&E ongeldig.",
+      [
+        "H10-LO01",
+        "H10-LO02"
+      ]
+    ],
+    [
+      44,
+      "Bij een nieuw proces ontstaan irritatieklachten en is blootstelling onbekend. Welke combinatie van onderzoek en maatregelen is verantwoord?",
+      [
+        "Laat het proces ongewijzigd doorgaan tot een medisch oorzakelijk verband bewezen is.",
+        "Verzamel gericht gegevens en passende deskundigheid; bepaal tegelijk noodzakelijke tijdelijke beheersing en kies na beoordeling definitieve maatregelen met effectcontrole.",
+        "Voer permanente PBM in en beschouw nader onderzoek daarna als overbodig.",
+        "Registreer onzekerheid als bewijs dat er geen arbeidsrisico is."
+      ],
+      [
+        1
+      ],
+      "Onzekerheid vraagt onderzoek én passende tijdelijke bescherming. Tijdelijke maatregelen zijn geen bewijs dat een definitieve oplossing is gerealiseerd; de reactie moet passen bij het mogelijke gevaar.",
+      [
+        "H6-LO08",
+        "H10-LO03",
+        "H10-LO06"
+      ]
+    ],
+    [
+      50,
+      "Een organisatie plant verkeersmaatregelen, voert ze uit, ontdekt via bijna-aanrijdingen tekortkomingen en stelt de aanpak bij. Welke conclusie past bij PDCA en de RI&E-cyclus?",
+      [
+        "Dit is plannen, uitvoeren, controleren en bijsturen: een praktisch verbeterhulpmiddel; verwerk relevante bevindingen ook in RI&E en Plan van Aanpak en controleer opnieuw het effect.",
+        "PDCA is een wettelijke vervaldatum waardoor de RI&E jaarlijks ongeldig wordt.",
+        "Na uitvoering zijn controle en bijsturing niet meer nodig.",
+        "Bijna-ongevallen tellen pas mee wanneer letsel is vastgesteld."
+      ],
+      [
+        0
+      ],
+      "PDCA helpt een doorlopende verbetercyclus organiseren. De methode vervangt de inhoudelijke wettelijke eisen niet en maakt signalen zonder letsel niet irrelevant.",
+      [
+        "H8-LO10",
+        "H9-LO12",
+        "H10-LO11"
+      ]
+    ]
+  ]
+}
