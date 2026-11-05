@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
+import { measure } from '@/lib/marketing/measurement'
+vi.mock('@/lib/marketing/measurement', () => ({ measure: vi.fn() }))
 import { ContactForm } from './contact-form'
-afterEach(() => { cleanup(); vi.unstubAllGlobals() })
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.mocked(measure).mockClear() })
 it('weigert verzending wanneer uitgeschakeld en koppelt fouten aan velden', () => {
   const fetcher = vi.fn(); vi.stubGlobal('fetch', fetcher)
   const view = render(<ContactForm enabled={false} />)
@@ -10,6 +12,7 @@ it('weigert verzending wanneer uitgeschakeld en koppelt fouten aan velden', () =
   view.rerender(<ContactForm enabled />)
   fireEvent.submit(screen.getByRole('button').closest('form')!)
   expect(fetcher).not.toHaveBeenCalled()
+  expect(measure).not.toHaveBeenCalled()
   expect(document.activeElement).toBe(screen.getByLabelText('Naam'))
   expect(screen.getByLabelText('E-mailadres').getAttribute('aria-invalid')).toBe('true')
   expect(screen.getByLabelText('Onderwerp').getAttribute('aria-invalid')).toBe('true')
@@ -34,6 +37,7 @@ it('blokkeert dubbel submit, bewaart invoer na failure en houdt retry idempotent
   await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(2))
   resolve({ ok: false, json: async () => ({ ok: false, message: 'Tijdelijk niet beschikbaar.' }) })
   await waitFor(() => expect((screen.getByRole('button') as HTMLButtonElement).disabled).toBe(false))
+  expect(measure).not.toHaveBeenCalled()
   expect(screen.getByRole('alert').textContent).toBe('Tijdelijk niet beschikbaar.')
   expect((screen.getByLabelText('Bericht') as HTMLTextAreaElement).value).toContain('synthetische')
   fetcher.mockResolvedValue({ ok: true, json: async () => ({ ok: true, message: 'Aangeboden aan de maildienst.' }) })
@@ -62,4 +66,14 @@ it('ververst een verlopen inzending niet automatisch en behoudt de ingevoerde te
   expect(fetcher.mock.calls.filter(([url]) => url === '/api/contact/request')).toHaveLength(1)
   expect((screen.getByLabelText('Bericht') as HTMLTextAreaElement).value).toContain('synthetische')
   expect(JSON.parse(fetcher.mock.calls[2][1].body).requestId).toBe(token)
+})
+
+it('never counts a honeypot response as a contact conversion', async () => {
+  const token = `v1.${Date.now().toString(36)}.00000000-0000-4000-8000-000000000000.${'a'.repeat(43)}`
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce({ ok: true, json: async () => ({ requestId: token }) }).mockResolvedValue({ ok: true, json: async () => ({ ok: true, message: 'Ontvangen' }) }))
+  render(<ContactForm enabled />)
+  for (const [label, value] of [['Naam', 'Test'], ['E-mailadres', 'seo@example.invalid'], ['Bericht', 'Synthetisch bericht voor acceptatie.'], ['Onderwerp', 'GENERAL'], ['Website', 'bot']]) fireEvent.change(screen.getByLabelText(label), { target: { value } })
+  fireEvent.submit(screen.getByRole('button').closest('form')!)
+  await waitFor(() => expect(screen.getByText('Ontvangen')).toBeTruthy())
+  expect(measure).not.toHaveBeenCalled()
 })

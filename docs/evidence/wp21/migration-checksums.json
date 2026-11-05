@@ -1,0 +1,572 @@
+{
+  "mainCount": 95,
+  "candidateCount": 113,
+  "historicalUnchanged": true,
+  "migrations": [
+    {
+      "name": "20260712132604_init",
+      "sha256": "0f7a663f1c4c57586885b6e813d9871edfc8506429465b4b35ead7ac7e7f106d",
+      "origin": "main"
+    },
+    {
+      "name": "20260712165804_add_authentication",
+      "sha256": "2879a52584b446e2a23ad41394b86ace1d9f1530cdf6dc58d2fc5ffcb78364e5",
+      "origin": "main"
+    },
+    {
+      "name": "20260713103000_add_organization_logo",
+      "sha256": "7fc6111055c4460b5f6ce09717c236db3e49f85c23509f20dc505a8ac4cfce8f",
+      "origin": "main"
+    },
+    {
+      "name": "20260713190000_add_intake_foundation",
+      "sha256": "201271dd5a485ded0a3b5915508838cc3e93bd1f98d8763d117ab2f7d28ff952",
+      "origin": "main"
+    },
+    {
+      "name": "20260713230000_add_assignment_conversion",
+      "sha256": "21737a9a31cfd43882ab4b9daefe0393389fda6655a57f97626513dbd1e8821d",
+      "origin": "main"
+    },
+    {
+      "name": "20260714120000_add_assignment_publication",
+      "sha256": "0f498a6efddfafaec18557a79822a6cff6b8938fa118d582989c7c2a00ecfc29",
+      "origin": "main"
+    },
+    {
+      "name": "20260714183000_add_provider_qualification_foundation",
+      "sha256": "3f2858eb55647a6d121227cd85a8ba7934c3b92a28f6ce41407431970281077d",
+      "origin": "main"
+    },
+    {
+      "name": "20260714184032_add_provider_insurance_requirements",
+      "sha256": "779877a15a91b8044d2554bf1acb7de465449e40caf9af2cec9311ae35723280",
+      "origin": "main"
+    },
+    {
+      "name": "20260714184549_add_provider_evidence_scan_decisions",
+      "sha256": "a6a3c9b0f0f88cd11bc200f210a0fa347afdb20b3e00def8eec4b8310809f2aa",
+      "origin": "main"
+    },
+    {
+      "name": "20260714184950_add_provider_block_four_eyes",
+      "sha256": "32fb8c8354aeb8b57b30a4be3288a0d7ffeef7279442849d1d84f7291d354dd1",
+      "origin": "main"
+    },
+    {
+      "name": "20260714210500_harden_provider_qualification_immutability",
+      "sha256": "8a2be547194950ad75e4cef05b716be449b7e0c9c1718b07cc3c8b936e4d7749",
+      "origin": "main"
+    },
+    {
+      "name": "20260715120000_add_provider_dossier_workflow_foundation",
+      "sha256": "fc60aaf52f801db3530f954d5a84aef6db7249d51a4bc921bd8856e6e0fa8968",
+      "origin": "main"
+    },
+    {
+      "name": "20260715121000_harden_provider_dossier_workflow",
+      "sha256": "01838036f32eca58ae78bdab0f41923d282543c99bf8da43f6c1621cafbec915",
+      "origin": "main"
+    },
+    {
+      "name": "20260715170000_complete_provider_dossier_resubmission_binding",
+      "sha256": "c802df8dd217dcfdb81366017d4a1635cae09bbc98b0891a4bcce2ac9d406070",
+      "origin": "main"
+    },
+    {
+      "name": "20260716120000_simplify_provider_qualification_input",
+      "sha256": "f7e7da945311606c6a03fd3d91a2c28afa871e9176650084582dd217ad622a0b",
+      "origin": "main"
+    },
+    {
+      "name": "20260717150000_add_adr013_expand_foundation",
+      "sha256": "cf5216db92cf75df1c010315e55313b58b45ff89579bd3cde967c8b9e61eca85",
+      "origin": "main"
+    },
+    {
+      "name": "20260717190000_add_platform_provisioning_events",
+      "sha256": "8f94f21ecf83d054b4d14a3421d5153040d40d67506e109393a97a0087bb400b",
+      "origin": "main"
+    },
+    {
+      "name": "20260720150000_add_marketplace_transaction_platform",
+      "sha256": "acab6c063e08f95f034b2f2e0c3407d84d3c11bb2e8a885e6dac38130286e7ba",
+      "origin": "main"
+    },
+    {
+      "name": "20260720173000_make_marketplace_audit_correlation_unique",
+      "sha256": "b9c1ef6b45cd3cab8b076c65bb910bafef1c1a520e706d92b7719fe09d73bbdc",
+      "origin": "main"
+    },
+    {
+      "name": "20260724150000_enforce_single_organization_membership",
+      "sha256": "f1b6b822de06b75ba03d0cfe620d33b729ad06fbf2baa43a55d6d643798ae0af",
+      "origin": "main"
+    },
+    {
+      "name": "20260726150000_add_public_intake_draft_foundation",
+      "sha256": "66c962c6b73182c8430448b0a1fa67b3d0334057fe939a5bec7f502be61bd4e0",
+      "origin": "main"
+    },
+    {
+      "name": "20260726190000_add_public_intake_user_abandonment",
+      "sha256": "c9aa327115f2ff0bb050fbcbf3d171fa822afbdf2b0b5ecfdb1d117812cba15d",
+      "origin": "main"
+    },
+    {
+      "name": "20260729100000_add_public_intake_ai_classification_cache",
+      "sha256": "29b5c5b84a21c7c900f8ccb1527d3c4e96420b86f5ec5f2ddf9c4133571c9303",
+      "origin": "main"
+    },
+    {
+      "name": "20260729143000_add_public_intake_answer_source",
+      "sha256": "0f2f4f8fd47442f0fa498a37375a0b54c3534ed0cb478b6c105559716976a6cb",
+      "origin": "main"
+    },
+    {
+      "name": "20260729180000_add_advice_dossiers",
+      "sha256": "ed83b12f7b53b86919e18dbb4317b90d325e2eeed7c7a475888ca5fbc71c736c",
+      "origin": "main"
+    },
+    {
+      "name": "20260730090000_add_published_requests",
+      "sha256": "768f91483e61251235479f08c464ab2379c71a19fc0b1527f01aa13120118f82",
+      "origin": "main"
+    },
+    {
+      "name": "20260730120000_add_request_interest_foundation",
+      "sha256": "dbdf137562a9e0d3ad9f9bfd1d39264d0b950c9c9dbba95a84b0bf28cc71ac6c",
+      "origin": "main"
+    },
+    {
+      "name": "20260730150000_add_request_offer_slots",
+      "sha256": "69634131b24f611419a4a7765bff4928e1052296b693bdd458e0b949b3494be4",
+      "origin": "main"
+    },
+    {
+      "name": "20260730170000_add_professional_discipline_taxonomy",
+      "sha256": "9518f0e91a33ad01f044b2932eb2495877861eed24d603f4259d09e0532a36ba",
+      "origin": "main"
+    },
+    {
+      "name": "20260731100000_add_test_session_impersonation",
+      "sha256": "b5593e9ddf6e5ca4bb0e7213ce8e1c850718b40a3976c22c39a500901d6dce88",
+      "origin": "main"
+    },
+    {
+      "name": "20260801100000_add_assignment_location_snapshots",
+      "sha256": "3c8f388834811f744f58836c4c18b1ec8f8479f420d8bfa3042557b363a32a25",
+      "origin": "main"
+    },
+    {
+      "name": "20260801101000_validate_assignment_location_snapshots",
+      "sha256": "488349ecda4b0df689a3be4b48be63e285963972392a213ce444554ade3e3fa4",
+      "origin": "main"
+    },
+    {
+      "name": "20260801102000_add_assignment_location_items",
+      "sha256": "57fa739e9a1302e3c14232874949864b0590e830904c8a5c8e2c03f79af1cde4",
+      "origin": "main"
+    },
+    {
+      "name": "20260801110000_add_marketplace_rules_credit_reliability",
+      "sha256": "08d1625528b95df2b3612e20191cd8425b90ee955c1466a1f7efd55cdd39f305",
+      "origin": "main"
+    },
+    {
+      "name": "20260802100000_add_knowledge_engine_foundation",
+      "sha256": "0aa38770f39642e112557af3b30bc6b3f20da845c33b5cae49cec804928194e4",
+      "origin": "main"
+    },
+    {
+      "name": "20260802110000_add_knowledge_context_provenance",
+      "sha256": "d9a734e483828350c5a1c2b18208741817e5689fedbcafe8e753f00c884b061b",
+      "origin": "main"
+    },
+    {
+      "name": "20260802120000_add_knowledge_review_workflow",
+      "sha256": "b6d3ef57473131e697e7fd908de05728b168f685fc17edb306d0e6b312e42269",
+      "origin": "main"
+    },
+    {
+      "name": "20260802121000_validate_knowledge_review_workflow",
+      "sha256": "2f1bc0c6648c2bcf090fcf117f63e8270db91950764e9a660234ad636bb6eea8",
+      "origin": "main"
+    },
+    {
+      "name": "20260802130000_add_provider_profile_expertise_basis",
+      "sha256": "ae25520cc8b3ef9f8e9e063e9bf4c25ee26f3e88b0811a6b2a8f2156de2f6709",
+      "origin": "main"
+    },
+    {
+      "name": "20260802140000_expand_provider_service_taxonomy",
+      "sha256": "a7286142beaee5e8941e40e9c9be5e3c8cb183a536645da7acb98442f9cb7afc",
+      "origin": "main"
+    },
+    {
+      "name": "20260802150000_add_knowledge_control_workflow",
+      "sha256": "ed02171285f9d38d8e51c4f25cf9d3400d67c72b040c0a09bc1a551306a08484",
+      "origin": "main"
+    },
+    {
+      "name": "20260803100000_exception_driven_knowledge_control",
+      "sha256": "e094c5adac8f73f29caea3363f754bff7159025a9221bb1cc3433cd9f38e495d",
+      "origin": "main"
+    },
+    {
+      "name": "20260805100000_add_user_account_types",
+      "sha256": "77e785b490b00d704b818c26d4769171afe864ca0ed5292b98ab69be548f2b6e",
+      "origin": "main"
+    },
+    {
+      "name": "20260805110000_add_professional_credit_wallet_ledger",
+      "sha256": "5285714dd43286b2cc7089e8c41c1512373514424ca652a170bc2806271c5a07",
+      "origin": "main"
+    },
+    {
+      "name": "20260805111000_protect_credit_wallet_projections",
+      "sha256": "7c619cbd08a40aaaa32044570b7e7b8da85ad59e8ef983e9e7821127e55dfc4d",
+      "origin": "main"
+    },
+    {
+      "name": "20260805112000_derive_credit_wallet_spent_projection",
+      "sha256": "ffd72a9336f8a935454bf31eafc19cc82382062bcaf0f3ed055f09f4e68d4e19",
+      "origin": "main"
+    },
+    {
+      "name": "20260808100000_add_generic_knowledge_source_metadata",
+      "sha256": "4c7e6beb30aa78330eaaa5721e0f71eac5d72ae9f75a75f01447b41431815444",
+      "origin": "main"
+    },
+    {
+      "name": "20260808110000_add_structured_knowledge_sector_links",
+      "sha256": "4a61543ae55d41a0e8c15708ba95f0af1b7c10a94e7a40438971c95d6869c138",
+      "origin": "main"
+    },
+    {
+      "name": "20260808120000_add_knowledge_import_corrections",
+      "sha256": "5a664b0521ab89e7cb87a43dc74abad3b42a09af53d3ee85f399dd327f42edbe",
+      "origin": "main"
+    },
+    {
+      "name": "20260808121000_harden_knowledge_import_corrections",
+      "sha256": "ca858254468347838f3813468eed3a4461c8e2cc245fca12a97cc03c16ecdd7a",
+      "origin": "main"
+    },
+    {
+      "name": "20260809100000_add_financial_chain_f3_f9",
+      "sha256": "0db6609f2f11fa03a7e80adcae74f39306740bead0e903fddee054541381d476",
+      "origin": "main"
+    },
+    {
+      "name": "20260809110000_add_pro_cancellation_at_period_end",
+      "sha256": "72dba62c02babde46aba51eab21510d0ea459a408990147862ea298f8a8fdb47",
+      "origin": "main"
+    },
+    {
+      "name": "20260809120000_harden_financial_refund_lifecycle",
+      "sha256": "eb27ffb612617745a340565ad6f440efae5badf6f09218d0c441516a1313be08",
+      "origin": "main"
+    },
+    {
+      "name": "20260809130000_add_mollie_test_acceptance_pricing",
+      "sha256": "b63e0ff6fa07b5393101b04e1d069e2db1178a6c8ba0dfd7b7da6ef1e6188ed3",
+      "origin": "main"
+    },
+    {
+      "name": "20260809140000_add_pro_mollie_mandate_projection",
+      "sha256": "b600794d4295b26b7b5287204ed5f0c9561aea9001eaf1abc97b0444327dfb45",
+      "origin": "main"
+    },
+    {
+      "name": "20260810100000_add_pro_first_payment_attempts",
+      "sha256": "af07f5b0e464eb347e266591afd4f21e26c9ab38f66ec571a59f8da99e9c726f",
+      "origin": "main"
+    },
+    {
+      "name": "20260811100000_add_better_auth_two_factor_foundation",
+      "sha256": "d194f50b55a3a827c958b9dc265ad8a52c640e668d32e4c8a3a9c14dda551468",
+      "origin": "main"
+    },
+    {
+      "name": "20260812100000_add_admin_communication_archive",
+      "sha256": "1a67ce07afbc222527259f7ec1b326f62546b3ceb95d579a9d723c3c14fa5028",
+      "origin": "main"
+    },
+    {
+      "name": "20260813100000_add_two_factor_reset_notification_audit",
+      "sha256": "cec652caee05996804c4cdba736fb2f5fb00665c25d09f7fe71b83a462588052",
+      "origin": "main"
+    },
+    {
+      "name": "20260813110000_add_public_intake_ai_context_questions",
+      "sha256": "beb1e4bea30df14d1cf3530facb12a54b002c62d1d27ab38eb630a453f1c31bf",
+      "origin": "main"
+    },
+    {
+      "name": "20260813120000_add_advice_dossier_intake_handoff",
+      "sha256": "4a7c93c048d934c95a8fbf47f5af815f83f21ea394fd39b69f8c7a83f64d7dbf",
+      "origin": "main"
+    },
+    {
+      "name": "20260815100000_add_knowledge_full_source_foundation",
+      "sha256": "2194318b43195b085ea05ed2245552b06f4e8be96f51a69866e2b6a8e8432ad5",
+      "origin": "main"
+    },
+    {
+      "name": "20260815110000_add_knowledge_method_foundation",
+      "sha256": "4b1cfad1205529437bc13da4af83cec096298afb7f9131dd9e39afbf78db446d",
+      "origin": "main"
+    },
+    {
+      "name": "20260816100000_add_bhv_structured_component_evidence",
+      "sha256": "b75912a4fe28ad886c0bbf69922ec53c0e7feee26afd2931a8df0115e4484db0",
+      "origin": "main"
+    },
+    {
+      "name": "20260816110000_add_multi_source_knowledge_onboarding",
+      "sha256": "275efe125414d79c9ea0f77c2a5abb9084e1332836a69ceed376b71821392ece",
+      "origin": "main"
+    },
+    {
+      "name": "20260816120000_add_knowledge_document_families",
+      "sha256": "9986d8044772267861ecb3ded9242ebc3c23e911c9d1435b881f3a3ca66fb8c1",
+      "origin": "main"
+    },
+    {
+      "name": "20260817100000_add_knowledge_canonical_source_identity",
+      "sha256": "c2a77221a59b8988c32289d96bbf3bda9e891157fb2eeb48670fcb4672b0f51f",
+      "origin": "main"
+    },
+    {
+      "name": "20260818100000_add_knowledge_cross_validation_assessments",
+      "sha256": "55d4f3f06d503a545fb98ee2fc486bdafec770cfd48c162593b163af89f2ab5d",
+      "origin": "main"
+    },
+    {
+      "name": "20260819100000_add_public_ai_intake_abuse_protection",
+      "sha256": "56a73a73cd83600c128eb00079e33346b581e963fc14b033c8f52c396594871b",
+      "origin": "main"
+    },
+    {
+      "name": "20260820100000_add_arbo_guide_runs",
+      "sha256": "90e0024cec3c06baf89d5d9302021d67478c01399894ef18daaca00d172fd51c",
+      "origin": "main"
+    },
+    {
+      "name": "20260824100000_add_financial_invoice_snapshot_v2",
+      "sha256": "3d1bf229180733e0c1788a1a2291ac71ec7b8a76861d21abb4b32a8edfda26df",
+      "origin": "main"
+    },
+    {
+      "name": "20260825140000_operationalize_jortt_sync",
+      "sha256": "7e22e5e4a999469569c97b10101be0cb42594e0408860ca1188f486567471881",
+      "origin": "main"
+    },
+    {
+      "name": "20260825150000_scope_financial_invoice_vat_validation",
+      "sha256": "b0d318216cba5378bfd903fc97a945d4f696267ef4c7548249866a83da7c2491",
+      "origin": "main"
+    },
+    {
+      "name": "20260827100000_add_assignment_max_selections",
+      "sha256": "fd628649a94d1a9812abf535300cc85841439652402b85070aa10d42ba802a48",
+      "origin": "main"
+    },
+    {
+      "name": "20260901100000_harden_jortt_invoice_identity",
+      "sha256": "b274514689552ff76c36de296cad6e9c5672638f65040e995b2016f22d1aebf6",
+      "origin": "main"
+    },
+    {
+      "name": "20260903100000_add_financial_maintenance_runs",
+      "sha256": "786ab3b725962658c629aac39aa02b4437e846297e785cbff3e7ec7e7568e9a7",
+      "origin": "main"
+    },
+    {
+      "name": "20260906100000_support_v2_credit_notes",
+      "sha256": "d4661542df68e403d3f468868b78603760c64a3d9a9b2d07f10a068d3d0a58c1",
+      "origin": "main"
+    },
+    {
+      "name": "20260912090000_simple_advice_request",
+      "sha256": "1accb8cbb4dae5c91355514ae43baca4403d2eab0077e642894b8c8648ba757e",
+      "origin": "main"
+    },
+    {
+      "name": "20260915090000_request_assignment_handoff",
+      "sha256": "4edb0ed098366257d096bec90712ff77f09a65c672dd3d08c4efc30a0f387ce7",
+      "origin": "main"
+    },
+    {
+      "name": "20260915180000_unify_legacy_simple_advice",
+      "sha256": "0b4c8222b8e024a4306006d1b540e1dba53577bfaf4b295a67976f38c0384c0c",
+      "origin": "main"
+    },
+    {
+      "name": "20260920120000_assignment_notifications_pricing",
+      "sha256": "d6d027ef14f210f5d44b46c13e5bfc250663f18a2c47399502c54c3400fe8f0b",
+      "origin": "main"
+    },
+    {
+      "name": "20260924150000_add_learning_vertical_slice",
+      "sha256": "0075c93233775559c31a79d95a323f359e4c6441b084a92193eb26921e3a8087",
+      "origin": "main"
+    },
+    {
+      "name": "20260927210000_add_learning_final_exam",
+      "sha256": "e5d1e10286fecb8ef3058ddbc7dadf0913b0f0445eee88bc74472a1a97101bcb",
+      "origin": "main"
+    },
+    {
+      "name": "20260929100000_add_learning_certificates",
+      "sha256": "610ea577ab47d6d470ef091bcc20f92f6d05315e116ac90d61f6c30b3fc81ceb",
+      "origin": "main"
+    },
+    {
+      "name": "20260930100000_add_learning_retention",
+      "sha256": "793447bad9dd725ddd0cca65446507bc5486b13dc236825904b5c427adbbb4d9",
+      "origin": "main"
+    },
+    {
+      "name": "20260930120000_correct_learning_retention_publication_policy",
+      "sha256": "7c1d3c77bb932b553d5e48fe18b7aeb645ee83ed3b575194715feb6d1df86c14",
+      "origin": "main"
+    },
+    {
+      "name": "20261001113000_add_compliance_domain_versioning_foundation",
+      "sha256": "119c864839d38488b8886c9f1c62275d2ca5f0ed496418f81e2f776e908c923c",
+      "origin": "main"
+    },
+    {
+      "name": "20261001210000_add_compliance_actions",
+      "sha256": "5f93d33f49d8d008156e816a4d923599a24506c7bd936e17e427daabb2484682",
+      "origin": "main"
+    },
+    {
+      "name": "20261015180000_register_legacy_compliance_framework",
+      "sha256": "270ec2a67d8bb57701699a6c11270d70577f2a5466d98f9283c9a0cfc794d68e",
+      "origin": "main"
+    },
+    {
+      "name": "20261016100000_add_compliance_v2_result_contract",
+      "sha256": "e72f370eb8be67acda8ee28ee99826c339d31bc274ac1c23a7be9cb3274febd3",
+      "origin": "main"
+    },
+    {
+      "name": "20261017100000_add_compliance_question_visibility",
+      "sha256": "13fbf61d449e7b89fd9a8711171cd735955393717cdc02b86bc719c15bd5ae2a",
+      "origin": "main"
+    },
+    {
+      "name": "20261019100000_allow_annual_reminder_reconsent",
+      "sha256": "94292b4e36dd4333066edebd1b3fffeab77bf62c6d5adbf037ef5dfd58c976a5",
+      "origin": "main"
+    },
+    {
+      "name": "20261024190000_restore_exam_question_immutability",
+      "sha256": "5b5e77906d988ac05d51fcbf3e32b46876ee8d73d19d4055c59a9ddb4079079a",
+      "origin": "integration"
+    },
+    {
+      "name": "20261024191000_add_academy_course_isolation",
+      "sha256": "453246f26803fdc843d24577328bb17aeb11671acb1cba49a4fc3193e049e9c6",
+      "origin": "integration"
+    },
+    {
+      "name": "20261024204000_allow_academy_certificate_numbers",
+      "sha256": "0d49a7e052f5a58c8b08d589cffcf202c822fb4850d1eb78f958e838fbbad7fa",
+      "origin": "integration"
+    },
+    {
+      "name": "20261026090000_restore_learning_exam_question_immutability",
+      "sha256": "e0e6ef79d3da43f4113c600e01a2923dd49961fa692d7b0992dae5b9ba549240",
+      "origin": "main"
+    },
+    {
+      "name": "20261026100000_add_academy_commerce",
+      "sha256": "79e291bf88e4d52e4191c35c1c1fed4f45547332da0253637da6e6fcd3f8e11a",
+      "origin": "integration"
+    },
+    {
+      "name": "20261026110000_allow_academy_sandbox_pricing",
+      "sha256": "27332bbdcf0255266fd794f0672afb4002b51bebbcb0c761a250062ac1b3ff4e",
+      "origin": "integration"
+    },
+    {
+      "name": "20261029100000_add_academy_pricing_promotions",
+      "sha256": "feadd2dc9fca1ed899b8511106e4bb244e38151b45bb8ddcacc82588bda4bdcd",
+      "origin": "integration"
+    },
+    {
+      "name": "20261029210000_restore_integrated_learning_question_policy",
+      "sha256": "45c7d859478b63b3b3c9a6f0352e93f7783e901e18721304cd4f5d8e18b46abf",
+      "origin": "integration"
+    },
+    {
+      "name": "20261030120000_academy_legal_commercial_decisions",
+      "sha256": "96cae51a8254d76b208783d6bfe6917c5e12a2b502525cd8eb507875c863b876",
+      "origin": "integration"
+    },
+    {
+      "name": "20261030140000_academy_seat_transfer_consideration",
+      "sha256": "bf4550c4ed66efdd01b189799705f8249cd35b9e8c117eccb0d6c6e074adc60c",
+      "origin": "integration"
+    },
+    {
+      "name": "20261030160000_academy_legal_partial_refunds",
+      "sha256": "924dec6109968f39803b09dee35d5de307aa0f802bae3db2be7820cfd7677f34",
+      "origin": "integration"
+    },
+    {
+      "name": "20261030170000_academy_legal_credit_note_validation",
+      "sha256": "784ad1b1bc7f92afcc2f117ded65319a32983111fea4186627355459c4333cfa",
+      "origin": "integration"
+    },
+    {
+      "name": "20261030180000_academy_refund_seat_allocations",
+      "sha256": "a75e64e27976958f8282e4e495c27613e9e03406d9b3823d2605ad02d830b90f",
+      "origin": "integration"
+    },
+    {
+      "name": "20261102120000_add_closed_contact_audit_retention",
+      "sha256": "dc31ade269099d83f4dc70538cbe1c541305a8de65f1f09c567aed5ab10d50cb",
+      "origin": "main"
+    },
+    {
+      "name": "20261103100000_add_closed_contact_decision_register",
+      "sha256": "a58891fd9431756094420561415b4f9f3ae5c49585433669f89bc0608b737030",
+      "origin": "main"
+    },
+    {
+      "name": "20261104180000_add_learning_authoring_media",
+      "sha256": "21a9306e64a422f5b2331d7168fc425bc6ee9e84eddca2d25aaa552540d4bd23",
+      "origin": "integration"
+    },
+    {
+      "name": "20261104190000_allow_operator_certificate_review",
+      "sha256": "f95e41abde58a186dd036206da79f3f3a65e3ce8b0c2b949dc28c572c35eecfc",
+      "origin": "integration"
+    },
+    {
+      "name": "20261104220000_add_learning_certificate_designer",
+      "sha256": "82a74c26206c1c8c7e17d3bfdd00e66b2ba89ee240ea674f8a3b4a39fe7439c5",
+      "origin": "integration"
+    },
+    {
+      "name": "20261105120000_add_versioned_compliance_drafts",
+      "sha256": "211d2fc640bb26be304118c3271c4af33b8b9d4c60ad77418499e497590a97ec",
+      "origin": "integration"
+    },
+    {
+      "name": "20261105121000_add_compliance_purchase_kind",
+      "sha256": "23c435393ca059d29057b557b98732041ed6b46a1e2858fe6d178f993cea9532",
+      "origin": "integration"
+    },
+    {
+      "name": "20261105122000_bind_compliance_purchase",
+      "sha256": "33a15099e56041e0152976fff13df900aed19279daa056ec087dd1add155c95a",
+      "origin": "integration"
+    }
+  ]
+}

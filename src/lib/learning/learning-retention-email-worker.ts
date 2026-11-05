@@ -11,13 +11,14 @@ const MAX_ATTEMPTS = 5
 const LEASE_MS = 5 * 60_000
 const RETRY_MS = [60_000, 5 * 60_000, 15 * 60_000, 60 * 60_000]
 
-export function createLearningRetentionEmail(input: { to: string; firstName: string; type: 'WEEK' | 'ANNUAL'; destinationUrl: string; idempotencyKey: string }): AuthEmail {
+export function createLearningRetentionEmail(input: { to: string; firstName: string; type: 'WEEK' | 'ANNUAL'; destinationUrl: string; idempotencyKey: string; courseTitle?: string }): AuthEmail {
+  const courseTitle = input.courseTitle ?? 'RI&E in de praktijk'
   const annual = input.type === 'ANNUAL'
-  const subject = annual ? 'Een jaar geleden behaalde je RI&E in de praktijk' : 'Je wekelijkse RI&E-kennischeck staat klaar'
+  const subject = annual ? `Een jaar geleden behaalde je ${courseTitle}` : courseTitle === 'RI&E in de praktijk' ? 'Je wekelijkse RI&E-kennischeck staat klaar' : `Je wekelijkse kennischeck voor ${courseTitle} staat klaar`
   const duration = annual ? '10 vragen' : '5 vragen · ongeveer 3–5 minuten'
   const message = annual
-    ? `Het is ongeveer een jaar geleden dat je de WorkMatchr-opleiding RI&E in de praktijk hebt afgerond.\n\nEen goed moment om te kijken hoeveel kennis nog paraat is. Doe een korte kennischeck.\n\nDeze check verlengt of vernieuwt je certificaat niet.`
-    : `Je nieuwe kennischeck voor RI&E in de praktijk staat klaar.\n\nJe ontvangt deze berichten omdat je zelf hebt gekozen voor het 12-weekse kennisbehoudprogramma. Deze berichten gaan alleen over je opleiding en kennisbehoud, zonder reclame of commerciële berichten. Je kunt kennisbehoud op ieder moment stoppen via Mijn e-learnings.`
+    ? `Het is ongeveer een jaar geleden dat je de WorkMatchr-opleiding ${courseTitle} hebt afgerond.\n\nEen goed moment om te kijken hoeveel kennis nog paraat is. Doe een korte kennischeck.\n\nDeze check verlengt of vernieuwt je certificaat niet.`
+    : `Je nieuwe kennischeck voor ${courseTitle} staat klaar.\n\nJe ontvangt deze berichten omdat je zelf hebt gekozen voor het 12-weekse kennisbehoudprogramma. Deze berichten gaan alleen over je opleiding en kennisbehoud, zonder reclame of commerciële berichten. Je kunt kennisbehoud op ieder moment stoppen via Mijn e-learnings.`
   const url = escapeHtml(input.destinationUrl)
   const safeFirstName = escapeHtml(input.firstName || 'deelnemer')
   return {
@@ -25,7 +26,7 @@ export function createLearningRetentionEmail(input: { to: string; firstName: str
     to: input.to,
     subject,
     text: `Hoi ${input.firstName || 'deelnemer'},\n\n${message}\n\n${duration}\n\n${input.destinationUrl}\n\nWorkMatchr Learning`,
-    html: `<p>Hoi ${safeFirstName},</p><p>${message.replace(/\n\n/g, '</p><p>')}</p><p>${escapeHtml(duration)}</p><p><a href="${url}">${annual ? 'Start de jaarlijkse kennischeck' : 'Start kennisbehoud'}</a></p><p>WorkMatchr Learning</p>`,
+    html: `<p>Hoi ${safeFirstName},</p><p>${escapeHtml(message).replace(/\n\n/g, '</p><p>')}</p><p>${escapeHtml(duration)}</p><p><a href="${url}">${annual ? 'Start de jaarlijkse kennischeck' : 'Start kennisbehoud'}</a></p><p>WorkMatchr Learning</p>`,
     idempotencyKey: input.idempotencyKey,
   }
 }
@@ -62,13 +63,24 @@ export async function deliverLearningRetentionEmails(input: { limit?: number; no
     report.claimed++
     const job = await db.notificationOutbox.findUniqueOrThrow({ where: { id: rows[0]!.id } })
     const finish = async (status: 'SENT' | 'FAILED' | 'PENDING', code: string | null, messageId?: string, delay?: number | null) => {
-      const result = await db.notificationOutbox.updateMany({
+      const update = (client: Pick<typeof db, 'notificationOutbox'>) => client.notificationOutbox.updateMany({
         where: { id: job.id, status: 'PROCESSING', leaseToken },
         data: { status, lastErrorCode: code, providerMessageId: messageId, leaseToken: null, leaseUntil: null,
           processedAt: status === 'PENDING' ? null : now(),
           ...(status === 'PENDING' ? { availableAt: new Date(now().getTime() + Math.max(delay ?? 0, RETRY_MS[Math.min(job.attemptCount - 1, RETRY_MS.length - 1)])) } : {}),
         },
       })
+      const result = status === 'SENT' && job.templateKey === TEMPLATE_ANNUAL
+        ? await db.$transaction(async transaction => {
+          const updated = await update(transaction)
+          if (updated.count) await transaction.learningAnnualReminder.updateMany({
+            where: { id: payload.annualReminderId as string, userId: job.recipientUserId!, sentAt: null },
+            data: { sentAt: now() },
+          })
+          return updated
+        })
+        : await update(db)
+      if (status === 'SENT' && !result.count) throw new Error('DELIVERY_LEASE_LOST')
       if (result.count) report[status === 'SENT' ? 'sent' : status === 'PENDING' ? 'retry' : 'failed']++
     }
     const payload = job.payload && typeof job.payload === 'object' ? job.payload as Record<string, unknown> : {}
@@ -79,25 +91,33 @@ export async function deliverLearningRetentionEmails(input: { limit?: number; no
     if ((!isAnnual && (typeof payload.participationId !== 'string' || typeof payload.weeklyCheckId !== 'string'))
       || (isAnnual && typeof payload.annualReminderId !== 'string')) { await finish('FAILED', 'UNSUPPORTED_OR_INVALID_PAYLOAD'); continue }
     const record = isAnnual
-      ? await db.learningAnnualReminder.findFirst({ where: { id: payload.annualReminderId as string, userId: job.recipientUserId, revokedAt: null, sentAt: null, scheduledFor: { lte: tick }, user: { status: 'ACTIVE', emailVerified: true } }, select: { id: true, userId: true, user: { select: { email: true } } } })
-      : await db.learningRetentionParticipation.findFirst({ where: { id: payload.participationId as string, userId: job.recipientUserId, status: 'ACTIVE', stoppedAt: null, user: { status: 'ACTIVE', emailVerified: true }, weeklyChecks: { some: { id: payload.weeklyCheckId as string, weekNumber: Number(payload.weekNumber), availableAt: { lte: tick } } } }, select: { id: true, userId: true, user: { select: { email: true } } } })
+      ? await db.learningAnnualReminder.findFirst({ where: { enrollment: { accessRevokedAt: null }, id: payload.annualReminderId as string, userId: job.recipientUserId, revokedAt: null, sentAt: null, scheduledFor: { lte: tick }, user: { status: 'ACTIVE', emailVerified: true } }, select: { id: true, userId: true, user: { select: { email: true } }, enrollment: { select: { courseVersion: { select: { course: { select: { title: true, slug: true } } } } } } } })
+      : await db.learningRetentionParticipation.findFirst({ where: { enrollment: { accessRevokedAt: null }, id: payload.participationId as string, userId: job.recipientUserId, status: 'ACTIVE', stoppedAt: null, user: { status: 'ACTIVE', emailVerified: true }, weeklyChecks: { some: { id: payload.weeklyCheckId as string, weekNumber: Number(payload.weekNumber), availableAt: { lte: tick } } } }, select: { id: true, userId: true, user: { select: { email: true } }, enrollment: { select: { courseVersion: { select: { course: { select: { title: true, slug: true } } } } } } } })
     if (!record) { await finish('FAILED', 'RETENTION_NOT_DELIVERABLE'); continue }
     const profile = await db.learningProfile.findUnique({ where: { userId: record.userId }, select: { firstName: true } })
     const message = createLearningRetentionEmail({
       to: record.user.email, firstName: profile?.firstName ?? '', type: isAnnual ? 'ANNUAL' : 'WEEK',
-      destinationUrl: new URL(isAnnual ? '/e-learnings/rie-in-de-praktijk/kennisbehoud/jaarlijks' : '/e-learnings/rie-in-de-praktijk/kennisbehoud', getPublicAppBaseUrl()).toString(),
+      courseTitle: record.enrollment.courseVersion.course.title,
+      destinationUrl: new URL(`/e-learnings/${record.enrollment.courseVersion.course.slug}/kennisbehoud${isAnnual ? '/jaarlijks' : ''}`, getPublicAppBaseUrl()).toString(),
       idempotencyKey: job.idempotencyKey,
     })
     const stillDeliverable = isAnnual
-      ? await db.learningAnnualReminder.findFirst({ where: { id: record.id, userId: record.userId, revokedAt: null, sentAt: null, scheduledFor: { lte: now() } }, select: { id: true } })
-      : await db.learningRetentionParticipation.findFirst({ where: { id: record.id, userId: record.userId, status: 'ACTIVE', stoppedAt: null, weeklyChecks: { some: { id: payload.weeklyCheckId as string, availableAt: { lte: now() } } } }, select: { id: true } })
+      ? await db.learningAnnualReminder.findFirst({ where: { id: record.id, userId: record.userId, revokedAt: null, sentAt: null, scheduledFor: { lte: now() }, enrollment: { accessRevokedAt: null }, user: { status: 'ACTIVE', emailVerified: true, email: record.user.email } }, select: { id: true } })
+      : await db.learningRetentionParticipation.findFirst({ where: { id: record.id, userId: record.userId, status: 'ACTIVE', stoppedAt: null, enrollment: { accessRevokedAt: null }, user: { status: 'ACTIVE', emailVerified: true, email: record.user.email }, weeklyChecks: { some: { id: payload.weeklyCheckId as string, availableAt: { lte: now() } } } }, select: { id: true } })
     if (!stillDeliverable) { await finish('FAILED', 'RETENTION_NOT_DELIVERABLE'); continue }
+    const ready = await db.notificationOutbox.updateMany({
+      where: { id: job.id, status: 'PROCESSING', leaseToken, leaseUntil: { gt: now() } },
+      data: { leaseUntil: new Date(now().getTime() + LEASE_MS) },
+    })
+    if (!ready.count) continue
+    let providerAccepted = false
     try {
       const sent = await send(message)
       if (sent.status !== 'ACCEPTED') { await finish('FAILED', 'DEVELOPMENT_ONLY'); continue }
+      providerAccepted = true
       await finish('SENT', null, sent.messageId)
-      if (isAnnual) await db.learningAnnualReminder.updateMany({ where: { id: record.id, userId: record.userId, revokedAt: null, sentAt: null }, data: { sentAt: now() } })
     } catch (error) {
+      if (providerAccepted) throw new Error('DELIVERY_ACKNOWLEDGEMENT_FAILED')
       const failure = deliveryFailure(error)
       await finish(failure.retryable && job.attemptCount < MAX_ATTEMPTS ? 'PENDING' : 'FAILED', failure.code, undefined, failure.retryAfterMs)
     }

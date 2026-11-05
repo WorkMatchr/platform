@@ -1,0 +1,27 @@
+import {beforeEach,describe,it,expect,vi} from 'vitest'
+import {academyTransferPrice} from './academy-seat-transfer-policy'
+const mocks=vi.hoisted(()=>({db:null as unknown,order:vi.fn(),pass:vi.fn()}))
+vi.mock('@/lib/prisma',()=>({getPrisma:()=>mocks.db}))
+vi.mock('@/lib/finance/financial-transaction',()=>({runSerializableFinancialTransaction:(fn:(tx:unknown)=>unknown)=>fn(mocks.db)}))
+vi.mock('./academy-commerce-environment',()=>({assertAcademyCommerceSandbox:vi.fn()}))
+vi.mock('./academy-commerce-access',()=>({lockAcademyCommerce:vi.fn(),ownedAcademyOrder:mocks.order,qualifyingAcademyPass:mocks.pass}))
+vi.mock('@/lib/finance/invoice-service',()=>({issueInvoiceForPaidPurchase:vi.fn().mockResolvedValue({id:'invoice'})}))
+import {prepareAcademySeatTransfer,startAcademySeatTransferPayment,processAcademySeatTransferPayment} from './academy-seat-transfer-service'
+const id='10000000-0000-4000-8000-000000000001',target='20000000-0000-4000-8000-000000000002'
+const input={seatId:id,email:'new@example.invalid',requestKey:target}
+function fixture(){return {learningAcademySeat:{findUnique:vi.fn().mockResolvedValue({id,orderId:'order',status:'INVITED',position:1,acceptedAt:null}),update:vi.fn()},user:{findUnique:vi.fn().mockResolvedValue({id:target,status:'ACTIVE',emailVerified:true,email:input.email})},learningAcademySeatTransfer:{findUnique:vi.fn().mockResolvedValue(null),findFirst:vi.fn().mockResolvedValue(null),findMany:vi.fn().mockResolvedValue([]),create:vi.fn().mockResolvedValue({id}),findUniqueOrThrow:vi.fn(),update:vi.fn()},financialPurchase:{create:vi.fn().mockResolvedValue({id:'topup'}),update:vi.fn()},financialEvent:{create:vi.fn(),upsert:vi.fn()},learningAcademySeatEvent:{create:vi.fn()},notificationOutbox:{upsert:vi.fn()}}}
+let db:ReturnType<typeof fixture>
+function order(){return {id:'order',quantity:5,seats:[],purchase:{id:'original',status:'PAID',vatRateBps:2100,organizationId:'organization'},benefitProof:{applied:true,participants:[{position:1,discountCents:600,userId:'alumnus'}]},pricingSnapshot:{prices:{fiveCents:59500,followUpFiveCents:56500}},courseVersion:{courseId:'course'}}}
+beforeEach(()=>{vi.clearAllMocks();db=fixture();mocks.db=db;mocks.order.mockResolvedValue(order());mocks.pass.mockResolvedValue(null)})
+describe('original alumni consideration and transfer safety',()=>{
+ it.each([[600,0,false,600],[600,0,true,0],[600,600,false,0],[601,0,false,601],[0,0,true,0]] as const)('original allocation %j %j %j', (discount,paid,equal,total)=>{const p=academyTransferPrice(discount,paid,equal,2100);expect(p.amountInclVatCents).toBe(total);expect(p.amountExclVatCents+p.vatAmountCents).toBe(total)})
+ it('rejects invalid historical allocations',()=>{expect(()=>academyTransferPrice(600,601,false,2100)).toThrow('SNAPSHOT_INVALID');expect(()=>academyTransferPrice(1.5,0,false,2100)).toThrow()})
+ it('creates separate consideration without changing original seat or order',async()=>{expect(await prepareAcademySeatTransfer('buyer',input)).toMatchObject({amountInclVatCents:600,applied:false});expect(db.financialPurchase.create).toHaveBeenCalledWith(expect.objectContaining({data:expect.objectContaining({amountInclVatCents:600,pricingMode:'ACADEMY_SANDBOX',packageDiscountCents:0})}));expect(db.learningAcademySeat.update).not.toHaveBeenCalled();expect(db.learningAcademySeatTransfer.create.mock.calls[0][0].data.snapshot).toMatchObject({originalDiscountCents:600,taxStatus:'TAX_REVIEW_REQUIRED'})})
+ it('equal qualification needs no top-up',async()=>{mocks.pass.mockResolvedValue({id:'pass'});expect(await prepareAcademySeatTransfer('buyer',input)).toMatchObject({amountInclVatCents:0})})
+ it('refresh retains one pending transfer',async()=>{db.learningAcademySeatTransfer.findFirst.mockResolvedValue({id,targetEmail:input.email,purchase:{amountInclVatCents:600}});expect(await prepareAcademySeatTransfer('buyer',input)).toMatchObject({transferId:id});expect(db.financialPurchase.create).not.toHaveBeenCalled()})
+ it('refuses another target while payment uncertain',async()=>{db.learningAcademySeatTransfer.findFirst.mockResolvedValue({targetEmail:'other@example.invalid'});await expect(prepareAcademySeatTransfer('buyer',input)).rejects.toThrow('TRANSFER_PENDING')})
+ it('requires a verified target',async()=>{db.user.findUnique.mockResolvedValue(null);await expect(prepareAcademySeatTransfer('buyer',input)).rejects.toThrow('VERIFIED_PARTICIPANT_REQUIRED');expect(db.financialPurchase.create).not.toHaveBeenCalled()})
+ it('never transfers an activated seat',async()=>{db.learningAcademySeat.findUnique.mockResolvedValue({id,orderId:'order',status:'ACTIVE',position:1,acceptedAt:new Date()});await expect(prepareAcademySeatTransfer('buyer',input)).rejects.toThrow('SEAT_NOT_AVAILABLE')})
+ it('requires explicit confirmation before provider contact',async()=>{await expect(startAcademySeatTransferPayment('buyer',id,false)).rejects.toThrow('CONFIRMATION_REQUIRED')})
+ it('rejects forged provider evidence before any writes',async()=>{db.learningAcademySeatTransfer.findFirst.mockResolvedValue({id});db.learningAcademySeatTransfer.findUniqueOrThrow.mockResolvedValue({seatId:id,purchase:{id:'topup',molliePaymentId:'tr_original',currency:'EUR',amountInclVatCents:600,organizationId:null}});await expect(processAcademySeatTransferPayment({id:'tr_forged',amountValue:'6.00',currency:'EUR',metadata:{purchaseId:'topup'}} as never)).rejects.toThrow('PAYMENT_MISMATCH');expect(db.financialPurchase.update).not.toHaveBeenCalled()})
+})

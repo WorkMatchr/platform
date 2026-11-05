@@ -1,0 +1,7 @@
+import { assertAcademyCommerceSandbox } from '@/lib/learning/academy-commerce-environment'
+import { notFound } from 'next/navigation'
+import { requireLearningUser } from '@/lib/learning/learning-authorization'
+import { getPrisma } from '@/lib/prisma'
+import { AcademyCommerceActionForm } from '@/components/learning/academy-commerce-forms'
+export const metadata={title:'Opleidingsplaats aanvaarden | WorkMatchr',robots:{index:false,follow:false}}
+export default async function Page({params}:{params:Promise<{seatId:string}>}){try{assertAcademyCommerceSandbox()}catch{notFound()}const {seatId}=await params;if(!/^[0-9a-f-]{36}$/i.test(seatId))notFound();const actor=await requireLearningUser(`/e-learnings/uitnodiging/${seatId}`);const user=await getPrisma().user.findUnique({where:{id:actor.id},select:{email:true,emailVerified:true}});if(!user?.emailVerified)notFound();const seat=await getPrisma().learningAcademySeat.findFirst({where:{id:seatId,status:'INVITED',invitedEmail:user.email.toLowerCase(),inviteExpiresAt:{gt:new Date()},order:{purchase:{status:'PAID'}}},select:{id:true,order:{select:{courseVersion:{select:{course:{select:{title:true}}}}}}}});if(!seat)notFound();return <main className="mx-auto max-w-3xl space-y-5 px-4 py-10"><h1 className="text-3xl font-bold">Opleidingsplaats aanvaarden</h1><p>{seat.order.courseVersion.course.title}</p><p>Deze plaats geeft geen organisatiebeheerdersrechten en schrijft u niet automatisch in voor kennisbehoud.</p><AcademyCommerceActionForm kind="accept" id={seat.id}/></main>}

@@ -11,10 +11,10 @@ export type JorttInvoicePayload = Readonly<{
   invoiceId: string
   technicalReference: string
   knownExternalReference: string | null
-  organizationId: string
+  organizationId: string | null
   invoiceNumber: string
   documentType: 'INVOICE' | 'CREDIT_NOTE'
-  pricingMode: 'STANDARD' | 'MOLLIE_TEST_ACCEPTANCE'
+  pricingMode: 'STANDARD' | 'MOLLIE_TEST_ACCEPTANCE' | 'ACADEMY_SANDBOX'
   issuedAt: string
   supplyDate: string | null
   servicePeriodStart: string | null
@@ -67,10 +67,10 @@ function buildPayload(invoice: {
   snapshotVersion: number
   packageLabel: string
   id: string
-  organizationId: string
+  organizationId: string | null
   invoiceNumber: string
   documentType: 'INVOICE' | 'CREDIT_NOTE'
-  pricingMode: 'STANDARD' | 'MOLLIE_TEST_ACCEPTANCE'
+  pricingMode: 'STANDARD' | 'MOLLIE_TEST_ACCEPTANCE' | 'ACADEMY_SANDBOX'
   issuedAt: Date
   supplyDate: Date | null
   servicePeriodStart: Date | null
@@ -95,6 +95,7 @@ function buildPayload(invoice: {
   jorttSync: { externalReference: string | null; technicalReference: string | null } | null
   originalInvoice: { jorttSync: { externalReference: string | null } | null } | null
 }): JorttInvoicePayload {
+  if (!invoice.organizationId || invoice.pricingMode === 'ACADEMY_SANDBOX') throw new Error('JORTT_ACADEMY_FISCAL_REVIEW_REQUIRED')
   let lines = invoice.lines
   if (invoice.documentType === 'INVOICE') {
     if (invoice.snapshotVersion === 1) {

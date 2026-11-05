@@ -1,4 +1,5 @@
 import 'server-only'
+import { resolveAcademyDefinition } from './academy-course-definition'
 import { Prisma } from '@/generated/prisma/client'
 import { getPrisma } from '@/lib/prisma'
 import { toRetentionQuestion } from './learning-retention-annual-service'
@@ -7,25 +8,25 @@ import { selectRetentionWeekQuestions } from './learning-retention-selector'
 import { canAnswerRetentionQuestion, evaluateRetentionAnswer, getCurrentRetentionWeek, getRetentionWeekWindow, getRetentionWeeksToEnsure, isRetentionAnswerShapeValid, presentRetentionQuestion, RETENTION_DURATION_WEEKS } from './learning-retention-policy'
 import { isRetentionQuestionSelectable, LEARNING_QUESTION_PUBLISHED_STATUS, RETENTION_BANK_PUBLISHED_STATUS } from './learning-retention-publication'
 
-const COURSE_CODE = 'WL-001'
-const PROGRAM_VERSION = 'WL-001-RETENTION-1.0'
+const COURSE_SLUG = 'rie-in-de-praktijk'
 const BANK_VERSION = 'WL-001-RETENTION-1.0'
-const CONSENT_VERSION = 'WL-001-RETENTION-CONSENT-1.0'
 const QUESTION_COUNT = 5
 type Db = Prisma.TransactionClient
 
-async function publishedProgram(db: Db) {
+async function publishedProgram(db: Db, programVersion: string, courseId: string) {
   return db.learningRetentionProgramVersion.findFirst({
-    where: { version: PROGRAM_VERSION, status: 'PUBLISHED', program: { course: { code: COURSE_CODE, status: 'PUBLISHED' } } },
+    where: { version: programVersion, courseId, status: 'PUBLISHED', program: { course: { status: 'PUBLISHED' } } },
     select: { id: true, courseId: true, consentVersion: true, durationWeeks: true, questionsPerWeek: true, openAfterProgramDays: true },
   })
 }
 
-async function findEligibleEnrollment(db: Db, userId: string) {
+async function findEligibleEnrollment(db: Db, userId: string, courseSlug: string) {
+  const course = await db.learningCourse.findUnique({ where: { slug: courseSlug }, select: { code: true, status: true } })
+  if (!course || course.status !== 'PUBLISHED') return null
   const enrollment = await db.learningEnrollment.findFirst({
     where: {
-      userId, courseVersion: { status: { in: ['PUBLISHED', 'RETIRED'] }, course: { code: COURSE_CODE, status: 'PUBLISHED' } },
-      examAttempts: { some: { status: 'SUBMITTED', passed: true, examVersion: { exam: { code: 'WL-001-FINAL' }, status: { in: ['PUBLISHED', 'RETIRED'] } } } },
+      userId, accessRevokedAt: null, courseVersion: { status: { in: ['PUBLISHED', 'RETIRED'] }, course: { slug: courseSlug, status: 'PUBLISHED' } },
+      examAttempts: { some: { status: 'SUBMITTED', passed: true, examVersion: { exam: { code: `${course.code}-FINAL` }, status: { in: ['PUBLISHED', 'RETIRED'] } } } },
     },
     include: {
       courseVersion: {
@@ -35,7 +36,7 @@ async function findEligibleEnrollment(db: Db, userId: string) {
         },
       },
       examAttempts: {
-        where: { status: 'SUBMITTED', passed: true, examVersion: { exam: { code: 'WL-001-FINAL' }, status: { in: ['PUBLISHED', 'RETIRED'] } } },
+        where: { status: 'SUBMITTED', passed: true, examVersion: { exam: { code: `${course.code}-FINAL` }, status: { in: ['PUBLISHED', 'RETIRED'] } } },
         orderBy: [{ submittedAt: 'asc' }, { attemptNumber: 'asc' }], take: 1, select: { submittedAt: true },
       },
     },
@@ -43,15 +44,13 @@ async function findEligibleEnrollment(db: Db, userId: string) {
   if (!enrollment || enrollment.courseVersion.chapters.length !== 10
     || enrollment.courseVersion.chapters.some((chapter) => chapter.progress[0]?.status !== 'COMPLETED')
     || !enrollment.examAttempts[0]?.submittedAt) return null
-  return enrollment
+  return { ...enrollment, definition: resolveAcademyDefinition(enrollment.courseVersion.course, enrollment.courseVersion.sourceMetadata) }
 }
 
-export async function getMyRetentionOverview(userId: string, now = new Date()) {
+export async function getMyRetentionOverview(userId: string, now = new Date(), courseSlug = COURSE_SLUG) {
   const db = getPrisma()
-  const [enrollment, program] = await Promise.all([
-    findEligibleEnrollment(db, userId),
-    db.learningRetentionProgramVersion.findFirst({ where: { version: PROGRAM_VERSION, status: { in: ['PUBLISHED', 'RETIRED'] } }, select: { id: true, consentVersion: true, status: true } }),
-  ])
+  const enrollment = await findEligibleEnrollment(db, userId, courseSlug)
+  const program = enrollment ? await db.learningRetentionProgramVersion.findFirst({ where: { courseId: enrollment.courseVersion.courseId, version: enrollment.definition.retention.programVersion, status: { in: ['PUBLISHED', 'RETIRED'] } }, select: { id: true, consentVersion: true, status: true } }) : null
   const programAvailable = program?.status === 'PUBLISHED'
   if (!enrollment) return { eligible: false as const, programAvailable, participation: null, weeks: [], annualReminder: null }
   const participation = program ? await db.learningRetentionParticipation.findUnique({ where: { learningEnrollmentId_programVersionId: { learningEnrollmentId: enrollment.id, programVersionId: program.id } }, include: { weeklyChecks: { orderBy: { weekNumber: 'asc' }, include: { _count: { select: { answers: true } } } } } }) : null
@@ -59,32 +58,32 @@ export async function getMyRetentionOverview(userId: string, now = new Date()) {
   const weeks = participation?.weeklyChecks.map((check) => ({
     id: check.id, weekNumber: check.weekNumber, available: check.availableAt <= now,
     closed: check.closesAt <= now, completed: check.completedAt !== null,
-    answered: check._count.answers, href: `/e-learnings/rie-in-de-praktijk/kennisbehoud/week/${check.id}`,
+    answered: check._count.answers, href: `/e-learnings/${courseSlug}/kennisbehoud/week/${check.id}`,
   })) ?? []
   return { eligible: true as const, programAvailable, participation, weeks, annualReminder }
 }
 
-export async function startMyRetentionParticipation(userId: string, consent: boolean, now = new Date()) {
+export async function startMyRetentionParticipation(userId: string, consent: boolean, now = new Date(), courseSlug = COURSE_SLUG) {
   if (!consent) throw new Error('RETENTION_CONSENT_REQUIRED')
   const db = getPrisma()
-  const eligibility = await findEligibleEnrollment(db, userId)
+  const eligibility = await findEligibleEnrollment(db, userId, courseSlug)
   if (!eligibility) throw new Error('RETENTION_NOT_ELIGIBLE')
   try {
     return await db.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT "id" FROM "LearningEnrollment" WHERE "id" = ${eligibility.id}::uuid AND "userId" = ${userId}::uuid FOR UPDATE`
-      const program = await publishedProgram(tx)
+      const program = await publishedProgram(tx, eligibility.definition.retention.programVersion, eligibility.courseVersion.courseId)
       if (!program || program.durationWeeks !== 12 || program.questionsPerWeek !== 5 || program.openAfterProgramDays !== 30) throw new Error('RETENTION_PROGRAM_NOT_AVAILABLE')
       const existing = await tx.learningRetentionParticipation.findUnique({ where: { learningEnrollmentId_programVersionId: { learningEnrollmentId: eligibility.id, programVersionId: program.id } } })
       if (existing) return existing
       return tx.learningRetentionParticipation.create({ data: {
         userId, learningEnrollmentId: eligibility.id, courseVersionId: eligibility.courseVersionId,
         courseId: eligibility.courseVersion.courseId, programVersionId: program.id,
-        status: 'ACTIVE', consentedAt: now, consentVersion: program.consentVersion || CONSENT_VERSION, startedAt: now,
+        status: 'ACTIVE', consentedAt: now, consentVersion: program.consentVersion || eligibility.definition.retention.consentVersion, startedAt: now,
       } })
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable })
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && ['P2002', 'P2034'].includes(error.code)) {
-      const program = await db.learningRetentionProgramVersion.findUnique({ where: { version: PROGRAM_VERSION }, select: { id: true } })
+      const program = await db.learningRetentionProgramVersion.findUnique({ where: { version: eligibility.definition.retention.programVersion }, select: { id: true } })
       if (program) {
         const existing = await db.learningRetentionParticipation.findUnique({ where: { learningEnrollmentId_programVersionId: { learningEnrollmentId: eligibility.id, programVersionId: program.id } } })
         if (existing) return existing
@@ -94,13 +93,13 @@ export async function startMyRetentionParticipation(userId: string, consent: boo
   }
 }
 
-async function publishedBank(db: Db) {
-  const rows = await db.learningRetentionQuestion.findMany({ where: { bankVersion: BANK_VERSION, status: RETENTION_BANK_PUBLISHED_STATUS, question: { status: LEARNING_QUESTION_PUBLISHED_STATUS } }, include: { question: { include: { options: { orderBy: { position: 'asc' } } } } } })
+async function publishedBank(db: Db, bankVersion: string) {
+  const rows = await db.learningRetentionQuestion.findMany({ where: { bankVersion, status: RETENTION_BANK_PUBLISHED_STATUS, question: { status: LEARNING_QUESTION_PUBLISHED_STATUS } }, include: { question: { include: { options: { orderBy: { position: 'asc' } } } } } })
   return rows.map((row) => ({ id: row.id, question: toRetentionQuestion(row) }))
     .filter(({ question }) => isRetentionQuestionSelectable({ retentionStatus: question.status, learningQuestionStatus: question.learningQuestionStatus }))
 }
 
-async function performanceSignals(db: Db, participationId: string, userId: string): Promise<RetentionKnowledgeSignal[]> {
+async function performanceSignals(db: Db, participationId: string, userId: string, enrollmentId: string): Promise<RetentionKnowledgeSignal[]> {
   const [answers, examAnswers] = await Promise.all([
     db.learningRetentionWeeklyAnswer.findMany({ where: { userId, weeklyCheck: { participationId } }, select: { correct: true, weeklyQuestion: { select: { retentionQuestion: { select: { question: { select: { knowledgeArea: true } } } } } } } }),
     db.$queryRaw<Array<{ knowledgeAreas: string[]; answer: Prisma.JsonValue; correctAnswer: Prisma.JsonValue }>>`
@@ -110,7 +109,7 @@ async function performanceSignals(db: Db, participationId: string, userId: strin
         JOIN "LearningExamVersion" version ON version."id" = attempt."examVersionId"
         JOIN "LearningExam" exam ON exam."id" = version."examId"
         WHERE attempt."userId" = ${userId}::uuid AND attempt."status" = 'SUBMITTED'
-          AND attempt."passed" = true AND exam."code" = 'WL-001-FINAL'
+          AND attempt."passed" = true AND attempt."enrollmentId" = ${enrollmentId}::uuid
         ORDER BY attempt."submittedAt" ASC NULLS LAST, attempt."attemptNumber" ASC
         LIMIT 1
       )
@@ -156,14 +155,14 @@ async function queueWeekEmail(db: Db, userId: string, participationId: string, c
 }
 
 async function ensureWeeklyCheckInTransaction(db: Db, userId: string, participationId: string, weekNumber: number, now: Date) {
-  const participation = await db.learningRetentionParticipation.findFirst({ where: { id: participationId, userId }, include: { programVersion: true } })
+  const participation = await db.learningRetentionParticipation.findFirst({ where: { id: participationId, userId, enrollment: { accessRevokedAt: null } }, include: { programVersion: true } })
   if (!participation || participation.status === 'STOPPED' || participation.stoppedAt) throw new Error('RETENTION_PARTICIPATION_NOT_AVAILABLE')
   const old = await db.learningRetentionWeeklyCheck.findUnique({ where: { participationId_weekNumber: { participationId, weekNumber } }, include: { questions: true, answers: true } })
   if (old) return { check: old, created: false }
   const dueWeeks = getRetentionWeeksToEnsure(participation.startedAt, participation.stoppedAt, now)
   if (!dueWeeks.includes(weekNumber)) throw new Error('RETENTION_WEEK_NOT_AVAILABLE')
   const closeAt = new Date(participation.startedAt.getTime() + (RETENTION_DURATION_WEEKS * 7 + participation.programVersion.openAfterProgramDays) * 24 * 60 * 60 * 1000)
-  const [bank, signals, history] = await Promise.all([publishedBank(db), performanceSignals(db, participationId, userId), questionHistory(db, participationId)])
+  const [bank, signals, history] = await Promise.all([publishedBank(db, participation.programVersion.bankVersion ?? BANK_VERSION), performanceSignals(db, participationId, userId, participation.learningEnrollmentId), questionHistory(db, participationId)])
   const selected = selectRetentionWeekQuestions({ questions: bank.map((row) => row.question), weekNumber, participationKey: participationId, participationStatus: participation.status, knowledgeSignals: signals, history })
   const byVersion = new Map(bank.map((item) => [`${item.question.code}:v${item.question.questionVersion}`, item.id]))
   const rows = selected.map(({ question, reason }, index) => {
@@ -193,7 +192,7 @@ async function ensureWeeklyCheckInTransaction(db: Db, userId: string, participat
 
 export async function ensureMyRetentionWeeklyChecks(userId: string, participationId: string, now = new Date()) {
   const db = getPrisma()
-  const participation = await db.learningRetentionParticipation.findFirst({ where: { id: participationId, userId }, select: { id: true, startedAt: true, stoppedAt: true, status: true } })
+  const participation = await db.learningRetentionParticipation.findFirst({ where: { id: participationId, userId, enrollment: { accessRevokedAt: null } }, select: { id: true, startedAt: true, stoppedAt: true, status: true } })
   if (!participation || participation.stoppedAt) throw new Error('RETENTION_PARTICIPATION_NOT_AVAILABLE')
   const weeks = getRetentionWeeksToEnsure(participation.startedAt, participation.stoppedAt, now)
   const result = []
@@ -209,7 +208,7 @@ export async function ensureMyRetentionWeeklyChecks(userId: string, participatio
 
 export async function ensureRetentionSchedule(now = new Date()) {
   const db = getPrisma()
-  const active = await db.learningRetentionParticipation.findMany({ where: { status: { in: ['ACTIVE', 'COMPLETED'] }, stoppedAt: null, startedAt: { lte: now } }, select: { id: true, userId: true, completedAt: true } })
+  const active = await db.learningRetentionParticipation.findMany({ where: { enrollment: { accessRevokedAt: null }, status: { in: ['ACTIVE', 'COMPLETED'] }, stoppedAt: null, startedAt: { lte: now } }, select: { id: true, userId: true, completedAt: true } })
   const result = { participants: active.length, checksCreated: 0, mailsQueued: 0 }
   for (const item of active) {
     const before = await db.learningRetentionWeeklyCheck.count({ where: { participationId: item.id } })
@@ -235,7 +234,7 @@ export async function stopMyRetentionParticipation(userId: string, participation
   const db = getPrisma()
   return db.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT "id" FROM "LearningRetentionParticipation" WHERE "id" = ${participationId}::uuid AND "userId" = ${userId}::uuid FOR UPDATE`
-    const owned = await tx.learningRetentionParticipation.findFirst({ where: { id: participationId, userId } })
+    const owned = await tx.learningRetentionParticipation.findFirst({ where: { id: participationId, userId, enrollment: { accessRevokedAt: null } } })
     if (!owned) throw new Error('RETENTION_PARTICIPATION_NOT_FOUND')
     if (owned.stoppedAt) return { stoppedAt: owned.stoppedAt, idempotent: true }
     const stoppedAt = now
@@ -250,7 +249,7 @@ export async function stopMyRetentionParticipation(userId: string, participation
 
 export async function getMyRetentionWeeklyCheck(userId: string, participationId: string, checkId: string, now = new Date()) {
   const db = getPrisma()
-  const participation = await db.learningRetentionParticipation.findFirst({ where: { id: participationId, userId }, select: { stoppedAt: true } })
+  const participation = await db.learningRetentionParticipation.findFirst({ where: { id: participationId, userId, enrollment: { accessRevokedAt: null } }, select: { stoppedAt: true } })
   if (!participation) return null
   if (!participation.stoppedAt) await ensureMyRetentionWeeklyChecks(userId, participationId, now)
   const check = await db.learningRetentionWeeklyCheck.findFirst({
@@ -298,7 +297,7 @@ export async function answerMyRetentionQuestion(userId: string, participationId:
   return db.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT "id" FROM "LearningRetentionWeeklyCheck" WHERE "id" = ${checkId}::uuid AND "userId" = ${userId}::uuid AND "participationId" = ${participationId}::uuid FOR UPDATE`
     const check = await tx.learningRetentionWeeklyCheck.findFirst({
-      where: { id: checkId, userId, participationId },
+      where: { id: checkId, userId, participationId, participation: { enrollment: { accessRevokedAt: null } } },
       include: {
         participation: true,
         answers: { where: { userId } },

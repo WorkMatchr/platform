@@ -1,5 +1,24 @@
 # Documentatie WorkMatchr
 
+- [WP21 - geintegreerde releasekandidaat en GO/NO-GO](wp21-integrated-release-readiness.md)
+
+- [Academy — complete cursusintegratie en WL-001-toetsbindingen](academy-complete-course-integration.md)
+- [Academy — visuele certificaatontwerper en veilige versies](academy-certificate-designer.md)
+- [Integratie certificaatontwerper met drie Academy-cursussen](academy-certificate-designer-integration.md)
+
+- [Academy — contentintegratie en publicatiegereedheid](academy-content-integration-and-publication-readiness.md)
+
+- [Academy WL-001, WL-002 en WL-003 — contentkandidaten en acceptatie](academy-content/README.md)
+
+- [LMS 2.0 — geïntegreerde releasekandidaat en acceptatie](lms-20-platform-release.md)
+- [WP19 — definitieve commerciële acceptatie na WP18](wp19-final-commercial-acceptance.md)
+
+- [WP18 — commerciële keten en offerteacceptatie](wp18-commercial-completion.md)
+- [SEO & Analytics — launch readiness en campagnevoorstel](marketing/seo-analytics-launch-readiness.md)
+- [Compliance F4: duurzame concepten, prijscontract en functionele acceptatie](compliance/f4-functional-completion.md)
+
+- [Arbo Compliance en Kenniscentrum: afronding en acceptatiegrenzen](compliance/arbo-compliance-knowledge-completion.md)
+
 - [Productiedatabase: schrijfpauze, herstel en migratieacceptatie](database-upgrade-preparation.md)
 
 - [Gecombineerde eindacceptatie en gesloten besluitregister](combined-final-acceptance.md)
@@ -251,3 +270,5 @@ Zie [legacy intake naar gedeelde Simple Advice Flow](legacy-intake-unification.m
 - [Compliance F4 — 46 claimreviews en read-only publicatiecontrole](compliance-f4-knowledge-publication.md)
 
 - [Commerciële afronding: contactoutbox, ketenacceptatie en beheervoorwaarden](commercial-launch-finalization.md)
+
+- [Academy 2.0 — publicatiechecklist zonder video](academy-20-publication-checklist.md)

@@ -1,3 +1,4 @@
+import { isF4Enabled } from '@/lib/compliance/compliance-f4-framework'
 import type { Metadata } from 'next'
 import { ArboGuideNotice, ArboGuidePageLayout } from '@/components/public/arbo-guide-layout'
 import { ComplianceFreeIntake } from '@/components/public/compliance-free-intake'
@@ -18,7 +19,7 @@ export default function ComplianceScanIntakePage() {
       <ArboGuideNotice>
         <strong className="text-brand-dark">Gratis intake:</strong> u ziet relevante en mogelijk relevante onderwerpen. Dit is uitsluitend oriëntatie, geen compliancebeoordeling, juridische conclusie of certificaat.
       </ArboGuideNotice>
-      <ComplianceFreeIntake />
+      <ComplianceFreeIntake f4Available={isF4Enabled()} />
     </ArboGuidePageLayout>
   )
 }

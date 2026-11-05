@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { renderToString } from 'react-dom/server'
 import { hydrateRoot } from 'react-dom/client'
@@ -9,7 +9,37 @@ import { f4TestDefinition } from '@/test-fixtures/compliance-f4'
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks() })
 const d = f4TestDefinition()
+function withDrafts(callback: (url: string, options?: RequestInit) => unknown) {
+  return vi.fn((url: string, options?: RequestInit) => {
+    if (url.endsWith('/drafts')) {
+      if (!options?.body) return Promise.resolve({ ok: true, json: async () => ({ drafts: [] }) })
+      const body = JSON.parse(String(options.body))
+      return Promise.resolve({ ok: true, json: async () => ({ draft: { id: body.idempotencyKey, revision: 0, startedAt: '2026-11-05T10:00:00.000Z' } }) })
+    }
+    return callback(url, options)
+  })
+}
+beforeEach(() => { vi.stubGlobal('fetch', withDrafts(vi.fn())) })
+
 describe('Uitgebreide wijzer', () => {
+  it('waarschuwt vóór uitloggen over niet-opgeslagen invoer en wist geheugen na sessiebeëindiging', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(false)
+    render(<ComplianceExpandedGuide definition={d} />)
+    fireEvent.click(screen.getByRole('radio', { name: 'Ja, werknemers in dienst' }))
+    expect(window.dispatchEvent(new Event('workmatchr:before-sign-out', { cancelable: true }))).toBe(false)
+    await act(async () => { window.dispatchEvent(new Event('workmatchr:signed-out')) })
+    expect((screen.getByRole('radio', { name: 'Ja, werknemers in dienst' }) as HTMLInputElement).checked).toBe(false)
+    expect(window.dispatchEvent(new Event('workmatchr:before-sign-out', { cancelable: true }))).toBe(true)
+  })
+  it('houdt eigen invoer vast bij een revisieconflict', async () => {
+    vi.stubGlobal('fetch', vi.fn((url, options) => options?.body ? Promise.resolve({ ok: false, status: 409, json: async () => ({}) }) : Promise.resolve({ ok: true, json: async () => ({ drafts: [] }) })))
+    render(<ComplianceExpandedGuide definition={d} />)
+    fireEvent.click(screen.getByRole('radio', { name: 'Ja, werknemers in dienst' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Concept opslaan' }))
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('ander tabblad'))
+    expect((screen.getByRole('radio', { name: 'Ja, werknemers in dienst' }) as HTMLInputElement).checked).toBe(true)
+  })
+
   it('gebruikt labels en behoudt antwoorden bij teruggaan, zonder opslag', () => {
     const storage = vi.spyOn(Storage.prototype, 'setItem')
     render(<ComplianceExpandedGuide definition={d} />)
@@ -24,16 +54,16 @@ describe('Uitgebreide wijzer', () => {
   it('beschermt tegen dubbel versturen en herstelt fouten met dezelfde idempotency key', async () => {
     let resolve!: (value: unknown) => void
     const fetch = vi.fn().mockImplementationOnce(() => new Promise(r => { resolve = r })).mockResolvedValue({ ok: false, json: async () => ({ saved: false }) })
-    vi.stubGlobal('fetch', fetch)
+    vi.stubGlobal('fetch', withDrafts(fetch))
     render(<ComplianceExpandedGuide definition={d} />)
     fireEvent.click(screen.getByRole('radio', { name: 'Ja, werknemers in dienst' }))
     for (let i = 0; i < 9; i++) fireEvent.click(screen.getByRole('button', { name: 'Volgende' }))
     const button = screen.getByRole('button', { name: 'Beoordeling afronden en opslaan' })
     fireEvent.click(button); fireEvent.click(button)
-    expect(fetch).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1))
     expect((button as HTMLButtonElement).disabled).toBe(true)
     await act(async () => resolve({ ok: false, json: async () => ({ saved: false }) }))
-    expect(screen.getByRole('alert').textContent).toContain('antwoorden blijven behouden')
+    expect(screen.getByRole('alert').textContent).toContain('Opslag mislukt')
     expect(document.activeElement).toBe(screen.getByRole('alert'))
     fireEvent.click(screen.getByRole('button', { name: 'Beoordeling afronden en opslaan' }))
     await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2))
@@ -53,18 +83,18 @@ describe('Uitgebreide wijzer', () => {
     const fetch = vi.fn()
       .mockResolvedValueOnce({ ok: false, status: 409, json: async () => ({ code: 'EXPIRED_COMPLETION' }) })
       .mockRejectedValue(new Error('Netwerk onderbroken'))
-    vi.stubGlobal('fetch', fetch)
+    vi.stubGlobal('fetch', withDrafts(fetch))
     render(<ComplianceExpandedGuide definition={d} />)
     fireEvent.click(screen.getByRole('radio', { name: 'Ja, werknemers in dienst' }))
     for (let i = 0; i < 9; i++) fireEvent.click(screen.getByRole('button', { name: 'Volgende' }))
     fireEvent.click(screen.getByRole('button', { name: 'Beoordeling afronden en opslaan' }))
     await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('verzendtermijn is verlopen'))
     fireEvent.click(screen.getByRole('button', { name: 'Beoordeling afronden en opslaan' }))
-    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('Opslaan is niet gelukt'))
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('Netwerk onderbroken'))
     fireEvent.click(screen.getByRole('button', { name: 'Beoordeling afronden en opslaan' }))
     await waitFor(() => expect(fetch).toHaveBeenCalledTimes(3))
     const bodies = fetch.mock.calls.map(call => JSON.parse(call[1].body))
-    expect(bodies[1].idempotencyKey).not.toBe(bodies[0].idempotencyKey)
+    expect(bodies[1].idempotencyKey).toBe(bodies[0].idempotencyKey)
     expect(bodies[2]).toEqual(bodies[1])
     expect(bodies.every(body => body.answers.HASEMPLOYEES === 'YES')).toBe(true)
   })

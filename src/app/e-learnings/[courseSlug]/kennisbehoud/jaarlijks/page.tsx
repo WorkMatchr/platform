@@ -1,3 +1,4 @@
+import { findAcademyEnrollment } from '@/lib/learning/academy-course-service'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { AnnualRetentionPlayer } from '@/components/learning/annual-retention-player'
@@ -7,16 +8,18 @@ import { getMyAnnualRetentionCheck } from '@/lib/learning/learning-retention-ann
 
 export default async function AnnualRetentionCheckPage({ params }: { params: Promise<{ courseSlug: string }> }) {
   const { courseSlug } = await params
-  if (courseSlug !== 'rie-in-de-praktijk') notFound()
+  if (!/^[a-z0-9-]{1,120}$/.test(courseSlug)) notFound()
   const user = await requireLearningUser(`/e-learnings/${courseSlug}/kennisbehoud/jaarlijks`)
-  const check = await getMyAnnualRetentionCheck(user.id)
+  const context = await findAcademyEnrollment(user.id, { courseSlug })
+  if (!context) notFound()
+  const check = await getMyAnnualRetentionCheck(user.id, new Date(), courseSlug)
   if (!check) return <main className="mx-auto w-full max-w-3xl space-y-5 px-4 py-10 sm:px-6">
     <h1 className="text-3xl font-bold text-brand-dark">Jaarlijkse kennischeck</h1>
     <Card className="space-y-4"><p>Er staat nu geen jaarlijkse kennischeck voor u klaar.</p><Link className="inline-flex min-h-11 items-center font-semibold text-brand-primary hover:underline" href="/e-learnings/mijn">Terug naar Mijn e-learnings</Link></Card>
   </main>
 
   if (check.completedAt && check.result) return <main className="mx-auto w-full max-w-3xl space-y-5 px-4 py-10 sm:px-6">
-    <p className="text-sm font-semibold uppercase tracking-wide text-brand-primary">RI&E in de praktijk</p>
+    <p className="text-sm font-semibold uppercase tracking-wide text-brand-primary">{context.definition.title}</p>
     <h1 className="text-3xl font-bold text-brand-dark">Jaarlijkse kennischeck afgerond</h1>
     <Card className="space-y-5">
       <p className="text-lg font-semibold text-brand-dark">{check.score} van 10 goed</p>
@@ -35,10 +38,10 @@ export default async function AnnualRetentionCheckPage({ params }: { params: Pro
   </main>
 
   return <main className="mx-auto w-full max-w-3xl space-y-5 px-4 py-10 sm:px-6">
-    <p className="text-sm font-semibold uppercase tracking-wide text-brand-primary">RI&E in de praktijk</p>
+    <p className="text-sm font-semibold uppercase tracking-wide text-brand-primary">{context.definition.title}</p>
     <h1 className="text-3xl font-bold text-brand-dark">Jaarlijkse kennischeck</h1>
     <p className="text-text-secondary">Tien korte vragen om uw kennis op te frissen. Dit is geen examen.</p>
-    <AnnualRetentionPlayer check={check} />
+    <AnnualRetentionPlayer check={check} courseSlug={courseSlug} />
     <Link className="inline-flex min-h-11 items-center font-semibold text-brand-primary hover:underline" href="/e-learnings/mijn">Kennischeck verlaten</Link>
   </main>
 }

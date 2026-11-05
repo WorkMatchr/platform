@@ -1,5 +1,7 @@
 'use client'
 
+import { measure } from '@/lib/marketing/measurement'
+
 import Link from 'next/link'
 import { useRef, useState, type FormEvent } from 'react'
 import { Button } from '@/components/ui/button'
@@ -44,6 +46,8 @@ export function ContactForm({ enabled }: { enabled: boolean }) {
       const body = await response.json() as ContactResult
       const safeResult = body && typeof body.message === 'string' ? { ...body, ok: response.ok && body.ok === true } : { ok: false, message: 'Versturen is niet gelukt. Uw invoer blijft staan. Probeer het later opnieuw.' }
       setResult(safeResult)
+      // Honeypot acceptance is deliberately indistinguishable to the caller; exclude it locally.
+      if (safeResult.ok && !parsed.data.website) measure('contact_request_accepted')
     } catch { setResult({ ok: false, message: 'Er is geen bevestiging ontvangen. Uw invoer blijft staan. Controleer uw verbinding en probeer opnieuw.' }) }
     finally { active.current = false; setPending(false); requestAnimationFrame(() => status.current?.focus()) }
   }

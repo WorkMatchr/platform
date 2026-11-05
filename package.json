@@ -70,10 +70,15 @@
     "seed:learning:exam:v1.1": "tsx scripts/seed-learning-final-exam-v1-1.ts",
     "test:db:learning": "tsx scripts/test-learning-database.ts",
     "test:db:learning-integrity": "tsx scripts/test-learning-publication-integrity-database.ts",
-    "test:db:contact": "tsx scripts/test-contact-outbox-database.ts"
+    "test:db:contact": "tsx scripts/test-contact-outbox-database.ts",
+    "academy:import": "node --import ./scripts/register-learning-server.mjs --import tsx scripts/import-academy-course.ts",
+    "academy:verify:db": "tsx scripts/verify-academy-database.ts",
+    "bootstrap:first-platform-owner": "tsx scripts/bootstrap-first-platform-owner.ts",
+    "academy:mail": "tsx scripts/academy-local-mail.ts",
+    "academy:verify:migrations": "tsx scripts/verify-academy-migration-history.ts"
   },
   "dependencies": {
-    "@better-auth/prisma-adapter": "^1.6.23",
+    "@better-auth/prisma-adapter": "1.7.7",
     "@mollie/api-client": "^4.6.0",
     "@napi-rs/canvas": "1.0.6",
     "@prisma/adapter-pg": "^7.10.1",
@@ -81,7 +86,7 @@
     "@types/qrcode": "^1.5.6",
     "@vercel/blob": "^2.8.0",
     "@vercel/oidc": "^3.8.5",
-    "better-auth": "^1.6.23",
+    "better-auth": "1.7.7",
     "dotenv": "^17.0.0",
     "next": "^16.4.1",
     "pdf-lib": "^1.17.1",
@@ -116,6 +121,7 @@
     "vitest": "^4.1.12"
   },
   "overrides": {
+    "@better-auth/core": "1.7.7",
     "@hono/node-server": "2.0.11",
     "find-my-way": "9.7.0",
     "postcss": "8.5.31",

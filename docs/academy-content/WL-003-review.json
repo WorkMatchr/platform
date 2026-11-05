@@ -1,0 +1,2166 @@
+{
+  "courseCode": "WL-003",
+  "title": "Veilig en gezond werken",
+  "sourceVersion": "WL-003-COURSE-1.0",
+  "candidateVersion": "WL-003-COURSE-1.1",
+  "reviewStatus": "OPEN",
+  "checkedAt": "2026-11-04",
+  "audience": [
+    "Medewerkers in dienstverlening, kantoor, zorg, logistiek en ondersteunende werkzaamheden.",
+    "Nieuwe en ervaren medewerkers die algemene veilige werkafspraken willen herkennen en toepassen."
+  ],
+  "prerequisites": [
+    "Geen arbodiploma of eerdere veiligheidsopleiding vereist.",
+    "Nederlandse werkinstructies kunnen lezen; bij onduidelijkheid ondersteuning organiseren.",
+    "Taakspecifieke instructie, technische bevoegdheden en lokale noodafspraken worden niet door deze opleiding vervangen."
+  ],
+  "learningObjectives": [
+    "H1-LD01: Verantwoordelijkheden van werkgever en werknemer in een praktijksituatie onderscheiden.",
+    "H1-LD02: Veilige instructies toepassen zonder systeemproblemen tot individuele schuld te reduceren.",
+    "H1-LD03: Een zorg feitelijk bespreken en een bruikbare vervolgafspraak maken.",
+    "H1-LD04: Grenzen van eigen kennis herkennen en bij onzekerheid passende hulp organiseren.",
+    "H2-LD01: Gevaar, blootstelling en mogelijk gevolg van elkaar onderscheiden.",
+    "H2-LD02: Relevante informatie verzamelen voordat een situatie veilig wordt verklaard.",
+    "H2-LD03: Directe én vertraagde gezondheidsrisico’s in verschillende werkcontexten herkennen.",
+    "H2-LD04: Maatregelen vergelijken met aandacht voor bron, werkcontext en betrokken anderen.",
+    "H3-LD01: Taak, omgeving, mensen en middelen vóór de start samen bekijken.",
+    "H3-LD02: Vaststellen of instructie, competentie en geschikte hulpmiddelen beschikbaar zijn.",
+    "H3-LD03: Bij een ontbrekende startvoorwaarde passende grenzen en vervolgacties kiezen.",
+    "H3-LD04: Veilige taakoverdracht en afstemming tussen gelijktijdige werkzaamheden organiseren.",
+    "H4-LD01: Werkafspraken toepassen en controleren of instructies echt zijn begrepen.",
+    "H4-LD02: Een wijziging herkennen die een nieuwe beoordeling of instructie nodig maakt.",
+    "H4-LD03: Een storing of afwijking behandelen zonder buiten eigen bevoegdheid te handelen.",
+    "H4-LD04: Een tijdelijke oplossing begrenzen en een controleerbare herstart afspreken.",
+    "H5-LD01: Looproutes, opslag en werkruimte op concrete veiligheidsknelpunten onderzoeken.",
+    "H5-LD02: Arbeidsmiddelen passend gebruiken en defecten buiten gebruik laten opvolgen.",
+    "H5-LD03: Als voetganger of collega veilig afstemmen rond intern transport.",
+    "H5-LD04: Voor onderhoud en onverwachte beweging deskundigheid en veilige werkafspraken herkennen.",
+    "H6-LD01: Bronaanpak en collectieve bescherming onderscheiden van persoonlijke bescherming.",
+    "H6-LD02: Nagaan of voorgeschreven PBM bij taak, risico en gebruiker passen.",
+    "H6-LD03: Gebreken, gebruiksgrenzen en combinaties van PBM herkennen en laten oplossen.",
+    "H6-LD04: Bescherming tijdens een verandering behouden en problemen terugkoppelen.",
+    "H7-LD01: Kracht, houding, herhaling en duur samen herkennen als mogelijke belasting.",
+    "H7-LD02: Hulpmiddelen en werkorganisatie afwegen vóór uitsluitend gedragsadvies.",
+    "H7-LD03: Werkplek en afwisseling passend organiseren bij beeldscherm- en ander werk.",
+    "H7-LD04: Vroege gezondheidssignalen bespreken zonder diagnose of onnodige medische gegevens.",
+    "H8-LD01: Werkdruksignalen verbinden aan taken, tijd, middelen en regelmogelijkheden.",
+    "H8-LD02: Ongewenst gedrag herkennen zonder de ervaring van een collega te bagatelliseren.",
+    "H8-LD03: Passende bespreek- en hulproutes kiezen met respect voor privacy en veiligheid.",
+    "H8-LD04: Als collega bijdragen aan werkbare afspraken en veilige samenwerking.",
+    "H9-LD01: Ongeval, bijna-ongeval en gevaarlijke situatie in voorbeelden onderscheiden.",
+    "H9-LD02: Bij acuut gevaar eigen veiligheid, alarmering en lokale noodafspraken verbinden.",
+    "H9-LD03: Feitelijk intern melden en werkgeversmelding aan de inspectie onderscheiden.",
+    "H9-LD04: Uit meldingen leren en opvolging controleren zonder schuld of een onjuiste oorzaak te verzinnen.",
+    "H10-LD01: Samenhangende signalen tijdens een werkdag ordenen op urgentie en ontbrekende informatie.",
+    "H10-LD02: Een uitvoerbaar start- of stopbesluit nemen binnen eigen taak en bevoegdheid.",
+    "H10-LD03: Onder tijdsdruk bescherming, afstemming en sociaal veilige communicatie combineren.",
+    "H10-LD04: Afgesproken verbeteringen overdragen en controleren of de veilige werkwijze werkt."
+  ],
+  "studyPlan": {
+    "chapterMinutes": [
+      26,
+      24,
+      23,
+      23,
+      24,
+      23,
+      23,
+      23,
+      24,
+      25
+    ],
+    "examMinutes": 50,
+    "totalMinutes": 288,
+    "measured": false,
+    "rationale": "Ontwerpstudielast 4 uur 48 minuten: zichtbare hoofdstuktekst inclusief vraagopties en feedback eenmaal tellen, lezen op 180 woorden/minuut, zes zelfstandige casusafwegingen per hoofdstuk, extra redeneertijd bij negen vragen en reflectie/navigatie. Geen minimumtimer of gemeten cursistgemiddelde. Retentiebank is optioneel en niet in de basisduur meegeteld.",
+    "chapterBreakdown": [
+      {
+        "chapter": 1,
+        "visibleWords": 2684,
+        "readingMinutesAt180WordsPerMinute": 15,
+        "applicationMinutes": 6,
+        "questionReasoningMinutes": 3,
+        "reflectionAndNavigationMinutes": 2,
+        "totalMinutes": 26
+      },
+      {
+        "chapter": 2,
+        "visibleWords": 2157,
+        "readingMinutesAt180WordsPerMinute": 12,
+        "applicationMinutes": 6,
+        "questionReasoningMinutes": 3,
+        "reflectionAndNavigationMinutes": 3,
+        "totalMinutes": 24
+      },
+      {
+        "chapter": 3,
+        "visibleWords": 1909,
+        "readingMinutesAt180WordsPerMinute": 11,
+        "applicationMinutes": 6,
+        "questionReasoningMinutes": 3,
+        "reflectionAndNavigationMinutes": 3,
+        "totalMinutes": 23
+      },
+      {
+        "chapter": 4,
+        "visibleWords": 1838,
+        "readingMinutesAt180WordsPerMinute": 11,
+        "applicationMinutes": 6,
+        "questionReasoningMinutes": 3,
+        "reflectionAndNavigationMinutes": 3,
+        "totalMinutes": 23
+      },
+      {
+        "chapter": 5,
+        "visibleWords": 1959,
+        "readingMinutesAt180WordsPerMinute": 11,
+        "applicationMinutes": 6,
+        "questionReasoningMinutes": 3,
+        "reflectionAndNavigationMinutes": 4,
+        "totalMinutes": 24
+      },
+      {
+        "chapter": 6,
+        "visibleWords": 1985,
+        "readingMinutesAt180WordsPerMinute": 12,
+        "applicationMinutes": 6,
+        "questionReasoningMinutes": 3,
+        "reflectionAndNavigationMinutes": 2,
+        "totalMinutes": 23
+      },
+      {
+        "chapter": 7,
+        "visibleWords": 1894,
+        "readingMinutesAt180WordsPerMinute": 11,
+        "applicationMinutes": 6,
+        "questionReasoningMinutes": 3,
+        "reflectionAndNavigationMinutes": 3,
+        "totalMinutes": 23
+      },
+      {
+        "chapter": 8,
+        "visibleWords": 1950,
+        "readingMinutesAt180WordsPerMinute": 11,
+        "applicationMinutes": 6,
+        "questionReasoningMinutes": 3,
+        "reflectionAndNavigationMinutes": 3,
+        "totalMinutes": 23
+      },
+      {
+        "chapter": 9,
+        "visibleWords": 2073,
+        "readingMinutesAt180WordsPerMinute": 12,
+        "applicationMinutes": 6,
+        "questionReasoningMinutes": 3,
+        "reflectionAndNavigationMinutes": 3,
+        "totalMinutes": 24
+      },
+      {
+        "chapter": 10,
+        "visibleWords": 2101,
+        "readingMinutesAt180WordsPerMinute": 12,
+        "applicationMinutes": 6,
+        "questionReasoningMinutes": 3,
+        "reflectionAndNavigationMinutes": 4,
+        "totalMinutes": 25
+      }
+    ],
+    "readingRateWordsPerMinute": 180,
+    "totalVisibleWords": 20550,
+    "pilotRequired": true
+  },
+  "certificate": {
+    "passingScore": 40,
+    "questionCount": 50,
+    "attemptLimit": null,
+    "legalQualification": false,
+    "expiry": "Geen wettelijke geldigheidsduur toegekend",
+    "requirements": [
+      "Alle hoofdstukken en bijbehorende leeractiviteiten afronden.",
+      "Minimaal 40 van 50 examenvragen juist beantwoorden.",
+      "Meerkeuze met meerdere juiste antwoorden: volledige juiste combinatie vereist.",
+      "Geen wettelijk beroepsdiploma, BHV-aanwijzing, machinebevoegdheid of werkplekgoedkeuring."
+    ],
+    "issued": false
+  },
+  "objectiveCoverage": [
+    {
+      "objective": "H1-LD01: Verantwoordelijkheden van werkgever en werknemer in een praktijksituatie onderscheiden.",
+      "chapters": [
+        1
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E01",
+        "WL003-EX-E05"
+      ],
+      "practiceBlockCodes": [
+        "H1-L1-exercise",
+        "WL003-H1-Q07-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H1-Q01",
+        "WL003-H1-Q07"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R001",
+        "WL003-RET-R002",
+        "WL003-RET-R010"
+      ]
+    },
+    {
+      "objective": "H1-LD02: Veilige instructies toepassen zonder systeemproblemen tot individuele schuld te reduceren.",
+      "chapters": [
+        1
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E02"
+      ],
+      "practiceBlockCodes": [
+        "H1-L2-exercise",
+        "H1-L3-exercise",
+        "WL003-H1-Q07-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H1-Q02",
+        "WL003-H1-Q03",
+        "WL003-H1-Q07"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R003",
+        "WL003-RET-R004",
+        "WL003-RET-R009"
+      ]
+    },
+    {
+      "objective": "H1-LD03: Een zorg feitelijk bespreken en een bruikbare vervolgafspraak maken.",
+      "chapters": [
+        1
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E03",
+        "WL003-EX-E05"
+      ],
+      "practiceBlockCodes": [
+        "H1-L4-exercise",
+        "WL003-H1-Q08-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H1-Q04",
+        "WL003-H1-Q08"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R005",
+        "WL003-RET-R006",
+        "WL003-RET-R009"
+      ]
+    },
+    {
+      "objective": "H1-LD04: Grenzen van eigen kennis herkennen en bij onzekerheid passende hulp organiseren.",
+      "chapters": [
+        1
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E04",
+        "WL003-EX-E05"
+      ],
+      "practiceBlockCodes": [
+        "H1-L5-exercise",
+        "H1-L6-exercise",
+        "WL003-H1-Q09-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H1-Q05",
+        "WL003-H1-Q06",
+        "WL003-H1-Q09"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R007",
+        "WL003-RET-R008",
+        "WL003-RET-R010"
+      ]
+    },
+    {
+      "objective": "H2-LD01: Gevaar, blootstelling en mogelijk gevolg van elkaar onderscheiden.",
+      "chapters": [
+        2
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E06",
+        "WL003-EX-E10"
+      ],
+      "practiceBlockCodes": [
+        "H2-L1-exercise",
+        "WL003-H2-Q07-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H2-Q01",
+        "WL003-H2-Q07"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R011",
+        "WL003-RET-R012",
+        "WL003-RET-R020"
+      ]
+    },
+    {
+      "objective": "H2-LD02: Relevante informatie verzamelen voordat een situatie veilig wordt verklaard.",
+      "chapters": [
+        2
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E07"
+      ],
+      "practiceBlockCodes": [
+        "H2-L2-exercise",
+        "H2-L4-exercise",
+        "WL003-H2-Q08-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H2-Q02",
+        "WL003-H2-Q04",
+        "WL003-H2-Q08"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R013",
+        "WL003-RET-R014",
+        "WL003-RET-R019"
+      ]
+    },
+    {
+      "objective": "H2-LD03: Directe én vertraagde gezondheidsrisico’s in verschillende werkcontexten herkennen.",
+      "chapters": [
+        2
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E08",
+        "WL003-EX-E10"
+      ],
+      "practiceBlockCodes": [
+        "H2-L3-exercise",
+        "H2-L6-exercise",
+        "WL003-H2-Q08-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H2-Q03",
+        "WL003-H2-Q06",
+        "WL003-H2-Q08"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R015",
+        "WL003-RET-R016",
+        "WL003-RET-R019"
+      ]
+    },
+    {
+      "objective": "H2-LD04: Maatregelen vergelijken met aandacht voor bron, werkcontext en betrokken anderen.",
+      "chapters": [
+        2
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E09",
+        "WL003-EX-E10"
+      ],
+      "practiceBlockCodes": [
+        "H2-L5-exercise",
+        "WL003-H2-Q09-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H2-Q05",
+        "WL003-H2-Q09"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R017",
+        "WL003-RET-R018",
+        "WL003-RET-R020"
+      ]
+    },
+    {
+      "objective": "H3-LD01: Taak, omgeving, mensen en middelen vóór de start samen bekijken.",
+      "chapters": [
+        3
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E11",
+        "WL003-EX-E15"
+      ],
+      "practiceBlockCodes": [
+        "H3-L1-exercise",
+        "H3-L2-exercise",
+        "WL003-H3-Q07-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H3-Q01",
+        "WL003-H3-Q02",
+        "WL003-H3-Q07"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R021",
+        "WL003-RET-R022",
+        "WL003-RET-R030"
+      ]
+    },
+    {
+      "objective": "H3-LD02: Vaststellen of instructie, competentie en geschikte hulpmiddelen beschikbaar zijn.",
+      "chapters": [
+        3
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E12"
+      ],
+      "practiceBlockCodes": [
+        "H3-L3-exercise",
+        "H3-L4-exercise",
+        "WL003-H3-Q07-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H3-Q03",
+        "WL003-H3-Q04",
+        "WL003-H3-Q07"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R023",
+        "WL003-RET-R024",
+        "WL003-RET-R029"
+      ]
+    },
+    {
+      "objective": "H3-LD03: Bij een ontbrekende startvoorwaarde passende grenzen en vervolgacties kiezen.",
+      "chapters": [
+        3
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E13",
+        "WL003-EX-E15"
+      ],
+      "practiceBlockCodes": [
+        "H3-L5-exercise",
+        "WL003-H3-Q08-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H3-Q05",
+        "WL003-H3-Q08"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R025",
+        "WL003-RET-R026",
+        "WL003-RET-R029"
+      ]
+    },
+    {
+      "objective": "H3-LD04: Veilige taakoverdracht en afstemming tussen gelijktijdige werkzaamheden organiseren.",
+      "chapters": [
+        3
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E14",
+        "WL003-EX-E15"
+      ],
+      "practiceBlockCodes": [
+        "H3-L6-exercise",
+        "WL003-H3-Q09-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H3-Q06",
+        "WL003-H3-Q09"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R027",
+        "WL003-RET-R028",
+        "WL003-RET-R030"
+      ]
+    },
+    {
+      "objective": "H4-LD01: Werkafspraken toepassen en controleren of instructies echt zijn begrepen.",
+      "chapters": [
+        4
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E19",
+        "WL003-EX-E20"
+      ],
+      "practiceBlockCodes": [
+        "H4-L1-exercise",
+        "WL003-H4-Q07-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H4-Q01",
+        "WL003-H4-Q07"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R031",
+        "WL003-RET-R032",
+        "WL003-RET-R040"
+      ]
+    },
+    {
+      "objective": "H4-LD02: Een wijziging herkennen die een nieuwe beoordeling of instructie nodig maakt.",
+      "chapters": [
+        4
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E16"
+      ],
+      "practiceBlockCodes": [
+        "H4-L2-exercise",
+        "H4-L3-exercise",
+        "WL003-H4-Q07-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H4-Q02",
+        "WL003-H4-Q03",
+        "WL003-H4-Q07"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R033",
+        "WL003-RET-R034",
+        "WL003-RET-R039"
+      ]
+    },
+    {
+      "objective": "H4-LD03: Een storing of afwijking behandelen zonder buiten eigen bevoegdheid te handelen.",
+      "chapters": [
+        4
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E17",
+        "WL003-EX-E20"
+      ],
+      "practiceBlockCodes": [
+        "H4-L4-exercise",
+        "WL003-H4-Q08-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H4-Q04",
+        "WL003-H4-Q08"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R035",
+        "WL003-RET-R036",
+        "WL003-RET-R039"
+      ]
+    },
+    {
+      "objective": "H4-LD04: Een tijdelijke oplossing begrenzen en een controleerbare herstart afspreken.",
+      "chapters": [
+        4
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E18",
+        "WL003-EX-E20"
+      ],
+      "practiceBlockCodes": [
+        "H4-L5-exercise",
+        "H4-L6-exercise",
+        "WL003-H4-Q09-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H4-Q05",
+        "WL003-H4-Q06",
+        "WL003-H4-Q09"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R037",
+        "WL003-RET-R038",
+        "WL003-RET-R040"
+      ]
+    },
+    {
+      "objective": "H5-LD01: Looproutes, opslag en werkruimte op concrete veiligheidsknelpunten onderzoeken.",
+      "chapters": [
+        5
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E21",
+        "WL003-EX-E25"
+      ],
+      "practiceBlockCodes": [
+        "H5-L1-exercise",
+        "H5-L5-exercise",
+        "WL003-H5-Q07-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H5-Q01",
+        "WL003-H5-Q05",
+        "WL003-H5-Q07"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R041",
+        "WL003-RET-R042",
+        "WL003-RET-R050"
+      ]
+    },
+    {
+      "objective": "H5-LD02: Arbeidsmiddelen passend gebruiken en defecten buiten gebruik laten opvolgen.",
+      "chapters": [
+        5
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E22"
+      ],
+      "practiceBlockCodes": [
+        "H5-L2-exercise",
+        "H5-L3-exercise",
+        "WL003-H5-Q07-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H5-Q02",
+        "WL003-H5-Q03",
+        "WL003-H5-Q07"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R043",
+        "WL003-RET-R044",
+        "WL003-RET-R049"
+      ]
+    },
+    {
+      "objective": "H5-LD03: Als voetganger of collega veilig afstemmen rond intern transport.",
+      "chapters": [
+        5
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E23",
+        "WL003-EX-E25"
+      ],
+      "practiceBlockCodes": [
+        "H5-L4-exercise",
+        "WL003-H5-Q08-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H5-Q04",
+        "WL003-H5-Q08"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R045",
+        "WL003-RET-R046",
+        "WL003-RET-R049"
+      ]
+    },
+    {
+      "objective": "H5-LD04: Voor onderhoud en onverwachte beweging deskundigheid en veilige werkafspraken herkennen.",
+      "chapters": [
+        5
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E24",
+        "WL003-EX-E25"
+      ],
+      "practiceBlockCodes": [
+        "H5-L6-exercise",
+        "WL003-H5-Q09-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H5-Q06",
+        "WL003-H5-Q09"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R047",
+        "WL003-RET-R048",
+        "WL003-RET-R050"
+      ]
+    },
+    {
+      "objective": "H6-LD01: Bronaanpak en collectieve bescherming onderscheiden van persoonlijke bescherming.",
+      "chapters": [
+        6
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E26",
+        "WL003-EX-E30"
+      ],
+      "practiceBlockCodes": [
+        "H6-L1-exercise",
+        "H6-L2-exercise",
+        "WL003-H6-Q07-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H6-Q01",
+        "WL003-H6-Q02",
+        "WL003-H6-Q07"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R051",
+        "WL003-RET-R052",
+        "WL003-RET-R060"
+      ]
+    },
+    {
+      "objective": "H6-LD02: Nagaan of voorgeschreven PBM bij taak, risico en gebruiker passen.",
+      "chapters": [
+        6
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E27"
+      ],
+      "practiceBlockCodes": [
+        "H6-L3-exercise",
+        "WL003-H6-Q07-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H6-Q03",
+        "WL003-H6-Q07"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R053",
+        "WL003-RET-R054",
+        "WL003-RET-R059"
+      ]
+    },
+    {
+      "objective": "H6-LD03: Gebreken, gebruiksgrenzen en combinaties van PBM herkennen en laten oplossen.",
+      "chapters": [
+        6
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E28",
+        "WL003-EX-E30"
+      ],
+      "practiceBlockCodes": [
+        "H6-L4-exercise",
+        "H6-L5-exercise",
+        "WL003-H6-Q08-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H6-Q04",
+        "WL003-H6-Q05",
+        "WL003-H6-Q08"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R055",
+        "WL003-RET-R056",
+        "WL003-RET-R059"
+      ]
+    },
+    {
+      "objective": "H6-LD04: Bescherming tijdens een verandering behouden en problemen terugkoppelen.",
+      "chapters": [
+        6
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E29",
+        "WL003-EX-E30"
+      ],
+      "practiceBlockCodes": [
+        "H6-L6-exercise",
+        "WL003-H6-Q09-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H6-Q06",
+        "WL003-H6-Q09"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R057",
+        "WL003-RET-R058",
+        "WL003-RET-R060"
+      ]
+    },
+    {
+      "objective": "H7-LD01: Kracht, houding, herhaling en duur samen herkennen als mogelijke belasting.",
+      "chapters": [
+        7
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E31",
+        "WL003-EX-E35"
+      ],
+      "practiceBlockCodes": [
+        "H7-L1-exercise",
+        "H7-L3-exercise",
+        "WL003-H7-Q07-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H7-Q01",
+        "WL003-H7-Q03",
+        "WL003-H7-Q07"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R061",
+        "WL003-RET-R062",
+        "WL003-RET-R070"
+      ]
+    },
+    {
+      "objective": "H7-LD02: Hulpmiddelen en werkorganisatie afwegen vóór uitsluitend gedragsadvies.",
+      "chapters": [
+        7
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E32"
+      ],
+      "practiceBlockCodes": [
+        "H7-L2-exercise",
+        "H7-L6-exercise",
+        "WL003-H7-Q07-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H7-Q02",
+        "WL003-H7-Q06",
+        "WL003-H7-Q07"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R063",
+        "WL003-RET-R064",
+        "WL003-RET-R069"
+      ]
+    },
+    {
+      "objective": "H7-LD03: Werkplek en afwisseling passend organiseren bij beeldscherm- en ander werk.",
+      "chapters": [
+        7
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E33",
+        "WL003-EX-E35"
+      ],
+      "practiceBlockCodes": [
+        "H7-L4-exercise",
+        "H7-L6-exercise",
+        "WL003-H7-Q08-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H7-Q04",
+        "WL003-H7-Q06",
+        "WL003-H7-Q08"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R065",
+        "WL003-RET-R066",
+        "WL003-RET-R069"
+      ]
+    },
+    {
+      "objective": "H7-LD04: Vroege gezondheidssignalen bespreken zonder diagnose of onnodige medische gegevens.",
+      "chapters": [
+        7
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E34",
+        "WL003-EX-E35"
+      ],
+      "practiceBlockCodes": [
+        "H7-L5-exercise",
+        "WL003-H7-Q09-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H7-Q05",
+        "WL003-H7-Q09"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R067",
+        "WL003-RET-R068",
+        "WL003-RET-R070"
+      ]
+    },
+    {
+      "objective": "H8-LD01: Werkdruksignalen verbinden aan taken, tijd, middelen en regelmogelijkheden.",
+      "chapters": [
+        8
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E36",
+        "WL003-EX-E40"
+      ],
+      "practiceBlockCodes": [
+        "H8-L1-exercise",
+        "WL003-H8-Q07-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H8-Q01",
+        "WL003-H8-Q07"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R071",
+        "WL003-RET-R072",
+        "WL003-RET-R080"
+      ]
+    },
+    {
+      "objective": "H8-LD02: Ongewenst gedrag herkennen zonder de ervaring van een collega te bagatelliseren.",
+      "chapters": [
+        8
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E37"
+      ],
+      "practiceBlockCodes": [
+        "H8-L3-exercise",
+        "WL003-H8-Q07-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H8-Q03",
+        "WL003-H8-Q07"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R073",
+        "WL003-RET-R074",
+        "WL003-RET-R079"
+      ]
+    },
+    {
+      "objective": "H8-LD03: Passende bespreek- en hulproutes kiezen met respect voor privacy en veiligheid.",
+      "chapters": [
+        8
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E38",
+        "WL003-EX-E39",
+        "WL003-EX-E40"
+      ],
+      "practiceBlockCodes": [
+        "H8-L4-exercise",
+        "H8-L5-exercise",
+        "WL003-H8-Q08-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H8-Q04",
+        "WL003-H8-Q05",
+        "WL003-H8-Q08"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R075",
+        "WL003-RET-R076",
+        "WL003-RET-R079"
+      ]
+    },
+    {
+      "objective": "H8-LD04: Als collega bijdragen aan werkbare afspraken en veilige samenwerking.",
+      "chapters": [
+        8
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E40"
+      ],
+      "practiceBlockCodes": [
+        "H8-L2-exercise",
+        "H8-L6-exercise",
+        "WL003-H8-Q09-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H8-Q02",
+        "WL003-H8-Q06",
+        "WL003-H8-Q09"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R077",
+        "WL003-RET-R078",
+        "WL003-RET-R080"
+      ]
+    },
+    {
+      "objective": "H9-LD01: Ongeval, bijna-ongeval en gevaarlijke situatie in voorbeelden onderscheiden.",
+      "chapters": [
+        9
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E41",
+        "WL003-EX-E45"
+      ],
+      "practiceBlockCodes": [
+        "H9-L1-exercise",
+        "WL003-H9-Q07-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H9-Q01",
+        "WL003-H9-Q07"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R081",
+        "WL003-RET-R082",
+        "WL003-RET-R090"
+      ]
+    },
+    {
+      "objective": "H9-LD02: Bij acuut gevaar eigen veiligheid, alarmering en lokale noodafspraken verbinden.",
+      "chapters": [
+        9
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E42",
+        "WL003-EX-E44"
+      ],
+      "practiceBlockCodes": [
+        "H9-L2-exercise",
+        "H9-L3-exercise",
+        "WL003-H9-Q07-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H9-Q02",
+        "WL003-H9-Q03",
+        "WL003-H9-Q07"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R083",
+        "WL003-RET-R084",
+        "WL003-RET-R089"
+      ]
+    },
+    {
+      "objective": "H9-LD03: Feitelijk intern melden en werkgeversmelding aan de inspectie onderscheiden.",
+      "chapters": [
+        9
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E43",
+        "WL003-EX-E45"
+      ],
+      "practiceBlockCodes": [
+        "H9-L4-exercise",
+        "H9-L5-exercise",
+        "WL003-H9-Q08-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H9-Q04",
+        "WL003-H9-Q05",
+        "WL003-H9-Q08"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R085",
+        "WL003-RET-R086",
+        "WL003-RET-R089"
+      ]
+    },
+    {
+      "objective": "H9-LD04: Uit meldingen leren en opvolging controleren zonder schuld of een onjuiste oorzaak te verzinnen.",
+      "chapters": [
+        9
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E45"
+      ],
+      "practiceBlockCodes": [
+        "H9-L6-exercise",
+        "WL003-H9-Q09-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H9-Q06",
+        "WL003-H9-Q09"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R087",
+        "WL003-RET-R088",
+        "WL003-RET-R090"
+      ]
+    },
+    {
+      "objective": "H10-LD01: Samenhangende signalen tijdens een werkdag ordenen op urgentie en ontbrekende informatie.",
+      "chapters": [
+        10
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E46",
+        "WL003-EX-E50"
+      ],
+      "practiceBlockCodes": [
+        "H10-L1-exercise",
+        "WL003-H10-Q07-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H10-Q01",
+        "WL003-H10-Q07"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R091",
+        "WL003-RET-R092",
+        "WL003-RET-R100"
+      ]
+    },
+    {
+      "objective": "H10-LD02: Een uitvoerbaar start- of stopbesluit nemen binnen eigen taak en bevoegdheid.",
+      "chapters": [
+        10
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E47"
+      ],
+      "practiceBlockCodes": [
+        "H10-L2-exercise",
+        "H10-L3-exercise",
+        "WL003-H10-Q07-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H10-Q02",
+        "WL003-H10-Q03",
+        "WL003-H10-Q07"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R093",
+        "WL003-RET-R094",
+        "WL003-RET-R099"
+      ]
+    },
+    {
+      "objective": "H10-LD03: Onder tijdsdruk bescherming, afstemming en sociaal veilige communicatie combineren.",
+      "chapters": [
+        10
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E48",
+        "WL003-EX-E50"
+      ],
+      "practiceBlockCodes": [
+        "H10-L4-exercise",
+        "H10-L5-exercise",
+        "WL003-H10-Q08-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H10-Q04",
+        "WL003-H10-Q05",
+        "WL003-H10-Q08"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R095",
+        "WL003-RET-R096",
+        "WL003-RET-R099"
+      ]
+    },
+    {
+      "objective": "H10-LD04: Afgesproken verbeteringen overdragen en controleren of de veilige werkwijze werkt.",
+      "chapters": [
+        10
+      ],
+      "examQuestionCodes": [
+        "WL003-EX-E49",
+        "WL003-EX-E50"
+      ],
+      "practiceBlockCodes": [
+        "H10-L6-exercise",
+        "WL003-H10-Q09-block"
+      ],
+      "formativeQuestionCodes": [
+        "WL003-H10-Q06",
+        "WL003-H10-Q09"
+      ],
+      "retentionQuestionCodes": [
+        "WL003-RET-R097",
+        "WL003-RET-R098",
+        "WL003-RET-R100"
+      ]
+    }
+  ],
+  "sourceEvidence": [
+    {
+      "sourceId": "roles",
+      "url": "https://www.arboportaal.nl/onderwerpen/arbowet--en--regelgeving/arbowetgeving/verplichtingen-werkgevers-en-werknemers",
+      "accessedAt": "2026-11-04",
+      "verification": "OFFICIAL_PAGE_READ",
+      "providerRevision": null,
+      "legalApproval": "OPEN",
+      "limitation": "Hoofdlijn rollen, instructie en melden; toepassing op concrete situaties formeel reviewen."
+    },
+    {
+      "sourceId": "pbm",
+      "url": "https://www.arboportaal.nl/onderwerpen/persoonlijke-beschermingsmiddelen/persoonlijke-beschermingsmiddelen-als-hulpmiddel-voor-gezond-en-veilig-werken",
+      "accessedAt": "2026-11-04",
+      "verification": "OFFICIAL_PAGE_READ",
+      "providerRevision": null,
+      "legalApproval": "OPEN",
+      "limitation": "Bron-/collectieve maatregelen, kosteloze noodzakelijke PBM; geen productspecifieke selectie."
+    },
+    {
+      "sourceId": "equipment",
+      "url": "https://www.arboportaal.nl/onderwerpen/veiligheid-op-het-werk/arbeidsmiddelen/onderhoud-van-arbeidsmiddelen",
+      "accessedAt": "2026-11-04",
+      "verification": "OFFICIAL_PAGE_READ",
+      "providerRevision": null,
+      "legalApproval": "OPEN",
+      "limitation": "Onderhoud en veiligheidsvoorzieningen; geen instructie voor zelf technisch veiligstellen."
+    },
+    {
+      "sourceId": "physical",
+      "url": "https://www.arboportaal.nl/onderwerpen/fysieke-belasting",
+      "accessedAt": "2026-11-04",
+      "verification": "OFFICIAL_PAGE_READ",
+      "providerRevision": null,
+      "legalApproval": "OPEN",
+      "limitation": "Kracht, duur, houding en afwisseling; geen universele veilige grens of diagnose."
+    },
+    {
+      "sourceId": "screen",
+      "url": "https://www.arboportaal.nl/onderwerpen/fysieke-belasting/computerwerk/wat-zegt-de-wet-over-beeldschermwerk",
+      "accessedAt": "2026-11-04",
+      "verification": "OFFICIAL_PAGE_READ",
+      "providerRevision": null,
+      "legalApproval": "OPEN",
+      "limitation": "Werkplekinrichting, belasting en afwisseling; geen numerieke zes-uursveiligheidsgarantie overgenomen."
+    },
+    {
+      "sourceId": "psa",
+      "url": "https://www.arboportaal.nl/onderwerpen/psychosociale-arbeidsbelasting",
+      "accessedAt": "2026-11-04",
+      "verification": "OFFICIAL_PAGE_READ",
+      "providerRevision": null,
+      "legalApproval": "OPEN",
+      "limitation": "Werkdruk en ongewenst gedrag; geen uitspraak over een individuele juridische klacht."
+    },
+    {
+      "sourceId": "pressure",
+      "url": "https://www.arboportaal.nl/onderwerpen/psychosociale-arbeidsbelasting/werkdruk/wat-zegt-de-wet",
+      "accessedAt": "2026-11-04",
+      "verification": "OFFICIAL_PAGE_READ",
+      "providerRevision": null,
+      "legalApproval": "OPEN",
+      "limitation": "Organisatorische werkdrukmaatregelen naast persoonlijke aanpak; juridische review blijft vereist."
+    },
+    {
+      "sourceId": "openconsult",
+      "url": "https://www.arboportaal.nl/documenten/vraag-en-antwoord/bedrijfsarts/waarvoor-is-het-open-spreekuur",
+      "accessedAt": "2026-11-04",
+      "verification": "OFFICIAL_PAGE_READ",
+      "providerRevision": null,
+      "legalApproval": "OPEN",
+      "limitation": "Preventieve toegang zonder werkgeverstoestemming; geen medische beoordeling in de opleiding."
+    },
+    {
+      "sourceId": "accident",
+      "url": "https://www.nlarbeidsinspectie.nl/onderwerpen/ik-wil-iets-melden/arbeidsongeval-melden",
+      "accessedAt": "2026-11-04",
+      "verification": "OFFICIAL_PAGE_READ",
+      "providerRevision": null,
+      "legalApproval": "OPEN",
+      "limitation": "Interne melding onderscheiden van werkgeversmelding; ook bijzondere biologische meldplichten laten beoordelen. Geen volledige beslisboom."
+    },
+    {
+      "sourceId": "bhv",
+      "url": "https://www.arboportaal.nl/onderwerpen/arbozorg/bedrijfshulpverlening/wat-zegt-de-wet-over-bedrijfshulpverlening",
+      "accessedAt": "2026-11-04",
+      "verification": "OFFICIAL_PAGE_READ",
+      "providerRevision": null,
+      "legalApproval": "OPEN",
+      "limitation": "Rol/noodorganisatie; de cursus vervangt geen praktijktraining. Geen universele herhaalfrequentie geleerd."
+    },
+    {
+      "sourceId": "emergency",
+      "url": "https://www.rijksoverheid.nl/documenten/vraag-en-antwoord/alarmnummer-112/wanneer-112-bellen",
+      "accessedAt": "2026-11-04",
+      "verification": "OFFICIAL_PAGE_READ",
+      "providerRevision": null,
+      "legalApproval": "OPEN",
+      "limitation": "Spoedeisende hulp en feitelijk alarmeren; geen EHBO- of reanimatie-instructie."
+    },
+    {
+      "sourceId": "substances",
+      "url": "https://www.arboportaal.nl/onderwerpen/inrichting-werkvloer/gevaarlijke-stoffen/vraag-en-antwoord/alle-vragen-en-antwoorden/wat-moeten-werkgevers-en-werknemers-doen-met-een-gevaarlijke-stof-waarop-een-etiket-met-duidelijke-informatie-ontbreekt",
+      "accessedAt": "2026-11-04",
+      "verification": "OFFICIAL_PAGE_READ",
+      "providerRevision": null,
+      "legalApproval": "OPEN",
+      "limitation": "Identificatie en instructie vóór gebruik van een onbekend product; geen beoordeling op geur of uiterlijk."
+    },
+    {
+      "sourceId": "traffic",
+      "url": "https://www.nlarbeidsinspectie.nl/documenten/2026/09/09/monitor-arbeidsongevallen-2025",
+      "accessedAt": "2026-11-04",
+      "verification": "OFFICIAL_PAGE_READ",
+      "providerRevision": null,
+      "legalApproval": "OPEN",
+      "limitation": "Aandacht voor intern transport en wederzijdse waarneming; geen voertuigbevoegdheid of vaste snelheids-/afstandsnorm."
+    },
+    {
+      "sourceId": "law",
+      "url": "https://wetten.overheid.nl/BWBR0010346/",
+      "accessedAt": "2026-11-04",
+      "verification": "HTTP_429_MANUAL_REVIEW_REQUIRED",
+      "providerRevision": null,
+      "legalApproval": "OPEN",
+      "limitation": "Directe geconsolideerde raadpleging op 2026-11-04 gaf HTTP 429. Artikelen 3, 8, 9, 11, 14, 15 en 29 vereisen menselijke juridische eindcontrole; officiële uitleg is geen vervanging daarvan."
+    },
+    {
+      "sourceId": "accident-register",
+      "url": "https://www.nlarbeidsinspectie.nl/onderwerpen/arbeidsomstandighedenwet/arbeidsongevallen",
+      "accessedAt": "2026-11-04",
+      "verification": "OFFICIAL_PAGE_READ",
+      "providerRevision": null,
+      "legalApproval": "OPEN",
+      "limitation": "Onderscheid directe werkgeversmelding en registratie; meer dan drie dagen verzuim, niet een zelfbedachte werkdagengrens."
+    },
+    {
+      "sourceId": "decree",
+      "url": "https://wetten.overheid.nl/BWBR0008498/",
+      "accessedAt": "2026-11-04",
+      "verification": "HTTP_429_MANUAL_REVIEW_REQUIRED",
+      "providerRevision": null,
+      "legalApproval": "OPEN",
+      "limitation": "Directe raadpleging op 2026-11-04 gaf HTTP 429. Artikelen 2.15, hoofdstukken 3, 4, 5, 7 en 8 integraal juridisch toetsen; geen brongoedkeuring afgeleid uit linkbestaan."
+    }
+  ],
+  "chapterLegalBindings": [
+    {
+      "chapter": 1,
+      "proposedLegalArticles": "Arbowet 3, 8 en 11",
+      "sourceIds": [
+        "roles",
+        "law"
+      ],
+      "classification": "Wettelijke hoofdlijn met praktische werknemersoefeningen; concrete toepasselijkheid door reviewer te bevestigen.",
+      "legalReview": "OPEN"
+    },
+    {
+      "chapter": 2,
+      "proposedLegalArticles": "Arbowet 3 en 5; Arbobesluit 4.2 waar stoffen relevant zijn",
+      "sourceIds": [
+        "roles",
+        "pbm",
+        "substances",
+        "law",
+        "decree"
+      ],
+      "classification": "Wettelijke hoofdlijn met praktische werknemersoefeningen; concrete toepasselijkheid door reviewer te bevestigen.",
+      "legalReview": "OPEN"
+    },
+    {
+      "chapter": 3,
+      "proposedLegalArticles": "Arbowet 8 en 11; Arbobesluit 7.3 en 7.6 voor taak en arbeidsmiddel",
+      "sourceIds": [
+        "roles",
+        "equipment",
+        "law",
+        "decree"
+      ],
+      "classification": "Wettelijke hoofdlijn met praktische werknemersoefeningen; concrete toepasselijkheid door reviewer te bevestigen.",
+      "legalReview": "OPEN"
+    },
+    {
+      "chapter": 4,
+      "proposedLegalArticles": "Arbowet 8 en 11; Arbobesluit 7.5 voor onderhoud/veilig werken",
+      "sourceIds": [
+        "roles",
+        "equipment",
+        "substances",
+        "law",
+        "decree"
+      ],
+      "classification": "Wettelijke hoofdlijn met praktische werknemersoefeningen; concrete toepasselijkheid door reviewer te bevestigen.",
+      "legalReview": "OPEN"
+    },
+    {
+      "chapter": 5,
+      "proposedLegalArticles": "Arbobesluit 3.2, 3.7, 3.14, 7.3 en 7.5; Arbowet 11",
+      "sourceIds": [
+        "equipment",
+        "traffic",
+        "roles",
+        "law",
+        "decree"
+      ],
+      "classification": "Wettelijke hoofdlijn met praktische werknemersoefeningen; concrete toepasselijkheid door reviewer te bevestigen.",
+      "legalReview": "OPEN"
+    },
+    {
+      "chapter": 6,
+      "proposedLegalArticles": "Arbowet 3 lid 1 onder b en 11; Arbobesluit 8.1–8.3",
+      "sourceIds": [
+        "pbm",
+        "roles",
+        "law",
+        "decree"
+      ],
+      "classification": "Wettelijke hoofdlijn met praktische werknemersoefeningen; concrete toepasselijkheid door reviewer te bevestigen.",
+      "legalReview": "OPEN"
+    },
+    {
+      "chapter": 7,
+      "proposedLegalArticles": "Arbobesluit 5.2–5.5 en 5.9–5.12; Arbowet 14 lid 2 onder e",
+      "sourceIds": [
+        "physical",
+        "screen",
+        "openconsult",
+        "law",
+        "decree"
+      ],
+      "classification": "Wettelijke hoofdlijn met praktische werknemersoefeningen; concrete toepasselijkheid door reviewer te bevestigen.",
+      "legalReview": "OPEN"
+    },
+    {
+      "chapter": 8,
+      "proposedLegalArticles": "Arbowet 3 lid 2; Arbobesluit 2.15",
+      "sourceIds": [
+        "psa",
+        "pressure",
+        "openconsult",
+        "law",
+        "decree"
+      ],
+      "classification": "Wettelijke hoofdlijn met praktische werknemersoefeningen; concrete toepasselijkheid door reviewer te bevestigen.",
+      "legalReview": "OPEN"
+    },
+    {
+      "chapter": 9,
+      "proposedLegalArticles": "Arbowet 9 leden 1 en 2, 11 en 15",
+      "sourceIds": [
+        "accident",
+        "accident-register",
+        "bhv",
+        "emergency",
+        "law"
+      ],
+      "classification": "Wettelijke hoofdlijn met praktische werknemersoefeningen; concrete toepasselijkheid door reviewer te bevestigen.",
+      "legalReview": "OPEN"
+    },
+    {
+      "chapter": 10,
+      "proposedLegalArticles": "Toepassing van hoofdstukken 1–9; geen zelfstandige extra wettelijke norm",
+      "sourceIds": [
+        "roles",
+        "equipment",
+        "physical",
+        "psa",
+        "accident",
+        "law"
+      ],
+      "classification": "Wettelijke hoofdlijn met praktische werknemersoefeningen; concrete toepasselijkheid door reviewer te bevestigen.",
+      "legalReview": "OPEN"
+    }
+  ],
+  "historicalSources": [
+    {
+      "title": "AI-2 Werken met beeldschermen",
+      "edition": "Tweede herziene druk, Sdu 2000",
+      "pagesReviewed": [
+        1,
+        2,
+        10,
+        11,
+        37,
+        39,
+        47
+      ],
+      "use": "Historische vergelijking werkorganisatie en ergonomie. Oude vaste uren-, pauze- en maatvoeringseisen en medische percentages niet als actuele norm overgenomen.",
+      "redistributed": false
+    },
+    {
+      "title": "AI-1 Arbo- en verzuimbeleid",
+      "edition": "Derde herziene druk, Sdu 2002",
+      "pagesReviewed": [
+        1,
+        2
+      ],
+      "use": "Identiteit en ouderdom vastgesteld; geen actuele juridische claims ontleend aan deze editie.",
+      "redistributed": false
+    }
+  ],
+  "changes": [
+    {
+      "location": "H1-course-orientation",
+      "reason": "Doelgroep, voorkennis, leerwerkwijze, tijdsraming, onbeperkte pogingen en grenzen certificaat expliciet."
+    },
+    {
+      "location": "H6-L1-explanation",
+      "reason": "Individuele organisatorische maatregelen expliciet tussen collectieve bescherming en PBM."
+    },
+    {
+      "location": "H7-L4-explanation",
+      "reason": "Regelmatige afwisseling bij beeldschermwerk als werkgeversplicht, niet slechts waar mogelijk."
+    },
+    {
+      "location": "H9-L5-explanation; WL003-H9-Q05; WL003-EX-E43; WL003-RET-R086",
+      "reason": "Verplichte directe ongevalmelding, latere bekendwording en afzonderlijke registratie verduidelijkt; geen medische zelfdiagnose."
+    },
+    {
+      "location": "course/exam/retention version 1.1; question revision 2 for three corrected items",
+      "reason": "Versie 1.0 en overige ongewijzigde vraagrevisies blijven intact."
+    }
+  ],
+  "remainingDecisions": [
+    "Menselijke inhoudelijke en juridische review van alle hoofdstukken, artikelbindingen en bijzondere werknemers-/taakcontexten; geconsolideerde wetten waren niet rechtstreeks toegankelijk.",
+    "Examenreview: juiste antwoorden, afleiders, complexiteit en psychometrische pilot; technische validatie is geen toetskwaliteitsgoedkeuring.",
+    "Studieduur met representatieve deelnemers meten; ontwerpduur is geen gemeten claim.",
+    "Product Owner-acceptatie van doelgroep, certificaattekst en publicatie; geen cursus gepubliceerd."
+  ],
+  "checkpoint": {
+    "state": "CONTENT_PREPARED_SCHEMA_VALIDATED_HUMAN_REVIEW_OPEN",
+    "sourceSha256": "6f8f45edf43f7dffd5b53b5271d65df08444b3ed937acb120b9f30ea36f978e8",
+    "candidateSha256": "b38f41d36c688309e9711753bf63c7d5dca62a38b7d8378d7b200d5db4646445",
+    "productionTouched": false,
+    "historicalFileModified": false
+  },
+  "assessmentReview": {
+    "status": "OPEN",
+    "uniqueQuestionCodes": 240,
+    "uniqueNormalizedStems": 240,
+    "examSingleChoice": 40,
+    "examMultipleChoice": 10,
+    "retentionSingleChoice": 80,
+    "retentionMultipleChoice": 20,
+    "examCorrectSingleChoicePositions": {
+      "A": 8,
+      "B": 7,
+      "C": 9,
+      "D": 16
+    },
+    "retentionCorrectSingleChoicePositions": {
+      "A": 20,
+      "B": 26,
+      "C": 18,
+      "D": 16
+    },
+    "maximumCorrectPositionRun": 3,
+    "limitations": [
+      "Examenpositie D is 16/40 (40%); geen perfect gelijke verdeling geclaimd.",
+      "Technische uniciteit en antwoordlengte bewijzen geen discriminatievermogen; afleiders en moeilijkheid moeten nog door een inhoudelijk reviewer en pilot worden beoordeeld.",
+      "E40 en E45 binden meerdere bestaande doelcodes; de matrix splitst die expliciet zonder historische vragen te herschrijven."
+    ]
+  },
+  "technicalChecks": {
+    "validateAcademyBundle": "PASS",
+    "uniqueCodesAndNormalizedStems": "240/240 PASS",
+    "objectiveCoverage": "40/40 with practice, exam and retention bindings",
+    "courseHistory": "Source 1.0 unchanged; candidate is additive file",
+    "lintTypeScriptBuild": "Shared parent-agent validation; not claimed by this individual content check",
+    "publication": "NOT EXECUTED"
+  },
+  "chapterPlans": [
+    {
+      "chapter": 1,
+      "title": "Eigen rol, verantwoordelijkheid en veilig gedrag",
+      "objectives": [
+        "H1-LD01: Verantwoordelijkheden van werkgever en werknemer in een praktijksituatie onderscheiden.",
+        "H1-LD02: Veilige instructies toepassen zonder systeemproblemen tot individuele schuld te reduceren.",
+        "H1-LD03: Een zorg feitelijk bespreken en een bruikbare vervolgafspraak maken.",
+        "H1-LD04: Grenzen van eigen kennis herkennen en bij onzekerheid passende hulp organiseren."
+      ],
+      "lessons": [
+        {
+          "explanationBlock": "H1-L1-explanation",
+          "title": "Twee verantwoordelijkheden die elkaar aanvullen",
+          "caseBlock": "H1-L1-case",
+          "applicationWithModelAnswer": "H1-L1-application",
+          "exerciseBlock": "H1-L1-exercise"
+        },
+        {
+          "explanationBlock": "H1-L2-explanation",
+          "title": "Een instructie begrijpen is meer dan tekenen",
+          "caseBlock": "H1-L2-case",
+          "applicationWithModelAnswer": "H1-L2-application",
+          "exerciseBlock": "H1-L2-exercise"
+        },
+        {
+          "explanationBlock": "H1-L3-explanation",
+          "title": "Veilig gedrag heeft een werkbare omgeving nodig",
+          "caseBlock": "H1-L3-case",
+          "applicationWithModelAnswer": "H1-L3-application",
+          "exerciseBlock": "H1-L3-exercise"
+        },
+        {
+          "explanationBlock": "H1-L4-explanation",
+          "title": "Aanspreken met feiten en een voorstel",
+          "caseBlock": "H1-L4-case",
+          "applicationWithModelAnswer": "H1-L4-application",
+          "exerciseBlock": "H1-L4-exercise"
+        },
+        {
+          "explanationBlock": "H1-L5-explanation",
+          "title": "Onzekerheid benoemen en een grens aangeven",
+          "caseBlock": "H1-L5-case",
+          "applicationWithModelAnswer": "H1-L5-application",
+          "exerciseBlock": "H1-L5-exercise"
+        },
+        {
+          "explanationBlock": "H1-L6-explanation",
+          "title": "Van melding naar een gesloten afspraak",
+          "caseBlock": "H1-L6-case",
+          "applicationWithModelAnswer": "H1-L6-application",
+          "exerciseBlock": "H1-L6-exercise"
+        }
+      ],
+      "chapterCheckCodes": [
+        "WL003-H1-Q07",
+        "WL003-H1-Q08",
+        "WL003-H1-Q09"
+      ],
+      "summaryBlock": "H1-summary"
+    },
+    {
+      "chapter": 2,
+      "title": "Gevaren herkennen en risico's begrijpen",
+      "objectives": [
+        "H2-LD01: Gevaar, blootstelling en mogelijk gevolg van elkaar onderscheiden.",
+        "H2-LD02: Relevante informatie verzamelen voordat een situatie veilig wordt verklaard.",
+        "H2-LD03: Directe én vertraagde gezondheidsrisico’s in verschillende werkcontexten herkennen.",
+        "H2-LD04: Maatregelen vergelijken met aandacht voor bron, werkcontext en betrokken anderen."
+      ],
+      "lessons": [
+        {
+          "explanationBlock": "H2-L1-explanation",
+          "title": "Gevaar, blootstelling en gevolg uit elkaar houden",
+          "caseBlock": "H2-L1-case",
+          "applicationWithModelAnswer": "H2-L1-application",
+          "exerciseBlock": "H2-L1-exercise"
+        },
+        {
+          "explanationBlock": "H2-L2-explanation",
+          "title": "Kijken naar wie u niet meteen ziet",
+          "caseBlock": "H2-L2-case",
+          "applicationWithModelAnswer": "H2-L2-application",
+          "exerciseBlock": "H2-L2-exercise"
+        },
+        {
+          "explanationBlock": "H2-L3-explanation",
+          "title": "Onzichtbare en vertraagde schade herkennen",
+          "caseBlock": "H2-L3-case",
+          "applicationWithModelAnswer": "H2-L3-application",
+          "exerciseBlock": "H2-L3-exercise"
+        },
+        {
+          "explanationBlock": "H2-L4-explanation",
+          "title": "Van indruk naar een bruikbare vraag",
+          "caseBlock": "H2-L4-case",
+          "applicationWithModelAnswer": "H2-L4-application",
+          "exerciseBlock": "H2-L4-exercise"
+        },
+        {
+          "explanationBlock": "H2-L5-explanation",
+          "title": "Maatregelen kiezen die contact voorkomen",
+          "caseBlock": "H2-L5-case",
+          "applicationWithModelAnswer": "H2-L5-application",
+          "exerciseBlock": "H2-L5-exercise"
+        },
+        {
+          "explanationBlock": "H2-L6-explanation",
+          "title": "Urgentie bepalen zonder schijnzekerheid",
+          "caseBlock": "H2-L6-case",
+          "applicationWithModelAnswer": "H2-L6-application",
+          "exerciseBlock": "H2-L6-exercise"
+        }
+      ],
+      "chapterCheckCodes": [
+        "WL003-H2-Q07",
+        "WL003-H2-Q08",
+        "WL003-H2-Q09"
+      ],
+      "summaryBlock": "H2-summary"
+    },
+    {
+      "chapter": 3,
+      "title": "Veilig voorbereiden en starten van werkzaamheden",
+      "objectives": [
+        "H3-LD01: Taak, omgeving, mensen en middelen vóór de start samen bekijken.",
+        "H3-LD02: Vaststellen of instructie, competentie en geschikte hulpmiddelen beschikbaar zijn.",
+        "H3-LD03: Bij een ontbrekende startvoorwaarde passende grenzen en vervolgacties kiezen.",
+        "H3-LD04: Veilige taakoverdracht en afstemming tussen gelijktijdige werkzaamheden organiseren."
+      ],
+      "lessons": [
+        {
+          "explanationBlock": "H3-L1-explanation",
+          "title": "Begin met de taak, niet met het formulier",
+          "caseBlock": "H3-L1-case",
+          "applicationWithModelAnswer": "H3-L1-application",
+          "exerciseBlock": "H3-L1-exercise"
+        },
+        {
+          "explanationBlock": "H3-L2-explanation",
+          "title": "Bekijk plaats, route en betrokken mensen",
+          "caseBlock": "H3-L2-case",
+          "applicationWithModelAnswer": "H3-L2-application",
+          "exerciseBlock": "H3-L2-exercise"
+        },
+        {
+          "explanationBlock": "H3-L3-explanation",
+          "title": "Controleer middelen zonder zelf te gaan keuren",
+          "caseBlock": "H3-L3-case",
+          "applicationWithModelAnswer": "H3-L3-application",
+          "exerciseBlock": "H3-L3-exercise"
+        },
+        {
+          "explanationBlock": "H3-L4-explanation",
+          "title": "Ken uw instructie, ervaring en taakgrens",
+          "caseBlock": "H3-L4-case",
+          "applicationWithModelAnswer": "H3-L4-application",
+          "exerciseBlock": "H3-L4-exercise"
+        },
+        {
+          "explanationBlock": "H3-L5-explanation",
+          "title": "Een ontbrekende voorwaarde werkbaar begrenzen",
+          "caseBlock": "H3-L5-case",
+          "applicationWithModelAnswer": "H3-L5-application",
+          "exerciseBlock": "H3-L5-exercise"
+        },
+        {
+          "explanationBlock": "H3-L6-explanation",
+          "title": "Draag de veilige situatie echt over",
+          "caseBlock": "H3-L6-case",
+          "applicationWithModelAnswer": "H3-L6-application",
+          "exerciseBlock": "H3-L6-exercise"
+        }
+      ],
+      "chapterCheckCodes": [
+        "WL003-H3-Q07",
+        "WL003-H3-Q08",
+        "WL003-H3-Q09"
+      ],
+      "summaryBlock": "H3-summary"
+    },
+    {
+      "chapter": 4,
+      "title": "Instructies, veranderingen en afwijkende situaties",
+      "objectives": [
+        "H4-LD01: Werkafspraken toepassen en controleren of instructies echt zijn begrepen.",
+        "H4-LD02: Een wijziging herkennen die een nieuwe beoordeling of instructie nodig maakt.",
+        "H4-LD03: Een storing of afwijking behandelen zonder buiten eigen bevoegdheid te handelen.",
+        "H4-LD04: Een tijdelijke oplossing begrenzen en een controleerbare herstart afspreken."
+      ],
+      "lessons": [
+        {
+          "explanationBlock": "H4-L1-explanation",
+          "title": "Vertaal een instructie naar een beslissing",
+          "caseBlock": "H4-L1-case",
+          "applicationWithModelAnswer": "H4-L1-application",
+          "exerciseBlock": "H4-L1-exercise"
+        },
+        {
+          "explanationBlock": "H4-L2-explanation",
+          "title": "Herken ook kleine wijzigingen met grote gevolgen",
+          "caseBlock": "H4-L2-case",
+          "applicationWithModelAnswer": "H4-L2-application",
+          "exerciseBlock": "H4-L2-exercise"
+        },
+        {
+          "explanationBlock": "H4-L3-explanation",
+          "title": "Neem een storing serieus zonder zelf te repareren",
+          "caseBlock": "H4-L3-case",
+          "applicationWithModelAnswer": "H4-L3-application",
+          "exerciseBlock": "H4-L3-exercise"
+        },
+        {
+          "explanationBlock": "H4-L4-explanation",
+          "title": "Een tijdelijke afspraak is geen blanco uitzondering",
+          "caseBlock": "H4-L4-case",
+          "applicationWithModelAnswer": "H4-L4-application",
+          "exerciseBlock": "H4-L4-exercise"
+        },
+        {
+          "explanationBlock": "H4-L5-explanation",
+          "title": "Controleer herstartvoorwaarden met de betrokkenen",
+          "caseBlock": "H4-L5-case",
+          "applicationWithModelAnswer": "H4-L5-application",
+          "exerciseBlock": "H4-L5-exercise"
+        },
+        {
+          "explanationBlock": "H4-L6-explanation",
+          "title": "Werk een afwijking terug naar de instructie",
+          "caseBlock": "H4-L6-case",
+          "applicationWithModelAnswer": "H4-L6-application",
+          "exerciseBlock": "H4-L6-exercise"
+        }
+      ],
+      "chapterCheckCodes": [
+        "WL003-H4-Q07",
+        "WL003-H4-Q08",
+        "WL003-H4-Q09"
+      ],
+      "summaryBlock": "H4-summary"
+    },
+    {
+      "chapter": 5,
+      "title": "Veilige werkplekken, arbeidsmiddelen en intern verkeer",
+      "objectives": [
+        "H5-LD01: Looproutes, opslag en werkruimte op concrete veiligheidsknelpunten onderzoeken.",
+        "H5-LD02: Arbeidsmiddelen passend gebruiken en defecten buiten gebruik laten opvolgen.",
+        "H5-LD03: Als voetganger of collega veilig afstemmen rond intern transport.",
+        "H5-LD04: Voor onderhoud en onverwachte beweging deskundigheid en veilige werkafspraken herkennen."
+      ],
+      "lessons": [
+        {
+          "explanationBlock": "H5-L1-explanation",
+          "title": "Een vrije route is een werkafspraak",
+          "caseBlock": "H5-L1-case",
+          "applicationWithModelAnswer": "H5-L1-application",
+          "exerciseBlock": "H5-L1-exercise"
+        },
+        {
+          "explanationBlock": "H5-L2-explanation",
+          "title": "Gebruik een middel waarvoor het bedoeld is",
+          "caseBlock": "H5-L2-case",
+          "applicationWithModelAnswer": "H5-L2-application",
+          "exerciseBlock": "H5-L2-exercise"
+        },
+        {
+          "explanationBlock": "H5-L3-explanation",
+          "title": "Een defect herkenbaar buiten gebruik houden",
+          "caseBlock": "H5-L3-case",
+          "applicationWithModelAnswer": "H5-L3-application",
+          "exerciseBlock": "H5-L3-exercise"
+        },
+        {
+          "explanationBlock": "H5-L4-explanation",
+          "title": "Als voetganger afstemmen rond voertuigen",
+          "caseBlock": "H5-L4-case",
+          "applicationWithModelAnswer": "H5-L4-application",
+          "exerciseBlock": "H5-L4-exercise"
+        },
+        {
+          "explanationBlock": "H5-L5-explanation",
+          "title": "Lading en opslag kunnen ook anderen raken",
+          "caseBlock": "H5-L5-case",
+          "applicationWithModelAnswer": "H5-L5-application",
+          "exerciseBlock": "H5-L5-exercise"
+        },
+        {
+          "explanationBlock": "H5-L6-explanation",
+          "title": "Onderhoud vraagt beheersing van onverwachte beweging",
+          "caseBlock": "H5-L6-case",
+          "applicationWithModelAnswer": "H5-L6-application",
+          "exerciseBlock": "H5-L6-exercise"
+        }
+      ],
+      "chapterCheckCodes": [
+        "WL003-H5-Q07",
+        "WL003-H5-Q08",
+        "WL003-H5-Q09"
+      ],
+      "summaryBlock": "H5-summary"
+    },
+    {
+      "chapter": 6,
+      "title": "Persoonlijke beschermingsmiddelen en collectieve bescherming",
+      "objectives": [
+        "H6-LD01: Bronaanpak en collectieve bescherming onderscheiden van persoonlijke bescherming.",
+        "H6-LD02: Nagaan of voorgeschreven PBM bij taak, risico en gebruiker passen.",
+        "H6-LD03: Gebreken, gebruiksgrenzen en combinaties van PBM herkennen en laten oplossen.",
+        "H6-LD04: Bescherming tijdens een verandering behouden en problemen terugkoppelen."
+      ],
+      "lessons": [
+        {
+          "explanationBlock": "H6-L1-explanation",
+          "title": "Begin niet bij de kast met beschermingsmiddelen",
+          "caseBlock": "H6-L1-case",
+          "applicationWithModelAnswer": "H6-L1-application",
+          "exerciseBlock": "H6-L1-exercise"
+        },
+        {
+          "explanationBlock": "H6-L2-explanation",
+          "title": "Een collectieve voorziening moet echt functioneren",
+          "caseBlock": "H6-L2-case",
+          "applicationWithModelAnswer": "H6-L2-application",
+          "exerciseBlock": "H6-L2-exercise"
+        },
+        {
+          "explanationBlock": "H6-L3-explanation",
+          "title": "Het juiste PBM volgt uit taak en risico",
+          "caseBlock": "H6-L3-case",
+          "applicationWithModelAnswer": "H6-L3-application",
+          "exerciseBlock": "H6-L3-exercise"
+        },
+        {
+          "explanationBlock": "H6-L4-explanation",
+          "title": "Pasvorm, combinatie en omgeving tellen mee",
+          "caseBlock": "H6-L4-case",
+          "applicationWithModelAnswer": "H6-L4-application",
+          "exerciseBlock": "H6-L4-exercise"
+        },
+        {
+          "explanationBlock": "H6-L5-explanation",
+          "title": "Controle, onderhoud en vervanging organiseren",
+          "caseBlock": "H6-L5-case",
+          "applicationWithModelAnswer": "H6-L5-application",
+          "exerciseBlock": "H6-L5-exercise"
+        },
+        {
+          "explanationBlock": "H6-L6-explanation",
+          "title": "Een probleem terugbrengen naar de maatregel",
+          "caseBlock": "H6-L6-case",
+          "applicationWithModelAnswer": "H6-L6-application",
+          "exerciseBlock": "H6-L6-exercise"
+        }
+      ],
+      "chapterCheckCodes": [
+        "WL003-H6-Q07",
+        "WL003-H6-Q08",
+        "WL003-H6-Q09"
+      ],
+      "summaryBlock": "H6-summary"
+    },
+    {
+      "chapter": 7,
+      "title": "Fysieke belasting, ergonomie en gezondheid",
+      "objectives": [
+        "H7-LD01: Kracht, houding, herhaling en duur samen herkennen als mogelijke belasting.",
+        "H7-LD02: Hulpmiddelen en werkorganisatie afwegen vóór uitsluitend gedragsadvies.",
+        "H7-LD03: Werkplek en afwisseling passend organiseren bij beeldscherm- en ander werk.",
+        "H7-LD04: Vroege gezondheidssignalen bespreken zonder diagnose of onnodige medische gegevens."
+      ],
+      "lessons": [
+        {
+          "explanationBlock": "H7-L1-explanation",
+          "title": "Bekijk de belasting over een hele werkperiode",
+          "caseBlock": "H7-L1-case",
+          "applicationWithModelAnswer": "H7-L1-application",
+          "exerciseBlock": "H7-L1-exercise"
+        },
+        {
+          "explanationBlock": "H7-L2-explanation",
+          "title": "Verminder een lastige handeling bij de bron",
+          "caseBlock": "H7-L2-case",
+          "applicationWithModelAnswer": "H7-L2-application",
+          "exerciseBlock": "H7-L2-exercise"
+        },
+        {
+          "explanationBlock": "H7-L3-explanation",
+          "title": "Duwen, trekken en verplaatsen zijn geen gewichtsgetal",
+          "caseBlock": "H7-L3-case",
+          "applicationWithModelAnswer": "H7-L3-application",
+          "exerciseBlock": "H7-L3-exercise"
+        },
+        {
+          "explanationBlock": "H7-L4-explanation",
+          "title": "Beeldschermwerk vraagt inrichting én afwisseling",
+          "caseBlock": "H7-L4-case",
+          "applicationWithModelAnswer": "H7-L4-application",
+          "exerciseBlock": "H7-L4-exercise"
+        },
+        {
+          "explanationBlock": "H7-L5-explanation",
+          "title": "Neem vroege signalen serieus zonder diagnose",
+          "caseBlock": "H7-L5-case",
+          "applicationWithModelAnswer": "H7-L5-application",
+          "exerciseBlock": "H7-L5-exercise"
+        },
+        {
+          "explanationBlock": "H7-L6-explanation",
+          "title": "Controleer of de gekozen verbetering echt helpt",
+          "caseBlock": "H7-L6-case",
+          "applicationWithModelAnswer": "H7-L6-application",
+          "exerciseBlock": "H7-L6-exercise"
+        }
+      ],
+      "chapterCheckCodes": [
+        "WL003-H7-Q07",
+        "WL003-H7-Q08",
+        "WL003-H7-Q09"
+      ],
+      "summaryBlock": "H7-summary"
+    },
+    {
+      "chapter": 8,
+      "title": "Werkdruk, psychosociale veiligheid en samenwerking",
+      "objectives": [
+        "H8-LD01: Werkdruksignalen verbinden aan taken, tijd, middelen en regelmogelijkheden.",
+        "H8-LD02: Ongewenst gedrag herkennen zonder de ervaring van een collega te bagatelliseren.",
+        "H8-LD03: Passende bespreek- en hulproutes kiezen met respect voor privacy en veiligheid.",
+        "H8-LD04: Als collega bijdragen aan werkbare afspraken en veilige samenwerking."
+      ],
+      "lessons": [
+        {
+          "explanationBlock": "H8-L1-explanation",
+          "title": "Drukte en structurele werkdruk onderscheiden",
+          "caseBlock": "H8-L1-case",
+          "applicationWithModelAnswer": "H8-L1-application",
+          "exerciseBlock": "H8-L1-exercise"
+        },
+        {
+          "explanationBlock": "H8-L2-explanation",
+          "title": "Maak prioriteiten en grenzen bespreekbaar",
+          "caseBlock": "H8-L2-case",
+          "applicationWithModelAnswer": "H8-L2-application",
+          "exerciseBlock": "H8-L2-exercise"
+        },
+        {
+          "explanationBlock": "H8-L3-explanation",
+          "title": "Ongewenst gedrag herkennen zonder een dossier te spelen",
+          "caseBlock": "H8-L3-case",
+          "applicationWithModelAnswer": "H8-L3-application",
+          "exerciseBlock": "H8-L3-exercise"
+        },
+        {
+          "explanationBlock": "H8-L4-explanation",
+          "title": "Kies een route die veilig bereikbaar is",
+          "caseBlock": "H8-L4-case",
+          "applicationWithModelAnswer": "H8-L4-application",
+          "exerciseBlock": "H8-L4-exercise"
+        },
+        {
+          "explanationBlock": "H8-L5-explanation",
+          "title": "Bij agressie eerst veiligheid organiseren",
+          "caseBlock": "H8-L5-case",
+          "applicationWithModelAnswer": "H8-L5-application",
+          "exerciseBlock": "H8-L5-exercise"
+        },
+        {
+          "explanationBlock": "H8-L6-explanation",
+          "title": "Ondersteun een collega zonder diens verhaal te verspreiden",
+          "caseBlock": "H8-L6-case",
+          "applicationWithModelAnswer": "H8-L6-application",
+          "exerciseBlock": "H8-L6-exercise"
+        }
+      ],
+      "chapterCheckCodes": [
+        "WL003-H8-Q07",
+        "WL003-H8-Q08",
+        "WL003-H8-Q09"
+      ],
+      "summaryBlock": "H8-summary"
+    },
+    {
+      "chapter": 9,
+      "title": "Incidenten, bijna-ongevallen, melden en noodsituaties",
+      "objectives": [
+        "H9-LD01: Ongeval, bijna-ongeval en gevaarlijke situatie in voorbeelden onderscheiden.",
+        "H9-LD02: Bij acuut gevaar eigen veiligheid, alarmering en lokale noodafspraken verbinden.",
+        "H9-LD03: Feitelijk intern melden en werkgeversmelding aan de inspectie onderscheiden.",
+        "H9-LD04: Uit meldingen leren en opvolging controleren zonder schuld of een onjuiste oorzaak te verzinnen."
+      ],
+      "lessons": [
+        {
+          "explanationBlock": "H9-L1-explanation",
+          "title": "Een bijna-ongeval is ook informatie",
+          "caseBlock": "H9-L1-case",
+          "applicationWithModelAnswer": "H9-L1-application",
+          "exerciseBlock": "H9-L1-exercise"
+        },
+        {
+          "explanationBlock": "H9-L2-explanation",
+          "title": "Bij een noodsituatie eerst uzelf veilig positioneren",
+          "caseBlock": "H9-L2-case",
+          "applicationWithModelAnswer": "H9-L2-application",
+          "exerciseBlock": "H9-L2-exercise"
+        },
+        {
+          "explanationBlock": "H9-L3-explanation",
+          "title": "Alarmering en ontruiming moeten lokaal bekend zijn",
+          "caseBlock": "H9-L3-case",
+          "applicationWithModelAnswer": "H9-L3-application",
+          "exerciseBlock": "H9-L3-exercise"
+        },
+        {
+          "explanationBlock": "H9-L4-explanation",
+          "title": "Meld feitelijk en met noodzakelijke informatie",
+          "caseBlock": "H9-L4-case",
+          "applicationWithModelAnswer": "H9-L4-application",
+          "exerciseBlock": "H9-L4-exercise"
+        },
+        {
+          "explanationBlock": "H9-L5-explanation",
+          "title": "Ken het verschil tussen intern melden en werkgeversmelding",
+          "caseBlock": "H9-L5-case",
+          "applicationWithModelAnswer": "H9-L5-application",
+          "exerciseBlock": "H9-L5-exercise"
+        },
+        {
+          "explanationBlock": "H9-L6-explanation",
+          "title": "Leer van omstandigheden en controleer vervolg",
+          "caseBlock": "H9-L6-case",
+          "applicationWithModelAnswer": "H9-L6-application",
+          "exerciseBlock": "H9-L6-exercise"
+        }
+      ],
+      "chapterCheckCodes": [
+        "WL003-H9-Q07",
+        "WL003-H9-Q08",
+        "WL003-H9-Q09"
+      ],
+      "summaryBlock": "H9-summary"
+    },
+    {
+      "chapter": 10,
+      "title": "Integrale praktijkcasus: een veilige werkdag",
+      "objectives": [
+        "H10-LD01: Samenhangende signalen tijdens een werkdag ordenen op urgentie en ontbrekende informatie.",
+        "H10-LD02: Een uitvoerbaar start- of stopbesluit nemen binnen eigen taak en bevoegdheid.",
+        "H10-LD03: Onder tijdsdruk bescherming, afstemming en sociaal veilige communicatie combineren.",
+        "H10-LD04: Afgesproken verbeteringen overdragen en controleren of de veilige werkwijze werkt."
+      ],
+      "lessons": [
+        {
+          "explanationBlock": "H10-L1-explanation",
+          "title": "08:00 — de startbespreking geeft nog geen volledige startvrijgave",
+          "caseBlock": "H10-L1-case",
+          "applicationWithModelAnswer": "H10-L1-application",
+          "exerciseBlock": "H10-L1-exercise"
+        },
+        {
+          "explanationBlock": "H10-L2-explanation",
+          "title": "09:15 — een levering verandert de route",
+          "caseBlock": "H10-L2-case",
+          "applicationWithModelAnswer": "H10-L2-application",
+          "exerciseBlock": "H10-L2-exercise"
+        },
+        {
+          "explanationBlock": "H10-L3-explanation",
+          "title": "11:00 — het hulpmiddel en de last passen niet vanzelf",
+          "caseBlock": "H10-L3-case",
+          "applicationWithModelAnswer": "H10-L3-application",
+          "exerciseBlock": "H10-L3-exercise"
+        },
+        {
+          "explanationBlock": "H10-L4-explanation",
+          "title": "13:00 — onder druk een veilig gesprek voeren",
+          "caseBlock": "H10-L4-case",
+          "applicationWithModelAnswer": "H10-L4-application",
+          "exerciseBlock": "H10-L4-exercise"
+        },
+        {
+          "explanationBlock": "H10-L5-explanation",
+          "title": "14:30 — een bijna-ongeval verandert de vervolgafspraak",
+          "caseBlock": "H10-L5-case",
+          "applicationWithModelAnswer": "H10-L5-application",
+          "exerciseBlock": "H10-L5-exercise"
+        },
+        {
+          "explanationBlock": "H10-L6-explanation",
+          "title": "16:00 — draag werkende én open punten over",
+          "caseBlock": "H10-L6-case",
+          "applicationWithModelAnswer": "H10-L6-application",
+          "exerciseBlock": "H10-L6-exercise"
+        }
+      ],
+      "chapterCheckCodes": [
+        "WL003-H10-Q07",
+        "WL003-H10-Q08",
+        "WL003-H10-Q09"
+      ],
+      "summaryBlock": "H10-summary"
+    }
+  ],
+  "evidence": {
+    "sourceFiles": [
+      {
+        "path": "prisma/seed-data/WL-003_COURSE_1.0_DRAFT.json",
+        "sha256": "6f8f45edf43f7dffd5b53b5271d65df08444b3ed937acb120b9f30ea36f978e8",
+        "sha256CanonicalLF": "7a1bdf3f69ccea6cd09e5e8a7f85284adb4cc5d7a801839a8e41fc91f475a12d"
+      }
+    ],
+    "regressionAssertions": [
+      {
+        "blockCode": "H9-L5-explanation",
+        "mustContain": [
+          "moet een arbeidsongeval met overlijden, blijvend letsel of ziekenhuisopname direct",
+          "Blijkt zo’n gevolg pas later",
+          "meer dan drie dagen verzuim"
+        ],
+        "mustNotContain": [
+          "kan directe melding",
+          "drie werkdagen"
+        ]
+      },
+      {
+        "blockCode": "H7-L4-explanation",
+        "mustContain": [
+          "moet beeldschermwerk regelmatig laten afwisselen"
+        ],
+        "mustNotContain": [
+          "Wissel waar mogelijk"
+        ]
+      },
+      {
+        "blockCode": "H6-L1-explanation",
+        "mustContain": [
+          "individuele organisatorische maatregelen"
+        ],
+        "mustNotContain": []
+      },
+      {
+        "blockCode": "H1-course-orientation",
+        "mustContain": [
+          "geen limiet op het aantal pogingen",
+          "geen wettelijk beroepsdiploma"
+        ],
+        "mustNotContain": []
+      }
+    ],
+    "changedQuestionRevisions": [
+      "WL003-H9-Q05",
+      "WL003-EX-E43",
+      "WL003-RET-R086"
+    ]
+  },
+  "checksumStrategy": "sha256 = waargenomen lokale bytes; sha256CanonicalLF = UTF-8 met CRLF naar LF voor platformonafhankelijke bronbehoudtests."
+}

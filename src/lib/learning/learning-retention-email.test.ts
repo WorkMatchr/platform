@@ -4,6 +4,13 @@ import { createLearningRetentionEmail } from './learning-retention-email-worker'
 vi.mock('server-only', () => ({}))
 
 describe('Learning-kennisbehoudmail', () => {
+  it('keeps another course title and route separate, escaping HTML rather than leaking adaptive information', () => {
+    const message = createLearningRetentionEmail({ to: 'student@example.invalid', firstName: 'Voorbeeld', type: 'WEEK', courseTitle: 'Preventie & praktijk', destinationUrl: 'https://workmatchr.nl/e-learnings/preventie/kennisbehoud', idempotencyKey: 'fixture' })
+    expect(message.subject).toContain('Preventie & praktijk')
+    expect(message.text).not.toContain('RI&E in de praktijk')
+    expect(message.html).toContain('Preventie &amp; praktijk')
+    expect(message.text).not.toMatch(/score|zwak|korting/)
+  })
   it('maakt een transactionele weekmail met betekenisvolle route en zonder score- of zwaktegegevens', () => {
     const message = createLearningRetentionEmail({
       to: 'student@example.invalid', firstName: '<Frank>', type: 'WEEK',

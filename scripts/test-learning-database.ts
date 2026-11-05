@@ -140,7 +140,15 @@ async function main() {
     assert.equal(catalog.rows[0]?.exam_tables, 5, 'Final exam tables are incomplete')
     assert.equal(catalog.rows[0]?.exam_triggers, 4, 'Final exam immutability and answer guards are incomplete')
     assert.equal(catalog.rows[0]?.certificate_tables, 1, 'Certificate table is incomplete')
-    assert.equal(catalog.rows[0]?.certificate_triggers, 3, 'Certificate validation, immutable and no-delete triggers are incomplete')
+    const certificateGuards = await db.query<{ tgname: string; tgenabled: string }>(`
+      SELECT tgname, tgenabled FROM pg_trigger
+      WHERE NOT tgisinternal AND tgrelid='"LearningCertificate"'::regclass
+        AND tgname LIKE 'LearningCertificate_%'`)
+    assert.deepEqual(certificateGuards.rows.map(row => row.tgname).sort(), [
+      'LearningCertificate_design_snapshot', 'LearningCertificate_immutable_update',
+      'LearningCertificate_no_delete', 'LearningCertificate_validate_insert',
+    ].sort(), 'Certificate validation, immutable, no-delete and design-snapshot guards are incomplete')
+    assert.ok(certificateGuards.rows.every(row => row.tgenabled === 'O'), 'Certificate protection triggers must be enabled')
     assert.equal(catalog.rows[0]?.profile_name_fields, 2, 'Certificate name fields are incomplete')
     const migrationNames = readdirSync('prisma/migrations')
       .filter((name) => existsSync(`prisma/migrations/${name}/migration.sql`)).sort()

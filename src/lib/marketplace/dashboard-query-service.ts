@@ -273,7 +273,7 @@ export async function getProviderParticipationForQuote(userId: string, organizat
   if (!membership) throw new MarketplaceServiceError('ACCESS_DENIED')
   const participation = await getPrisma().providerParticipation.findFirst({
     where: { id: participationId, providerOrganizationId: organizationId, status: 'ACTIVE' },
-    select: { id: true, creditReservation: { select: { id: true } }, assignment: { select: { title: true } }, quote: { select: { id: true, version: true } }, invitation: { select: { deadlineAt: true } } },
+    select: { id: true, creditReservation: { select: { id: true } }, assignment: { select: { title: true, status: true } }, quote: { select: { id: true, version: true, status: true, currentVersion: { select: { priceCents: true, priceExplanation: true, approach: true, planning: true, terms: true, validUntil: true } } } }, invitation: { select: { deadlineAt: true } } },
   })
   if (!participation) throw new MarketplaceServiceError('NOT_FOUND')
   const purchase = participation.creditReservation ? null : await getPrisma().creditTransaction.findFirst({
@@ -281,7 +281,9 @@ export async function getProviderParticipationForQuote(userId: string, organizat
     select: { id: true },
   })
   if (!participation.creditReservation && !purchase) throw new MarketplaceServiceError('ACCESS_DENIED')
-  return { membership, participation }
+  const canEdit = ['AWAITING_RESPONSES', 'IN_SELECTION'].includes(participation.assignment.status)
+    && participation.invitation.deadlineAt > new Date() && (!participation.quote || participation.quote.status === 'DRAFT')
+  return { membership, participation, canEdit }
 }
 
 export async function getProviderQuoteDetail(userId: string, organizationId: string, quoteId: string) {
@@ -298,7 +300,7 @@ export async function getProviderQuoteDetail(userId: string, organizationId: str
       version: true,
       submittedAt: true,
       currentVersion: { select: { version: true, priceCents: true, priceExplanation: true, approach: true, planning: true, terms: true, validUntil: true } },
-      participation: { select: { id: true, invitation: { select: { deadlineAt: true } }, messageChannel: { select: { id: true } }, assignment: { select: { title: true } } } },
+      participation: { select: { id: true, status: true, invitation: { select: { deadlineAt: true } }, messageChannel: { select: { id: true } }, assignment: { select: { title: true, status: true } } } },
     },
   })
   if (!quote) throw new MarketplaceServiceError('NOT_FOUND')
