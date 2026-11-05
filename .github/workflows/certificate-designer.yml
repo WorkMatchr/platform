@@ -1,0 +1,45 @@
+name: Certificate designer
+on:
+  pull_request:
+    paths:
+      - 'src/**/certificate-design*'
+      - 'src/**/learning-certificate*'
+      - 'src/app/platformbeheer/academy/certificaten/**'
+      - 'prisma/schema.prisma'
+      - 'prisma/migrations/20261104220000_add_learning_certificate_designer/**'
+      - '.github/workflows/certificate-designer.yml'
+permissions:
+  contents: read
+jobs:
+  isolated-certificate-designer:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_PASSWORD: synthetic-certificate-ci-only
+          POSTGRES_DB: workmatchr_lms20_synthetic
+        ports:
+          - 5449:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:synthetic-certificate-ci-only@127.0.0.1:5449/workmatchr_lms20_synthetic
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate && npx prisma migrate deploy
+      - name: Isolated PostgreSQL lifecycle, authorization and immutable certificates
+        run: npx vitest run src/lib/learning/certificate-design-postgres.test.ts --maxWorkers=1
+        env:
+          CERTIFICATE_DESIGN_POSTGRES_TEST: 'true'
+      - name: Design, preview, legacy PDF and mail regressions
+        run: npx vitest run src/lib/learning/certificate-design.test.ts src/lib/learning/certificate-design-authorization.test.ts src/lib/learning/certificate-design-email.test.ts src/components/learning/certificate-designer.test.tsx src/app/platformbeheer/academy/certificaten/sjablonen/preview/route.test.ts src/lib/learning/learning-certificate-pdf.test.ts src/lib/learning/learning-certificate-service.test.ts src/lib/learning/learning-certificate-history.test.ts src/lib/learning/learning-certificate-email.test.ts src/lib/learning/academy-certificate-admin.test.ts src/lib/learning/academy-certificate-resend-worker.test.ts --maxWorkers=2
+      - run: npm run lint
+      - run: BETTER_AUTH_SECRET="$(openssl rand -hex 32)" npm run build
+      - run: npm run typecheck

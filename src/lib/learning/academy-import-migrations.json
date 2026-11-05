@@ -761,5 +761,12 @@
       "5d61c81845856498fd3201e0dadab347736e786dbc9fb7a9c839ba836f9a10ea",
       "f95e41abde58a186dd036206da79f3f3a65e3ce8b0c2b949dc28c572c35eecfc"
     ]
+  },
+  {
+    "name": "20261104220000_add_learning_certificate_designer",
+    "checksums": [
+      "19bfb98f6ec7a242237990cfbf5c16166f5532bbfd815605214ee6eac7a64d54",
+      "82a74c26206c1c8c7e17d3bfdd00e66b2ba89ee240ea674f8a3b4a39fe7439c5"
+    ]
   }
 ]

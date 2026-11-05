@@ -13,6 +13,7 @@ export default async function AcademyCertificatesPage() {
   return <div className="min-w-0">
     <AdminPageHeader eyebrow="Academy" title="Certificaten" description="Bekijk oorspronkelijke certificaatgegevens, download een certificaat of vraag gecontroleerd een herverzending aan." />
     <Link className="inline-flex min-h-11 items-center underline" href="/platformbeheer/academy/beoordelingen">Correcties en examenbezwaren beoordelen</Link>
+    <p><Link className="inline-flex min-h-11 items-center underline" href="/platformbeheer/academy/certificaten/sjablonen">Certificaatsjablonen ontwerpen</Link></p>
     <AcademyCertificateList courses={courses} initial={initial} />
   </div>
 }

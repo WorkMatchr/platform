@@ -6430,6 +6430,7 @@ model LearningRetentionAnnualAnswer {
 }
 
 model LearningCertificate {
+  designSnapshot Json? @db.JsonB
   id                 String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId             String                    @db.Uuid
   courseId           String                    @db.Uuid
@@ -6646,4 +6647,27 @@ model LearningAcademySeatTransfer {
   seat LearningAcademySeat @relation(fields: [seatId], references: [id], onDelete: Restrict)
   purchase FinancialPurchase @relation(fields: [purchaseId], references: [id], onDelete: Restrict)
   @@index([seatId, createdAt])
+}
+model LearningCertificateDesign {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  familyId String @db.Uuid
+  version Int
+  name String @db.VarChar(160)
+  state String @default("DRAFT") @db.VarChar(20)
+  revision Int @default(1)
+  definition Json @db.JsonB
+  checksum String @db.VarChar(64)
+  reviewedChecksum String? @db.VarChar(64)
+  createdBy String @db.Uuid
+  reviewedBy String? @db.Uuid
+  reviewedAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  bindings LearningCertificateDesignBinding[]
+  @@unique([familyId, version])
+}
+model LearningCertificateDesignBinding {
+  scope String @id @db.VarChar(48)
+  designId String @db.Uuid
+  design LearningCertificateDesign @relation(fields:[designId], references:[id], onDelete:Restrict)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 }

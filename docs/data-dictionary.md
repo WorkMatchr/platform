@@ -279,3 +279,11 @@ Zie [bezorg- en legacybeleid](marketplace-assignment-notifications.md).
 ## Compliance F4 (nog niet uitgerold)
 
 Nullable `ComplianceQuestionDefinition.visibilityCondition` bewaart versiegebonden zichtbaarheid. Geen bestaande data gewijzigd; zie [F4](compliance-f4-expanded-guide.md).
+
+## Certificaatontwerp
+LearningCertificateDesign: familie/versie, state, revision, definition, checksum,
+reviewedChecksum, createdBy/reviewedBy/reviewedAt. Alleen concept inhoudelijk
+wijzigbaar. LearningCertificateDesignBinding.scope: GLOBAL of bestaande cursus-ID;
+alleen ACTIVE designs. LearningCertificate.designSnapshot: nullable historische
+ontwerpvastlegging; alleen nieuwe uitgiften met expliciet gekozen actief ontwerp.
+Zie academy-certificate-designer.md voor lifecycle en rollback.
