@@ -1,3 +1,4 @@
+import { PREVIEW_FORBIDDEN_VARIABLES } from '@/lib/maintenance/preview-isolation'
 export const ACADEMY_TEST_DATABASE = {
   projectId: 'academy-synthetic-project', branchId: 'branch-fixture-little-hill',
   hostname: 'fixture-6e93ad508d.example.invalid', database: 'neondb',
@@ -34,7 +35,7 @@ export function assertAcademyDatabaseTarget(input: { databaseUrl?: string; proje
   try { url = new URL(input.databaseUrl ?? '') } catch { throw new Error('ACADEMY_IMPORT_DATABASE_REFUSED') }
   if (process.env.ACADEMY_LOCAL_ACCEPTANCE === 'true' && !process.env.VERCEL && input.projectId === 'local-synthetic' && input.branchId === 'lms20-isolated'
     && url.protocol === 'postgresql:' && url.hostname === '127.0.0.1' && url.port === '5449' && url.pathname === '/workmatchr_lms20_synthetic'
-    && url.username === 'postgres' && url.password && !url.search && !url.hash && !process.env.RESEND_API_KEY && !process.env.JORTT_CLIENT_SECRET)
+    && ['postgres', 'academy_content_editor'].includes(url.username) && url.password && !url.search && !url.hash && !PREVIEW_FORBIDDEN_VARIABLES.some(key => Boolean(process.env[key])) && !process.env.CRON_SECRET && !process.env.FINANCIAL_MAINTENANCE_SECRET)
     return {projectId:input.projectId,branchId:input.branchId,hostname:url.hostname,database:'workmatchr_lms20_synthetic'}
   const target = input.branchId === ACADEMY_FINAL_ACCEPTANCE_DATABASE.branchId ? ACADEMY_FINAL_ACCEPTANCE_DATABASE
     : input.branchId === ACADEMY_DECISIONS_DATABASE.branchId ? ACADEMY_DECISIONS_DATABASE

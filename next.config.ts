@@ -3,6 +3,8 @@ import type { NextConfig } from 'next'
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Full Academy bundles require more than the default 1 MB action body.
+  experimental: { serverActions: { bodySizeLimit: '2mb' } },
   async headers() {
     return [{
       source: '/:path*',
