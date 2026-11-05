@@ -1,3 +1,5 @@
+import { isAcademyBundle, bundleHash, saveBundleDraft, verifyBundleDraft, publishBundleQuestions } from './academy-bundle-authoring'
+import { validateAcademyBundle, type AcademyCourseBundle } from './academy-content-standard'
 import 'server-only'
 import { createHash } from 'node:crypto'
 import { Prisma } from '@/generated/prisma/client'
@@ -9,18 +11,23 @@ import { authoringSchema, canTransition, type AuthoringCourse, type AuthoringSta
 import { createAcademyDefinition } from './academy-course-definition'
 import { readLearningMedia } from './learning-media-storage'
 
-export type AuthoringMetadata = { authoring: { content: AuthoringCourse; state: AuthoringState; revision: number; hash: string; reviewedBy?: string; reviewedAt?: string; reviewReason?: string }; academy: ReturnType<typeof createAcademyDefinition> }
+export type AuthoringMetadata = { authoring: { content: AuthoringCourse | AcademyCourseBundle; state: AuthoringState; revision: number; hash: string; reviewedBy?: string; reviewedAt?: string; reviewReason?: string }; academy: ReturnType<typeof createAcademyDefinition> }
 export async function requireAuthor() {
   if (!isLearningRuntimeEnabled()) throw new Error('LEARNING_DISABLED')
   const user = await getCurrentUser()
   if (!user) throw new Error('ACCESS_DENIED')
   return getPlatformOperatorContext(user.id)
 }
-export function contentHash(content: AuthoringCourse) { return createHash('sha256').update(JSON.stringify(authoringSchema.parse(content))).digest('hex') }
+export function contentHash(content: AuthoringCourse | AcademyCourseBundle) { if (isAcademyBundle(content)) return bundleHash(validateAcademyBundle(content)); return createHash('sha256').update(JSON.stringify(authoringSchema.parse(content))).digest('hex') }
 export function authoringMetadata(value: unknown): AuthoringMetadata {
-  const metadata = value as AuthoringMetadata
+  const metadata = value as AuthoringMetadata & { bundle?: unknown; bundleHash?: string }
+  if (!metadata?.authoring && metadata?.bundle) {
+    const bundle = validateAcademyBundle(metadata.bundle)
+    if (bundleHash(bundle) !== metadata.bundleHash) throw Error('CONTENT_INTEGRITY_FAILED')
+    return { academy: bundle.definition, authoring: { content: bundle, state: 'DRAFT', revision: 0, hash: bundleHash(bundle) } } as AuthoringMetadata
+  }
   if (!metadata?.authoring || !metadata.academy) throw new Error('LEGACY_VERSION_READ_ONLY')
-  const content = authoringSchema.parse(metadata.authoring.content)
+  const content = isAcademyBundle(metadata.authoring.content) ? validateAcademyBundle(metadata.authoring.content) : authoringSchema.parse(metadata.authoring.content)
   if (contentHash(content) !== metadata.authoring.hash) throw new Error('CONTENT_INTEGRITY_FAILED')
   return metadata
 }
@@ -35,6 +42,7 @@ export async function readAuthoringVersion(id: string) {
 }
 export async function saveAuthoringCourse(raw: unknown, versionId?: string, expectedRevision = 0) {
   const actor = await requireAuthor()
+  if (isAcademyBundle(raw)) return getPrisma().$transaction(tx => saveBundleDraft(tx, raw, actor.userId, versionId, expectedRevision), { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 180000 })
   const input = authoringSchema.parse(raw)
   const db = getPrisma()
   return db.$transaction(async tx => {
@@ -137,15 +145,27 @@ export async function transitionAuthoringCourse(id:string,revision:number,to:Aut
     const meta=authoringMetadata(version.sourceMetadata)
     const from=version.status==='DRAFT'?meta.authoring.state:version.status
     if(meta.authoring.revision!==revision || !canTransition(from,to))throw new Error('INVALID_TRANSITION')
-    if(to!=='DRAFT'&&to!=='RETIRED')await verifyStoredContent(tx,id,meta.authoring.content)
+    if(to!=='DRAFT'&&to!=='RETIRED') {
+      if(isAcademyBundle(meta.authoring.content)) await verifyBundleDraft(tx,id,meta.authoring.content)
+      else await verifyStoredContent(tx,id,meta.authoring.content)
+    }
     const next={...meta,authoring:{...meta.authoring,state:to,revision:revision+1}}
     if(to==='APPROVED')Object.assign(next.authoring,{reviewedBy:actor.userId,reviewedAt:new Date().toISOString(),reviewReason:reason.trim()})
     if(to==='DRAFT'){delete next.authoring.reviewedBy;delete next.authoring.reviewedAt;delete next.authoring.reviewReason}
     if(to==='PUBLISHED'){
       if(!meta.authoring.reviewedBy||!meta.authoring.reviewedAt)throw new Error('HUMAN_APPROVAL_REQUIRED')
+      // Do not strand existing learners: historical reports remain immutable, but retired
+      // exams intentionally cannot receive new attempts. Require a separate transition plan.
+      const activePredecessors=await tx.learningEnrollment.count({where:{accessRevokedAt:null,courseVersion:{courseId:version.courseId,status:'PUBLISHED',id:{not:id}},OR:[{examAttempts:{none:{passed:true,status:'SUBMITTED'}}},{examAttempts:{some:{status:'IN_PROGRESS'}}}]}})
+      if(activePredecessors)throw Error('ACTIVE_ENROLLMENTS_REQUIRE_VERSION_PLAN')
       // Existing database publication guards validate question/options and completeness.
-      await tx.learningQuestion.updateMany({where:{code:{startsWith:`AUTH-${id}-`}},data:{status:'PUBLISHED'}})
+      if(isAcademyBundle(meta.authoring.content)) await publishBundleQuestions(tx,id,meta.authoring.content)
+      else await tx.learningQuestion.updateMany({where:{code:{startsWith:`AUTH-${id}-`}},data:{status:'PUBLISHED'}})
+      await tx.learningExamVersion.updateMany({where:{courseId:version.courseId,status:'PUBLISHED',courseVersionId:{not:id}},data:{status:'RETIRED'}})
       await tx.learningExamVersion.updateMany({where:{courseVersionId:id,status:'DRAFT'},data:{status:'PUBLISHED',publishedAt:new Date()}})
+      const superseded=await tx.learningCourseVersion.findMany({where:{courseId:version.courseId,status:'PUBLISHED',id:{not:id}},select:{id:true}})
+      await tx.learningCourseVersion.updateMany({where:{id:{in:superseded.map(v=>v.id)},status:'PUBLISHED'},data:{status:'RETIRED'}})
+      for(const previous of superseded)await tx.marketplaceAuditEvent.create({data:{actorUserId:actor.userId,actorRole:'PLATFORM_ADMIN',entityType:'LearningCourseVersion',entityId:previous.id,action:'ACADEMY_VERSION_SUPERSEDED',metadata:{successorVersionId:id}}})
       await tx.learningCourseVersion.update({where:{id},data:{status:'PUBLISHED',publishedAt:new Date(),sourceMetadata:json(next)}})
       await tx.learningCourse.update({where:{id:version.courseId},data:{status:'PUBLISHED'}})
     }else if(to==='RETIRED'){
@@ -154,4 +174,25 @@ export async function transitionAuthoringCourse(id:string,revision:number,to:Aut
     }else await tx.learningCourseVersion.update({where:{id},data:{sourceMetadata:json(next)}})
     await tx.marketplaceAuditEvent.create({data:{actorUserId:actor.userId,actorRole:'PLATFORM_ADMIN',entityType:'LearningCourseVersion',entityId:id,action:'ACADEMY_PUBLICATION_TRANSITION',metadata:{from,to,hash:meta.authoring.hash,reason:reason.trim()}}})
   },{isolationLevel:Prisma.TransactionIsolationLevel.Serializable,timeout:30000})
+}
+
+/** Prepare an explicit new draft without mutating the source or writing any row. */
+export async function prepareBundleRevision(id: string, version: string) {
+  await requireAuthor()
+  if (!/^[a-zA-Z0-9.-]{1,18}$/.test(version)) throw Error('INVALID_NEW_VERSION')
+  const source = await getPrisma().learningCourseVersion.findUniqueOrThrow({ where: { id } })
+  const metadata = source.sourceMetadata as Record<string, unknown> | null
+  const content = metadata?.bundle ?? (metadata?.authoring as { content?: unknown } | undefined)?.content
+  const bundle = structuredClone(validateAcademyBundle(content))
+  if (source.version === version) throw Error('NEW_VERSION_REQUIRED')
+  bundle.courseVersion = version
+  bundle.examVersion = `${bundle.definition.courseCode}-EXAM-${version}`
+  bundle.definition.exam.code = `${bundle.definition.courseCode}-FINAL`
+  bundle.definition.retention.bankVersion = `${bundle.definition.courseCode}-RETENTION-${version}`
+  bundle.definition.retention.programVersion = `${bundle.definition.courseCode}-RETENTION-${version}`
+  const all = [...bundle.chapters.flatMap(c => c.questions), ...bundle.examQuestions, ...bundle.retentionQuestions]
+  const versions = await getPrisma().learningQuestion.groupBy({ by: ['code'], where: { code: { in: all.map(q => q.code) } }, _max: { version: true } })
+  const max = new Map(versions.map(q => [q.code, q._max.version ?? 0]))
+  for (const question of all) question.version = Math.max(question.version, max.get(question.code) ?? 0) + 1
+  return validateAcademyBundle(bundle)
 }

@@ -105,6 +105,9 @@ describe('Learning-contentrenderer', () => {
     expect(render('PROCESS', { steps: ['Inventariseren', 'Evalueren'] })).toContain('<ol')
     expect(render('SUMMARY', { items: ['Risico’s beoordelen'] })).toContain('Risico’s beoordelen')
     expect(render('IMAGE', { alt: 'Illustratie volgt' })).toContain('Illustratie volgt')
+    const image = render('IMAGE', { src: `/learning-media/${'a'.repeat(64)}.webp`, alt: 'Tekstalternatief', caption: 'Zichtbaar lesbijschrift' })
+    expect(image).toContain('<figcaption>Zichtbaar lesbijschrift</figcaption>')
+    expect(image).toContain('alt="Tekstalternatief"')
   })
 
   it('rendert alle H4/H5/H6/H7/H8-blokken generiek, inclusief callouts en processtappen', () => {

@@ -20,7 +20,9 @@ const identities = [
   ['WL-003', 'Veilig en gezond werken'],
 ] as const
 function load(code: string) {
-  const matches = readdirSync('content/academy').filter(name => name.startsWith(`${code}_COURSE_`) && name.endsWith('_DRAFT.json'))
+  // This suite preserves the original reviewed candidates; later revisions have separate tests.
+  const versions: Record<string,string> = { 'WL-001':'1.0', 'WL-002':'1.3', 'WL-003':'1.1' }
+  const matches = readdirSync('content/academy').filter(name => name === `${code}_COURSE_${versions[code]}_DRAFT.json`)
   expect(matches).toHaveLength(1)
   const bundle = validateAcademyBundle(JSON.parse(readFileSync(path.join('content/academy', matches[0]), 'utf8')))
   const review = JSON.parse(readFileSync(`docs/academy-content/${code}-review.json`, 'utf8'))

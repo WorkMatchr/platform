@@ -16,7 +16,7 @@ export type AcademyQuestion = z.infer<typeof academyQuestionSchema>
 
 const blockSchema = z.object({
   code: z.string().min(1),
-  type: z.enum(['HEADING', 'TEXT', 'CALLOUT', 'PROCESS', 'SUMMARY', 'SINGLE_CHOICE', 'MULTI_CHOICE']),
+  type: z.enum(['HEADING', 'TEXT', 'CALLOUT', 'PROCESS', 'SUMMARY', 'SINGLE_CHOICE', 'MULTI_CHOICE', 'IMAGE']),
   data: z.record(z.string(), z.unknown()), questionCode: z.string().optional(),
 }).strict()
 
@@ -25,12 +25,13 @@ export const academyBundleSchema = z.object({
   courseVersion: z.string().min(1).max(40), description: z.string().min(60),
   contentStatus: z.literal('DRAFT'), reviewFlags: z.array(z.enum(['CONTENT REVIEW REQUIRED — LEGAL', 'ASSESSMENT VALIDATION REQUIRED'])).length(2),
   checkedAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  sources: z.array(z.object({ id: z.string(), title: z.string().min(3), url: z.url(), status: z.enum(['CHECKED', 'MANUAL_REVIEW_REQUIRED']), scope: z.string().min(10) }).strict()).min(3),
+  sources: z.array(z.object({ id: z.string(), title: z.string().min(3), url: z.url().refine(value => new URL(value).protocol === 'https:', 'Gebruik een HTTPS-bron.'), status: z.enum(['CHECKED', 'MANUAL_REVIEW_REQUIRED']), scope: z.string().min(10) }).strict()).min(3),
   chapters: z.array(z.object({
     slug: z.string().regex(/^[a-z0-9-]+$/), title: z.string().min(8), position: z.number().int().min(1).max(10), estimatedMinutes: z.number().int().positive(),
     objectives: z.array(z.string().min(12)).min(3), blocks: z.array(blockSchema).min(20),
     questions: z.array(academyQuestionSchema).min(6), chapterCheckCodes: z.array(z.string()).min(3),
   }).strict()).length(10),
+  examSettings: z.object({ attemptLimit: z.number().int().min(1).max(100).nullable() }).strict().optional(),
   examVersion: z.string().min(1).max(40), examQuestions: z.array(academyQuestionSchema).length(50),
   retentionQuestions: z.array(academyQuestionSchema).length(100),
 }).strict()
@@ -60,6 +61,7 @@ export function academyContentQuality(questions: AcademyQuestion[]) {
 
 export function validateAcademyBundle(input: unknown): AcademyCourseBundle {
   const bundle = academyBundleSchema.parse(input)
+  if (bundle.definition.chapterCount !== bundle.chapters.length || bundle.definition.exam.questionCount !== 50) throw new Error('ACADEMY_EXAM_CONTRACT')
   const prefix = bundle.definition.courseCode.replace('-', '')
   const all = [...bundle.chapters.flatMap((chapter) => chapter.questions), ...bundle.examQuestions, ...bundle.retentionQuestions]
   unique(all.map((question) => question.code), 'QUESTION_CODE')
@@ -73,6 +75,7 @@ export function validateAcademyBundle(input: unknown): AcademyCourseBundle {
     const local = new Map(chapter.questions.map((question) => [question.code, question]))
     const referenced = new Set<string>()
     for (const block of chapter.blocks) {
+      if (block.type === 'IMAGE' && (!/^\/learning-media\/[a-f0-9]{64}\.webp$/.test(String(block.data.src)) || typeof block.data.alt !== 'string' || !block.data.alt.trim())) throw new Error('ACADEMY_IMAGE_REQUIRED')
       if (/("correctAnswer"|"isCorrect"|"answerKey")/.test(JSON.stringify(block.data))) throw new Error('ACADEMY_ANSWER_KEY_IN_BLOCK')
       if (!block.questionCode) continue
       const question = local.get(block.questionCode)
