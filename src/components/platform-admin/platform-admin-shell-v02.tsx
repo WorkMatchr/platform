@@ -10,10 +10,10 @@ import { AcademyAdminNavigation } from './academy-admin-navigation'
 import { isPlatformOperatorMembershipRole } from '@/lib/platform-admin/platform-admin-policy'
 import { TestAccountSwitcher } from './test-account-switcher'
 
-export function PlatformAdminShellV02({ children, displayName, membershipRole, testAccountSwitcher }: ComponentProps<typeof PlatformAdminShell>) {
+export function PlatformAdminShellV02({ children, displayName, membershipRole, testAccountSwitcher, academyEnabled = false }: ComponentProps<typeof PlatformAdminShell>) {
   const pathname = usePathname()
   return <WorkspaceShell
-    chapters={getPlatformAdminChapters(membershipRole)}
+    chapters={getPlatformAdminChapters(membershipRole).filter(chapter => chapter.label !== 'Academy')}
     active={getPlatformAdminActiveItem(pathname, membershipRole)}
     identity={displayName}
     homeHref="/platformbeheer"
@@ -22,6 +22,6 @@ export function PlatformAdminShellV02({ children, displayName, membershipRole, t
     headerActions={<Link href="/account" className={`inline-flex min-h-10 items-center ${focus}`}>Account</Link>}
     navigationLabel="Beheerhoofdstukken"
     footerLabel="WorkMatchr · Beveiligde beheeromgeving"
-    sidebarExtra={<>{isPlatformOperatorMembershipRole(membershipRole) && <AcademyAdminNavigation />}{testAccountSwitcher ? <details className="mt-3 rounded-card border border-border bg-surface p-3 text-sm"><summary className={`cursor-pointer ${focus}`}>Testaccountwisselaar</summary><TestAccountSwitcher {...testAccountSwitcher} /></details> : null}</>}
+    sidebarExtra={<>{isPlatformOperatorMembershipRole(membershipRole) && <AcademyAdminNavigation enabled={academyEnabled} />}{testAccountSwitcher ? <details className="mt-3 rounded-card border border-border bg-surface p-3 text-sm"><summary className={`cursor-pointer ${focus}`}>Testaccountwisselaar</summary><TestAccountSwitcher {...testAccountSwitcher} /></details> : null}</>}
   >{children}</WorkspaceShell>
 }

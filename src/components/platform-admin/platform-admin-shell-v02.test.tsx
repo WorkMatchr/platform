@@ -42,3 +42,21 @@ it.each(['OWNER', 'ADMIN'] as const)('shows all six unavailable Academy areas fo
   expect(navigation.querySelectorAll('a, button, form')).toHaveLength(0)
   expect(document.querySelector('nav[aria-label="Binnen Financieel"] [aria-current="page"]')?.getAttribute('href')).toBe('/platformbeheer/financien/facturen')
 })
+
+it.each(['OWNER', 'ADMIN'] as const)('uses one Academy menu and only integrated management routes for %s', role => {
+  const document = new JSDOM(renderToStaticMarkup(<PlatformAdminShellV02 displayName="Synthetisch" membershipRole={role} academyEnabled testAccountSwitcher={null}>Overzicht</PlatformAdminShellV02>)).window.document
+  expect(document.querySelectorAll('nav[aria-label="Academy / E-learning"]')).toHaveLength(1)
+  expect(document.querySelector('nav[aria-label="Beheerhoofdstukken"] a[href^="/platformbeheer/academy"]')).toBeNull()
+  const menu = document.querySelector('nav[aria-label="Academy / E-learning"]')!
+  expect(menu.querySelectorAll('li')).toHaveLength(6)
+  expect(menu.querySelectorAll('li a')).toHaveLength(5)
+  const participants = [...menu.querySelectorAll('li')].find(item => item.textContent?.includes('Deelnemers en resultaten'))!
+  expect(participants.querySelector('a')).toBeNull()
+  expect(participants.textContent).toContain('Nog niet beschikbaar')
+  expect([...menu.querySelectorAll('a')].every(a => a.getAttribute('href')?.startsWith('/platformbeheer/academy/'))).toBe(true)
+})
+it('does not expose Academy to MEMBER even when the runtime is enabled', () => {
+ const html = renderToStaticMarkup(<PlatformAdminShellV02 displayName="Synthetisch" membershipRole="MEMBER" academyEnabled testAccountSwitcher={null}>Audit</PlatformAdminShellV02>)
+ expect(html).not.toContain('/platformbeheer/academy')
+ expect(html).not.toContain('Academy / E-learning')
+})

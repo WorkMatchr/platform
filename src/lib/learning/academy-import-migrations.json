@@ -768,5 +768,23 @@
       "19bfb98f6ec7a242237990cfbf5c16166f5532bbfd815605214ee6eac7a64d54",
       "82a74c26206c1c8c7e17d3bfdd00e66b2ba89ee240ea674f8a3b4a39fe7439c5"
     ]
+  },
+  {
+    "name": "20261105120000_add_versioned_compliance_drafts",
+    "checksums": [
+      "211d2fc640bb26be304118c3271c4af33b8b9d4c60ad77418499e497590a97ec"
+    ]
+  },
+  {
+    "name": "20261105121000_add_compliance_purchase_kind",
+    "checksums": [
+      "23c435393ca059d29057b557b98732041ed6b46a1e2858fe6d178f993cea9532"
+    ]
+  },
+  {
+    "name": "20261105122000_bind_compliance_purchase",
+    "checksums": [
+      "33a15099e56041e0152976fff13df900aed19279daa056ec087dd1add155c95a"
+    ]
   }
 ]

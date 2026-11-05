@@ -16,6 +16,7 @@ export function PlatformAdminShell({
   children: ReactNode
   displayName: string
   membershipRole: PlatformMembershipRole
+  academyEnabled?: boolean
   testAccountSwitcher: {
     accounts: TestAccountOption[] | null
     unavailableReason: string | null

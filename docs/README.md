@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [WP21 - geintegreerde releasekandidaat en GO/NO-GO](wp21-integrated-release-readiness.md)
+
 - [Academy — complete cursusintegratie en WL-001-toetsbindingen](academy-complete-course-integration.md)
 - [Academy — visuele certificaatontwerper en veilige versies](academy-certificate-designer.md)
 - [Integratie certificaatontwerper met drie Academy-cursussen](academy-certificate-designer-integration.md)

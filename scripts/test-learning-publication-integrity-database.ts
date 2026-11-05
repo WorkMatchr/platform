@@ -122,7 +122,15 @@ async function dataSnapshot(db: Client) {
 async function restoreSyntheticDatabase(admin: Client, db: Client, database: string, exams: Exam[]) {
   const container = process.env.WP16_POSTGRES_CONTAINER_ID
   if (!container) return
-  assert.equal(process.env.GITHUB_ACTIONS, 'true')
+  if (process.env.GITHUB_ACTIONS !== 'true') {
+    assert.ok(process.argv.includes('--local-synthetic-recovery'), 'Explicit local recovery opt-in required')
+    const inspected = spawnSync('docker', ['inspect', container], { encoding: 'utf8', timeout: 10000 })
+    assert.equal(inspected.status, 0)
+    const owned = JSON.parse(inspected.stdout)[0]
+    assert.equal(owned.Config.Labels['workmatchr.synthetic'], 'wp21-integration')
+    assert.equal(owned.HostConfig.PortBindings['5432/tcp'][0].HostIp, '127.0.0.1')
+    assert.equal(owned.HostConfig.PortBindings['5432/tcp'][0].HostPort, source.port)
+  }
   assert.match(container, /^[a-f0-9]{12,64}$/)
   assert.equal(database, `workmatchr_db02_fresh_${suffix}`)
   assert.equal((await db.query('SELECT current_database() AS name')).rows[0].name, database)
@@ -238,7 +246,7 @@ async function integrityChecks(db: Client, exams: Exam[]) {
   }
 }
 
-async function runDatabase(admin: Client, mode: 'upgrade' | 'fresh') {
+async function runDatabase(admin: Client, mode: 'upgrade' | 'fresh' | 'current-upgrade') {
   const appliedNames = mode === 'upgrade' ? historicalNames : names
   const database = `workmatchr_db02_${mode}_${suffix}`
   const target = new URL(source)
@@ -300,6 +308,25 @@ async function runDatabase(admin: Client, mode: 'upgrade' | 'fresh') {
           assert.deepEqual(await functionIdentity(db), identityBefore, 'Correction changed owner/ACL/OID/security mode/volatility')
         }
       }
+    } else if (mode === 'current-upgrade') {
+      const mainNames = [...historicalNames, '20261102120000_add_closed_contact_audit_retention', '20261103100000_add_closed_contact_decision_register'].sort()
+      assert.equal(mainNames.length, 95)
+      mainNames.forEach(copy); deploy()
+      const registryBefore = (await db.query('SELECT * FROM _prisma_migrations ORDER BY migration_name')).rows
+      assert.equal(registryBefore.length, 95)
+      exams = [await newExam(db, 'PUBLISHED'), await newExam(db, 'RETIRED')]
+      const columns = (await db.query(`SELECT table_name, array_agg(column_name::text ORDER BY ordinal_position) AS columns FROM information_schema.columns WHERE table_schema='public' AND table_name<>'_prisma_migrations' GROUP BY table_name ORDER BY table_name`)).rows
+      const queries = columns.map(row => {
+        assert.match(row.table_name, /^[A-Za-z0-9_]+$/)
+        for (const column of row.columns) assert.match(column, /^[A-Za-z0-9_]+$/)
+        return `SELECT md5(coalesce(string_agg(row_to_json(t)::text, '|' ORDER BY row_to_json(t)::text),'')) AS digest FROM (SELECT ${row.columns.map((column:string) => '"'+column+'"').join(',')} FROM public."${row.table_name}") t`
+      })
+      const before = []
+      for (const query of queries) before.push((await db.query(query)).rows[0].digest)
+      names.filter(name => !mainNames.includes(name)).forEach(copy); deploy()
+      for (let i=0; i<queries.length; i++) assert.equal((await db.query(queries[i])).rows[0].digest, before[i], `Existing values changed: ${columns[i].table_name}`)
+      assert.deepEqual((await db.query('SELECT * FROM _prisma_migrations WHERE migration_name=ANY($1::text[]) ORDER BY migration_name',[mainNames])).rows,registryBefore)
+      console.log('PASS: current main 95 -> candidate 113; all original table columns/data and migration records unchanged')
     } else {
       appliedNames.forEach(copy)
       deploy()
@@ -345,8 +372,11 @@ async function main() {
       await admin.query(`CREATE ROLE "${role}" NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS`)
       createdRoles.push(role)
     }
-    await runDatabase(admin, 'upgrade')
-    await runDatabase(admin, 'fresh')
+    if (!process.argv.includes('--current-upgrade-only')) {
+      await runDatabase(admin, 'upgrade')
+      await runDatabase(admin, 'fresh')
+    }
+    await runDatabase(admin, 'current-upgrade')
     console.log(`PASS: ${negativeChecks} explicit rejected mutations/privilege attempts; no production access`)
   } finally {
     for (const role of createdRoles.reverse()) await admin.query(`DROP ROLE "${role}"`)
