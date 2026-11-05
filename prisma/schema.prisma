@@ -686,6 +686,7 @@ enum CreditTransactionType {
 }
 
 enum FinancialPurchaseKind {
+  COMPLIANCE_SCAN
   CREDIT_PACKAGE
   PRO_SUBSCRIPTION
   ACADEMY_COURSE
@@ -3011,6 +3012,11 @@ model ArboGuideRun {
   @@index([completedByUserId, completedAt])
   @@index([guideType, guideVersion, completedAt])
   @@index([status, createdAt])
+  draftRevision Int?
+  draftDefinitionChecksum String? @db.VarChar(64)
+
+  compliancePurchase FinancialPurchase?
+
 }
 
 model ArboGuideRunResult {
@@ -4120,6 +4126,8 @@ model FinancialPurchase {
   @@index([discountCodeId])
   academySeatTransfer LearningAcademySeatTransfer?
   academyOrder LearningAcademyOrder?
+  complianceRunId String? @unique @db.Uuid
+  complianceRun ArboGuideRun? @relation(fields: [complianceRunId], references: [id], onDelete: Restrict)
 
 }
 

@@ -110,7 +110,7 @@ describe('Compliance-rapportage', () => {
     expect(text).toContain('Status: Actie nodig')
     expect(text).toContain('Status: Controleren')
     expect(text).toContain('Arbeidsomstandighedenwet')
-    expect(text).toContain(COMPLIANCE_REPORT_DISCLAIMER)
+    expect(text.replace(/\s+/g, ' ')).toContain(COMPLIANCE_REPORT_DISCLAIMER)
     const pages = await extractPdfPages(new Uint8Array(bytes))
     expect(pages[0]).not.toContain('Resultaten per onderwerp')
     expect(pages[1]).toContain('Resultaten per onderwerp')

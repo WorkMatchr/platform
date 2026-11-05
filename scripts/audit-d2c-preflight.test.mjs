@@ -6,7 +6,7 @@ import path from 'node:path'
 import os from 'node:os'
 import { auditPreflight as checkPreflight, pendingMigrations } from './audit-d2c-preflight.mjs'
 
-// Preserve the approved historical eight-migration plan. The new candidate is NOT authorized by it.
+// Preserve the approved historical eight-migration plan. Later candidates are NOT authorized by it.
 const migrationRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'workmatchr-historical-preflight-'))
 // Fixed historical fixture: later Academy migrations are not part of this old plan.
 const historicalNames = JSON.parse(fs.readFileSync(new URL('./fixtures/d2c-historical-migration-names.json', import.meta.url), 'utf8'))
@@ -26,7 +26,7 @@ const auditPreflight = (evidence, database) => checkPreflight(evidence, database
 const registry=fs.readdirSync(migrationRoot).filter(n=>/^\d/.test(n)&&!pendingMigrations.includes(n)).sort().map(migration_name=>({migration_name,finished:true,rolled_back:false,checksum:createHash('sha256').update(fs.readFileSync(path.join(migrationRoot,migration_name,'migration.sql'),'utf8').replace(/\r\n/g,'\n')).digest('hex')}))
 const evidence={database:'fixture_db',readOnly:'on',version:'18.0',registry,invalidIndexes:0,unvalidatedConstraints:0,unfinishedFinanceRuns:0,activeOutboxLeases:0,walletMismatches:0,ungrantedLocks:0,learningTables:0,examGuardExists:false,unfinishedClientTransactions:0,outbox:[]}
 test('read-only metadata matches 85 registrations and exactly eight pending files',()=>assert.equal(auditPreflight(evidence,'fixture_db').status,'PASS'))
-test('original production plan refuses the additional unapproved contact-audit migration',()=>assert.throws(()=>checkPreflight(evidence,'fixture_db'),/Unexpected local migration count/))
+test('original production plan refuses all later unapproved migrations',()=>assert.throws(()=>checkPreflight(evidence,'fixture_db'),/Unexpected local migration count/))
 for(const [name,change] of [
   ['wrong database',e=>{e.database='other'}],
   ['read-write evidence',e=>{e.readOnly='off'}],

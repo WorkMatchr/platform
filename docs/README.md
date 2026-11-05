@@ -13,6 +13,9 @@
 
 - [WP18 — commerciële keten en offerteacceptatie](wp18-commercial-completion.md)
 - [SEO & Analytics — launch readiness en campagnevoorstel](marketing/seo-analytics-launch-readiness.md)
+- [Compliance F4: duurzame concepten, prijscontract en functionele acceptatie](compliance/f4-functional-completion.md)
+
+- [Arbo Compliance en Kenniscentrum: afronding en acceptatiegrenzen](compliance/arbo-compliance-knowledge-completion.md)
 
 - [Productiedatabase: schrijfpauze, herstel en migratieacceptatie](database-upgrade-preparation.md)
 

@@ -7,9 +7,15 @@ import { POST } from './route'
 import { ArboGuideRunError } from '@/lib/arbo-guides/arbo-guide-run-service'
 import { f4TestDefinition, f4PositiveAnswers } from '@/test-fixtures/compliance-f4'
 const request = (body: unknown) => new Request('http://localhost/wijzers/compliance/v2/runs', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
-const body = () => ({ answers: f4PositiveAnswers, idempotencyKey: 'b0000000-0000-4000-8000-000000000001', startedAt: new Date().toISOString(), completedAt: new Date().toISOString() })
+const body = () => ({ draftRevision: 0, answers: f4PositiveAnswers, idempotencyKey: 'b0000000-0000-4000-8000-000000000001', startedAt: new Date().toISOString(), completedAt: new Date().toISOString() })
 beforeEach(() => { vi.clearAllMocks(); mocks.enabled = true; mocks.access.mockResolvedValue({ authorized: true, organizationId: 'trusted-org', userId: 'trusted-user', organizationName: 'Test' }); mocks.load.mockResolvedValue(f4TestDefinition()); mocks.complete.mockResolvedValue({ id: 'run', created: true }) })
 describe('F4 route', () => {
+  it('weigert een omweg zonder conceptrevisie en meldt ontbrekende betaaltoegang', async () => {
+    const { draftRevision: omitted, ...withoutDraft } = body(); void omitted
+    expect((await POST(request(withoutDraft))).status).toBe(400)
+    mocks.complete.mockRejectedValue(new ArboGuideRunError('PAYMENT_REQUIRED'))
+    const result = await POST(request(body())); expect(result.status).toBe(402); expect((await result.json()).code).toBe('PAYMENT_REQUIRED')
+  })
   it('staat standaard uit en raakt dan auth/database niet aan', async () => { mocks.enabled = false; expect((await POST(request(body()))).status).toBe(404); expect(mocks.access).not.toHaveBeenCalled(); expect(mocks.complete).not.toHaveBeenCalled() })
   for (const status of [401,403]) it(`weigert ${status} zonder framework/opslag`, async () => { mocks.access.mockResolvedValue({ authorized: false, status }); expect((await POST(request(body()))).status).toBe(status); expect(mocks.load).not.toHaveBeenCalled() })
   it('negeert geen vervalste tenant/framework/snapshot: weigert de aanvraag', async () => { expect((await POST(request({ ...body(), organizationId: 'foreign' }))).status).toBe(400); expect(mocks.complete).not.toHaveBeenCalled() })
@@ -18,7 +24,7 @@ describe('F4 route', () => {
     const input = mocks.complete.mock.calls[0][0]
     expect(input.organizationId).toBe('trusted-org'); expect(input.completedByUserId).toBe('trusted-user')
     expect(input.reportSnapshot.results).toHaveLength(10); expect(input.guideVersion).toBe('2')
-    expect(mocks.complete.mock.calls[0][1]).toEqual({ maxCompletionAgeMs: 300_000 })
+    expect(mocks.complete.mock.calls[0][1]).toEqual({ maxCompletionAgeMs: 300_000, draftRevision: 0 })
   })
   it('laat oude identieke inzendingen door de geautoriseerde replaycontrole beoordelen', async () => {
     const old = new Date(Date.now() - 360_000).toISOString()

@@ -129,16 +129,17 @@ export async function issueInvoiceForPaidPurchase(
   const isAcademy = purchase.kind === 'ACADEMY_COURSE'
   const supplyDate = isCredits ? purchase.creditedTransaction?.createdAt : paidAt
   if (!supplyDate) throw new Error('INVOICE_V2_SUPPLY_DATE_REQUIRED')
-  const servicePeriodStart = isCredits || isAcademy ? null : paidAt
+  const isSubscription = purchase.kind === 'PRO_SUBSCRIPTION'
+  const servicePeriodStart = isSubscription ? paidAt : null
   const servicePeriodEnd = servicePeriodStart ? addUtcMonth(servicePeriodStart) : null
   if (isCredits && (purchase.credits < 1 || purchase.baseAmountCents % purchase.credits !== 0)) {
     throw new Error('INVOICE_V2_CREDIT_UNIT_PRICE_NOT_EXACT')
   }
   const totalDiscount = purchase.packageDiscountCents + purchase.proDiscountCents + purchase.discountCodeDiscountCents
   const line = buildInvoiceV2Line({
-    description: isAcademy ? `[TEST — TAX REVIEW REQUIRED] ${purchase.packageLabel}` : isCredits ? `${purchase.credits} WorkMatchr credits` : 'WorkMatchr Pro',
+    description: isAcademy ? `[TEST — TAX REVIEW REQUIRED] ${purchase.packageLabel}` : isCredits ? `${purchase.credits} WorkMatchr credits` : isSubscription ? 'WorkMatchr Pro' : purchase.packageLabel,
     quantity: isCredits ? purchase.credits : 1,
-    unit: isAcademy ? 'opleidingspakket' : isCredits ? 'credit' : 'maand',
+    unit: isAcademy ? 'opleidingspakket' : isCredits ? 'credit' : isSubscription ? 'maand' : 'scan',
     unitPriceExclVatCents: isCredits ? purchase.baseAmountCents / purchase.credits : purchase.baseAmountCents,
     discountAmountCents: totalDiscount,
     vatRateBps: purchase.vatRateBps,
