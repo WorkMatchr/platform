@@ -159,6 +159,12 @@ Geen runtime-auditlogica gewijzigd. De volledige gecombineerde suite blijft beho
 de zelfstandige CI-suite voert dezelfde controle uit op een lege database.
 Na correctie lokaal opnieuw 16/16 PASS en 110/110 migraties; cleanup PASS.
 
+De bredere legacy-learning-CI vond vervolgens een oude verwachting van precies
+drie certificaattriggers. Migratie 110 voegt terecht een vierde toe. De controle
+verifieert nu expliciet de vier verwachte namen plus actieve status; de bestaande
+immutability-, no-delete- en validatietests blijven ongewijzigd. Dit voegt alleen
+`scripts/test-learning-database.ts` aan de integratiewijzigingsset toe.
+
 Vercel Preview op de eerste integratiehead compileerde en doorliep TypeScript,
 maar stopt bij pagina-configuratie met `PREVIEW_DATABASE_ISOLATION_REQUIRED`.
 De bestaande afscherming blijft intact. Dit vereist bewezen Preview-isolatie,
@@ -201,6 +207,7 @@ productiemigratie-/vrijgaveautorisatie. Geen productiefeaturegate gewijzigd.
 - `prisma/migrations/20261104220000_add_learning_certificate_designer/migration.sql`
 - `prisma/schema.prisma`
 - `scripts/test-academy-content-database.mjs`
+- `scripts/test-learning-database.ts`
 - `src/app/platformbeheer/academy/certificaten/page.tsx`
 - `src/app/platformbeheer/academy/certificaten/sjablonen/actions.ts`
 - `src/app/platformbeheer/academy/certificaten/sjablonen/page.tsx`
