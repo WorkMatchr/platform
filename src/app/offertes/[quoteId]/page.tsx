@@ -21,6 +21,9 @@ export default async function QuotePage({ params }: { params: Promise<{ quoteId:
   const { quote, membership } = result
   const currentVersion = quote.currentVersion
   if (!currentVersion) notFound()
+  const canEdit = quote.status === 'DRAFT' && membership.role !== 'MEMBER'
+    && quote.participation.status === 'ACTIVE' && quote.participation.invitation.deadlineAt > new Date()
+    && ['AWAITING_RESPONSES', 'IN_SELECTION'].includes(quote.participation.assignment.status)
 
   return (
     <Section spacing="compact">
@@ -32,10 +35,13 @@ export default async function QuotePage({ params }: { params: Promise<{ quoteId:
         <dl className="grid gap-5 sm:grid-cols-2">
           <div><dt className="font-semibold">Prijs</dt><dd>€ {(Number(currentVersion.priceCents) / 100).toLocaleString('nl-NL', { minimumFractionDigits: 2 })}</dd></div>
           <div><dt className="font-semibold">Versie</dt><dd>{currentVersion.version}</dd></div>
+          <div className="sm:col-span-2"><dt className="font-semibold">Toelichting op de prijs</dt><dd className="mt-1 whitespace-pre-wrap">{currentVersion.priceExplanation}</dd></div>
           <div className="sm:col-span-2"><dt className="font-semibold">Aanpak</dt><dd className="mt-1 whitespace-pre-wrap">{currentVersion.approach}</dd></div>
           <div className="sm:col-span-2"><dt className="font-semibold">Planning</dt><dd className="mt-1 whitespace-pre-wrap">{currentVersion.planning}</dd></div>
+          {currentVersion.terms ? <div className="sm:col-span-2"><dt className="font-semibold">Voorwaarden</dt><dd className="mt-1 whitespace-pre-wrap">{currentVersion.terms}</dd></div> : null}
+          {currentVersion.validUntil ? <div className="sm:col-span-2"><dt className="font-semibold">Geldig tot</dt><dd>{currentVersion.validUntil.toLocaleString('nl-NL')}</dd></div> : null}
         </dl>
-        {quote.status === 'DRAFT' && membership.role !== 'MEMBER' ? (
+        {canEdit ? (
           <div className="mt-6 flex flex-wrap gap-3">
             <Link className="font-semibold underline" href={`/offertes/nieuw?deelname=${quote.participation.id}`}>Offerte aanpassen</Link>
             <ActionForm action={submitQuoteAction}>
