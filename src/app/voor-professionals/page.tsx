@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { PublicPageLayout } from '@/components/public/public-page-layout'
 import { Section } from '@/components/layout/section'
 import { Card } from '@/components/ui/card'
@@ -27,6 +28,9 @@ export default function ProfessionalsPage() {
         <Card><Heading as="h3" size="h3">Reageer op relevante opdrachten</Heading><Text className="mt-3 text-text-secondary">Bekijk opdrachten die aansluiten op de gecontroleerde deskundigheid en het werkgebied van uw organisatie. Bij beschikbare opdrachten kunt u uw interesse tonen.</Text></Card>
       </div>
       <Text className="mt-6 max-w-3xl text-text-secondary">Welke opdrachten beschikbaar zijn, hangt af van de vragen van opdrachtgevers en uw profiel. Aanmelden geeft geen garantie op opdrachten. Voor gebruik richt u na registratie uw organisatie en profiel in.</Text>
+      <Heading as="h2" size="h2" className="mt-8">Werken via WorkMatchr in arbo, veiligheid en HSE</Heading>
+      <Text className="mt-3 max-w-3xl text-text-secondary">Zoekt u opdrachten als veiligheidsprofessional? Op WorkMatchr reageert u namens uw organisatie. Een volledig profiel en gecontroleerde deskundigheid helpen bij het vinden van passende vragen; er is geen garantie op werk of omzet.</Text>
+      <Link href={publicRoutes.services} className="mt-4 inline-block text-brand-primary-hover underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-primary">Bekijk de diensten en deskundigheden</Link>
     </Section>
   </PublicPageLayout>
 }

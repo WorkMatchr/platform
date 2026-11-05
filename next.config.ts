@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next'
+import { searchIndexingHeaders } from './src/config/search-indexing'
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -6,7 +7,7 @@ const nextConfig: NextConfig = {
   // Full Academy bundles require more than the default 1 MB action body.
   experimental: { serverActions: { bodySizeLimit: '2mb' } },
   async headers() {
-    return [{
+    return [...searchIndexingHeaders(process.env.VERCEL_ENV), {
       source: '/:path*',
       headers: [
         // Keep Next.js inline hydration and existing provider redirects working.

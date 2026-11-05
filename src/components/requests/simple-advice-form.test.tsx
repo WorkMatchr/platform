@@ -16,10 +16,12 @@ beforeAll(async () => {
   closeDom = () => dom.window.close()
 }, 180000)
 afterAll(() => { cleanup?.(); closeDom?.(); for (const [key, descriptor] of originalGlobals) { if (descriptor) Object.defineProperty(globalThis, key, descriptor); else Reflect.deleteProperty(globalThis, key) } })
+import { measure } from '@/lib/marketing/measurement'
+vi.mock('@/lib/marketing/measurement', () => ({ measure: vi.fn() }))
 import { SimpleAdviceForm } from './simple-advice-form'
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }))
 vi.mock('next/link', () => ({ useLinkStatus: () => ({ pending: false }), default: ({ children, ...props }: React.ComponentProps<'a'>) => <a {...props}>{children}</a> }))
-beforeEach(() => { cleanup(); sessionStorage.clear() })
+beforeEach(() => { cleanup(); sessionStorage.clear(); vi.mocked(measure).mockClear() })
 const setup = () => render(<SimpleAdviceForm action={vi.fn().mockResolvedValue({})} viewerId="owner" locations={[{ id: '11111111-1111-4111-8111-111111111111', city: 'Utrecht' }]} />)
 const choose = (label: string, value: string) => fireEvent.change(screen.getByLabelText(label), { target: { value } })
 const next = async () => { await waitFor(() => expect((screen.getByRole('button', { name: 'Verder' }) as HTMLButtonElement).disabled).toBe(false)); fireEvent.click(screen.getByRole('button', { name: 'Verder' })) }
@@ -317,4 +319,20 @@ describe('Advieswijzer deep links', () => {
     expect((screen.getByLabelText('Welke deskundigheid zoekt u?') as HTMLSelectElement).value).toBe('')
     expect(action).not.toHaveBeenCalled()
   })
+})
+
+it('emits publication only after server success, once and without payload', async () => {
+  const action = vi.fn().mockResolvedValueOnce({ message: 'Try again' }).mockResolvedValueOnce({ requestId: 'synthetic-request' })
+  render(<SimpleAdviceForm action={action} viewerId="owner" />)
+  expect(measure).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByLabelText('Nee')); choose('Waar gaat uw vraag over?', 'UNKNOWN'); await next(); fill(); await next()
+  expect(vi.mocked(measure).mock.calls.filter(([name]) => name === 'advice_start')).toHaveLength(1)
+  expect(vi.mocked(measure).mock.calls.filter(([name]) => name === 'advice_complete')).toHaveLength(1)
+  fireEvent.click(screen.getByText('Opdracht publiceren'))
+  await waitFor(() => expect(screen.getByText('Try again')).toBeTruthy())
+  expect(measure).not.toHaveBeenCalledWith('assignment_published')
+  fireEvent.click(screen.getByText('Opdracht publiceren'))
+  await waitFor(() => expect(measure).toHaveBeenCalledWith('assignment_published'))
+  expect(vi.mocked(measure).mock.calls.filter(([name]) => name === 'assignment_published')).toHaveLength(1)
+  expect(vi.mocked(measure).mock.calls.every(call => call.length === 1)).toBe(true)
 })

@@ -96,13 +96,13 @@ describe('publieke e-learningpagina’s', () => {
   })
 
   it('registreert de publieke route voor SEO met eigen metadata', () => {
-    expect(indexablePublicRoutes).toContain('/e-learning')
-    expect(sitemap().some(entry => new URL(entry.url).pathname === '/e-learning')).toBe(true)
+    expect(indexablePublicRoutes).not.toContain('/e-learning')
+    expect(sitemap().some(entry => new URL(entry.url).pathname === '/e-learning')).toBe(false)
     expect(metadata.title).toContain('WorkMatchr')
     expect(metadata.description).toContain('arbeidsveiligheid')
     expect(metadata.alternates).toEqual({ canonical: '/e-learning' })
     expect(metadata.openGraph).toMatchObject({ url: '/e-learning' })
-    expect(sitemap().some(entry => new URL(entry.url).pathname === publicLearning.href)).toBe(true)
+    expect(sitemap().some(entry => new URL(entry.url).pathname === publicLearning.href)).toBe(false)
     expect(rieMetadata.alternates).toEqual({ canonical: publicLearning.href })
     expect(rieMetadata.title).toContain('RI&E')
     expect(rieMetadata.description).toContain('Binnenkort beschikbaar')
