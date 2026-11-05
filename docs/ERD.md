@@ -770,3 +770,9 @@ De scan en haar resultaten blijven immutable. Alleen de operationele velden van 
 ## Compliance F4 (nog niet uitgerold)
 
 Nullable `ComplianceQuestionDefinition.visibilityCondition` bewaart versiegebonden zichtbaarheid. Geen bestaande data gewijzigd; zie [F4](compliance-f4-expanded-guide.md).
+
+## Certificaatontwerper
+LearningCertificateDesign 1—N LearningCertificateDesignBinding (GLOBAL of
+LearningCourse.id). Nieuwe LearningCertificate-uitgifte bevat een onveranderbare
+kopie van de gekozen definitie en checksum; de oorspronkelijke certificaat-,
+gebruiker-, inschrijving- en examenrelaties blijven leidend.

@@ -491,3 +491,9 @@ Migratie `20261001210000_add_compliance_actions` voegt de operationele actielaag
 ## Compliance F4 (nog niet uitgerold)
 
 Nullable `ComplianceQuestionDefinition.visibilityCondition` bewaart versiegebonden zichtbaarheid. Geen bestaande data gewijzigd; zie [F4](compliance-f4-expanded-guide.md).
+
+## Certificaatontwerper (LMS-kandidaat)
+Additieve migratie 20261104220000_add_learning_certificate_designer: versieerbare
+LearningCertificateDesign, globale/cursuskoppeling LearningCertificateDesignBinding
+en nullable LearningCertificate.designSnapshot. Geen backfill; bestaande guards
+behouden. Zie [ontwerp en releasegrenzen](academy-certificate-designer.md).

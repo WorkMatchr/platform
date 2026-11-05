@@ -70,13 +70,15 @@ export async function deliverLearningCertificateEmails(input: { limit?: number; 
     const certificate = await db.learningCertificate.findFirst({
       where: { id: payload.certificateId, userId: job.recipientUserId, status: 'ACTIVE' },
       select: {
-        certificateNumber: true, courseTitle: true, firstName: true, lastName: true, issuedAt: true, templateVersion: true,
+        certificateNumber: true, courseTitle: true, firstName: true, lastName: true, issuedAt: true, templateVersion: true, courseVersion: true, designSnapshot: true,
         user: { select: { email: true, emailVerified: true, status: true } },
       },
     })
     if (!certificate || certificate.user.status !== 'ACTIVE' || !certificate.user.emailVerified) { await finish('FAILED', 'CERTIFICATE_NOT_DELIVERABLE'); continue }
     const pdfBytes = await buildLearningCertificatePdf({
       templateVersion: certificate.templateVersion,
+      courseVersion: certificate.courseVersion,
+      designSnapshot: certificate.designSnapshot,
       firstName: certificate.firstName,
       lastName: certificate.lastName,
       courseTitle: certificate.courseTitle,
