@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [WP19 — definitieve commerciële acceptatie na WP18](wp19-final-commercial-acceptance.md)
+
 - [WP18 — commerciële keten en offerteacceptatie](wp18-commercial-completion.md)
 
 - [Productiedatabase: schrijfpauze, herstel en migratieacceptatie](database-upgrade-preparation.md)
