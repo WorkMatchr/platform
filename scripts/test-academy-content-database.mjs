@@ -40,6 +40,12 @@ try {
  const identity = (await client.query("SELECT current_database() AS name,current_setting('server_version_num')::int AS version")).rows[0]
  assert.equal(identity.name, database); assert.ok(identity.version >= 180000 && identity.version < 190000)
  run(process.execPath, ['node_modules/prisma/build/index.js', 'migrate', 'deploy'], { DATABASE_URL: ownerUrl })
+ const before = (await client.query('SELECT migration_name,checksum,finished_at,rolled_back_at FROM _prisma_migrations ORDER BY migration_name')).rows
+ assert.equal(before.length, 110)
+ assert.ok(before.every(row => row.finished_at && !row.rolled_back_at))
+ run(process.execPath, ['node_modules/prisma/build/index.js', 'migrate', 'deploy'], { DATABASE_URL: ownerUrl })
+ assert.deepEqual((await client.query('SELECT migration_name,checksum,finished_at,rolled_back_at FROM _prisma_migrations ORDER BY migration_name')).rows, before)
+ console.log('110 migrations PASS; repeated deploy leaves the registry unchanged.')
  await client.query("CREATE ROLE academy_content_editor LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD '" + runtimeSecret + "'")
  await client.query('REVOKE CREATE,TEMPORARY ON DATABASE workmatchr_lms20_synthetic FROM PUBLIC')
  await client.query('REVOKE CREATE ON SCHEMA public FROM PUBLIC')
@@ -54,8 +60,8 @@ try {
  await client.query('GRANT USAGE,SELECT ON ALL SEQUENCES IN SCHEMA public TO academy_content_editor')
  await client.query('GRANT EXECUTE ON FUNCTION public.learning_question_is_editable(uuid) TO academy_content_editor')
  const runtimeUrl = 'postgresql://academy_content_editor:' + runtimeSecret + '@127.0.0.1:5449/' + database
- console.log(run(process.execPath, ['node_modules/vitest/vitest.mjs', 'run', 'src/lib/learning/academy-content-postgres.test.ts', '--maxWorkers=1'],
-  { DATABASE_URL: runtimeUrl, ACADEMY_CONTENT_POSTGRES_TEST: 'true' }))
+ console.log(run(process.execPath, ['node_modules/vitest/vitest.mjs', 'run', 'src/lib/learning/academy-content-postgres.test.ts', 'src/lib/learning/certificate-design-postgres.test.ts', '--maxWorkers=1'],
+  { DATABASE_URL: runtimeUrl, ACADEMY_CONTENT_POSTGRES_TEST: 'true', CERTIFICATE_DESIGN_POSTGRES_TEST: 'true' }))
 } finally {
  await client?.end().catch(() => {})
  if (!containerId) {

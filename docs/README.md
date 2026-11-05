@@ -1,6 +1,8 @@
 # Documentatie WorkMatchr
 
 - [Academy — complete cursusintegratie en WL-001-toetsbindingen](academy-complete-course-integration.md)
+- [Academy — visuele certificaatontwerper en veilige versies](academy-certificate-designer.md)
+- [Integratie certificaatontwerper met drie Academy-cursussen](academy-certificate-designer-integration.md)
 
 - [Academy — contentintegratie en publicatiegereedheid](academy-content-integration-and-publication-readiness.md)
 

@@ -15,6 +15,9 @@ import { verifyLocalImportRole } from './academy-import-preflight'
 import { startLearningCourseAction, finishLearningBlockAction, submitLearningAnswerAction, completeLearningChapterAction } from '@/app/e-learnings/actions'
 import { getFinalExamOverview, startFinalExamAttempt, saveFinalExamAnswer, submitFinalExamAttempt, getFinalExamPlayer } from './learning-final-exam-service'
 import { ensureCertificateForPassedExam, getOwnedLearningCertificate, getPublicLearningCertificate } from './learning-certificate-service'
+import { saveCertificateDesign, transitionCertificateDesign, bindCertificateDesign, duplicateCertificateDesign } from './certificate-design-service'
+import { standardCertificateDesign } from './certificate-design-contract'
+import { buildLearningCertificatePdf } from './learning-certificate-pdf'
 const enabled=process.env.ACADEMY_CONTENT_POSTGRES_TEST==='true'
 const bundles=['WL-001_COURSE_1.2_DRAFT.json','WL-002_COURSE_1.3_DRAFT.json','WL-003_COURSE_1.1_DRAFT.json'].map(f=>validateAcademyBundle(JSON.parse(readFileSync(`content/academy/${f}`,'utf8'))))
 describe.skipIf(!enabled)('full Academy content PostgreSQL 18 integration',()=>{
@@ -88,6 +91,12 @@ describe.skipIf(!enabled)('full Academy content PostgreSQL 18 integration',()=>{
   const code=bundle.definition.courseCode
   it(`${code}: actual services progress, fail/retry, pass, single certificate and ownership`,async()=>{
    state.actor=admin;const id=edits.get(code)!
+   const design=await saveCertificateDesign({name:`${code} synthetisch certificaat`,revision:0,definition:standardCertificateDesign})
+   await transitionCertificateDesign(design.id,1,'REVIEW','Uitsluitend synthetische ontwerpreview')
+   await transitionCertificateDesign(design.id,2,'APPROVED','Uitsluitend synthetische ontwerpgoedkeuring')
+   await transitionCertificateDesign(design.id,3,'ACTIVE','Uitsluitend lokale testactivering')
+   const identity=await db.learningCourseVersion.findUniqueOrThrow({where:{id}})
+   await bindCertificateDesign(identity.courseId,design.id)
    await transitionAuthoringCourse(id,1,'REVIEW','Uitsluitend synthetische technische acceptatie; geen juridische goedkeuring')
    await transitionAuthoringCourse(id,2,'APPROVED','Uitsluitend lokale testreview; inhoudelijke productieacceptatie blijft open')
    await transitionAuthoringCourse(id,3,'PUBLISHED','Uitsluitend lokale testpublicatie in geïsoleerde database')
@@ -113,6 +122,22 @@ describe.skipIf(!enabled)('full Academy content PostgreSQL 18 integration',()=>{
    const certificates=await Promise.all([ensureCertificateForPassedExam(student,code),ensureCertificateForPassedExam(student,code)])
    expect(certificates[0].certificate?.id).toBe(certificates[1].certificate?.id)
    const cert=certificates[0].certificate!;expect(await getOwnedLearningCertificate(outsider,cert.id)).toBeNull();expect((await getPublicLearningCertificate(cert.certificateNumber))?.status).toBe('ACTIVE')
+   expect(cert.templateVersion).toBe('ACADEMY-DESIGN-1')
+   expect(cert.designSnapshot).toMatchObject({designId:design.id,courseCode:code})
+   expect(cert.courseVersion).toBe(editVersion)
+   expect(cert.courseTitle).toBe(bundle.definition.title)
+   const originalPdf=await buildLearningCertificatePdf(cert)
+   expect(Buffer.from(originalPdf).subarray(0,5).toString()).toBe('%PDF-')
+   state.actor=admin
+   const successor=await duplicateCertificateDesign(design.id,true)
+   await transitionCertificateDesign(successor.id,1,'REVIEW','Uitsluitend lokale opvolgreview')
+   await transitionCertificateDesign(successor.id,2,'APPROVED','Uitsluitend lokale opvolggoedkeuring')
+   await transitionCertificateDesign(successor.id,3,'ACTIVE','Uitsluitend lokale opvolgactivering')
+   const historical=await db.learningCertificate.findUniqueOrThrow({where:{id:cert.id}})
+   expect(historical.designSnapshot).toEqual(cert.designSnapshot)
+   expect(await buildLearningCertificatePdf(historical)).toEqual(originalPdf)
+   expect((await db.learningCertificateDesignBinding.findUniqueOrThrow({where:{scope:identity.courseId}})).designId).toBe(successor.id)
+   state.actor=student
    await expect(startFinalExamAttempt(student,bundle.definition.slug)).rejects.toThrow('ATTEMPT_LIMIT_REACHED')
    const before=canonicalAcademyContent((await db.learningCourseVersion.findUniqueOrThrow({where:{id}})).sourceMetadata)
    state.actor=admin;const next=await prepareBundleRevision(id,`${editVersion}b`);const nextSaved=await saveAuthoringCourse(next,id,4)

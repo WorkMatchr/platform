@@ -11,6 +11,7 @@ const PAGE_WIDTH = 841.89
 const LOGO_PATH = join(process.cwd(), 'public', 'branding', 'workmatchr-logo.png')
 
 export type LearningCertificatePdfData = {
+  designSnapshot?: unknown
   correctionNotice?: string
   courseVersion?: string
   templateVersion: string
@@ -32,6 +33,20 @@ function cleanPdfText(value: string) {
 }
 
 export async function buildLearningCertificatePdf(certificate: LearningCertificatePdfData) {
+  if (certificate.templateVersion === 'ACADEMY-DESIGN-1') {
+    const { designSchema } = await import('./certificate-design-contract')
+    const { certificateDesignChecksum, renderCertificateDesign } = await import('./certificate-design-pdf')
+    const snapshot = certificate.designSnapshot as { definition?: unknown; checksum?: string; courseCode?: string } | null
+    if (!snapshot || !snapshot.courseCode || !certificate.courseVersion || certificateDesignChecksum(snapshot.definition) !== snapshot.checksum) throw Error('CERTIFICATE_DESIGN_INTEGRITY')
+    return renderCertificateDesign(designSchema.parse(snapshot.definition), {
+      'deelnemer.naam': cleanPdfText(certificate.firstName + ' ' + certificate.lastName),
+      'cursus.titel': cleanPdfText(certificate.courseTitle), 'cursus.code': snapshot.courseCode,
+      'cursus.versie': certificate.courseVersion,
+      datum: new Intl.DateTimeFormat('nl-NL', {dateStyle:'long',timeZone:'Europe/Amsterdam'}).format(certificate.issuedAt),
+      'certificaat.nummer': certificate.certificateNumber,
+      'certificaat.verificatie_url': new URL('/certificaat/' + encodeURIComponent(certificate.certificateNumber), getPublicAppBaseUrl()).toString(),
+    }, false, certificate.correctionNotice, certificate.issuedAt)
+  }
   if (certificate.templateVersion !== LEARNING_CERTIFICATE_TEMPLATE_VERSION && certificate.templateVersion !== 'ACADEMY-CERT-1.0' && certificate.templateVersion !== 'ACADEMY-CERT-2.0') throw new Error('UNSUPPORTED_CERTIFICATE_TEMPLATE_VERSION')
 
   if (certificate.templateVersion === 'ACADEMY-CERT-2.0' && !certificate.courseVersion?.trim()) throw new Error('CERTIFICATE_COURSE_VERSION_REQUIRED')
