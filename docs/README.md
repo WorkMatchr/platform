@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [WP18 — commerciële keten en offerteacceptatie](wp18-commercial-completion.md)
+
 - [Productiedatabase: schrijfpauze, herstel en migratieacceptatie](database-upgrade-preparation.md)
 
 - [Gecombineerde eindacceptatie en gesloten besluitregister](combined-final-acceptance.md)
