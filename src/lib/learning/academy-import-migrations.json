@@ -786,5 +786,19 @@
     "checksums": [
       "33a15099e56041e0152976fff13df900aed19279daa056ec087dd1add155c95a"
     ]
+  },
+  {
+    "name": "20261106120000_repair_pro_financial_integrity",
+    "checksums": [
+      "748aec6245b09d7597977fb4fdfe370e4b39420f4a51ad1d76014601877b665c",
+      "f17ecdd7046413968f4db20da7bb4e321776223c52221f5d67fc50bce214ea6b"
+    ]
+  },
+  {
+    "name": "20261106130000_integrate_pro_academy_refund_guards",
+    "checksums": [
+      "d57f9e9ccba499eab8602874721eee989a8460b4af0ba097d410ec199c9c65e6",
+      "82f99ec1f6d07632e48900eaca5e9f35c5dcb5433ddab4424b57bed9511c333c"
+    ]
   }
 ]

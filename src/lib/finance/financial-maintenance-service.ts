@@ -1,3 +1,4 @@
+import { runScheduledFinancialChainReview } from './financial-chain-review-service'
 import 'server-only'
 
 import { getPrisma } from '@/lib/prisma'
@@ -12,7 +13,7 @@ const RUN_LEASE_MS = 30 * 60 * 1000
 const RUN_RETENTION_MS = 90 * 24 * 60 * 60 * 1000
 type MaintenanceTrigger = 'SCHEDULER' | 'MANUAL_API'
 type CategoryResult = { processed: number; succeeded: number; failed: number; skipped?: boolean }
-type MaintenanceCounts = Record<'refunds' | 'cancellations' | 'suspensions' | 'jortt', CategoryResult>
+type MaintenanceCounts = Record<'refunds' | 'cancellations' | 'suspensions' | 'jortt', CategoryResult> & { chain?: CategoryResult }
 
 function safeErrorCode(error: unknown) {
   const message = error instanceof Error ? error.message : ''
@@ -73,6 +74,10 @@ export async function runFinancialMaintenance(
         failed: value.filter((item) => item.status === 'FAILED').length,
       }))
     : { category: 'jortt' as const, result: { processed: 0, succeeded: 0, failed: 0, skipped: true }, errorCode: null })
+
+  if (process.env.FINANCIAL_CHAIN_REVIEW_ENABLED === 'true') {
+    results.push(await safelyRun('chain', () => runScheduledFinancialChainReview(gateway, at), value => value))
+  }
 
   const counts = Object.fromEntries(results.map(({ category, result }) => [category, result])) as MaintenanceCounts
   const errorCodes = results.flatMap((item) => item.errorCode ? [item.errorCode] : [])

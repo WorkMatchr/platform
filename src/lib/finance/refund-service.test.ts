@@ -41,6 +41,7 @@ const transaction = {
     findFirst: vi.fn(async () => null),
     findUniqueOrThrow: vi.fn(async () => ({ ...refund, creditNote: null })),
     create: vi.fn(async () => refund),
+    updateMany: vi.fn().mockResolvedValue({ count: 1 }),
     update: vi.fn(async ({ data }: { data: object }) => ({ ...refund, ...data })),
   },
   financialPurchase: {
@@ -55,7 +56,7 @@ let serializableCall = 0
 let failCompletion = false
 
 vi.mock('@/lib/prisma', () => ({
-  getPrisma: () => ({ $transaction: mocks.fallbackTransaction, financialInvoice: { findUnique: vi.fn().mockResolvedValue({ id: 'credit-note' }) } }),
+  getPrisma: () => ({ $transaction: mocks.fallbackTransaction, financialEvent: transaction.financialEvent, financialInvoice: { findUnique: vi.fn().mockResolvedValue({ id: 'credit-note' }) } }),
 }))
 vi.mock('@/lib/credits/credit-wallet-service', () => ({
   recordFinancialRefundCreditPhaseInTransaction: mocks.phase,
@@ -69,7 +70,7 @@ vi.mock('./invoice-service', () => ({
 vi.mock('./financial-transaction', () => ({
   runSerializableFinancialTransaction: async (operation: (value: typeof transaction) => unknown) => {
     serializableCall += 1
-    if (serializableCall === 2 && failCompletion) throw new Error('DATABASE_COMPLETION_FAILED')
+    if (serializableCall === 3 && failCompletion) throw new Error('DATABASE_COMPLETION_FAILED')
     return operation(transaction)
   },
 }))
@@ -87,6 +88,7 @@ describe('financiële refund-foutisolatie', () => {
     vi.clearAllMocks()
     serializableCall = 0
     failCompletion = false
+    transaction.financialEvent.upsert.mockResolvedValue({})
     mocks.authorize.mockResolvedValue({ id: input.actorUserId })
     mocks.phase.mockImplementation(async (_transaction, values: { phase: string }) => ({ id: `ledger-${values.phase}` }))
     mocks.fallbackTransaction.mockImplementation((operation: (value: typeof transaction) => unknown) => operation(transaction))
@@ -116,19 +118,19 @@ describe('financiële refund-foutisolatie', () => {
     const gateway = { createRefund: vi.fn().mockResolvedValue({ id: 're_test', status: 'pending' }) } as never
     const { refundWorkmatchrError } = await import('./refund-service')
 
-    await expect(refundWorkmatchrError(input, gateway)).rejects.toThrow('DATABASE_COMPLETION_FAILED')
+    await expect(refundWorkmatchrError(input, gateway)).rejects.toThrow('MOLLIE_REFUND_RECONCILIATION_REQUIRED')
     expect(mocks.phase).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ phase: 'RESERVE' }))
     expect(mocks.phase).not.toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ phase: 'RELEASE' }))
     expect(mocks.fallbackTransaction).not.toHaveBeenCalled()
   })
 
-  it('geeft de reservering alleen vrij wanneer Mollie de refund niet accepteert', async () => {
+  it('behoudt de reservering bij een onbekende provideruitkomst', async () => {
     const gateway = { createRefund: vi.fn().mockRejectedValue(new Error('MOLLIE_REFUND_FAILED')) } as never
     const { refundWorkmatchrError } = await import('./refund-service')
 
-    await expect(refundWorkmatchrError(input, gateway)).rejects.toThrow('MOLLIE_REFUND_FAILED')
-    expect(mocks.phase).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ phase: 'RELEASE' }))
-    expect(transaction.financialRefund.update).toHaveBeenCalledWith(expect.objectContaining({ data: { status: 'FAILED' } }))
+    await expect(refundWorkmatchrError(input, gateway)).rejects.toThrow('MOLLIE_REFUND_RECONCILIATION_REQUIRED')
+    expect(mocks.phase).not.toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ phase: 'RELEASE' }))
+    expect(transaction.financialRefund.updateMany).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ reconciliationRequired: true }) }))
   })
 
   it('verwerkt een volledige betaalde creditaankoop en legt de aanvraag auditbaar vast', async () => {

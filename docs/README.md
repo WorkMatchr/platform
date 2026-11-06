@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [P1.1 — financiële integratie en herstelgereedheid](p1-financial-integration-and-recovery-readiness.md)
+
 - [WP21 - geintegreerde releasekandidaat en GO/NO-GO](wp21-integrated-release-readiness.md)
 
 - [Academy — complete cursusintegratie en WL-001-toetsbindingen](academy-complete-course-integration.md)
@@ -18,6 +20,8 @@
 - [Compliance F4: duurzame concepten, prijscontract en functionele acceptatie](compliance/f4-functional-completion.md)
 
 - [Arbo Compliance en Kenniscentrum: afronding en acceptatiegrenzen](compliance/arbo-compliance-knowledge-completion.md)
+
+- [P1: Pro-incasso, creditfacturen en betaalreconciliatie](p1-financial-integrity-repair.md)
 
 - [Productiedatabase: schrijfpauze, herstel en migratieacceptatie](database-upgrade-preparation.md)
 

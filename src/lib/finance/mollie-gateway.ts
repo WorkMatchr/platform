@@ -69,14 +69,18 @@ export interface MollieGateway {
     methods?: readonly MollieFirstPaymentMethod[]
   }): Promise<MolliePaymentSnapshot>
   getPayment(paymentId: string): Promise<MolliePaymentSnapshot>
+  listPaymentsForReview?(): Promise<readonly MolliePaymentSnapshot[]>
+  listRefundsForReview?(paymentId: string): Promise<readonly MollieRefundSnapshot[]>
   createRefund(input: {
     paymentId: string
     amountValue: string
     currency: 'EUR'
     description: string
     idempotencyKey: string
-    metadata: { refundId: string; purchaseId: string }
+    metadata: { refundId: string; purchaseId?: string; creditNoteId?: string }
   }): Promise<MollieRefundSnapshot>
+  listSubscriptionPayments?(input: { customerId: string; subscriptionId: string; after: Date }): Promise<readonly MolliePaymentSnapshot[]>
+  findRefundByReference?(input: { paymentId: string; refundId: string; amountValue: string; currency: string }): Promise<MollieRefundSnapshot | null>
   getRefund(input: { paymentId: string; refundId: string }): Promise<MollieRefundSnapshot>
   createCustomer(input: { name: string; email: string; organizationId: string; idempotencyKey: string }): Promise<{ id: string }>
   getCustomer(customerId: string): Promise<Readonly<{ id: string; organizationId: string | null }>>
@@ -239,6 +243,48 @@ export function createMollieGateway(): MollieGateway {
     async getRefund(input) {
       const refund = await client.paymentRefunds.get(input.refundId, { paymentId: input.paymentId })
       return { id: refund.id, status: refund.status, amountValue: refund.amount.value, currency: refund.amount.currency, paymentId: input.paymentId }
+    },
+    async listSubscriptionPayments(input) {
+      const result: MolliePaymentSnapshot[] = []
+      for await (const payment of client.subscriptionPayments.iterate({ customerId: input.customerId, subscriptionId: input.subscriptionId })) {
+        const snapshot = paymentSnapshot(payment)
+        if (snapshot.createdAt && new Date(snapshot.createdAt) < input.after) break
+        result.push(snapshot)
+        if (result.length >= 500) throw new Error('MOLLIE_RECONCILIATION_PAGE_LIMIT')
+      }
+      return result
+    },
+    async listPaymentsForReview() {
+      const result: MolliePaymentSnapshot[] = []
+      let inspected = 0
+      for await (const payment of client.payments.iterate()) {
+        if (++inspected > 5000) throw new Error('FINANCIAL_REVIEW_COVERAGE_LIMIT')
+        const snapshot = paymentSnapshot(payment)
+        if (snapshot.status === 'paid') result.push(snapshot)
+      }
+      return result
+    },
+    async listRefundsForReview(paymentId) {
+      const result: MollieRefundSnapshot[] = []
+      for await (const refund of client.paymentRefunds.iterate({ paymentId })) {
+        if (result.length >= 100) throw new Error('FINANCIAL_REVIEW_REFUND_LIMIT')
+        result.push({ id: refund.id, status: refund.status, paymentId, amountValue: refund.amount.value, currency: refund.amount.currency })
+      }
+      return result
+    },
+    async findRefundByReference(input) {
+      const matches: MollieRefundSnapshot[] = []
+      let count = 0
+      for await (const refund of client.paymentRefunds.iterate({ paymentId: input.paymentId })) {
+        if (++count > 500) throw new Error('MOLLIE_REFUND_PAGE_LIMIT')
+        const metadata = z.object({ refundId: z.string().uuid() }).safeParse(refund.metadata)
+        if (metadata.success && metadata.data.refundId === input.refundId) {
+          if (refund.amount.value !== input.amountValue || refund.amount.currency !== input.currency) throw new Error('MOLLIE_REFUND_MISMATCH')
+          matches.push({ id: refund.id, status: refund.status, amountValue: refund.amount.value, currency: refund.amount.currency, paymentId: input.paymentId })
+        }
+      }
+      if (matches.length > 1) throw new Error('MOLLIE_REFUND_DUPLICATE_REMOTE')
+      return matches[0] ?? null
     },
     async createCustomer(input) {
       const customer = await client.customers.create({

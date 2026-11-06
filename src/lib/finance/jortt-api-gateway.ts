@@ -1,6 +1,7 @@
 import 'server-only'
 
-import type { JorttGateway, JorttInvoicePayload } from './jortt-sync-service'
+import type { JorttPaymentEvidence, JorttPaymentGateway } from './jortt-payment-service'
+import type { JorttGateway, JorttInvoicePayload, JorttCreditCheckpoint } from './jortt-sync-service'
 import { jorttFetch, jorttJson, jorttOperation } from './jortt-provider-diagnostics'
 
 type Fetcher = typeof fetch
@@ -30,7 +31,7 @@ export function isJorttSyncConfigured() {
   }
 }
 
-export class JorttApiGateway implements JorttGateway {
+export class JorttApiGateway implements JorttGateway, JorttPaymentGateway {
   constructor(private readonly fetcher: Fetcher = fetch) {}
 
   private async token() {
@@ -102,7 +103,71 @@ export class JorttApiGateway implements JorttGateway {
     throw new Error('JORTT_REMOTE_INVOICE_PENDING')
   }
 
-  async submitInvoice(payload: JorttInvoicePayload, _idempotencyKey: string) {
+
+
+  private async submitProCredit(payload: JorttInvoicePayload, token: string, checkpoint?: JorttCreditCheckpoint) {
+    if (process.env.PRO_FINANCIAL_CORRECTIONS_ENABLED !== 'true' || !checkpoint) throw new Error('PRO_FINANCIAL_CORRECTIONS_DISABLED')
+    if (!payload.originalInvoiceExternalReference || payload.documentType !== 'CREDIT_NOTE') throw new Error('JORTT_ORIGINAL_INVOICE_NOT_SYNCED')
+    type CreditRecord = JorttRecord & { credited_invoice_id: string; invoice_total_incl_vat: { amount: string; currency: string }; invoice_total: { amount: string; currency: string } }
+    let id = payload.knownExternalReference ?? (await this.findTechnicalInvoice(payload.technicalReference, token))?.id
+    if (!id) {
+      await checkpoint.claimCreation()
+      const draft = await this.request<{ data: { id: string } }>(`/invoices/${payload.originalInvoiceExternalReference}/credit`, token, { method: 'POST', body: '{}' })
+      id = draft.data.id
+      await checkpoint.saveDraftId(id)
+    }
+    let remote = (await this.request<{ data: CreditRecord }>(`/invoices/${id}`, token)).data
+    if (remote.credited_invoice_id !== payload.originalInvoiceExternalReference) throw new Error('JORTT_CREDIT_SOURCE_MISMATCH')
+    if (remote.invoice_status === 'draft') {
+      await this.request(`/invoices/${id}`, token, { method: 'PUT', body: JSON.stringify({ reference: payload.invoiceNumber,
+        invoice_date: date(payload.issuedAt), net_amounts: false, remarks: payload.technicalReference,
+        line_items: payload.lines.map(line => ({ description: line.description, quantity: String(line.quantity),
+          amount: { amount: money(line.unitPriceExclVatCents), currency: payload.currency }, vat: { value: String(line.vatRateBps / 10000), category: null } })),
+      }) })
+      remote = (await this.request<{ data: CreditRecord }>(`/invoices/${id}`, token)).data
+    }
+    this.validateIdentity(remote, payload)
+    if (remote.credited_invoice_id !== payload.originalInvoiceExternalReference
+      || remote.invoice_total_incl_vat.amount !== money(payload.amountInclVatCents)
+      || remote.invoice_total.amount !== money(payload.amountExclVatCents)
+      || remote.invoice_total_incl_vat.currency !== payload.currency || remote.invoice_total.currency !== payload.currency) throw new Error('JORTT_CREDIT_TOTAL_MISMATCH')
+    if (!remote.invoice_number && remote.invoice_status === 'draft') await this.sendSelf(id, token)
+    const finalized = remote.invoice_number ? remote : await this.waitForFinalInvoice(id, payload, token)
+    return { externalReference: id, remoteInvoiceNumber: finalized.invoice_number! }
+  }
+
+  async inspectPayment(invoiceId: string): Promise<JorttPaymentEvidence> {
+    if (process.env.JORTT_PAYMENT_RECONCILIATION_ENABLED !== 'true' && process.env.FINANCIAL_CHAIN_REVIEW_ENABLED !== 'true') throw new Error('JORTT_PAYMENT_RECONCILIATION_DISABLED')
+    const { accessToken } = await this.token()
+    const invoice = await this.request<{ data: { id: string; reference: string; invoice_total_incl_vat: { amount: string; currency: string }; invoice_due_amount: { amount: string; currency: string } } }>(`/invoices/${invoiceId}`, accessToken)
+    const payments = await this.request<{ data: Array<{ booking_id: string; description: string; amount: { amount: string; currency: string }; ledger_account_id: string | null; book_date: string }> }>(`/payments/${invoiceId}`, accessToken)
+    const accounts = await this.request<{ data: Array<{ ledger_account_id: string }> }>(`/invoices/${invoiceId}/payment_methods/ledger_accounts`, accessToken)
+    const cents = (value: string) => {
+      if (!/^-?\d+\.\d{2}$/.test(value)) throw new Error('JORTT_PAYMENT_AMOUNT_INVALID')
+      const result = Math.round(Number(value) * 100)
+      if (!Number.isSafeInteger(result)) throw new Error('JORTT_PAYMENT_AMOUNT_INVALID')
+      return result
+    }
+    const currency = invoice.data.invoice_total_incl_vat.currency
+    if (invoice.data.invoice_due_amount.currency !== currency || payments.data.some(p => p.amount.currency !== currency)) throw new Error('JORTT_PAYMENT_CURRENCY_MISMATCH')
+    return { id: invoice.data.id, reference: invoice.data.reference, totalCents: cents(invoice.data.invoice_total_incl_vat.amount),
+      dueCents: cents(invoice.data.invoice_due_amount.amount), currency,
+      bookings: payments.data.map(p => ({ id: p.booking_id, description: p.description, amountCents: cents(p.amount.amount), ledgerAccountId: p.ledger_account_id, bookDate: p.book_date })),
+      allowedLedgerAccounts: accounts.data.map(a => a.ledger_account_id) }
+  }
+
+  async registerPayment(input: { invoiceId: string; amountCents: number; ledgerAccountId: string; bookDate: string; reference: string }) {
+    if (process.env.JORTT_PAYMENT_RECONCILIATION_ENABLED !== 'true') throw new Error('JORTT_PAYMENT_RECONCILIATION_DISABLED')
+    const { accessToken } = await this.token()
+    const result = await this.request<{ data: { booking_id: string } }>('/payments/register', accessToken, { method: 'POST', body: JSON.stringify({
+      sink_id: input.invoiceId, amount: { amount: money(input.amountCents), currency: 'EUR' }, ledger_account_id: input.ledgerAccountId,
+      book_date: input.bookDate, description: input.reference,
+    }) })
+    if (!result.data.booking_id) throw new Error('JORTT_PAYMENT_CONFIRMATION_MISSING')
+    return { bookingId: result.data.booking_id }
+  }
+
+  async submitInvoice(payload: JorttInvoicePayload, _idempotencyKey: string, checkpoint?: JorttCreditCheckpoint) {
     assertJorttAccountingContext(payload)
     void _idempotencyKey
     if (payload.documentType === 'INVOICE') {
@@ -113,6 +178,7 @@ export class JorttApiGateway implements JorttGateway {
       }
     }
     const { accessToken, config } = await this.token()
+    if (payload.proCredit) return this.submitProCredit(payload, accessToken, checkpoint)
     if (payload.knownExternalReference) {
       const known = await this.request<{ data: JorttRecord }>(`/invoices/${payload.knownExternalReference}`, accessToken)
       this.validateIdentity(known.data, payload, true)

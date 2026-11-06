@@ -1,0 +1,42 @@
+name: P1 financial integrity
+on:
+  pull_request:
+    paths: ['src/lib/finance/**', 'src/app/platformbeheer/financien/**', 'src/app/api/payments/mollie/**', 'prisma/**', 'scripts/test-p1-financial-database.ts', '.github/workflows/p1-financial-integrity.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic-finance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: synthetic
+          POSTGRES_PASSWORD: synthetic-ci-only
+          POSTGRES_DB: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U synthetic -d postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://synthetic:synthetic-ci-only@127.0.0.1:5432/postgres
+      AUTH_EMAIL_DELIVERY_ENABLED: 'false'
+      CONTACT_FORM_ENABLED: 'false'
+      PRO_FINANCIAL_CORRECTIONS_ENABLED: 'false'
+      JORTT_PAYMENT_RECONCILIATION_ENABLED: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run db:generate
+      - run: npx vitest run src/lib/finance src/lib/credits src/app/api/payments/mollie src/app/platformbeheer/financien/pro-correction-actions.test.ts --maxWorkers=2
+      - run: npm run test:db:finance
+      - run: npm run test:db:finance-p1
+      - run: npm run lint
+      - run: npx tsc --noEmit
+      - run: npm run build

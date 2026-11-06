@@ -4185,7 +4185,12 @@ model FinancialRefund {
   legalDecisionId String? @unique @db.Uuid
   legalDecision AcademyLegalRefundDecision? @relation(fields: [legalDecisionId], references: [id], onDelete: Restrict)
   id                  String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  purchaseId          String                 @db.Uuid
+  purchaseId          String?                @db.Uuid
+  proCreditNoteId     String?                @unique @db.Uuid
+  providerDispatchVersion Int @default(1)
+  providerAttemptedAt DateTime?              @db.Timestamptz(3)
+  reconciliationRequired Boolean             @default(false)
+  proCreditNote       FinancialInvoice?      @relation("ProCreditRefund", fields: [proCreditNoteId], references: [id], onDelete: Restrict)
   approvedByUserId    String                 @db.Uuid
   status              FinancialPaymentStatus @default(PENDING)
   reason              String                 @db.VarChar(500)
@@ -4196,7 +4201,7 @@ model FinancialRefund {
   idempotencyKey      String                 @unique @db.VarChar(160)
   requestedAt         DateTime               @default(now()) @db.Timestamptz(3)
   completedAt         DateTime?              @db.Timestamptz(3)
-  purchase            FinancialPurchase      @relation(fields: [purchaseId], references: [id], onDelete: Restrict)
+  purchase            FinancialPurchase?     @relation(fields: [purchaseId], references: [id], onDelete: Restrict)
   approvedByUser      User                   @relation("FinancialRefundApprover", fields: [approvedByUserId], references: [id], onDelete: Restrict)
   ledgerTransaction   CreditTransaction?     @relation("FinancialRefundCredit", fields: [ledgerTransactionId], references: [id], onDelete: Restrict)
   creditNote          FinancialInvoice?
@@ -4221,6 +4226,8 @@ model FinancialInvoice {
   purchaseId                String?                          @unique @db.Uuid
   refundId                  String?                          @unique @db.Uuid
   subscriptionPaymentId     String?                          @unique @db.Uuid
+  proCreditKey              String?                          @unique @db.VarChar(160)
+  proRefund                 FinancialRefund?                 @relation("ProCreditRefund")
   originalInvoiceId         String?                          @db.Uuid
   organizationId            String?                           @db.Uuid
   issuedAt                  DateTime                         @db.Timestamptz(3)

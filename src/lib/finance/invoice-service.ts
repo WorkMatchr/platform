@@ -4,6 +4,7 @@ import { Prisma } from '@/generated/prisma/client'
 import { MOLLIE_SANDBOX_ACCEPTANCE_PRICING } from './mollie-test-pricing'
 import { WORKMATCHR_SELLER } from './financial-contract'
 import { mirrorCreditNoteSnapshot, legalPartialCreditNoteSnapshot } from './credit-note-snapshot'
+import { resolveProInvoiceSource } from './pro-payment-source'
 
 type Transaction = Prisma.TransactionClient
 
@@ -96,7 +97,7 @@ export function formatFinancialDocumentNumber(sequence: number, issuedAt: Date) 
   return `WM-${year.slice(-2)}${month}5${String(sequence).padStart(3, '0')}`
 }
 
-async function allocateInvoiceSequence(transaction: Transaction) {
+export async function allocateInvoiceSequence(transaction: Transaction) {
   await transaction.$queryRaw(Prisma.sql`SELECT pg_advisory_xact_lock(hashtextextended('financial-invoice-counter', 0))::text AS "lock"`)
   await transaction.$executeRaw(Prisma.sql`
     INSERT INTO "FinancialInvoiceCounter" ("id", "nextNumber", "updatedAt")
@@ -234,7 +235,7 @@ export async function issueCreditNoteForCompletedRefund(
     where: { id: refundId },
     include: { legalDecision: true, purchase: { include: { invoice: { include: { lines: true, vatSummaries: true } } } } },
   })
-  if (!refund || refund.status !== 'REFUNDED' || !refund.purchase.invoice) throw new Error('COMPLETED_REFUND_REQUIRED')
+  if (!refund || refund.status !== 'REFUNDED' || !refund.purchase?.invoice) throw new Error('COMPLETED_REFUND_REQUIRED')
   const original = refund.purchase.invoice
   const partial = refund.legalDecision
   if (partial && (refund.purchase.kind !== 'ACADEMY_COURSE' || refund.purchase.pricingMode !== 'ACADEMY_SANDBOX'
@@ -314,7 +315,7 @@ export async function issueInvoiceForPaidSubscriptionPayment(
       },
     },
   })
-  const customerSnapshot = payment?.subscription.firstPaymentPurchase?.invoice
+  const customerSnapshot = payment ? (await resolveProInvoiceSource(transaction, payment.subscriptionId)).invoice : null
   if (!payment || payment.status !== 'PAID' || !customerSnapshot) {
     throw new Error('PAID_SUBSCRIPTION_PAYMENT_WITH_CUSTOMER_SNAPSHOT_REQUIRED')
   }

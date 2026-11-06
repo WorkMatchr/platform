@@ -11,6 +11,7 @@ import { lockAcademyCommerce, revokeAcademyPurchaseEntitlements } from './academ
 
 export async function applyAcademyRefundInTransaction(tx: Prisma.TransactionClient, current: FinancialRefund & { purchase: FinancialPurchase }, snapshot: MollieRefundSnapshot) {
   assertAcademyCommerceSandbox()
+  commerceAssert(current.purchaseId === current.purchase.id, 'ACADEMY_REFUND_SOURCE_REQUIRED')
   if (current.legalDecisionId) return applyAcademyLegalRefund(tx, current, snapshot)
   await lockAcademyCommerce(tx, `purchase:${current.purchaseId}`)
   commerceAssert(current.purchase.kind === 'ACADEMY_COURSE' && current.credits === 0 && current.amountCents === current.purchase.amountInclVatCents, 'ACADEMY_FULL_REFUND_REQUIRED')
@@ -22,11 +23,11 @@ export async function applyAcademyRefundInTransaction(tx: Prisma.TransactionClie
   const refund = await tx.financialRefund.update({ where: { id: current.id }, data: { status, mollieRefundId: snapshot.id, ...(status === 'REFUNDED' ? { completedAt: now } : {}) } })
   let creditNote = null
   if (status === 'REFUNDED') {
-    await tx.financialPurchase.update({ where: { id: current.purchaseId }, data: { status: 'REFUNDED', terminalAt: now } })
-    await revokeAcademyPurchaseEntitlements(tx, current.purchaseId, now)
+    await tx.financialPurchase.update({ where: { id: current.purchase.id }, data: { status: 'REFUNDED', terminalAt: now } })
+    await revokeAcademyPurchaseEntitlements(tx, current.purchase.id, now)
     creditNote = await issueCreditNoteForCompletedRefund(tx, current.id)
   } else if (status === 'FAILED' || status === 'CANCELED') {
-    await tx.financialPurchase.updateMany({ where: { id: current.purchaseId, status: 'REFUND_REVIEW_REQUIRED' }, data: { status: 'PAID' } })
+    await tx.financialPurchase.updateMany({ where: { id: current.purchase.id, status: 'REFUND_REVIEW_REQUIRED' }, data: { status: 'PAID' } })
   }
   await tx.financialEvent.upsert({ where: { idempotencyKey: `academy-refund:${current.id}:${status}` }, create: { purchaseId: current.purchaseId, refundId: current.id, eventType: 'ACADEMY_REFUND_STATUS', result: status, idempotencyKey: `academy-refund:${current.id}:${status}` }, update: {} })
   return { refund, creditNote, reviewRequired: false, academySandbox: true }
@@ -55,6 +56,11 @@ export async function requestAcademyRefund(actorId: string, purchaseId: string, 
   return runSerializableFinancialTransaction(async tx => {
     await lockAcademyCommerce(tx, `purchase:${purchaseId}`)
     const current = await tx.financialRefund.findUniqueOrThrow({ where: { id: prepared.refund.id }, include: { purchase: true } })
-    return (await applyAcademyRefundInTransaction(tx, current, snapshot)).refund
+    return (await applyAcademyRefundInTransaction(tx, { ...current, purchase: requireAcademyPurchase(current.purchase) }, snapshot)).refund
   })
+}
+
+function requireAcademyPurchase(purchase: FinancialPurchase | null): FinancialPurchase {
+  commerceAssert(purchase?.kind === 'ACADEMY_COURSE', 'ACADEMY_REFUND_SOURCE_REQUIRED')
+  return purchase
 }

@@ -5,6 +5,8 @@ vi.mock('server-only', () => ({}))
 const mocks = vi.hoisted(() => ({
   createPayment: vi.fn(),
   getPayment: vi.fn(),
+  iteratePayments: vi.fn(),
+  iterateRefunds: vi.fn(),
   createSubscription: vi.fn(),
   iterateSubscriptions: vi.fn(),
   listMethods: vi.fn(),
@@ -13,7 +15,8 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@mollie/api-client', () => ({
   createMollieClient: () => ({
-    payments: { create: mocks.createPayment, get: mocks.getPayment },
+    payments: { create: mocks.createPayment, get: mocks.getPayment, iterate: mocks.iteratePayments },
+    paymentRefunds: { iterate: mocks.iterateRefunds },
     methods: { list: mocks.listMethods },
     customerMandates: { page: mocks.listMandates },
     customerSubscriptions: {
@@ -73,6 +76,19 @@ describe('Mollie-bedragconversie', () => {
 
   afterEach(() => vi.unstubAllEnvs())
 
+  it('reads complete payment/refund evidence without create operations and fails at the coverage limit',async()=>{
+    const row={id:'tr_review',status:'paid',amount:{value:'30.25',currency:'EUR'},metadata:{},paidAt:'2026-11-06T00:00:00Z',getCheckoutUrl:()=>null}
+    mocks.iteratePayments.mockImplementation(async function*(){yield row})
+    mocks.iterateRefunds.mockImplementation(async function*(){yield {id:'re_review',status:'refunded',amount:{value:'10.00',currency:'EUR'}}})
+    const gateway=createMollieGateway()
+    expect(await gateway.listPaymentsForReview!()).toHaveLength(1)
+    expect(await gateway.listRefundsForReview!('tr_review')).toEqual([{id:'re_review',status:'refunded',amountValue:'10.00',currency:'EUR',paymentId:'tr_review'}])
+    expect(mocks.createPayment).not.toHaveBeenCalled()
+    mocks.iteratePayments.mockImplementation(async function*(){for(let n=0;n<5001;n++)yield row})
+    await expect(gateway.listPaymentsForReview!()).rejects.toThrow('COVERAGE_LIMIT')
+    mocks.iterateRefunds.mockImplementation(async function*(){for(let n=0;n<101;n++)yield {id:'re_review',status:'refunded',amount:{value:'10.00',currency:'EUR'}}})
+    await expect(gateway.listRefundsForReview!('tr_review')).rejects.toThrow('REFUND_LIMIT')
+  })
   it.each(['authorized', 'unknown', 'PAID', '', null])('weigert onbekende of niet-ondersteunde providerstatus %s vóór financiële verwerking', async status => {
     mocks.getPayment.mockResolvedValue({ id: 'tr_synthetic', status, amount: { value: '30.25', currency: 'EUR' }, metadata: {}, getCheckoutUrl: () => null })
     await expect(createMollieGateway().getPayment('tr_synthetic')).rejects.toThrow()

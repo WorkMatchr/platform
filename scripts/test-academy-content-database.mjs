@@ -41,11 +41,11 @@ try {
  assert.equal(identity.name, database); assert.ok(identity.version >= 180000 && identity.version < 190000)
  run(process.execPath, ['node_modules/prisma/build/index.js', 'migrate', 'deploy'], { DATABASE_URL: ownerUrl })
  const before = (await client.query('SELECT migration_name,checksum,finished_at,rolled_back_at FROM _prisma_migrations ORDER BY migration_name')).rows
- assert.equal(before.length, 113)
+ assert.equal(before.length, 115)
  assert.ok(before.every(row => row.finished_at && !row.rolled_back_at))
  run(process.execPath, ['node_modules/prisma/build/index.js', 'migrate', 'deploy'], { DATABASE_URL: ownerUrl })
  assert.deepEqual((await client.query('SELECT migration_name,checksum,finished_at,rolled_back_at FROM _prisma_migrations ORDER BY migration_name')).rows, before)
- console.log('113 migrations PASS; repeated deploy leaves the registry unchanged.')
+ console.log('115 migrations PASS; repeated deploy leaves the registry unchanged.')
  await client.query("CREATE ROLE academy_content_editor LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD '" + runtimeSecret + "'")
  await client.query('REVOKE CREATE,TEMPORARY ON DATABASE workmatchr_lms20_synthetic FROM PUBLIC')
  await client.query('REVOKE CREATE ON SCHEMA public FROM PUBLIC')

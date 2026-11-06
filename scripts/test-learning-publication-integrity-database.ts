@@ -36,7 +36,7 @@ const finalExam = '20260927210000_add_learning_final_exam'
 const migrationRoot = path.resolve('prisma/migrations')
 const names = readdirSync(migrationRoot).filter((name) => /^\d/.test(name)).sort()
 assert.ok(names.includes(correction), 'The forward-only publication correction is required')
-assert.equal(names.at(-1), '20261105122000_bind_compliance_purchase', 'Review this staged regression when adding later migrations')
+assert.equal(names.at(-1), '20261106130000_integrate_pro_academy_refund_guards', 'Review this staged regression when adding later migrations')
 const manifest = JSON.parse(readFileSync('docs/evidence/wp14/migration-checksums.json', 'utf8')) as {
   migrations: { name: string; lfSha256: string; productionChecksum: string | null }[]
 }
@@ -246,7 +246,7 @@ async function integrityChecks(db: Client, exams: Exam[]) {
   }
 }
 
-async function runDatabase(admin: Client, mode: 'upgrade' | 'fresh' | 'current-upgrade') {
+async function runDatabase(admin: Client, mode: 'upgrade' | 'fresh' | 'current-upgrade' | 'production-upgrade') {
   const appliedNames = mode === 'upgrade' ? historicalNames : names
   const database = `workmatchr_db02_${mode}_${suffix}`
   const target = new URL(source)
@@ -308,13 +308,15 @@ async function runDatabase(admin: Client, mode: 'upgrade' | 'fresh' | 'current-u
           assert.deepEqual(await functionIdentity(db), identityBefore, 'Correction changed owner/ACL/OID/security mode/volatility')
         }
       }
-    } else if (mode === 'current-upgrade') {
-      const mainNames = [...historicalNames, '20261102120000_add_closed_contact_audit_retention', '20261103100000_add_closed_contact_decision_register'].sort()
-      assert.equal(mainNames.length, 95)
+    } else if (mode === 'current-upgrade' || mode === 'production-upgrade') {
+      const mainNames = mode === 'production-upgrade' ? productionNames : [...historicalNames, '20261102120000_add_closed_contact_audit_retention', '20261103100000_add_closed_contact_decision_register'].sort()
+      const baselineCount = mode === 'production-upgrade' ? 85 : 95
+      assert.equal(mainNames.length, baselineCount)
       mainNames.forEach(copy); deploy()
       const registryBefore = (await db.query('SELECT * FROM _prisma_migrations ORDER BY migration_name')).rows
-      assert.equal(registryBefore.length, 95)
-      exams = [await newExam(db, 'PUBLISHED'), await newExam(db, 'RETIRED')]
+      assert.equal(registryBefore.length, baselineCount)
+      if (mode === 'current-upgrade') exams = [await newExam(db, 'PUBLISHED'), await newExam(db, 'RETIRED')]
+      else { const id=randomUUID(); await db.query(`INSERT INTO "User" (id,email,"displayName",status,"updatedAt") VALUES ($1,$2,'Synthetic','ACTIVE',now())`,[id,`${id}@example.invalid`]) }
       const columns = (await db.query(`SELECT table_name, array_agg(column_name::text ORDER BY ordinal_position) AS columns FROM information_schema.columns WHERE table_schema='public' AND table_name<>'_prisma_migrations' GROUP BY table_name ORDER BY table_name`)).rows
       const queries = columns.map(row => {
         assert.match(row.table_name, /^[A-Za-z0-9_]+$/)
@@ -326,7 +328,8 @@ async function runDatabase(admin: Client, mode: 'upgrade' | 'fresh' | 'current-u
       names.filter(name => !mainNames.includes(name)).forEach(copy); deploy()
       for (let i=0; i<queries.length; i++) assert.equal((await db.query(queries[i])).rows[0].digest, before[i], `Existing values changed: ${columns[i].table_name}`)
       assert.deepEqual((await db.query('SELECT * FROM _prisma_migrations WHERE migration_name=ANY($1::text[]) ORDER BY migration_name',[mainNames])).rows,registryBefore)
-      console.log('PASS: current main 95 -> candidate 113; all original table columns/data and migration records unchanged')
+      if (mode === 'production-upgrade') exams = [await newExam(db, 'PUBLISHED'), await newExam(db, 'RETIRED')]
+      console.log(`PASS: synthetic baseline ${baselineCount} -> candidate 115; all original table columns/data and migration records unchanged`)
     } else {
       appliedNames.forEach(copy)
       deploy()
@@ -372,11 +375,11 @@ async function main() {
       await admin.query(`CREATE ROLE "${role}" NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS`)
       createdRoles.push(role)
     }
-    if (!process.argv.includes('--current-upgrade-only')) {
+    if (!process.argv.includes('--current-upgrade-only') && !process.argv.includes('--production-upgrade-only')) {
       await runDatabase(admin, 'upgrade')
       await runDatabase(admin, 'fresh')
     }
-    await runDatabase(admin, 'current-upgrade')
+    await runDatabase(admin, process.argv.includes('--production-upgrade-only') ? 'production-upgrade' : 'current-upgrade')
     console.log(`PASS: ${negativeChecks} explicit rejected mutations/privilege attempts; no production access`)
   } finally {
     for (const role of createdRoles.reverse()) await admin.query(`DROP ROLE "${role}"`)

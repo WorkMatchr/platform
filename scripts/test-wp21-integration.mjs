@@ -45,11 +45,13 @@ try {
  assert.deepEqual(existing,[{datname:'postgres'}])
  await db.end();db=null
  const suites=[
+ ['production-baseline-upgrade',['exec','--','tsx','scripts/test-learning-publication-integrity-database.ts','--production-upgrade-only']],
  ['current-main-upgrade',['exec','--','tsx','scripts/test-learning-publication-integrity-database.ts','--current-upgrade-only']],
  ['contact-audit',['exec','--','tsx','scripts/test-contact-audit-retention-database.ts']],
  ['contact-register',['exec','--','tsx','scripts/test-contact-decision-register-database.ts']],
  ['integrity-restore',['run','test:db:learning-integrity','--','--local-synthetic-recovery']],
  ['finance',['run','test:db:finance']],
+ ['finance-p1',['run','test:db:finance-p1',...(process.argv.includes('--finance-browser')?['--','--browser']:[])]],
  ['marketplace-concurrency',['run','test:db:marketplace-concurrency']],
  ['sessions',['run','test:db:auth-sessions']],
  ['notification-commercial-chain',['run','test:db:assignment-notifications']],

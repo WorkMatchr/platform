@@ -41,7 +41,7 @@ export default async function PlatformFinancialInvoicesPage({ searchParams }: { 
                 ? financialPaymentStatusLabels[invoice.refund.status]
                 : 'Niet beschikbaar'
           return <tr key={invoice.id}>
-            <td className="whitespace-nowrap px-4 py-3 font-semibold text-brand-dark">{invoice.invoiceNumber}</td>
+            <td className="whitespace-nowrap px-4 py-3 font-semibold text-brand-dark"><Link href={`${pathname}/${invoice.id}`} className="underline">{invoice.invoiceNumber}</Link></td>
             <td className="whitespace-nowrap px-4 py-3">{formatPlatformDate(invoice.issuedAt)}</td>
             <td className="px-4 py-3">{(invoice.organization?.name ?? invoice.customerOrganizationName)}</td>
             <td className="whitespace-nowrap px-4 py-3">{formatEuro(invoice.amountExclVatCents)}</td>

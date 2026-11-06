@@ -76,19 +76,20 @@ export async function executeAcademyLegalRefund(actorId: string, decisionId: str
   const current = await runSerializableFinancialTransaction(async tx => {
     await requireMarketplacePlatformAdmin(tx, actorId)
     const refund = await tx.financialRefund.findUniqueOrThrow({ where: { legalDecisionId: decisionId }, include: { purchase: true, seatAllocations: true } })
-    commerceAssert(refund.purchase.pricingMode === 'ACADEMY_SANDBOX', 'ACADEMY_LEGAL_REFUND_SANDBOX_PURCHASE_REQUIRED')
-    return refund
+    commerceAssert(refund.purchase?.pricingMode === 'ACADEMY_SANDBOX', 'ACADEMY_LEGAL_REFUND_SANDBOX_PURCHASE_REQUIRED')
+    return { ...refund, purchase: refund.purchase }
   })
   if (['REFUNDED', 'FAILED', 'CANCELED'].includes(current.status)) return current
   commerceAssert(current.seatAllocations.reduce((sum,a) => sum+a.amountCents,0) === current.amountCents, 'ACADEMY_ALUMNI_REFUND_REVIEW_REQUIRED')
   const snapshot = current.mollieRefundId
     ? await gateway.getRefund({ paymentId: current.purchase.molliePaymentId!, refundId: current.mollieRefundId })
     : await gateway.createRefund({ paymentId: current.purchase.molliePaymentId!, amountValue: centsToMollieValue(current.amountCents), currency: 'EUR',
-      description: 'Academy sandbox wettelijke restitutie', idempotencyKey: current.idempotencyKey, metadata: { refundId: current.id, purchaseId: current.purchaseId } })
+      description: 'Academy sandbox wettelijke restitutie', idempotencyKey: current.idempotencyKey, metadata: { refundId: current.id, purchaseId: current.purchase.id } })
   // Ambiguous transport failures leave the existing reservation intact; retry uses the same key.
   return runSerializableFinancialTransaction(async tx => {
     await lockAcademyCommerce(tx, `purchase:${current.purchaseId}`)
     const fresh = await tx.financialRefund.findUniqueOrThrow({ where: { id: current.id }, include: { purchase: true, seatAllocations: true } })
-    return (await applyAcademyLegalRefund(tx, fresh, snapshot)).refund
+    commerceAssert(fresh.purchase?.kind === 'ACADEMY_COURSE', 'ACADEMY_REFUND_SOURCE_REQUIRED')
+    return (await applyAcademyLegalRefund(tx, { ...fresh, purchase: fresh.purchase }, snapshot)).refund
   })
 }
