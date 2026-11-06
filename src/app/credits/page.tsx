@@ -24,7 +24,7 @@ export default async function CreditsPage({ searchParams }: { searchParams: Prom
   const { user, activeMembership } = await requireOrganizationMembership(undefined, '/credits')
   if (user.accountType !== 'PROFESSIONAL' || !activeMembership.organization.providerProfile) notFound()
   const organizationId = activeMembership.organization.id
-  const [overview, organization, purchases, subscription] = await Promise.all([
+  const [overview, organization, purchases, subscription, invoices] = await Promise.all([
     getProviderCreditOverview(user.id, organizationId),
     getPrisma().organization.findUnique({
       where: { id: organizationId },
@@ -39,6 +39,10 @@ export default async function CreditsPage({ searchParams }: { searchParams: Prom
       include: { invoice: { select: { id: true, invoiceNumber: true } } },
     }),
     getPrisma().professionalSubscription.findUnique({ where: { organizationId } }),
+    getPrisma().financialInvoice.findMany({
+      where: { organizationId }, orderBy: [{ issuedAt: 'desc' }, { id: 'desc' }], take: 50,
+      select: { id: true, invoiceNumber: true, issuedAt: true, documentType: true, packageLabel: true, amountInclVatCents: true },
+    }),
   ])
   if (!organization) notFound()
   const location = organization.locations[0]
@@ -81,5 +85,13 @@ export default async function CreditsPage({ searchParams }: { searchParams: Prom
     </Card>
     <Card className="mt-6"><h2 className="text-lg font-semibold">Aankopen en facturen</h2><ul className="mt-4 divide-y divide-border">{purchases.map((purchase) => <li key={purchase.id} className="grid gap-2 py-4 sm:grid-cols-[1fr_auto]"><div><p className="font-semibold">{purchase.packageLabel}{purchase.pricingMode === 'MOLLIE_TEST_ACCEPTANCE' ? ' · Sandbox-testbetaling' : ''}</p><p className="text-sm text-text-secondary">{purchase.createdAt.toLocaleString('nl-NL')} · {formatEuro(purchase.amountInclVatCents)} incl. btw · {purchase.status}</p></div>{purchase.invoice ? <Link className="font-semibold underline" href={`/credits/facturen/${purchase.invoice.id}`}>{purchase.invoice.invoiceNumber}</Link> : <Link className="font-semibold underline" href={`/credits/betaling/${purchase.id}`}>Bekijk status</Link>}</li>)}{purchases.length === 0 ? <li className="py-4 text-text-secondary">Er zijn nog geen aankopen.</li> : null}</ul></Card>
     <Card className="mt-6"><h2 className="text-lg font-semibold">Recente creditmutaties</h2><ul className="mt-4 divide-y divide-border">{overview.transactions.map((transaction) => <li key={transaction.id} className="grid gap-1 py-4 sm:grid-cols-[1fr_auto]"><div><p className="font-semibold">{creditTransactionTypeLabels[transaction.type] ?? 'Status niet beschikbaar'}</p><p className="text-sm text-text-secondary">{transaction.reason ?? 'Creditmutatie'} · {transaction.createdAt.toLocaleString('nl-NL')}</p></div><span className="font-semibold">{transaction.amount > 0 ? '+' : ''}{transaction.amount}</span></li>)}{overview.transactions.length === 0 && <li className="py-4 text-text-secondary">Er zijn nog geen creditmutaties.</li>}</ul></Card>
+    <Card className="mt-6">
+      <h2 className="text-lg font-semibold">Recente facturen en creditnota’s</h2>
+      <p className="mt-2 text-sm text-text-secondary">De laatste 50 documenten van uw organisatie, inclusief maandfacturen van Pro.</p>
+      <ul className="mt-4 divide-y divide-border">{invoices.map(invoice => <li key={invoice.id} className="grid gap-2 py-4 sm:grid-cols-[1fr_auto]">
+        <div><p className="font-semibold">{invoice.documentType === 'CREDIT_NOTE' ? 'Creditnota' : 'Factuur'} {invoice.invoiceNumber}</p><p className="text-sm text-text-secondary">{invoice.packageLabel} · {invoice.issuedAt.toLocaleDateString('nl-NL')} · {formatEuro(invoice.amountInclVatCents)} incl. btw</p></div>
+        <Link className="font-semibold underline" href={`/credits/facturen/${invoice.id}`}>Bekijk {invoice.invoiceNumber}</Link>
+      </li>)}{invoices.length === 0 ? <li className="py-4 text-text-secondary">Er zijn nog geen facturen of creditnota’s.</li> : null}</ul>
+    </Card>
   </Section>
 }

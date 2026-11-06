@@ -46,7 +46,14 @@ export default async function InvoicePage({ params, searchParams }: { params: Pr
         <label className="block">Creditbedrag inclusief btw (bijvoorbeeld 10,00)<input className={field} name="amount" inputMode="decimal" required pattern="[0-9]+[.,][0-9]{2}" defaultValue={(remaining / 100).toFixed(2).replace('.', ',')} /></label>
         <Confirmation invoiceId={invoice.id} operation="credit" /><Button type="submit">Creditfactuur aanmaken</Button>
       </fieldset></form></AdminSection> : null}
-    {pro ? <AdminSection title="Ontbrekende incasso's controleren"><p>Controleer alle providerbetalingen vanaf de gekozen datum. Bestaande registraties blijven behouden; geldige ontbrekende betalingen krijgen een factuur.</p>
+    {pro ? <AdminSection title="Eén ontvangen Pro-betaling verwerken">
+      <p>Gebruik uitsluitend de afzonderlijk goedgekeurde Mollie-betaling. Een ontbrekende registratie en factuur worden aangemaakt. Er wordt geen nieuwe incasso gestart. Verwerking in Jortt blijft een afzonderlijke stap.</p>
+      <form action={proFinancialCorrectionAction} className="max-w-xl space-y-4"><fieldset disabled={!enabled} className="space-y-4">
+        <label className="block">Goedgekeurd Mollie-betalings-ID<input className={field} name="paymentId" required pattern="tr_[A-Za-z0-9]+" maxLength={100} /></label>
+        <Confirmation invoiceId={invoice.id} operation="pro-payments" /><Button type="submit">Deze betaling verwerken</Button>
+      </fieldset></form>
+    </AdminSection> : null}
+    {pro ? <AdminSection title="Ontbrekende incasso's controleren"><p>Controleer alle providerbetalingen vanaf de gekozen datum. Bestaande registraties blijven behouden; geldige ontbrekende betalingen krijgen een factuur. Deze brede actie vereist goedkeuring voor de volledige periode; gebruik haar niet voor herstel van één afzonderlijk goedgekeurde betaling.</p>
       <form action={proFinancialCorrectionAction} className="max-w-xl space-y-4"><fieldset disabled={!enabled} className="space-y-4">
         <label className="block">Controleren vanaf<input className={field} type="date" name="after" required /></label>
         <Confirmation invoiceId={invoice.id} operation="pro-payments" /><Button type="submit">Pro-betalingen reconciliëren</Button>

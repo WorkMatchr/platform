@@ -117,7 +117,10 @@ export async function proFinancialCorrectionAction(formData: FormData) {
       const invoice = await getPrisma().financialInvoice.findUniqueOrThrow({ where: { id: values.data.invoiceId } })
       if (!invoice.organizationId) throw new Error('PRO_INVOICE_REQUIRED')
       const subscription = await getPrisma().professionalSubscription.findUniqueOrThrow({ where: { organizationId: invoice.organizationId } })
-      const result = await reconcileProPayments({ ...common, subscriptionId: subscription.id, after: new Date(String(formData.get('after'))) })
+      const scope = formData.has('paymentId')
+        ? { paymentId: formData.get('paymentId') }
+        : { after: new Date(String(formData.get('after'))) }
+      const result = await reconcileProPayments({ ...common, subscriptionId: subscription.id, ...scope })
       if (result.failed) outcome = 'controle-nodig'
     } else {
       const result = await reconcileJorttPayment({ ...common, ledgerAccountId: formData.get('ledgerAccountId'), bookDate: formData.get('bookDate') }, new JorttApiGateway())

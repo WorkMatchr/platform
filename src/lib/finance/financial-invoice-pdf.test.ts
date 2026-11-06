@@ -48,7 +48,8 @@ describe('financiële factuur-pdf', () => {
   it('is reproduceerbaar voor dezelfde historische snapshot en bestandsnaam', async () => {
     const first = await buildFinancialInvoicePdf(invoice)
     const second = await buildFinancialInvoicePdf({ ...invoice })
-    expect(Buffer.from(second)).toEqual(Buffer.from(first))
+    // Compare every byte without the assertion engine traversing a large Buffer as an object.
+    expect(Buffer.from(second).equals(Buffer.from(first))).toBe(true)
     expect(financialInvoicePdfFilename(invoice.invoiceNumber)).toBe('WorkMatchr-factuur-WM-26085001.pdf')
   })
 
