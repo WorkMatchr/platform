@@ -69,10 +69,37 @@ async function main() {
     const { issueInvoiceForPaidPurchase } = await import('../src/lib/finance/invoice-service')
     await runSerializable(transaction=>issueInvoiceForPaidPurchase(transaction,paidRetry.id))
     const payment=(id:string,paidAt:string,status='paid')=>({id,status,amountValue:'59.29',currency:'EUR',metadata:{subscriptionId:pro.id,organizationId:organization.id},paidAt:status==='paid'?paidAt:null,createdAt:paidAt,checkoutUrl:null,subscriptionId:'sub_p1',mandateId:'mdt_p1',method:'directdebit'})
-    const october=payment('tr_p1october','2026-10-04T19:00:48Z')
-    const november=payment('tr_p1november','2026-11-04T19:00:48Z')
-    await processRecurringProPayment(october as never)
-    await processRecurringProPayment(november as never)
+    const october={...payment('tr_p1october','2026-10-04T19:00:48Z'),paidAt:'2026-10-06T12:00:00Z'}
+    const november={...payment('tr_p1november','2026-11-04T19:00:48Z'),paidAt:'2026-11-05T12:00:00Z'}
+    const { reconcileProPayments } = await import('../src/lib/finance/pro-payment-reconciliation')
+    const exactInput={actorUserId:platformAdministrator.id,subscriptionId:pro.id,reason:'Synthetic per-payment approval P14'}
+    let recoveryReads=0
+    const exactGateway={getCustomer:async()=>({id:'cst_p1',organizationId:organization.id}),
+      getPayment:async(id:string)=>{recoveryReads++;return id===october.id?october:november},
+      listSubscriptionPayments:async()=>{throw new Error('UNAPPROVED_BROAD_RECOVERY')}}
+    const issuedAfter=new Date()
+    assert.deepEqual(await reconcileProPayments({...exactInput,paymentId:october.id},exactGateway as never),{inspected:1,processed:1,failed:0})
+    assert.equal(await prisma.financialInvoice.count({where:{molliePaymentId:november.id}}),0)
+    assert.deepEqual(await reconcileProPayments({...exactInput,paymentId:november.id},exactGateway as never),{inspected:1,processed:1,failed:0})
+    const exactReplay=await Promise.all(Array.from({length:6},()=>reconcileProPayments({...exactInput,paymentId:october.id},exactGateway as never)))
+    assert.ok(exactReplay.every(result=>result.processed===1&&result.failed===0))
+    assert.equal(recoveryReads,8)
+    assert.equal(await prisma.professionalSubscriptionPayment.count({where:{subscriptionId:pro.id,status:'PAID'}}),2)
+    assert.equal(await prisma.financialEvent.count({where:{subscriptionId:pro.id,eventType:'PRO_PAYMENT_RECONCILED',actorUserId:platformAdministrator.id}}),2)
+    for(const [providerId,start,end] of [[october.id,'2026-10-04T19:00:48.000Z','2026-11-04T19:00:48.000Z'],[november.id,'2026-11-04T19:00:48.000Z','2026-12-04T19:00:48.000Z']]) {
+      const invoice:FinancialInvoice=await prisma.financialInvoice.findFirstOrThrow({where:{molliePaymentId:providerId}})
+      assert.equal(invoice.servicePeriodStart?.toISOString(),start);assert.equal(invoice.servicePeriodEnd?.toISOString(),end)
+      assert.ok(invoice.issuedAt>=issuedAfter);assert.equal(invoice.amountInclVatCents,5929);assert.equal(invoice.vatAmountCents,1029)
+      assert.equal(await prisma.financialJorttSync.count({where:{invoiceId:invoice.id,status:'PENDING'}}),1)
+    }
+    assert.equal((await prisma.professionalSubscription.findUniqueOrThrow({where:{id:pro.id}})).currentPeriodEnd?.toISOString(),'2026-12-04T19:00:48.000Z')
+    for(const invalid of [{amountValue:'59.30'},{currency:'USD'},{metadata:{...october.metadata,organizationId:secondOrganization.id}}]) {
+      const id='tr_p14invalid'
+      const bad={...exactGateway,getPayment:async()=>({...october,...invalid,id})}
+      assert.deepEqual(await reconcileProPayments({...exactInput,paymentId:id},bad as never),{inspected:1,processed:0,failed:1})
+      assert.equal(await prisma.financialInvoice.count({where:{molliePaymentId:id}}),0)
+    }
+    console.log('P14 PASS: individually scoped October/November; six concurrent exact replays; no broad read; actual issue date, original service periods, VAT, pending Jortt, operator audit; wrong tenant/amount/currency refused')
     assert.equal(await prisma.financialInvoice.count({where:{subscriptionPayment:{subscriptionId:pro.id}}}),2)
     assert.equal((await prisma.professionalSubscription.findUniqueOrThrow({where:{id:pro.id}})).firstPaymentPurchaseId,failedFirst.id)
     console.log('PASS expired original + paid retry: two renewals, original history unchanged')
@@ -184,7 +211,6 @@ async function main() {
     assert.equal((await reconcileJorttPayment(reconcileInput,jorttGateway)).status,'CONFIRMED')
     assert.equal(bookCalls,1)
     console.log('PASS Jortt lost response -> read-only confirmation, one booking, authorization')
-    const { reconcileProPayments } = await import('../src/lib/finance/pro-payment-reconciliation')
     const missed={...november,id:'tr_p1missing',createdAt:'2027-01-04T19:00:48Z',paidAt:'2027-01-06T19:00:48Z'}
     const lookup={ getCustomer:async()=>({id:'cst_p1',organizationId:organization.id}), listSubscriptionPayments:async()=>[missed,november,october] }
     await assert.rejects(()=>reconcileProPayments({actorUserId:secondUser.id,subscriptionId:pro.id,after:new Date('2026-09-01'),reason:'Synthetic missing webhook reconciliation'},lookup as never))
