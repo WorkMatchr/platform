@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto'
 import { spawnSync } from 'node:child_process'
 import { registerHooks } from 'node:module'
 import { Client } from 'pg'
-import { Prisma, type FinancialPurchase, type FinancialInvoice, type FinancialRefund } from '../src/generated/prisma/client'
+import { Prisma, type FinancialPurchase, type FinancialInvoice, type FinancialRefund, type ComplianceFrameworkVersion, type ArboGuideRun } from '../src/generated/prisma/client'
 
 registerHooks({ resolve(specifier, context, nextResolve) {
   if (specifier === 'server-only') return { url: 'data:text/javascript,export default {}', shortCircuit: true }
@@ -297,6 +297,109 @@ async function main() {
       assert.equal(await prisma.financialJorttSync.count({where:{invoiceId:{in:[original.id,credit.id]}}}),0)
     }
     console.log('PASS merged Academy guards: consumer/business full credit commits, exact VAT/source, repeat idempotent, unauthorized partial/delete refused; sandbox Jortt hold retained')
+    // P1.7: close product-bound accounting gaps with real services and fake gateways.
+    // No provider networking is permitted during this additional acceptance slice.
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = async () => { throw new Error('P17_EXTERNAL_PROVIDER_FORBIDDEN') }
+    try {
+      const { buildFinancialInvoicePdf } = await import('../src/lib/finance/financial-invoice-pdf')
+      const { getProfessionalFinancialDashboard } = await import('../src/lib/finance/financial-dashboard-service')
+      const { listPlatformFinancialInvoices } = await import('../src/lib/finance/platform-financial-query-service')
+      const snapshots: FinancialInvoice[] = []
+      for (const kind of ['CREDIT_PACKAGE','COMPLIANCE_SCAN'] as const) {
+        const net = kind === 'CREDIT_PACKAGE' ? 2500 : 2495
+        const vat = Math.round(net * 21 / 100), gross = net + vat
+        const framework: ComplianceFrameworkVersion|null = kind==='COMPLIANCE_SCAN' ? await prisma.complianceFrameworkVersion.create({data:{
+          frameworkCode:'P17_SYNTHETIC_FINANCE',version:'1',status:'DRAFT',title:'Synthetic financial binding only',
+          methodology:'No legal evaluation',disclaimer:'Synthetic fixture, never publish',checksum:'a'.repeat(64)}}) : null
+        // Financial boundary fixture only: no claim that a legal framework is published.
+        const draft: ArboGuideRun|null = framework ? await prisma.arboGuideRun.create({data:{guideType:'COMPLIANCE',guideVersion:'2',reportVersion:'2.0',
+          organizationId:organization.id,completedByUserId:user.id,complianceFrameworkVersionId:framework.id,
+          idempotencyKey:randomUUID(),answersSnapshot:{},draftRevision:0,draftDefinitionChecksum:'a'.repeat(64)}}) : null
+        const purchase: FinancialPurchase = await prisma.financialPurchase.create({data:{...baseData,id:randomUUID(),kind,
+          complianceRunId:draft?.id??null,
+          status:'PAYMENT_PENDING',paidAt:null,terminalAt:null,credits:kind==='CREDIT_PACKAGE'?25:0,
+          packageSku:kind==='CREDIT_PACKAGE'?'CREDITS_25':'SYNTHETIC_COMPLIANCE',packageLabel:'Synthetic '+kind,
+          baseAmountCents:net,amountExclVatCents:net,vatAmountCents:vat,amountInclVatCents:gross,
+          molliePaymentId:'tr_p17_'+randomUUID(),idempotencyKey:randomUUID()}})
+        const observed={id:purchase.molliePaymentId!,status:'paid',amountValue:(gross/100).toFixed(2),currency:'EUR',
+          metadata:{purchaseId:purchase.id,organizationId:organization.id},paidAt:new Date().toISOString(),
+          createdAt:new Date().toISOString(),checkoutUrl:null}
+        const gateway={getPayment:async()=>observed} as unknown as Parameters<typeof processMolliePayment>[1]
+        const failedDeliveries=await Promise.allSettled(Array.from({length:6},()=>processMolliePayment(observed.id,gateway)))
+        assert.ok(failedDeliveries.every(r=>r.status==='rejected' && r.reason.message==='INVOICE_EMAIL_NOT_ACCEPTED'))
+        const committedInvoice=await prisma.financialInvoice.findUniqueOrThrow({where:{purchaseId:purchase.id}})
+        const { deliverFinancialInvoiceEmail }=await import('../src/lib/finance/financial-invoice-delivery-service')
+        let fakeMailAcceptances=0
+        await deliverFinancialInvoiceEmail(committedInvoice.id,async()=>{fakeMailAcceptances++;return {accepted:true,transport:'RESEND',status:'ACCEPTED',messageId:'p17-fake-only'}})
+        await Promise.all(Array.from({length:6},()=>processMolliePayment(observed.id,gateway)))
+        assert.equal(fakeMailAcceptances,1)
+        await processMolliePayment(observed.id,{getPayment:async()=>({...observed,status:'pending'})} as unknown as Parameters<typeof processMolliePayment>[1])
+        assert.equal(await prisma.financialInvoice.count({where:{purchaseId:purchase.id}}),1)
+        assert.equal((await prisma.financialPurchase.findUniqueOrThrow({where:{id:purchase.id}})).status,'PAID')
+        const document: Prisma.FinancialInvoiceGetPayload<{include:{lines:true;vatSummaries:true}}>=await prisma.financialInvoice.findUniqueOrThrow({where:{purchaseId:purchase.id},include:{lines:true,vatSummaries:true}})
+        snapshots.push(document)
+        assert.equal(document.amountInclVatCents,gross);assert.equal(document.vatAmountCents,vat)
+        assert.equal(document.lines[0].unit,kind==='CREDIT_PACKAGE'?'credit':'scan')
+        if(kind==='CREDIT_PACKAGE') {
+          const ledgerEntries: Array<{totalDelta:number}>=await prisma.creditTransaction.findMany({where:{creditedPurchase:{id:purchase.id}}})
+          assert.equal(ledgerEntries.length,1);assert.equal(ledgerEntries[0].totalDelta,25)
+        }
+        assert.equal(Buffer.from(await buildFinancialInvoicePdf(document)).subarray(0,5).toString(),'%PDF-')
+        let documentPosts=0, paymentPosts=0
+        await syncFinancialInvoiceToJortt(document.id,{submitInvoice:async(payload)=>{
+          documentPosts++;assert.equal(payload.amountInclVatCents,gross)
+          return {externalReference:'fake-'+document.id,remoteInvoiceNumber:'SYNTHETIC-'+document.sequenceNumber}
+        }})
+        await syncFinancialInvoiceToJortt(document.id,{submitInvoice:async()=>{throw new Error('DUPLICATE_DOCUMENT')}})
+        const remote={id:'fake-'+document.id,reference:document.invoiceNumber,totalCents:gross,dueCents:gross,currency:'EUR',
+          bookings:[] as typeof evidence.bookings,allowedLedgerAccounts:[ledger]}
+        const fake={inspectPayment:async()=>remote,registerPayment:async(input:{reference:string;bookDate:string})=>{
+          paymentPosts++;const id=randomUUID();remote.dueCents=0
+          remote.bookings.push({id,description:input.reference,amountCents:gross,ledgerAccountId:ledger,bookDate:input.bookDate})
+          return {bookingId:id}
+        }}
+        const input={...reconcileInput,invoiceId:document.id}
+        await assert.rejects(()=>reconcileJorttPayment({...input,actorUserId:secondUser.id},fake))
+        assert.equal((await reconcileJorttPayment(input,fake)).status,'CONFIRMED')
+        assert.equal((await reconcileJorttPayment(input,fake)).status,'CONFIRMED')
+        assert.equal(documentPosts,1);assert.equal(paymentPosts,1)
+      }
+      const own=await getProfessionalFinancialDashboard({actorUserId:user.id,organizationId:organization.id})
+      const other=await getProfessionalFinancialDashboard({actorUserId:secondUser.id,organizationId:secondOrganization.id})
+      const adminInvoices=await listPlatformFinancialInvoices(platformAdministrator.id)
+      for(const document of snapshots) {
+        assert.ok(own.invoices.some(i=>i.id===document.id))
+        assert.ok(!other.invoices.some(i=>i.id===document.id))
+        assert.ok(adminInvoices.items.some(i=>i.id===document.id))
+      }
+      await assert.rejects(()=>getProfessionalFinancialDashboard({actorUserId:secondUser.id,organizationId:organization.id}))
+      await assert.rejects(()=>listPlatformFinancialInvoices(secondUser.id))
+      const historical=await prisma.financialInvoice.findMany({where:{subscriptionPayment:{molliePaymentId:{in:[october.id,november.id]}}}})
+      assert.equal(historical.length,2)
+      for(const document of historical) {
+        let documentPosts=0,paymentPosts=0
+        await syncFinancialInvoiceToJortt(document.id,{submitInvoice:async()=>{
+          documentPosts++;return {externalReference:'p17-history-'+document.id,remoteInvoiceNumber:'FAKE-'+document.sequenceNumber}
+        }})
+        const remote={id:'p17-history-'+document.id,reference:document.invoiceNumber,totalCents:5929,dueCents:5929,currency:'EUR',
+          bookings:[] as typeof evidence.bookings,allowedLedgerAccounts:[ledger]}
+        const fake={inspectPayment:async()=>remote,registerPayment:async(input:{reference:string;bookDate:string})=>{
+          paymentPosts++;remote.dueCents=0
+          remote.bookings.push({id:randomUUID(),description:input.reference,amountCents:5929,ledgerAccountId:ledger,bookDate:input.bookDate})
+          throw new Error('P17_FAKE_LOST_ACCEPTANCE')
+        }}
+        const input={...reconcileInput,invoiceId:document.id}
+        assert.equal((await reconcileJorttPayment(input,fake)).status,'REVIEW_REQUIRED')
+        assert.equal((await reconcileJorttPayment(input,fake)).status,'CONFIRMED')
+        assert.equal((await reconcileJorttPayment(input,fake)).status,'CONFIRMED')
+        await syncFinancialInvoiceToJortt(document.id,{submitInvoice:async()=>{throw new Error('DUPLICATE_DOCUMENT')}})
+        assert.equal(documentPosts,1);assert.equal(paymentPosts,1)
+        assert.equal((await prisma.financialInvoice.findUniqueOrThrow({where:{id:document.id}})).invoiceNumber,document.invoiceNumber)
+      }
+      console.log('P17 PASS: two selected historical synthetic invoices -> fake Jortt document, uncertain settlement, read-only confirmation, one booking each and unchanged original number')
+      console.log('P17 PASS: credits and Compliance financial handlers, six callbacks each, one invoice and exact credits/VAT, tenant/admin lists, PDF bytes, fake Jortt document+settlement replay; not a Compliance checkout/access test')
+    } finally { globalThis.fetch=originalFetch }
     deploySchema()
     const counts=await prisma.$queryRawUnsafe('SELECT count(*)::int AS applied FROM "_prisma_migrations" WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL')
     assert.deepEqual(counts,[{applied:115}])
