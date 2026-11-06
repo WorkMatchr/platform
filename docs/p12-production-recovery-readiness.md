@@ -47,7 +47,7 @@ Rollen en databasebrede ACL's zitten niet volledig in `pg_dump`. Voor echte uitv
 
 ## C — schrijfpauze en hervatting
 
-De bestaande `test-d2d-write-pause.mjs --synthetic-only` is opnieuw gericht uitgevoerd: **11 controles PASS**. Nieuwe login geweigerd; bestaande transactie correct afgerond; idle pool gedetecteerd; onbekende directe login en membership blokkeren sluiten/heropenen; HTTP- en GET-writes weigeren tijdens fence; adapterherstart heft fence niet op; databasefout geeft geen vals webhooksucces; sessie/scheduler hervatten één keer; zes dubbele synthetische callbacks geven één ledgerboeking; backuprol kan niet escaleren/schrijven. Alleen eigen netwerkloze testcontainer verwijderd; bestaande containers/volumes gelijk gebleven.
+De bestaande `test-d2d-write-pause.mjs --synthetic-only` is opnieuw gericht uitgevoerd: **11 controles PASS**. Nieuwe login geweigerd; bestaande transactie correct afgerond; idle pool gedetecteerd; onbekende directe login en membership blokkeren sluiten/heropenen; HTTP- en GET-writes weigeren tijdens fence; adapterherstart heft fence niet op; databasefout geeft geen vals webhooksucces; sessie/scheduler hervatten één keer; zes dubbele synthetische callbacks geven één ledgerboeking. De backupfixture weigert drie concrete pogingen: CREATE ROLE, SET ROLE naar de operator en DELETE na uitschakeling van transaction_read_only. Dit bewijst geen algemene read-onlygarantie, met name niet voor PUBLIC large-object-functies. Alleen eigen netwerkloze testcontainer verwijderd; bestaande containers/volumes gelijk gebleven.
 
 Dit zijn **synthetische HTTP-adapters**, geen operationele Vercel-pauze. De echte financiële serviceconcurrency is afzonderlijk getest. Geen claim dat alle productiealiases of directe clients nu gefencet zijn.
 
