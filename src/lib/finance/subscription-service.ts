@@ -22,6 +22,7 @@ import { issueInvoiceForPaidSubscriptionPayment } from './invoice-service'
 import { runSerializableFinancialTransaction } from './financial-transaction'
 import { isRetryableProFirstPaymentAttempt } from './pro-subscription-presentation'
 import { getSafeMollieErrorDetails } from './credit-payment-diagnostics'
+import { resolveProInvoiceSource, recurringContractPeriod } from './pro-payment-source'
 import { finalizeProFirstPaymentDownstream } from './pro-first-payment-downstream-service'
 
 const inputSchema = z.object({
@@ -676,57 +677,72 @@ export async function processRecurringProPayment(payment: MolliePaymentSnapshot)
   if (!payment.subscriptionId) throw new Error('MOLLIE_SUBSCRIPTION_ID_MISSING')
   const subscription = await getPrisma().professionalSubscription.findUnique({ where: { mollieSubscriptionId: payment.subscriptionId } })
   if (!subscription) throw new Error('UNKNOWN_MOLLIE_SUBSCRIPTION')
-  if (payment.currency !== subscription.currency || payment.amountValue !== centsToMollieValue(subscription.amountInclVatCents)) throw new Error('MOLLIE_PAYMENT_MISMATCH')
-  if (subscription.mollieMandateId && payment.mandateId !== subscription.mollieMandateId) throw new Error('MOLLIE_MANDATE_MISMATCH')
-  if (subscription.mollieMandateMethod && payment.method !== subscription.mollieMandateMethod) throw new Error('MOLLIE_MANDATE_METHOD_MISMATCH')
-  return runSerializableFinancialTransaction(async (transaction) => {
-    await lock(transaction, subscription.organizationId)
-    const fingerprint = await import('node:crypto').then(({ createHash }) => createHash('sha256').update(JSON.stringify({ id: payment.id, status: payment.status, amount: payment.amountValue, currency: payment.currency, subscriptionId: payment.subscriptionId, mandateId: payment.mandateId, method: payment.method })).digest('hex'))
-    const paidPeriodStart = payment.status === 'paid' ? (payment.paidAt ? new Date(payment.paidAt) : new Date()) : null
-    const paidPeriodEnd = paidPeriodStart ? addUtcMonth(paidPeriodStart) : null
-    const paymentRecord = await transaction.professionalSubscriptionPayment.upsert({
-      where: { idempotencyKey: `pro-payment:${payment.id}:${payment.status}:${fingerprint}` },
-      create: {
-        subscriptionId: subscription.id,
-        molliePaymentId: payment.id,
-        status: payment.status === 'canceled' ? 'CANCELED' : payment.status.toUpperCase() as 'OPEN' | 'PENDING' | 'PAID' | 'FAILED' | 'EXPIRED',
-        amountExclVatCents: subscription.amountExclVatCents,
-        vatRateBps: subscription.vatRateBps,
-        vatAmountCents: subscription.vatAmountCents,
-        amountInclVatCents: subscription.amountInclVatCents,
-        currency: subscription.currency,
-        periodStart: paidPeriodStart,
-        periodEnd: paidPeriodEnd,
-        payloadFingerprint: fingerprint,
-        idempotencyKey: `pro-payment:${payment.id}:${payment.status}:${fingerprint}`,
-      },
-      update: {},
-    })
-    if (payment.status === 'paid') {
-      const periodStart = paymentRecord.periodStart ?? paidPeriodStart
-      const periodEnd = paymentRecord.periodEnd ?? paidPeriodEnd
-      if (!periodStart || !periodEnd) throw new Error('PRO_PAYMENT_PERIOD_REQUIRED')
-      const updated = await transaction.professionalSubscription.update({ where: { id: subscription.id }, data: { status: 'ACTIVE', currentPeriodStart: periodStart, currentPeriodEnd: periodEnd, pastDueAt: null, retryCount: 0 } })
-      await issueInvoiceForPaidSubscriptionPayment(transaction, paymentRecord.id, periodStart)
-      return updated
-    }
-    if (['failed', 'canceled', 'expired'].includes(payment.status)) {
-      const now = new Date()
-      const updated = await transaction.professionalSubscription.update({
-        where: { id: subscription.id }, data: { status: 'PAST_DUE', pastDueAt: subscription.pastDueAt ?? now, retryCount: { increment: 1 } },
-      })
-      const recipients = await transaction.organizationMembership.findMany({ where: { organizationId: subscription.organizationId, status: 'ACTIVE', role: { in: ['OWNER', 'ADMIN'] }, user: { status: 'ACTIVE' } }, select: { userId: true } })
-      for (const recipient of recipients) {
-        await transaction.marketplaceNotification.upsert({
-          where: { recipientUserId_eventId: { recipientUserId: recipient.userId, eventId: `pro-payment-failed:${payment.id}` } },
-          create: { recipientUserId: recipient.userId, eventId: `pro-payment-failed:${payment.id}`, type: 'PRO_PAYMENT_FAILED', title: 'Betaling WorkMatchr Pro niet gelukt', body: 'De Pro-voordelen zijn tijdelijk gepauzeerd. Uw overige WorkMatchr-functionaliteit en bestaande credits blijven beschikbaar.', targetRoute: '/credits', idempotencyKey: `${recipient.userId}:pro-payment-failed:${payment.id}` },
-          update: {},
-        })
+  if (payment.currency !== subscription.currency || payment.amountValue !== centsToMollieValue(subscription.amountInclVatCents)
+    || payment.metadata.organizationId !== subscription.organizationId || payment.metadata.subscriptionId !== subscription.id
+) throw new Error('MOLLIE_PAYMENT_MISMATCH')
+  if (!subscription.mollieMandateId || payment.mandateId !== subscription.mollieMandateId
+    || payment.method !== subscription.mollieMandateMethod) throw new Error('MOLLIE_MANDATE_MISMATCH')
+  if (payment.status === 'paid' && (!payment.paidAt || !Number.isFinite(Date.parse(payment.paidAt)))) throw new Error('MOLLIE_PAID_AT_REQUIRED')
+  try {
+    return await runSerializableFinancialTransaction(async (transaction) => {
+      await lock(transaction, subscription.organizationId)
+      const current = await transaction.professionalSubscription.findUniqueOrThrow({ where: { id: subscription.id } })
+      const priorPaid = await transaction.professionalSubscriptionPayment.findFirst({ where: { molliePaymentId: payment.id, status: 'PAID' } })
+      if (priorPaid) {
+        if (priorPaid.subscriptionId !== current.id) throw new Error('MOLLIE_PAYMENT_MISMATCH')
+        await issueInvoiceForPaidSubscriptionPayment(transaction, priorPaid.id)
+        return current // terminal paid wins; replay cannot regress the current period
       }
-      return updated
-    }
-    return subscription
-  })
+      const source = await resolveProInvoiceSource(transaction, current.id)
+      const period = recurringContractPeriod(source.invoice.servicePeriodStart!, payment.createdAt)
+      const key = `pro-payment-v2:${payment.id}:${payment.status}`
+      const prior = await transaction.professionalSubscriptionPayment.findUnique({ where: { idempotencyKey: key } })
+      if (prior) return current
+      const fingerprint = await import('node:crypto').then(({ createHash }) => createHash('sha256').update(JSON.stringify({ id: payment.id, status: payment.status, amount: payment.amountValue, subscriptionId: current.id })).digest('hex'))
+      const record = await transaction.professionalSubscriptionPayment.create({ data: {
+        subscriptionId: current.id, molliePaymentId: payment.id,
+        status: payment.status.toUpperCase() as 'OPEN' | 'PENDING' | 'PAID' | 'FAILED' | 'CANCELED' | 'EXPIRED',
+        amountExclVatCents: current.amountExclVatCents, vatRateBps: current.vatRateBps,
+        vatAmountCents: current.vatAmountCents, amountInclVatCents: current.amountInclVatCents,
+        currency: current.currency, periodStart: period.start, periodEnd: period.end,
+        payloadFingerprint: fingerprint, idempotencyKey: key,
+      } })
+      await transaction.financialEvent.create({ data: { subscriptionId: current.id, eventType: 'PRO_PAYMENT_VALIDATED', result: record.status,
+        idempotencyKey: `pro-validated:${payment.id}:${payment.status}`, metadata: { paymentId: payment.id, sourceInvoiceId: source.invoice.id,
+          providerCreatedAt: payment.createdAt, providerPaidAt: payment.paidAt, periodStart: period.start.toISOString(), periodEnd: period.end.toISOString(), amountCents: current.amountInclVatCents } } })
+      if (payment.status === 'paid') {
+        await issueInvoiceForPaidSubscriptionPayment(transaction, record.id)
+        // An older month's late payment is recorded, but cannot replace a newer period.
+        const newerFailure = await transaction.professionalSubscriptionPayment.findFirst({ where: { subscriptionId: current.id, periodStart: { gt: period.start }, status: { in: ['FAILED', 'CANCELED', 'EXPIRED'] } } })
+        if (!newerFailure && (!current.currentPeriodStart || period.start >= current.currentPeriodStart) && current.status !== 'CANCELED') {
+          return transaction.professionalSubscription.update({ where: { id: current.id }, data: {
+            status: 'ACTIVE', currentPeriodStart: period.start, currentPeriodEnd: period.end, pastDueAt: null, retryCount: 0,
+          } })
+        }
+      } else if (['failed', 'canceled', 'expired'].includes(payment.status)
+        && (!current.currentPeriodEnd || period.start >= current.currentPeriodEnd) && current.status !== 'CANCELED') {
+        const earlierFailure = await transaction.professionalSubscriptionPayment.findFirst({ where: {
+          subscriptionId: current.id, molliePaymentId: payment.id, id: { not: record.id }, status: { in: ['FAILED', 'CANCELED', 'EXPIRED'] },
+        } })
+        if (!earlierFailure) {
+          await transaction.professionalSubscription.update({ where: { id: current.id }, data: { status: 'PAST_DUE', pastDueAt: current.pastDueAt ?? new Date(), retryCount: { increment: 1 } } })
+          const recipients = await transaction.organizationMembership.findMany({ where: { organizationId: current.organizationId, status: 'ACTIVE', role: { in: ['OWNER', 'ADMIN'] }, user: { status: 'ACTIVE' } }, select: { userId: true } })
+          for (const recipient of recipients) await transaction.marketplaceNotification.upsert({
+            where: { recipientUserId_eventId: { recipientUserId: recipient.userId, eventId: `pro-payment-failed:${payment.id}` } },
+            create: { recipientUserId: recipient.userId, eventId: `pro-payment-failed:${payment.id}`, type: 'PRO_PAYMENT_FAILED', title: 'Betaling WorkMatchr Pro niet gelukt', body: 'De Pro-voordelen zijn tijdelijk gepauzeerd. Uw overige WorkMatchr-functionaliteit en bestaande credits blijven beschikbaar.', targetRoute: '/credits', idempotencyKey: `${recipient.userId}:pro-payment-failed:${payment.id}` }, update: {},
+          })
+        }
+      }
+      return transaction.professionalSubscription.findUniqueOrThrow({ where: { id: current.id } })
+    })
+  } catch (error) {
+    // Separate transaction: a rolled-back invoice must not erase the reconciliation signal.
+    await getPrisma().financialEvent.upsert({ where: { idempotencyKey: `pro-processing-failed:${payment.id}:${payment.status}` },
+      create: { subscriptionId: subscription.id, eventType: 'PRO_PAYMENT_PROCESSING_FAILED', result: 'REVIEW_REQUIRED',
+        idempotencyKey: `pro-processing-failed:${payment.id}:${payment.status}`, metadata: { paymentId: payment.id, status: payment.status } }, update: {},
+    }).catch(() => undefined) // HTTP failure remains visible if the database itself is unavailable
+    throw error
+  }
 }
 
 export async function scheduleProCancellation(

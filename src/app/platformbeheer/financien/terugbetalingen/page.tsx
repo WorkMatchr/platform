@@ -29,16 +29,16 @@ export default async function PlatformFinancialRefundsPage({ searchParams }: { s
     </FilterForm>
     <AdminSection title={`${data.total} terugbetalingen`}>
       {data.items.length === 0 ? <EmptyState>Geen terugbetalingen gevonden met deze filters.</EmptyState> : <AdminTable headers={['Datum', 'Organisatie', 'Status', 'Bedrag', 'Oorspronkelijke betaling', 'Mollie refund-id', 'Oorspronkelijke factuur', 'Creditnota']}>
-        {data.items.map((refund) => <tr key={refund.id}>
+        {data.items.map((refund) => { const original = refund.purchase?.invoice ?? refund.proCreditNote?.originalInvoice; const note = refund.creditNote ?? refund.proCreditNote; return <tr key={refund.id}>
           <td className="whitespace-nowrap px-4 py-3">{formatPlatformDate(refund.completedAt ?? refund.requestedAt)}</td>
-          <td className="px-4 py-3 font-medium text-brand-dark">{refund.purchase.organization.name}</td>
-          <td className="px-4 py-3"><StatusPill tone={financialStatusTone(refund.purchase.status === 'REFUND_REVIEW_REQUIRED' ? refund.purchase.status : refund.status)}>{refund.purchase.status === 'REFUND_REVIEW_REQUIRED' ? financialPurchaseStatusLabels.REFUND_REVIEW_REQUIRED : financialPaymentStatusLabels[refund.status]}</StatusPill></td>
+          <td className="px-4 py-3 font-medium text-brand-dark">{refund.purchase?.organization.name ?? refund.proCreditNote?.organization.name ?? 'Onbekend'}</td>
+          <td className="px-4 py-3"><StatusPill tone={financialStatusTone(refund.purchase?.status === 'REFUND_REVIEW_REQUIRED' ? refund.purchase?.status : refund.status)}>{refund.purchase?.status === 'REFUND_REVIEW_REQUIRED' ? financialPurchaseStatusLabels.REFUND_REVIEW_REQUIRED : financialPaymentStatusLabels[refund.status]}</StatusPill>{refund.reconciliationRequired || (refund.status === 'PENDING' && refund.providerDispatchVersion === 0 && !refund.mollieRefundId) ? <p>Provideruitkomst onzeker — controleren, niet opnieuw verzenden.</p> : null}</td>
           <td className="whitespace-nowrap px-4 py-3">{formatEuro(refund.amountCents)}</td>
-          <td className="px-4 py-3 font-mono text-xs">{refund.purchase.molliePaymentId ?? '—'}</td>
+          <td className="px-4 py-3 font-mono text-xs">{refund.purchase?.molliePaymentId ?? refund.proCreditNote?.molliePaymentId ?? '—'}</td>
           <td className="px-4 py-3 font-mono text-xs">{refund.mollieRefundId ?? '—'}</td>
-          <td className="px-4 py-3">{refund.purchase.invoice ? <Link className="font-semibold text-brand-primary hover:underline" href={`/platformbeheer/financien/facturen/${refund.purchase.invoice.id}/pdf`}>{refund.purchase.invoice.invoiceNumber}</Link> : '—'}</td>
-          <td className="px-4 py-3">{refund.creditNote ? <Link className="font-semibold text-brand-primary hover:underline" href={`/platformbeheer/financien/facturen/${refund.creditNote.id}/pdf`}>{refund.creditNote.invoiceNumber}</Link> : '—'}</td>
-        </tr>)}
+          <td className="px-4 py-3">{original ? <Link className="font-semibold text-brand-primary hover:underline" href={`/platformbeheer/financien/facturen/${original.id}/pdf`}>{original.invoiceNumber}</Link> : '—'}</td>
+          <td className="px-4 py-3">{note ? <Link className="font-semibold text-brand-primary hover:underline" href={`/platformbeheer/financien/facturen/${note.id}/pdf`}>{note.invoiceNumber}</Link> : '—'}</td>
+        </tr>})}
       </AdminTable>}
       <AdminPagination page={data.page} pageCount={data.pageCount} previousHref={data.page > 1 ? paginationHref(pathname, params, data.page - 1) : null} nextHref={data.page < data.pageCount ? paginationHref(pathname, params, data.page + 1) : null} />
     </AdminSection>

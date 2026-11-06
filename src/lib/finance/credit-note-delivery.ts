@@ -3,10 +3,10 @@ import { deliverFinancialInvoiceEmail, recordFinancialInvoiceEmailFailure } from
 
 /** Always after commit; delivery failure cannot roll back a valid refund. */
 export async function deliverCompletedRefundCreditNote(result: {
-  refund: { status: string; purchaseId: string; approvedByUserId: string | null }
+  refund: { status: string; purchaseId: string | null; approvedByUserId: string | null }
   creditNote?: { id: string } | null
 }) {
-  if (result.refund.status !== 'REFUNDED' || !result.creditNote) return
+  if (result.refund.status !== 'REFUNDED' || !result.creditNote || !result.refund.purchaseId) return
   try {
     await deliverFinancialInvoiceEmail(result.creditNote.id)
   } catch {

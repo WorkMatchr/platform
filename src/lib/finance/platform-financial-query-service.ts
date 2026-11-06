@@ -76,6 +76,7 @@ export async function getPlatformFinancialPaymentDetail(actorUserId: string, pur
           completedAt: true,
           mollieRefundId: true,
           creditNote: { select: { id: true, invoiceNumber: true } },
+    proCreditNote: { select: { id: true, invoiceNumber: true, molliePaymentId: true, organization: { select: { name: true } }, originalInvoice: { select: { id: true, invoiceNumber: true } } } },
         },
       },
       creditedTransaction: {
@@ -124,14 +125,16 @@ export async function listPlatformFinancialRefunds(actorUserId: string, filters:
   const where: Prisma.FinancialRefundWhereInput = {
     status: filters.status,
     requestedAt: dateWhere(filters),
-    purchase: filters.organization
-      ? { organization: { name: { contains: filters.organization, mode: 'insensitive' } } }
-      : undefined,
+    OR: filters.organization ? [
+      { purchase: { organization: { name: { contains: filters.organization, mode: 'insensitive' } } } },
+      { proCreditNote: { organization: { name: { contains: filters.organization, mode: 'insensitive' } } } },
+    ] : undefined,
   }
   const select = {
-    id: true, status: true, amountCents: true, requestedAt: true, completedAt: true, mollieRefundId: true,
+    id: true, status: true, reconciliationRequired: true, providerDispatchVersion: true, amountCents: true, requestedAt: true, completedAt: true, mollieRefundId: true,
     purchase: { select: { id: true, status: true, molliePaymentId: true, organization: { select: { id: true, name: true } }, invoice: { select: { id: true, invoiceNumber: true } } } },
     creditNote: { select: { id: true, invoiceNumber: true } },
+    proCreditNote: { select: { id: true, invoiceNumber: true, molliePaymentId: true, organization: { select: { name: true } }, originalInvoice: { select: { id: true, invoiceNumber: true } } } },
   } satisfies Prisma.FinancialRefundSelect
   return paginated(filters.page, () => prisma.financialRefund.count({ where }), (skip) => prisma.financialRefund.findMany({ where, select, orderBy: [{ requestedAt: 'desc' }, { id: 'desc' }], skip, take: PAGE_SIZE }))
 }

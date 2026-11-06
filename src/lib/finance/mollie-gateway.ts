@@ -72,8 +72,10 @@ export interface MollieGateway {
     currency: 'EUR'
     description: string
     idempotencyKey: string
-    metadata: { refundId: string; purchaseId: string }
+    metadata: { refundId: string; purchaseId?: string; creditNoteId?: string }
   }): Promise<MollieRefundSnapshot>
+  listSubscriptionPayments?(input: { customerId: string; subscriptionId: string; after: Date }): Promise<readonly MolliePaymentSnapshot[]>
+  findRefundByReference?(input: { paymentId: string; refundId: string; amountValue: string; currency: string }): Promise<MollieRefundSnapshot | null>
   getRefund(input: { paymentId: string; refundId: string }): Promise<MollieRefundSnapshot>
   createCustomer(input: { name: string; email: string; organizationId: string; idempotencyKey: string }): Promise<{ id: string }>
   getCustomer(customerId: string): Promise<Readonly<{ id: string; organizationId: string | null }>>
@@ -236,6 +238,30 @@ export function createMollieGateway(): MollieGateway {
     async getRefund(input) {
       const refund = await client.paymentRefunds.get(input.refundId, { paymentId: input.paymentId })
       return { id: refund.id, status: refund.status }
+    },
+    async listSubscriptionPayments(input) {
+      const result: MolliePaymentSnapshot[] = []
+      for await (const payment of client.subscriptionPayments.iterate({ customerId: input.customerId, subscriptionId: input.subscriptionId })) {
+        const snapshot = paymentSnapshot(payment)
+        if (snapshot.createdAt && new Date(snapshot.createdAt) < input.after) break
+        result.push(snapshot)
+        if (result.length >= 500) throw new Error('MOLLIE_RECONCILIATION_PAGE_LIMIT')
+      }
+      return result
+    },
+    async findRefundByReference(input) {
+      const matches: MollieRefundSnapshot[] = []
+      let count = 0
+      for await (const refund of client.paymentRefunds.iterate({ paymentId: input.paymentId })) {
+        if (++count > 500) throw new Error('MOLLIE_REFUND_PAGE_LIMIT')
+        const metadata = z.object({ refundId: z.string().uuid() }).safeParse(refund.metadata)
+        if (metadata.success && metadata.data.refundId === input.refundId) {
+          if (refund.amount.value !== input.amountValue || refund.amount.currency !== input.currency) throw new Error('MOLLIE_REFUND_MISMATCH')
+          matches.push({ id: refund.id, status: refund.status })
+        }
+      }
+      if (matches.length > 1) throw new Error('MOLLIE_REFUND_DUPLICATE_REMOTE')
+      return matches[0] ?? null
     },
     async createCustomer(input) {
       const customer = await client.customers.create({

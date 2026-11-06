@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { MollieGateway, MolliePaymentSnapshot, MollieSubscriptionSnapshot } from './mollie-gateway'
 
 vi.mock('server-only', () => ({}))
+vi.mock('./pro-payment-source', async importOriginal => ({ ...await importOriginal<object>(), resolveProInvoiceSource: async () => ({ invoice: { servicePeriodStart: new Date('2026-08-09T12:00:00Z') } }) }))
 
 const mocks = vi.hoisted(() => ({
   authorize: vi.fn(),
@@ -67,7 +68,7 @@ const transaction = {
   professionalSubscriptionFirstPaymentAttempt: {
     create: mocks.firstPaymentAttemptCreate,
   },
-  professionalSubscriptionPayment: { upsert: mocks.paymentUpsert },
+  professionalSubscriptionPayment: { create: mocks.paymentUpsert, findFirst: vi.fn().mockResolvedValue(null), findUnique: vi.fn().mockResolvedValue(null) },
   financialEvent: { upsert: mocks.eventUpsert, create: mocks.eventCreate, count: mocks.eventCount },
   organizationMembership: { findMany: vi.fn(async () => []) },
   marketplaceNotification: { upsert: vi.fn() },
@@ -177,6 +178,7 @@ describe('WorkMatchr Pro via first payment en recurring mandate', () => {
     mocks.listFirstPaymentMethods.mockResolvedValue(['ideal', 'creditcard'])
     mocks.findRemoteSubscription.mockResolvedValue(null)
     mocks.createSubscription.mockResolvedValue(remoteSubscription())
+    mocks.eventUpsert.mockResolvedValue({})
     mocks.eventCount.mockResolvedValue(0)
     mocks.paymentUpsert.mockResolvedValue({ id: '50000000-0000-4000-8000-000000000001' })
     mocks.invoice.mockResolvedValue({ id: '60000000-0000-4000-8000-000000000001' })
@@ -645,10 +647,10 @@ describe('WorkMatchr Pro via first payment en recurring mandate', () => {
 
     expect(current).toMatchObject({ status: 'ACTIVE', pastDueAt: null, retryCount: 0 })
     expect(mocks.paymentUpsert).toHaveBeenCalledWith(expect.objectContaining({
-      create: expect.objectContaining({ amountInclVatCents: 5_929, status: 'PAID',
+      data: expect.objectContaining({ amountInclVatCents: 5_929, status: 'PAID',
         periodStart: new Date('2026-09-09T12:00:00Z'), periodEnd: new Date('2026-10-09T12:00:00Z') }),
     }))
-    expect(mocks.invoice).toHaveBeenCalledWith(transaction, '50000000-0000-4000-8000-000000000001', expect.any(Date))
+    expect(mocks.invoice).toHaveBeenCalledWith(transaction, '50000000-0000-4000-8000-000000000001')
   })
 
   it('zet een mislukte maandincasso op PAST_DUE zonder credits te wijzigen', async () => {

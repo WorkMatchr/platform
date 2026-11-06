@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [P1: Pro-incasso, creditfacturen en betaalreconciliatie](p1-financial-integrity-repair.md)
+
 - [Productiedatabase: schrijfpauze, herstel en migratieacceptatie](database-upgrade-preparation.md)
 
 - [Gecombineerde eindacceptatie en gesloten besluitregister](combined-final-acceptance.md)
