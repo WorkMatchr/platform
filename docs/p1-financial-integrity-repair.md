@@ -77,6 +77,7 @@ Uitgevoerd op de afzonderlijke herstelbranch met de vastgelegde npm-lockfile; ge
 - Bestaande financiele databasesuite: snapshots, signed v2-crediten, wallet/ledger, nummering, kortingscodeconcurrency en mailfoutisolatie PASS.
 - HTTP-webhooktests bewijzen 500 zonder interne foutdetails en veilige heraanbieding. De PostgreSQL-proef loopt via de betaalservice met fake gateway; geen claim van echte Mollie-netwerkacceptatie.
 - Lint: 0 fouten, vier bestaande ongewijzigde Next.js-navigatiewaarschuwingen in authenticatiecomponenten.
+- CI ontdekte een integratieprobleem in de historische D2C-testfixture: deze nam de nieuwe P1-migratie onterecht op in het synthetische register van 85. De fixture sluit nu expliciet ook deze nieuwe kandidaat uit. De operationele preflight blijft ongewijzigd en weigert alle niet-goedgekeurde extra migraties.
 - Diff-check en gerichte secrets-/operationele-metadatacontrole: PASS; uitsluitend synthetische fixtures en lokale loopbackconfiguratie in de tests.
 - TypeScript: PASS. Build: PASS; drie bestaande waarschuwingen over dynamische bestandstracing in kennisbron-/leerbestandsopslag.
 - PostgreSQL-driver meldt bij bestaande serializable concurrency een pg@9-deprecationwaarschuwing; de huidige pg@8-controles slagen.

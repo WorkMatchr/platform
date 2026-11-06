@@ -10,7 +10,8 @@ import { auditPreflight as checkPreflight, pendingMigrations } from './audit-d2c
 const migrationRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'workmatchr-historical-preflight-'))
 for (const name of fs.readdirSync('prisma/migrations').filter(n => /^\d/.test(n)
   && n !== '20261102120000_add_closed_contact_audit_retention'
-  && n !== '20261103100000_add_closed_contact_decision_register')) {
+  && n !== '20261103100000_add_closed_contact_decision_register'
+  && n !== '20261106120000_repair_pro_financial_integrity')) {
   fs.mkdirSync(path.join(migrationRoot, name))
   fs.copyFileSync(path.join('prisma/migrations', name, 'migration.sql'), path.join(migrationRoot, name, 'migration.sql'))
 }
@@ -25,7 +26,7 @@ const auditPreflight = (evidence, database) => checkPreflight(evidence, database
 const registry=fs.readdirSync(migrationRoot).filter(n=>/^\d/.test(n)&&!pendingMigrations.includes(n)).sort().map(migration_name=>({migration_name,finished:true,rolled_back:false,checksum:createHash('sha256').update(fs.readFileSync(path.join(migrationRoot,migration_name,'migration.sql'),'utf8').replace(/\r\n/g,'\n')).digest('hex')}))
 const evidence={database:'fixture_db',readOnly:'on',version:'18.0',registry,invalidIndexes:0,unvalidatedConstraints:0,unfinishedFinanceRuns:0,activeOutboxLeases:0,walletMismatches:0,ungrantedLocks:0,learningTables:0,examGuardExists:false,unfinishedClientTransactions:0,outbox:[]}
 test('read-only metadata matches 85 registrations and exactly eight pending files',()=>assert.equal(auditPreflight(evidence,'fixture_db').status,'PASS'))
-test('original production plan refuses the additional unapproved contact-audit migration',()=>assert.throws(()=>checkPreflight(evidence,'fixture_db'),/Unexpected local migration count/))
+test('original production plan refuses additional unapproved contact and P1 migrations',()=>assert.throws(()=>checkPreflight(evidence,'fixture_db'),/Unexpected local migration count/))
 for(const [name,change] of [
   ['wrong database',e=>{e.database='other'}],
   ['read-write evidence',e=>{e.readOnly='off'}],
