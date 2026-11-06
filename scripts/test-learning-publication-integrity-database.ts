@@ -5,6 +5,7 @@ import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writ
 import path from 'node:path'
 import { Client } from 'pg'
 import { assertSyntheticRoles, configureSyntheticRoles, roleAclSnapshot } from './fixtures/database-role-policy'
+import { seedFinancialRecoveryBaseline85 } from './fixtures/financial-recovery-baseline'
 
 // Never migrates the supplied database. Only connects to postgres to create unique,
 // process-owned databases/roles, then removes exactly those objects in finally.
@@ -178,6 +179,98 @@ async function functionIdentity(db: Client) {
   return (await db.query(`SELECT oid,proowner,proacl,prosecdef,provolatile FROM pg_proc WHERE oid='public.learning_question_is_editable(uuid)'::regprocedure`)).rows[0]
 }
 
+// P1.2: restore the populated 85 baseline BEFORE upgrading. This is a synthetic
+// rehearsal, never evidence that a current production backup is recoverable.
+async function restoreAndUpgradeFinancialBaseline(admin: Client, db: Client, database: string, deploy: (url: URL) => void, queries: string[], before: string[]) {
+  const container = process.env.WP16_POSTGRES_CONTAINER_ID
+  assert.ok(container, 'Owned synthetic container required for financial recovery proof')
+  assert.match(container, /^[a-f0-9]{12,64}$/)
+  assert.equal(database, `workmatchr_db02_production-upgrade_${suffix}`)
+  assert.equal((await db.query('SELECT current_database() AS name')).rows[0].name, database)
+  if (process.env.GITHUB_ACTIONS !== 'true') {
+    assert.ok(process.argv.includes('--local-synthetic-recovery'), 'Explicit local recovery opt-in required')
+    const inspected = spawnSync('docker', ['inspect', container], { encoding: 'utf8', timeout: 10000 })
+    assert.equal(inspected.status, 0)
+    const owned = JSON.parse(inspected.stdout)[0]
+    assert.equal(owned.Config.Labels['workmatchr.synthetic'], 'wp21-integration')
+    assert.equal(owned.HostConfig.PortBindings['5432/tcp'][0].HostIp, '127.0.0.1')
+    assert.equal(owned.HostConfig.PortBindings['5432/tcp'][0].HostPort, source.port)
+  }
+  const restoredName = `workmatchr_p12_restore_${suffix}`
+  const url = new URL(source); url.pathname = `/${restoredName}`
+  const restored = new Client({ connectionString: url.href, connectionTimeoutMillis: 5000 })
+  const registry = (await db.query('SELECT * FROM _prisma_migrations ORDER BY migration_name')).rows
+  assert.equal(registry.length, 85)
+  const objects = async (client: Client) => (await client.query(`
+    SELECT 'function' AS kind, p.proname AS name, pg_get_function_identity_arguments(p.oid) AS args,
+      pg_get_userbyid(p.proowner) AS owner, p.proacl::text AS acl, md5(pg_get_functiondef(p.oid)) AS definition
+    FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public'
+    UNION ALL SELECT 'constraint', c.conname, c.conrelid::regclass::text, '', '', pg_get_constraintdef(c.oid)
+    FROM pg_constraint c JOIN pg_namespace n ON n.oid=c.connamespace WHERE n.nspname='public'
+    UNION ALL SELECT 'trigger', t.tgname, t.tgrelid::regclass::text, '', '', pg_get_triggerdef(t.oid)
+    FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid JOIN pg_namespace n ON n.oid=c.relnamespace
+    WHERE n.nspname='public' AND NOT t.tgisinternal ORDER BY kind,name,args`)).rows
+  const baselineObjects = await objects(db), acls = await roleAclSnapshot(db), data = await dataSnapshot(db)
+  const start = Date.now()
+  let created = false
+  try {
+    const dump = spawnSync('docker', ['exec', container, 'pg_dump', '-U', 'postgres', '--format=custom', '--dbname', database], { timeout: 120000, maxBuffer: 64 * 1024 * 1024 })
+    assert.equal(dump.status, 0, 'Synthetic baseline dump failed')
+    assert.ok(dump.stdout.length > 0)
+    await admin.query(`CREATE DATABASE "${restoredName}"`); created = true
+    const restore = spawnSync('docker', ['exec', '-i', container, 'pg_restore', '-U', 'postgres', '--single-transaction', '--exit-on-error', '--dbname', restoredName], { input: dump.stdout, timeout: 120000, maxBuffer: 1024 * 1024 })
+    assert.equal(restore.status, 0, 'Synthetic baseline restore failed')
+    await restored.connect()
+    assert.deepEqual(await dataSnapshot(restored), data, 'Restored baseline data differs')
+    // PostgreSQL's dump/reparse can canonicalize CHECK arrays and parentheses.
+    // Reparse each original CHECK on an empty temporary LIKE table, then compare
+    // the actual definitions. Do not ignore constraints or strip casts by regex.
+    const expectedObjects = structuredClone(baselineObjects)
+    for (const object of expectedObjects) {
+      if (object.kind !== 'constraint' || !object.definition.startsWith('CHECK (')) continue
+      assert.match(object.args, /^"?[A-Za-z0-9_]+"?$/)
+      await restored.query('BEGIN')
+      try {
+        await restored.query(`CREATE TEMP TABLE p12_check_shape (LIKE public.${object.args}) ON COMMIT DROP`)
+        await restored.query(`ALTER TABLE p12_check_shape ADD CONSTRAINT p12_check_expected ${object.definition}`)
+        object.definition = (await restored.query(`SELECT pg_get_constraintdef(oid) AS definition FROM pg_constraint WHERE conrelid='pg_temp.p12_check_shape'::regclass AND conname='p12_check_expected'`)).rows[0].definition
+      } finally { await restored.query('ROLLBACK') }
+    }
+    assert.deepEqual(await objects(restored), expectedObjects, 'Restored functions/constraints/triggers differ')
+    assert.deepEqual(await roleAclSnapshot(restored), acls, 'Restored ownership/ACL differs')
+    assert.deepEqual((await restored.query('SELECT * FROM _prisma_migrations ORDER BY migration_name')).rows, registry)
+    // Roles and database ACLs need a separate operator manifest; pg_dump does not
+    // back them up. Existing NOLOGIN fixture role receives only explicit reads.
+    await restored.query(`REVOKE CREATE,TEMPORARY ON DATABASE "${restoredName}" FROM PUBLIC`)
+    await restored.query(`GRANT USAGE ON SCHEMA public TO "${diagnostic}"`)
+    await restored.query(`GRANT SELECT ON "FinancialInvoice", "ProfessionalSubscriptionPayment" TO "${diagnostic}"`)
+    await restored.query(`SET ROLE "${diagnostic}"`)
+    try {
+      assert.equal((await restored.query('SELECT count(*)::int AS n FROM "FinancialInvoice"')).rows[0].n, 4)
+      await denied(restored, 'UPDATE "FinancialInvoice" SET "amountInclVatCents"=0', [], '42501')
+      await denied(restored, 'CREATE TABLE public.p12_forbidden (id int)', [], '42501')
+      await denied(restored, 'SET session_replication_role = replica', [], '42501')
+    } finally { await restored.query('RESET ROLE') }
+    deploy(url)
+    for (let i = 0; i < queries.length; i++) assert.equal((await restored.query(queries[i])).rows[0].digest, before[i], `Restored financial history changed at projection ${i}`)
+    assert.deepEqual((await restored.query('SELECT * FROM _prisma_migrations WHERE migration_name=ANY($1::text[]) ORDER BY migration_name', [productionNames])).rows, registry)
+    const completed = (await restored.query('SELECT * FROM _prisma_migrations ORDER BY migration_name')).rows
+    assert.deepEqual(completed.map(row => row.migration_name), names)
+    for (const row of completed) {
+      assert.ok(row.finished_at && !row.rolled_back_at)
+      assert.equal(row.checksum, hash(readFileSync(path.join(migrationRoot, row.migration_name, 'migration.sql'))))
+    }
+    deploy(url)
+    assert.deepEqual((await restored.query('SELECT * FROM _prisma_migrations ORDER BY migration_name')).rows, completed)
+    assert.equal((await restored.query('SELECT count(*)::int AS n FROM pg_index WHERE NOT indisvalid OR NOT indisready')).rows[0].n, 0)
+    assert.equal((await restored.query('SELECT count(*)::int AS n FROM pg_constraint WHERE NOT convalidated')).rows[0].n, 0)
+    console.log(`P1.2 RESTORE-UPGRADE PASS: populated 85 dump -> isolated restore -> 115 -> repeat; all original data, registry, baseline ACL/objects and restricted reads verified; ${Date.now() - start} ms (synthetic only)`)
+  } finally {
+    await restored.end()
+    if (created) await admin.query(`DROP DATABASE "${restoredName}" WITH (FORCE)`)
+  }
+}
+
 async function grantWriter(db: Client) {
   await db.query(`GRANT USAGE ON SCHEMA public TO "${writer}", "${outsider}"`)
   await db.query(`GRANT SELECT ON ALL TABLES IN SCHEMA public TO "${writer}"`)
@@ -259,9 +352,9 @@ async function runDatabase(admin: Client, mode: 'upgrade' | 'fresh' | 'current-u
   const config = path.join(stage, 'prisma.config.ts')
   writeFileSync(config, `import { defineConfig } from 'prisma/config'; export default defineConfig({schema:${JSON.stringify(path.resolve('prisma/schema.prisma'))},migrations:{path:${JSON.stringify(migrations)}},datasource:{url:process.env.DATABASE_URL!}});`)
   const copy = (name: string) => cpSync(path.join(migrationRoot, name), path.join(migrations, name), { recursive: true })
-  const deploy = () => {
+  const deploy = (destination: URL = target) => {
     const result = spawnSync(process.execPath, ['node_modules/prisma/build/index.js', 'migrate', 'deploy', '--config', config], {
-      env: { ...process.env, DATABASE_URL: target.toString() }, encoding: 'utf8', timeout:180_000,
+      env: { ...process.env, DATABASE_URL: destination.toString() }, encoding: 'utf8', timeout:180_000,
     })
     // No connection strings or provider payloads in failures.
     assert.equal(result.status, 0, `Isolated ${mode} migrate deploy failed: ${result.error?.name ?? result.status}`)
@@ -316,7 +409,7 @@ async function runDatabase(admin: Client, mode: 'upgrade' | 'fresh' | 'current-u
       const registryBefore = (await db.query('SELECT * FROM _prisma_migrations ORDER BY migration_name')).rows
       assert.equal(registryBefore.length, baselineCount)
       if (mode === 'current-upgrade') exams = [await newExam(db, 'PUBLISHED'), await newExam(db, 'RETIRED')]
-      else { const id=randomUUID(); await db.query(`INSERT INTO "User" (id,email,"displayName",status,"updatedAt") VALUES ($1,$2,'Synthetic','ACTIVE',now())`,[id,`${id}@example.invalid`]) }
+      else await seedFinancialRecoveryBaseline85(db)
       const columns = (await db.query(`SELECT table_name, array_agg(column_name::text ORDER BY ordinal_position) AS columns FROM information_schema.columns WHERE table_schema='public' AND table_name<>'_prisma_migrations' GROUP BY table_name ORDER BY table_name`)).rows
       const queries = columns.map(row => {
         assert.match(row.table_name, /^[A-Za-z0-9_]+$/)
@@ -325,7 +418,9 @@ async function runDatabase(admin: Client, mode: 'upgrade' | 'fresh' | 'current-u
       })
       const before = []
       for (const query of queries) before.push((await db.query(query)).rows[0].digest)
-      names.filter(name => !mainNames.includes(name)).forEach(copy); deploy()
+      names.filter(name => !mainNames.includes(name)).forEach(copy)
+      if (mode === 'production-upgrade') await restoreAndUpgradeFinancialBaseline(admin, db, database, deploy, queries, before)
+      deploy()
       for (let i=0; i<queries.length; i++) assert.equal((await db.query(queries[i])).rows[0].digest, before[i], `Existing values changed: ${columns[i].table_name}`)
       assert.deepEqual((await db.query('SELECT * FROM _prisma_migrations WHERE migration_name=ANY($1::text[]) ORDER BY migration_name',[mainNames])).rows,registryBefore)
       if (mode === 'production-upgrade') exams = [await newExam(db, 'PUBLISHED'), await newExam(db, 'RETIRED')]

@@ -1,0 +1,190 @@
+{
+  "candidate": "db959b4b48c072df37a94f42e983c5fcbe142173",
+  "baselineCount": 85,
+  "candidateCount": 115,
+  "pendingCount": 30,
+  "productionExecution": "NOT_EXECUTED",
+  "artifactNote": "Use Git-LF hashes for the Linux release artifact; preserve existing historical database checksums and explained CRLF variants. No resolve or normalization of database history.",
+  "pending": [
+    {
+      "order": 1,
+      "name": "20260924150000_add_learning_vertical_slice",
+      "gitLfSha256": "a0216425308cff3d4c387c23254de9738ad5bb6a979ca7f23ded93f858e193b0",
+      "localSyntheticArtifactSha256": "0075c93233775559c31a79d95a323f359e4c6441b084a92193eb26921e3a8087"
+    },
+    {
+      "order": 2,
+      "name": "20260927210000_add_learning_final_exam",
+      "gitLfSha256": "a860a8224c001c199c669f3ffc87100d9b35b6898c3f04808c94704001e34eca",
+      "localSyntheticArtifactSha256": "e5d1e10286fecb8ef3058ddbc7dadf0913b0f0445eee88bc74472a1a97101bcb"
+    },
+    {
+      "order": 3,
+      "name": "20260929100000_add_learning_certificates",
+      "gitLfSha256": "c36b03b1ba2d040037f995cf3fb643901662afb314c08715b663ea1a3ab15e25",
+      "localSyntheticArtifactSha256": "610ea577ab47d6d470ef091bcc20f92f6d05315e116ac90d61f6c30b3fc81ceb"
+    },
+    {
+      "order": 4,
+      "name": "20260930100000_add_learning_retention",
+      "gitLfSha256": "d6cedbbc59851a65c92afd9b0780d549fb02d8a37a66f58488fa144b18370f6d",
+      "localSyntheticArtifactSha256": "793447bad9dd725ddd0cca65446507bc5486b13dc236825904b5c427adbbb4d9"
+    },
+    {
+      "order": 5,
+      "name": "20260930120000_correct_learning_retention_publication_policy",
+      "gitLfSha256": "e763bff041695c069d748954b3e10620491b88ea551b9b01d86e7a3b24f2dd1d",
+      "localSyntheticArtifactSha256": "7c1d3c77bb932b553d5e48fe18b7aeb645ee83ed3b575194715feb6d1df86c14"
+    },
+    {
+      "order": 6,
+      "name": "20261017100000_add_compliance_question_visibility",
+      "gitLfSha256": "a8afbde65f76235f9b87b31ede297c9cc697c7a70fa405a8bb7d855ae0d3e30a",
+      "localSyntheticArtifactSha256": "13fbf61d449e7b89fd9a8711171cd735955393717cdc02b86bc719c15bd5ae2a"
+    },
+    {
+      "order": 7,
+      "name": "20261019100000_allow_annual_reminder_reconsent",
+      "gitLfSha256": "5912dbc3537967c89f0410a3c4f1d31f7e24ac52a79561bcd66b06acb9813f50",
+      "localSyntheticArtifactSha256": "94292b4e36dd4333066edebd1b3fffeab77bf62c6d5adbf037ef5dfd58c976a5"
+    },
+    {
+      "order": 8,
+      "name": "20261024190000_restore_exam_question_immutability",
+      "gitLfSha256": "48bbc99a444c95e52c7aadf12296ddfc9686b7680b3cecd17330e15b91464f45",
+      "localSyntheticArtifactSha256": "5b5e77906d988ac05d51fcbf3e32b46876ee8d73d19d4055c59a9ddb4079079a"
+    },
+    {
+      "order": 9,
+      "name": "20261024191000_add_academy_course_isolation",
+      "gitLfSha256": "8bc7f9c9f71b9fd9113da405906fa308f0883c68098c8fdaa45bb016d7e2b823",
+      "localSyntheticArtifactSha256": "453246f26803fdc843d24577328bb17aeb11671acb1cba49a4fc3193e049e9c6"
+    },
+    {
+      "order": 10,
+      "name": "20261024204000_allow_academy_certificate_numbers",
+      "gitLfSha256": "7872dcad266fe1ae77eb8840b1d304f1403cfd3bbf9b541434e461fe816324e9",
+      "localSyntheticArtifactSha256": "0d49a7e052f5a58c8b08d589cffcf202c822fb4850d1eb78f958e838fbbad7fa"
+    },
+    {
+      "order": 11,
+      "name": "20261026090000_restore_learning_exam_question_immutability",
+      "gitLfSha256": "7b3a4247163153f2d2b03d1706e8c640dfd228c4a030d2ce04b082d9ddaafcce",
+      "localSyntheticArtifactSha256": "e0e6ef79d3da43f4113c600e01a2923dd49961fa692d7b0992dae5b9ba549240"
+    },
+    {
+      "order": 12,
+      "name": "20261026100000_add_academy_commerce",
+      "gitLfSha256": "a7ef0beedf543081ac4f3b914fea2f46db90210e87e495ed5004dad2144d7531",
+      "localSyntheticArtifactSha256": "79e291bf88e4d52e4191c35c1c1fed4f45547332da0253637da6e6fcd3f8e11a"
+    },
+    {
+      "order": 13,
+      "name": "20261026110000_allow_academy_sandbox_pricing",
+      "gitLfSha256": "cb5a6daa7d44cde32b7da2a085caa7ccf58c25721fc978982796e7ef1da52c44",
+      "localSyntheticArtifactSha256": "27332bbdcf0255266fd794f0672afb4002b51bebbcb0c761a250062ac1b3ff4e"
+    },
+    {
+      "order": 14,
+      "name": "20261029100000_add_academy_pricing_promotions",
+      "gitLfSha256": "34de3ea7fbbc5e8af26b234b3f624e7ce142921d8d2931d36354fd17d9630ec4",
+      "localSyntheticArtifactSha256": "feadd2dc9fca1ed899b8511106e4bb244e38151b45bb8ddcacc82588bda4bdcd"
+    },
+    {
+      "order": 15,
+      "name": "20261029210000_restore_integrated_learning_question_policy",
+      "gitLfSha256": "ec7e13fe7267b52e0c949e8ac77dbf15e57bca9b00fea95393875e152cb85eea",
+      "localSyntheticArtifactSha256": "45c7d859478b63b3b3c9a6f0352e93f7783e901e18721304cd4f5d8e18b46abf"
+    },
+    {
+      "order": 16,
+      "name": "20261030120000_academy_legal_commercial_decisions",
+      "gitLfSha256": "15b4e6f6accfa9462da1d1273208cd7b045b676ffe7ba0ba3835fb438fcc1ef5",
+      "localSyntheticArtifactSha256": "96cae51a8254d76b208783d6bfe6917c5e12a2b502525cd8eb507875c863b876"
+    },
+    {
+      "order": 17,
+      "name": "20261030140000_academy_seat_transfer_consideration",
+      "gitLfSha256": "04349c7d5d37d6710960b39200fc23d51e7d06bcb5c70c28a64fcea7ba467f1a",
+      "localSyntheticArtifactSha256": "bf4550c4ed66efdd01b189799705f8249cd35b9e8c117eccb0d6c6e074adc60c"
+    },
+    {
+      "order": 18,
+      "name": "20261030160000_academy_legal_partial_refunds",
+      "gitLfSha256": "64d57be7a2832f9d4b0fb69ddb6ba8906c87b46879d5e5e374c0113812957da5",
+      "localSyntheticArtifactSha256": "924dec6109968f39803b09dee35d5de307aa0f802bae3db2be7820cfd7677f34"
+    },
+    {
+      "order": 19,
+      "name": "20261030170000_academy_legal_credit_note_validation",
+      "gitLfSha256": "551ae9db19dcf5a0ff0ec37c00d15be85c8c6eecb6fc1f35be8020c16e046381",
+      "localSyntheticArtifactSha256": "784ad1b1bc7f92afcc2f117ded65319a32983111fea4186627355459c4333cfa"
+    },
+    {
+      "order": 20,
+      "name": "20261030180000_academy_refund_seat_allocations",
+      "gitLfSha256": "684923cdfb2cb61389a2181773ab37bcf8548419cdc638029b4a40dd719c9423",
+      "localSyntheticArtifactSha256": "a75e64e27976958f8282e4e495c27613e9e03406d9b3823d2605ad02d830b90f"
+    },
+    {
+      "order": 21,
+      "name": "20261102120000_add_closed_contact_audit_retention",
+      "gitLfSha256": "dc4b2fcda589042dbc559e0cc8c93b3c6c1ee9a2e0d424d3a3e6bef4e59c60e3",
+      "localSyntheticArtifactSha256": "dc31ade269099d83f4dc70538cbe1c541305a8de65f1f09c567aed5ab10d50cb"
+    },
+    {
+      "order": 22,
+      "name": "20261103100000_add_closed_contact_decision_register",
+      "gitLfSha256": "9b701e715d58cf2c6a4b808334a606202ba2a0cabaf632304a8516b42fcd0d48",
+      "localSyntheticArtifactSha256": "a58891fd9431756094420561415b4f9f3ae5c49585433669f89bc0608b737030"
+    },
+    {
+      "order": 23,
+      "name": "20261104180000_add_learning_authoring_media",
+      "gitLfSha256": "ba9580260e5f5dd1a0c9ad9bbe2a1ba98881a63d10e3924a7ede5a6e1f8b2052",
+      "localSyntheticArtifactSha256": "21a9306e64a422f5b2331d7168fc425bc6ee9e84eddca2d25aaa552540d4bd23"
+    },
+    {
+      "order": 24,
+      "name": "20261104190000_allow_operator_certificate_review",
+      "gitLfSha256": "5d61c81845856498fd3201e0dadab347736e786dbc9fb7a9c839ba836f9a10ea",
+      "localSyntheticArtifactSha256": "f95e41abde58a186dd036206da79f3f3a65e3ce8b0c2b949dc28c572c35eecfc"
+    },
+    {
+      "order": 25,
+      "name": "20261104220000_add_learning_certificate_designer",
+      "gitLfSha256": "19bfb98f6ec7a242237990cfbf5c16166f5532bbfd815605214ee6eac7a64d54",
+      "localSyntheticArtifactSha256": "82a74c26206c1c8c7e17d3bfdd00e66b2ba89ee240ea674f8a3b4a39fe7439c5"
+    },
+    {
+      "order": 26,
+      "name": "20261105120000_add_versioned_compliance_drafts",
+      "gitLfSha256": "211d2fc640bb26be304118c3271c4af33b8b9d4c60ad77418499e497590a97ec",
+      "localSyntheticArtifactSha256": "211d2fc640bb26be304118c3271c4af33b8b9d4c60ad77418499e497590a97ec"
+    },
+    {
+      "order": 27,
+      "name": "20261105121000_add_compliance_purchase_kind",
+      "gitLfSha256": "23c435393ca059d29057b557b98732041ed6b46a1e2858fe6d178f993cea9532",
+      "localSyntheticArtifactSha256": "23c435393ca059d29057b557b98732041ed6b46a1e2858fe6d178f993cea9532"
+    },
+    {
+      "order": 28,
+      "name": "20261105122000_bind_compliance_purchase",
+      "gitLfSha256": "33a15099e56041e0152976fff13df900aed19279daa056ec087dd1add155c95a",
+      "localSyntheticArtifactSha256": "33a15099e56041e0152976fff13df900aed19279daa056ec087dd1add155c95a"
+    },
+    {
+      "order": 29,
+      "name": "20261106120000_repair_pro_financial_integrity",
+      "gitLfSha256": "748aec6245b09d7597977fb4fdfe370e4b39420f4a51ad1d76014601877b665c",
+      "localSyntheticArtifactSha256": "f17ecdd7046413968f4db20da7bb4e321776223c52221f5d67fc50bce214ea6b"
+    },
+    {
+      "order": 30,
+      "name": "20261106130000_integrate_pro_academy_refund_guards",
+      "gitLfSha256": "d57f9e9ccba499eab8602874721eee989a8460b4af0ba097d410ec199c9c65e6",
+      "localSyntheticArtifactSha256": "82f99ec1f6d07632e48900eaca5e9f35c5dcb5433ddab4424b57bed9511c333c"
+    }
+  ]
+}

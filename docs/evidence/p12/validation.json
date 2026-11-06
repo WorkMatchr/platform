@@ -1,0 +1,59 @@
+{
+  "date": "2026-11-06",
+  "candidate": "db959b4b48c072df37a94f42e983c5fcbe142173",
+  "syntheticOnly": true,
+  "productionActions": "NONE",
+  "baseline": 85,
+  "candidateMigrations": 115,
+  "pending": 30,
+  "populatedRecoveryUpgrade": {
+    "status": "PASS",
+    "phaseDurationMs": 41990,
+    "suiteDurationMs": 109426,
+    "negativeMutationChecks": 47,
+    "historicalDataAndRegistryPreserved": true,
+    "temporaryResourcesRemoved": true
+  },
+  "financialPostgres": "PASS",
+  "writerFence": {
+    "status": "PASS",
+    "checks": 11,
+    "realProductionPause": "NOT_PROVEN"
+  },
+  "unitRegressions": {
+    "initialPassed": 428,
+    "initialTimeouts": 2,
+    "skipped": 2,
+    "retestPassed": 10,
+    "retestFiles": 2,
+    "unchangedTimeoutMs": 5000,
+    "retestWorkers": 1,
+    "uniquePassedAfterRetest": 430
+  },
+  "portCollisionCleanup": "PASS",
+  "lint": {
+    "errors": 0,
+    "existingWarnings": 4,
+    "changedFilesErrors": 0
+  },
+  "typescript": "PASS",
+  "build": {
+    "webpack": "PASS",
+    "localTurbopack": "NOT_REPEATED; previous Windows worker-start blocker; base Linux CI passed"
+  },
+  "secretMetadataDiffCheck": "PASS; unchanged synthetic loopback fixtures reviewed separately",
+  "actualProductionRecovery": "BLOCKED",
+  "p13Production": "NO_GO",
+  "logSha256": {
+    "recoveryUpgrade": "ef3b6fce2cadf3e011c7cf7597de8bd2963b0f0dec3eef51cf8d074acdad9449",
+    "financialPostgres": "6570eb76c956434da4dec583f4a112c2c08934d527e6c38921b90cc90b7dbb72",
+    "writerFence": "28305ad3b25766717b99f920d4da7d1619716160ce0dddd6d90119bdd0aa2467",
+    "unitFirstRun": "37f5c431a6132ae260401a9684e09c7d7b13bcf32c1fc14314af0438b5aa5a1c",
+    "unitTimeoutRetest": "ea8b8592ae9ac42b9bac64cf1a5c02c4b188f7c368d56c08aa4e45e1141ee1fe",
+    "portCollision": "c8dde7cadb03fb3f42e178ee4dbe951ba8a45d201030dc5464cc666299111b42",
+    "lint": "dd72fda0d819b471da14150438c2b2e575f16c039997d50517199f2bddaff326",
+    "changedLint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "typescript": "114f8a95e76475a2a381badb1d4011a4a05863b9b71f8ead68d35d4e6259731a",
+    "build": "01ddf1b01b03a15462b4b9d1895a7898f6d815ca7b519c9d77f27e75ed1d0476"
+  }
+}
