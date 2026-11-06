@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [P1.2 — productieherstel, gevulde 85→115-herstelproef en uitvoeringsplan](p12-production-recovery-readiness.md)
+
 - [P1.1 — financiële integratie en herstelgereedheid](p1-financial-integration-and-recovery-readiness.md)
 
 - [WP21 - geintegreerde releasekandidaat en GO/NO-GO](wp21-integrated-release-readiness.md)

@@ -29,6 +29,16 @@ function run(cmd, args, extra = {}, timeout = 900000) {
 let id, db
 try {
  const started = run('docker', ['run','-d','--name',name,'--label','workmatchr.synthetic=wp21-integration','--memory=512m','-e','POSTGRES_PASSWORD','-p','127.0.0.1:5491:5432','postgres:18'],{POSTGRES_PASSWORD:secret})
+ // A failed port bind can leave a newly created container behind. Recover only
+ // this invocation's exact generated name/label so finally can remove it.
+ if(started.status!==0){
+  const probe=run('docker',['inspect',name])
+  if(probe.status===0){
+   const own=JSON.parse(probe.stdout)[0]
+   assert.equal(own.Name,'/'+name);assert.equal(own.Config.Labels['workmatchr.synthetic'],'wp21-integration')
+   assert.equal(own.State.Status,'created');assert.match(own.Id,/^[a-f0-9]{64}$/);id=own.Id
+  }
+ }
  assert.equal(started.status,0,'OWN_CONTAINER_START_FAILED')
  id=started.stdout.trim();assert.match(id,/^[a-f0-9]{64}$/)
  const inspect=JSON.parse(run('docker',['inspect',id]).stdout)[0]
@@ -45,7 +55,7 @@ try {
  assert.deepEqual(existing,[{datname:'postgres'}])
  await db.end();db=null
  const suites=[
- ['production-baseline-upgrade',['exec','--','tsx','scripts/test-learning-publication-integrity-database.ts','--production-upgrade-only']],
+ ['production-baseline-upgrade',['exec','--','tsx','scripts/test-learning-publication-integrity-database.ts','--production-upgrade-only','--local-synthetic-recovery']],
  ['current-main-upgrade',['exec','--','tsx','scripts/test-learning-publication-integrity-database.ts','--current-upgrade-only']],
  ['contact-audit',['exec','--','tsx','scripts/test-contact-audit-retention-database.ts']],
  ['contact-register',['exec','--','tsx','scripts/test-contact-decision-register-database.ts']],
