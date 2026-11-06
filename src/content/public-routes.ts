@@ -149,9 +149,8 @@ export const indexablePublicRoutes = [
   publicRoutes.services,
   publicRoutes.clients,
   publicRoutes.professionals,
-  publicRoutes.elearning,
-  publicRoutes.rieLearning,
-  ...roadmapLearningCourses.map(publicLearningHref),
+  // Learning is not released; public explanations remain reachable, not indexed.
+  publicRoutes.contact,
   publicRoutes.rieService,
   publicRoutes.preventionOfficerService,
   publicRoutes.bhvService,

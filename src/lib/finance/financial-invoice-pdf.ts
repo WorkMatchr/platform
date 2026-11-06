@@ -48,7 +48,7 @@ export type FinancialInvoicePdfSnapshot = Pick<FinancialInvoice,
   | 'vatRateBps'
   | 'vatAmountCents'
   | 'amountInclVatCents'
-> & { lines?: FinancialInvoiceLine[]; vatSummaries?: FinancialInvoiceVatSummary[] }
+> & { pricingMode?: FinancialInvoice['pricingMode']; lines?: FinancialInvoiceLine[]; vatSummaries?: FinancialInvoiceVatSummary[] }
 
 function normalize(value: string) {
   return value.replaceAll('\u0000', '').replaceAll('\u00a0', ' ').replaceAll('\u2011', '-').replaceAll('\u2013', '-')
@@ -273,6 +273,9 @@ async function buildSnapshotV2FinancialInvoicePdf(invoice: FinancialInvoicePdfSn
   }
   y -= metaHeight + 24
 
+  if (invoice.pricingMode === 'ACADEMY_SANDBOX') {
+    drawSectionTitle('TESTDOCUMENT — TAX REVIEW REQUIRED')
+  }
   drawSectionTitle('Factuuradres en leverancier')
   const gap = 14
   const cardWidth = (CONTENT_WIDTH - gap) / 2

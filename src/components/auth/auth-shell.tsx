@@ -17,7 +17,7 @@ export function AuthShell({
   wide?: boolean
 }) {
   return (
-    <main className="px-5 py-12 sm:px-8 sm:py-20">
+    <div className="px-5 py-12 sm:px-8 sm:py-20">
       <Card className={`mx-auto w-full ${wide ? 'max-w-6xl' : 'max-w-lg'} p-6 sm:p-9`}>
         <Link href="/" className="inline-flex rounded-control focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary" aria-label="WorkMatchr, naar de homepage">
           <WorkMatchrLogo size="header" priority />
@@ -26,7 +26,7 @@ export function AuthShell({
         <Text className="mt-3 text-text-secondary">{intro}</Text>
         <div className="mt-8">{children}</div>
       </Card>
-    </main>
+    </div>
   )
 }
 

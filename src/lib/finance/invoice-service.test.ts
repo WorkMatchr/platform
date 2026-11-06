@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { buildInvoiceV2Line, formatFinancialDocumentNumber, issueInvoiceForPaidPurchase, issueInvoiceForPaidSubscriptionPayment } from './invoice-service'
 
 vi.mock('server-only', () => ({}))
+vi.mock('./pro-payment-source', () => ({ resolveProInvoiceSource: async () => ({ invoice: { customerOrganizationName: 'Voorbeeldorganisatie', customerAddressLine: 'Teststraat 1', customerPostalCode: '1234 AB', customerCity: 'Teststad', customerCountryCode: 'NL', customerKvKNumber: null, customerVatId: null } }) }))
 
 describe('financiële documentnummering', () => {
   it('gebruikt WM-YYMM5NNN met een globale sequence', () => {
@@ -47,6 +48,51 @@ describe('financiële documentnummering', () => {
       amountExclVatCents: 100, vatAmountCents: 21, amountInclVatCents: 121,
       snapshotVersion: 2, supplyDate: new Date('2026-08-09T12:00:00Z'),
     }) })
+    expect(transaction.financialEvent.create).toHaveBeenCalledWith({ data: expect.objectContaining({
+      metadata: expect.objectContaining({
+        pricingPolicy: 'MOLLIE_SANDBOX_ACCEPTANCE_PRICING',
+        amountExclVatCents: 100,
+        vatAmountCents: 21,
+        amountInclVatCents: 121,
+      }),
+    }) })
+    expect(transaction.financialJorttSync.create).toHaveBeenCalledWith({
+      data: { invoiceId: 'invoice-id', technicalReference: 'workmatchr-invoice:invoice-id' },
+    })
+  })
+
+  it.each([['ACADEMY_COURSE', 'opleidingspakket', '[TEST \u2014 TAX REVIEW REQUIRED] Synthetisch product'], ['COMPLIANCE_SCAN', 'scan', 'Synthetisch product'], ['PRO_SUBSCRIPTION', 'maand', 'WorkMatchr Pro']] as const)('behoudt juiste factuurregel en periode voor %s', async (kind, unit, description) => {
+    const createInvoice = vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({ id: 'invoice-id', ...data }))
+    const transaction = {
+      $queryRaw: vi.fn().mockResolvedValue([{ nextNumber: 1 }]),
+      $executeRaw: vi.fn().mockResolvedValue(1),
+      financialInvoiceCounter: { update: vi.fn() },
+      financialInvoice: { findUnique: vi.fn().mockResolvedValue(null), create: createInvoice },
+      financialInvoiceLine: { create: vi.fn() },
+      financialInvoiceVatSummary: { create: vi.fn() },
+      financialPurchase: { findUnique: vi.fn().mockResolvedValue({
+        id: 'purchase-id', organizationId: 'organization-id', createdByUserId: 'user-id', status: 'PAID', kind,
+        pricingMode: 'MOLLIE_TEST_ACCEPTANCE', packageSku: 'CREDITS_25', packageLabel: 'Synthetisch product', credits: 25,
+        baseAmountCents: 100, packageDiscountCents: 0, proDiscountCents: 0, discountCodeDiscountCents: 0,
+        amountExclVatCents: 100, vatRateBps: 2_100, vatAmountCents: 21, amountInclVatCents: 121, currency: 'EUR',
+        billingOrganizationName: 'Voorbeeldorganisatie', billingAddressLine: 'Teststraat 1', billingPostalCode: '1234 AB',
+        billingCity: 'Teststad', billingCountryCode: 'NL', billingKvKNumber: null, billingVatId: null,
+        molliePaymentId: 'tr_testpayment', paidAt: new Date('2026-08-09T11:59:00Z'),
+        creditedTransaction: { createdAt: new Date('2026-08-09T12:00:00Z') },
+      }) },
+      financialJorttSync: { create: vi.fn() },
+      financialEvent: { create: vi.fn() },
+    }
+
+    await issueInvoiceForPaidPurchase(transaction as never, 'purchase-id', new Date('2026-08-09T12:00:00Z'))
+
+    expect(createInvoice).toHaveBeenCalledWith({ data: expect.objectContaining({
+      pricingMode: 'MOLLIE_TEST_ACCEPTANCE', credits: 25, baseAmountCents: 100,
+      amountExclVatCents: 100, vatAmountCents: 21, amountInclVatCents: 121,
+      snapshotVersion: 2, supplyDate: new Date('2026-08-09T11:59:00Z'),
+      servicePeriodStart: kind === 'PRO_SUBSCRIPTION' ? new Date('2026-08-09T11:59:00Z') : null,
+    }) })
+    expect(transaction.financialInvoiceLine.create).toHaveBeenCalledWith({ data: expect.objectContaining({ unit, description, quantity: 1 }) })
     expect(transaction.financialEvent.create).toHaveBeenCalledWith({ data: expect.objectContaining({
       metadata: expect.objectContaining({
         pricingPolicy: 'MOLLIE_SANDBOX_ACCEPTANCE_PRICING',

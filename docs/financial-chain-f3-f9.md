@@ -122,3 +122,18 @@ Alle waarden staan uitsluitend in beheerde omgevingsconfiguratie:
 - `JORTT_PRODUCTION_WRITES_ENABLED` (expliciete tweede Production-write-gate; standaard `false`)
 
 Sleutels, volledige providerresponses en persoonsgegevens worden niet gelogd of gedocumenteerd.
+
+
+## WP19 — begrensde factuurmailretries
+
+Een apart gecommit append-only `INVOICE_EMAIL_ATTEMPT_STARTED` bewaart de eerste-pogingstijd
+en een inhoudsvingerafdruk vóór iedere eerste providerpoging. De bestaande invoice-lock
+beschermt transport en SENT; ReadCommitted ziet de laatste SENT na het wachten op die lock.
+Financiële transacties behouden hun serialiseerbare verwerking. Dezelfde key/inhoud kan alleen
+binnen 23 uur vanaf eerste poging én uitgifte opnieuw worden aangeboden (vroegste grens). Op de grens, bij gewijzigde inhoud of onbekende
+historische poging volgt `INVOICE_EMAIL_RECONCILIATION_REQUIRED` zonder transport. Een oude
+ongeregistreerde factuur (vanaf 23 uur na uitgifte) krijgt niet automatisch een nieuwe klok.
+Bestaande SENT blijft een no-op; factuurdownload, bedragen, wallet en ledger blijven intact.
+Provideracceptatie is geen inboxbewijs en een key is geen onbeperkte exactly-once-garantie.
+Zie [WP19](wp19-final-commercial-acceptance.md) voor bewijs, operationele reconciliatie,
+historische acceptatievoorwaarden en de beperking van rollback naar oudere mailcode.

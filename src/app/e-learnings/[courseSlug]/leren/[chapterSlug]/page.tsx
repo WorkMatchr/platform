@@ -1,3 +1,4 @@
+import { resolveAcademyDefinition } from '@/lib/learning/academy-course-definition'
 import { redirect } from 'next/navigation'
 import { LessonPlayer } from '@/components/learning/lesson-player'
 import { requireLearningUser } from '@/lib/learning/learning-authorization'
@@ -16,6 +17,7 @@ export default async function LearningChapterPage({
   const result = await getLearningChapter(courseSlug, chapterSlug, user.id, query.version)
   if (!result) redirect(`/e-learnings/${courseSlug}`)
   const { chapter, enrollment } = result
+  if (enrollment.status === 'NOT_STARTED') redirect(`/e-learnings/${courseSlug}`)
   const progress = chapter.progress[0]
   const introData = chapter.contentBlocks[0]?.data
   const intro = introData && typeof introData === 'object' && !Array.isArray(introData) ? introData as Record<string, unknown> : {}
@@ -35,9 +37,11 @@ export default async function LearningChapterPage({
 
   return <LessonPlayer
     courseTitle={chapter.courseVersion.course.title}
+    prototypeContent={resolveAcademyDefinition(chapter.courseVersion.course, chapter.courseVersion.sourceMetadata).schemaVersion === 1}
     chapterId={chapter.id}
     chapterTitle={chapter.title}
     chapterPosition={chapter.position}
+    chapterCount={resolveAcademyDefinition(chapter.courseVersion.course, chapter.courseVersion.sourceMetadata).chapterCount}
     courseSlug={courseSlug}
     courseVersion={chapter.courseVersion.version}
     estimatedDurationLabel={durationLabel}

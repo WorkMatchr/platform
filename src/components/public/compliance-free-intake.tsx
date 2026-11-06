@@ -1,11 +1,12 @@
 'use client'
 
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ComplianceFreeIntakeV2 } from './compliance-free-intake-v2'
 import { ComplianceFreeIntakeLegacy } from './compliance-free-intake-legacy'
 import { useComplianceDraft } from './use-compliance-draft'
 
-export function ComplianceFreeIntake() {
+export function ComplianceFreeIntake({ f4Available = false }: { f4Available?: boolean }) {
   const storage = useComplianceDraft()
   if (!storage.ready) return <p role="status">Uw intake wordt klaargezet…</p>
   if (storage.legacy || storage.blocked) return <section className="mx-auto max-w-4xl rounded-card border border-border bg-surface p-6">
@@ -29,6 +30,11 @@ export function ComplianceFreeIntake() {
         <Button variant="outline" onClick={storage.remember} disabled={!!storage.saved} aria-describedby="compliance-storage-help">Concept 24 uur op dit apparaat bewaren</Button>
         <Button variant="ghost" onClick={storage.forget}>Concept van dit apparaat verwijderen</Button>
       </div>
+    </section>}
+    {storage.completed && f4Available && <section className="mx-auto max-w-4xl rounded-card border border-border bg-surface p-5">
+      <h2 className="text-xl font-bold text-brand-dark">Uitgebreide scan voorbereiden</h2>
+      <p className="mt-2 text-text-secondary">U heeft een account en een organisatie nodig. Uw intakeantwoorden worden niet automatisch overgenomen. De betaalfunctie voor deze scan is nog niet vrijgegeven.</p>
+      <Link href="/wijzers/compliance/v2" className="mt-3 inline-block font-semibold text-brand-primary underline focus-visible:outline-2 focus-visible:outline-offset-4">Ga naar uw scanomgeving</Link>
     </section>}
     {storage.message && <p role="status" className="mx-auto max-w-4xl text-sm text-text-secondary">{storage.message}</p>}
   </div>

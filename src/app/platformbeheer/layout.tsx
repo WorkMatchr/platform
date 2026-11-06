@@ -1,3 +1,4 @@
+import { isLearningRuntimeEnabled } from '@/lib/learning/learning-runtime-policy'
 import { cookies } from 'next/headers'
 import { PlatformAdminShellV02 } from '@/components/platform-admin/platform-admin-shell-v02'
 import type { ReactNode } from 'react'
@@ -42,6 +43,7 @@ export default async function PlatformAdminLayout({ children }: { children: Reac
     <Shell
       displayName={administrator.displayName?.trim() || 'Platformbeheerder'}
       membershipRole={administrator.membershipRole}
+      academyEnabled={isLearningRuntimeEnabled()}
       testAccountSwitcher={testAccountSwitcher}
     >
       {children}

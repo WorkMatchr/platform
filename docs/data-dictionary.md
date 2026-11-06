@@ -279,3 +279,23 @@ Zie [bezorg- en legacybeleid](marketplace-assignment-notifications.md).
 ## Compliance F4 (nog niet uitgerold)
 
 Nullable `ComplianceQuestionDefinition.visibilityCondition` bewaart versiegebonden zichtbaarheid. Geen bestaande data gewijzigd; zie [F4](compliance-f4-expanded-guide.md).
+
+## Certificaatontwerp
+LearningCertificateDesign: familie/versie, state, revision, definition, checksum,
+reviewedChecksum, createdBy/reviewedBy/reviewedAt. Alleen concept inhoudelijk
+wijzigbaar. LearningCertificateDesignBinding.scope: GLOBAL of bestaande cursus-ID;
+alleen ACTIVE designs. LearningCertificate.designSnapshot: nullable historische
+ontwerpvastlegging; alleen nieuwe uitgiften met expliciet gekozen actief ontwerp.
+Zie academy-certificate-designer.md voor lifecycle en rollback.
+
+
+### P1 Pro-crediten en refundintentie
+
+`FinancialInvoice.proCreditKey` is de unieke operatoropdracht voor een zelfstandige Pro-creditfactuur. `originalInvoiceId` bewaart de bron; organisatie, dienstperiode en belastinggegevens blijven daaraan gebonden. `FinancialRefund.proCreditNoteId` is een unieke alternatieve bron naast `purchaseId`; beide tegelijk zijn verboden. Pro-refunds hebben nul walletcredits.
+
+`providerDispatchVersion` onderscheidt onbekende historische dispatch (0) van het nieuwe intentieprotocol (1). `providerAttemptedAt` wordt eenmaal vastgelegd voor de providercall; `reconciliationRequired` houdt onbekende acceptatie zichtbaar. Een nieuwe poging volgt niet automatisch uit een fout. [Herstelcontract en migratievoorwaarden](p1-financial-integrity-repair.md).
+
+
+### P1.1 financiële controlewaarnemingen
+
+De bestaande append-only `FinancialEvent` registreert `FINANCIAL_CHAIN_REVIEW`, tenant-run, platformcyclus en `FINANCIAL_WEBHOOK_FAILURE`. Codes/status, actor, waarnemingsdatum, betaal-/factuurreferentie en bewijsdigest zijn voldoende; ruwe providerresponses, bankgegevens en klantnamen worden niet gekopieerd. Een herstelde controle voegt bewijs toe en overschrijft geen historische waarneming. Het controlespoor is geen tweede ledger. Configuratie en productieacceptatie staan in het P1.1-rapport.

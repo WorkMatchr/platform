@@ -1,11 +1,12 @@
 import Link from 'next/link'
+import { breadcrumbData } from '@/lib/marketing/breadcrumb-data'
 import type { InternalHref } from '@/content/public-homepage'
 
 type Breadcrumb = { label: string; href?: InternalHref }
 
 export function Breadcrumbs({ items }: { items: readonly Breadcrumb[] }) {
   return (
-    <nav aria-label="Broodkruimelpad" className="text-body-sm text-text-secondary">
+    <><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: breadcrumbData(items) }} /><nav aria-label="Broodkruimelpad" className="text-body-sm text-text-secondary">
       <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
         {items.map((item, index) => (
           <li key={item.label} className="flex items-center gap-2">
@@ -14,6 +15,6 @@ export function Breadcrumbs({ items }: { items: readonly Breadcrumb[] }) {
           </li>
         ))}
       </ol>
-    </nav>
+    </nav></>
   )
 }

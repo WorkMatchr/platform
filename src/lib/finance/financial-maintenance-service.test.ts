@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('server-only', () => ({}))
 
@@ -18,6 +18,8 @@ const refunds = vi.fn()
 const cancellations = vi.fn()
 const suspensions = vi.fn()
 const jortt = vi.fn()
+const chain=vi.fn()
+vi.mock('./financial-chain-review-service',()=>({runScheduledFinancialChainReview:chain}))
 
 vi.mock('@/lib/prisma', () => ({ getPrisma: () => prisma }))
 vi.mock('./refund-service', () => ({ reconcilePendingMollieRefunds: refunds }))
@@ -40,7 +42,9 @@ describe('financiële maintenance-orchestratie', () => {
     expect(result.status).toBe('SUCCEEDED')
     expect(result.errorCodes).toEqual([])
   })
+  afterEach(()=>vi.unstubAllEnvs())
   beforeEach(() => {
+    vi.stubEnv('FINANCIAL_CHAIN_REVIEW_ENABLED','false')
     vi.clearAllMocks()
     transaction.financialMaintenanceRun.create.mockResolvedValue({ id: 'maintenance-run-id' })
     refunds.mockResolvedValue({ inspected: 2, pending: 1, refunded: 1, failed: 0, canceled: 0, providerErrors: 0 })
@@ -49,6 +53,18 @@ describe('financiële maintenance-orchestratie', () => {
     jortt.mockResolvedValue([{ invoiceId: 'invoice-id', status: 'SYNCED' }])
   })
 
+  it('retains a visible partial failure when the enabled daily comparison is incomplete',async()=>{
+    vi.stubEnv('FINANCIAL_CHAIN_REVIEW_ENABLED','true');chain.mockRejectedValue(new Error('FINANCIAL_REVIEW_INCOMPLETE'))
+    const {runFinancialMaintenance}=await import('./financial-maintenance-service')
+    const result=await runFinancialMaintenance(new Date(),{} as never,'SCHEDULER')
+    expect(chain).toHaveBeenCalledOnce();expect(result.status).toBe('PARTIAL_FAILURE')
+    expect(result.errorCodes).toContain('FINANCIAL_REVIEW_INCOMPLETE')
+  })
+  it('does not call the reader while the review gate is closed',async()=>{
+    const {runFinancialMaintenance}=await import('./financial-maintenance-service')
+    await runFinancialMaintenance(new Date(),{} as never,'SCHEDULER')
+    expect(chain).not.toHaveBeenCalled()
+  })
   it('registreert één succesvolle, idempotent herhaalbare run met categorietotalen', async () => {
     const { runFinancialMaintenance } = await import('./financial-maintenance-service')
     const result = await runFinancialMaintenance(new Date('2026-09-03T10:00:00Z'), {} as never, 'SCHEDULER')

@@ -91,54 +91,18 @@ describe('authenticatie-e-mails', () => {
       .rejects.toMatchObject({ code: 'EMAIL_DELIVERY_NOT_CONFIGURED' } satisfies Partial<AuthEmailDeliveryError>)
     expect(output).not.toHaveBeenCalled()
   })
-  it('logt de volledige verificatielink in het vaste developmentformaat', async () => {
-    vi.stubEnv('NODE_ENV', 'development')
-    delete process.env.RESEND_API_KEY
-    delete process.env.AUTH_EMAIL_FROM
-    const output = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
-    const url = 'http://localhost:4317/api/auth/verify-email?token=verification-token'
-    await sendAuthEmail(verificationEmail('verification@example.invalid', 'Test', url))
-    expect(output).toHaveBeenCalledWith([
-      '--------------------------------------------------',
-      'Development verification email',
-      'To: verification@example.invalid',
-      'Verify URL:',
-      url,
-      '--------------------------------------------------',
-      '',
-    ].join('\n'))
-  })
-  it('logt de volledige resetlink in het vaste developmentformaat', async () => {
-    vi.stubEnv('NODE_ENV', 'development')
-    delete process.env.RESEND_API_KEY
-    delete process.env.AUTH_EMAIL_FROM
-    const output = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
-    const url = 'http://localhost:4317/wachtwoord-herstellen/reset-token'
-    await sendAuthEmail(passwordResetEmail('reset@example.invalid', 'Test', url))
-    expect(output).toHaveBeenCalledWith([
-      '--------------------------------------------------',
-      'Development password reset email',
-      'To: reset@example.invalid',
-      'Reset URL:',
-      url,
-      '--------------------------------------------------',
-      '',
-    ].join('\n'))
-  })
-  it('logt een uitnodiging in development als accountactivatie', async () => {
-    vi.stubEnv('NODE_ENV', 'development')
-    delete process.env.RESEND_API_KEY
-    delete process.env.AUTH_EMAIL_FROM
-    const output = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
-    const url = 'http://localhost:4317/api/auth/reset-password/activation-token?callbackURL=%2Faccount-activeren'
-    await sendAuthEmail(invitationActivationEmail(
-      'activation@example.invalid',
-      'Test',
-      'Voorbeeldorganisatie',
-      url,
-    ))
-    expect(output).toHaveBeenCalledWith(expect.stringContaining('Development account activation email'))
-    expect(output).toHaveBeenCalledWith(expect.stringContaining(`Activation URL:\n${url}`))
+  it.each([
+    {kind:'verification',message:verificationEmail('verification@example.invalid','Test','http://localhost:4317/api/auth/verify-email?token=unit-fixture')},
+    {kind:'reset',message:passwordResetEmail('reset@example.invalid','Test','http://localhost:4317/wachtwoord-herstellen/unit-fixture')},
+    {kind:'invitation',message:invitationActivationEmail('activation@example.invalid','Test','Voorbeeldorganisatie','http://localhost:4317/api/auth/reset-password/unit-fixture')},
+  ])('logs only a tokenless status for development $kind',async({message})=>{
+    vi.stubEnv('NODE_ENV','development');vi.stubEnv('RESEND_API_KEY','');vi.stubEnv('AUTH_EMAIL_FROM','')
+    const output=vi.spyOn(process.stdout,'write').mockImplementation(()=>true),info=vi.spyOn(console,'info').mockImplementation(()=>{})
+    await sendAuthEmail(message)
+    expect(output).not.toHaveBeenCalled()
+    expect(info).toHaveBeenCalledWith('Ontwikkelmail verwerkt; gevoelige inhoud wordt niet gelogd.')
+    expect(JSON.stringify(info.mock.calls)).not.toContain(message.developmentUrl)
+    expect(JSON.stringify(info.mock.calls)).not.toContain(message.to)
   })
   it('behandelt een echt adres zonder Resend-configuratie nooit als verzonden', async () => {
     vi.stubEnv('NODE_ENV', 'development')

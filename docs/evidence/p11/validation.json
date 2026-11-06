@@ -1,0 +1,65 @@
+{
+  "environment": "isolated local PostgreSQL 18, synthetic accounts, fake providers",
+  "productionActions": "NONE",
+  "fullRegression": {
+    "passed": 4217,
+    "skipped": 115,
+    "scope": "initial integration; subsequent changed areas rerun"
+  },
+  "finalFinancialRegression": {
+    "passed": 406,
+    "files": 44
+  },
+  "schedulerAuthorization": {
+    "passed": 5
+  },
+  "academy": {
+    "passed": 16,
+    "files": 2
+  },
+  "browser": {
+    "engine": "Edge via Playwright",
+    "roles": [
+      "OWNER",
+      "ADMIN",
+      "MEMBER",
+      "CUSTOMER",
+      "OUTSIDER"
+    ],
+    "desktop": [
+      1280,
+      900
+    ],
+    "mobile": [
+      390,
+      844
+    ],
+    "real200PercentZoom": "NOT_TESTED",
+    "historicalInvoiceAfterSyntheticCancellation": "PASS",
+    "accessAfterMembershipRemoval": "DENIED",
+    "sessionsAfterLogout": 0
+  },
+  "lint": {
+    "errors": 0,
+    "existingWarnings": 4
+  },
+  "typescript": "PASS",
+  "build": {
+    "webpack": "PASS",
+    "localTurbopack": "BLOCKED CSS worker startup; not represented as PASS"
+  },
+  "sourceMigrationsUnchanged": true,
+  "candidateMigrationCount": 115,
+  "providerAcceptance": "NOT_EXECUTED",
+  "commercialProduction": "NO_GO",
+  "localEvidenceDigests": {
+    "p11-all-regressions.log": "70a982774e0db7c17804da127cbe3268758c7e703da173eac26b6894ba2265ad",
+    "p11-regressions-final2.log": "c85f66a08535e5c198b1eaf3745eb379b64b2ab58856af640fe02e005eeba216",
+    "p11-scheduler-final.log": "7d9be6bf6e1e7847196b09810da4a32534eff6a6e018fd57d7a5b29668b71201",
+    "p11-final-migration-finance.log": "0f837ca9579ba1a5fcd722303df4a8bbadc13436eb06560c73e31f73e6407ce9",
+    "p11-academy-final.log": "6e0192c25b9f7c2c5e83e2705055a1771985bed5091f0f6b5ed221eb920b652a",
+    "p11-financial-browser-final.log": "c3855280e6c2871bfa027144cccde62c058cd2002fb5363138b0456c1ac21509",
+    "p11-build-final2.log": "5007a0fc51198ad7db2fc7b25b2f3c468c2e152dd3a103c2e5f88a60430ae3ca",
+    "p11-lint-final2.log": "425588aa3ff80865f1df20d156cef0cef680a0d2e8da540eb9beda1b8ee99cb9"
+  }
+}

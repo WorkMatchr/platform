@@ -23,6 +23,12 @@ function payload(overrides: Partial<JorttInvoicePayload> = {}): JorttInvoicePayl
 }
 
 describe('Jortt API gateway', () => {
+  it.each([{ pricingMode: 'ACADEMY_SANDBOX' as const }, { organizationId: null }])('weigert Academy/persoonlijke context vóór iedere providercall', async overrides => {
+    const fetcher = vi.fn()
+    await expect(new JorttApiGateway(fetcher as typeof fetch).submitInvoice(payload(overrides), 'academy-refused')).rejects.toThrow('JORTT_ACADEMY_FISCAL_REVIEW_REQUIRED')
+    expect(fetcher).not.toHaveBeenCalled()
+  })
+
   it.each(['AUTH', 'INVOICE_LOOKUP', 'CUSTOMER_LOOKUP', 'CUSTOMER_CREATE', 'INVOICE_CREATE', 'INVOICE_FINALIZE', 'INVOICE_READ'])('behoudt de echte gatewayfase %s bij afwijzing en stopt zonder vervolgaanroep', async (failedStage) => {
     const stages: string[] = []
     const fetcher = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
@@ -332,4 +338,77 @@ describe('Jortt API gateway', () => {
     await expect(new JorttApiGateway(fetcher as typeof fetch).submitInvoice(payload({ amountInclVatCents: 11_496 }), 'mismatch')).rejects.toThrow('JORTT_INVOICE_TOTAL_MISMATCH')
     expect(fetcher).not.toHaveBeenCalled()
   })
+  it('keeps payment registration closed before any network call', async () => {
+    vi.stubEnv('JORTT_PAYMENT_RECONCILIATION_ENABLED', 'false')
+    const fetcher = vi.fn()
+    const api = new JorttApiGateway(fetcher)
+    await expect(api.inspectPayment('invoice')).rejects.toThrow('JORTT_PAYMENT_RECONCILIATION_DISABLED')
+    await expect(api.registerPayment({ invoiceId: 'invoice', amountCents: 100, ledgerAccountId: 'ledger', bookDate: '2026-11-06', reference: 'reference' })).rejects.toThrow('JORTT_PAYMENT_RECONCILIATION_DISABLED')
+    expect(fetcher).not.toHaveBeenCalled()
+  })
+  it('read-only review gate never grants payment registration', async () => {
+    vi.stubEnv('FINANCIAL_CHAIN_REVIEW_ENABLED','true')
+    vi.stubEnv('JORTT_PAYMENT_RECONCILIATION_ENABLED','false')
+    const fetcher=vi.fn(async(url:unknown)=>{
+      const path=String(url)
+      if(path.includes('/oauth/token'))return response({access_token:'synthetic'})
+      if(path.endsWith('/ledger_accounts')||path.endsWith('/payments/invoice'))return response({data:[]})
+      if(path.endsWith('/invoices/invoice'))return response({data:{id:'invoice',reference:'WM-SYNTHETIC',invoice_total_incl_vat:{amount:'59.29',currency:'EUR'},invoice_due_amount:{amount:'59.29',currency:'EUR'}}})
+      throw new Error('UNEXPECTED_WRITE')
+    })
+    const api=new JorttApiGateway(fetcher as typeof fetch)
+    expect((await api.inspectPayment('invoice')).totalCents).toBe(5929)
+    const reads=fetcher.mock.calls.length
+    await expect(api.registerPayment({invoiceId:'invoice',amountCents:5929,ledgerAccountId:'ledger',bookDate:'2026-11-06',reference:'test'})).rejects.toThrow('DISABLED')
+    expect(fetcher).toHaveBeenCalledTimes(reads)
+  })
+  it('reads exact official payment fields and sends a separate registration request', async () => {
+    vi.stubEnv('JORTT_PAYMENT_RECONCILIATION_ENABLED', 'true')
+    const fetcher = vi.fn(async (url: unknown, init?: RequestInit) => {
+      const path = String(url)
+      if (path.includes('/oauth/token')) return response({access_token:'synthetic'})
+      if (path.endsWith('/ledger_accounts')) return response({ data:[{ledger_account_id:'ledger'}] })
+      if (path.endsWith('/payments/invoice')) return response({ data:[] })
+      if (path.endsWith('/invoices/invoice')) return response({data:{id:'invoice',reference:'WM-SYNTHETIC',invoice_total_incl_vat:{amount:'59.29',currency:'EUR'},invoice_due_amount:{amount:'59.29',currency:'EUR'}}})
+      if (path.endsWith('/payments/register')) {
+        expect(JSON.parse(String(init?.body))).toEqual({sink_id:'invoice',amount:{amount:'59.29',currency:'EUR'},ledger_account_id:'ledger',book_date:'2026-11-06',description:'workmatchr-payment:synthetic'})
+        return response({data:{booking_id:'booking'}})
+      }
+      throw new Error('UNEXPECTED_ENDPOINT')
+    })
+    const api = new JorttApiGateway(fetcher as typeof fetch)
+    expect(await api.inspectPayment('invoice')).toMatchObject({totalCents:5929,dueCents:5929,bookings:[],allowedLedgerAccounts:['ledger']})
+    expect(await api.registerPayment({ invoiceId:'invoice',amountCents:5929,ledgerAccountId:'ledger',bookDate:'2026-11-06',reference:'workmatchr-payment:synthetic' })).toEqual({bookingId:'booking'})
+  })
+  it.each([false, true])('edits a Pro credit draft before finalization; mismatched totals block=%s', async mismatch => {
+    vi.stubEnv('PRO_FINANCIAL_CORRECTIONS_ENABLED','true')
+    const source='10000000-0000-4000-8000-000000000005'
+    const creditId='10000000-0000-4000-8000-000000000006'
+    const data=payload({proCredit:true,documentType:'CREDIT_NOTE',originalInvoiceExternalReference:source,amountExclVatCents:-826,vatAmountCents:-174,amountInclVatCents:-1000,
+      lines:[{description:'Pro partial',quantity:1,unit:'correctie',unitPriceExclVatCents:-826,discountAmountCents:0,netAmountExclVatCents:-826,vatRateBps:2100,vatAmountCents:-174}]})
+    let edited=false; let sent=false
+    const checkpoint={claimCreation:vi.fn().mockResolvedValue(undefined),saveDraftId:vi.fn().mockResolvedValue(undefined)}
+    const fetcher=vi.fn(async (url:unknown,init?:RequestInit)=>{
+      const path=String(url)
+      if(path.includes('/oauth/token')) return response({access_token:'synthetic'})
+      if(path.includes('/invoices?')) return response({data:[]})
+      if(path.endsWith('/credit')) {expect(checkpoint.claimCreation).toHaveBeenCalledOnce();return response({data:{id:creditId}})}
+      if(init?.method==='PUT') {expect(checkpoint.saveDraftId).toHaveBeenCalledWith(creditId);expect(JSON.parse(String(init.body)).line_items[0].amount.amount).toBe('-8.26');edited=true;return response({})}
+      if(path.endsWith('/send')) {expect(edited).toBe(true);sent=true;return response({})}
+      return response({data:{id:creditId,credited_invoice_id:source,reference:data.invoiceNumber,remarks:data.technicalReference,invoice_status:sent?'sent':'draft',invoice_number:sent?'C-SYNTHETIC':null,
+        invoice_total:{amount:edited?'-8.26':'-49.00',currency:'EUR'},invoice_total_incl_vat:{amount:edited&&!mismatch?'-10.00':'-59.29',currency:'EUR'}}})
+    })
+    const operation=new JorttApiGateway(fetcher as typeof fetch).submitInvoice(data,'synthetic',checkpoint)
+    if(mismatch) {await expect(operation).rejects.toThrow('JORTT_CREDIT_TOTAL_MISMATCH');expect(sent).toBe(false)}
+    else {expect(await operation).toEqual({externalReference:creditId,remoteInvoiceNumber:'C-SYNTHETIC'});expect(sent).toBe(true)}
+  })
+  it('does not create another Pro credit after an uncertain creation', async () => {
+    vi.stubEnv('PRO_FINANCIAL_CORRECTIONS_ENABLED','true')
+    const fetcher=vi.fn(async (url:unknown)=>String(url).includes('/oauth/token')?response({access_token:'synthetic'}):response({data:[]}))
+    await expect(new JorttApiGateway(fetcher as typeof fetch).submitInvoice(payload({proCredit:true,documentType:'CREDIT_NOTE',originalInvoiceExternalReference:'original'}),'synthetic',{
+      claimCreation:async()=>{throw new Error('JORTT_PRO_CREDIT_CREATION_UNCERTAIN')},saveDraftId:vi.fn(),
+    })).rejects.toThrow('JORTT_PRO_CREDIT_CREATION_UNCERTAIN')
+    expect(fetcher.mock.calls.some(([url])=>String(url).endsWith('/credit'))).toBe(false)
+  })
+
 })

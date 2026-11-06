@@ -1,14 +1,12 @@
+import { currentAcademyAccess } from './academy-access-policy'
 import 'server-only'
 import { Prisma } from '@/generated/prisma/client'
 import { getPrisma } from '@/lib/prisma'
 import { isExamAnswerCorrect, scoreExam, type ExamQuestionType } from './learning-exam-policy'
+import { findAcademyEnrollment } from './academy-course-service'
 
-const COURSE_CODE = 'WL-001'
 const COURSE_SLUG = 'rie-in-de-praktijk'
-const COURSE_VERSION = 'prototype-0.17'
-const EXAM_CODE = 'WL-001-FINAL'
-const EXAM_VERSIONS_IN_PRIORITY_ORDER = ['WL-001-EXAM-1.1', 'WL-001-EXAM-1.0'] as const
-const QUESTION_COUNT = 50
+
 
 type Db = Prisma.TransactionClient
 
@@ -20,41 +18,42 @@ async function completedChapterCount(transaction: Db, enrollmentId: string, cour
   return { chapters, expected }
 }
 
-async function findPublishedExam(courseSlug: string) {
-  if (courseSlug !== COURSE_SLUG) return null
-  for (const version of EXAM_VERSIONS_IN_PRIORITY_ORDER) {
-    const examVersion = await getPrisma().learningExamVersion.findFirst({
-      where: {
-        version,
-        status: 'PUBLISHED',
-        exam: { code: EXAM_CODE, course: { code: COURSE_CODE, slug: COURSE_SLUG, status: 'PUBLISHED' } },
-        courseVersion: { version: COURSE_VERSION, status: 'PUBLISHED' },
-      },
-      select: {
-        id: true, examId: true, courseId: true, courseVersionId: true,
-        questionCount: true, maxScore: true, passingScore: true, passingPercentage: true,
-        timeLimitMinutes: true, attemptLimit: true, _count: { select: { questions: true } },
-      },
-    })
-    if (!examVersion) continue
-    if (examVersion.questionCount !== QUESTION_COUNT || examVersion.maxScore !== QUESTION_COUNT
-      || examVersion.passingScore !== 40 || examVersion.passingPercentage !== 80
-      || examVersion.timeLimitMinutes !== null || examVersion.attemptLimit !== null
-      || examVersion._count.questions !== QUESTION_COUNT) {
-      throw new Error('EXAM_NOT_AVAILABLE')
-    }
-    const { _count, ...publishedVersion } = examVersion
-    void _count
-    return publishedVersion
+async function findPublishedExam(userId: string, courseSlug: string, courseVersionId?: string) {
+  const context = await findAcademyEnrollment(userId, { courseSlug, courseVersionId })
+  if (!context) return null
+  const { enrollment, definition } = context
+  const examVersion = await getPrisma().learningExamVersion.findFirst({
+    where: {
+      // New attempts may only use the published exam for this enrolled course version.
+      // Historical attempt/result readers resolve their immutable version by ID separately.
+      status: 'PUBLISHED',
+      courseVersionId: enrollment.courseVersionId,
+      exam: { code: definition.exam.code, course: { code: definition.courseCode, slug: courseSlug, status: 'PUBLISHED' } },
+      courseVersion: { status: { in: ['PUBLISHED', 'RETIRED'] } },
+    },
+    select: {
+      id: true, examId: true, courseId: true, courseVersionId: true, version: true,
+      questionCount: true, maxScore: true, passingScore: true, passingPercentage: true,
+      timeLimitMinutes: true, attemptLimit: true, _count: { select: { questions: true } },
+    },
+  })
+  if (!examVersion) return null
+  if (examVersion.questionCount !== definition.exam.questionCount || examVersion.maxScore !== definition.exam.questionCount
+    || examVersion.passingScore !== definition.exam.passingScore || examVersion.passingPercentage !== definition.exam.passingPercentage
+    || examVersion.timeLimitMinutes !== null
+    || examVersion._count.questions !== definition.exam.questionCount) {
+    throw new Error('EXAM_NOT_AVAILABLE')
   }
-  return null
+  const { _count, ...publishedVersion } = examVersion
+  void _count
+  return publishedVersion
 }
 
-export async function getFinalExamOverview(userId: string, courseSlug = COURSE_SLUG) {
-  const examVersion = await findPublishedExam(courseSlug)
+export async function getFinalExamOverview(userId: string, courseSlug = COURSE_SLUG, courseVersionId?: string) {
+  const examVersion = await findPublishedExam(userId, courseSlug, courseVersionId)
   if (!examVersion) return null
   const enrollment = await getPrisma().learningEnrollment.findUnique({
-    where: { userId_courseVersionId: { userId, courseVersionId: examVersion.courseVersionId } },
+    where: { userId_courseVersionId: { userId, courseVersionId: examVersion.courseVersionId }, ...currentAcademyAccess() },
     select: {
       id: true,
       status: true,
@@ -75,13 +74,13 @@ export async function getFinalExamOverview(userId: string, courseSlug = COURSE_S
       examAttempts: { where: { examId: examVersion.examId }, orderBy: { attemptNumber: 'asc' }, select: { id: true, attemptNumber: true, status: true, score: true, maxScore: true, percentage: true, passed: true, submittedAt: true, startedAt: true, currentPosition: true } },
     },
   })
-  if (!enrollment) return { examVersion, enrollment: null, eligible: false, completedChapters: 0, chapterCount: 10, activeAttempt: null, attempts: [] }
+  if (!enrollment) return { examVersion, enrollment: null, eligible: false, completedChapters: 0, chapterCount: 0, activeAttempt: null, attempts: [] }
   const chapters = enrollment.courseVersion.chapters
   const completedChapters = chapters.filter((chapter) => chapter.progress[0]?.status === 'COMPLETED').length
   return {
     examVersion,
     enrollment,
-    eligible: chapters.length === 10 && completedChapters === 10,
+    eligible: chapters.length > 0 && completedChapters === chapters.length,
     completedChapters,
     chapterCount: chapters.length,
     activeAttempt: enrollment.examAttempts.find((attempt) => attempt.status === 'IN_PROGRESS') ?? null,
@@ -89,8 +88,8 @@ export async function getFinalExamOverview(userId: string, courseSlug = COURSE_S
   }
 }
 
-export async function startFinalExamAttempt(userId: string) {
-  const examVersion = await findPublishedExam(COURSE_SLUG)
+export async function startFinalExamAttempt(userId: string, courseSlug = COURSE_SLUG, courseVersionId?: string) {
+  const examVersion = await findPublishedExam(userId, courseSlug, courseVersionId)
   if (!examVersion) {
     throw new Error('EXAM_NOT_AVAILABLE')
   }
@@ -98,13 +97,13 @@ export async function startFinalExamAttempt(userId: string) {
   try {
     return await prisma.$transaction(async (transaction) => {
       const enrollment = await transaction.learningEnrollment.findUnique({
-        where: { userId_courseVersionId: { userId, courseVersionId: examVersion.courseVersionId } },
+        where: { userId_courseVersionId: { userId, courseVersionId: examVersion.courseVersionId }, ...currentAcademyAccess() },
         select: { id: true, userId: true, courseVersionId: true },
       })
       if (!enrollment) throw new Error('ENROLLMENT_REQUIRED')
       await transaction.$queryRaw`SELECT id FROM "LearningEnrollment" WHERE id = ${enrollment.id}::uuid FOR UPDATE`
       const completion = await completedChapterCount(transaction, enrollment.id, examVersion.courseVersionId)
-      if (completion.expected !== 10 || completion.chapters !== 10) throw new Error('CHAPTERS_INCOMPLETE')
+      if (completion.expected < 1 || completion.chapters !== completion.expected) throw new Error('CHAPTERS_INCOMPLETE')
       const existing = await transaction.learningExamAttempt.findFirst({
         where: { enrollmentId: enrollment.id, examId: examVersion.examId, status: 'IN_PROGRESS' },
       })
@@ -113,6 +112,7 @@ export async function startFinalExamAttempt(userId: string) {
         where: { enrollmentId: enrollment.id, examId: examVersion.examId },
         _max: { attemptNumber: true },
       })
+      if (examVersion.attemptLimit !== null && (latest._max.attemptNumber ?? 0) >= examVersion.attemptLimit) throw new Error('ATTEMPT_LIMIT_REACHED')
       return transaction.learningExamAttempt.create({
         data: {
           userId,
@@ -129,7 +129,7 @@ export async function startFinalExamAttempt(userId: string) {
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 15_000 })
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && ['P2002', 'P2034'].includes(error.code)) {
-      const active = await prisma.learningExamAttempt.findFirst({ where: { userId, examId: examVersion.examId, status: 'IN_PROGRESS' } })
+      const active = await prisma.learningExamAttempt.findFirst({ where: { userId, examId: examVersion.examId, status: 'IN_PROGRESS', enrollment: { ...currentAcademyAccess() } } })
       if (active) return active
     }
     throw error
@@ -144,7 +144,7 @@ async function lockOwnedAttempt(transaction: Db, userId: string, attemptId: stri
   `
   if (!rows.length) throw new Error('ATTEMPT_NOT_FOUND')
   const attempt = await transaction.learningExamAttempt.findFirst({
-    where: { id: attemptId, userId },
+    where: { id: attemptId, userId, enrollment: { ...currentAcademyAccess() } },
     include: {
       examVersion: {
         include: {
@@ -162,7 +162,7 @@ async function lockOwnedAttempt(transaction: Db, userId: string, attemptId: stri
 
 export async function getFinalExamPlayer(userId: string, attemptId: string) {
   const attempt = await getPrisma().learningExamAttempt.findFirst({
-    where: { id: attemptId, userId, status: 'IN_PROGRESS', examVersion: { status: { in: ['PUBLISHED', 'RETIRED'] } } },
+    where: { id: attemptId, userId, enrollment: { ...currentAcademyAccess() }, status: 'IN_PROGRESS', examVersion: { status: { in: ['PUBLISHED', 'RETIRED'] } } },
     include: {
       examVersion: {
         include: {
@@ -175,13 +175,13 @@ export async function getFinalExamPlayer(userId: string, attemptId: string) {
       answers: true,
     },
   })
-  if (!attempt || attempt.examVersion.questions.length !== QUESTION_COUNT) return null
+  if (!attempt || attempt.examVersion.questions.length !== attempt.examVersion.questionCount) return null
   return {
     id: attempt.id,
     attemptNumber: attempt.attemptNumber,
-    currentPosition: Math.min(Math.max(attempt.currentPosition, 1), QUESTION_COUNT),
+    currentPosition: Math.min(Math.max(attempt.currentPosition, 1), attempt.examVersion.questionCount),
     startedAt: attempt.startedAt,
-    questionCount: QUESTION_COUNT,
+    questionCount: attempt.examVersion.questionCount,
     answers: Object.fromEntries(attempt.answers.map((answer) => [answer.questionId, answer.answer as unknown])),
     questions: attempt.examVersion.questions.map((mapping) => ({
       id: mapping.questionId,
@@ -222,10 +222,11 @@ export async function saveFinalExamAnswer(userId: string, attemptId: string, que
 }
 
 export async function updateFinalExamPosition(userId: string, attemptId: string, position: number) {
-  if (!Number.isInteger(position) || position < 1 || position > QUESTION_COUNT) throw new Error('INVALID_POSITION')
+  if (!Number.isInteger(position) || position < 1) throw new Error('INVALID_POSITION')
   return getPrisma().$transaction(async (transaction) => {
     const attempt = await lockOwnedAttempt(transaction, userId, attemptId)
     if (attempt.status !== 'IN_PROGRESS') throw new Error('ATTEMPT_SUBMITTED')
+    if (position > attempt.examVersion.questionCount) throw new Error('INVALID_POSITION')
     await transaction.learningExamAttempt.update({ where: { id: attemptId }, data: { currentPosition: position } })
     return { saved: true }
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable })
@@ -257,7 +258,7 @@ export async function submitFinalExamAttempt(userId: string, attemptId: string) 
     return await prisma.$transaction(async (transaction) => {
       const attempt = await lockOwnedAttempt(transaction, userId, attemptId)
       if (attempt.status === 'SUBMITTED') return attempt
-      if (attempt.status !== 'IN_PROGRESS' || attempt.examVersion.questions.length !== QUESTION_COUNT) throw new Error('ATTEMPT_NOT_SUBMITTABLE')
+      if (attempt.status !== 'IN_PROGRESS' || attempt.examVersion.questions.length !== attempt.examVersion.questionCount) throw new Error('ATTEMPT_NOT_SUBMITTABLE')
       const answers = await transaction.learningExamAnswer.findMany({ where: { attemptId } })
       const answerMap = new Map(answers.map((answer) => [answer.questionId, answer.answer as unknown]))
       const result = scoreExam(attempt.examVersion.questions.map((mapping) => ({

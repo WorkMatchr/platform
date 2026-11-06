@@ -1,3 +1,4 @@
+import { recordFinancialWebhookFailure } from '@/lib/finance/financial-chain-review-service'
 import { processMolliePayment } from '@/lib/finance/financial-purchase-service'
 
 export async function POST(request: Request) {
@@ -15,6 +16,7 @@ export async function POST(request: Request) {
     await processMolliePayment(paymentId)
     return new Response('OK', { status: 200 })
   } catch {
+    await recordFinancialWebhookFailure(paymentId)
     return new Response('Payment processing failed', { status: 500 })
   }
 }

@@ -15,6 +15,7 @@ const prisma = {
     findMany: vi.fn().mockResolvedValue([{ amountExclVatCents: 4_900, vatAmountCents: 1_029, amountInclVatCents: 5_929 }]),
     groupBy: vi.fn().mockResolvedValue([{ status: 'PAID', _count: 1 }, { status: 'FAILED', _count: 2 }]),
   },
+  financialInvoice: { findMany: vi.fn().mockResolvedValue([]) },
   financialRefund: {
     findMany: vi.fn().mockResolvedValue([{ amountCents: 12_100, creditNote: { amountExclVatCents: -10_000, vatAmountCents: -2_100, amountInclVatCents: -12_100 } }]),
     groupBy: vi.fn().mockResolvedValue([{ status: 'REFUNDED', _count: 1 }, { status: 'PENDING', _count: 2 }, { status: 'FAILED', _count: 1 }]),
@@ -34,7 +35,7 @@ vi.mock('@/lib/platform-admin/platform-admin-authorization', () => ({ getPlatfor
 vi.mock('@/lib/marketplace/marketplace-authorization', () => ({ requireProviderMarketplaceAccess: vi.fn() }))
 
 describe('platformbrede financiële rapportage', () => {
-  it('telt credit- en Pro-omzet bruto en trekt alleen voltooide refunds af', async () => {
+  it('telt credit- en Pro-omzet en geboekte creditfacturen afzonderlijk van cashrefunds', async () => {
     const { getPlatformFinancialDashboard } = await import('./financial-dashboard-service')
     const result = await getPlatformFinancialDashboard('10000000-0000-4000-8000-000000000001')
 
@@ -53,13 +54,30 @@ describe('platformbrede financiële rapportage', () => {
     expect(prisma.financialJorttSync.groupBy).toHaveBeenCalledWith({ where: operationalJorttFilter, by: ['status'], _count: true })
     expect(result.failedRefunds).toBe(1)
   })
+  it('verlaagt omzet door een Pro-creditfactuur zonder een cashrefund te verzinnen', async () => {
+    prisma.financialInvoice.findMany.mockResolvedValueOnce([{ amountExclVatCents: -826, vatAmountCents: -174, amountInclVatCents: -1000 }] as never)
+    const { getPlatformFinancialDashboard } = await import('./financial-dashboard-service')
+    const result = await getPlatformFinancialDashboard('10000000-0000-4000-8000-000000000001')
+    expect(result.netRevenueInclVatCents).toBe(10858)
+    expect(result.refundInclVatCents).toBe(12100)
+    expect(result.creditNoteAmountCents).toBe(13100)
+  })
+
 })
 
 describe('financiële maintenance-observability', () => {
+  it.each([[25,false],[26,false],[27,true]] as const)('uses the actual daily cadence: %i hours late=%s',async(hours,late)=>{
+    const now=new Date('2026-11-06T06:00:00Z')
+    prisma.financialMaintenanceRun.findFirst.mockReset().mockResolvedValue({status:'SUCCEEDED',finishedAt:new Date(now.getTime()-hours*3600000)})
+    const {getPlatformFinancialMaintenanceOverview}=await import('./financial-dashboard-service')
+    expect((await getPlatformFinancialMaintenanceOverview('actor',now)).maintenanceLate).toBe(late)
+    prisma.financialMaintenanceRun.findFirst.mockReset()
+  })
+
   it('aggregeert achterstallige categorieën en signaleert een te oude succesvolle run', async () => {
     prisma.financialMaintenanceRun.findFirst
       .mockResolvedValueOnce({ status: 'PARTIAL_FAILURE', startedAt: new Date('2026-09-03T09:00:00Z'), finishedAt: new Date('2026-09-03T09:01:00Z'), errorCodes: ['SAFE_ERROR'] })
-      .mockResolvedValueOnce({ status: 'SUCCEEDED', startedAt: new Date('2026-09-03T06:00:00Z'), finishedAt: new Date('2026-09-03T06:01:00Z'), errorCodes: [] })
+      .mockResolvedValueOnce({ status: 'SUCCEEDED', startedAt: new Date('2026-09-02T06:00:00Z'), finishedAt: new Date('2026-09-02T06:01:00Z'), errorCodes: [] })
       .mockResolvedValueOnce({ status: 'PARTIAL_FAILURE', startedAt: new Date('2026-09-03T09:00:00Z'), finishedAt: new Date('2026-09-03T09:01:00Z'), errorCodes: ['SAFE_ERROR'] })
     prisma.financialRefund.count = vi.fn().mockResolvedValueOnce(3).mockResolvedValueOnce(2)
     prisma.professionalSubscription.count = vi.fn().mockResolvedValueOnce(3).mockResolvedValueOnce(1).mockResolvedValueOnce(2)

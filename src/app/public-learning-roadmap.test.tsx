@@ -29,7 +29,9 @@ function expectInformationOnly(document: Document) {
     expect(link.textContent).not.toMatch(/Koop nu|Inschrijven|Start opleiding|Nu starten/i)
   }
   expect(document.body.textContent).not.toMatch(/DRAFT|PUBLISHED_PROTOTYPE|RETIRED|inclusief btw|exclusief btw/i)
-  expect(document.querySelector('script[type="application/ld+json"]')).toBeNull()
+  for (const script of document.querySelectorAll('script[type="application/ld+json"]')) {
+    expect(JSON.parse(script.textContent || '{}')['@type']).toBe('BreadcrumbList')
+  }
 }
 
 describe('Public Learning roadmap', () => {
@@ -95,8 +97,8 @@ describe('Public Learning roadmap', () => {
     expect(metadata.description).toContain('In ontwikkeling')
     expect(metadata.alternates).toEqual({ canonical: publicLearningHref(course) })
     expect(metadata.openGraph).toMatchObject({ url: publicLearningHref(course) })
-    expect(indexablePublicRoutes.filter(route => route === publicLearningHref(course))).toHaveLength(1)
-    expect(sitemap().filter(entry => new URL(entry.url).pathname === publicLearningHref(course))).toHaveLength(1)
+    expect((indexablePublicRoutes as readonly string[]).filter(route => route === publicLearningHref(course))).toHaveLength(0)
+    expect(sitemap().filter(entry => new URL(entry.url).pathname === publicLearningHref(course))).toHaveLength(0)
     expect(isRegisteredPublicHref(publicLearningHref(course))).toBe(true)
   })
 
@@ -107,10 +109,10 @@ describe('Public Learning roadmap', () => {
     }
   })
 
-  it('houdt twaalf unieke detailroutes en unieke metadatatitels zonder dubbele sitemapregels', async () => {
+  it('behoudt unieke metadatatitels maar indexeert geen niet-vrijgegeven opleidingen', async () => {
     const learningRoutes = sitemap().map(entry => new URL(entry.url).pathname).filter(path => path.startsWith('/e-learning/'))
-    expect(learningRoutes).toHaveLength(12)
-    expect(new Set(learningRoutes).size).toBe(12)
+    expect(learningRoutes).toHaveLength(0)
+    expect(new Set(learningRoutes).size).toBe(0)
     const titles = await Promise.all(expectedSlugs.map(async slug => (await generateMetadata({ params: Promise.resolve({ slug }) })).title))
     expect(new Set(titles).size).toBe(11)
   })

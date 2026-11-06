@@ -50,6 +50,12 @@ describe('Learning-contentrenderer', () => {
     mocks.complete.mockReset().mockResolvedValue({ ok: true })
   })
 
+  it('uses the configured chapter count for a generic course', () => {
+    const html = renderToStaticMarkup(createElement(LessonPlayer, { ...playerProps, chapterPosition: 1, chapterCount: 1, chapterNavigation: [{id:'one',slug:'one',title:'Enige hoofdstuk',position:1,progressStatus:null}] }))
+    expect(html).toContain('Enige hoofdstuk')
+    expect(html).not.toContain('Nog niet beschikbaar')
+  })
+
   it.each([{ correctQuestionIds: [] }, { correctQuestionIds: ['q-1'] }])('actualiseert het eindresultaat na retries zonder refresh of dubbeltelling (%j)', async ({ correctQuestionIds }) => {
     mocks.submit
       .mockResolvedValueOnce({ ok: true, correct: false, feedback: 'Probeer opnieuw.' })
@@ -99,6 +105,9 @@ describe('Learning-contentrenderer', () => {
     expect(render('PROCESS', { steps: ['Inventariseren', 'Evalueren'] })).toContain('<ol')
     expect(render('SUMMARY', { items: ['Risico’s beoordelen'] })).toContain('Risico’s beoordelen')
     expect(render('IMAGE', { alt: 'Illustratie volgt' })).toContain('Illustratie volgt')
+    const image = render('IMAGE', { src: `/learning-media/${'a'.repeat(64)}.webp`, alt: 'Tekstalternatief', caption: 'Zichtbaar lesbijschrift' })
+    expect(image).toContain('<figcaption>Zichtbaar lesbijschrift</figcaption>')
+    expect(image).toContain('alt="Tekstalternatief"')
   })
 
   it('rendert alle H4/H5/H6/H7/H8-blokken generiek, inclusief callouts en processtappen', () => {

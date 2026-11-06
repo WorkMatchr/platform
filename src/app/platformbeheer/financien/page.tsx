@@ -1,3 +1,5 @@
+import { getFinancialChainReviewOverview } from '@/lib/finance/financial-chain-review-service'
+import { financialReviewLabels, type FinancialReviewStatus } from '@/lib/finance/financial-chain-review'
 import { AdminPageHeader, AdminSection, AdminTable, MetricCard, StatusPill } from '@/components/platform-admin/platform-admin-ui'
 import { formatEuro } from '@/lib/finance/financial-contract'
 import { getPlatformFinancialDashboard, getPlatformFinancialMaintenanceOverview } from '@/lib/finance/financial-dashboard-service'
@@ -5,9 +7,10 @@ import { requirePlatformAdministrator } from '@/lib/platform-admin/platform-admi
 
 export default async function PlatformFinancialPage() {
   const administrator = await requirePlatformAdministrator('/platformbeheer/financien')
-  const [data, maintenance] = await Promise.all([
+  const [data, maintenance, chain] = await Promise.all([
     getPlatformFinancialDashboard(administrator.id),
     getPlatformFinancialMaintenanceOverview(administrator.id),
+    getFinancialChainReviewOverview(administrator.id),
   ])
   const runStatus = maintenance.latestRun?.status === 'SUCCEEDED'
     ? { label: 'Geslaagd', tone: 'good' as const }
@@ -23,6 +26,7 @@ export default async function PlatformFinancialPage() {
     <AdminPageHeader title="Financieel overzicht" description="Herleidbaar overzicht uit betalingen, facturen, abonnementen en het append-only creditgrootboek." />
     <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
       <MetricCard label="Bruto omzet incl. btw" value={formatEuro(data.grossRevenueInclVatCents)} />
+      <MetricCard label="Creditfacturen incl. btw" value={formatEuro(data.creditNoteAmountCents)} />
       <MetricCard label="Terugbetaald incl. btw" value={formatEuro(data.refundInclVatCents)} attention={data.refundInclVatCents > 0} />
       <MetricCard label="Netto omzet incl. btw" value={formatEuro(data.netRevenueInclVatCents)} />
       <MetricCard label="Netto omzet excl. btw" value={formatEuro(data.netRevenueExclVatCents)} />
@@ -41,6 +45,15 @@ export default async function PlatformFinancialPage() {
       <MetricCard label="Kortingscodes gebruikt" value={data.discountCodeUses} />
       <MetricCard label="Startersbonussen" value={data.starterBonuses} />
     </div>
+    <AdminSection title="Financiële ketencontrole" description="Vergelijking van betaling, factuur, grootboek en Jortt. Afwijkingen worden nooit automatisch gecorrigeerd.">
+      <p className="text-sm text-text-secondary">{chain.enabled ? 'Controlevoorziening ingeschakeld; planning en providerdekking moeten afzonderlijk zijn geverifieerd.' : 'Automatische ketencontrole is niet geactiveerd.'}</p>
+      {chain.overdue ? <p role="status" className="my-3 font-semibold text-error">Geen volledige ketencontrole in de afgelopen 26 uur geregistreerd. Platformbeheer moet dit onderzoeken.</p> : null}
+      <p className="text-sm">Laatste controle: {formatDateTime(chain.lastRun?.createdAt)}</p>
+      <AdminTable headers={['Waarneming', 'Status', 'Opvolging']}>
+        {chain.observations.map(item => <tr key={item.id}><td className="px-4 py-3">{formatDateTime(item.createdAt)}</td><td className="px-4 py-3">{financialReviewLabels[item.result as FinancialReviewStatus] ?? 'In onderzoek'}</td><td className="px-4 py-3">{['OK','RECOVERED'].includes(item.result) ? 'Controlebewijs vastgelegd' : 'Onderzoek betaling, factuur en Jortt; een correctie vereist afzonderlijke bevoegdheid.'}</td></tr>)}
+      </AdminTable>
+      <p className="mt-2 text-xs text-text-secondary">Laatste 50 waarnemingen, inclusief hercontroles; dit is geen volledig register van open incidenten.</p>
+    </AdminSection>
     <AdminSection title="WorkMatchr Pro" description="Actuele abonnementstatussen; Pro beïnvloedt matching niet.">
       <AdminTable headers={['Status', 'Aantal']}>{data.subscriptions.map((item) => <tr key={item.status}><td className="px-4 py-3">{item.status}</td><td className="px-4 py-3">{item._count}</td></tr>)}</AdminTable>
     </AdminSection>

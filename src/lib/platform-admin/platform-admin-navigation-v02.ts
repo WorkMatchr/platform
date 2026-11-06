@@ -10,6 +10,7 @@ export const platformAdminChapters = [
   { label: 'Kennis & content', items: [link('/kennisbank', 'Kennisbeheer'), link('/kennisbank/bronnen/uploaden', 'Bronnen toevoegen'), link('/kennisbank/beoordelingen', 'Beoordelingen'), link('/kennisbank/meldingen', 'Meldingen')] },
   { label: 'Platform & instellingen', items: [link('/instellingen', 'Instellingen'), link('/trading/toegang', 'Tradingtoegang')] },
   { label: 'Beveiliging & audit', items: [link('/auditor', 'Audit'), link('/platformbeheerders', 'Platformbeheerders')] },
+  { label: 'Academy', items: [link('/academy/cursussen', 'Cursussen'), link('/academy/vragen', 'Vragen & antwoorden'), link('/academy/certificaten', 'Certificaten'), link('/academy/beoordelingen', 'Beoordelingsverzoeken'), link('/academy/prijzen', 'Prijzen & kortingen')] },
 ]
 
 export function getPlatformAdminChapters(role: PlatformMembershipRole) {

@@ -3,6 +3,14 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
+import { requestAcademyRefund } from '@/lib/learning/academy-commerce-refund'
+
+import { reconcileProPayments } from '@/lib/finance/pro-payment-reconciliation'
+import { issueProCredit } from '@/lib/finance/pro-credit-service'
+import { requestProRefund } from '@/lib/finance/pro-refund-service'
+import { reconcileJorttPayment } from '@/lib/finance/jortt-payment-service'
+import { JorttApiGateway } from '@/lib/finance/jortt-api-gateway'
+import { reconcileMollieRefund } from '@/lib/finance/refund-service'
 import { refundWorkmatchrError } from '@/lib/finance/refund-service'
 import { createJorttGateway } from '@/lib/finance/jortt-api-gateway'
 import { syncFinancialInvoiceToJortt } from '@/lib/finance/jortt-sync-service'
@@ -65,4 +73,59 @@ export async function retryPlatformJorttSyncAction(formData: FormData) {
   revalidatePath('/platformbeheer/financien')
   revalidatePath(returnTo)
   redirect(`${returnTo}?resultaat=jortt-gesynchroniseerd`)
+}
+
+
+export async function startPlatformAcademyRefundAction(formData: FormData) {
+  const parsed = z.object({ purchaseId: z.string().uuid(), reason: z.string().trim().min(10).max(500), confirmed: z.literal('on') }).safeParse(Object.fromEntries(formData))
+  const returnTo = parsed.success ? `/platformbeheer/financien/betalingen/${parsed.data.purchaseId}` : '/platformbeheer/financien/betalingen'
+  const actor = await requirePlatformAdministrator(returnTo)
+  if (!parsed.success) redirect(`${returnTo}?fout=ongeldige-terugbetaling`)
+  try { await requestAcademyRefund(actor.id, parsed.data.purchaseId, parsed.data.reason) }
+  catch { redirect(`${returnTo}?fout=terugbetaling-niet-gestart`) }
+  revalidatePath(returnTo)
+  revalidatePath('/platformbeheer/financien/terugbetalingen')
+  redirect(`${returnTo}?resultaat=terugbetaling-gestart`)
+}
+
+export async function proFinancialCorrectionAction(formData: FormData) {
+  const values = z.object({ invoiceId: z.string().uuid(), operation: z.enum(['credit', 'refund', 'refund-check', 'jortt-payment', 'pro-payments']),
+    reason: z.string().trim().min(10).max(500), confirmed: z.literal('on'),
+  }).safeParse(Object.fromEntries(formData))
+  const administrator = await requirePlatformAdministrator('/platformbeheer/financien/facturen')
+  if (!values.success) redirect('/platformbeheer/financien/facturen?fout=ongeldige-correctie')
+  const returnTo = `/platformbeheer/financien/facturen/${values.data.invoiceId}`
+  if (process.env.PRO_FINANCIAL_CORRECTIONS_ENABLED !== 'true') redirect(`${returnTo}?fout=niet-vrijgegeven`)
+  let outcome = 'vastgelegd'
+  try {
+    const common = { actorUserId: administrator.id, invoiceId: values.data.invoiceId, reason: values.data.reason }
+    if (values.data.operation === 'credit') {
+      const amount = String(formData.get('amount') ?? '').replace(',', '.')
+      if (!/^\d{1,7}\.\d{2}$/.test(amount)) throw new Error('INVALID_AMOUNT')
+      const [euros, cents] = amount.split('.')
+      await issueProCredit({ ...common, amountInclVatCents: Number(euros) * 100 + Number(cents), idempotencyKey: formData.get('idempotencyKey') })
+    } else if (values.data.operation === 'refund') {
+      const result = await requestProRefund({ ...common, creditNoteId: values.data.invoiceId, idempotencyKey: formData.get('idempotencyKey') })
+      if (result.reviewRequired) outcome = 'controle-nodig'
+    } else if (values.data.operation === 'refund-check') {
+      const { getPrisma } = await import('@/lib/prisma')
+      const refund = await getPrisma().financialRefund.findUniqueOrThrow({ where: { proCreditNoteId: values.data.invoiceId } })
+      const result = await reconcileMollieRefund(refund.id)
+      if (result.reviewRequired) outcome = 'controle-nodig'
+    } else if (values.data.operation === 'pro-payments') {
+      const { getPrisma } = await import('@/lib/prisma')
+      const invoice = await getPrisma().financialInvoice.findUniqueOrThrow({ where: { id: values.data.invoiceId } })
+      if (!invoice.organizationId) throw new Error('PRO_INVOICE_REQUIRED')
+      const subscription = await getPrisma().professionalSubscription.findUniqueOrThrow({ where: { organizationId: invoice.organizationId } })
+      const result = await reconcileProPayments({ ...common, subscriptionId: subscription.id, after: new Date(String(formData.get('after'))) })
+      if (result.failed) outcome = 'controle-nodig'
+    } else {
+      const result = await reconcileJorttPayment({ ...common, ledgerAccountId: formData.get('ledgerAccountId'), bookDate: formData.get('bookDate') }, new JorttApiGateway())
+      if (result.status !== 'CONFIRMED') outcome = 'controle-nodig'
+    }
+  } catch {
+    redirect(`${returnTo}?fout=controle-nodig`)
+  }
+  revalidatePath('/platformbeheer/financien', 'layout')
+  redirect(`${returnTo}?resultaat=${outcome}`)
 }

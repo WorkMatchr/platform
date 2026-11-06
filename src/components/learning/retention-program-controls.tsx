@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { answerRetentionQuestionAction, setAnnualReminderConsentAction, startRetentionParticipationAction, stopRetentionParticipationAction } from '@/app/e-learnings/retention-actions'
 
-export function RetentionOptIn() {
+export function RetentionOptIn({ courseSlug = 'rie-in-de-praktijk', courseTitle = 'RI&E in de praktijk' }: { courseSlug?: string; courseTitle?: string } = {}) {
   const formRef = useRef<HTMLFormElement>(null)
   const [message, setMessage] = useState('')
   const [pending, startTransition] = useTransition()
@@ -19,7 +19,8 @@ export function RetentionOptIn() {
       if (result.ok) router.refresh()
     })
   }}>
-    <h2 className="text-xl font-bold text-brand-dark">Houd uw RI&E-kennis actief</h2>
+    <input type="hidden" name="courseSlug" value={courseSlug} />
+    <h2 className="text-xl font-bold text-brand-dark">Houd uw kennis van {courseTitle} actief</h2>
     <p>Wilt u de komende 12 weken uw kennis blijven onderhouden?</p>
     <p>Iedere week staat een korte kennischeck van 5 vragen voor u klaar. Dat kost ongeveer 3–5 minuten.</p>
     <p>We sturen u één e-mail wanneer een nieuwe kennischeck klaarstaat. Deze berichten gaan uitsluitend over uw opleiding en kennisbehoud. Geen reclame of commerciële berichten.</p>
@@ -30,24 +31,24 @@ export function RetentionOptIn() {
   </form>
 }
 
-export function AnnualReminderConsent({ enabled, scheduledFor, sent }: { enabled: boolean; scheduledFor: string | null; sent: boolean }) {
+export function AnnualReminderConsent({ enabled, scheduledFor, sent, courseSlug = 'rie-in-de-praktijk', courseTitle = 'RI&E in de praktijk' }: { enabled: boolean; scheduledFor: string | null; sent: boolean; courseSlug?: string; courseTitle?: string }) {
   const [consented, setConsented] = useState(false)
   const [message, setMessage] = useState('')
   const [pending, startTransition] = useTransition()
   const router = useRouter()
   async function change(value: boolean) {
     startTransition(async () => {
-      const result = await setAnnualReminderConsentAction(value)
+      const result = await setAnnualReminderConsentAction(value, courseSlug)
       setMessage(result.ok ? (value ? 'Jaarherinnering ingeschakeld.' : 'Jaarherinnering uitgeschakeld.') : result.message)
       if (result.ok) { setConsented(false); router.refresh() }
     })
   }
   return <section className="space-y-3 border-t border-border pt-4" aria-labelledby="annual-reminder-title">
     <h2 id="annual-reminder-title" className="text-lg font-bold text-brand-dark">Jaarherinnering</h2>
-    <p className="text-sm leading-6 text-text-secondary">Herinner mij over ongeveer één jaar om mijn RI&E-kennis opnieuw te controleren. Dit is een aparte, vrijwillige keuze en verandert niets aan uw certificaat.</p>
+    <p className="text-sm leading-6 text-text-secondary">Herinner mij over ongeveer één jaar om mijn kennis van {courseTitle} opnieuw te controleren. Dit is een aparte, vrijwillige keuze en verandert niets aan uw certificaat.</p>
     {sent ? <>
       <p role="status">De jaarherinnering is verzonden. U kunt de jaarlijkse kennischeck openen.</p>
-      <Link className="inline-flex min-h-11 items-center font-semibold text-brand-primary underline" href="/e-learnings/rie-in-de-praktijk/kennisbehoud/jaarlijks">Open jaarlijkse kennischeck</Link>
+      <Link className="inline-flex min-h-11 items-center font-semibold text-brand-primary underline" href={`/e-learnings/${courseSlug}/kennisbehoud/jaarlijks`}>Open jaarlijkse kennischeck</Link>
     </> : enabled ? <>
       {scheduledFor && <p className="text-sm">Gepland rond {new Intl.DateTimeFormat('nl-NL', { dateStyle: 'long', timeZone: 'Europe/Amsterdam' }).format(new Date(scheduledFor))}.</p>}
       <button type="button" disabled={pending} onClick={() => change(false)} className="inline-flex min-h-11 items-center rounded-control border border-border px-4 font-semibold text-brand-primary">Jaarherinnering uitschakelen</button>
@@ -99,9 +100,13 @@ export function RetentionWeeklyPlayer({ check }: { check: WeeklyCheck }) {
   const router = useRouter()
   const question = check.questions[index]
   const goNext = () => { setIndex((value) => Math.min(check.questions.length - 1, value + 1)); setSelected([]); setLocalFeedback(null); setError(''); router.refresh() }
-  useEffect(() => { if (localFeedback) feedbackRef.current?.focus(); else heading.current?.focus() }, [index, localFeedback])
+  useEffect(() => {
+    if (check.result) heading.current?.focus()
+    else if (localFeedback) feedbackRef.current?.focus()
+    else heading.current?.focus()
+  }, [index, localFeedback, check.result])
   if (check.result) return <section className="space-y-4" aria-labelledby="retention-result-title">
-    <h2 id="retention-result-title" tabIndex={-1} className="text-2xl font-bold text-brand-dark">{check.result.title}</h2>
+    <h2 id="retention-result-title" ref={heading} tabIndex={-1} className="text-2xl font-bold text-brand-dark">{check.result.title}</h2>
     <p className="text-lg font-semibold">{check.result.score}</p>
     {check.result.strongAreas.length > 0 && <p>Sterk: {check.result.strongAreas.join(', ')}</p>}
     {check.result.attentionAreas.length > 0 && <div><p>Opnieuw bekijken: {check.result.attentionAreas.join(', ')}</p><ul className="mt-2 list-inside list-disc">{check.result.chapterLinks.map((link) => <li key={`${link.chapterNumber}-${link.knowledgeArea}`}><a className="font-semibold text-brand-primary underline" href={link.href}>{link.knowledgeArea} — hoofdstuk {link.chapterNumber}</a></li>)}</ul></div>}
@@ -125,7 +130,7 @@ export function RetentionWeeklyPlayer({ check }: { check: WeeklyCheck }) {
     <p className="text-sm font-semibold text-brand-primary">Week {check.weekNumber} van 12 · Vraag {question.position} van 5</p>
     <h2 id="weekly-question-title" ref={heading} tabIndex={-1} className="text-xl font-bold leading-7 text-brand-dark">{question.presentation.questionText}</h2>
     {question.presentation.multiSelectInstruction && <p className="text-sm font-semibold">{question.presentation.multiSelectInstruction}</p>}
-    <fieldset disabled={answered || Boolean(localFeedback) || pending} className="space-y-3">
+    <fieldset disabled={!check.answeringAllowed || answered || Boolean(localFeedback) || pending} className="space-y-3">
       <legend className="sr-only">{question.presentation.type === 'SINGLE_CHOICE' ? 'Kies één antwoord' : 'Kies alle juiste antwoorden'}</legend>
       {question.presentation.options.map((option) => <label key={option.value} className="flex min-h-12 cursor-pointer items-start gap-3 rounded-card border border-border p-4 leading-6 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2">
         <input className="mt-1 size-5 shrink-0 accent-brand-primary" type={question.presentation.type === 'SINGLE_CHOICE' ? 'radio' : 'checkbox'} name={`retention-${question.id}`} checked={selected.includes(option.value) || (answered && option.selected)} onChange={() => setSelected((values) => question.presentation.type === 'SINGLE_CHOICE' ? [option.value] : values.includes(option.value) ? values.filter((value) => value !== option.value) : [...values, option.value])} />

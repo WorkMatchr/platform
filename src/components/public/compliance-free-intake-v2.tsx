@@ -1,5 +1,7 @@
 'use client'
 
+import { measure } from '@/lib/marketing/measurement'
+
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { LinkButton } from '@/components/ui/link-button'
@@ -34,6 +36,7 @@ export function ComplianceFreeIntakeV2({ answers, stepIndex, onChange, onFinish,
   const heading = useRef<HTMLHeadingElement>(null)
   const form = useRef<HTMLFormElement>(null)
   const moved = useRef(false)
+  const started = useRef(false)
   useEffect(() => {
     if (!moved.current) return
     heading.current?.focus({ preventScroll: true })
@@ -44,6 +47,7 @@ export function ComplianceFreeIntakeV2({ answers, stepIndex, onChange, onFinish,
   const progress = Math.round((stepIndex + 1) / 5 * 100)
   function changeStep(next: number) { moved.current = true; setError(null); onChange(answers, next) }
   function answer(value: string | string[]) {
+    if (!started.current) { started.current = true; measure('compliance_intake_start') }
     setError(null)
     onChange({ ...answers, [q.code]: value }, stepIndex)
   }
@@ -86,7 +90,7 @@ export function ComplianceFreeIntakeV2({ answers, stepIndex, onChange, onFinish,
       <p className="mt-2 text-text-secondary">In de bestaande Compliance-wijzer kunt u met een gratis account en actieve organisatie de basis van uw arbobeleid verkennen en een resultaat bewaren. Uw antwoorden uit deze intake worden nog niet meegenomen. U vult daar zelf de gevraagde gegevens in.</p>
       <div className="mt-5 flex flex-wrap gap-3">
         <LinkButton href={publicRoutes.complianceGuide}>Naar de Compliance-wijzer</LinkButton>
-        <Button variant="outline" onClick={() => { setResult(false); moved.current = true; onRestart() }}>Nieuwe intake starten</Button>
+        <Button variant="outline" onClick={() => { setResult(false); started.current = false; moved.current = true; onRestart() }}>Nieuwe intake starten</Button>
       </div>
       <p className="mt-5 text-sm text-text-secondary">Uitgebreide Compliance Scan — in voorbereiding en nog niet beschikbaar.</p>
     </section>
@@ -102,7 +106,7 @@ export function ComplianceFreeIntakeV2({ answers, stepIndex, onChange, onFinish,
       requestAnimationFrame(() => form.current?.querySelector<HTMLInputElement>('input')?.focus())
       return
     }
-    if (stepIndex === 4) { moved.current = true; onFinish(); setResult(true) }
+    if (stepIndex === 4) { moved.current = true; onFinish(); measure('free_intake_complete'); setResult(true) }
     else changeStep(stepIndex + 1)
   }} className="mx-auto max-w-4xl space-y-6">
     <p className="text-sm text-text-secondary" aria-live="polite">Hoofdvraag {stepIndex + 1} van 5 · Sommige vragen hebben meerdere keuzes.</p>

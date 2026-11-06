@@ -14,7 +14,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ cer
   const pdf = await buildLearningCertificatePdf(certificate)
   return new NextResponse(Buffer.from(pdf), { headers: {
     'Content-Type': 'application/pdf',
-    'Content-Disposition': `attachment; filename="${learningCertificateFilename(certificate.firstName, certificate.lastName)}"`,
+    'Content-Disposition': `attachment; filename="${learningCertificateFilename(certificate.firstName, certificate.lastName, certificate.templateVersion === 'WL-001-CERT-1.0' ? undefined : certificate.courseTitle)}"`,
     'Cache-Control': 'private, no-store',
     'X-Robots-Tag': 'noindex, nofollow, noarchive',
   } })

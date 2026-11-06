@@ -44,10 +44,13 @@ try {
   const baseline = process.argv.includes('--baseline-85')
   const migrationRoot = path.resolve('prisma/migrations')
   const allMigrations = readdirSync(migrationRoot).filter(name => /^\d/.test(name)).sort()
-  assert.equal(allMigrations.length, 95)
-  const expectedMigrations = allMigrations.filter(name => !baseline || (!pendingMigrations.includes(name)
-    && name !== '20261102120000_add_closed_contact_audit_retention'
-    && name !== '20261103100000_add_closed_contact_decision_register'))
+  assert.ok(allMigrations.length > 0)
+  // Keep the historical 85 baseline fixed; current-chain mode verifies every
+  // checked-out migration, including additive Academy migrations.
+  const historicalNames = JSON.parse(readFileSync('scripts/fixtures/d2c-historical-migration-names.json', 'utf8')) as string[]
+  assert.equal(historicalNames.length, 93)
+  assert.ok(historicalNames.every(name => allMigrations.includes(name)))
+  const expectedMigrations = baseline ? historicalNames.filter(name => !pendingMigrations.includes(name)) : allMigrations
   const migrateArgs = [process.env.npm_execpath!, 'run', 'db:deploy']
   if (baseline) {
     // Reconstruct the documented 85-migration state only in this newly created DB.

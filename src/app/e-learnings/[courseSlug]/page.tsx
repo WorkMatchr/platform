@@ -1,3 +1,4 @@
+import { resolveAcademyDefinition } from '@/lib/learning/academy-course-definition'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Container } from '@/components/layout/container'
@@ -16,6 +17,7 @@ export default async function LearningCoursePage({ params }: { params: Promise<{
   ])
   if (!course) notFound()
   const version = course.versions[0]
+  const isPrototype = resolveAcademyDefinition(course, version.sourceMetadata).schemaVersion === 1
   const enrollment = version?.enrollments[0]
   const chapters = version?.chapters ?? []
   const continueChapter = chapters.find((chapter) => chapter.progress[0]?.status === 'IN_PROGRESS')
@@ -28,7 +30,7 @@ export default async function LearningCoursePage({ params }: { params: Promise<{
     <Link className="text-sm font-semibold text-brand-primary hover:underline" href="/e-learnings/aanbod">← Opleidingsaanbod</Link>
     <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
       <article className="max-w-3xl">
-        <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-brand-primary">{course.code} · Prototypecontent</p>
+        <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-brand-primary">{course.code}{isPrototype ? ' · Prototypecontent' : ''}</p>
         <h1 className="text-3xl font-bold text-brand-dark sm:text-4xl">{course.title}</h1>
         <p className="mt-4 text-lg leading-8 text-text-secondary">{course.description}</p>
         <section className="mt-8" aria-labelledby="available-chapters">
@@ -46,14 +48,14 @@ export default async function LearningCoursePage({ params }: { params: Promise<{
                 <div><p className="font-semibold text-brand-dark">Hoofdstuk {chapter.position} · {chapter.title}</p><p className="mt-1 text-sm text-text-secondary">{durationLabel}</p></div>
                 {isStarted
                   ? <Link className="inline-flex min-h-11 items-center rounded-control border border-border px-4 font-semibold text-brand-primary" href={href}>{chapterProgress?.status === 'COMPLETED' ? 'Opnieuw bekijken' : chapterProgress?.status === 'IN_PROGRESS' ? 'Verdergaan' : 'Open hoofdstuk'}</Link>
-                  : <form action={startLearningCourseAction}><input type="hidden" name="courseSlug" value={course.slug} /><input type="hidden" name="chapterSlug" value={chapter.slug} /><button type="submit" className="inline-flex min-h-11 items-center rounded-control border border-border px-4 font-semibold text-brand-primary">Start hoofdstuk {chapter.position}</button></form>}
+                  : <form action={startLearningCourseAction}><input type="hidden" name="courseSlug" value={course.slug} /><input type="hidden" name="courseVersionId" value={version.id} /><input type="hidden" name="chapterSlug" value={chapter.slug} /><button type="submit" className="inline-flex min-h-11 items-center rounded-control border border-border px-4 font-semibold text-brand-primary">Start hoofdstuk {chapter.position}</button></form>}
               </li>
             })}
           </ul>
           {chapters.some((chapter) => chapter.position === 3) && !chapters.some((chapter) => chapter.position === 2)
             && <p className="mt-3 text-sm leading-6 text-text-secondary">Hoofdstuk 2 is nog in ontwikkeling. Hoofdstuk 3 blijft hoofdstuk 3 in de cursusvolgorde.</p>}
         </section>
-        <p className="mt-8 rounded-card border border-warning/30 bg-warning/10 p-4 text-sm leading-6">Deze cursus bevat prototypecontent die nog inhoudelijk en juridisch wordt beoordeeld. De cursus is geen certificering of professionele kwalificatie.</p>
+        {isPrototype && <p className="mt-8 rounded-card border border-warning/30 bg-warning/10 p-4 text-sm leading-6">Deze cursus bevat prototypecontent die nog inhoudelijk en juridisch wordt beoordeeld. De cursus is geen certificering of professionele kwalificatie.</p>}
       </article>
       <aside><Card className="space-y-4">
         <p className="text-sm font-semibold text-brand-primary">{course.code} · {version?.version ?? 'Prototype'}</p>
@@ -61,7 +63,7 @@ export default async function LearningCoursePage({ params }: { params: Promise<{
         {isStarted && continueChapter && <p className="text-sm leading-6">Hoofdstuk {continueChapter.position} · {progress?.status === 'COMPLETED' ? 'afgerond' : `${progress?.progressPercentage ?? 0}% doorlopen`}</p>}
         {isStarted && continueChapter
           ? <Link className="flex min-h-11 items-center justify-center rounded-control bg-brand-primary px-4 text-center font-semibold text-text-on-dark" href={`/e-learnings/${course.slug}/leren/${continueChapter.slug}?version=${encodeURIComponent(version?.version ?? '')}${progress?.status === 'COMPLETED' ? '&opnieuw=1' : ''}`}>{progress?.status === 'COMPLETED' ? 'Hoofdstuk opnieuw bekijken' : 'Verder waar u gebleven was'}</Link>
-          : <form action={startLearningCourseAction}><input type="hidden" name="courseSlug" value={course.slug} /><button type="submit" className="inline-flex min-h-11 w-full items-center justify-center rounded-control bg-brand-primary px-4 font-semibold text-text-on-dark">Start deze e-learning</button></form>}
+          : <form action={startLearningCourseAction}><input type="hidden" name="courseSlug" value={course.slug} /><input type="hidden" name="courseVersionId" value={version.id} /><button type="submit" className="inline-flex min-h-11 w-full items-center justify-center rounded-control bg-brand-primary px-4 font-semibold text-text-on-dark">Start deze e-learning</button></form>}
         {examOverview?.eligible && <Link className="inline-flex min-h-11 w-full items-center justify-center rounded-control border border-brand-primary px-4 text-center font-semibold text-brand-primary" href={examOverview.activeAttempt ? `/e-learnings/${course.slug}/eindtoets/${examOverview.activeAttempt.id}` : `/e-learnings/${course.slug}/eindtoets`}>{examOverview.activeAttempt ? 'Hervat eindtoets' : examOverview.attempts.some((attempt) => attempt.passed) ? 'Bekijk uw eindtoets' : 'Start eindtoets'}</Link>}
         <Link className="block text-center text-sm font-semibold text-brand-primary hover:underline" href="/e-learnings/mijn">Mijn e-learnings</Link>
       </Card></aside>

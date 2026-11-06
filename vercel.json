@@ -2,6 +2,8 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "git": {
     "deploymentEnabled": {
+      "codex/p11-financial-integration-recovery": false,
+      "codex/wp21-integrated-release-candidate": false,
       "codex/db05-runtime-preflight": false,
       "codex/wp15-integrated-readiness": false,
       "codex/wp16-production-readiness": false,

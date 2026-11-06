@@ -672,6 +672,8 @@ erDiagram
   ProfessionalSubscription ||--o{ FinancialEvent : auditeert_mandate
   ProfessionalSubscription ||--o{ ProfessionalSubscriptionPayment : incasseert
   ProfessionalSubscriptionPayment ||--o| FinancialInvoice : factureert
+  FinancialInvoice ||--o{ FinancialInvoice : oorspronkelijke_factuur
+  FinancialInvoice ||--o| FinancialRefund : pro_credit_cashrefund
   FinancialInvoice ||--o| FinancialJorttSync : projecteert
   FinancialJorttSync ||--o{ FinancialJorttSyncAttempt : probeert
   DiscountCode ||--o{ DiscountRedemption : gebruikt
@@ -686,6 +688,8 @@ erDiagram
     string[] errorCodes
   }
 ```
+
+Een Pro-creditfactuur verwijst via `originalInvoiceId` naar de oorspronkelijke betaalde factuur. De optionele `FinancialRefund.proCreditNoteId` koppelt een afzonderlijke cashrefund aan precies één Pro-credit; deze bron en `purchaseId` sluiten elkaar uit. De creditfactuur bestaat onafhankelijk van de refund en wijzigt geen abonnement of creditwallet.
 
 Een Pro-abonnement bewaart uitsluitend de Mollie customer-, mandate- en subscription-identifiers plus de gevalideerde mandate-status, methode en verificatietijd. Een iDEAL-first-payment levert bij een geactiveerde SEPA-methode een direct-debit-mandate op; kaart blijft een afzonderlijk geldig alternatief. Gevoelige rekening- en kaartgegevens blijven uitsluitend bij Mollie.
 ## ADR-013 Contract — enkelvoudige tenantcontext
@@ -770,3 +774,9 @@ De scan en haar resultaten blijven immutable. Alleen de operationele velden van 
 ## Compliance F4 (nog niet uitgerold)
 
 Nullable `ComplianceQuestionDefinition.visibilityCondition` bewaart versiegebonden zichtbaarheid. Geen bestaande data gewijzigd; zie [F4](compliance-f4-expanded-guide.md).
+
+## Certificaatontwerper
+LearningCertificateDesign 1—N LearningCertificateDesignBinding (GLOBAL of
+LearningCourse.id). Nieuwe LearningCertificate-uitgifte bevat een onveranderbare
+kopie van de gekozen definitie en checksum; de oorspronkelijke certificaat-,
+gebruiker-, inschrijving- en examenrelaties blijven leidend.

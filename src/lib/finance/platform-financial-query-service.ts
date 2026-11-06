@@ -41,7 +41,7 @@ export async function listPlatformFinancialPayments(actorUserId: string, filters
     organization: filters.organization ? { name: { contains: filters.organization, mode: 'insensitive' } } : undefined,
   }
   const select = {
-    id: true, createdAt: true, kind: true, status: true, molliePaymentId: true, amountInclVatCents: true,
+    id: true, billingOrganizationName: true, createdAt: true, kind: true, status: true, molliePaymentId: true, amountInclVatCents: true,
     organization: { select: { id: true, name: true } }, invoice: { select: { id: true, invoiceNumber: true } },
   } satisfies Prisma.FinancialPurchaseSelect
   return paginated(filters.page, () => prisma.financialPurchase.count({ where }), (skip) => prisma.financialPurchase.findMany({ where, select, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], skip, take: PAGE_SIZE }))
@@ -59,6 +59,7 @@ export async function getPlatformFinancialPaymentDetail(actorUserId: string, pur
       kind: true,
       status: true,
       packageLabel: true,
+      billingOrganizationName: true,
       credits: true,
       molliePaymentId: true,
       amountExclVatCents: true,
@@ -76,6 +77,7 @@ export async function getPlatformFinancialPaymentDetail(actorUserId: string, pur
           completedAt: true,
           mollieRefundId: true,
           creditNote: { select: { id: true, invoiceNumber: true } },
+    proCreditNote: { select: { id: true, invoiceNumber: true, molliePaymentId: true, organization: { select: { name: true } }, originalInvoice: { select: { id: true, invoiceNumber: true } } } },
         },
       },
       creditedTransaction: {
@@ -110,7 +112,7 @@ export async function listPlatformFinancialInvoices(actorUserId: string, filters
     organization: filters.organization ? { name: { contains: filters.organization, mode: 'insensitive' } } : undefined,
   }
   const select = {
-    id: true, invoiceNumber: true, issuedAt: true, documentType: true, amountExclVatCents: true, vatAmountCents: true, amountInclVatCents: true,
+    id: true, customerOrganizationName: true, invoiceNumber: true, issuedAt: true, documentType: true, amountExclVatCents: true, vatAmountCents: true, amountInclVatCents: true,
     organization: { select: { id: true, name: true } }, purchase: { select: { status: true } },
     subscriptionPayment: { select: { status: true } }, refund: { select: { status: true } },
     jorttSync: { select: { invoiceId: true, status: true, remoteInvoiceNumber: true, lastErrorCode: true, updatedAt: true, syncedAt: true } },
@@ -124,14 +126,16 @@ export async function listPlatformFinancialRefunds(actorUserId: string, filters:
   const where: Prisma.FinancialRefundWhereInput = {
     status: filters.status,
     requestedAt: dateWhere(filters),
-    purchase: filters.organization
-      ? { organization: { name: { contains: filters.organization, mode: 'insensitive' } } }
-      : undefined,
+    OR: filters.organization ? [
+      { purchase: { organization: { name: { contains: filters.organization, mode: 'insensitive' } } } },
+      { proCreditNote: { organization: { name: { contains: filters.organization, mode: 'insensitive' } } } },
+    ] : undefined,
   }
   const select = {
-    id: true, status: true, amountCents: true, requestedAt: true, completedAt: true, mollieRefundId: true,
-    purchase: { select: { id: true, status: true, molliePaymentId: true, organization: { select: { id: true, name: true } }, invoice: { select: { id: true, invoiceNumber: true } } } },
+    id: true, status: true, reconciliationRequired: true, providerDispatchVersion: true, amountCents: true, requestedAt: true, completedAt: true, mollieRefundId: true,
+    purchase: { select: { id: true, billingOrganizationName: true, status: true, molliePaymentId: true, organization: { select: { id: true, name: true } }, invoice: { select: { id: true, invoiceNumber: true } } } },
     creditNote: { select: { id: true, invoiceNumber: true } },
+    proCreditNote: { select: { id: true, invoiceNumber: true, molliePaymentId: true, organization: { select: { name: true } }, originalInvoice: { select: { id: true, invoiceNumber: true } } } },
   } satisfies Prisma.FinancialRefundSelect
   return paginated(filters.page, () => prisma.financialRefund.count({ where }), (skip) => prisma.financialRefund.findMany({ where, select, orderBy: [{ requestedAt: 'desc' }, { id: 'desc' }], skip, take: PAGE_SIZE }))
 }

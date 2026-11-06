@@ -3,7 +3,8 @@ import 'server-only'
 import { Prisma } from '@/generated/prisma/client'
 import { MOLLIE_SANDBOX_ACCEPTANCE_PRICING } from './mollie-test-pricing'
 import { WORKMATCHR_SELLER } from './financial-contract'
-import { mirrorCreditNoteSnapshot } from './credit-note-snapshot'
+import { mirrorCreditNoteSnapshot, legalPartialCreditNoteSnapshot } from './credit-note-snapshot'
+import { resolveProInvoiceSource } from './pro-payment-source'
 
 type Transaction = Prisma.TransactionClient
 
@@ -96,7 +97,7 @@ export function formatFinancialDocumentNumber(sequence: number, issuedAt: Date) 
   return `WM-${year.slice(-2)}${month}5${String(sequence).padStart(3, '0')}`
 }
 
-async function allocateInvoiceSequence(transaction: Transaction) {
+export async function allocateInvoiceSequence(transaction: Transaction) {
   await transaction.$queryRaw(Prisma.sql`SELECT pg_advisory_xact_lock(hashtextextended('financial-invoice-counter', 0))::text AS "lock"`)
   await transaction.$executeRaw(Prisma.sql`
     INSERT INTO "FinancialInvoiceCounter" ("id", "nextNumber", "updatedAt")
@@ -122,22 +123,24 @@ export async function issueInvoiceForPaidPurchase(
     where: { id: purchaseId },
     include: { creditedTransaction: { select: { createdAt: true } } },
   })
-  if (!purchase || purchase.status !== 'PAID' || !purchase.molliePaymentId) throw new Error('PAID_PURCHASE_REQUIRED')
+  if (!purchase || purchase.status !== 'PAID' || (!purchase.molliePaymentId && !(purchase.kind === 'ACADEMY_COURSE' && purchase.amountInclVatCents === 0 && purchase.amountExclVatCents === 0 && purchase.vatAmountCents === 0))) throw new Error('PAID_PURCHASE_REQUIRED')
   const paidAt = purchase.paidAt
   if (!paidAt) throw new Error('INVOICE_V2_PAYMENT_DATE_REQUIRED')
   const isCredits = purchase.kind === 'CREDIT_PACKAGE'
+  const isAcademy = purchase.kind === 'ACADEMY_COURSE'
   const supplyDate = isCredits ? purchase.creditedTransaction?.createdAt : paidAt
   if (!supplyDate) throw new Error('INVOICE_V2_SUPPLY_DATE_REQUIRED')
-  const servicePeriodStart = isCredits ? null : paidAt
+  const isSubscription = purchase.kind === 'PRO_SUBSCRIPTION'
+  const servicePeriodStart = isSubscription ? paidAt : null
   const servicePeriodEnd = servicePeriodStart ? addUtcMonth(servicePeriodStart) : null
   if (isCredits && (purchase.credits < 1 || purchase.baseAmountCents % purchase.credits !== 0)) {
     throw new Error('INVOICE_V2_CREDIT_UNIT_PRICE_NOT_EXACT')
   }
   const totalDiscount = purchase.packageDiscountCents + purchase.proDiscountCents + purchase.discountCodeDiscountCents
   const line = buildInvoiceV2Line({
-    description: isCredits ? `${purchase.credits} WorkMatchr credits` : 'WorkMatchr Pro',
+    description: isAcademy ? `[TEST — TAX REVIEW REQUIRED] ${purchase.packageLabel}` : isCredits ? `${purchase.credits} WorkMatchr credits` : isSubscription ? 'WorkMatchr Pro' : purchase.packageLabel,
     quantity: isCredits ? purchase.credits : 1,
-    unit: isCredits ? 'credit' : 'maand',
+    unit: isAcademy ? 'opleidingspakket' : isCredits ? 'credit' : isSubscription ? 'maand' : 'scan',
     unitPriceExclVatCents: isCredits ? purchase.baseAmountCents / purchase.credits : purchase.baseAmountCents,
     discountAmountCents: totalDiscount,
     vatRateBps: purchase.vatRateBps,
@@ -194,7 +197,8 @@ export async function issueInvoiceForPaidPurchase(
     },
   })
   await createInvoiceV2Details(transaction, invoice.id, line)
-  await transaction.financialJorttSync.create({ data: { invoiceId: invoice.id, technicalReference: `workmatchr-invoice:${invoice.id}` } })
+  // Academy sandbox documents must never enter live accounting queues.
+  if (invoice.pricingMode !== 'ACADEMY_SANDBOX') await transaction.financialJorttSync.create({ data: { invoiceId: invoice.id, technicalReference: `workmatchr-invoice:${invoice.id}` } })
   await transaction.financialEvent.create({
     data: {
       actorUserId: purchase.createdByUserId,
@@ -207,7 +211,7 @@ export async function issueInvoiceForPaidPurchase(
         invoiceNumber: invoice.invoiceNumber,
         sequenceNumber,
         pricingMode: invoice.pricingMode,
-        pricingPolicy: invoice.pricingMode === 'MOLLIE_TEST_ACCEPTANCE'
+        pricingPolicy: invoice.pricingMode === 'ACADEMY_SANDBOX' ? 'ACADEMY-PRICE-TEST-1.0' : invoice.pricingMode === 'MOLLIE_TEST_ACCEPTANCE'
           ? MOLLIE_SANDBOX_ACCEPTANCE_PRICING
           : 'STANDARD',
         amountExclVatCents: invoice.amountExclVatCents,
@@ -229,15 +233,19 @@ export async function issueCreditNoteForCompletedRefund(
   if (existing) return existing
   const refund = await transaction.financialRefund.findUnique({
     where: { id: refundId },
-    include: { purchase: { include: { invoice: { include: { lines: true, vatSummaries: true } } } } },
+    include: { legalDecision: true, purchase: { include: { invoice: { include: { lines: true, vatSummaries: true } } } } },
   })
-  if (!refund || refund.status !== 'REFUNDED' || !refund.purchase.invoice) throw new Error('COMPLETED_REFUND_REQUIRED')
+  if (!refund || refund.status !== 'REFUNDED' || !refund.purchase?.invoice) throw new Error('COMPLETED_REFUND_REQUIRED')
   const original = refund.purchase.invoice
-  if (refund.amountCents !== refund.purchase.amountInclVatCents || refund.amountCents !== original.amountInclVatCents
-    || refund.credits !== original.credits || original.organizationId !== refund.purchase.organizationId) {
+  const partial = refund.legalDecision
+  if (partial && (refund.purchase.kind !== 'ACADEMY_COURSE' || refund.purchase.pricingMode !== 'ACADEMY_SANDBOX'
+    || partial.purchaseId !== refund.purchaseId || partial.amountInclVatCents !== refund.amountCents || refund.credits !== 0
+    || original.organizationId !== refund.purchase.organizationId)) throw new Error('ACADEMY_LEGAL_CREDIT_ALLOCATION_REQUIRED')
+  if (!partial && (refund.amountCents !== refund.purchase.amountInclVatCents || refund.amountCents !== original.amountInclVatCents
+    || refund.credits !== original.credits || original.organizationId !== refund.purchase.organizationId)) {
     throw new Error('FULL_REFUND_INVOICE_REQUIRED')
   }
-  const details = mirrorCreditNoteSnapshot(original)
+  const details = partial ? legalPartialCreditNoteSnapshot(original, partial) : mirrorCreditNoteSnapshot(original)
   const sequenceNumber = await allocateInvoiceSequence(transaction)
   const scale = (value: number) => -value
   const invoice = await transaction.financialInvoice.create({
@@ -273,13 +281,13 @@ export async function issueCreditNoteForCompletedRefund(
       packageSku: original.packageSku,
       packageLabel: `Correctie ${original.packageLabel}`,
       credits: -refund.credits,
-      baseAmountCents: scale(original.baseAmountCents),
-      packageDiscountCents: scale(original.packageDiscountCents),
-      proDiscountCents: scale(original.proDiscountCents),
-      discountCodeDiscountCents: scale(original.discountCodeDiscountCents),
-      amountExclVatCents: scale(original.amountExclVatCents),
+      baseAmountCents: partial ? -(partial.amountExclVatCents) : scale(original.baseAmountCents),
+      packageDiscountCents: partial ? -(0) : scale(original.packageDiscountCents),
+      proDiscountCents: partial ? -(0) : scale(original.proDiscountCents),
+      discountCodeDiscountCents: partial ? -(0) : scale(original.discountCodeDiscountCents),
+      amountExclVatCents: partial ? -(partial.amountExclVatCents) : scale(original.amountExclVatCents),
       vatRateBps: original.vatRateBps,
-      vatAmountCents: scale(original.vatAmountCents),
+      vatAmountCents: partial ? -(partial.vatAmountCents) : scale(original.vatAmountCents),
       amountInclVatCents: -refund.amountCents,
       currency: original.currency,
       molliePaymentId: original.molliePaymentId,
@@ -287,7 +295,8 @@ export async function issueCreditNoteForCompletedRefund(
       vatSummaries: { create: details.vatSummaries },
     },
   })
-  await transaction.financialJorttSync.create({ data: { invoiceId: invoice.id, technicalReference: `workmatchr-invoice:${invoice.id}` } })
+  // Academy sandbox documents must never enter live accounting queues.
+  if (invoice.pricingMode !== 'ACADEMY_SANDBOX') await transaction.financialJorttSync.create({ data: { invoiceId: invoice.id, technicalReference: `workmatchr-invoice:${invoice.id}` } })
   return invoice
 }
 
@@ -306,7 +315,7 @@ export async function issueInvoiceForPaidSubscriptionPayment(
       },
     },
   })
-  const customerSnapshot = payment?.subscription.firstPaymentPurchase?.invoice
+  const customerSnapshot = payment ? (await resolveProInvoiceSource(transaction, payment.subscriptionId)).invoice : null
   if (!payment || payment.status !== 'PAID' || !customerSnapshot) {
     throw new Error('PAID_SUBSCRIPTION_PAYMENT_WITH_CUSTOMER_SNAPSHOT_REQUIRED')
   }
@@ -363,7 +372,8 @@ export async function issueInvoiceForPaidSubscriptionPayment(
     },
   })
   await createInvoiceV2Details(transaction, invoice.id, line)
-  await transaction.financialJorttSync.create({ data: { invoiceId: invoice.id, technicalReference: `workmatchr-invoice:${invoice.id}` } })
+  // Academy sandbox documents must never enter live accounting queues.
+  if (invoice.pricingMode !== 'ACADEMY_SANDBOX') await transaction.financialJorttSync.create({ data: { invoiceId: invoice.id, technicalReference: `workmatchr-invoice:${invoice.id}` } })
   await transaction.financialEvent.create({
     data: {
       subscriptionId: payment.subscriptionId,

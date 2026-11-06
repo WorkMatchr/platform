@@ -72,7 +72,9 @@ async function seedFinalExam() {
     }
 
     if (examVersion.status !== 'DRAFT') {
-      if (examVersion.status !== 'PUBLISHED') throw new Error('WL-001-EXAM-1.0 is niet publiceerbaar.')
+      // A v1.1 upgrade retires v1.0. Replay validates the frozen bank below;
+      // it must neither reject a valid history nor republish the old version.
+      if (!['PUBLISHED', 'RETIRED'].includes(examVersion.status)) throw new Error('WL-001-EXAM-1.0 heeft een onverwachte status.')
       if (examVersion.questions.length !== 50) throw new Error('Gepubliceerde ExamVersion heeft niet exact 50 vragen.')
       for (const [index, source] of bank.entries()) {
         const mapping = examVersion.questions.find((item) => item.position === index + 1)

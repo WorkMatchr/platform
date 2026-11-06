@@ -1,8 +1,11 @@
+import { createPdfStructure } from './pdf-structure'
+import type { PDFRef } from 'pdf-lib'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib'
 import type { ArboGuideReportSnapshot } from '@/lib/arbo-guides/arbo-guide-run-service'
 import { groupArboGuideSources, normalizeArboGuideReportSource } from '@/lib/arbo-guides/arbo-guide-sources'
+import { complianceReportSources } from '@/lib/compliance/compliance-report-sources'
 import type { ComplianceReportData } from './compliance-report'
 
 const PAGE_WIDTH = 595.28
@@ -61,9 +64,11 @@ export async function buildComplianceReportPdf(report: ArboGuideReportSnapshot |
   if (report.tier !== 'BASIC') throw new Error('De uitgebreide rapportage is nog niet beschikbaar.')
 
   const document = await PDFDocument.create()
+  const tags = createPdfStructure(document)
   const guideTitle = options.guideTitle ?? 'Compliance-wijzer'
   document.setTitle(`WorkMatchr ${guideTitle} rapport`)
   document.setAuthor('WorkMatchr')
+  document.setLanguage('nl-NL')
   document.setSubject(`Indicatieve ${guideTitle}, beoordelingsset versie ${report.assessmentVersion}`)
   document.setCreationDate(new Date(report.scannedAt))
   const regular = await document.embedFont(StandardFonts.Helvetica)
@@ -81,24 +86,25 @@ export async function buildComplianceReportPdf(report: ArboGuideReportSnapshot |
   function preparePage(cover = false): void {
     y = PAGE_HEIGHT - TOP
     if (cover) {
-      page.drawImage(workmatchrLogo, { x: MARGIN_X, y: y - PDF_LOGO_HEIGHT + 8, width: PDF_LOGO_WIDTH, height: PDF_LOGO_HEIGHT })
+      tags.mark(page, tags.element('Figure', undefined, 'WorkMatchr'), () => page.drawImage(workmatchrLogo, { x: MARGIN_X, y: y - PDF_LOGO_HEIGHT + 8, width: PDF_LOGO_WIDTH, height: PDF_LOGO_HEIGHT }))
       y -= PDF_LOGO_HEIGHT + 8
     } else {
-      page.drawText('WorkMatchr', { x: MARGIN_X, y, size: 12, font: bold, color: brandDark })
+      tags.artifact(page, () => page.drawText('WorkMatchr', { x: MARGIN_X, y, size: 12, font: bold, color: brandDark }))
       y -= 18
     }
-    page.drawLine({ start: { x: MARGIN_X, y }, end: { x: PAGE_WIDTH - MARGIN_X, y }, color: brandBlue, thickness: 1.2 })
+    tags.artifact(page, () => page.drawLine({ start: { x: MARGIN_X, y }, end: { x: PAGE_WIDTH - MARGIN_X, y }, color: brandBlue, thickness: 1.2 }))
     y -= 24
   }
   function newPage(): void { page = document.addPage([PAGE_WIDTH, PAGE_HEIGHT]); preparePage() }
   function ensureSpace(height: number): void { if (y - height < BOTTOM) newPage() }
-  function text(value: string, options: { font?: PDFFont; size?: number; color?: ReturnType<typeof rgb>; gapAfter?: number; indent?: number } = {}): void {
+  function text(value: string, options: { font?: PDFFont; size?: number; color?: ReturnType<typeof rgb>; gapAfter?: number; indent?: number; role?: string; element?: PDFRef } = {}): void {
+    const element = options.element ?? tags.element(options.role ?? 'P')
     const usedFont = options.font ?? regular
     const size = options.size ?? BODY_SIZE
     const indent = options.indent ?? 0
     for (const line of wrapText(value, usedFont, size, CONTENT_WIDTH - indent)) {
       ensureSpace(LINE_HEIGHT)
-      page.drawText(line, { x: MARGIN_X + indent, y, size, font: usedFont, color: options.color ?? textColor })
+      tags.mark(page, element, () => page.drawText(line, { x: MARGIN_X + indent, y, size, font: usedFont, color: options.color ?? textColor }))
       y -= LINE_HEIGHT
     }
     y -= options.gapAfter ?? 4
@@ -106,17 +112,19 @@ export async function buildComplianceReportPdf(report: ArboGuideReportSnapshot |
   function heading(value: string): void {
     ensureSpace(34)
     y -= 7
-    text(value, { font: bold, size: 14, color: brandDark, gapAfter: 6 })
+    text(value, { role: 'H2', font: bold, size: 14, color: brandDark, gapAfter: 6 })
   }
   function divider(): void {
     ensureSpace(18)
-    page.drawLine({ start: { x: MARGIN_X, y }, end: { x: PAGE_WIDTH - MARGIN_X, y }, color: border, thickness: 0.7 })
+    tags.artifact(page, () => page.drawLine({ start: { x: MARGIN_X, y }, end: { x: PAGE_WIDTH - MARGIN_X, y }, color: border, thickness: 0.7 }))
     y -= 14
   }
   function twoColumnList(values: readonly string[]): void {
     const columnGap = 18
     const columnWidth = (CONTENT_WIDTH - columnGap) / 2
     const rows = Math.ceil(values.length / 2)
+    const list = tags.element('L')
+    const items = values.map(() => tags.element('LBody', tags.element('LI', list)))
     for (let row = 0; row < rows; row += 1) {
       const left = values[row]
       const right = values[row + rows]
@@ -124,8 +132,8 @@ export async function buildComplianceReportPdf(report: ArboGuideReportSnapshot |
       const rightLines = right ? wrapText(`- ${right}`, regular, BODY_SIZE, columnWidth) : []
       const rowLines = Math.max(leftLines.length, rightLines.length)
       ensureSpace(rowLines * LINE_HEIGHT)
-      leftLines.forEach((line, index) => page.drawText(line, { x: MARGIN_X, y: y - index * LINE_HEIGHT, size: BODY_SIZE, font: regular, color: textColor }))
-      rightLines.forEach((line, index) => page.drawText(line, { x: MARGIN_X + columnWidth + columnGap, y: y - index * LINE_HEIGHT, size: BODY_SIZE, font: regular, color: textColor }))
+      leftLines.forEach((line, index) => tags.mark(page, items[row], () => page.drawText(line, { x: MARGIN_X, y: y - index * LINE_HEIGHT, size: BODY_SIZE, font: regular, color: textColor })))
+      rightLines.forEach((line, index) => tags.mark(page, items[row + rows], () => page.drawText(line, { x: MARGIN_X + columnWidth + columnGap, y: y - index * LINE_HEIGHT, size: BODY_SIZE, font: regular, color: textColor })))
       y -= rowLines * LINE_HEIGHT
     }
     y -= 4
@@ -137,14 +145,15 @@ export async function buildComplianceReportPdf(report: ArboGuideReportSnapshot |
 
   const scanDate = new Intl.DateTimeFormat('nl-NL', { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(report.scannedAt))
   preparePage(true)
-  text(guideTitle, { font: bold, size: 25, color: brandDark, gapAfter: 10 })
+  text(guideTitle, { role: 'H1', font: bold, size: 25, color: brandDark, gapAfter: 10 })
   text('Indicatief basisrapport', { font: bold, size: 13, color: brandBlue, gapAfter: 18 })
   if (report.organizationName) text(`Organisatie: ${report.organizationName}`, { font: bold, gapAfter: 3 })
   if (options.reportNumber) text(`Rapportnummer: ${options.reportNumber}`, { font: bold, gapAfter: 3 })
   text(`Datum van de scan: ${scanDate}`, { color: muted, gapAfter: 3 })
   text(`Beoordelingsset: versie ${report.assessmentVersion}`, { color: muted, gapAfter: 18 })
+  if ('framework' in report) text(`Beoordelingsmethode: ${report.framework.frameworkCode} / ${report.framework.version}`, { color: muted, gapAfter: 3 })
   text(`Rapportstructuur: versie ${report.reportVersion}`, { color: muted, gapAfter: 18 })
-  text(`Dit rapport vat de uitkomst van de gratis ${guideTitle} samen. Het bevat geen formele goedkeuring, score of certificaat.`, { color: muted })
+  text(`Dit rapport vat de uitkomst van de ${guideTitle} samen. Het bevat geen formele goedkeuring, score of certificaat.`, { color: muted })
 
   const managementSummary = 'managementSummary' in report ? report.managementSummary : undefined
   const scenarioLabels = 'scenarioLabels' in report ? report.scenarioLabels : undefined
@@ -160,11 +169,17 @@ export async function buildComplianceReportPdf(report: ArboGuideReportSnapshot |
   const v2 = 'schemaVersion' in report && report.schemaVersion === 2 ? report : null
   const attentionItems = 'attentionItems' in report ? report.attentionItems : report.results.filter(r => r.status !== 'IN_ORDER' && r.status !== 'NOT_APPLICABLE')
   heading('Samenvatting')
-  text(`${report.summary.order} onderdelen op orde`)
-  text(`${report.summary.action} onderdelen ${v2 ? 'vereisen' : 'vragen'} actie`)
-  if ('check' in report.summary) text(`${report.summary.check} onderdelen moeten worden gecontroleerd`)
-  else { text(`${report.summary.attention} onderdelen vragen aandacht`); text(`${report.summary.notAssessed} onderdelen niet beoordeeld`) }
-  text(`${report.summary.notApplicable} onderdelen niet van toepassing`)
+  const summaryTable = tags.element('Table')
+  const summaryRows: Array<[string, number]> = [['Op orde', report.summary.order], [v2 ? 'Actie vereist' : 'Actie nodig', report.summary.action],
+    ...('check' in report.summary ? [['Controleren', report.summary.check] as [string, number]] : [['Aandacht nodig', report.summary.attention], ['Niet beoordeeld', report.summary.notAssessed]] as Array<[string, number]>),
+    ['Niet van toepassing', report.summary.notApplicable]]
+  for (const [label, count] of summaryRows) {
+    ensureSpace(LINE_HEIGHT)
+    const row = tags.element('TR', summaryTable)
+    tags.mark(page, tags.element('TH', row), () => page.drawText(label, { x: MARGIN_X, y, size: BODY_SIZE, font: regular, color: textColor }))
+    tags.mark(page, tags.element('TD', row), () => page.drawText(String(count), { x: MARGIN_X + 200, y, size: BODY_SIZE, font: regular, color: textColor }))
+    y -= LINE_HEIGHT + 4
+  }
 
   if (attentionItems.length > 0) {
     heading('Belangrijkste aandachtspunten')
@@ -175,7 +190,7 @@ export async function buildComplianceReportPdf(report: ArboGuideReportSnapshot |
 
   // Detailresultaten beginnen voor iedere Arbo-wijzer op een nieuwe pagina.
   newPage()
-  text('Resultaten per onderwerp', { font: bold, size: 18, color: brandDark, gapAfter: 10 })
+  text('Resultaten per onderwerp', { role: 'H2', font: bold, size: 18, color: brandDark, gapAfter: 10 })
   for (const result of report.results) {
     const estimatedHeight = 48
       + measuredTextHeight(result.title, bold, 12)
@@ -183,7 +198,7 @@ export async function buildComplianceReportPdf(report: ArboGuideReportSnapshot |
       + measuredTextHeight(`Vervolgstap: ${result.nextStep}`)
     ensureSpace(Math.min(estimatedHeight, PAGE_HEIGHT - TOP - BOTTOM))
     divider()
-    text(result.title, { font: bold, size: 12, color: brandDark, gapAfter: 2 })
+    text(result.title, { role: 'H3', font: bold, size: 12, color: brandDark, gapAfter: 2 })
     text(`Status: ${result.statusLabel}`, { font: bold, color: brandBlue, gapAfter: 3 })
     text(result.explanation)
     if ('sufficientlyAssessed' in result && !result.sufficientlyAssessed) text('Dit onderwerp is nog niet voldoende beoordeeld.', { color: muted })
@@ -199,13 +214,19 @@ export async function buildComplianceReportPdf(report: ArboGuideReportSnapshot |
   }
 
   heading('Geraadpleegde bronnen')
-  const sourceGroups = groupArboGuideSources(report.sources.map(normalizeArboGuideReportSource))
+  const sourceGroups = v2
+    ? [{ label: 'Bronbindingen van deze beoordeling', sources: complianceReportSources(v2) }]
+    : groupArboGuideSources(report.sources.map(normalizeArboGuideReportSource))
   for (const group of sourceGroups) {
     text(group.label, { font: bold, size: 11, color: brandDark, gapAfter: 3 })
     for (const source of group.sources) {
       text(`${source.title} - ${source.publisher}`, { font: bold, gapAfter: 1 })
       text(source.url, { color: brandBlue, gapAfter: 1 })
       text(`Door WorkMatchr gecontroleerd op ${source.reviewedAt}`, { size: 8.5, color: muted, gapAfter: 6 })
+      if ('sourceVersionId' in source && 'claimId' in source) {
+        text(`Bronrevisie: ${source.sourceVersionId}`, { size: 8.5, color: muted })
+        text(`Claimreferentie: ${source.claimId}`, { size: 8.5, color: muted })
+      }
     }
   }
 
@@ -215,7 +236,8 @@ export async function buildComplianceReportPdf(report: ArboGuideReportSnapshot |
   const pages = document.getPages()
   pages.forEach((currentPage, index) => {
     const label = `Pagina ${index + 1} van ${pages.length}`
-    currentPage.drawText(label, { x: PAGE_WIDTH - MARGIN_X - regular.widthOfTextAtSize(label, 8), y: 28, size: 8, font: regular, color: muted })
+    tags.artifact(currentPage, () => currentPage.drawText(label, { x: PAGE_WIDTH - MARGIN_X - regular.widthOfTextAtSize(label, 8), y: 28, size: 8, font: regular, color: muted }))
   })
+  tags.finish()
   return document.save()
 }

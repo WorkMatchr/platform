@@ -18,7 +18,7 @@ async function fixture() {
   const auth = betterAuth({ ...applicationAuth.options, baseURL: 'http://localhost:3046', trustedOrigins: ['http://localhost:3046'],
     secret: 'synthetic-unit-test-secret-not-for-use-9384', database: memoryAdapter(db), plugins: [], advanced: { ...applicationAuth.options.advanced, disableOriginCheck: false, disableCSRFCheck: false } })
   const ctx = await auth.$context
-  const user = await ctx.internalAdapter.createUser({ name: 'Synthetic session test', email, emailVerified: true })
+  const user = await ctx.internalAdapter.createUser({ name: 'Synthetic session test', email, emailVerified: true }, { method: 'email-password' })
   await ctx.internalAdapter.createAccount({ userId: user.id, accountId: user.id, providerId: 'credential', password: passwordHash })
   async function login(rememberMe?: unknown) {
     return auth.handler(new Request('http://localhost:3046/api/auth/sign-in/email', { method: 'POST', headers: { 'Content-Type': 'application/json', origin: 'http://localhost:3046' }, body: JSON.stringify({ email, password, ...(rememberMe === undefined ? {} : { rememberMe }) }) }))

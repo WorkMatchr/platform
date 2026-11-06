@@ -35,10 +35,17 @@ const retention = '20260930100000_add_learning_retention'
 const finalExam = '20260927210000_add_learning_final_exam'
 const migrationRoot = path.resolve('prisma/migrations')
 const names = readdirSync(migrationRoot).filter((name) => /^\d/.test(name)).sort()
-assert.equal(names.at(-1), '20261103100000_add_closed_contact_decision_register', 'Review this staged regression when adding later migrations')
+assert.ok(names.includes(correction), 'The forward-only publication correction is required')
+assert.equal(names.at(-1), '20261106130000_integrate_pro_academy_refund_guards', 'Review this staged regression when adding later migrations')
 const manifest = JSON.parse(readFileSync('docs/evidence/wp14/migration-checksums.json', 'utf8')) as {
   migrations: { name: string; lfSha256: string; productionChecksum: string | null }[]
 }
+// Reproduce the original main regression against its own historical chain.
+// Academy has an earlier repair and later commerce migrations: including those
+// in this staged reproduction would change the defect being tested. Fresh mode
+// below still deploys and verifies the complete current migration chain.
+const historicalNames = [...manifest.migrations.map((entry) => entry.name), correction].sort()
+assert.ok(historicalNames.every((name) => names.includes(name)))
 const productionNames = manifest.migrations.filter((entry) => entry.productionChecksum).map((entry) => entry.name)
 assert.equal(productionNames.length, 85)
 const hash = (bytes: string | Buffer) => createHash('sha256').update(bytes).digest('hex')
@@ -115,7 +122,15 @@ async function dataSnapshot(db: Client) {
 async function restoreSyntheticDatabase(admin: Client, db: Client, database: string, exams: Exam[]) {
   const container = process.env.WP16_POSTGRES_CONTAINER_ID
   if (!container) return
-  assert.equal(process.env.GITHUB_ACTIONS, 'true')
+  if (process.env.GITHUB_ACTIONS !== 'true') {
+    assert.ok(process.argv.includes('--local-synthetic-recovery'), 'Explicit local recovery opt-in required')
+    const inspected = spawnSync('docker', ['inspect', container], { encoding: 'utf8', timeout: 10000 })
+    assert.equal(inspected.status, 0)
+    const owned = JSON.parse(inspected.stdout)[0]
+    assert.equal(owned.Config.Labels['workmatchr.synthetic'], 'wp21-integration')
+    assert.equal(owned.HostConfig.PortBindings['5432/tcp'][0].HostIp, '127.0.0.1')
+    assert.equal(owned.HostConfig.PortBindings['5432/tcp'][0].HostPort, source.port)
+  }
   assert.match(container, /^[a-f0-9]{12,64}$/)
   assert.equal(database, `workmatchr_db02_fresh_${suffix}`)
   assert.equal((await db.query('SELECT current_database() AS name')).rows[0].name, database)
@@ -147,7 +162,7 @@ async function restoreSyntheticDatabase(admin: Client, db: Client, database: str
     assert.deepEqual((await restored.query('SELECT * FROM _prisma_migrations ORDER BY migration_name')).rows, registry)
     assert.deepEqual(await functions(restored), functionsBefore, 'Restored function body/security/ACL differs')
     assert.deepEqual(await roleAclSnapshot(restored), aclsBefore, 'Restored table/sequence owners or ACLs differ')
-    await assertSyntheticRoles(restored, runtime, diagnostic)
+    await assertSyntheticRoles(restored, runtime, diagnostic, names.length)
     for (const exam of exams) await assertProtected(restored, exam)
     await restored.query(`SET ROLE "${writer}"`)
     try { for (const exam of exams) await assertProtected(restored, exam) } finally { await restored.query('RESET ROLE') }
@@ -231,7 +246,8 @@ async function integrityChecks(db: Client, exams: Exam[]) {
   }
 }
 
-async function runDatabase(admin: Client, mode: 'upgrade' | 'fresh') {
+async function runDatabase(admin: Client, mode: 'upgrade' | 'fresh' | 'current-upgrade' | 'production-upgrade') {
+  const appliedNames = mode === 'upgrade' ? historicalNames : names
   const database = `workmatchr_db02_${mode}_${suffix}`
   const target = new URL(source)
   target.pathname = `/${database}`
@@ -261,7 +277,7 @@ async function runDatabase(admin: Client, mode: 'upgrade' | 'fresh') {
       productionNames.forEach(copy)
       deploy()
       assert.equal((await db.query('SELECT count(*)::int AS n FROM _prisma_migrations')).rows[0].n, 85)
-      for (const name of names.filter((n) => !productionNames.includes(n))) {
+      for (const name of appliedNames.filter((n) => !productionNames.includes(n))) {
         let dataBefore: Record<string, string> | undefined
         let identityBefore: Awaited<ReturnType<typeof functionIdentity>>
         if (name === correction) {
@@ -292,14 +308,36 @@ async function runDatabase(admin: Client, mode: 'upgrade' | 'fresh') {
           assert.deepEqual(await functionIdentity(db), identityBefore, 'Correction changed owner/ACL/OID/security mode/volatility')
         }
       }
+    } else if (mode === 'current-upgrade' || mode === 'production-upgrade') {
+      const mainNames = mode === 'production-upgrade' ? productionNames : [...historicalNames, '20261102120000_add_closed_contact_audit_retention', '20261103100000_add_closed_contact_decision_register'].sort()
+      const baselineCount = mode === 'production-upgrade' ? 85 : 95
+      assert.equal(mainNames.length, baselineCount)
+      mainNames.forEach(copy); deploy()
+      const registryBefore = (await db.query('SELECT * FROM _prisma_migrations ORDER BY migration_name')).rows
+      assert.equal(registryBefore.length, baselineCount)
+      if (mode === 'current-upgrade') exams = [await newExam(db, 'PUBLISHED'), await newExam(db, 'RETIRED')]
+      else { const id=randomUUID(); await db.query(`INSERT INTO "User" (id,email,"displayName",status,"updatedAt") VALUES ($1,$2,'Synthetic','ACTIVE',now())`,[id,`${id}@example.invalid`]) }
+      const columns = (await db.query(`SELECT table_name, array_agg(column_name::text ORDER BY ordinal_position) AS columns FROM information_schema.columns WHERE table_schema='public' AND table_name<>'_prisma_migrations' GROUP BY table_name ORDER BY table_name`)).rows
+      const queries = columns.map(row => {
+        assert.match(row.table_name, /^[A-Za-z0-9_]+$/)
+        for (const column of row.columns) assert.match(column, /^[A-Za-z0-9_]+$/)
+        return `SELECT md5(coalesce(string_agg(row_to_json(t)::text, '|' ORDER BY row_to_json(t)::text),'')) AS digest FROM (SELECT ${row.columns.map((column:string) => '"'+column+'"').join(',')} FROM public."${row.table_name}") t`
+      })
+      const before = []
+      for (const query of queries) before.push((await db.query(query)).rows[0].digest)
+      names.filter(name => !mainNames.includes(name)).forEach(copy); deploy()
+      for (let i=0; i<queries.length; i++) assert.equal((await db.query(queries[i])).rows[0].digest, before[i], `Existing values changed: ${columns[i].table_name}`)
+      assert.deepEqual((await db.query('SELECT * FROM _prisma_migrations WHERE migration_name=ANY($1::text[]) ORDER BY migration_name',[mainNames])).rows,registryBefore)
+      if (mode === 'production-upgrade') exams = [await newExam(db, 'PUBLISHED'), await newExam(db, 'RETIRED')]
+      console.log(`PASS: synthetic baseline ${baselineCount} -> candidate 115; all original table columns/data and migration records unchanged`)
     } else {
-      names.forEach(copy)
+      appliedNames.forEach(copy)
       deploy()
       exams = [await newExam(db, 'PUBLISHED'), await newExam(db, 'RETIRED')]
     }
     await integrityChecks(db, exams)
     const rows = (await db.query('SELECT id,migration_name,checksum,finished_at,rolled_back_at FROM _prisma_migrations ORDER BY migration_name')).rows
-    assert.deepEqual(rows.map((r) => r.migration_name), names)
+    assert.deepEqual(rows.map((r) => r.migration_name), appliedNames)
     for (const row of rows) {
       assert.ok(row.finished_at && !row.rolled_back_at)
       assert.equal(row.checksum, hash(readFileSync(path.join(migrationRoot, row.migration_name, 'migration.sql'))))
@@ -312,12 +350,12 @@ async function runDatabase(admin: Client, mode: 'upgrade' | 'fresh') {
         env: { ...process.env, DATABASE_URL: '', WP17_ACCEPTANCE_DATABASE_URL: target.toString() }, encoding: 'utf8', timeout: 30000,
       })
       assert.equal(acceptance.status, 0, 'WP17 read-only acceptance preflight failed')
-      console.log('WP17 ACCEPTANCE PREFLIGHT PASS: actual isolated 95-migration database; closed gates/no external credentials')
+      console.log(`WP17 ACCEPTANCE PREFLIGHT PASS: actual isolated ${names.length}-migration database; closed gates/no external credentials`)
       await configureSyntheticRoles(db, runtime, diagnostic)
-      await assertSyntheticRoles(db, runtime, diagnostic)
+      await assertSyntheticRoles(db, runtime, diagnostic, names.length)
       await restoreSyntheticDatabase(admin, db, database, exams)
     }
-    console.log(`PASS: ${mode}; ${names.length}/${names.length} migrations, checksums/repeat, least privilege, exam history and retention protection`)
+    console.log(`PASS: ${mode}; ${appliedNames.length}/${appliedNames.length} migrations, checksums/repeat, least privilege, exam history and retention protection`)
   } finally {
     await db.end()
     if (created) await admin.query(`DROP DATABASE "${database}" WITH (FORCE)`)
@@ -337,8 +375,11 @@ async function main() {
       await admin.query(`CREATE ROLE "${role}" NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS`)
       createdRoles.push(role)
     }
-    await runDatabase(admin, 'upgrade')
-    await runDatabase(admin, 'fresh')
+    if (!process.argv.includes('--current-upgrade-only') && !process.argv.includes('--production-upgrade-only')) {
+      await runDatabase(admin, 'upgrade')
+      await runDatabase(admin, 'fresh')
+    }
+    await runDatabase(admin, process.argv.includes('--production-upgrade-only') ? 'production-upgrade' : 'current-upgrade')
     console.log(`PASS: ${negativeChecks} explicit rejected mutations/privilege attempts; no production access`)
   } finally {
     for (const role of createdRoles.reverse()) await admin.query(`DROP ROLE "${role}"`)

@@ -9,12 +9,13 @@ const PROCESSING_LEASE_MS = 5 * 60 * 1000
 
 export type JorttInvoicePayload = Readonly<{
   invoiceId: string
+  proCredit?: boolean
   technicalReference: string
   knownExternalReference: string | null
-  organizationId: string
+  organizationId: string | null
   invoiceNumber: string
   documentType: 'INVOICE' | 'CREDIT_NOTE'
-  pricingMode: 'STANDARD' | 'MOLLIE_TEST_ACCEPTANCE'
+  pricingMode: 'STANDARD' | 'MOLLIE_TEST_ACCEPTANCE' | 'ACADEMY_SANDBOX'
   issuedAt: string
   supplyDate: string | null
   servicePeriodStart: string | null
@@ -48,8 +49,13 @@ export type JorttInvoicePayload = Readonly<{
   }>>
 }>
 
+export interface JorttCreditCheckpoint {
+  claimCreation(): Promise<void>
+  saveDraftId(id: string): Promise<void>
+}
+
 export interface JorttGateway {
-  submitInvoice(payload: JorttInvoicePayload, idempotencyKey: string): Promise<{ externalReference: string; remoteInvoiceNumber: string }>
+  submitInvoice(payload: JorttInvoicePayload, idempotencyKey: string, checkpoint?: JorttCreditCheckpoint): Promise<{ externalReference: string; remoteInvoiceNumber: string }>
 }
 
 export class UnconfiguredJorttGateway implements JorttGateway {
@@ -65,12 +71,13 @@ function safeErrorCode(error: unknown) {
 
 function buildPayload(invoice: {
   snapshotVersion: number
+  proCreditKey?: string | null
   packageLabel: string
   id: string
-  organizationId: string
+  organizationId: string | null
   invoiceNumber: string
   documentType: 'INVOICE' | 'CREDIT_NOTE'
-  pricingMode: 'STANDARD' | 'MOLLIE_TEST_ACCEPTANCE'
+  pricingMode: 'STANDARD' | 'MOLLIE_TEST_ACCEPTANCE' | 'ACADEMY_SANDBOX'
   issuedAt: Date
   supplyDate: Date | null
   servicePeriodStart: Date | null
@@ -95,6 +102,7 @@ function buildPayload(invoice: {
   jorttSync: { externalReference: string | null; technicalReference: string | null } | null
   originalInvoice: { jorttSync: { externalReference: string | null } | null } | null
 }): JorttInvoicePayload {
+  if (!invoice.organizationId || invoice.pricingMode === 'ACADEMY_SANDBOX') throw new Error('JORTT_ACADEMY_FISCAL_REVIEW_REQUIRED')
   let lines = invoice.lines
   if (invoice.documentType === 'INVOICE') {
     if (invoice.snapshotVersion === 1) {
@@ -116,6 +124,7 @@ function buildPayload(invoice: {
   }
   return Object.freeze({
     invoiceId: invoice.id,
+    proCredit: !!invoice.proCreditKey,
     technicalReference: invoice.jorttSync?.technicalReference ?? `workmatchr-invoice:${invoice.id}`,
     knownExternalReference: invoice.jorttSync?.externalReference ?? null,
     organizationId: invoice.organizationId,
@@ -180,7 +189,16 @@ export async function syncFinancialInvoiceToJortt(
   const attemptNumber = claimed.sync.attemptCount
   const idempotencyKey = `jortt:invoice:${claimed.invoice.id}`
   try {
-    const result = await gateway.submitInvoice(buildPayload(claimed.invoice), idempotencyKey)
+    const result = await gateway.submitInvoice(buildPayload(claimed.invoice), idempotencyKey, {
+      async claimCreation() {
+        const created = await getPrisma().financialEvent.createMany({ data: { invoiceId, eventType: 'JORTT_PRO_CREDIT_CREATE_INTENT', result: 'PENDING', idempotencyKey: `jortt-pro-credit-create:${invoiceId}` }, skipDuplicates: true })
+        if (created.count !== 1) throw new Error('JORTT_PRO_CREDIT_CREATION_UNCERTAIN')
+      },
+      async saveDraftId(id) {
+        if (!/^[0-9a-f-]{36}$/i.test(id)) throw new Error('JORTT_INVALID_DRAFT_ID')
+        await getPrisma().financialJorttSync.update({ where: { id: claimed.sync.id }, data: { externalReference: id } })
+      },
+    })
     return getPrisma().$transaction(async (transaction) => {
       await transaction.financialJorttSyncAttempt.create({
         data: { syncId: claimed.sync.id, attemptNumber, status: 'SYNCED', externalReference: result.externalReference, idempotencyKey: `${idempotencyKey}:${attemptNumber}` },
