@@ -279,3 +279,10 @@ Zie [bezorg- en legacybeleid](marketplace-assignment-notifications.md).
 ## Compliance F4 (nog niet uitgerold)
 
 Nullable `ComplianceQuestionDefinition.visibilityCondition` bewaart versiegebonden zichtbaarheid. Geen bestaande data gewijzigd; zie [F4](compliance-f4-expanded-guide.md).
+
+
+### P1 Pro-crediten en refundintentie
+
+`FinancialInvoice.proCreditKey` is de unieke operatoropdracht voor een zelfstandige Pro-creditfactuur. `originalInvoiceId` bewaart de bron; organisatie, dienstperiode en belastinggegevens blijven daaraan gebonden. `FinancialRefund.proCreditNoteId` is een unieke alternatieve bron naast `purchaseId`; beide tegelijk zijn verboden. Pro-refunds hebben nul walletcredits.
+
+`providerDispatchVersion` onderscheidt onbekende historische dispatch (0) van het nieuwe intentieprotocol (1). `providerAttemptedAt` wordt eenmaal vastgelegd voor de providercall; `reconciliationRequired` houdt onbekende acceptatie zichtbaar. Een nieuwe poging volgt niet automatisch uit een fout. [Herstelcontract en migratievoorwaarden](p1-financial-integrity-repair.md).
