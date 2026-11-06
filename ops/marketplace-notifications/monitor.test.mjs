@@ -98,3 +98,24 @@ test('persistent dedup emits once, escalates, recovers; state/log never stores p
     assert.deepEqual(errors, ['CONTACT_MONITOR_UNAVAILABLE'])
   } finally { rmSync(dir, { recursive: true, force: true }) }
 })
+
+test('independent synthetic receiver acknowledges scheduler outage once; failed receipt is retried', async t => {
+  const dir = mkdtempSync(join(tmpdir(), 'wm-p17-receiver-'))
+  t.after(() => rmSync(dir, { recursive: true, force: true }))
+  const received = [], errors = [], stateFile = join(dir, 'state.json')
+  let receiverAvailable = false
+  const options = { stateFile, now, error: text => errors.push(text),
+    loadScheduler: async () => ({lastRun: now - 61*minute, lastSuccess: now - 61*minute}),
+    readHealth: async () => health(),
+    log: text => { if (!receiverAvailable) throw new Error('SYNTHETIC_RECEIVER_DOWN'); received.push(JSON.parse(text)) } }
+  assert.equal(await runMonitor(options), 2)
+  assert.equal(received.length, 0)
+  receiverAvailable = true
+  assert.equal(await runMonitor(options), 1)
+  assert.deepEqual(received, [{code:'SCHEDULER',transition:'opened',level:'critical'}])
+  assert.equal(await runMonitor(options), 1)
+  assert.equal(received.length, 1)
+  assert.equal(await runMonitor({...options,loadScheduler:async()=>scheduler}), 0)
+  assert.deepEqual(received[1], {code:'SCHEDULER',transition:'resolved',level:'resolved'})
+  assert.deepEqual(errors, ['CONTACT_MONITOR_UNAVAILABLE'])
+})

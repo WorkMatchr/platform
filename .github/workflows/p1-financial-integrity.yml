@@ -1,7 +1,7 @@
 name: P1 financial integrity
 on:
   pull_request:
-    paths: ['src/app/credits/**', 'src/lib/finance/**', 'src/app/platformbeheer/financien/**', 'src/app/api/payments/mollie/**', 'prisma/**', 'scripts/test-p1-financial-database.ts', '.github/workflows/p1-financial-integrity.yml']
+    paths: ['src/app/credits/**', 'src/lib/finance/**', 'src/app/platformbeheer/financien/**', 'src/app/api/payments/mollie/**', 'prisma/**', 'scripts/test-p1-financial-database.ts', 'ops/recovery/**', 'ops/marketplace-notifications/monitor*', '.github/workflows/p1-financial-integrity.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -34,6 +34,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run db:generate
+      - run: node --test ops/recovery/encrypted-archive.test.mjs ops/recovery/write-fence.test.mjs ops/marketplace-notifications/monitor.test.mjs
       - run: npx vitest run src/lib/finance src/lib/credits src/app/api/payments/mollie src/app/platformbeheer/financien/pro-correction-actions.test.ts src/app/credits/invoice-visibility.test.tsx --maxWorkers=2
       - run: npm run test:db:finance
       - run: npm run test:db:finance-p1
