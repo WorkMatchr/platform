@@ -3,7 +3,6 @@ import { ProviderOfferingForm } from '@/components/providers/provider-offering-f
 import { requireProviderDossierContext } from '@/lib/providers/provider-onboarding-context'
 import { getProviderOffering } from '@/lib/providers/provider-offering-query'
 import { saveOfferingAction } from './actions'
-import { saveOfferingAction } from './actions'
 
 export default async function ProviderOfferingPage() {
   const context = await requireProviderDossierContext('/aanbiedersdossier/diensten-en-ervaring')
