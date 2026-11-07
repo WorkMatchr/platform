@@ -6,7 +6,7 @@ Platformtoegang gebruikt dezelfde Better Auth-accountactivatie als organisatie-u
 
 ## Scope Module 4A
 
-Module 4A levert persoonlijke accounts met Better Auth 1.6.23: registratie, verplichte e-mailverificatie, login, logout, wachtwoordherstel, databasegebaseerde sessies en een beveiligde accountpagina. Module 4B bouwt hierop voort met afzonderlijke organisatie- en membershipautorisatie; Better Auth blijft de enige sessiebron.
+Module 4A levert persoonlijke accounts met Better Auth 1.7.18 en de bijbehorende Prisma-adapter 1.7.18: registratie, verplichte e-mailverificatie, login, logout, wachtwoordherstel, databasegebaseerde sessies en een beveiligde accountpagina. Module 4B bouwt hierop voort met afzonderlijke organisatie- en membershipautorisatie; Better Auth blijft de enige sessiebron.
 
 ## Architectuur
 
