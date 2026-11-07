@@ -60,3 +60,17 @@ it('does not treat an invoice copied period as independent proof',()=>{
  expect(reviewFinancialChain(e,scope).codes).toContain('SUBSCRIPTION_PERIOD_SOURCE_NOT_VERIFIED')
  expect(reviewFinancialChain(e,scope).status).toBe('INVESTIGATING')
 })
+
+it('detects a paid renewal beyond the stored subscription period without flagging older renewals', () => {
+  const e = fixture('PRO_SUBSCRIPTION')
+  expect(reviewFinancialChain({...e, subscriptionBehind:true},scope).codes).toContain('SUBSCRIPTION_PERIOD_BEHIND')
+  expect(reviewFinancialChain({...e, subscriptionBehind:false},scope).status).toBe('OK')
+})
+
+it('distinguishes a zero balance without evidence from an actual open invoice or mismatched booking', () => {
+  const e=fixture('PRO_SUBSCRIPTION')
+  e.jortt.settled=false;e.jortt.confirmationRecorded=false
+  expect(reviewFinancialChain(e,scope)).toMatchObject({status:'INVESTIGATING',codes:['JORTT_SETTLEMENT_NOT_VERIFIED']})
+  e.jortt.confirmationRecorded=true
+  expect(reviewFinancialChain(e,scope)).toMatchObject({status:'DEVIATION',codes:['JORTT_SETTLEMENT_MISMATCH']})
+})

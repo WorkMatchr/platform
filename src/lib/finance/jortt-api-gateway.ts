@@ -204,14 +204,19 @@ export class JorttApiGateway implements JorttGateway, JorttPaymentGateway {
     let remoteId: string
     if (payload.documentType === 'CREDIT_NOTE') {
       if (!payload.originalInvoiceExternalReference) throw new Error('JORTT_ORIGINAL_INVOICE_NOT_SYNCED')
+      if (!checkpoint) throw new Error('JORTT_DOCUMENT_CHECKPOINT_REQUIRED')
+      await checkpoint.claimCreation()
       const created = await this.request<{ data: { id: string } }>(`/invoices/${payload.originalInvoiceExternalReference}/credit`, accessToken, { method: 'POST', body: JSON.stringify({}) })
       remoteId = created.data.id
       await this.request(`/invoices/${remoteId}`, accessToken, { method: 'PUT', body: JSON.stringify({ reference: payload.invoiceNumber, remarks: `WorkMatchr creditnota ${payload.invoiceNumber}; ${payload.technicalReference}` }) })
+      await checkpoint.saveDraftId(remoteId)
       await this.sendSelf(remoteId, accessToken)
     } else {
       assertJorttAccountingContext(payload)
       const customerReference = `workmatchr-org:${payload.organizationId}`
       let customer = await this.findExact('customers', customerReference, accessToken)
+      if (!checkpoint) throw new Error('JORTT_DOCUMENT_CHECKPOINT_REQUIRED')
+      await checkpoint.claimCreation()
       if (!customer) {
         const created = await this.request<{ data: { id: string } }>('/customers', accessToken, { method: 'POST', body: JSON.stringify({ is_private: false, customer_name: payload.customer.organizationName, address_street: payload.customer.addressLine, address_postal_code: payload.customer.postalCode, address_city: payload.customer.city, address_country_code: payload.customer.countryCode, shift_vat: false, vat_number: payload.customer.vatId ?? undefined, coc_number: payload.customer.kvkNumber ?? undefined, payment_method_invoice: 'already_paid', reference: customerReference, default_ledger_account_id: config.ledgerAccountId }) })
         customer = { id: created.data.id, reference: customerReference }
@@ -222,6 +227,7 @@ export class JorttApiGateway implements JorttGateway, JorttPaymentGateway {
       ])
       const created = await this.request<{ data: { id: string } }>('/invoices', accessToken, { method: 'POST', body: JSON.stringify({ customer_id: customer.id, invoice_date: date(payload.issuedAt), delivery_period: payload.servicePeriodStart ? date(payload.servicePeriodStart) : payload.supplyDate ? date(payload.supplyDate) : date(payload.issuedAt), delivery_period_end: payload.servicePeriodEnd ? date(payload.servicePeriodEnd) : undefined, tradename_id: config.tradenameId, net_amounts: false, payment_method: 'already_paid', reference: payload.invoiceNumber, remarks: payload.paymentReference ? `WorkMatchr ${payload.invoiceNumber}; ${payload.technicalReference}; Mollie ${payload.paymentReference}` : `WorkMatchr ${payload.invoiceNumber}; ${payload.technicalReference}`, line_items: lineItems }) })
       remoteId = created.data.id
+      await checkpoint.saveDraftId(remoteId)
       await this.sendSelf(remoteId, accessToken)
     }
     const remote = await this.waitForFinalInvoice(remoteId, payload, accessToken)

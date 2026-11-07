@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 vi.mock('server-only', () => ({}))
 
 const mocks = vi.hoisted(() => ({
-  queryRaw: vi.fn(), invoiceFind: vi.fn(), syncUpdate: vi.fn(), attemptCreate: vi.fn(), eventCreate: vi.fn(), eventUpsert: vi.fn(), syncFindMany: vi.fn(),
+  eventFind: vi.fn(), eventClaim: vi.fn(), queryRaw: vi.fn(), invoiceFind: vi.fn(), syncUpdate: vi.fn(), attemptCreate: vi.fn(), eventCreate: vi.fn(), eventUpsert: vi.fn(), syncFindMany: vi.fn(),
 }))
 
 const prisma = {
@@ -15,6 +15,7 @@ const prisma = {
     financialEvent: { create: mocks.eventCreate, upsert: mocks.eventUpsert },
   })),
   financialJorttSync: { findMany: mocks.syncFindMany },
+  financialEvent: { findUnique: mocks.eventFind, createMany: mocks.eventClaim },
 }
 
 vi.mock('@/lib/prisma', () => ({ getPrisma: () => prisma }))
@@ -90,6 +91,25 @@ describe('Jortt synchronisatieservice', () => {
     const submitInvoice = vi.fn()
     await expect(syncFinancialInvoiceToJortt('invoice-id', { submitInvoice })).rejects.toThrow('JORTT_INVOICE_TOTAL_MISMATCH')
     expect(submitInvoice).not.toHaveBeenCalled()
+  })
+
+  it('laat na een poging van voor de checkpointversie alleen een gevonden document reconciliëren', async () => {
+    const legacy = invoice('RETRY_REQUIRED'); legacy.jorttSync.attemptCount = 2
+    mocks.invoiceFind.mockResolvedValue(legacy)
+    mocks.eventFind.mockResolvedValue(null)
+    const post = vi.fn()
+    await expect(syncFinancialInvoiceToJortt('invoice-id', { async submitInvoice(_payload, _key, checkpoint) {
+      await checkpoint!.claimCreation(); return post()
+    } })).rejects.toThrow('JORTT_LEGACY_CREATION_REQUIRES_REVIEW')
+    expect(post).not.toHaveBeenCalled()
+    expect(mocks.eventClaim).not.toHaveBeenCalled()
+    expect(mocks.eventUpsert).not.toHaveBeenCalledWith(expect.objectContaining({
+      create: expect.objectContaining({ eventType: 'JORTT_CHECKPOINT_PROTOCOL' }),
+    }))
+    // A provider lookup that finds the exact issued document needs no new creation intent.
+    await expect(syncFinancialInvoiceToJortt('invoice-id', { async submitInvoice() {
+      return { externalReference: 'existing-remote', remoteInvoiceNumber: 'J-1' }
+    } })).resolves.toMatchObject({ status: 'SYNCED' })
   })
 
   it('behoudt v2-regels zonder reconstructie', async () => {

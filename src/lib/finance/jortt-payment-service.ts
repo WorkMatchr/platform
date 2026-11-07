@@ -12,6 +12,14 @@ export interface JorttPaymentGateway {
   registerPayment(input: { invoiceId: string; amountCents: number; ledgerAccountId: string; bookDate: string; reference: string }): Promise<{ bookingId: string }>
 }
 
+export function confirmsJorttBooking(remote: JorttPaymentEvidence, invoice: { id: string; amountInclVatCents: number },
+  ledgerAccountId: unknown, bookDate: unknown) {
+  const [booking] = remote.bookings
+  return typeof ledgerAccountId === 'string' && typeof bookDate === 'string' && remote.dueCents === 0
+    && remote.bookings.length === 1 && !!booking.id && booking.description === `workmatchr-payment:${invoice.id}`
+    && booking.amountCents === invoice.amountInclVatCents && booking.ledgerAccountId === ledgerAccountId && booking.bookDate === bookDate
+}
+
 /** Separate from document synchronization. An unknown POST is reconciled by reads, never replayed. */
 export async function reconcileJorttPayment(input: unknown, gateway: JorttPaymentGateway) {
   const values = z.object({ actorUserId: z.string().uuid(), invoiceId: z.string().uuid(),
@@ -36,8 +44,7 @@ export async function reconcileJorttPayment(input: unknown, gateway: JorttPaymen
     const data = previous.metadata as Record<string, unknown> | null
     if (data?.ledgerAccountId !== values.ledgerAccountId || data?.bookDate !== values.bookDate) throw new Error('JORTT_PAYMENT_INTENT_CONFLICT')
   }
-  if (remote.bookings.length === 1 && matches.length === 1 && matches[0].amountCents === invoice.amountInclVatCents
-    && matches[0].ledgerAccountId === values.ledgerAccountId && matches[0].bookDate === values.bookDate && remote.dueCents === 0) {
+  if (confirmsJorttBooking(remote, invoice, values.ledgerAccountId, values.bookDate)) {
     await prisma.financialEvent.upsert({ where: { idempotencyKey: `jortt-payment-confirmed:${invoice.id}` }, create: {
       actorUserId: values.actorUserId, invoiceId: invoice.id, eventType: 'JORTT_PAYMENT_CONFIRMED', result: 'SUCCEEDED',
       reason: values.reason, idempotencyKey: `jortt-payment-confirmed:${invoice.id}`,

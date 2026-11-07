@@ -4,7 +4,8 @@ import { randomBytes } from 'node:crypto'
 import { spawnSync } from 'node:child_process'
 import pg from 'pg'
 
-if (process.argv[2] !== '--local-synthetic' || process.argv.slice(3).some(arg => arg !== '--browser-only')) throw Error('EXPLICIT_LOCAL_SYNTHETIC_FLAG_REQUIRED')
+if (process.argv[2] !== '--local-synthetic' || process.argv.slice(3).some(arg => !['--browser-only', '--commerce-only','--buyer-browser'].includes(arg))) throw Error('EXPLICIT_LOCAL_SYNTHETIC_FLAG_REQUIRED')
+if(process.argv.includes('--buyer-browser') && !process.argv.includes('--commerce-only')) throw Error('COMMERCE_FIXTURE_REQUIRED')
 if (process.env.VERCEL || process.env.NODE_ENV === 'production') throw Error('LOCAL_OR_CI_ONLY')
 const database = 'workmatchr_lms20_synthetic'
 const name = 'workmatchr-academy-content-test-' + Date.now() + '-' + process.pid
@@ -60,8 +61,15 @@ try {
  await client.query('GRANT USAGE,SELECT ON ALL SEQUENCES IN SCHEMA public TO academy_content_editor')
  await client.query('GRANT EXECUTE ON FUNCTION public.learning_question_is_editable(uuid) TO academy_content_editor')
  const runtimeUrl = 'postgresql://academy_content_editor:' + runtimeSecret + '@127.0.0.1:5449/' + database
- if (!process.argv.includes('--browser-only')) console.log(run(process.execPath, ['node_modules/vitest/vitest.mjs', 'run', 'src/lib/learning/academy-content-postgres.test.ts', 'src/lib/learning/certificate-design-postgres.test.ts', '--maxWorkers=1'],
+ if (process.argv.includes('--commerce-only')) console.log(run(process.execPath, ['node_modules/vitest/vitest.mjs','run','src/lib/learning/academy-commerce.integration.test.ts','--maxWorkers=1'], {
+  P18_RETAIN_LOCAL_BUYER_FIXTURES: String(process.argv.includes('--buyer-browser')), DATABASE_URL:runtimeUrl, ACADEMY_LOCAL_ACCEPTANCE:'true', ACADEMY_TEST_PROJECT_ID:'local-synthetic', ACADEMY_TEST_BRANCH_ID:'lms20-isolated', ACADEMY_COMMERCE_RUNTIME:'1'
+ }))
+ else if (!process.argv.includes('--browser-only')) console.log(run(process.execPath, ['node_modules/vitest/vitest.mjs', 'run', 'src/lib/learning/academy-content-postgres.test.ts', 'src/lib/learning/certificate-design-postgres.test.ts', '--maxWorkers=1'],
   { DATABASE_URL: runtimeUrl, ACADEMY_CONTENT_POSTGRES_TEST: 'true', CERTIFICATE_DESIGN_POSTGRES_TEST: 'true' }))
+ if (process.argv.includes('--buyer-browser')) console.log(run(process.execPath,['--import','./scripts/register-learning-server.mjs','--import','tsx','scripts/test-p18-academy-buyer-browser.ts'],{
+  DATABASE_URL:runtimeUrl,ACADEMY_LOCAL_ACCEPTANCE:'true',ACADEMY_TEST_PROJECT_ID:'local-synthetic',ACADEMY_TEST_BRANCH_ID:'lms20-isolated',
+  ACADEMY_COMMERCE_SANDBOX:'1',LEARNING_RUNTIME_ENABLED:'true',COMPLIANCE_F4_ENABLED:'false',CONTACT_FORM_ENABLED:'false',AUTH_EMAIL_DELIVERY_ENABLED:'false'
+ }))
  if (process.argv.includes('--browser-only')) console.log(run(process.execPath, ['--import','./scripts/register-learning-server.mjs','--import','tsx','scripts/test-wp21-admin-browser.ts'], { DATABASE_URL: runtimeUrl }))
 } finally {
  await client?.end().catch(() => {})

@@ -1,7 +1,7 @@
 import 'server-only'
 import { getPrisma } from '@/lib/prisma'
 import type { MollieGateway } from './mollie-gateway'
-import type { JorttPaymentGateway } from './jortt-payment-service'
+import { confirmsJorttBooking, type JorttPaymentGateway } from './jortt-payment-service'
 import type { FinancialChainEvidence, PaidProduct } from './financial-chain-review'
 import type { FinancialReviewReader } from './financial-chain-review-service'
 import { buildFinancialInvoicePdf } from './financial-invoice-pdf'
@@ -32,13 +32,16 @@ export async function createFinancialChainReader(gateway: Pick<MollieGateway,'li
     const purchase=purchases[0]
     const organizationId=payment.metadata.organizationId ?? purchase?.organizationId ?? recurring[0]?.subscription.organizationId
     const tenantKey=organizationId ? `organization:${organizationId}` : purchase?.createdByUserId ? `customer:${purchase.createdByUserId}` : null
-    if (!tenantKey || purchases.some(p=>p.organizationId && p.organizationId!==organizationId) || recurring.some(p=>p.subscription.organizationId!==organizationId)) throw new Error('FINANCIAL_REVIEW_UNASSIGNED_PAYMENT')
+    if (!tenantKey || purchases.some(p=>p.organizationId!==(organizationId??null)) || recurring.some(p=>p.subscription.organizationId!==organizationId)) throw new Error('FINANCIAL_REVIEW_UNASSIGNED_PAYMENT')
     const product=purchase?.kind ?? (recurring.length || payment.metadata.subscriptionId ? 'PRO_SUBSCRIPTION' : null)
     if (!product || !['PRO_SUBSCRIPTION','CREDIT_PACKAGE','ACADEMY_COURSE','COMPLIANCE_SCAN'].includes(product)) throw new Error('FINANCIAL_REVIEW_PRODUCT_UNSUPPORTED')
     const original=invoices.find(i=>i.documentType==='INVOICE'), sync=original?.jorttSync
     const registrationAmounts=(p:{amountExclVatCents:number;vatAmountCents:number;amountInclVatCents:number;currency:string})=>({net:p.amountExclVatCents,vat:p.vatAmountCents,gross:p.amountInclVatCents,currency:p.currency})
     let remoteInvoice: Awaited<ReturnType<JorttPaymentGateway['inspectPayment']>> | null=null
     if (sync?.status==='SYNCED' && sync.externalReference) remoteInvoice=await jortt.inspectPayment(sync.externalReference)
+    // A zero balance alone cannot identify the payment, clearing account or book date.
+    const confirmed = remoteInvoice && original ? await db.financialEvent.findUnique({where:{idempotencyKey:`jortt-payment-confirmed:${original.id}`}}) : null
+    const booking = confirmed?.metadata
     let pdf: boolean | null=null
     if (original) { try { const bytes=await buildFinancialInvoicePdf(original);pdf=Buffer.from(bytes).subarray(0,4).toString('ascii')==='%PDF' } catch { pdf=false } }
     const refunds=await gateway.listRefundsForReview(payment.id)
@@ -53,10 +56,10 @@ export async function createFinancialChainReader(gateway: Pick<MollieGateway,'li
       ledger:{applicable:product==='CREDIT_PACKAGE',checked:true,expectedCredits:purchase?.credits??0,actualCredits:purchase?.creditedTransaction?.totalDelta??0,entries:purchase?.creditedTransaction?1:0},
       // These are actual route acceptance claims, not derivable from a provider GET.
       access:{customer:null,administrator:null,tenantIsolation:null,pdf},
-      jortt:{checked:!!remoteInvoice,invoiceId:remoteInvoice?.id??null,documentMatched:!!remoteInvoice && remoteInvoice.id===sync?.externalReference && remoteInvoice.reference===original?.invoiceNumber && remoteInvoice.totalCents===original?.amountInclVatCents && remoteInvoice.currency===original?.currency,settled:!!remoteInvoice && remoteInvoice.dueCents===0 && remoteInvoice.bookings.length>0 && remoteInvoice.bookings.reduce((sum,b)=>sum+b.amountCents,0)===remoteInvoice.totalCents && new Set(remoteInvoice.bookings.map(b=>b.id)).size===remoteInvoice.bookings.length,dueCents:remoteInvoice?.dueCents??null},
+      jortt:{checked:!!remoteInvoice,invoiceId:remoteInvoice?.id??null,documentMatched:!!remoteInvoice && remoteInvoice.id===sync?.externalReference && remoteInvoice.reference===original?.invoiceNumber && remoteInvoice.totalCents===original?.amountInclVatCents && remoteInvoice.currency===original?.currency,confirmationRecorded:!!confirmed,settled:!!remoteInvoice && !!original && !!booking && typeof booking==='object' && !Array.isArray(booking) && confirmsJorttBooking(remoteInvoice,original,booking.ledgerAccountId,booking.bookDate) && remoteInvoice.bookings[0].id===booking.bookingId,dueCents:remoteInvoice?.dueCents??null},
       corrections:invoices.filter(i=>i.documentType==='CREDIT_NOTE').map(i=>({id:i.id,originalInvoiceId:i.originalInvoiceId,tenantKey:i.organizationId?`organization:${i.organizationId}`:tenantKey,gross:i.amountInclVatCents,net:i.amountExclVatCents,vat:i.vatAmountCents})),
       refunds:[...refunds.map(r=>{const local=localRefunds.find(l=>l.mollieRefundId===r.id);return {id:r.id,recorded:!!local,gross:cents(r.amountValue),registeredGross:local?.amountCents??null,currency:r.currency??'',uncertain:!!local?.reconciliationRequired||['pending','queued','processing'].includes(r.status),ageMs:local?Date.now()-local.requestedAt.getTime():0}}),
-        ...missingRemote.map(r=>({id:r.id,recorded:true,gross:r.amountCents,registeredGross:r.amountCents,currency:payment.currency,uncertain:true,ageMs:Date.now()-r.requestedAt.getTime()}))],periodVerified:product!=='PRO_SUBSCRIPTION'||recurring.length===1,complete:true})
+        ...missingRemote.map(r=>({id:r.id,recorded:true,gross:r.amountCents,registeredGross:r.amountCents,currency:payment.currency,uncertain:true,ageMs:Date.now()-r.requestedAt.getTime()}))],subscriptionBehind:recurring.some(p=>p.periodEnd && (!p.subscription.currentPeriodEnd || p.subscription.currentPeriodEnd < p.periodEnd)),periodVerified:product!=='PRO_SUBSCRIPTION'||recurring.length===1,complete:true})
   }
   const reader: FinancialReviewReader={async read({tenantKey}){const payments=scoped.filter(e=>e.tenantKey===tenantKey);return {complete:true,expectedPaid:payments.length,payments}}}
   return {reader,scopes:[...new Set(scoped.map(e=>e.tenantKey))],paymentCount:scoped.length}

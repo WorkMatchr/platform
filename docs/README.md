@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [P1.8 — betalingen, koperfacturen en boekhoudkundige aflettering](p18-unified-payments-and-invoicing.md)
+
 - [P1.7 — financiële nachtronde, nieuwe rolgrenzen en releasegereedheid](p17-night-shift-financial-release-readiness.md)
 
 - [P1.4 — historisch financieel herstel en afzonderlijke gebeurtenisacceptatie](p14-historical-financial-recovery.md)

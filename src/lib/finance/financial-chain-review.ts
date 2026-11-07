@@ -11,10 +11,10 @@ export type FinancialChainEvidence = {
   invoices: Array<Amounts & { id: string; paymentId: string; tenantKey: string; original: boolean; descriptionPresent: boolean; periodStart?: string; periodEnd?: string }>
   ledger: { applicable: boolean; checked: boolean; expectedCredits: number; actualCredits: number; entries: number }
   access: { customer: boolean | null; administrator: boolean | null; pdf: boolean | null; tenantIsolation: boolean | null }
-  jortt: { checked: boolean; invoiceId: string | null; documentMatched: boolean; settled: boolean; dueCents: number | null }
+  jortt: { checked: boolean; invoiceId: string | null; documentMatched: boolean; settled: boolean; confirmationRecorded?: boolean; dueCents: number | null }
   corrections: Array<{ id: string; originalInvoiceId: string | null; tenantKey: string; gross: number; net: number; vat: number }>
   refunds: Array<{ id: string; recorded: boolean; gross: number; registeredGross: number | null; currency: string; uncertain: boolean; ageMs: number }>
-  complete: boolean; periodVerified?: boolean
+  complete: boolean; periodVerified?: boolean; subscriptionBehind?: boolean
 }
 export type FinancialChainReview = { key: string; status: FinancialReviewStatus; codes: string[]; evidenceHash: string }
 const cents = (n: number) => Number.isSafeInteger(n)
@@ -24,6 +24,7 @@ export function reviewFinancialChain(e: FinancialChainEvidence, scope: string, p
   if (!scope || e.tenantKey !== scope || !/^tr_[A-Za-z0-9]+$/.test(e.paymentId)) throw new Error('FINANCIAL_REVIEW_SCOPE_MISMATCH')
   const errors: string[] = [], unknown: string[] = []
   const originals = e.invoices.filter(i => i.original)
+  if (e.product === 'PRO_SUBSCRIPTION' && e.subscriptionBehind) errors.push('SUBSCRIPTION_PERIOD_BEHIND')
   if (e.registrations.length !== 1) errors.push('PAYMENT_REGISTRATION_COUNT')
   if (originals.length !== 1) errors.push('ORIGINAL_INVOICE_COUNT')
   for (const registration of e.registrations) {
@@ -53,7 +54,11 @@ export function reviewFinancialChain(e: FinancialChainEvidence, scope: string, p
   if (!e.jortt.checked) unknown.push('JORTT_NOT_VERIFIED')
   else {
     if (!e.jortt.invoiceId || !e.jortt.documentMatched) errors.push('JORTT_DOCUMENT_MISMATCH')
-    if (!e.jortt.settled || e.jortt.dueCents !== 0) errors.push('JORTT_PAYMENT_OPEN')
+    if (e.jortt.dueCents !== 0) errors.push('JORTT_PAYMENT_OPEN')
+    else if (!e.jortt.settled) {
+      if (e.jortt.confirmationRecorded === false) unknown.push('JORTT_SETTLEMENT_NOT_VERIFIED')
+      else errors.push('JORTT_SETTLEMENT_MISMATCH')
+    }
   }
   for (const credit of e.corrections) {
     if (!originals.some(i => i.id === credit.originalInvoiceId) || credit.tenantKey !== scope) errors.push('CREDIT_SOURCE_MISMATCH')

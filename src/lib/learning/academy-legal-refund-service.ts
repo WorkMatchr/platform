@@ -2,13 +2,12 @@ import 'server-only'
 import { z } from 'zod'
 import { runSerializableFinancialTransaction } from '@/lib/finance/financial-transaction'
 import { requireMarketplacePlatformAdmin } from '@/lib/marketplace/marketplace-authorization'
-import { centsToMollieValue, type MollieGateway } from '@/lib/finance/mollie-gateway'
+import { type MollieGateway } from '@/lib/finance/mollie-gateway'
 import { assertAcademyCommerceSandbox } from './academy-commerce-environment'
 import { commerceAssert } from './academy-commerce-policy'
 import { lockAcademyCommerce } from './academy-commerce-access'
 import { allocateLegalRefund, LEGAL_REFUND_ALLOCATION } from './academy-legal-refund-policy'
 import { originalAcademySeatAmounts, ACADEMY_SEAT_ALLOCATION_VERSION } from './academy-seat-refund-policy'
-import { applyAcademyLegalRefund } from './academy-legal-refund-apply'
 
 const approval = z.object({ purchaseId: z.string().uuid(), requestKey: z.string().uuid(), reason: z.string().trim().min(10).max(500),
   amountInclVatCents: z.number().int().positive(), amountExclVatCents: z.number().int().nonnegative(), vatAmountCents: z.number().int().nonnegative(),
@@ -63,12 +62,12 @@ export async function approveAcademyLegalRefund(actorId: string, raw: unknown) {
       reason: decision.reason, amountCents: amounts.amountInclVatCents, credits: 0, idempotencyKey: `academy-legal-refund:${decision.id}` } })
     await tx.academyRefundSeatAllocation.createMany({ data: allocations.map(a => ({ ...a, refundId: refund.id })) })
     await tx.financialPurchase.update({ where: { id: purchase.id }, data: { status: 'REFUND_REVIEW_REQUIRED' } })
-    await tx.financialEvent.create({ data: { purchaseId: purchase.id, refundId: refund.id, eventType: 'ACADEMY_LEGAL_REFUND_APPROVED', result: 'TAX_REVIEW_REQUIRED', idempotencyKey: `academy-legal-refund-approved:${decision.id}` } })
+    await tx.financialEvent.create({ data: { purchaseId: purchase.id, refundId: refund.id, eventType: 'ACADEMY_LEGAL_REFUND_APPROVED', metadata: { dispatchProtocol: 'CLAIM_BEFORE_IO' }, result: 'TAX_REVIEW_REQUIRED', idempotencyKey: `academy-legal-refund-approved:${decision.id}` } })
     return { ...decision, refund: { ...refund, seatAllocations: allocations } }
   })
 }
 
-export type AcademyLegalRefundFakeGateway = Pick<MollieGateway, 'createRefund' | 'getRefund'> & { transport: 'FAKE' }
+export type AcademyLegalRefundFakeGateway = Pick<MollieGateway, 'createRefund' | 'getRefund' | 'findRefundByReference'> & { transport: 'FAKE' }
 /** Intentionally has no production transport/default gateway. No live provider activation. */
 export async function executeAcademyLegalRefund(actorId: string, decisionId: string, gateway: AcademyLegalRefundFakeGateway) {
   assertAcademyCommerceSandbox()
@@ -77,19 +76,17 @@ export async function executeAcademyLegalRefund(actorId: string, decisionId: str
     await requireMarketplacePlatformAdmin(tx, actorId)
     const refund = await tx.financialRefund.findUniqueOrThrow({ where: { legalDecisionId: decisionId }, include: { purchase: true, seatAllocations: true } })
     commerceAssert(refund.purchase?.pricingMode === 'ACADEMY_SANDBOX', 'ACADEMY_LEGAL_REFUND_SANDBOX_PURCHASE_REQUIRED')
-    return { ...refund, purchase: refund.purchase }
+    const approvalEvent = await tx.financialEvent.findUnique({ where: { idempotencyKey: `academy-legal-refund-approved:${decisionId}` } })
+    const metadata = approvalEvent?.metadata
+    const dispatchSafe = metadata && typeof metadata === 'object' && !Array.isArray(metadata) && metadata.dispatchProtocol === 'CLAIM_BEFORE_IO'
+    return { ...refund, purchase: refund.purchase, dispatchSafe }
   })
   if (['REFUNDED', 'FAILED', 'CANCELED'].includes(current.status)) return current
   commerceAssert(current.seatAllocations.reduce((sum,a) => sum+a.amountCents,0) === current.amountCents, 'ACADEMY_ALUMNI_REFUND_REVIEW_REQUIRED')
-  const snapshot = current.mollieRefundId
-    ? await gateway.getRefund({ paymentId: current.purchase.molliePaymentId!, refundId: current.mollieRefundId })
-    : await gateway.createRefund({ paymentId: current.purchase.molliePaymentId!, amountValue: centsToMollieValue(current.amountCents), currency: 'EUR',
-      description: 'Academy sandbox wettelijke restitutie', idempotencyKey: current.idempotencyKey, metadata: { refundId: current.id, purchaseId: current.purchase.id } })
-  // Ambiguous transport failures leave the existing reservation intact; retry uses the same key.
-  return runSerializableFinancialTransaction(async tx => {
-    await lockAcademyCommerce(tx, `purchase:${current.purchaseId}`)
-    const fresh = await tx.financialRefund.findUniqueOrThrow({ where: { id: current.id }, include: { purchase: true, seatAllocations: true } })
-    commerceAssert(fresh.purchase?.kind === 'ACADEMY_COURSE', 'ACADEMY_REFUND_SOURCE_REQUIRED')
-    return (await applyAcademyLegalRefund(tx, { ...fresh, purchase: fresh.purchase }, snapshot)).refund
-  })
+  const { submitPreparedRefund, reconcileMollieRefund } = await import('@/lib/finance/refund-service')
+  const result = current.dispatchSafe && !current.mollieRefundId
+    ? await submitPreparedRefund(current.id, current.purchase.molliePaymentId!, current.amountCents, { purchaseId: current.purchase.id }, gateway, actorId, true)
+    : await reconcileMollieRefund(current.id, gateway)
+  commerceAssert(!result.reviewRequired, 'MOLLIE_REFUND_RECONCILIATION_REQUIRED')
+  return result.refund
 }

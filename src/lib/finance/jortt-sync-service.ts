@@ -69,7 +69,7 @@ function safeErrorCode(error: unknown) {
   return /^[A-Z0-9_]{3,80}$/.test(message) ? message : 'JORTT_PROVIDER_ERROR'
 }
 
-function buildPayload(invoice: {
+export function buildJorttInvoicePayload(invoice: {
   snapshotVersion: number
   proCreditKey?: string | null
   packageLabel: string
@@ -102,7 +102,6 @@ function buildPayload(invoice: {
   jorttSync: { externalReference: string | null; technicalReference: string | null } | null
   originalInvoice: { jorttSync: { externalReference: string | null } | null } | null
 }): JorttInvoicePayload {
-  if (!invoice.organizationId || invoice.pricingMode === 'ACADEMY_SANDBOX') throw new Error('JORTT_ACADEMY_FISCAL_REVIEW_REQUIRED')
   let lines = invoice.lines
   if (invoice.documentType === 'INVOICE') {
     if (invoice.snapshotVersion === 1) {
@@ -174,6 +173,12 @@ export async function syncFinancialInvoiceToJortt(
       invoice.jorttSync.status === 'PROCESSING'
       && invoice.jorttSync.updatedAt.getTime() > claimedAt.getTime() - PROCESSING_LEASE_MS
     ) throw new Error('JORTT_SYNC_IN_PROGRESS')
+    // Only a first attempt observed by this protocol proves that no older untracked POST was possible.
+    if (invoice.jorttSync.attemptCount === 0 && !invoice.proCreditKey) {
+      const key = `jortt-checkpoint-protocol:${invoiceId}`
+      await transaction.financialEvent.upsert({ where: { idempotencyKey: key }, update: {},
+        create: { invoiceId, eventType: 'JORTT_CHECKPOINT_PROTOCOL', result: 'ENABLED', idempotencyKey: key } })
+    }
     const sync = await transaction.financialJorttSync.update({
       where: { id: invoice.jorttSync.id },
       data: {
@@ -189,10 +194,15 @@ export async function syncFinancialInvoiceToJortt(
   const attemptNumber = claimed.sync.attemptCount
   const idempotencyKey = `jortt:invoice:${claimed.invoice.id}`
   try {
-    const result = await gateway.submitInvoice(buildPayload(claimed.invoice), idempotencyKey, {
+    if (!claimed.invoice.organizationId || claimed.invoice.pricingMode === 'ACADEMY_SANDBOX') throw new Error('JORTT_ACADEMY_FISCAL_REVIEW_REQUIRED')
+    const result = await gateway.submitInvoice(buildJorttInvoicePayload(claimed.invoice), idempotencyKey, {
       async claimCreation() {
-        const created = await getPrisma().financialEvent.createMany({ data: { invoiceId, eventType: 'JORTT_PRO_CREDIT_CREATE_INTENT', result: 'PENDING', idempotencyKey: `jortt-pro-credit-create:${invoiceId}` }, skipDuplicates: true })
-        if (created.count !== 1) throw new Error('JORTT_PRO_CREDIT_CREATION_UNCERTAIN')
+        const proCredit = !!claimed.invoice.proCreditKey
+        if (!proCredit && !await getPrisma().financialEvent.findUnique({
+          where: { idempotencyKey: `jortt-checkpoint-protocol:${invoiceId}` }, select: { id: true },
+        })) throw new Error('JORTT_LEGACY_CREATION_REQUIRES_REVIEW')
+        const created = await getPrisma().financialEvent.createMany({ data: { invoiceId, eventType: proCredit ? 'JORTT_PRO_CREDIT_CREATE_INTENT' : 'JORTT_DOCUMENT_CREATE_INTENT', result: 'PENDING', idempotencyKey: proCredit ? `jortt-pro-credit-create:${invoiceId}` : `jortt-document-create:${invoiceId}` }, skipDuplicates: true })
+        if (created.count !== 1) throw new Error(proCredit ? 'JORTT_PRO_CREDIT_CREATION_UNCERTAIN' : 'JORTT_DOCUMENT_CREATION_UNCERTAIN')
       },
       async saveDraftId(id) {
         if (!/^[0-9a-f-]{36}$/i.test(id)) throw new Error('JORTT_INVALID_DRAFT_ID')

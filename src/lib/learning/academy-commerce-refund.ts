@@ -43,24 +43,18 @@ export async function requestAcademyRefund(actorId: string, purchaseId: string, 
     commerceAssert(purchase?.academyOrder && purchase.kind === 'ACADEMY_COURSE' && ['PAID','REFUND_REVIEW_REQUIRED','REFUNDED'].includes(purchase.status) && purchase.molliePaymentId, 'ACADEMY_PAID_PURCHASE_REQUIRED')
     const key = `academy-full-refund:${purchase.id}`
     const old = await tx.financialRefund.findUnique({ where: { idempotencyKey: key } })
-    if (old) return { refund: old, purchase }
+    if (old) return { refund: old, purchase, fresh: false }
     const refund = await tx.financialRefund.create({ data: { purchaseId, approvedByUserId: actorId, reason, amountCents: purchase.amountInclVatCents, credits: 0, idempotencyKey: key } })
     await tx.financialPurchase.update({ where: { id: purchaseId }, data: { status: 'REFUND_REVIEW_REQUIRED' } })
-    return { refund, purchase }
+    return { refund, purchase, fresh: true }
   })
   if (['REFUNDED','FAILED','CANCELED'].includes(prepared.refund.status)) return prepared.refund
-  const snapshot = prepared.refund.mollieRefundId
-    ? await gateway.getRefund({ paymentId: prepared.purchase.molliePaymentId!, refundId: prepared.refund.mollieRefundId })
-    : await gateway.createRefund({ paymentId: prepared.purchase.molliePaymentId!, amountValue: centsToMollieValue(prepared.refund.amountCents), currency: 'EUR', description: 'WorkMatchr Academy sandboxterugbetaling', idempotencyKey: prepared.refund.idempotencyKey, metadata: { refundId: prepared.refund.id, purchaseId } })
-  // Network ambiguity leaves the same PENDING intent; provider idempotency protects retries.
-  return runSerializableFinancialTransaction(async tx => {
-    await lockAcademyCommerce(tx, `purchase:${purchaseId}`)
-    const current = await tx.financialRefund.findUniqueOrThrow({ where: { id: prepared.refund.id }, include: { purchase: true } })
-    return (await applyAcademyRefundInTransaction(tx, { ...current, purchase: requireAcademyPurchase(current.purchase) }, snapshot)).refund
-  })
-}
-
-function requireAcademyPurchase(purchase: FinancialPurchase | null): FinancialPurchase {
-  commerceAssert(purchase?.kind === 'ACADEMY_COURSE', 'ACADEMY_REFUND_SOURCE_REQUIRED')
-  return purchase
+  // Older pending rows may already have reached Mollie without a recorded attempt.
+  // Only the caller that created this intent may dispatch; all replays are reads.
+  const { submitPreparedRefund, reconcileMollieRefund } = await import('@/lib/finance/refund-service')
+  const result = prepared.fresh
+    ? await submitPreparedRefund(prepared.refund.id, prepared.purchase.molliePaymentId!, prepared.refund.amountCents, { purchaseId }, gateway, actorId, true)
+    : await reconcileMollieRefund(prepared.refund.id, gateway)
+  commerceAssert(!result.reviewRequired, 'MOLLIE_REFUND_RECONCILIATION_REQUIRED')
+  return result.refund
 }

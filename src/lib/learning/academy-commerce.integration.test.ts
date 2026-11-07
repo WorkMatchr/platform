@@ -18,6 +18,7 @@ import { deliverAcademyCommerceEmails } from './academy-commerce-email-worker'
 import { ACADEMY_LEGAL_VERSION } from './academy-commerce-policy'
 
 const enabled = process.env.ACADEMY_COMMERCE_RUNTIME === '1'
+const browserFixtures = process.env.P18_RETAIN_LOCAL_BUYER_FIXTURES === 'true'
 let db: PrismaClient
 function scoped(tx: Prisma.TransactionClient): PrismaClient {
   const proxy = new Proxy(tx, { get(target, key) {
@@ -47,9 +48,14 @@ beforeAll(async () => {
   if (!enabled) return
   vi.stubEnv('ACADEMY_COMMERCE_SANDBOX', '1')
   // Synthetic value; every provider call is injected, never sent to Mollie.
-  vi.stubEnv('MOLLIE_API_KEY', 'test_runtime_fake_no_delivery')
+  if (process.env.ACADEMY_LOCAL_ACCEPTANCE !== 'true') vi.stubEnv('MOLLIE_API_KEY', 'test_runtime_fake_no_delivery')
   db = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }) })
   await identity()
+  if (browserFixtures) {
+    expect(process.env.ACADEMY_LOCAL_ACCEPTANCE).toBe('true')
+    expect(await db.learningAcademyOrder.count()).toBe(0)
+    expect(await db.user.count()).toBe(0)
+  }
 })
 afterAll(async () => { await db?.$disconnect(); vi.unstubAllEnvs() })
 
@@ -68,12 +74,16 @@ describe.skipIf(!enabled)('Academy commerce: isolated PostgreSQL, fake transport
           organizationId = organization.id
           await tx.organizationMembership.create({ data: { userId: user.id, organizationId, role: 'OWNER', status: 'ACTIVE' } })
         }
-        const courseCode = process.env.ACADEMY_LOCAL_ACCEPTANCE === 'true' ? 'WL-991' : 'WL-001'
+        const courseCode = process.env.ACADEMY_LOCAL_ACCEPTANCE === 'true' ? (quantity===1?'WL-991':'WL-992') : 'WL-001'
         if (process.env.ACADEMY_LOCAL_ACCEPTANCE === 'true') {
-          const course = await tx.learningCourse.findUniqueOrThrow({where:{code:courseCode}})
-          const old = await tx.learningAcademyPriceVersion.findFirstOrThrow({where:{courseId:course.id},orderBy:{revision:'desc'}})
-          const {id,createdAt,...values}=old;void id;void createdAt
-          await tx.learningAcademyPriceVersion.create({data:{...values,revision:old.revision+1,individualCents:14900,fiveCents:59500}})
+          // This is a new disposable database; no dependency on a previous editor session.
+          const operator = await tx.user.create({data:{email:`operator-${randomUUID()}@example.invalid`,platformRole:'ADMIN',status:'ACTIVE',emailVerified:true}})
+          const platform = await tx.organization.upsert({where:{systemKey:'WORKMATCHR_PLATFORM'},create:{name:'Synthetic platform',organizationType:'PLATFORM_OPERATOR',status:'ACTIVE',systemKey:'WORKMATCHR_PLATFORM'},update:{}})
+          await tx.organizationMembership.create({data:{userId:operator.id,organizationId:platform.id,role:'OWNER',status:'ACTIVE'}})
+          const now = new Date()
+          const course = await tx.learningCourse.create({data:{code:courseCode,slug:`synthetic-commerce-${quantity}`,title:'Synthetic course',description:'Local finance fixture',status:'PUBLISHED',
+            versions:{create:{version:'1',status:'PUBLISHED',publishedAt:now,validFrom:now,reviewDueAt:new Date(now.getTime()+86400000)}}}})
+          await tx.learningAcademyPriceVersion.create({data:{scopeKey:course.id,courseId:course.id,revision:1,individualCents:14900,fiveCents:59500,followUpIndividualCents:13999,followUpFiveCents:56500,vatRateBps:2100,vatTreatment:'TAXABLE',taxStatus:'TAX_REVIEW_REQUIRED',taxReference:'',createdByUserId:operator.id}})
         }
         const input = { courseCode, quantity, buyerType: quantity === 1 ? 'CONSUMER' : 'BUSINESS', ...(organizationId ? { organizationId } : {}), billing: { name: 'Fictieve Testkoper', address: 'Teststraat 1', postalCode: '1000AA', city: 'Teststad', country: 'NL' }, platformTermsAccepted: true, academyTermsAccepted: true, legalVersion: ACADEMY_LEGAL_VERSION, idempotencyKey: `fixture-${randomUUID()}` }
         const order = await createAcademyOrder(user.id, input)
@@ -97,9 +107,66 @@ describe.skipIf(!enabled)('Academy commerce: isolated PostgreSQL, fake transport
         await startAcademyOrderPayment(user.id, order.orderId, true, gateway)
         await processAcademyMolliePayment(payment)
         expect(await tx.learningEnrollment.count({ where: { userId: user.id } })).toBe(0)
+        await processAcademyMolliePayment({ ...payment, status: 'failed' })
+        expect(await tx.financialInvoice.count({where:{purchaseId:raw.purchaseId}})).toBe(0)
         const paid = { ...payment, status: 'paid' as const, paidAt: new Date().toISOString() }
         await processAcademyMolliePayment(paid); await processAcademyMolliePayment(paid)
+        await processAcademyMolliePayment(payment) // stale open callback after paid
+        expect((await tx.financialPurchase.findUniqueOrThrow({where:{id:raw.purchaseId}})).status).toBe('PAID')
         expect(await tx.financialInvoice.count({ where: { purchaseId: raw.purchaseId } })).toBe(1)
+        const invoice = await tx.financialInvoice.findUniqueOrThrow({where:{purchaseId:raw.purchaseId}, include:{lines:true,vatSummaries:true,jorttSync:true,originalInvoice:{include:{jorttSync:true}}}})
+        const {buildFinancialInvoicePdf} = await import('@/lib/finance/financial-invoice-pdf')
+        const {buildJorttInvoicePayload} = await import('@/lib/finance/jortt-sync-service')
+        const {confirmsJorttBooking} = await import('@/lib/finance/jortt-payment-service')
+        const {listPlatformFinancialInvoices} = await import('@/lib/finance/platform-financial-query-service')
+        const operator = await tx.user.findFirstOrThrow({where:{platformRole:'ADMIN',memberships:{some:{organization:{systemKey:'WORKMATCHR_PLATFORM'},role:'OWNER',status:'ACTIVE'}}}})
+        expect((await listPlatformFinancialInvoices(operator.id)).items.some(row=>row.id===invoice.id)).toBe(true)
+        expect((await getAcademyOrderView(user.id,order.orderId)).invoice?.id).toBe(invoice.id)
+        expect(Buffer.from(await buildFinancialInvoicePdf(invoice)).subarray(0,5).toString()).toBe('%PDF-')
+        // Exercise the immutable mapping and the same settlement evidence predicate without a queue or live posting.
+        const document = buildJorttInvoicePayload(invoice)
+        expect(document.organizationId).toBe(organizationId??null)
+        expect(document.paymentReference).toBe(payment.id)
+        expect([document.amountExclVatCents,document.vatAmountCents,document.amountInclVatCents]).toEqual(quantity===1?[12314,2586,14900]:[49174,10326,59500])
+        const ledger = randomUUID(), bookDate = paid.paidAt.slice(0,10)
+        const submitInvoice = vi.fn(async (payload: typeof document) => {
+          expect(payload.lines.reduce((n,line)=>n+line.netAmountExclVatCents+line.vatAmountCents,0)).toBe(payload.amountInclVatCents)
+          return {externalReference:'fake-'+payload.invoiceId, remoteInvoiceNumber:'TEST-'+payload.invoiceNumber}
+        })
+        const accepted = await submitInvoice(document)
+        const remote = {id:accepted.externalReference,reference:document.invoiceNumber,currency:document.currency,totalCents:document.amountInclVatCents,dueCents:document.amountInclVatCents,
+          allowedLedgerAccounts:[ledger],bookings:[] as Array<{id:string;description:string;amountCents:number;ledgerAccountId:string;bookDate:string}>}
+        const provider = {
+          inspectPayment:vi.fn(async()=>remote),
+          registerPayment:vi.fn(async (input:{invoiceId:string;reference:string;amountCents:number;ledgerAccountId:string;bookDate:string})=>{
+            expect(input.invoiceId).toBe(remote.id)
+            remote.bookings.push({id:randomUUID(),description:input.reference,amountCents:input.amountCents,ledgerAccountId:input.ledgerAccountId,bookDate:input.bookDate})
+            remote.dueCents-=input.amountCents
+            throw new Error('SYNTHETIC_LOST_SETTLEMENT_RESPONSE')
+          })
+        }
+        // Only substitute the future document-link read. Never enqueue, mark an actual
+        // Academy sync as SYNCED or switch the immutable snapshot out of sandbox mode.
+        const persisted = scoped(tx)
+        context.db = new Proxy(persisted,{get(target,key){
+          if(key!=='financialInvoice') return Reflect.get(target,key)
+          return {findUniqueOrThrow:async ({where}:{where:{id:string}})=>{
+            const row=await tx.financialInvoice.findUniqueOrThrow({where,include:{purchase:true,subscriptionPayment:true,jorttSync:true}})
+            expect(row.id).toBe(invoice.id);expect(row.jorttSync).toBeNull()
+            return {...row,jorttSync:{...accepted,status:'SYNCED'}}
+          }}
+        }})
+        try {
+          const {reconcileJorttPayment}=await import('@/lib/finance/jortt-payment-service')
+          const input={invoiceId:invoice.id,actorUserId:operator.id,ledgerAccountId:ledger,bookDate,reason:'Isolated synthetic settlement'}
+          await expect(reconcileJorttPayment({...input,actorUserId:user.id},provider)).rejects.toThrow()
+          expect((await reconcileJorttPayment(input,provider)).status).toBe('REVIEW_REQUIRED')
+          expect((await reconcileJorttPayment(input,provider)).status).toBe('CONFIRMED')
+          expect((await reconcileJorttPayment(input,provider)).status).toBe('CONFIRMED')
+          expect(provider.registerPayment).toHaveBeenCalledTimes(1)
+          expect(confirmsJorttBooking(remote,invoice,'other-clearing',bookDate)).toBe(false)
+          expect(await tx.financialEvent.count({where:{invoiceId:invoice.id,eventType:'JORTT_PAYMENT_CONFIRMED'}})).toBe(1)
+        } finally { context.db=persisted }
         expect(await tx.financialJorttSync.count({ where: { invoice: { purchaseId: raw.purchaseId } } })).toBe(0)
         expect(await tx.notificationOutbox.count({ where: { idempotencyKey: `academy-order-confirmed:${raw.purchaseId}` } })).toBe(1)
         if (quantity === 5) {
@@ -124,7 +191,13 @@ describe.skipIf(!enabled)('Academy commerce: isolated PostgreSQL, fake transport
         const owner = await tx.user.findFirstOrThrow({ where: { platformRole: 'ADMIN', status: 'ACTIVE', memberships: { some: { role: 'OWNER', status: 'ACTIVE', organization: { systemKey: 'WORKMATCHR_PLATFORM' } } } }, select: { id: true } })
         await rejectsDatabaseMutation(() => tx.financialRefund.create({ data: { purchaseId: raw.purchaseId, approvedByUserId: owner.id, reason: 'Ongeldige gedeeltelijke fixture', amountCents: 1, credits: 0, idempotencyKey: `invalid-${randomUUID()}` } }))
         await expect(requestAcademyRefund(user.id, raw.purchaseId, 'Fictieve terugbetalingsproef', gateway)).rejects.toMatchObject({ code: 'ACCESS_DENIED' })
+        const acceptedRefund = { id: `re_${raw.purchaseId}`, status:'refunded' as const, amountValue:payment.amountValue, currency:'EUR', paymentId:payment.id }
+        vi.mocked(gateway.createRefund).mockRejectedValueOnce(new Error('SYNTHETIC_RESPONSE_LOST'))
+        gateway.findRefundByReference = vi.fn().mockResolvedValueOnce(null).mockResolvedValue(acceptedRefund)
+        await expect(requestAcademyRefund(owner.id, raw.purchaseId, 'Fictieve terugbetalingsproef', gateway)).rejects.toThrow('MOLLIE_REFUND_RECONCILIATION_REQUIRED')
+        await expect(requestAcademyRefund(owner.id, raw.purchaseId, 'Fictieve terugbetalingsproef', gateway)).rejects.toThrow('MOLLIE_REFUND_RECONCILIATION_REQUIRED')
         await requestAcademyRefund(owner.id, raw.purchaseId, 'Fictieve terugbetalingsproef', gateway)
+        expect(gateway.findRefundByReference).toHaveBeenCalledTimes(2)
         await requestAcademyRefund(owner.id, raw.purchaseId, 'Fictieve terugbetalingsproef', gateway)
         expect(gateway.createRefund).toHaveBeenCalledTimes(1)
         expect(await tx.financialRefund.count({ where: { purchaseId: raw.purchaseId } })).toBe(1)
@@ -134,9 +207,9 @@ describe.skipIf(!enabled)('Academy commerce: isolated PostgreSQL, fake transport
         expect(await tx.learningEnrollment.count({ where: { id: { in: seats.map(s => s.enrollmentId!) }, accessRevokedAt: { not: null } } })).toBe(1)
         // Force deferred invoice and exact-seat-count constraints before rollback.
         await tx.$executeRawUnsafe('SET CONSTRAINTS ALL IMMEDIATE')
-        throw rollback
+        if (!browserFixtures) throw rollback
       }, { timeout: 120_000 })
     } catch (error) { if (error !== rollback) throw error }
-    expect(await preserved()).toEqual(before)
+    if (!browserFixtures) expect(await preserved()).toEqual(before)
   }, 150_000)
 })

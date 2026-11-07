@@ -364,6 +364,23 @@ async function main() {
         assert.equal((await reconcileJorttPayment(input,fake)).status,'CONFIRMED')
         assert.equal((await reconcileJorttPayment(input,fake)).status,'CONFIRMED')
         assert.equal(documentPosts,1);assert.equal(paymentPosts,1)
+        if(kind==='CREDIT_PACKAGE'){
+          let refunds=0
+          const refundInput={actorUserId:platformAdministrator.id,purchaseId:purchase.id,reasonCode:'WORKMATCHR_TECHNICAL_ERROR',
+            reason:'Synthetic P18 full package refund',idempotencyKey:randomUUID()}
+          const receipt={id:'re_p18_'+randomUUID(),status:'refunded' as const,paymentId:observed.id,currency:'EUR',amountValue:observed.amountValue}
+          const provider={createRefund:async()=>{refunds++;return {...receipt,amountValue:'0.01'}},findRefundByReference:async()=>receipt}
+          await assert.rejects(()=>refundWorkmatchrError(refundInput,provider as never),/MOLLIE_REFUND_RECONCILIATION_REQUIRED/)
+          const pending: FinancialRefund=await prisma.financialRefund.findFirstOrThrow({where:{purchaseId:purchase.id}})
+          assert.equal(pending.status,'PENDING');assert.equal(pending.ledgerTransactionId,null)
+          assert.equal(await prisma.financialInvoice.count({where:{refundId:pending.id}}),0)
+          await reconcileMollieRefund(pending.id,provider as never)
+          await reconcileMollieRefund(pending.id,provider as never)
+          const resolved: Prisma.FinancialRefundGetPayload<{include:{creditNote:true}}>=await prisma.financialRefund.findUniqueOrThrow({where:{id:pending.id},include:{creditNote:true}})
+          assert.equal(refunds,1);assert.equal(resolved.status,'REFUNDED');assert.ok(resolved.ledgerTransactionId)
+          assert.equal(resolved.creditNote?.originalInvoiceId,document.id);assert.equal(resolved.creditNote?.amountInclVatCents,-gross)
+          console.log('P18 PASS: mismatched refund amount creates no credit note or wallet deduction; exact read-only reconciliation commits once.')
+        }
       }
       const own=await getProfessionalFinancialDashboard({actorUserId:user.id,organizationId:organization.id})
       const other=await getProfessionalFinancialDashboard({actorUserId:secondUser.id,organizationId:secondOrganization.id})

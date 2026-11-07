@@ -42,7 +42,7 @@ export async function getFinancialChainReviewOverview(actorUserId: string, at = 
   await requireMarketplacePlatformAdmin(prisma, actorUserId)
   const [lastRun, observations] = await Promise.all([
     prisma.financialEvent.findFirst({ where: { eventType: 'FINANCIAL_CHAIN_REVIEW_CYCLE', result: { in: ['SUCCEEDED','REVIEW_REQUIRED'] } }, orderBy: { createdAt: 'desc' }, select: { createdAt: true, result: true } }),
-    prisma.financialEvent.findMany({ where: { eventType: { in: ['FINANCIAL_CHAIN_REVIEW', 'FINANCIAL_WEBHOOK_FAILURE'] } }, orderBy: { createdAt: 'desc' }, take: 50, select: { id: true, createdAt: true, result: true, metadata: true } }),
+    prisma.financialEvent.findMany({ where: { OR: [{ eventType: { in: ['FINANCIAL_CHAIN_REVIEW', 'FINANCIAL_WEBHOOK_FAILURE'] } }, { eventType:'FINANCIAL_CHAIN_REVIEW_CYCLE', result:'FAILED' }] }, orderBy: { createdAt: 'desc' }, take: 50, select: { id: true, createdAt: true, result: true, metadata: true } }),
   ])
   return { enabled: process.env.FINANCIAL_CHAIN_REVIEW_ENABLED === 'true', lastRun, observations,
     overdue: !lastRun || at.getTime() - lastRun.createdAt.getTime() > 26 * 60 * 60 * 1000 }
