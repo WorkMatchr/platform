@@ -114,13 +114,15 @@ describe('accountweergave van platform- en organisatierollen', () => {
     expect(pageSource).toContain('[overflow-wrap:anywhere]')
   })
 
-  it('ordent accountgegevens, organisatie en beveiliging in de afgesproken responsive volgorde', () => {
+  it('houdt accountgegevens gescheiden van organisatiebeheer en Arbo-wijzers', () => {
     const pageSource = readFileSync(join(process.cwd(), 'src/app/account/page.tsx'), 'utf8')
-    expect(pageSource).toContain('Uw organisatie')
+    expect(pageSource).toContain('Mijn account')
+    expect(pageSource).not.toContain('Uw organisatie')
+    expect(pageSource).not.toContain('Actieve organisatie')
+    expect(pageSource).not.toContain('Mijn Arbo-wijzers')
     expect(pageSource).toContain('Accountbeveiliging')
     expect(pageSource).toContain('Beheer uw wachtwoord')
     expect(pageSource).not.toContain('Tweestapsverificatie')
-    expect(pageSource.indexOf('Persoonlijk account')).toBeLessThan(pageSource.indexOf('Uw organisatie'))
-    expect(pageSource.indexOf('Uw organisatie')).toBeLessThan(pageSource.indexOf('Beveiliging'))
+    expect(pageSource.indexOf('Mijn account')).toBeLessThan(pageSource.indexOf('Beveiliging'))
   })
 })
