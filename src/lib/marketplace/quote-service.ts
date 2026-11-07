@@ -39,6 +39,8 @@ export async function saveQuoteDraft(input: {
       },
     })
     if (!participation) throw new MarketplaceServiceError('NOT_FOUND')
+    const assignment = await transaction.assignment.findUniqueOrThrow({ where: { id: participation.assignmentId }, select: { status: true } })
+    if (!['AWAITING_RESPONSES', 'IN_SELECTION'].includes(assignment.status)) throw new MarketplaceServiceError('INVALID_STATE')
     const [legacyReservation, purchase] = await Promise.all([
       transaction.creditReservation.findUnique({ where: { participationId: participation.id }, select: { id: true } }),
       transaction.creditTransaction.findFirst({ where: { referenceType: 'ProviderParticipation', referenceId: participation.id, type: 'PARTICIPATION_PAYMENT' }, select: { id: true } }),

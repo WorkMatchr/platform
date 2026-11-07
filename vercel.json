@@ -22,7 +22,8 @@
       "codex/contact-monitor-finalization": false,
       "codex/contact-audit-retention": false,
       "codex/combined-final-acceptance": false,
-      "codex/database-upgrade-preparation": false
+      "codex/database-upgrade-preparation": false,
+      "codex/release-b3-marketplace-post-homepage": false
     }
   },
   "crons": [
