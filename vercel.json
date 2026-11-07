@@ -24,7 +24,8 @@
       "codex/combined-final-acceptance": false,
       "codex/database-upgrade-preparation": false,
       "codex/release-b1-auth-post-homepage": false,
-      "codex/release-b2-seo-post-homepage": false
+      "codex/release-b2-seo-post-homepage": false,
+      "codex/release-b3-marketplace-post-homepage": false
     }
   },
   "crons": [
