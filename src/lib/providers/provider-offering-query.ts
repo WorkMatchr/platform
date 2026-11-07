@@ -13,12 +13,12 @@ export async function getProviderOffering(userId: string, profileId: string): Pr
     const where = { providerProfileId: profileId, status: manager ? undefined : 'ACTIVE' as const }
     const latest = { take: 1, orderBy: { version: 'desc' as const } }
     const terms = await tx.providerTaxonomyTerm.findMany({
-      where: { isActive: true, version: { status: 'PUBLISHED', taxonomy: { kind: { in: ['SECTOR', 'SERVICE', 'SPECIALISM'] } } } },
+      where: { isActive: true, version: { status: 'PUBLISHED', taxonomy: { kind: { in: ['SECTOR', 'SERVICE', 'SPECIALISM', 'REGION'] } } } },
       select: { id: true, label: true, version: { select: { taxonomy: { select: { kind: true } } } } },
       orderBy: [{ label: 'asc' }, { id: 'asc' }],
     })
     const options = (kind: string) => terms.filter(t => t.version.taxonomy.kind === kind).map(({ id, label }) => ({ id, label }))
-    const sectors = options('SECTOR'), services = options('SERVICE')
+    const sectors = options('SECTOR'), services = options('SERVICE'), areas = options('REGION')
     const rows: OfferingRow[] = []
     const experience = await tx.providerSectorExperience.findMany({ where, orderBy: { id: 'asc' },
       include: { revisions: { ...latest, include: { sectorTerm: true } } } })
@@ -40,12 +40,21 @@ export async function getProviderOffering(userId: string, profileId: string): Pr
         specialismLabel: revision.specialismTerm?.label, modes: revision.deliveryModes, years: null,
         verification: providerVerificationLabels[revision.verificationLevel] })
     }
-    for (const [kind, choices] of [['sector', sectors], ['service', services]] as const) {
+    const workAreas = await tx.providerWorkArea.findMany({ where, orderBy: { id: 'asc' },
+      include: { revisions: { ...latest, include: { regionTerm: true } } } })
+    for (const record of workAreas) {
+      const revision = record.revisions[0]
+      if (!revision) throw new ProviderServiceError('CONFIGURATION_INCOMPLETE')
+      rows.push({ ...catalogRow('area', revision.regionTerm), key: record.id, recordId: record.id,
+        selected: record.status === 'ACTIVE', years: revision.maxTravelDistanceKm,
+        verification: providerVerificationLabels[revision.verificationLevel] })
+    }
+    for (const [kind, choices] of [['sector', sectors], ['service', services], ['area', areas]] as const) {
       for (const option of choices) {
         if (!rows.some(row => row.kind === kind && row.termId === option.id)) rows.push(catalogRow(kind, option))
       }
     }
     return { profileId, version: profile.version, editSectors: sections.includes('SECTOR_EXPERIENCE'),
-      editServices: sections.includes('CAPABILITIES'), sectors, services, specialisms: options('SPECIALISM'), rows }
+      editServices: sections.includes('CAPABILITIES'), editArea: sections.includes('WORK_AREA'), sectors, services, areas, specialisms: options('SPECIALISM'), rows }
   }, { isolationLevel: 'RepeatableRead' })
 }

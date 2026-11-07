@@ -1,7 +1,7 @@
 import type { ProviderDeliveryMode } from '@/generated/prisma/client'
 
 export type OfferingOption = { id: string; label: string }
-export type OfferingKind = 'sector' | 'service'
+export type OfferingKind = 'sector' | 'service' | 'area'
 export type OfferingValues = {
   selected: boolean
   termId: string | null
@@ -23,6 +23,8 @@ export type Offering = {
   sectors: OfferingOption[]
   services: OfferingOption[]
   specialisms: OfferingOption[]
+  areas?: OfferingOption[]
+  editArea?: boolean
   editSectors: boolean
   editServices: boolean
   rows: OfferingRow[]

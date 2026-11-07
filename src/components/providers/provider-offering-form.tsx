@@ -43,7 +43,7 @@ export function ProviderOfferingForm({ initial, save }: { initial: Offering; sav
         if (result.data) {
           setBase(result.data)
           setRows(result.data.rows)
-          setMessage('Uw sectoren en diensten zijn opgeslagen.')
+          setMessage('Uw dienstverlening en werkgebied zijn opgeslagen.')
         } else setError(result.error ?? 'Opslaan is niet gelukt.')
       } catch {
         setError('Opslaan kon niet worden bevestigd. Controleer de laatste stand door het profiel opnieuw te openen.')
@@ -61,8 +61,8 @@ export function ProviderOfferingForm({ initial, save }: { initial: Offering; sav
       </label>
       {row.recordId && !original?.selected && <p className="text-sm text-text-secondary">Gearchiveerd{editable ? ' · selecteer om te herstellen' : ''}</p>}
       {row.selected && <div className="mt-2 space-y-3">
-        {row.kind === 'sector' ? <label className="block text-sm">Jaren ervaring (optioneel)
-          <input type="number" min="0" max="80" step="1" className={field} value={row.years ?? ''}
+        {row.kind === 'sector' || row.kind === 'area' ? <label className="block text-sm">{row.kind === 'sector' ? 'Jaren ervaring (optioneel)' : 'Maximale reisafstand in km (optioneel)'}
+          <input type="number" min="0" max={row.kind === 'sector' ? 80 : 1000} step="1" className={field} value={row.years ?? ''}
             onChange={event => patch({ years: event.target.value === '' ? null : event.target.valueAsNumber })} />
         </label> : <>
           {row.recordId && !original?.termId && <label className="block text-sm">Dienst koppelen
@@ -101,15 +101,15 @@ export function ProviderOfferingForm({ initial, save }: { initial: Offering; sav
   }
 
   return <form className="space-y-5" onSubmit={event => { event.preventDefault(); submit() }}>
-    {(['sector', 'service'] as const).map(kind => {
+    {(['sector', 'service', 'area'] as const).map(kind => {
       const sector = kind === 'sector'
-      const title = sector ? 'Sectoren' : 'Diensten'
-      const editable = sector ? base.editSectors : base.editServices
-      const options = sector ? base.sectors : base.services
+      const title = sector ? 'Sectoren' : kind === 'service' ? 'Diensten' : 'Werkgebied'
+      const editable = sector ? base.editSectors : kind === 'service' ? base.editServices : Boolean(base.editArea)
+      const options = sector ? base.sectors : kind === 'service' ? base.services : (base.areas ?? [])
       const visible = rows.filter(row => row.kind === kind && (editable || row.selected))
-      return <Card key={kind} id={sector ? 'sectoren' : 'diensten'} className="min-w-0">
+      return <Card key={kind} id={sector ? 'sectoren' : kind === 'service' ? 'diensten' : 'werkgebied'} className="min-w-0">
         <h2 className="text-xl font-bold">{title}</h2>
-        <p className="mt-1 text-text-secondary">{sector ? 'In welke branches heeft uw organisatie ervaring?' : 'Welke werkzaamheden biedt u aan? Kies per dienst uw leveringsvormen.'}</p>
+        <p className="mt-1 text-text-secondary">{sector ? 'In welke branches heeft uw organisatie ervaring?' : kind === 'service' ? 'Welke werkzaamheden biedt u aan? Kies per dienst uw leveringsvormen.' : 'Waar wilt u opdrachten uitvoeren? Kies één of meer werkgebieden.'}</p>
         {!options.length && <p className="mt-3 text-sm">De catalogus voor {title.toLowerCase()} bevat momenteel geen beschikbare keuzes.</p>}
         {!editable && <p className="mt-2 text-sm">{visible.length ? 'Alleen-lezen.' : 'Er zijn nog geen keuzes vastgelegd.'}</p>}
         <fieldset disabled={!editable || pending} className="mt-4 min-w-0">
@@ -120,6 +120,6 @@ export function ProviderOfferingForm({ initial, save }: { initial: Offering; sav
     })}
     {error && <p role="alert" className="font-semibold">{error}</p>}
     <p role="status" aria-live="polite" className="empty:hidden">{message}</p>
-    {(base.editSectors || base.editServices) && <Button type="submit" loading={pending}>Wijzigingen opslaan</Button>}
+    {(base.editSectors || base.editServices || base.editArea) && <Button type="submit" loading={pending}>Wijzigingen opslaan</Button>}
   </form>
 }
