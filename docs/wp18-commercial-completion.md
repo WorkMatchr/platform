@@ -174,3 +174,74 @@ Rollback herintroduceert genoemde offerteproblemen en is geen permanente oplossi
 **Technisch gereed voor gecontroleerde review.** Geen onvoorwaardelijke productie-GO:
 remote Preview/CI, ontbrekende e-mailproductbesluiten en bestaande provider-/juridische
 releasevoorwaarden blijven afzonderlijk te beoordelen. Geen productiehandeling uitgevoerd.
+
+## Release B3 op de gepubliceerde A/B1/B2-basis
+
+Deze aanvulling geldt voor PR #112. De eerdere WP18-metingen hierboven zijn historisch.
+De referentie voor de release is productiecommit `baa6547c35c03905bec09fc22b76593e5821794d`.
+Het enige integratieconflict betrof de lijst met uitgesloten Preview-branches in
+`vercel.json`. Zowel B2 als B3 behoudt de eigen uitsluiting.
+
+De read-only controle bevestigde de 85 afgeronde productiemigraties. Alle 85 namen en
+SHA-256-checksums zijn vergeleken met de bijbehorende SQL uit Git. Bij 12 bestanden
+komen de vastgelegde checksums overeen met CRLF-regeleinden en bij de overige 73
+met de oorspronkelijke Git-bytes. De PostgreSQL 18-proef gebruikte precies de 85
+geregistreerde bestanden, met dezelfde checksums. De keten uit de repository bevat
+ook latere migraties. Een eenvoudige selectie van de eerste 85 mappen is onjuist.
+
+- De server bewaart voor een gekozen einddatum het begin van de volgende dag in
+  Amsterdam. De detailweergaven tonen dit exclusieve tijdstip met tijdzone. Bij
+  bewerken bewaart een ongewijzigde datum ook het oorspronkelijke historische tijdstip.
+- Het bestaande prijs-, selectie-, credit- en sessiemodel blijft leidend. De schema-,
+  homepage-, auth-, SEO- en providerbestanden van de productiebasis zijn identiek.
+- Op schema 85 zijn conceptversies, de verlopen uitnodiging, capaciteitsgrens,
+  tenantisolatie, gelijktijdige indiening en gunning en de bijbehorende notificaties
+  getest. Een parallelle gunning leverde precies één besluit op. Een niet-ingediend
+  concept behield zijn status en kreeg geen afwijzingsmelding. Een herhaalde aankoop
+  en indiening leverden samen één deelnameafschrijving op. Ook de sessie- en
+  financiële PostgreSQL-suites slaagden.
+
+### Herhaalde acceptatie op de geïntegreerde kandidaat
+
+| Controle | Resultaat |
+| --- | --- |
+| Gerichte Vitest-regressies en scheduler | PASS, 404 tests in 64 bestanden en 14 schedulertests. |
+| PostgreSQL 18 met 85 productiemigraties | PASS voor Marketplace, sessies en financiële integriteit met synthetische tenants en fake providers. |
+| Edge, desktop en mobiele weergave | PASS voor het ingelogde offerteformulier, 1414 en 390 CSS-pixels breed. Alle zes velden kwamen na opslaan en heropenen terug. |
+| Echte browserzoom op 200% | PASS, bij een buitenbreedte van 1440 px veranderde de inhoudsbreedte van 1414 naar 707 px en de pixelratio van 1 naar 2. |
+| Toegankelijkheid van het offerteformulier | PASS voor geteste tabvolgorde, zichtbare focus en reflow. Axe vond op de drie weergaven geen overtredingen van de geteste WCAG A/AA-regels. |
+| Tenantafscherming in Edge | PASS, een andere professional kreeg voor zowel het conceptformulier als het offertedetail de pagina voor een onbekende route. |
+| Lint, zelfstandige TypeScriptcontrole en standaardproductiebuild | PASS. Lint meldt vier bestaande navigatiewaarschuwingen. De standaardbuild gebruikte Turbopack. |
+
+De GitHub Actions zijn gekoppeld aan de PR-head. Controleer de bijbehorende runs
+opnieuw zodra die head of de productiebasis verandert. Fysieke mobiele apparaten
+en een schermlezer maakten geen deel uit van deze browserproef.
+
+### Publicatie en terugkeer
+
+Controleer vóór een afzonderlijk goedgekeurde publicatie opnieuw de PR-head, groene
+Actions, productiealias en schema-identiteit. Controleer na publicatie de alias en
+commit, homepage, SEO, inloggen, accountafscherming en de offertepagina. Gebruik
+bestaande foutsignalen voor opslaan, indienen en gunnen. Stop bij een onverwachte
+autorisatie-, datum- of transactiefout. Herstel dan met afzonderlijke bevoegdheid de
+productiealias naar de vooraf opnieuw gecontroleerde READY-deployment van B2.
+Nieuwe legitieme offertetransacties blijven behouden. Terugkeer naar B2 brengt ook
+het oude bewerkings- en geldigheidsgedrag terug. Gebruik die handelingen pas weer
+na beoordeling. Er is geen databaseterugdraai nodig.
+
+### Afzonderlijk vervolg voor het dienstverlenersprofiel
+
+De pagina voor diensten haalt uitsluitend actieve termen uit gepubliceerde versies
+van `ProviderTaxonomy` op. De read-only telling op de productiebasis vond geen
+`SERVICE`-taxonomie, tegenover 12 selecteerbare sectoren en 20 specialismen. Daardoor
+heeft de dienstenselectie alleen een placeholder. De repository definieert diensten
+in de referentieseed. Herstel van productiegegevens valt buiten B3.
+
+Vervolgopdracht **Sectoren en diensten**: verifieer de bedoelde gepubliceerde
+dienstencatalogus en bereid een afzonderlijke, idempotente referentiedata-aanvulling
+voor. Combineer daarna sectoren, meerdere diensten en specialismen, en de
+leveringsvormen per dienst in één formulier. Gebruik de bestaande profiel- en
+revisieservices met één atomische opslagactie, optimistische versiecontrole en
+serverautorisatie. Behoud bestaande koppelingen en bewijs bij ongewijzigd opslaan.
+Test lege catalogus, wijzigen zonder verlies, rol- en tenantgrenzen, gelijktijdige
+bewerkingen en ongewijzigde matching en selecteerbaarheid.

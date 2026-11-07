@@ -13,7 +13,6 @@ import { markMarketplaceNotificationRead } from '@/lib/marketplace/notification-
 import { acceptProviderInvitation, declineProviderInvitation } from '@/lib/marketplace/participation-service'
 import { MarketplaceServiceError } from '@/lib/marketplace/marketplace-errors'
 import { saveQuoteDraft, submitQuote } from '@/lib/marketplace/quote-service'
-import { parseQuoteValidUntilDate } from '@/lib/marketplace/quote-validity-date'
 
 const idSchema = z.uuid()
 const idempotencySchema = z.string().min(8).max(120)
@@ -76,7 +75,7 @@ export async function saveQuoteDraftAction(formData: FormData) {
       approach: z.string().min(20).max(10_000).parse(formData.get('approach')),
       planning: z.string().min(10).max(2000).parse(formData.get('planning')),
       terms: z.string().max(2000).optional().parse(formData.get('terms') || undefined),
-      validUntil: formData.get('validUntil') ? parseQuoteValidUntilDate(z.string().parse(formData.get('validUntil'))) : undefined,
+      validUntil: z.iso.date().optional().parse(formData.get('validUntil') || undefined),
     },
   })
   revalidatePath('/dashboard')

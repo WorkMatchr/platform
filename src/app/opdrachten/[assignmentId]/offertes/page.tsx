@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { Metadata } from 'next'
+import { formatQuoteExpiry } from '@/lib/marketplace/quote-validity-date'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { awardQuoteAction } from '@/app/marktplaats/actions'
@@ -41,7 +42,7 @@ export default async function ClientQuotesPage({ params }: { params: Promise<{ a
             <p className="mt-1 whitespace-pre-wrap">{quote.submittedVersion.priceExplanation}</p>
             <h3 className="mt-5 font-semibold">Aanpak</h3>
             <p className="mt-1 whitespace-pre-wrap text-text-secondary">{quote.submittedVersion.approach}</p>
-            {quote.submittedVersion.validUntil ? <p className="mt-3 text-sm">Geldig tot: {quote.submittedVersion.validUntil.toLocaleString('nl-NL')}{quote.submittedVersion.validUntil <= new Date() ? ' (verstreken)' : ''}</p> : null}
+            {quote.submittedVersion.validUntil ? <p className="mt-3 text-sm">Geldig tot: {formatQuoteExpiry(quote.submittedVersion.validUntil)}{quote.submittedVersion.validUntil <= new Date() ? ' (verstreken)' : ''}</p> : null}
             <h3 className="mt-5 font-semibold">Planning</h3>
             <p className="mt-1 whitespace-pre-wrap">{quote.submittedVersion.planning}</p>
             {quote.submittedVersion.terms ? <div className="mt-5"><h3 className="font-semibold">Voorwaarden</h3><p className="mt-1 whitespace-pre-wrap">{quote.submittedVersion.terms}</p></div> : null}

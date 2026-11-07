@@ -44,6 +44,7 @@ async function main() {
     const { acceptProviderInvitation } = await import('../src/lib/marketplace/participation-service')
     const { getProviderInvitationDetail, getClientQuotes, getProviderQuoteDetail } = await import('../src/lib/marketplace/dashboard-query-service')
     const { saveQuoteDraft, submitQuote } = await import('../src/lib/marketplace/quote-service')
+    const { quoteValidityInputDate } = await import('../src/lib/marketplace/quote-validity-date')
     const { awardMarketplaceQuote } = await import('../src/lib/marketplace/award-service')
     const { sendMarketplaceMessage } = await import('../src/lib/marketplace/messaging-service')
     const { correctMarketplaceCredits, grantMarketplaceCredits, reserveCreditsInTransaction } = await import('../src/lib/marketplace/credit-service')
@@ -168,7 +169,23 @@ async function main() {
     assert.equal(await prisma.creditTransaction.count({ where: { referenceId: submittedQuote.participation.id, type: 'CONSUMPTION' } }), 0)
     assert.equal(await prisma.marketplaceAuditEvent.count({ where: { action: 'QUOTE_SUBMITTED', entityId: quote.id } }), 1)
 
-    await submitQuote({ actorUserId: secondProviderUser.id, providerOrganizationId: secondProviderOrganization.id, quoteId: secondQuote.id, expectedQuoteVersion: 1, idempotencyKey: randomUUID() })
+    const secondVersion = await prisma.quoteVersion.findUniqueOrThrow({ where: { id: secondQuote.currentVersionId! } })
+    const originalExpiry = secondVersion.validUntil!
+    const revised = await saveQuoteDraft({
+      actorUserId: secondProviderUser.id, providerOrganizationId: secondProviderOrganization.id,
+      participationId: secondParticipation.id, expectedQuoteVersion: secondQuote.version,
+      content: {
+        priceCents: Number(secondVersion.priceCents), priceExplanation: secondVersion.priceExplanation,
+        approach: secondVersion.approach, planning: secondVersion.planning, terms: 'Gewijzigde synthetische voorwaarden.',
+        validUntil: quoteValidityInputDate(originalExpiry),
+      },
+    })
+    const savedVersion = await prisma.quoteVersion.findUniqueOrThrow({ where: { id: revised.currentVersionId! } })
+    assert.equal(savedVersion.validUntil?.getTime(), originalExpiry.getTime())
+    assert.notEqual(savedVersion.id, secondVersion.id)
+    const secondSubmission = { actorUserId: secondProviderUser.id, providerOrganizationId: secondProviderOrganization.id, quoteId: secondQuote.id, expectedQuoteVersion: revised.version, idempotencyKey: randomUUID() }
+    await assert.rejects(submitQuote({ ...secondSubmission, now: new Date(Date.now() + 2 * 86_400_000) }), { code: 'DEADLINE_PASSED' })
+    await submitQuote(secondSubmission)
     const channel = await prisma.marketplaceMessageChannel.findFirstOrThrow({ where: { participationId: acceptedParticipation.id } })
     const messageInput = { actorUserId: providerUser.id, organizationId: providerOrganization.id, channelId: channel.id, content: 'Uitsluitend synthetisch testbericht.', idempotencyKey: randomUUID() }
     const message = await sendMarketplaceMessage(messageInput)

@@ -1,10 +1,11 @@
 import type { NextConfig } from 'next'
+import { searchIndexingHeaders } from './src/config/search-indexing'
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   async headers() {
-    return [{
+    return [...searchIndexingHeaders(process.env.VERCEL_ENV), {
       source: '/:path*',
       headers: [
         // Keep Next.js inline hydration and existing provider redirects working.

@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { Metadata } from 'next'
+import { formatQuoteExpiry } from '@/lib/marketplace/quote-validity-date'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { submitQuoteAction } from '@/app/marktplaats/actions'
@@ -39,7 +40,7 @@ export default async function QuotePage({ params }: { params: Promise<{ quoteId:
           <div className="sm:col-span-2"><dt className="font-semibold">Aanpak</dt><dd className="mt-1 whitespace-pre-wrap">{currentVersion.approach}</dd></div>
           <div className="sm:col-span-2"><dt className="font-semibold">Planning</dt><dd className="mt-1 whitespace-pre-wrap">{currentVersion.planning}</dd></div>
           {currentVersion.terms ? <div className="sm:col-span-2"><dt className="font-semibold">Voorwaarden</dt><dd className="mt-1 whitespace-pre-wrap">{currentVersion.terms}</dd></div> : null}
-          {currentVersion.validUntil ? <div className="sm:col-span-2"><dt className="font-semibold">Geldig tot</dt><dd>{currentVersion.validUntil.toLocaleString('nl-NL')}</dd></div> : null}
+          {currentVersion.validUntil ? <div className="sm:col-span-2"><dt className="font-semibold">Geldig tot</dt><dd>{formatQuoteExpiry(currentVersion.validUntil)}</dd></div> : null}
         </dl>
         {canEdit ? (
           <div className="mt-6 flex flex-wrap gap-3">

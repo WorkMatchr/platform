@@ -2,7 +2,24 @@
 // Store the exclusive start of the next day as a UTC instant. Existing timestamps
 // (including older quote versions) are not rewritten or reinterpreted.
 const TIME_ZONE = 'Europe/Amsterdam'
+const calendarFormatter = new Intl.DateTimeFormat('sv-SE', { timeZone: TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit' })
+const instantFormatter = new Intl.DateTimeFormat('nl-NL', { timeZone: TIME_ZONE, dateStyle: 'long', timeStyle: 'long' })
 const offsetFormatter = new Intl.DateTimeFormat('en-US', { timeZone: TIME_ZONE, timeZoneName: 'shortOffset' })
+
+// The last valid millisecond determines the inclusive date shown in the editor.
+export function quoteValidityInputDate(expiry: Date): string {
+  return calendarFormatter.format(new Date(expiry.getTime() - 1))
+}
+
+export function formatQuoteExpiry(expiry: Date): string {
+  return instantFormatter.format(expiry)
+}
+
+export function resolveQuoteExpiry(input: string | Date | undefined, previous?: Date | null): Date | undefined {
+  if (typeof input !== 'string') return input
+  if (previous && quoteValidityInputDate(previous) === input) return previous
+  return parseQuoteValidUntilDate(input)
+}
 
 export function parseQuoteValidUntilDate(value: string): Date {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)

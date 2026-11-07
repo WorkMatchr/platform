@@ -20,9 +20,12 @@ De service dwingt dit transactioneel af; een verborgen knop is geen autorisatie.
 Na indiening blijft de oorspronkelijke immutable versie leidend.
 
 Een offerte met een verstreken validUntil kan niet worden gegund, ook niet precies op
-het vervaltijdstip. De opgeslagen timestamp en de bestaande datumconversie blijven
-ongewijzigd; er wordt geen nieuwe einde-van-de-dagregel geïntroduceerd. Historische
-idempotente gunningen blijven terugleesbaar. De weergave toont de geldigheid.
+het vervaltijdstip. Bij een nieuwe of gewijzigde einddatum geldt de hele gekozen dag
+in `Europe/Amsterdam`. De database bewaart het begin van de volgende lokale dag als
+exclusief vervaltijdstip. Professional en opdrachtgever zien dat tijdstip in Nederlandse
+tijd. Bij een ongewijzigde datum in een bestaand concept behoudt de nieuwe versie het
+oorspronkelijke tijdstip, ook wanneer dat midden op de dag valt. Historische versies en
+idempotente gunningen blijven terugleesbaar.
 
 Alleen daadwerkelijk gegunde of afgewezen ingediende offertes krijgen de bijbehorende
 in-app gunnings-/afwijzingsmelding. Een niet-ingediend of ingetrokken concept krijgt geen
