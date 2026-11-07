@@ -108,7 +108,7 @@ describe('publieke informatiearchitectuur', () => {
     const rules = robots()
     expect(rules.sitemap).toBe(`${siteConfig.url}/sitemap.xml`)
     expect(rules.rules).toMatchObject({ userAgent: '*', allow: '/' })
-    expect(JSON.stringify(rules.rules)).toContain('/aanbiedersdossier')
+    expect(JSON.stringify(rules.rules)).toContain('/api/')
   })
 
   it('biedt op de 404-pagina bruikbare vervolgroutes', () => {
