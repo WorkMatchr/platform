@@ -5,7 +5,7 @@ import { LinkButton } from '@/components/ui/link-button'
 import { getActiveOrganizationContext } from '@/lib/organizations/organization-authorization'
 import { buildAccountViewModel } from './account-view-model'
 
-export const metadata = { title: 'Uw account | WorkMatchr' }
+export const metadata = { title: 'Mijn account | WorkMatchr' }
 
 function Detail({ label, value }: { label: string; value: string }) {
   return (
