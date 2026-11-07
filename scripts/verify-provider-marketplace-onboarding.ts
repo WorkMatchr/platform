@@ -33,7 +33,7 @@ export async function verifyProviderMarketplaceOnboarding(db: PrismaClient, fixt
   const participate = (actorId = user.id, orgId = org.id) => db.$transaction(tx => requireProviderParticipationAccess(tx, actorId, orgId))
   const denied = { code: 'PROFILE_ONBOARDING_REQUIRED' }
   const assess = () => assessProviderDossierCompleteness(user.id, providerProfileId)
-  assert.equal((await assess()).policyVersion, 'PROVIDER-COMPLETENESS-B4-1')
+  assert.equal((await assess()).policyVersion, 'PROVIDER-COMPLETENESS-B4-2')
   assert.deepEqual(await matching(), new Set([providerProfileId]))
   assert.equal((await participate(fixture.legacyOwnerId, fixture.legacyOrganizationId)).role, 'OWNER')
   await assert.rejects(participate(fixture.legacyMemberId, fixture.legacyOrganizationId), { code: 'ACCESS_DENIED' })
@@ -67,21 +67,11 @@ export async function verifyProviderMarketplaceOnboarding(db: PrismaClient, fixt
     serviceTermId: fixture.serviceTermId, deliveryModes: ['REMOTE'] } } } })
   await db.providerSectorExperience.create({ data: { providerProfileId, revisions: { create: { version: 1, sectorTermId: fixture.sectorTermId } } } })
   await db.providerWorkArea.create({ data: { providerProfileId, revisions: { create: { version: 1, regionTermId: fixture.regionTermId } } } })
-  await db.providerProfessional.create({ data: { providerProfileId, identityRevisions: { create: { version: 1, displayName: 'Testprofessional', functionalRole: 'Testrol' } } } })
-  await db.providerOrganizationQualification.create({ data: { providerProfileId, revisions: { create: { version: 1, qualificationTermId: fixture.qualificationTermId } } } })
-  const evidence = await db.providerEvidenceDocument.create({ data: { providerProfileId, status: 'AVAILABLE', revisions: { create: {
-    version: 1, storageKey: 'synthetic/b4/document', originalFileName: 'test.pdf', mimeType: 'application/pdf', sizeBytes: 32, sha256: checksum, scanStatus: 'CLEAN',
-  } } }, include: { revisions: true } })
-  const evidenceRevisionId = evidence.revisions[0].id
-  await db.providerEvidenceScanDecision.create({ data: { evidenceRevisionId, scanStatus: 'CLEAN', scannerReference: 'synthetic', checksum } })
-  await db.providerInsurance.create({ data: { providerProfileId, revisions: { create: { version: 1, insuranceTypeTermId: fixture.insuranceTermId,
-    insurer: 'Test', policyReference: 'Test', effectiveFrom: past, expiresAt: future, insuredOrganizationId: org.id, evidenceRevisionId } } } })
-  const terms = await db.providerTermDocument.create({ data: { code: 'B4_SYNTHETIC', label: 'Testverklaring', versions: { create: {
-    version: 1, label: 'Test', status: 'ACTIVE', effectiveFrom: past, contentReference: 'synthetic/b4/terms', checksum,
-  } } }, include: { versions: true } })
-  assert.deepEqual((await assess()).blockingSections, ['DECLARATIONS'])
-  await db.providerTermAcceptance.create({ data: { providerProfileId, documentVersionId: terms.versions[0].id, acceptedByUserId: user.id } })
-  assert.equal((await assess()).completed, 9)
+  // Matching essentials are enough for new providers; no insurance, evidence,
+  // professional roster or separate declarations are needed for onboarding.
+  assert.equal((await assess()).completed, 4)
+  assert.deepEqual((await assess()).blockingSections, [])
+
   await assert.rejects(participate(), denied)
   await db.providerProfile.update({ where: { id: providerProfileId }, data: {
     lifecycleStatus: 'QUALIFIED', approvalStatus: 'APPROVED', platformQualificationStatus: 'QUALIFIED', readinessStatus: 'READY', selectabilityStatus: 'SELECTABLE',
@@ -98,5 +88,5 @@ export async function verifyProviderMarketplaceOnboarding(db: PrismaClient, fixt
   await db.providerProfile.update({ where: { id: providerProfileId }, data: { version: { increment: 1 } } })
   await assert.rejects(participate(), denied)
   assert.deepEqual(await matching(), new Set([providerProfileId]))
-  console.log('PASS onboarding, 9/9 sections, separate approval, stale approval, actions, legacy cohort and tenant isolation')
+  console.log('PASS onboarding, 4/4 matching sections, separate approval, stale approval, actions, legacy cohort and tenant isolation')
 }
