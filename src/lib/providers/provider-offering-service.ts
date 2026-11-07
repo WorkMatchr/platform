@@ -84,7 +84,7 @@ async function writeArea(tx: Tx, providerProfileId: string, row: Change) {
   if ((!row.selected && !record) || !row.termId || row.specialismId || row.modes.length ||
       (row.years !== null && (row.years < 0 || row.years > 1000))) invalid()
   if (previous && previous.regionTermId !== row.termId) invalid()
-  let changed = row.selected && (!previous || previous.maxTravelDistanceKm !== row.years)
+  const changed = row.selected && (!previous || previous.maxTravelDistanceKm !== row.years)
   if (row.selected) {
     const term = await requireTerm(tx, row.termId, ['REGION'])
     if (term && await hasConflictingActiveWorkArea(tx, providerProfileId, term.code, record?.id)) invalid()
