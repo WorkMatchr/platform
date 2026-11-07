@@ -80,7 +80,11 @@ async function loadCandidateSource(transaction: Transaction, providerProfileId: 
   })
   if (!provider) throw new ProviderServiceError('NOT_FOUND')
   const enrolled = provider.organization.provisioningEvents.length > 0
-  const { provisioningEvents: _onboardingEvents, ...snapshotOrganization } = provider.organization
+  const snapshotOrganization = {
+    id: provider.organization.id, name: provider.organization.name, tradeName: provider.organization.tradeName,
+    chamberOfCommerceNumber: provider.organization.chamberOfCommerceNumber,
+    organizationType: provider.organization.organizationType, status: provider.organization.status,
+  }
   const complete = provider.capabilities.length > 0 && provider.capabilities.every((item) => item.revisions.length === 1)
     && provider.sectorExperiences.length > 0 && provider.sectorExperiences.every((item) => item.revisions.length === 1)
     && provider.workAreas.length > 0 && provider.workAreas.every((item) => item.revisions.length === 1)
