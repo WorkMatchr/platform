@@ -23,6 +23,7 @@
       "codex/contact-audit-retention": false,
       "codex/combined-final-acceptance": false,
       "codex/database-upgrade-preparation": false,
+      "codex/release-b1-auth-post-homepage": false,
       "codex/release-b3-marketplace-post-homepage": false
     }
   },
