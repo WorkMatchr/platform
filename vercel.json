@@ -25,7 +25,8 @@
       "codex/database-upgrade-preparation": false,
       "codex/release-b1-auth-post-homepage": false,
       "codex/release-b2-seo-post-homepage": false,
-      "codex/account-and-arbo-guides-ux": false
+      "codex/account-and-arbo-guides-ux": false,
+      "codex/release-b3-marketplace-post-homepage": false
     }
   },
   "crons": [

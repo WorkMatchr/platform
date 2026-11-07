@@ -75,7 +75,7 @@ export async function saveQuoteDraftAction(formData: FormData) {
       approach: z.string().min(20).max(10_000).parse(formData.get('approach')),
       planning: z.string().min(10).max(2000).parse(formData.get('planning')),
       terms: z.string().max(2000).optional().parse(formData.get('terms') || undefined),
-      validUntil: formData.get('validUntil') ? z.coerce.date().parse(formData.get('validUntil')) : undefined,
+      validUntil: z.iso.date().optional().parse(formData.get('validUntil') || undefined),
     },
   })
   revalidatePath('/dashboard')
