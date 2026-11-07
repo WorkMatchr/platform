@@ -5,6 +5,13 @@ import { describe, expect, it } from 'vitest'
 function source(path: string) { return readFileSync(join(process.cwd(), path), 'utf8') }
 
 describe('Mijn Arbo-wijzers', () => {
+  it('biedt ook zonder rapporten een startknop naar de bestaande Arbo-wijzers', () => {
+    const page = source('src/app/mijn-arbo-wijzers/page.tsx')
+    expect(page).toContain('Nieuwe Arbo-wijzer')
+    expect(page).toContain('href="/wijzers"')
+    expect(page.indexOf('Nieuwe Arbo-wijzer')).toBeLessThan(page.indexOf('runs.length === 0'))
+  })
+
   it('autoriseert overzicht, detail en PDF server-side op de actieve organisatie', () => {
     expect(source('src/app/mijn-arbo-wijzers/page.tsx')).toContain('requireOrganizationMembership')
     expect(source('src/app/mijn-arbo-wijzers/[runId]/page.tsx')).toContain('organizationId: activeMembership.organization.id')

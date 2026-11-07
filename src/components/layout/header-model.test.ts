@@ -63,9 +63,9 @@ describe('gedeelde headercontext', () => {
       },
       {
         key: 'personal',
-        label: 'Persoonlijk',
+        label: 'Mijn account',
         links: [
-          { href: '/account', label: 'Account' },
+          { href: '/account', label: 'Mijn account' },
           { href: '/notificaties', label: 'Notificaties' },
         ],
       },
@@ -158,7 +158,7 @@ describe('gedeelde headercontext', () => {
     }, true)
     expect(platformAdministrator.navigationGroups).toEqual([
       { key: 'work', label: 'Werk', links: [{ href: '/platformbeheer', label: 'Platformbeheer' }] },
-      { key: 'personal', label: 'Persoonlijk', links: [{ href: '/account', label: 'Account' }] },
+      { key: 'personal', label: 'Mijn account', links: [{ href: '/account', label: 'Mijn account' }] },
     ])
     expect(platformAdministrator.activeOrganization).toBeNull()
     expect(buildHeaderViewModel(clientContext).navigationGroups.flatMap((group) => group.links).some((item) => item.href === '/platformbeheer')).toBe(false)

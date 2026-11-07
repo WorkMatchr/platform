@@ -23,7 +23,7 @@ export type HeaderViewModel = {
   activeOrganization: { id: string; name: string; role: OrganizationMembershipRole } | null
   navigationGroups: Array<{
     key: 'work' | 'organization' | 'learning' | 'personal'
-    label: 'Werk' | 'Organisatie' | 'E-LEARNINGS' | 'Persoonlijk'
+    label: 'Werk' | 'Organisatie' | 'E-LEARNINGS' | 'Mijn account'
     links: Array<{ href: string; label: string }>
   }>
 }
@@ -68,7 +68,7 @@ export function buildHeaderViewModel(
     navigationGroups: isPlatformAdministrator
       ? [
           { key: 'work', label: 'Werk', links: [{ href: '/platformbeheer', label: 'Platformbeheer' }] },
-          { key: 'personal', label: 'Persoonlijk', links: [{ href: '/account', label: 'Account' }] },
+          { key: 'personal', label: 'Mijn account', links: [{ href: '/account', label: 'Mijn account' }] },
         ]
       : [
           {
@@ -123,7 +123,7 @@ export function buildHeaderViewModel(
           } as const] : []),
           {
             key: 'personal',
-            label: 'Persoonlijk',
+            label: 'Mijn account',
             links: [
               { href: '/account', label: 'Account' },
               ...(organization ? [{ href: '/notificaties', label: 'Notificaties' }] : []),
