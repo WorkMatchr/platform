@@ -81,8 +81,7 @@ describe('gedeelde headercontext', () => {
       { href: '/organisatie', label: 'Organisatie' },
       { href: '/organisatie/gebruikers', label: 'Medewerkers' },
       { href: '/aanbiedersdossier', label: 'Dienstverlenersprofiel' },
-      { href: '/aanbiedersdossier/professionals', label: 'Professionals' },
-      { href: '/aanbiedersdossier/profiel', label: 'Kernexpertises en profiel' },
+      { href: '/aanbiedersdossier/diensten-en-ervaring', label: 'Mijn dienstverlening' },
     ])
     expect(model.navigationGroups.find((group) => group.key === 'work')?.links).toEqual(expect.arrayContaining([
       { href: '/credits', label: 'Credits & facturen' },
