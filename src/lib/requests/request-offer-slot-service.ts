@@ -4,7 +4,7 @@ import type {
   RequestStatus,
 } from '@/generated/prisma/client'
 import { Prisma as PrismaNamespace } from '@/generated/prisma/client'
-import { requireProviderMarketplaceAccess } from '@/lib/marketplace/marketplace-authorization'
+import { requireProviderParticipationAccess } from '@/lib/marketplace/marketplace-authorization'
 import { getApplicableMarketplaceRuleSet } from '@/lib/marketplace/marketplace-rules-service'
 import { getPrisma } from '@/lib/prisma'
 import type { ProviderRequestActor } from './request-interest-service'
@@ -52,7 +52,7 @@ async function requireClaimAccess(
   actor: ProviderRequestActor,
 ) {
   try {
-    const access = await requireProviderMarketplaceAccess(
+    const access = await requireProviderParticipationAccess(
       transaction,
       actor.userId,
       actor.organizationId,

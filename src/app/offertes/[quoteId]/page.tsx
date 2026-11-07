@@ -9,13 +9,13 @@ import { Card } from '@/components/ui/card'
 import { Heading } from '@/components/ui/heading'
 import { getProviderQuoteDetail } from '@/lib/marketplace/dashboard-query-service'
 import { quoteStatusLabels } from '@/lib/marketplace/marketplace-presentation'
-import { requireOrganizationMembership } from '@/lib/organizations/organization-authorization'
+import { requireMarketplacePageMembership } from '@/lib/providers/provider-marketplace-page'
 
 export const metadata: Metadata = { title: 'Uw offerte | WorkMatchr' }
 
 export default async function QuotePage({ params }: { params: Promise<{ quoteId: string }> }) {
   const { quoteId } = await params
-  const { user, activeMembership } = await requireOrganizationMembership(undefined, `/offertes/${quoteId}`)
+  const { user, activeMembership } = await requireMarketplacePageMembership(undefined, `/offertes/${quoteId}`)
   const result = await getProviderQuoteDetail(user.id, activeMembership.organization.id, quoteId).catch(() => null)
   if (!result) notFound()
   const { quote, membership } = result

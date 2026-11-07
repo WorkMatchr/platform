@@ -1,4 +1,5 @@
 import type { Prisma, ProviderDossierSection } from '@/generated/prisma/client'
+import { onboardingEventWhere } from './provider-onboarding-cohort'
 import { getPrisma } from '@/lib/prisma'
 import { requireProviderViewer } from './provider-authorization'
 import { getProviderEditableSections } from './provider-dossier-access'
@@ -48,21 +49,26 @@ export async function assessProviderDossierCompletenessInTransaction(
   transaction: Prisma.TransactionClient,
   providerProfileId: string,
   at = new Date(),
+  userId?: string,
 ): Promise<ProviderCompletenessAssessment> {
   const provider = await transaction.providerProfile.findFirst({
     where: { id: providerProfileId, archivedAt: null, organization: { status: 'ACTIVE', organizationType: { in: ['PROVIDER', 'BOTH'] } } },
     select: {
       version: true,
-      organization: { select: { name: true, chamberOfCommerceNumber: true } },
+      organization: { select: { name: true, chamberOfCommerceNumber: true,
+        provisioningEvents: { where: onboardingEventWhere(userId), select: { id: true }, take: 1 },
+      } },
     },
   })
   if (!provider) return emptyAssessment()
 
   // De pg-driver ondersteunt geen overlappende queries op één transactionele
   // PoolClient. Houd deze reads daarom expliciet sequentieel en vlak.
+  const enrolled = provider.organization.provisioningEvents.length > 0
+  const policyVersion = enrolled ? 'PROVIDER-COMPLETENESS-B4-1' : PROVIDER_COMPLETENESS_POLICY_VERSION
   const capabilityRevisions = await transaction.providerCapabilityRevision.findMany({
     where: { capability: { providerProfileId, status: 'ACTIVE' } },
-    select: { providerCapabilityId: true, version: true, serviceTermId: true, specialismTermId: true },
+    select: { providerCapabilityId: true, version: true, serviceTermId: true, specialismTermId: true, deliveryModes: true },
   })
   const sectorExperienceCount = await transaction.providerSectorExperience.count({
     where: { providerProfileId, status: 'ACTIVE' },
@@ -113,7 +119,7 @@ export async function assessProviderDossierCompletenessInTransaction(
   const accepted = new Set(termAcceptances.map((item) => item.documentVersionId))
   const checks: Check[] = [
     { section: 'ORGANIZATION', complete: provider.organization.name.trim().length >= 2 && Boolean(provider.organization.chamberOfCommerceNumber?.trim()), code: 'ORGANIZATION_INCOMPLETE' },
-    { section: 'CAPABILITIES', complete: capabilities.some((item) => Boolean(item.serviceTermId || item.specialismTermId)), code: 'CAPABILITIES_INCOMPLETE' },
+    { section: 'CAPABILITIES', complete: capabilities.some((item) => enrolled ? Boolean(item.serviceTermId && item.deliveryModes.length) : Boolean(item.serviceTermId || item.specialismTermId)), code: enrolled ? 'SERVICE_DELIVERY_REQUIRED' : 'CAPABILITIES_INCOMPLETE' },
     { section: 'SECTOR_EXPERIENCE', complete: sectorExperienceCount > 0, code: 'SECTOR_EXPERIENCE_INCOMPLETE' },
     { section: 'WORK_AREA', complete: workAreaCount > 0, code: 'WORK_AREA_INCOMPLETE' },
     { section: 'PROFESSIONALS', complete: professionals.some((item) => item.status === 'ACTIVE'), code: 'PROFESSIONALS_INCOMPLETE' },
@@ -131,12 +137,12 @@ export async function assessProviderDossierCompletenessInTransaction(
   const editableSections = await getProviderEditableSections(transaction, providerProfileId)
   const completed = checks.length - reasons.length
   const checksum = hashProviderJson({
-    policyVersion: PROVIDER_COMPLETENESS_POLICY_VERSION,
+    policyVersion,
     sourceProfileVersion: provider.version,
     results: checks.map((check) => ({ section: check.section, complete: check.complete, expired: check.expired ?? false, code: check.code })),
   }).sha256
   return {
-    policyVersion: PROVIDER_COMPLETENESS_POLICY_VERSION,
+    policyVersion,
     sourceProfileVersion: provider.version,
     required: checks.length,
     completed,
@@ -174,6 +180,6 @@ function emptyAssessment(): ProviderCompletenessAssessment {
 export async function assessProviderDossierCompleteness(userId: string, providerProfileId: string, at = new Date()) {
   return getPrisma().$transaction(async (transaction) => {
     await requireProviderViewer(transaction, userId, providerProfileId)
-    return assessProviderDossierCompletenessInTransaction(transaction, providerProfileId, at)
+    return assessProviderDossierCompletenessInTransaction(transaction, providerProfileId, at, userId)
   })
 }

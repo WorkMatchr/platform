@@ -1,4 +1,5 @@
 import type { Prisma } from '@/generated/prisma/client'
+import { organizationOnboarding } from '@/lib/providers/provider-onboarding-cohort'
 import { getPrisma } from '@/lib/prisma'
 import { canCreateOrganization, canManageOrganization, shouldCreateProviderProfile } from './organization-policy'
 import type { CreateOrganizationInput, OrganizationProfileInput } from './organization-validation'
@@ -106,7 +107,7 @@ export async function createOrganization(userId: string, input: CreateOrganizati
       reasonCode: 'ORGANIZATION_ONBOARDING_OWNER_LINKED',
       correlationId,
       idempotencyKey: `organization-onboarding:account:${membership.id}`,
-      metadata: { policyVersion: 'ADR013_PHASE2B_V1' },
+      metadata: { policyVersion: 'ADR013_PHASE2B_V1', ...(user.accountType === 'PROFESSIONAL' ? { marketplaceOnboarding: organizationOnboarding } : {}) },
     })
 
     return { id: organization.id }

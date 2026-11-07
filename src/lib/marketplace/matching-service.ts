@@ -4,6 +4,7 @@ import { enqueueAssignmentNotifications } from './assignment-notification'
 import { z } from 'zod'
 import { evaluateRequestedExpertises } from './matching-expertise'
 import { externalAssignmentWhere } from '@/lib/assignments/assignment-identity'
+import { blockedOnboardingProfiles } from '@/lib/providers/provider-marketplace-onboarding'
 import type { Prisma } from '@/generated/prisma/client'
 import { getPrisma } from '@/lib/prisma'
 import { hashProviderJson, type CanonicalValue } from '@/lib/providers/provider-canonical-json'
@@ -187,7 +188,9 @@ export async function runMarketplaceMatching(input: {
       provider: MatchingProviderFacts
       result: ReturnType<typeof evaluateMatchingCandidate>
     }> = []
+    const blocked = await blockedOnboardingProfiles(transaction, Array.from(latestByProvider.values(), p => ({ providerProfileId: p.providerProfileId, organizationId: p.providerProfile.organizationId })), now)
     for (const projection of latestByProvider.values()) {
+      if (blocked.has(projection.providerProfileId)) continue
       const payload = readTrustedPayload(projection.payload)
       if (!payload) continue
       const provider = { providerProfileId: projection.providerProfileId, ...payload }
@@ -405,6 +408,10 @@ export async function applyMarketplaceMatchIntervention(input: {
     if (run.candidates.some((candidate) => candidate.providerProfile.selectabilityStatus !== 'SELECTABLE' || candidate.providerProfile.lifecycleStatus !== 'QUALIFIED')) {
       throw new MarketplaceServiceError('NOT_SELECTABLE')
     }
+    const blocked = await blockedOnboardingProfiles(transaction, run.candidates.map(candidate => ({
+      providerProfileId: candidate.providerProfileId, organizationId: candidate.providerProfile.organizationId,
+    })), now)
+    if (blocked.size) throw new MarketplaceServiceError('PROFILE_ONBOARDING_REQUIRED')
     const replacementIds = new Set(run.candidates.map((candidate) => candidate.providerProfileId))
     const currentInvitations = run.invitations.filter((invitation) => invitation.status === 'INVITED')
     const originalSelection = currentInvitations.map((invitation) => ({ invitationId: invitation.id, providerProfileId: invitation.providerProfileId }))

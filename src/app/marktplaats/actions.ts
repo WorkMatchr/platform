@@ -17,6 +17,13 @@ import { saveQuoteDraft, submitQuote } from '@/lib/marketplace/quote-service'
 const idSchema = z.uuid()
 const idempotencySchema = z.string().min(8).max(120)
 
+function handleParticipationError(error: unknown): never {
+  if (error instanceof MarketplaceServiceError && error.code === 'PROFILE_ONBOARDING_REQUIRED') {
+    redirect('/aanbiedersdossier?toegang=profiel')
+  }
+  throw error
+}
+
 async function context(returnTo: string) {
   const user = await requireUser(returnTo)
   const organization = await requireOrganizationMembership(undefined, returnTo)
@@ -44,7 +51,7 @@ export async function acceptProviderInvitationAction(formData: FormData) {
     if (error instanceof MarketplaceServiceError && ['INSUFFICIENT_CREDITS', 'FULL', 'INVALID_STATE', 'DEADLINE_PASSED'].includes(error.code)) {
       redirect(`/uitnodigingen/${invitationId}?purchaseError=${error.code}`)
     }
-    throw error
+    handleParticipationError(error)
   }
   revalidatePath('/dashboard')
   redirect(`/offertes/nieuw?deelname=${participation.id}`)
@@ -77,7 +84,7 @@ export async function saveQuoteDraftAction(formData: FormData) {
       terms: z.string().max(2000).optional().parse(formData.get('terms') || undefined),
       validUntil: formData.get('validUntil') ? z.coerce.date().parse(formData.get('validUntil')) : undefined,
     },
-  })
+  }).catch(handleParticipationError)
   revalidatePath('/dashboard')
   redirect(`/offertes/${quote.id}`)
 }
@@ -87,7 +94,7 @@ export async function submitQuoteAction(formData: FormData) {
   const expectedQuoteVersion = z.coerce.number().int().positive().parse(formData.get('expectedQuoteVersion'))
   const idempotencyKey = idempotencySchema.parse(formData.get('idempotencyKey'))
   const { user, organizationId } = await context(`/offertes/${quoteId}`)
-  await submitQuote({ actorUserId: user.id, providerOrganizationId: organizationId, quoteId, expectedQuoteVersion, idempotencyKey })
+  await submitQuote({ actorUserId: user.id, providerOrganizationId: organizationId, quoteId, expectedQuoteVersion, idempotencyKey }).catch(handleParticipationError)
   revalidatePath('/dashboard')
   redirect(`/offertes/${quoteId}`)
 }
@@ -108,7 +115,7 @@ export async function sendMarketplaceMessageAction(formData: FormData) {
   const content = z.string().min(1).max(4000).parse(formData.get('content'))
   const idempotencyKey = idempotencySchema.parse(formData.get('idempotencyKey'))
   const { user, organizationId } = await context(`/berichten/${channelId}`)
-  await sendMarketplaceMessage({ actorUserId: user.id, organizationId, channelId, content, idempotencyKey })
+  await sendMarketplaceMessage({ actorUserId: user.id, organizationId, channelId, content, idempotencyKey }).catch(handleParticipationError)
   revalidatePath(`/berichten/${channelId}`)
 }
 

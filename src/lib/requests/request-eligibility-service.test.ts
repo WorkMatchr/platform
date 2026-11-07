@@ -10,7 +10,7 @@ const projection=(id:string,codes:string[])=>({id,providerProfileId:id,sha256:'f
 const request={id:'request',regionCode:null,sectorCode:null,primaryExpertise:'Hogere veiligheidskundige (HVK)',primaryExpertiseCodes:['HVK'],additionalExpertise:['Middelbare veiligheidskundige (MVK)','Arbeidshygiënist'],additionalExpertiseCodes:['MVK','ARBEIDSHYGIENIST'],possibleExpertise:[],possibleExpertiseCodes:[]}
 describe('expliciete doelgroep binnen bestaande eligibility',()=>{
  it('matcht alleen gekozen codes, koppelt juiste labels en geeft primair voorrang',async()=>{
-  const create=vi.fn().mockResolvedValue({});const tx={trustedProviderProjection:{findMany:vi.fn().mockResolvedValue([projection('primary',['HVK']),projection('additional',['MVK']),projection('both',['HVK','MVK']),projection('hygiene',['ARBEIDSHYGIENIST']),projection('outside',['BEDRIJFSARTS'])])},requestEligibleProvider:{create}}
+  const create=vi.fn().mockResolvedValue({});const tx={accountProvisioningEvent:{findMany:vi.fn().mockResolvedValue([])},trustedProviderProjection:{findMany:vi.fn().mockResolvedValue([projection('primary',['HVK']),projection('additional',['MVK']),projection('both',['HVK','MVK']),projection('hygiene',['ARBEIDSHYGIENIST']),projection('outside',['BEDRIJFSARTS'])])},requestEligibleProvider:{create}}
   expect(await createRequestEligibilitySnapshot(tx as unknown as Prisma.TransactionClient,request,new Date(),{primaryExpertise:'HVK',additionalExpertises:['MVK','ARBEIDSHYGIENIST'],expertiseSelectionSource:'USER_SELECTED'})).toBe(4)
   const rows=create.mock.calls.map(([v])=>v.data)
   expect(rows.find(r=>r.providerProfileId==='additional').matchedExpertise).toEqual(['ADDITIONAL:Middelbare veiligheidskundige (MVK)'])
@@ -20,7 +20,7 @@ describe('expliciete doelgroep binnen bestaande eligibility',()=>{
   expect(rows.some(r=>r.providerProfileId==='outside')).toBe(false)
  })
  it('zonder aanvullend blijft alleen primary over; Route B maakt geen doelgroep',async()=>{
-  const create=vi.fn().mockResolvedValue({});const findMany=vi.fn().mockResolvedValue([projection('primary',['HVK']),projection('other',['MVK'])]);const tx={trustedProviderProjection:{findMany},requestEligibleProvider:{create}}
+  const create=vi.fn().mockResolvedValue({});const findMany=vi.fn().mockResolvedValue([projection('primary',['HVK']),projection('other',['MVK'])]);const tx={accountProvisioningEvent:{findMany:vi.fn().mockResolvedValue([])},trustedProviderProjection:{findMany},requestEligibleProvider:{create}}
   expect(await createRequestEligibilitySnapshot(tx as unknown as Prisma.TransactionClient,request,new Date(),{primaryExpertise:'HVK',additionalExpertises:[],expertiseSelectionSource:'USER_SELECTED'})).toBe(1)
   expect(await createRequestEligibilitySnapshot(tx as unknown as Prisma.TransactionClient,request,new Date(),{primaryExpertise:null,additionalExpertises:[],expertiseSelectionSource:'USER_SELECTED'})).toBe(0)
   expect(findMany).toHaveBeenCalledTimes(1)

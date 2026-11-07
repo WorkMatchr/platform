@@ -8,12 +8,14 @@ import { requireProviderDossierContext } from '@/lib/providers/provider-onboardi
 
 const dateFormatter = new Intl.DateTimeFormat('nl-NL', { dateStyle: 'long', timeStyle: 'short' })
 
-export default async function ProviderDossierPage() {
+export default async function ProviderDossierPage({ searchParams }: { searchParams: Promise<{ toegang?: string }> }) {
+  const { toegang } = await searchParams
   const context = await requireProviderDossierContext('/aanbiedersdossier')
   const dashboard = await getProviderDossierDashboard(context.user.id, context.providerProfileId)
   return (
     <>
       <ProviderPageHeader title="Uw dienstverlenersprofiel" description={`Beheer de gegevens waarmee WorkMatchr uw organisatie later zorgvuldig kan beoordelen. Laatst bijgewerkt op ${dateFormatter.format(new Date(dashboard.lastModifiedAt))}.`} readOnly={!context.canManage} />
+      {toegang === 'profiel' && <p className="mb-4" role="status">Voor deelname aan de Marketplace heeft uw organisatie een compleet en goedgekeurd profiel nodig. Bekijk hieronder welke stappen nog openstaan.</p>}
       <ProviderStatusSummary statuses={dashboard.statuses} />
       <ProviderCompleteness assessment={dashboard.completeness} />
       <ProviderOpenActions actions={dashboard.openActions} canManage={context.canManage} />

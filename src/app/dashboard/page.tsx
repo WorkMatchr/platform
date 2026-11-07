@@ -1,3 +1,6 @@
+import { ProviderCompleteness } from '@/components/providers/provider-completeness'
+import { assessProviderDossierCompleteness } from '@/lib/providers/provider-dossier-completeness'
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getPlatformAdminLanding } from '@/lib/platform-admin/platform-admin-landing'
 import type { Metadata } from 'next'
@@ -22,6 +25,12 @@ export default async function DashboardPage() {
       }
       throw error
     })
+  const assessment = dashboard.kind === 'PROVIDER'
+    ? await assessProviderDossierCompleteness(user.id, dashboard.providerProfileId) : null
   const contextLabel = activeMembership ? ` bij ${activeMembership.organization.name}` : ' binnen WorkMatchr-beheer'
-  return <Section spacing="compact"><Heading as="h1" size="h2">Dashboard</Heading><p className="mt-3 mb-8 text-text-secondary">Uw actuele acties en marktprocessen{contextLabel}.</p><MarketplaceDashboard dashboard={dashboard} /></Section>
+  return <Section spacing="compact"><Heading as="h1" size="h2">Dashboard</Heading><p className="mt-3 mb-8 text-text-secondary">Uw actuele acties en marktprocessen{contextLabel}.</p>{assessment && <div className="mb-8">
+    <ProviderCompleteness assessment={assessment} />
+    {dashboard.kind === 'PROVIDER' && dashboard.membership.role === 'MEMBER' && <p className="mt-3">Een eigenaar of beheerder kan uw organisatieprofiel bijwerken.</p>}
+    <Link href="/aanbiedersdossier" className="mt-4 inline-block font-semibold underline">Profiel en beoordelingsstatus bekijken</Link>
+  </div>}<MarketplaceDashboard dashboard={dashboard} /></Section>
 }

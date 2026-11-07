@@ -42,7 +42,7 @@ async function loadContext(transaction: Prisma.TransactionClient, userId: string
 export async function getProviderDossierDashboard(userId: string, providerProfileId: string, at = new Date()) {
   return getPrisma().$transaction(async (transaction) => {
     const { access, provider } = await loadContext(transaction, userId, providerProfileId)
-    const completeness = await assessProviderDossierCompletenessInTransaction(transaction, provider.id, at)
+    const completeness = await assessProviderDossierCompletenessInTransaction(transaction, provider.id, at, userId)
     const latestSubmission = provider.dossierSubmissions[0] ?? null
     const activeSubmission = latestSubmission && ['SUBMITTED', 'UNDER_REVIEW', 'ADDITIONAL_INFORMATION_REQUIRED'].includes(latestSubmission.status) ? latestSubmission : null
     const findings = (latestSubmission?.reviewCases[0]?.findings ?? []).filter((finding) => finding.section !== 'CAPACITY')

@@ -1,5 +1,5 @@
 import { getPrisma } from '@/lib/prisma'
-import { requireProviderMarketplaceAccess } from './marketplace-authorization'
+import { requireProviderMarketplaceAccess, requireProviderParticipationAccess } from './marketplace-authorization'
 import { purchaseAssignmentInTransaction, releaseCreditReservationInTransaction } from './credit-service'
 import { readInvitationPrice } from './assignment-pricing'
 import { MarketplaceServiceError } from './marketplace-errors'
@@ -17,7 +17,7 @@ export async function acceptProviderInvitation(input: {
   for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
       return await getPrisma().$transaction(async (transaction) => {
-    const access = await requireProviderMarketplaceAccess(transaction, input.actorUserId, input.providerOrganizationId, true)
+    const access = await requireProviderParticipationAccess(transaction, input.actorUserId, input.providerOrganizationId)
     const repeated = await transaction.providerParticipation.findUnique({ where: { idempotencyKey: input.idempotencyKey }, include: { creditReservation: true } })
     if (repeated) {
       if (repeated.providerOrganizationId !== input.providerOrganizationId || repeated.invitationId !== input.invitationId) throw new MarketplaceServiceError('ACCESS_DENIED')

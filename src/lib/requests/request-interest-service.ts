@@ -1,6 +1,6 @@
 import type { Prisma, RequestInterestStatus } from '@/generated/prisma/client'
 import { Prisma as PrismaNamespace } from '@/generated/prisma/client'
-import { requireProviderMarketplaceAccess } from '@/lib/marketplace/marketplace-authorization'
+import { requireProviderMarketplaceAccess, requireProviderParticipationAccess } from '@/lib/marketplace/marketplace-authorization'
 import { getPrisma } from '@/lib/prisma'
 import { getApplicableMarketplaceRuleSet } from '@/lib/marketplace/marketplace-rules-service'
 
@@ -38,9 +38,11 @@ async function requireProviderAccess(
   transaction: Transaction,
   actor: ProviderRequestActor,
   write: boolean,
+  participate = false,
 ) {
   try {
-    return await requireProviderMarketplaceAccess(
+    const authorize = participate ? requireProviderParticipationAccess : requireProviderMarketplaceAccess
+    return await authorize(
       transaction,
       actor.userId,
       actor.organizationId,
@@ -236,7 +238,7 @@ async function writeInterest(
 ): Promise<{ id: string; status: RequestInterestStatus }> {
   return getPrisma().$transaction(
     async (transaction) => {
-      await requireProviderAccess(transaction, input.actor, true)
+      await requireProviderAccess(transaction, input.actor, true, input.targetStatus === 'INTERESTED')
       await transaction.$queryRaw(
         PrismaNamespace.sql`
           SELECT pg_advisory_xact_lock(

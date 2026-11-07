@@ -16,7 +16,7 @@ export type ProviderDossierOpenAction = {
 
 type ActionDetails = Omit<ProviderDossierOpenAction, 'code' | 'priority' | 'section' | 'blocking'>
 
-const details: Record<ProviderDossierSection, ActionDetails> = {
+export const providerSectionDetails: Record<ProviderDossierSection, ActionDetails> = {
   ORGANIZATION: {
     title: 'Vul de bedrijfsgegevens aan',
     description: 'Controleer de juridische en algemene organisatiegegevens.',
@@ -129,7 +129,8 @@ export function buildProviderDossierOpenActions(
     code: reason.code,
     priority: 300 - index,
     section: reason.section,
-    ...details[reason.section],
+    ...providerSectionDetails[reason.section],
+    ...(reason.code === 'SERVICE_DELIVERY_REQUIRED' ? { description: 'Kies een dienst en geef aan hoe u die levert.' } : {}),
     blocking: true,
   }))
 
@@ -141,10 +142,10 @@ export function buildProviderDossierOpenActions(
         section,
         title: 'Los het herstelpunt op',
         description: 'De beoordelaar vraagt aanvullende informatie voor dit onderdeel.',
-        routeHint: details[section].routeHint,
-        pageTitle: details[section].pageTitle,
-        groupLabel: details[section].groupLabel,
-        groupHref: details[section].groupHref,
+        routeHint: providerSectionDetails[section].routeHint,
+        pageTitle: providerSectionDetails[section].pageTitle,
+        groupLabel: providerSectionDetails[section].groupLabel,
+        groupHref: providerSectionDetails[section].groupHref,
         blocking: true,
       })
     }

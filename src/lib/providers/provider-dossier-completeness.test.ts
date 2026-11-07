@@ -3,7 +3,7 @@ import { assessProviderDossierCompletenessInTransaction, PROVIDER_COMPLETENESS_P
 
 const completeState = {
   version: 7,
-  organization: { name: 'Veilig Werken B.V.', chamberOfCommerceNumber: '12345678' },
+  organization: { provisioningEvents: [], name: 'Veilig Werken B.V.', chamberOfCommerceNumber: '12345678' },
   capabilities: [{ revisions: [{ serviceTermId: 'service', specialismTermId: null }] }],
   sectorExperiences: [{ id: 'sector' }],
   workAreas: [{ id: 'area' }],
@@ -54,6 +54,19 @@ describe('provider dossier completeness', () => {
     expect(result.reasons).toEqual([])
   })
 
+  it.each([
+    [null, 'specialism', ['REMOTE'], false],
+    ['service', null, [], false],
+    ['service', null, ['REMOTE'], true],
+  ] as const)('controleert de dienst en leveringsvorm bij nieuwe aanmeldingen', async (serviceTermId, specialismTermId, deliveryModes, expected) => {
+    const result = await assessProviderDossierCompletenessInTransaction(transaction({
+      organization: { ...completeState.organization, provisioningEvents: [{ id: 'enrolled' }] },
+      capabilities: [{ revisions: [{ serviceTermId, specialismTermId, deliveryModes }] }],
+    }).client as never, 'provider', new Date('2026-07-15'))
+    expect(result.policyVersion).toBe('PROVIDER-COMPLETENESS-B4-1')
+    expect(result.isSubmittable).toBe(expected)
+  })
+
   it('vereist voor diensten geen competentie', async () => {
     const result = await assessProviderDossierCompletenessInTransaction(transaction({
       capabilities: [{ revisions: [{ serviceTermId: 'service', specialismTermId: null }] }],
@@ -71,7 +84,7 @@ describe('provider dossier completeness', () => {
   })
 
   it.each([
-    ['ORGANIZATION', { organization: { name: '', chamberOfCommerceNumber: null } }],
+    ['ORGANIZATION', { organization: { provisioningEvents: [], name: '', chamberOfCommerceNumber: null } }],
     ['CAPABILITIES', { capabilities: [] }],
     ['SECTOR_EXPERIENCE', { sectorExperiences: [] }],
     ['WORK_AREA', { workAreas: [] }],

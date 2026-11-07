@@ -137,7 +137,7 @@ export async function createProviderDossierSubmission(userId: string, providerPr
     const repeated = await transaction.providerDossierSubmission.findUnique({ where: { providerProfileId_idempotencyKey: { providerProfileId, idempotencyKey: input.idempotencyKey } }, select: { id: true, status: true, version: true, currentCandidateId: true } })
     if (repeated) return repeated
     if (await transaction.providerDossierSubmission.count({ where: { providerProfileId, status: { in: ACTIVE_STATUSES } } })) throw new ProviderServiceError('ACTIVE_SUBMISSION_EXISTS')
-    const completeness = await assessProviderDossierCompletenessInTransaction(transaction, providerProfileId)
+    const completeness = await assessProviderDossierCompletenessInTransaction(transaction, providerProfileId, new Date(), userId)
     if (!completeness.isSubmittable || completeness.sourceProfileVersion !== input.expectedProfileVersion) throw new ProviderServiceError('DOSSIER_NOT_SUBMITTABLE')
     const submission = await transaction.providerDossierSubmission.create({ data: { providerProfileId, submittedByUserId: userId, idempotencyKey: input.idempotencyKey }, select: { id: true } })
     const candidate = await createCandidate(transaction, userId, providerProfileId, submission.id)
@@ -225,7 +225,7 @@ export async function resubmitProviderDossier(userId: string, providerProfileId:
     if (repeated) return { submissionId: input.submissionId, status: 'SUBMITTED' as const, version: repeated.submission.version, candidate: repeated.candidate }
     const submission = await transaction.providerDossierSubmission.findFirst({ where: { id: input.submissionId, providerProfileId, status: 'ADDITIONAL_INFORMATION_REQUIRED', version: input.expectedVersion }, select: { id: true, reviewCases: { orderBy: { openedAt: 'desc' }, take: 1, select: { findings: { select: { id: true, resolutions: { take: 1, orderBy: { version: 'desc' }, select: { version: true, response: true } } } } } } } })
     if (!submission || submission.reviewCases.length === 0 || submission.reviewCases[0]!.findings.some((finding) => finding.resolutions.length === 0)) throw new ProviderServiceError('FINDING_NOT_RESOLVED')
-    const completeness = await assessProviderDossierCompletenessInTransaction(transaction, providerProfileId)
+    const completeness = await assessProviderDossierCompletenessInTransaction(transaction, providerProfileId, new Date(), userId)
     if (!completeness.isSubmittable) throw new ProviderServiceError('DOSSIER_NOT_SUBMITTABLE')
     const candidate = await createCandidate(transaction, userId, providerProfileId, submission.id)
     for (const finding of submission.reviewCases[0]!.findings) {

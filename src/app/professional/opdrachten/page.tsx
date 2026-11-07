@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation'
 import { Container } from '@/components/layout/container'
 import { Section } from '@/components/layout/section'
 import { Card } from '@/components/ui/card'
-import { requireOrganizationMembership } from '@/lib/organizations/organization-authorization'
+import { requireMarketplacePageMembership } from '@/lib/providers/provider-marketplace-page'
 import {
   requestInterestStatusLabels,
 } from '@/lib/requests/request-interest-contract'
@@ -27,7 +27,7 @@ const dateFormatter = new Intl.DateTimeFormat('nl-NL', {
 
 export default async function ProviderRequestsPage() {
   const { user, activeMembership } =
-    await requireOrganizationMembership(
+    await requireMarketplacePageMembership(
       undefined,
       '/professional/opdrachten',
     )

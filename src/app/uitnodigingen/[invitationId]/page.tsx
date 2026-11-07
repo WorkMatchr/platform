@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Heading } from '@/components/ui/heading'
 import { getProviderInvitationDetail } from '@/lib/marketplace/dashboard-query-service'
-import { requireOrganizationMembership } from '@/lib/organizations/organization-authorization'
+import { requireMarketplacePageMembership } from '@/lib/providers/provider-marketplace-page'
 
 export const metadata: Metadata = { title: 'Uitnodiging | WorkMatchr' }
 
@@ -22,7 +22,7 @@ const purchaseErrors: Record<string, string> = {
 
 export default async function InvitationPage({ params, searchParams }: { params: Promise<{ invitationId: string }>; searchParams: Promise<{ purchaseError?: string }> }) {
   const { invitationId } = await params
-  const { user, activeMembership } = await requireOrganizationMembership(undefined, `/uitnodigingen/${invitationId}`)
+  const { user, activeMembership } = await requireMarketplacePageMembership(undefined, `/uitnodigingen/${invitationId}`)
   const result = await getProviderInvitationDetail(user.id, activeMembership.organization.id, invitationId).catch(() => null)
   if (!result) notFound()
   const { invitation, membership, availableCredits } = result

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
+import { verifyProviderMarketplaceOnboarding } from './verify-provider-marketplace-onboarding'
 import { getPrisma } from '../src/lib/prisma'
 import { ensureProviderServiceCatalog } from '../prisma/provider-service-catalog'
 import { getProviderOffering } from '../src/lib/providers/provider-offering-query'
@@ -25,7 +26,7 @@ async function main() {
     }
     const owner = await user('b4-owner', 'OWNER'), admin = await user('b4-admin', 'ADMIN')
     const member = await user('b4-member', 'MEMBER'), outsider = await user('b4-other', 'OWNER', other.id)
-    async function option(kind: 'SPECIALISM' | 'SECTOR' | 'COMPETENCY', suffix = '') {
+    async function option(kind: 'SPECIALISM' | 'SECTOR' | 'COMPETENCY' | 'REGION' | 'INSURANCE_TYPE' | 'QUALIFICATION', suffix = '') {
       const taxonomy = await db.providerTaxonomy.upsert({ where: { kind }, create: { kind, code: kind, name: kind }, update: {} })
       const version = await db.providerTaxonomyVersion.findFirst({ where: { taxonomyId: taxonomy.id, status: 'PUBLISHED' } }) ??
         await db.providerTaxonomyVersion.create({ data: { taxonomyId: taxonomy.id, version: 1, status: 'PUBLISHED', publishedAt: new Date(),
@@ -103,6 +104,11 @@ async function main() {
     await assert.rejects(db.providerTaxonomyTerm.update({ where: { id: secondService.id }, data: { isActive: false } }), /immutable/)
     assert.equal((await read()).rows.find(row => row.recordId === legacy.id)?.termId, secondService.id)
     assert.equal(await db.providerTaxonomyTerm.count({ where: { versionId: catalogVersion.id } }), 19)
+    await verifyProviderMarketplaceOnboarding(db, {
+      sectorTermId: sector.id, serviceTermId: secondService.id, regionTermId: (await option('REGION')).id,
+      insuranceTermId: (await option('INSURANCE_TYPE')).id, qualificationTermId: (await option('QUALIFICATION')).id,
+      legacyOrganizationId: org.id, legacyProfileId: profile, legacyOwnerId: owner.id, legacyMemberId: member.id,
+    })
     console.log('PASS catalogus, meervoudige selectie, historie, rollback, concurrency, rollen, tenantisolatie, sectieslot, archiveren en herstellen')
   } finally { await db.$disconnect() }
 }
