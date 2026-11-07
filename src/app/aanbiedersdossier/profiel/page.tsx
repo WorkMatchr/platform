@@ -10,13 +10,6 @@ import { getProviderOnboardingOptions } from '@/lib/providers/provider-onboardin
 import { getProviderProfileEditor } from '@/lib/providers/provider-decision-profile-service'
 import { getProviderDossierDashboard } from '@/lib/providers/provider-dossier-query-service'
 
-const organizationStatusLabels = {
-  PENDING: 'In afwachting',
-  ACTIVE: 'Actief',
-  SUSPENDED: 'Geblokkeerd',
-  ARCHIVED: 'Gearchiveerd',
-} as const
-
 function SummaryList({ values, empty }: { values: string[]; empty: string }) {
   return values.length > 0
     ? <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-text-secondary">{Array.from(new Set(values)).map((value) => <li key={value}>{value}</li>)}</ul>
@@ -44,7 +37,6 @@ export default async function ProviderProfilePage() {
     .filter((term) => term.id)
   const memberships = profile.organizationQualifications.filter((claim) => claim.qualificationTerm.version.taxonomy.kind === 'MEMBERSHIP')
   const registrations = profile.organizationQualifications.filter((claim) => claim.qualificationTerm.version.taxonomy.kind === 'REGISTRATION')
-  const location = profile.organization.locations[0]
   const services = profile.capabilities.flatMap(({ serviceTerm, specialismTerm, deliveryModes }) => {
     if (!serviceTerm) return []
     return [[serviceTerm.label, specialismTerm?.label, deliveryModes.map(mode => providerDeliveryModeLabels[mode]).join(', ')].filter(Boolean).join(' · ')]
@@ -62,27 +54,7 @@ export default async function ProviderProfilePage() {
       readOnly={!editable}
       readOnlyMessage={readOnlyMessage}
     />
-    <div className="grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(14rem,0.3fr)_minmax(0,0.7fr)]">
-      <aside className="min-w-0 lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto lg:pr-2" aria-label="Organisatiegegevens">
-        <Card>
-          <h2 className="text-lg font-bold">Organisatie</h2>
-          <dl className="mt-4 space-y-4 text-sm">
-            <div><dt className="text-text-secondary">Naam</dt><dd className="font-semibold break-words">{profile.organization.name}</dd></div>
-            <div><dt className="text-text-secondary">Status</dt><dd>{organizationStatusLabels[profile.organization.status]}</dd></div>
-            <div><dt className="text-text-secondary">KvK-nummer</dt><dd>{profile.organization.chamberOfCommerceNumber ?? 'Niet ingevuld'}</dd></div>
-            <div><dt className="text-text-secondary">Locatie</dt><dd>{location ? [location.label, location.city, location.province].filter(Boolean).join(', ') : 'Niet ingevuld'}</dd></div>
-            <div><dt className="text-text-secondary">Sectorervaring</dt><dd>{sectorExperience.length > 0 ? sectorExperience.join(', ') : 'Niet ingevuld'}</dd></div>
-            <div><dt className="text-text-secondary">Aantal medewerkers</dt><dd>{profile.organization.employeeCount?.toLocaleString('nl-NL') ?? 'Niet ingevuld'}</dd></div>
-            <div><dt className="text-text-secondary">Website</dt><dd className="break-all">{profile.organization.website ? <a className="font-semibold text-brand underline" href={profile.organization.website} target="_blank" rel="noreferrer">{profile.organization.website}</a> : 'Niet ingevuld'}</dd></div>
-          </dl>
-          <div className="mt-5 grid gap-2">
-            <Link className="font-semibold text-brand underline" href="/organisatie/profiel">Organisatie wijzigen</Link>
-            <Link className="font-semibold text-brand underline" href="/organisatie/gebruikers">Gebruikers beheren</Link>
-          </div>
-        </Card>
-      </aside>
-
-      <div className="min-w-0 space-y-6">
+    <div className="min-w-0 space-y-6">
         <Card>
           <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
             <div><p className="font-semibold">Profiel ingevuld: {profile.completeness.percentage}%</p><p className="text-sm text-text-secondary">Dit percentage is alleen een invulhulp en geen beoordeling van kwaliteit of deskundigheid.</p></div>
@@ -116,7 +88,6 @@ export default async function ProviderProfilePage() {
           {editable && options.registrations.length > 0 && <div className="mt-5"><ProviderOrganizationClaimForm action={saveProviderOrganizationClaimAction} profileVersion={profile.version} options={options.registrations} idPrefix="registration" selectionLabel="Registratie" numberLabel="Registratienummer" submitLabel="Registratie toevoegen" /></div>}
           <div className="mt-5 space-y-3">{registrations.length > 0 ? registrations.map((claim) => <div key={claim.id} className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-border p-3"><span className="font-semibold">{claim.qualificationTerm.label}</span><span className="rounded-full border border-border bg-surface-subtle px-3 py-1 text-xs font-semibold">{claim.statusLabel}</span></div>) : <p className="text-sm text-text-secondary">Er zijn nog geen registraties toegevoegd.</p>}</div>
         </Card>
-      </div>
     </div>
   </>
 }
