@@ -1,3 +1,4 @@
+import { decisionHistory, qualificationAt } from './provider-effective-qualification'
 import { z } from 'zod'
 import type { Prisma, ProviderPlatformQualificationStatus } from '@/generated/prisma/client'
 import { getPrisma } from '@/lib/prisma'
@@ -156,12 +157,26 @@ export async function recordProviderQualificationDecision(
         }
       }
 
+      let restoredDecisionId: string | undefined
+      if (input.outcome === 'QUALIFIED' || input.outcome === 'RESTORED') {
+        const history = await transaction.providerQualificationDecision.findMany({
+          ...decisionHistory, where: { providerProfileId, scope: input.scope, capabilityId: input.capabilityId ?? null },
+        })
+        const effective = qualificationAt(history, providerProfileId, now)
+        if (input.outcome === 'QUALIFIED' && effective.suspended) throw new ProviderServiceError('CONFLICT')
+        if (input.outcome === 'RESTORED') {
+          if (!effective.previous || effective.current || effective.previous.validFrom >= now) throw new ProviderServiceError('CONFLICT')
+          restoredDecisionId = effective.previous.id
+        }
+      }
+
       const sourceChecksum = hashProviderJson({
         capabilityId: input.capabilityId ?? null,
         outcome: input.outcome,
         providerProfileId,
         providerVersion: provider.version,
         reasonCode: input.reasonCode,
+        ...(restoredDecisionId ? { restoredDecisionId } : {}),
         reviewChecksum: reviewerRecord.checksum,
         reviewId: reviewerRecord.id,
         requirementConfigId: requirementConfigId ?? null,

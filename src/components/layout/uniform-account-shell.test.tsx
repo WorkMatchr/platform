@@ -23,7 +23,7 @@ describe('A01.7 uniforme werkruimte', () => {
       const model = buildHeaderViewModel(context(accountType, role))
       const links = model.navigationGroups.flatMap(group => group.links)
       expect(links.some(link => link.href === '/organisatie/gebruikers')).toBe(role !== 'MEMBER')
-      expect(links.some(link => link.href === '/aanbiedersdossier/profiel')).toBe(accountType === 'PROFESSIONAL')
+      expect(links.some(link => link.href === '/aanbiedersdossier')).toBe(accountType === 'PROFESSIONAL')
       expect(links.some(link => link.href.startsWith('/platformbeheer'))).toBe(false)
       for (const link of links) expect(existsSync(`src/app${link.href}/page.tsx`), link.href).toBe(true)
       const html = markup(model)

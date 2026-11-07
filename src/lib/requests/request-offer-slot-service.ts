@@ -93,7 +93,7 @@ async function claimInTransaction(
     at: Date
   },
 ): Promise<RequestOfferSlotReference> {
-  await requireClaimAccess(transaction, input.actor)
+  const access = await requireClaimAccess(transaction, input.actor)
 
   const lockedRequests = await transaction.$queryRaw<
     Array<{ id: string; status: RequestStatus }>
@@ -125,7 +125,7 @@ async function claimInTransaction(
     select: {
       id: true,
       status: true,
-      eligibility: { select: { id: true } },
+      eligibility: { select: { id: true, projectionId: true } },
       offerSlot: {
         select: {
           id: true,
@@ -140,7 +140,7 @@ async function claimInTransaction(
       },
     },
   })
-  if (!interest?.eligibility) {
+  if (!interest?.eligibility || (access.projectionId && interest.eligibility.projectionId !== access.projectionId)) {
     throw new RequestOfferSlotServiceError('NOT_FOUND')
   }
   if (interest.status !== 'INTERESTED') {

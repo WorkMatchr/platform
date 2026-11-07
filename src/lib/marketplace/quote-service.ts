@@ -34,6 +34,7 @@ export async function saveQuoteDraft(input: {
     const participation = await transaction.providerParticipation.findFirst({
       where: {
         id: input.participationId,
+        invitation: { matchCandidate: { projectionId: access.projectionId } },
         providerOrganizationId: input.providerOrganizationId,
         providerProfileId: access.providerProfile.id,
         status: 'ACTIVE',
@@ -107,7 +108,7 @@ export async function submitQuote(input: {
   return getPrisma().$transaction(async (transaction) => {
     const access = await requireProviderParticipationAccess(transaction, input.actorUserId, input.providerOrganizationId, true)
     const quote = await transaction.quote.findFirst({
-      where: { id: input.quoteId, providerOrganizationId: input.providerOrganizationId, providerProfileId: access.providerProfile.id },
+      where: { id: input.quoteId, participation: { invitation: { matchCandidate: { projectionId: access.projectionId } } }, providerOrganizationId: input.providerOrganizationId, providerProfileId: access.providerProfile.id },
     })
     if (!quote?.currentVersionId) throw new MarketplaceServiceError('NOT_FOUND')
     const currentVersion = await transaction.quoteVersion.findUniqueOrThrow({ where: { id: quote.currentVersionId } })

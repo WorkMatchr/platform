@@ -15,6 +15,7 @@ import { professionalOnboarding } from '../src/lib/providers/provider-onboarding
 
 // Invoked exclusively from the empty, loopback-only B4 database harness.
 export async function verifyProviderMarketplaceOnboarding(db: PrismaClient, fixture: {
+  reviewedByUserId: string; approvedByUserId: string; reasonCode: string
   sectorTermId: string; serviceTermId: string; regionTermId: string; insuranceTermId: string; qualificationTermId: string
   legacyOrganizationId: string; legacyProfileId: string; legacyOwnerId: string; legacyMemberId: string
 }) {
@@ -63,7 +64,7 @@ export async function verifyProviderMarketplaceOnboarding(db: PrismaClient, fixt
 
   const checksum = createHash('sha256').update('B4 synthetic fixture').digest('hex')
   const past = new Date('2020-01-01'), future = new Date('2090-01-01')
-  await db.providerCapability.create({ data: { providerProfileId, revisions: { create: { version: 1,
+  const service = await db.providerCapability.create({ data: { providerProfileId, revisions: { create: { version: 1,
     serviceTermId: fixture.serviceTermId, deliveryModes: ['REMOTE'] } } } })
   await db.providerSectorExperience.create({ data: { providerProfileId, revisions: { create: { version: 1, sectorTermId: fixture.sectorTermId } } } })
   await db.providerWorkArea.create({ data: { providerProfileId, revisions: { create: { version: 1, regionTermId: fixture.regionTermId } } } })
@@ -82,6 +83,12 @@ export async function verifyProviderMarketplaceOnboarding(db: PrismaClient, fixt
     status: 'SELECTABLE', sourceVersion: profile.version, reasonCodes: [], checksum } })
   await db.trustedProviderProjection.create({ data: { providerProfileId, readinessAssessmentId: readiness.id, selectabilityAssessmentId: selectability.id,
     schemaVersion: 2, canonicalizationVersion: 'WORKMATCHR-CJ-1', sourceVersion: profile.version, payload: { synthetic: true }, sha256: checksum, validFrom: past, validUntil: future } })
+  await assert.rejects(participate(), denied)
+  const history = { providerProfileId, outcome: 'QUALIFIED' as const, validFrom: past, sourceChecksum: checksum,
+    reviewedByUserId: fixture.reviewedByUserId, approvedByUserId: fixture.approvedByUserId, reasonCode: fixture.reasonCode }
+  await db.providerQualificationDecision.createMany({ data: [
+    { ...history, scope: 'PLATFORM' }, { ...history, scope: 'CAPABILITY', capabilityId: service.id },
+  ] })
   assert.equal((await participate()).providerProfile.id, providerProfileId)
   assert.deepEqual(await matching(), new Set())
   // A later change invalidates the approval for the previous profile version.

@@ -162,7 +162,7 @@ export async function createRequestEligibilitySnapshot(
   }
 
   const blocked = await blockedOnboardingProfiles(transaction, Array.from(latestByProvider.values(), p => ({
-    providerProfileId: p.providerProfileId, organizationId: p.providerProfile.organizationId,
+    projectionId: p.id, providerProfileId: p.providerProfileId, organizationId: p.providerProfile.organizationId,
   })), at)
   let eligibleCount = 0
   for (const projection of latestByProvider.values()) {

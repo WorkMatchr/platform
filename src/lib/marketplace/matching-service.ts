@@ -188,7 +188,7 @@ export async function runMarketplaceMatching(input: {
       provider: MatchingProviderFacts
       result: ReturnType<typeof evaluateMatchingCandidate>
     }> = []
-    const blocked = await blockedOnboardingProfiles(transaction, Array.from(latestByProvider.values(), p => ({ providerProfileId: p.providerProfileId, organizationId: p.providerProfile.organizationId })), now)
+    const blocked = await blockedOnboardingProfiles(transaction, Array.from(latestByProvider.values(), p => ({ projectionId: p.id, providerProfileId: p.providerProfileId, organizationId: p.providerProfile.organizationId })), now)
     for (const projection of latestByProvider.values()) {
       if (blocked.has(projection.providerProfileId)) continue
       const payload = readTrustedPayload(projection.payload)
@@ -409,7 +409,7 @@ export async function applyMarketplaceMatchIntervention(input: {
       throw new MarketplaceServiceError('NOT_SELECTABLE')
     }
     const blocked = await blockedOnboardingProfiles(transaction, run.candidates.map(candidate => ({
-      providerProfileId: candidate.providerProfileId, organizationId: candidate.providerProfile.organizationId,
+      projectionId: candidate.projectionId, providerProfileId: candidate.providerProfileId, organizationId: candidate.providerProfile.organizationId,
     })), now)
     if (blocked.size) throw new MarketplaceServiceError('PROFILE_ONBOARDING_REQUIRED')
     const replacementIds = new Set(run.candidates.map((candidate) => candidate.providerProfileId))

@@ -1,44 +1,60 @@
+import { profileDecisionHistory, profileQualificationAt } from './provider-effective-qualification'
 import type { Prisma } from '@/generated/prisma/client'
 import { assessProviderDossierCompletenessInTransaction } from './provider-dossier-completeness'
 import { onboardingEventWhere } from './provider-onboarding-cohort'
 
-type Candidate = { providerProfileId: string; organizationId: string }
+type Candidate = { providerProfileId: string; organizationId: string; projectionId?: string }
 
 // Matching evaluates the organization. An individual action also checks the
 // actor's own enrollment, including invitations to a pre-existing organization.
-export async function blockedOnboardingProfiles(
+export async function currentMarketplaceProjections(
   tx: Prisma.TransactionClient, candidates: Candidate[], at: Date, userId?: string,
-): Promise<Set<string>> {
-  const blocked = new Set<string>()
-  if (!candidates.length) return blocked
+): Promise<Map<string, string | undefined>> {
+  const allowed = new Map<string, string | undefined>()
+  if (!candidates.length) return allowed
   const enrolled = await tx.accountProvisioningEvent.findMany({
     where: { organizationId: { in: candidates.map(p => p.organizationId) }, ...onboardingEventWhere(userId) },
     distinct: ['organizationId'], select: { organizationId: true },
   })
   const organizations = new Set(enrolled.map(event => event.organizationId))
-  const scoped = candidates.filter(p => organizations.has(p.organizationId))
-  if (!scoped.length) return blocked
   const currentProjection = { validFrom: { lte: at }, validUntil: { gt: at }, invalidation: null }
-  const qualified = await tx.providerProfile.findMany({
+  const profiles = await tx.providerProfile.findMany({
     where: {
-      id: { in: scoped.map(p => p.providerProfileId) }, archivedAt: null, lifecycleStatus: 'QUALIFIED',
-      platformQualificationStatus: 'QUALIFIED', readinessStatus: 'READY', selectabilityStatus: 'SELECTABLE',
+      id: { in: candidates.map(p => p.providerProfileId) }, archivedAt: null,
       organization: { status: 'ACTIVE', systemKey: null, organizationType: { in: ['PROVIDER', 'BOTH'] } },
       blocks: { none: { release: null } },
-
     },
-    select: { id: true, organizationId: true, version: true,
-      trustedProjections: { where: currentProjection, orderBy: { sourceVersion: 'desc' }, take: 1, select: { sourceVersion: true } },
+    select: {
+      id: true, organizationId: true, version: true, lifecycleStatus: true, platformQualificationStatus: true,
+      readinessStatus: true, selectabilityStatus: true, ...profileDecisionHistory,
+      trustedProjections: { where: currentProjection, orderBy: { sourceVersion: 'desc' }, take: 1, select: { id: true, sourceVersion: true } },
+      _count: { select: { trustedProjections: true } },
     },
   })
-  const byProfile = new Map(qualified
-    .filter(profile => profile.trustedProjections[0]?.sourceVersion === profile.version)
-    .map(profile => [profile.id, profile.organizationId]))
-  for (const candidate of scoped) {
-    if (byProfile.get(candidate.providerProfileId) !== candidate.organizationId ||
-        !(await assessProviderDossierCompletenessInTransaction(tx, candidate.providerProfileId, at, userId)).isSubmittable) {
-      blocked.add(candidate.providerProfileId)
-    }
+  const byId = new Map(profiles.map(profile => [profile.id, profile]))
+  for (const candidate of candidates) {
+    const profile = byId.get(candidate.providerProfileId)
+    if (!profile || profile.organizationId !== candidate.organizationId) continue
+    const enrolled = organizations.has(profile.organizationId)
+    const projection = profile.trustedProjections[0]
+    // Keep the pre-B4 admission policy for existing members. An actual adverse
+    // decision, including expiry, always overrides their previous access.
+    const qualification = profileQualificationAt(profile, at)
+    if (qualification.adverse || ['SUSPENDED', 'EXPIRED', 'REJECTED', 'CHANGES_REQUESTED'].includes(profile.platformQualificationStatus)) continue
+    if ((candidate.projectionId || profile._count.trustedProjections > 0 || enrolled) &&
+        (!projection || projection.sourceVersion !== profile.version || (candidate.projectionId && candidate.projectionId !== projection.id))) continue
+    if (enrolled && (!qualification.platform || !qualification.allServicesQualified ||
+        profile.lifecycleStatus !== 'QUALIFIED' || profile.platformQualificationStatus !== 'QUALIFIED' ||
+        profile.readinessStatus !== 'READY' || profile.selectabilityStatus !== 'SELECTABLE' ||
+        !(await assessProviderDossierCompletenessInTransaction(tx, profile.id, at, userId)).isSubmittable)) continue
+    allowed.set(profile.id, projection?.id)
   }
-  return blocked
+  return allowed
+}
+
+export async function blockedOnboardingProfiles(
+  tx: Prisma.TransactionClient, candidates: Candidate[], at: Date, userId?: string,
+) {
+  const allowed = await currentMarketplaceProjections(tx, candidates, at, userId)
+  return new Set(candidates.map(candidate => candidate.providerProfileId).filter(id => !allowed.has(id)))
 }

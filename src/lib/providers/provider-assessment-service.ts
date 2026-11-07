@@ -1,3 +1,4 @@
+import { profileDecisionHistory, profileQualificationAt } from './provider-effective-qualification'
 import { getPrisma } from '@/lib/prisma'
 import { hashProviderJson } from './provider-canonical-json'
 import { ProviderServiceError } from './provider-errors'
@@ -32,7 +33,7 @@ export async function calculateProviderReadiness(providerProfileId: string, at =
     })
     await transaction.providerProfile.update({ where: { id: providerProfileId }, data: { readinessStatus: status } })
     return assessment
-  })
+  }, { isolationLevel: 'Serializable' })
 }
 
 export async function calculateProviderSelectability(providerProfileId: string, at = new Date()) {
@@ -45,10 +46,7 @@ export async function calculateProviderSelectability(providerProfileId: string, 
         platformQualificationStatus: true,
         readinessAssessments: { orderBy: { createdAt: 'desc' }, take: 1 },
         blocks: { where: { release: null }, select: { id: true } },
-        capabilities: {
-          where: { status: 'ACTIVE' },
-          select: { id: true, qualificationDecisions: { where: { outcome: { in: ['QUALIFIED', 'RESTORED'] }, validFrom: { lte: at }, OR: [{ validUntil: null }, { validUntil: { gt: at } }] }, take: 1 } },
-        },
+        ...profileDecisionHistory,
       },
     })
     if (!provider) throw new ProviderServiceError('NOT_FOUND')
@@ -58,9 +56,10 @@ export async function calculateProviderSelectability(providerProfileId: string, 
     if (readiness.status !== 'READY' || readiness.sourceVersion !== provider.version) {
       reasons.push('CONFIGURATION_INCOMPLETE')
     }
-    if (provider.platformQualificationStatus !== 'QUALIFIED') reasons.push('REQUIREMENTS_NOT_CONFIGURED')
+    const qualification = profileQualificationAt(provider, at)
+    if (!qualification.platform || provider.platformQualificationStatus !== 'QUALIFIED') reasons.push('REQUIREMENTS_NOT_CONFIGURED')
     if (provider.blocks.length > 0) reasons.push('PROVIDER_BLOCKED')
-    if (provider.capabilities.length === 0 || provider.capabilities.some((item) => item.qualificationDecisions.length === 0)) {
+    if (!qualification.allServicesQualified) {
       reasons.push('QUALIFICATION_REQUIREMENTS_NOT_CONFIGURED')
     }
     const status = reasons.length === 0 ? 'SELECTABLE' : provider.blocks.length > 0 ? 'BLOCKED' : 'NOT_SELECTABLE'
@@ -71,5 +70,5 @@ export async function calculateProviderSelectability(providerProfileId: string, 
     })
     await transaction.providerProfile.update({ where: { id: providerProfileId }, data: { selectabilityStatus: status } })
     return assessment
-  })
+  }, { isolationLevel: 'Serializable' })
 }

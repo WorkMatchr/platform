@@ -11,11 +11,11 @@ const id = (suffix: string) => `00000000-0000-4000-8000-${suffix.padStart(12, '0
 const transaction = {
   providerTaxonomyTerm: { findFirst: mocks.term }, providerCapability: { updateMany: mocks.update }, providerCapabilityRevision: { create: mocks.revision },
   providerWorkArea: { findMany: vi.fn().mockResolvedValue([]) },
-  providerProfile: { updateMany: mocks.profileUpdate }, trustedProviderProjection: { findFirst: mocks.projection }, trustedProviderProjectionInvalidation: { create: mocks.invalidation },
+  providerProfile: { updateMany: mocks.profileUpdate }, trustedProviderProjection: { findMany: mocks.projection }, trustedProviderProjectionInvalidation: { createMany: mocks.invalidation },
 }
 
 beforeEach(() => {
-  vi.clearAllMocks(); mocks.transaction.mockImplementation((callback) => callback(transaction)); mocks.requireManager.mockResolvedValue({ organizationId: id('1') }); mocks.term.mockResolvedValue({ id: id('2'), code: 'SERVICE' }); mocks.update.mockResolvedValue({ count: 1 }); mocks.revision.mockResolvedValue({ id: id('3'), version: 2 }); mocks.profileUpdate.mockResolvedValue({ count: 1 }); mocks.projection.mockResolvedValue({ id: id('4') })
+  vi.clearAllMocks(); mocks.transaction.mockImplementation((callback) => callback(transaction)); mocks.requireManager.mockResolvedValue({ organizationId: id('1') }); mocks.term.mockResolvedValue({ id: id('2'), code: 'SERVICE' }); mocks.update.mockResolvedValue({ count: 1 }); mocks.revision.mockResolvedValue({ id: id('3'), version: 2 }); mocks.profileUpdate.mockResolvedValue({ count: 1 }); mocks.projection.mockResolvedValue([{ id: id('4') }, { id: id('5') }])
 })
 
 describe('provider record mutation service', () => {
@@ -23,7 +23,7 @@ describe('provider record mutation service', () => {
     const result = await reviseProviderCapability(id('9'), id('1'), { expectedProfileVersion: 3, expectedRecordVersion: 1, capabilityId: id('5'), serviceTermId: id('2'), deliveryModes: ['REMOTE'] })
     expect(result).toMatchObject({ version: 2, profileVersion: 4, verificationLevel: 'SELF_DECLARED' })
     expect(mocks.requireEditable).toHaveBeenCalledWith(transaction, id('1'), 'CAPABILITIES')
-    expect(mocks.invalidation).toHaveBeenCalledWith({ data: { projectionId: id('4'), reasonCode: 'SOURCE_CHANGED' } })
+    expect(mocks.invalidation).toHaveBeenCalledWith({ data: [{ projectionId: id('4'), reasonCode: 'SOURCE_CHANGED' }, { projectionId: id('5'), reasonCode: 'SOURCE_CHANGED' }], skipDuplicates: true })
   })
 
   it('meldt een stale recordversie als veilig conflict', async () => {

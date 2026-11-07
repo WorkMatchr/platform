@@ -1,5 +1,5 @@
 import type { Prisma } from '@/generated/prisma/client'
-import { blockedOnboardingProfiles } from '@/lib/providers/provider-marketplace-onboarding'
+import { currentMarketplaceProjections } from '@/lib/providers/provider-marketplace-onboarding'
 import { MarketplaceServiceError } from './marketplace-errors'
 
 export async function requireClientMarketplaceManager(
@@ -51,9 +51,10 @@ export async function requireProviderParticipationAccess(
   tx: Prisma.TransactionClient, userId: string, organizationId: string, write = true,
 ) {
   const access = await requireProviderMarketplaceAccess(tx, userId, organizationId, write)
-  const blocked = await blockedOnboardingProfiles(tx, [{ providerProfileId: access.providerProfile.id, organizationId }], new Date(), userId)
-  if (blocked.size) throw new MarketplaceServiceError('PROFILE_ONBOARDING_REQUIRED')
-  return access
+  const current = await currentMarketplaceProjections(tx, [{ providerProfileId: access.providerProfile.id, organizationId }], new Date(), userId)
+  const projectionId = current.get(access.providerProfile.id)
+  if (!current.has(access.providerProfile.id)) throw new MarketplaceServiceError('PROFILE_ONBOARDING_REQUIRED')
+  return { ...access, projectionId }
 }
 
 export async function requireMarketplacePlatformAdmin(transaction: Prisma.TransactionClient, userId: string) {

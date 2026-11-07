@@ -6,6 +6,9 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { createElement } from 'react'
 import { RequestMatchExplanation } from '@/components/requests/request-match-explanation'
 
+// Candidate qualification is exercised against PostgreSQL in the provider suite.
+vi.mock('@/lib/providers/provider-marketplace-onboarding', () => ({ blockedOnboardingProfiles: async () => new Set() }))
+
 const projection=(id:string,codes:string[])=>({id,providerProfileId:id,sha256:'fixture',sourceVersion:1,schemaVersion:1,providerProfile:{organizationId:id},payload:{capabilities:codes.map(specialismCode=>({serviceCode:'SAFETY_ADVICE',specialismCode,deliveryModes:['ON_SITE']})),sectors:[],workAreas:[{regionCode:'NATIONWIDE'}]}})
 const request={id:'request',regionCode:null,sectorCode:null,primaryExpertise:'Hogere veiligheidskundige (HVK)',primaryExpertiseCodes:['HVK'],additionalExpertise:['Middelbare veiligheidskundige (MVK)','Arbeidshygiënist'],additionalExpertiseCodes:['MVK','ARBEIDSHYGIENIST'],possibleExpertise:[],possibleExpertiseCodes:[]}
 describe('expliciete doelgroep binnen bestaande eligibility',()=>{

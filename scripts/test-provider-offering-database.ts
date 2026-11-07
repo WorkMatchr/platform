@@ -115,12 +115,14 @@ async function main() {
     await assert.rejects(db.providerTaxonomyTerm.update({ where: { id: secondService.id }, data: { isActive: false } }), /immutable/)
     assert.equal((await read()).rows.find(row => row.recordId === legacy.id)?.termId, secondService.id)
     assert.equal(await db.providerTaxonomyTerm.count({ where: { versionId: catalogVersion.id } }), 19)
+    const qualificationTermId = (await option('QUALIFICATION')).id
+    const operators = await verifyProviderQualification(db, secondService.id, qualificationTermId, region.id)
     await verifyProviderMarketplaceOnboarding(db, {
+      ...operators,
       sectorTermId: sector.id, serviceTermId: secondService.id, regionTermId: region.id,
-      insuranceTermId: (await option('INSURANCE_TYPE')).id, qualificationTermId: (await option('QUALIFICATION')).id,
+      insuranceTermId: (await option('INSURANCE_TYPE')).id, qualificationTermId,
       legacyOrganizationId: org.id, legacyProfileId: profile, legacyOwnerId: owner.id, legacyMemberId: member.id,
     })
-    await verifyProviderQualification(db, secondService.id, (await db.providerTaxonomyTerm.findFirstOrThrow({ where: { version: { taxonomy: { kind: 'QUALIFICATION' } } } })).id)
     console.log('PASS catalogus, sectoren/diensten/werkgebied in één transactie, historie, rollback, concurrency, rollen, tenantisolatie, sectieslot, archiveren en herstellen')
   } finally { await db.$disconnect() }
 }
