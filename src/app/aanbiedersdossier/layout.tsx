@@ -10,7 +10,6 @@ const groups: Array<{ label: string; href: string; matchPaths: string[]; section
   { label: 'Dienstverlenersprofiel', href: '/aanbiedersdossier/profiel', matchPaths: ['/aanbiedersdossier/profiel', '/aanbiedersdossier/voorvertoning'], sections: ['ORGANIZATION', 'CAPABILITIES'] },
   { label: 'Bedrijfsgegevens', href: '/aanbiedersdossier/bedrijfsgegevens', matchPaths: ['/aanbiedersdossier/bedrijfsgegevens'], sections: ['ORGANIZATION'] },
   { label: 'Mijn dienstverlening', href: '/aanbiedersdossier/diensten-en-ervaring', matchPaths: ['/aanbiedersdossier/diensten-en-ervaring', '/aanbiedersdossier/diensten', '/aanbiedersdossier/sectorervaring', '/aanbiedersdossier/werkgebied'], sections: ['CAPABILITIES', 'SECTOR_EXPERIENCE', 'WORK_AREA'] },
-  { label: 'Mijn expertise (optioneel)', href: '/aanbiedersdossier/professionals', matchPaths: ['/aanbiedersdossier/professionals'], sections: ['PROFESSIONALS', 'QUALIFICATIONS'] },
 ]
 
 export default async function ProviderDossierLayout({ children }: { children: ReactNode }) {
