@@ -35,6 +35,7 @@ async function main() {
     }
     const spec = await option('SPECIALISM'), sector = await option('SECTOR'), competency = await option('COMPETENCY')
     const extraSector = await option('SECTOR', '_TWEE')
+    const region = await option('REGION')
     await option('SPECIALISM', '_TWEE')
     await db.providerProfileCoreExpertise.create({ data: { providerProfileId: profile, taxonomyTermId: spec.id, position: 1 } })
     const until = new Date('2090-06-01T00:00:00Z')
@@ -63,6 +64,8 @@ async function main() {
     const changes = offeringChanges(snapshot.rows, [selectedSector, service, { ...before, termId: secondService.id }])
     const selectedSecondSector = { ...snapshot.rows.find(row => row.termId === extraSector.id)!, selected: true, years: 7 }
     changes.push(...offeringChanges(snapshot.rows, [selectedSecondSector]))
+    const selectedArea = { ...snapshot.rows.find(row => row.kind === 'area' && row.termId === region.id)!, selected: true, years: 100 }
+    changes.push(...offeringChanges(snapshot.rows, [selectedArea]))
     const input = { version: snapshot.version, changes }
     await assert.rejects(saveProviderOffering(owner.id, profile, { ...input,
       changes: offeringChanges(snapshot.rows, [{ ...before, specialismId: null }]),
@@ -71,14 +74,21 @@ async function main() {
     await assert.rejects(saveProviderOffering(outsider.id, profile, input), { code: 'ACCESS_DENIED' })
     await assert.rejects(saveProviderOffering(member.id, profile, input), { code: 'ACCESS_DENIED' })
     await assert.rejects(saveProviderOffering(owner.id, profile, { ...input, changes: [changes[0], { ...changes[1], termId: sector.id }] }), { code: 'VALIDATION_ERROR' })
+    await assert.rejects(saveProviderOffering(owner.id, profile, { ...input,
+      changes: [changes[0], { ...changes[changes.length - 1], termId: sector.id }],
+    }), { code: 'VALIDATION_ERROR' })
     assert.equal((await read()).version, snapshot.version)
     assert.equal(await db.providerSectorExperience.count({ where: { providerProfileId: profile } }), 0)
+    assert.equal(await db.providerWorkArea.count({ where: { providerProfileId: profile } }), 0)
     const race = await Promise.allSettled([saveProviderOffering(owner.id, profile, input), saveProviderOffering(admin.id, profile, input)])
     assert.equal(race.filter(result => result.status === 'fulfilled').length, 1)
     assert.equal(race.find(result => result.status === 'rejected')?.reason.code, 'CONFLICT')
     const saved = await read()
     assert.equal(saved.version, snapshot.version + 1)
-    assert.equal(saved.rows.filter(row => row.selected).length, 4)
+    assert.equal(saved.rows.filter(row => row.selected).length, 5)
+    assert.equal(await db.providerWorkArea.count({ where: { providerProfileId: profile } }), 1)
+    const savedArea = saved.rows.find(row => row.kind === 'area' && row.termId === region.id)!
+    assert.equal(savedArea.years, 100)
     const current = saved.rows.find(row => row.recordId === legacy.id)!
     assert.equal(current.termId, secondService.id)
     const history = await db.providerCapabilityRevision.findMany({ where: { providerCapabilityId: legacy.id }, orderBy: { version: 'asc' } })
@@ -105,11 +115,11 @@ async function main() {
     assert.equal((await read()).rows.find(row => row.recordId === legacy.id)?.termId, secondService.id)
     assert.equal(await db.providerTaxonomyTerm.count({ where: { versionId: catalogVersion.id } }), 19)
     await verifyProviderMarketplaceOnboarding(db, {
-      sectorTermId: sector.id, serviceTermId: secondService.id, regionTermId: (await option('REGION')).id,
+      sectorTermId: sector.id, serviceTermId: secondService.id, regionTermId: region.id,
       insuranceTermId: (await option('INSURANCE_TYPE')).id, qualificationTermId: (await option('QUALIFICATION')).id,
       legacyOrganizationId: org.id, legacyProfileId: profile, legacyOwnerId: owner.id, legacyMemberId: member.id,
     })
-    console.log('PASS catalogus, meervoudige selectie, historie, rollback, concurrency, rollen, tenantisolatie, sectieslot, archiveren en herstellen')
+    console.log('PASS catalogus, sectoren/diensten/werkgebied in één transactie, historie, rollback, concurrency, rollen, tenantisolatie, sectieslot, archiveren en herstellen')
   } finally { await db.$disconnect() }
 }
 
