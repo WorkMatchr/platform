@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { providerDeliveryModeLabels } from '@/lib/providers/provider-dossier-presentation'
 import { saveProviderOrganizationClaimAction, saveProviderProfileAction, saveProviderProfileSelectionsAction } from '../actions'
 import { ProviderPageHeader } from '@/components/providers/provider-page-header'
 import { ProviderProfileForm } from '@/components/providers/provider-profile-form'
@@ -18,7 +19,7 @@ const organizationStatusLabels = {
 
 function SummaryList({ values, empty }: { values: string[]; empty: string }) {
   return values.length > 0
-    ? <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-text-secondary">{values.map((value) => <li key={value}>{value}</li>)}</ul>
+    ? <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-text-secondary">{Array.from(new Set(values)).map((value) => <li key={value}>{value}</li>)}</ul>
     : <p className="mt-3 text-sm text-text-secondary">{empty}</p>
 }
 
@@ -44,7 +45,10 @@ export default async function ProviderProfilePage() {
   const memberships = profile.organizationQualifications.filter((claim) => claim.qualificationTerm.version.taxonomy.kind === 'MEMBERSHIP')
   const registrations = profile.organizationQualifications.filter((claim) => claim.qualificationTerm.version.taxonomy.kind === 'REGISTRATION')
   const location = profile.organization.locations[0]
-  const services = profile.capabilities.map((capability) => capability.serviceTerm?.label).filter((label): label is string => Boolean(label))
+  const services = profile.capabilities.flatMap(({ serviceTerm, specialismTerm, deliveryModes }) => {
+    if (!serviceTerm) return []
+    return [[serviceTerm.label, specialismTerm?.label, deliveryModes.map(mode => providerDeliveryModeLabels[mode]).join(', ')].filter(Boolean).join(' · ')]
+  })
   const specialisms = profile.capabilities.map((capability) => capability.specialismTerm?.label).filter((label): label is string => Boolean(label))
   const sectorExperience = profile.sectors.map((sector) => sector.sectorTerm.label)
   const workAreas = profile.workAreas.map((area) => area.regionTerm.label)
@@ -91,9 +95,9 @@ export default async function ProviderProfilePage() {
         <Card><h2 className="mb-5 text-lg font-bold">Kernexpertise en werkvormen</h2>{editable ? <ProviderProfileSelectionForm action={saveProviderProfileSelectionsAction} profileVersion={profile.version} expertiseOptions={expertiseOptions} selectedExpertiseIds={profile.coreExpertises.map((item) => item.taxonomyTermId)} workModeOptions={profile.workModeOptions} selectedWorkModeIds={profile.workModes.map((item) => item.taxonomyTermId)} /> : <p className="text-text-secondary">Deze profielgegevens zijn nu alleen-lezen.</p>}</Card>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Card><h2 className="font-bold">Diensten</h2><SummaryList values={services} empty="Nog geen diensten toegevoegd." /><Link href="/aanbiedersdossier/diensten" className="mt-4 inline-block font-semibold text-brand underline">Diensten beheren</Link></Card>
-          <Card><h2 className="font-bold">Specialismen</h2><SummaryList values={specialisms} empty="Nog geen specialismen toegevoegd." /><Link href="/aanbiedersdossier/diensten" className="mt-4 inline-block font-semibold text-brand underline">Specialismen beheren</Link></Card>
-          <Card><h2 className="font-bold">Sectorervaring</h2><SummaryList values={sectorExperience} empty="Nog geen sectorervaring toegevoegd." /><Link href="/aanbiedersdossier/sectorervaring" className="mt-4 inline-block font-semibold text-brand underline">Sectorervaring beheren</Link></Card>
+          <Card><h2 className="font-bold">Diensten</h2><SummaryList values={services} empty="Nog geen diensten toegevoegd." /><Link href="/aanbiedersdossier/diensten-en-ervaring#diensten" className="mt-4 inline-block font-semibold text-brand underline">Diensten beheren</Link></Card>
+          <Card><h2 className="font-bold">Specialismen</h2><SummaryList values={specialisms} empty="Nog geen specialismen toegevoegd." /><Link href="/aanbiedersdossier/diensten-en-ervaring#diensten" className="mt-4 inline-block font-semibold text-brand underline">Specialismen beheren</Link></Card>
+          <Card><h2 className="font-bold">Sectorervaring</h2><SummaryList values={sectorExperience} empty="Nog geen sectorervaring toegevoegd." /><Link href="/aanbiedersdossier/diensten-en-ervaring#sectoren" className="mt-4 inline-block font-semibold text-brand underline">Sectorervaring beheren</Link></Card>
           <Card><h2 className="font-bold">Werkgebied</h2><SummaryList values={workAreas} empty="Nog geen werkgebied toegevoegd." /><Link href="/aanbiedersdossier/werkgebied" className="mt-4 inline-block font-semibold text-brand underline">Werkgebied beheren</Link></Card>
           <Card><h2 className="font-bold">Werkvormen</h2><SummaryList values={workModes} empty="Nog geen werkvormen gekozen." /></Card>
           <Card><h2 className="font-bold">Professionals en kwalificaties</h2><p className="mt-3 text-sm text-text-secondary">{profile.professionals.length} professional(s) en {professionalQualifications} kwalificatie(s).</p><Link href="/aanbiedersdossier/professionals" className="mt-4 inline-block font-semibold text-brand underline">Professionals beheren</Link></Card>

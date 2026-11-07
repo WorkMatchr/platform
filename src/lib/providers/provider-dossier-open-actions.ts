@@ -30,7 +30,7 @@ const details: Record<ProviderDossierSection, ActionDetails> = {
     description: 'Leg minimaal één passende dienst of specialisme vast.',
     routeHint: '/aanbiedersdossier/diensten',
     pageTitle: 'Diensten en specialismen',
-    groupLabel: 'Diensten en ervaring',
+    groupLabel: 'Sectoren en diensten',
     groupHref: '/aanbiedersdossier/diensten-en-ervaring',
   },
   SECTOR_EXPERIENCE: {
@@ -38,7 +38,7 @@ const details: Record<ProviderDossierSection, ActionDetails> = {
     description: 'Leg vast in welke sectoren de organisatie ervaring heeft.',
     routeHint: '/aanbiedersdossier/sectorervaring',
     pageTitle: 'Sectorervaring',
-    groupLabel: 'Diensten en ervaring',
+    groupLabel: 'Sectoren en diensten',
     groupHref: '/aanbiedersdossier/diensten-en-ervaring',
   },
   WORK_AREA: {

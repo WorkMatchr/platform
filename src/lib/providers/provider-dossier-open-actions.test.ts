@@ -69,15 +69,15 @@ describe('provider dossier open actions', () => {
       title: 'Vul sectorervaring in',
       routeHint: '/aanbiedersdossier/sectorervaring',
       pageTitle: 'Sectorervaring',
-      groupLabel: 'Diensten en ervaring',
+      groupLabel: 'Sectoren en diensten',
       groupHref: '/aanbiedersdossier/diensten-en-ervaring',
     })
   })
 
   it.each([
     ['ORGANIZATION', 'ORGANIZATION_INCOMPLETE', 'Vul de bedrijfsgegevens aan', '/aanbiedersdossier/bedrijfsgegevens', 'Bedrijfsgegevens', 'Bedrijfsgegevens'],
-    ['CAPABILITIES', 'CAPABILITIES_INCOMPLETE', 'Voeg een dienst toe', '/aanbiedersdossier/diensten', 'Diensten en specialismen', 'Diensten en ervaring'],
-    ['SECTOR_EXPERIENCE', 'SECTOR_EXPERIENCE_INCOMPLETE', 'Vul sectorervaring in', '/aanbiedersdossier/sectorervaring', 'Sectorervaring', 'Diensten en ervaring'],
+    ['CAPABILITIES', 'CAPABILITIES_INCOMPLETE', 'Voeg een dienst toe', '/aanbiedersdossier/diensten', 'Diensten en specialismen', 'Sectoren en diensten'],
+    ['SECTOR_EXPERIENCE', 'SECTOR_EXPERIENCE_INCOMPLETE', 'Vul sectorervaring in', '/aanbiedersdossier/sectorervaring', 'Sectorervaring', 'Sectoren en diensten'],
     ['WORK_AREA', 'WORK_AREA_INCOMPLETE', 'Vul het werkgebied in', '/aanbiedersdossier/werkgebied', 'Werkgebied', 'Werkgebied'],
     ['PROFESSIONALS', 'PROFESSIONALS_INCOMPLETE', 'Voeg een professional toe', '/aanbiedersdossier/professionals', 'Professionals', 'Professionals en kwalificaties'],
     ['INSURANCE', 'INSURANCE_EXPIRED', 'Werk de verzekering bij', '/aanbiedersdossier/verzekeringen', 'Verzekeringen', 'Verzekeringen en bewijsstukken'],

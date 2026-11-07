@@ -9,7 +9,7 @@ const groups: Array<{ label: string; href: string; matchPaths: string[]; section
   { label: 'Overzicht', href: '/aanbiedersdossier', matchPaths: ['/aanbiedersdossier'], sections: [] },
   { label: 'Dienstverlenersprofiel', href: '/aanbiedersdossier/profiel', matchPaths: ['/aanbiedersdossier/profiel', '/aanbiedersdossier/voorvertoning'], sections: ['ORGANIZATION', 'CAPABILITIES'] },
   { label: 'Bedrijfsgegevens', href: '/aanbiedersdossier/bedrijfsgegevens', matchPaths: ['/aanbiedersdossier/bedrijfsgegevens'], sections: ['ORGANIZATION'] },
-  { label: 'Diensten en ervaring', href: '/aanbiedersdossier/diensten-en-ervaring', matchPaths: ['/aanbiedersdossier/diensten-en-ervaring', '/aanbiedersdossier/diensten', '/aanbiedersdossier/sectorervaring'], sections: ['CAPABILITIES', 'SECTOR_EXPERIENCE'] },
+  { label: 'Sectoren en diensten', href: '/aanbiedersdossier/diensten-en-ervaring', matchPaths: ['/aanbiedersdossier/diensten-en-ervaring', '/aanbiedersdossier/diensten', '/aanbiedersdossier/sectorervaring'], sections: ['CAPABILITIES', 'SECTOR_EXPERIENCE'] },
   { label: 'Werkgebied', href: '/aanbiedersdossier/werkgebied', matchPaths: ['/aanbiedersdossier/werkgebied'], sections: ['WORK_AREA'] },
   { label: 'Professionals en kwalificaties', href: '/aanbiedersdossier/professionals', matchPaths: ['/aanbiedersdossier/professionals'], sections: ['PROFESSIONALS', 'QUALIFICATIONS'] },
   { label: 'Verzekeringen en bewijsstukken', href: '/aanbiedersdossier/verzekeringen', matchPaths: ['/aanbiedersdossier/verzekeringen', '/aanbiedersdossier/bewijsstukken'], sections: ['INSURANCE', 'EVIDENCE'] },

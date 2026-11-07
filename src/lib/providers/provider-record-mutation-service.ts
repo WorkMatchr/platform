@@ -33,7 +33,7 @@ const profileSchema = z.object({
 })
 const statusSchema = z.object({ expectedProfileVersion: expectedVersionSchema, expectedRecordVersion: expectedVersionSchema, recordId: uuidSchema, status: z.enum(['ACTIVE', 'ARCHIVED']) })
 
-async function requireTerm(transaction: Prisma.TransactionClient, id: string | undefined, kinds: Array<'SERVICE' | 'SPECIALISM' | 'COMPETENCY' | 'SECTOR' | 'REGION' | 'QUALIFICATION' | 'CERTIFICATION' | 'MEMBERSHIP' | 'REGISTRATION' | 'WORK_MODE' | 'INSURANCE_TYPE'>) {
+export async function requireTerm(transaction: Prisma.TransactionClient, id: string | undefined, kinds: Array<'SERVICE' | 'SPECIALISM' | 'COMPETENCY' | 'SECTOR' | 'REGION' | 'QUALIFICATION' | 'CERTIFICATION' | 'MEMBERSHIP' | 'REGISTRATION' | 'WORK_MODE' | 'INSURANCE_TYPE'>) {
   if (!id) return
   const term = await transaction.providerTaxonomyTerm.findFirst({ where: { id, isActive: true, version: { status: 'PUBLISHED', taxonomy: { kind: { in: kinds } } } }, select: { id: true, code: true } })
   if (!term) throw new ProviderServiceError('VALIDATION_ERROR')
