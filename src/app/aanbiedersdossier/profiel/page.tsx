@@ -45,7 +45,6 @@ export default async function ProviderProfilePage() {
   const sectorExperience = profile.sectors.map((sector) => sector.sectorTerm.label)
   const workAreas = profile.workAreas.map((area) => area.regionTerm.label)
   const workModes = profile.workModes.map((mode) => mode.taxonomyTerm.label)
-  const professionalQualifications = profile.professionals.reduce((count, professional) => count + professional.qualifications.length, 0)
 
   return <>
     <ProviderPageHeader
@@ -72,7 +71,6 @@ export default async function ProviderProfilePage() {
           <Card><h2 className="font-bold">Sectorervaring</h2><SummaryList values={sectorExperience} empty="Nog geen sectorervaring toegevoegd." /><Link href="/aanbiedersdossier/diensten-en-ervaring#sectoren" className="mt-4 inline-block font-semibold text-brand underline">Sectorervaring beheren</Link></Card>
           <Card><h2 className="font-bold">Werkgebied</h2><SummaryList values={workAreas} empty="Nog geen werkgebied toegevoegd." /><Link href="/aanbiedersdossier/werkgebied" className="mt-4 inline-block font-semibold text-brand underline">Werkgebied beheren</Link></Card>
           <Card><h2 className="font-bold">Werkvormen</h2><SummaryList values={workModes} empty="Nog geen werkvormen gekozen." /></Card>
-          <Card><h2 className="font-bold">Professionals en kwalificaties</h2><p className="mt-3 text-sm text-text-secondary">{profile.professionals.length} professional(s) en {professionalQualifications} kwalificatie(s).</p><Link href="/aanbiedersdossier/professionals" className="mt-4 inline-block font-semibold text-brand underline">Professionals beheren</Link></Card>
         </div>
 
         <Card>
