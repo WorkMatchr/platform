@@ -80,6 +80,7 @@ async function loadCandidateSource(transaction: Transaction, providerProfileId: 
   })
   if (!provider) throw new ProviderServiceError('NOT_FOUND')
   const enrolled = provider.organization.provisioningEvents.length > 0
+  const { provisioningEvents: _onboardingEvents, ...snapshotOrganization } = provider.organization
   const complete = provider.capabilities.length > 0 && provider.capabilities.every((item) => item.revisions.length === 1)
     && provider.sectorExperiences.length > 0 && provider.sectorExperiences.every((item) => item.revisions.length === 1)
     && provider.workAreas.length > 0 && provider.workAreas.every((item) => item.revisions.length === 1)
@@ -92,7 +93,7 @@ async function loadCandidateSource(transaction: Transaction, providerProfileId: 
   const evidence = provider.evidenceDocuments.flatMap((document) => document.revisions).sort((a, b) => a.id.localeCompare(b.id))
   const payload: CanonicalValue = {
     provider: { id: provider.id, sourceProfileVersion: provider.version, lifecycleStatus: provider.lifecycleStatus, readinessStatus: provider.readinessStatus, platformQualificationStatus: provider.platformQualificationStatus, selectabilityStatus: provider.selectabilityStatus },
-    organization: provider.organization,
+    organization: snapshotOrganization,
     capabilities: provider.capabilities.map((item) => ({ recordId: item.id, ...item.revisions[0]!, validFrom: iso(item.revisions[0]!.validFrom), validUntil: iso(item.revisions[0]!.validUntil) })).sort((a, b) => a.recordId.localeCompare(b.recordId)),
     sectorExperiences: provider.sectorExperiences.map((item) => ({ recordId: item.id, ...item.revisions[0]! })).sort((a, b) => a.recordId.localeCompare(b.recordId)),
     workAreas: provider.workAreas.map((item) => ({ recordId: item.id, ...item.revisions[0]! })).sort((a, b) => a.recordId.localeCompare(b.recordId)),
