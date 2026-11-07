@@ -8,6 +8,7 @@ import { requiresFourEyes } from './provider-policy'
 import { expectedVersionSchema, reasonCodeSchema, uuidSchema } from './provider-validation'
 import { parseProviderInput } from './provider-write-utils'
 import { assessProviderDossierCompletenessInTransaction } from './provider-dossier-completeness'
+import { onboardingEventWhere } from './provider-onboarding-cohort'
 
 const DOSSIER_SCHEMA_VERSION = 'PROVIDER-DOSSIER-2'
 const CANONICALIZATION_VERSION = 'WORKMATCHR-CJ-1'
@@ -52,13 +53,13 @@ export function buildProviderDossierSnapshot(payload: CanonicalValue) {
   }
 }
 
-async function loadCandidateSource(transaction: Transaction, providerProfileId: string) {
+async function loadCandidateSource(transaction: Transaction, providerProfileId: string, userId: string) {
   const provider = await transaction.providerProfile.findFirst({
     where: { id: providerProfileId, archivedAt: null, organization: { status: 'ACTIVE' } },
     select: {
       id: true, version: true, lifecycleStatus: true, readinessStatus: true,
       platformQualificationStatus: true, selectabilityStatus: true,
-      organization: { select: { id: true, name: true, tradeName: true, chamberOfCommerceNumber: true, organizationType: true, status: true } },
+      organization: { select: { id: true, name: true, tradeName: true, chamberOfCommerceNumber: true, organizationType: true, status: true, provisioningEvents: { where: onboardingEventWhere(userId), select: { id: true }, take: 1 } } },
       capabilities: { where: { status: 'ACTIVE' }, select: { id: true, revisions: { orderBy: { version: 'desc' }, take: 1, select: { id: true, version: true, serviceTermId: true, specialismTermId: true, competencyTermId: true, deliveryModes: true, verificationLevel: true, validFrom: true, validUntil: true } } } },
       sectorExperiences: { where: { status: 'ACTIVE' }, select: { id: true, revisions: { orderBy: { version: 'desc' }, take: 1, select: { id: true, version: true, sectorTermId: true, experienceYears: true, verificationLevel: true } } } },
       workAreas: { where: { status: 'ACTIVE' }, select: { id: true, revisions: { orderBy: { version: 'desc' }, take: 1, select: { id: true, version: true, regionTermId: true, maxTravelDistanceKm: true, verificationLevel: true } } } },
@@ -78,13 +79,14 @@ async function loadCandidateSource(transaction: Transaction, providerProfileId: 
     },
   })
   if (!provider) throw new ProviderServiceError('NOT_FOUND')
+  const enrolled = provider.organization.provisioningEvents.length > 0
   const complete = provider.capabilities.length > 0 && provider.capabilities.every((item) => item.revisions.length === 1)
     && provider.sectorExperiences.length > 0 && provider.sectorExperiences.every((item) => item.revisions.length === 1)
     && provider.workAreas.length > 0 && provider.workAreas.every((item) => item.revisions.length === 1)
-    && provider.professionals.length > 0
-    && provider.professionals.every((item) => item.identityRevisions.length === 1 && item.qualifications.length > 0 && item.qualifications.every((qualification) => qualification.revisions.length === 1))
-    && provider.insurances.length > 0 && provider.insurances.every((item) => item.revisions.length === 1)
-    && provider.termAcceptances.length > 0
+    && (enrolled || (provider.professionals.length > 0
+      && provider.professionals.every((item) => item.identityRevisions.length === 1 && item.qualifications.length > 0 && item.qualifications.every((qualification) => qualification.revisions.length === 1))
+      && provider.insurances.length > 0 && provider.insurances.every((item) => item.revisions.length === 1)
+      && provider.termAcceptances.length > 0))
   if (!complete) throw new ProviderServiceError('CONFIGURATION_INCOMPLETE')
 
   const evidence = provider.evidenceDocuments.flatMap((document) => document.revisions).sort((a, b) => a.id.localeCompare(b.id))
@@ -112,7 +114,7 @@ async function loadCandidateSource(transaction: Transaction, providerProfileId: 
 }
 
 async function createCandidate(transaction: Transaction, actorUserId: string, providerProfileId: string, submissionId: string) {
-  const source = await loadCandidateSource(transaction, providerProfileId)
+  const source = await loadCandidateSource(transaction, providerProfileId, actorUserId)
   const latest = await transaction.providerDossierCandidate.aggregate({ where: { providerProfileId }, _max: { candidateVersion: true } })
   const candidateVersion = (latest._max.candidateVersion ?? 0) + 1
   const snapshot = buildProviderDossierSnapshot(source.payload)
