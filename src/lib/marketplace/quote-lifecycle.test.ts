@@ -25,9 +25,9 @@ describe('commercial quote lifecycle boundaries', () => {
     await expect(saveQuoteDraft({ actorUserId: 'user', providerOrganizationId: 'provider', participationId: 'participation', expectedQuoteVersion: 0, content })).rejects.toMatchObject({ code: 'INVALID_STATE' })
     expect((state.tx.quote as { create: ReturnType<typeof vi.fn> }).create).not.toHaveBeenCalled()
   })
-  it.each(['2026-11-01T11:59:59Z', '2026-11-01T12:00:00Z'])('does not award an expired quote at %s', async expiry => {
-    ;(state.tx.quote as { findFirst: ReturnType<typeof vi.fn> }).findFirst.mockResolvedValue({ id: 'quote', submittedVersion: { id: 'version', validUntil: new Date(expiry) } })
-    await expect(awardMarketplaceQuote({ actorUserId: 'user', clientOrganizationId: 'client', assignmentId: 'assignment', quoteId: 'quote', motivation: 'Synthetische motivering', idempotencyKey: 'award-key', now: new Date('2026-11-01T12:00:00Z') })).rejects.toMatchObject({ code: 'DEADLINE_PASSED' })
+  it.each(['2026-11-01T23:00:00Z', '2026-11-01T23:00:01Z'])('does not award a November 1 offer at %s', async now => {
+    ;(state.tx.quote as { findFirst: ReturnType<typeof vi.fn> }).findFirst.mockResolvedValue({ id: 'quote', submittedVersion: { id: 'version', validUntil: new Date('2026-11-01T00:00:00Z') } })
+    await expect(awardMarketplaceQuote({ actorUserId: 'user', clientOrganizationId: 'client', assignmentId: 'assignment', quoteId: 'quote', motivation: 'Synthetische motivering', idempotencyKey: 'award-key', now: new Date(now) })).rejects.toMatchObject({ code: 'DEADLINE_PASSED' })
     expect((state.tx.awardDecision as { create: ReturnType<typeof vi.fn> }).create).not.toHaveBeenCalled()
   })
 })

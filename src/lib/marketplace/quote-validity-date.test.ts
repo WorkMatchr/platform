@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatQuoteExpiry, parseQuoteValidUntilDate, quoteValidityInputDate, resolveQuoteExpiry } from './quote-validity-date'
+import { formatQuoteExpiry, isQuoteExpired, parseQuoteValidUntilDate, quoteExpiryFromSqlDate, quoteValidityInputDate } from './quote-validity-date'
 
 describe('Dutch calendar-day quote validity', () => {
   it.each([
@@ -13,19 +13,24 @@ describe('Dutch calendar-day quote validity', () => {
     ['2028-02-29', '2028-02-29T23:00:00.000Z'],
     ['2026-04-30', '2026-04-30T22:00:00.000Z'],
   ])('stores the exclusive start of the next Amsterdam day for %s', (input, expected) => {
-    const expiry = parseQuoteValidUntilDate(input)
-    expect(expiry.toISOString()).toBe(expected)
-    expect(quoteValidityInputDate(expiry)).toBe(input)
-    expect(resolveQuoteExpiry(input, expiry)).toEqual(expiry)
+    const stored = parseQuoteValidUntilDate(input)
+    expect(stored.toISOString()).toBe(input + 'T00:00:00.000Z')
+    expect(quoteValidityInputDate(stored)).toBe(input)
+    expect(quoteExpiryFromSqlDate(stored).toISOString()).toBe(expected)
+    const end = new Date(expected)
+    expect(isQuoteExpired(stored, new Date(end.getTime() - 1))).toBe(false)
+    expect(isQuoteExpired(stored, end)).toBe(true)
   })
 
-  it('keeps an unchanged legacy instant even when its UTC date differs from its Dutch date', () => {
-    const legacy = new Date('2026-11-14T23:45:12.345Z')
-    expect(quoteValidityInputDate(legacy)).toBe('2026-11-15')
-    expect(formatQuoteExpiry(legacy)).toContain('00:45:12')
-    expect(resolveQuoteExpiry('2026-11-15', legacy)).toBe(legacy)
-    expect(resolveQuoteExpiry('2026-11-16', legacy)?.toISOString()).toBe('2026-11-16T23:00:00.000Z')
-    expect(resolveQuoteExpiry(undefined, legacy)).toBeUndefined()
+  it('renders a stored calendar date in Amsterdam and refuses to truncate an explicit timestamp', () => {
+    const stored = new Date('2026-11-15T00:00:00Z')
+    expect(parseQuoteValidUntilDate(stored)).toBe(stored)
+    expect(formatQuoteExpiry(stored)).toContain('16 november 2026')
+    expect(() => parseQuoteValidUntilDate(new Date('2026-11-15T12:45:00Z'))).toThrow(RangeError)
+  })
+
+  it('can display a historical calendar date even when its timezone offset includes seconds', () => {
+    expect(formatQuoteExpiry(parseQuoteValidUntilDate('1800-01-01'))).toContain('2 januari 1800')
   })
 
   it.each(['2026-02-29', '2026-02-30', '2026-13-01', '2026-00-10', '2026-11-31', '2026-11-15T12:00:00Z', '15-11-2026', ''])('rejects invalid or timestamp inputs: %s', input => {

@@ -189,9 +189,16 @@ met de oorspronkelijke Git-bytes. De PostgreSQL 18-proef gebruikte precies de 85
 geregistreerde bestanden, met dezelfde checksums. De keten uit de repository bevat
 ook latere migraties. Een eenvoudige selectie van de eerste 85 mappen is onjuist.
 
-- De server bewaart voor een gekozen einddatum het begin van de volgende dag in
+- Voor een gekozen einddatum berekent de server het begin van de volgende dag in
   Amsterdam. De detailweergaven tonen dit exclusieve tijdstip met tijdzone. Bij
-  bewerken bewaart een ongewijzigde datum ook het oorspronkelijke historische tijdstip.
+  bewerken bewaart de nieuwe versie dezelfde kalenderdatum. De eerste browserproef
+  bracht aan het licht dat PostgreSQL bij opslaan in `QuoteVersion.validUntil` elk
+  tijddeel afkapt. De productiecatalogus bevestigt het kolomtype `DATE`. Pas na
+  het lezen wordt de exclusieve Nederlandse grens berekend. De schrijfservice
+  weigert een expliciet intradag-tijdstip in deze kolom. Een tijdstip dat al vóór B3
+  bij opslag verloren ging, kan niet uit een kalenderdatum worden gereconstrueerd.
+  Andere velden met expliciete tijdstippen, waaronder de uitnodigingsdeadline, behouden
+  hun eigen betekenis. Er is geen backfill of wijziging in historische versies.
 - Het bestaande prijs-, selectie-, credit- en sessiemodel blijft leidend. De schema-,
   homepage-, auth-, SEO- en providerbestanden van de productiebasis zijn identiek.
 - Op schema 85 zijn conceptversies, de verlopen uitnodiging, capaciteitsgrens,
@@ -205,11 +212,13 @@ ook latere migraties. Een eenvoudige selectie van de eerste 85 mappen is onjuist
 
 | Controle | Resultaat |
 | --- | --- |
-| Gerichte Vitest-regressies en scheduler | PASS, 404 tests in 64 bestanden en 14 schedulertests. |
+| Gerichte Vitest-regressies en scheduler | PASS, 405 tests in 64 bestanden en 14 schedulertests. |
 | PostgreSQL 18 met 85 productiemigraties | PASS voor Marketplace, sessies en financiële integriteit met synthetische tenants en fake providers. |
 | Edge, desktop en mobiele weergave | PASS voor het ingelogde offerteformulier, 1414 en 390 CSS-pixels breed. Alle zes velden kwamen na opslaan en heropenen terug. |
 | Echte browserzoom op 200% | PASS, bij een buitenbreedte van 1440 px veranderde de inhoudsbreedte van 1414 naar 707 px en de pixelratio van 1 naar 2. |
 | Toegankelijkheid van het offerteformulier | PASS voor geteste tabvolgorde, zichtbare focus en reflow. Axe vond op de drie weergaven geen overtredingen van de geteste WCAG A/AA-regels. |
+| Offerte van concept tot gunning in Edge | PASS voor wijzigen, indienen, blokkeren van nabewerking, prijs en voorwaarden, gunning en afscherming na uitloggen. Voor 31 maart 2096 zag de opdrachtgever na databaseopslag 1 april 2096 om 00.00 uur CEST. |
+| Uiterste gunningsmoment op schema 85 | PASS voor gunning op de laatste geldige milliseconde en weigering vanaf exact de volgende lokale middernacht. |
 | Tenantafscherming in Edge | PASS, een andere professional kreeg voor zowel het conceptformulier als het offertedetail de pagina voor een onbekende route. |
 | Lint, zelfstandige TypeScriptcontrole en standaardproductiebuild | PASS. Lint meldt vier bestaande navigatiewaarschuwingen. De standaardbuild gebruikte Turbopack. |
 

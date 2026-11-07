@@ -44,7 +44,7 @@ async function main() {
     const { acceptProviderInvitation } = await import('../src/lib/marketplace/participation-service')
     const { getProviderInvitationDetail, getClientQuotes, getProviderQuoteDetail } = await import('../src/lib/marketplace/dashboard-query-service')
     const { saveQuoteDraft, submitQuote } = await import('../src/lib/marketplace/quote-service')
-    const { quoteValidityInputDate } = await import('../src/lib/marketplace/quote-validity-date')
+    const { quoteValidityInputDate, quoteExpiryFromSqlDate } = await import('../src/lib/marketplace/quote-validity-date')
     const { awardMarketplaceQuote } = await import('../src/lib/marketplace/award-service')
     const { sendMarketplaceMessage } = await import('../src/lib/marketplace/messaging-service')
     const { correctMarketplaceCredits, grantMarketplaceCredits, reserveCreditsInTransaction } = await import('../src/lib/marketplace/credit-service')
@@ -151,8 +151,8 @@ async function main() {
     await assert.rejects(() => acceptProviderInvitation({ actorUserId: poorProviderUser.id, providerOrganizationId: poorProviderOrganization.id, invitationId: insufficientFixture.invitation.id, idempotencyKey: randomUUID() }), (error: unknown) => Boolean(error && typeof error === 'object' && 'code' in error && error.code === 'INSUFFICIENT_CREDITS'))
     assert.equal(await prisma.providerParticipation.count({ where: { invitationId: insufficientFixture.invitation.id } }), 0)
     assert.equal(await prisma.marketplaceMessageChannel.count({ where: { assignmentId: insufficientFixture.assignment.id } }), 0)
-    const secondQuote = await saveQuoteDraft({ actorUserId: secondProviderUser.id, providerOrganizationId: secondProviderOrganization.id, participationId: secondParticipation.id, expectedQuoteVersion: 0, content: { priceCents: 30_000, priceExplanation: 'Een tweede transparante fictieve testprijs.', approach: 'Een tweede concrete en controleerbare aanpak voor de test.', planning: 'Uitvoering binnen zes weken.', validUntil: new Date(Date.now() + 3_600_000) } })
-    const quote = await saveQuoteDraft({ actorUserId: providerUser.id, providerOrganizationId: providerOrganization.id, participationId: acceptedParticipation.id, expectedQuoteVersion: 0, content: { priceCents: 25_000, priceExplanation: 'Een transparante fictieve testprijs.', approach: 'Een concrete en controleerbare fictieve aanpak voor deze test.', planning: 'Uitvoering binnen vier weken.' } })
+    const secondQuote = await saveQuoteDraft({ actorUserId: secondProviderUser.id, providerOrganizationId: secondProviderOrganization.id, participationId: secondParticipation.id, expectedQuoteVersion: 0, content: { priceCents: 30_000, priceExplanation: 'Een tweede transparante fictieve testprijs.', approach: 'Een tweede concrete en controleerbare aanpak voor de test.', planning: 'Uitvoering binnen zes weken.', validUntil: '2096-03-31' } })
+    const quote = await saveQuoteDraft({ actorUserId: providerUser.id, providerOrganizationId: providerOrganization.id, participationId: acceptedParticipation.id, expectedQuoteVersion: 0, content: { priceCents: 25_000, priceExplanation: 'Een transparante fictieve testprijs.', approach: 'Een concrete en controleerbare fictieve aanpak voor deze test.', planning: 'Uitvoering binnen vier weken.', validUntil: '2096-03-31' } })
     const thirdParticipation = await prisma.providerParticipation.findUniqueOrThrow({ where: { invitationId: thirdInvitation.invitation.id } })
     const draftInput = { actorUserId: thirdProviderUser.id, providerOrganizationId: thirdProviderOrganization.id, participationId: thirdParticipation.id, expectedQuoteVersion: 0, content: { priceCents: 30000, priceExplanation: 'Synthetische prijs voor een nog niet ingediende offerte.', approach: 'Een volledige aanpak die nog niet is ingediend.', planning: 'Uitvoering in gezamenlijk overleg.' } }
     const unsubmitted = await saveQuoteDraft(draftInput)
@@ -170,18 +170,20 @@ async function main() {
     assert.equal(await prisma.marketplaceAuditEvent.count({ where: { action: 'QUOTE_SUBMITTED', entityId: quote.id } }), 1)
 
     const secondVersion = await prisma.quoteVersion.findUniqueOrThrow({ where: { id: secondQuote.currentVersionId! } })
-    const originalExpiry = secondVersion.validUntil!
+    const originalDate = secondVersion.validUntil!
+    assert.equal(originalDate.toISOString(), '2096-03-31T00:00:00.000Z')
+    assert.equal(quoteExpiryFromSqlDate(originalDate).toISOString(), '2096-03-31T22:00:00.000Z')
     const revised = await saveQuoteDraft({
       actorUserId: secondProviderUser.id, providerOrganizationId: secondProviderOrganization.id,
       participationId: secondParticipation.id, expectedQuoteVersion: secondQuote.version,
       content: {
         priceCents: Number(secondVersion.priceCents), priceExplanation: secondVersion.priceExplanation,
         approach: secondVersion.approach, planning: secondVersion.planning, terms: 'Gewijzigde synthetische voorwaarden.',
-        validUntil: quoteValidityInputDate(originalExpiry),
+        validUntil: quoteValidityInputDate(originalDate),
       },
     })
     const savedVersion = await prisma.quoteVersion.findUniqueOrThrow({ where: { id: revised.currentVersionId! } })
-    assert.equal(savedVersion.validUntil?.getTime(), originalExpiry.getTime())
+    assert.equal(savedVersion.validUntil?.getTime(), originalDate.getTime())
     assert.notEqual(savedVersion.id, secondVersion.id)
     const secondSubmission = { actorUserId: secondProviderUser.id, providerOrganizationId: secondProviderOrganization.id, quoteId: secondQuote.id, expectedQuoteVersion: revised.version, idempotencyKey: randomUUID() }
     await assert.rejects(submitQuote({ ...secondSubmission, now: new Date(Date.now() + 2 * 86_400_000) }), { code: 'DEADLINE_PASSED' })
@@ -192,12 +194,13 @@ async function main() {
     assert.equal((await sendMarketplaceMessage(messageInput)).id, message.id)
     await assert.rejects(() => sendMarketplaceMessage({ ...messageInput, actorUserId: secondProviderUser.id, organizationId: secondProviderOrganization.id }), { code: 'ACCESS_DENIED' })
     assert.equal(await prisma.marketplaceMessage.count({ where: { idempotencyKey: messageInput.idempotencyKey } }), 1)
-    await assert.rejects(awardMarketplaceQuote({ actorUserId: clientUser.id, clientOrganizationId: clientOrganization.id, assignmentId: acceptanceFixture.assignment.id, quoteId: secondQuote.id, motivation: 'Verlopen offerte mag niet gegund worden.', idempotencyKey: randomUUID(), now: new Date(Date.now() + 7_200_000) }), { code: 'DEADLINE_PASSED' })
+    await assert.rejects(awardMarketplaceQuote({ actorUserId: clientUser.id, clientOrganizationId: clientOrganization.id, assignmentId: acceptanceFixture.assignment.id, quoteId: secondQuote.id, motivation: 'Verlopen offerte mag niet gegund worden.', idempotencyKey: randomUUID(), now: new Date('2096-03-31T22:00:00.000Z') }), { code: 'DEADLINE_PASSED' })
     assert.equal(await prisma.awardDecision.count({ where: { assignmentId: acceptanceFixture.assignment.id } }), 0)
     const awardKey = randomUUID()
+    const lastValidInstant = new Date('2096-03-31T21:59:59.999Z')
     const awardRace = await Promise.allSettled([
-      awardMarketplaceQuote({ actorUserId: clientUser.id, clientOrganizationId: clientOrganization.id, assignmentId: acceptanceFixture.assignment.id, quoteId: quote.id, motivation: 'Deze fictieve offerte past aantoonbaar het beste.', idempotencyKey: awardKey }),
-      awardMarketplaceQuote({ actorUserId: clientUser.id, clientOrganizationId: clientOrganization.id, assignmentId: acceptanceFixture.assignment.id, quoteId: quote.id, motivation: 'Deze fictieve offerte past aantoonbaar het beste.', idempotencyKey: awardKey }),
+      awardMarketplaceQuote({ actorUserId: clientUser.id, clientOrganizationId: clientOrganization.id, assignmentId: acceptanceFixture.assignment.id, quoteId: quote.id, motivation: 'Deze fictieve offerte past aantoonbaar het beste.', idempotencyKey: awardKey, now: lastValidInstant }),
+      awardMarketplaceQuote({ actorUserId: clientUser.id, clientOrganizationId: clientOrganization.id, assignmentId: acceptanceFixture.assignment.id, quoteId: quote.id, motivation: 'Deze fictieve offerte past aantoonbaar het beste.', idempotencyKey: awardKey, now: lastValidInstant }),
     ])
     raceResult('Dubbele gunning', awardRace)
     assert.equal(await prisma.awardDecision.count({ where: { assignmentId: acceptanceFixture.assignment.id } }), 1)

@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { Metadata } from 'next'
-import { formatQuoteExpiry } from '@/lib/marketplace/quote-validity-date'
+import { formatQuoteExpiry, isQuoteExpired } from '@/lib/marketplace/quote-validity-date'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { awardQuoteAction } from '@/app/marktplaats/actions'
@@ -20,6 +20,7 @@ export default async function ClientQuotesPage({ params }: { params: Promise<{ a
   const result = await getClientQuotes(user.id, activeMembership.organization.id, assignmentId).catch(() => null)
   if (!result) notFound()
   const { assignment } = result
+  const now = new Date()
 
   return (
     <Section spacing="compact">
@@ -42,14 +43,14 @@ export default async function ClientQuotesPage({ params }: { params: Promise<{ a
             <p className="mt-1 whitespace-pre-wrap">{quote.submittedVersion.priceExplanation}</p>
             <h3 className="mt-5 font-semibold">Aanpak</h3>
             <p className="mt-1 whitespace-pre-wrap text-text-secondary">{quote.submittedVersion.approach}</p>
-            {quote.submittedVersion.validUntil ? <p className="mt-3 text-sm">Geldig tot: {formatQuoteExpiry(quote.submittedVersion.validUntil)}{quote.submittedVersion.validUntil <= new Date() ? ' (verstreken)' : ''}</p> : null}
+            {quote.submittedVersion.validUntil ? <p className="mt-3 text-sm">Geldig tot: {formatQuoteExpiry(quote.submittedVersion.validUntil)}{isQuoteExpired(quote.submittedVersion.validUntil, now) ? ' (verstreken)' : ''}</p> : null}
             <h3 className="mt-5 font-semibold">Planning</h3>
             <p className="mt-1 whitespace-pre-wrap">{quote.submittedVersion.planning}</p>
             {quote.submittedVersion.terms ? <div className="mt-5"><h3 className="font-semibold">Voorwaarden</h3><p className="mt-1 whitespace-pre-wrap">{quote.submittedVersion.terms}</p></div> : null}
             {quote.participation.messageChannel ? (
               <Link className="mt-5 inline-block font-semibold underline" href={`/berichten/${quote.participation.messageChannel.id}`}>Berichten openen</Link>
             ) : null}
-            {quote.status === 'SUBMITTED' && assignment.status === 'IN_SELECTION' && !assignment.awardDecision && (!quote.submittedVersion.validUntil || quote.submittedVersion.validUntil > new Date()) ? (
+            {quote.status === 'SUBMITTED' && assignment.status === 'IN_SELECTION' && !assignment.awardDecision && !isQuoteExpired(quote.submittedVersion.validUntil, now) ? (
               <ActionForm action={awardQuoteAction} className="mt-6 grid gap-3 border-t border-border pt-5">
                 <input type="hidden" name="assignmentId" value={assignment.id} />
                 <input type="hidden" name="quoteId" value={quote.id} />

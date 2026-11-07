@@ -1,5 +1,5 @@
 import { getPrisma } from '@/lib/prisma'
-import { resolveQuoteExpiry } from './quote-validity-date'
+import { parseQuoteValidUntilDate } from './quote-validity-date'
 import { requireProviderMarketplaceAccess } from './marketplace-authorization'
 import { consumeCreditReservationInTransaction } from './credit-service'
 import { MarketplaceServiceError } from './marketplace-errors'
@@ -48,10 +48,7 @@ export async function saveQuoteDraft(input: {
     ])
     if (!legacyReservation && !purchase) throw new MarketplaceServiceError('ACCESS_DENIED')
     const invitation = await transaction.providerInvitation.findUniqueOrThrow({ where: { id: participation.invitationId }, select: { deadlineAt: true } })
-    const existingQuote = await transaction.quote.findUnique({
-      where: { participationId: participation.id },
-      include: { currentVersion: { select: { validUntil: true } } },
-    })
+    const existingQuote = await transaction.quote.findUnique({ where: { participationId: participation.id } })
     if (invitation.deadlineAt <= new Date()) throw new MarketplaceServiceError('DEADLINE_PASSED')
     if (existingQuote && existingQuote.status !== 'DRAFT') throw new MarketplaceServiceError('INVALID_STATE')
     if ((existingQuote?.version ?? 0) !== input.expectedQuoteVersion) throw new MarketplaceServiceError('CONFLICT')
@@ -74,7 +71,7 @@ export async function saveQuoteDraft(input: {
         approach: input.content.approach.trim(),
         planning: input.content.planning.trim(),
         terms: input.content.terms?.trim() || null,
-        validUntil: resolveQuoteExpiry(input.content.validUntil, existingQuote?.currentVersion?.validUntil),
+        validUntil: input.content.validUntil === undefined ? null : parseQuoteValidUntilDate(input.content.validUntil),
         submittedByUserId: input.actorUserId,
       },
     })

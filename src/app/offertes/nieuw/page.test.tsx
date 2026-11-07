@@ -11,7 +11,8 @@ it('restores every saved field when a professional edits a draft', async () => {
   for (const value of ['123.45', 'Bewaar deze prijsuitleg', 'Bewaar deze volledige aanpak', 'Bewaar de planning', 'Bewaar de voorwaarden', '2098-12-31']) expect(html).toContain(value)
   expect(html).toContain('name="expectedQuoteVersion" value="2"')
   expect(html).toContain('Bij behoud van deze datum vervalt uw offerte op')
-  expect(html).toContain('01:00:00')
+  expect(html).toContain('1 januari 2099')
+  expect(html).toContain('00:00:00')
 })
 
 it('does not offer an edit form when the lifecycle no longer permits changes', async () => {

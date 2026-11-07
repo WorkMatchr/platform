@@ -21,11 +21,11 @@ Na indiening blijft de oorspronkelijke immutable versie leidend.
 
 Een offerte met een verstreken validUntil kan niet worden gegund, ook niet precies op
 het vervaltijdstip. Bij een nieuwe of gewijzigde einddatum geldt de hele gekozen dag
-in `Europe/Amsterdam`. De database bewaart het begin van de volgende lokale dag als
-exclusief vervaltijdstip. Professional en opdrachtgever zien dat tijdstip in Nederlandse
-tijd. Bij een ongewijzigde datum in een bestaand concept behoudt de nieuwe versie het
-oorspronkelijke tijdstip, ook wanneer dat midden op de dag valt. Historische versies en
-idempotente gunningen blijven terugleesbaar.
+in `Europe/Amsterdam`. PostgreSQL bewaart de kalenderdatum als `DATE`. De app leidt
+bij tonen en gunnen dezelfde exclusieve grens af, namelijk het begin van de volgende
+lokale dag. Een datumveld kan geen expliciet tijdstip bewaren. De schrijfservice weigert
+daarom tijdstippen met een tijdcomponent. Bestaande datumwaarden, uitnodigingsdeadlines,
+indieningstijdstippen, historische versies en gunningsbesluiten worden niet herschreven.
 
 Alleen daadwerkelijk gegunde of afgewezen ingediende offertes krijgen de bijbehorende
 in-app gunnings-/afwijzingsmelding. Een niet-ingediend of ingetrokken concept krijgt geen
