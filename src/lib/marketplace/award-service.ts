@@ -1,3 +1,4 @@
+import { isQuoteExpired } from './quote-validity-date'
 import { externalAssignmentWhere } from '@/lib/assignments/assignment-identity'
 import type { Prisma } from '@/generated/prisma/client'
 import { getPrisma } from '@/lib/prisma'
@@ -45,6 +46,7 @@ export async function awardMarketplaceQuote(input: {
       include: { submittedVersion: true, providerProfile: { select: { id: true, organizationId: true } } },
     })
     if (!quote?.submittedVersion) throw new MarketplaceServiceError('INVALID_STATE')
+    if (isQuoteExpired(quote.submittedVersion.validUntil, now)) throw new MarketplaceServiceError('DEADLINE_PASSED')
     const snapshot = {
       assignmentId: assignment.id,
       assignmentVersion: assignment.version,
@@ -113,7 +115,7 @@ export async function awardMarketplaceQuote(input: {
       data: { status: 'READ_ONLY', closedAt: now },
     })
     const providerQuotes = await transaction.quote.findMany({
-      where: { assignmentId: assignment.id },
+      where: { assignmentId: assignment.id, status: { in: ['AWARDED', 'REJECTED'] } },
       select: { id: true, providerOrganizationId: true, status: true },
     })
     for (const providerQuote of providerQuotes) {

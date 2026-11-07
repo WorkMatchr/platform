@@ -82,7 +82,7 @@ export async function saveQuoteDraftAction(formData: FormData) {
       approach: z.string().min(20).max(10_000).parse(formData.get('approach')),
       planning: z.string().min(10).max(2000).parse(formData.get('planning')),
       terms: z.string().max(2000).optional().parse(formData.get('terms') || undefined),
-      validUntil: formData.get('validUntil') ? z.coerce.date().parse(formData.get('validUntil')) : undefined,
+      validUntil: z.iso.date().optional().parse(formData.get('validUntil') || undefined),
     },
   }).catch(handleParticipationError)
   revalidatePath('/dashboard')
@@ -115,7 +115,7 @@ export async function sendMarketplaceMessageAction(formData: FormData) {
   const content = z.string().min(1).max(4000).parse(formData.get('content'))
   const idempotencyKey = idempotencySchema.parse(formData.get('idempotencyKey'))
   const { user, organizationId } = await context(`/berichten/${channelId}`)
-  await sendMarketplaceMessage({ actorUserId: user.id, organizationId, channelId, content, idempotencyKey }).catch(handleParticipationError)
+  await sendMarketplaceMessage({ actorUserId: user.id, organizationId, channelId, content, idempotencyKey })
   revalidatePath(`/berichten/${channelId}`)
 }
 

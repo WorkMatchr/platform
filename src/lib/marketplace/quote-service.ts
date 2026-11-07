@@ -1,4 +1,5 @@
 import { getPrisma } from '@/lib/prisma'
+import { parseQuoteValidUntilDate } from './quote-validity-date'
 import { requireProviderParticipationAccess } from './marketplace-authorization'
 import { consumeCreditReservationInTransaction } from './credit-service'
 import { MarketplaceServiceError } from './marketplace-errors'
@@ -10,7 +11,7 @@ type QuoteContent = {
   approach: string
   planning: string
   terms?: string
-  validUntil?: Date
+  validUntil?: string | Date
 }
 
 function validateQuoteContent(content: QuoteContent) {
@@ -39,6 +40,8 @@ export async function saveQuoteDraft(input: {
       },
     })
     if (!participation) throw new MarketplaceServiceError('NOT_FOUND')
+    const assignment = await transaction.assignment.findUniqueOrThrow({ where: { id: participation.assignmentId }, select: { status: true } })
+    if (!['AWAITING_RESPONSES', 'IN_SELECTION'].includes(assignment.status)) throw new MarketplaceServiceError('INVALID_STATE')
     const [legacyReservation, purchase] = await Promise.all([
       transaction.creditReservation.findUnique({ where: { participationId: participation.id }, select: { id: true } }),
       transaction.creditTransaction.findFirst({ where: { referenceType: 'ProviderParticipation', referenceId: participation.id, type: 'PARTICIPATION_PAYMENT' }, select: { id: true } }),
@@ -68,7 +71,7 @@ export async function saveQuoteDraft(input: {
         approach: input.content.approach.trim(),
         planning: input.content.planning.trim(),
         terms: input.content.terms?.trim() || null,
-        validUntil: input.content.validUntil,
+        validUntil: input.content.validUntil === undefined ? null : parseQuoteValidUntilDate(input.content.validUntil),
         submittedByUserId: input.actorUserId,
       },
     })
