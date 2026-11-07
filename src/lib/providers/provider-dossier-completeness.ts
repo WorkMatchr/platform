@@ -65,7 +65,7 @@ export async function assessProviderDossierCompletenessInTransaction(
   // De pg-driver ondersteunt geen overlappende queries op één transactionele
   // PoolClient. Houd deze reads daarom expliciet sequentieel en vlak.
   const enrolled = provider.organization.provisioningEvents.length > 0
-  const policyVersion = enrolled ? 'PROVIDER-COMPLETENESS-B4-1' : PROVIDER_COMPLETENESS_POLICY_VERSION
+  const policyVersion = enrolled ? 'PROVIDER-COMPLETENESS-B4-2' : PROVIDER_COMPLETENESS_POLICY_VERSION
   const capabilityRevisions = await transaction.providerCapabilityRevision.findMany({
     where: { capability: { providerProfileId, status: 'ACTIVE' } },
     select: { providerCapabilityId: true, version: true, serviceTermId: true, specialismTermId: true, deliveryModes: true },
@@ -128,28 +128,33 @@ export async function assessProviderDossierCompletenessInTransaction(
     { section: 'EVIDENCE', complete: cleanEvidenceCount > 0 && activeInsurance.every((item) => scanStatusByEvidenceRevision.get(item.evidenceRevisionId) === 'CLEAN'), code: 'EVIDENCE_UNAVAILABLE' },
     { section: 'DECLARATIONS', complete: requiredTerms.length > 0 && requiredTerms.every((item) => accepted.has(item.id)), code: requiredTerms.length === 0 ? 'TERMS_NOT_CONFIGURED' : 'TERM_NOT_ACCEPTED' },
   ]
-  const reasons = checks.filter((check) => !check.complete).map<ProviderCompletenessReason>((check) => ({
+  // The new lightweight Marketplace onboarding requires only the information
+  // needed to match and contact the organization. Existing legacy dossiers retain
+  // their original policy and approved snapshots until a separate transition.
+  const applicableChecks = enrolled ? checks.filter(check =>
+    ['ORGANIZATION', 'CAPABILITIES', 'SECTOR_EXPERIENCE', 'WORK_AREA'].includes(check.section)) : checks
+  const reasons = applicableChecks.filter((check) => !check.complete).map<ProviderCompletenessReason>((check) => ({
     code: check.code,
     section: check.section,
     state: check.expired ? 'EXPIRED' : check.section === 'DECLARATIONS' && requiredTerms.length === 0 ? 'NOT_STARTED' : 'ACTION_REQUIRED',
   }))
   const blockingSections = [...new Set(reasons.map((reason) => reason.section))]
   const editableSections = await getProviderEditableSections(transaction, providerProfileId)
-  const completed = checks.length - reasons.length
+  const completed = applicableChecks.length - reasons.length
   const checksum = hashProviderJson({
     policyVersion,
     sourceProfileVersion: provider.version,
-    results: checks.map((check) => ({ section: check.section, complete: check.complete, expired: check.expired ?? false, code: check.code })),
+    results: applicableChecks.map((check) => ({ section: check.section, complete: check.complete, expired: check.expired ?? false, code: check.code })),
   }).sha256
   return {
     policyVersion,
     sourceProfileVersion: provider.version,
-    required: checks.length,
+    required: applicableChecks.length,
     completed,
     actionRequired: reasons.filter((reason) => reason.state === 'ACTION_REQUIRED').length,
     expired: reasons.filter((reason) => reason.state === 'EXPIRED').length,
     notStarted: reasons.filter((reason) => reason.state === 'NOT_STARTED').length,
-    percentage: Math.round((completed / checks.length) * 100),
+    percentage: Math.round((completed / applicableChecks.length) * 100),
     blockingSections,
     warnings: reasons.filter((reason) => reason.state === 'EXPIRED' || reason.state === 'WARNING'),
     reasons,
