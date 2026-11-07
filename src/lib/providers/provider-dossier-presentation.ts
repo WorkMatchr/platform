@@ -77,13 +77,13 @@ export const providerSelectabilityLabels: Record<ProviderSelectabilityStatus, st
 }
 
 export function presentProviderStatuses(input: {
-  readinessStatus: ProviderReadinessStatus
+  dossierComplete: boolean
   qualificationStatus: ProviderPlatformQualificationStatus
   selectabilityStatus: ProviderSelectabilityStatus
   submissionStatus: ProviderDossierSubmissionStatus | null
 }) {
   return {
-    dossierCompleteness: providerReadinessLabels[input.readinessStatus],
+    dossierCompleteness: input.dossierComplete ? 'Dossier compleet' : 'Dossier niet compleet',
     platformQualification: providerQualificationLabels[input.qualificationStatus],
     professionalQualification: 'Per kwalificatie weergegeven',
     reviewStatus: input.submissionStatus ? providerReviewLabels[input.submissionStatus] : 'Nog niet ingediend',

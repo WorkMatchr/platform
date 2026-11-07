@@ -7,6 +7,7 @@ export type MarketplaceErrorCode =
   | 'INVALID_STATE'
   | 'NOT_FOUND'
   | 'NOT_SELECTABLE'
+  | 'PROFILE_ONBOARDING_REQUIRED'
   | 'VALIDATION_ERROR'
 
 const messages: Record<MarketplaceErrorCode, string> = {
@@ -17,6 +18,7 @@ const messages: Record<MarketplaceErrorCode, string> = {
   INSUFFICIENT_CREDITS: 'Uw creditsaldo is te laag om deze opdracht te kopen.',
   INVALID_STATE: 'Deze handeling is in de huidige status niet mogelijk.',
   NOT_FOUND: 'Deze gegevens zijn niet beschikbaar.',
+  PROFILE_ONBOARDING_REQUIRED: 'Open uw dienstverlenersprofiel en controleer de afronding en beoordeling voordat u deelneemt.',
   NOT_SELECTABLE: 'Uw organisatie is op dit moment niet selecteerbaar.',
   VALIDATION_ERROR: 'Controleer de ingevulde gegevens.',
 }

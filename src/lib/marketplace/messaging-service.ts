@@ -1,5 +1,6 @@
 import type { Prisma } from '@/generated/prisma/client'
 import { getPrisma } from '@/lib/prisma'
+import { requireProviderParticipationAccess } from './marketplace-authorization'
 import { MarketplaceServiceError } from './marketplace-errors'
 import { activeOrganizationRecipients, createMarketplaceNotification, writeMarketplaceAudit } from './marketplace-events'
 
@@ -37,6 +38,9 @@ async function requireChannelAccess(
   })
   const role = channel.clientOrganizationId === organizationId ? clientRole : providerMembership?.role
   if (!role || (write && role === 'MEMBER')) throw new MarketplaceServiceError('ACCESS_DENIED')
+  if (write && organizationId === channel.participation.providerOrganizationId) {
+    await requireProviderParticipationAccess(transaction, userId, organizationId)
+  }
   return { channel, role }
 }
 

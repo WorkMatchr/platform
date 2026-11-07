@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { isProviderNavigationItemCurrent, type ProviderNavigationItem } from './provider-dossier-navigation'
 
 const servicesGroup: ProviderNavigationItem = {
-  label: 'Diensten en ervaring',
+  label: 'Sectoren en diensten',
   href: '/aanbiedersdossier/diensten-en-ervaring',
   matchPaths: [
     '/aanbiedersdossier/diensten-en-ervaring',
@@ -15,15 +15,15 @@ const servicesGroup: ProviderNavigationItem = {
 }
 
 describe('dienstverlenersprofiel-navigatiecontext', () => {
-  it('houdt Diensten en ervaring actief op Sectorervaring', () => {
+  it('houdt Sectoren en diensten actief op Sectorervaring', () => {
     expect(isProviderNavigationItemCurrent(servicesGroup, '/aanbiedersdossier/sectorervaring')).toBe(true)
   })
 
-  it('houdt Diensten en ervaring actief op Diensten en specialismen', () => {
+  it('houdt Sectoren en diensten actief op Diensten en specialismen', () => {
     expect(isProviderNavigationItemCurrent(servicesGroup, '/aanbiedersdossier/diensten')).toBe(true)
   })
 
-  it('activeert Diensten en ervaring op de overzichtspagina', () => {
+  it('activeert Sectoren en diensten op de overzichtspagina', () => {
     expect(isProviderNavigationItemCurrent(servicesGroup, '/aanbiedersdossier/diensten-en-ervaring')).toBe(true)
   })
 

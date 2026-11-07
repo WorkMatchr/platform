@@ -11,14 +11,14 @@ export async function reserveProviderVersion(
     data: { version: { increment: 1 }, readinessStatus: 'INCOMPLETE', selectabilityStatus: 'NOT_SELECTABLE' },
   })
   if (updated.count !== 1) throw new ProviderServiceError('CONFLICT')
-  const currentProjection = await transaction.trustedProviderProjection.findFirst({
+  const currentProjections = await transaction.trustedProviderProjection.findMany({
     where: { providerProfileId, invalidation: null },
-    orderBy: { sourceVersion: 'desc' },
     select: { id: true },
   })
-  if (currentProjection) {
-    await transaction.trustedProviderProjectionInvalidation.create({
-      data: { projectionId: currentProjection.id, reasonCode: 'SOURCE_CHANGED' },
+  if (currentProjections.length) {
+    await transaction.trustedProviderProjectionInvalidation.createMany({
+      data: currentProjections.map(projection => ({ projectionId: projection.id, reasonCode: 'SOURCE_CHANGED' })),
+      skipDuplicates: true,
     })
   }
   return expectedVersion + 1

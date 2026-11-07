@@ -1,6 +1,6 @@
 import type { Prisma, RequestInterestStatus } from '@/generated/prisma/client'
 import { Prisma as PrismaNamespace } from '@/generated/prisma/client'
-import { requireProviderMarketplaceAccess } from '@/lib/marketplace/marketplace-authorization'
+import { requireProviderMarketplaceAccess, requireProviderParticipationAccess } from '@/lib/marketplace/marketplace-authorization'
 import { getPrisma } from '@/lib/prisma'
 import { getApplicableMarketplaceRuleSet } from '@/lib/marketplace/marketplace-rules-service'
 
@@ -38,9 +38,11 @@ async function requireProviderAccess(
   transaction: Transaction,
   actor: ProviderRequestActor,
   write: boolean,
+  participate = true,
 ) {
   try {
-    return await requireProviderMarketplaceAccess(
+    if (!participate) return { ...await requireProviderMarketplaceAccess(transaction, actor.userId, actor.organizationId, write), projectionId: undefined }
+    return await requireProviderParticipationAccess(
       transaction,
       actor.userId,
       actor.organizationId,
@@ -69,10 +71,11 @@ export async function listEligibleRequestsForProvider(
   actor: ProviderRequestActor,
 ) {
   return getPrisma().$transaction(async (transaction) => {
-    await requireProviderAccess(transaction, actor, false)
+    const access = await requireProviderAccess(transaction, actor, false)
     return transaction.requestEligibleProvider.findMany({
       where: {
         providerOrganizationId: actor.organizationId,
+        projectionId: access.projectionId,
         request: { status: 'PUBLISHED' },
       },
       orderBy: { request: { publishedAt: 'desc' } },
@@ -93,7 +96,7 @@ export async function listEligibleRequestsForProvider(
         },
       },
     })
-  })
+  }, { isolationLevel: 'RepeatableRead' })
 }
 
 export async function getEligibleRequestForProvider(
@@ -109,6 +112,7 @@ export async function getEligibleRequestForProvider(
     const eligibility =
       await transaction.requestEligibleProvider.findUnique({
         where: {
+          projectionId: access.projectionId,
           requestId_providerOrganizationId: {
             requestId,
             providerOrganizationId: actor.organizationId,
@@ -223,7 +227,7 @@ export async function getEligibleRequestForProvider(
       canManage:
         access.role === 'OWNER' || access.role === 'ADMIN',
     }
-  })
+  }, { isolationLevel: 'RepeatableRead' })
 }
 
 async function writeInterest(
@@ -236,7 +240,7 @@ async function writeInterest(
 ): Promise<{ id: string; status: RequestInterestStatus }> {
   return getPrisma().$transaction(
     async (transaction) => {
-      await requireProviderAccess(transaction, input.actor, true)
+      const access = await requireProviderAccess(transaction, input.actor, true, input.targetStatus === 'INTERESTED')
       await transaction.$queryRaw(
         PrismaNamespace.sql`
           SELECT pg_advisory_xact_lock(
@@ -248,6 +252,7 @@ async function writeInterest(
       const eligibility =
         await transaction.requestEligibleProvider.findUnique({
           where: {
+            projectionId: access.projectionId,
             requestId_providerOrganizationId: {
               requestId: input.requestId,
               providerOrganizationId: input.actor.organizationId,

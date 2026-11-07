@@ -19,7 +19,7 @@ describe('A01.6 bestaande accountnavigatie', () => {
     vi.stubEnv('NEXT_PUBLIC_ACCOUNT_SHELL_VERSION', undefined)
     for (const role of ['OWNER', 'ADMIN', 'MEMBER'] as const) {
       const professional = accountType === 'PROFESSIONAL'
-      route.pathname = professional ? '/aanbiedersdossier/professionals' : '/opdrachten'
+      route.pathname = professional ? '/aanbiedersdossier/diensten-en-ervaring' : '/opdrachten'
       const model = buildHeaderViewModel({
         user: { displayName: 'Synthetische gebruiker', email: 'navigation@example.invalid', accountType },
         activeMembership: { role, organization: { id: 'synthetic-org', name: 'Testorganisatie', organizationType: professional ? 'PROVIDER' : 'CLIENT', providerProfile: professional ? { id: 'synthetic-profile' } : null } },

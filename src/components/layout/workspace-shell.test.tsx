@@ -54,6 +54,17 @@ describe('gedeelde goedgekeurde beheershell', () => {
       expect(account.querySelector('[role="main"]')?.id).toBe('main-content')
     }
   })
+  it('plaatst het organisatieoverzicht onder de primaire navigatie binnen het aanbiedersdossier', () => {
+    route.pathname = '/aanbiedersdossier/profiel'
+    const html = renderToStaticMarkup(<AccountWorkspaceShell model={modelFor('PROFESSIONAL', 'OWNER')} banner={null}><h1>Mijn profiel</h1></AccountWorkspaceShell>)
+    const doc = parse(html)
+    const organization = doc.querySelector('[aria-label="Mijn organisatie"]')
+    expect(organization?.textContent).toContain('Tenant A')
+    expect(organization?.previousElementSibling?.tagName).toBe('NAV')
+    expect(doc.querySelectorAll('[aria-label="Mijn organisatie"]')).toHaveLength(1)
+    expect(doc.querySelector('[role="main"]')?.textContent).toContain('Mijn profiel')
+  })
+
   it('behoudt platformrolfiltering voor OWNER, ADMIN en MEMBER', () => {
     route.pathname = '/platformbeheer/auditor'
     for (const role of ['OWNER', 'ADMIN', 'MEMBER'] as const) {

@@ -1,4 +1,5 @@
 import { requestedExpertiseOptions, type SimpleAdviceInput } from './simple-advice-contract'
+import { blockedOnboardingProfiles } from '@/lib/providers/provider-marketplace-onboarding'
 import type { Prisma } from '@/generated/prisma/client'
 import { evaluateMatchingCandidate } from '@/lib/marketplace/matching-rules'
 import { MARKETPLACE_RULE_VERSION } from '@/lib/marketplace/marketplace-config'
@@ -160,8 +161,12 @@ export async function createRequestEligibilitySnapshot(
     }
   }
 
+  const blocked = await blockedOnboardingProfiles(transaction, Array.from(latestByProvider.values(), p => ({
+    projectionId: p.id, providerProfileId: p.providerProfileId, organizationId: p.providerProfile.organizationId,
+  })), at)
   let eligibleCount = 0
   for (const projection of latestByProvider.values()) {
+    if (blocked.has(projection.providerProfileId)) continue
     const payload = readTrustedPayload(projection.payload)
     if (!payload) continue
     const workAreaMatches =

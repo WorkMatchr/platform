@@ -1,4 +1,5 @@
 import type { Prisma, ProviderDossierSection } from '@/generated/prisma/client'
+import { onboardingEventWhere } from './provider-onboarding-cohort'
 import { getPrisma } from '@/lib/prisma'
 import { requireProviderViewer } from './provider-authorization'
 import { getProviderEditableSections } from './provider-dossier-access'
@@ -12,7 +13,10 @@ export type ProviderCompletenessReason = {
   state: 'ACTION_REQUIRED' | 'EXPIRED' | 'NOT_STARTED' | 'WARNING'
 }
 
+export type ProviderSectionStatus = 'REQUIRED_COMPLETE' | 'REQUIRED_OPEN' | 'OPTIONAL_COMPLETE' | 'OPTIONAL_OPEN' | 'OPTIONAL_EMPTY' | 'NOT_APPLICABLE'
+
 export type ProviderCompletenessAssessment = {
+  sections: Partial<Record<ProviderDossierSection, ProviderSectionStatus>>
   policyVersion: string
   sourceProfileVersion: number
   required: number
@@ -48,21 +52,26 @@ export async function assessProviderDossierCompletenessInTransaction(
   transaction: Prisma.TransactionClient,
   providerProfileId: string,
   at = new Date(),
+  userId?: string,
 ): Promise<ProviderCompletenessAssessment> {
   const provider = await transaction.providerProfile.findFirst({
     where: { id: providerProfileId, archivedAt: null, organization: { status: 'ACTIVE', organizationType: { in: ['PROVIDER', 'BOTH'] } } },
     select: {
       version: true,
-      organization: { select: { name: true, chamberOfCommerceNumber: true } },
+      organization: { select: { name: true, chamberOfCommerceNumber: true,
+        provisioningEvents: { where: onboardingEventWhere(userId), select: { id: true }, take: 1 },
+      } },
     },
   })
   if (!provider) return emptyAssessment()
 
   // De pg-driver ondersteunt geen overlappende queries op één transactionele
   // PoolClient. Houd deze reads daarom expliciet sequentieel en vlak.
+  const enrolled = provider.organization.provisioningEvents.length > 0
+  const policyVersion = enrolled ? 'PROVIDER-COMPLETENESS-B4-2' : PROVIDER_COMPLETENESS_POLICY_VERSION
   const capabilityRevisions = await transaction.providerCapabilityRevision.findMany({
     where: { capability: { providerProfileId, status: 'ACTIVE' } },
-    select: { providerCapabilityId: true, version: true, serviceTermId: true, specialismTermId: true },
+    select: { providerCapabilityId: true, version: true, serviceTermId: true, specialismTermId: true, deliveryModes: true },
   })
   const sectorExperienceCount = await transaction.providerSectorExperience.count({
     where: { providerProfileId, status: 'ACTIVE' },
@@ -75,10 +84,10 @@ export async function assessProviderDossierCompletenessInTransaction(
     select: { professionalId: true, version: true, status: true },
   })
   const professionalQualificationCount = await transaction.providerProfessionalQualification.count({
-    where: { status: 'ACTIVE', professional: { providerProfileId, status: 'ACTIVE' } },
+    where: { status: 'ACTIVE', professional: { providerProfileId, status: 'ACTIVE' }, revisions: { some: {} } },
   })
   const organizationQualificationCount = await transaction.providerOrganizationQualification.count({
-    where: { providerProfileId, status: 'ACTIVE' },
+    where: { providerProfileId, status: 'ACTIVE', revisions: { some: {} } },
   })
   const insuranceRevisions = await transaction.providerInsuranceRevision.findMany({
     where: { insurance: { providerProfileId, status: 'ACTIVE' } },
@@ -97,6 +106,9 @@ export async function assessProviderDossierCompletenessInTransaction(
       scanDecision: { scanStatus: 'CLEAN' },
     },
   })
+  const pendingEvidence = enrolled && cleanEvidenceCount === 0
+    ? await transaction.providerEvidenceDocument.count({ where: { providerProfileId, status: { not: 'ARCHIVED' } } })
+    : 0
   const termAcceptances = await transaction.providerTermAcceptance.findMany({
     where: { providerProfileId },
     select: { documentVersionId: true },
@@ -113,7 +125,7 @@ export async function assessProviderDossierCompletenessInTransaction(
   const accepted = new Set(termAcceptances.map((item) => item.documentVersionId))
   const checks: Check[] = [
     { section: 'ORGANIZATION', complete: provider.organization.name.trim().length >= 2 && Boolean(provider.organization.chamberOfCommerceNumber?.trim()), code: 'ORGANIZATION_INCOMPLETE' },
-    { section: 'CAPABILITIES', complete: capabilities.some((item) => Boolean(item.serviceTermId || item.specialismTermId)), code: 'CAPABILITIES_INCOMPLETE' },
+    { section: 'CAPABILITIES', complete: capabilities.some((item) => enrolled ? Boolean(item.serviceTermId && item.deliveryModes.length) : Boolean(item.serviceTermId || item.specialismTermId)), code: enrolled ? 'SERVICE_DELIVERY_REQUIRED' : 'CAPABILITIES_INCOMPLETE' },
     { section: 'SECTOR_EXPERIENCE', complete: sectorExperienceCount > 0, code: 'SECTOR_EXPERIENCE_INCOMPLETE' },
     { section: 'WORK_AREA', complete: workAreaCount > 0, code: 'WORK_AREA_INCOMPLETE' },
     { section: 'PROFESSIONALS', complete: professionals.some((item) => item.status === 'ACTIVE'), code: 'PROFESSIONALS_INCOMPLETE' },
@@ -122,28 +134,44 @@ export async function assessProviderDossierCompletenessInTransaction(
     { section: 'EVIDENCE', complete: cleanEvidenceCount > 0 && activeInsurance.every((item) => scanStatusByEvidenceRevision.get(item.evidenceRevisionId) === 'CLEAN'), code: 'EVIDENCE_UNAVAILABLE' },
     { section: 'DECLARATIONS', complete: requiredTerms.length > 0 && requiredTerms.every((item) => accepted.has(item.id)), code: requiredTerms.length === 0 ? 'TERMS_NOT_CONFIGURED' : 'TERM_NOT_ACCEPTED' },
   ]
-  const reasons = checks.filter((check) => !check.complete).map<ProviderCompletenessReason>((check) => ({
+  // The new lightweight Marketplace onboarding requires only the information
+  // needed to match and contact the organization. Existing legacy dossiers retain
+  // their original policy and approved snapshots until a separate transition.
+  const applicableChecks = enrolled ? checks.filter(check =>
+    ['ORGANIZATION', 'CAPABILITIES', 'SECTOR_EXPERIENCE', 'WORK_AREA'].includes(check.section)) : checks
+  const sections: ProviderCompletenessAssessment['sections'] = { CAPACITY: 'NOT_APPLICABLE' }
+  for (const check of checks) {
+    if (applicableChecks.includes(check)) sections[check.section] = check.complete ? 'REQUIRED_COMPLETE' : 'REQUIRED_OPEN'
+    else if (check.section === 'DECLARATIONS' && requiredTerms.length === 0) sections[check.section] = 'NOT_APPLICABLE'
+    else if (check.complete) sections[check.section] = 'OPTIONAL_COMPLETE'
+    else if ((check.section === 'INSURANCE' && activeInsurance.length) ||
+        (check.section === 'PROFESSIONALS' && professionals.length) ||
+        (check.section === 'DECLARATIONS' && termAcceptances.length) ||
+        (check.section === 'EVIDENCE' && (pendingEvidence || cleanEvidenceCount || activeInsurance.length))) sections[check.section] = 'OPTIONAL_OPEN'
+    else sections[check.section] = 'OPTIONAL_EMPTY'
+  }
+  const reasons = applicableChecks.filter((check) => !check.complete).map<ProviderCompletenessReason>((check) => ({
     code: check.code,
     section: check.section,
     state: check.expired ? 'EXPIRED' : check.section === 'DECLARATIONS' && requiredTerms.length === 0 ? 'NOT_STARTED' : 'ACTION_REQUIRED',
   }))
   const blockingSections = [...new Set(reasons.map((reason) => reason.section))]
   const editableSections = await getProviderEditableSections(transaction, providerProfileId)
-  const completed = checks.length - reasons.length
+  const completed = applicableChecks.length - reasons.length
   const checksum = hashProviderJson({
-    policyVersion: PROVIDER_COMPLETENESS_POLICY_VERSION,
+    policyVersion,
     sourceProfileVersion: provider.version,
-    results: checks.map((check) => ({ section: check.section, complete: check.complete, expired: check.expired ?? false, code: check.code })),
+    results: applicableChecks.map((check) => ({ section: check.section, complete: check.complete, expired: check.expired ?? false, code: check.code })),
   }).sha256
   return {
-    policyVersion: PROVIDER_COMPLETENESS_POLICY_VERSION,
+    policyVersion, sections,
     sourceProfileVersion: provider.version,
-    required: checks.length,
+    required: applicableChecks.length,
     completed,
     actionRequired: reasons.filter((reason) => reason.state === 'ACTION_REQUIRED').length,
     expired: reasons.filter((reason) => reason.state === 'EXPIRED').length,
     notStarted: reasons.filter((reason) => reason.state === 'NOT_STARTED').length,
-    percentage: Math.round((completed / checks.length) * 100),
+    percentage: Math.round((completed / applicableChecks.length) * 100),
     blockingSections,
     warnings: reasons.filter((reason) => reason.state === 'EXPIRED' || reason.state === 'WARNING'),
     reasons,
@@ -164,6 +192,7 @@ function emptyAssessment(): ProviderCompletenessAssessment {
     state: 'NOT_STARTED',
   }))
   return {
+    sections: { ...Object.fromEntries(sections.map(section => [section, 'REQUIRED_OPEN'])), CAPACITY: 'NOT_APPLICABLE' },
     policyVersion: PROVIDER_COMPLETENESS_POLICY_VERSION, sourceProfileVersion: 0,
     required: 9, completed: 0, actionRequired: 0, expired: 0, notStarted: 9, percentage: 0,
     blockingSections: sections,
@@ -174,6 +203,6 @@ function emptyAssessment(): ProviderCompletenessAssessment {
 export async function assessProviderDossierCompleteness(userId: string, providerProfileId: string, at = new Date()) {
   return getPrisma().$transaction(async (transaction) => {
     await requireProviderViewer(transaction, userId, providerProfileId)
-    return assessProviderDossierCompletenessInTransaction(transaction, providerProfileId, at)
+    return assessProviderDossierCompletenessInTransaction(transaction, providerProfileId, at, userId)
   })
 }
