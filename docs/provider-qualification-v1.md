@@ -11,3 +11,9 @@ concrete vakdiscipline als `specialismCode`. De SPECIALISM-taxonomie v2
 voegt `ergonoom`, `arbeids-en-organisatiedeskundige`, `asbest` en
 `milieudeskundige` toe. Zelfverklaarde profieltekst of een functietitel
 levert nooit automatisch een projectie of eligibility op.
+
+## Dienstbesluiten en eigendom
+
+Elk besluit over een dienst controleert in dezelfde serialiseerbare transactie of die dienst bij het beoordeelde profiel hoort. Een ontbrekende of vreemde dienst geeft dezelfde afwijzing vóór het opslaan van het besluit, het verhogen van de profielversie en het intrekken van de projectie. Kwalificatie en herstel vereisen een actieve dienst met de bestaande inhoudelijke bewijsbasis. Een negatief besluit over een eigen gearchiveerde dienst blijft mogelijk en maakt die dienst nooit actief.
+
+De bestaande afzonderlijke foreign keys controleren of beide records bestaan. Een samengestelde foreign key zou ook toekomstige rechtstreekse database-invoer kunnen beschermen. Dat vraagt een unieke samengestelde sleutel, controle van historische koppelingen en een afzonderlijke migratie. Deze servicereparatie werkt op de bestaande 85 migraties.

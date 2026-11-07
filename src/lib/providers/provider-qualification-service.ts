@@ -125,6 +125,13 @@ export async function recordProviderQualificationDecision(
       })
       if (!provider) throw new ProviderServiceError('NOT_FOUND')
       if (provider.version !== input.expectedProfileVersion) throw new ProviderServiceError('CONFLICT')
+      if (input.scope === 'CAPABILITY') {
+        // Negative decisions may close an archived service, but always within its own dossier.
+        const subject = await transaction.providerCapability.findFirst({
+          where: { id: input.capabilityId!, providerProfileId }, select: { id: true },
+        })
+        if (!subject) throw new ProviderServiceError('NOT_FOUND')
+      }
       const reviewerRecord = await transaction.providerVerificationReview.findFirst({
         where: {
           providerProfileId,

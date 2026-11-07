@@ -1,3 +1,4 @@
+import { verifyProviderQualification } from './verify-provider-qualification'
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
 import { verifyProviderMarketplaceOnboarding } from './verify-provider-marketplace-onboarding'
@@ -119,6 +120,7 @@ async function main() {
       insuranceTermId: (await option('INSURANCE_TYPE')).id, qualificationTermId: (await option('QUALIFICATION')).id,
       legacyOrganizationId: org.id, legacyProfileId: profile, legacyOwnerId: owner.id, legacyMemberId: member.id,
     })
+    await verifyProviderQualification(db, secondService.id, (await db.providerTaxonomyTerm.findFirstOrThrow({ where: { version: { taxonomy: { kind: 'QUALIFICATION' } } } })).id)
     console.log('PASS catalogus, sectoren/diensten/werkgebied in één transactie, historie, rollback, concurrency, rollen, tenantisolatie, sectieslot, archiveren en herstellen')
   } finally { await db.$disconnect() }
 }
