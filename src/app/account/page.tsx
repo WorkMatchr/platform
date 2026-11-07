@@ -1,11 +1,8 @@
 import { AssignmentEmailPreference } from '@/components/account/assignment-email-preference'
 import { getPrisma } from '@/lib/prisma'
+import { AuthShell } from '@/components/auth/auth-shell'
 import { LinkButton } from '@/components/ui/link-button'
 import { getActiveOrganizationContext } from '@/lib/organizations/organization-authorization'
-import {
-import { buildAccountViewModel } from './account-view-model'
-
-
 import { buildAccountViewModel } from './account-view-model'
 
 export const metadata = { title: 'Uw account | WorkMatchr' }
