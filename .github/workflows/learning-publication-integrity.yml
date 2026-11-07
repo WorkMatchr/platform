@@ -60,5 +60,7 @@ jobs:
         run: npm run test:db:auth-sessions
       - name: Account and Arbo guide UX regression tests
         run: npx vitest run src/app/account/account-view-model.test.ts src/app/mijn-arbo-wijzers/arbo-guide-history-interface.test.ts src/app/mijn-arbo-wijzers/page.test.tsx --maxWorkers=2
+      - name: Marketplace quote validity and lifecycle regressions
+        run: npx vitest run src/lib/marketplace/quote-validity-date.test.ts src/lib/marketplace/quote-lifecycle.test.ts src/app/offertes/nieuw/page.test.tsx src/app/offertes/quote-presentation.test.tsx --maxWorkers=2
       - name: Infrastructure and application regressions
         run: npx vitest run src/lib/compliance src/lib/learning src/lib/finance src/lib/credits src/lib/email.test.ts src/components/compliance src/components/arbo-guide --maxWorkers=2
