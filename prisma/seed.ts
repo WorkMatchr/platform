@@ -141,6 +141,7 @@ const providerReasonCodes = [
   ['TERMS_NOT_CONFIGURED', 'TERMS', 'Voorwaarden zijn niet geconfigureerd'],
   ['INSURANCE_REQUIREMENTS_NOT_CONFIGURED', 'INSURANCE', 'Verzekeringsvereisten zijn niet geconfigureerd'],
   ['QUALIFICATION_REQUIREMENTS_NOT_CONFIGURED', 'QUALIFICATION', 'Kwalificatievereisten zijn niet geconfigureerd'],
+  ['QUALIFICATION_EVIDENCE_CONFIRMED', 'QUALIFICATION', 'Vereiste kwalificatiebewijzen gecontroleerd'],
   ['CAPACITY_STALE', 'READINESS', 'Capaciteitsgegevens zijn verlopen'],
   ['PROVIDER_BLOCKED', 'SELECTABILITY', 'Provider is geblokkeerd'],
 ] as const

@@ -2,8 +2,14 @@ import Link from 'next/link'
 import type { ProviderDossierSection } from '@/generated/prisma/client'
 import { providerSectionDetails } from '@/lib/providers/provider-dossier-open-actions'
 import { providerDossierSectionLabels } from '@/lib/providers/provider-dossier-presentation'
-import type { ProviderCompletenessAssessment } from '@/lib/providers/provider-dossier-completeness'
+import type { ProviderCompletenessAssessment, ProviderSectionStatus } from '@/lib/providers/provider-dossier-completeness'
 import { Card } from '@/components/ui/card'
+
+const sectionLabels: Record<ProviderSectionStatus, string> = {
+  REQUIRED_COMPLETE: 'Verplicht · afgerond', REQUIRED_OPEN: 'Verplicht · nog afronden',
+  OPTIONAL_COMPLETE: 'Optioneel · afgerond', OPTIONAL_OPEN: 'Optioneel · nog afronden', OPTIONAL_EMPTY: 'Optioneel · niet ingevuld',
+  NOT_APPLICABLE: 'Niet van toepassing',
+}
 
 export function ProviderCompleteness({ assessment }: { assessment: ProviderCompletenessAssessment }) {
   return (
@@ -19,16 +25,16 @@ export function ProviderCompleteness({ assessment }: { assessment: ProviderCompl
       <ul className="mt-5 divide-y divide-border">
         {(Object.keys(providerSectionDetails) as ProviderDossierSection[]).map(section => {
           const reason = assessment.reasons.find(item => item.section === section)
-          const unavailable = section === 'CAPACITY'
-          const status = unavailable ? 'Niet van toepassing' : reason ? 'Verplicht · nog afronden' : 'Verplicht · afgerond'
+          const status = assessment.sections[section]
+          if (!status) return null
           const href = section === 'CAPABILITIES' ? '/aanbiedersdossier/diensten-en-ervaring#diensten'
             : section === 'SECTOR_EXPERIENCE' ? '/aanbiedersdossier/diensten-en-ervaring#sectoren'
             : section === 'ORGANIZATION' ? '/organisatie/profiel' : providerSectionDetails[section].routeHint
           return <li key={section} className="flex flex-wrap items-baseline justify-between gap-x-3 py-2">
-            {reason && !unavailable
+            {status === 'REQUIRED_OPEN'
               ? <Link href={href} className="font-semibold underline">{providerDossierSectionLabels[section]}</Link>
               : <span>{providerDossierSectionLabels[section]}</span>}
-            <span className="text-sm">{status}</span>
+            <span className="text-sm">{sectionLabels[status]}</span>
             {reason?.code === 'TERMS_NOT_CONFIGURED' && <span className="w-full text-sm">Platformbeheer moet de verplichte verklaringen beschikbaar stellen.</span>}
             {reason?.code === 'EVIDENCE_UNAVAILABLE' && <span className="w-full text-sm">Er ontbreekt gecontroleerd bewijs. Bekijk bij Bewijsstukken welke aanlevermogelijkheden beschikbaar zijn.</span>}
           </li>

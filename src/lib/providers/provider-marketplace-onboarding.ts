@@ -1,3 +1,4 @@
+import { currentApprovedQualificationBasis } from './provider-dossier-service'
 import { profileDecisionHistory, profileQualificationAt } from './provider-effective-qualification'
 import type { Prisma } from '@/generated/prisma/client'
 import { assessProviderDossierCompletenessInTransaction } from './provider-dossier-completeness'
@@ -14,9 +15,10 @@ export async function currentMarketplaceProjections(
   if (!candidates.length) return allowed
   const enrolled = await tx.accountProvisioningEvent.findMany({
     where: { organizationId: { in: candidates.map(p => p.organizationId) }, ...onboardingEventWhere(userId) },
-    distinct: ['organizationId'], select: { organizationId: true },
+    distinct: ['organizationId', 'reasonCode'], select: { organizationId: true, reasonCode: true },
   })
   const organizations = new Set(enrolled.map(event => event.organizationId))
+  const newOrganizations = new Set(enrolled.filter(event => event.reasonCode === 'ORGANIZATION_ONBOARDING_OWNER_LINKED').map(event => event.organizationId))
   const currentProjection = { validFrom: { lte: at }, validUntil: { gt: at }, invalidation: null }
   const profiles = await tx.providerProfile.findMany({
     where: {
@@ -43,6 +45,9 @@ export async function currentMarketplaceProjections(
     if (qualification.adverse || ['SUSPENDED', 'EXPIRED', 'REJECTED', 'CHANGES_REQUESTED'].includes(profile.platformQualificationStatus)) continue
     if ((candidate.projectionId || profile._count.trustedProjections > 0 || enrolled) &&
         (!projection || projection.sourceVersion !== profile.version || (candidate.projectionId && candidate.projectionId !== projection.id))) continue
+    if (newOrganizations.has(profile.organizationId) && !qualification.platform?.dossierCandidateId) continue
+    if (qualification.platform?.dossierCandidateId && (!qualification.allServicesQualified ||
+        !await currentApprovedQualificationBasis(tx, profile.id, qualification.platform.dossierCandidateId))) continue
     if (enrolled && (!qualification.platform || !qualification.allServicesQualified ||
         profile.lifecycleStatus !== 'QUALIFIED' || profile.platformQualificationStatus !== 'QUALIFIED' ||
         profile.readinessStatus !== 'READY' || profile.selectabilityStatus !== 'SELECTABLE' ||

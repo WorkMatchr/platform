@@ -29,3 +29,15 @@ Selecteerbaarheid vereist kwalificatie voor **alle actieve diensten**. Bij één
 De bestaande overgangsregeling blijft gelden voor teamleden die buiten de B4-onboarding vallen. De vier nieuwe dossiervereisten worden voor hen niet alsnog afgedwongen. Een geregistreerde schorsing, verlopen besluit of verouderde projectie blokkeert wel een nieuwe deelname. Factuur- en accountbeheer, het afwijzen van een uitnodiging en het intrekken van deelname houden hun eigen autorisatie.
 
 De lokale PostgreSQL-regressie staat in `scripts/verify-provider-qualification.ts` en loopt via `scripts/test-provider-offering-database.ts`. De proef gebruikt synthetische organisaties, functiescheiding en echte servicetransacties. Onafhankelijke readiness-voorwaarden zijn als testgegeven vastgelegd. Dossiergoedkeuring en de beheerinterface voor kwalificatie hebben een afzonderlijke acceptatie.
+
+## B4-kwalificatie in beheer
+
+Een bevoegde goedkeurder vindt goedgekeurde dossiers onder **Beheer → Dossiers → Goedgekeurde dossiers voor kwalificatie**. De vier verplichte matchingonderdelen maken het dossier indienbaar. Voor kwalificatie gelden daarnaast de bestaande vereisten voor verklaringen, verzekeringsbewijs en de gekozen diensten. De beoordelaar van de afgesloten dossierbeoordeling en de goedkeurder hebben verschillende identiteiten en actuele bevoegdheden.
+
+De referentiedata bevatten daarvoor de positieve redencode `QUALIFICATION_EVIDENCE_CONFIRMED`. Een beheeromgeving heeft een actieve, passende reden in het domein `QUALIFICATION` nodig. De bestaande foutcode voor ontbrekende vereisten is uitgesloten. Dit vraagt geen schemawijziging. Controleer de vereiste referentiedata vóór ingebruikname.
+
+Leg op de dossierpagina eerst een besluit vast voor het platform en vervolgens voor iedere actieve dienst. Kies een reden en einddatum. De einddatum is inclusief in UTC. Elk nieuw positief besluit vanuit beheer verwijst naar de ingediende versie, de indiening en de afgesloten beoordeling. Een tussentijdse wijziging van organisatiegegevens of dossierinhoud vereist opnieuw indienen en beoordelen. Gelijktijdige besluiten op een achterhaalde profielversie worden geweigerd.
+
+Met **Selecteerbaarheid bijwerken** worden de bestaande assessments en, bij een positief resultaat, de projectie in dezelfde transactie vastgelegd. Bij het openen van een uitnodiging, een offerte of het uitvoeren van een Marketplace-actie worden de actuele bevoegdheid en kwalificatie opnieuw gecontroleerd.
+
+Zie het [acceptatieverslag met synthetisch browserbewijs](b4-kwalificatie-acceptatie.md).

@@ -39,6 +39,7 @@ function transaction(overrides: Record<string, unknown> = {}, detectOverlap = fa
     providerOrganizationQualification: { count: query((state.organizationQualifications as unknown[]).length) },
     providerInsuranceRevision: { findMany: query(insurances.flatMap((item, index) => item.revisions.map((revision, revisionIndex) => ({ insuranceId: `insurance-${index}`, version: revisionIndex + 1, expiresAt: revision.expiresAt, evidenceRevisionId: `evidence-${index}-${revisionIndex}` })))) },
     providerEvidenceScanDecision: { findMany: query(insurances.flatMap((item, index) => item.revisions.flatMap((revision, revisionIndex) => revision.evidenceRevision.scanDecision ? [{ evidenceRevisionId: `evidence-${index}-${revisionIndex}`, scanStatus: revision.evidenceRevision.scanDecision.scanStatus }] : []))) },
+    providerEvidenceDocument: { count: query(evidenceDocuments.length) },
     providerEvidenceRevision: { count: query(evidenceDocuments.filter((item) => item.revisions.length > 0).length) },
     providerTermAcceptance: { findMany: query(state.termAcceptances) },
     providerTermDocumentVersion: { findMany: query([{ id: 'term' }]) },
@@ -48,10 +49,30 @@ function transaction(overrides: Record<string, unknown> = {}, detectOverlap = fa
 }
 
 describe('provider dossier completeness', () => {
+  const empty = { capabilities: [], sectorExperiences: [], workAreas: [], professionals: [], insurances: [],
+    organizationQualifications: [], evidenceDocuments: [], termAcceptances: [] }
+  const enrolled = { ...completeState.organization, provisioningEvents: [{ id: 'cohort' }] }
+  it.each([
+    ['nieuw leeg', { ...empty, organization: { ...enrolled, name: '', chamberOfCommerceNumber: null } }, 0],
+    ['nieuw gedeeltelijk', { ...empty, organization: enrolled }, 1],
+    ['vier matchingonderdelen', { ...empty, organization: enrolled, capabilities: [{ revisions: [{ serviceTermId: 'service', deliveryModes: ['REMOTE'] }] }],
+      sectorExperiences: [{}], workAreas: [{}] }, 4],
+  ] as const)('%s geeft lege optionele onderdelen geen afronding', async (_, state, completed) => {
+    const result = await assessProviderDossierCompletenessInTransaction(transaction(state).client as never, 'provider', new Date('2026-07-15'))
+    expect(result).toMatchObject({ completed, required: 4, sections: { CAPACITY: 'NOT_APPLICABLE',
+      PROFESSIONALS: 'OPTIONAL_EMPTY', QUALIFICATIONS: 'OPTIONAL_EMPTY', INSURANCE: 'OPTIONAL_EMPTY', EVIDENCE: 'OPTIONAL_EMPTY', DECLARATIONS: 'OPTIONAL_EMPTY' } })
+  })
+  it('onderscheidt een open bewijsstuk van een lege rubriek', async () => {
+    const result = await assessProviderDossierCompletenessInTransaction(transaction({ ...empty, organization: enrolled,
+      evidenceDocuments: [{ revisions: [] }] }).client as never, 'provider', new Date('2026-07-15'))
+    expect(result.sections.EVIDENCE).toBe('OPTIONAL_OPEN')
+  })
+
   it('meet uitsluitend volledigheid en maakt een compleet dossier indienbaar', async () => {
     const result = await assessProviderDossierCompletenessInTransaction(transaction().client as never, 'provider', new Date('2026-07-15'))
     expect(result).toMatchObject({ policyVersion: PROVIDER_COMPLETENESS_POLICY_VERSION, required: 9, completed: 9, percentage: 100, isSubmittable: true })
     expect(result.reasons).toEqual([])
+    expect(result.sections).toMatchObject({ PROFESSIONALS: 'REQUIRED_COMPLETE', QUALIFICATIONS: 'REQUIRED_COMPLETE', DECLARATIONS: 'REQUIRED_COMPLETE', CAPACITY: 'NOT_APPLICABLE' })
   })
 
   it.each([
@@ -75,6 +96,7 @@ describe('provider dossier completeness', () => {
     }).client as never, 'provider', new Date('2026-07-15'))
     expect(result).toMatchObject({ required: 4, completed: 4, percentage: 100, isSubmittable: true })
     expect(result.blockingSections).toEqual([])
+    expect(result.sections).toMatchObject({ PROFESSIONALS: 'OPTIONAL_EMPTY', INSURANCE: 'OPTIONAL_EMPTY', EVIDENCE: 'OPTIONAL_EMPTY', DECLARATIONS: 'OPTIONAL_EMPTY', CAPACITY: 'NOT_APPLICABLE' })
   })
 
   it('vereist voor diensten geen competentie', async () => {

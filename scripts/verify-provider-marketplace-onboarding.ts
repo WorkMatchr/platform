@@ -1,3 +1,6 @@
+import { createProviderDossierSubmission, openProviderDossierReviewCase, finalizeProviderDossierReview, currentApprovedQualificationBasis } from '../src/lib/providers/provider-dossier-service'
+import { recordProviderVerificationReview } from '../src/lib/providers/provider-verification-service'
+import { recordProviderQualificationDecision, refreshApprovedProviderSelection } from '../src/lib/providers/provider-qualification-service'
 import assert from 'node:assert/strict'
 import { createHash, randomUUID } from 'node:crypto'
 import type { PrismaClient } from '../src/generated/prisma/client'
@@ -50,6 +53,12 @@ export async function verifyProviderMarketplaceOnboarding(db: PrismaClient, fixt
   assert.deepEqual(await matching(fixture.legacyOwnerId), new Set([providerProfileId]))
   assert.deepEqual(await matching(), new Set([providerProfileId]))
 
+  const legacyChecklist = await assessProviderDossierCompleteness(fixture.legacyOwnerId, fixture.legacyProfileId)
+  const inviteeChecklist = await assessProviderDossierCompleteness(fixture.legacyMemberId, fixture.legacyProfileId)
+  assert.equal(legacyChecklist.required, 9)
+  assert.equal(inviteeChecklist.required, 4)
+  assert.equal(inviteeChecklist.sections.INSURANCE, legacyChecklist.sections.INSURANCE === 'REQUIRED_COMPLETE' ? 'OPTIONAL_COMPLETE' : 'OPTIONAL_EMPTY')
+
   const actor = { userId: user.id, organizationId: org.id }
   const operator = { actorUserId: user.id, providerOrganizationId: org.id }
   const id = randomUUID()
@@ -89,11 +98,42 @@ export async function verifyProviderMarketplaceOnboarding(db: PrismaClient, fixt
   await db.providerQualificationDecision.createMany({ data: [
     { ...history, scope: 'PLATFORM' }, { ...history, scope: 'CAPABILITY', capabilityId: service.id },
   ] })
-  assert.equal((await participate()).providerProfile.id, providerProfileId)
-  assert.deepEqual(await matching(), new Set())
+  // An unbound historical decision cannot qualify a newly onboarded organization.
+  await assert.rejects(participate(), denied)
+  assert.deepEqual(await matching(), new Set([providerProfileId]))
   // A later change invalidates the approval for the previous profile version.
   await db.providerProfile.update({ where: { id: providerProfileId }, data: { version: { increment: 1 } } })
   await assert.rejects(participate(), denied)
   assert.deepEqual(await matching(), new Set([providerProfileId]))
+  const capabilityRevision = await db.providerCapabilityRevision.findFirstOrThrow({ where: { providerCapabilityId: service.id } })
+  const currentVersion = async () => (await db.providerProfile.findUniqueOrThrow({ where: { id: providerProfileId } })).version
+  await recordProviderVerificationReview(fixture.reviewedByUserId, providerProfileId, { expectedProfileVersion: await currentVersion(),
+    subject: { type: 'CAPABILITY', revisionId: capabilityRevision.id }, outcome: 'VERIFIED', resultingLevel: 'VERIFIED', reasonCode: fixture.reasonCode })
+  const expectedProfileVersion = await currentVersion()
+  const submission = await createProviderDossierSubmission(user.id, providerProfileId, { expectedProfileVersion, idempotencyKey: randomUUID() })
+  const dossierCandidateId = submission.currentCandidateId!
+  const input = { expectedProfileVersion, dossierCandidateId, scope: 'PLATFORM', outcome: 'QUALIFIED',
+    reviewedByUserId: fixture.reviewedByUserId, reasonCode: fixture.reasonCode, validUntil: future }
+  const decide = (actor: string, candidateId = dossierCandidateId) =>
+    recordProviderQualificationDecision(actor, providerProfileId, { ...input, dossierCandidateId: candidateId })
+  await assert.rejects(decide(fixture.approvedByUserId), { code: 'DOSSIER_NOT_SUBMITTABLE' })
+  const review = await openProviderDossierReviewCase(fixture.reviewedByUserId, providerProfileId, { submissionId: submission.id, expectedVersion: 1 })
+  await finalizeProviderDossierReview(fixture.approvedByUserId, providerProfileId, 'APPROVED', { submissionId: submission.id,
+    reviewCaseId: review.id, expectedVersion: 2, reviewedByUserId: fixture.reviewedByUserId, reasonCode: fixture.reasonCode })
+  const basis = () => db.$transaction(tx => currentApprovedQualificationBasis(tx, providerProfileId, dossierCandidateId))
+  assert.equal((await basis())?.dossierReviewCaseId, review.id)
+  assert.equal((await assess()).sections.PROFESSIONALS, 'OPTIONAL_EMPTY')
+  await assert.rejects(decide(fixture.reviewedByUserId), { code: 'FOUR_EYES_REQUIRED' })
+  await assert.rejects(decide(user.id), { code: 'ACCESS_DENIED' })
+  const diagnostic = 'QUALIFICATION_REQUIREMENTS_NOT_CONFIGURED'
+  await db.providerReasonCode.upsert({ where: { code: diagnostic }, update: {}, create: { code: diagnostic, domain: 'QUALIFICATION', label: 'Testmelding' } })
+  await assert.rejects(recordProviderQualificationDecision(fixture.approvedByUserId, providerProfileId, { ...input, reasonCode: diagnostic }), { code: 'VALIDATION_ERROR' })
+  await assert.rejects(decide(fixture.approvedByUserId, randomUUID()), { code: 'DOSSIER_NOT_SUBMITTABLE' })
+  await assert.rejects(decide(fixture.approvedByUserId), { code: 'TERMS_NOT_CONFIGURED' })
+  await assert.rejects(refreshApprovedProviderSelection(fixture.approvedByUserId, providerProfileId, dossierCandidateId, expectedProfileVersion), { code: 'DOSSIER_NOT_SUBMITTABLE' })
+  await db.organization.update({ where: { id: org.id }, data: { tradeName: 'Gewijzigde synthetische naam' } })
+  assert.equal(await basis(), null)
+  await assert.rejects(decide(fixture.approvedByUserId), { code: 'DOSSIER_NOT_SUBMITTABLE' })
+  console.log('PASS approved checklist, cohort differences, four eyes, independent permissions, current tenant snapshot, unconfigured qualification, stale organization edit')
   console.log('PASS onboarding, 4/4 matching sections, separate approval, stale approval, actions, legacy cohort and tenant isolation')
 }

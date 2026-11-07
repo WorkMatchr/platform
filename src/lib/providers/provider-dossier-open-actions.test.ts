@@ -4,7 +4,7 @@ import type { ProviderCompletenessAssessment } from './provider-dossier-complete
 import { buildProviderDossierOpenActions } from './provider-dossier-open-actions'
 
 const complete: ProviderCompletenessAssessment = {
-  policyVersion: 'v1',
+  policyVersion: 'v1', sections: {},
   sourceProfileVersion: 1,
   required: 9,
   completed: 9,

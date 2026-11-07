@@ -1,3 +1,5 @@
+import type { Prisma } from '@/generated/prisma/client'
+import { currentApprovedQualificationBasis } from './provider-dossier-service'
 import { profileDecisionHistory, profileQualificationAt } from './provider-effective-qualification'
 import { getPrisma } from '@/lib/prisma'
 import { hashProviderJson } from './provider-canonical-json'
@@ -9,7 +11,10 @@ function errorReason(error: unknown): string {
 }
 
 export async function calculateProviderReadiness(providerProfileId: string, at = new Date()) {
-  return getPrisma().$transaction(async (transaction) => {
+  return getPrisma().$transaction(tx => calculateProviderReadinessInTransaction(tx, providerProfileId, at), { isolationLevel: 'Serializable' })
+}
+
+export async function calculateProviderReadinessInTransaction(transaction: Prisma.TransactionClient, providerProfileId: string, at: Date) {
     const provider = await transaction.providerProfile.findFirst({
       where: { id: providerProfileId, archivedAt: null, organization: { status: 'ACTIVE' } },
       select: { id: true, version: true },
@@ -33,11 +38,13 @@ export async function calculateProviderReadiness(providerProfileId: string, at =
     })
     await transaction.providerProfile.update({ where: { id: providerProfileId }, data: { readinessStatus: status } })
     return assessment
-  }, { isolationLevel: 'Serializable' })
 }
 
 export async function calculateProviderSelectability(providerProfileId: string, at = new Date()) {
-  return getPrisma().$transaction(async (transaction) => {
+  return getPrisma().$transaction(tx => calculateProviderSelectabilityInTransaction(tx, providerProfileId, at), { isolationLevel: 'Serializable' })
+}
+
+export async function calculateProviderSelectabilityInTransaction(transaction: Prisma.TransactionClient, providerProfileId: string, at: Date) {
     const provider = await transaction.providerProfile.findFirst({
       where: { id: providerProfileId, archivedAt: null },
       select: {
@@ -57,6 +64,8 @@ export async function calculateProviderSelectability(providerProfileId: string, 
       reasons.push('CONFIGURATION_INCOMPLETE')
     }
     const qualification = profileQualificationAt(provider, at)
+    if (qualification.platform?.dossierCandidateId &&
+        !await currentApprovedQualificationBasis(transaction, providerProfileId, qualification.platform.dossierCandidateId)) reasons.push('DOSSIER_NOT_SUBMITTABLE')
     if (!qualification.platform || provider.platformQualificationStatus !== 'QUALIFIED') reasons.push('REQUIREMENTS_NOT_CONFIGURED')
     if (provider.blocks.length > 0) reasons.push('PROVIDER_BLOCKED')
     if (!qualification.allServicesQualified) {
@@ -70,5 +79,4 @@ export async function calculateProviderSelectability(providerProfileId: string, 
     })
     await transaction.providerProfile.update({ where: { id: providerProfileId }, data: { selectabilityStatus: status } })
     return assessment
-  }, { isolationLevel: 'Serializable' })
 }

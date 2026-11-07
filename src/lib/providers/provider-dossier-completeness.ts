@@ -13,7 +13,10 @@ export type ProviderCompletenessReason = {
   state: 'ACTION_REQUIRED' | 'EXPIRED' | 'NOT_STARTED' | 'WARNING'
 }
 
+export type ProviderSectionStatus = 'REQUIRED_COMPLETE' | 'REQUIRED_OPEN' | 'OPTIONAL_COMPLETE' | 'OPTIONAL_OPEN' | 'OPTIONAL_EMPTY' | 'NOT_APPLICABLE'
+
 export type ProviderCompletenessAssessment = {
+  sections: Partial<Record<ProviderDossierSection, ProviderSectionStatus>>
   policyVersion: string
   sourceProfileVersion: number
   required: number
@@ -81,10 +84,10 @@ export async function assessProviderDossierCompletenessInTransaction(
     select: { professionalId: true, version: true, status: true },
   })
   const professionalQualificationCount = await transaction.providerProfessionalQualification.count({
-    where: { status: 'ACTIVE', professional: { providerProfileId, status: 'ACTIVE' } },
+    where: { status: 'ACTIVE', professional: { providerProfileId, status: 'ACTIVE' }, revisions: { some: {} } },
   })
   const organizationQualificationCount = await transaction.providerOrganizationQualification.count({
-    where: { providerProfileId, status: 'ACTIVE' },
+    where: { providerProfileId, status: 'ACTIVE', revisions: { some: {} } },
   })
   const insuranceRevisions = await transaction.providerInsuranceRevision.findMany({
     where: { insurance: { providerProfileId, status: 'ACTIVE' } },
@@ -103,6 +106,9 @@ export async function assessProviderDossierCompletenessInTransaction(
       scanDecision: { scanStatus: 'CLEAN' },
     },
   })
+  const pendingEvidence = enrolled && cleanEvidenceCount === 0
+    ? await transaction.providerEvidenceDocument.count({ where: { providerProfileId, status: { not: 'ARCHIVED' } } })
+    : 0
   const termAcceptances = await transaction.providerTermAcceptance.findMany({
     where: { providerProfileId },
     select: { documentVersionId: true },
@@ -133,6 +139,17 @@ export async function assessProviderDossierCompletenessInTransaction(
   // their original policy and approved snapshots until a separate transition.
   const applicableChecks = enrolled ? checks.filter(check =>
     ['ORGANIZATION', 'CAPABILITIES', 'SECTOR_EXPERIENCE', 'WORK_AREA'].includes(check.section)) : checks
+  const sections: ProviderCompletenessAssessment['sections'] = { CAPACITY: 'NOT_APPLICABLE' }
+  for (const check of checks) {
+    if (applicableChecks.includes(check)) sections[check.section] = check.complete ? 'REQUIRED_COMPLETE' : 'REQUIRED_OPEN'
+    else if (check.section === 'DECLARATIONS' && requiredTerms.length === 0) sections[check.section] = 'NOT_APPLICABLE'
+    else if (check.complete) sections[check.section] = 'OPTIONAL_COMPLETE'
+    else if ((check.section === 'INSURANCE' && activeInsurance.length) ||
+        (check.section === 'PROFESSIONALS' && professionals.length) ||
+        (check.section === 'DECLARATIONS' && termAcceptances.length) ||
+        (check.section === 'EVIDENCE' && (pendingEvidence || cleanEvidenceCount || activeInsurance.length))) sections[check.section] = 'OPTIONAL_OPEN'
+    else sections[check.section] = 'OPTIONAL_EMPTY'
+  }
   const reasons = applicableChecks.filter((check) => !check.complete).map<ProviderCompletenessReason>((check) => ({
     code: check.code,
     section: check.section,
@@ -147,7 +164,7 @@ export async function assessProviderDossierCompletenessInTransaction(
     results: applicableChecks.map((check) => ({ section: check.section, complete: check.complete, expired: check.expired ?? false, code: check.code })),
   }).sha256
   return {
-    policyVersion,
+    policyVersion, sections,
     sourceProfileVersion: provider.version,
     required: applicableChecks.length,
     completed,
@@ -175,6 +192,7 @@ function emptyAssessment(): ProviderCompletenessAssessment {
     state: 'NOT_STARTED',
   }))
   return {
+    sections: { ...Object.fromEntries(sections.map(section => [section, 'REQUIRED_OPEN'])), CAPACITY: 'NOT_APPLICABLE' },
     policyVersion: PROVIDER_COMPLETENESS_POLICY_VERSION, sourceProfileVersion: 0,
     required: 9, completed: 0, actionRequired: 0, expired: 0, notStarted: 9, percentage: 0,
     blockingSections: sections,

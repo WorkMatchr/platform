@@ -15,7 +15,7 @@ export default async function ProviderDossierPage({ searchParams }: { searchPara
   return (
     <>
       <ProviderPageHeader title="Uw dienstverlenersprofiel" description={`Beheer de gegevens waarmee WorkMatchr uw organisatie later zorgvuldig kan beoordelen. Laatst bijgewerkt op ${dateFormatter.format(new Date(dashboard.lastModifiedAt))}.`} readOnly={!context.canManage} />
-      {toegang === 'profiel' && <p className="mb-4" role="status">Voor deelname aan de Marketplace heeft uw organisatie een compleet en goedgekeurd profiel nodig. Bekijk hieronder welke stappen nog openstaan.</p>}
+      {toegang === 'profiel' && <p className="mb-4" role="status">Voor deelname aan de Marketplace moet uw dossier compleet en goedgekeurd zijn. Uw organisatie heeft ook een geldige platformkwalificatie en selecteerbare diensten nodig. Bekijk hieronder uw actuele status.</p>}
       <ProviderStatusSummary statuses={dashboard.statuses} />
       <ProviderCompleteness assessment={dashboard.completeness} />
       <ProviderOpenActions actions={dashboard.openActions} canManage={context.canManage} />

@@ -1,3 +1,4 @@
+import { currentApprovedQualificationBasis } from './provider-dossier-service'
 import { profileDecisionHistory, profileQualificationAt, decisionHistory } from './provider-effective-qualification'
 import type { Prisma } from '@/generated/prisma/client'
 import { getPrisma } from '@/lib/prisma'
@@ -44,8 +45,10 @@ function currentVerification<T extends { verificationReviews: Array<{ resultingL
 }
 
 export async function createTrustedProviderProjection(providerProfileId: string, createdByUserId?: string, at = new Date()) {
-  return getPrisma().$transaction(
-    async (transaction) => {
+  return getPrisma().$transaction(tx => createTrustedProviderProjectionInTransaction(tx, providerProfileId, createdByUserId, at), { isolationLevel: 'Serializable' })
+}
+
+export async function createTrustedProviderProjectionInTransaction(transaction: Prisma.TransactionClient, providerProfileId: string, createdByUserId: string | undefined, at: Date) {
       // Serialize issuance with the profile revision update that revokes existing projections.
       await transaction.$queryRaw`SELECT id FROM "ProviderProfile" WHERE id = ${providerProfileId}::uuid FOR UPDATE`
       const provider = await transaction.providerProfile.findFirst({
@@ -82,6 +85,8 @@ export async function createTrustedProviderProjection(providerProfileId: string,
       ) {
         throw new ProviderServiceError('PROJECTION_NOT_ALLOWED')
       }
+      if (platformDecision.dossierCandidateId &&
+          !await currentApprovedQualificationBasis(transaction, providerProfileId, platformDecision.dossierCandidateId)) throw new ProviderServiceError('PROJECTION_NOT_ALLOWED')
       const taxonomyVersions = await transaction.providerTaxonomyVersion.findMany({
         where: { status: 'PUBLISHED', checksum: { not: null } },
         select: { version: true, checksum: true, taxonomy: { select: { kind: true } } },
@@ -141,7 +146,4 @@ export async function createTrustedProviderProjection(providerProfileId: string,
         select: { id: true, sha256: true },
       })
       return { ...projection, idempotent: false }
-    },
-    { isolationLevel: 'Serializable' },
-  )
 }

@@ -118,6 +118,41 @@ async function loadCandidateSource(transaction: Transaction, providerProfileId: 
   return { provider, evidence, payload, sourceReferences }
 }
 
+// Qualification decisions advance the profile version; only decisions linked to
+// this immutable submission may account for the gap since dossier approval.
+export async function currentApprovedQualificationBasis(transaction: Transaction, providerProfileId: string, candidateId: string) {
+  const submission = await transaction.providerDossierSubmission.findFirst({
+    where: { providerProfileId }, orderBy: [{ submittedAt: 'desc' }, { id: 'desc' }],
+    select: { id: true, status: true, currentCandidate: true,
+      reviewCases: { where: { candidateId, status: 'CLOSED' }, orderBy: { closedAt: 'desc' }, take: 1,
+        select: { id: true, openedByUserId: true, closedByUserId: true } },
+      history: { where: { candidateId, toStatus: 'APPROVED' }, take: 1, select: { actorUserId: true } },
+    },
+  })
+  const candidate = submission?.currentCandidate
+  const review = submission?.reviewCases[0]
+  if (!candidate || candidate.id !== candidateId || candidate.providerProfileId !== providerProfileId ||
+      candidate.submissionId !== submission.id || submission.status !== 'APPROVED' || !review ||
+      !review.closedByUserId || review.closedByUserId !== submission.history[0]?.actorUserId ||
+      review.openedByUserId === review.closedByUserId) return null
+  const recorded = candidate.canonicalPayload as { provider?: CanonicalValue }
+  if (!recorded?.provider) return null
+  try {
+    const live = await loadCandidateSource(transaction, providerProfileId, candidate.createdByUserId)
+    const bound = await transaction.providerQualificationDecision.count({ where: { providerProfileId, dossierCandidateId: candidateId, dossierSubmissionId: submission.id } })
+    if (live.provider.version !== candidate.sourceProfileVersion + bound) return null
+    // The source documents, organization and revision identities must still
+    // match. Workflow statuses in the snapshot describe the original submission.
+    const checksum = hashProviderJson({ ...live.payload, provider: recorded.provider }).sha256
+    if (checksum !== candidate.sha256) return null
+    return { dossierCandidateId: candidate.id, dossierSubmissionId: submission.id,
+      dossierReviewCaseId: review.id, submitterId: candidate.createdByUserId, reviewerUserId: review.openedByUserId, candidateChecksum: checksum }
+  } catch (error) {
+    if (error instanceof ProviderServiceError && ['CONFIGURATION_INCOMPLETE', 'NOT_FOUND'].includes(error.code)) return null
+    throw error
+  }
+}
+
 async function createCandidate(transaction: Transaction, actorUserId: string, providerProfileId: string, submissionId: string) {
   const source = await loadCandidateSource(transaction, providerProfileId, actorUserId)
   const latest = await transaction.providerDossierCandidate.aggregate({ where: { providerProfileId }, _max: { candidateVersion: true } })

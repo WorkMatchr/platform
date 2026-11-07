@@ -1,7 +1,7 @@
 import type { Prisma, ProviderQualificationDecision } from '@/generated/prisma/client'
 
 export const decisionHistory = {
-  select: { id: true, providerProfileId: true, validFrom: true, validUntil: true, createdAt: true, outcome: true },
+  select: { id: true, dossierCandidateId: true, providerProfileId: true, validFrom: true, validUntil: true, createdAt: true, outcome: true },
   orderBy: [{ validFrom: 'asc' }, { createdAt: 'asc' }],
 } satisfies Prisma.ProviderQualificationDecisionFindManyArgs
 
@@ -59,7 +59,8 @@ type Sources = {
 export function profileQualificationAt(provider: Sources, at: Date) {
   const platform = qualificationAt(provider.qualificationDecisions, provider.id, at)
   const capabilities = provider.capabilities.map(cap => qualificationAt(cap.qualificationDecisions, provider.id, at))
-  const allServicesQualified = capabilities.length > 0 && capabilities.every(cap => cap.current !== null)
+  const allServicesQualified = capabilities.length > 0 && capabilities.every(cap => cap.current !== null &&
+    (!platform.current?.dossierCandidateId || cap.current.dossierCandidateId === platform.current.dossierCandidateId))
   const boundaries = [platform, ...capabilities].flatMap(item => [item.current?.validUntil, item.nextChange])
     .filter((date): date is Date => date != null)
   const adverse = [platform, ...capabilities].some(scope => scope.started && !scope.current)

@@ -1,6 +1,11 @@
 import type { Prisma, ProviderVerificationLevel } from '@/generated/prisma/client'
 import { ProviderServiceError } from './provider-errors'
 
+// Positive audit decisions must not cite the diagnostic for absent service requirements.
+export const positiveQualificationReason = {
+  domain: 'QUALIFICATION', isActive: true, NOT: { code: 'QUALIFICATION_REQUIREMENTS_NOT_CONFIGURED' },
+} as const
+
 const requiredTermCodes = [
   'PLATFORM_TERMS',
   'PRIVACY_NOTICE',

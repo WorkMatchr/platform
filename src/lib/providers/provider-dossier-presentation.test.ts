@@ -16,8 +16,15 @@ describe('provider dossier presentatie', () => {
   })
 
   it('houdt de vijf hoofstatussen afzonderlijk', () => {
-    expect(presentProviderStatuses({ readinessStatus: 'INCOMPLETE', qualificationStatus: 'NOT_ASSESSED', selectabilityStatus: 'NOT_SELECTABLE', submissionStatus: null })).toEqual({
+    expect(presentProviderStatuses({ dossierComplete: false, qualificationStatus: 'NOT_ASSESSED', selectabilityStatus: 'NOT_SELECTABLE', submissionStatus: null })).toEqual({
       dossierCompleteness: 'Dossier niet compleet', platformQualification: 'Nog niet beoordeeld', professionalQualification: 'Per kwalificatie weergegeven', reviewStatus: 'Nog niet ingediend', selectability: 'Nog niet selecteerbaar',
+    })
+  })
+
+  it('toont een volledig dossier ook wanneer een schorsing deelname blokkeert', () => {
+    expect(presentProviderStatuses({ dossierComplete: true, qualificationStatus: 'SUSPENDED',
+      selectabilityStatus: 'NOT_SELECTABLE', submissionStatus: 'APPROVED' })).toMatchObject({
+      dossierCompleteness: 'Dossier compleet', platformQualification: 'Geschorst', selectability: 'Nog niet selecteerbaar',
     })
   })
 
