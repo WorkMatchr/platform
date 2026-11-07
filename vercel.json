@@ -22,6 +22,7 @@
       "codex/contact-monitor-finalization": false,
       "codex/contact-audit-retention": false,
       "codex/combined-final-acceptance": false,
+      "codex/release-a-better-auth-patch": false,
       "codex/database-upgrade-preparation": false
     }
   },
