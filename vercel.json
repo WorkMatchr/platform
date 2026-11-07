@@ -2,7 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "git": {
     "deploymentEnabled": {
-      "codex/b4-provider-profile": false,
       "codex/db05-runtime-preflight": false,
       "codex/wp15-integrated-readiness": false,
       "codex/wp16-production-readiness": false,
@@ -25,7 +24,9 @@
       "codex/combined-final-acceptance": false,
       "codex/database-upgrade-preparation": false,
       "codex/release-b1-auth-post-homepage": false,
-      "codex/release-b2-seo-post-homepage": false
+      "codex/release-b2-seo-post-homepage": false,
+      "codex/account-and-arbo-guides-ux": false,
+      "codex/b4-provider-profile": false
     }
   },
   "crons": [

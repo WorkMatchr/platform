@@ -10,7 +10,11 @@ export default async function MyArboGuidesPage() {
   const { user, activeMembership } = await requireOrganizationMembership(undefined, '/mijn-arbo-wijzers')
   const runs = await listArboGuideRuns({ userId: user.id, organizationId: activeMembership.organization.id })
   return (
-    <AuthShell title="Mijn Arbo-wijzers" intro="Bekijk en download de afgeronde wijzers van uw organisatie." wide>
+    <AuthShell title="Mijn Arbo-wijzers" intro="Bekijk uw afgeronde wijzers of start een nieuwe Arbo-wijzer." wide>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <p className="text-sm text-text-secondary">Kies een nieuwe wijzer of bekijk uw eerdere resultaten.</p>
+        <LinkButton href="/wijzers">Nieuwe Arbo-wijzer</LinkButton>
+      </div>
       {runs.length === 0 ? (
         <StatusMessage>Er zijn nog geen afgeronde Arbo-wijzers voor uw organisatie.</StatusMessage>
       ) : (
