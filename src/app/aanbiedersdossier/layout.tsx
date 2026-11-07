@@ -28,7 +28,7 @@ export default async function ProviderDossierLayout({ children }: { children: Re
   return (
     <Container className="py-8 sm:py-12">
       <div data-provider-workspace className="grid gap-8 lg:grid-cols-[18rem_minmax(0,1fr)]">
-        <aside className="space-y-4"><div className="rounded-card border border-border bg-surface px-4 py-3"><p className="text-sm text-text-secondary">Mijn organisatie</p><p className="font-semibold break-words text-brand-dark">{context.organization.name}</p></div><ProviderDossierNavigation items={items} /></aside>
+        <aside><ProviderDossierNavigation items={items} /></aside>
         <div className="min-w-0">{children}</div>
       </div>
     </Container>
