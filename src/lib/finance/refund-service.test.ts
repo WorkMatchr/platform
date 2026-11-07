@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => ({
 const purchase = {
   id: '10000000-0000-4000-8000-000000000001',
   organizationId: '20000000-0000-4000-8000-000000000001',
-  kind: 'CREDIT_PACKAGE',
+  kind: 'CREDIT_PACKAGE', currency: 'EUR',
   status: 'PAID',
   molliePaymentId: 'tr_test',
   credits: 25,
@@ -115,7 +115,7 @@ describe('financiële refund-foutisolatie', () => {
 
   it('houdt credits gereserveerd wanneer Mollie accepteert maar lokale afronding faalt', async () => {
     failCompletion = true
-    const gateway = { createRefund: vi.fn().mockResolvedValue({ id: 're_test', status: 'pending' }) } as never
+    const gateway = { createRefund: vi.fn().mockResolvedValue({ id: 're_test', paymentId: 'tr_test', currency: 'EUR', amountValue: '30.25', status: 'pending' }) } as never
     const { refundWorkmatchrError } = await import('./refund-service')
 
     await expect(refundWorkmatchrError(input, gateway)).rejects.toThrow('MOLLIE_REFUND_RECONCILIATION_REQUIRED')
@@ -134,7 +134,7 @@ describe('financiële refund-foutisolatie', () => {
   })
 
   it('verwerkt een volledige betaalde creditaankoop en legt de aanvraag auditbaar vast', async () => {
-    const createRefund = vi.fn().mockResolvedValue({ id: 're_test', status: 'refunded' })
+    const createRefund = vi.fn().mockResolvedValue({ id: 're_test', paymentId: 'tr_test', currency: 'EUR', amountValue: '30.25', status: 'refunded' })
     const gateway = { createRefund } as never
     const { refundWorkmatchrError } = await import('./refund-service')
     const result = await refundWorkmatchrError(input, gateway)

@@ -35,6 +35,8 @@ vi.mock('@/lib/marketplace/marketplace-authorization', () => ({ requireMarketpla
 
 const refundId = '40000000-0000-4000-8000-000000000001'
 
+const source = { id: 're_test', paymentId: 'tr_test', currency: 'EUR', amountValue: '30.25' }
+
 function resetRefund() {
   current = {
     id: refundId,
@@ -42,9 +44,9 @@ function resetRefund() {
     approvedByUserId: '50000000-0000-4000-8000-000000000001',
     status: 'PENDING',
     mollieRefundId: null,
-    credits: 25,
+    credits: 25, amountCents: 3025,
     creditNote: null,
-    purchase: { organizationId: '20000000-0000-4000-8000-000000000001' },
+    purchase: { molliePaymentId: 'tr_test', currency: 'EUR', organizationId: '20000000-0000-4000-8000-000000000001' },
   }
 }
 
@@ -61,9 +63,17 @@ describe('Mollie-refundlevenscyclus', () => {
     })
   })
 
+  it.each([{paymentId: 'tr_other'}, {currency: 'USD'}, {amountValue: '0.01'}, {amountValue: undefined}])('weigert afwijkend kasbewijs vóór wallet en creditnota: %j', async mismatch => {
+    const { applyMollieRefundSnapshot } = await import('./refund-service')
+    await expect(applyMollieRefundSnapshot(refundId, { ...source, ...mismatch, status: 'refunded' })).rejects.toThrow('MOLLIE_REFUND_MISMATCH')
+    expect(mocks.phase).not.toHaveBeenCalled()
+    expect(mocks.issueCreditNote).not.toHaveBeenCalled()
+    expect(transaction.financialRefund.update).not.toHaveBeenCalled()
+  })
+
   it.each(['queued', 'pending', 'processing'] as const)('houdt status %s hangend zonder afschrijving of creditnota', async (status) => {
     const { applyMollieRefundSnapshot } = await import('./refund-service')
-    const result = await applyMollieRefundSnapshot(refundId, { id: 're_test', status })
+    const result = await applyMollieRefundSnapshot(refundId, { ...source, status })
 
     expect(result.refund).toMatchObject({ status: 'PENDING', mollieRefundId: 're_test' })
     expect(mocks.phase).not.toHaveBeenCalled()
@@ -73,7 +83,7 @@ describe('Mollie-refundlevenscyclus', () => {
 
   it('boekt credits en creditnota uitsluitend na de definitieve status refunded', async () => {
     const { applyMollieRefundSnapshot } = await import('./refund-service')
-    const result = await applyMollieRefundSnapshot(refundId, { id: 're_test', status: 'refunded' })
+    const result = await applyMollieRefundSnapshot(refundId, { ...source, status: 'refunded' })
 
     expect(result.refund).toMatchObject({ status: 'REFUNDED', ledgerTransactionId: 'ledger-COMPLETE' })
     expect(mocks.phase).toHaveBeenCalledOnce()
@@ -84,7 +94,7 @@ describe('Mollie-refundlevenscyclus', () => {
 
   it.each(['failed', 'canceled'] as const)('geeft de reservering vrij na definitieve status %s', async (status) => {
     const { applyMollieRefundSnapshot } = await import('./refund-service')
-    const result = await applyMollieRefundSnapshot(refundId, { id: 're_test', status })
+    const result = await applyMollieRefundSnapshot(refundId, { ...source, status })
 
     expect(result.refund.status).toBe(status.toUpperCase())
     expect(mocks.phase).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ phase: 'RELEASE' }))
@@ -93,8 +103,8 @@ describe('Mollie-refundlevenscyclus', () => {
 
   it('verwerkt een dubbel provider-successsignaal idempotent', async () => {
     const { applyMollieRefundSnapshot } = await import('./refund-service')
-    await applyMollieRefundSnapshot(refundId, { id: 're_test', status: 'refunded' })
-    await applyMollieRefundSnapshot(refundId, { id: 're_test', status: 'refunded' })
+    await applyMollieRefundSnapshot(refundId, { ...source, status: 'refunded' })
+    await applyMollieRefundSnapshot(refundId, { ...source, status: 'refunded' })
 
     expect(mocks.phase).toHaveBeenCalledOnce()
     expect(mocks.issueCreditNote).toHaveBeenCalledOnce()
@@ -103,8 +113,8 @@ describe('Mollie-refundlevenscyclus', () => {
   it('kan na een lokale transactionele fout met dezelfde providersnapshot veilig worden hervat', async () => {
     const { applyMollieRefundSnapshot } = await import('./refund-service')
     mocks.failNextTransaction = true
-    await expect(applyMollieRefundSnapshot(refundId, { id: 're_test', status: 'refunded' })).rejects.toThrow('LOCAL_TRANSACTION_FAILED')
-    const result = await applyMollieRefundSnapshot(refundId, { id: 're_test', status: 'refunded' })
+    await expect(applyMollieRefundSnapshot(refundId, { ...source, status: 'refunded' })).rejects.toThrow('LOCAL_TRANSACTION_FAILED')
+    const result = await applyMollieRefundSnapshot(refundId, { ...source, status: 'refunded' })
 
     expect(result.refund.status).toBe('REFUNDED')
     expect(mocks.phase).toHaveBeenCalledOnce()

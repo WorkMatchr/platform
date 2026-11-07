@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { PREVIEW_FORBIDDEN_VARIABLES } from '@/lib/maintenance/preview-isolation'
 import { assertAcademyCommerceSandbox } from './academy-commerce-environment'
 // Deliberately synthetic credentials, never used to connect.
 const target='postgresql://fixture:fixture@fixture-6e93ad508d.example.invalid/neondb?sslmode=verify-full'
@@ -35,4 +36,15 @@ describe.each([
   vi.stubEnv('DATABASE_URL', target.replace('fixture-6e93ad508d.example.invalid', hostname) + suffix)
   expect(() => assertAcademyCommerceSandbox()).toThrow('ACADEMY_IMPORT_DATABASE_REFUSED')
  })
+})
+
+it('allows keyless fake payments only on the pinned local synthetic target',()=>{
+  setup()
+  for (const name of [...PREVIEW_FORBIDDEN_VARIABLES,'CRON_SECRET','FINANCIAL_MAINTENANCE_SECRET']) vi.stubEnv(name, '')
+  vi.stubEnv('ACADEMY_LOCAL_ACCEPTANCE','true');vi.stubEnv('ACADEMY_TEST_PROJECT_ID','local-synthetic')
+  vi.stubEnv('ACADEMY_TEST_BRANCH_ID','lms20-isolated');vi.stubEnv('VERCEL','');vi.stubEnv('MOLLIE_API_KEY','')
+  vi.stubEnv('DATABASE_URL','postgresql://academy_content_editor:fixture@127.0.0.1:5449/workmatchr_lms20_synthetic')
+  expect(()=>assertAcademyCommerceSandbox()).not.toThrow()
+  vi.stubEnv('MOLLIE_API_KEY','test_synthetic');expect(()=>assertAcademyCommerceSandbox()).toThrow()
+  vi.stubEnv('MOLLIE_API_KEY','');vi.stubEnv('NODE_ENV','production');expect(()=>assertAcademyCommerceSandbox()).toThrow()
 })

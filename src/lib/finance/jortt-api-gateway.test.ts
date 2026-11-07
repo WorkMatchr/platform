@@ -7,6 +7,18 @@ import type { JorttInvoicePayload } from './jortt-sync-service'
 
 const response = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } })
 
+// Direct adapter tests inject the same checkpoint interface as the queue worker.
+function adapter(fetcher: typeof fetch) {
+  const gateway = new JorttApiGateway(fetcher)
+  const submit = gateway.submitInvoice.bind(gateway)
+  const claimed = new Set<string>()
+  gateway.submitInvoice = (data,key,checkpoint) => submit(data,key,checkpoint ?? {
+    async claimCreation(){if(claimed.has(key))throw Error('JORTT_DOCUMENT_CREATION_UNCERTAIN');claimed.add(key)},
+    async saveDraftId(){}
+  })
+  return gateway
+}
+
 function payload(overrides: Partial<JorttInvoicePayload> = {}): JorttInvoicePayload {
   return {
     invoiceId: '10000000-0000-4000-8000-000000000001',
@@ -25,7 +37,7 @@ function payload(overrides: Partial<JorttInvoicePayload> = {}): JorttInvoicePayl
 describe('Jortt API gateway', () => {
   it.each([{ pricingMode: 'ACADEMY_SANDBOX' as const }, { organizationId: null }])('weigert Academy/persoonlijke context vóór iedere providercall', async overrides => {
     const fetcher = vi.fn()
-    await expect(new JorttApiGateway(fetcher as typeof fetch).submitInvoice(payload(overrides), 'academy-refused')).rejects.toThrow('JORTT_ACADEMY_FISCAL_REVIEW_REQUIRED')
+    await expect(adapter(fetcher as typeof fetch).submitInvoice(payload(overrides), 'academy-refused')).rejects.toThrow('JORTT_ACADEMY_FISCAL_REVIEW_REQUIRED')
     expect(fetcher).not.toHaveBeenCalled()
   })
 
@@ -46,13 +58,13 @@ describe('Jortt API gateway', () => {
       }
       return response({ data: { id: 'invoice', reference: payload().invoiceNumber, remarks: payload().technicalReference, invoice_number: 'J1' } })
     })
-    await expect(new JorttApiGateway(fetcher as typeof fetch).submitInvoice(payload(), 'stable-key')).rejects.toMatchObject({ diagnostic: { operation: failedStage, httpStatus: 422, providerErrorCode: 'params.invalid' } })
+    await expect(adapter(fetcher as typeof fetch).submitInvoice(payload(), 'stable-key')).rejects.toMatchObject({ diagnostic: { operation: failedStage, httpStatus: 422, providerErrorCode: 'params.invalid' } })
     expect(stages.at(-1)).toBe(failedStage)
     expect(stages.filter(stage => stage === failedStage)).toHaveLength(1)
   })
   it('weigert ontbrekende regels vóór iedere providercall, zonder v1-fallback in de gateway', async () => {
     const fetcher = vi.fn()
-    await expect(new JorttApiGateway(fetcher as typeof fetch).submitInvoice(payload({ lines: [] }), 'missing-lines'))
+    await expect(adapter(fetcher as typeof fetch).submitInvoice(payload({ lines: [] }), 'missing-lines'))
       .rejects.toThrow('JORTT_INVOICE_TOTAL_MISMATCH')
     expect(fetcher).not.toHaveBeenCalled()
   })
@@ -79,7 +91,7 @@ describe('Jortt API gateway', () => {
       return response({}, 404)
     })
 
-    await new JorttApiGateway(fetcher as typeof fetch).submitInvoice(payload(), 'scope-check')
+    await adapter(fetcher as typeof fetch).submitInvoice(payload(), 'scope-check')
 
     expect(requestedScope).toBe('customers:read customers:write invoices:read invoices:write organizations:read')
   })
@@ -99,7 +111,7 @@ describe('Jortt API gateway', () => {
       if (url.endsWith('/invoices/invoice-1')) return response({ data: { id: 'invoice-1', reference: 'WM-2026-000001', remarks: payload().technicalReference, invoice_number: 'J2026-42' } })
       return response({}, 404)
     })
-    const result = await new JorttApiGateway(fetcher as typeof fetch).submitInvoice(payload(), 'jortt:WM-2026-000001')
+    const result = await adapter(fetcher as typeof fetch).submitInvoice(payload(), 'jortt:WM-2026-000001')
     expect(result).toEqual({ externalReference: 'invoice-1', remoteInvoiceNumber: 'J2026-42' })
     const invoiceBody = calls.find((call) => call.url.endsWith('/invoices'))?.body as Record<string, unknown>
     expect(invoiceBody).toMatchObject({ reference: 'WM-2026-000001', payment_method: 'already_paid', net_amounts: false })
@@ -131,7 +143,7 @@ describe('Jortt API gateway', () => {
       invoiceNumber: 'WM-2026-000050', amountExclVatCents: 5_000, vatAmountCents: 1_050, amountInclVatCents: 6_050,
       lines: [{ description: '50 WorkMatchr-credits', quantity: 50, unit: 'credit', unitPriceExclVatCents: 100, discountAmountCents: 0, netAmountExclVatCents: 5_000, vatRateBps: 2_100, vatAmountCents: 1_050 }],
     })
-    await new JorttApiGateway(fetcher as typeof fetch).submitInvoice(fiftyCredits, 'fifty-credits')
+    await adapter(fetcher as typeof fetch).submitInvoice(fiftyCredits, 'fifty-credits')
     expect(invoiceBody).toMatchObject({
       net_amounts: false,
       line_items: [{ quantity: '50', amount: { amount: '1.00', currency: 'EUR' }, vat: { value: '0.21', category: null } }],
@@ -151,7 +163,7 @@ describe('Jortt API gateway', () => {
       if (url.endsWith('/invoices/invoice-pro')) return response({ data: { id: 'invoice-pro', reference: 'WM-PRO-2026-1', remarks: payload().technicalReference, invoice_number: 'JPRO-1' } })
       return response({}, 404)
     })
-    await new JorttApiGateway(fetcher as typeof fetch).submitInvoice(payload({
+    await adapter(fetcher as typeof fetch).submitInvoice(payload({
       invoiceNumber: 'WM-PRO-2026-1', servicePeriodStart: '2026-09-01T00:00:00.000Z', servicePeriodEnd: '2026-09-30T00:00:00.000Z',
       amountExclVatCents: 4_900, vatAmountCents: 1_029, amountInclVatCents: 5_929,
       lines: [{ description: 'WorkMatchr Pro', quantity: 1, unit: 'maand', unitPriceExclVatCents: 4_900, discountAmountCents: 0, netAmountExclVatCents: 4_900, vatRateBps: 2_100, vatAmountCents: 1_029 }],
@@ -167,7 +179,7 @@ describe('Jortt API gateway', () => {
       if (url.endsWith('/invoices/invoice-1')) return response({ data: { id: 'invoice-1', reference: 'WM-2026-000001', remarks: payload().technicalReference, invoice_number: 'J2026-42' } })
       return response({}, 500)
     })
-    const result = await new JorttApiGateway(fetcher as typeof fetch).submitInvoice(payload(), 'same-replay')
+    const result = await adapter(fetcher as typeof fetch).submitInvoice(payload(), 'same-replay')
     expect(result.remoteInvoiceNumber).toBe('J2026-42')
     expect(fetcher).toHaveBeenCalledTimes(3)
   })
@@ -185,7 +197,7 @@ describe('Jortt API gateway', () => {
       }
       return response({}, 500)
     })
-    await expect(new JorttApiGateway(fetcher as typeof fetch).submitInvoice(payload(), 'fallback-replay')).resolves.toEqual({ externalReference: 'invoice-fallback', remoteInvoiceNumber: 'J-FALLBACK' })
+    await expect(adapter(fetcher as typeof fetch).submitInvoice(payload(), 'fallback-replay')).resolves.toEqual({ externalReference: 'invoice-fallback', remoteInvoiceNumber: 'J-FALLBACK' })
     expect(fetcher.mock.calls.some(([input], index) => index > 0 && String(input).endsWith('/invoices'))).toBe(false)
   })
 
@@ -202,7 +214,7 @@ describe('Jortt API gateway', () => {
       }
       return response({}, 500)
     })
-    await expect(new JorttApiGateway(fetcher as typeof fetch).submitInvoice(payload(), 'retry')).resolves.toEqual({ externalReference: 'invoice-pending', remoteInvoiceNumber: 'J2026-43' })
+    await expect(adapter(fetcher as typeof fetch).submitInvoice(payload(), 'retry')).resolves.toEqual({ externalReference: 'invoice-pending', remoteInvoiceNumber: 'J2026-43' })
     expect(fetcher.mock.calls.some(([input]) => String(input).endsWith('/invoices'))).toBe(false)
   })
 
@@ -225,12 +237,12 @@ describe('Jortt API gateway', () => {
       if (url.endsWith('/invoices/credit-1')) return response({ data: { id: 'credit-1', reference: 'WM-CN-2026-000001', remarks: creditPayload.technicalReference, invoice_number: 'J2026-C42' } })
       return response({}, 404)
     })
-    const result = await new JorttApiGateway(fetcher as typeof fetch).submitInvoice(creditPayload, 'credit-replay')
+    const result = await adapter(fetcher as typeof fetch).submitInvoice(creditPayload, 'credit-replay')
     expect(result.remoteInvoiceNumber).toBe('J2026-C42')
     expect(calls.find((call) => call.url.endsWith('/credit-1/send'))?.body).toEqual({ send_method: 'self' })
     expect(JSON.stringify(calls)).not.toMatch(/peppol|send_method":"email/i)
     expect(calls.some((call) => call.url.endsWith('/invoices') && call.body !== null)).toBe(false)
-    await new JorttApiGateway(fetcher as typeof fetch).submitInvoice(creditPayload, 'credit-replay')
+    await adapter(fetcher as typeof fetch).submitInvoice(creditPayload, 'credit-replay')
     expect(calls.filter(call => call.url.endsWith('/invoices/invoice-original/credit'))).toHaveLength(1)
   })
 
@@ -251,7 +263,7 @@ describe('Jortt API gateway', () => {
       if (url.endsWith('/invoices/credit-distinct')) return response({ data: { id: 'credit-distinct', reference: creditPayload.invoiceNumber, remarks: creditPayload.technicalReference, invoice_number: 'J-CREDIT' } })
       return response({}, 404)
     })
-    await expect(new JorttApiGateway(fetcher as typeof fetch).submitInvoice(creditPayload, 'credit-technical-id')).resolves.toEqual({ externalReference: 'credit-distinct', remoteInvoiceNumber: 'J-CREDIT' })
+    await expect(adapter(fetcher as typeof fetch).submitInvoice(creditPayload, 'credit-technical-id')).resolves.toEqual({ externalReference: 'credit-distinct', remoteInvoiceNumber: 'J-CREDIT' })
   })
 
   it('beschouwt dezelfde menselijke referentie met een andere technische invoice-ID niet als dezelfde factuur', async () => {
@@ -266,7 +278,7 @@ describe('Jortt API gateway', () => {
       if (url.endsWith('/invoices/new-invoice')) return response({ data: { id: 'new-invoice', reference: 'WM-2026-000001', remarks: payload().technicalReference, invoice_number: 'J-NEW' } })
       return response({}, 404)
     })
-    await expect(new JorttApiGateway(fetcher as typeof fetch).submitInvoice(payload(), 'technical-id')).resolves.toMatchObject({ externalReference: 'new-invoice' })
+    await expect(adapter(fetcher as typeof fetch).submitInvoice(payload(), 'technical-id')).resolves.toMatchObject({ externalReference: 'new-invoice' })
     expect(created).toBe(true)
   })
 
@@ -277,7 +289,7 @@ describe('Jortt API gateway', () => {
       if (url.endsWith('/invoices/known-remote')) return response({ data: { id: 'known-remote', reference: 'WM-2026-000001', invoice_number: 'J-LEGACY' } })
       return response({}, 500)
     })
-    await expect(new JorttApiGateway(fetcher as typeof fetch).submitInvoice(payload({ knownExternalReference: 'known-remote' }), 'known')).resolves.toEqual({ externalReference: 'known-remote', remoteInvoiceNumber: 'J-LEGACY' })
+    await expect(adapter(fetcher as typeof fetch).submitInvoice(payload({ knownExternalReference: 'known-remote' }), 'known')).resolves.toEqual({ externalReference: 'known-remote', remoteInvoiceNumber: 'J-LEGACY' })
     expect(fetcher.mock.calls.some(([input]) => String(input).includes('/invoices?'))).toBe(false)
   })
 
@@ -292,7 +304,7 @@ describe('Jortt API gateway', () => {
       ] })
       return response({}, 500)
     })
-    await expect(new JorttApiGateway(fetcher as typeof fetch).submitInvoice(payload(), 'ambiguous')).rejects.toThrow('JORTT_TECHNICAL_IDENTITY_CONFLICT')
+    await expect(adapter(fetcher as typeof fetch).submitInvoice(payload(), 'ambiguous')).rejects.toThrow('JORTT_TECHNICAL_IDENTITY_CONFLICT')
   })
 
   it('dedupliceert hetzelfde remote object wanneer Jortt het meermaals teruggeeft', async () => {
@@ -307,7 +319,7 @@ describe('Jortt API gateway', () => {
       if (url.endsWith('/invoices/invoice-same')) return response({ data: { id: 'invoice-same', reference: 'WM-2026-000001', remarks: marker, invoice_number: 'J-SAME' } })
       return response({}, 500)
     })
-    await expect(new JorttApiGateway(fetcher as typeof fetch).submitInvoice(payload(), 'duplicate-result')).resolves.toEqual({ externalReference: 'invoice-same', remoteInvoiceNumber: 'J-SAME' })
+    await expect(adapter(fetcher as typeof fetch).submitInvoice(payload(), 'duplicate-result')).resolves.toEqual({ externalReference: 'invoice-same', remoteInvoiceNumber: 'J-SAME' })
   })
 
   it('faalt gesloten bij een markerloze historische botsing in plaats van een derde document te maken', async () => {
@@ -320,7 +332,7 @@ describe('Jortt API gateway', () => {
       if (url.endsWith('/invoices')) invoiceCreates += 1
       return response({}, 500)
     })
-    await expect(new JorttApiGateway(fetcher as typeof fetch).submitInvoice(payload(), 'legacy-ambiguity')).rejects.toThrow('JORTT_LEGACY_IDENTITY_AMBIGUOUS')
+    await expect(adapter(fetcher as typeof fetch).submitInvoice(payload(), 'legacy-ambiguity')).rejects.toThrow('JORTT_LEGACY_IDENTITY_AMBIGUOUS')
     expect(invoiceCreates).toBe(0)
   })
 
@@ -335,7 +347,7 @@ describe('Jortt API gateway', () => {
 
   it('weigert een factuur waarvan immutable regels en totalen niet aansluiten vóór de API-call', async () => {
     const fetcher = vi.fn()
-    await expect(new JorttApiGateway(fetcher as typeof fetch).submitInvoice(payload({ amountInclVatCents: 11_496 }), 'mismatch')).rejects.toThrow('JORTT_INVOICE_TOTAL_MISMATCH')
+    await expect(adapter(fetcher as typeof fetch).submitInvoice(payload({ amountInclVatCents: 11_496 }), 'mismatch')).rejects.toThrow('JORTT_INVOICE_TOTAL_MISMATCH')
     expect(fetcher).not.toHaveBeenCalled()
   })
   it('keeps payment registration closed before any network call', async () => {
@@ -398,17 +410,34 @@ describe('Jortt API gateway', () => {
       return response({data:{id:creditId,credited_invoice_id:source,reference:data.invoiceNumber,remarks:data.technicalReference,invoice_status:sent?'sent':'draft',invoice_number:sent?'C-SYNTHETIC':null,
         invoice_total:{amount:edited?'-8.26':'-49.00',currency:'EUR'},invoice_total_incl_vat:{amount:edited&&!mismatch?'-10.00':'-59.29',currency:'EUR'}}})
     })
-    const operation=new JorttApiGateway(fetcher as typeof fetch).submitInvoice(data,'synthetic',checkpoint)
+    const operation=adapter(fetcher as typeof fetch).submitInvoice(data,'synthetic',checkpoint)
     if(mismatch) {await expect(operation).rejects.toThrow('JORTT_CREDIT_TOTAL_MISMATCH');expect(sent).toBe(false)}
     else {expect(await operation).toEqual({externalReference:creditId,remoteInvoiceNumber:'C-SYNTHETIC'});expect(sent).toBe(true)}
   })
   it('does not create another Pro credit after an uncertain creation', async () => {
     vi.stubEnv('PRO_FINANCIAL_CORRECTIONS_ENABLED','true')
     const fetcher=vi.fn(async (url:unknown)=>String(url).includes('/oauth/token')?response({access_token:'synthetic'}):response({data:[]}))
-    await expect(new JorttApiGateway(fetcher as typeof fetch).submitInvoice(payload({proCredit:true,documentType:'CREDIT_NOTE',originalInvoiceExternalReference:'original'}),'synthetic',{
+    await expect(adapter(fetcher as typeof fetch).submitInvoice(payload({proCredit:true,documentType:'CREDIT_NOTE',originalInvoiceExternalReference:'original'}),'synthetic',{
       claimCreation:async()=>{throw new Error('JORTT_PRO_CREDIT_CREATION_UNCERTAIN')},saveDraftId:vi.fn(),
     })).rejects.toThrow('JORTT_PRO_CREDIT_CREATION_UNCERTAIN')
     expect(fetcher.mock.calls.some(([url])=>String(url).endsWith('/credit'))).toBe(false)
   })
 
+})
+
+it('requires a durable intent before creating an original after read-only lookup',async()=>{
+  vi.stubEnv('VERCEL_ENV','preview');vi.stubEnv('JORTT_SYNC_ENVIRONMENT','acceptance')
+  vi.stubEnv('JORTT_CLIENT_ID','synthetic');vi.stubEnv('JORTT_CLIENT_SECRET','synthetic')
+  try {
+    let writes=0
+    const gateway = adapter(vi.fn(async (url:unknown,init?:RequestInit) => {
+      if(String(url).includes('/oauth/token'))return response({access_token:'fake'})
+      if(String(url).includes('/customers?'))return response({data:[{id:'fake-customer',reference:`workmatchr-org:${payload().organizationId}`}]})
+      if(init?.method==='POST'){writes++;throw Error('RESPONSE_LOST')}
+      return response({data:[]})
+    }) as typeof fetch)
+    await expect(gateway.submitInvoice(payload(),'stable')).rejects.toThrow()
+    await expect(gateway.submitInvoice(payload(),'stable')).rejects.toThrow('JORTT_DOCUMENT_CREATION_UNCERTAIN')
+    expect(writes).toBe(1)
+  } finally {vi.unstubAllEnvs()}
 })

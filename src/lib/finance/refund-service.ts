@@ -67,6 +67,9 @@ export async function applyMollieRefundSnapshot(refundId: string, snapshot: Moll
       return { refund, creditNote: null, reviewRequired: false }
     }
     if (!current.purchase || !current.purchaseId) throw new Error('REFUND_SOURCE_REQUIRED')
+    if (!snapshot.id || !current.purchase.molliePaymentId || snapshot.paymentId !== current.purchase.molliePaymentId
+      || snapshot.currency !== current.purchase.currency || snapshot.amountValue !== centsToMollieValue(current.amountCents))
+      throw new Error('MOLLIE_REFUND_MISMATCH')
     if (current.status === 'REFUNDED' && status !== 'REFUNDED') return { refund: current, creditNote: current.creditNote, reviewRequired: false }
 
 
@@ -246,11 +249,23 @@ export async function refundWorkmatchrError(input: unknown, gateway: MollieGatew
   return submitPreparedRefund(prepared.refund.id, purchase.molliePaymentId, prepared.refund.amountCents, { purchaseId: purchase.id }, gateway, values.actorUserId)
 }
 
+export type RefundTransport = Pick<MollieGateway, 'createRefund' | 'getRefund' | 'findRefundByReference'>
+
 export async function submitPreparedRefund(refundId: string, paymentId: string, amountCents: number,
-  source: { purchaseId?: string; creditNoteId?: string }, gateway: MollieGateway, actorUserId: string) {
+  source: { purchaseId?: string; creditNoteId?: string }, gateway: RefundTransport, actorUserId: string, academySandbox = false) {
   // Persist intent BEFORE I/O. A crash or lost response is UNKNOWN, never proof of rejection.
   const claim = await runSerializableFinancialTransaction(async transaction => {
     await requireMarketplacePlatformAdmin(transaction, actorUserId)
+    if (academySandbox) {
+      assertAcademyCommerceSandbox()
+      const eligible = await transaction.financialRefund.findFirst({where:{id:refundId, purchaseId:source.purchaseId, status:'PENDING',
+        mollieRefundId:null, amountCents, purchase:{kind:'ACADEMY_COURSE', pricingMode:'ACADEMY_SANDBOX', molliePaymentId:paymentId}}})
+      if (!eligible) return { count: 0 }
+      // The Academy history guard permits only status, provider ID and completion time to change.
+      // Use the existing unique, append-only financial event as the dispatch claim.
+      return transaction.financialEvent.createMany({data:{refundId,purchaseId:eligible.purchaseId,actorUserId,
+        eventType:'ACADEMY_REFUND_DISPATCH',result:'PENDING',idempotencyKey:`academy-refund-dispatch:${refundId}`},skipDuplicates:true})
+    }
     return transaction.financialRefund.updateMany({ where: { id: refundId, status: 'PENDING', providerDispatchVersion: 1, providerAttemptedAt: null },
       data: { providerAttemptedAt: new Date(), reconciliationRequired: true } })
   })
@@ -267,7 +282,7 @@ export async function submitPreparedRefund(refundId: string, paymentId: string, 
   }
 }
 
-export async function reconcileMollieRefund(refundId: string, gateway: MollieGateway = createMollieGateway()) {
+export async function reconcileMollieRefund(refundId: string, gateway: Pick<RefundTransport, 'getRefund' | 'findRefundByReference'> = createMollieGateway()) {
   const refund = await getPrisma().financialRefund.findUnique({
     where: { id: refundId },
     include: { purchase: { select: { molliePaymentId: true, kind: true } }, creditNote: true, proCreditNote: true },

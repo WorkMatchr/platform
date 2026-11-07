@@ -19,6 +19,8 @@ const {chromium}=await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright')
 const password=randomBytes(24).toString('base64url')
 const platform=await db.organization.findUniqueOrThrow({where:{systemKey:'WORKMATCHR_PLATFORM'}})
 const invoice=await db.financialInvoice.findFirstOrThrow({where:{documentType:'INVOICE',organizationId:{not:null}},orderBy:{createdAt:'asc'}})
+const creditInvoice=await db.financialInvoice.findFirstOrThrow({where:{organizationId:invoice.organizationId,documentType:'INVOICE',purchase:{kind:'CREDIT_PACKAGE'}}})
+const academyInvoice=await db.financialInvoice.findFirstOrThrow({where:{organizationId:null,documentType:'INVOICE',purchase:{kind:'ACADEMY_COURSE'}}})
 const owner=await db.organizationMembership.findFirstOrThrow({where:{organizationId:invoice.organizationId!,role:'OWNER'},include:{user:true}})
 const outsider=await db.organizationMembership.findFirstOrThrow({where:{organizationId:{notIn:[invoice.organizationId!,platform.id]}},include:{user:true}})
 const actors=[]
@@ -49,11 +51,18 @@ try{
    await page.goto(base+'/platformbeheer/financien');await page.getByRole('heading',{name:'Financieel overzicht',exact:true}).waitFor()
    await page.getByText('Automatische ketencontrole is niet geactiveerd.',{exact:true}).waitFor()
    await page.goto(base+'/platformbeheer/financien/facturen/'+invoice.id);await page.getByRole('link',{name:'PDF bekijken',exact:true}).waitFor()
+   for(const other of [creditInvoice, academyInvoice]){
+     const download=await readPdf(base+'/platformbeheer/financien/facturen/'+other.id+'/pdf')
+     assert.equal(download.status,200);assert.equal(download.prefix,'%PDF')
+   }
    assert.equal(await page.locator('fieldset:not([disabled])').count(),0,'CORRECTION_GATES_CLOSED')
    const pdf=await readPdf(base+'/platformbeheer/financien/facturen/'+invoice.id+'/pdf');assert.equal(pdf.status,200);assert.equal(pdf.contentType,'application/pdf');assert.equal(pdf.prefix,'%PDF')
   }else if(actor.role==='CUSTOMER'){
    await page.goto(base+'/credits/facturen/'+invoice.id);await page.getByRole('link',{name:'Download pdf',exact:true}).waitFor()
    const pdf=await readPdf(base+'/credits/facturen/'+invoice.id+'/pdf');assert.equal(pdf.status,200);assert.equal(pdf.cache,'private, no-store');assert.equal(pdf.contentType,'application/pdf');assert.equal(pdf.prefix,'%PDF')
+   await page.goto(base+'/credits/facturen/'+creditInvoice.id)
+   await page.getByRole('link',{name:'Download pdf',exact:true}).waitFor()
+   assert.equal((await readPdf(base+'/credits/facturen/'+creditInvoice.id+'/pdf')).prefix,'%PDF')
    // Synthetic state transition only: cancellation cannot erase historical invoice access.
    const changed=await db.professionalSubscription.updateMany({where:{organizationId:invoice.organizationId!},data:{status:'CANCELED'}})
    assert.equal(changed.count,1)

@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { allocateLegalRefund } from './academy-legal-refund-policy'
 const state = vi.hoisted(() => ({ db: null as unknown }))
 vi.mock('@/lib/finance/financial-transaction', () => ({ runSerializableFinancialTransaction: (fn: (db: unknown) => unknown) => fn(state.db) }))
+vi.mock('@/lib/prisma',()=>({getPrisma:()=>state.db}))
 vi.mock('./academy-commerce-environment', () => ({ assertAcademyCommerceSandbox: vi.fn() }))
 vi.mock('./academy-legal-refund-apply', () => ({ applyAcademyLegalRefund: vi.fn() }))
 import { approveAcademyLegalRefund, executeAcademyLegalRefund } from './academy-legal-refund-service'
@@ -13,10 +14,10 @@ const pricingSnapshot={formatVersion:1,quantity:5,originalGrossCents:59500,final
 function fixture() {
   return { $queryRaw: vi.fn(), user: { findFirst: vi.fn().mockResolvedValue({ id: 'operator' }) },
     academyLegalRefundDecision: { findUnique: vi.fn().mockResolvedValue(null), create: vi.fn(async ({ data }) => ({ id: randomUUID(), ...data })) },
-    financialRefund: { create: vi.fn(async ({ data }) => ({ id: randomUUID(), status: 'PENDING', ...data })), findUniqueOrThrow: vi.fn() },
+    financialRefund: { create: vi.fn(async ({ data }) => ({ id: randomUUID(), status: 'PENDING', ...data })), findUniqueOrThrow: vi.fn(), findFirst:vi.fn(), findUnique:vi.fn() },
     financialPurchase: { findUnique: vi.fn().mockResolvedValue({ id: randomUUID(), kind: 'ACADEMY_COURSE', pricingMode: 'ACADEMY_SANDBOX', status: 'PAID', molliePaymentId: 'tr_fake',
       ...original, vatRateBps: 2100, academyOrder: { seats, quantity:5, pricingSnapshot, benefitProof:{} }, invoice: { snapshotVersion: 2 }, refunds: [] }), update: vi.fn() },
-    academyRefundSeatAllocation: { createMany: vi.fn() }, financialEvent: { create: vi.fn() } }
+    academyRefundSeatAllocation: { createMany: vi.fn() }, financialEvent: { create: vi.fn(), findUnique:vi.fn(), createMany:vi.fn(), upsert:vi.fn().mockResolvedValue({}) } }
 }
 let db: ReturnType<typeof fixture>
 const input = () => ({ purchaseId: randomUUID(), requestKey: randomUUID(), reason: 'Afzonderlijk beoordeelde wettelijke aanspraak', legalEntitlementReviewed: true,
@@ -98,12 +99,21 @@ describe('D09 explicit human approval and fake-only execution', () => {
     expect(db.user.findFirst).not.toHaveBeenCalled(); expect(fake.createRefund).not.toHaveBeenCalled()
   })
   it('retains the exact pending intent on ambiguous fake network failure', async () => {
-    const refund = { id: 'refund', status: 'PENDING', amountCents: 100, seatAllocations:[{amountCents:100}], idempotencyKey: 'original-key', purchase: { pricingMode: 'ACADEMY_SANDBOX', molliePaymentId: 'tr_fake' } }
+    const refund = { id: 'refund', status: 'PENDING', amountCents: 100, seatAllocations:[{amountCents:100}], purchaseId:'purchase', purchase: { id:'purchase',kind:'ACADEMY_COURSE',pricingMode: 'ACADEMY_SANDBOX', molliePaymentId: 'tr_fake' } }
     db.financialRefund.findUniqueOrThrow.mockResolvedValue(refund)
-    const fake = { transport: 'FAKE' as const, createRefund: vi.fn().mockRejectedValue(new Error('SIMULATED_TIMEOUT')), getRefund: vi.fn() }
-    await expect(executeAcademyLegalRefund('operator', randomUUID(), fake)).rejects.toThrow('SIMULATED_TIMEOUT')
-    await expect(executeAcademyLegalRefund('operator', randomUUID(), fake)).rejects.toThrow('SIMULATED_TIMEOUT')
-    expect(fake.createRefund.mock.calls.every(([call]) => call.idempotencyKey === 'original-key')).toBe(true)
+    db.financialRefund.findFirst.mockResolvedValue(refund);db.financialRefund.findUnique.mockResolvedValue(refund)
+    db.financialEvent.findUnique.mockResolvedValue({metadata:{dispatchProtocol:'CLAIM_BEFORE_IO'}})
+    db.financialEvent.createMany.mockResolvedValueOnce({count:1}).mockResolvedValue({count:0})
+    const fake = { transport: 'FAKE' as const, createRefund: vi.fn().mockRejectedValue(new Error('SIMULATED_TIMEOUT')), getRefund: vi.fn(),findRefundByReference:vi.fn().mockResolvedValue(null) }
+    const decisionId=randomUUID()
+    await expect(executeAcademyLegalRefund('operator', decisionId, fake)).rejects.toThrow('RECONCILIATION_REQUIRED')
+    await expect(executeAcademyLegalRefund('operator', decisionId, fake)).rejects.toThrow('RECONCILIATION_REQUIRED')
+    expect(fake.createRefund).toHaveBeenCalledTimes(1)
+    expect(fake.findRefundByReference).toHaveBeenCalledTimes(1)
+    db.financialEvent.findUnique.mockResolvedValue(null) // historical intent without a safe dispatch marker
+    await expect(executeAcademyLegalRefund('operator', decisionId, fake)).rejects.toThrow('RECONCILIATION_REQUIRED')
+    expect(fake.createRefund).toHaveBeenCalledTimes(1)
+    expect(fake.findRefundByReference).toHaveBeenCalledTimes(2)
     expect(db.financialRefund.create).not.toHaveBeenCalled(); expect(db.financialPurchase.update).not.toHaveBeenCalled()
   })
   it.each(['REFUNDED', 'FAILED', 'CANCELED'])('never repeats a terminal %s delivery', async status => {
