@@ -63,8 +63,18 @@ describe('provider dossier completeness', () => {
       organization: { ...completeState.organization, provisioningEvents: [{ id: 'enrolled' }] },
       capabilities: [{ revisions: [{ serviceTermId, specialismTermId, deliveryModes }] }],
     }).client as never, 'provider', new Date('2026-07-15'))
-    expect(result.policyVersion).toBe('PROVIDER-COMPLETENESS-B4-1')
+    expect(result.policyVersion).toBe('PROVIDER-COMPLETENESS-B4-2')
     expect(result.isSubmittable).toBe(expected)
+  })
+
+  it('vereist bij nieuwe aanbieders geen verzekeringen, documenten, verklaringen of personeelsdossiers', async () => {
+    const result = await assessProviderDossierCompletenessInTransaction(transaction({
+      organization: { ...completeState.organization, provisioningEvents: [{ id: 'enrolled' }] },
+      capabilities: [{ revisions: [{ serviceTermId: 'service', specialismTermId: null, deliveryModes: ['REMOTE'] }] }],
+      professionals: [], insurances: [], evidenceDocuments: [], termAcceptances: [],
+    }).client as never, 'provider', new Date('2026-07-15'))
+    expect(result).toMatchObject({ required: 4, completed: 4, percentage: 100, isSubmittable: true })
+    expect(result.blockingSections).toEqual([])
   })
 
   it('vereist voor diensten geen competentie', async () => {
