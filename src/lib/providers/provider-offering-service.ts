@@ -14,7 +14,7 @@ const changeSchema = z.object({
   kind: z.enum(['sector', 'service', 'area']), recordId: uuidSchema.nullable(), selected: z.boolean(),
   termId: uuidSchema.nullable(), specialismId: uuidSchema.nullable(),
   modes: z.array(z.enum(['ON_SITE', 'HYBRID', 'REMOTE'])).max(3).refine(values => new Set(values).size === values.length),
-  years: z.int().min(0).max(80).nullable(),
+  years: z.int().min(0).max(1000).nullable(),
 }).strict()
 const batchSchema = z.object({ version: expectedVersionSchema, changes: z.array(changeSchema).max(250) })
 type Change = z.infer<typeof changeSchema>
@@ -30,7 +30,7 @@ async function writeSector(tx: Tx, providerProfileId: string, row: Change) {
   const previous = record?.revisions[0]
   if (row.recordId && !previous) conflict()
   const status = row.selected ? 'ACTIVE' : 'ARCHIVED'
-  if ((!row.selected && !record) || !row.termId || row.specialismId || row.modes.length) invalid()
+  if ((!row.selected && !record) || !row.termId || row.specialismId || row.modes.length || (row.years !== null && row.years > 80)) invalid()
   if (previous && previous.sectorTermId !== row.termId) invalid()
   if (!previous) await requireTerm(tx, row.termId, ['SECTOR'])
   const changed = row.selected && (!previous || previous.experienceYears !== row.years)
