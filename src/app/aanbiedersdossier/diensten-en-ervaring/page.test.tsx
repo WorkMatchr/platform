@@ -19,6 +19,25 @@ describe('gecombineerd dienstverlenersprofiel', () => {
     expect(html).toContain('checked=""')
     expect(html).toContain('Leveringsvormen voor Bestaand specialisme')
   })
+  it('bundelt sectoren, diensten en werkgebieden onder één opslagactie', () => {
+    const area = { id: 'regio', label: 'Drenthe' }
+    const input: Offering = { ...initial, editArea: true, areas: [area],
+      rows: [...initial.rows, catalogRow('area', area)] }
+    const html = renderToStaticMarkup(<ProviderOfferingForm initial={input} save={vi.fn()} />)
+    expect(html.match(/type="submit"/g)).toHaveLength(1)
+    expect(html).toContain('Werkgebied')
+    expect(html).toContain('Drenthe')
+    const changes = offeringChanges(input.rows, [
+      { ...input.rows[0], selected: true, years: 5 },
+      ...input.rows.slice(1, -1),
+      { ...input.rows[input.rows.length - 1], selected: true, years: 100 },
+    ])
+    expect(changes).toEqual([
+      { kind: 'sector', selected: true, years: 5, recordId: null, modes: [], specialismId: null, termId: 'sector' },
+      { kind: 'area', selected: true, years: 100, recordId: null, modes: [], specialismId: null, termId: 'regio' },
+    ])
+  })
+
   it('toont leden alleen de opgeslagen keuzes zonder opslagknop', () => {
     const html = renderToStaticMarkup(<ProviderOfferingForm initial={{ ...initial, editSectors: false, editServices: false }} save={vi.fn()} />)
     expect(html).not.toContain('type="submit"')
