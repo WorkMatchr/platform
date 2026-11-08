@@ -67,7 +67,7 @@ export async function getMarketplaceDashboard(userId: string, organizationId: st
   ) {
     const providerProfileId = membership.organization.providerProfile.id
     return prisma.$transaction(async tx => {
-      const allowed = await currentMarketplaceProjections(tx, [{ providerProfileId, organizationId }], new Date(), userId)
+      const allowed = await currentMarketplaceProjections(tx, [{ providerProfileId, organizationId }], new Date())
       const projectionId = allowed.get(providerProfileId)
       const [invitations, quotes, creditAccount, notifications] = await Promise.all([
         allowed.has(providerProfileId) ? tx.providerInvitation.findMany({ where: { providerOrganizationId: organizationId, matchCandidate: { projectionId } }, orderBy: { invitedAt: 'desc' }, take: 20, select: { id: true, assignmentId: true, status: true, deadlineAt: true, creditCost: true, invitedAt: true } }) : [],

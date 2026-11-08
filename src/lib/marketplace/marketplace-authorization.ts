@@ -51,7 +51,7 @@ export async function requireProviderParticipationAccess(
   tx: Prisma.TransactionClient, userId: string, organizationId: string, write = true,
 ) {
   const access = await requireProviderMarketplaceAccess(tx, userId, organizationId, write)
-  const current = await currentMarketplaceProjections(tx, [{ providerProfileId: access.providerProfile.id, organizationId }], new Date(), userId)
+  const current = await currentMarketplaceProjections(tx, [{ providerProfileId: access.providerProfile.id, organizationId }], new Date())
   const projectionId = current.get(access.providerProfile.id)
   if (!current.has(access.providerProfile.id)) throw new MarketplaceServiceError('PROFILE_ONBOARDING_REQUIRED')
   return { ...access, projectionId }

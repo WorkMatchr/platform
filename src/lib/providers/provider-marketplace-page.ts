@@ -9,7 +9,7 @@ export async function requireMarketplacePageMembership(organizationId?: string, 
   const organization = context.activeMembership.organization
   if (context.user.accountType === 'PROFESSIONAL' && organization.providerProfile) {
     const candidate = { providerProfileId: organization.providerProfile.id, organizationId: organization.id }
-    const blocked = await getPrisma().$transaction(tx => blockedOnboardingProfiles(tx, [candidate], new Date(), context.user.id))
+    const blocked = await getPrisma().$transaction(tx => blockedOnboardingProfiles(tx, [candidate], new Date()))
     if (blocked.size) redirect('/aanbiedersdossier?toegang=profiel')
   }
   return context

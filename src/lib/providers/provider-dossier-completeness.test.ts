@@ -4,7 +4,7 @@ import { assessProviderDossierCompletenessInTransaction, PROVIDER_COMPLETENESS_P
 const completeState = {
   version: 7,
   organization: { provisioningEvents: [], name: 'Veilig Werken B.V.', chamberOfCommerceNumber: '12345678' },
-  capabilities: [{ revisions: [{ serviceTermId: 'service', specialismTermId: null }] }],
+  capabilities: [{ revisions: [{ serviceTermId: 'service', specialismTermId: null, deliveryModes: ['REMOTE'] }] }],
   sectorExperiences: [{ id: 'sector' }],
   workAreas: [{ id: 'area' }],
   professionals: [{ identityRevisions: [{ status: 'ACTIVE' }], qualifications: [{ id: 'qualification' }] }],
@@ -70,9 +70,9 @@ describe('provider dossier completeness', () => {
 
   it('meet uitsluitend volledigheid en maakt een compleet dossier indienbaar', async () => {
     const result = await assessProviderDossierCompletenessInTransaction(transaction().client as never, 'provider', new Date('2026-07-15'))
-    expect(result).toMatchObject({ policyVersion: PROVIDER_COMPLETENESS_POLICY_VERSION, required: 9, completed: 9, percentage: 100, isSubmittable: true })
+    expect(result).toMatchObject({ policyVersion: PROVIDER_COMPLETENESS_POLICY_VERSION, required: 4, completed: 4, percentage: 100, isSubmittable: true })
     expect(result.reasons).toEqual([])
-    expect(result.sections).toMatchObject({ PROFESSIONALS: 'REQUIRED_COMPLETE', QUALIFICATIONS: 'REQUIRED_COMPLETE', DECLARATIONS: 'REQUIRED_COMPLETE', CAPACITY: 'NOT_APPLICABLE' })
+    expect(result.sections).toMatchObject({ PROFESSIONALS: 'OPTIONAL_COMPLETE', QUALIFICATIONS: 'OPTIONAL_COMPLETE', DECLARATIONS: 'OPTIONAL_COMPLETE', CAPACITY: 'NOT_APPLICABLE' })
   })
 
   it.each([
@@ -84,7 +84,7 @@ describe('provider dossier completeness', () => {
       organization: { ...completeState.organization, provisioningEvents: [{ id: 'enrolled' }] },
       capabilities: [{ revisions: [{ serviceTermId, specialismTermId, deliveryModes }] }],
     }).client as never, 'provider', new Date('2026-07-15'))
-    expect(result.policyVersion).toBe('PROVIDER-COMPLETENESS-B4-2')
+    expect(result.policyVersion).toBe(PROVIDER_COMPLETENESS_POLICY_VERSION)
     expect(result.isSubmittable).toBe(expected)
   })
 
@@ -101,7 +101,7 @@ describe('provider dossier completeness', () => {
 
   it('vereist voor diensten geen competentie', async () => {
     const result = await assessProviderDossierCompletenessInTransaction(transaction({
-      capabilities: [{ revisions: [{ serviceTermId: 'service', specialismTermId: null }] }],
+      capabilities: [{ revisions: [{ serviceTermId: 'service', specialismTermId: null, deliveryModes: ['REMOTE'] }] }],
     }).client as never, 'provider', new Date('2026-07-15'))
 
     expect(result.blockingSections).not.toContain('CAPABILITIES')
@@ -125,14 +125,15 @@ describe('provider dossier completeness', () => {
     ['INSURANCE', { insurances: [] }],
     ['EVIDENCE', { evidenceDocuments: [] }],
     ['DECLARATIONS', { termAcceptances: [] }],
-  ])('maakt de sectie %s afzonderlijk blokkerend', async (section, overrides) => {
+  ])('bepaalt de toepasselijkheid van %s voor bestaande organisaties', async (section, overrides) => {
     const result = await assessProviderDossierCompletenessInTransaction(
       transaction(overrides).client as never,
       'provider',
       new Date('2026-07-15'),
     )
-    expect(result.blockingSections).toContain(section)
-    expect(result.isSubmittable).toBe(false)
+    const required = ['ORGANIZATION', 'CAPABILITIES', 'SECTOR_EXPERIENCE', 'WORK_AREA'].includes(String(section))
+    expect(result.blockingSections.includes(section as keyof typeof result.sections)).toBe(required)
+    expect(result.isSubmittable).toBe(!required)
   })
 
   it('start geen tweede query zolang dezelfde transactionele client nog bezig is', async () => {

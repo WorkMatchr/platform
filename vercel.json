@@ -28,7 +28,8 @@
       "codex/account-and-arbo-guides-ux": false,
       "codex/release-b3-marketplace-post-homepage": false,
       "codex/b4-provider-profile": false,
-      "codex/marketplace-recovery-v3": false
+      "codex/marketplace-recovery-v3": false,
+      "codex/workmatchr-v3-release-candidate": false
     }
   },
   "crons": [

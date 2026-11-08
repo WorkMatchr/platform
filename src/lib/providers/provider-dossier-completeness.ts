@@ -1,11 +1,10 @@
 import type { Prisma, ProviderDossierSection } from '@/generated/prisma/client'
-import { onboardingEventWhere } from './provider-onboarding-cohort'
 import { getPrisma } from '@/lib/prisma'
 import { requireProviderViewer } from './provider-authorization'
 import { getProviderEditableSections } from './provider-dossier-access'
 import { hashProviderJson } from './provider-canonical-json'
 
-export const PROVIDER_COMPLETENESS_POLICY_VERSION = 'PROVIDER-COMPLETENESS-2'
+export const PROVIDER_COMPLETENESS_POLICY_VERSION = 'PROVIDER-COMPLETENESS-V3-1'
 
 export type ProviderCompletenessReason = {
   code: string
@@ -33,6 +32,8 @@ export type ProviderCompletenessAssessment = {
   checksum: string
 }
 
+const matchingSections: ProviderDossierSection[] = ['ORGANIZATION', 'CAPABILITIES', 'SECTOR_EXPERIENCE', 'WORK_AREA']
+
 type Check = { section: ProviderDossierSection; complete: boolean; expired?: boolean; code: string }
 
 function latestRevisionPerRecord<T extends { version: number }>(
@@ -52,14 +53,12 @@ export async function assessProviderDossierCompletenessInTransaction(
   transaction: Prisma.TransactionClient,
   providerProfileId: string,
   at = new Date(),
-  userId?: string,
 ): Promise<ProviderCompletenessAssessment> {
   const provider = await transaction.providerProfile.findFirst({
     where: { id: providerProfileId, archivedAt: null, organization: { status: 'ACTIVE', organizationType: { in: ['PROVIDER', 'BOTH'] } } },
     select: {
       version: true,
       organization: { select: { name: true, chamberOfCommerceNumber: true,
-        provisioningEvents: { where: onboardingEventWhere(userId), select: { id: true }, take: 1 },
       } },
     },
   })
@@ -67,8 +66,7 @@ export async function assessProviderDossierCompletenessInTransaction(
 
   // De pg-driver ondersteunt geen overlappende queries op één transactionele
   // PoolClient. Houd deze reads daarom expliciet sequentieel en vlak.
-  const enrolled = provider.organization.provisioningEvents.length > 0
-  const policyVersion = enrolled ? 'PROVIDER-COMPLETENESS-B4-2' : PROVIDER_COMPLETENESS_POLICY_VERSION
+  const policyVersion = PROVIDER_COMPLETENESS_POLICY_VERSION
   const capabilityRevisions = await transaction.providerCapabilityRevision.findMany({
     where: { capability: { providerProfileId, status: 'ACTIVE' } },
     select: { providerCapabilityId: true, version: true, serviceTermId: true, specialismTermId: true, deliveryModes: true },
@@ -106,7 +104,7 @@ export async function assessProviderDossierCompletenessInTransaction(
       scanDecision: { scanStatus: 'CLEAN' },
     },
   })
-  const pendingEvidence = enrolled && cleanEvidenceCount === 0
+  const pendingEvidence = cleanEvidenceCount === 0
     ? await transaction.providerEvidenceDocument.count({ where: { providerProfileId, status: { not: 'ARCHIVED' } } })
     : 0
   const termAcceptances = await transaction.providerTermAcceptance.findMany({
@@ -125,7 +123,7 @@ export async function assessProviderDossierCompletenessInTransaction(
   const accepted = new Set(termAcceptances.map((item) => item.documentVersionId))
   const checks: Check[] = [
     { section: 'ORGANIZATION', complete: provider.organization.name.trim().length >= 2 && Boolean(provider.organization.chamberOfCommerceNumber?.trim()), code: 'ORGANIZATION_INCOMPLETE' },
-    { section: 'CAPABILITIES', complete: capabilities.some((item) => enrolled ? Boolean(item.serviceTermId && item.deliveryModes.length) : Boolean(item.serviceTermId || item.specialismTermId)), code: enrolled ? 'SERVICE_DELIVERY_REQUIRED' : 'CAPABILITIES_INCOMPLETE' },
+    { section: 'CAPABILITIES', complete: capabilities.some((item) => Boolean(item.serviceTermId && item.deliveryModes.length)), code: 'SERVICE_DELIVERY_REQUIRED' },
     { section: 'SECTOR_EXPERIENCE', complete: sectorExperienceCount > 0, code: 'SECTOR_EXPERIENCE_INCOMPLETE' },
     { section: 'WORK_AREA', complete: workAreaCount > 0, code: 'WORK_AREA_INCOMPLETE' },
     { section: 'PROFESSIONALS', complete: professionals.some((item) => item.status === 'ACTIVE'), code: 'PROFESSIONALS_INCOMPLETE' },
@@ -134,11 +132,7 @@ export async function assessProviderDossierCompletenessInTransaction(
     { section: 'EVIDENCE', complete: cleanEvidenceCount > 0 && activeInsurance.every((item) => scanStatusByEvidenceRevision.get(item.evidenceRevisionId) === 'CLEAN'), code: 'EVIDENCE_UNAVAILABLE' },
     { section: 'DECLARATIONS', complete: requiredTerms.length > 0 && requiredTerms.every((item) => accepted.has(item.id)), code: requiredTerms.length === 0 ? 'TERMS_NOT_CONFIGURED' : 'TERM_NOT_ACCEPTED' },
   ]
-  // The new lightweight Marketplace onboarding requires only the information
-  // needed to match and contact the organization. Existing legacy dossiers retain
-  // their original policy and approved snapshots until a separate transition.
-  const applicableChecks = enrolled ? checks.filter(check =>
-    ['ORGANIZATION', 'CAPABILITIES', 'SECTOR_EXPERIENCE', 'WORK_AREA'].includes(check.section)) : checks
+  const applicableChecks = checks.filter(check => matchingSections.includes(check.section))
   const sections: ProviderCompletenessAssessment['sections'] = { CAPACITY: 'NOT_APPLICABLE' }
   for (const check of checks) {
     if (applicableChecks.includes(check)) sections[check.section] = check.complete ? 'REQUIRED_COMPLETE' : 'REQUIRED_OPEN'
@@ -182,20 +176,16 @@ export async function assessProviderDossierCompletenessInTransaction(
 }
 
 function emptyAssessment(): ProviderCompletenessAssessment {
-  const sections: ProviderDossierSection[] = [
-    'ORGANIZATION', 'CAPABILITIES', 'SECTOR_EXPERIENCE', 'WORK_AREA',
-    'PROFESSIONALS', 'QUALIFICATIONS', 'INSURANCE', 'EVIDENCE', 'DECLARATIONS',
-  ]
-  const reasons = sections.map<ProviderCompletenessReason>((section) => ({
+  const reasons = matchingSections.map<ProviderCompletenessReason>((section) => ({
     code: 'DOSSIER_NOT_STARTED',
     section,
     state: 'NOT_STARTED',
   }))
   return {
-    sections: { ...Object.fromEntries(sections.map(section => [section, 'REQUIRED_OPEN'])), CAPACITY: 'NOT_APPLICABLE' },
+    sections: { ...Object.fromEntries(matchingSections.map(section => [section, 'REQUIRED_OPEN'])), PROFESSIONALS: 'OPTIONAL_EMPTY', QUALIFICATIONS: 'OPTIONAL_EMPTY', INSURANCE: 'OPTIONAL_EMPTY', EVIDENCE: 'OPTIONAL_EMPTY', DECLARATIONS: 'NOT_APPLICABLE', CAPACITY: 'NOT_APPLICABLE' },
     policyVersion: PROVIDER_COMPLETENESS_POLICY_VERSION, sourceProfileVersion: 0,
-    required: 9, completed: 0, actionRequired: 0, expired: 0, notStarted: 9, percentage: 0,
-    blockingSections: sections,
+    required: matchingSections.length, completed: 0, actionRequired: 0, expired: 0, notStarted: matchingSections.length, percentage: 0,
+    blockingSections: matchingSections,
     warnings: [], reasons, editableSections: [], isSubmittable: false, checksum: '',
   }
 }
@@ -203,6 +193,6 @@ function emptyAssessment(): ProviderCompletenessAssessment {
 export async function assessProviderDossierCompleteness(userId: string, providerProfileId: string, at = new Date()) {
   return getPrisma().$transaction(async (transaction) => {
     await requireProviderViewer(transaction, userId, providerProfileId)
-    return assessProviderDossierCompletenessInTransaction(transaction, providerProfileId, at, userId)
+    return assessProviderDossierCompletenessInTransaction(transaction, providerProfileId, at)
   })
 }

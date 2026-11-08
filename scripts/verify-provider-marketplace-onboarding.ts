@@ -33,31 +33,29 @@ export async function verifyProviderMarketplaceOnboarding(db: PrismaClient, fixt
   const providerProfileId = profile.id
   const candidate = { providerProfileId, organizationId: org.id }
   const legacy = { providerProfileId: fixture.legacyProfileId, organizationId: fixture.legacyOrganizationId }
-  const matching = (userId?: string) => db.$transaction(tx => blockedOnboardingProfiles(tx, [candidate, legacy], new Date(), userId))
+  const matching = () => db.$transaction(tx => blockedOnboardingProfiles(tx, [candidate, legacy], new Date()))
   const participate = (actorId = user.id, orgId = org.id) => db.$transaction(tx => requireProviderParticipationAccess(tx, actorId, orgId))
   const denied = { code: 'PROFILE_ONBOARDING_REQUIRED' }
   const assess = () => assessProviderDossierCompleteness(user.id, providerProfileId)
-  assert.equal((await assess()).policyVersion, 'PROVIDER-COMPLETENESS-B4-2')
-  assert.deepEqual(await matching(), new Set([providerProfileId]))
-  assert.equal((await participate(fixture.legacyOwnerId, fixture.legacyOrganizationId)).role, 'OWNER')
+  assert.equal((await assess()).policyVersion, 'PROVIDER-COMPLETENESS-V3-1')
+  assert.deepEqual(await matching(), new Set([providerProfileId, legacy.providerProfileId]))
+  await assert.rejects(participate(fixture.legacyOwnerId, fixture.legacyOrganizationId), denied)
   await assert.rejects(participate(fixture.legacyMemberId, fixture.legacyOrganizationId), { code: 'ACCESS_DENIED' })
   await assert.rejects(participate(user.id, fixture.legacyOrganizationId), { code: 'ACCESS_DENIED' })
   assert.equal((await db.$transaction(tx => requireProviderMarketplaceAccess(tx, user.id, org.id))).role, 'OWNER')
 
-  // Simulate the immutable invitation event on a pre-B4 tenant. It affects only its subject.
+  // Simulate the immutable invitation event on a pre-B4 tenant. It must not change the policy of either member.
   await appendAccountProvisioningEvent(db, {
     eventType: 'ORGANIZATION_LINKED', subjectUserId: fixture.legacyMemberId, organizationId: fixture.legacyOrganizationId,
     reasonCode: 'ORGANIZATION_INVITATION_LINKED', metadata: { marketplaceOnboarding: professionalOnboarding },
   })
-  assert.deepEqual(await matching(fixture.legacyMemberId), new Set([providerProfileId, legacy.providerProfileId]))
-  assert.deepEqual(await matching(fixture.legacyOwnerId), new Set([providerProfileId]))
-  assert.deepEqual(await matching(), new Set([providerProfileId]))
+  assert.deepEqual(await matching(), new Set([providerProfileId, legacy.providerProfileId]))
 
   const legacyChecklist = await assessProviderDossierCompleteness(fixture.legacyOwnerId, fixture.legacyProfileId)
   const inviteeChecklist = await assessProviderDossierCompleteness(fixture.legacyMemberId, fixture.legacyProfileId)
-  assert.equal(legacyChecklist.required, 9)
+  assert.equal(legacyChecklist.required, 4)
   assert.equal(inviteeChecklist.required, 4)
-  assert.equal(inviteeChecklist.sections.INSURANCE, legacyChecklist.sections.INSURANCE === 'REQUIRED_COMPLETE' ? 'OPTIONAL_COMPLETE' : 'OPTIONAL_EMPTY')
+  assert.equal(inviteeChecklist.sections.INSURANCE, legacyChecklist.sections.INSURANCE)
 
   const actor = { userId: user.id, organizationId: org.id }
   const operator = { actorUserId: user.id, providerOrganizationId: org.id }
@@ -100,11 +98,11 @@ export async function verifyProviderMarketplaceOnboarding(db: PrismaClient, fixt
   ] })
   // An unbound historical decision cannot qualify a newly onboarded organization.
   await assert.rejects(participate(), denied)
-  assert.deepEqual(await matching(), new Set([providerProfileId]))
+  assert.deepEqual(await matching(), new Set([providerProfileId, legacy.providerProfileId]))
   // A later change invalidates the approval for the previous profile version.
   await db.providerProfile.update({ where: { id: providerProfileId }, data: { version: { increment: 1 } } })
   await assert.rejects(participate(), denied)
-  assert.deepEqual(await matching(), new Set([providerProfileId]))
+  assert.deepEqual(await matching(), new Set([providerProfileId, legacy.providerProfileId]))
   const capabilityRevision = await db.providerCapabilityRevision.findFirstOrThrow({ where: { providerCapabilityId: service.id } })
   const currentVersion = async () => (await db.providerProfile.findUniqueOrThrow({ where: { id: providerProfileId } })).version
   await recordProviderVerificationReview(fixture.reviewedByUserId, providerProfileId, { expectedProfileVersion: await currentVersion(),

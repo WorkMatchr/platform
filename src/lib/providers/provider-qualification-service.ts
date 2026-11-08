@@ -157,7 +157,7 @@ export async function recordProviderQualificationDecision(
       if (positive && (input.scope === 'PLATFORM' || input.dossierCandidateId)) {
         if (!input.dossierCandidateId) throw new ProviderServiceError('DOSSIER_NOT_SUBMITTABLE')
         basis = await currentApprovedQualificationBasis(transaction, providerProfileId, input.dossierCandidateId)
-        if (basis && !(await assessProviderDossierCompletenessInTransaction(transaction, providerProfileId, now, basis.submitterId)).isSubmittable) throw new ProviderServiceError('DOSSIER_NOT_SUBMITTABLE')
+        if (basis && !(await assessProviderDossierCompletenessInTransaction(transaction, providerProfileId, now)).isSubmittable) throw new ProviderServiceError('DOSSIER_NOT_SUBMITTABLE')
         if (!basis) throw new ProviderServiceError('DOSSIER_NOT_SUBMITTABLE')
         if (basis.reviewerUserId !== input.reviewedByUserId) throw new ProviderServiceError('ACCESS_DENIED')
         if (provider.lifecycleStatus === 'ARCHIVED' ||
