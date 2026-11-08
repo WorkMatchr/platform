@@ -4,7 +4,7 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 import { spawn } from 'node:child_process'
-import { pathToFileURL } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { encryptArchive, decryptVerifiedArchive } from '../ops/recovery/encrypted-archive.mjs'
 
 import { readTargetPolicy, validateTargetPolicy, targetFields } from '../ops/recovery/target-policy.mjs'
@@ -20,7 +20,11 @@ export function validateApproval(p,now=Date.now(),target) {
 }
 const osEnv=()=>Object.fromEntries(Object.entries(process.env).filter(([k])=>/^(PATH|PATHEXT|SYSTEMROOT|WINDIR|TEMP|TMP|USERPROFILE|LOCALAPPDATA|APPDATA|COMSPEC|PROGRAMFILES|HOMEDRIVE|HOMEPATH)$/i.test(k)))
 function launch(cmd,args) {
-  if(cmd.endsWith('gpg.exe'))args=args.map(a=>/^[A-Za-z]:[\\/]/.test(a)?a.replaceAll('\\','/').replace(/^([A-Za-z]):/,(_,d)=>`/${d.toLowerCase()}`):a)
+  if (cmd === 'ubuntu-gpg') {
+    cmd = path.join(process.env.SystemRoot, 'System32', 'wsl.exe')
+    args = ['--distribution', 'Ubuntu', '--exec', '/usr/bin/gpg', '--no-options', ...args.map(a =>
+      /^[Cc]:[\\/]/.test(a) ? '/mnt/c/' + a.slice(3).replaceAll('\\', '/') : a)]
+  }
   return spawn(cmd,args,{windowsHide:true,env:osEnv(),stdio:['pipe','pipe','pipe']})
 }
 async function run(cmd,args,input) {
@@ -42,11 +46,16 @@ async function stage(mode,config,execute,target) {
   validateApproval(config,Date.now(),target)
   const { host, database, backupRole, restoreOwner }=target
   assert.equal(process.platform,'win32')
-  const archiveRoot=path.resolve(process.env.LOCALAPPDATA,'WorkMatchr','production-recovery')
+  const privateRoot=path.join(process.env.LOCALAPPDATA,'WorkMatchr')
+  const archiveRoot=path.resolve(config.archiveRoot ?? path.join(privateRoot,'production-recovery'))
+  const relative=path.relative(privateRoot,archiveRoot)
+  assert.ok(/^C:\\/i.test(archiveRoot) && relative && !relative.startsWith('..') && !path.isAbsolute(relative))
   const dir=path.join(archiveRoot,config.runId),archive=path.join(dir,'backup.dump.gpg')
   // The run directory must already be secured by the operator; reject links.
-  for(const p of [archiveRoot,dir])assert.ok(fs.statSync(p).isDirectory()&&!fs.lstatSync(p).isSymbolicLink())
-  const gpg='C:/Program Files/Git/usr/bin/gpg.exe'
+  for(let p=dir;p!==path.dirname(p);p=path.dirname(p))assert.ok(fs.statSync(p).isDirectory()&&!fs.lstatSync(p).isSymbolicLink())
+  assert.equal(fs.realpathSync.native(dir).toLowerCase(),dir.toLowerCase())
+  assert.match(mode==='backup'?config.publicKeyring:config.privateKeyring,/^\/dev\/shm\/[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_-]+)*$/)
+  const gpg='ubuntu-gpg'
   const client=`d2c-${mode==='backup'?'client':'restore'}-${config.runId.slice(4)}`
   const meta=JSON.parse((await ok(['inspect',client])).toString())[0]
   assert.equal(meta.Config.Labels['workmatchr.d2c'],config.runId)
@@ -55,6 +64,13 @@ async function stage(mode,config,execute,target) {
   assert.ok(meta.Mounts.every(m=>m.Type==='tmpfs'),'No persistent database/credential mounts')
   const manifestFile=path.join(dir,'manifest.json')
   if(mode==='backup') {
+    const cardScript=fileURLToPath(new URL('./d2c-card.ps1',import.meta.url))
+    const cardArgs=['-NoProfile','-NonInteractive','-File',cardScript,'-VolumeId',target.volumeId,'-Serial',target.volumeSerial,'-RunId',config.runId]
+    const card=async(extra=[])=>{
+      const result=await run('pwsh', [...cardArgs,...extra])
+      assert.equal(result.code,0,'Archive card check or transfer failed')
+    }
+    await card()
     assert.ok(!fs.existsSync(manifestFile)&&!fs.existsSync(archive),'One archive only; no overwrite/retry')
     assert.equal(meta.HostConfig.NetworkMode,'bridge')
     const base=['exec','-i','--env',`PGHOST=${host}`,'--env',`PGDATABASE=${database}`,'--env',`PGUSER=${backupRole}`,'--env','PGPASSFILE=/run/d2c/pgpass','--env','PGSSLMODE=verify-full','--env','PGSSLROOTCERT=/etc/ssl/certs/ca-certificates.crt','--env','PGOPTIONS=-c default_transaction_read_only=on',client]
@@ -66,6 +82,7 @@ async function stage(mode,config,execute,target) {
     const lockFd=fs.openSync(lock,'wx')
     try {
       const result=await encryptArchive({launch,source:'docker',sourceArgs:[...base,'pg_dump','--no-password','--format=custom','--lock-wait-timeout=5s','--serializable-deferrable'],gpg,keyring:config.publicKeyring,fingerprint:config.fingerprint,output:archive})
+      await card(['-Archive',archive,'-ExpectedHash',result.sha256])
       fs.writeFileSync(manifestFile,JSON.stringify({runId:config.runId,createdAt:new Date().toISOString(),source:{host,database},...result},null,2),{flag:'wx'})
       console.log(JSON.stringify({stage:'backup',complete:true,bytes:result.bytes,sha256:result.sha256}))
     } finally {fs.closeSync(lockFd);fs.unlinkSync(lock)}
