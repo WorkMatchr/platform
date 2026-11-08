@@ -41,16 +41,33 @@ export async function applyMollieRefundSnapshot(refundId: string, snapshot: Moll
     await lock(transaction, refundId)
     const current = await transaction.financialRefund.findUniqueOrThrow({
       where: { id: refundId },
-      include: { purchase: true, creditNote: true },
+      include: { purchase: true, creditNote: true, proCreditNote: true },
     })
     if (current.mollieRefundId && current.mollieRefundId !== snapshot.id) throw new Error('MOLLIE_REFUND_MISMATCH')
     const status = mapMollieRefundStatus(snapshot.status)
     const eventKey = `mollie-refund-status:${current.id}:${snapshot.status}`
+    if (current.proCreditNoteId) {
+      if (!current.proCreditNote || current.amountCents !== -current.proCreditNote.amountInclVatCents) throw new Error('PRO_REFUND_CREDIT_MISMATCH')
+      if (current.status === 'REFUNDED' && status !== 'REFUNDED') return { refund: current, creditNote: null, reviewRequired: false }
+      if (current.status !== 'PENDING' && current.status !== status) throw new Error('REFUND_TERMINAL_STATE_CONFLICT')
+      const refund = await transaction.financialRefund.update({ where: { id: current.id }, data: {
+        status, mollieRefundId: snapshot.id, reconciliationRequired: false, ...(status === 'REFUNDED' ? { completedAt: current.completedAt ?? new Date() } : {}),
+      } })
+      await transaction.financialEvent.upsert({ where: { idempotencyKey: eventKey }, create: {
+        actorUserId: current.approvedByUserId, invoiceId: current.proCreditNoteId, refundId: current.id,
+        eventType: 'PRO_REFUND_STATUS', result: status, idempotencyKey: eventKey,
+        metadata: { providerStatus: snapshot.status, amountCents: current.amountCents, subscriptionUnchanged: true },
+      }, update: {} })
+      return { refund, creditNote: null, reviewRequired: false }
+    }
+    if (!current.purchase || !current.purchaseId) throw new Error('REFUND_SOURCE_REQUIRED')
+    if (current.status === 'REFUNDED' && status !== 'REFUNDED') return { refund: current, creditNote: current.creditNote, reviewRequired: false }
+
 
     if (status === 'PENDING') {
       const refund = current.mollieRefundId
         ? current
-        : await transaction.financialRefund.update({ where: { id: current.id }, data: { mollieRefundId: snapshot.id } })
+        : await transaction.financialRefund.update({ where: { id: current.id }, data: { mollieRefundId: snapshot.id, reconciliationRequired: false } })
       await transaction.financialEvent.upsert({
         where: { idempotencyKey: eventKey },
         create: {
@@ -81,7 +98,7 @@ export async function applyMollieRefundSnapshot(refundId: string, snapshot: Moll
       })
       const refund = await transaction.financialRefund.update({
         where: { id: current.id },
-        data: { status, mollieRefundId: snapshot.id, ledgerTransactionId: ledger.id, completedAt: new Date() },
+        data: { status, reconciliationRequired: false, mollieRefundId: snapshot.id, ledgerTransactionId: ledger.id, completedAt: new Date() },
       })
       await transaction.financialPurchase.update({
         where: { id: current.purchaseId },
@@ -115,7 +132,7 @@ export async function applyMollieRefundSnapshot(refundId: string, snapshot: Moll
     })
     const refund = await transaction.financialRefund.update({
       where: { id: current.id },
-      data: { status, mollieRefundId: snapshot.id },
+      data: { status, reconciliationRequired: false, mollieRefundId: snapshot.id },
     })
     await transaction.financialEvent.upsert({
       where: { idempotencyKey: eventKey },
@@ -142,13 +159,16 @@ export async function refundWorkmatchrError(input: unknown, gateway: MollieGatew
     await requireMarketplacePlatformAdmin(transaction, values.actorUserId)
     await lock(transaction, values.purchaseId)
     const existing = await transaction.financialRefund.findUnique({ where: { idempotencyKey: values.idempotencyKey }, include: { purchase: true, creditNote: true } })
-    if (existing) return { refund: existing, reviewRequired: existing.purchase.status === 'REFUND_REVIEW_REQUIRED' }
+    if (existing) {
+      if (existing.purchaseId !== values.purchaseId || !existing.purchase) throw new Error('REFUND_IDEMPOTENCY_CONFLICT')
+      return { refund: existing, reviewRequired: existing.purchase.status === 'REFUND_REVIEW_REQUIRED' }
+    }
     const existingForPurchase = await transaction.financialRefund.findFirst({
       where: { purchaseId: values.purchaseId },
       orderBy: { requestedAt: 'desc' },
       include: { purchase: true, creditNote: true },
     })
-    if (existingForPurchase) return { refund: existingForPurchase, reviewRequired: existingForPurchase.purchase.status === 'REFUND_REVIEW_REQUIRED' }
+    if (existingForPurchase) return { refund: existingForPurchase, reviewRequired: existingForPurchase.purchase?.status === 'REFUND_REVIEW_REQUIRED' }
     const purchase = await transaction.financialPurchase.findUnique({ where: { id: values.purchaseId }, include: {
       creditedTransaction: true, invoice: { include: { lines: true, vatSummaries: true } },
     } })
@@ -211,47 +231,39 @@ export async function refundWorkmatchrError(input: unknown, gateway: MollieGatew
   }
   if (['FAILED', 'CANCELED'].includes(prepared.refund.status)) return { refund: prepared.refund, creditNote: null, reviewRequired: false }
   const purchase = prepared.refund.purchase
-  if (!purchase.molliePaymentId) throw new Error('MOLLIE_PAYMENT_REQUIRED')
+  if (!purchase?.molliePaymentId) throw new Error('MOLLIE_PAYMENT_REQUIRED')
   if (prepared.refund.mollieRefundId) {
     const snapshot = await gateway.getRefund({ paymentId: purchase.molliePaymentId, refundId: prepared.refund.mollieRefundId })
     return applyMollieRefundSnapshot(prepared.refund.id, snapshot)
   }
-  let remote: Awaited<ReturnType<MollieGateway['createRefund']>>
+  return submitPreparedRefund(prepared.refund.id, purchase.molliePaymentId, prepared.refund.amountCents, { purchaseId: purchase.id }, gateway, values.actorUserId)
+}
+
+export async function submitPreparedRefund(refundId: string, paymentId: string, amountCents: number,
+  source: { purchaseId?: string; creditNoteId?: string }, gateway: MollieGateway, actorUserId: string) {
+  // Persist intent BEFORE I/O. A crash or lost response is UNKNOWN, never proof of rejection.
+  const claim = await runSerializableFinancialTransaction(async transaction => {
+    await requireMarketplacePlatformAdmin(transaction, actorUserId)
+    return transaction.financialRefund.updateMany({ where: { id: refundId, status: 'PENDING', providerDispatchVersion: 1, providerAttemptedAt: null },
+      data: { providerAttemptedAt: new Date(), reconciliationRequired: true } })
+  })
+  if (claim.count !== 1) return reconcileMollieRefund(refundId, gateway)
   try {
-    remote = await gateway.createRefund({
-      paymentId: purchase.molliePaymentId,
-      amountValue: centsToMollieValue(prepared.refund.amountCents),
-      currency: 'EUR',
-      description: 'Door WorkMatchr goedgekeurde technische correctie',
-      idempotencyKey: `mollie-refund-${prepared.refund.id}`,
-      metadata: { refundId: prepared.refund.id, purchaseId: purchase.id },
-    })
-  } catch (error) {
-    await getPrisma().$transaction(async (transaction) => {
-      await recordFinancialRefundCreditPhaseInTransaction(transaction, { refundId: prepared.refund.id, organizationId: purchase.organizationId, actorUserId: values.actorUserId, credits: prepared.refund.credits, phase: 'RELEASE', reason: 'Creditreservering vrijgegeven omdat de terugbetaling niet is bevestigd.' })
-      await transaction.financialRefund.update({ where: { id: prepared.refund.id }, data: { status: 'FAILED' } })
-      await transaction.financialEvent.upsert({
-        where: { idempotencyKey: `mollie-refund-request-failed:${prepared.refund.id}` },
-        create: {
-          actorUserId: values.actorUserId,
-          purchaseId: purchase.id,
-          refundId: prepared.refund.id,
-          eventType: 'MOLLIE_REFUND_REQUEST_FAILED',
-          result: 'FAILED',
-          idempotencyKey: `mollie-refund-request-failed:${prepared.refund.id}`,
-        },
-        update: {},
-      })
-    })
-    throw error
+    const remote = await gateway.createRefund({ paymentId, amountValue: centsToMollieValue(amountCents), currency: 'EUR',
+      description: 'Door WorkMatchr goedgekeurde correctie', idempotencyKey: `mollie-refund-${refundId}`, metadata: { refundId, ...source } })
+    return await applyMollieRefundSnapshot(refundId, remote)
+  } catch {
+    await getPrisma().financialEvent.upsert({ where: { idempotencyKey: `refund-uncertain:${refundId}` }, create: {
+      refundId, eventType: 'MOLLIE_REFUND_UNCERTAIN', result: 'REVIEW_REQUIRED', idempotencyKey: `refund-uncertain:${refundId}`,
+    }, update: {} }).catch(() => undefined)
+    throw new Error('MOLLIE_REFUND_RECONCILIATION_REQUIRED')
   }
-  return applyMollieRefundSnapshot(prepared.refund.id, remote)
 }
 
 export async function reconcileMollieRefund(refundId: string, gateway: MollieGateway = createMollieGateway()) {
   const refund = await getPrisma().financialRefund.findUnique({
     where: { id: refundId },
-    include: { purchase: { select: { molliePaymentId: true } }, creditNote: true },
+    include: { purchase: { select: { molliePaymentId: true } }, creditNote: true, proCreditNote: true },
   })
   if (!refund) throw new Error('PENDING_MOLLIE_REFUND_REQUIRED')
   if (refund.status === 'REFUNDED') {
@@ -259,16 +271,19 @@ export async function reconcileMollieRefund(refundId: string, gateway: MollieGat
     return { refund, creditNote: refund.creditNote, reviewRequired: false }
   }
   if (['FAILED', 'CANCELED'].includes(refund.status)) return { refund, creditNote: null, reviewRequired: false }
-  if (!refund.mollieRefundId || !refund.purchase.molliePaymentId) {
-    throw new Error('PENDING_MOLLIE_REFUND_REQUIRED')
-  }
-  const snapshot = await gateway.getRefund({ paymentId: refund.purchase.molliePaymentId, refundId: refund.mollieRefundId })
+  const paymentId = refund.purchase?.molliePaymentId ?? refund.proCreditNote?.molliePaymentId
+  if (!paymentId) throw new Error('PENDING_MOLLIE_REFUND_REQUIRED')
+  const snapshot = refund.mollieRefundId
+    ? await gateway.getRefund({ paymentId, refundId: refund.mollieRefundId })
+    : await gateway.findRefundByReference?.({ paymentId, refundId: refund.id, amountValue: centsToMollieValue(refund.amountCents), currency: 'EUR' })
+  if (!snapshot) return { refund, creditNote: refund.creditNote, reviewRequired: true }
+
   return applyMollieRefundSnapshot(refund.id, snapshot)
 }
 
 export async function reconcilePendingMollieRefunds(gateway: MollieGateway = createMollieGateway()) {
   const refunds = await getPrisma().financialRefund.findMany({
-    where: { status: 'PENDING', mollieRefundId: { not: null }, purchase: { molliePaymentId: { not: null } } },
+    where: { status: 'PENDING', OR: [{ mollieRefundId: { not: null } }, { reconciliationRequired: true }] },
     select: { id: true },
     orderBy: { requestedAt: 'asc' },
   })

@@ -78,7 +78,7 @@ describe('Jortt synchronisatieservice', () => {
       issuedAt: source.issuedAt.toISOString(), currency: 'EUR', technicalReference: 'workmatchr-invoice:invoice-id',
       amountExclVatCents: net, vatAmountCents: vat, amountInclVatCents: total,
       lines: [{ description: label, quantity: 1, unit: 'pakket', unitPriceExclVatCents: net, discountAmountCents: 0, netAmountExclVatCents: net, vatRateBps: 2100, vatAmountCents: vat }],
-    }), 'jortt:invoice:invoice-id')
+    }), 'jortt:invoice:invoice-id', expect.objectContaining({ claimCreation: expect.any(Function), saveDraftId: expect.any(Function) }))
     expect(source).toEqual(original)
     mocks.invoiceFind.mockResolvedValue({ ...source, jorttSync: { ...source.jorttSync, status: 'SYNCED' } })
     await syncFinancialInvoiceToJortt(source.id, { submitInvoice })
@@ -134,7 +134,7 @@ describe('Jortt synchronisatieservice', () => {
       invoiceId: 'invoice-id',
       invoiceNumber: 'WM-2026-000001',
       technicalReference: 'workmatchr-invoice:invoice-id',
-    }), 'jortt:invoice:invoice-id')
+    }), 'jortt:invoice:invoice-id', expect.objectContaining({ claimCreation: expect.any(Function), saveDraftId: expect.any(Function) }))
     expect(mocks.syncUpdate).toHaveBeenLastCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: 'SYNCED', externalReference: 'remote-id', remoteInvoiceNumber: 'J2026-42' }) }))
     expect(mocks.invoiceFind).toHaveBeenCalledTimes(1)
   })
