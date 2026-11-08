@@ -23,6 +23,7 @@ export default async function PlatformFinancialPage() {
     <AdminPageHeader title="Financieel overzicht" description="Herleidbaar overzicht uit betalingen, facturen, abonnementen en het append-only creditgrootboek." />
     <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
       <MetricCard label="Bruto omzet incl. btw" value={formatEuro(data.grossRevenueInclVatCents)} />
+      <MetricCard label="Creditfacturen incl. btw" value={formatEuro(data.creditNoteAmountCents)} />
       <MetricCard label="Terugbetaald incl. btw" value={formatEuro(data.refundInclVatCents)} attention={data.refundInclVatCents > 0} />
       <MetricCard label="Netto omzet incl. btw" value={formatEuro(data.netRevenueInclVatCents)} />
       <MetricCard label="Netto omzet excl. btw" value={formatEuro(data.netRevenueExclVatCents)} />

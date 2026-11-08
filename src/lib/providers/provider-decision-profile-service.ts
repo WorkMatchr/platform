@@ -7,7 +7,7 @@ import { requireProviderSectionEditable } from './provider-dossier-access'
 import { ProviderServiceError } from './provider-errors'
 import { parseProviderInput, reserveProviderVersion } from './provider-write-utils'
 import { presentProviderServiceTerm } from './provider-taxonomy-presentation'
-import { hasEffectiveProEntitlement } from '@/lib/finance/pro-entitlement-service'
+import { findEffectiveProSubscription } from '@/lib/finance/pro-entitlement-service'
 
 const profileSelectionsSchema = z.object({
   expectedProfileVersion: z.int().positive(),
@@ -56,7 +56,7 @@ export function deriveProviderProfileCompleteness(source: CompletenessSource): P
 }
 
 async function loadProfile(transaction: Prisma.TransactionClient, providerProfileId: string) {
-  return transaction.providerProfile.findUnique({
+  const profile = await transaction.providerProfile.findUnique({
     where: { id: providerProfileId },
     select: {
       id: true,
@@ -89,13 +89,6 @@ async function loadProfile(transaction: Prisma.TransactionClient, providerProfil
           sectors: {
             orderBy: { createdAt: 'asc' },
             select: { sector: { select: { name: true } } },
-          },
-          professionalSubscription: {
-            select: {
-              status: true,
-              cancelAtPeriodEnd: true,
-              cancellationEffectiveAt: true,
-            },
           },
         },
       },
@@ -198,6 +191,9 @@ async function loadProfile(transaction: Prisma.TransactionClient, providerProfil
       },
     },
   })
+  if (!profile) return null
+  const entitlement = await findEffectiveProSubscription(transaction, profile.organization.id)
+  return { ...profile, hasActivePro: Boolean(entitlement) }
 }
 
 function claimStatus(revision: {
@@ -252,7 +248,6 @@ function presentProfile(profile: NonNullable<Awaited<ReturnType<typeof loadProfi
         statusLabel: claimStatus(revision),
       }))),
     })),
-    hasActivePro: hasEffectiveProEntitlement(profile.organization.professionalSubscription),
     completeness,
   }
 }

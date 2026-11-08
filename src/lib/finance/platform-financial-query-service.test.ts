@@ -64,7 +64,7 @@ describe('platform financiële queryservice', () => {
     const { listPlatformFinancialRefunds } = await import('./platform-financial-query-service')
     await listPlatformFinancialRefunds('platform-admin')
     expect(prisma.financialRefund.findMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({ purchase: undefined }),
+      where: expect.objectContaining({ OR: undefined }),
       take: 25,
     }))
   })

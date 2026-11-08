@@ -28,6 +28,7 @@
     "test:db:account-lifecycle": "tsx scripts/test-account-lifecycle-database.ts",
     "test:db:credits": "tsx scripts/test-credit-wallet-database.ts",
     "test:db:finance": "tsx scripts/test-financial-chain-database.ts",
+    "test:db:finance-p1": "tsx scripts/test-p1-financial-database.ts",
     "test:db:assignment-notifications": "tsx scripts/test-assignment-notifications-database.ts",
     "test:db:marketplace": "tsx scripts/test-marketplace-database.ts",
     "test:db:marketplace-concurrency": "tsx scripts/test-marketplace-concurrency-database.ts",

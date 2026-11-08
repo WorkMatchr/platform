@@ -1,10 +1,10 @@
-import { resolveProInvoiceSource } from './pro-payment-source'
 import 'server-only'
 
 import { Prisma } from '@/generated/prisma/client'
 import { MOLLIE_SANDBOX_ACCEPTANCE_PRICING } from './mollie-test-pricing'
 import { WORKMATCHR_SELLER } from './financial-contract'
 import { mirrorCreditNoteSnapshot } from './credit-note-snapshot'
+import { resolveProInvoiceSource } from './pro-payment-source'
 
 type Transaction = Prisma.TransactionClient
 
@@ -97,7 +97,7 @@ export function formatFinancialDocumentNumber(sequence: number, issuedAt: Date) 
   return `WM-${year.slice(-2)}${month}5${String(sequence).padStart(3, '0')}`
 }
 
-async function allocateInvoiceSequence(transaction: Transaction) {
+export async function allocateInvoiceSequence(transaction: Transaction) {
   await transaction.$queryRaw(Prisma.sql`SELECT pg_advisory_xact_lock(hashtextextended('financial-invoice-counter', 0))::text AS "lock"`)
   await transaction.$executeRaw(Prisma.sql`
     INSERT INTO "FinancialInvoiceCounter" ("id", "nextNumber", "updatedAt")
@@ -232,7 +232,7 @@ export async function issueCreditNoteForCompletedRefund(
     where: { id: refundId },
     include: { purchase: { include: { invoice: { include: { lines: true, vatSummaries: true } } } } },
   })
-  if (!refund || refund.status !== 'REFUNDED' || !refund.purchase.invoice) throw new Error('COMPLETED_REFUND_REQUIRED')
+  if (!refund || refund.status !== 'REFUNDED' || !refund.purchase?.invoice) throw new Error('COMPLETED_REFUND_REQUIRED')
   const original = refund.purchase.invoice
   if (refund.amountCents !== refund.purchase.amountInclVatCents || refund.amountCents !== original.amountInclVatCents
     || refund.credits !== original.credits || original.organizationId !== refund.purchase.organizationId) {
