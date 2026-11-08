@@ -1,4 +1,5 @@
 import type { Prisma } from '@/generated/prisma/client'
+import { currentMarketplaceProjections } from '@/lib/providers/provider-marketplace-onboarding'
 import { MarketplaceServiceError } from './marketplace-errors'
 
 export async function requireClientMarketplaceManager(
@@ -44,6 +45,16 @@ export async function requireProviderMarketplaceAccess(
   })
   if (!membership?.organization.providerProfile) throw new MarketplaceServiceError('ACCESS_DENIED')
   return { ...membership, providerProfile: membership.organization.providerProfile }
+}
+
+export async function requireProviderParticipationAccess(
+  tx: Prisma.TransactionClient, userId: string, organizationId: string, write = true,
+) {
+  const access = await requireProviderMarketplaceAccess(tx, userId, organizationId, write)
+  const current = await currentMarketplaceProjections(tx, [{ providerProfileId: access.providerProfile.id, organizationId }], new Date())
+  const projectionId = current.get(access.providerProfile.id)
+  if (!current.has(access.providerProfile.id)) throw new MarketplaceServiceError('PROFILE_ONBOARDING_REQUIRED')
+  return { ...access, projectionId }
 }
 
 export async function requireMarketplacePlatformAdmin(transaction: Prisma.TransactionClient, userId: string) {

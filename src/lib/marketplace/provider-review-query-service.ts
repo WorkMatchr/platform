@@ -1,9 +1,17 @@
+import { positiveQualificationReason } from '@/lib/providers/provider-requirements'
+import { requireProviderPlatformPermission } from '@/lib/providers/provider-authorization'
 import { getPrisma } from '@/lib/prisma'
 import { getMarketplacePlatformDashboard } from './dashboard-query-service'
 import { MarketplaceServiceError } from './marketplace-errors'
 
 export async function getProviderReviewWorklist(userId: string) {
   const platform = await getMarketplacePlatformDashboard(userId)
+  const awaitingQualification = platform.actorPermissions.includes('PROVIDER_APPROVER')
+    ? await getPrisma().providerDossierSubmission.findMany({
+        where: { status: 'APPROVED', providerProfile: { archivedAt: null, OR: [{ platformQualificationStatus: 'NOT_ASSESSED' }, { selectabilityStatus: { not: 'SELECTABLE' } }] } },
+        orderBy: { submittedAt: 'desc' }, distinct: ['providerProfileId'], take: 50,
+        select: { providerProfileId: true, providerProfile: { select: { organization: { select: { name: true } } } } },
+      }) : []
   const submissions = await getPrisma().providerDossierSubmission.findMany({
     where: { status: { in: ['SUBMITTED', 'UNDER_REVIEW', 'ADDITIONAL_INFORMATION_REQUIRED'] } },
     orderBy: { updatedAt: 'asc' },
@@ -17,7 +25,7 @@ export async function getProviderReviewWorklist(userId: string) {
       reviewCases: { where: { status: 'OPEN' }, take: 1, select: { id: true } },
     },
   })
-  return { permissions: platform.actorPermissions, submissions }
+  return { permissions: platform.actorPermissions, submissions, awaitingQualification }
 }
 
 export async function getProviderReviewDetail(userId: string, providerProfileId: string) {
@@ -61,4 +69,18 @@ export async function getProviderReviewDetail(userId: string, providerProfileId:
   })
   if (!provider) throw new MarketplaceServiceError('NOT_FOUND')
   return { permissions: platform.actorPermissions, provider, submission: provider.dossierSubmissions[0] ?? null }
+}
+
+export async function getQualificationManagement(actorId: string, providerProfileId: string) {
+  return getPrisma().$transaction(async tx => {
+    await requireProviderPlatformPermission(tx, actorId, 'PROVIDER_APPROVER', providerProfileId)
+    const capabilities = await tx.providerCapability.findMany({ where: { providerProfileId, status: 'ACTIVE' },
+      orderBy: { id: 'asc' }, select: { id: true, revisions: { orderBy: { version: 'desc' }, take: 1,
+        select: { serviceTerm: { select: { label: true } }, specialismTerm: { select: { label: true } } } } } })
+    const reasons = await tx.providerReasonCode.findMany({ where: positiveQualificationReason, orderBy: { label: 'asc' }, select: { code: true, label: true } })
+    const decisions = await tx.providerQualificationDecision.findMany({ where: { providerProfileId }, orderBy: [{ validFrom: 'desc' }, { createdAt: 'desc' }], take: 20,
+      select: { id: true, scope: true, outcome: true, capabilityId: true, reasonCode: true, validFrom: true, validUntil: true,
+        reviewedByUser: { select: { displayName: true, id: true } }, approvedByUser: { select: { displayName: true, id: true } } } })
+    return { capabilities, reasons, decisions }
+  })
 }

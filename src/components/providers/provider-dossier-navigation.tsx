@@ -8,7 +8,7 @@ export type ProviderNavigationItem = {
   label: string
   href: string
   matchPaths?: string[]
-  status: 'Gereed' | 'Actie nodig' | 'Verlopen' | 'Niet gestart'
+  status?: 'Gereed' | 'Actie nodig' | 'Verlopen' | 'Niet gestart'
 }
 
 export function isProviderNavigationItemCurrent(item: ProviderNavigationItem, pathname: string) {
@@ -32,7 +32,7 @@ export function ProviderDossierNavigation({ items }: { items: ProviderNavigation
               className={`block rounded-control border px-4 py-3 transition-colors ${current ? 'border-brand-primary bg-brand-primary-subtle text-brand-dark' : 'border-border bg-surface hover:border-brand-primary'}`}
             >
               <span className="block font-semibold">{item.label}</span>
-              <span className="mt-1 block text-sm text-text-secondary">Status: {item.status}</span>
+              {item.status && <span className="mt-1 block text-sm text-text-secondary">Status: {item.status}</span>}
             </Link>
           </li>
         )

@@ -32,6 +32,16 @@ jobs:
       - name: Restricted metadata helper and read-only diagnostic SQL
         run: node scripts/test-show-db-tree-privileges.mjs
       - run: npm run db:generate
+      - name: Pro renewals, rollback and concurrent webhook replay
+        env:
+          PG_SERVICE: ${{ job.services.postgres.id }}
+        run: |
+          test -n "$PG_SERVICE"
+          db_name="workmatchr_b4_$(openssl rand -hex 6)"
+          docker exec "$PG_SERVICE" createdb -U postgres "$db_name"
+          export DATABASE_URL="${DATABASE_URL%/*}/$db_name"
+          npm run db:deploy
+          npx --no-install tsx scripts/finance-tests/pro-renewal-regression.ts
       - name: Real-client TLS and isolated WP17B target validation
         run: npx vitest run src/lib/maintenance/database-client-tls.test.ts scripts/wp17b-acceptance-target.test.ts --maxWorkers=2
       - name: Closed database diagnostic and maintenance authentication
@@ -52,6 +62,14 @@ jobs:
           npx tsx scripts/test-contact-reconciliation-database.ts
           npx tsx scripts/test-contact-audit-retention-database.ts
           npx tsx scripts/test-contact-decision-register-database.ts
+      - name: Provider offering, matching and tenant isolation
+        run: |
+          npx vitest run provider matching aanbiedersdossier --maxWorkers=2
+          dbname="workmatchr_b4_$(openssl rand -hex 6)"
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "CREATE DATABASE $dbname"
+          export DATABASE_URL="${DATABASE_URL%/*}/$dbname"
+          npm run db:deploy
+          npx tsx scripts/test-provider-offering-database.ts
       - name: Financial concurrency and tenant authorization
         run: npm run test:db:finance && npm run test:db:marketplace-concurrency
       - name: Versioned Compliance and personal learning history

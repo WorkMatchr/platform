@@ -1,5 +1,6 @@
+import { externalAssignmentId } from '@/lib/assignments/assignment-identity'
 import { getPrisma } from '@/lib/prisma'
-import { requireProviderMarketplaceAccess } from './marketplace-authorization'
+import { requireProviderMarketplaceAccess, requireProviderParticipationAccess } from './marketplace-authorization'
 import { purchaseAssignmentInTransaction, releaseCreditReservationInTransaction } from './credit-service'
 import { readInvitationPrice } from './assignment-pricing'
 import { MarketplaceServiceError } from './marketplace-errors'
@@ -17,15 +18,16 @@ export async function acceptProviderInvitation(input: {
   for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
       return await getPrisma().$transaction(async (transaction) => {
-    const access = await requireProviderMarketplaceAccess(transaction, input.actorUserId, input.providerOrganizationId, true)
-    const repeated = await transaction.providerParticipation.findUnique({ where: { idempotencyKey: input.idempotencyKey }, include: { creditReservation: true } })
+    const access = await requireProviderParticipationAccess(transaction, input.actorUserId, input.providerOrganizationId)
+    const repeated = await transaction.providerParticipation.findUnique({ where: { idempotencyKey: input.idempotencyKey }, include: { creditReservation: true, invitation: { select: { matchCandidate: { select: { projectionId: true } } } } } })
     if (repeated) {
-      if (repeated.providerOrganizationId !== input.providerOrganizationId || repeated.invitationId !== input.invitationId) throw new MarketplaceServiceError('ACCESS_DENIED')
+      if ((access.projectionId && repeated.invitation.matchCandidate.projectionId !== access.projectionId) || repeated.providerOrganizationId !== input.providerOrganizationId || repeated.invitationId !== input.invitationId) throw new MarketplaceServiceError('ACCESS_DENIED')
       return repeated
     }
     const invitationIdentity = await transaction.providerInvitation.findFirst({
       where: {
         id: input.invitationId,
+        matchCandidate: { projectionId: access.projectionId },
         providerOrganizationId: input.providerOrganizationId,
         providerProfileId: access.providerProfile.id,
       },
@@ -35,7 +37,7 @@ export async function acceptProviderInvitation(input: {
     await transaction.$queryRaw`SELECT "id" FROM "Assignment" WHERE "id" = ${invitationIdentity.assignmentId}::uuid FOR UPDATE`
     const invitation = await transaction.providerInvitation.findFirst({
       where: { id: input.invitationId, providerOrganizationId: input.providerOrganizationId, providerProfileId: access.providerProfile.id },
-      include: { assignment: { select: { clientOrganizationId: true, status: true, maxSelections: true } }, participation: { include: { creditReservation: true } } },
+      include: { assignment: { select: { id: true, requestId: true, clientOrganizationId: true, status: true, maxSelections: true } }, participation: { include: { creditReservation: true } } },
     })
     if (!invitation) throw new MarketplaceServiceError('NOT_FOUND')
     if (invitation.participation) return invitation.participation
@@ -82,7 +84,7 @@ export async function acceptProviderInvitation(input: {
         providerProfileId: invitation.providerProfileId,
       },
     })
-    const clientRecipients = await activeOrganizationRecipients(transaction, invitation.assignment.clientOrganizationId)
+    const clientRecipients = await activeOrganizationRecipients(transaction, invitation.assignment.clientOrganizationId, 'CLIENT_MANAGERS')
     for (const recipientUserId of clientRecipients) {
       await createMarketplaceNotification(transaction, {
         recipientUserId,
@@ -90,7 +92,7 @@ export async function acceptProviderInvitation(input: {
         type: 'PROVIDER_ACCEPTED',
         title: 'Aanbieder neemt deel',
         body: 'Een uitgenodigde aanbieder heeft de uitnodiging geaccepteerd.',
-        targetRoute: `/opdrachten/${invitation.assignmentId}/offertes`,
+        targetRoute: `/opdrachten/${externalAssignmentId(invitation.assignment)}/offertes`,
       })
     }
     await writeMarketplaceAudit(transaction, {
@@ -111,12 +113,18 @@ export async function acceptProviderInvitation(input: {
       if (!error || typeof error !== 'object' || !('code' in error) || error.code !== 'P2034') throw error
     }
   }
-  const existing = await getPrisma().providerParticipation.findFirst({
-    where: { invitationId: input.invitationId, providerOrganizationId: input.providerOrganizationId },
-    include: { creditReservation: true },
-  })
-  if (existing) return existing
-  throw new MarketplaceServiceError('CONFLICT')
+  // A concurrent acceptance may have committed during the retries. Re-read
+  // under the same tenant and projection checks as the purchase itself.
+  return getPrisma().$transaction(async transaction => {
+    const access = await requireProviderParticipationAccess(transaction, input.actorUserId, input.providerOrganizationId)
+    const existing = await transaction.providerParticipation.findFirst({
+      where: { invitationId: input.invitationId, providerOrganizationId: input.providerOrganizationId,
+        providerProfileId: access.providerProfile.id, invitation: { matchCandidate: { projectionId: access.projectionId } } },
+      include: { creditReservation: true },
+    })
+    if (!existing) throw new MarketplaceServiceError('CONFLICT')
+    return existing
+  }, { isolationLevel: 'RepeatableRead' })
 }
 
 export async function declineProviderInvitation(input: {
@@ -138,7 +146,7 @@ export async function declineProviderInvitation(input: {
     }
     const invitation = await transaction.providerInvitation.findFirst({
       where: { id: input.invitationId, providerOrganizationId: input.providerOrganizationId, providerProfileId: access.providerProfile.id, status: 'INVITED' },
-      include: { assignment: { select: { clientOrganizationId: true } } },
+      include: { assignment: { select: { id: true, requestId: true, clientOrganizationId: true } } },
     })
     if (!invitation) throw new MarketplaceServiceError('NOT_FOUND')
     if (invitation.deadlineAt <= now) throw new MarketplaceServiceError('DEADLINE_PASSED')
@@ -151,14 +159,14 @@ export async function declineProviderInvitation(input: {
       where: { assignmentId: invitation.assignmentId, providerProfileId: invitation.providerProfileId, status: 'INVITED' },
       data: { status: 'DECLINED' },
     })
-    for (const recipientUserId of await activeOrganizationRecipients(transaction, invitation.assignment.clientOrganizationId)) {
+    for (const recipientUserId of await activeOrganizationRecipients(transaction, invitation.assignment.clientOrganizationId, 'CLIENT_MANAGERS')) {
       await createMarketplaceNotification(transaction, {
         recipientUserId,
         eventId: `INVITATION_DECLINED:${invitation.id}`,
         type: 'PROVIDER_DECLINED',
         title: 'Aanbieder neemt niet deel',
         body: 'Een uitgenodigde aanbieder heeft de uitnodiging afgewezen.',
-        targetRoute: `/opdrachten/${invitation.assignmentId}/selectie`,
+        targetRoute: `/opdrachten/${externalAssignmentId(invitation.assignment)}/selectie`,
       })
     }
     return writeMarketplaceAudit(transaction, {

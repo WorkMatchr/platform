@@ -51,7 +51,7 @@ export async function getProviderDossierDashboard(userId: string, providerProfil
       viewerRole: access.membershipRole,
       organization: provider.organization,
       profileVersion: provider.version,
-      statuses: presentProviderStatuses({ readinessStatus: provider.readinessStatus, qualificationStatus: provider.platformQualificationStatus, selectabilityStatus: provider.selectabilityStatus, submissionStatus: latestSubmission?.status ?? null }),
+      statuses: presentProviderStatuses({ dossierComplete: completeness.isSubmittable, qualificationStatus: provider.platformQualificationStatus, selectabilityStatus: provider.selectabilityStatus, submissionStatus: latestSubmission?.status ?? null }),
       completeness,
       openActions: buildProviderDossierOpenActions(completeness, activeSubmission?.status ?? null, findings.filter((finding) => finding.resolutions.length === 0).map((finding) => finding.section)),
       expiryWarnings: completeness.warnings,

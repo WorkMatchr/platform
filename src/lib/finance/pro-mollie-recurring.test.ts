@@ -67,7 +67,7 @@ const transaction = {
   professionalSubscriptionFirstPaymentAttempt: {
     create: mocks.firstPaymentAttemptCreate,
   },
-  professionalSubscriptionPayment: { upsert: mocks.paymentUpsert },
+  professionalSubscriptionPayment: { createMany: mocks.paymentUpsert, findUniqueOrThrow: vi.fn(async () => ({ id: '50000000-0000-4000-8000-000000000001' })), findMany: vi.fn(async () => []), findFirst: vi.fn(async () => null) },
   financialEvent: { upsert: mocks.eventUpsert, create: mocks.eventCreate, count: mocks.eventCount },
   organizationMembership: { findMany: vi.fn(async () => []) },
   marketplaceNotification: { upsert: vi.fn() },
@@ -148,6 +148,10 @@ function gateway(): MollieGateway {
 }
 
 function recurringPayment(status: MolliePaymentSnapshot['status']): MolliePaymentSnapshot {
+  const start = new Date('2026-08-09T12:00:00Z')
+  current.firstPaymentPurchase = { ...purchase, kind: 'PRO_SUBSCRIPTION', organizationId, molliePaymentId: 'tr_first',
+    invoice: { purchaseId, organizationId, documentType: 'INVOICE', snapshotVersion: 2, molliePaymentId: 'tr_first',
+      amountInclVatCents: 5929, servicePeriodStart: start, servicePeriodEnd: new Date('2026-09-09T12:00:00Z') } }
   return {
     id: 'tr_recurring',
     status,
@@ -645,10 +649,10 @@ describe('WorkMatchr Pro via first payment en recurring mandate', () => {
 
     expect(current).toMatchObject({ status: 'ACTIVE', pastDueAt: null, retryCount: 0 })
     expect(mocks.paymentUpsert).toHaveBeenCalledWith(expect.objectContaining({
-      create: expect.objectContaining({ amountInclVatCents: 5_929, status: 'PAID',
+      data: expect.objectContaining({ amountInclVatCents: 5_929, status: 'PAID',
         periodStart: new Date('2026-09-09T12:00:00Z'), periodEnd: new Date('2026-10-09T12:00:00Z') }),
     }))
-    expect(mocks.invoice).toHaveBeenCalledWith(transaction, '50000000-0000-4000-8000-000000000001', expect.any(Date))
+    expect(mocks.invoice).toHaveBeenCalledWith(transaction, '50000000-0000-4000-8000-000000000001')
   })
 
   it('zet een mislukte maandincasso op PAST_DUE zonder credits te wijzigen', async () => {

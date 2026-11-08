@@ -6,14 +6,14 @@ import { Section } from '@/components/layout/section'
 import { ActionForm, SubmitButton as Button } from '@/components/ui/action-form'
 import { Heading } from '@/components/ui/heading'
 import { getProviderParticipationForQuote } from '@/lib/marketplace/dashboard-query-service'
-import { requireOrganizationMembership } from '@/lib/organizations/organization-authorization'
+import { requireMarketplacePageMembership } from '@/lib/providers/provider-marketplace-page'
 
 export const metadata: Metadata = { title: 'Offerte opstellen | WorkMatchr' }
 
 export default async function NewQuotePage({ searchParams }: { searchParams: Promise<{ deelname?: string }> }) {
   const participationId = (await searchParams).deelname
   if (!participationId) notFound()
-  const { user, activeMembership } = await requireOrganizationMembership(undefined, `/offertes/nieuw?deelname=${participationId}`)
+  const { user, activeMembership } = await requireMarketplacePageMembership(undefined, `/offertes/nieuw?deelname=${participationId}`)
   const result = await getProviderParticipationForQuote(user.id, activeMembership.organization.id, participationId).catch(() => null)
   if (!result) notFound()
   const current = result.participation.quote?.currentVersion

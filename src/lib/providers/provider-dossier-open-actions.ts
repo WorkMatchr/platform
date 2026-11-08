@@ -16,7 +16,7 @@ export type ProviderDossierOpenAction = {
 
 type ActionDetails = Omit<ProviderDossierOpenAction, 'code' | 'priority' | 'section' | 'blocking'>
 
-const details: Record<ProviderDossierSection, ActionDetails> = {
+export const providerSectionDetails: Record<ProviderDossierSection, ActionDetails> = {
   ORGANIZATION: {
     title: 'Vul de bedrijfsgegevens aan',
     description: 'Controleer de juridische en algemene organisatiegegevens.',
@@ -28,34 +28,34 @@ const details: Record<ProviderDossierSection, ActionDetails> = {
   CAPABILITIES: {
     title: 'Voeg een dienst toe',
     description: 'Leg minimaal één passende dienst of specialisme vast.',
-    routeHint: '/aanbiedersdossier/diensten',
+    routeHint: '/aanbiedersdossier/diensten-en-ervaring#diensten',
     pageTitle: 'Diensten en specialismen',
-    groupLabel: 'Diensten en ervaring',
+    groupLabel: 'Mijn dienstverlening',
     groupHref: '/aanbiedersdossier/diensten-en-ervaring',
   },
   SECTOR_EXPERIENCE: {
     title: 'Vul sectorervaring in',
     description: 'Leg vast in welke sectoren de organisatie ervaring heeft.',
-    routeHint: '/aanbiedersdossier/sectorervaring',
+    routeHint: '/aanbiedersdossier/diensten-en-ervaring#sectoren',
     pageTitle: 'Sectorervaring',
-    groupLabel: 'Diensten en ervaring',
+    groupLabel: 'Mijn dienstverlening',
     groupHref: '/aanbiedersdossier/diensten-en-ervaring',
   },
   WORK_AREA: {
     title: 'Vul het werkgebied in',
     description: 'Kies provincies, landelijk of inzet op afstand.',
-    routeHint: '/aanbiedersdossier/werkgebied',
+    routeHint: '/aanbiedersdossier/diensten-en-ervaring#werkgebied',
     pageTitle: 'Werkgebied',
-    groupLabel: 'Werkgebied',
-    groupHref: '/aanbiedersdossier/werkgebied',
+    groupLabel: 'Mijn dienstverlening',
+    groupHref: '/aanbiedersdossier/diensten-en-ervaring',
   },
   CAPACITY: {
     title: 'Capaciteitsgegevens zijn niet meer nodig',
     description: 'Historische capaciteitsgegevens blijven alleen voor bestaande dossierhistorie bewaard.',
-    routeHint: '/aanbiedersdossier/werkgebied',
+    routeHint: '/aanbiedersdossier/diensten-en-ervaring#werkgebied',
     pageTitle: 'Werkgebied',
-    groupLabel: 'Werkgebied',
-    groupHref: '/aanbiedersdossier/werkgebied',
+    groupLabel: 'Mijn dienstverlening',
+    groupHref: '/aanbiedersdossier/diensten-en-ervaring',
   },
   PROFESSIONALS: {
     title: 'Voeg een professional toe',
@@ -129,7 +129,8 @@ export function buildProviderDossierOpenActions(
     code: reason.code,
     priority: 300 - index,
     section: reason.section,
-    ...details[reason.section],
+    ...providerSectionDetails[reason.section],
+    ...(reason.code === 'SERVICE_DELIVERY_REQUIRED' ? { description: 'Kies een dienst en geef aan hoe u die levert.' } : {}),
     blocking: true,
   }))
 
@@ -141,10 +142,10 @@ export function buildProviderDossierOpenActions(
         section,
         title: 'Los het herstelpunt op',
         description: 'De beoordelaar vraagt aanvullende informatie voor dit onderdeel.',
-        routeHint: details[section].routeHint,
-        pageTitle: details[section].pageTitle,
-        groupLabel: details[section].groupLabel,
-        groupHref: details[section].groupHref,
+        routeHint: providerSectionDetails[section].routeHint,
+        pageTitle: providerSectionDetails[section].pageTitle,
+        groupLabel: providerSectionDetails[section].groupLabel,
+        groupHref: providerSectionDetails[section].groupHref,
         blocking: true,
       })
     }

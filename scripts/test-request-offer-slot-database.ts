@@ -75,6 +75,9 @@ async function main() {
   const prisma = getPrisma()
 
   try {
+    await (await import('./fixtures/reviewed-marketplace-provider')).reviewSelectableRequestFixtures(prisma)
+    const reviewedAt = Date.now()
+    const scenarioTime = (minutes: number) => new Date(reviewedAt + minutes * 60_000)
     const clientMembership =
       await prisma.organizationMembership.findFirstOrThrow({
         where: {
@@ -242,7 +245,7 @@ async function main() {
 
     const sequentialRequest = await publishTestRequest(
       1,
-      new Date('2026-08-01T12:00:00Z'),
+      scenarioTime(0),
     )
     const sequentialActors = await actorsForRequest(
       sequentialRequest.id,
@@ -271,17 +274,17 @@ async function main() {
     const first = await offerSlotService.claimRequestOfferSlot({
       actor: sequentialActors[0]!,
       requestId: sequentialRequest.id,
-      at: new Date('2026-08-01T12:10:00Z'),
+      at: scenarioTime(10),
     })
     const second = await offerSlotService.claimRequestOfferSlot({
       actor: sequentialActors[1]!,
       requestId: sequentialRequest.id,
-      at: new Date('2026-08-01T12:11:00Z'),
+      at: scenarioTime(11),
     })
     const third = await offerSlotService.claimRequestOfferSlot({
       actor: sequentialActors[2]!,
       requestId: sequentialRequest.id,
-      at: new Date('2026-08-01T12:12:00Z'),
+      at: scenarioTime(12),
     })
     assert.deepEqual(
       [first.slotNumber, second.slotNumber, third.slotNumber],
@@ -461,7 +464,7 @@ async function main() {
         reason: 'NO_LONGER_NEEDED',
         confirmed: true,
       },
-      at: new Date('2026-08-01T12:30:00Z'),
+      at: scenarioTime(30),
     })
     assert.equal(withdrawal.refundedCredits, 69)
     assert.equal(withdrawal.idempotent, false)
@@ -474,7 +477,7 @@ async function main() {
           reason: 'NO_LONGER_NEEDED',
           confirmed: true,
         },
-        at: new Date('2026-08-01T12:31:00Z'),
+        at: scenarioTime(31),
       })
     assert.equal(repeatedWithdrawal.refundedCredits, 69)
     assert.equal(repeatedWithdrawal.idempotent, true)
@@ -517,7 +520,7 @@ async function main() {
 
     const concurrentRequest = await publishTestRequest(
       2,
-      new Date('2026-08-01T13:00:00Z'),
+      scenarioTime(60),
     )
     const concurrentActors = (
       await actorsForRequest(concurrentRequest.id)
@@ -554,7 +557,7 @@ async function main() {
         offerSlotService.claimRequestOfferSlot({
           actor,
           requestId: concurrentRequest.id,
-          at: new Date('2026-08-01T13:10:00Z'),
+          at: scenarioTime(70),
         }),
       ),
     )
@@ -615,7 +618,7 @@ async function main() {
       where: { id: concurrentRequest.id },
       data: {
         status: 'CANCELLED',
-        archivedAt: new Date('2026-08-01T13:20:00Z'),
+        archivedAt: scenarioTime(80),
       },
     })
     const unclaimedActor = concurrentActors.find(

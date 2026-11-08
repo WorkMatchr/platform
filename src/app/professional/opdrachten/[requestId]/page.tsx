@@ -5,7 +5,7 @@ import { Container } from '@/components/layout/container'
 import { Section } from '@/components/layout/section'
 import { ActionForm, SubmitButton as Button } from '@/components/ui/action-form'
 import { LinkButton } from '@/components/ui/link-button'
-import { requireOrganizationMembership } from '@/lib/organizations/organization-authorization'
+import { requireMarketplacePageMembership } from '@/lib/providers/provider-marketplace-page'
 import {
   requestInterestStatusLabels,
 } from '@/lib/requests/request-interest-contract'
@@ -35,7 +35,7 @@ export default async function ProviderRequestDetailPage({
   const { requestId } = await params
   const { result } = await searchParams
   const { user, activeMembership } =
-    await requireOrganizationMembership(
+    await requireMarketplacePageMembership(
       undefined,
       `/professional/opdrachten/${requestId}`,
     )

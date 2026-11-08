@@ -74,41 +74,13 @@ describe('provider-onboardinginterface', () => {
     expect(service).toContain('new Set(input.capabilityIds)')
   })
 
-  it('borgt het groepsoverzicht, de sectorervaringstitel, actieve hoofdgroep en inhoudshoogte van de actiekaart', () => {
-    const overview = readFileSync(route('diensten-en-ervaring'), 'utf8')
-    const services = readFileSync(route('diensten'), 'utf8')
-    const sector = readFileSync(route('sectorervaring'), 'utf8')
-    const layout = readFileSync(join(root, 'src', 'app', 'aanbiedersdossier', 'layout.tsx'), 'utf8')
-    const openActions = readFileSync(
-      join(root, 'src', 'components', 'providers', 'provider-open-actions.tsx'),
-      'utf8',
-    )
-    expect(overview).toContain("href: '/aanbiedersdossier/diensten'")
-    expect(overview).toContain("href: '/aanbiedersdossier/sectorervaring'")
-    expect(services).toContain('title="Diensten en specialismen"')
-    expect(services).toContain('groupLabel="Diensten en ervaring"')
-    expect(sector).toContain('title="Sectorervaring"')
-    expect(sector).toContain('groupLabel="Diensten en ervaring"')
-    expect(layout).toContain("href: '/aanbiedersdossier/diensten-en-ervaring'")
+  it('houdt oude bladwijzers en de actieve hoofdgroep van het gecombineerde formulier intact', () => {
+    expect(readFileSync(route('diensten'), 'utf8')).toContain("redirect('/aanbiedersdossier/diensten-en-ervaring#diensten')")
+    expect(readFileSync(route('sectorervaring'), 'utf8')).toContain("redirect('/aanbiedersdossier/diensten-en-ervaring#sectoren')")
+    expect(readFileSync(route('diensten-en-ervaring'), 'utf8')).toContain('requireProviderDossierContext')
+    const layout = readFileSync(join(root, 'src/app/aanbiedersdossier/layout.tsx'), 'utf8')
     expect(layout).toContain("'/aanbiedersdossier/diensten-en-ervaring', '/aanbiedersdossier/diensten', '/aanbiedersdossier/sectorervaring'")
-    expect(openActions).toContain('grid items-start gap-6')
-  })
-
-  it('toont het dienstformulier vóór een compacte responsive dienstenlijst zonder competentieveld', () => {
-    const services = readFileSync(route('diensten'), 'utf8')
-    const form = readFileSync(join(root, 'src', 'components', 'providers', 'provider-capability-form.tsx'), 'utf8')
-    const actions = readFileSync(join(root, 'src', 'app', 'aanbiedersdossier', 'actions.ts'), 'utf8')
-    expect(services).toContain('lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]')
-    expect(services).toContain('grid min-w-0 items-start gap-6')
-    expect(services).toContain('min-w-0')
-    expect(services).toContain('sm:flex-row sm:items-center sm:justify-between')
-    expect(services).toContain('shrink-0 sm:self-center')
-    expect(services.indexOf('Dienst toevoegen')).toBeLessThan(services.indexOf('Uw diensten'))
-    expect(form).toContain('name="serviceTermId"')
-    expect(form).toContain('name="specialismTermId"')
-    expect(form).toContain('name="deliveryModes"')
-    expect(form).not.toMatch(/competencyTermId|Competentie|competencies/)
-    expect(actions.slice(actions.indexOf('const capabilitySchema'), actions.indexOf('const sectorSchema'))).not.toContain('competencyTermId')
+    expect(readFileSync(join(root, 'src/components/providers/provider-open-actions.tsx'), 'utf8')).toContain('grid items-start gap-6')
   })
 
   it('gebruikt uitsluitend de zichtbare term Dienstverlenersprofiel', () => {
@@ -151,8 +123,10 @@ describe('provider-onboardinginterface', () => {
     expect(editorRead).not.toContain('$transaction')
     expect(options).not.toContain('$transaction')
     expect(page.indexOf('await getProviderDossierDashboard')).toBeLessThan(page.indexOf('await Promise.all'))
-    expect(page).toContain('lg:max-h-[calc(100vh-3rem)]')
-    expect(page).toContain('lg:overflow-y-auto')
+    const shell = readFileSync(join(root, 'src/components/layout/account-workspace-shell.tsx'), 'utf8')
+    expect(shell).toContain('sidebarExtra={moveOrganizationToSidebar')
+    expect(shell).toContain('Mijn organisatie')
+    expect(page).not.toContain('aria-label="Organisatiegegevens"')
     expect(page).toContain('Lidmaatschappen')
     expect(page).toContain('Registraties')
   })

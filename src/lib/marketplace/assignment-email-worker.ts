@@ -1,3 +1,4 @@
+import { blockedOnboardingProfiles } from '@/lib/providers/provider-marketplace-onboarding'
 import { readInvitationPrice } from './assignment-pricing'
 import { createHash, randomUUID } from 'node:crypto'
 import { getPrisma } from '@/lib/prisma'
@@ -58,9 +59,14 @@ export async function deliverAssignmentEmails(input: { limit?: number; now?: () 
         providerProfile: { selectabilityStatus: 'SELECTABLE', lifecycleStatus: 'QUALIFIED', archivedAt: null, blocks: { none: { release: null } } },
         providerOrganization: { status: 'ACTIVE', organizationType: { in: ['PROVIDER', 'BOTH'] } },
         assignment: { status: { in: ['MATCHING', 'AWAITING_RESPONSES', 'IN_SELECTION'] }, archivedAt: null, clientOrganization: { status: 'ACTIVE' } },
-      }, select: { providerOrganizationId: true, snapshot: true, creditCost: true },
+      }, select: { providerProfileId: true, providerOrganizationId: true, matchCandidate: { select: { projectionId: true } }, snapshot: true, creditCost: true },
     })
     if (!invitation) { await finish('FAILED', 'INVITATION_NOT_DELIVERABLE'); continue }
+    const blocked = await db.$transaction(tx => blockedOnboardingProfiles(tx, [{
+      providerProfileId: invitation.providerProfileId, organizationId: invitation.providerOrganizationId,
+      projectionId: invitation.matchCandidate.projectionId,
+    }], now))
+    if (blocked.size) { await finish('FAILED', 'INVITATION_NOT_DELIVERABLE'); continue }
     const recipient = await db.organizationMembership.findFirst({
       where: { organizationId: invitation.providerOrganizationId, userId: job.recipientUserId, status: 'ACTIVE',
         user: { status: 'ACTIVE', emailVerified: true, accountType: 'PROFESSIONAL', assignmentEmailEnabled: true } },

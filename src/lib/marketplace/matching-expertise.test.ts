@@ -14,6 +14,19 @@ it('keeps primary and explicit additional matches distinct', () => {
   expect(evaluateRequestedExpertises(assignment, [], provider('middelbare-veiligheidskundige')).status).toBe('EXCLUDED')
   expect(evaluateRequestedExpertises(assignment, ['middelbare-veiligheidskundige'], provider('bedrijfsarts')).status).toBe('EXCLUDED')
 })
+it('explains a geographic exclusion using the offered additional expertise', () => {
+  const additional = 'middelbare-veiligheidskundige'
+  const result = evaluateRequestedExpertises(assignment, [additional], {
+    ...provider(additional), workAreas: [{ regionCode: 'NOORD_HOLLAND' }],
+  })
+  expect(result.status).toBe('EXCLUDED')
+  expect(result.normalizedScore).toBeNull()
+  expect(result.exclusionReasons).toEqual(['WERKGEBIED_PAST_NIET'])
+  expect(result.factors.at(-1)).toMatchObject({
+    key: 'ADDITIONAL_EXPERTISE', matched: false, explanation: additional,
+  })
+})
+
 it('presents canonical identity and additional references without internal ID or client data', () => {
   const preview = toAssignmentPreview({ id: 'internal', requestId: 'external', title: 'Veilig werken', primarySpecialism: { name: 'HVK' },
     specialisms: [{ isRequired: true, specialism: { name: 'HVK' } }, { isRequired: false, specialism: { name: 'MVK' } }],

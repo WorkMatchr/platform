@@ -12,7 +12,7 @@ export type WorkspaceChapter = { label: string; items: readonly { href: string; 
 export function WorkspaceShell({ children, chapters, active, identity, homeHref, homeLabel, brandLabel, headerActions, sidebarExtra, banner, contentId, navigationLabel, footerLabel }: {
   children: ReactNode
   chapters: readonly WorkspaceChapter[]
-  active?: { chapter: WorkspaceChapter; item: WorkspaceChapter['items'][number] }
+  active?: { chapter: WorkspaceChapter; item: WorkspaceChapter['items'][number]; exact?: boolean }
   identity: ReactNode
   homeHref: string
   homeLabel: string
@@ -48,7 +48,7 @@ export function WorkspaceShell({ children, chapters, active, identity, homeHref,
         <div className="mb-4 border-b border-border pb-3">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-secondary">{chapter.label}</p>
           <nav aria-label={`Binnen ${chapter.label}`} className="flex flex-wrap gap-1">
-            {chapter.items.map((item) => <Link key={item.href} href={item.href} aria-current={active?.item.href === item.href ? 'page' : undefined} className={`inline-flex min-h-10 items-center px-3 py-2 text-sm ${focus} ${active?.item.href === item.href ? 'bg-brand-primary-subtle font-semibold text-brand-dark' : 'text-text-secondary hover:bg-surface'}`}>{item.label}</Link>)}
+            {chapter.items.map((item) => <Link key={item.href} href={item.href} aria-current={active?.item.href === item.href ? (active.exact === false ? 'location' : 'page') : undefined} className={`inline-flex min-h-10 items-center px-3 py-2 text-sm ${focus} ${active?.item.href === item.href ? 'bg-brand-primary-subtle font-semibold text-brand-dark' : 'text-text-secondary hover:bg-surface'}`}>{item.label}</Link>)}
           </nav>
         </div>
         <div className={styles.content}>{children}</div>

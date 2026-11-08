@@ -67,6 +67,9 @@ async function main() {
   const prisma = getPrisma()
 
   try {
+    await (await import('./fixtures/reviewed-marketplace-provider')).reviewSelectableRequestFixtures(prisma)
+    const reviewedAt = Date.now()
+    const scenarioTime = (minutes: number) => new Date(reviewedAt + minutes * 60_000)
     const clientMembership =
       await prisma.organizationMembership.findFirstOrThrow({
         where: {
@@ -91,7 +94,7 @@ async function main() {
         subject: 'Risico-inventarisatie en -evaluatie',
         status: 'COMPLETED',
         currentVersionNumber: 1,
-        completedAt: new Date('2026-07-30T08:00:00Z'),
+        completedAt: scenarioTime(-2940),
       },
     })
     await prisma.adviceDossierVersion.create({
@@ -146,7 +149,7 @@ async function main() {
         requestedStart: 'IN_CONSULTATION',
         notes: '',
       },
-      at: new Date('2026-08-01T09:00:00Z'),
+      at: scenarioTime(0),
     })
     const eligible =
       await prisma.requestEligibleProvider.findMany({
@@ -299,7 +302,7 @@ async function main() {
         interestService.registerRequestInterest({
           actor,
           requestId: request.id,
-          at: new Date('2026-08-01T09:15:00Z'),
+          at: scenarioTime(15),
         }),
       ),
     )
@@ -326,12 +329,12 @@ async function main() {
     await interestService.withdrawRequestInterest({
       actor,
       requestId: request.id,
-      at: new Date('2026-08-01T09:20:00Z'),
+      at: scenarioTime(20),
     })
     await interestService.registerRequestInterest({
       actor,
       requestId: request.id,
-      at: new Date('2026-08-01T09:25:00Z'),
+      at: scenarioTime(25),
     })
     interest = await prisma.requestInterest.findFirstOrThrow({
       where: { id: interest.id },
@@ -384,23 +387,22 @@ async function main() {
     await interestService.withdrawRequestInterest({
       actor,
       requestId: request.id,
-      at: new Date('2026-08-01T09:30:00Z'),
+      at: scenarioTime(30),
     })
     await prisma.request.update({
       where: { id: request.id },
       data: {
         status: 'CANCELLED',
-        archivedAt: new Date('2026-07-30T09:31:00Z'),
+        archivedAt: scenarioTime(-2849),
       },
     })
-    await expectCode(
-      () =>
-        interestService.registerRequestInterest({
-          actor,
-          requestId: request.id,
-        }),
-      'INVALID_STATUS',
-    )
+    // The first supplier lost selectability above. Authorization is checked before request status.
+    await expectCode(() => interestService.registerRequestInterest({ actor, requestId: request.id }), 'ACCESS_DENIED')
+    const other = eligible.find(row => row.providerOrganizationId !== actor.organizationId)!
+    await expectCode(() => interestService.registerRequestInterest({
+      actor: { userId: other.providerOrganization.memberships[0]!.userId, organizationId: other.providerOrganizationId },
+      requestId: request.id,
+    }), 'INVALID_STATUS')
 
     assert.equal(await prisma.providerInvitation.count(), 0)
     assert.equal(await prisma.providerParticipation.count(), 0)
