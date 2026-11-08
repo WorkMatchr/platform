@@ -47,6 +47,8 @@ jobs:
       - name: Closed database diagnostic and maintenance authentication
         run: npx vitest run src/lib/prisma.test.ts scripts/wp17-acceptance-preflight.test.ts src/lib/maintenance/preview-isolation.test.ts src/lib/maintenance/database-identity.test.ts src/lib/maintenance/database-identity-auth.test.ts src/app/api/maintenance/database-identity/route.test.ts src/lib/finance/financial-maintenance-auth.test.ts src/app/api/maintenance/finance/route.test.ts src/app/api/maintenance/marketplace/route.test.ts src/lib/learning/learning-runtime-gate.test.ts src/app/featuregate-isolation.test.ts --maxWorkers=2
       - name: Assignment scope decisions, revision races and dispatch
+        env:
+          BETTER_AUTH_URL: http://127.0.0.1:3197
         run: |
           npx vitest run src/lib/marketplace/assignment-scope.test.ts --maxWorkers=1
           dbname="workmatchr_scope_$(openssl rand -hex 6)"

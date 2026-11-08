@@ -173,6 +173,7 @@ export async function readAssignmentScope(tx: Tx, id: string, service: string, n
     revision: a.publishedVersion,
     configId: config?.id ?? null,
     serviceTermId: row?.serviceTerm.id ?? null,
+    reviewEventId:audit?.id??null,
     policyVersion: config?.version ?? null,
     catalogVersion: row?.serviceTerm.version.version ?? null,
     reviewable: !blocked && decision.reviewable && !audit,

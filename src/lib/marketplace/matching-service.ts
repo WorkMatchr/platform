@@ -154,6 +154,7 @@ export async function runMarketplaceMatching(input: {
     requireWithin(scope)
     const assignmentSnapshot = {
       scopeService:scope.service, scopeDigest:scope.digest,
+      scopePolicy:{catalogVersion:scope.catalogVersion,configId:scope.configId,version:scope.policyVersion,serviceTermId:scope.serviceTermId,reviewEventId:scope.reviewEventId,decision:'BINNEN_SCOPE'},
       assignmentId: assignment.id,
       assignmentVersion: assignment.version,
       publishedVersion: assignment.publishedVersion,

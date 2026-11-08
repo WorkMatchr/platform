@@ -93,6 +93,8 @@ export async function deliverAssignmentEmails(input: { limit?: number; now?: () 
       const result = await db.$transaction(async tx=>{
         await tx.$queryRaw`SELECT a.id FROM "Assignment" a JOIN "ProviderInvitation" i ON i."assignmentId"=a.id WHERE i.id=${parsed.data.invitationId}::uuid FOR UPDATE OF a`
         await tx.$queryRaw`SELECT p.id FROM "ProviderInvitation" i JOIN "ProviderProfile" p ON p.id=i."providerProfileId" WHERE i.id=${parsed.data.invitationId}::uuid FOR SHARE OF i,p`
+        // Policy publication is infrequent; keep the effective set stable until dispatch.
+        await tx.$executeRaw`LOCK TABLE "ProviderCapabilityRequirementConfig", "ProviderCapabilityQualificationRequirement", "ProviderTaxonomyVersion", "ProviderTaxonomyTerm" IN SHARE MODE`
         const live=await tx.providerInvitation.findUniqueOrThrow({where:{id:parsed.data.invitationId},include:{matchRun:{select:{assignmentSnapshot:true}},matchCandidate:{select:{projectionId:true}}}})
         const at=clock()
         const scope=await checkRunScope(tx,live.assignmentId,live.matchRun.assignmentSnapshot,at)
