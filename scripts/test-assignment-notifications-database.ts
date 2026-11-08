@@ -54,7 +54,7 @@ try {
   const { toAssignmentPreview } = await import('../src/lib/marketplace/assignment-purchase-preview')
   const { resolveAssignmentPrice } = await import('../src/lib/marketplace/assignment-pricing')
   const { getProviderInvitationDetail } = await import('../src/lib/marketplace/dashboard-query-service')
-  const { acceptProviderInvitation } = await import('../src/lib/marketplace/participation-service')
+  const { acceptProviderInvitation, declineProviderInvitation } = await import('../src/lib/marketplace/participation-service')
   const { deliverAssignmentEmails } = await import('../src/lib/marketplace/assignment-email-worker')
   const { AuthEmailDeliveryError } = await import('../src/lib/email')
   db = getPrisma()
@@ -206,7 +206,7 @@ try {
   const additionalProfile = await db.providerProfile.create({ data: { organizationId: additionalOrg.id, lifecycleStatus: 'QUALIFIED', readinessStatus: 'READY', platformQualificationStatus: 'QUALIFIED', selectabilityStatus: 'SELECTABLE' } })
   const additionalReadiness = await db.providerReadinessAssessment.create({ data: { providerProfileId: additionalProfile.id, status: 'READY', reasonCodes: [], sourceVersion: 1, checksum: 'd'.repeat(64) } })
   const additionalSelectability = await db.providerSelectabilityAssessment.create({ data: { providerProfileId: additionalProfile.id, readinessAssessmentId: additionalReadiness.id, status: 'SELECTABLE', reasonCodes: [], sourceVersion: 1, checksum: 'e'.repeat(64) } })
-  await db.trustedProviderProjection.create({ data: { providerProfileId: additionalProfile.id, readinessAssessmentId: additionalReadiness.id, selectabilityAssessmentId: additionalSelectability.id, schemaVersion: 2, canonicalizationVersion: 'WORKMATCHR-CJ-1', sourceVersion: 1, payload: { capabilities: [{ serviceCode: 'ABSENCE_REINTEGRATION', specialismCode: 'casemanager-verzuim', deliveryModes: ['ON_SITE', 'REMOTE'] }], sectors: [], workAreas: [{ regionCode: 'NATIONWIDE' }] }, sha256: 'f'.repeat(64), validFrom: new Date(Date.now() - 60_000), validUntil: new Date(Date.now() + 7 * 86_400_000) } })
+  await db.trustedProviderProjection.create({ data: { providerProfileId: additionalProfile.id, readinessAssessmentId: additionalReadiness.id, selectabilityAssessmentId: additionalSelectability.id, schemaVersion: 2, canonicalizationVersion: 'WORKMATCHR-CJ-1', sourceVersion: 1, payload: { capabilities: [{ serviceCode: 'ABSENCE_REINTEGRATION', specialismCode: 'casemanager-verzuim', deliveryModes: ['ON_SITE', 'REMOTE'] }], sectors: [], workAreas: [{ regionCode: 'NOORD_HOLLAND' }] }, sha256: 'f'.repeat(64), validFrom: new Date(Date.now() - 60_000), validUntil: new Date(Date.now() + 7 * 86_400_000) } })
   const { publishSimpleAdviceRequest } = await import('../src/lib/requests/simple-advice-service')
   const viewer = { userId: client.id, organizationId: clientOrg.id, organizationRole: 'OWNER' as const, isPlatformAdministrator: false }
   const basic = { routeChoice: 'KNOWS_EXPERTISE', requestedExpertise: 'BEDRIJFSARTS', additionalExpertises: ['CASEMANAGER_VERZUIM'], requestTitle: 'Fictieve vertrouwelijke klantnaam', requestDescription: 'Wij willen advies over gezondheid op het werk.', desiredOutcome: 'ADVICE', workLocationMode: 'REMOTE', desiredStartMode: 'WITHIN_ONE_MONTH' }
@@ -243,9 +243,25 @@ try {
     assert.equal(await db.notificationOutbox.count({ where: { eventId: `INVITATION:${invitation.id}`, recipientUserId: recipient.id, status: 'SENT' } }), 1)
   }
   assert.equal((await deliverAssignmentEmails({ send: async () => { throw new Error('Duplicate delivery') } })).claimed, 0)
+  const clientMember = await db.user.create({ data: {
+    email: `${randomUUID()}@example.invalid`, status: 'ACTIVE', accountType: 'CLIENT',
+    memberships: { create: { organizationId: clientOrg.id, status: 'ACTIVE', role: 'MEMBER' } },
+  } })
   const invitationInput = { actorUserId: user.id, providerOrganizationId: providerOrg.id, invitationId: primaryInvitation.id, idempotencyKey: randomUUID() }
   const [participation, replay] = await Promise.all([acceptProviderInvitation(invitationInput), acceptProviderInvitation(invitationInput)])
   assert.equal(participation.id, replay.id)
+  const acceptedNotice = await db.marketplaceNotification.findFirstOrThrow({
+    where: { recipientUserId: client.id, eventId: `PARTICIPATION:${participation.id}` },
+  })
+  assert.equal(acceptedNotice.targetRoute, `/opdrachten/${published.id}/offertes`)
+  await declineProviderInvitation({
+    actorUserId: additionalUser.id, providerOrganizationId: additionalInvitation.providerOrganizationId,
+    invitationId: additionalInvitation.id, reason: 'Synthetische afwijzing wegens planning.', idempotencyKey: randomUUID(),
+  })
+  const declinedNotice = await db.marketplaceNotification.findFirstOrThrow({
+    where: { recipientUserId: client.id, eventId: `INVITATION_DECLINED:${additionalInvitation.id}` },
+  })
+  assert.equal(declinedNotice.targetRoute, `/opdrachten/${published.id}/selectie`)
   await assert.rejects(acceptProviderInvitation({ ...invitationInput, actorUserId: additionalUser.id }), { code: 'ACCESS_DENIED' })
   assert.equal(await db.creditTransaction.count({ where: { referenceId: participation.id, type: 'PARTICIPATION_PAYMENT' } }), 1)
   assert.equal((await db.creditAccount.findUniqueOrThrow({ where: { organizationId: providerOrg.id } })).availableBalance, 100 - initial.invitation.creditCost - primaryInvitation.creditCost)
@@ -266,6 +282,35 @@ try {
   assert.equal(await db.marketplaceAuditEvent.count({ where: { action: 'QUOTE_SUBMITTED', entityId: quote.id } }), 1)
   assert.deepEqual(await db.adviceDossierVersion.findUniqueOrThrow({ where: { id: immutableVersion.id } }), immutableVersion)
   console.log('WP16 PASS: purchased credits -> canonical dossier/request/handoff -> PRIMARY/ADDITIONAL -> fake SENT -> one unlock -> quote/award/replay -> immutable snapshot; cross-tenant denied')
+  const location = await db.organizationLocation.create({ data: {
+    organizationId: clientOrg.id, label: 'Testlocatie', addressLine: 'Testweg 1', postalCode: '0000 AA',
+    city: 'Utrecht', province: 'Utrecht', countryCode: 'NL',
+  } })
+  const physical = await publishSimpleAdviceRequest(viewer, randomUUID(), {
+    ...basic, workLocationMode: 'ORGANIZATION', organizationLocationId: location.id,
+  })
+  const regionalRun = await runMarketplaceMatching({ actorUserId: client.id, organizationId: clientOrg.id,
+    assignmentId: physical.id, expectedAssignmentVersion: 1, idempotencyKey: randomUUID() })
+  const excluded = regionalRun.candidates.find(candidate => candidate.providerProfileId === additionalProfile.id)
+  assert.ok(excluded)
+  assert.equal(excluded.status, 'EXCLUDED')
+  assert.equal(excluded.rank, null)
+  assert.equal(excluded.normalizedScore, null)
+  assert.deepEqual(regionalRun.invitations.map(invitation => invitation.providerOrganizationId), [providerOrg.id])
+  assert.equal(await db.providerParticipation.count({ where: { assignmentId: regionalRun.assignmentId, providerOrganizationId: additionalOrg.id } }), 0)
+  console.log('PASS Utrecht: landelijke dekking geselecteerd, aanvullende deskundigheid zonder regionale dekking uitgesloten')
+  const { getMarketplaceNotifications } = await import('../src/lib/marketplace/notification-service')
+  const oldLink = `/opdrachten/${handoff.assignmentId}/offertes`
+  const historical = await db.marketplaceNotification.create({ data: {
+    recipientUserId: client.id, eventId: randomUUID(), type: 'PROVIDER_ACCEPTED', title: 'Testmelding',
+    body: 'Eerdere synthetische deelname.', targetRoute: oldLink, idempotencyKey: randomUUID(),
+  } })
+  assert.equal((await getMarketplaceNotifications(client.id)).find(notice => notice.id === historical.id)?.targetRoute, acceptedNotice.targetRoute)
+  assert.ok(!(await getMarketplaceNotifications(additionalUser.id)).some(notice => notice.id === historical.id))
+  assert.equal((await db.marketplaceNotification.findUniqueOrThrow({ where: { id: historical.id } })).targetRoute, oldLink)
+  assert.equal(await db.marketplaceNotification.count({ where: {
+    recipientUserId: clientMember.id, type: { in: ['PROVIDER_ACCEPTED', 'PROVIDER_DECLINED', 'QUOTE_SUBMITTED'] },
+  } }), 0)
   const beforeUnknown = await db.providerInvitation.count()
   const unknown = await publishSimpleAdviceRequest(viewer, randomUUID(), { ...basic, routeChoice: 'NEEDS_TOPIC', requestedExpertise: null, additionalExpertises: [], helpTopic: 'UNKNOWN' })
   await assert.rejects(runMarketplaceMatching({ actorUserId: client.id, organizationId: clientOrg.id, assignmentId: unknown.id, expectedAssignmentVersion: 1, idempotencyKey: randomUUID() }))

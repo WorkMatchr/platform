@@ -3,6 +3,9 @@ import { createTrustedProviderProjection } from '../src/lib/providers/trusted-pr
 import { currentMarketplaceProjections } from '../src/lib/providers/provider-marketplace-onboarding'
 import { requireProviderParticipationAccess } from '../src/lib/marketplace/marketplace-authorization'
 import { getProviderInvitationDetail } from '../src/lib/marketplace/dashboard-query-service'
+import { randomUUID } from 'node:crypto'
+import { acceptProviderInvitation } from '../src/lib/marketplace/participation-service'
+import { saveQuoteDraft, submitQuote } from '../src/lib/marketplace/quote-service'
 import assert from 'node:assert/strict'
 import type { PrismaClient, ProviderQualificationOutcome } from '../src/generated/prisma/client'
 import { recordProviderQualificationDecision } from '../src/lib/providers/provider-qualification-service'
@@ -105,7 +108,45 @@ export async function verifyProviderQualification(db: PrismaClient, serviceTermI
   await selectable()
   const original = await project()
   assert.equal((await access()).projectionId, original.id)
+  const client = await db.organization.create({ data: { name: 'Test opdrachtgever schorsing', organizationType: 'CLIENT', status: 'ACTIVE' } })
+  const assignment = await db.assignment.create({ data: {
+    clientOrganizationId: client.id, createdByUserId: reviewer.id, title: 'Test schorsing', description: 'Synthetische opdracht.',
+  } })
+  await db.$transaction(async tx => {
+    const publishedAt = new Date()
+    await tx.assignmentRevision.create({ data: { assignmentId: assignment.id, version: 1, title: assignment.title, description: assignment.description,
+      locationType: 'UNKNOWN', allowsRemoteWork: false, changedByUserId: reviewer.id } })
+    await tx.assignment.update({ where: { id: assignment.id }, data: { status: 'OPEN', publishedAt, publishedByUserId: reviewer.id, publishedVersion: 1 } })
+    await tx.assignmentStatusHistory.create({ data: { assignmentId: assignment.id, fromStatus: 'READY_FOR_REVIEW', toStatus: 'OPEN',
+      changedByUserId: reviewer.id, reason: 'Synthetische publicatie.', createdAt: publishedAt } })
+    await tx.assignment.update({ where: { id: assignment.id }, data: { status: 'AWAITING_RESPONSES' } })
+  })
+  const run = await db.marketplaceMatchRun.create({ data: { assignmentId: assignment.id, assignmentVersion: 1, engineVersion: 'test',
+    modelVersion: 'test', ruleVersion: 'test', taxonomyVersion: 'test', startedByUserId: reviewer.id, idempotencyKey: randomUUID(),
+    confidenceLevel: 'HOOG', confidenceReasons: [], assignmentSnapshot: {}, inputChecksum: checksum } })
+  const selected = await db.marketplaceMatchCandidate.create({ data: { matchRunId: run.id, providerProfileId, projectionId: original.id,
+    status: 'SELECTED', rank: 1, normalizedScore: 10000, scoreNumerator: 1, scoreDenominator: 1, exclusionReasons: [], explanation: {}, providerSnapshot: {}, snapshotChecksum: checksum } })
+  const invitation = await db.providerInvitation.create({ data: { assignmentId: assignment.id, matchRunId: run.id, matchCandidateId: selected.id,
+    providerProfileId, providerOrganizationId: c.org.id, creditCost: 25, deadlineAt: future, snapshot: {}, snapshotChecksum: checksum, idempotencyKey: randomUUID() } })
+  const wallet = await db.creditAccount.create({ data: { organizationId: c.org.id } })
+  await db.creditTransaction.create({ data: { creditAccountId: wallet.id, type: 'ADMIN_GRANT', amount: 100, totalDelta: 100, reservedDelta: 0,
+    balanceAfter: 100, reason: 'Synthetisch beginsaldo', createdByUserId: reviewer.id, idempotencyKey: randomUUID() } })
+  const actor = { actorUserId: owner.id, providerOrganizationId: c.org.id }
+  const purchase = { ...actor, invitationId: invitation.id, idempotencyKey: randomUUID() }
+  const detail = () => getProviderInvitationDetail(owner.id, c.org.id, invitation.id)
+  assert.equal((await detail()).invitation.canPurchase, true)
+  const participation = await acceptProviderInvitation(purchase)
+  const edit = { ...actor, participationId: participation.id, expectedQuoteVersion: 0,
+    content: { priceCents: 10000, priceExplanation: 'Synthetische prijs.', approach: 'Een synthetisch plan van aanpak.', planning: 'Binnen een maand.' } }
+  const draft = await saveQuoteDraft(edit)
   await change('SUSPENDED')
+  const denied = { code: 'PROFILE_ONBOARDING_REQUIRED' }
+  await assert.rejects(detail(), denied)
+  await assert.rejects(acceptProviderInvitation(purchase), denied)
+  await assert.rejects(saveQuoteDraft({ ...edit, expectedQuoteVersion: draft.version }), denied)
+  await assert.rejects(submitQuote({ ...actor, quoteId: draft.id, expectedQuoteVersion: draft.version, idempotencyKey: randomUUID() }), denied)
+  assert.equal((await db.quote.findUniqueOrThrow({ where: { id: draft.id } })).status, 'DRAFT')
+  assert.equal(await db.creditTransaction.count({ where: { referenceId: participation.id } }), 1)
   assert.ok(await db.trustedProviderProjectionInvalidation.findUnique({ where: { projectionId: original.id } }))
   await ready()
   assert.equal((await calculateProviderSelectability(providerProfileId)).status, 'NOT_SELECTABLE')
@@ -118,6 +159,9 @@ export async function verifyProviderQualification(db: PrismaClient, serviceTermI
   const restored = await project()
   assert.notEqual(restored.id, original.id)
   assert.equal((await access()).projectionId, restored.id)
+  await assert.rejects(detail(), { code: 'NOT_FOUND' })
+  await assert.rejects(acceptProviderInvitation(purchase), { code: 'ACCESS_DENIED' })
+  console.log('PASS paid invitation and draft locked during service suspension, one debit and old invitation stays closed after restoration')
   assert.equal((await db.$transaction(tx => currentMarketplaceProjections(tx, [{ ...candidate, projectionId: original.id }], new Date()))).size, 0)
 
   // Race first issuance for a fresh revision, not just reuse of an existing projection.

@@ -125,7 +125,7 @@ export async function awardMarketplaceQuote(input: {
       select: { id: true, providerOrganizationId: true, status: true },
     })
     for (const providerQuote of providerQuotes) {
-      const recipients = await activeOrganizationRecipients(transaction, providerQuote.providerOrganizationId)
+      const recipients = await activeOrganizationRecipients(transaction, providerQuote.providerOrganizationId, 'PROVIDER_MEMBERS')
       for (const recipientUserId of recipients) {
         const awarded = providerQuote.id === quote.id
         await createMarketplaceNotification(transaction, {

@@ -6,6 +6,7 @@ export type MatchingAssignmentFacts = {
   capabilityCode: string
   sectorCode: string | null
   regionCode: string | null
+  requiresPhysicalPresence?: boolean
   allowsRemoteWork: boolean
 }
 
@@ -38,16 +39,22 @@ export function evaluateMatchingCandidate(
     (capability) => capability.serviceCode === assignment.capabilityCode || capability.specialismCode === assignment.capabilityCode,
   )
   const regionMatch =
-    assignment.regionCode === null ||
     provider.workAreas.some((area) => area.regionCode === assignment.regionCode || area.regionCode === 'NATIONWIDE')
+  const onSiteMatch = regionMatch && matchingCapabilities.some(capability =>
+    capability.deliveryModes.includes('ON_SITE') || capability.deliveryModes.includes('HYBRID'),
+  )
   const remoteMatch =
-    !assignment.allowsRemoteWork ||
     matchingCapabilities.some((capability) => capability.deliveryModes.includes('REMOTE')) ||
     provider.workAreas.some((area) => area.regionCode === 'REMOTE')
 
+  const requiresPhysicalPresence = assignment.requiresPhysicalPresence ?? !assignment.allowsRemoteWork
+  const hybridMatch = matchingCapabilities.some(capability => capability.deliveryModes.includes('HYBRID'))
+  const deliveryMatched = (!requiresPhysicalPresence || onSiteMatch) &&
+    (!assignment.allowsRemoteWork || remoteMatch || (requiresPhysicalPresence && hybridMatch))
+
   const exclusionReasons: string[] = []
   if (matchingCapabilities.length === 0) exclusionReasons.push('DIENST_NIET_AANGEBODEN')
-  if (!regionMatch && !remoteMatch) exclusionReasons.push('WERKGEBIED_PAST_NIET')
+  if (!deliveryMatched) exclusionReasons.push('WERKGEBIED_PAST_NIET')
   if (exclusionReasons.length > 0) {
     return {
       status: 'EXCLUDED',
@@ -79,7 +86,6 @@ export function evaluateMatchingCandidate(
       explanation: matched ? 'Er is gecontroleerde ervaring in uw sector.' : 'Er is geen gecontroleerde sectorspecifieke ervaring.',
     })
   }
-  const deliveryMatched = assignment.allowsRemoteWork ? remoteMatch : regionMatch
   factors.push({
     key: 'LEVERINGSVOORKEUR',
     matched: deliveryMatched,
