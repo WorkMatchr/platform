@@ -78,19 +78,24 @@ async function loadCandidateSource(transaction: Transaction, providerProfileId: 
     },
   })
   if (!provider) throw new ProviderServiceError('NOT_FOUND')
+  const snapshotOrganization = {
+    id: provider.organization.id, name: provider.organization.name, tradeName: provider.organization.tradeName,
+    chamberOfCommerceNumber: provider.organization.chamberOfCommerceNumber,
+    organizationType: provider.organization.organizationType, status: provider.organization.status,
+  }
   const complete = provider.capabilities.length > 0 && provider.capabilities.every((item) => item.revisions.length === 1)
     && provider.sectorExperiences.length > 0 && provider.sectorExperiences.every((item) => item.revisions.length === 1)
     && provider.workAreas.length > 0 && provider.workAreas.every((item) => item.revisions.length === 1)
-    && provider.professionals.length > 0
-    && provider.professionals.every((item) => item.identityRevisions.length === 1 && item.qualifications.length > 0 && item.qualifications.every((qualification) => qualification.revisions.length === 1))
-    && provider.insurances.length > 0 && provider.insurances.every((item) => item.revisions.length === 1)
-    && provider.termAcceptances.length > 0
+    && provider.professionals.every(item => item.identityRevisions.length === 1 &&
+      item.qualifications.every(qualification => qualification.revisions.length === 1))
+    && provider.organizationQualifications.every(item => item.revisions.length === 1)
+    && provider.insurances.every(item => item.revisions.length === 1)
   if (!complete) throw new ProviderServiceError('CONFIGURATION_INCOMPLETE')
 
   const evidence = provider.evidenceDocuments.flatMap((document) => document.revisions).sort((a, b) => a.id.localeCompare(b.id))
   const payload: CanonicalValue = {
     provider: { id: provider.id, sourceProfileVersion: provider.version, lifecycleStatus: provider.lifecycleStatus, readinessStatus: provider.readinessStatus, platformQualificationStatus: provider.platformQualificationStatus, selectabilityStatus: provider.selectabilityStatus },
-    organization: provider.organization,
+    organization: snapshotOrganization,
     capabilities: provider.capabilities.map((item) => ({ recordId: item.id, ...item.revisions[0]!, validFrom: iso(item.revisions[0]!.validFrom), validUntil: iso(item.revisions[0]!.validUntil) })).sort((a, b) => a.recordId.localeCompare(b.recordId)),
     sectorExperiences: provider.sectorExperiences.map((item) => ({ recordId: item.id, ...item.revisions[0]! })).sort((a, b) => a.recordId.localeCompare(b.recordId)),
     workAreas: provider.workAreas.map((item) => ({ recordId: item.id, ...item.revisions[0]! })).sort((a, b) => a.recordId.localeCompare(b.recordId)),
@@ -109,6 +114,41 @@ async function loadCandidateSource(transaction: Transaction, providerProfileId: 
     evidenceRevisionIds: evidence.map((item) => item.id),
   }
   return { provider, evidence, payload, sourceReferences }
+}
+
+// Qualification decisions advance the profile version; only decisions linked to
+// this immutable submission may account for the gap since dossier approval.
+export async function currentApprovedQualificationBasis(transaction: Transaction, providerProfileId: string, candidateId: string) {
+  const submission = await transaction.providerDossierSubmission.findFirst({
+    where: { providerProfileId }, orderBy: [{ submittedAt: 'desc' }, { id: 'desc' }],
+    select: { id: true, status: true, currentCandidate: true,
+      reviewCases: { where: { candidateId, status: 'CLOSED' }, orderBy: { closedAt: 'desc' }, take: 1,
+        select: { id: true, openedByUserId: true, closedByUserId: true } },
+      history: { where: { candidateId, toStatus: 'APPROVED' }, take: 1, select: { actorUserId: true } },
+    },
+  })
+  const candidate = submission?.currentCandidate
+  const review = submission?.reviewCases[0]
+  if (!candidate || candidate.id !== candidateId || candidate.providerProfileId !== providerProfileId ||
+      candidate.submissionId !== submission.id || submission.status !== 'APPROVED' || !review ||
+      !review.closedByUserId || review.closedByUserId !== submission.history[0]?.actorUserId ||
+      review.openedByUserId === review.closedByUserId) return null
+  const recorded = candidate.canonicalPayload as { provider?: CanonicalValue }
+  if (!recorded?.provider) return null
+  try {
+    const live = await loadCandidateSource(transaction, providerProfileId)
+    const bound = await transaction.providerQualificationDecision.count({ where: { providerProfileId, dossierCandidateId: candidateId, dossierSubmissionId: submission.id } })
+    if (live.provider.version !== candidate.sourceProfileVersion + bound) return null
+    // The source documents, organization and revision identities must still
+    // match. Workflow statuses in the snapshot describe the original submission.
+    const checksum = hashProviderJson({ ...live.payload, provider: recorded.provider }).sha256
+    if (checksum !== candidate.sha256) return null
+    return { dossierCandidateId: candidate.id, dossierSubmissionId: submission.id,
+      dossierReviewCaseId: review.id, submitterId: candidate.createdByUserId, reviewerUserId: review.openedByUserId, candidateChecksum: checksum }
+  } catch (error) {
+    if (error instanceof ProviderServiceError && ['CONFIGURATION_INCOMPLETE', 'NOT_FOUND'].includes(error.code)) return null
+    throw error
+  }
 }
 
 async function createCandidate(transaction: Transaction, actorUserId: string, providerProfileId: string, submissionId: string) {
@@ -137,7 +177,7 @@ export async function createProviderDossierSubmission(userId: string, providerPr
     const repeated = await transaction.providerDossierSubmission.findUnique({ where: { providerProfileId_idempotencyKey: { providerProfileId, idempotencyKey: input.idempotencyKey } }, select: { id: true, status: true, version: true, currentCandidateId: true } })
     if (repeated) return repeated
     if (await transaction.providerDossierSubmission.count({ where: { providerProfileId, status: { in: ACTIVE_STATUSES } } })) throw new ProviderServiceError('ACTIVE_SUBMISSION_EXISTS')
-    const completeness = await assessProviderDossierCompletenessInTransaction(transaction, providerProfileId)
+    const completeness = await assessProviderDossierCompletenessInTransaction(transaction, providerProfileId, new Date())
     if (!completeness.isSubmittable || completeness.sourceProfileVersion !== input.expectedProfileVersion) throw new ProviderServiceError('DOSSIER_NOT_SUBMITTABLE')
     const submission = await transaction.providerDossierSubmission.create({ data: { providerProfileId, submittedByUserId: userId, idempotencyKey: input.idempotencyKey }, select: { id: true } })
     const candidate = await createCandidate(transaction, userId, providerProfileId, submission.id)
@@ -225,7 +265,7 @@ export async function resubmitProviderDossier(userId: string, providerProfileId:
     if (repeated) return { submissionId: input.submissionId, status: 'SUBMITTED' as const, version: repeated.submission.version, candidate: repeated.candidate }
     const submission = await transaction.providerDossierSubmission.findFirst({ where: { id: input.submissionId, providerProfileId, status: 'ADDITIONAL_INFORMATION_REQUIRED', version: input.expectedVersion }, select: { id: true, reviewCases: { orderBy: { openedAt: 'desc' }, take: 1, select: { findings: { select: { id: true, resolutions: { take: 1, orderBy: { version: 'desc' }, select: { version: true, response: true } } } } } } } })
     if (!submission || submission.reviewCases.length === 0 || submission.reviewCases[0]!.findings.some((finding) => finding.resolutions.length === 0)) throw new ProviderServiceError('FINDING_NOT_RESOLVED')
-    const completeness = await assessProviderDossierCompletenessInTransaction(transaction, providerProfileId)
+    const completeness = await assessProviderDossierCompletenessInTransaction(transaction, providerProfileId, new Date())
     if (!completeness.isSubmittable) throw new ProviderServiceError('DOSSIER_NOT_SUBMITTABLE')
     const candidate = await createCandidate(transaction, userId, providerProfileId, submission.id)
     for (const finding of submission.reviewCases[0]!.findings) {

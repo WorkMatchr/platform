@@ -107,8 +107,7 @@ export function buildHeaderViewModel(
               ...(supportsProviderWork
                 ? [
                     { href: '/aanbiedersdossier', label: 'Dienstverlenersprofiel' },
-                    { href: '/aanbiedersdossier/professionals', label: 'Professionals' },
-                    { href: '/aanbiedersdossier/profiel', label: 'Kernexpertises en profiel' },
+                    { href: '/aanbiedersdossier/diensten-en-ervaring', label: 'Mijn dienstverlening' },
                   ]
                 : []),
             ],

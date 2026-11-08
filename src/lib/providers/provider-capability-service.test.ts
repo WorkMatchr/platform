@@ -21,8 +21,8 @@ const transactionClient = {
   providerTaxonomyTerm: { findFirst: mocks.termFind },
   providerCapability: { create: mocks.capabilityCreate },
   providerProfile: { updateMany: mocks.profileUpdateMany },
-  trustedProviderProjection: { findFirst: mocks.projectionFind },
-  trustedProviderProjectionInvalidation: { create: vi.fn() },
+  trustedProviderProjection: { findMany: mocks.projectionFind },
+  trustedProviderProjectionInvalidation: { createMany: vi.fn() },
 }
 
 beforeEach(() => {
@@ -32,7 +32,7 @@ beforeEach(() => {
   mocks.termFind.mockResolvedValue({ id: id('2') })
   mocks.capabilityCreate.mockResolvedValue({ id: id('3'), version: 1 })
   mocks.profileUpdateMany.mockResolvedValue({ count: 1 })
-  mocks.projectionFind.mockResolvedValue(null)
+  mocks.projectionFind.mockResolvedValue([])
 })
 
 describe('provider capability service', () => {

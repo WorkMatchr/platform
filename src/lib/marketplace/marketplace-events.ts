@@ -54,10 +54,18 @@ export async function enqueueMarketplaceEmail(
   })
 }
 
-export async function activeOrganizationRecipients(transaction: Transaction, organizationId: string) {
-  const memberships = await transaction.organizationMembership.findMany({
-    where: { organizationId, status: 'ACTIVE', user: { status: 'ACTIVE' } },
-    select: { userId: true },
-  })
+export async function activeOrganizationRecipients(
+  transaction: Transaction, organizationId: string, audience?: 'CLIENT_MANAGERS' | 'PROVIDER_MEMBERS',
+) {
+  const scope: Prisma.OrganizationMembershipWhereInput = { organizationId, status: 'ACTIVE', user: { status: 'ACTIVE' } }
+  if (audience === 'CLIENT_MANAGERS') {
+    scope.role = { in: ['OWNER', 'ADMIN'] }
+    scope.user = { status: 'ACTIVE', accountType: 'CLIENT' }
+    scope.organization = { status: 'ACTIVE', organizationType: 'CLIENT', systemKey: null }
+  } else if (audience === 'PROVIDER_MEMBERS') {
+    scope.user = { status: 'ACTIVE', accountType: 'PROFESSIONAL' }
+    scope.organization = { status: 'ACTIVE', organizationType: { in: ['PROVIDER', 'BOTH'] }, systemKey: null }
+  }
+  const memberships = await transaction.organizationMembership.findMany({ where: scope, select: { userId: true } })
   return memberships.map((membership) => membership.userId)
 }

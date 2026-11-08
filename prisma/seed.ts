@@ -1,3 +1,4 @@
+import { providerServiceTerms } from './provider-service-catalog'
 import 'dotenv/config'
 import { expertiseSpecialismSlugs } from '../src/lib/requests/expertise-specialism-reference'
 import { createHash } from 'node:crypto'
@@ -76,27 +77,7 @@ const certifications = [
 ] as const
 
 const providerTaxonomies = {
-  SERVICE: [
-    ['RISK_ASSESSMENT', 'RI&E'],
-    ['OCCUPATIONAL_SAFETY', 'Arbeidsveiligheid'],
-    ['ABSENCE_REINTEGRATION', 'Verzuim en re-integratie'],
-    ['OCCUPATIONAL_EXPERT_ADVICE', 'Arbeidsdeskundig advies'],
-    ['REINTEGRATION_FIRST_TRACK', 'Re-integratie eerste spoor'],
-    ['REINTEGRATION_SECOND_TRACK', 'Re-integratie tweede spoor'],
-    ['PMO', 'Preventief medisch onderzoek (PMO)'],
-    ['PAGO', 'Periodiek arbeidsgezondheidskundig onderzoek (PAGO)'],
-    ['OCCUPATIONAL_PHYSICIAN', 'Bedrijfsarts'],
-    ['OCCUPATIONAL_HEALTH_SERVICE', 'Arbodienstverlening'],
-    ['ERGONOMICS', 'Ergonomie'],
-    ['OCCUPATIONAL_HYGIENE', 'Arbeidshygiëne'],
-    ['MACHINERY_SAFETY', 'Machineveiligheid'],
-    ['INCIDENT_INVESTIGATION', 'Incidentonderzoek'],
-    ['EMERGENCY_RESPONSE', 'BHV en ontruiming'],
-    ['SAFETY_ADVICE', 'Veiligheidsadvies'],
-    ['IMPLEMENTATION_SUPPORT', 'Ondersteuning bij implementatie'],
-    ['AUDIT_AND_INSPECTION', 'Audit en inspectie'],
-    ['TRAINING', 'Opleiding en training'],
-  ],
+  SERVICE: providerServiceTerms,
   COMPETENCY: [
     ['RISK_ASSESSMENT_EXECUTION', 'Uitvoering risico-inventarisatie'],
     ['SAFETY_ADVISORY', 'Veiligheidsadvisering'],
@@ -160,6 +141,7 @@ const providerReasonCodes = [
   ['TERMS_NOT_CONFIGURED', 'TERMS', 'Voorwaarden zijn niet geconfigureerd'],
   ['INSURANCE_REQUIREMENTS_NOT_CONFIGURED', 'INSURANCE', 'Verzekeringsvereisten zijn niet geconfigureerd'],
   ['QUALIFICATION_REQUIREMENTS_NOT_CONFIGURED', 'QUALIFICATION', 'Kwalificatievereisten zijn niet geconfigureerd'],
+  ['QUALIFICATION_EVIDENCE_CONFIRMED', 'QUALIFICATION', 'Vereiste kwalificatiebewijzen gecontroleerd'],
   ['CAPACITY_STALE', 'READINESS', 'Capaciteitsgegevens zijn verlopen'],
   ['PROVIDER_BLOCKED', 'SELECTABILITY', 'Provider is geblokkeerd'],
 ] as const

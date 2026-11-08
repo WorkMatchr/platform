@@ -4,7 +4,7 @@ import type {
   RequestStatus,
 } from '@/generated/prisma/client'
 import { Prisma as PrismaNamespace } from '@/generated/prisma/client'
-import { requireProviderMarketplaceAccess } from '@/lib/marketplace/marketplace-authorization'
+import { requireProviderParticipationAccess } from '@/lib/marketplace/marketplace-authorization'
 import { getApplicableMarketplaceRuleSet } from '@/lib/marketplace/marketplace-rules-service'
 import { getPrisma } from '@/lib/prisma'
 import type { ProviderRequestActor } from './request-interest-service'
@@ -52,7 +52,7 @@ async function requireClaimAccess(
   actor: ProviderRequestActor,
 ) {
   try {
-    const access = await requireProviderMarketplaceAccess(
+    const access = await requireProviderParticipationAccess(
       transaction,
       actor.userId,
       actor.organizationId,
@@ -93,7 +93,7 @@ async function claimInTransaction(
     at: Date
   },
 ): Promise<RequestOfferSlotReference> {
-  await requireClaimAccess(transaction, input.actor)
+  const access = await requireClaimAccess(transaction, input.actor)
 
   const lockedRequests = await transaction.$queryRaw<
     Array<{ id: string; status: RequestStatus }>
@@ -125,7 +125,7 @@ async function claimInTransaction(
     select: {
       id: true,
       status: true,
-      eligibility: { select: { id: true } },
+      eligibility: { select: { id: true, projectionId: true } },
       offerSlot: {
         select: {
           id: true,
@@ -140,7 +140,7 @@ async function claimInTransaction(
       },
     },
   })
-  if (!interest?.eligibility) {
+  if (!interest?.eligibility || (access.projectionId && interest.eligibility.projectionId !== access.projectionId)) {
     throw new RequestOfferSlotServiceError('NOT_FOUND')
   }
   if (interest.status !== 'INTERESTED') {

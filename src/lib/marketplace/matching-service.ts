@@ -4,6 +4,7 @@ import { enqueueAssignmentNotifications } from './assignment-notification'
 import { z } from 'zod'
 import { evaluateRequestedExpertises } from './matching-expertise'
 import { externalAssignmentWhere } from '@/lib/assignments/assignment-identity'
+import { blockedOnboardingProfiles } from '@/lib/providers/provider-marketplace-onboarding'
 import type { Prisma } from '@/generated/prisma/client'
 import { getPrisma } from '@/lib/prisma'
 import { hashProviderJson, type CanonicalValue } from '@/lib/providers/provider-canonical-json'
@@ -113,6 +114,7 @@ export async function runMarketplaceMatching(input: {
         locationProvince: true,
         locationRegion: true,
         locationCount: true,
+        locationType: true,
         maxSelections: true,
         primarySpecialism: { select: { name: true } },
         sector: { select: { name: true } },
@@ -144,7 +146,8 @@ export async function runMarketplaceMatching(input: {
       publishedVersion: assignment.publishedVersion,
       capabilityCode: primaryCode,
       sectorCode: sectorMapping?.term.code ?? null,
-      regionCode: assignment.requestId ? normalizeRegion(assignment.locationProvince) : normalizeRegion(assignment.location?.province),
+      regionCode: assignment.locationType === 'MULTIPLE' ? null : normalizeRegion(assignment.locationProvince ?? assignment.location?.province),
+      requiresPhysicalPresence: !assignment.allowsRemoteWork || ['REGISTERED', 'OTHER', 'MULTIPLE'].includes(assignment.locationType),
       allowsRemoteWork: assignment.allowsRemoteWork,
       responseDeadline: assignment.responseDeadline.toISOString(),
       ...(assignment.request ? { primaryExpertise: assignment.request.primaryExpertiseCodes, additionalExpertises: assignment.request.additionalExpertiseCodes, requestedStart: assignment.request.requestedStart, expertiseSelectionSource: 'USER_SELECTED', specialisms: assignment.specialisms } : {}),
@@ -187,7 +190,9 @@ export async function runMarketplaceMatching(input: {
       provider: MatchingProviderFacts
       result: ReturnType<typeof evaluateMatchingCandidate>
     }> = []
+    const blocked = await blockedOnboardingProfiles(transaction, Array.from(latestByProvider.values(), p => ({ projectionId: p.id, providerProfileId: p.providerProfileId, organizationId: p.providerProfile.organizationId })), now)
     for (const projection of latestByProvider.values()) {
+      if (blocked.has(projection.providerProfileId)) continue
       const payload = readTrustedPayload(projection.payload)
       if (!payload) continue
       const provider = { providerProfileId: projection.providerProfileId, ...payload }
@@ -195,7 +200,9 @@ export async function runMarketplaceMatching(input: {
         projection,
         providerProfileId: projection.providerProfileId,
         provider,
-        result: assignment.requestId ? evaluateRequestedExpertises({ assignmentId: assignment.id, capabilityCode: primaryCode, sectorCode: sectorMapping?.term.code ?? null, regionCode: normalizeRegion(assignment.locationProvince), allowsRemoteWork: assignment.allowsRemoteWork }, additionalCodes, provider) : evaluateMatchingCandidate({ assignmentId: assignment.id, capabilityCode: primaryCode, sectorCode: sectorMapping?.term.code ?? null, regionCode: normalizeRegion(assignment.location?.province), allowsRemoteWork: assignment.allowsRemoteWork }, provider),
+        result: assignment.requestId
+          ? evaluateRequestedExpertises(assignmentSnapshot, additionalCodes, provider)
+          : evaluateMatchingCandidate(assignmentSnapshot, provider),
       })
     }
     const ranked = rankMatchingCandidates(evaluated)
@@ -405,8 +412,16 @@ export async function applyMarketplaceMatchIntervention(input: {
     if (run.candidates.some((candidate) => candidate.providerProfile.selectabilityStatus !== 'SELECTABLE' || candidate.providerProfile.lifecycleStatus !== 'QUALIFIED')) {
       throw new MarketplaceServiceError('NOT_SELECTABLE')
     }
+    const blocked = await blockedOnboardingProfiles(transaction, run.candidates.map(candidate => ({
+      projectionId: candidate.projectionId, providerProfileId: candidate.providerProfileId, organizationId: candidate.providerProfile.organizationId,
+    })), now)
+    if (blocked.size) throw new MarketplaceServiceError('PROFILE_ONBOARDING_REQUIRED')
     const replacementIds = new Set(run.candidates.map((candidate) => candidate.providerProfileId))
     const currentInvitations = run.invitations.filter((invitation) => invitation.status === 'INVITED')
+    if (run.ruleVersion !== MARKETPLACE_RULE_VERSION &&
+        run.candidates.some(candidate => !currentInvitations.some(invitation => invitation.matchCandidateId === candidate.id))) {
+      throw new MarketplaceServiceError('INVALID_STATE')
+    }
     const originalSelection = currentInvitations.map((invitation) => ({ invitationId: invitation.id, providerProfileId: invitation.providerProfileId }))
     const replacementSelection = run.candidates.map((candidate) => ({ candidateId: candidate.id, providerProfileId: candidate.providerProfileId }))
     const intervention = await transaction.marketplaceMatchIntervention.create({

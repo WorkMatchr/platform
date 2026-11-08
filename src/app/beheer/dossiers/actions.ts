@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
+import { recordProviderQualificationDecision, refreshApprovedProviderSelection } from '@/lib/providers/provider-qualification-service'
+import { ProviderServiceError } from '@/lib/providers/provider-errors'
 import { requireUser } from '@/lib/authorization'
 import {
   createProviderDossierFinding,
@@ -66,4 +68,37 @@ export async function finalizeProviderReviewAction(formData: FormData) {
   revalidatePath('/beheer/dossiers')
   revalidatePath('/aanbiedersdossier', 'layout')
   redirect('/beheer/dossiers')
+}
+
+export async function manageQualificationAction(form: FormData) {
+  const profileId = id.parse(form.get('providerProfileId'))
+  const path = `/beheer/dossiers/${profileId}`
+  const user = await requireUser(path)
+  let result: string
+  try {
+    const candidateId = id.parse(form.get('candidateId'))
+    const expectedVersion = version.parse(form.get('expectedVersion'))
+    if (form.get('operation') === 'selection') {
+      const status = await refreshApprovedProviderSelection(user.id, profileId, candidateId, expectedVersion)
+      result = status === 'SELECTABLE' ? 'selecteerbaar' : 'niet-selecteerbaar'
+    } else {
+      const target = form.get('target')
+      const expiry = z.iso.date().parse(form.get('validThrough'))
+      const until = new Date(expiry + 'T00:00:00.000Z')
+      until.setUTCDate(until.getUTCDate() + 1)
+      await recordProviderQualificationDecision(user.id, profileId, {
+        dossierCandidateId: candidateId, expectedProfileVersion: expectedVersion, scope: target === 'PLATFORM' ? 'PLATFORM' : 'CAPABILITY',
+        capabilityId: target === 'PLATFORM' ? undefined : id.parse(target), reviewedByUserId: id.parse(form.get('reviewerId')),
+        reasonCode: reasonCode.parse(form.get('reasonCode')), outcome: z.enum(['QUALIFIED', 'RESTORED']).parse(form.get('outcome')), validUntil: until,
+      })
+      result = 'besluit'
+    }
+  } catch (error) {
+    if (!(error instanceof ProviderServiceError || error instanceof z.ZodError)) throw error
+    result = error instanceof ProviderServiceError ? error.code : 'VALIDATION_ERROR'
+  }
+  revalidatePath(path)
+  revalidatePath('/beheer/dossiers')
+  revalidatePath('/dashboard')
+  redirect(`${path}?kwalificatie=${result}#kwalificatiebeheer`)
 }

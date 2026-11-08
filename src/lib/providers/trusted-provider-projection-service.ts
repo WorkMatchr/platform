@@ -1,3 +1,5 @@
+import { currentApprovedQualificationBasis } from './provider-dossier-service'
+import { profileDecisionHistory, profileQualificationAt, decisionHistory } from './provider-effective-qualification'
 import type { Prisma } from '@/generated/prisma/client'
 import { getPrisma } from '@/lib/prisma'
 import { hashProviderJson, type CanonicalValue } from './provider-canonical-json'
@@ -43,20 +45,24 @@ function currentVerification<T extends { verificationReviews: Array<{ resultingL
 }
 
 export async function createTrustedProviderProjection(providerProfileId: string, createdByUserId?: string, at = new Date()) {
-  return getPrisma().$transaction(
-    async (transaction) => {
+  return getPrisma().$transaction(tx => createTrustedProviderProjectionInTransaction(tx, providerProfileId, createdByUserId, at), { isolationLevel: 'Serializable' })
+}
+
+export async function createTrustedProviderProjectionInTransaction(transaction: Prisma.TransactionClient, providerProfileId: string, createdByUserId: string | undefined, at: Date) {
+      // Serialize issuance with the profile revision update that revokes existing projections.
+      await transaction.$queryRaw`SELECT id FROM "ProviderProfile" WHERE id = ${providerProfileId}::uuid FOR UPDATE`
       const provider = await transaction.providerProfile.findFirst({
-        where: { id: providerProfileId, archivedAt: null, selectabilityStatus: 'SELECTABLE' },
+        where: { id: providerProfileId, archivedAt: null, platformQualificationStatus: 'QUALIFIED', readinessStatus: 'READY', selectabilityStatus: 'SELECTABLE', blocks: { none: { release: null } } },
         select: {
           id: true,
           version: true,
-          readinessAssessments: { where: { status: 'READY' }, orderBy: { createdAt: 'desc' }, take: 1 },
-          selectabilityAssessments: { where: { status: 'SELECTABLE' }, orderBy: { createdAt: 'desc' }, take: 1 },
-          qualificationDecisions: { where: { scope: 'PLATFORM', outcome: { in: ['QUALIFIED', 'RESTORED'] }, validFrom: { lte: at }, OR: [{ validUntil: null }, { validUntil: { gt: at } }] }, orderBy: { createdAt: 'desc' }, take: 1 },
+          readinessAssessments: { orderBy: { createdAt: 'desc' }, take: 1 },
+          selectabilityAssessments: { orderBy: { createdAt: 'desc' }, take: 1 },
+          qualificationDecisions: profileDecisionHistory.qualificationDecisions,
           capabilities: {
-            where: { status: 'ACTIVE', qualificationDecisions: { some: { outcome: { in: ['QUALIFIED', 'RESTORED'] }, validFrom: { lte: at }, OR: [{ validUntil: null }, { validUntil: { gt: at } }] } } },
+            where: { status: 'ACTIVE' },
             select: {
-              qualificationDecisions: { where: { outcome: { in: ['QUALIFIED', 'RESTORED'] }, validFrom: { lte: at }, OR: [{ validUntil: null }, { validUntil: { gt: at } }] }, orderBy: { createdAt: 'desc' }, take: 1, select: { validUntil: true } },
+              id: true, qualificationDecisions: decisionHistory,
               revisions: { orderBy: { version: 'desc' }, take: 1, include: { serviceTerm: true, specialismTerm: true, competencyTerm: true, verificationReviews: { where: { validFrom: { lte: at }, OR: [{ validUntil: null }, { validUntil: { gt: at } }] }, orderBy: { createdAt: 'desc' }, take: 1 } } },
             },
           },
@@ -66,17 +72,21 @@ export async function createTrustedProviderProjection(providerProfileId: string,
       })
       const readiness = provider?.readinessAssessments[0]
       const selectability = provider?.selectabilityAssessments[0]
-      const platformDecision = provider?.qualificationDecisions[0]
+      const qualification = provider && profileQualificationAt(provider, at)
+      const platformDecision = qualification?.platform
       if (
         !provider ||
         !readiness ||
-        !selectability ||
-        !platformDecision ||
+        !selectability || readiness.status !== 'READY' || selectability.status !== 'SELECTABLE' ||
+        selectability.readinessAssessmentId !== readiness.id ||
+        !platformDecision || !qualification.allServicesQualified ||
         readiness.sourceVersion !== provider.version ||
         selectability.sourceVersion !== provider.version
       ) {
         throw new ProviderServiceError('PROJECTION_NOT_ALLOWED')
       }
+      if (platformDecision.dossierCandidateId &&
+          !await currentApprovedQualificationBasis(transaction, providerProfileId, platformDecision.dossierCandidateId)) throw new ProviderServiceError('PROJECTION_NOT_ALLOWED')
       const taxonomyVersions = await transaction.providerTaxonomyVersion.findMany({
         where: { status: 'PUBLISHED', checksum: { not: null } },
         select: { version: true, checksum: true, taxonomy: { select: { kind: true } } },
@@ -102,8 +112,7 @@ export async function createTrustedProviderProjection(providerProfileId: string,
         platformQualificationDecisionId: platformDecision.id,
       })
       const sourceExpiries = [
-        platformDecision.validUntil,
-        ...provider.capabilities.flatMap((item) => item.qualificationDecisions.map((decision) => decision.validUntil)),
+        ...qualification.boundaries,
         ...provider.capabilities.flatMap((item) => item.revisions.flatMap((revision) => revision.verificationReviews.map((review) => review.validUntil))),
         ...provider.sectorExperiences.flatMap((item) => item.revisions.flatMap((revision) => revision.verificationReviews.map((review) => review.validUntil))),
         ...provider.workAreas.flatMap((item) => item.revisions.flatMap((revision) => revision.verificationReviews.map((review) => review.validUntil))),
@@ -114,11 +123,11 @@ export async function createTrustedProviderProjection(providerProfileId: string,
       const { sha256 } = hashProviderJson(payload)
       const existing = await transaction.trustedProviderProjection.findUnique({
         where: { providerProfileId_sourceVersion: { providerProfileId, sourceVersion: provider.version } },
-        select: { id: true, sha256: true },
+        select: { id: true, sha256: true, invalidation: true, validFrom: true, validUntil: true },
       })
       if (existing) {
-        if (existing.sha256 !== sha256) throw new ProviderServiceError('CONFLICT')
-        return { ...existing, idempotent: true }
+        if (existing.invalidation || existing.validFrom > at || existing.validUntil <= at || existing.validUntil > validUntil || existing.sha256 !== sha256) throw new ProviderServiceError('CONFLICT')
+        return { id: existing.id, sha256, idempotent: true }
       }
       const projection = await transaction.trustedProviderProjection.create({
         data: {
@@ -137,7 +146,4 @@ export async function createTrustedProviderProjection(providerProfileId: string,
         select: { id: true, sha256: true },
       })
       return { ...projection, idempotent: false }
-    },
-    { isolationLevel: 'Serializable' },
-  )
 }

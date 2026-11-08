@@ -15,7 +15,7 @@ describe('matchingregels', () => {
       providerProfileId: '22222222-2222-4222-8222-222222222222',
       capabilities: [],
       sectors: [{ sectorCode: 'BOUW' }],
-      workAreas: [{ regionCode: 'LANDELIJK' }],
+      workAreas: [{ regionCode: 'NATIONWIDE' }],
     })
     expect(result.status).toBe('EXCLUDED')
     expect(result.normalizedScore).toBeNull()
@@ -43,10 +43,43 @@ describe('matchingregels', () => {
         providerProfileId,
         capabilities: [{ serviceCode: 'RIE', specialismCode: null, deliveryModes: ['ON_SITE'] }],
         sectors: [],
-        workAreas: [{ regionCode: 'LANDELIJK' }],
+        workAreas: [{ regionCode: 'NATIONWIDE' }],
       }),
     }))
+    expect(rankMatchingCandidates(candidates)).toHaveLength(2)
     expect(rankMatchingCandidates(candidates)).toEqual(rankMatchingCandidates([...candidates].reverse()))
+  })
+
+  it.each([
+    ['NOORD_HOLLAND', 'ON_SITE', false, 'EXCLUDED'],
+    ['UTRECHT', 'ON_SITE', false, 'ELIGIBLE'],
+    ['UTRECHT', 'HYBRID', false, 'ELIGIBLE'],
+    ['UTRECHT', 'REMOTE', false, 'EXCLUDED'],
+    ['NATIONWIDE', 'ON_SITE', false, 'ELIGIBLE'],
+    [null, 'ON_SITE', false, 'EXCLUDED'],
+    ['NOORD_HOLLAND', 'REMOTE', true, 'ELIGIBLE'],
+    ['REMOTE', 'HYBRID', true, 'ELIGIBLE'],
+    ['UTRECHT', 'ON_SITE', true, 'EXCLUDED'],
+  ] as const)('toetst werkgebied %s en leveringsvorm %s bij remote=%s', (area, mode, remote, status) => {
+    const result = evaluateMatchingCandidate({ ...assignment, allowsRemoteWork: remote }, {
+      providerProfileId: 'provider',
+      capabilities: [{ serviceCode: 'RIE', specialismCode: null, deliveryModes: [mode] }],
+      workAreas: area ? [{ regionCode: area }] : [],
+      sectors: [{ sectorCode: 'BOUW' }],
+    })
+    expect(result.status).toBe(status)
+    if (status === 'EXCLUDED') {
+      expect(result.normalizedScore).toBeNull()
+      expect(rankMatchingCandidates([{ result, providerProfileId: 'provider' }])).toEqual([])
+    }
+  })
+
+  it('vereist bij gecombineerde uitvoering ook fysieke dekking voor de gekozen dienst', () => {
+    const facts = { ...assignment, allowsRemoteWork: true, requiresPhysicalPresence: true }
+    const hybrid = { providerProfileId: 'hybrid', capabilities: [{ serviceCode: 'RIE', specialismCode: null, deliveryModes: ['HYBRID'] }], sectors: [], workAreas: [{ regionCode: 'UTRECHT' }] }
+    expect(evaluateMatchingCandidate(facts, hybrid).status).toBe('ELIGIBLE')
+    expect(evaluateMatchingCandidate(facts, { ...hybrid, workAreas: [{ regionCode: 'NOORD_HOLLAND' }] }).status).toBe('EXCLUDED')
+    expect(evaluateMatchingCandidate({ ...facts, regionCode: null }, hybrid).status).toBe('EXCLUDED')
   })
 
   it('matcht een concrete vakdiscipline uitsluitend op het geverifieerde specialisme', () => {

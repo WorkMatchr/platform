@@ -129,6 +129,7 @@ export function OrganizationForm({ action, initialValues = {}, mode, sectors, fi
         <legend className="text-lg font-bold text-brand-dark">Sectoren</legend>
         <p className="mt-2 text-sm text-text-secondary">
           Selecteer minimaal één sector waarin uw organisatie actief is.
+            {mode === 'edit' && (initialValues.organizationType === 'PROVIDER' || initialValues.organizationType === 'BOTH') && ' Uw sectorervaring voor matching beheert u bij Mijn dienstverlening.'}
         </p>
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
           {sectors.map((sector) => <label key={sector.id} className={`${optionClassName('sectorIds')} cursor-pointer`}><input className="size-5 shrink-0 accent-brand-primary" type="checkbox" name="sectorIds" value={sector.id} defaultChecked={selectedSectorIds.has(sector.id)} aria-invalid={isInvalid('sectorIds')} aria-describedby={describedBy('sectorIds')} /><span>{sector.name}</span></label>)}

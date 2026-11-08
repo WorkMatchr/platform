@@ -3,6 +3,7 @@ const state = vi.hoisted(() => ({ tx: {} as Record<string, unknown> }))
 vi.mock('@/lib/prisma', () => ({ getPrisma: () => ({ $transaction: (fn: (tx: unknown) => unknown) => fn(state.tx) }) }))
 vi.mock('./marketplace-authorization', () => ({
   requireProviderMarketplaceAccess: vi.fn().mockResolvedValue({ role: 'OWNER', providerProfile: { id: 'profile' } }),
+  requireProviderParticipationAccess: vi.fn().mockResolvedValue({ role: 'OWNER', providerProfile: { id: 'profile' } }),
   requireClientMarketplaceManager: vi.fn().mockResolvedValue({ role: 'OWNER' }),
 }))
 import { saveQuoteDraft } from './quote-service'
