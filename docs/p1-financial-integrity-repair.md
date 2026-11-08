@@ -3,6 +3,12 @@
 Datum: 6 november 2026. Basis: `a315db8c7738b8862a92d9f8517b0315e3b14d1f`.
 Scope: uitsluitend codeherstel, synthetische gegevens en fake providers. Productie is niet benaderd of gewijzigd tijdens deze reparatie. De eerdere private onderzoeksbewijzen blijven buiten Git.
 
+## Financiële vervolgkandidaat V3.0
+
+De vervolgbranch bouwt op PR #118 (`821a6949`). De controles en providerbewijzen hieronder uit de oorspronkelijke P1-reparatie hebben hun eigen datum. De actuele resultaten voor de geïntegreerde commit staan op de vervolg-PR.
+
+De financiële PostgreSQL-proef op een lege lokale database verwerkt een synthetische betaalde herkansing via de webhookservice en activeert het abonnement met een bevestigd testmandaat. Dezelfde organisatie doorloopt verlengingen, een mislukte incasso met herstel, gedeeltelijke credits, een fake refund en een apart aangevraagde opzegging. Een tweede abonnement bewijst volledige creditering van een verlengingsfactuur. De proef vergelijkt factuur, btw, audit, Jortt-opdrachten en de ongewijzigde creditwallet. De databaseketen heeft 96 migraties. De eerdere V3.0-controles op betaalidentiteit, schorsing, stornering en vertraagde webhooks blijven van toepassing.
+
 ## Root causes en correcties
 
 ### 1. Pro-incasso en facturatie

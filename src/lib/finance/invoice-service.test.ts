@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from 'vitest'
 import { buildInvoiceV2Line, formatFinancialDocumentNumber, issueInvoiceForPaidPurchase, issueInvoiceForPaidSubscriptionPayment } from './invoice-service'
 
 vi.mock('server-only', () => ({}))
-vi.mock('./pro-payment-source', () => ({ resolveProInvoiceSource: async () => ({ invoice: { customerOrganizationName: 'Voorbeeldorganisatie', customerAddressLine: 'Teststraat 1', customerPostalCode: '1234 AB', customerCity: 'Teststad', customerCountryCode: 'NL', customerKvKNumber: null, customerVatId: null } }) }))
 
 describe('financiële documentnummering', () => {
   it('gebruikt WM-YYMM5NNN met een globale sequence', () => {
