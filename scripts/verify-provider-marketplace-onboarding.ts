@@ -146,11 +146,17 @@ export async function verifyProviderMarketplaceOnboarding(db: PrismaClient, fixt
   const afterVerification = new Date(future.getTime() + 1)
   await assert.rejects(recordProviderQualificationDecision(fixture.approvedByUserId, providerProfileId,
     { ...input, validUntil: afterVerification }), { code: 'REQUIREMENTS_NOT_CONFIGURED' })
-  await assert.rejects(decide(fixture.approvedByUserId), { code: 'TERMS_NOT_CONFIGURED' })
   await assert.rejects(refreshApprovedProviderSelection(fixture.approvedByUserId, providerProfileId, dossierCandidateId, expectedProfileVersion), { code: 'DOSSIER_NOT_SUBMITTABLE' })
+  const platform = await decide(fixture.approvedByUserId)
+  assert.equal(platform.scope, 'PLATFORM')
+  expectedProfileVersion = input.expectedProfileVersion = await currentVersion()
+  await assert.rejects(participate(), denied)
+  await assert.rejects(recordProviderQualificationDecision(fixture.approvedByUserId, providerProfileId,
+    { ...input, scope: 'CAPABILITY', capabilityId: service.id }), { code: 'SERVICE_QUALIFICATION_REQUIRED' })
+  assert.equal(await db.providerQualificationDecision.count({ where: { providerProfileId, dossierCandidateId, scope: 'CAPABILITY' } }), 0)
   await db.organization.update({ where: { id: org.id }, data: { tradeName: 'Gewijzigde synthetische naam' } })
   assert.equal(await basis(), null)
   await assert.rejects(decide(fixture.approvedByUserId), { code: 'DOSSIER_NOT_SUBMITTABLE' })
-  console.log('PASS approved checklist, cohort differences, four eyes, independent permissions, current tenant snapshot, unconfigured qualification, stale organization edit')
+  console.log('PASS approved checklist, cohort differences, four eyes, independent permissions, current tenant snapshot, standard platform qualification, required service credential refused, stale organization edit')
   console.log('PASS onboarding, 4/4 matching sections, separate approval, stale approval, actions, legacy cohort and tenant isolation')
 }

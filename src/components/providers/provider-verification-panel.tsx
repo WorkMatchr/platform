@@ -12,10 +12,6 @@ export function ProviderVerificationPanel({ profileId, version, candidateId, cas
   return <Card className="mt-6" id="verificaties">
     <h2 className="text-lg font-semibold">Ingediende onderdelen verifiëren</h2>
     <p>Controleer de ingediende gegevens en het bijbehorende bewijs. Vraag bij ontbrekend bewijs een aanvulling via Bevindingen.</p>
-    {!data.some(s => s.type === 'INSURANCE') && <p className="mt-3">
-      Het dossier bevat geen verzekeringspolis. Voor platformkwalificatie is een geldige aansprakelijkheidsverzekering met gecontroleerd bewijs nodig.
-      Vraag de dienstverlener dit aan te vullen voordat u het dossier sluit.
-    </p>}
     <ul className="mt-4 grid gap-3">
       {data.map(s => <li key={s.id}><details className="rounded-control border border-border p-4">
         <summary className="cursor-pointer font-semibold">{s.label} {s.title} · {s.status}</summary>

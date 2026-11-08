@@ -74,10 +74,11 @@ export default async function ProviderReviewDetailPage({
     DOSSIER_NOT_SUBMITTABLE: 'De goedgekeurde dossierversie is niet meer actueel. Laat de actuele versie indienen en beoordelen.',
     FOUR_EYES_REQUIRED: 'De beoordelaar en de goedkeurder moeten verschillende personen zijn.',
     CONFLICT: 'De gegevens of het eerdere besluit zijn gewijzigd. Controleer de actuele stand.',
-    TERMS_NOT_CONFIGURED: 'De vereiste verklaringen zijn nog niet geconfigureerd.',
+    SERVICE_QUALIFICATION_REQUIRED: 'Controleer het vereiste bewijs voor de gekozen dienst en de geldigheid ervan.',
+    SERVICE_INSURANCE_REQUIRED: 'Voor deze dienst ontbreekt een geldige, gecontroleerde beroepsaansprakelijkheidsverzekering.',
     INSURANCE_REQUIREMENTS_NOT_CONFIGURED: 'De verzekeringsvereisten zijn nog niet geconfigureerd.',
     QUALIFICATION_REQUIREMENTS_NOT_CONFIGURED: 'Voor de dienst zijn nog geen beoordelingsvereisten gepubliceerd.',
-    CONFIGURATION_INCOMPLETE: 'De vereiste verklaringen, verzekeringen of dienstbewijzen zijn nog niet volledig.',
+    CONFIGURATION_INCOMPLETE: 'Controleer de toepasselijke kwalificatievereisten en hun geldigheid voor de gekozen dienst.',
     REQUIREMENTS_NOT_CONFIGURED: 'Laat de toegewezen beoordelaar de ingediende onderdelen verifiëren. Is de beoordeling al gesloten, laat dan een actuele versie indienen en beoordelen.',
     PROJECTION_NOT_ALLOWED: 'Controleer de verificatie van diensten en werkgebieden voordat u de selectie bijwerkt.',
   }
@@ -218,6 +219,11 @@ export default async function ProviderReviewDetailPage({
         <h2 className="text-lg font-semibold">Kwalificatie beheren</h2>
         <p className="mt-2">Leg voor het platform en iedere actieve dienst een afzonderlijk besluit vast op basis van de goedgekeurde dossierversie.</p>
         {qualificationResult && <p className="mt-3 font-semibold" role="status">{feedback[qualificationResult] ?? 'De actie is niet uitgevoerd. Controleer uw bevoegdheid, invoer en de bewijsstukken.'}</p>}
+        <details className="my-4"><summary>Vereisten per dienst</summary>
+          {management.serviceRules.map(rule => <p key={rule.id}><strong>{rule.label}</strong> · {[
+            ...rule.qualifications, ...(rule.insurance ? ['Gecontroleerde beroepsaansprakelijkheidsverzekering'] : []),
+          ].join(', ') || (rule.configured ? 'Geen aanvullend bewijs vereist' : 'Vereisten ontbreken. Kwalificatie geblokkeerd.')}</p>)}
+        </details>
         {management.decisions.length > 0 && <ul className="my-4 space-y-2" aria-label="Recente kwalificatiebesluiten">{management.decisions.map(d => <li key={d.id}>
           <strong>{d.scope === 'PLATFORM' ? 'Platform' : management.capabilities.find(c => c.id === d.capabilityId)?.revisions[0]?.serviceTerm?.label ?? 'Dienst'} · {outcomeLabels[d.outcome]}</strong>
           <div>Reden: {management.reasons.find(r => r.code === d.reasonCode)?.label ?? d.reasonCode}. Beoordelaar: {d.reviewedByUser.displayName ?? d.reviewedByUser.id}. Goedkeurder: {d.approvedByUser.displayName ?? d.approvedByUser.id}.</div>

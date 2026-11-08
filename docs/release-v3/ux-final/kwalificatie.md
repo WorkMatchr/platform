@@ -1,5 +1,7 @@
 # QUAL-UX-01 — Beoordelaarsverificatie
 
+**Historische proef.** Het latere besluit en de acceptatie van de vier verplichte matchingonderdelen staan in de [V3.0-standaardtoelating](onboarding-v3.md).
+
 **NO-GO voor de volledige browserroute van een nieuwe professional.** De toegewezen beoordelaar kan verificaties vastleggen en de tweede beheerder kan het dossier goedkeuren. De volgende blokkade is het verzekeringsbewijs. De professional kan via de huidige interface geen bewijsbestand aanleveren. Zonder een gecontroleerd bewijsbestand kan de professional geen polis toevoegen en weigert de kwalificatieservice het platformbesluit.
 
 De basis was [de UX-acceptatie op 6211cde](https://github.com/WorkMatchr/platform/commit/6211cdef399e11f5a1148f2576ea402c4719d43a). Alle onderstaande handelingen gebruikten tijdelijke lokale PostgreSQL 18-databases, fictieve accounts en lokale mailopvang.

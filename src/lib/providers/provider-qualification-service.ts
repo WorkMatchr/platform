@@ -10,7 +10,7 @@ import { requireProviderPlatformPermission } from './provider-authorization'
 import { hashProviderJson } from './provider-canonical-json'
 import { ProviderServiceError } from './provider-errors'
 import { requiresFourEyes } from './provider-policy'
-import { positiveQualificationReason, requirePlatformQualificationBasis } from './provider-requirements'
+import { applicableServiceRequirements, positiveQualificationReason, requireProfessionalLiability } from './provider-requirements'
 import { expectedVersionSchema, reasonCodeSchema, uuidSchema } from './provider-validation'
 import { parseProviderInput, reserveProviderVersion } from './provider-write-utils'
 
@@ -44,20 +44,14 @@ async function requireCapabilityQualificationBasis(
   })
   const revision = capability?.revisions[0]
   if (!capability || !revision?.serviceTermId) throw new ProviderServiceError('CONFIGURATION_INCOMPLETE')
-  const config = await transaction.providerCapabilityRequirementConfig.findFirst({
-    where: { status: 'PUBLISHED', effectiveFrom: { lte: at }, OR: [{ effectiveUntil: null }, { effectiveUntil: { gt: at } }] },
-    include: {
-      requirements: {
-        where: {
-          serviceTermId: revision.serviceTermId,
-          OR: [{ specialismTermId: null }, { specialismTermId: revision.specialismTermId }],
-        },
-      },
-    },
-  })
+  const config = await applicableServiceRequirements(transaction, revision.serviceTermId, revision.specialismTermId, at)
   if (!config || config.requirements.length === 0) {
     throw new ProviderServiceError('QUALIFICATION_REQUIREMENTS_NOT_CONFIGURED')
   }
+  if (config.requirements.some(row => row.requiresProfessionalLiability)) {
+    await requireProfessionalLiability(transaction, providerProfileId, at, decision)
+  }
+  if (!config.requirements.some(row => row.isRequired)) return config
   const organizationQualifications = await transaction.providerOrganizationQualification.findMany({
     where: { providerProfileId, status: 'ACTIVE' },
     include: {
@@ -65,6 +59,7 @@ async function requireCapabilityQualificationBasis(
         orderBy: { version: 'desc' },
         take: 1,
         include: {
+          evidenceRevision: { include: { scanDecision: true, evidenceDocument: true } },
           verificationReviews: {
             where: { validFrom: { lte: at } },
             orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
@@ -81,6 +76,7 @@ async function requireCapabilityQualificationBasis(
         orderBy: { version: 'desc' },
         take: 1,
         include: {
+          evidenceRevision: { include: { scanDecision: true, evidenceDocument: true } },
           verificationReviews: {
             where: { validFrom: { lte: at } },
             orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
@@ -94,15 +90,23 @@ async function requireCapabilityQualificationBasis(
     .flatMap((item) => item.revisions)
     .filter((item) => item.validUntil === null || item.validUntil >= at)
   for (const requirement of config.requirements.filter((item) => item.isRequired)) {
-    const qualification = available.find((item) => item.qualificationTermId === requirement.requirementTermId)
-    const review = qualification?.verificationReviews[0]
-    const level = review && (!review.validUntil || review.validUntil > at) ? review.resultingLevel : 'SELF_DECLARED'
-    if (!qualification || verificationRank[level] < verificationRank[requirement.minimumVerification] ||
-        (decision && ((qualification.validUntil && qualification.validUntil < decision.validUntil) ||
-          (requirement.minimumVerification !== 'SELF_DECLARED' && (!review || review.dossierCandidateId !== decision.dossierCandidateId ||
-            review.reviewerUserId !== decision.reviewerUserId || !review.validUntil || review.validUntil < decision.validUntil))))) {
-      throw new ProviderServiceError('CONFIGURATION_INCOMPLETE')
-    }
+    const supported = available.some(qualification => {
+      if (qualification.qualificationTermId !== requirement.requirementTermId ||
+          (qualification.issuedAt && qualification.issuedAt > at) ||
+          (requirement.requiresValidity && !qualification.validUntil) ||
+          (decision && qualification.validUntil && qualification.validUntil < decision.validUntil)) return false
+      if (requirement.minimumVerification === 'SELF_DECLARED') return true
+      const review = qualification.verificationReviews[0]
+      const evidence = qualification.evidenceRevision
+      if (!review || !['VERIFIED', 'DOCUMENT_CHECKED'].includes(review.outcome) ||
+          !review.validUntil || review.validUntil <= at ||
+          verificationRank[review.resultingLevel] < verificationRank[requirement.minimumVerification] ||
+          !evidence || evidence.scanDecision?.scanStatus !== 'CLEAN' || evidence.evidenceDocument.status !== 'AVAILABLE' ||
+          evidence.version !== evidence.evidenceDocument.version || evidence.evidenceDocument.providerProfileId !== providerProfileId) return false
+      return !decision || (review.dossierCandidateId === decision.dossierCandidateId &&
+        review.reviewerUserId === decision.reviewerUserId && review.validUntil >= decision.validUntil)
+    })
+    if (!supported) throw new ProviderServiceError('SERVICE_QUALIFICATION_REQUIRED')
   }
   return config
 }
@@ -174,9 +178,12 @@ export async function recordProviderQualificationDecision(
         const revision = input.scope === 'CAPABILITY' ? await transaction.providerCapabilityRevision.findFirst({
           where: { providerCapabilityId: input.capabilityId }, orderBy: { version: 'desc' }, select: { id: true },
         }) : null
+        if (input.scope === 'CAPABILITY' && !revision) throw new ProviderServiceError('CONFIGURATION_INCOMPLETE')
         const subjects = await transaction.providerVerificationReview.findMany({
           where: { providerProfileId, dossierCandidateId: basis.dossierCandidateId, dossierReviewCaseId: basis.dossierReviewCaseId,
-            reviewerUserId: basis.reviewerUserId, ...(revision ? { capabilityRevisionId: revision.id } : {}) },
+            reviewerUserId: basis.reviewerUserId, ...(revision ? { capabilityRevisionId: revision.id } : {
+              OR: [{ capabilityRevisionId: { not: null } }, { workAreaRevisionId: { not: null } }, { sectorExperienceRevisionId: { not: null } }],
+            }) },
           orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         })
         const seen = new Set<string>()
@@ -197,9 +204,7 @@ export async function recordProviderQualificationDecision(
         ? { dossierCandidateId: basis.dossierCandidateId, reviewerUserId: basis.reviewerUserId, validUntil: input.validUntil } : undefined
       let requirementConfigId: string | undefined
       if (input.outcome === 'QUALIFIED' || input.outcome === 'RESTORED') {
-        if (input.scope === 'PLATFORM') {
-          await requirePlatformQualificationBasis(transaction, providerProfileId, now, verificationWindow)
-        } else {
+        if (input.scope === 'CAPABILITY') {
           const config = await requireCapabilityQualificationBasis(transaction, providerProfileId, input.capabilityId!, now, verificationWindow)
           requirementConfigId = config.id
         }

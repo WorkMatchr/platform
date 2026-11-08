@@ -1,28 +1,31 @@
 import { describe, expect, it, vi } from 'vitest'
-import { requirePlatformQualificationBasis } from './provider-requirements'
+import { requireProfessionalLiability } from './provider-requirements'
 
-const at = new Date('2026-07-14T12:00:00.000Z')
+const at = new Date('2026-07-14T12:00:00Z')
+const until = new Date('2026-08-14T12:00:00Z')
+const window = { reviewerUserId: 'reviewer', dossierCandidateId: 'candidate', validUntil: until }
+const rule = { insuranceTypeTerm: { code: 'PROFESSIONAL_LIABILITY' }, minimumVerification: 'VERIFIED',
+  minimumCoverageCents: BigInt(100), coverageGeography: 'NL' }
+const policy = { insuranceTypeTerm: rule.insuranceTypeTerm, effectiveFrom: at, expiresAt: until,
+  coverageAmountCents: BigInt(100), coverageGeography: 'NL', verificationReviews: [{ ...window, outcome: 'VERIFIED', resultingLevel: 'VERIFIED' }],
+  evidenceRevision: { version: 1, scanDecision: { scanStatus: 'CLEAN' }, evidenceDocument: { version: 1, providerProfileId: 'provider', status: 'AVAILABLE' } } }
 
-function transaction(overrides: Record<string, unknown> = {}) {
-  return {
-    providerTermDocumentVersion: { findMany: vi.fn().mockResolvedValue([]) },
-    providerTermAcceptance: { count: vi.fn().mockResolvedValue(0) },
-    providerInsuranceRequirementConfig: { findFirst: vi.fn().mockResolvedValue(null) },
-    providerInsurance: { findMany: vi.fn().mockResolvedValue([]) },
-    ...overrides,
-  } as never
+function assess(revisions: unknown[], configured = true) {
+  const tx = { providerInsuranceRequirementConfig: { findFirst: vi.fn().mockResolvedValue(configured ? { requirements: [rule] } : null) },
+    providerInsurance: { findMany: vi.fn().mockResolvedValue(revisions.map(revision => ({ revisions: [revision] }))) } }
+  return requireProfessionalLiability(tx as never, 'provider', at, window)
 }
 
-describe('fail-closed platformkwalificatiebasis', () => {
-  it('blokkeert wanneer actuele voorwaardenconfiguratie ontbreekt', async () => {
-    await expect(requirePlatformQualificationBasis(transaction(), 'provider', at)).rejects.toMatchObject({ code: 'TERMS_NOT_CONFIGURED' })
+describe('dienstspecifieke beroepsaansprakelijkheid', () => {
+  it('weigert een ontbrekend dekkingsbeleid', async () => {
+    await expect(assess([], false)).rejects.toMatchObject({ code: 'INSURANCE_REQUIREMENTS_NOT_CONFIGURED' })
   })
-
-  it('blokkeert wanneer verzekeringsvereisten ontbreken', async () => {
-    const codes = ['PLATFORM_TERMS', 'PRIVACY_NOTICE', 'PROVIDER_DATA_ACCURACY', 'ORGANIZATION_AUTHORITY', 'CONFLICTS_OF_INTEREST', 'LEGAL_COMPLIANCE']
-    await expect(requirePlatformQualificationBasis(transaction({
-      providerTermDocumentVersion: { findMany: vi.fn().mockResolvedValue(codes.map((code) => ({ id: code, document: { code } }))) },
-      providerTermAcceptance: { count: vi.fn().mockResolvedValue(codes.length) },
-    }), 'provider', at)).rejects.toMatchObject({ code: 'INSURANCE_REQUIREMENTS_NOT_CONFIGURED' })
+  it.each([ { policies: [] }, { policies: [{ ...policy, coverageAmountCents: BigInt(99) }] }, { policies: [{ ...policy, expiresAt: at }] },
+    { policies: [{ ...policy, evidenceRevision: { ...policy.evidenceRevision, scanDecision: null } }] },
+    { policies: [{ ...policy, verificationReviews: [] }] }])('weigert onvoldoende onderbouwing (%#)', async ({ policies }) => {
+    await expect(assess(policies)).rejects.toMatchObject({ code: 'SERVICE_INSURANCE_REQUIRED' })
+  })
+  it('accepteert een geldige gecontroleerde polis voor de hele besluitperiode', async () => {
+    await expect(assess([policy])).resolves.toBeUndefined()
   })
 })

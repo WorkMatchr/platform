@@ -1,5 +1,5 @@
 import { verificationSubjects, subjectField } from '@/lib/providers/provider-review-subjects'
-import { positiveQualificationReason } from '@/lib/providers/provider-requirements'
+import { applicableServiceRequirements, positiveQualificationReason } from '@/lib/providers/provider-requirements'
 import { requireProviderPlatformPermission } from '@/lib/providers/provider-authorization'
 import { getPrisma } from '@/lib/prisma'
 import { getMarketplacePlatformDashboard } from './dashboard-query-service'
@@ -77,12 +77,22 @@ export async function getQualificationManagement(actorId: string, providerProfil
     await requireProviderPlatformPermission(tx, actorId, 'PROVIDER_APPROVER', providerProfileId)
     const capabilities = await tx.providerCapability.findMany({ where: { providerProfileId, status: 'ACTIVE' },
       orderBy: { id: 'asc' }, select: { id: true, revisions: { orderBy: { version: 'desc' }, take: 1,
-        select: { serviceTerm: { select: { label: true } }, specialismTerm: { select: { label: true } } } } } })
+        select: { serviceTermId: true, specialismTermId: true, serviceTerm: { select: { label: true } }, specialismTerm: { select: { label: true } } } } } })
     const reasons = await tx.providerReasonCode.findMany({ where: positiveQualificationReason, orderBy: { label: 'asc' }, select: { code: true, label: true } })
     const decisions = await tx.providerQualificationDecision.findMany({ where: { providerProfileId }, orderBy: [{ validFrom: 'desc' }, { createdAt: 'desc' }], take: 20,
       select: { id: true, scope: true, outcome: true, capabilityId: true, reasonCode: true, validFrom: true, validUntil: true,
         reviewedByUser: { select: { displayName: true, id: true } }, approvedByUser: { select: { displayName: true, id: true } } } })
-    return { capabilities, reasons, decisions }
+    const serviceRules = []
+    const at = new Date()
+    for (const capability of capabilities) {
+      const revision = capability.revisions[0]
+      const config = revision?.serviceTermId && await applicableServiceRequirements(tx, revision.serviceTermId, revision.specialismTermId, at)
+      const rules = config ? config.requirements : []
+      serviceRules.push({ id: capability.id, label: [revision?.serviceTerm?.label, revision?.specialismTerm?.label].filter(Boolean).join(' · '),
+        configured: rules.length > 0, qualifications: rules.filter(rule => rule.isRequired).map(rule => rule.requirementTerm.label),
+        insurance: rules.some(rule => rule.requiresProfessionalLiability) })
+    }
+    return { capabilities, reasons, decisions, serviceRules }
   })
 }
 

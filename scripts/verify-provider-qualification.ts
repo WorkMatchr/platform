@@ -42,7 +42,7 @@ export async function verifyProviderQualification(db: PrismaClient, serviceTermI
   const config = await db.providerCapabilityRequirementConfig.create({ data: { version: 1, effectiveFrom: past } })
   await db.providerCapabilityQualificationRequirement.create({ data: { configId: config.id, serviceTermId, requirementTermId, kind: 'QUALIFICATION', minimumVerification: 'SELF_DECLARED', isRequired: true } })
   await db.providerCapabilityRequirementConfig.update({ where: { id: config.id }, data: { status: 'PUBLISHED', checksum, publishedAt: past } })
-  await db.providerOrganizationQualification.create({ data: { providerProfileId: a.profile.id, revisions: { create: { version: 1, qualificationTermId: requirementTermId } } } })
+  await db.providerOrganizationQualification.create({ data: { providerProfileId: a.profile.id, revisions: { create: { version: 1, qualificationTermId: requirementTermId, validUntil: future } } } })
   const state = () => db.providerProfile.findMany({
     where: { id: { in: [a.profile.id, b.profile.id] } }, orderBy: { id: 'asc' },
     include: { qualificationDecisions: true, readinessAssessments: true, selectabilityAssessments: true, blocks: true,
@@ -77,7 +77,7 @@ export async function verifyProviderQualification(db: PrismaClient, serviceTermI
     memberships: { create: { organizationId: c.org.id, role: 'OWNER', status: 'ACTIVE' } } } })
   const access = () => db.$transaction(tx => requireProviderParticipationAccess(tx, owner.id, c.org.id))
   const history = { providerProfileId, reviewedByUserId: reviewer.id, approvedByUserId: approver.id, reasonCode, sourceChecksum: checksum }
-  await db.providerOrganizationQualification.create({ data: { providerProfileId, revisions: { create: { version: 1, qualificationTermId: requirementTermId } } } })
+  await db.providerOrganizationQualification.create({ data: { providerProfileId, revisions: { create: { version: 1, qualificationTermId: requirementTermId, validUntil: future } } } })
   const second = await db.providerCapability.create({ data: { providerProfileId, revisions: { create: { version: 1, serviceTermId, deliveryModes: ['REMOTE'] } } } })
   const area = await db.providerWorkArea.create({ data: { providerProfileId, revisions: { create: { version: 1, regionTermId } } }, include: { revisions: true } })
   await db.providerVerificationReview.create({ data: { providerProfileId, workAreaRevisionId: area.revisions[0].id, reviewerUserId: reviewer.id, validFrom: past, reasonCode, checksum, outcome: 'VERIFIED', resultingLevel: 'VERIFIED' } })

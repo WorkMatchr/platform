@@ -4,11 +4,7 @@ import { profileDecisionHistory, profileQualificationAt } from './provider-effec
 import { getPrisma } from '@/lib/prisma'
 import { hashProviderJson } from './provider-canonical-json'
 import { ProviderServiceError } from './provider-errors'
-import { requirePlatformQualificationBasis } from './provider-requirements'
-
-function errorReason(error: unknown): string {
-  return error instanceof ProviderServiceError ? error.code : 'CONFIGURATION_INCOMPLETE'
-}
+import { assessProviderDossierCompletenessInTransaction } from './provider-dossier-completeness'
 
 export async function calculateProviderReadiness(providerProfileId: string, at = new Date()) {
   return getPrisma().$transaction(tx => calculateProviderReadinessInTransaction(tx, providerProfileId, at), { isolationLevel: 'Serializable' })
@@ -20,16 +16,8 @@ export async function calculateProviderReadinessInTransaction(transaction: Prism
       select: { id: true, version: true },
     })
     if (!provider) throw new ProviderServiceError('NOT_FOUND')
-    const reasons: string[] = []
-    const capabilityCount = await transaction.providerCapability.count({ where: { providerProfileId, status: 'ACTIVE', revisions: { some: { serviceTermId: { not: null } } } } })
-    const workAreaCount = await transaction.providerWorkArea.count({ where: { providerProfileId, status: 'ACTIVE' } })
-    if (capabilityCount === 0) reasons.push('CAPABILITIES_INCOMPLETE')
-    if (workAreaCount === 0) reasons.push('WORK_AREAS_INCOMPLETE')
-    try {
-      await requirePlatformQualificationBasis(transaction, providerProfileId, at)
-    } catch (error) {
-      reasons.push(errorReason(error))
-    }
+    const assessmentBasis = await assessProviderDossierCompletenessInTransaction(transaction, providerProfileId, at)
+    const reasons = assessmentBasis.reasons.map(reason => reason.code)
     const status = reasons.length === 0 ? 'READY' : 'INCOMPLETE'
     const checksum = hashProviderJson({ providerProfileId, providerVersion: provider.version, reasons: [...new Set(reasons)].sort(), status }).sha256
     const assessment = await transaction.providerReadinessAssessment.create({
