@@ -29,7 +29,8 @@
       "codex/release-b3-marketplace-post-homepage": false,
       "codex/b4-provider-profile": false,
       "codex/marketplace-recovery-v3": false,
-      "codex/workmatchr-v3-release-candidate": false
+      "codex/workmatchr-v3-release-candidate": false,
+      "codex/v3-integrated-release": false
     }
   },
   "crons": [
