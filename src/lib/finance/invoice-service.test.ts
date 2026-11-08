@@ -97,15 +97,22 @@ describe('financiële documentnummering', () => {
       financialInvoiceCounter: { update: vi.fn() },
       financialInvoice: { findUnique: vi.fn().mockResolvedValue(null), create: createInvoice },
       financialInvoiceLine: { create: createLine }, financialInvoiceVatSummary: { create: vi.fn() },
+      professionalSubscription: { findUniqueOrThrow: vi.fn().mockResolvedValue({
+        organizationId: 'organization-id', firstPaymentAttempts: [],
+        firstPaymentPurchase: { id: 'first', organizationId: 'organization-id', kind: 'PRO_SUBSCRIPTION', status: 'PAID',
+          molliePaymentId: 'tr_first', amountInclVatCents: 5929, invoice: {
+            purchaseId: 'first', organizationId: 'organization-id', documentType: 'INVOICE', snapshotVersion: 2, molliePaymentId: 'tr_first',
+            servicePeriodStart: new Date('2026-08-01'), servicePeriodEnd: new Date('2026-09-01'), amountInclVatCents: 5929,
+            customerOrganizationName: 'Voorbeeldorganisatie', customerAddressLine: 'Teststraat 1', customerPostalCode: '1234 AB',
+            customerCity: 'Teststad', customerCountryCode: 'NL', customerKvKNumber: null, customerVatId: null,
+          } },
+      }) },
       professionalSubscriptionPayment: { findUnique: vi.fn().mockResolvedValue({
         id: 'payment-pro', status: 'PAID', molliePaymentId: 'tr_pro', amountExclVatCents: 4_900,
         vatRateBps: 2_100, vatAmountCents: 1_029, amountInclVatCents: 5_929, currency: 'EUR',
         periodStart: new Date('2026-09-01T00:00:00Z'), periodEnd: new Date('2026-10-01T00:00:00Z'),
         subscriptionId: 'subscription-pro', subscription: { organizationId: 'organization-id', planCode: 'WORKMATCHR_PRO_MONTHLY',
-          planLabel: 'WorkMatchr Pro', firstPaymentPurchase: { invoice: {
-            customerOrganizationName: 'Voorbeeldorganisatie', customerAddressLine: 'Teststraat 1', customerPostalCode: '1234 AB',
-            customerCity: 'Teststad', customerCountryCode: 'NL', customerKvKNumber: null, customerVatId: null,
-          } } },
+          planLabel: 'WorkMatchr Pro' },
       }) },
       financialJorttSync: { create: vi.fn() }, financialEvent: { create: vi.fn() },
     }
