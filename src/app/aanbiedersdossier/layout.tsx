@@ -5,9 +5,9 @@ import { getProviderDossierDashboard } from '@/lib/providers/provider-dossier-qu
 import { requireProviderDossierContext } from '@/lib/providers/provider-onboarding-context'
 import type { ProviderDossierSection } from '@/generated/prisma/client'
 
-const groups: Array<{ label: string; href: string; matchPaths: string[]; sections: ProviderDossierSection[] }> = [
+const groups: Array<{ label: string; href: string; matchPaths: string[]; sections: ProviderDossierSection[] | null }> = [
   { label: 'Overzicht', href: '/aanbiedersdossier', matchPaths: ['/aanbiedersdossier'], sections: [] },
-  { label: 'Dienstverlenersprofiel', href: '/aanbiedersdossier/profiel', matchPaths: ['/aanbiedersdossier/profiel', '/aanbiedersdossier/voorvertoning'], sections: ['ORGANIZATION', 'CAPABILITIES'] },
+  { label: 'Dienstverlenersprofiel', href: '/aanbiedersdossier/profiel', matchPaths: ['/aanbiedersdossier/profiel', '/aanbiedersdossier/voorvertoning'], sections: null },
   { label: 'Bedrijfsgegevens', href: '/aanbiedersdossier/bedrijfsgegevens', matchPaths: ['/aanbiedersdossier/bedrijfsgegevens'], sections: ['ORGANIZATION'] },
   { label: 'Mijn dienstverlening', href: '/aanbiedersdossier/diensten-en-ervaring', matchPaths: ['/aanbiedersdossier/diensten-en-ervaring', '/aanbiedersdossier/diensten', '/aanbiedersdossier/sectorervaring', '/aanbiedersdossier/werkgebied'], sections: ['CAPABILITIES', 'SECTOR_EXPERIENCE', 'WORK_AREA'] },
 ]
@@ -16,9 +16,11 @@ export default async function ProviderDossierLayout({ children }: { children: Re
   const context = await requireProviderDossierContext('/aanbiedersdossier')
   const dashboard = await getProviderDossierDashboard(context.user.id, context.providerProfileId)
   const items: ProviderNavigationItem[] = groups.map((group) => {
-    const reasons = group.sections.length === 0
+    const sections = group.sections
+    if (!sections) return { label: group.label, href: group.href, matchPaths: group.matchPaths }
+    const reasons = sections.length === 0
       ? dashboard.completeness.reasons
-      : dashboard.completeness.reasons.filter((reason) => group.sections.includes(reason.section))
+      : dashboard.completeness.reasons.filter((reason) => sections.includes(reason.section))
     const status = reasons.some((reason) => reason.state === 'EXPIRED') ? 'Verlopen'
       : reasons.some((reason) => reason.state === 'ACTION_REQUIRED' || reason.state === 'WARNING') ? 'Actie nodig'
         : reasons.some((reason) => reason.state === 'NOT_STARTED') ? 'Niet gestart' : 'Gereed'

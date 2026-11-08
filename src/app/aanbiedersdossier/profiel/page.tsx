@@ -56,22 +56,24 @@ export default async function ProviderProfilePage() {
     <div className="min-w-0 space-y-6">
         <Card>
           <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-            <div><p className="font-semibold">Profiel ingevuld: {profile.completeness.percentage}%</p><p className="text-sm text-text-secondary">Dit percentage is alleen een invulhulp en geen beoordeling van kwaliteit of deskundigheid.</p></div>
+            <div><p className="font-semibold">Profielpresentatie ingevuld: {profile.completeness.percentage}%</p><p className="text-sm text-text-secondary">Dit percentage is alleen een invulhulp en geen beoordeling van kwaliteit of deskundigheid.</p></div>
             <Link href="/aanbiedersdossier/voorvertoning" className="inline-flex min-h-11 items-center justify-center rounded-control border border-brand-primary px-4 font-semibold text-brand-primary hover:bg-brand-primary-subtle">Voorvertoning bekijken</Link>
           </div>
-          {profile.completeness.suggestions.length > 0 && <><h2 className="mt-5 font-bold">Uw profiel verder aanvullen</h2><SummaryList values={profile.completeness.suggestions} empty="Uw profiel is volledig ingevuld." /></>}
+          {profile.completeness.suggestions.length > 0 && <><h2 className="mt-5 font-bold">Uw presentatie verder aanvullen</h2><SummaryList values={profile.completeness.suggestions} empty="Uw profiel is volledig ingevuld." /></>}
         </Card>
 
         <Card><h2 className="mb-5 text-lg font-bold">Introductie, omschrijving en werkwijze</h2>{editable ? <ProviderProfileForm action={saveProviderProfileAction} version={profile.version} shortIntroduction={profile.shortIntroduction} description={profile.description} workingMethod={profile.workingMethod} /> : <p className="text-text-secondary">Deze profielgegevens zijn nu alleen-lezen.</p>}</Card>
         <Card><h2 className="mb-5 text-lg font-bold">Kernexpertise en werkvormen</h2>{editable ? <ProviderProfileSelectionForm action={saveProviderProfileSelectionsAction} profileVersion={profile.version} expertiseOptions={expertiseOptions} selectedExpertiseIds={profile.coreExpertises.map((item) => item.taxonomyTermId)} workModeOptions={profile.workModeOptions} selectedWorkModeIds={profile.workModes.map((item) => item.taxonomyTermId)} /> : <p className="text-text-secondary">Deze profielgegevens zijn nu alleen-lezen.</p>}</Card>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Card><h2 className="font-bold">Diensten</h2><SummaryList values={services} empty="Nog geen diensten toegevoegd." /><Link href="/aanbiedersdossier/diensten-en-ervaring#diensten" className="mt-4 inline-block font-semibold text-brand underline">Diensten beheren</Link></Card>
-          <Card><h2 className="font-bold">Specialismen</h2><SummaryList values={specialisms} empty="Nog geen specialismen toegevoegd." /><Link href="/aanbiedersdossier/diensten-en-ervaring#diensten" className="mt-4 inline-block font-semibold text-brand underline">Specialismen beheren</Link></Card>
-          <Card><h2 className="font-bold">Sectorervaring</h2><SummaryList values={sectorExperience} empty="Nog geen sectorervaring toegevoegd." /><Link href="/aanbiedersdossier/diensten-en-ervaring#sectoren" className="mt-4 inline-block font-semibold text-brand underline">Sectorervaring beheren</Link></Card>
-          <Card><h2 className="font-bold">Werkgebied</h2><SummaryList values={workAreas} empty="Nog geen werkgebied toegevoegd." /><Link href="/aanbiedersdossier/werkgebied" className="mt-4 inline-block font-semibold text-brand underline">Werkgebied beheren</Link></Card>
+          <Card><h2 className="font-bold">Diensten</h2><SummaryList values={services} empty="Nog geen diensten toegevoegd." /></Card>
+          <Card><h2 className="font-bold">Specialismen</h2><SummaryList values={specialisms} empty="Nog geen specialismen toegevoegd." /></Card>
+          <Card><h2 className="font-bold">Sectorervaring</h2><SummaryList values={sectorExperience} empty="Nog geen sectorervaring toegevoegd." /></Card>
+          <Card><h2 className="font-bold">Werkgebied</h2><SummaryList values={workAreas} empty="Nog geen werkgebied toegevoegd." /></Card>
           <Card><h2 className="font-bold">Werkvormen</h2><SummaryList values={workModes} empty="Nog geen werkvormen gekozen." /></Card>
         </div>
+
+        <Link href="/aanbiedersdossier/diensten-en-ervaring" className="inline-flex min-h-11 items-center font-semibold text-brand underline">Mijn dienstverlening bekijken en beheren</Link>
 
         <Card>
           <h2 className="text-lg font-bold">Lidmaatschappen</h2>

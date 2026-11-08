@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card'
 import { LinkButton } from '@/components/ui/link-button'
 import { presentAssignmentStatus } from '@/lib/assignments/assignment-presentation'
 import { presentInvitationStatus } from '@/lib/marketplace/marketplace-presentation'
-import { providerLifecycleLabels } from '@/lib/providers/provider-dossier-presentation'
+import { providerLifecycleLabels, providerSelectabilityLabels } from '@/lib/providers/provider-dossier-presentation'
 
 export function MarketplaceDashboard({ dashboard }: { dashboard: MarketplaceDashboardView }) {
   if (dashboard.kind === 'PLATFORM') {
@@ -26,7 +26,7 @@ export function MarketplaceDashboard({ dashboard }: { dashboard: MarketplaceDash
       <div className="space-y-6">
         <div className="grid gap-5 md:grid-cols-3">
           <Card><h2 className="font-semibold">Dossier</h2><p className="mt-2 text-text-secondary">{providerLifecycleLabels[profile.lifecycleStatus]}</p></Card>
-          <Card><h2 className="font-semibold">Selecteerbaarheid</h2><p className="mt-2 text-text-secondary">{profile.selectabilityStatus === 'SELECTABLE' ? 'Selecteerbaar' : 'Niet selecteerbaar'}</p></Card>
+          <Card><h2 className="font-semibold">Selecteerbaarheid</h2><p className="mt-2 text-text-secondary">{providerSelectabilityLabels[profile.selectabilityStatus]}</p></Card>
           <Card><h2 className="font-semibold">Credits</h2><p className="mt-2 text-text-secondary">{dashboard.creditAccount?.availableBalance ?? 0} beschikbaar · {dashboard.creditAccount?.reservedBalance ?? 0} gereserveerd</p><Link className="mt-3 inline-block underline" href="/credits">Bekijk mutaties</Link></Card>
         </div>
         <Card>

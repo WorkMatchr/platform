@@ -31,8 +31,12 @@ describe('gedeelde goedgekeurde beheershell', () => {
         route.pathname = link.href
         const document = parse(renderToStaticMarkup(<AccountWorkspaceShell model={model} banner={null}><form action="/unchanged"><input name="value" defaultValue="retained" /></form></AccountWorkspaceShell>))
         expect(document.querySelector('nav[aria-label="Accounthoofdstukken"] [aria-current="location"]')?.textContent).toBe(group.label)
-        expect(document.querySelector('[aria-current="page"]')?.getAttribute('href')).toBe(link.href)
-        expect([...document.querySelectorAll(`nav[aria-label="Binnen ${group.label}"] a`)].map(a => a.getAttribute('href'))).toEqual(group.links.map(item => item.href))
+        const inDossier = route.pathname.startsWith('/aanbiedersdossier')
+        const inOffering = link.href === '/aanbiedersdossier/diensten-en-ervaring'
+        const local = document.querySelector(`nav[aria-label="Binnen ${group.label}"]`)!
+        expect(local.querySelector('[aria-current]')?.getAttribute('href')).toBe(inOffering ? '/aanbiedersdossier' : link.href)
+        expect(local.querySelector('[aria-current]')?.getAttribute('aria-current')).toBe(inOffering ? 'location' : 'page')
+        expect([...document.querySelectorAll(`nav[aria-label="Binnen ${group.label}"] a`)].map(a => a.getAttribute('href'))).toEqual(group.links.filter(item => !inDossier || item.href !== '/aanbiedersdossier/diensten-en-ervaring').map(item => item.href))
         expect(document.querySelector('summary')).toBeNull()
         expect(document.querySelector('form')?.getAttribute('action')).toBe('/unchanged')
         expect(document.querySelector('input')?.getAttribute('value')).toBe('retained')

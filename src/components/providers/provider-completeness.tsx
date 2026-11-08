@@ -27,12 +27,9 @@ export function ProviderCompleteness({ assessment }: { assessment: ProviderCompl
           const reason = assessment.reasons.find(item => item.section === section)
           const status = assessment.sections[section]
           if (!status) return null
-          const href = section === 'CAPABILITIES' ? '/aanbiedersdossier/diensten-en-ervaring#diensten'
-            : section === 'SECTOR_EXPERIENCE' ? '/aanbiedersdossier/diensten-en-ervaring#sectoren'
-            : section === 'ORGANIZATION' ? '/organisatie/profiel' : providerSectionDetails[section].routeHint
           return <li key={section} className="flex flex-wrap items-baseline justify-between gap-x-3 py-2">
-            {status === 'REQUIRED_OPEN'
-              ? <Link href={href} className="font-semibold underline">{providerDossierSectionLabels[section]}</Link>
+            {status !== 'NOT_APPLICABLE'
+              ? <Link href={providerSectionDetails[section].routeHint} className="font-semibold underline">{providerDossierSectionLabels[section]}</Link>
               : <span>{providerDossierSectionLabels[section]}</span>}
             <span className="text-sm">{sectionLabels[status]}</span>
             {reason?.code === 'TERMS_NOT_CONFIGURED' && <span className="w-full text-sm">Platformbeheer moet de verplichte verklaringen beschikbaar stellen.</span>}

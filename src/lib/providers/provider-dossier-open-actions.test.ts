@@ -67,18 +67,18 @@ describe('provider dossier open actions', () => {
       )[0],
     ).toMatchObject({
       title: 'Vul sectorervaring in',
-      routeHint: '/aanbiedersdossier/sectorervaring',
+      routeHint: '/aanbiedersdossier/diensten-en-ervaring#sectoren',
       pageTitle: 'Sectorervaring',
-      groupLabel: 'Sectoren en diensten',
+      groupLabel: 'Mijn dienstverlening',
       groupHref: '/aanbiedersdossier/diensten-en-ervaring',
     })
   })
 
   it.each([
     ['ORGANIZATION', 'ORGANIZATION_INCOMPLETE', 'Vul de bedrijfsgegevens aan', '/aanbiedersdossier/bedrijfsgegevens', 'Bedrijfsgegevens', 'Bedrijfsgegevens'],
-    ['CAPABILITIES', 'CAPABILITIES_INCOMPLETE', 'Voeg een dienst toe', '/aanbiedersdossier/diensten', 'Diensten en specialismen', 'Sectoren en diensten'],
-    ['SECTOR_EXPERIENCE', 'SECTOR_EXPERIENCE_INCOMPLETE', 'Vul sectorervaring in', '/aanbiedersdossier/sectorervaring', 'Sectorervaring', 'Sectoren en diensten'],
-    ['WORK_AREA', 'WORK_AREA_INCOMPLETE', 'Vul het werkgebied in', '/aanbiedersdossier/werkgebied', 'Werkgebied', 'Werkgebied'],
+    ['CAPABILITIES', 'CAPABILITIES_INCOMPLETE', 'Voeg een dienst toe', '/aanbiedersdossier/diensten-en-ervaring#diensten', 'Diensten en specialismen', 'Mijn dienstverlening'],
+    ['SECTOR_EXPERIENCE', 'SECTOR_EXPERIENCE_INCOMPLETE', 'Vul sectorervaring in', '/aanbiedersdossier/diensten-en-ervaring#sectoren', 'Sectorervaring', 'Mijn dienstverlening'],
+    ['WORK_AREA', 'WORK_AREA_INCOMPLETE', 'Vul het werkgebied in', '/aanbiedersdossier/diensten-en-ervaring#werkgebied', 'Werkgebied', 'Mijn dienstverlening'],
     ['PROFESSIONALS', 'PROFESSIONALS_INCOMPLETE', 'Voeg een professional toe', '/aanbiedersdossier/professionals', 'Professionals', 'Professionals en kwalificaties'],
     ['INSURANCE', 'INSURANCE_EXPIRED', 'Werk de verzekering bij', '/aanbiedersdossier/verzekeringen', 'Verzekeringen', 'Verzekeringen en bewijsstukken'],
     ['EVIDENCE', 'EVIDENCE_UNAVAILABLE', 'Maak bewijs beschikbaar', '/aanbiedersdossier/bewijsstukken', 'Bewijsstukken', 'Verzekeringen en bewijsstukken'],
