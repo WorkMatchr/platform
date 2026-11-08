@@ -1,4 +1,4 @@
-import { resolveProInvoiceSource, recurringContractPeriod } from './pro-payment-source'
+import { firstProPeriodEnd, resolveProInvoiceSource, recurringContractPeriod } from './pro-payment-source'
 import 'server-only'
 
 import { Prisma } from '@/generated/prisma/client'
@@ -39,16 +39,6 @@ const cancellationInputSchema = z.object({
 
 async function lock(transaction: Prisma.TransactionClient, key: string) {
   await transaction.$queryRaw(Prisma.sql`SELECT pg_advisory_xact_lock(hashtextextended(${`subscription:${key}`}, 0))::text AS "lock"`)
-}
-
-function addUtcMonth(value: Date) {
-  const result = new Date(value)
-  const day = result.getUTCDate()
-  result.setUTCDate(1)
-  result.setUTCMonth(result.getUTCMonth() + 1)
-  const lastDayOfTargetMonth = new Date(Date.UTC(result.getUTCFullYear(), result.getUTCMonth() + 1, 0)).getUTCDate()
-  result.setUTCDate(Math.min(day, lastDayOfTargetMonth))
-  return result
 }
 
 function toMollieDate(value: Date) {
@@ -202,7 +192,7 @@ async function completeRemoteSubscriptionActivation(
 
   const verifiedAt = new Date()
   const periodStart = paymentPurchase.paidAt ?? verifiedAt
-  const periodEnd = addUtcMonth(periodStart)
+  const periodEnd = firstProPeriodEnd(periodStart)
   let remote = existingRemote
   if (!remote) {
     const { webhookBaseUrl } = getMollieUrls()

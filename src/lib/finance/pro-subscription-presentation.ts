@@ -1,5 +1,3 @@
-import { hasEffectiveProEntitlement } from './pro-entitlement-service'
-
 export type ProSubscriptionStatus =
   | 'PENDING_MANDATE'
   | 'ACTIVE'
@@ -45,10 +43,6 @@ export function canScheduleProCancellation(subscription: ProSubscriptionSummary 
     && ['ACTIVE', 'PAST_DUE'].includes(subscription.status)
     && !subscription.cancelAtPeriodEnd,
   )
-}
-
-export function hasActiveProBenefits(subscription: ProSubscriptionSummary | null, at = new Date()) {
-  return hasEffectiveProEntitlement(subscription, at)
 }
 
 export function getProCancellationExplanation(subscription: ProSubscriptionSummary | null) {

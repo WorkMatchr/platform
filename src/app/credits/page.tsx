@@ -7,11 +7,12 @@ import { CreditPurchaseCheckout } from '@/components/finance/credit-purchase-che
 import { Card } from '@/components/ui/card'
 import { Heading } from '@/components/ui/heading'
 import { creditPackageCatalog, formatEuro } from '@/lib/finance/financial-contract'
-import { getProSubscriptionStatusLabel, hasActiveProBenefits } from '@/lib/finance/pro-subscription-presentation'
+import { getProSubscriptionStatusLabel } from '@/lib/finance/pro-subscription-presentation'
 import {
   calculateAuthoritativeMollieCreditPrice,
   usesMollieTestAcceptancePrice,
 } from '@/lib/finance/mollie-test-pricing'
+import { findEffectiveProSubscription } from '@/lib/finance/pro-entitlement-service'
 import { creditTransactionTypeLabels } from '@/lib/marketplace/marketplace-presentation'
 import { getProviderCreditOverview } from '@/lib/marketplace/credit-service'
 import { requireOrganizationMembership } from '@/lib/organizations/organization-authorization'
@@ -24,7 +25,7 @@ export default async function CreditsPage({ searchParams }: { searchParams: Prom
   const { user, activeMembership } = await requireOrganizationMembership(undefined, '/credits')
   if (user.accountType !== 'PROFESSIONAL' || !activeMembership.organization.providerProfile) notFound()
   const organizationId = activeMembership.organization.id
-  const [overview, organization, purchases, subscription] = await Promise.all([
+  const [overview, organization, purchases, subscription, effectivePro] = await Promise.all([
     getProviderCreditOverview(user.id, organizationId),
     getPrisma().organization.findUnique({
       where: { id: organizationId },
@@ -39,12 +40,13 @@ export default async function CreditsPage({ searchParams }: { searchParams: Prom
       include: { invoice: { select: { id: true, invoiceNumber: true } } },
     }),
     getPrisma().professionalSubscription.findUnique({ where: { organizationId } }),
+    findEffectiveProSubscription(getPrisma(), organizationId),
   ])
   if (!organization) notFound()
   const location = organization.locations[0]
   const { fout } = await searchParams
   const mollieTestAcceptanceActive = usesMollieTestAcceptancePrice('CREDITS_25')
-  const hasActivePro = hasActiveProBenefits(subscription)
+  const hasActivePro = Boolean(effectivePro)
   const checkoutPackages = creditPackageCatalog.map((item) => ({
     sku: item.sku,
     credits: item.credits,

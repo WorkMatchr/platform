@@ -109,3 +109,11 @@ Rollback: sluit de twee nieuwe gates; stop nieuwe herstelacties en behoud alle i
 ## Advies
 
 Technische integratie: GO voor review en geisoleerde integratie na groene checks; geen productie- of mergevrijgave op het huidige 85-migratieschema. Productieherstel: NO-GO totdat migratie/release, historische herstelset en boekhoudkundige provideracceptatie afzonderlijk zijn goedgekeurd. Onzekere provideruitkomsten blijven expliciet geblokkeerd.
+
+## FIN-04 en de betaalde looptijd
+
+De creditpagina, de prijsvoorvertoning, de definitieve aankoop en de Pro-badge gebruiken dezelfde servercontrole. Het begintijdstip van een bevestigde betaalperiode telt mee. Op het eindtijdstip vervalt het voordeel. Een geplande opzegging kan de looptijd verder begrenzen. Bij `PAST_DUE` vervallen de voordelen direct volgens het bestaande contract.
+
+De eerste periode volgt uit de bevestigde eerste betaling van de organisatie of de gekoppelde betaalde herkansing. Bij verlengingen geldt het opgeslagen interval van de bevestigde incasso. Een later ontvangen betaalbericht laat een tussenliggende onbetaalde maand open. Opnieuw openen van dezelfde checkout behoudt de eerder vastgelegde prijs.
+
+De lokale PostgreSQL-proef `npm run test:db:finance-p1` vergelijkt prijsvoorvertoning en aankoop met een vaste klok, een nepcheckout en geblokkeerd uitgaand HTTP-verkeer. De proef controleert ook een gelijktijdige verlenging, dubbele berichten en het reguliere tarief van een gratis account.

@@ -31,6 +31,10 @@ function anchoredMonth(anchor: Date, offset: number) {
   return result
 }
 
+export function firstProPeriodEnd(paidAt: Date) {
+  return anchoredMonth(paidAt, 1)
+}
+
 /** Contract month is anchored to the paid initial invoice, never to settlement time. */
 export function recurringContractPeriod(anchor: Date, createdAt: string | null) {
   const created = new Date(createdAt ?? '')

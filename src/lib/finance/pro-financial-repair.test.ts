@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { allocateProCredit } from './pro-credit-service'
-import { recurringContractPeriod, resolveProInvoiceSource } from './pro-payment-source'
+import { firstProPeriodEnd, recurringContractPeriod, resolveProInvoiceSource } from './pro-payment-source'
 
 describe('Pro correction contract', () => {
   it('allocates every cent once across partial credits, including the final VAT cent', () => {
@@ -17,6 +17,7 @@ describe('Pro correction contract', () => {
   })
   it('anchors renewal to the contract and restores month-end after February', () => {
     const anchor = new Date('2026-01-31T14:00:00Z')
+    expect(firstProPeriodEnd(anchor)).toEqual(new Date('2026-02-28T14:00:00Z'))
     expect(recurringContractPeriod(anchor, '2026-02-28T00:00:00Z')).toEqual({ start: new Date('2026-02-28T14:00:00Z'), end: new Date('2026-03-31T14:00:00Z') })
     expect(() => recurringContractPeriod(anchor, '2026-04-01T00:00:00Z')).toThrow('PRO_PAYMENT_SCHEDULE_REVIEW_REQUIRED')
     expect(() => recurringContractPeriod(anchor, null)).toThrow('PRO_PAYMENT_SCHEDULE_REQUIRED')

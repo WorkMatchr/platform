@@ -71,6 +71,10 @@ async function main() {
     const paidRetry = await prisma.financialPurchase.create({data:{...baseData,id:randomUUID(),status:'PAYMENT_PENDING',paidAt:null,terminalAt:null,molliePaymentId:'tr_p1retry',idempotencyKey:randomUUID()}})
     const pro = await prisma.professionalSubscription.create({data:{organizationId:organization.id,status:'PENDING_MANDATE',planCode:'WORKMATCHR_PRO',planLabel:'Synthetic Pro',amountExclVatCents:4900,vatRateBps:2100,vatAmountCents:1029,amountInclVatCents:5929,currency:'EUR',mollieCustomerId:'cst_p1',firstPaymentPurchaseId:failedFirst.id,currentPeriodStart:new Date('2026-09-04T19:00:48Z'),currentPeriodEnd:new Date('2026-10-04T19:00:48Z')}})
     await prisma.professionalSubscriptionFirstPaymentAttempt.create({data:{subscriptionId:pro.id,purchaseId:paidRetry.id,attemptNumber:1}})
+    const { findEffectiveProSubscription } = await import('../src/lib/finance/pro-entitlement-service')
+    await prisma.professionalSubscription.update({ where: { id: pro.id }, data: { status: 'ACTIVE' } })
+    assert.equal(await findEffectiveProSubscription(prisma, organization.id, baseData.paidAt), null)
+    await prisma.professionalSubscription.update({ where: { id: pro.id }, data: { status: 'PENDING_MANDATE' } })
     const { issueInvoiceForPaidPurchase } = await import('../src/lib/finance/invoice-service')
     const initialGateway = {
       getPayment: async () => ({
@@ -91,7 +95,11 @@ async function main() {
     const payment=(id:string,paidAt:string,status='paid')=>({id,status,amountValue:'59.29',currency:'EUR',metadata:{subscriptionId:pro.id,organizationId:organization.id},paidAt:status==='paid'?paidAt:null,createdAt:paidAt,checkoutUrl:null,subscriptionId:'sub_p1',mandateId:'mdt_p1',method:'directdebit'})
     const october=payment('tr_p1october','2026-10-04T19:00:48Z')
     const november=payment('tr_p1november','2026-11-04T19:00:48Z')
-    await processRecurringProPayment(october as never)
+    const { verifyPaidProPricing } = await import('./finance-tests/pro-paid-period')
+    await verifyPaidProPricing({
+      actorUserId: user.id, organizationId: organization.id, subscriptionId: pro.id,
+      freeUserId: secondUser.id, freeOrganizationId: secondOrganization.id, renewal: october as never,
+    })
     await processRecurringProPayment(november as never)
     assert.equal(await prisma.financialInvoice.count({where:{subscriptionPayment:{subscriptionId:pro.id}}}),2)
     assert.equal((await prisma.professionalSubscription.findUniqueOrThrow({where:{id:pro.id}})).firstPaymentPurchaseId,failedFirst.id)
@@ -209,6 +217,9 @@ async function main() {
     assert.equal(recovery.failed,0);assert.equal(recovery.processed,3)
     assert.equal(await prisma.financialInvoice.count({where:{molliePaymentId:missed.id}}),1)
     await assert.rejects(()=>processRecurringProPayment({...missed,metadata:{...missed.metadata,organizationId:secondOrganization.id}} as never),/MOLLIE_PAYMENT_MISMATCH/)
+    assert.ok(await findEffectiveProSubscription(prisma, organization.id, new Date('2026-11-15T12:00:00Z')))
+    assert.equal(await findEffectiveProSubscription(prisma, organization.id, new Date('2026-12-15T12:00:00Z')), null)
+    assert.ok(await findEffectiveProSubscription(prisma, organization.id, new Date('2027-01-15T12:00:00Z')))
     console.log('PASS missing webhook backfill through existing service; cross-tenant binding rejected')
     // A lost client acknowledgement after commit cannot result in a second invoice.
     const committed={...missed,id:'tr_p1lostcommit',createdAt:'2027-02-04T19:00:48Z',paidAt:'2027-02-06T19:00:48Z'}
