@@ -65,7 +65,7 @@ export async function deliverAssignmentEmails(input: { limit?: number; now?: () 
     const blocked = await db.$transaction(tx => blockedOnboardingProfiles(tx, [{
       providerProfileId: invitation.providerProfileId, organizationId: invitation.providerOrganizationId,
       projectionId: invitation.matchCandidate.projectionId,
-    }], now, job.recipientUserId!))
+    }], now))
     if (blocked.size) { await finish('FAILED', 'INVITATION_NOT_DELIVERABLE'); continue }
     const recipient = await db.organizationMembership.findFirst({
       where: { organizationId: invitation.providerOrganizationId, userId: job.recipientUserId, status: 'ACTIVE',
