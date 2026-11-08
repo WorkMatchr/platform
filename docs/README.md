@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [V3.0 – commerciële omschakeling en clean-startproef](release-v3/operationele-start.md)
+
 - [Homepage 2.0 — compacte lay-out en acceptatie](homepage-compact-v2.md)
 
 - [Productiedatabase: schrijfpauze, herstel en migratieacceptatie](database-upgrade-preparation.md)
