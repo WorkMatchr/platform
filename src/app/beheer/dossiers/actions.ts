@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { recordProviderVerificationReview } from '@/lib/providers/provider-verification-service'
 import { z } from 'zod'
 import { recordProviderQualificationDecision, refreshApprovedProviderSelection } from '@/lib/providers/provider-qualification-service'
 import { ProviderServiceError } from '@/lib/providers/provider-errors'
@@ -101,4 +102,30 @@ export async function manageQualificationAction(form: FormData) {
   revalidatePath('/beheer/dossiers')
   revalidatePath('/dashboard')
   redirect(`${path}?kwalificatie=${result}#kwalificatiebeheer`)
+}
+
+export async function recordVerificationAction(form: FormData) {
+  const profileId = id.parse(form.get('providerProfileId'))
+  const path = `/beheer/dossiers/${profileId}`
+  const user = await requireUser(path)
+  let feedback = 'opgeslagen'
+  try {
+    const outcome = z.enum(['VERIFIED', 'DOCUMENT_CHECKED', 'REJECTED', 'CHANGES_REQUESTED']).parse(form.get('outcome'))
+    const positive = outcome === 'VERIFIED' || outcome === 'DOCUMENT_CHECKED'
+    await recordProviderVerificationReview(user.id, profileId, {
+      expectedProfileVersion: version.parse(form.get('expectedVersion')),
+      dossier: { candidateId: form.get('candidateId'), reviewCaseId: form.get('reviewCaseId'), justification: form.get('justification') },
+      subject: { type: form.get('type'), revisionId: form.get('revisionId') }, outcome,
+      resultingLevel: positive ? outcome : 'SELF_DECLARED',
+      reasonCode: positive ? 'QUALIFICATION_EVIDENCE_CONFIRMED' : 'CONFIGURATION_INCOMPLETE',
+      validUntil: new Date(z.iso.date().parse(form.get('until')) + 'T00:00:00Z'),
+    })
+  } catch (error) {
+    if (error instanceof ProviderServiceError) feedback = error.code
+    else if (error instanceof z.ZodError) feedback = 'VALIDATION_ERROR'
+    else if (error instanceof Error && 'code' in error && error.code === 'P2034') feedback = 'CONFLICT'
+    else throw error
+  }
+  revalidatePath(path)
+  redirect(`${path}?verificatie=${feedback}#verificaties`)
 }

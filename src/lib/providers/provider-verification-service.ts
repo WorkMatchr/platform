@@ -1,3 +1,6 @@
+import { candidateMatchesProfile } from './provider-dossier-service'
+import { subjectField, verificationSubjects } from './provider-review-subjects'
+import { positiveQualificationReason } from './provider-requirements'
 import { z } from 'zod'
 import type { Prisma } from '@/generated/prisma/client'
 import { getPrisma } from '@/lib/prisma'
@@ -20,6 +23,7 @@ const subjectSchema = z.discriminatedUnion('type', [
 const reviewSchema = z.object({
   expectedProfileVersion: z.int().positive(),
   subject: subjectSchema,
+  dossier: z.object({ candidateId: uuidSchema, reviewCaseId: uuidSchema, justification: z.string().trim().min(10).max(500) }).optional(),
   outcome: z.enum(['DOCUMENT_CHECKED', 'VERIFIED', 'CHANGES_REQUESTED', 'REJECTED', 'EXPIRED']),
   resultingLevel: z.enum(['SELF_DECLARED', 'DOCUMENT_CHECKED', 'VERIFIED']),
   reasonCode: reasonCodeSchema,
@@ -31,16 +35,6 @@ const reviewSchema = z.object({
     (['CHANGES_REQUESTED', 'REJECTED', 'EXPIRED'].includes(input.outcome) && input.resultingLevel === 'SELF_DECLARED'),
   { path: ['resultingLevel'], message: 'Het verificatieniveau past niet bij de uitkomst.' },
 )
-
-const subjectField = {
-  CAPABILITY: 'capabilityRevisionId',
-  SECTOR_EXPERIENCE: 'sectorExperienceRevisionId',
-  WORK_AREA: 'workAreaRevisionId',
-  PROFESSIONAL_QUALIFICATION: 'professionalQualificationRevisionId',
-  ORGANIZATION_QUALIFICATION: 'organizationQualificationRevisionId',
-  INSURANCE: 'insuranceRevisionId',
-  EVIDENCE: 'evidenceRevisionId',
-} as const
 
 async function subjectBelongsToProvider(
   transaction: Prisma.TransactionClient,
@@ -76,11 +70,32 @@ export async function recordProviderVerificationReview(
     if (!(await subjectBelongsToProvider(transaction, providerProfileId, input.subject))) {
       throw new ProviderServiceError('NOT_FOUND')
     }
-    const reason = await transaction.providerReasonCode.findUnique({ where: { code: input.reasonCode }, select: { id: true } })
-    if (!reason) throw new ProviderServiceError('VALIDATION_ERROR')
     const validFrom = new Date()
     if (input.validUntil && input.validUntil <= validFrom) throw new ProviderServiceError('VALIDATION_ERROR')
+    const positive = input.resultingLevel !== 'SELF_DECLARED'
+    let binding
+    if (input.dossier) {
+      const latest = await transaction.providerDossierSubmission.findFirst({
+        where: { providerProfileId }, orderBy: [{ submittedAt: 'desc' }, { id: 'desc' }],
+        include: { currentCandidate: true, reviewCases: { where: { id: input.dossier.reviewCaseId, status: 'OPEN', openedByUserId: reviewerUserId } } },
+      })
+      const candidate = latest?.currentCandidate
+      const reviewCase = latest?.reviewCases[0]
+      if (!reviewCase || reviewCase.candidateId !== input.dossier.candidateId || reviewCase.providerProfileId !== providerProfileId) throw new ProviderServiceError('ACCESS_DENIED')
+      if (!candidate || candidate.id !== reviewCase.candidateId || latest.status !== 'UNDER_REVIEW' ||
+          !await candidateMatchesProfile(transaction, candidate)) throw new ProviderServiceError('DOSSIER_NOT_SUBMITTABLE')
+      const subject = verificationSubjects(candidate.canonicalPayload).find(s => s.type === input.subject.type && s.id === input.subject.revisionId)
+      if (!subject) throw new ProviderServiceError('NOT_FOUND')
+      if (positive && (!input.validUntil || subject.missingEvidence ||
+          (subject.validFrom && new Date(subject.validFrom) > validFrom) ||
+          (subject.validUntil && input.validUntil > new Date(subject.validUntil)))) throw new ProviderServiceError('VALIDATION_ERROR')
+      binding = { dossierCandidateId: candidate.id, dossierSubmissionId: latest.id, dossierReviewCaseId: reviewCase.id }
+    }
+    const reason = await transaction.providerReasonCode.findUnique({ where: { code: input.reasonCode, isActive: true,
+      ...(binding && positive ? positiveQualificationReason : {}) }, select: { id: true } })
+    if (!reason) throw new ProviderServiceError('VALIDATION_ERROR')
     const checksum = hashProviderJson({
+      ...(binding ? { ...binding, reviewerUserId, justification: input.dossier!.justification } : {}),
       outcome: input.outcome,
       providerProfileId,
       reasonCode: input.reasonCode,
@@ -92,6 +107,7 @@ export async function recordProviderVerificationReview(
     const review = await transaction.providerVerificationReview.create({
       data: {
         providerProfileId,
+        ...binding,
         [subjectField[input.subject.type]]: input.subject.revisionId,
         outcome: input.outcome,
         resultingLevel: input.resultingLevel,
@@ -118,8 +134,15 @@ export async function recordProviderVerificationReview(
         data: { projectionId: projection.id, reasonCode: 'VERIFICATION_CHANGED' },
       })
     }
+    if (binding && input.dossier) {
+      await transaction.marketplaceAuditEvent.create({ data: {
+        actorUserId: reviewerUserId, actorRole: 'PROVIDER_REVIEWER', action: 'PROVIDER_VERIFICATION_RECORDED',
+        entityType: 'ProviderVerificationReview', entityId: review.id, nextState: input.outcome,
+        reason: input.dossier.justification, metadata: { ...binding, providerProfileId, checksum },
+      } })
+    }
     return { ...review, profileVersion: input.expectedProfileVersion + 1 }
-  })
+  }, { isolationLevel: 'Serializable' })
 }
 
 const scanDecisionSchema = z.object({

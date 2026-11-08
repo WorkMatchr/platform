@@ -116,8 +116,21 @@ async function loadCandidateSource(transaction: Transaction, providerProfileId: 
   return { provider, evidence, payload, sourceReferences }
 }
 
-// Qualification decisions advance the profile version; only decisions linked to
-// this immutable submission may account for the gap since dossier approval.
+// Every candidate-bound decision or verification advances the version once.
+export async function candidateMatchesProfile(transaction: Transaction, candidate: {
+  id: string; providerProfileId: string; submissionId: string; sourceProfileVersion: number
+  canonicalPayload: Prisma.JsonValue; sha256: string
+}) {
+  const recorded = candidate.canonicalPayload as { provider?: CanonicalValue }
+  if (!recorded?.provider) return false
+  const live = await loadCandidateSource(transaction, candidate.providerProfileId)
+  const where = { providerProfileId: candidate.providerProfileId, dossierCandidateId: candidate.id, dossierSubmissionId: candidate.submissionId }
+  const decisions = await transaction.providerQualificationDecision.count({ where })
+  const reviews = await transaction.providerVerificationReview.count({ where })
+  return live.provider.version === candidate.sourceProfileVersion + decisions + reviews &&
+    hashProviderJson({ ...live.payload, provider: recorded.provider }).sha256 === candidate.sha256
+}
+
 export async function currentApprovedQualificationBasis(transaction: Transaction, providerProfileId: string, candidateId: string) {
   const submission = await transaction.providerDossierSubmission.findFirst({
     where: { providerProfileId }, orderBy: [{ submittedAt: 'desc' }, { id: 'desc' }],
@@ -133,18 +146,10 @@ export async function currentApprovedQualificationBasis(transaction: Transaction
       candidate.submissionId !== submission.id || submission.status !== 'APPROVED' || !review ||
       !review.closedByUserId || review.closedByUserId !== submission.history[0]?.actorUserId ||
       review.openedByUserId === review.closedByUserId) return null
-  const recorded = candidate.canonicalPayload as { provider?: CanonicalValue }
-  if (!recorded?.provider) return null
   try {
-    const live = await loadCandidateSource(transaction, providerProfileId)
-    const bound = await transaction.providerQualificationDecision.count({ where: { providerProfileId, dossierCandidateId: candidateId, dossierSubmissionId: submission.id } })
-    if (live.provider.version !== candidate.sourceProfileVersion + bound) return null
-    // The source documents, organization and revision identities must still
-    // match. Workflow statuses in the snapshot describe the original submission.
-    const checksum = hashProviderJson({ ...live.payload, provider: recorded.provider }).sha256
-    if (checksum !== candidate.sha256) return null
+    if (!await candidateMatchesProfile(transaction, candidate)) return null
     return { dossierCandidateId: candidate.id, dossierSubmissionId: submission.id,
-      dossierReviewCaseId: review.id, submitterId: candidate.createdByUserId, reviewerUserId: review.openedByUserId, candidateChecksum: checksum }
+      dossierReviewCaseId: review.id, submitterId: candidate.createdByUserId, reviewerUserId: review.openedByUserId, candidateChecksum: candidate.sha256 }
   } catch (error) {
     if (error instanceof ProviderServiceError && ['CONFIGURATION_INCOMPLETE', 'NOT_FOUND'].includes(error.code)) return null
     throw error

@@ -1,3 +1,4 @@
+import { ProviderVerificationPanel } from '@/components/providers/provider-verification-panel'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import {
@@ -13,7 +14,7 @@ import { Card } from '@/components/ui/card'
 import { Heading } from '@/components/ui/heading'
 import { requireUser } from '@/lib/authorization'
 import { ProviderServiceError } from '@/lib/providers/provider-errors'
-import { getProviderReviewDetail, getQualificationManagement } from '@/lib/marketplace/provider-review-query-service'
+import { getProviderReviewDetail, getQualificationManagement, getReviewSubjects } from '@/lib/marketplace/provider-review-query-service'
 import {
   providerDossierSectionLabels,
   providerQualificationLabels,
@@ -41,7 +42,7 @@ export default async function ProviderReviewDetailPage({
   params, searchParams,
 }: {
   params: Promise<{ providerProfileId: string }>
-  searchParams: Promise<{ kwalificatie?: string }>
+  searchParams: Promise<{ kwalificatie?: string; verificatie?: string }>
 }) {
   const { providerProfileId } = await params
   const user = await requireUser(`/beheer/dossiers/${providerProfileId}`)
@@ -60,8 +61,14 @@ export default async function ProviderReviewDetailPage({
         if (error instanceof ProviderServiceError && error.code === 'ACCESS_DENIED') return null
         throw error
       }) : null
-  const qualificationResult = (await searchParams).kwalificatie
+  const { kwalificatie: qualificationResult, verificatie: verificationResult } = await searchParams
+  const canVerify = isReviewer && reviewCase?.openedByUserId === user.id && reviewCase.status === 'OPEN' && submission.status === 'UNDER_REVIEW'
+  const subjects = reviewCase && (canVerify || isApprover)
+    ? await getReviewSubjects(user.id, provider.id, submission.currentCandidate.id, !canVerify) : null
   const feedback: Record<string, string> = {
+    opgeslagen: 'De verificatie is opgeslagen.',
+    VALIDATION_ERROR: 'Controleer de onderbouwing, de geldigheid van het bewijs en de einddatum van de verificatie.',
+    ACCESS_DENIED: 'Alleen de toegewezen beoordelaar kan de open beoordeling bijwerken.',
     besluit: 'Het kwalificatiebesluit is vastgelegd.', selecteerbaar: 'De dienstverlener is nu selecteerbaar.',
     'niet-selecteerbaar': 'Nog niet selecteerbaar. Controleer de kwalificaties van het platform en van alle actieve diensten.',
     DOSSIER_NOT_SUBMITTABLE: 'De goedgekeurde dossierversie is niet meer actueel. Laat de actuele versie indienen en beoordelen.',
@@ -71,7 +78,7 @@ export default async function ProviderReviewDetailPage({
     INSURANCE_REQUIREMENTS_NOT_CONFIGURED: 'De verzekeringsvereisten zijn nog niet geconfigureerd.',
     QUALIFICATION_REQUIREMENTS_NOT_CONFIGURED: 'Voor de dienst zijn nog geen beoordelingsvereisten gepubliceerd.',
     CONFIGURATION_INCOMPLETE: 'De vereiste verklaringen, verzekeringen of dienstbewijzen zijn nog niet volledig.',
-    REQUIREMENTS_NOT_CONFIGURED: 'Een geldige verificatie van de beoordelaar ontbreekt.',
+    REQUIREMENTS_NOT_CONFIGURED: 'Laat de toegewezen beoordelaar de ingediende onderdelen verifiëren. Is de beoordeling al gesloten, laat dan een actuele versie indienen en beoordelen.',
     PROJECTION_NOT_ALLOWED: 'Controleer de verificatie van diensten en werkgebieden voordat u de selectie bijwerkt.',
   }
   const outcomeLabels = { QUALIFIED: 'Gekwalificeerd', RESTORED: 'Hersteld', SUSPENDED: 'Geschorst', REJECTED: 'Afgewezen', EXPIRED: 'Verlopen', CHANGES_REQUESTED: 'Aanvulling gevraagd' }
@@ -119,6 +126,9 @@ export default async function ProviderReviewDetailPage({
         </Card>
       </div>
 
+      {verificationResult && <p role="status" className="mt-4">{feedback[verificationResult] ?? 'De verificatie is niet opgeslagen. Open het actuele dossier opnieuw.'}</p>}
+      {subjects && reviewCase && <ProviderVerificationPanel profileId={provider.id} version={provider.version}
+        candidateId={submission.currentCandidate.id} caseId={reviewCase.id} editable={canVerify} data={subjects} />}
       {isReviewer && reviewCase?.status === 'OPEN' && submission.status === 'UNDER_REVIEW' ? (
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
           <Card>

@@ -1,5 +1,7 @@
 # V3.0 — Gebruikersacceptatie van registratie tot gunning
 
+De vervolgproef en de reparatie van de beoordelaarsverificatie staan in [QUAL-UX-01](kwalificatie.md). Hieronder staat de oorspronkelijke nulmeting.
+
 **Technisch NO-GO voor de volledige gebruikersroute.** De opdrachtgever kon twee offertes vergelijken en er één gunnen. Een nieuwe professional met uitsluitend de vier verplichte profielonderdelen kon na dossiergoedkeuring de platformkwalificatie niet afronden met bevoegd testbeheer. Met aanvullend voorbereide verificaties werkte de route vanaf kwalificatie tot en met het openen van de gegunde offerte.
 
 Geteste basis is [PR #122 op 7a5d8dc](https://github.com/WorkMatchr/platform/commit/7a5d8dc6dee1a60cb142aede0241f439591f4626). De enige wijziging in de applicatie is de leesbare koppeling van bronfactuur naar creditnota. Die route is opnieuw getest op de productiebuild van de UX-branch. De branch heeft een eigen uitsluiting voor Vercel-deployments.

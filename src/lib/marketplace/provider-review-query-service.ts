@@ -1,3 +1,4 @@
+import { verificationSubjects, subjectField } from '@/lib/providers/provider-review-subjects'
 import { positiveQualificationReason } from '@/lib/providers/provider-requirements'
 import { requireProviderPlatformPermission } from '@/lib/providers/provider-authorization'
 import { getPrisma } from '@/lib/prisma'
@@ -82,5 +83,29 @@ export async function getQualificationManagement(actorId: string, providerProfil
       select: { id: true, scope: true, outcome: true, capabilityId: true, reasonCode: true, validFrom: true, validUntil: true,
         reviewedByUser: { select: { displayName: true, id: true } }, approvedByUser: { select: { displayName: true, id: true } } } })
     return { capabilities, reasons, decisions }
+  })
+}
+
+export async function getReviewSubjects(actorId: string, providerProfileId: string, candidateId: string, approver: boolean) {
+  return getPrisma().$transaction(async tx => {
+    await requireProviderPlatformPermission(tx, actorId, approver ? 'PROVIDER_APPROVER' : 'PROVIDER_REVIEWER', providerProfileId)
+    const candidate = await tx.providerDossierCandidate.findFirstOrThrow({
+      where: { id: candidateId, providerProfileId }, select: { canonicalPayload: true },
+    })
+    const subjects = verificationSubjects(candidate.canonicalPayload)
+    const terms = await tx.providerTaxonomyTerm.findMany({
+      where: { id: { in: subjects.flatMap(s => s.terms) } }, select: { id: true, label: true },
+    })
+    const labels = new Map(terms.map(t => [t.id, t.label]))
+    const reviews = await tx.providerVerificationReview.findMany({
+      where: { providerProfileId, dossierCandidateId: candidateId }, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    })
+    const outcomes = { VERIFIED: 'Geverifieerd', DOCUMENT_CHECKED: 'Document gecontroleerd', REJECTED: 'Afgekeurd',
+      EXPIRED: 'Verlopen', CHANGES_REQUESTED: 'Aanvulling nodig' }
+    return subjects.map(s => {
+      const review = reviews.find(r => r[subjectField[s.type]] === s.id)
+      const status = !review ? 'Nog te controleren' : review.validUntil && review.validUntil <= new Date() ? 'Verlopen' : outcomes[review.outcome]
+      return { ...s, title: s.terms.map(id => labels.get(id)).filter(Boolean).join(' · '), status, reviewEnd: review?.validUntil }
+    })
   })
 }

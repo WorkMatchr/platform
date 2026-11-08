@@ -107,7 +107,7 @@ export async function verifyProviderMarketplaceOnboarding(db: PrismaClient, fixt
   const currentVersion = async () => (await db.providerProfile.findUniqueOrThrow({ where: { id: providerProfileId } })).version
   await recordProviderVerificationReview(fixture.reviewedByUserId, providerProfileId, { expectedProfileVersion: await currentVersion(),
     subject: { type: 'CAPABILITY', revisionId: capabilityRevision.id }, outcome: 'VERIFIED', resultingLevel: 'VERIFIED', reasonCode: fixture.reasonCode })
-  const expectedProfileVersion = await currentVersion()
+  let expectedProfileVersion = await currentVersion()
   const submission = await createProviderDossierSubmission(user.id, providerProfileId, { expectedProfileVersion, idempotencyKey: randomUUID() })
   const dossierCandidateId = submission.currentCandidateId!
   const input = { expectedProfileVersion, dossierCandidateId, scope: 'PLATFORM', outcome: 'QUALIFIED',
@@ -116,6 +116,22 @@ export async function verifyProviderMarketplaceOnboarding(db: PrismaClient, fixt
     recordProviderQualificationDecision(actor, providerProfileId, { ...input, dossierCandidateId: candidateId })
   await assert.rejects(decide(fixture.approvedByUserId), { code: 'DOSSIER_NOT_SUBMITTABLE' })
   const review = await openProviderDossierReviewCase(fixture.reviewedByUserId, providerProfileId, { submissionId: submission.id, expectedVersion: 1 })
+  const boundReview = {
+    expectedProfileVersion, dossier: { candidateId: dossierCandidateId, reviewCaseId: review.id, justification: 'Synthetische verificatie van de dienstrevisie.' },
+    subject: { type: 'CAPABILITY', revisionId: capabilityRevision.id }, outcome: 'VERIFIED', resultingLevel: 'VERIFIED', reasonCode: fixture.reasonCode,
+    validUntil: future,
+  }
+  const verify = (actor: string, data = boundReview) => recordProviderVerificationReview(actor, providerProfileId, data)
+  await assert.rejects(verify(user.id), { code: 'ACCESS_DENIED' })
+  await assert.rejects(verify(fixture.reviewedByUserId, { ...boundReview, validUntil: past }), { code: 'VALIDATION_ERROR' })
+  await assert.rejects(verify(fixture.reviewedByUserId, { ...boundReview, dossier: { ...boundReview.dossier, candidateId: randomUUID() } }), { code: 'ACCESS_DENIED' })
+  const attempts = await Promise.allSettled([verify(fixture.reviewedByUserId), verify(fixture.reviewedByUserId)])
+  assert.equal(attempts.filter(result => result.status === 'fulfilled').length, 1)
+  await assert.rejects(verify(fixture.reviewedByUserId), { code: 'CONFLICT' })
+  assert.equal(await db.providerVerificationReview.count({ where: { dossierCandidateId } }), 1)
+  const bound = await db.providerVerificationReview.findFirstOrThrow({ where: { dossierCandidateId } })
+  assert.equal(await db.marketplaceAuditEvent.count({ where: { entityId: bound.id, actorUserId: fixture.reviewedByUserId } }), 1)
+  expectedProfileVersion = input.expectedProfileVersion = await currentVersion()
   await finalizeProviderDossierReview(fixture.approvedByUserId, providerProfileId, 'APPROVED', { submissionId: submission.id,
     reviewCaseId: review.id, expectedVersion: 2, reviewedByUserId: fixture.reviewedByUserId, reasonCode: fixture.reasonCode })
   const basis = () => db.$transaction(tx => currentApprovedQualificationBasis(tx, providerProfileId, dossierCandidateId))
@@ -127,6 +143,9 @@ export async function verifyProviderMarketplaceOnboarding(db: PrismaClient, fixt
   await db.providerReasonCode.upsert({ where: { code: diagnostic }, update: {}, create: { code: diagnostic, domain: 'QUALIFICATION', label: 'Testmelding' } })
   await assert.rejects(recordProviderQualificationDecision(fixture.approvedByUserId, providerProfileId, { ...input, reasonCode: diagnostic }), { code: 'VALIDATION_ERROR' })
   await assert.rejects(decide(fixture.approvedByUserId, randomUUID()), { code: 'DOSSIER_NOT_SUBMITTABLE' })
+  const afterVerification = new Date(future.getTime() + 1)
+  await assert.rejects(recordProviderQualificationDecision(fixture.approvedByUserId, providerProfileId,
+    { ...input, validUntil: afterVerification }), { code: 'REQUIREMENTS_NOT_CONFIGURED' })
   await assert.rejects(decide(fixture.approvedByUserId), { code: 'TERMS_NOT_CONFIGURED' })
   await assert.rejects(refreshApprovedProviderSelection(fixture.approvedByUserId, providerProfileId, dossierCandidateId, expectedProfileVersion), { code: 'DOSSIER_NOT_SUBMITTABLE' })
   await db.organization.update({ where: { id: org.id }, data: { tradeName: 'Gewijzigde synthetische naam' } })

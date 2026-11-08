@@ -25,6 +25,7 @@ export async function requirePlatformQualificationBasis(
   transaction: Prisma.TransactionClient,
   providerProfileId: string,
   at: Date,
+  decision?: { dossierCandidateId: string; reviewerUserId: string; validUntil: Date },
 ) {
   const activeTerms = await transaction.providerTermDocumentVersion.findMany({
     where: {
@@ -65,7 +66,7 @@ export async function requirePlatformQualificationBasis(
         include: {
           insuranceTypeTerm: { select: { code: true } },
           evidenceRevision: { include: { scanDecision: true } },
-          verificationReviews: { where: { validFrom: { lte: at }, OR: [{ validUntil: null }, { validUntil: { gt: at } }] }, orderBy: { createdAt: 'desc' }, take: 1 },
+          verificationReviews: { where: { validFrom: { lte: at } }, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], take: 1 },
         },
       },
     },
@@ -75,9 +76,13 @@ export async function requirePlatformQualificationBasis(
     const policy = policies
       .flatMap((item) => item.revisions)
       .find((revision) => revision.insuranceTypeTerm.code === requirement.insuranceTypeTerm.code && revision.effectiveFrom <= at && revision.expiresAt >= at)
-    const reviewedLevel = policy?.verificationReviews[0]?.resultingLevel ?? 'SELF_DECLARED'
+    const review = policy?.verificationReviews[0]
+    const reviewedLevel = review && (!review.validUntil || review.validUntil > at) ? review.resultingLevel : 'SELF_DECLARED'
     if (
       !policy ||
+      (decision && (policy.expiresAt < decision.validUntil ||
+        (requirement.minimumVerification !== 'SELF_DECLARED' && (!review || review.dossierCandidateId !== decision.dossierCandidateId ||
+          review.reviewerUserId !== decision.reviewerUserId || !review.validUntil || review.validUntil < decision.validUntil)))) ||
       policy.evidenceRevision.scanDecision?.scanStatus !== 'CLEAN' ||
       verificationRank[reviewedLevel] < verificationRank[requirement.minimumVerification] ||
       (requirement.minimumCoverageCents !== null &&
