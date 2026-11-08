@@ -1,3 +1,4 @@
+import { requestScopeCandidates } from './request-scope-service'
 import type {
   Prisma,
   RequestOfferSlotStatus,
@@ -140,7 +141,7 @@ async function claimInTransaction(
       },
     },
   })
-  if (!interest?.eligibility || (access.projectionId && interest.eligibility.projectionId !== access.projectionId)) {
+  if (!interest?.eligibility || !(await requestScopeCandidates(transaction,input.requestId,input.at)).has(interest.eligibility.projectionId) || (access.projectionId && interest.eligibility.projectionId !== access.projectionId)) {
     throw new RequestOfferSlotServiceError('NOT_FOUND')
   }
   if (interest.status !== 'INTERESTED') {

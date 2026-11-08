@@ -1,3 +1,4 @@
+import { requestScopeCandidates } from './request-scope-service'
 import { requestedExpertiseOptions, type SimpleAdviceInput } from './simple-advice-contract'
 import { blockedOnboardingProfiles } from '@/lib/providers/provider-marketplace-onboarding'
 import type { Prisma } from '@/generated/prisma/client'
@@ -116,9 +117,11 @@ export async function createRequestEligibilitySnapshot(
   ] : expertiseTiers(request)
   if (tiers.length === 0) return 0
 
+  const scoped=await requestScopeCandidates(transaction,request.id,at)
+  if(!scoped.size) return 0
   const projections = await transaction.trustedProviderProjection.findMany({
     where: {
-      validFrom: { lte: at },
+      id:{in:[...scoped]}, validFrom: { lte: at },
       validUntil: { gt: at },
       invalidation: null,
       providerProfile: {

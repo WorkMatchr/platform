@@ -3,6 +3,7 @@ import { getMarketplaceNotifications } from './notification-service'
 import { currentMarketplaceProjections } from '@/lib/providers/provider-marketplace-onboarding'
 import { readInvitationPrice } from './assignment-pricing'
 import { assignmentPreviewSchema } from './assignment-purchase-preview'
+import { visibleScopedInvitation } from './assignment-scope-service'
 import { externalAssignmentWhere, externalAssignmentId, ownedAssignmentWhere } from '@/lib/assignments/assignment-identity'
 import { getPrisma } from '@/lib/prisma'
 import { hasValidPlatformActorFoundation } from '@/lib/account-architecture/platform-actor-policy'
@@ -70,7 +71,7 @@ export async function getMarketplaceDashboard(userId: string, organizationId: st
       const allowed = await currentMarketplaceProjections(tx, [{ providerProfileId, organizationId }], new Date())
       const projectionId = allowed.get(providerProfileId)
       const [invitations, quotes, creditAccount, notifications] = await Promise.all([
-        allowed.has(providerProfileId) ? tx.providerInvitation.findMany({ where: { providerOrganizationId: organizationId, matchCandidate: { projectionId } }, orderBy: { invitedAt: 'desc' }, take: 20, select: { id: true, assignmentId: true, status: true, deadlineAt: true, creditCost: true, invitedAt: true } }) : [],
+        allowed.has(providerProfileId) ? tx.providerInvitation.findMany({ where: { providerOrganizationId: organizationId, matchCandidate: { projectionId } }, orderBy: { invitedAt: 'desc' }, take: 20, select: { id: true, assignmentId: true, providerProfileId:true,snapshot:true,matchRun:{select:{assignmentSnapshot:true}},status: true, deadlineAt: true, creditCost: true, invitedAt: true } }) : [],
         allowed.has(providerProfileId) ? tx.quote.findMany({ where: { providerOrganizationId: organizationId, participation: { invitation: { matchCandidate: { projectionId } } } }, orderBy: { updatedAt: 'desc' }, take: 20, select: { id: true, assignmentId: true, status: true, version: true, submittedAt: true, updatedAt: true } }) : [],
         tx.creditTransaction.findMany({
           where: { creditAccount: { organizationId } },
@@ -78,7 +79,9 @@ export async function getMarketplaceDashboard(userId: string, organizationId: st
         }),
         getMarketplaceNotifications(userId, 10, tx),
       ])
-      return { kind: 'PROVIDER' as const, membership, providerProfileId, invitations, quotes, creditAccount: deriveCreditBalance(creditAccount), notifications }
+      const visible=[]
+      for(const inv of invitations) if(inv.status!=='INVITED' || await visibleScopedInvitation(tx,inv,new Date())) {visible.push({id:inv.id,assignmentId:inv.assignmentId,status:inv.status,deadlineAt:inv.deadlineAt,creditCost:inv.creditCost,invitedAt:inv.invitedAt})}
+      return { kind: 'PROVIDER' as const, membership, providerProfileId, invitations:visible, quotes, creditAccount: deriveCreditBalance(creditAccount), notifications }
     }, { isolationLevel: 'RepeatableRead' })
   }
 
@@ -122,7 +125,7 @@ export async function getMarketplaceDashboard(userId: string, organizationId: st
         awardDecision: { select: { id: true, decidedAt: true } },
       },
     }),
-    getMarketplaceNotifications(userId, 10, prisma),
+    getMarketplaceNotifications(userId, 10),
     prisma.assignment.count({
       where: {
         clientOrganizationId: organizationId,
@@ -194,7 +197,7 @@ export async function getProviderInvitationDetail(userId: string, organizationId
       select: {
         id: true,
         status: true,
-        creditCost: true,
+        creditCost: true,providerProfileId:true,matchRun:{select:{assignmentSnapshot:true}},
         snapshot: true,
         deadlineAt: true,
         participation: { select: { id: true, status: true, version: true, creditReservation: { select: { id: true } }, quote: { select: { id: true, status: true, version: true } }, messageChannel: { select: { id: true } } } },
@@ -209,6 +212,9 @@ export async function getProviderInvitationDetail(userId: string, organizationId
       },
     })
     if (!invitation) throw new MarketplaceServiceError('NOT_FOUND')
+    if(invitation.status==='INVITED'){
+      if(!await visibleScopedInvitation(tx,{...invitation,assignmentId:invitation.assignment.id},now)) throw new MarketplaceServiceError('NOT_SELECTABLE')
+    }
     const [account, purchase] = await Promise.all([
       tx.creditAccount.findUnique({ where: { organizationId }, select: { availableBalance: true } }),
       invitation.participation ? tx.creditTransaction.findFirst({ where: { referenceType: 'ProviderParticipation', referenceId: invitation.participation.id, type: 'PARTICIPATION_PAYMENT' }, select: { id: true } }) : null,
@@ -329,7 +335,7 @@ export async function getAssignmentSelectionView(userId: string, organizationId:
         where: { status: 'COMPLETED' },
         orderBy: { completedAt: 'desc' },
         take: 1,
-        select: { id: true, confidenceLevel: true, confidenceReasons: true, completedAt: true, decisionReport: true, candidates: { where: { status: 'SELECTED' }, orderBy: { rank: 'asc' }, select: { id: true, rank: true, explanation: true } } },
+        select: { id: true, assignmentSnapshot:true,confidenceLevel: true, confidenceReasons: true, completedAt: true, decisionReport: true, candidates: { where: { status: 'SELECTED' }, orderBy: { rank: 'asc' }, select: { id: true, rank: true, explanation: true } } },
       },
     },
   })

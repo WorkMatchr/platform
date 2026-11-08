@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { clientScope,reviewScope } from '@/lib/marketplace/assignment-scope-workflow'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { requireUser } from '@/lib/authorization'
@@ -30,12 +31,25 @@ async function context(returnTo: string) {
   return { user, organizationId: organization.activeMembership.organization.id }
 }
 
+export async function requestScopeReviewAction(form:FormData){
+  const id=idSchema.parse(form.get('assignmentId')), service=z.string().parse(form.get('service'))
+  const {user,organizationId}=await context('/opdrachten/'+id+'/selectie')
+  await clientScope(user.id,organizationId,id,service,true,z.string().length(64).parse(form.get('digest')))
+  redirect('/opdrachten/'+id+'/selectie?service='+encodeURIComponent(service)+'&aangevraagd=1')
+}
+export async function decideScopeAction(form:FormData){
+  const user=await requireUser('/beheer/marktplaats')
+  await reviewScope(user.id,idSchema.parse(form.get('assignmentId')),z.string().parse(form.get('service')),z.string().length(64).parse(form.get('digest')),
+    z.enum(['binnen','buiten']).parse(form.get('decision'))==='binnen',z.string().trim().min(10).max(500).parse(form.get('reason')))
+  revalidatePath('/beheer/marktplaats')
+}
+
 export async function startMarketplaceMatchingAction(formData: FormData) {
   const assignmentId = idSchema.parse(formData.get('assignmentId'))
   const expectedAssignmentVersion = z.coerce.number().int().positive().parse(formData.get('expectedAssignmentVersion'))
   const idempotencyKey = idempotencySchema.parse(formData.get('idempotencyKey'))
   const { user, organizationId } = await context(`/opdrachten/${assignmentId}/selectie`)
-  await runMarketplaceMatching({ actorUserId: user.id, organizationId, assignmentId, expectedAssignmentVersion, idempotencyKey })
+  await runMarketplaceMatching({ actorUserId: user.id, organizationId, assignmentId, expectedAssignmentVersion, idempotencyKey, scopeService:z.string().parse(formData.get('service')) })
   revalidatePath('/dashboard')
   redirect(`/opdrachten/${assignmentId}/offertes`)
 }

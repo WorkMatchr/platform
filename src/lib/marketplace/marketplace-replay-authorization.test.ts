@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const state = vi.hoisted(() => ({ transaction: {} as Record<string, unknown> }))
 vi.mock('@/lib/prisma', () => ({ getPrisma: () => ({ $transaction: (callback: (tx: unknown) => unknown) => callback(state.transaction) }) }))
 
+vi.mock('@/lib/providers/provider-marketplace-onboarding',async original=>({...await original<typeof import('@/lib/providers/provider-marketplace-onboarding')>(),blockedOnboardingProfiles:async()=>new Set()}))
+vi.mock('./assignment-scope-service',async original=>({...await original<typeof import('./assignment-scope-service')>(),checkRunScope:async()=>({}),eligibleForScopedExpertise:async()=>true}))
 import { awardMarketplaceQuote } from './award-service'
 import { declineProviderInvitation } from './participation-service'
 import { sendMarketplaceMessage } from './messaging-service'
@@ -78,6 +80,7 @@ describe('marketplace idempotency never grants authorization', () => {
 
   it.each([true, false])('binds platform interventions to the original selection (valid=%s)', async valid => {
     authorize()
+    state.transaction.marketplaceMatchRun={findUniqueOrThrow:async()=>({assignmentId:'assignment',assignmentSnapshot:{capabilityCode:'ergonoom'},candidates:[{providerProfileId:'provider',providerProfile:{organizationId:'org'},explanation:{factors:[]}}]})}
     const event = { actorUserId: 'user', action: 'MATCH_SELECTION_INTERVENED', entityType: 'MarketplaceMatchIntervention', metadata: { matchRunId: 'run', replacementSelection: [{ candidateId: valid ? 'candidate' : 'other' }] } }
     state.transaction.marketplaceAuditEvent = { findUnique: vi.fn().mockResolvedValue(event) }
     const result = applyMarketplaceMatchIntervention({ actorUserId: 'user', matchRunId: 'run', candidateIds: ['candidate'], reason: 'Synthetische reden', idempotencyKey: 'existing' })

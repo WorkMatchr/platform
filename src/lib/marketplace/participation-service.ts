@@ -1,4 +1,5 @@
 import { externalAssignmentId } from '@/lib/assignments/assignment-identity'
+import { checkRunScope, eligibleForScopedExpertise } from './assignment-scope-service'
 import { getPrisma } from '@/lib/prisma'
 import { requireProviderMarketplaceAccess, requireProviderParticipationAccess } from './marketplace-authorization'
 import { purchaseAssignmentInTransaction, releaseCreditReservationInTransaction } from './credit-service'
@@ -37,9 +38,11 @@ export async function acceptProviderInvitation(input: {
     await transaction.$queryRaw`SELECT "id" FROM "Assignment" WHERE "id" = ${invitationIdentity.assignmentId}::uuid FOR UPDATE`
     const invitation = await transaction.providerInvitation.findFirst({
       where: { id: input.invitationId, providerOrganizationId: input.providerOrganizationId, providerProfileId: access.providerProfile.id },
-      include: { assignment: { select: { id: true, requestId: true, clientOrganizationId: true, status: true, maxSelections: true } }, participation: { include: { creditReservation: true } } },
+      include: { matchRun:{select:{assignmentSnapshot:true}}, assignment: { select: { id: true, requestId: true, clientOrganizationId: true, status: true, maxSelections: true } }, participation: { include: { creditReservation: true } } },
     })
     if (!invitation) throw new MarketplaceServiceError('NOT_FOUND')
+    const scope=await checkRunScope(transaction,invitation.assignmentId,invitation.matchRun.assignmentSnapshot,now)
+    if(!await eligibleForScopedExpertise(transaction,invitation.providerProfileId,scope,(invitation.snapshot as Record<string,unknown>)?.recipientExpertise,now)) throw new MarketplaceServiceError('NOT_SELECTABLE')
     if (invitation.participation) return invitation.participation
     if (invitation.status !== 'INVITED') throw new MarketplaceServiceError('INVALID_STATE')
     if (invitation.deadlineAt <= now) throw new MarketplaceServiceError('DEADLINE_PASSED')

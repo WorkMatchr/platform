@@ -1,3 +1,5 @@
+import { standardTasks } from '../src/lib/marketplace/assignment-scope'
+import { syntheticSafetyScope } from './fixtures/launch-scope-policy'
 import type { Assignment, ProviderInvitation, NotificationOutbox, PrismaClient } from '../src/generated/prisma/client'
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
@@ -65,29 +67,30 @@ try {
   const client = await db.user.create({ data: { email: `${randomUUID()}@example.invalid`, status: 'ACTIVE', accountType: 'CLIENT', emailVerified: true, memberships: { create: { organizationId: clientOrg.id, status: 'ACTIVE', role: 'OWNER' } } } })
   const user = await db.user.create({ data: { email: `${randomUUID()}@example.invalid`, status: 'ACTIVE', accountType: 'PROFESSIONAL', emailVerified: true, memberships: { create: { organizationId: providerOrg.id, status: 'ACTIVE', role: 'OWNER' } } } })
   const profile = await db.providerProfile.create({ data: { organizationId: providerOrg.id, lifecycleStatus: 'QUALIFIED', readinessStatus: 'READY', platformQualificationStatus: 'QUALIFIED', selectabilityStatus: 'SELECTABLE' } })
-  const profileVersion = await (await import('./fixtures/reviewed-marketplace-provider')).prepareReviewedSupplier(db, profile.id, providerOrg.id)
+  const policy=await syntheticSafetyScope(db)
+  const profileVersion = await (await import('./fixtures/reviewed-marketplace-provider')).prepareReviewedSupplier(db, profile.id, providerOrg.id,policy)
     const readiness = await db.providerReadinessAssessment.create({ data: { providerProfileId: profile.id, status: 'READY', reasonCodes: [], sourceVersion: profileVersion, checksum: 'a'.repeat(64) } })
   const selectability = await db.providerSelectabilityAssessment.create({ data: { providerProfileId: profile.id, readinessAssessmentId: readiness.id, status: 'SELECTABLE', reasonCodes: [], sourceVersion: profileVersion, checksum: 'b'.repeat(64) } })
-  await db.trustedProviderProjection.create({ data: { providerProfileId: profile.id, readinessAssessmentId: readiness.id, selectabilityAssessmentId: selectability.id, schemaVersion: 2, canonicalizationVersion: 'WORKMATCHR-CJ-1', sourceVersion: profileVersion, payload: { capabilities: [{ serviceCode: 'OCCUPATIONAL_PHYSICIAN', specialismCode: 'bedrijfsarts', deliveryModes: ['ON_SITE', 'REMOTE'] }], sectors: [], workAreas: [{ regionCode: 'NATIONWIDE' }] }, sha256: 'c'.repeat(64), validFrom: new Date(Date.now() - 60_000), validUntil: new Date(Date.now() + 7 * 86_400_000) } })
-  const specialism = await db.specialism.findUniqueOrThrow({ where: { slug: 'bedrijfsarts' } })
-  const ruleData = { participationPriceCredits: 25, minimumParticipationPrice: 5, expertiseAdjustments: { bedrijfsarts: 2 }, changeReason: 'Isolated acceptance pricing', status: 'PUBLISHED' as const, createdByUserId: client.id }
+  await db.trustedProviderProjection.create({ data: { providerProfileId: profile.id, readinessAssessmentId: readiness.id, selectabilityAssessmentId: selectability.id, schemaVersion: 2, canonicalizationVersion: 'WORKMATCHR-CJ-1', sourceVersion: profileVersion, payload: { capabilities: [{ serviceCode: 'SAFETY_ADVICE', specialismCode: 'hogere-veiligheidskundige', deliveryModes: ['ON_SITE', 'REMOTE'] }], sectors: [], workAreas: [{ regionCode: 'NATIONWIDE' }] }, sha256: 'c'.repeat(64), validFrom: new Date(Date.now() - 60_000), validUntil: new Date(Date.now() + 7 * 86_400_000) } })
+  const specialism = await db.specialism.findUniqueOrThrow({ where: { slug: 'hogere-veiligheidskundige' } })
+  const ruleData = { participationPriceCredits: 25, minimumParticipationPrice: 5, expertiseAdjustments: { 'hogere-veiligheidskundige': 2 }, changeReason: 'Isolated acceptance pricing', status: 'PUBLISHED' as const, createdByUserId: client.id }
   const rule = await db.marketplaceRuleSet.create({ data: { ...ruleData, version: 'test.notifications.1', validFrom: new Date(Date.now() - 60_000) } })
   let fixtureNumber = 0
   async function fixture(): Promise<{ draft: Assignment; invitation: ProviderInvitation; job: NotificationOutbox }> {
     fixtureNumber += 1
-    const draft = await db!.assignment.create({ data: { clientOrganizationId: clientOrg.id, createdByUserId: client.id, title: 'Confidential client name, person@example.invalid, Main Street 12', description: 'Private description with telephone 0612345678.', primarySpecialismId: specialism.id, allowsRemoteWork: true, responseDeadline: new Date(Date.now() + 7 * 86_400_000), locationProvince: 'Utrecht', maxSelections: 3 } })
+    const draft = await db!.assignment.create({ data: { clientOrganizationId: clientOrg.id, createdByUserId: client.id, title:standardTasks.SAFETY_ADVICE.title,description:standardTasks.SAFETY_ADVICE.task,locationName:'Confidential client name, person@example.invalid, Main Street 12',locationType:'REMOTE', primarySpecialismId: specialism.id, allowsRemoteWork: true, responseDeadline: new Date(Date.now() + 7 * 86_400_000), locationProvince: 'Utrecht', maxSelections: 3 } })
     await db!.$transaction(async tx => {
       const publishedAt = new Date()
-      await tx.assignmentRevision.create({ data: { assignmentId: draft.id, version: 1, title: draft.title, description: draft.description, locationType: 'REMOTE', allowsRemoteWork: true, changedByUserId: client.id } })
+      await tx.assignmentRevision.create({ data: { assignmentId: draft.id, version: 1, title: draft.title, description:draft.description,locationName:draft.locationName,primarySpecialismId:specialism.id,locationProvince:draft.locationProvince,responseDeadline:draft.responseDeadline, locationType: 'REMOTE', allowsRemoteWork: true, changedByUserId: client.id } })
       await tx.assignment.update({ where: { id: draft.id }, data: { status: 'OPEN', publishedAt, publishedByUserId: client.id, publishedVersion: 1 } })
       await tx.assignmentStatusHistory.create({ data: { assignmentId: draft.id, fromStatus: 'READY_FOR_REVIEW', toStatus: 'OPEN', changedByUserId: client.id, reason: 'Isolated notification test', createdAt: publishedAt } })
     })
     const key = randomUUID()
-    const run = await runMarketplaceMatching({ actorUserId: client.id, organizationId: clientOrg.id, assignmentId: draft.id, expectedAssignmentVersion: 1, idempotencyKey: key })
+    const run = await runMarketplaceMatching({ scopeService:'SAFETY_ADVICE',actorUserId: client.id, organizationId: clientOrg.id, assignmentId: draft.id, expectedAssignmentVersion: 1, idempotencyKey: key })
     assert.equal(run.invitations.length, 1, 'existing selection produces one invitation')
     const invitation = run.invitations[0]
     const snapshot = invitation.snapshot as { preview: object }
-    await db!.$transaction(tx => enqueueAssignmentNotifications(tx, invitation, toAssignmentPreview(draft, invitation.creditCost, { primaryExpertiseCode: 'bedrijfsarts', recipientExpertise: 'bedrijfsarts', matchType: 'PRIMARY' })))
+    await db!.$transaction(tx => enqueueAssignmentNotifications(tx, invitation, toAssignmentPreview(draft, invitation.creditCost, { primaryExpertiseCode: 'hogere-veiligheidskundige', recipientExpertise: 'hogere-veiligheidskundige', matchType: 'PRIMARY' })))
     assert.equal(await db!.marketplaceNotification.count({ where: { eventId: `INVITATION:${invitation.id}` } }), 1)
     const jobs = await db!.notificationOutbox.findMany({ where: { eventId: `INVITATION:${invitation.id}` } })
     assert.equal(jobs.length, 1)
@@ -102,7 +105,7 @@ try {
   assert.equal(initialPreview.invitation.fullAssignment, null)
   await assert.rejects(getProviderInvitationDetail(client.id, clientOrg.id, initial.invitation.id))
   await assert.rejects(db.providerInvitation.update({ where: { id: initial.invitation.id }, data: { creditCost: 50 } }))
-  await assert.rejects(db.marketplaceRuleSet.update({ where: { id: rule.id }, data: { expertiseAdjustments: { bedrijfsarts: 5 } } }))
+  await assert.rejects(db.marketplaceRuleSet.update({ where: { id: rule.id }, data: { expertiseAdjustments: { 'hogere-veiligheidskundige': 5 } } }))
 
   let calls = 0
   const accepted = async (email: AuthEmail) => { calls += 1; assert.equal(email.to, user.email); return { accepted: true as const, transport: 'RESEND' as const, status: 'ACCEPTED' as const, messageId: `fake-${calls}` } }
@@ -199,19 +202,19 @@ try {
   await assert.rejects(acceptProviderInvitation({ ...purchaseInput, actorUserId: client.id }))
   const payments = await db.creditTransaction.findMany({ where: { type: 'PARTICIPATION_PAYMENT' } })
   assert.equal(payments.length, 1); assert.equal(payments[0].amount, -27); assert.equal(payments[0].marketplaceRuleSetId, rule.id)
-  const price = resolveAssignmentPrice(rule, 'bedrijfsarts', new Date())
+  const price = resolveAssignmentPrice(rule, 'hogere-veiligheidskundige', new Date())
   assert.equal(price.resolvedPrice, 27)
   // Actual Simple Advice -> Request -> Assignment -> primary and additional invitations.
   const additionalOrg = await db.organization.create({ data: { name: 'TEST Additional Provider', organizationType: 'PROVIDER', status: 'ACTIVE' } })
   const additionalUser = await db.user.create({ data: { email: `${randomUUID()}@example.invalid`, status: 'ACTIVE', accountType: 'PROFESSIONAL', emailVerified: true, memberships: { create: { organizationId: additionalOrg.id, status: 'ACTIVE', role: 'OWNER' } } } })
   const additionalProfile = await db.providerProfile.create({ data: { organizationId: additionalOrg.id, lifecycleStatus: 'QUALIFIED', readinessStatus: 'READY', platformQualificationStatus: 'QUALIFIED', selectabilityStatus: 'SELECTABLE' } })
-  const additionalProfileVersion = await (await import('./fixtures/reviewed-marketplace-provider')).prepareReviewedSupplier(db, additionalProfile.id, additionalOrg.id)
+  const additionalProfileVersion = await (await import('./fixtures/reviewed-marketplace-provider')).prepareReviewedSupplier(db, additionalProfile.id, additionalOrg.id,{...policy,specialismTermId:policy.additionalTermId})
     const additionalReadiness = await db.providerReadinessAssessment.create({ data: { providerProfileId: additionalProfile.id, status: 'READY', reasonCodes: [], sourceVersion: additionalProfileVersion, checksum: 'd'.repeat(64) } })
   const additionalSelectability = await db.providerSelectabilityAssessment.create({ data: { providerProfileId: additionalProfile.id, readinessAssessmentId: additionalReadiness.id, status: 'SELECTABLE', reasonCodes: [], sourceVersion: additionalProfileVersion, checksum: 'e'.repeat(64) } })
-  await db.trustedProviderProjection.create({ data: { providerProfileId: additionalProfile.id, readinessAssessmentId: additionalReadiness.id, selectabilityAssessmentId: additionalSelectability.id, schemaVersion: 2, canonicalizationVersion: 'WORKMATCHR-CJ-1', sourceVersion: additionalProfileVersion, payload: { capabilities: [{ serviceCode: 'ABSENCE_REINTEGRATION', specialismCode: 'casemanager-verzuim', deliveryModes: ['ON_SITE', 'REMOTE'] }], sectors: [], workAreas: [{ regionCode: 'NOORD_HOLLAND' }] }, sha256: 'f'.repeat(64), validFrom: new Date(Date.now() - 60_000), validUntil: new Date(Date.now() + 7 * 86_400_000) } })
+  await db.trustedProviderProjection.create({ data: { providerProfileId: additionalProfile.id, readinessAssessmentId: additionalReadiness.id, selectabilityAssessmentId: additionalSelectability.id, schemaVersion: 2, canonicalizationVersion: 'WORKMATCHR-CJ-1', sourceVersion: additionalProfileVersion, payload: { capabilities: [{ serviceCode: 'SAFETY_ADVICE', specialismCode: 'middelbare-veiligheidskundige', deliveryModes: ['ON_SITE', 'REMOTE'] }], sectors: [], workAreas: [{ regionCode: 'NOORD_HOLLAND' }] }, sha256: 'f'.repeat(64), validFrom: new Date(Date.now() - 60_000), validUntil: new Date(Date.now() + 7 * 86_400_000) } })
   const { publishSimpleAdviceRequest } = await import('../src/lib/requests/simple-advice-service')
   const viewer = { userId: client.id, organizationId: clientOrg.id, organizationRole: 'OWNER' as const, isPlatformAdministrator: false }
-  const basic = { routeChoice: 'KNOWS_EXPERTISE', requestedExpertise: 'BEDRIJFSARTS', additionalExpertises: ['CASEMANAGER_VERZUIM'], requestTitle: 'Fictieve vertrouwelijke klantnaam', requestDescription: 'Wij willen advies over gezondheid op het werk.', desiredOutcome: 'ADVICE', workLocationMode: 'REMOTE', desiredStartMode: 'WITHIN_ONE_MONTH' }
+  const basic = { routeChoice: 'KNOWS_EXPERTISE', requestedExpertise: 'HVK', additionalExpertises: ['MVK'], requestTitle:standardTasks.SAFETY_ADVICE.title, requestDescription:standardTasks.SAFETY_ADVICE.task, desiredOutcome: 'ADVICE', workLocationMode: 'REMOTE', desiredStartMode: 'WITHIN_ONE_MONTH' }
   const dossierId = randomUUID()
   const published = await publishSimpleAdviceRequest(viewer, dossierId, basic)
   assert.equal((await publishSimpleAdviceRequest(viewer, dossierId, basic)).id, published.id)
@@ -221,7 +224,7 @@ try {
   assert.equal(await db.requestAssignmentHandoff.count({ where: { requestId: canonicalRequest.id } }), 1)
   const handoff = await db.requestAssignmentHandoff.findFirstOrThrow({ where: { requestId: canonicalRequest.id } })
   const immutableVersion = await db.adviceDossierVersion.findFirstOrThrow({ where: { adviceDossierId: dossierId } })
-  const matched = await runMarketplaceMatching({ actorUserId: client.id, organizationId: clientOrg.id, assignmentId: published.id, expectedAssignmentVersion: 1, idempotencyKey: randomUUID() })
+  const matched = await runMarketplaceMatching({ scopeService:'SAFETY_ADVICE',actorUserId: client.id, organizationId: clientOrg.id, assignmentId: published.id, expectedAssignmentVersion: 1, idempotencyKey: randomUUID() })
   assert.equal(matched.invitations.length, 2)
   const additionalInvitation = matched.invitations.find(inv => inv.providerProfileId === additionalProfile.id)!
   const primaryInvitation = matched.invitations.find(inv => inv.providerProfileId === profile.id)!
@@ -229,13 +232,13 @@ try {
   assert.equal((primaryInvitation.snapshot as { matchType: string }).matchType, 'PRIMARY')
   assert.equal(additionalInvitation.creditCost, primaryInvitation.creditCost)
   const additionalDetail = await getProviderInvitationDetail(additionalUser.id, additionalOrg.id, additionalInvitation.id)
-  assert.deepEqual(additionalDetail.invitation.preview.additionalExpertises, ['Casemanager verzuim'])
-  assert.equal(additionalDetail.invitation.preview.expertise, 'Bedrijfsarts')
+  assert.deepEqual(additionalDetail.invitation.preview.additionalExpertises, ['Middelbare veiligheidskundige (MVK)'])
+  assert.equal(additionalDetail.invitation.preview.expertise, 'Hogere veiligheidskundige (HVK)')
   assert.equal(additionalDetail.invitation.preview.assignmentId, published.id)
   const delivered: AuthEmail[] = []
   await deliverAssignmentEmails({ send: async email => { delivered.push(email); return { accepted: true, status: 'ACCEPTED', transport: 'RESEND', messageId: randomUUID() } } })
-  assert.ok(delivered.some(email => email.subject === 'Nieuwe opdracht mogelijk relevant voor Casemanager verzuim | WorkMatchr'))
-  assert.ok(delivered.some(email => email.subject === 'Nieuwe opdracht voor Bedrijfsarts | WorkMatchr'))
+  assert.ok(delivered.some(email => email.subject === 'Nieuwe opdracht mogelijk relevant voor Middelbare veiligheidskundige (MVK) | WorkMatchr'))
+  assert.ok(delivered.some(email => email.subject === 'Nieuwe opdracht voor Hogere veiligheidskundige (HVK) | WorkMatchr'))
   for (const [invitation, recipient] of [[primaryInvitation, user], [additionalInvitation, additionalUser]] as const) {
     const mails = delivered.filter(email => email.html.includes(`/uitnodigingen/${invitation.id}`))
     assert.equal(mails.length, 1)
@@ -285,7 +288,7 @@ try {
   const physical = await publishSimpleAdviceRequest(viewer, randomUUID(), {
     ...basic, workLocationMode: 'ORGANIZATION', organizationLocationId: location.id,
   })
-  const regionalRun = await runMarketplaceMatching({ actorUserId: client.id, organizationId: clientOrg.id,
+  const regionalRun = await runMarketplaceMatching({ scopeService:'SAFETY_ADVICE',actorUserId: client.id, organizationId: clientOrg.id,
     assignmentId: physical.id, expectedAssignmentVersion: 1, idempotencyKey: randomUUID() })
   const excluded = regionalRun.candidates.find(candidate => candidate.providerProfileId === additionalProfile.id)
   assert.ok(excluded)
@@ -322,7 +325,7 @@ try {
   } }), 0)
   const beforeUnknown = await db.providerInvitation.count()
   const unknown = await publishSimpleAdviceRequest(viewer, randomUUID(), { ...basic, routeChoice: 'NEEDS_TOPIC', requestedExpertise: null, additionalExpertises: [], helpTopic: 'UNKNOWN' })
-  await assert.rejects(runMarketplaceMatching({ actorUserId: client.id, organizationId: clientOrg.id, assignmentId: unknown.id, expectedAssignmentVersion: 1, idempotencyKey: randomUUID() }))
+  await assert.rejects(runMarketplaceMatching({ scopeService:'SAFETY_ADVICE',actorUserId: client.id, organizationId: clientOrg.id, assignmentId: unknown.id, expectedAssignmentVersion: 1, idempotencyKey: randomUUID() }))
   assert.equal(await db.providerInvitation.count(), beforeUnknown)
 
   if (process.env.WM_NOTIFICATION_BROWSER_ACCEPTANCE === '1') {

@@ -10,6 +10,7 @@ vi.mock('@/lib/prisma', () => ({ getPrisma: () => db }))
 vi.mock('@/lib/providers/provider-marketplace-onboarding', () => ({
   currentMarketplaceProjections: async () => new Map([['provider', 'projection']]),
 }))
+vi.mock('./assignment-scope-service',()=>({visibleScopedInvitation:async()=>true}))
 import { getAssignmentSelectionView, getClientQuotes, getProviderInvitationDetail, getProviderParticipationForQuote, getProviderQuoteDetail } from './dashboard-query-service'
 
 beforeEach(() => { vi.resetAllMocks(); db.$transaction.mockImplementation(fn => fn(db)) })
@@ -28,7 +29,7 @@ it.each([
   const now = new Date('2026-10-23T12:00:00Z')
   db.organizationMembership.findFirst.mockResolvedValue({ role: 'OWNER', organization: { providerProfile: { id: 'provider' } } })
   db.creditAccount.findUnique.mockResolvedValue({ availableBalance: 100 })
-  db.providerInvitation.findFirst.mockResolvedValue({ id: 'invitation', status: 'INVITED', deadlineAt: new Date(now.getTime() + offset), participation: null, snapshot: {}, creditCost: 31, assignment: { id: 'assignment', status, primarySpecialism: null, sector: null, desiredStartDate: null, responseDeadline: null, locationProvince: null, maxSelections: 3 } })
+  db.providerInvitation.findFirst.mockResolvedValue({ id: 'invitation', matchRun:{assignmentSnapshot:{}},status: 'INVITED', deadlineAt: new Date(now.getTime() + offset), participation: null, snapshot: {}, creditCost: 31, assignment: { id: 'assignment', status, primarySpecialism: null, sector: null, desiredStartDate: null, responseDeadline: null, locationProvince: null, maxSelections: 3 } })
   const result = await getProviderInvitationDetail('user', 'organization', 'invitation', now)
   expect(result.invitation.canPurchase).toBe(expected)
   expect(result.invitation.fullAssignment).toBeNull()

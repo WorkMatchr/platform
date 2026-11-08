@@ -1,3 +1,4 @@
+import { requestScopeCandidates } from './request-scope-service'
 import type { Prisma, RequestInterestStatus } from '@/generated/prisma/client'
 import { Prisma as PrismaNamespace } from '@/generated/prisma/client'
 import { requireProviderMarketplaceAccess, requireProviderParticipationAccess } from '@/lib/marketplace/marketplace-authorization'
@@ -72,7 +73,7 @@ export async function listEligibleRequestsForProvider(
 ) {
   return getPrisma().$transaction(async (transaction) => {
     const access = await requireProviderAccess(transaction, actor, false)
-    return transaction.requestEligibleProvider.findMany({
+    const records=await transaction.requestEligibleProvider.findMany({
       where: {
         providerOrganizationId: actor.organizationId,
         projectionId: access.projectionId,
@@ -80,7 +81,7 @@ export async function listEligibleRequestsForProvider(
       },
       orderBy: { request: { publishedAt: 'desc' } },
       select: {
-        matchedExpertise: true,
+        projectionId:true,matchedExpertise: true,
         eligibilityBasis: true,
         request: { select: publicRequestSelect },
         interest: {
@@ -96,6 +97,9 @@ export async function listEligibleRequestsForProvider(
         },
       },
     })
+    const visible=[]
+    for(const row of records) if((await requestScopeCandidates(transaction,row.request.id,new Date())).has(row.projectionId)) visible.push(row)
+    return visible
   }, { isolationLevel: 'RepeatableRead' })
 }
 
@@ -119,7 +123,7 @@ export async function getEligibleRequestForProvider(
           },
         },
         select: {
-          matchedExpertise: true,
+          projectionId:true,matchedExpertise: true,
         eligibilityBasis: true,
           request: {
             select: {
@@ -149,7 +153,7 @@ export async function getEligibleRequestForProvider(
           },
         },
       })
-    if (!eligibility || eligibility.request.status !== 'PUBLISHED') {
+    if (!eligibility || !(await requestScopeCandidates(transaction,requestId,new Date())).has(eligibility.projectionId) || eligibility.request.status !== 'PUBLISHED') {
       throw new RequestInterestServiceError('NOT_FOUND')
     }
     const activeOfferSlotCount =
@@ -259,10 +263,10 @@ async function writeInterest(
             },
           },
           select: {
-            request: { select: { status: true } },
+            projectionId:true,request: { select: { status: true } },
           },
         })
-      if (!eligibility) {
+      if (!eligibility || (input.targetStatus==='INTERESTED' && !(await requestScopeCandidates(transaction,input.requestId,new Date())).has(eligibility.projectionId))) {
         throw new RequestInterestServiceError('NOT_FOUND')
       }
       if (eligibility.request.status !== 'PUBLISHED') {

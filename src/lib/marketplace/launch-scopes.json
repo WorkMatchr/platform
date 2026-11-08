@@ -1,0 +1,26 @@
+{
+  "ERGONOMICS": {
+    "name": "Ergonomie",
+    "definition": "**Werkingssfeer:** Niet-medisch onderzoek en advies over werkplekken, beeldschermwerk, fysieke belasting, werkhouding, werkplekinrichting en praktische verbetermaatregelen; begeleiding bij ergonomische werkplekaanpassingen.\n\n**Buiten scope:** Medische diagnoses en keuringen, medische belastbaarheidsbeoordeling, PAGO, medische onderdelen van PMO en andere formele arbeidsgezondheidskundige onderzoeken.\n\n**Kwalificatie:** Geen algemene wettelijke diplomaverplichting voor niet-medische ergonomische advisering; de professional moet wel aantoonbaar bekwaam zijn voor de specifieke opdracht. Eventuele wettelijk gereguleerde activiteiten vereisen afzonderlijke passende bevoegdheid."
+  },
+  "INCIDENT_INVESTIGATION": {
+    "name": "Incidentonderzoek",
+    "definition": "**Werkingssfeer:** Niet-strafrechtelijk feiten- en organisatieonderzoek naar incidenten, inclusief interviews, tijdlijn- en oorzakenanalyse, toepassing van passende onderzoeksmethoden (zoals Tripod of MORT), rapportage en verbeteradvies.\n\n**Buiten scope:** Wpbr-plichtig particulier persoonsgericht onderzoek, strafrechtelijke opsporing, medische beoordeling en formele onderzoeken door of namens wettelijke toezichthouders, zoals de Nederlandse Arbeidsinspectie. Opdrachtgevers kunnen geen bevoegdheden van toezichthouders overdragen door een opdracht op WorkMatchr te plaatsen.\n\n**Kwalificatie:** Passende onderzoekservaring, onafhankelijkheid waar relevant en aantoonbare beheersing van de gekozen onderzoeksmethode; geen algemene wettelijke diplomaplicht voor dit afgebakende niet-gereguleerde onderzoek."
+  },
+  "SAFETY_ADVICE": {
+    "name": "Veiligheidsadvies",
+    "definition": "**Werkingssfeer:** Algemene veiligheidsadvisering, preventie, risicobeheersing, praktische risicoanalyses, beleidsadvies en advies over beheersmaatregelen en veiligheidsmanagement.\n\n**Buiten scope:** Wettelijke toetsing van RI&E en bijbehorend plan van aanpak, inclusief systeem- en scopetoetsing waar van toepassing, en andere formele beoordelingen waarvoor een specifieke certificering of wettelijke bevoegdheid vereist is.\n\n**Kwalificatie:** Passende veiligheidskundige deskundigheid en relevante ervaring. MVK/HVK kan als achtergrond of specialisatie vermeld worden, maar een MVK-diploma op zichzelf verleent geen wettelijke RI&E-toetsingsbevoegdheid. Wettelijke toetsing vereist een daartoe bevoegde gecertificeerde arbokerndeskundige binnen de toepasselijke scope, dan wel een geregistreerd bedrijfsarts conform het wettelijke toetsingskader."
+  },
+  "IMPLEMENTATION_SUPPORT": {
+    "name": "Ondersteuning bij implementatie",
+    "definition": "**Werkingssfeer:** Uitwerken en invoeren van veiligheidsprocedures, werkinstructies, verbeterplannen, beheersmaatregelen, werkprocessen en managementsystemen; projectmatige implementatiebegeleiding.\n\n**Buiten scope:** Wettelijke keuringen, formele certificeringsbesluiten en onafhankelijke formele beoordelingen of inspecties waarvoor specifieke bevoegdheid, onafhankelijkheid of accreditatie vereist is.\n\n**Kwalificatie:** Aantoonbare relevante implementatie-, project- of uitvoeringsdeskundigheid. Beroepscertificaten niet standaard verplicht; opdrachtgebonden deskundigheid controleren."
+  },
+  "REINTEGRATION_FIRST_TRACK": {
+    "name": "Re-integratie eerste spoor",
+    "definition": "**Werkingssfeer:** Niet-medische ondersteuning van werkgever en werknemer bij werkhervatting binnen de eigen organisatie: procescoördinatie, werkafspraken, voortgangsbewaking en het zoeken naar passende eigen, aangepaste of andere interne werkzaamheden, in afstemming met werkgever, werknemer en waar van toepassing arbodienst/bedrijfsarts.\n\n**Buiten scope:** Medische belastbaarheidsbeoordeling, diagnose, vaststelling van arbeidsongeschiktheid, medische verzuimbegeleiding, formeel UWV-deskundigenoordeel en besluitvorming over uitkeringen. De werkgever blijft verantwoordelijk voor zijn poortwachterverplichtingen.\n\n**Kwalificatie:** Aantoonbare kennis van de Wet verbetering poortwachter, relevante re-integratieprocessen en werkervaring. Geen algemene wettelijke diploma-eis voor deze afgebakende niet-medische begeleiding. Bij twijfel over medische belastbaarheid moet de bedrijfsarts worden betrokken."
+  },
+  "REINTEGRATION_SECOND_TRACK": {
+    "name": "Re-integratie tweede spoor",
+    "definition": "**Werkingssfeer:** Niet-medische begeleiding naar passend werk buiten de eigen werkgever: arbeidsmarktoriëntatie, loopbaan- en sollicitatiebegeleiding, jobmatching, acquisitie richting werkgevers en procesmatige voortgangsrapportage. De positie van spoor 2 volgt de poortwachtercontext; spoor 1 wordt eerst onderzocht, maar beide sporen kunnen onder omstandigheden parallel lopen.\n\n**Buiten scope:** Medische belastbaarheidsbeoordeling, formele arbeidsdeskundigenoordelen in WIA/UWV-context, vaststelling van arbeidsongeschiktheid, UWV-deskundigenoordeel en beslissingen over uitkeringen.\n\n**Kwalificatie:** Aantoonbare kennis van tweede-spoortrajecten, arbeidsmarktbegeleiding en passende re-integratie-ervaring. Geen algemene wettelijke diploma-eis voor dit afgebakende niet-medische traject."
+  }
+}

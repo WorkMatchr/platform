@@ -1,3 +1,5 @@
+import { standardTasks } from '../src/lib/marketplace/assignment-scope'
+import { syntheticSafetyScope } from './fixtures/launch-scope-policy'
 import 'dotenv/config'
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
@@ -66,9 +68,10 @@ async function main() {
     const poorProviderUser = await prisma.user.create({ data: { email: `provider-poor-${randomUUID()}@example.invalid`, status: 'ACTIVE', accountType: 'PROFESSIONAL', emailVerified: true, memberships: { create: { organizationId: poorProviderOrganization.id, role: 'OWNER', status: 'ACTIVE' } } } })
     const platformAdmin = await prisma.user.create({ data: { email: `admin-${randomUUID()}@example.invalid`, status: 'ACTIVE', emailVerified: true, platformRole: 'ADMIN', memberships: { create: { organizationId: platformOrganization.id, role: 'ADMIN', status: 'ACTIVE' } } } })
 
+    const policy=await syntheticSafetyScope(prisma)
     async function createSelectableProvider(organizationId: string) {
       const profile = await prisma!.providerProfile.create({ data: { organizationId, lifecycleStatus: 'QUALIFIED', readinessStatus: 'READY', platformQualificationStatus: 'QUALIFIED', selectabilityStatus: 'SELECTABLE' } })
-      const profileVersion = await (await import('./fixtures/reviewed-marketplace-provider')).prepareReviewedSupplier(prisma!, profile.id, organizationId)
+      const profileVersion = await (await import('./fixtures/reviewed-marketplace-provider')).prepareReviewedSupplier(prisma!, profile.id, organizationId,policy)
     const readiness = await prisma!.providerReadinessAssessment.create({ data: { providerProfileId: profile.id, status: 'READY', reasonCodes: [], sourceVersion: profileVersion, checksum: randomUUID().replaceAll('-', '').padEnd(64, '0').slice(0, 64) } })
       const selectability = await prisma!.providerSelectabilityAssessment.create({ data: { providerProfileId: profile.id, readinessAssessmentId: readiness.id, status: 'SELECTABLE', reasonCodes: [], sourceVersion: profileVersion, checksum: randomUUID().replaceAll('-', '').padEnd(64, '1').slice(0, 64) } })
       const projection = await prisma!.trustedProviderProjection.create({ data: { providerProfileId: profile.id, readinessAssessmentId: readiness.id, selectabilityAssessmentId: selectability.id, schemaVersion: 2, canonicalizationVersion: 'WORKMATCHR-CJ-1', sourceVersion: profileVersion, payload: { capabilities: [], sectors: [], workAreas: [] }, sha256: randomUUID().replaceAll('-', '').padEnd(64, '2').slice(0, 64), validFrom: new Date(), validUntil: new Date('2096-04-01T00:00:00Z') } })
@@ -92,20 +95,22 @@ async function main() {
     async function createInvitation(providerData: typeof provider, providerOrganizationId: string, assignmentId?: string) {
       let assignment = assignmentId
         ? await prisma!.assignment.findUniqueOrThrow({ where: { id: assignmentId } })
-        : await prisma!.assignment.create({ data: { clientOrganizationId: clientOrganization.id, createdByUserId: clientUser.id, title: 'TEST-WM concurrencyopdracht', description: 'Volledig fictieve concurrencytest.' } })
+        : await prisma!.assignment.create({ data: { clientOrganizationId: clientOrganization.id, createdByUserId: clientUser.id, title:standardTasks.SAFETY_ADVICE.title,description:standardTasks.SAFETY_ADVICE.task,primarySpecialismId:policy.specialismId } })
       if (!assignmentId) {
         const publishedAt = new Date()
         assignment = await prisma!.$transaction(async (transaction) => {
-          await transaction.assignmentRevision.create({ data: { assignmentId: assignment.id, version: 1, title: assignment.title, description: assignment.description, locationType: 'UNKNOWN', allowsRemoteWork: false, changedByUserId: clientUser.id } })
+          await transaction.assignmentRevision.create({ data: { assignmentId: assignment.id, version: 1, primarySpecialismId:policy.specialismId,title: assignment.title, description: assignment.description, locationType: 'UNKNOWN', allowsRemoteWork: false, changedByUserId: clientUser.id } })
           await transaction.assignment.update({ where: { id: assignment.id }, data: { status: 'OPEN', publishedAt, publishedByUserId: clientUser.id, publishedVersion: 1 } })
           await transaction.assignmentStatusHistory.create({ data: { assignmentId: assignment.id, fromStatus: 'READY_FOR_REVIEW', toStatus: 'OPEN', changedByUserId: clientUser.id, reason: 'Fictieve publicatie voor concurrencytest.', createdAt: publishedAt } })
           return transaction.assignment.update({ where: { id: assignment.id }, data: { status: 'AWAITING_RESPONSES' } })
         })
       }
-      const run = await prisma!.marketplaceMatchRun.create({ data: { assignmentId: assignment.id, assignmentVersion: assignment.version, engineVersion: 'test', modelVersion: 'test', ruleVersion: 'test', taxonomyVersion: 'test', startedByUserId: clientUser.id, idempotencyKey: randomUUID(), confidenceLevel: 'HOOG', confidenceReasons: [], assignmentSnapshot: {}, inputChecksum: randomUUID().replaceAll('-', '').padEnd(64, '3').slice(0, 64) } })
+      const {readAssignmentScope,requireWithin}=await import('../src/lib/marketplace/assignment-scope-service')
+      const scope=await prisma!.$transaction(tx=>readAssignmentScope(tx,assignment.id,'SAFETY_ADVICE',new Date()));requireWithin(scope)
+      const run = await prisma!.marketplaceMatchRun.create({ data: { assignmentId: assignment.id, assignmentVersion: assignment.version, engineVersion: 'test', modelVersion: 'test', ruleVersion: 'test', taxonomyVersion: 'test', startedByUserId: clientUser.id, idempotencyKey: randomUUID(), confidenceLevel: 'HOOG', confidenceReasons: [], assignmentSnapshot: {scopeDigest:scope.digest,scopeService:scope.service,capabilityCode:'hogere-veiligheidskundige'}, inputChecksum: randomUUID().replaceAll('-', '').padEnd(64, '3').slice(0, 64) } })
       const candidate = await prisma!.marketplaceMatchCandidate.create({ data: { matchRunId: run.id, providerProfileId: providerData.profile.id, projectionId: providerData.projection.id, status: 'SELECTED', rank: 1, scoreNumerator: 1, scoreDenominator: 1, normalizedScore: 10_000, exclusionReasons: [], explanation: {}, providerSnapshot: {}, snapshotChecksum: randomUUID().replaceAll('-', '').padEnd(64, '4').slice(0, 64) } })
       await prisma!.assignmentProviderSelection.create({ data: { assignmentId: assignment.id, providerProfileId: providerData.profile.id, source: 'AUTOMATIC', status: 'INVITED', selectedByUserId: clientUser.id } })
-      const invitation = await prisma!.providerInvitation.create({ data: { assignmentId: assignment.id, matchRunId: run.id, matchCandidateId: candidate.id, providerProfileId: providerData.profile.id, providerOrganizationId, creditCost: 25, deadlineAt: new Date(Date.now() + 86_400_000), snapshot: {}, snapshotChecksum: randomUUID().replaceAll('-', '').padEnd(64, '5').slice(0, 64), idempotencyKey: randomUUID() } })
+      const invitation = await prisma!.providerInvitation.create({ data: { assignmentId: assignment.id, matchRunId: run.id, matchCandidateId: candidate.id, providerProfileId: providerData.profile.id, providerOrganizationId, creditCost: 25, deadlineAt: new Date(Date.now() + 86_400_000), snapshot: {recipientExpertise:'hogere-veiligheidskundige'}, snapshotChecksum: randomUUID().replaceAll('-', '').padEnd(64, '5').slice(0, 64), idempotencyKey: randomUUID() } })
       return { assignment, invitation }
     }
 

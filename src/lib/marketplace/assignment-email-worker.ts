@@ -1,5 +1,7 @@
 import { blockedOnboardingProfiles } from '@/lib/providers/provider-marketplace-onboarding'
 import { readInvitationPrice } from './assignment-pricing'
+import { checkRunScope, eligibleForScopedExpertise } from './assignment-scope-service'
+import { MarketplaceServiceError } from './marketplace-errors'
 import { createHash, randomUUID } from 'node:crypto'
 import { getPrisma } from '@/lib/prisma'
 import { AuthEmailDeliveryError, sendAuthEmail } from '@/lib/email'
@@ -15,7 +17,7 @@ export function assignmentEmailFailure(error: unknown) {
   return { code: error.code, retryAfterMs: error.retryAfterMs, retryable: error.code === 'EMAIL_PROVIDER_UNAVAILABLE' || error.code === 'EMAIL_PROVIDER_RESPONSE_INVALID' || (error.code === 'EMAIL_PROVIDER_REJECTED' && (error.providerStatusCode === 429 || (error.providerStatusCode ?? 0) >= 500)) }
 }
 
-/** Only this template is claimed. External transport always runs outside a DB transaction. */
+/** Only this template is claimed. Dispatch is fenced against concurrent assignment revisions. */
 export async function deliverAssignmentEmails(input: { limit?: number; now?: () => Date; send?: typeof sendAuthEmail } = {}) {
   const db = getPrisma()
   const clock = input.now ?? (() => new Date())
@@ -86,13 +88,30 @@ export async function deliverAssignmentEmails(input: { limit?: number; now?: () 
       if (job.deliveryFingerprint && job.deliveryFingerprint !== fingerprint) { await finish('FAILED', 'DELIVERY_PAYLOAD_CHANGED'); continue }
       const ready = await db.notificationOutbox.updateMany({ where: { id: job.id, leaseToken: token, status: 'PROCESSING', leaseUntil: { gt: clock() } }, data: { deliveryFingerprint: fingerprint } })
       if (!ready.count) continue
-      const result = await send(email)
+      // Serialize the final dispatch against assignment edits. Never retry an ambiguous
+      // provider acknowledgement with a different key, even if the transaction fails.
+      const result = await db.$transaction(async tx=>{
+        await tx.$queryRaw`SELECT a.id FROM "Assignment" a JOIN "ProviderInvitation" i ON i."assignmentId"=a.id WHERE i.id=${parsed.data.invitationId}::uuid FOR UPDATE OF a`
+        await tx.$queryRaw`SELECT p.id FROM "ProviderInvitation" i JOIN "ProviderProfile" p ON p.id=i."providerProfileId" WHERE i.id=${parsed.data.invitationId}::uuid FOR SHARE OF i,p`
+        const live=await tx.providerInvitation.findUniqueOrThrow({where:{id:parsed.data.invitationId},include:{matchRun:{select:{assignmentSnapshot:true}},matchCandidate:{select:{projectionId:true}}}})
+        const at=clock()
+        const scope=await checkRunScope(tx,live.assignmentId,live.matchRun.assignmentSnapshot,at)
+        if(live.status!=='INVITED'||live.deadlineAt<=at || !await eligibleForScopedExpertise(tx,live.providerProfileId,scope,snapshot.recipientExpertise,at) ||
+           (await blockedOnboardingProfiles(tx,[{providerProfileId:live.providerProfileId,organizationId:live.providerOrganizationId,projectionId:live.matchCandidate.projectionId}],at)).size)
+          throw new MarketplaceServiceError('NOT_SELECTABLE')
+        const recipientStillActive=await tx.organizationMembership.findFirst({where:{organizationId:live.providerOrganizationId,userId:job.recipientUserId!,status:'ACTIVE',user:{status:'ACTIVE',emailVerified:true,assignmentEmailEnabled:true,email:recipient.user.email}},select:{userId:true}})
+        if(!recipientStillActive) throw new MarketplaceServiceError('NOT_SELECTABLE')
+        const receipt=await send(email)
+        providerAccepted=receipt.status==='ACCEPTED'
+        return receipt
+      },{timeout:15000})
       if (result.status !== 'ACCEPTED') { await finish('FAILED', 'DEVELOPMENT_ONLY'); continue }
       providerAccepted = true
       await finish('SENT', null, result.messageId)
     } catch (error) {
       // Keep the lease after a lost acknowledgement; retry the same provider key, never a new send.
       if (providerAccepted) throw new Error('DELIVERY_ACKNOWLEDGEMENT_FAILED')
+      if(error instanceof MarketplaceServiceError){await finish('FAILED','INVITATION_NOT_DELIVERABLE');continue}
       const failure = assignmentEmailFailure(error)
       await finish(failure.retryable && job.attemptCount < ASSIGNMENT_EMAIL_MAX_ATTEMPTS ? 'PENDING' : 'FAILED', failure.code, undefined, failure.retryAfterMs)
     }

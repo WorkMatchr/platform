@@ -1,3 +1,4 @@
+import { checkRunScope, readAssignmentScope, requireWithin, scopedCapabilities, eligibleForScopedExpertise } from './assignment-scope-service'
 import { getApplicableMarketplaceRuleSet } from './marketplace-rules-service'
 import { resolveAssignmentPrice } from './assignment-pricing'
 import { enqueueAssignmentNotifications } from './assignment-notification'
@@ -68,6 +69,7 @@ export async function runMarketplaceMatching(input: {
   actorUserId: string
   organizationId: string
   assignmentId: string
+  scopeService?: string
   expectedAssignmentVersion: number
   idempotencyKey: string
   now?: Date
@@ -82,6 +84,14 @@ export async function runMarketplaceMatching(input: {
     if (existing) {
       const source = await transaction.assignment.findFirst({ where: { ...externalAssignmentWhere(input.assignmentId), clientOrganizationId: input.organizationId, id: existing.assignmentId } })
       if (!source) throw new MarketplaceServiceError('ACCESS_DENIED')
+      if (!(source.id===input.assignmentId && !source.requestId || source.requestId===input.assignmentId)) throw new MarketplaceServiceError('ACCESS_DENIED')
+      const scope=await checkRunScope(transaction,source.id,existing.assignmentSnapshot,now)
+      if (scope.service!==input.scopeService) throw new MarketplaceServiceError('CONFLICT')
+      const applicable=existing.candidates.filter(c=>c.status==='SELECTED'||c.status==='ELIGIBLE')
+      const live=await transaction.providerProfile.findMany({where:{id:{in:applicable.map(c=>c.providerProfileId)}},select:{id:true,organizationId:true}})
+      if((await blockedOnboardingProfiles(transaction,applicable.map(c=>({providerProfileId:c.providerProfileId,organizationId:live.find(p=>p.id===c.providerProfileId)?.organizationId??'',projectionId:c.projectionId})),now)).size) throw new MarketplaceServiceError('NOT_SELECTABLE')
+      const {capabilityCode}=z.object({capabilityCode:z.string()}).parse(existing.assignmentSnapshot)
+      for(const c of applicable) if (!await eligibleForScopedExpertise(transaction,c.providerProfileId,scope,invitationMatchFromFactors(capabilityCode,c.explanation).recipientExpertise,now)) throw new MarketplaceServiceError('NOT_SELECTABLE')
       return existing
     }
     const assignment = await transaction.assignment.findFirst({
@@ -140,7 +150,10 @@ export async function runMarketplaceMatching(input: {
       ? await transaction.providerSectorTaxonomyMap.findUnique({ where: { sectorId: assignment.sectorId }, select: { term: { select: { code: true } } } })
       : null
 
+    const scope=await readAssignmentScope(transaction,assignment.id,input.scopeService??'',now)
+    requireWithin(scope)
     const assignmentSnapshot = {
+      scopeService:scope.service, scopeDigest:scope.digest,
       assignmentId: assignment.id,
       assignmentVersion: assignment.version,
       publishedVersion: assignment.publishedVersion,
@@ -195,7 +208,10 @@ export async function runMarketplaceMatching(input: {
       if (blocked.has(projection.providerProfileId)) continue
       const payload = readTrustedPayload(projection.payload)
       if (!payload) continue
-      const provider = { providerProfileId: projection.providerProfileId, ...payload }
+      const current=await scopedCapabilities(transaction,projection.providerProfileId,scope,now)
+      const capabilities=payload.capabilities.filter(c=>c.serviceCode===scope.service && current.includes(c.specialismCode))
+      if (!capabilities.length) continue
+      const provider = { providerProfileId: projection.providerProfileId, ...payload, capabilities }
       evaluated.push({
         projection,
         providerProfileId: projection.providerProfileId,
@@ -383,6 +399,11 @@ export async function applyMarketplaceMatchIntervention(input: {
     if (repeated) {
       const original = z.object({ matchRunId: z.string(), replacementSelection: z.array(z.object({ candidateId: z.string() })) }).safeParse(repeated.metadata)
       if (repeated.actorUserId !== input.actorUserId || repeated.action !== 'MATCH_SELECTION_INTERVENED' || repeated.entityType !== 'MarketplaceMatchIntervention' || !original.success || original.data.matchRunId !== input.matchRunId || original.data.replacementSelection.length !== input.candidateIds.length || original.data.replacementSelection.some(candidate => !input.candidateIds.includes(candidate.candidateId))) throw new MarketplaceServiceError('ACCESS_DENIED')
+      const historical=await transaction.marketplaceMatchRun.findUniqueOrThrow({where:{id:input.matchRunId},include:{candidates:{where:{id:{in:input.candidateIds}},include:{providerProfile:{select:{organizationId:true}}}}}})
+      const scope=await checkRunScope(transaction,historical.assignmentId,historical.assignmentSnapshot,now)
+      const {capabilityCode}=z.object({capabilityCode:z.string()}).parse(historical.assignmentSnapshot)
+      if(historical.candidates.length!==input.candidateIds.length || (await blockedOnboardingProfiles(transaction,historical.candidates.map(c=>({providerProfileId:c.providerProfileId,projectionId:c.projectionId,organizationId:c.providerProfile.organizationId})),now)).size) throw new MarketplaceServiceError('NOT_SELECTABLE')
+      for(const c of historical.candidates) if(!await eligibleForScopedExpertise(transaction,c.providerProfileId,scope,invitationMatchFromFactors(capabilityCode,c.explanation).recipientExpertise,now)) throw new MarketplaceServiceError('NOT_SELECTABLE')
       return repeated
     }
     const run = await transaction.marketplaceMatchRun.findFirst({
@@ -402,6 +423,9 @@ export async function applyMarketplaceMatchIntervention(input: {
       },
     })
     if (!run || run.candidates.length !== input.candidateIds.length) throw new MarketplaceServiceError('NOT_FOUND')
+    const scope=await checkRunScope(transaction,run.assignment.id,run.assignmentSnapshot,now)
+    const {capabilityCode}=z.object({capabilityCode:z.string()}).parse(run.assignmentSnapshot)
+    for(const c of run.candidates) if (!await eligibleForScopedExpertise(transaction,c.providerProfileId,scope,invitationMatchFromFactors(capabilityCode,c.explanation).recipientExpertise,now)) throw new MarketplaceServiceError('NOT_SELECTABLE')
     if (input.candidateIds.length > run.assignment.maxSelections) throw new MarketplaceServiceError('VALIDATION_ERROR')
     if (!run.assignment.responseDeadline || run.assignment.responseDeadline <= now || !['MATCHING', 'AWAITING_RESPONSES'].includes(run.assignment.status)) {
       throw new MarketplaceServiceError('INVALID_STATE')

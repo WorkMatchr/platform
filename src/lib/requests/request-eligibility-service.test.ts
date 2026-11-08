@@ -6,6 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { createElement } from 'react'
 import { RequestMatchExplanation } from '@/components/requests/request-match-explanation'
 
+vi.mock('./request-scope-service',()=>({requestScopeCandidates:async()=>new Set(['primary','additional','both','hygiene','other'])}))
 // Candidate qualification is exercised against PostgreSQL in the provider suite.
 vi.mock('@/lib/providers/provider-marketplace-onboarding', () => ({ blockedOnboardingProfiles: async () => new Set() }))
 

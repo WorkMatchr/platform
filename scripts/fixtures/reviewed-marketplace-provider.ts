@@ -7,12 +7,12 @@ import {
 
 // Downstream notification and concurrency tests start with an already reviewed supplier.
 // The separate onboarding suite exercises qualification issuance and substantive requirements.
-export async function prepareReviewedSupplier(db: PrismaClient, profileId: string, organizationId: string) {
+export async function prepareReviewedSupplier(db: PrismaClient, profileId: string, organizationId: string, policy?: {serviceTermId:string;specialismTermId:string;configId:string}) {
   const url = new URL(process.env.DATABASE_URL!)
   assert.ok(['localhost', '127.0.0.1', '[::1]'].includes(url.hostname))
   const [identity] = await db.$queryRaw<{ database: string }[]>`SELECT current_database() AS database`
   assert.equal('/' + identity.database, url.pathname)
-  assert.match(identity.database, /^workmatchr_(marketplace_concurrency|notifications_test|test_providers_m7d[23])_\d+_\d+$/)
+  assert.match(identity.database, /^workmatchr_(?:(marketplace_concurrency|notifications_test|test_providers_m7d[23])_\d+_\d+|scope_[a-f0-9]{12})$/)
 
   const owner = await db.organizationMembership.findFirstOrThrow({ where: { organizationId, role: 'OWNER', status: 'ACTIVE' } })
   const platform = await db.organization.upsert({ where: { systemKey: 'WORKMATCHR_PLATFORM' }, update: {},
@@ -43,7 +43,7 @@ export async function prepareReviewedSupplier(db: PrismaClient, profileId: strin
     await db.providerSectorExperience.create({ data: { providerProfileId: profileId, revisions: { create: { version: 1, sectorTermId } } } })
     await db.providerWorkArea.create({ data: { providerProfileId: profileId, revisions: { create: { version: 1, regionTermId } } } })
     const capability = await db.providerCapability.create({ data: { providerProfileId: profileId,
-      revisions: { create: { version: 1, serviceTermId, deliveryModes: ['ON_SITE', 'REMOTE'] } } } })
+      revisions: { create: { version: 1, serviceTermId:policy?.serviceTermId??serviceTermId,specialismTermId:policy?.specialismTermId, deliveryModes: ['ON_SITE', 'REMOTE'] } } } })
     capabilities = [capability]
   }
   const profile = await db.providerProfile.findUniqueOrThrow({ where: { id: profileId } })
@@ -58,7 +58,7 @@ export async function prepareReviewedSupplier(db: PrismaClient, profileId: strin
     dossierSubmissionId: submission.id, dossierReviewCaseId: review.id, sourceChecksum: snapshot.sha256 }
   const [, current] = await db.$transaction([
     db.providerQualificationDecision.createMany({ data: [{ ...decision, scope: 'PLATFORM' },
-      ...capabilities.map(cap => ({ ...decision, scope: 'CAPABILITY' as const, capabilityId: cap.id }))] }),
+      ...capabilities.map(cap => ({ ...decision, scope: 'CAPABILITY' as const, capabilityId: cap.id,requirementConfigId:policy?.configId }))] }),
     db.providerProfile.update({ where: { id: profileId }, data: { version: { increment: 1 + capabilities.length } } }),
   ])
   return current.version

@@ -1,3 +1,6 @@
+import { reviewQueue } from '@/lib/marketplace/assignment-scope-workflow'
+import { launchScopes } from '@/lib/marketplace/assignment-scope'
+import { decideScopeAction } from '@/app/marktplaats/actions'
 import { randomUUID } from 'node:crypto'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
@@ -24,12 +27,22 @@ export default async function MarketplaceAdminPage() {
   const dashboard = await getMarketplacePlatformDashboard(user.id).catch(() => null)
   if (!dashboard?.canManageMarketplace) notFound()
 
+  const queue=await reviewQueue(user.id)
   return (
     <Section spacing="compact">
       <Heading as="h1" size="h2">Marktplaatsbeheer</Heading>
       <p className="mt-3 text-text-secondary">
         Beheer gecontroleerde uitzonderingen. Iedere handeling wordt met uitvoerder, reden en eenmalige procesreferentie vastgelegd.
       </p>
+      <h2 className="mt-8 text-lg font-semibold">Werkzaamheden beoordelen</h2>
+      {!queue.length && <p>Geen actuele aanvragen voor inhoudelijke beoordeling.</p>}
+      {queue.map(s=><Card key={s.digest}><h3>{s.title} · {launchScopes[s.service].name}</h3><p>{s.description}</p><p className="whitespace-pre-line">{s.secondary.join('\n')}</p>
+      <p>Deskundigheid: {s.specialisms.join(', ')} · Opdrachtversie {s.revision} · Beleidsversie {s.policyVersion}</p>
+      <p className="whitespace-pre-line">{launchScopes[s.service].definition.replaceAll('**','')}</p>
+      <form action={decideScopeAction} className="grid gap-3"><input type="hidden" name="service" value={s.service}/><input type="hidden" name="assignmentId" value={s.id}/><input type="hidden" name="digest" value={s.digest}/>
+      <label>Motivering (geen persoonsgegevens)<textarea name="reason" minLength={10} maxLength={500} required/></label>
+      <label>Besluit <select name="decision" required defaultValue=""><option value="">Kies een besluit</option><option value="binnen">Binnen de werkingssfeer, geen aanvullende bevoegdheid nodig</option><option value="buiten">Buiten scope: aanpassen of doorverwijzen</option></select></label>
+      <Button type="submit">Besluit vastleggen</Button></form></Card>)}
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <Card>
           <h2 className="text-lg font-semibold">Gratis credits toekennen</h2>
