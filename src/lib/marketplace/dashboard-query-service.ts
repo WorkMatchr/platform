@@ -1,4 +1,5 @@
 import { requireProviderParticipationAccess } from './marketplace-authorization'
+import { getMarketplaceNotifications } from './notification-service'
 import { currentMarketplaceProjections } from '@/lib/providers/provider-marketplace-onboarding'
 import { readInvitationPrice } from './assignment-pricing'
 import { assignmentPreviewSchema } from './assignment-purchase-preview'
@@ -75,7 +76,7 @@ export async function getMarketplaceDashboard(userId: string, organizationId: st
           where: { creditAccount: { organizationId } },
           select: { totalDelta: true, reservedDelta: true },
         }),
-        tx.marketplaceNotification.findMany({ where: { recipientUserId: userId }, orderBy: { createdAt: 'desc' }, take: 10, select: { id: true, title: true, body: true, targetRoute: true, readAt: true, createdAt: true } }),
+        getMarketplaceNotifications(userId, 10, tx),
       ])
       return { kind: 'PROVIDER' as const, membership, providerProfileId, invitations, quotes, creditAccount: deriveCreditBalance(creditAccount), notifications }
     }, { isolationLevel: 'RepeatableRead' })
@@ -121,7 +122,7 @@ export async function getMarketplaceDashboard(userId: string, organizationId: st
         awardDecision: { select: { id: true, decidedAt: true } },
       },
     }),
-    prisma.marketplaceNotification.findMany({ where: { recipientUserId: userId }, orderBy: { createdAt: 'desc' }, take: 10, select: { id: true, title: true, body: true, targetRoute: true, readAt: true, createdAt: true } }),
+    getMarketplaceNotifications(userId, 10, prisma),
     prisma.assignment.count({
       where: {
         clientOrganizationId: organizationId,

@@ -68,8 +68,8 @@ export async function verifyProviderMarketplaceOnboarding(db: PrismaClient, fixt
   await assert.rejects(submitQuote({ ...operator, quoteId: id, expectedQuoteVersion: 1, idempotencyKey: id }), denied)
   await assert.rejects(registerRequestInterest({ actor, requestId: id }), { code: 'ACCESS_DENIED' })
   await assert.rejects(claimRequestOfferSlot({ actor, requestId: id }), { code: 'ACCESS_DENIED' })
-  assert.equal(await db.quote.count(), 0)
-  assert.equal(await db.providerParticipation.count(), 0)
+  assert.equal(await db.quote.count({ where: { providerProfileId } }), 0)
+  assert.equal(await db.providerParticipation.count({ where: { providerProfileId } }), 0)
 
   const checksum = createHash('sha256').update('B4 synthetic fixture').digest('hex')
   const past = new Date('2020-01-01'), future = new Date('2090-01-01')

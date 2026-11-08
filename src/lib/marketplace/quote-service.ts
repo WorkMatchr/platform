@@ -155,7 +155,7 @@ export async function submitQuote(input: {
       where: { assignmentId: quote.assignmentId, providerProfileId: quote.providerProfileId, status: { in: ['INVITED', 'VIEWED'] } },
       data: { status: 'RESPONDED', respondedAt: now },
     })
-    const recipients = await activeOrganizationRecipients(transaction, assignment.clientOrganizationId)
+    const recipients = await activeOrganizationRecipients(transaction, assignment.clientOrganizationId, 'CLIENT_MANAGERS')
     for (const recipientUserId of recipients) {
       await createMarketplaceNotification(transaction, {
         recipientUserId,
