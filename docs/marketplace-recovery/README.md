@@ -25,6 +25,21 @@ Alle gegevens waren synthetisch. De browser gebruikte een lokale productiebuild 
 
 Een geïnjecteerde fout bij de databasecommit liet saldo, deelname en kanaal onveranderd. Gelijktijdige conceptwijzigingen gaven één geslaagde wijziging en één conflict. De PostgreSQL-suites controleerden ook het drieplaatsenplafond, ongewijzigde dossiersnapshots, auditregistratie, afgeschermde prijzen en tenantisolatie.
 
+## Gecombineerde proef op locatie en B4-accountintegratie
+
+Eén opdrachtgever publiceerde via de browser een fysieke opdracht in Utrecht. Drie aanbieders met Utrechtse of landelijke dekking doorliepen de hele keten. Een vierde had toepasselijke deskundigheid en bediende uitsluitend Noord-Holland.
+
+| Controle | Bewijs uit browser en PostgreSQL |
+| --- | --- |
+| Matching en e-mail | Drie uitnodigingen en drie lokaal opgevangen mails aan de juiste professionals. Alle drie de links brachten de ontvanger na het inloggen terug naar de eigen uitnodiging. De vierde kandidaat had alleen de uitsluitingsreden `WERKGEBIED_PAST_NIET`, zonder rang of score. Voor deze professional waren er nul mails, uitnodigingen en deelnames. Het saldo bleef 200 testcredits. |
+| Autorisatie | De uitgesloten professional kreeg via de link van een andere organisatie geen inzage of koopknop. Bij tijdelijke schorsing van een uitgenodigde organisatie weigerden de lees- en aankoopservice de bestaande uitnodiging. Er ontstond geen deelname of afschrijving. |
+| Offertes en gunning | Elke deelnemer betaalde precies één keer 27 testcredits, bewaarde en heropende een concept en diende de offerte definitief in. De database bevatte drie verschillende ingediende versies, één gunning en twee afwijzingen. Zes opdrachtgevermeldingen voor deelname en indiening verwezen naar het offerteoverzicht van dezelfde opdracht. |
+| Account en historie | Vanuit Account opende de professional via Organisatie de pagina Mijn dienstverlening. De vastgelegde dienst, sector en regio stonden aangevinkt, ook na het openen van de drie oude profielroutes. De dossierstatus was zichtbaar. PostgreSQL bevestigde behoud van de geverifieerde dienstrevisie, de sector- en regiorevisies, de oorspronkelijke beoordelingen en de vertrouwde projectie. De bestaande organisatie kreeg geen nieuw onboarding-event. |
+
+Bij een afwijzing van alle gevraagde deskundigheden koos de matcher voorheen altijd de motivering van de primaire deskundigheid. Daardoor kon een aanvullende aanbieder die uitsluitend buiten het werkgebied viel, ook de melding krijgen dat de dienst ontbrak. De matcher verklaart de uitsluiting nu aan de hand van een daadwerkelijk aangeboden deskundigheid als die er is. Een geschikte primaire kandidaat houdt voorrang en een uitgesloten kandidaat krijgt geen score of uitnodiging. De PostgreSQL-regressie controleert de exacte reden en het uitblijven van een extra accountmelding.
+
+[Mijn dienstverlening met bestaande keuzes](mijn-dienstverlening.png)
+
 ## Meldingen en browser
 
 Zeven bestaande meldingstypen zijn bij de bedoelde ontvanger en een andere organisatie in Edge geopend. Het betrof primaire en aanvullende uitnodigingen, deelname, afwijzing van een uitnodiging, indiening, gunning en afwijzing van een offerte. Publicatie heeft een bevestigingspagina en een publicatie-event. De sluiting bij gunning heeft statushistorie en de meldingen over de afzonderlijke offertes. Er is geen extra berichttype toegevoegd.
@@ -35,7 +50,8 @@ De offerte en de vergelijking zijn gemeten bij 1414, 820 en 390 CSS-pixels en bi
 
 ## Reproduceerbare controles
 
-- Volledige Vitest-suite met twee workers. 3432 geslaagd, 0 mislukt, 26 overgeslagen. De afzonderlijke PostgreSQL-harness test de databasegebonden routes.
+- Na de correctie van de afwijsmotivering zijn de 65 betrokken Vitest-bestanden opnieuw uitgevoerd. Alle 480 tests slaagden. De aangescherpte PostgreSQL-test controleerde ook de uitsluitingsreden en het aantal accountmeldingen.
+- Eerdere volledige Vitest-suite met twee workers. 3432 geslaagd, 0 mislukt, 26 overgeslagen. De afzonderlijke PostgreSQL-harness test de databasegebonden routes.
 - PostgreSQL met `test:db:assignment-notifications`, `test:db:marketplace-concurrency`, `test:db:requests`, `test:db:request-offer-slots` en `test:db:request-interests`. De eerste suite gebruikt de beperkte synthetische runtimerol en omvat 17 meldingsfixtures.
 - B4 met `scripts/test-provider-offering-database.ts` op een lege loopback-database. Deze ingang controleert zowel de kwalificatie- als de onboardingmatrix.
 - TypeScript, lokale productiebuild en ESLint. Vier bestaande lintwaarschuwingen in de authenticatieformulieren. De tijdelijke browserharness staat buiten de repositorycontroles.

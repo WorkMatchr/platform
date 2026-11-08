@@ -275,6 +275,7 @@ try {
   assert.deepEqual(await db.adviceDossierVersion.findUniqueOrThrow({ where: { id: immutableVersion.id } }), immutableVersion)
   console.log('WP16 PASS: purchased credits -> canonical dossier/request/handoff -> PRIMARY/ADDITIONAL -> fake SENT -> one unlock -> quote/award/replay -> immutable snapshot; cross-tenant denied')
   const additionalMailBefore = await db.notificationOutbox.count({ where: { recipientUserId: additionalUser.id } })
+  const additionalNoticesBefore = await db.marketplaceNotification.count({ where: { recipientUserId: additionalUser.id } })
   const location = await db.organizationLocation.create({ data: {
     organizationId: clientOrg.id, label: 'Testlocatie', addressLine: 'Testweg 1', postalCode: '0000 AA',
     city: 'Utrecht', province: 'Utrecht', countryCode: 'NL',
@@ -287,11 +288,13 @@ try {
   const excluded = regionalRun.candidates.find(candidate => candidate.providerProfileId === additionalProfile.id)
   assert.ok(excluded)
   assert.equal(excluded.status, 'EXCLUDED')
+  assert.deepEqual(excluded.exclusionReasons, ['WERKGEBIED_PAST_NIET'])
   assert.equal(excluded.rank, null)
   assert.equal(excluded.normalizedScore, null)
   assert.deepEqual(regionalRun.invitations.map(invitation => invitation.providerOrganizationId), [providerOrg.id])
   assert.equal(await db.providerParticipation.count({ where: { assignmentId: regionalRun.assignmentId, providerOrganizationId: additionalOrg.id } }), 0)
   assert.equal(await db.notificationOutbox.count({ where: { recipientUserId: additionalUser.id } }), additionalMailBefore)
+  assert.equal(await db.marketplaceNotification.count({ where: { recipientUserId: additionalUser.id } }), additionalNoticesBefore)
   // Keep the two canonical PRIMARY/ADDITIONAL invitations available to the optional browser fixture.
   const physicalInvitation = regionalRun.invitations[0]!
   await declineProviderInvitation({
