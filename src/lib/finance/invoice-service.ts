@@ -1,3 +1,4 @@
+import { resolveProInvoiceSource } from './pro-payment-source'
 import 'server-only'
 
 import { Prisma } from '@/generated/prisma/client'
@@ -300,13 +301,9 @@ export async function issueInvoiceForPaidSubscriptionPayment(
   if (existing) return existing
   const payment = await transaction.professionalSubscriptionPayment.findUnique({
     where: { id: subscriptionPaymentId },
-    include: {
-      subscription: {
-        include: { firstPaymentPurchase: { include: { invoice: true } } },
-      },
-    },
+    include: { subscription: true },
   })
-  const customerSnapshot = payment?.subscription.firstPaymentPurchase?.invoice
+  const customerSnapshot = payment?.status === 'PAID' ? (await resolveProInvoiceSource(transaction, payment.subscriptionId)).invoice : null
   if (!payment || payment.status !== 'PAID' || !customerSnapshot) {
     throw new Error('PAID_SUBSCRIPTION_PAYMENT_WITH_CUSTOMER_SNAPSHOT_REQUIRED')
   }
