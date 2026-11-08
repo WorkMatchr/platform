@@ -53,6 +53,11 @@ body {
   color: var(--color-text-primary);
 }
 
+[data-workspace-theme='professional'],
+[data-workspace-theme='professional'] > [data-workspace-shell] {
+  background-color: #eaf7ee;
+}
+
 ::selection {
   background: var(--color-brand-primary-subtle);
   color: var(--color-brand-dark);

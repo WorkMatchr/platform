@@ -21,7 +21,7 @@ export function AccountWorkspaceShell({ model, banner, children }: { model: Head
   const active = chapters.flatMap(chapter => chapter.items.map(item => ({ chapter, item, exact: pathname === item.href })))
     .filter(({ item }) => pathname === item.href || pathname.startsWith(`${item.href}/`))
     .sort((a, b) => b.item.href.length - a.item.href.length)[0]
-  return <div data-account-shell="v02" data-account-layout="shared" className="lg:h-dvh lg:overflow-hidden">
+  return <div data-account-shell="v02" data-account-layout="shared" data-workspace-theme={model.workspaceTheme} className="lg:h-dvh lg:overflow-hidden">
     <WorkspaceShell chapters={chapters} active={active}
       identity={<>{model.displayName}{!moveOrganizationToSidebar && model.activeOrganization ? <><br />{model.activeOrganization.name}<br />{organizationRoleLabels[model.activeOrganization.role]}</> : null}</>}
       sidebarExtra={moveOrganizationToSidebar && model.activeOrganization ? <div className="mt-4 rounded-card border border-border bg-surface p-4" aria-label="Mijn organisatie"><p className="text-sm font-semibold text-text-secondary">Mijn organisatie</p><p className="mt-2 break-words font-bold text-brand-dark">{model.activeOrganization.name}</p><p className="mt-1 text-sm text-text-secondary">{organizationRoleLabels[model.activeOrganization.role]}</p></div> : null}

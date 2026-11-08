@@ -34,6 +34,20 @@ describe('A01.7 uniforme werkruimte', () => {
       expect(html).toContain('Testorganisatie')
     }
   })
+  it.each(['shared', 'legacy'])('volgt op dezelfde accountpagina de actuele omgeving (%s)', layout => {
+    if (layout === 'legacy') vi.stubEnv('NEXT_PUBLIC_ACCOUNT_LAYOUT_VERSION', 'legacy')
+    route.pathname = '/account'
+    const client = context('CLIENT', 'OWNER')
+    const professional = context('PROFESSIONAL', 'OWNER')
+    for (const [viewer, theme] of [[client, 'default'], [professional, 'professional'], [client, 'default']] as const) {
+      expect(markup(buildHeaderViewModel(viewer))).toContain(`data-workspace-theme="${theme}"`)
+    }
+    expect(markup(buildHeaderViewModel({ user: professional.user, activeMembership: null }))).toContain('data-workspace-theme="professional"')
+    expect(markup(buildHeaderViewModel({ user: professional.user, activeMembership: client.activeMembership }))).toContain('data-workspace-theme="default"')
+    expect(markup(buildHeaderViewModel(professional, true))).toContain('data-workspace-theme="default"')
+    route.pathname = '/'
+    expect(markup(buildHeaderViewModel(professional))).not.toContain('data-workspace-theme')
+  })
   it('behoudt de eerdere account-v02 en v01 als expliciete rollback', () => {
     vi.stubEnv('NEXT_PUBLIC_ACCOUNT_LAYOUT_VERSION', 'legacy')
     expect(markup()).toContain('data-account-layout="legacy"')

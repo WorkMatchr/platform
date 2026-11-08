@@ -11,6 +11,7 @@ import { ApplicationChrome, usesAuthenticatedWorkspace } from './application-chr
 import type { HeaderViewModel } from './header-model'
 
 const anonymousModel: HeaderViewModel = {
+  workspaceTheme: 'default',
   authenticated: false,
   isPlatformAdministrator: false,
   displayName: '',
@@ -88,6 +89,7 @@ describe('routebewuste applicatiechrome', () => {
         compactFooter={<div>Compacte workspacefooter</div>}
         footer={<div>Publieke footer</div>}
         headerModel={{
+          workspaceTheme: 'default',
           authenticated: true,
           isPlatformAdministrator: false,
           displayName: 'Opdrachtgever',

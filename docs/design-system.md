@@ -17,6 +17,7 @@ De tokens staan centraal in `src/app/globals.css` en zijn via Tailwind CSS besch
 | `brand-primary-subtle` | `#e7f5fb` | Subtiele merkvlakken |
 | `brand-dark` | `#0b2942` | Navigatie en belangrijke contrastvlakken |
 | `background` | `#f7fbfd` | Paginachtergrond |
+| Professionele accountomgeving | `#eaf7ee` | Achtergrond van de actieve professionele werkruimte, ook bij mobiele weergave |
 | `surface` | `#ffffff` | Componentoppervlakken |
 | `surface-subtle` | `#eef7fb` | Subtiele secties en kaarten |
 | `text-primary` | `#102a3e` | Primaire tekst |
