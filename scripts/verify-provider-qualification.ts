@@ -1,3 +1,5 @@
+import { scopeReference, standardTasks } from '../src/lib/marketplace/assignment-scope'
+import { readAssignmentScope, requireWithin } from '../src/lib/marketplace/assignment-scope-service'
 import { createProviderDossierSubmission, openProviderDossierReviewCase, finalizeProviderDossierReview } from '../src/lib/providers/provider-dossier-service'
 import { calculateProviderSelectability } from '../src/lib/providers/provider-assessment-service'
 import { createTrustedProviderProjection } from '../src/lib/providers/trusted-provider-projection-service'
@@ -41,6 +43,13 @@ export async function verifyProviderQualification(db: PrismaClient, serviceTermI
   const a = await subject('Test kwalificatie A'), b = await subject('Test kwalificatie B')
   const config = await db.providerCapabilityRequirementConfig.create({ data: { version: 1, effectiveFrom: past } })
   await db.providerCapabilityQualificationRequirement.create({ data: { configId: config.id, serviceTermId, requirementTermId, kind: 'QUALIFICATION', minimumVerification: 'SELF_DECLARED', isRequired: true } })
+  // Keep the separately credentialled service and a standard launch service in the same published policy.
+  const originalTerm = await db.providerTaxonomyTerm.findUniqueOrThrow({ where: { id: serviceTermId } })
+  const launchCode = originalTerm.code === 'SAFETY_ADVICE' ? 'ERGONOMICS' : 'SAFETY_ADVICE'
+  const launch = await db.providerTaxonomyTerm.findUniqueOrThrow({ where: { versionId_code: { versionId: originalTerm.versionId, code: launchCode } } })
+  const rule = await db.providerTaxonomyTerm.findUniqueOrThrow({ where: { id: requirementTermId } })
+  const neutral = await db.providerTaxonomyTerm.create({ data: { versionId: rule.versionId, code: 'STANDARD_SERVICE_SCOPE', label: scopeReference, sortOrder: 2500 } })
+  await db.providerCapabilityQualificationRequirement.create({ data: { configId: config.id, serviceTermId: launch.id, requirementTermId: neutral.id, kind: 'QUALIFICATION', minimumVerification: 'SELF_DECLARED', isRequired: false, requiresValidity: false } })
   await db.providerCapabilityRequirementConfig.update({ where: { id: config.id }, data: { status: 'PUBLISHED', checksum, publishedAt: past } })
   await db.providerOrganizationQualification.create({ data: { providerProfileId: a.profile.id, revisions: { create: { version: 1, qualificationTermId: requirementTermId, validUntil: future } } } })
   const state = () => db.providerProfile.findMany({
@@ -78,7 +87,7 @@ export async function verifyProviderQualification(db: PrismaClient, serviceTermI
   const access = () => db.$transaction(tx => requireProviderParticipationAccess(tx, owner.id, c.org.id))
   const history = { providerProfileId, reviewedByUserId: reviewer.id, approvedByUserId: approver.id, reasonCode, sourceChecksum: checksum }
   await db.providerOrganizationQualification.create({ data: { providerProfileId, revisions: { create: { version: 1, qualificationTermId: requirementTermId, validUntil: future } } } })
-  const second = await db.providerCapability.create({ data: { providerProfileId, revisions: { create: { version: 1, serviceTermId, deliveryModes: ['REMOTE'] } } } })
+  const second = await db.providerCapability.create({ data: { providerProfileId, revisions: { create: { version: 1, serviceTermId: launch.id, deliveryModes: ['REMOTE'] } } } })
   const area = await db.providerWorkArea.create({ data: { providerProfileId, revisions: { create: { version: 1, regionTermId } } }, include: { revisions: true } })
   await db.providerVerificationReview.create({ data: { providerProfileId, workAreaRevisionId: area.revisions[0].id, reviewerUserId: reviewer.id, validFrom: past, reasonCode, checksum, outcome: 'VERIFIED', resultingLevel: 'VERIFIED' } })
   await db.providerQualificationDecision.createMany({ data: [
@@ -102,7 +111,7 @@ export async function verifyProviderQualification(db: PrismaClient, serviceTermI
     await db.$transaction([
       db.providerQualificationDecision.createMany({ data: [
         { ...record, scope: 'PLATFORM' }, { ...record, scope: 'CAPABILITY', capabilityId: c.cap.id },
-        { ...record, scope: 'CAPABILITY', capabilityId: second.id },
+        { ...record, scope: 'CAPABILITY', capabilityId: second.id, requirementConfigId: config.id },
       ] }),
       db.providerProfile.update({ where: { id: providerProfileId }, data: { version: { increment: 3 } } }),
     ])
@@ -134,25 +143,33 @@ export async function verifyProviderQualification(db: PrismaClient, serviceTermI
   const original = await project()
   assert.equal((await access()).projectionId, original.id)
   const client = await db.organization.create({ data: { name: 'Test opdrachtgever schorsing', organizationType: 'CLIENT', status: 'ACTIVE' } })
+  const standard = standardTasks[launchCode]
+  const slug = standard.specialists[0]
+  const specialism = await db.specialism.upsert({ where: { slug }, create: { slug, name: slug }, update: {} })
+  const specVersion = await db.providerTaxonomyVersion.findFirstOrThrow({ where: { status: 'PUBLISHED', taxonomy: { kind: 'SPECIALISM' } } })
+  const specTerm = await db.providerTaxonomyTerm.upsert({ where: { versionId_code: { versionId: specVersion.id, code: slug } }, create: { versionId: specVersion.id, code: slug, label: slug, sortOrder: 2200 }, update: {} })
+  await db.providerSpecialismTaxonomyMap.upsert({ where: { specialismId: specialism.id }, create: { specialismId: specialism.id, termId: specTerm.id }, update: {} })
   const assignment = await db.assignment.create({ data: {
-    clientOrganizationId: client.id, createdByUserId: reviewer.id, title: 'Test schorsing', description: 'Synthetische opdracht.',
+    clientOrganizationId: client.id, createdByUserId: reviewer.id, primarySpecialismId: specialism.id, title: standard.title, description: standard.task,
   } })
   await db.$transaction(async tx => {
     const publishedAt = new Date()
-    await tx.assignmentRevision.create({ data: { assignmentId: assignment.id, version: 1, title: assignment.title, description: assignment.description,
+    await tx.assignmentRevision.create({ data: { assignmentId: assignment.id, version: 1, primarySpecialismId: specialism.id, title: assignment.title, description: assignment.description,
       locationType: 'UNKNOWN', allowsRemoteWork: false, changedByUserId: reviewer.id } })
     await tx.assignment.update({ where: { id: assignment.id }, data: { status: 'OPEN', publishedAt, publishedByUserId: reviewer.id, publishedVersion: 1 } })
     await tx.assignmentStatusHistory.create({ data: { assignmentId: assignment.id, fromStatus: 'READY_FOR_REVIEW', toStatus: 'OPEN',
       changedByUserId: reviewer.id, reason: 'Synthetische publicatie.', createdAt: publishedAt } })
     await tx.assignment.update({ where: { id: assignment.id }, data: { status: 'AWAITING_RESPONSES' } })
   })
+  const scope = await db.$transaction(tx => readAssignmentScope(tx, assignment.id, launchCode, new Date()))
+  requireWithin(scope)
   const run = await db.marketplaceMatchRun.create({ data: { assignmentId: assignment.id, assignmentVersion: 1, engineVersion: 'test',
     modelVersion: 'test', ruleVersion: 'test', taxonomyVersion: 'test', startedByUserId: reviewer.id, idempotencyKey: randomUUID(),
-    confidenceLevel: 'HOOG', confidenceReasons: [], assignmentSnapshot: {}, inputChecksum: checksum } })
+    confidenceLevel: 'HOOG', confidenceReasons: [], assignmentSnapshot: { scopeService: launchCode, scopeDigest: scope.digest, capabilityCode: launchCode }, inputChecksum: checksum } })
   const selected = await db.marketplaceMatchCandidate.create({ data: { matchRunId: run.id, providerProfileId, projectionId: original.id,
     status: 'SELECTED', rank: 1, normalizedScore: 10000, scoreNumerator: 1, scoreDenominator: 1, exclusionReasons: [], explanation: {}, providerSnapshot: {}, snapshotChecksum: checksum } })
   const invitation = await db.providerInvitation.create({ data: { assignmentId: assignment.id, matchRunId: run.id, matchCandidateId: selected.id,
-    providerProfileId, providerOrganizationId: c.org.id, creditCost: 25, deadlineAt: future, snapshot: {}, snapshotChecksum: checksum, idempotencyKey: randomUUID() } })
+    providerProfileId, providerOrganizationId: c.org.id, creditCost: 25, deadlineAt: future, snapshot: { recipientExpertise: launchCode }, snapshotChecksum: checksum, idempotencyKey: randomUUID() } })
   const wallet = await db.creditAccount.create({ data: { organizationId: c.org.id } })
   await db.creditTransaction.create({ data: { creditAccountId: wallet.id, type: 'ADMIN_GRANT', amount: 100, totalDelta: 100, reservedDelta: 0,
     balanceAfter: 100, reason: 'Synthetisch beginsaldo', createdByUserId: reviewer.id, idempotencyKey: randomUUID() } })

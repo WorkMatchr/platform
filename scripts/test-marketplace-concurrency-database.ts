@@ -126,7 +126,7 @@ async function main() {
     raceResult('Dubbele uitnodigingsacceptatie', acceptanceRace)
     const acceptedParticipation = await prisma.providerParticipation.findUniqueOrThrow({ where: { invitationId: acceptanceFixture.invitation.id }, include: { creditReservation: true } })
     const fullAccess = await getProviderInvitationDetail(providerUser.id, providerOrganization.id, acceptanceFixture.invitation.id)
-    assert.equal(fullAccess.invitation.fullAssignment?.description, 'Volledig fictieve concurrencytest.')
+    assert.equal(fullAccess.invitation.fullAssignment?.description, standardTasks.SAFETY_ADVICE.task)
     assert.equal(await prisma.providerParticipation.count({ where: { invitationId: acceptanceFixture.invitation.id } }), 1)
     assert.equal(acceptedParticipation.creditReservation, null)
     assert.equal((await prisma.providerInvitation.findUniqueOrThrow({ where: { id: acceptanceFixture.invitation.id } })).status, 'ACCEPTED')

@@ -1,5 +1,6 @@
 import type { Prisma } from '@/generated/prisma/client'
-import { checkRunScope, scopedCapabilities } from '@/lib/marketplace/assignment-scope-service'
+import { checkRunScope, eligibleForScopedExpertise } from '@/lib/marketplace/assignment-scope-service'
+import { invitationMatchFromFactors } from '@/lib/marketplace/assignment-purchase-preview'
 import { MarketplaceServiceError } from '@/lib/marketplace/marketplace-errors'
 import { blockedOnboardingProfiles } from '@/lib/providers/provider-marketplace-onboarding'
 
@@ -13,6 +14,7 @@ export async function requestScopeCandidates(tx: Prisma.TransactionClient, reque
       candidates: {
         where: { status: { in: ['ELIGIBLE', 'SELECTED'] } },
         select: {
+          explanation: true,
           providerProfileId: true,
           projectionId: true,
           providerProfile: { select: { organizationId: true } },
@@ -24,6 +26,8 @@ export async function requestScopeCandidates(tx: Prisma.TransactionClient, reque
   if (!run) return allowed
   try {
     const scope = await checkRunScope(tx, run.assignmentId, run.assignmentSnapshot, at)
+    const snap = run.assignmentSnapshot
+    if (!snap || typeof snap !== 'object' || Array.isArray(snap) || typeof snap.capabilityCode !== 'string') return allowed
     const blocked = await blockedOnboardingProfiles(
       tx,
       run.candidates.map((c) => ({ ...c, organizationId: c.providerProfile.organizationId })),
@@ -32,7 +36,7 @@ export async function requestScopeCandidates(tx: Prisma.TransactionClient, reque
     for (const c of run.candidates)
       if (
         !blocked.has(c.providerProfileId) &&
-        (await scopedCapabilities(tx, c.providerProfileId, scope, at)).length
+        await eligibleForScopedExpertise(tx, c.providerProfileId, scope, invitationMatchFromFactors(snap.capabilityCode, c.explanation).recipientExpertise, at)
       )
         allowed.add(c.projectionId)
   } catch (e) {
