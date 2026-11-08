@@ -264,25 +264,26 @@ export async function eligibleForScopedExpertise(
   const current = await scopedCapabilities(tx, profile, scope, at)
   return current.length > 0 && (expertise === scope.service || current.includes(expertise))
 }
-export async function visibleScopedInvitation(
-  tx: Tx,
-  inv: {
-    assignmentId: string
-    providerProfileId: string
-    snapshot: Prisma.JsonValue
-    matchRun: { assignmentSnapshot: Prisma.JsonValue }
-  },
-  at: Date,
-) {
+export const invitationScopeSelect = {
+  assignmentId: true,
+  providerProfileId: true,
+  snapshot: true,
+  matchRun: { select: { assignmentSnapshot: true } },
+} satisfies Prisma.ProviderInvitationSelect
+
+type ScopedInvitation = Prisma.ProviderInvitationGetPayload<{ select: typeof invitationScopeSelect }>
+
+export async function requireCurrentInvitationScope(tx: Tx, inv: ScopedInvitation, at: Date, lock = true) {
+  const scope = await checkRunScope(tx, inv.assignmentId, inv.matchRun.assignmentSnapshot, at, lock)
+  const expertise = (inv.snapshot as Record<string, unknown> | null)?.recipientExpertise
+  if (!await eligibleForScopedExpertise(tx, inv.providerProfileId, scope, expertise, at))
+    throw new MarketplaceServiceError('NOT_SELECTABLE')
+}
+
+export async function visibleScopedInvitation(tx: Tx, inv: ScopedInvitation, at: Date) {
   try {
-    const scope = await checkRunScope(tx, inv.assignmentId, inv.matchRun.assignmentSnapshot, at, false)
-    return eligibleForScopedExpertise(
-      tx,
-      inv.providerProfileId,
-      scope,
-      (inv.snapshot as Record<string, unknown>)?.recipientExpertise,
-      at,
-    )
+    await requireCurrentInvitationScope(tx, inv, at, false)
+    return true
   } catch (error) {
     if (error instanceof MarketplaceServiceError) return false
     throw error

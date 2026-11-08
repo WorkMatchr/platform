@@ -1,3 +1,4 @@
+import { invitationScopeSelect, requireCurrentInvitationScope } from './assignment-scope-service'
 import { blockedOnboardingProfiles } from '@/lib/providers/provider-marketplace-onboarding'
 import { isQuoteExpired } from './quote-validity-date'
 import { externalAssignmentWhere } from '@/lib/assignments/assignment-identity'
@@ -44,7 +45,7 @@ export async function awardMarketplaceQuote(input: {
     if (!assignment) throw new MarketplaceServiceError('INVALID_STATE')
     const quote = await transaction.quote.findFirst({
       where: { id: input.quoteId, assignmentId: assignment.id, status: 'SUBMITTED', submittedVersionId: { not: null } },
-      include: { submittedVersion: true, participation: { select: { invitation: { select: { matchCandidate: { select: { projectionId: true } } } } } }, providerProfile: { select: { id: true, organizationId: true } } },
+      include: { submittedVersion: true, participation: { select: { invitation: { select: { ...invitationScopeSelect, matchCandidate: { select: { projectionId: true } } } } } }, providerProfile: { select: { id: true, organizationId: true } } },
     })
     if (!quote?.submittedVersion) throw new MarketplaceServiceError('INVALID_STATE')
     if (isQuoteExpired(quote.submittedVersion.validUntil, now)) throw new MarketplaceServiceError('DEADLINE_PASSED')
@@ -53,6 +54,7 @@ export async function awardMarketplaceQuote(input: {
       projectionId: quote.participation.invitation.matchCandidate.projectionId,
     }], now)
     if (blocked.size) throw new MarketplaceServiceError('INVALID_STATE')
+    await requireCurrentInvitationScope(transaction, quote.participation.invitation, now)
     const snapshot = {
       assignmentId: assignment.id,
       assignmentVersion: assignment.version,

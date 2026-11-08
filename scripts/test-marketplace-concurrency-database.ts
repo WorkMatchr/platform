@@ -277,6 +277,29 @@ async function main() {
     }
     assert.equal(await prisma.providerParticipation.count({ where: { assignmentId: acceptanceFixture.assignment.id } }), 3)
     assert.equal(await prisma.quote.count({ where: { assignmentId: acceptanceFixture.assignment.id } }), 3)
+    // A changed assignment cannot progress even after a provider has already paid.
+    const stale = await createInvitation(fourthProvider, fourthProviderOrganization.id)
+    const bought = await acceptProviderInvitation({ actorUserId: fourthProviderUser.id, providerOrganizationId: fourthProviderOrganization.id, invitationId: stale.invitation.id, idempotencyKey: randomUUID() })
+    const staleDraft = { ...draftInput, actorUserId: fourthProviderUser.id, providerOrganizationId: fourthProviderOrganization.id, participationId: bought.id }
+    const stored = await saveQuoteDraft(staleDraft)
+    const staleSubmit = { actorUserId: fourthProviderUser.id, providerOrganizationId: fourthProviderOrganization.id, quoteId: stored.id, expectedQuoteVersion: stored.version, idempotencyKey: randomUUID() }
+    const staleAwardFixture = await createInvitation(fourthProvider, fourthProviderOrganization.id)
+    const awardParticipation = await acceptProviderInvitation({ actorUserId: fourthProviderUser.id, providerOrganizationId: fourthProviderOrganization.id, invitationId: staleAwardFixture.invitation.id, idempotencyKey: randomUUID() })
+    const awardDraft = await saveQuoteDraft({ ...staleDraft, participationId: awardParticipation.id })
+    await submitQuote({ ...staleSubmit, quoteId: awardDraft.id, expectedQuoteVersion: awardDraft.version, idempotencyKey: randomUUID() })
+    await assert.rejects(
+      prisma.assignment.update({ where: { id: stale.assignment.id }, data: { description: 'Gewijzigde gepubliceerde inhoud.' } }),
+      /immutable/,
+    )
+    // Withdraw the mapped specialism after purchase and submission, with all database triggers enabled.
+    await prisma.specialism.update({ where: { id: policy.specialismId }, data: { isActive: false } })
+    await assert.rejects(saveQuoteDraft({ ...staleDraft, expectedQuoteVersion: stored.version }), { code: 'NOT_SELECTABLE' })
+    await assert.rejects(submitQuote(staleSubmit), { code: 'NOT_SELECTABLE' })
+    assert.equal((await prisma.quote.findUniqueOrThrow({ where: { id: stored.id } })).status, 'DRAFT')
+    assert.equal(await prisma.creditTransaction.count({ where: { referenceId: bought.id, type: 'PARTICIPATION_PAYMENT' } }), 1)
+    await assert.rejects(awardMarketplaceQuote({ ...awardInput, assignmentId: staleAwardFixture.assignment.id, quoteId: awardDraft.id, idempotencyKey: randomUUID() }), { code: 'NOT_SELECTABLE' })
+    assert.equal(await prisma.awardDecision.count({ where: { assignmentId: staleAwardFixture.assignment.id } }), 0)
+    console.log('PASS scopewijziging na betaling of indiening blokkeert opslaan, indienen en gunnen.')
     console.log('Alle marketplace-races eindigen atomair, zonder negatieve saldi, gedeeltelijke records of dubbele auditgebeurtenissen.')
   } finally {
     if (prisma) await prisma.$disconnect()

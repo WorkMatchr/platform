@@ -1,3 +1,4 @@
+import { providerServiceTerms } from '../../../prisma/provider-service-catalog'
 import { describe, it, expect } from 'vitest'
 import { classifyTask, standardTasks, knownService, scopeReference, type Service } from './assignment-scope'
 import { qualifyScopePolicy } from './assignment-scope-policy'
@@ -40,6 +41,14 @@ describe('inhoudelijke opdrachtcontrole', () => {
         state: 'BUITEN_SCOPE',
         reviewable: false,
       })
+  })
+  it('houdt alle dertien overige catalogusdiensten gesloten', () => {
+    const launch = ['ERGONOMICS', 'INCIDENT_INVESTIGATION', 'SAFETY_ADVICE', 'IMPLEMENTATION_SUPPORT',
+      'REINTEGRATION_FIRST_TRACK', 'REINTEGRATION_SECOND_TRACK']
+    expect(providerServiceTerms).toHaveLength(19)
+    expect(providerServiceTerms.filter(([code]) => knownService(code)).map(([code]) => code).sort())
+      .toEqual(launch.sort())
+    expect(providerServiceTerms.filter(([code]) => !knownService(code))).toHaveLength(13)
   })
   it('erkent uitsluitend de zes bekrachtigde diensten en de gepubliceerde referentieterm', () => {
     expect(knownService('OCCUPATIONAL_HEALTH_SERVICE')).toBe(false)
