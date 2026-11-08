@@ -4,10 +4,13 @@ import { evaluateMatchingCandidate, type MatchingAssignmentFacts, type MatchingP
 export function evaluateRequestedExpertises(assignment: MatchingAssignmentFacts, additionalCodes: readonly string[], provider: MatchingProviderFacts) {
   const codes = [assignment.capabilityCode, ...additionalCodes]
   const results = codes.map(capabilityCode => evaluateMatchingCandidate({ ...assignment, capabilityCode }, provider))
-  const index = results.findIndex(result => result.status === 'ELIGIBLE')
-  const result = results[index < 0 ? 0 : index]!
+  const eligibleIndex = results.findIndex(result => result.status === 'ELIGIBLE')
+  // Explain an exclusion against an expertise the provider actually offers, if present.
+  const offeredIndex = results.findIndex(result => !result.exclusionReasons.includes('DIENST_NIET_AANGEBODEN'))
+  const index = eligibleIndex >= 0 ? eligibleIndex : Math.max(0, offeredIndex)
+  const result = results[index]!
   return { ...result, factors: [...result.factors, {
-    key: index > 0 ? 'ADDITIONAL_EXPERTISE' : 'PRIMARY_EXPERTISE', matched: index >= 0,
-    points: 0, possible: 0, explanation: codes[index < 0 ? 0 : index]!,
+    key: index > 0 ? 'ADDITIONAL_EXPERTISE' : 'PRIMARY_EXPERTISE', matched: result.status === 'ELIGIBLE',
+    points: 0, possible: 0, explanation: codes[index]!,
   }] }
 }
