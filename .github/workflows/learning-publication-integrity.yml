@@ -32,6 +32,16 @@ jobs:
       - name: Restricted metadata helper and read-only diagnostic SQL
         run: node scripts/test-show-db-tree-privileges.mjs
       - run: npm run db:generate
+      - name: Pro renewals, rollback and concurrent webhook replay
+        env:
+          PG_SERVICE: ${{ job.services.postgres.id }}
+        run: |
+          test -n "$PG_SERVICE"
+          db_name="workmatchr_b4_$(openssl rand -hex 6)"
+          docker exec "$PG_SERVICE" createdb -U postgres "$db_name"
+          export DATABASE_URL="${DATABASE_URL%/*}/$db_name"
+          npm run db:deploy
+          npx --no-install tsx scripts/finance-tests/pro-renewal-regression.ts
       - name: Real-client TLS and isolated WP17B target validation
         run: npx vitest run src/lib/maintenance/database-client-tls.test.ts scripts/wp17b-acceptance-target.test.ts --maxWorkers=2
       - name: Closed database diagnostic and maintenance authentication
