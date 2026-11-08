@@ -254,14 +254,6 @@ try {
     where: { recipientUserId: client.id, eventId: `PARTICIPATION:${participation.id}` },
   })
   assert.equal(acceptedNotice.targetRoute, `/opdrachten/${published.id}/offertes`)
-  await declineProviderInvitation({
-    actorUserId: additionalUser.id, providerOrganizationId: additionalInvitation.providerOrganizationId,
-    invitationId: additionalInvitation.id, reason: 'Synthetische afwijzing wegens planning.', idempotencyKey: randomUUID(),
-  })
-  const declinedNotice = await db.marketplaceNotification.findFirstOrThrow({
-    where: { recipientUserId: client.id, eventId: `INVITATION_DECLINED:${additionalInvitation.id}` },
-  })
-  assert.equal(declinedNotice.targetRoute, `/opdrachten/${published.id}/selectie`)
   await assert.rejects(acceptProviderInvitation({ ...invitationInput, actorUserId: additionalUser.id }), { code: 'ACCESS_DENIED' })
   assert.equal(await db.creditTransaction.count({ where: { referenceId: participation.id, type: 'PARTICIPATION_PAYMENT' } }), 1)
   assert.equal((await db.creditAccount.findUniqueOrThrow({ where: { organizationId: providerOrg.id } })).availableBalance, 100 - initial.invitation.creditCost - primaryInvitation.creditCost)
@@ -282,6 +274,7 @@ try {
   assert.equal(await db.marketplaceAuditEvent.count({ where: { action: 'QUOTE_SUBMITTED', entityId: quote.id } }), 1)
   assert.deepEqual(await db.adviceDossierVersion.findUniqueOrThrow({ where: { id: immutableVersion.id } }), immutableVersion)
   console.log('WP16 PASS: purchased credits -> canonical dossier/request/handoff -> PRIMARY/ADDITIONAL -> fake SENT -> one unlock -> quote/award/replay -> immutable snapshot; cross-tenant denied')
+  const additionalMailBefore = await db.notificationOutbox.count({ where: { recipientUserId: additionalUser.id } })
   const location = await db.organizationLocation.create({ data: {
     organizationId: clientOrg.id, label: 'Testlocatie', addressLine: 'Testweg 1', postalCode: '0000 AA',
     city: 'Utrecht', province: 'Utrecht', countryCode: 'NL',
@@ -298,6 +291,17 @@ try {
   assert.equal(excluded.normalizedScore, null)
   assert.deepEqual(regionalRun.invitations.map(invitation => invitation.providerOrganizationId), [providerOrg.id])
   assert.equal(await db.providerParticipation.count({ where: { assignmentId: regionalRun.assignmentId, providerOrganizationId: additionalOrg.id } }), 0)
+  assert.equal(await db.notificationOutbox.count({ where: { recipientUserId: additionalUser.id } }), additionalMailBefore)
+  // Keep the two canonical PRIMARY/ADDITIONAL invitations available to the optional browser fixture.
+  const physicalInvitation = regionalRun.invitations[0]!
+  await declineProviderInvitation({
+    actorUserId: user.id, providerOrganizationId: providerOrg.id,
+    invitationId: physicalInvitation.id, reason: 'Synthetische afwijzing wegens planning.', idempotencyKey: randomUUID(),
+  })
+  const declinedNotice = await db.marketplaceNotification.findFirstOrThrow({
+    where: { recipientUserId: client.id, eventId: `INVITATION_DECLINED:${physicalInvitation.id}` },
+  })
+  assert.equal(declinedNotice.targetRoute, `/opdrachten/${physical.id}/selectie`)
   console.log('PASS Utrecht: landelijke dekking geselecteerd, aanvullende deskundigheid zonder regionale dekking uitgesloten')
   const { getMarketplaceNotifications } = await import('../src/lib/marketplace/notification-service')
   const oldLink = `/opdrachten/${handoff.assignmentId}/offertes`
