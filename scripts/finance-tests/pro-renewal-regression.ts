@@ -110,6 +110,13 @@ async function main() {
     assert.equal(await prisma.financialEvent.count({ where: { eventType: 'PRO_REVERSAL_REVIEW', subscriptionId: pro.id } }), 2)
     assert.equal(await invoiceCount(october.id), 1)
     assert.equal((await subscription()).currentPeriodEnd?.toISOString(), '2027-01-04T19:00:48.000Z')
+    // The February failure arrived before January's successful payment was delivered.
+    await charge(recurring('tr_test_february', '2027-02-04T18:00:00Z', 'failed'))
+    await charge(recurring('tr_test_january', '2027-01-04T19:00:00Z'))
+    assert.equal((await subscription()).currentPeriodEnd?.toISOString(), '2027-02-04T19:00:48.000Z')
+    assert.equal((await subscription()).status, 'PAST_DUE')
+    assert.equal((await subscription()).retryCount, 1)
+    assert.equal(await invoiceCount('tr_test_january'), 1)
     console.log('PASS paid retry source, two renewals, rollback and replay, monthly coverage, repeated failure, recovery, refund and chargeback observations, Jortt queue')
   } finally { await prisma.$disconnect() }
 }

@@ -740,9 +740,10 @@ export async function processRecurringProPayment(payment: MolliePaymentSnapshot)
         const newerFailure = await transaction.professionalSubscriptionPayment.findFirst({
           where: { subscriptionId: current.id, periodStart: { gte: nextCycle }, status: { in: ['FAILED', 'CANCELED', 'EXPIRED'] } },
         })
-        if (!reversalRequiresReview && !newerFailure && (!current.currentPeriodEnd || period.end >= current.currentPeriodEnd) && ['ACTIVE', 'PAST_DUE'].includes(current.status)) {
+        if (!reversalRequiresReview && (!current.currentPeriodEnd || period.end >= current.currentPeriodEnd) && ['ACTIVE', 'PAST_DUE'].includes(current.status)) {
           return transaction.professionalSubscription.update({ where: { id: current.id }, data: {
-            status: 'ACTIVE', currentPeriodStart: period.start, currentPeriodEnd: period.end, pastDueAt: null, retryCount: 0,
+            currentPeriodStart: period.start, currentPeriodEnd: period.end,
+            ...(newerFailure ? {} : { status: 'ACTIVE' as const, pastDueAt: null, retryCount: 0 }),
           } })
         }
       } else if (['failed', 'canceled', 'expired'].includes(payment.status)
