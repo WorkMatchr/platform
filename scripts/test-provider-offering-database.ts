@@ -116,7 +116,7 @@ async function main() {
     assert.equal((await read()).rows.find(row => row.recordId === legacy.id)?.termId, secondService.id)
     assert.equal(await db.providerTaxonomyTerm.count({ where: { versionId: catalogVersion.id } }), 19)
     const qualificationTermId = (await option('QUALIFICATION')).id
-    const operators = await verifyProviderQualification(db, secondService.id, qualificationTermId, region.id)
+    const operators = await verifyProviderQualification(db, secondService.id, qualificationTermId, region.id, sector.id)
     await verifyProviderMarketplaceOnboarding(db, {
       ...operators,
       sectorTermId: sector.id, serviceTermId: secondService.id, regionTermId: region.id,

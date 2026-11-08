@@ -1,3 +1,4 @@
+import { createProviderDossierSubmission, openProviderDossierReviewCase, finalizeProviderDossierReview } from '../src/lib/providers/provider-dossier-service'
 import { calculateProviderSelectability } from '../src/lib/providers/provider-assessment-service'
 import { createTrustedProviderProjection } from '../src/lib/providers/trusted-provider-projection-service'
 import { currentMarketplaceProjections } from '../src/lib/providers/provider-marketplace-onboarding'
@@ -11,7 +12,7 @@ import type { PrismaClient, ProviderQualificationOutcome } from '../src/generate
 import { recordProviderQualificationDecision } from '../src/lib/providers/provider-qualification-service'
 
 // Called only by the empty loopback database harness, after the reference catalogue exists.
-export async function verifyProviderQualification(db: PrismaClient, serviceTermId: string, requirementTermId: string, regionTermId: string) {
+export async function verifyProviderQualification(db: PrismaClient, serviceTermId: string, requirementTermId: string, regionTermId: string, sectorTermId: string) {
   const past = new Date('2020-01-01'), future = new Date('2090-01-01'), checksum = 'e'.repeat(64)
   const platform = await db.organization.create({ data: {
     name: 'Test kwalificatiebeheer', organizationType: 'PLATFORM_OPERATOR', status: 'ACTIVE', systemKey: 'WORKMATCHR_PLATFORM',
@@ -84,6 +85,29 @@ export async function verifyProviderQualification(db: PrismaClient, serviceTermI
     { ...history, scope: 'PLATFORM', outcome: 'QUALIFIED', validFrom: past },
     { ...history, scope: 'CAPABILITY', capabilityId: second.id, outcome: 'QUALIFIED', validFrom: past },
   ] })
+  await db.organization.update({ where: { id: c.org.id }, data: { chamberOfCommerceNumber: '00000041' } })
+  await db.providerSectorExperience.create({ data: { providerProfileId, revisions: { create: { version: 1, sectorTermId } } } })
+
+  // The chronology fixture starts from reviewed historical decisions. A restoration
+  // after an unbound suspension needs a new review before live access can resume.
+  async function reviewedHistory() {
+    const { version } = await db.providerProfile.findUniqueOrThrow({ where: { id: providerProfileId } })
+    const submission = await createProviderDossierSubmission(owner.id, providerProfileId, { expectedProfileVersion: version, idempotencyKey: randomUUID() })
+    const review = await openProviderDossierReviewCase(reviewer.id, providerProfileId, { submissionId: submission.id, expectedVersion: 1 })
+    await finalizeProviderDossierReview(approver.id, providerProfileId, 'APPROVED', {
+      submissionId: submission.id, reviewCaseId: review.id, expectedVersion: 2, reviewedByUserId: reviewer.id, reasonCode,
+    })
+    const links = { dossierSubmissionId: submission.id, dossierCandidateId: submission.currentCandidateId!, dossierReviewCaseId: review.id }
+    const record = { ...history, ...links, outcome: 'QUALIFIED' as const, validFrom: new Date() }
+    await db.$transaction([
+      db.providerQualificationDecision.createMany({ data: [
+        { ...record, scope: 'PLATFORM' }, { ...record, scope: 'CAPABILITY', capabilityId: c.cap.id },
+        { ...record, scope: 'CAPABILITY', capabilityId: second.id },
+      ] }),
+      db.providerProfile.update({ where: { id: providerProfileId }, data: { version: { increment: 3 } } }),
+    ])
+    return links
+  }
   async function change(outcome: ProviderQualificationOutcome, platform = false, actor = approver.id) {
     const { version } = await db.providerProfile.findUniqueOrThrow({ where: { id: providerProfileId } })
     return recordProviderQualificationDecision(actor, providerProfileId, { expectedProfileVersion: version, scope: platform ? 'PLATFORM' : 'CAPABILITY',
@@ -105,6 +129,7 @@ export async function verifyProviderQualification(db: PrismaClient, serviceTermI
     await assert.rejects(project(), { code: 'PROJECTION_NOT_ALLOWED' })
   }
   await change('QUALIFIED')
+  await reviewedHistory()
   await selectable()
   const original = await project()
   assert.equal((await access()).projectionId, original.id)
@@ -155,6 +180,7 @@ export async function verifyProviderQualification(db: PrismaClient, serviceTermI
   await assert.rejects(change('RESTORED', false, reviewer.id), { code: 'FOUR_EYES_REQUIRED' })
   await assert.rejects(change('RESTORED', false, owner.id), { code: 'ACCESS_DENIED' })
   await change('RESTORED')
+  await reviewedHistory()
   await selectable()
   const restored = await project()
   assert.notEqual(restored.id, original.id)
@@ -166,6 +192,7 @@ export async function verifyProviderQualification(db: PrismaClient, serviceTermI
 
   // Race first issuance for a fresh revision, not just reuse of an existing projection.
   await change('QUALIFIED')
+  await reviewedHistory()
   await selectable()
   const race = await Promise.allSettled([change('SUSPENDED'), calculateProviderSelectability(providerProfileId), project()])
   if (race[0].status === 'rejected') {
@@ -183,7 +210,8 @@ export async function verifyProviderQualification(db: PrismaClient, serviceTermI
   // Pre-existing and scheduled rows use the same PostgreSQL ordering at every read boundary.
   const start = new Date(Date.now() + 86_400_000)
   const end = new Date(+start + 3600_000)
-  const futureRecord = { ...history, scope: 'CAPABILITY' as const, capabilityId: c.cap.id }
+  const priorBasis = await db.providerQualificationDecision.findFirstOrThrow({ where: { providerProfileId, scope: 'PLATFORM', dossierCandidateId: { not: null } }, orderBy: { createdAt: 'desc' }, select: { dossierCandidateId: true, dossierSubmissionId: true, dossierReviewCaseId: true } })
+  const futureRecord = { ...history, ...priorBasis, scope: 'CAPABILITY' as const, capabilityId: c.cap.id }
   await db.providerQualificationDecision.create({ data: { ...futureRecord, outcome: 'RESTORED', validFrom: start, validUntil: end } })
   assert.equal((await calculateProviderSelectability(providerProfileId)).status, 'NOT_SELECTABLE')
   await blocked()
@@ -196,6 +224,7 @@ export async function verifyProviderQualification(db: PrismaClient, serviceTermI
   ] })
   assert.equal((await calculateProviderSelectability(providerProfileId, same)).status, 'NOT_SELECTABLE')
   await change('RESTORED')
+  const restoredBasis = await reviewedHistory()
   await selectable()
   const bounded = await project()
   assert.equal(+(await db.trustedProviderProjection.findUniqueOrThrow({ where: { id: bounded.id } })).validUntil, +start)
@@ -203,11 +232,14 @@ export async function verifyProviderQualification(db: PrismaClient, serviceTermI
   const renewal = new Date(+start - 4 * 3600_000)
   const expires = new Date(+start - 3 * 3600_000)
   const ambiguous = new Date(+start - 2 * 3600_000)
-  const secondScope = { ...history, scope: 'CAPABILITY' as const, capabilityId: second.id, outcome: 'QUALIFIED' as const }
+  const secondScope = { ...history, ...restoredBasis, scope: 'CAPABILITY' as const, capabilityId: second.id, outcome: 'QUALIFIED' as const }
   await db.providerQualificationDecision.createMany({ data: [
     { ...secondScope, validFrom: renewal, validUntil: expires },
     { ...secondScope, validFrom: ambiguous }, { ...secondScope, validFrom: ambiguous },
   ] })
+  await db.providerProfile.update({ where: { id: providerProfileId }, data: { version: { increment: 3 } } })
+  await selectable()
+  await project()
   assert.equal((await calculateProviderSelectability(providerProfileId, renewal)).status, 'SELECTABLE')
   // Live reads must deny even when cached selectability and projection still look positive.
   for (const at of [expires, ambiguous]) {

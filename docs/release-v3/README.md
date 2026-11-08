@@ -8,7 +8,7 @@ Doeldatum 1 januari 2027. Deze branch is uitgesloten van automatische Vercel-dep
 | --- | --- |
 | main | ecf2f578c31f654298d4eaf071fc16b3022d5dd1 |
 | B4, inclusief schorsing, herstel, vier ogen en dossierbinding | abf3cc705c7e830edb6532504cc30d09d2b357ff |
-| Marketplace-herstel inclusief B4 | 199992b544d612dbf86463feca1cc1a0e40496a7 |
+| Marketplace-herstel inclusief B4 | f094c1fa3adc1e7230301860c1445b672a9d30bb |
 | ACCOUNT-01, apart overgenomen | e16be9632acbc99dbe81f779bad7651e8d06c750 |
 | Marketplace-audit, bewijsbron | e7961a9a89769fa78e993d432e56049aac0753ad |
 | Pre-launchaudit, bewijsbron | 52789518839927fa1d34e38d57e0ec6772bc45c4 |

@@ -68,9 +68,10 @@ async function main() {
 
     async function createSelectableProvider(organizationId: string) {
       const profile = await prisma!.providerProfile.create({ data: { organizationId, lifecycleStatus: 'QUALIFIED', readinessStatus: 'READY', platformQualificationStatus: 'QUALIFIED', selectabilityStatus: 'SELECTABLE' } })
-      const readiness = await prisma!.providerReadinessAssessment.create({ data: { providerProfileId: profile.id, status: 'READY', reasonCodes: [], sourceVersion: 1, checksum: randomUUID().replaceAll('-', '').padEnd(64, '0').slice(0, 64) } })
-      const selectability = await prisma!.providerSelectabilityAssessment.create({ data: { providerProfileId: profile.id, readinessAssessmentId: readiness.id, status: 'SELECTABLE', reasonCodes: [], sourceVersion: 1, checksum: randomUUID().replaceAll('-', '').padEnd(64, '1').slice(0, 64) } })
-      const projection = await prisma!.trustedProviderProjection.create({ data: { providerProfileId: profile.id, readinessAssessmentId: readiness.id, selectabilityAssessmentId: selectability.id, schemaVersion: 2, canonicalizationVersion: 'WORKMATCHR-CJ-1', sourceVersion: 1, payload: { capabilities: [], sectors: [], workAreas: [] }, sha256: randomUUID().replaceAll('-', '').padEnd(64, '2').slice(0, 64), validFrom: new Date(), validUntil: new Date('2096-04-01T00:00:00Z') } })
+      const profileVersion = await (await import('./fixtures/reviewed-marketplace-provider')).prepareReviewedSupplier(prisma!, profile.id, organizationId)
+    const readiness = await prisma!.providerReadinessAssessment.create({ data: { providerProfileId: profile.id, status: 'READY', reasonCodes: [], sourceVersion: profileVersion, checksum: randomUUID().replaceAll('-', '').padEnd(64, '0').slice(0, 64) } })
+      const selectability = await prisma!.providerSelectabilityAssessment.create({ data: { providerProfileId: profile.id, readinessAssessmentId: readiness.id, status: 'SELECTABLE', reasonCodes: [], sourceVersion: profileVersion, checksum: randomUUID().replaceAll('-', '').padEnd(64, '1').slice(0, 64) } })
+      const projection = await prisma!.trustedProviderProjection.create({ data: { providerProfileId: profile.id, readinessAssessmentId: readiness.id, selectabilityAssessmentId: selectability.id, schemaVersion: 2, canonicalizationVersion: 'WORKMATCHR-CJ-1', sourceVersion: profileVersion, payload: { capabilities: [], sectors: [], workAreas: [] }, sha256: randomUUID().replaceAll('-', '').padEnd(64, '2').slice(0, 64), validFrom: new Date(), validUntil: new Date('2096-04-01T00:00:00Z') } })
       return { profile, projection }
     }
 
