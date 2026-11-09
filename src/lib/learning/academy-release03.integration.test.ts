@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { PlatformAdminAccessError } from '@/lib/platform-admin/platform-admin-authorization'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '@/generated/prisma/client'
 import { syntheticCourse } from './academy-authoring-fixture'
@@ -43,8 +44,8 @@ describe.skipIf(!enabled)('V3 Academy-upgrade met bestaande inschrijving en uitg
   it('weigert schrijven door een auditor en beheerder van een andere organisatie', async () => {
     for (const actor of [member, outsider]) {
       state.actor = actor
-      await expect(saveAuthoringCourse(syntheticCourse)).rejects.toThrow()
-      await expect(saveCertificateDesign({ name: 'Onbevoegd', revision: 0, definition: standardCertificateDesign })).rejects.toThrow()
+      await expect(saveAuthoringCourse(syntheticCourse)).rejects.toBeInstanceOf(PlatformAdminAccessError)
+      await expect(saveCertificateDesign({ name: 'Onbevoegd', revision: 0, definition: standardCertificateDesign })).rejects.toBeInstanceOf(PlatformAdminAccessError)
     }
   })
   it('importeert alle drie de ongewijzigde bundels naast de historische WL-001 en controleert herhaling en revisies', async () => {
