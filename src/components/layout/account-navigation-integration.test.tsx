@@ -19,7 +19,7 @@ describe('A01.6 bestaande accountnavigatie', () => {
     vi.stubEnv('NEXT_PUBLIC_ACCOUNT_SHELL_VERSION', undefined)
     for (const role of ['OWNER', 'ADMIN', 'MEMBER'] as const) {
       const professional = accountType === 'PROFESSIONAL'
-      route.pathname = professional ? '/aanbiedersdossier/professionals' : '/opdrachten'
+      route.pathname = professional ? '/aanbiedersdossier/diensten-en-ervaring' : '/opdrachten'
       const model = buildHeaderViewModel({
         user: { displayName: 'Synthetische gebruiker', email: 'navigation@example.invalid', accountType },
         activeMembership: { role, organization: { id: 'synthetic-org', name: 'Testorganisatie', organizationType: professional ? 'PROVIDER' : 'CLIENT', providerProfile: professional ? { id: 'synthetic-profile' } : null } },
@@ -31,10 +31,10 @@ describe('A01.6 bestaande accountnavigatie', () => {
       expect(chapters).not.toBeNull()
       expect(document.querySelector('summary')).toBeNull()
       expect([...document.querySelectorAll('button')].filter(button => button.textContent === 'Uitloggen')).toHaveLength(1)
-      const activeGroup = model.navigationGroups.find(group => group.links.some(link => link.href === route.pathname))!
+      const activeGroup = model.navigationGroups.find(group => group.links.some(link => link.href === (professional ? '/aanbiedersdossier' : route.pathname)))!
       const local = document.querySelector(`nav[aria-label="Binnen ${activeGroup.label}"]`)!
-      expect([...local.querySelectorAll('a')].map(link => link.getAttribute('href'))).toEqual(activeGroup.links.map(link => link.href))
-      expect(local.querySelector('[aria-current="page"]')?.getAttribute('href')).toBe(route.pathname)
+      expect([...local.querySelectorAll('a')].map(link => link.getAttribute('href'))).toEqual(activeGroup.links.map(link => link.href).filter(href => href !== '/aanbiedersdossier/diensten-en-ervaring'))
+      expect(local.querySelector(professional ? '[aria-current="location"]' : '[aria-current="page"]')?.getAttribute('href')).toBe(professional ? '/aanbiedersdossier' : route.pathname)
       expect([...chapters.querySelectorAll('a')].map(link => link.textContent)).toEqual(model.navigationGroups.map(group => group.label))
       expect(chapters.querySelector('[aria-current="location"]')?.textContent).toBe(activeGroup.label)
       expect(document.querySelector('a[href="/platformbeheer"]')).toBeNull()

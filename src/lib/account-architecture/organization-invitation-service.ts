@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { Prisma } from '@/generated/prisma/client'
 import type { OrganizationMembershipRole, OrganizationType } from '@/generated/prisma/enums'
+import { professionalOnboarding } from '@/lib/providers/provider-onboarding-cohort'
 import { getPrisma } from '@/lib/prisma'
 import { appendAccountProvisioningEvent, appendOrganizationMembershipEvent } from './account-history-service'
 import { canManageTenantAccount } from './account-management-policy'
@@ -177,7 +178,7 @@ async function provisionInvitation(input: InviteOrganizationUserInput, passwordH
       eventType: 'ORGANIZATION_LINKED', subjectUserId: userId, actorUserId: input.actorUserId,
       organizationId: input.organizationId, membershipId, reasonCode: 'ORGANIZATION_INVITATION_LINKED',
       correlationId, idempotencyKey: `${input.idempotencyKey}:linked`,
-      metadata: { policyVersion: POLICY_VERSION },
+      metadata: { policyVersion: POLICY_VERSION, ...(accountType === 'PROFESSIONAL' ? { marketplaceOnboarding: professionalOnboarding } : {}) },
     })
     await appendAccountProvisioningEvent(transaction, {
       eventType: 'ROLE_GRANTED', subjectUserId: userId, actorUserId: input.actorUserId,

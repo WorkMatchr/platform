@@ -2,6 +2,9 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "git": {
     "deploymentEnabled": {
+      "codex/v3-ux-final": false,
+      "codex/v3-financial-completion": false,
+      "codex/v3-pro-financial-recovery": false,
       "codex/db05-runtime-preflight": false,
       "codex/wp15-integrated-readiness": false,
       "codex/wp16-production-readiness": false,
@@ -26,7 +29,10 @@
       "codex/release-b1-auth-post-homepage": false,
       "codex/release-b2-seo-post-homepage": false,
       "codex/account-and-arbo-guides-ux": false,
-      "codex/release-b3-marketplace-post-homepage": false
+      "codex/release-b3-marketplace-post-homepage": false,
+      "codex/b4-provider-profile": false,
+      "codex/marketplace-recovery-v3": false,
+      "codex/workmatchr-v3-release-candidate": false
     }
   },
   "crons": [

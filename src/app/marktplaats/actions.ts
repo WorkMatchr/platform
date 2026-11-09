@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { clientScope,reviewScope } from '@/lib/marketplace/assignment-scope-workflow'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { requireUser } from '@/lib/authorization'
@@ -17,10 +18,30 @@ import { saveQuoteDraft, submitQuote } from '@/lib/marketplace/quote-service'
 const idSchema = z.uuid()
 const idempotencySchema = z.string().min(8).max(120)
 
+function handleParticipationError(error: unknown): never {
+  if (error instanceof MarketplaceServiceError && error.code === 'PROFILE_ONBOARDING_REQUIRED') {
+    redirect('/aanbiedersdossier?toegang=profiel')
+  }
+  throw error
+}
+
 async function context(returnTo: string) {
   const user = await requireUser(returnTo)
   const organization = await requireOrganizationMembership(undefined, returnTo)
   return { user, organizationId: organization.activeMembership.organization.id }
+}
+
+export async function requestScopeReviewAction(form:FormData){
+  const id=idSchema.parse(form.get('assignmentId')), service=z.string().parse(form.get('service'))
+  const {user,organizationId}=await context('/opdrachten/'+id+'/selectie')
+  await clientScope(user.id,organizationId,id,service,true,z.string().length(64).parse(form.get('digest')))
+  redirect('/opdrachten/'+id+'/selectie?service='+encodeURIComponent(service)+'&aangevraagd=1')
+}
+export async function decideScopeAction(form:FormData){
+  const user=await requireUser('/beheer/marktplaats')
+  await reviewScope(user.id,idSchema.parse(form.get('assignmentId')),z.string().parse(form.get('service')),z.string().length(64).parse(form.get('digest')),
+    z.enum(['binnen','buiten']).parse(form.get('decision'))==='binnen',z.string().trim().min(10).max(500).parse(form.get('reason')))
+  revalidatePath('/beheer/marktplaats')
 }
 
 export async function startMarketplaceMatchingAction(formData: FormData) {
@@ -28,7 +49,7 @@ export async function startMarketplaceMatchingAction(formData: FormData) {
   const expectedAssignmentVersion = z.coerce.number().int().positive().parse(formData.get('expectedAssignmentVersion'))
   const idempotencyKey = idempotencySchema.parse(formData.get('idempotencyKey'))
   const { user, organizationId } = await context(`/opdrachten/${assignmentId}/selectie`)
-  await runMarketplaceMatching({ actorUserId: user.id, organizationId, assignmentId, expectedAssignmentVersion, idempotencyKey })
+  await runMarketplaceMatching({ actorUserId: user.id, organizationId, assignmentId, expectedAssignmentVersion, idempotencyKey, scopeService:z.string().parse(formData.get('service')) })
   revalidatePath('/dashboard')
   redirect(`/opdrachten/${assignmentId}/offertes`)
 }
@@ -44,7 +65,7 @@ export async function acceptProviderInvitationAction(formData: FormData) {
     if (error instanceof MarketplaceServiceError && ['INSUFFICIENT_CREDITS', 'FULL', 'INVALID_STATE', 'DEADLINE_PASSED'].includes(error.code)) {
       redirect(`/uitnodigingen/${invitationId}?purchaseError=${error.code}`)
     }
-    throw error
+    handleParticipationError(error)
   }
   revalidatePath('/dashboard')
   redirect(`/offertes/nieuw?deelname=${participation.id}`)
@@ -77,7 +98,7 @@ export async function saveQuoteDraftAction(formData: FormData) {
       terms: z.string().max(2000).optional().parse(formData.get('terms') || undefined),
       validUntil: z.iso.date().optional().parse(formData.get('validUntil') || undefined),
     },
-  })
+  }).catch(handleParticipationError)
   revalidatePath('/dashboard')
   redirect(`/offertes/${quote.id}`)
 }
@@ -87,7 +108,7 @@ export async function submitQuoteAction(formData: FormData) {
   const expectedQuoteVersion = z.coerce.number().int().positive().parse(formData.get('expectedQuoteVersion'))
   const idempotencyKey = idempotencySchema.parse(formData.get('idempotencyKey'))
   const { user, organizationId } = await context(`/offertes/${quoteId}`)
-  await submitQuote({ actorUserId: user.id, providerOrganizationId: organizationId, quoteId, expectedQuoteVersion, idempotencyKey })
+  await submitQuote({ actorUserId: user.id, providerOrganizationId: organizationId, quoteId, expectedQuoteVersion, idempotencyKey }).catch(handleParticipationError)
   revalidatePath('/dashboard')
   redirect(`/offertes/${quoteId}`)
 }

@@ -5,7 +5,7 @@ vi.mock('server-only', () => ({}))
 const mocks = vi.hoisted(() => ({
   eventFind: vi.fn(),
   eventCreate: vi.fn(),
-  eventUpsert: vi.fn(),
+  eventCreateMany: vi.fn(),
   invoiceFind: vi.fn(),
   queryRaw: vi.fn(),
 }))
@@ -16,8 +16,12 @@ const transaction = {
   financialInvoice: { findUnique: mocks.invoiceFind },
 }
 
-vi.mock('@/lib/prisma', () => ({ getPrisma: () => ({ financialEvent: { upsert: mocks.eventUpsert } }) }))
-vi.mock('./financial-transaction', () => ({ runSerializableFinancialTransaction: (operation: (tx: typeof transaction) => unknown) => operation(transaction) }))
+vi.mock('@/lib/prisma', () => ({
+  getPrisma: () => ({
+    financialEvent: { createMany: mocks.eventCreateMany },
+    $transaction: (operation: (tx: typeof transaction) => unknown) => operation(transaction),
+  }),
+}))
 
 const invoice = {
   id: '60000000-0000-4000-8000-000000000001',
@@ -40,7 +44,7 @@ describe('factuurmailbezorging', () => {
     mocks.eventFind.mockResolvedValue(null)
     mocks.invoiceFind.mockResolvedValue(invoice)
     mocks.eventCreate.mockResolvedValue({ id: 'event-id' })
-    mocks.eventUpsert.mockResolvedValue({ id: 'failure-event' })
+    mocks.eventCreateMany.mockResolvedValue({ id: 'failure-event' })
   })
 
   afterEach(() => {
@@ -128,6 +132,6 @@ describe('factuurmailbezorging', () => {
     await expect(deliverFinancialInvoiceEmail(invoice.id, sender)).rejects.toThrow('PAID_PURCHASE_INVOICE_REQUIRED')
     expect(sender).not.toHaveBeenCalled()
     await recordFinancialInvoiceEmailFailure(invoice.id, invoice.purchaseId, invoice.purchase.createdByUserId)
-    expect(mocks.eventUpsert).toHaveBeenCalledWith(expect.objectContaining({ create: expect.objectContaining({ eventType: 'INVOICE_EMAIL_FAILED', metadata: { retryable: true } }) }))
+    expect(mocks.eventCreateMany).toHaveBeenCalledWith(expect.objectContaining({ skipDuplicates: true, data: expect.objectContaining({ eventType: 'INVOICE_EMAIL_FAILED', metadata: { retryable: true } }) }))
   })
 })

@@ -7,6 +7,8 @@ export type ProviderErrorCode =
   | 'CONFIGURATION_INCOMPLETE'
   | 'REQUIREMENTS_NOT_CONFIGURED'
   | 'TERMS_NOT_CONFIGURED'
+  | 'SERVICE_QUALIFICATION_REQUIRED'
+  | 'SERVICE_INSURANCE_REQUIRED'
   | 'INSURANCE_REQUIREMENTS_NOT_CONFIGURED'
   | 'QUALIFICATION_REQUIREMENTS_NOT_CONFIGURED'
   | 'EVIDENCE_NOT_CLEAN'
@@ -32,6 +34,8 @@ const messages: Record<ProviderErrorCode, string> = {
   CONFIGURATION_INCOMPLETE: 'De kwalificatieconfiguratie is nog niet volledig.',
   REQUIREMENTS_NOT_CONFIGURED: 'De kwalificatievereisten zijn nog niet geconfigureerd.',
   TERMS_NOT_CONFIGURED: 'De vereiste voorwaarden zijn nog niet geconfigureerd.',
+  SERVICE_QUALIFICATION_REQUIRED: 'De vereiste dienstkwalificatie ontbreekt of is onvoldoende onderbouwd.',
+  SERVICE_INSURANCE_REQUIRED: 'Deze dienst vereist gecontroleerd bewijs van beroepsaansprakelijkheid.',
   INSURANCE_REQUIREMENTS_NOT_CONFIGURED: 'De verzekeringsvereisten zijn nog niet geconfigureerd.',
   QUALIFICATION_REQUIREMENTS_NOT_CONFIGURED: 'De beroepskwalificatievereisten zijn nog niet geconfigureerd.',
   EVIDENCE_NOT_CLEAN: 'Het bewijsdocument is nog niet veilig beschikbaar.',

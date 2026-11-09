@@ -29,7 +29,7 @@ export async function createOrganizationAction(_state: OrganizationActionState, 
   }
 
   revalidatePath('/', 'layout')
-  redirect('/organisatie?aangemaakt=1')
+  redirect(parsed.data.organizationType === 'PROVIDER' ? '/aanbiedersdossier' : '/organisatie?aangemaakt=1')
 }
 
 export async function updateOrganizationAction(_state: OrganizationActionState, formData: FormData): Promise<OrganizationActionState> {

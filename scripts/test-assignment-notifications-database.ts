@@ -1,3 +1,5 @@
+import { standardTasks } from '../src/lib/marketplace/assignment-scope'
+import { syntheticSafetyScope } from './fixtures/launch-scope-policy'
 import type { Assignment, ProviderInvitation, NotificationOutbox, PrismaClient } from '../src/generated/prisma/client'
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
@@ -44,8 +46,18 @@ try {
     createdRoles.push(role)
   }
   const provisioning = new Client({ connectionString: testUrl.href })
-  try { await provisioning.connect(); await configureSyntheticRoles(provisioning, runtimeRole, diagnosticRole) }
-  finally { await provisioning.end() }
+  try {
+    await provisioning.connect()
+    await configureSyntheticRoles(provisioning, runtimeRole, diagnosticRole)
+    // Force contenders to overlap only on the synthetic invoice failure marker.
+    if (process.env.WM_NOTIFICATION_BROWSER_ACCEPTANCE !== '1') await provisioning.query(`
+      CREATE FUNCTION test_delay_invoice_failure() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN PERFORM pg_sleep(0.35); RETURN NEW; END $$;
+      CREATE TRIGGER test_delay_invoice_failure BEFORE INSERT ON "FinancialEvent"
+      FOR EACH ROW WHEN (NEW."eventType" = 'INVOICE_EMAIL_FAILED')
+      EXECUTE FUNCTION test_delay_invoice_failure()
+    `)
+  } finally { await provisioning.end() }
   testUrl.searchParams.set('options', `-c role=${runtimeRole}`)
   process.env.DATABASE_URL = testUrl.href
   const { getPrisma } = await import('../src/lib/prisma')
@@ -54,7 +66,7 @@ try {
   const { toAssignmentPreview } = await import('../src/lib/marketplace/assignment-purchase-preview')
   const { resolveAssignmentPrice } = await import('../src/lib/marketplace/assignment-pricing')
   const { getProviderInvitationDetail } = await import('../src/lib/marketplace/dashboard-query-service')
-  const { acceptProviderInvitation } = await import('../src/lib/marketplace/participation-service')
+  const { acceptProviderInvitation, declineProviderInvitation } = await import('../src/lib/marketplace/participation-service')
   const { deliverAssignmentEmails } = await import('../src/lib/marketplace/assignment-email-worker')
   const { AuthEmailDeliveryError } = await import('../src/lib/email')
   db = getPrisma()
@@ -65,28 +77,30 @@ try {
   const client = await db.user.create({ data: { email: `${randomUUID()}@example.invalid`, status: 'ACTIVE', accountType: 'CLIENT', emailVerified: true, memberships: { create: { organizationId: clientOrg.id, status: 'ACTIVE', role: 'OWNER' } } } })
   const user = await db.user.create({ data: { email: `${randomUUID()}@example.invalid`, status: 'ACTIVE', accountType: 'PROFESSIONAL', emailVerified: true, memberships: { create: { organizationId: providerOrg.id, status: 'ACTIVE', role: 'OWNER' } } } })
   const profile = await db.providerProfile.create({ data: { organizationId: providerOrg.id, lifecycleStatus: 'QUALIFIED', readinessStatus: 'READY', platformQualificationStatus: 'QUALIFIED', selectabilityStatus: 'SELECTABLE' } })
-  const readiness = await db.providerReadinessAssessment.create({ data: { providerProfileId: profile.id, status: 'READY', reasonCodes: [], sourceVersion: 1, checksum: 'a'.repeat(64) } })
-  const selectability = await db.providerSelectabilityAssessment.create({ data: { providerProfileId: profile.id, readinessAssessmentId: readiness.id, status: 'SELECTABLE', reasonCodes: [], sourceVersion: 1, checksum: 'b'.repeat(64) } })
-  await db.trustedProviderProjection.create({ data: { providerProfileId: profile.id, readinessAssessmentId: readiness.id, selectabilityAssessmentId: selectability.id, schemaVersion: 2, canonicalizationVersion: 'WORKMATCHR-CJ-1', sourceVersion: 1, payload: { capabilities: [{ serviceCode: 'OCCUPATIONAL_PHYSICIAN', specialismCode: 'bedrijfsarts', deliveryModes: ['ON_SITE', 'REMOTE'] }], sectors: [], workAreas: [{ regionCode: 'NATIONWIDE' }] }, sha256: 'c'.repeat(64), validFrom: new Date(Date.now() - 60_000), validUntil: new Date(Date.now() + 7 * 86_400_000) } })
-  const specialism = await db.specialism.findUniqueOrThrow({ where: { slug: 'bedrijfsarts' } })
-  const ruleData = { participationPriceCredits: 25, minimumParticipationPrice: 5, expertiseAdjustments: { bedrijfsarts: 2 }, changeReason: 'Isolated acceptance pricing', status: 'PUBLISHED' as const, createdByUserId: client.id }
+  const policy=await syntheticSafetyScope(db)
+  const profileVersion = await (await import('./fixtures/reviewed-marketplace-provider')).prepareReviewedSupplier(db, profile.id, providerOrg.id,policy)
+    const readiness = await db.providerReadinessAssessment.create({ data: { providerProfileId: profile.id, status: 'READY', reasonCodes: [], sourceVersion: profileVersion, checksum: 'a'.repeat(64) } })
+  const selectability = await db.providerSelectabilityAssessment.create({ data: { providerProfileId: profile.id, readinessAssessmentId: readiness.id, status: 'SELECTABLE', reasonCodes: [], sourceVersion: profileVersion, checksum: 'b'.repeat(64) } })
+  await db.trustedProviderProjection.create({ data: { providerProfileId: profile.id, readinessAssessmentId: readiness.id, selectabilityAssessmentId: selectability.id, schemaVersion: 2, canonicalizationVersion: 'WORKMATCHR-CJ-1', sourceVersion: profileVersion, payload: { capabilities: [{ serviceCode: 'SAFETY_ADVICE', specialismCode: 'hogere-veiligheidskundige', deliveryModes: ['ON_SITE', 'REMOTE'] }], sectors: [], workAreas: [{ regionCode: 'NATIONWIDE' }] }, sha256: 'c'.repeat(64), validFrom: new Date(Date.now() - 60_000), validUntil: new Date(Date.now() + 7 * 86_400_000) } })
+  const specialism = await db.specialism.findUniqueOrThrow({ where: { slug: 'hogere-veiligheidskundige' } })
+  const ruleData = { participationPriceCredits: 25, minimumParticipationPrice: 5, expertiseAdjustments: { 'hogere-veiligheidskundige': 2 }, changeReason: 'Isolated acceptance pricing', status: 'PUBLISHED' as const, createdByUserId: client.id }
   const rule = await db.marketplaceRuleSet.create({ data: { ...ruleData, version: 'test.notifications.1', validFrom: new Date(Date.now() - 60_000) } })
   let fixtureNumber = 0
   async function fixture(): Promise<{ draft: Assignment; invitation: ProviderInvitation; job: NotificationOutbox }> {
     fixtureNumber += 1
-    const draft = await db!.assignment.create({ data: { clientOrganizationId: clientOrg.id, createdByUserId: client.id, title: 'Confidential client name, person@example.invalid, Main Street 12', description: 'Private description with telephone 0612345678.', primarySpecialismId: specialism.id, allowsRemoteWork: true, responseDeadline: new Date(Date.now() + 7 * 86_400_000), locationProvince: 'Utrecht', maxSelections: 3 } })
+    const draft = await db!.assignment.create({ data: { clientOrganizationId: clientOrg.id, createdByUserId: client.id, title:standardTasks.SAFETY_ADVICE.title,description:standardTasks.SAFETY_ADVICE.task,locationName:'Confidential client name, person@example.invalid, Main Street 12',locationType:'REMOTE', primarySpecialismId: specialism.id, allowsRemoteWork: true, responseDeadline: new Date(Date.now() + 7 * 86_400_000), locationProvince: 'Utrecht', maxSelections: 3 } })
     await db!.$transaction(async tx => {
       const publishedAt = new Date()
-      await tx.assignmentRevision.create({ data: { assignmentId: draft.id, version: 1, title: draft.title, description: draft.description, locationType: 'REMOTE', allowsRemoteWork: true, changedByUserId: client.id } })
+      await tx.assignmentRevision.create({ data: { assignmentId: draft.id, version: 1, title: draft.title, description:draft.description,locationName:draft.locationName,primarySpecialismId:specialism.id,locationProvince:draft.locationProvince,responseDeadline:draft.responseDeadline, locationType: 'REMOTE', allowsRemoteWork: true, changedByUserId: client.id } })
       await tx.assignment.update({ where: { id: draft.id }, data: { status: 'OPEN', publishedAt, publishedByUserId: client.id, publishedVersion: 1 } })
       await tx.assignmentStatusHistory.create({ data: { assignmentId: draft.id, fromStatus: 'READY_FOR_REVIEW', toStatus: 'OPEN', changedByUserId: client.id, reason: 'Isolated notification test', createdAt: publishedAt } })
     })
     const key = randomUUID()
-    const run = await runMarketplaceMatching({ actorUserId: client.id, organizationId: clientOrg.id, assignmentId: draft.id, expectedAssignmentVersion: 1, idempotencyKey: key })
+    const run = await runMarketplaceMatching({ scopeService:'SAFETY_ADVICE',actorUserId: client.id, organizationId: clientOrg.id, assignmentId: draft.id, expectedAssignmentVersion: 1, idempotencyKey: key })
     assert.equal(run.invitations.length, 1, 'existing selection produces one invitation')
     const invitation = run.invitations[0]
     const snapshot = invitation.snapshot as { preview: object }
-    await db!.$transaction(tx => enqueueAssignmentNotifications(tx, invitation, toAssignmentPreview(draft, invitation.creditCost, { primaryExpertiseCode: 'bedrijfsarts', recipientExpertise: 'bedrijfsarts', matchType: 'PRIMARY' })))
+    await db!.$transaction(tx => enqueueAssignmentNotifications(tx, invitation, toAssignmentPreview(draft, invitation.creditCost, { primaryExpertiseCode: 'hogere-veiligheidskundige', recipientExpertise: 'hogere-veiligheidskundige', matchType: 'PRIMARY' })))
     assert.equal(await db!.marketplaceNotification.count({ where: { eventId: `INVITATION:${invitation.id}` } }), 1)
     const jobs = await db!.notificationOutbox.findMany({ where: { eventId: `INVITATION:${invitation.id}` } })
     assert.equal(jobs.length, 1)
@@ -101,7 +115,7 @@ try {
   assert.equal(initialPreview.invitation.fullAssignment, null)
   await assert.rejects(getProviderInvitationDetail(client.id, clientOrg.id, initial.invitation.id))
   await assert.rejects(db.providerInvitation.update({ where: { id: initial.invitation.id }, data: { creditCost: 50 } }))
-  await assert.rejects(db.marketplaceRuleSet.update({ where: { id: rule.id }, data: { expertiseAdjustments: { bedrijfsarts: 5 } } }))
+  await assert.rejects(db.marketplaceRuleSet.update({ where: { id: rule.id }, data: { expertiseAdjustments: { 'hogere-veiligheidskundige': 5 } } }))
 
   let calls = 0
   const accepted = async (email: AuthEmail) => { calls += 1; assert.equal(email.to, user.email); return { accepted: true as const, transport: 'RESEND' as const, status: 'ACCEPTED' as const, messageId: `fake-${calls}` } }
@@ -198,18 +212,19 @@ try {
   await assert.rejects(acceptProviderInvitation({ ...purchaseInput, actorUserId: client.id }))
   const payments = await db.creditTransaction.findMany({ where: { type: 'PARTICIPATION_PAYMENT' } })
   assert.equal(payments.length, 1); assert.equal(payments[0].amount, -27); assert.equal(payments[0].marketplaceRuleSetId, rule.id)
-  const price = resolveAssignmentPrice(rule, 'bedrijfsarts', new Date())
+  const price = resolveAssignmentPrice(rule, 'hogere-veiligheidskundige', new Date())
   assert.equal(price.resolvedPrice, 27)
   // Actual Simple Advice -> Request -> Assignment -> primary and additional invitations.
   const additionalOrg = await db.organization.create({ data: { name: 'TEST Additional Provider', organizationType: 'PROVIDER', status: 'ACTIVE' } })
   const additionalUser = await db.user.create({ data: { email: `${randomUUID()}@example.invalid`, status: 'ACTIVE', accountType: 'PROFESSIONAL', emailVerified: true, memberships: { create: { organizationId: additionalOrg.id, status: 'ACTIVE', role: 'OWNER' } } } })
   const additionalProfile = await db.providerProfile.create({ data: { organizationId: additionalOrg.id, lifecycleStatus: 'QUALIFIED', readinessStatus: 'READY', platformQualificationStatus: 'QUALIFIED', selectabilityStatus: 'SELECTABLE' } })
-  const additionalReadiness = await db.providerReadinessAssessment.create({ data: { providerProfileId: additionalProfile.id, status: 'READY', reasonCodes: [], sourceVersion: 1, checksum: 'd'.repeat(64) } })
-  const additionalSelectability = await db.providerSelectabilityAssessment.create({ data: { providerProfileId: additionalProfile.id, readinessAssessmentId: additionalReadiness.id, status: 'SELECTABLE', reasonCodes: [], sourceVersion: 1, checksum: 'e'.repeat(64) } })
-  await db.trustedProviderProjection.create({ data: { providerProfileId: additionalProfile.id, readinessAssessmentId: additionalReadiness.id, selectabilityAssessmentId: additionalSelectability.id, schemaVersion: 2, canonicalizationVersion: 'WORKMATCHR-CJ-1', sourceVersion: 1, payload: { capabilities: [{ serviceCode: 'ABSENCE_REINTEGRATION', specialismCode: 'casemanager-verzuim', deliveryModes: ['ON_SITE', 'REMOTE'] }], sectors: [], workAreas: [{ regionCode: 'NATIONWIDE' }] }, sha256: 'f'.repeat(64), validFrom: new Date(Date.now() - 60_000), validUntil: new Date(Date.now() + 7 * 86_400_000) } })
+  const additionalProfileVersion = await (await import('./fixtures/reviewed-marketplace-provider')).prepareReviewedSupplier(db, additionalProfile.id, additionalOrg.id,{...policy,specialismTermId:policy.additionalTermId})
+    const additionalReadiness = await db.providerReadinessAssessment.create({ data: { providerProfileId: additionalProfile.id, status: 'READY', reasonCodes: [], sourceVersion: additionalProfileVersion, checksum: 'd'.repeat(64) } })
+  const additionalSelectability = await db.providerSelectabilityAssessment.create({ data: { providerProfileId: additionalProfile.id, readinessAssessmentId: additionalReadiness.id, status: 'SELECTABLE', reasonCodes: [], sourceVersion: additionalProfileVersion, checksum: 'e'.repeat(64) } })
+  await db.trustedProviderProjection.create({ data: { providerProfileId: additionalProfile.id, readinessAssessmentId: additionalReadiness.id, selectabilityAssessmentId: additionalSelectability.id, schemaVersion: 2, canonicalizationVersion: 'WORKMATCHR-CJ-1', sourceVersion: additionalProfileVersion, payload: { capabilities: [{ serviceCode: 'SAFETY_ADVICE', specialismCode: 'middelbare-veiligheidskundige', deliveryModes: ['ON_SITE', 'REMOTE'] }], sectors: [], workAreas: [{ regionCode: 'NOORD_HOLLAND' }] }, sha256: 'f'.repeat(64), validFrom: new Date(Date.now() - 60_000), validUntil: new Date(Date.now() + 7 * 86_400_000) } })
   const { publishSimpleAdviceRequest } = await import('../src/lib/requests/simple-advice-service')
   const viewer = { userId: client.id, organizationId: clientOrg.id, organizationRole: 'OWNER' as const, isPlatformAdministrator: false }
-  const basic = { routeChoice: 'KNOWS_EXPERTISE', requestedExpertise: 'BEDRIJFSARTS', additionalExpertises: ['CASEMANAGER_VERZUIM'], requestTitle: 'Fictieve vertrouwelijke klantnaam', requestDescription: 'Wij willen advies over gezondheid op het werk.', desiredOutcome: 'ADVICE', workLocationMode: 'REMOTE', desiredStartMode: 'WITHIN_ONE_MONTH' }
+  const basic = { routeChoice: 'KNOWS_EXPERTISE', requestedExpertise: 'HVK', additionalExpertises: ['MVK'], requestTitle:standardTasks.SAFETY_ADVICE.title, requestDescription:standardTasks.SAFETY_ADVICE.task, desiredOutcome: 'ADVICE', workLocationMode: 'REMOTE', desiredStartMode: 'WITHIN_ONE_MONTH' }
   const dossierId = randomUUID()
   const published = await publishSimpleAdviceRequest(viewer, dossierId, basic)
   assert.equal((await publishSimpleAdviceRequest(viewer, dossierId, basic)).id, published.id)
@@ -219,7 +234,7 @@ try {
   assert.equal(await db.requestAssignmentHandoff.count({ where: { requestId: canonicalRequest.id } }), 1)
   const handoff = await db.requestAssignmentHandoff.findFirstOrThrow({ where: { requestId: canonicalRequest.id } })
   const immutableVersion = await db.adviceDossierVersion.findFirstOrThrow({ where: { adviceDossierId: dossierId } })
-  const matched = await runMarketplaceMatching({ actorUserId: client.id, organizationId: clientOrg.id, assignmentId: published.id, expectedAssignmentVersion: 1, idempotencyKey: randomUUID() })
+  const matched = await runMarketplaceMatching({ scopeService:'SAFETY_ADVICE',actorUserId: client.id, organizationId: clientOrg.id, assignmentId: published.id, expectedAssignmentVersion: 1, idempotencyKey: randomUUID() })
   assert.equal(matched.invitations.length, 2)
   const additionalInvitation = matched.invitations.find(inv => inv.providerProfileId === additionalProfile.id)!
   const primaryInvitation = matched.invitations.find(inv => inv.providerProfileId === profile.id)!
@@ -227,13 +242,13 @@ try {
   assert.equal((primaryInvitation.snapshot as { matchType: string }).matchType, 'PRIMARY')
   assert.equal(additionalInvitation.creditCost, primaryInvitation.creditCost)
   const additionalDetail = await getProviderInvitationDetail(additionalUser.id, additionalOrg.id, additionalInvitation.id)
-  assert.deepEqual(additionalDetail.invitation.preview.additionalExpertises, ['Casemanager verzuim'])
-  assert.equal(additionalDetail.invitation.preview.expertise, 'Bedrijfsarts')
+  assert.deepEqual(additionalDetail.invitation.preview.additionalExpertises, ['Middelbare veiligheidskundige (MVK)'])
+  assert.equal(additionalDetail.invitation.preview.expertise, 'Hogere veiligheidskundige (HVK)')
   assert.equal(additionalDetail.invitation.preview.assignmentId, published.id)
   const delivered: AuthEmail[] = []
   await deliverAssignmentEmails({ send: async email => { delivered.push(email); return { accepted: true, status: 'ACCEPTED', transport: 'RESEND', messageId: randomUUID() } } })
-  assert.ok(delivered.some(email => email.subject === 'Nieuwe opdracht mogelijk relevant voor Casemanager verzuim | WorkMatchr'))
-  assert.ok(delivered.some(email => email.subject === 'Nieuwe opdracht voor Bedrijfsarts | WorkMatchr'))
+  assert.ok(delivered.some(email => email.subject === 'Nieuwe opdracht mogelijk relevant voor Middelbare veiligheidskundige (MVK) | WorkMatchr'))
+  assert.ok(delivered.some(email => email.subject === 'Nieuwe opdracht voor Hogere veiligheidskundige (HVK) | WorkMatchr'))
   for (const [invitation, recipient] of [[primaryInvitation, user], [additionalInvitation, additionalUser]] as const) {
     const mails = delivered.filter(email => email.html.includes(`/uitnodigingen/${invitation.id}`))
     assert.equal(mails.length, 1)
@@ -243,9 +258,17 @@ try {
     assert.equal(await db.notificationOutbox.count({ where: { eventId: `INVITATION:${invitation.id}`, recipientUserId: recipient.id, status: 'SENT' } }), 1)
   }
   assert.equal((await deliverAssignmentEmails({ send: async () => { throw new Error('Duplicate delivery') } })).claimed, 0)
+  const clientMember = await db.user.create({ data: {
+    email: `${randomUUID()}@example.invalid`, status: 'ACTIVE', accountType: 'CLIENT',
+    memberships: { create: { organizationId: clientOrg.id, status: 'ACTIVE', role: 'MEMBER' } },
+  } })
   const invitationInput = { actorUserId: user.id, providerOrganizationId: providerOrg.id, invitationId: primaryInvitation.id, idempotencyKey: randomUUID() }
   const [participation, replay] = await Promise.all([acceptProviderInvitation(invitationInput), acceptProviderInvitation(invitationInput)])
   assert.equal(participation.id, replay.id)
+  const acceptedNotice = await db.marketplaceNotification.findFirstOrThrow({
+    where: { recipientUserId: client.id, eventId: `PARTICIPATION:${participation.id}` },
+  })
+  assert.equal(acceptedNotice.targetRoute, `/opdrachten/${published.id}/offertes`)
   await assert.rejects(acceptProviderInvitation({ ...invitationInput, actorUserId: additionalUser.id }), { code: 'ACCESS_DENIED' })
   assert.equal(await db.creditTransaction.count({ where: { referenceId: participation.id, type: 'PARTICIPATION_PAYMENT' } }), 1)
   assert.equal((await db.creditAccount.findUniqueOrThrow({ where: { organizationId: providerOrg.id } })).availableBalance, 100 - initial.invitation.creditCost - primaryInvitation.creditCost)
@@ -266,16 +289,60 @@ try {
   assert.equal(await db.marketplaceAuditEvent.count({ where: { action: 'QUOTE_SUBMITTED', entityId: quote.id } }), 1)
   assert.deepEqual(await db.adviceDossierVersion.findUniqueOrThrow({ where: { id: immutableVersion.id } }), immutableVersion)
   console.log('WP16 PASS: purchased credits -> canonical dossier/request/handoff -> PRIMARY/ADDITIONAL -> fake SENT -> one unlock -> quote/award/replay -> immutable snapshot; cross-tenant denied')
+  const additionalMailBefore = await db.notificationOutbox.count({ where: { recipientUserId: additionalUser.id } })
+  const additionalNoticesBefore = await db.marketplaceNotification.count({ where: { recipientUserId: additionalUser.id } })
+  const location = await db.organizationLocation.create({ data: {
+    organizationId: clientOrg.id, label: 'Testlocatie', addressLine: 'Testweg 1', postalCode: '0000 AA',
+    city: 'Utrecht', province: 'Utrecht', countryCode: 'NL',
+  } })
+  const physical = await publishSimpleAdviceRequest(viewer, randomUUID(), {
+    ...basic, workLocationMode: 'ORGANIZATION', organizationLocationId: location.id,
+  })
+  const regionalRun = await runMarketplaceMatching({ scopeService:'SAFETY_ADVICE',actorUserId: client.id, organizationId: clientOrg.id,
+    assignmentId: physical.id, expectedAssignmentVersion: 1, idempotencyKey: randomUUID() })
+  const excluded = regionalRun.candidates.find(candidate => candidate.providerProfileId === additionalProfile.id)
+  assert.ok(excluded)
+  assert.equal(excluded.status, 'EXCLUDED')
+  assert.deepEqual(excluded.exclusionReasons, ['WERKGEBIED_PAST_NIET'])
+  assert.equal(excluded.rank, null)
+  assert.equal(excluded.normalizedScore, null)
+  assert.deepEqual(regionalRun.invitations.map(invitation => invitation.providerOrganizationId), [providerOrg.id])
+  assert.equal(await db.providerParticipation.count({ where: { assignmentId: regionalRun.assignmentId, providerOrganizationId: additionalOrg.id } }), 0)
+  assert.equal(await db.notificationOutbox.count({ where: { recipientUserId: additionalUser.id } }), additionalMailBefore)
+  assert.equal(await db.marketplaceNotification.count({ where: { recipientUserId: additionalUser.id } }), additionalNoticesBefore)
+  // Keep the two canonical PRIMARY/ADDITIONAL invitations available to the optional browser fixture.
+  const physicalInvitation = regionalRun.invitations[0]!
+  await declineProviderInvitation({
+    actorUserId: user.id, providerOrganizationId: providerOrg.id,
+    invitationId: physicalInvitation.id, reason: 'Synthetische afwijzing wegens planning.', idempotencyKey: randomUUID(),
+  })
+  const declinedNotice = await db.marketplaceNotification.findFirstOrThrow({
+    where: { recipientUserId: client.id, eventId: `INVITATION_DECLINED:${physicalInvitation.id}` },
+  })
+  assert.equal(declinedNotice.targetRoute, `/opdrachten/${physical.id}/selectie`)
+  console.log('PASS Utrecht: landelijke dekking geselecteerd, aanvullende deskundigheid zonder regionale dekking uitgesloten')
+  const { getMarketplaceNotifications } = await import('../src/lib/marketplace/notification-service')
+  const oldLink = `/opdrachten/${handoff.assignmentId}/offertes`
+  const historical = await db.marketplaceNotification.create({ data: {
+    recipientUserId: client.id, eventId: randomUUID(), type: 'PROVIDER_ACCEPTED', title: 'Testmelding',
+    body: 'Eerdere synthetische deelname.', targetRoute: oldLink, idempotencyKey: randomUUID(),
+  } })
+  assert.equal((await getMarketplaceNotifications(client.id)).find(notice => notice.id === historical.id)?.targetRoute, acceptedNotice.targetRoute)
+  assert.ok(!(await getMarketplaceNotifications(additionalUser.id)).some(notice => notice.id === historical.id))
+  assert.equal((await db.marketplaceNotification.findUniqueOrThrow({ where: { id: historical.id } })).targetRoute, oldLink)
+  assert.equal(await db.marketplaceNotification.count({ where: {
+    recipientUserId: clientMember.id, type: { in: ['PROVIDER_ACCEPTED', 'PROVIDER_DECLINED', 'QUOTE_SUBMITTED'] },
+  } }), 0)
   const beforeUnknown = await db.providerInvitation.count()
   const unknown = await publishSimpleAdviceRequest(viewer, randomUUID(), { ...basic, routeChoice: 'NEEDS_TOPIC', requestedExpertise: null, additionalExpertises: [], helpTopic: 'UNKNOWN' })
-  await assert.rejects(runMarketplaceMatching({ actorUserId: client.id, organizationId: clientOrg.id, assignmentId: unknown.id, expectedAssignmentVersion: 1, idempotencyKey: randomUUID() }))
+  await assert.rejects(runMarketplaceMatching({ scopeService:'SAFETY_ADVICE',actorUserId: client.id, organizationId: clientOrg.id, assignmentId: unknown.id, expectedAssignmentVersion: 1, idempotencyKey: randomUUID() }))
   assert.equal(await db.providerInvitation.count(), beforeUnknown)
 
   if (process.env.WM_NOTIFICATION_BROWSER_ACCEPTANCE === '1') {
     const { hashPassword } = await import('better-auth/crypto')
     const { mkdir, writeFile } = await import('node:fs/promises')
     const { randomBytes } = await import('node:crypto')
-    const platform = await db.organization.create({ data: { name: 'TEST Platform', organizationType: 'PLATFORM_OPERATOR', systemKey: 'WORKMATCHR_PLATFORM', status: 'ACTIVE' } })
+    const platform = await db.organization.findUniqueOrThrow({ where: { systemKey: 'WORKMATCHR_PLATFORM' } })
     const administrator = await db.user.create({ data: { email: `${randomUUID()}@example.invalid`, platformRole: 'ADMIN', status: 'ACTIVE', emailVerified: true, accountType: 'CLIENT', memberships: { create: { organizationId: platform.id, role: 'OWNER', status: 'ACTIVE' } } } })
     const password = randomBytes(24).toString('base64url')
     const hash = await hashPassword(password)

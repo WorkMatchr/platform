@@ -1,29 +1,23 @@
+import type { Prisma } from '@/generated/prisma/client'
+import { currentApprovedQualificationBasis } from './provider-dossier-service'
+import { profileDecisionHistory, profileQualificationAt } from './provider-effective-qualification'
 import { getPrisma } from '@/lib/prisma'
 import { hashProviderJson } from './provider-canonical-json'
 import { ProviderServiceError } from './provider-errors'
-import { requirePlatformQualificationBasis } from './provider-requirements'
-
-function errorReason(error: unknown): string {
-  return error instanceof ProviderServiceError ? error.code : 'CONFIGURATION_INCOMPLETE'
-}
+import { assessProviderDossierCompletenessInTransaction } from './provider-dossier-completeness'
 
 export async function calculateProviderReadiness(providerProfileId: string, at = new Date()) {
-  return getPrisma().$transaction(async (transaction) => {
+  return getPrisma().$transaction(tx => calculateProviderReadinessInTransaction(tx, providerProfileId, at), { isolationLevel: 'Serializable' })
+}
+
+export async function calculateProviderReadinessInTransaction(transaction: Prisma.TransactionClient, providerProfileId: string, at: Date) {
     const provider = await transaction.providerProfile.findFirst({
       where: { id: providerProfileId, archivedAt: null, organization: { status: 'ACTIVE' } },
       select: { id: true, version: true },
     })
     if (!provider) throw new ProviderServiceError('NOT_FOUND')
-    const reasons: string[] = []
-    const capabilityCount = await transaction.providerCapability.count({ where: { providerProfileId, status: 'ACTIVE', revisions: { some: { serviceTermId: { not: null } } } } })
-    const workAreaCount = await transaction.providerWorkArea.count({ where: { providerProfileId, status: 'ACTIVE' } })
-    if (capabilityCount === 0) reasons.push('CAPABILITIES_INCOMPLETE')
-    if (workAreaCount === 0) reasons.push('WORK_AREAS_INCOMPLETE')
-    try {
-      await requirePlatformQualificationBasis(transaction, providerProfileId, at)
-    } catch (error) {
-      reasons.push(errorReason(error))
-    }
+    const assessmentBasis = await assessProviderDossierCompletenessInTransaction(transaction, providerProfileId, at)
+    const reasons = assessmentBasis.reasons.map(reason => reason.code)
     const status = reasons.length === 0 ? 'READY' : 'INCOMPLETE'
     const checksum = hashProviderJson({ providerProfileId, providerVersion: provider.version, reasons: [...new Set(reasons)].sort(), status }).sha256
     const assessment = await transaction.providerReadinessAssessment.create({
@@ -32,11 +26,13 @@ export async function calculateProviderReadiness(providerProfileId: string, at =
     })
     await transaction.providerProfile.update({ where: { id: providerProfileId }, data: { readinessStatus: status } })
     return assessment
-  })
 }
 
 export async function calculateProviderSelectability(providerProfileId: string, at = new Date()) {
-  return getPrisma().$transaction(async (transaction) => {
+  return getPrisma().$transaction(tx => calculateProviderSelectabilityInTransaction(tx, providerProfileId, at), { isolationLevel: 'Serializable' })
+}
+
+export async function calculateProviderSelectabilityInTransaction(transaction: Prisma.TransactionClient, providerProfileId: string, at: Date) {
     const provider = await transaction.providerProfile.findFirst({
       where: { id: providerProfileId, archivedAt: null },
       select: {
@@ -45,10 +41,7 @@ export async function calculateProviderSelectability(providerProfileId: string, 
         platformQualificationStatus: true,
         readinessAssessments: { orderBy: { createdAt: 'desc' }, take: 1 },
         blocks: { where: { release: null }, select: { id: true } },
-        capabilities: {
-          where: { status: 'ACTIVE' },
-          select: { id: true, qualificationDecisions: { where: { outcome: { in: ['QUALIFIED', 'RESTORED'] }, validFrom: { lte: at }, OR: [{ validUntil: null }, { validUntil: { gt: at } }] }, take: 1 } },
-        },
+        ...profileDecisionHistory,
       },
     })
     if (!provider) throw new ProviderServiceError('NOT_FOUND')
@@ -58,9 +51,12 @@ export async function calculateProviderSelectability(providerProfileId: string, 
     if (readiness.status !== 'READY' || readiness.sourceVersion !== provider.version) {
       reasons.push('CONFIGURATION_INCOMPLETE')
     }
-    if (provider.platformQualificationStatus !== 'QUALIFIED') reasons.push('REQUIREMENTS_NOT_CONFIGURED')
+    const qualification = profileQualificationAt(provider, at)
+    if (qualification.platform?.dossierCandidateId &&
+        !await currentApprovedQualificationBasis(transaction, providerProfileId, qualification.platform.dossierCandidateId)) reasons.push('DOSSIER_NOT_SUBMITTABLE')
+    if (!qualification.platform || provider.platformQualificationStatus !== 'QUALIFIED') reasons.push('REQUIREMENTS_NOT_CONFIGURED')
     if (provider.blocks.length > 0) reasons.push('PROVIDER_BLOCKED')
-    if (provider.capabilities.length === 0 || provider.capabilities.some((item) => item.qualificationDecisions.length === 0)) {
+    if (!qualification.allServicesQualified) {
       reasons.push('QUALIFICATION_REQUIREMENTS_NOT_CONFIGURED')
     }
     const status = reasons.length === 0 ? 'SELECTABLE' : provider.blocks.length > 0 ? 'BLOCKED' : 'NOT_SELECTABLE'
@@ -71,5 +67,4 @@ export async function calculateProviderSelectability(providerProfileId: string, 
     })
     await transaction.providerProfile.update({ where: { id: providerProfileId }, data: { selectabilityStatus: status } })
     return assessment
-  })
 }

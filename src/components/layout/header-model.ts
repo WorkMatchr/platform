@@ -17,6 +17,7 @@ type HeaderContext = {
 }
 
 export type HeaderViewModel = {
+  workspaceTheme: 'default' | 'professional'
   authenticated: boolean
   isPlatformAdministrator: boolean
   displayName: string
@@ -36,6 +37,7 @@ export function buildHeaderViewModel(
 ): HeaderViewModel {
   if (!context) {
     return {
+      workspaceTheme: 'default',
       authenticated: false,
       isPlatformAdministrator: false,
       displayName: '',
@@ -54,6 +56,9 @@ export function buildHeaderViewModel(
   const isLearningOnly = learningRuntimeEnabled && context.user.accountType == null && !organization && hasLearningProfile
   const hasLearningAccess = learningRuntimeEnabled && (context.user.accountType != null || hasLearningProfile)
   return {
+    workspaceTheme: !isPlatformAdministrator && context.user.accountType === 'PROFESSIONAL' &&
+      (!organization || organization.organizationType === 'PROVIDER' || organization.organizationType === 'BOTH')
+      ? 'professional' : 'default',
     authenticated: true,
     isPlatformAdministrator,
     displayName: context.user.displayName?.trim() || 'Gebruiker',
@@ -85,7 +90,7 @@ export function buildHeaderViewModel(
                 : []),
               ...(supportsProviderWork
                 ? [
-                    { href: '/professional/opdrachten', label: 'Beschikbare opdrachten' },
+                    { href: '/professional/opdrachten', label: 'Eerdere aanvragen' },
                     { href: '/uitnodigingen', label: 'Uitnodigingen' },
                   ]
                 : []),
@@ -107,8 +112,7 @@ export function buildHeaderViewModel(
               ...(supportsProviderWork
                 ? [
                     { href: '/aanbiedersdossier', label: 'Dienstverlenersprofiel' },
-                    { href: '/aanbiedersdossier/professionals', label: 'Professionals' },
-                    { href: '/aanbiedersdossier/profiel', label: 'Kernexpertises en profiel' },
+                    { href: '/aanbiedersdossier/diensten-en-ervaring', label: 'Mijn dienstverlening' },
                   ]
                 : []),
             ],

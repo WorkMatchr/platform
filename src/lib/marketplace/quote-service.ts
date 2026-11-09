@@ -1,6 +1,7 @@
+import { invitationScopeSelect, requireCurrentInvitationScope } from './assignment-scope-service'
 import { getPrisma } from '@/lib/prisma'
 import { parseQuoteValidUntilDate } from './quote-validity-date'
-import { requireProviderMarketplaceAccess } from './marketplace-authorization'
+import { requireProviderParticipationAccess } from './marketplace-authorization'
 import { consumeCreditReservationInTransaction } from './credit-service'
 import { MarketplaceServiceError } from './marketplace-errors'
 import { activeOrganizationRecipients, createMarketplaceNotification, writeMarketplaceAudit } from './marketplace-events'
@@ -30,10 +31,11 @@ export async function saveQuoteDraft(input: {
 }) {
   validateQuoteContent(input.content)
   return getPrisma().$transaction(async (transaction) => {
-    const access = await requireProviderMarketplaceAccess(transaction, input.actorUserId, input.providerOrganizationId, true)
+    const access = await requireProviderParticipationAccess(transaction, input.actorUserId, input.providerOrganizationId, true)
     const participation = await transaction.providerParticipation.findFirst({
       where: {
         id: input.participationId,
+        invitation: { matchCandidate: { projectionId: access.projectionId } },
         providerOrganizationId: input.providerOrganizationId,
         providerProfileId: access.providerProfile.id,
         status: 'ACTIVE',
@@ -47,7 +49,8 @@ export async function saveQuoteDraft(input: {
       transaction.creditTransaction.findFirst({ where: { referenceType: 'ProviderParticipation', referenceId: participation.id, type: 'PARTICIPATION_PAYMENT' }, select: { id: true } }),
     ])
     if (!legacyReservation && !purchase) throw new MarketplaceServiceError('ACCESS_DENIED')
-    const invitation = await transaction.providerInvitation.findUniqueOrThrow({ where: { id: participation.invitationId }, select: { deadlineAt: true } })
+    const invitation = await transaction.providerInvitation.findUniqueOrThrow({ where: { id: participation.invitationId }, select: { ...invitationScopeSelect, deadlineAt: true } })
+    await requireCurrentInvitationScope(transaction, invitation, new Date())
     const existingQuote = await transaction.quote.findUnique({ where: { participationId: participation.id } })
     if (invitation.deadlineAt <= new Date()) throw new MarketplaceServiceError('DEADLINE_PASSED')
     if (existingQuote && existingQuote.status !== 'DRAFT') throw new MarketplaceServiceError('INVALID_STATE')
@@ -105,21 +108,22 @@ export async function submitQuote(input: {
 }) {
   const now = input.now ?? new Date()
   return getPrisma().$transaction(async (transaction) => {
-    const access = await requireProviderMarketplaceAccess(transaction, input.actorUserId, input.providerOrganizationId, true)
+    const access = await requireProviderParticipationAccess(transaction, input.actorUserId, input.providerOrganizationId, true)
     const quote = await transaction.quote.findFirst({
-      where: { id: input.quoteId, providerOrganizationId: input.providerOrganizationId, providerProfileId: access.providerProfile.id },
+      where: { id: input.quoteId, participation: { invitation: { matchCandidate: { projectionId: access.projectionId } } }, providerOrganizationId: input.providerOrganizationId, providerProfileId: access.providerProfile.id },
     })
     if (!quote?.currentVersionId) throw new MarketplaceServiceError('NOT_FOUND')
     const currentVersion = await transaction.quoteVersion.findUniqueOrThrow({ where: { id: quote.currentVersionId } })
     const participation = await transaction.providerParticipation.findUniqueOrThrow({ where: { id: quote.participationId } })
     const reservation = await transaction.creditReservation.findUnique({ where: { participationId: participation.id } })
-    const invitation = await transaction.providerInvitation.findUniqueOrThrow({ where: { id: participation.invitationId }, select: { deadlineAt: true } })
+    const invitation = await transaction.providerInvitation.findUniqueOrThrow({ where: { id: participation.invitationId }, select: { ...invitationScopeSelect, deadlineAt: true } })
     const assignment = await transaction.assignment.findUniqueOrThrow({ where: { id: participation.assignmentId }, select: { clientOrganizationId: true, status: true, requestId: true } })
     const purchase = reservation ? null : await transaction.creditTransaction.findFirst({
       where: { referenceType: 'ProviderParticipation', referenceId: participation.id, type: 'PARTICIPATION_PAYMENT' },
       select: { id: true },
     })
     if (!reservation && !purchase) throw new MarketplaceServiceError('NOT_FOUND')
+    await requireCurrentInvitationScope(transaction, invitation, now)
     if (quote.status === 'SUBMITTED' && quote.submittedVersionId === quote.currentVersionId) return quote
     if (quote.status !== 'DRAFT' || quote.version !== input.expectedQuoteVersion || participation.status !== 'ACTIVE') {
       throw new MarketplaceServiceError('CONFLICT')
@@ -154,7 +158,7 @@ export async function submitQuote(input: {
       where: { assignmentId: quote.assignmentId, providerProfileId: quote.providerProfileId, status: { in: ['INVITED', 'VIEWED'] } },
       data: { status: 'RESPONDED', respondedAt: now },
     })
-    const recipients = await activeOrganizationRecipients(transaction, assignment.clientOrganizationId)
+    const recipients = await activeOrganizationRecipients(transaction, assignment.clientOrganizationId, 'CLIENT_MANAGERS')
     for (const recipientUserId of recipients) {
       await createMarketplaceNotification(transaction, {
         recipientUserId,

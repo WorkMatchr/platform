@@ -66,7 +66,7 @@ export function ApplicationChrome({
 
   if (usesAccountChrome) {
     return (
-      <div data-account-shell={useV02 ? 'v02' : 'v01'} data-account-layout={useUniformLayout ? 'uniform' : 'legacy'} className={`flex min-h-screen flex-col bg-background lg:h-dvh lg:min-h-0 lg:overflow-hidden ${useV02 ? accountStyles.shell : ''} ${useUniformLayout ? uniformStyles.shell : ''}`}>
+      <div data-workspace-theme={headerModel.workspaceTheme} data-account-shell={useV02 ? 'v02' : 'v01'} data-account-layout={useUniformLayout ? 'uniform' : 'legacy'} className={`flex min-h-screen flex-col bg-background lg:h-dvh lg:min-h-0 lg:overflow-hidden ${useV02 ? accountStyles.shell : ''} ${useUniformLayout ? uniformStyles.shell : ''}`}>
         <div className="shrink-0">{header}</div>
         <div className="shrink-0">{banner}</div>
         <main

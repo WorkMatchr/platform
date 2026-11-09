@@ -128,7 +128,7 @@ export async function previewCreditPurchasePrice(input: unknown) {
 
 export async function createCreditPurchase(
   input: unknown,
-  gateway: MollieGateway = createMollieGateway(),
+  gateway: Pick<MollieGateway, 'createPayment'> = createMollieGateway(),
 ) {
   const values = createCreditPurchaseSchema.parse(input)
   const purchase = await runSerializableFinancialTransaction(async (transaction) => {

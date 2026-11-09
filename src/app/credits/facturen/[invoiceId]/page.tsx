@@ -15,7 +15,15 @@ export default async function InvoicePage({ params }: { params: Promise<{ invoic
   const { activeMembership } = await requireOrganizationMembership(undefined, `/credits/facturen/${invoiceId}`)
   const invoice = await getPrisma().financialInvoice.findFirst({
     where: { id: invoiceId, organizationId: activeMembership.organization.id },
-    include: { lines: { orderBy: { position: 'asc' } }, vatSummaries: { orderBy: { vatRateBps: 'asc' } } },
+    include: {
+      lines: { orderBy: { position: 'asc' } },
+      vatSummaries: { orderBy: { vatRateBps: 'asc' } },
+      corrections: {
+        where: { organizationId: activeMembership.organization.id, documentType: 'CREDIT_NOTE' },
+        orderBy: [{ issuedAt: 'desc' }, { id: 'asc' }],
+        select: { id: true, invoiceNumber: true, amountInclVatCents: true },
+      },
+    },
   })
   if (!invoice) notFound()
   return <Section spacing="compact" className="max-w-4xl">
@@ -29,5 +37,20 @@ export default async function InvoicePage({ params }: { params: Promise<{ invoic
       </> : <div className="overflow-x-auto"><table className="w-full min-w-[34rem] border-collapse text-left"><thead><tr className="border-b border-border"><th className="py-3">Omschrijving</th><th className="py-3 text-right">Credits</th><th className="py-3 text-right">Excl. btw</th></tr></thead><tbody><tr className="border-b border-border"><td className="py-4">{invoice.packageLabel}</td><td className="py-4 text-right">{invoice.credits}</td><td className="py-4 text-right">{formatEuro(invoice.amountExclVatCents)}</td></tr></tbody></table></div>}
       <dl className="ml-auto grid w-full max-w-sm grid-cols-[1fr_auto] gap-x-5 gap-y-2"><dt>Bedrag excl. btw</dt><dd>{formatEuro(invoice.amountExclVatCents)}</dd>{invoice.snapshotVersion === 2 ? invoice.vatSummaries.map((summary) => <div className="contents" key={summary.id}><dt>Btw {summary.vatRateBps / 100}% over {formatEuro(summary.taxableAmountExclVatCents)}</dt><dd>{formatEuro(summary.vatAmountCents)}</dd></div>) : <><dt>Btw ({invoice.vatRateBps / 100}%)</dt><dd>{formatEuro(invoice.vatAmountCents)}</dd></>}<dt className="font-semibold">Totaal incl. btw</dt><dd className="font-semibold">{formatEuro(invoice.amountInclVatCents)}</dd></dl>
     </Card>
+    {invoice.corrections.length > 0 && (
+      <Card className="mt-6">
+        <h2 className="text-lg font-semibold">Creditnota&apos;s bij deze factuur</h2>
+        <ul className="mt-3 space-y-2">
+          {invoice.corrections.map(note => (
+            <li key={note.id}>
+              <Link className="font-semibold underline" href={`/credits/facturen/${note.id}`}>
+                Creditnota {note.invoiceNumber}
+              </Link>
+              {' · '}{formatEuro(note.amountInclVatCents)}
+            </li>
+          ))}
+        </ul>
+      </Card>
+    )}
   </Section>
 }

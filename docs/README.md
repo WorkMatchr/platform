@@ -1,6 +1,7 @@
 # Documentatie WorkMatchr
 
 - [Homepage 2.0 — compacte lay-out en acceptatie](homepage-compact-v2.md)
+- [P1: Pro-incasso, creditfacturen en betaalreconciliatie](p1-financial-integrity-repair.md)
 
 - [Productiedatabase: schrijfpauze, herstel en migratieacceptatie](database-upgrade-preparation.md)
 

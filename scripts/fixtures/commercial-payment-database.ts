@@ -40,19 +40,33 @@ export async function fundCommercialFixture(db: PrismaClient, actor: { id: strin
   assert.equal(await db.creditTransaction.count({ where: { referenceId: purchase.id } }), 0)
   payments.set(payment.id, { ...payment, status: 'paid', paidAt: new Date().toISOString() })
   const race = await Promise.allSettled(Array.from({ length: 6 }, () => processMolliePayment(payment.id, gateway)))
-  assert.ok(race.every(r => r.status === 'rejected' && r.reason instanceof Error && r.reason.message === 'INVOICE_EMAIL_NOT_ACCEPTED'))
+  const outcomes = race.map(result => {
+    if (result.status === 'fulfilled') return 'UNEXPECTED_SUCCESS'
+    const error: unknown = result.reason
+    if (!(error instanceof Error)) return 'UNKNOWN_FAILURE'
+    if ('code' in error) return String(error.code)
+    return error.message === 'INVOICE_EMAIL_NOT_ACCEPTED' ? error.message : error.name
+  })
+  assert.deepEqual(outcomes, Array<string>(6).fill('INVOICE_EMAIL_NOT_ACCEPTED'))
+
   assert.equal(await db.creditTransaction.count({ where: { referenceId: purchase.id, type: 'PURCHASE' } }), 1)
   assert.equal(await db.financialInvoice.count({ where: { purchaseId: purchase.id } }), 1)
   assert.equal((await db.creditAccount.findUniqueOrThrow({ where: { organizationId } })).availableBalance, 100)
   const invoice = await db.financialInvoice.findUniqueOrThrow({ where: { purchaseId: purchase.id } })
+  assert.equal(await db.financialEvent.count({ where: { purchaseId: purchase.id, invoiceId: invoice.id, eventType: 'INVOICE_EMAIL_FAILED' } }), 1)
+  assert.equal(await db.financialEvent.count({ where: { invoiceId: invoice.id, eventType: 'INVOICE_EMAIL_SENT' } }), 0)
   let accepted = 0
   const send: Parameters<typeof deliverFinancialInvoiceEmail>[1] = async email => {
     assert.equal(email.to, actor.email)
     assert.equal(email.idempotencyKey, `invoice-email:${invoice.id}`)
     accepted++
+    await new Promise(resolve => setTimeout(resolve, 120))
     return { accepted: true, transport: 'RESEND', status: 'ACCEPTED', messageId: 'synthetic-wp16-invoice' }
   }
-  await deliverFinancialInvoiceEmail(invoice.id, send)
+  const recovery = await Promise.allSettled(Array.from({ length: 6 }, () => deliverFinancialInvoiceEmail(invoice.id, send)))
+  assert.equal(accepted, 1, 'one provider call during concurrent recovery')
+  assert.ok(recovery.every(result => result.status === 'fulfilled'))
+  assert.equal(recovery.filter(result => result.status === 'fulfilled' && !result.value.idempotent).length, 1)
   await deliverFinancialInvoiceEmail(invoice.id, send)
   assert.equal(accepted, 1)
   await processMolliePayment(payment.id, gateway)
@@ -69,6 +83,6 @@ export async function fundCommercialFixture(db: PrismaClient, actor: { id: strin
     assert.equal(await db.financialInvoice.count({ where: { purchaseId: canceled.id } }), 0)
   }
   delete process.env.MOLLIE_API_KEY
-  console.log('WP16 PASS: real checkout/payment services, fake gateway, six replays, one purchase/ledger/invoice, failed-mail recovery, cancellation and unauthorized replay')
+  console.log('WP16 PASS: real checkout/payment services, fake gateway, six rejected deliveries, one failure marker, six concurrent recoveries with one send, one purchase/ledger/invoice, cancellation and unauthorized replay')
   return purchase
 }

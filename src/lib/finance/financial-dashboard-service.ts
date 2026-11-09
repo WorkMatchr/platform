@@ -33,13 +33,14 @@ export async function getProfessionalFinancialDashboard(input: { actorUserId: st
 export async function getPlatformFinancialDashboard(actorUserId: string) {
   await getPlatformAdministratorContext(actorUserId)
   const prisma = getPrisma()
-  const [purchases, payments, subscriptionPayments, subscriptionPaymentStatuses, refunds, refundStatuses, ledger, discounts, starterBonuses, subscriptions, jortt] = await Promise.all([
+  const [purchases, payments, subscriptionPayments, subscriptionPaymentStatuses, refunds, refundStatuses, proCredits, ledger, discounts, starterBonuses, subscriptions, jortt] = await Promise.all([
     prisma.financialPurchase.findMany({ where: { status: { in: ['PAID', 'PARTIALLY_REFUNDED', 'REFUNDED'] } }, select: { kind: true, amountExclVatCents: true, vatAmountCents: true, amountInclVatCents: true, credits: true } }),
     prisma.financialPurchase.groupBy({ by: ['kind', 'status'], _count: true }),
     prisma.professionalSubscriptionPayment.findMany({ where: { status: 'PAID' }, select: { amountExclVatCents: true, vatAmountCents: true, amountInclVatCents: true } }),
     prisma.professionalSubscriptionPayment.groupBy({ by: ['status'], _count: true }),
-    prisma.financialRefund.findMany({ where: { status: 'REFUNDED' }, select: { amountCents: true, creditNote: { select: { amountExclVatCents: true, vatAmountCents: true, amountInclVatCents: true } } } }),
+    prisma.financialRefund.findMany({ where: { status: 'REFUNDED' }, select: { amountCents: true, creditNote: { select: { amountExclVatCents: true, vatAmountCents: true, amountInclVatCents: true } }, proCreditNote: { select: { amountExclVatCents: true, vatAmountCents: true, amountInclVatCents: true } } } }),
     prisma.financialRefund.groupBy({ by: ['status'], _count: true }),
+    prisma.financialInvoice.findMany({ where: { documentType: 'CREDIT_NOTE', proCreditKey: { not: null } }, select: { amountExclVatCents: true, vatAmountCents: true, amountInclVatCents: true } }),
     prisma.creditTransaction.groupBy({ by: ['type'], _sum: { totalDelta: true }, _count: true }),
     prisma.discountRedemption.count({ where: { status: 'APPLIED' } }),
     prisma.starterBenefitGrant.count(),
@@ -52,13 +53,15 @@ export async function getPlatformFinancialDashboard(actorUserId: string) {
   const countSubscriptionPaymentStatus = (status: string) => subscriptionPaymentStatuses.find((item) => item.status === status)?._count ?? 0
   const creditPurchases = purchases.filter((item) => item.kind === 'CREDIT_PACKAGE')
   const proPurchases = purchases.filter((item) => item.kind === 'PRO_SUBSCRIPTION')
-  if (refunds.some((item) => !item.creditNote)) throw new Error('COMPLETED_REFUND_CREDIT_NOTE_MISSING')
+  if (refunds.some((item) => !item.creditNote && !item.proCreditNote)) throw new Error('COMPLETED_REFUND_CREDIT_NOTE_MISSING')
   const grossRevenueExclVatCents = [...purchases, ...subscriptionPayments].reduce((sum, item) => sum + item.amountExclVatCents, 0)
   const grossVatCents = [...purchases, ...subscriptionPayments].reduce((sum, item) => sum + item.vatAmountCents, 0)
   const grossRevenueInclVatCents = [...purchases, ...subscriptionPayments].reduce((sum, item) => sum + item.amountInclVatCents, 0)
-  const refundExclVatCents = Math.abs(refunds.reduce((sum, item) => sum + (item.creditNote?.amountExclVatCents ?? 0), 0))
-  const refundVatCents = Math.abs(refunds.reduce((sum, item) => sum + (item.creditNote?.vatAmountCents ?? 0), 0))
-  const refundInclVatCents = Math.abs(refunds.reduce((sum, item) => sum + (item.creditNote?.amountInclVatCents ?? 0), 0))
+  const refundExclVatCents = Math.abs(refunds.reduce((sum, item) => sum + ((item.creditNote ?? item.proCreditNote)?.amountExclVatCents ?? 0), 0))
+  const refundVatCents = Math.abs(refunds.reduce((sum, item) => sum + ((item.creditNote ?? item.proCreditNote)?.vatAmountCents ?? 0), 0))
+  const refundInclVatCents = Math.abs(refunds.reduce((sum, item) => sum + ((item.creditNote ?? item.proCreditNote)?.amountInclVatCents ?? 0), 0))
+  const corrections = [...refunds.flatMap(r => r.creditNote ? [r.creditNote] : []), ...proCredits]
+  const credited = { net: -corrections.reduce((n, c) => n + c.amountExclVatCents, 0), vat: -corrections.reduce((n, c) => n + c.vatAmountCents, 0), gross: -corrections.reduce((n, c) => n + c.amountInclVatCents, 0) }
   const failedInitialProPayments = payments
     .filter((item) => item.kind === 'PRO_SUBSCRIPTION' && ['FAILED', 'CANCELED', 'EXPIRED'].includes(item.status))
     .reduce((sum, item) => sum + item._count, 0)
@@ -66,12 +69,13 @@ export async function getPlatformFinancialDashboard(actorUserId: string) {
     grossRevenueExclVatCents,
     grossVatCents,
     grossRevenueInclVatCents,
+    creditNoteAmountCents: credited.gross,
     refundExclVatCents,
     refundVatCents,
     refundInclVatCents,
-    netRevenueExclVatCents: grossRevenueExclVatCents - refundExclVatCents,
-    netVatCents: grossVatCents - refundVatCents,
-    netRevenueInclVatCents: grossRevenueInclVatCents - refundInclVatCents,
+    netRevenueExclVatCents: grossRevenueExclVatCents - credited.net,
+    netVatCents: grossVatCents - credited.vat,
+    netRevenueInclVatCents: grossRevenueInclVatCents - credited.gross,
     successfulPayments: countStatus('PAID') + countStatus('PARTIALLY_REFUNDED') + countStatus('REFUNDED'),
     failedPayments: countStatus('FAILED') + countStatus('CANCELED') + countStatus('EXPIRED'),
     successfulCreditPayments: creditPurchases.length,

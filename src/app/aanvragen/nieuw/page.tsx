@@ -40,6 +40,8 @@ export default async function NewRequestPage({
     )
   }
 
+  if (preview.requiresCanonicalIntake) redirect(`/adviesdossiers/${dossierId}`)
+
   return (
     <Section spacing="compact">
       <Container size="narrow">

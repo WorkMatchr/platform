@@ -1,14 +1,16 @@
+import { MarketplaceServiceError } from '@/lib/marketplace/marketplace-errors'
+import { requestScopeCandidates } from './request-scope-service'
 import type { Prisma, RequestInterestStatus } from '@/generated/prisma/client'
 import { Prisma as PrismaNamespace } from '@/generated/prisma/client'
-import { requireProviderMarketplaceAccess } from '@/lib/marketplace/marketplace-authorization'
+import { requireProviderMarketplaceAccess, requireProviderParticipationAccess } from '@/lib/marketplace/marketplace-authorization'
 import { getPrisma } from '@/lib/prisma'
-import { getApplicableMarketplaceRuleSet } from '@/lib/marketplace/marketplace-rules-service'
 
 type Transaction = Prisma.TransactionClient
 
 export class RequestInterestServiceError extends Error {
   constructor(
     public readonly code:
+      | 'LEGACY_ROUTE_CLOSED'
       | 'NOT_FOUND'
       | 'ACCESS_DENIED'
       | 'INVALID_STATUS'
@@ -38,9 +40,11 @@ async function requireProviderAccess(
   transaction: Transaction,
   actor: ProviderRequestActor,
   write: boolean,
+  participate = true,
 ) {
   try {
-    return await requireProviderMarketplaceAccess(
+    if (!participate) return await requireProviderMarketplaceAccess(transaction, actor.userId, actor.organizationId, write)
+    return await requireProviderParticipationAccess(
       transaction,
       actor.userId,
       actor.organizationId,
@@ -69,11 +73,11 @@ export async function listEligibleRequestsForProvider(
   actor: ProviderRequestActor,
 ) {
   return getPrisma().$transaction(async (transaction) => {
-    await requireProviderAccess(transaction, actor, false)
+    await requireProviderAccess(transaction, actor, false, false)
     return transaction.requestEligibleProvider.findMany({
       where: {
         providerOrganizationId: actor.organizationId,
-        request: { status: 'PUBLISHED' },
+        interest: { isNot: null },
       },
       orderBy: { request: { publishedAt: 'desc' } },
       select: {
@@ -93,7 +97,7 @@ export async function listEligibleRequestsForProvider(
         },
       },
     })
-  })
+  }, { isolationLevel: 'RepeatableRead' })
 }
 
 export async function getEligibleRequestForProvider(
@@ -101,11 +105,7 @@ export async function getEligibleRequestForProvider(
   requestId: string,
 ) {
   return getPrisma().$transaction(async (transaction) => {
-    const access = await requireProviderAccess(transaction, actor, false)
-    const marketplaceRules = await getApplicableMarketplaceRuleSet(
-      transaction,
-      new Date(),
-    )
+    const access = await requireProviderAccess(transaction, actor, false, false)
     const eligibility =
       await transaction.requestEligibleProvider.findUnique({
         where: {
@@ -115,8 +115,9 @@ export async function getEligibleRequestForProvider(
           },
         },
         select: {
+          projectionId: true,
           matchedExpertise: true,
-        eligibilityBasis: true,
+          eligibilityBasis: true,
           request: {
             select: {
               ...publicRequestSelect,
@@ -145,19 +146,19 @@ export async function getEligibleRequestForProvider(
           },
         },
       })
-    if (!eligibility || eligibility.request.status !== 'PUBLISHED') {
-      throw new RequestInterestServiceError('NOT_FOUND')
+    if (!eligibility?.interest) throw new RequestInterestServiceError('NOT_FOUND')
+    const hasClaimedOfferSlot = eligibility.interest.offerSlot?.status === 'CLAIMED'
+    let mayReadContact = false
+    if (hasClaimedOfferSlot && eligibility.request.status === 'PUBLISHED') {
+      try {
+        const current = await requireProviderParticipationAccess(transaction, actor.userId, actor.organizationId, false)
+        mayReadContact = current.projectionId === eligibility.projectionId &&
+          (await requestScopeCandidates(transaction, requestId, new Date())).has(eligibility.projectionId)
+      } catch (error) {
+        if (!(error instanceof MarketplaceServiceError) || !['ACCESS_DENIED', 'PROFILE_ONBOARDING_REQUIRED'].includes(error.code)) throw error
+      }
     }
-    const activeOfferSlotCount =
-      await transaction.requestOfferSlot.count({
-        where: {
-          requestId,
-          status: 'CLAIMED',
-        },
-      })
-    const hasClaimedOfferSlot =
-      eligibility.interest?.offerSlot?.status === 'CLAIMED'
-    const requesterDetails = hasClaimedOfferSlot
+    const requesterDetails = mayReadContact
       ? await transaction.request.findUnique({
           where: { id: requestId },
           select: {
@@ -194,13 +195,7 @@ export async function getEligibleRequestForProvider(
       : null
     return {
       ...eligibility,
-      activeOfferSlotCount,
-      marketplaceRules: {
-        version: marketplaceRules.version,
-        participationPriceCredits:
-          marketplaceRules.participationPriceCredits,
-        maximumParticipants: marketplaceRules.maximumParticipants,
-      },
+      interest: eligibility.interest,
       requesterDetails: requesterDetails
         ? {
             organizationName:
@@ -223,20 +218,19 @@ export async function getEligibleRequestForProvider(
       canManage:
         access.role === 'OWNER' || access.role === 'ADMIN',
     }
-  })
+  }, { isolationLevel: 'RepeatableRead' })
 }
 
 async function writeInterest(
   input: {
     actor: ProviderRequestActor
     requestId: string
-    targetStatus: RequestInterestStatus
     at: Date
   },
 ): Promise<{ id: string; status: RequestInterestStatus }> {
   return getPrisma().$transaction(
     async (transaction) => {
-      await requireProviderAccess(transaction, input.actor, true)
+      await requireProviderAccess(transaction, input.actor, true, false)
       await transaction.$queryRaw(
         PrismaNamespace.sql`
           SELECT pg_advisory_xact_lock(
@@ -245,25 +239,6 @@ async function writeInterest(
           )::text AS "lock"
         `,
       )
-      const eligibility =
-        await transaction.requestEligibleProvider.findUnique({
-          where: {
-            requestId_providerOrganizationId: {
-              requestId: input.requestId,
-              providerOrganizationId: input.actor.organizationId,
-            },
-          },
-          select: {
-            request: { select: { status: true } },
-          },
-        })
-      if (!eligibility) {
-        throw new RequestInterestServiceError('NOT_FOUND')
-      }
-      if (eligibility.request.status !== 'PUBLISHED') {
-        throw new RequestInterestServiceError('INVALID_STATUS')
-      }
-
       const existing = await transaction.requestInterest.findUnique({
         where: {
           requestId_providerOrganizationId: {
@@ -274,6 +249,7 @@ async function writeInterest(
         select: {
           id: true,
           status: true,
+          request: { select: { status: true } },
           _count: { select: { events: true } },
           offerSlot: {
             select: {
@@ -282,57 +258,19 @@ async function writeInterest(
           },
         },
       })
-      if (!existing) {
-        if (input.targetStatus !== 'INTERESTED') {
-          throw new RequestInterestServiceError('NOT_FOUND')
-        }
-        const interest = await transaction.requestInterest.create({
-          data: {
-            requestId: input.requestId,
-            providerOrganizationId: input.actor.organizationId,
-            createdByUserId: input.actor.userId,
-            status: 'INTERESTED',
-            createdAt: input.at,
-          },
-          select: { id: true, status: true },
-        })
-        await transaction.requestInterestEvent.create({
-          data: {
-            interestId: interest.id,
-            requestId: input.requestId,
-            providerOrganizationId: input.actor.organizationId,
-            actorUserId: input.actor.userId,
-            type: 'INTEREST_REGISTERED',
-            toStatus: 'INTERESTED',
-            idempotencyKey: `request-interest:${interest.id}:1`,
-            occurredAt: input.at,
-          },
-        })
-        return interest
-      }
-      if (existing.status === input.targetStatus) {
+      if (!existing) throw new RequestInterestServiceError('NOT_FOUND')
+      if (existing.status === 'WITHDRAWN') {
         return { id: existing.id, status: existing.status }
       }
-      if (
-        input.targetStatus === 'WITHDRAWN' &&
-        existing.offerSlot?.status === 'CLAIMED'
-      ) {
+      if (existing.request.status !== 'PUBLISHED') throw new RequestInterestServiceError('INVALID_STATUS')
+      if (existing.offerSlot?.status === 'CLAIMED') {
         throw new RequestInterestServiceError('SLOT_CLAIMED')
       }
 
       const eventNumber = existing._count.events + 1
       const interest = await transaction.requestInterest.update({
         where: { id: existing.id },
-        data:
-          input.targetStatus === 'WITHDRAWN'
-            ? {
-                status: 'WITHDRAWN',
-                withdrawnAt: input.at,
-              }
-            : {
-                status: 'INTERESTED',
-                withdrawnAt: null,
-              },
+        data: { status: 'WITHDRAWN', withdrawnAt: input.at },
         select: { id: true, status: true },
       })
       await transaction.requestInterestEvent.create({
@@ -341,12 +279,9 @@ async function writeInterest(
           requestId: input.requestId,
           providerOrganizationId: input.actor.organizationId,
           actorUserId: input.actor.userId,
-          type:
-            input.targetStatus === 'WITHDRAWN'
-              ? 'INTEREST_WITHDRAWN'
-              : 'INTEREST_REACTIVATED',
+          type: 'INTEREST_WITHDRAWN',
           fromStatus: existing.status,
-          toStatus: input.targetStatus,
+          toStatus: 'WITHDRAWN',
           idempotencyKey: `request-interest:${existing.id}:${eventNumber}`,
           occurredAt: input.at,
         },
@@ -360,7 +295,6 @@ async function writeInterest(
 async function withConflictRetry(input: {
   actor: ProviderRequestActor
   requestId: string
-  targetStatus: RequestInterestStatus
   at?: Date
 }) {
   for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -377,12 +311,13 @@ async function withConflictRetry(input: {
   throw new RequestInterestServiceError('CONFLICT')
 }
 
-export function registerRequestInterest(input: {
+export async function registerRequestInterest(input: {
   actor: ProviderRequestActor
   requestId: string
   at?: Date
 }) {
-  return withConflictRetry({ ...input, targetStatus: 'INTERESTED' })
+  await getPrisma().$transaction(tx => requireProviderAccess(tx, input.actor, true))
+  throw new RequestInterestServiceError('LEGACY_ROUTE_CLOSED')
 }
 
 export function withdrawRequestInterest(input: {
@@ -390,5 +325,5 @@ export function withdrawRequestInterest(input: {
   requestId: string
   at?: Date
 }) {
-  return withConflictRetry({ ...input, targetStatus: 'WITHDRAWN' })
+  return withConflictRetry(input)
 }

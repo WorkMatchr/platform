@@ -18,6 +18,8 @@ import type { SimpleAdviceActionState } from '@/app/advieswijzer/simple-actions'
 import { deriveSimpleAdviceTitle, simpleAdviceSchema, simpleAdviceRouteSchema, simpleAdviceSummary, requestedExpertiseOptions, helpTopicLabels, outcomeLabels, locationLabels, startLabels, usesLocation } from '@/lib/requests/simple-advice-contract'
 
 type Draft = Record<string, string> & { routeChoice: string; requestedExpertise: string; helpTopic: string }
+import { standardTasks } from '@/lib/marketplace/assignment-scope'
+
 const empty: Draft = { routeChoice: '', requestedExpertise: '', helpTopic: '', helpTopicOther: '', requestTitle: '', requestDescription: '', desiredOutcome: '', desiredOutcomeOther: '', workLocationMode: '', organizationLocationId: '', organizationLocationCity: '', otherLocationCity: '', desiredStartMode: '', desiredStartDate: '' }
 export function SimpleAdviceForm({ action, viewerId, locations = [], draftId, initialValues, initialVersion = 0, saveAction, start }: {
   action: (state: SimpleAdviceActionState, form: FormData) => Promise<SimpleAdviceActionState>
@@ -164,6 +166,7 @@ export function SimpleAdviceForm({ action, viewerId, locations = [], draftId, in
     {step === 1 && <>
       {v.routeChoice === 'NEEDS_TOPIC' && topicSituations?.selected.length ? <div className="rounded-card border border-border bg-brand-primary-subtle p-4"><p className="font-semibold text-brand-dark">Uw gekozen situaties</p><p className="mt-1 whitespace-pre-wrap break-words text-sm">{topicSituationSummary(topicSituations)}</p><p className="mt-2 text-sm text-text-secondary">Gebruik dit als context bij uw beschrijving. Via Terug kunt u uw keuzes wijzigen.</p></div> : null}
       <div><label className="mb-2 block font-semibold" htmlFor="requestDescription">Beschrijf uw vraag of situatie</label><p id="description-help" className="mb-2 text-sm text-text-secondary">Beschrijf kort wat er speelt, waar u ondersteuning bij zoekt en wat u wilt bereiken. U hoeft geen vaktermen te gebruiken.</p><textarea {...attrs('requestDescription')} aria-describedby={['description-help', error('requestDescription') ? 'requestDescription-error' : ''].filter(Boolean).join(' ')} rows={5} maxLength={4000} /><p className="mt-1 text-sm text-text-secondary">Noem geen namen, medische gegevens of andere gevoelige persoonsgegevens.</p>{fieldError('requestDescription')}</div>
+      <details><summary>Standaardwerkzaamheden gebruiken</summary><p>Kies alleen een omschrijving die uw volledige opdracht dekt. U kunt de tekst aanpassen.</p>{Object.entries(standardTasks).map(([code,t])=><button type="button" key={code} className="block underline" onClick={()=>update('requestDescription',t.task)}>{t.title}</button>)}</details>
       {select('desiredOutcome', 'Wat wilt u bereiken?', outcomeLabels)}
       {v.desiredOutcome === 'OTHER' && text('desiredOutcomeOther', 'Licht toe wat u wilt bereiken')}
       {select('workLocationMode', 'Waar moet de opdracht worden uitgevoerd?', locationLabels)}

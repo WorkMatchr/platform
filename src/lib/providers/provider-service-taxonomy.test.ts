@@ -22,7 +22,8 @@ const requiredServices = [
 
 describe('dienstentaxonomie versie 2', () => {
   it('publiceert de vereiste centrale diensten zonder gepubliceerde versie 1 te overschrijven', () => {
-    const seed = readFileSync(join(process.cwd(), 'prisma', 'seed.ts'), 'utf8')
+    const seed = readFileSync(join(process.cwd(), 'prisma', 'provider-service-catalog.ts'), 'utf8')
+    expect(readFileSync(join(process.cwd(), 'prisma', 'seed.ts'), 'utf8')).toContain('SERVICE: providerServiceTerms')
     const migration = readFileSync(join(process.cwd(), 'prisma', 'migrations', '20260802140000_expand_provider_service_taxonomy', 'migration.sql'), 'utf8')
 
     for (const [code, label] of requiredServices) {

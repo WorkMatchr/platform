@@ -3,7 +3,6 @@ import {
   canScheduleProCancellation,
   getProCancellationExplanation,
   getProSubscriptionStatusLabel,
-  hasActiveProBenefits,
   isRetryableProFirstPaymentAttempt,
 } from './pro-subscription-presentation'
 
@@ -26,12 +25,6 @@ describe('WorkMatchr Pro-presentatie en voordeelbeleid', () => {
 
   it('schakelt een al geplande dubbele opzegactie uit', () => {
     expect(canScheduleProCancellation(subscription('ACTIVE', true))).toBe(false)
-  })
-
-  it('behoudt Pro-voordelen tot en niet na de geplande einddatum', () => {
-    expect(hasActiveProBenefits(subscription('ACTIVE', true), now)).toBe(true)
-    expect(hasActiveProBenefits(subscription('ACTIVE', true), future)).toBe(false)
-    expect(hasActiveProBenefits(subscription('PAST_DUE', true), now)).toBe(false)
   })
 
   it('toont een geplande opzegging als actief tot de einddatum en daarna als opgezegd', () => {

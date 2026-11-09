@@ -1,3 +1,5 @@
+import { standardTasks } from '../src/lib/marketplace/assignment-scope'
+import { syntheticSafetyScope } from './fixtures/launch-scope-policy'
 import 'dotenv/config'
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
@@ -66,11 +68,13 @@ async function main() {
     const poorProviderUser = await prisma.user.create({ data: { email: `provider-poor-${randomUUID()}@example.invalid`, status: 'ACTIVE', accountType: 'PROFESSIONAL', emailVerified: true, memberships: { create: { organizationId: poorProviderOrganization.id, role: 'OWNER', status: 'ACTIVE' } } } })
     const platformAdmin = await prisma.user.create({ data: { email: `admin-${randomUUID()}@example.invalid`, status: 'ACTIVE', emailVerified: true, platformRole: 'ADMIN', memberships: { create: { organizationId: platformOrganization.id, role: 'ADMIN', status: 'ACTIVE' } } } })
 
+    const policy=await syntheticSafetyScope(prisma)
     async function createSelectableProvider(organizationId: string) {
       const profile = await prisma!.providerProfile.create({ data: { organizationId, lifecycleStatus: 'QUALIFIED', readinessStatus: 'READY', platformQualificationStatus: 'QUALIFIED', selectabilityStatus: 'SELECTABLE' } })
-      const readiness = await prisma!.providerReadinessAssessment.create({ data: { providerProfileId: profile.id, status: 'READY', reasonCodes: [], sourceVersion: 1, checksum: randomUUID().replaceAll('-', '').padEnd(64, '0').slice(0, 64) } })
-      const selectability = await prisma!.providerSelectabilityAssessment.create({ data: { providerProfileId: profile.id, readinessAssessmentId: readiness.id, status: 'SELECTABLE', reasonCodes: [], sourceVersion: 1, checksum: randomUUID().replaceAll('-', '').padEnd(64, '1').slice(0, 64) } })
-      const projection = await prisma!.trustedProviderProjection.create({ data: { providerProfileId: profile.id, readinessAssessmentId: readiness.id, selectabilityAssessmentId: selectability.id, schemaVersion: 2, canonicalizationVersion: 'WORKMATCHR-CJ-1', sourceVersion: 1, payload: { capabilities: [], sectors: [], workAreas: [] }, sha256: randomUUID().replaceAll('-', '').padEnd(64, '2').slice(0, 64), validFrom: new Date(), validUntil: new Date(Date.now() + 86_400_000) } })
+      const profileVersion = await (await import('./fixtures/reviewed-marketplace-provider')).prepareReviewedSupplier(prisma!, profile.id, organizationId,policy)
+    const readiness = await prisma!.providerReadinessAssessment.create({ data: { providerProfileId: profile.id, status: 'READY', reasonCodes: [], sourceVersion: profileVersion, checksum: randomUUID().replaceAll('-', '').padEnd(64, '0').slice(0, 64) } })
+      const selectability = await prisma!.providerSelectabilityAssessment.create({ data: { providerProfileId: profile.id, readinessAssessmentId: readiness.id, status: 'SELECTABLE', reasonCodes: [], sourceVersion: profileVersion, checksum: randomUUID().replaceAll('-', '').padEnd(64, '1').slice(0, 64) } })
+      const projection = await prisma!.trustedProviderProjection.create({ data: { providerProfileId: profile.id, readinessAssessmentId: readiness.id, selectabilityAssessmentId: selectability.id, schemaVersion: 2, canonicalizationVersion: 'WORKMATCHR-CJ-1', sourceVersion: profileVersion, payload: { capabilities: [], sectors: [], workAreas: [] }, sha256: randomUUID().replaceAll('-', '').padEnd(64, '2').slice(0, 64), validFrom: new Date(), validUntil: new Date('2096-04-01T00:00:00Z') } })
       return { profile, projection }
     }
 
@@ -91,20 +95,22 @@ async function main() {
     async function createInvitation(providerData: typeof provider, providerOrganizationId: string, assignmentId?: string) {
       let assignment = assignmentId
         ? await prisma!.assignment.findUniqueOrThrow({ where: { id: assignmentId } })
-        : await prisma!.assignment.create({ data: { clientOrganizationId: clientOrganization.id, createdByUserId: clientUser.id, title: 'TEST-WM concurrencyopdracht', description: 'Volledig fictieve concurrencytest.' } })
+        : await prisma!.assignment.create({ data: { clientOrganizationId: clientOrganization.id, createdByUserId: clientUser.id, title:standardTasks.SAFETY_ADVICE.title,description:standardTasks.SAFETY_ADVICE.task,primarySpecialismId:policy.specialismId } })
       if (!assignmentId) {
         const publishedAt = new Date()
         assignment = await prisma!.$transaction(async (transaction) => {
-          await transaction.assignmentRevision.create({ data: { assignmentId: assignment.id, version: 1, title: assignment.title, description: assignment.description, locationType: 'UNKNOWN', allowsRemoteWork: false, changedByUserId: clientUser.id } })
+          await transaction.assignmentRevision.create({ data: { assignmentId: assignment.id, version: 1, primarySpecialismId:policy.specialismId,title: assignment.title, description: assignment.description, locationType: 'UNKNOWN', allowsRemoteWork: false, changedByUserId: clientUser.id } })
           await transaction.assignment.update({ where: { id: assignment.id }, data: { status: 'OPEN', publishedAt, publishedByUserId: clientUser.id, publishedVersion: 1 } })
           await transaction.assignmentStatusHistory.create({ data: { assignmentId: assignment.id, fromStatus: 'READY_FOR_REVIEW', toStatus: 'OPEN', changedByUserId: clientUser.id, reason: 'Fictieve publicatie voor concurrencytest.', createdAt: publishedAt } })
           return transaction.assignment.update({ where: { id: assignment.id }, data: { status: 'AWAITING_RESPONSES' } })
         })
       }
-      const run = await prisma!.marketplaceMatchRun.create({ data: { assignmentId: assignment.id, assignmentVersion: assignment.version, engineVersion: 'test', modelVersion: 'test', ruleVersion: 'test', taxonomyVersion: 'test', startedByUserId: clientUser.id, idempotencyKey: randomUUID(), confidenceLevel: 'HOOG', confidenceReasons: [], assignmentSnapshot: {}, inputChecksum: randomUUID().replaceAll('-', '').padEnd(64, '3').slice(0, 64) } })
+      const {readAssignmentScope,requireWithin}=await import('../src/lib/marketplace/assignment-scope-service')
+      const scope=await prisma!.$transaction(tx=>readAssignmentScope(tx,assignment.id,'SAFETY_ADVICE',new Date()));requireWithin(scope)
+      const run = await prisma!.marketplaceMatchRun.create({ data: { assignmentId: assignment.id, assignmentVersion: assignment.version, engineVersion: 'test', modelVersion: 'test', ruleVersion: 'test', taxonomyVersion: 'test', startedByUserId: clientUser.id, idempotencyKey: randomUUID(), confidenceLevel: 'HOOG', confidenceReasons: [], assignmentSnapshot: {scopeDigest:scope.digest,scopeService:scope.service,capabilityCode:'hogere-veiligheidskundige'}, inputChecksum: randomUUID().replaceAll('-', '').padEnd(64, '3').slice(0, 64) } })
       const candidate = await prisma!.marketplaceMatchCandidate.create({ data: { matchRunId: run.id, providerProfileId: providerData.profile.id, projectionId: providerData.projection.id, status: 'SELECTED', rank: 1, scoreNumerator: 1, scoreDenominator: 1, normalizedScore: 10_000, exclusionReasons: [], explanation: {}, providerSnapshot: {}, snapshotChecksum: randomUUID().replaceAll('-', '').padEnd(64, '4').slice(0, 64) } })
       await prisma!.assignmentProviderSelection.create({ data: { assignmentId: assignment.id, providerProfileId: providerData.profile.id, source: 'AUTOMATIC', status: 'INVITED', selectedByUserId: clientUser.id } })
-      const invitation = await prisma!.providerInvitation.create({ data: { assignmentId: assignment.id, matchRunId: run.id, matchCandidateId: candidate.id, providerProfileId: providerData.profile.id, providerOrganizationId, creditCost: 25, deadlineAt: new Date(Date.now() + 86_400_000), snapshot: {}, snapshotChecksum: randomUUID().replaceAll('-', '').padEnd(64, '5').slice(0, 64), idempotencyKey: randomUUID() } })
+      const invitation = await prisma!.providerInvitation.create({ data: { assignmentId: assignment.id, matchRunId: run.id, matchCandidateId: candidate.id, providerProfileId: providerData.profile.id, providerOrganizationId, creditCost: 25, deadlineAt: new Date(Date.now() + 86_400_000), snapshot: {recipientExpertise:'hogere-veiligheidskundige'}, snapshotChecksum: randomUUID().replaceAll('-', '').padEnd(64, '5').slice(0, 64), idempotencyKey: randomUUID() } })
       return { assignment, invitation }
     }
 
@@ -120,7 +126,7 @@ async function main() {
     raceResult('Dubbele uitnodigingsacceptatie', acceptanceRace)
     const acceptedParticipation = await prisma.providerParticipation.findUniqueOrThrow({ where: { invitationId: acceptanceFixture.invitation.id }, include: { creditReservation: true } })
     const fullAccess = await getProviderInvitationDetail(providerUser.id, providerOrganization.id, acceptanceFixture.invitation.id)
-    assert.equal(fullAccess.invitation.fullAssignment?.description, 'Volledig fictieve concurrencytest.')
+    assert.equal(fullAccess.invitation.fullAssignment?.description, standardTasks.SAFETY_ADVICE.task)
     assert.equal(await prisma.providerParticipation.count({ where: { invitationId: acceptanceFixture.invitation.id } }), 1)
     assert.equal(acceptedParticipation.creditReservation, null)
     assert.equal((await prisma.providerInvitation.findUniqueOrThrow({ where: { id: acceptanceFixture.invitation.id } })).status, 'ACCEPTED')
@@ -212,6 +218,23 @@ async function main() {
     await assert.rejects(saveQuoteDraft({ ...draftInput, expectedQuoteVersion: unsubmitted.version }), { code: 'INVALID_STATE' })
     assert.equal(await prisma.quoteVersion.count({ where: { quoteId: unsubmitted.id } }), 1)
     assert.equal(await prisma.marketplaceNotification.count({ where: { recipientUserId: thirdProviderUser.id, type: 'QUOTE_REJECTED' } }), 0, 'A never-submitted draft is not a rejected offer')
+    // Direct service entry points must not rewrite pre-existing commercial obligations.
+    const { registerRequestInterest } = await import('../src/lib/requests/request-interest-service')
+    const { claimRequestOfferSlot } = await import('../src/lib/requests/request-offer-slot-service')
+    const history = () => prisma!.$transaction([
+      prisma!.creditTransaction.findMany({ where: { creditAccountId: providerCreditAccount.id }, orderBy: { id: 'asc' } }),
+      prisma!.creditReservation.findUniqueOrThrow({ where: { participationId: manualParticipation.id } }),
+      prisma!.quoteVersion.findMany({ where: { quoteId: { in: [quote.id, secondQuote.id] } }, orderBy: { id: 'asc' } }),
+      prisma!.awardDecision.findFirstOrThrow({ where: { assignmentId: acceptanceFixture.assignment.id } }),
+    ])
+    const beforeRetiredCalls = await history()
+    assert.equal(beforeRetiredCalls[1].status, 'ACTIVE')
+    assert.equal(beforeRetiredCalls[1].amount, 10)
+    const archivedInput = { actor: { userId: providerUser.id, organizationId: providerOrganization.id }, requestId: acceptanceFixture.assignment.id }
+    await Promise.all([registerRequestInterest, claimRequestOfferSlot].map(call =>
+      assert.rejects(call(archivedInput), { code: 'LEGACY_ROUTE_CLOSED' })))
+    assert.deepEqual(await history(), beforeRetiredCalls)
+    console.log('Historische afschrijving, actieve reservering, offerteversies en gunning ongewijzigd na directe oude serviceaanroepen.')
     const awardInput = { actorUserId: clientUser.id, clientOrganizationId: clientOrganization.id, assignmentId: acceptanceFixture.assignment.id, quoteId: quote.id, motivation: 'Deze fictieve offerte past aantoonbaar het beste.', idempotencyKey: awardKey }
     assert.equal((await awardMarketplaceQuote(awardInput)).quoteId, quote.id)
     await assert.rejects(() => awardMarketplaceQuote({ ...awardInput, actorUserId: secondProviderUser.id, clientOrganizationId: secondProviderOrganization.id }), { code: 'ACCESS_DENIED' })
@@ -271,6 +294,29 @@ async function main() {
     }
     assert.equal(await prisma.providerParticipation.count({ where: { assignmentId: acceptanceFixture.assignment.id } }), 3)
     assert.equal(await prisma.quote.count({ where: { assignmentId: acceptanceFixture.assignment.id } }), 3)
+    // A changed assignment cannot progress even after a provider has already paid.
+    const stale = await createInvitation(fourthProvider, fourthProviderOrganization.id)
+    const bought = await acceptProviderInvitation({ actorUserId: fourthProviderUser.id, providerOrganizationId: fourthProviderOrganization.id, invitationId: stale.invitation.id, idempotencyKey: randomUUID() })
+    const staleDraft = { ...draftInput, actorUserId: fourthProviderUser.id, providerOrganizationId: fourthProviderOrganization.id, participationId: bought.id }
+    const stored = await saveQuoteDraft(staleDraft)
+    const staleSubmit = { actorUserId: fourthProviderUser.id, providerOrganizationId: fourthProviderOrganization.id, quoteId: stored.id, expectedQuoteVersion: stored.version, idempotencyKey: randomUUID() }
+    const staleAwardFixture = await createInvitation(fourthProvider, fourthProviderOrganization.id)
+    const awardParticipation = await acceptProviderInvitation({ actorUserId: fourthProviderUser.id, providerOrganizationId: fourthProviderOrganization.id, invitationId: staleAwardFixture.invitation.id, idempotencyKey: randomUUID() })
+    const awardDraft = await saveQuoteDraft({ ...staleDraft, participationId: awardParticipation.id })
+    await submitQuote({ ...staleSubmit, quoteId: awardDraft.id, expectedQuoteVersion: awardDraft.version, idempotencyKey: randomUUID() })
+    await assert.rejects(
+      prisma.assignment.update({ where: { id: stale.assignment.id }, data: { description: 'Gewijzigde gepubliceerde inhoud.' } }),
+      /immutable/,
+    )
+    // Withdraw the mapped specialism after purchase and submission, with all database triggers enabled.
+    await prisma.specialism.update({ where: { id: policy.specialismId }, data: { isActive: false } })
+    await assert.rejects(saveQuoteDraft({ ...staleDraft, expectedQuoteVersion: stored.version }), { code: 'NOT_SELECTABLE' })
+    await assert.rejects(submitQuote(staleSubmit), { code: 'NOT_SELECTABLE' })
+    assert.equal((await prisma.quote.findUniqueOrThrow({ where: { id: stored.id } })).status, 'DRAFT')
+    assert.equal(await prisma.creditTransaction.count({ where: { referenceId: bought.id, type: 'PARTICIPATION_PAYMENT' } }), 1)
+    await assert.rejects(awardMarketplaceQuote({ ...awardInput, assignmentId: staleAwardFixture.assignment.id, quoteId: awardDraft.id, idempotencyKey: randomUUID() }), { code: 'NOT_SELECTABLE' })
+    assert.equal(await prisma.awardDecision.count({ where: { assignmentId: staleAwardFixture.assignment.id } }), 0)
+    console.log('PASS scopewijziging na betaling of indiening blokkeert opslaan, indienen en gunnen.')
     console.log('Alle marketplace-races eindigen atomair, zonder negatieve saldi, gedeeltelijke records of dubbele auditgebeurtenissen.')
   } finally {
     if (prisma) await prisma.$disconnect()

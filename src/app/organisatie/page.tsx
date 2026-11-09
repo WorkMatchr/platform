@@ -17,10 +17,9 @@ const typeLabels = {
   PLATFORM_OPERATOR: 'Platformorganisatie',
 } as const
 const statusLabels = { PENDING: 'In afwachting', ACTIVE: 'Actief', SUSPENDED: 'Geschorst', ARCHIVED: 'Gearchiveerd' } as const
-const providerLabels = { DRAFT: 'Concept', PENDING_REVIEW: 'In beoordeling', APPROVED: 'Goedgekeurd', REJECTED: 'Afgewezen', SUSPENDED: 'Geschorst' } as const
 
 export default async function OrganizationPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const { activeMembership } = await requireOrganizationMembership()
+  const { activeMembership, user } = await requireOrganizationMembership()
   const organization = activeMembership.organization
   const location = organization.locations.find((item) => item.isPrimary) ?? organization.locations[0]
   const manageable = canManageOrganization(activeMembership.role, activeMembership.status, organization.status)
@@ -42,7 +41,7 @@ export default async function OrganizationPage({ searchParams }: { searchParams:
         <OrganizationLogo name={organization.name} storageKey={organization.logoStorageKey} width={organization.logoWidth} height={organization.logoHeight} />
         <div><Badge variant={organization.status === 'ACTIVE' ? 'success' : 'neutral'}>{statusLabels[organization.status]}</Badge><Heading as="h1" size="h2" className="mt-3">{organization.name}</Heading>{organization.tradeName && <p className="mt-1 text-text-secondary">Handelsnaam: {organization.tradeName}</p>}</div>
       </div>
-      <div className="flex flex-wrap gap-3">{manageable && <LinkButton href="/organisatie/profiel">Profiel wijzigen</LinkButton>}{manageable && <LinkButton href="/organisatie/gebruikers" variant="outline">Gebruikers beheren</LinkButton>}</div>
+      <div className="flex flex-wrap gap-3">{manageable && <LinkButton href="/organisatie/profiel">Organisatiegegevens wijzigen</LinkButton>}{manageable && <LinkButton href="/organisatie/gebruikers" variant="outline">Gebruikers beheren</LinkButton>}</div>
     </div>
     {notice && <p role="status" className="mt-6 rounded-control bg-brand-primary-subtle p-3 text-brand-dark">{notice}</p>}
     <Card className="mt-8"><dl className="grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -54,8 +53,11 @@ export default async function OrganizationPage({ searchParams }: { searchParams:
       <Detail label="Algemeen e-mailadres" value={organization.generalEmail} />
       <Detail label="Aantal medewerkers" value={organization.employeeCount?.toLocaleString('nl-NL')} />
       <Detail label="Locatie" value={location ? `${location.addressLine}, ${location.postalCode} ${location.city}, ${location.countryCode}` : null} />
-      <Detail label="Sectoren" value={organization.sectors.map((item) => item.sector.name).join(', ')} />
-      {organization.providerProfile && <Detail label="Dienstverlenerstatus" value={providerLabels[organization.providerProfile.approvalStatus]} />}
+      <Detail label="Organisatiesectoren" value={organization.sectors.map((item) => item.sector.name).join(', ')} />
+      {user.accountType === 'PROFESSIONAL' && organization.providerProfile && (organization.organizationType === 'PROVIDER' || organization.organizationType === 'BOTH') && <div>
+        <dt className="text-sm font-semibold text-text-secondary">Dienstverlenersprofiel</dt>
+        <dd className="mt-1"><LinkButton href="/aanbiedersdossier" variant="outline">Dossier en beoordelingsstatus bekijken</LinkButton></dd>
+      </div>}
     </dl></Card>
   </Section>
 }

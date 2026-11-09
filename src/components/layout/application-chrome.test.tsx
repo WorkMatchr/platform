@@ -11,6 +11,7 @@ import { ApplicationChrome, usesAuthenticatedWorkspace } from './application-chr
 import type { HeaderViewModel } from './header-model'
 
 const anonymousModel: HeaderViewModel = {
+  workspaceTheme: 'default',
   authenticated: false,
   isPlatformAdministrator: false,
   displayName: '',
@@ -88,6 +89,7 @@ describe('routebewuste applicatiechrome', () => {
         compactFooter={<div>Compacte workspacefooter</div>}
         footer={<div>Publieke footer</div>}
         headerModel={{
+          workspaceTheme: 'default',
           authenticated: true,
           isPlatformAdministrator: false,
           displayName: 'Opdrachtgever',
@@ -102,7 +104,8 @@ describe('routebewuste applicatiechrome', () => {
     expect(html).toContain('lg:grid-cols-[14rem_minmax(0,1fr)]')
     expect(html).toContain('Opdrachtgever')
     expect(html).toContain('Organisatie BV')
-    expect(html).toContain('aria-current="page"')
+    expect(html).toMatch(/aria-current="location"[^>]*href="\/opdrachten"|href="\/opdrachten"[^>]*aria-current="location"/)
+    expect(html).not.toContain('aria-current="page"')
     expect(html).toContain('lg:overflow-y-auto')
     expect(html).toContain('Beveiligde accountomgeving')
     expect(html).not.toContain('Publieke footer')

@@ -1,9 +1,18 @@
+import { verificationSubjects, subjectField } from '@/lib/providers/provider-review-subjects'
+import { applicableServiceRequirements, positiveQualificationReason } from '@/lib/providers/provider-requirements'
+import { requireProviderPlatformPermission } from '@/lib/providers/provider-authorization'
 import { getPrisma } from '@/lib/prisma'
 import { getMarketplacePlatformDashboard } from './dashboard-query-service'
 import { MarketplaceServiceError } from './marketplace-errors'
 
 export async function getProviderReviewWorklist(userId: string) {
   const platform = await getMarketplacePlatformDashboard(userId)
+  const awaitingQualification = platform.actorPermissions.includes('PROVIDER_APPROVER')
+    ? await getPrisma().providerDossierSubmission.findMany({
+        where: { status: 'APPROVED', providerProfile: { archivedAt: null, OR: [{ platformQualificationStatus: 'NOT_ASSESSED' }, { selectabilityStatus: { not: 'SELECTABLE' } }] } },
+        orderBy: { submittedAt: 'desc' }, distinct: ['providerProfileId'], take: 50,
+        select: { providerProfileId: true, providerProfile: { select: { organization: { select: { name: true } } } } },
+      }) : []
   const submissions = await getPrisma().providerDossierSubmission.findMany({
     where: { status: { in: ['SUBMITTED', 'UNDER_REVIEW', 'ADDITIONAL_INFORMATION_REQUIRED'] } },
     orderBy: { updatedAt: 'asc' },
@@ -17,7 +26,7 @@ export async function getProviderReviewWorklist(userId: string) {
       reviewCases: { where: { status: 'OPEN' }, take: 1, select: { id: true } },
     },
   })
-  return { permissions: platform.actorPermissions, submissions }
+  return { permissions: platform.actorPermissions, submissions, awaitingQualification }
 }
 
 export async function getProviderReviewDetail(userId: string, providerProfileId: string) {
@@ -61,4 +70,52 @@ export async function getProviderReviewDetail(userId: string, providerProfileId:
   })
   if (!provider) throw new MarketplaceServiceError('NOT_FOUND')
   return { permissions: platform.actorPermissions, provider, submission: provider.dossierSubmissions[0] ?? null }
+}
+
+export async function getQualificationManagement(actorId: string, providerProfileId: string) {
+  return getPrisma().$transaction(async tx => {
+    await requireProviderPlatformPermission(tx, actorId, 'PROVIDER_APPROVER', providerProfileId)
+    const capabilities = await tx.providerCapability.findMany({ where: { providerProfileId, status: 'ACTIVE' },
+      orderBy: { id: 'asc' }, select: { id: true, revisions: { orderBy: { version: 'desc' }, take: 1,
+        select: { serviceTermId: true, specialismTermId: true, serviceTerm: { select: { label: true } }, specialismTerm: { select: { label: true } } } } } })
+    const reasons = await tx.providerReasonCode.findMany({ where: positiveQualificationReason, orderBy: { label: 'asc' }, select: { code: true, label: true } })
+    const decisions = await tx.providerQualificationDecision.findMany({ where: { providerProfileId }, orderBy: [{ validFrom: 'desc' }, { createdAt: 'desc' }], take: 20,
+      select: { id: true, scope: true, outcome: true, capabilityId: true, reasonCode: true, validFrom: true, validUntil: true,
+        reviewedByUser: { select: { displayName: true, id: true } }, approvedByUser: { select: { displayName: true, id: true } } } })
+    const serviceRules = []
+    const at = new Date()
+    for (const capability of capabilities) {
+      const revision = capability.revisions[0]
+      const config = revision?.serviceTermId && await applicableServiceRequirements(tx, revision.serviceTermId, revision.specialismTermId, at)
+      const rules = config ? config.requirements : []
+      serviceRules.push({ id: capability.id, label: [revision?.serviceTerm?.label, revision?.specialismTerm?.label].filter(Boolean).join(' · '),
+        configured: rules.length > 0, qualifications: rules.filter(rule => rule.isRequired).map(rule => rule.requirementTerm.label),
+        insurance: rules.some(rule => rule.requiresProfessionalLiability) })
+    }
+    return { capabilities, reasons, decisions, serviceRules }
+  })
+}
+
+export async function getReviewSubjects(actorId: string, providerProfileId: string, candidateId: string, approver: boolean) {
+  return getPrisma().$transaction(async tx => {
+    await requireProviderPlatformPermission(tx, actorId, approver ? 'PROVIDER_APPROVER' : 'PROVIDER_REVIEWER', providerProfileId)
+    const candidate = await tx.providerDossierCandidate.findFirstOrThrow({
+      where: { id: candidateId, providerProfileId }, select: { canonicalPayload: true },
+    })
+    const subjects = verificationSubjects(candidate.canonicalPayload)
+    const terms = await tx.providerTaxonomyTerm.findMany({
+      where: { id: { in: subjects.flatMap(s => s.terms) } }, select: { id: true, label: true },
+    })
+    const labels = new Map(terms.map(t => [t.id, t.label]))
+    const reviews = await tx.providerVerificationReview.findMany({
+      where: { providerProfileId, dossierCandidateId: candidateId }, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    })
+    const outcomes = { VERIFIED: 'Geverifieerd', DOCUMENT_CHECKED: 'Document gecontroleerd', REJECTED: 'Afgekeurd',
+      EXPIRED: 'Verlopen', CHANGES_REQUESTED: 'Aanvulling nodig' }
+    return subjects.map(s => {
+      const review = reviews.find(r => r[subjectField[s.type]] === s.id)
+      const status = !review ? 'Nog te controleren' : review.validUntil && review.validUntil <= new Date() ? 'Verlopen' : outcomes[review.outcome]
+      return { ...s, title: s.terms.map(id => labels.get(id)).filter(Boolean).join(' · '), status, reviewEnd: review?.validUntil }
+    })
+  })
 }

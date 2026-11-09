@@ -15,6 +15,7 @@ const prisma = {
     findMany: vi.fn().mockResolvedValue([{ amountExclVatCents: 4_900, vatAmountCents: 1_029, amountInclVatCents: 5_929 }]),
     groupBy: vi.fn().mockResolvedValue([{ status: 'PAID', _count: 1 }, { status: 'FAILED', _count: 2 }]),
   },
+  financialInvoice: { findMany: vi.fn().mockResolvedValue([]) },
   financialRefund: {
     findMany: vi.fn().mockResolvedValue([{ amountCents: 12_100, creditNote: { amountExclVatCents: -10_000, vatAmountCents: -2_100, amountInclVatCents: -12_100 } }]),
     groupBy: vi.fn().mockResolvedValue([{ status: 'REFUNDED', _count: 1 }, { status: 'PENDING', _count: 2 }, { status: 'FAILED', _count: 1 }]),
@@ -34,7 +35,7 @@ vi.mock('@/lib/platform-admin/platform-admin-authorization', () => ({ getPlatfor
 vi.mock('@/lib/marketplace/marketplace-authorization', () => ({ requireProviderMarketplaceAccess: vi.fn() }))
 
 describe('platformbrede financiële rapportage', () => {
-  it('telt credit- en Pro-omzet bruto en trekt alleen voltooide refunds af', async () => {
+  it('telt credit- en Pro-omzet en geboekte creditfacturen afzonderlijk van cashrefunds', async () => {
     const { getPlatformFinancialDashboard } = await import('./financial-dashboard-service')
     const result = await getPlatformFinancialDashboard('10000000-0000-4000-8000-000000000001')
 
@@ -53,6 +54,15 @@ describe('platformbrede financiële rapportage', () => {
     expect(prisma.financialJorttSync.groupBy).toHaveBeenCalledWith({ where: operationalJorttFilter, by: ['status'], _count: true })
     expect(result.failedRefunds).toBe(1)
   })
+  it('verlaagt omzet door een Pro-creditfactuur zonder een cashrefund te verzinnen', async () => {
+    prisma.financialInvoice.findMany.mockResolvedValueOnce([{ amountExclVatCents: -826, vatAmountCents: -174, amountInclVatCents: -1000 }] as never)
+    const { getPlatformFinancialDashboard } = await import('./financial-dashboard-service')
+    const result = await getPlatformFinancialDashboard('10000000-0000-4000-8000-000000000001')
+    expect(result.netRevenueInclVatCents).toBe(10858)
+    expect(result.refundInclVatCents).toBe(12100)
+    expect(result.creditNoteAmountCents).toBe(13100)
+  })
+
 })
 
 describe('financiële maintenance-observability', () => {
