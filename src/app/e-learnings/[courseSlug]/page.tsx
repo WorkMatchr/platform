@@ -42,7 +42,7 @@ export default async function LearningCoursePage({ params }: { params: Promise<{
                 ? firstBlockData.estimatedDurationLabel
                 : `Circa ${chapter.estimatedMinutes} minuten`
               const href = `/e-learnings/${course.slug}/leren/${chapter.slug}?version=${encodeURIComponent(version.version)}${chapterProgress?.status === 'COMPLETED' ? '&opnieuw=1' : ''}`
-              return <li key={chapter.id} className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-border bg-surface p-4">
+              return <li key={chapter.id} id={`hoofdstuk-${chapter.position}`} className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-border bg-surface p-4">
                 <div><p className="font-semibold text-brand-dark">Hoofdstuk {chapter.position} · {chapter.title}</p><p className="mt-1 text-sm text-text-secondary">{durationLabel}</p></div>
                 {isStarted
                   ? <Link className="inline-flex min-h-11 items-center rounded-control border border-border px-4 font-semibold text-brand-primary" href={href}>{chapterProgress?.status === 'COMPLETED' ? 'Opnieuw bekijken' : chapterProgress?.status === 'IN_PROGRESS' ? 'Verdergaan' : 'Open hoofdstuk'}</Link>

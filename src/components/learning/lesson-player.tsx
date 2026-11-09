@@ -292,7 +292,7 @@ export function LessonPlayer({
           <p className="mt-1">{correctQuestionIds.size} van {questionStats.total} onderwerpen laatst correct beantwoord</p>
         </div>
         <div className="flex flex-wrap gap-3"><Link href={`/e-learnings/${courseSlug}`} className="inline-flex min-h-11 items-center rounded-control bg-brand-primary px-5 font-semibold text-text-on-dark">Terug naar de cursus</Link><Link href="/e-learnings/mijn" className="inline-flex min-h-11 items-center rounded-control border border-border px-5 font-semibold text-brand-dark">Mijn e-learnings</Link></div>
-        <p className="rounded-control border border-border bg-surface-subtle p-4 text-sm text-text-secondary">Andere hoofdstukken zijn nog in ontwikkeling. Deze prototypecursus is geen certificering of bewijs van een professionele kwalificatie.</p>
+        <p className="rounded-control border border-border bg-surface-subtle p-4 text-sm text-text-secondary">Deze prototypecursus is geen certificering of bewijs van een professionele kwalificatie.</p>
       </Card>
     )
   }

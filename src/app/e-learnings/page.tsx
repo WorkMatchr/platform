@@ -16,9 +16,11 @@ export default async function LearningHomePage() {
       <section className="mt-12" aria-labelledby="featured-title"><h2 id="featured-title" className="mb-5 text-2xl font-bold text-brand-dark">Beschikbaar opleidingsaanbod</h2><div className="grid gap-5 md:grid-cols-2">{courses.map((course) => {
         const version = course.versions[0]
         const enrollment = version?.enrollments[0]
-        const chapter = version?.chapters[0]
+        const chapters = version?.chapters ?? []
+        const minutes = chapters.reduce((sum, chapter) => sum + chapter.estimatedMinutes, 0)
+        const chapter = chapters[0]
         const progress = chapter?.progress[0]
-        return <Card key={course.id} className="flex flex-col gap-4"><p className="text-sm font-semibold text-brand-primary">{course.code} · Prototype</p><h3 className="text-xl font-bold text-brand-dark">{course.title}</h3><p className="leading-7 text-text-secondary">{course.description}</p><div className="mt-auto flex items-center justify-between gap-3 pt-2 text-sm"><span>{chapter?.estimatedMinutes ?? 10} minuten · {version?.chapters.length ?? 1} hoofdstuk beschikbaar</span><Link className="font-semibold text-brand-primary hover:underline" href={`/e-learnings/${course.slug}`}>{enrollment?.status === 'IN_PROGRESS' && progress?.status === 'IN_PROGRESS' ? 'Verder leren' : 'Bekijk opleiding'}</Link></div></Card>
+        return <Card key={course.id} className="flex flex-col gap-4"><p className="text-sm font-semibold text-brand-primary">{course.code} · Prototype</p><h3 className="text-xl font-bold text-brand-dark">{course.title}</h3><p className="leading-7 text-text-secondary">{course.description}</p><div className="mt-auto flex items-center justify-between gap-3 pt-2 text-sm"><span>{minutes} minuten voor de lessen · {chapters.length} {chapters.length === 1 ? 'hoofdstuk' : 'hoofdstukken'} beschikbaar</span><Link className="font-semibold text-brand-primary hover:underline" href={`/e-learnings/${course.slug}`}>{enrollment?.status === 'IN_PROGRESS' && progress?.status === 'IN_PROGRESS' ? 'Verder leren' : 'Bekijk opleiding'}</Link></div></Card>
       })}</div>{courses.length === 0 && <p className="rounded-card border border-border bg-surface p-5">Er zijn nog geen e-learnings beschikbaar.</p>}</section>
     </Container>
   )
