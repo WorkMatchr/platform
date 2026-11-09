@@ -1,5 +1,5 @@
 # Windows host acceptance. Both identifiers must come from the operator's private policy.
-param([Parameter(Mandatory)][string]$VolumeId,[Parameter(Mandatory)][string]$Serial)
+param([Parameter(Mandatory)][string]$VolumeId,[Parameter(Mandatory)][string]$Serial,[switch]$Online)
 $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $true
 $suffix = [guid]::NewGuid().ToString('N').Substring(0,8)
@@ -31,7 +31,7 @@ for who in a b; do
 done
 gpg --batch --with-colons --fingerprint | awk -F: '$1=="fpr"{print $10;exit}'
 '@
-  docker run -d --name $client --label "workmatchr.d2c=$runId" --network bridge --add-host db.fixture.test:127.0.0.1 --tmpfs /var/lib/postgresql --entrypoint sleep $image infinity | Out-Null
+  docker run -d --name $client --label "workmatchr.d2c=$runId" --network bridge --add-host db.fixture.test:127.0.0.1 --tmpfs /run/d2c --tmpfs /var/lib/postgresql --entrypoint sleep $image infinity | Out-Null
   $created = $true
   InUbuntu 'k=/dev/shm/RUN_ID; openssl req -x509 -newkey rsa:2048 -nodes -days 1 -keyout "$k/server.key" -out "$k/server.crt" -subj /CN=db.fixture.test -addext subjectAltName=DNS:db.fixture.test 2>/dev/null'
   foreach ($name in 'server.key','server.crt') {
@@ -61,6 +61,21 @@ psql -U postgres -d fixture_db -v ON_ERROR_STOP=1 -c 'create table fixture(value
   $plan.publicKeyring="$keyHome/public"
   $plan.fingerprint=($fingerprint | Select-Object -Last 1).Trim()
   foreach ($gate in 'hostSecurityVerified','keyCustodyVerified','writerPauseVerified','cleanupBackstopVerified','preflight85Verified') { $plan[$gate]=$true }
+  $mode='backup'
+  if ($Online) {
+    $mode='online-backup'
+    $plan.operatorHost=[Environment]::MachineName.ToLowerInvariant()
+    $policy.operatorHost=$plan.operatorHost
+    docker exec $client psql -U postgres -v ON_ERROR_STOP=1 -c "alter role fixture_backup createdb password 'synthetic-fixture'" -c "alter database fixture_db set neon.project_id='fixture-project'" -c "alter database fixture_db set neon.branch_id='fixture-branch'" | Out-Null
+    docker exec $client sh -ec 'sed -i "s/^host .*trust$/host all all 127.0.0.1\/32 scram-sha-256/" /var/lib/postgresql/fixture/pg_hba.conf; gosu postgres pg_ctl -D /var/lib/postgresql/fixture reload' | Out-Null
+    $plan.Remove('writerPauseVerified')
+    $plan.scope='D2C_SINGLE_ONLINE_EXPORT'
+    $policy.onlineScope=$plan.scope
+    $plan.from=[DateTime]::UtcNow.AddSeconds(-5).ToString('o')
+    $plan.onlineSnapshotAccepted=$true
+    $plan.privilegedCredentialAccepted=$true
+    foreach ($field in 'from','until','runId','fingerprint','onlineSnapshotAccepted','privilegedCredentialAccepted','hostSecurityVerified','keyCustodyVerified','cleanupBackstopVerified','preflight85Verified') { $policy[$field]=$plan[$field] }
+  }
   $policy | ConvertTo-Json | Set-Content "$dir/policy.json"
   $plan | ConvertTo-Json | Set-Content "$dir/plan.json"
   foreach ($field in 'volumeId','volumeSerial') {
@@ -68,11 +83,20 @@ psql -U postgres -d fixture_db -v ON_ERROR_STOP=1 -c 'create table fixture(value
     $wrong[$field] = if ($field -eq 'volumeId') { '\\?\Volume{00000000-0000-0000-0000-000000000000}\' } else { '00000000' }
     $wrong | ConvertTo-Json | Set-Content "$dir/absent.json"
     $rejected = $false
-    try { node scripts/d2c-archive-stage.mjs backup "$dir/plan.json" --execute "$dir/absent.json" }
+    try { "synthetic-fixture" | node scripts/d2c-archive-stage.mjs $mode "$dir/plan.json" --execute "$dir/absent.json" }
     catch [System.Management.Automation.NativeCommandExitException] { $rejected = $true }
     if (!$rejected -or (Test-Path "$dir/backup.dump.gpg") -or (Test-Path "$dir/manifest.json")) { throw 'Card preflight did not stop export' }
   }
-  node scripts/d2c-archive-stage.mjs backup "$dir/plan.json" --execute "$dir/policy.json"
+  if ($Online) {
+    docker exec $client mv /etc/ssl/certs/ca-certificates.crt /run/d2c/synthetic-ca
+    try {
+      $tlsRefused=$false
+      try { "synthetic-fixture" | node scripts/d2c-archive-stage.mjs $mode "$dir/plan.json" --execute "$dir/policy.json" }
+      catch [System.Management.Automation.NativeCommandExitException] { $tlsRefused=$true }
+      if (!$tlsRefused -or (Test-Path "$dir/manifest.json") -or [IO.File]::Exists($cardFile)) { throw 'Untrusted TLS accepted' }
+    } finally { docker exec $client mv /run/d2c/synthetic-ca /etc/ssl/certs/ca-certificates.crt }
+  }
+  "synthetic-fixture" | node scripts/d2c-archive-stage.mjs $mode "$dir/plan.json" --execute "$dir/policy.json"
   $manifest = Get-Content "$dir/manifest.json" -Raw | ConvertFrom-Json
   if ((Get-FileHash -LiteralPath $cardFile).Hash -ne $manifest.sha256) { throw 'Card digest differs' }
   $archiveBytes = [IO.File]::ReadAllBytes($cardFile)
