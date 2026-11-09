@@ -64,13 +64,15 @@ export async function deliverLearningCertificateEmails(input: { limit?: number; 
     const certificate = await db.learningCertificate.findFirst({
       where: { id: payload.certificateId, userId: job.recipientUserId, status: 'ACTIVE' },
       select: {
-        certificateNumber: true, courseTitle: true, firstName: true, lastName: true, issuedAt: true, templateVersion: true,
+        certificateNumber: true, courseTitle: true, firstName: true, lastName: true, issuedAt: true, templateVersion: true, courseVersion: true, designSnapshot: true,
         user: { select: { email: true, emailVerified: true, status: true } },
       },
     })
     if (!certificate || certificate.user.status !== 'ACTIVE' || !certificate.user.emailVerified) { await finish('FAILED', 'CERTIFICATE_NOT_DELIVERABLE'); continue }
     const pdfBytes = await buildLearningCertificatePdf({
       templateVersion: certificate.templateVersion,
+      courseVersion: certificate.courseVersion,
+      designSnapshot: certificate.designSnapshot,
       firstName: certificate.firstName,
       lastName: certificate.lastName,
       courseTitle: certificate.courseTitle,
@@ -84,7 +86,7 @@ export async function deliverLearningCertificateEmails(input: { limit?: number; 
       courseTitle: certificate.courseTitle,
       certificateNumber: certificate.certificateNumber,
       downloadUrl: new URL('/e-learnings/mijn', getPublicAppBaseUrl()).toString(),
-      filename: learningCertificateFilename(certificate.firstName, certificate.lastName),
+      filename: learningCertificateFilename(certificate.firstName, certificate.lastName, certificate.templateVersion === 'WL-001-CERT-1.0' ? undefined : certificate.courseTitle),
       pdfBytes,
       idempotencyKey: job.idempotencyKey,
     })

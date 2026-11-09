@@ -1,3 +1,8 @@
+import { AcademyBundleEditor } from '@/components/learning/academy-bundle-editor'
+import { isAcademyBundle } from '@/lib/learning/academy-bundle-contract'
+import { authoringMetadata } from '@/lib/learning/academy-authoring-service'
+import { AcademyCourseEditor } from '@/components/learning/academy-course-editor'
+import { AcademyCourseReview } from '@/components/learning/academy-course-review'
 import Link from 'next/link'
 import { readAcademyCourseResults } from '@/lib/learning/academy-course-results'
 
@@ -7,10 +12,19 @@ export default async function CourseVersionPage({ params, searchParams }: {
   const { versionId } = await params
   const page = Number((await searchParams).pagina ?? 1)
   const version = await readAcademyCourseResults(versionId, page)
+  const metadata = version.sourceMetadata
+  const editable = metadata && typeof metadata === 'object' && ('authoring' in metadata || 'bundle' in metadata)
+    ? authoringMetadata(metadata) : null
   const base = `/platformbeheer/academy/cursussen/${versionId}`
   return <section className="min-w-0 space-y-5">
     <Link href="/platformbeheer/academy/cursussen" className="underline">Alle cursussen</Link>
     <h1 className="text-2xl font-bold">{version.course.title} · {version.version}</h1>
+    {editable ? <>
+      <AcademyCourseReview id={versionId} revision={editable.authoring.revision} state={version.status === 'DRAFT' ? editable.authoring.state : version.status} />
+      {isAcademyBundle(editable.authoring.content)
+        ? <AcademyBundleEditor initial={editable.authoring.content} id={versionId} revision={editable.authoring.revision} />
+        : <AcademyCourseEditor id={versionId} revision={editable.authoring.revision} initial={editable.authoring.content} readOnly={version.status !== 'DRAFT' || editable.authoring.state !== 'DRAFT'} />}
+    </> : <p>Historische cursusversie. De oorspronkelijke inhoud is alleen-lezen.</p>}
     <h2 className="text-xl font-semibold">Deelnemers en resultaten ({version._count.enrollments})</h2>
     {!version.enrollments.length && <p>Geen inschrijvingen op deze pagina.</p>}
     {version.enrollments.map(enrollment => <article key={enrollment.id} className="space-y-2 rounded-card border border-border p-4">

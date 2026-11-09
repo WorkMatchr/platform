@@ -1319,6 +1319,8 @@ model User {
   learningRetentionParticipations    LearningRetentionParticipation[]
   learningAnnualReminders            LearningAnnualReminder[]
   learningRetentionAnswers           LearningRetentionWeeklyAnswer[]
+  createdCertificateDesigns           LearningCertificateDesign[] @relation("CertificateDesignCreator")
+  reviewedCertificateDesigns          LearningCertificateDesign[] @relation("CertificateDesignReviewer")
   learningRetentionAnnualChecks      LearningRetentionAnnualCheck[]
   learningAnnualCheckAnswers         LearningRetentionAnnualAnswer[]
   assignedComplianceActions          ComplianceAction[]                   @relation("ComplianceActionAssignee")
@@ -5879,6 +5881,9 @@ model LearningCourseVersion {
   enrollments    LearningEnrollment[]
   examVersions   LearningExamVersion[]
 
+  academyImports LearningAcademyImport[]
+  retentionParticipations LearningRetentionParticipation[]
+
   @@unique([courseId, version])
   @@unique([id, courseId])
   @@index([status, publishedAt])
@@ -5957,6 +5962,8 @@ model LearningQuestionOption {
 }
 
 model LearningEnrollment {
+  accessRevokedAt DateTime? @db.Timestamptz(3)
+  accessExpiresAt DateTime? @db.Timestamptz(3)
   id                  String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId              String                       @db.Uuid
   courseVersionId     String                       @db.Uuid
@@ -6162,10 +6169,12 @@ model LearningRetentionProgramVersion {
   selectionPolicyVersion String                                 @db.VarChar(60)
   consentVersion         String                                 @db.VarChar(40)
   consentCopy            String                                 @db.Text
+  bankVersion            String?                                @db.VarChar(40)
   publishedAt            DateTime?                              @db.Timestamptz(3)
   createdAt              DateTime                               @default(now()) @db.Timestamptz(3)
   program                LearningRetentionProgram               @relation(fields: [programId, courseId], references: [id, courseId], onDelete: Restrict)
   participations         LearningRetentionParticipation[]
+  annualChecks           LearningRetentionAnnualCheck[]
 
   @@unique([id, courseId])
   @@index([programId, status, publishedAt])
@@ -6208,6 +6217,7 @@ model LearningRetentionParticipation {
   user                 User                                 @relation(fields: [userId], references: [id], onDelete: Restrict)
   enrollment           LearningEnrollment                   @relation(fields: [learningEnrollmentId, courseVersionId, userId], references: [id, courseVersionId, userId], onDelete: Restrict)
   programVersion       LearningRetentionProgramVersion      @relation(fields: [programVersionId, courseId], references: [id, courseId], onDelete: Restrict)
+  courseVersion        LearningCourseVersion                @relation(fields: [courseVersionId, courseId], references: [id, courseId], onDelete: Restrict, map: "LearningRetentionParticipation_course_version_course_fkey")
   weeklyChecks         LearningRetentionWeeklyCheck[]
 
   @@unique([learningEnrollmentId, programVersionId])
@@ -6303,6 +6313,7 @@ model LearningAnnualReminderConsentEvent {
 model LearningRetentionAnnualCheck {
   id             String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   reminderId     String                        @unique @db.Uuid
+  programVersionId String?                     @db.Uuid
   userId         String                        @db.Uuid
   checkVersion   String                        @default("WL-001-ANNUAL-CHECK-1.0") @db.VarChar(40)
   availableAt    DateTime                      @db.Timestamptz(3)
@@ -6312,10 +6323,12 @@ model LearningRetentionAnnualCheck {
   maxScore       Int                           @default(10)
   createdAt      DateTime                      @default(now()) @db.Timestamptz(3)
   reminder       LearningAnnualReminder       @relation(fields: [reminderId, userId], references: [id, userId], onDelete: Restrict)
+  programVersion LearningRetentionProgramVersion? @relation(fields: [programVersionId], references: [id], onDelete: Restrict)
   user           User                          @relation(fields: [userId], references: [id], onDelete: Restrict)
   questions      LearningRetentionAnnualQuestion[]
   answers        LearningRetentionAnnualAnswer[]
 
+  @@index([programVersionId])
   @@unique([id, userId])
   @@unique([reminderId, userId])
   @@index([userId, availableAt])
@@ -6353,6 +6366,7 @@ model LearningRetentionAnnualAnswer {
 }
 
 model LearningCertificate {
+  designSnapshot Json? @db.JsonB
   id                 String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId             String                    @db.Uuid
   courseId           String                    @db.Uuid
@@ -6377,4 +6391,42 @@ model LearningCertificate {
   @@unique([courseId, userId])
   @@index([userId, createdAt])
   @@index([status, issuedAt])
+}
+
+model LearningAcademyImport {
+  id              String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseVersionId String                @db.Uuid
+  bundleHash      String                @db.VarChar(64)
+  operatorReference String              @db.VarChar(120)
+  createdAt       DateTime              @default(now()) @db.Timestamptz(3)
+  courseVersion   LearningCourseVersion @relation(fields: [courseVersionId], references: [id], onDelete: Restrict)
+
+  @@unique([courseVersionId, bundleHash])
+}
+
+model LearningCertificateDesign {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  familyId String @db.Uuid
+  version Int
+  name String @db.VarChar(160)
+  state String @default("DRAFT") @db.VarChar(20)
+  revision Int @default(1)
+  definition Json @db.JsonB
+  checksum String @db.VarChar(64)
+  reviewedChecksum String? @db.VarChar(64)
+  createdBy String @db.Uuid
+  reviewedBy String? @db.Uuid
+  reviewedAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  creator User @relation("CertificateDesignCreator", fields: [createdBy], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  reviewer User? @relation("CertificateDesignReviewer", fields: [reviewedBy], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  bindings LearningCertificateDesignBinding[]
+  @@unique([familyId, version])
+}
+
+model LearningCertificateDesignBinding {
+  scope String @id @db.VarChar(48)
+  designId String @db.Uuid
+  design LearningCertificateDesign @relation(fields:[designId], references:[id], onDelete:Restrict, onUpdate:NoAction)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 }

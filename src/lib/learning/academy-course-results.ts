@@ -29,7 +29,7 @@ export async function readAcademyCourseResults(versionId: string, page: number) 
   const version = await getPrisma().learningCourseVersion.findUnique({
     where: { id: versionId },
     select: {
-      version: true, course: { select: { title: true } },
+      version: true, status: true, sourceMetadata: true, course: { select: { title: true } },
       chapters: { select: { id: true, title: true }, orderBy: { position: 'asc' } },
       _count: { select: { enrollments: true } },
       enrollments: {

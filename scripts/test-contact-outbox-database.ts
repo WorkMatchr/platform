@@ -44,8 +44,15 @@ try {
   const baseline = process.argv.includes('--baseline-85')
   const migrationRoot = path.resolve('prisma/migrations')
   const allMigrations = readdirSync(migrationRoot).filter(name => /^\d/.test(name)).sort()
-  assert.equal(allMigrations.length, 96)
-  const expectedMigrations = allMigrations.filter(name => !baseline || (!pendingMigrations.includes(name)
+  assert.equal(allMigrations.length, 101)
+  const academyMigrations = new Set([
+    '20261024191000_add_academy_course_isolation',
+    '20261024204000_allow_academy_certificate_numbers',
+    '20261104220000_add_learning_certificate_designer',
+    '20261109180000_academy_editor_chapter_range',
+    '20261109181000_academy_enrollment_access',
+  ])
+  const expectedMigrations = allMigrations.filter(name => !baseline || (!academyMigrations.has(name) && !pendingMigrations.includes(name)
     && name !== '20261102120000_add_closed_contact_audit_retention'
     && name !== '20261103100000_add_closed_contact_decision_register'
     && name !== '20261106120000_repair_pro_financial_integrity'))

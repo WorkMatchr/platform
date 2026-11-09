@@ -32,7 +32,7 @@ async function check() {
     assert.equal(identity.database, url.pathname.slice(1))
     const rows = (await db.query('SELECT migration_name,checksum,finished_at,rolled_back_at FROM _prisma_migrations ORDER BY migration_name')).rows
     const names = readdirSync('prisma/migrations').filter(name => /^\d/.test(name)).sort()
-    assert.equal(names.length, 96); assert.deepEqual(rows.map(row => row.migration_name), names)
+    assert.equal(names.length, 101); assert.deepEqual(rows.map(row => row.migration_name), names)
     for (const row of rows) {
       assert.ok(row.finished_at && !row.rolled_back_at)
       const sql = readFileSync(`prisma/migrations/${row.migration_name}/migration.sql`, 'utf8')

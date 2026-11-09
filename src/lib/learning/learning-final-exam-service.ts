@@ -3,9 +3,8 @@ import { Prisma } from '@/generated/prisma/client'
 import { getPrisma } from '@/lib/prisma'
 import { isExamAnswerCorrect, scoreExam, type ExamQuestionType } from './learning-exam-policy'
 
-const COURSE_CODE = 'WL-001'
-const COURSE_SLUG = 'rie-in-de-praktijk'
-const COURSE_VERSION = 'prototype-0.17'
+import { COURSE_CODE, COURSE_SLUG, COURSE_VERSION } from './learning-exam-runtime-version'
+
 const EXAM_CODE = 'WL-001-FINAL'
 const EXAM_VERSIONS_IN_PRIORITY_ORDER = ['WL-001-EXAM-1.1', 'WL-001-EXAM-1.0'] as const
 const QUESTION_COUNT = 50
