@@ -342,7 +342,7 @@ try {
     const { hashPassword } = await import('better-auth/crypto')
     const { mkdir, writeFile } = await import('node:fs/promises')
     const { randomBytes } = await import('node:crypto')
-    const platform = await db.organization.create({ data: { name: 'TEST Platform', organizationType: 'PLATFORM_OPERATOR', systemKey: 'WORKMATCHR_PLATFORM', status: 'ACTIVE' } })
+    const platform = await db.organization.findUniqueOrThrow({ where: { systemKey: 'WORKMATCHR_PLATFORM' } })
     const administrator = await db.user.create({ data: { email: `${randomUUID()}@example.invalid`, platformRole: 'ADMIN', status: 'ACTIVE', emailVerified: true, accountType: 'CLIENT', memberships: { create: { organizationId: platform.id, role: 'OWNER', status: 'ACTIVE' } } } })
     const password = randomBytes(24).toString('base64url')
     const hash = await hashPassword(password)
