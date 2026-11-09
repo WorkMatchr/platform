@@ -46,8 +46,16 @@ describe('Learning-queryservice en eigenaarsgrenzen', () => {
     mocks.enrollmentFindFirst.mockResolvedValue(null)
 
     await expect(getLearningChapter('rie-in-de-praktijk', 'waarom-een-rie', 'user-a')).resolves.toBeNull()
-    expect(mocks.enrollmentFindFirst).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: 'user-a', courseVersionId: 'version-1' } }))
+    const access = {
+      userId: 'user-a',
+      accessRevokedAt: null,
+      OR: [{ accessExpiresAt: null }, { accessExpiresAt: { gt: expect.any(Date) } }],
+    }
+    expect(mocks.enrollmentFindFirst).toHaveBeenCalledWith(expect.objectContaining({
+      where: { ...access, courseVersionId: 'version-1' },
+    }))
     const query = mocks.chapterFindFirst.mock.calls[0]?.[0]
+    expect(query.where.courseVersion.enrollments).toEqual({ some: access })
     expect(query.include.progress).toMatchObject({ where: { enrollment: { userId: 'user-a' } } })
     expect(query.include.contentBlocks.include.question.select).not.toHaveProperty('correctAnswer')
     expect(query.where.courseVersion.status).toEqual({ in: ['PUBLISHED', 'RETIRED'] })
