@@ -6,7 +6,6 @@ import type {
   OrganizationStatus,
   OrganizationType,
   Prisma,
-  RequestRequestedStart,
 } from '@/generated/prisma/client'
 import { Prisma as PrismaNamespace } from '@/generated/prisma/client'
 import {
@@ -19,7 +18,6 @@ import {
   requestPublicationInputSchema,
   type RequestPublicationInput,
 } from './request-contract'
-import { createRequestEligibilitySnapshot } from './request-eligibility-service'
 import {
   getPublicationRestriction,
   getPublicationRestrictionInTransaction,
@@ -33,6 +31,7 @@ export class RequestServiceError extends Error {
       | 'NOT_FOUND'
       | 'NOT_ELIGIBLE'
       | 'ACCESS_DENIED'
+      | 'CANONICAL_REQUEST_REQUIRED'
       | 'PUBLICATION_REVIEW_REQUIRED'
       | 'CONFLICT',
   ) {
@@ -270,6 +269,7 @@ export async function getRequestPublicationPreview(
       sector: sectorFromDossier(dossier) ?? 'Niet opgegeven',
     },
     existingRequest: dossier.request,
+    requiresCanonicalIntake: !version.simpleRequestSnapshot,
     publicationRestriction,
   } as const
 }
@@ -420,17 +420,18 @@ export async function publishRequestAttempt(input: {
         dossier.currentVersionNumber,
       )
       if (!version) throw new RequestServiceError('CONFLICT')
-      const simple = version.simpleRequestSnapshot ? simpleAdviceSchema.parse(version.simpleRequestSnapshot) : null
+      if (!version.simpleRequestSnapshot) throw new RequestServiceError('CANONICAL_REQUEST_REQUIRED')
+      const simple = simpleAdviceSchema.parse(version.simpleRequestSnapshot)
       const location = await transaction.organizationLocation.findFirst({
         where: {
           organizationId: dossier.organizationId,
-          ...(simple?.organizationLocationId ? { id: simple.organizationLocationId } : {}),
+          ...(simple.organizationLocationId ? { id: simple.organizationLocationId } : {}),
           archivedAt: null,
         },
         orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
         select: { province: true, city: true },
       })
-      if (simple && usesLocation(simple, 'ORGANIZATION') && !simple.organizationLocationCity && !location) throw new RequestServiceError('NOT_ELIGIBLE')
+      if (usesLocation(simple, 'ORGANIZATION') && !simple.organizationLocationCity && !location) throw new RequestServiceError('NOT_ELIGIBLE')
       const organizationSector =
         await transaction.organizationSector.findFirst({
           where: { organizationId: dossier.organizationId },
@@ -450,7 +451,7 @@ export async function publishRequestAttempt(input: {
         transaction,
         input.at.getUTCFullYear(),
       )
-      const region = simple ? (usesLocation(simple, 'OTHER_LOCATION') ? simple.otherLocationCity : usesLocation(simple, 'ORGANIZATION') ? simple.organizationLocationCity || location?.province?.trim() || location?.city.trim() || null : null) : location?.province?.trim() || location?.city.trim() || null
+      const region = usesLocation(simple, 'OTHER_LOCATION') ? simple.otherLocationCity : usesLocation(simple, 'ORGANIZATION') ? simple.organizationLocationCity || location?.province?.trim() || location?.city.trim() || null : null
       const sectorCode =
         organizationSector?.sector.providerSectorTaxonomyMap?.term.code ??
         null
@@ -460,14 +461,14 @@ export async function publishRequestAttempt(input: {
           tenantId: dossier.organizationId,
           organizationId: dossier.organizationId,
           adviceDossierId: dossier.id,
-          adviceDossierVersionId: simple ? version.id : null,
+          adviceDossierVersionId: version.id,
           status: 'PUBLISHED',
-          title: simple?.requestTitle ?? requestTitle(version.subject),
-          publicSummary: simple?.requestDescription ?? input.publication.publicSummary,
+          title: simple.requestTitle,
+          publicSummary: simple.requestDescription,
           region,
           sector: organizationSector?.sector.name ?? null,
-          requestedStart: simple?.desiredStartMode ?? input.publication.requestedStart as RequestRequestedStart,
-          notes: simple ? simpleAdviceSummary(simple, location?.city).filter(([label]) => !['Beschrijving', 'Waar heeft u hulp bij?'].includes(label)).map(([label, value]) => `${label}: ${value}`).join('\n') : input.publication.notes || null,
+          requestedStart: simple.desiredStartMode,
+          notes: simpleAdviceSummary(simple, location?.city).filter(([label]) => !['Beschrijving', 'Waar heeft u hulp bij?'].includes(label)).map(([label, value]) => `${label}: ${value}`).join('\n'),
           primaryExpertise: expertise.primary,
           additionalExpertise: [...expertise.additional],
           possibleExpertise: [...expertise.possible],
@@ -492,12 +493,7 @@ export async function publishRequestAttempt(input: {
           possibleExpertiseCodes: true,
         },
       })
-      if (simple) await handoffRequest(transaction, { requestId: request.id, organizationId: dossier.organizationId, actorUserId: input.viewer.userId, sourceVersionId: version.id, at: input.at, mode: 'PUBLICATION', legacyIntakeId: input.legacyIntakeId })
-      const eligibleCount = simple ? 0 : await createRequestEligibilitySnapshot(
-        transaction,
-        request,
-        input.at,
-      )
+      await handoffRequest(transaction, { requestId: request.id, organizationId: dossier.organizationId, actorUserId: input.viewer.userId, sourceVersionId: version.id, at: input.at, mode: 'PUBLICATION', legacyIntakeId: input.legacyIntakeId })
       await transaction.requestEvent.create({
         data: {
           requestId: request.id,
@@ -513,19 +509,10 @@ export async function publishRequestAttempt(input: {
           data: { status: 'CLOSED', requestId: request.id },
         })
       }
-      if (!simple) await transaction.requestEvent.create({
-        data: {
-          requestId: request.id,
-          actorUserId: input.viewer.userId,
-          type: 'ELIGIBILITY_SNAPSHOT_CREATED',
-          idempotencyKey: `request:${request.id}:eligibility`,
-          occurredAt: input.at,
-        },
-      })
       return {
         id: request.id,
         requestNumber: request.requestNumber,
-        eligibleCount,
+        eligibleCount: 0,
       }
     }
   return input.transaction ? run(input.transaction) : getPrisma().$transaction(run, { isolationLevel: 'Serializable' })

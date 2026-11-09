@@ -55,6 +55,7 @@ export async function publishRequestAction(
     requestId = request.id
   } catch (error) {
     if (error instanceof RequestServiceError) {
+      if (error.code === 'CANONICAL_REQUEST_REQUIRED') redirect(`/adviesdossiers/${parsed.data.adviceDossierId}`)
       return {
         values,
         message:

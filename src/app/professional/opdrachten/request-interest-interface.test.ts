@@ -29,7 +29,7 @@ describe('M7D.2 providerinterface', () => {
       'Sector',
       'Planning',
       'Gevraagde deskundigheid',
-      'Na een succesvolle claim worden de contactgegevens',
+      'Eerdere aanvragen',
     ]) {
       expect(`${listSource}\n${detailSource}`.toLowerCase()).toContain(
         label.toLowerCase(),
@@ -52,15 +52,11 @@ describe('M7D.2 providerinterface', () => {
     expect(`${listSource}\n${detailSource}`).not.toContain('getPrisma')
   })
 
-  it('toont claimstatus, volle plaatsen en geen credit- of offerteformulier', () => {
-    expect(detailSource).toContain('Offerteplaats claimen')
-    expect(detailSource).toContain(
-      'Alle offerteplaatsen zijn momenteel bezet',
-    )
-    expect(detailSource).toContain(
-      'Offerteplaats succesvol geclaimd',
-    )
-    expect(detailSource).not.toContain('Offertebedrag')
-    expect(detailSource).not.toContain('Credits afschrijven')
+  it('toont historische kosten en verwijst voor nieuwe deelname naar uitnodigingen', () => {
+    expect(detailSource).toContain('Oorspronkelijke kosten')
+    expect(listSource).toContain('href="/uitnodigingen"')
+    expect(detailSource).not.toContain('claimRequestOfferSlotAction')
+    expect(detailSource).not.toContain('registerRequestInterestAction')
+    expect(detailSource).toContain('withdrawRequestInterestAction')
   })
 })

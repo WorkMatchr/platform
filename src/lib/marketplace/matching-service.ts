@@ -1,3 +1,4 @@
+import { requireNoHistoricalParticipation } from '@/lib/requests/historical-participation'
 import { checkRunScope, readAssignmentScope, requireWithin, scopedCapabilities, eligibleForScopedExpertise } from './assignment-scope-service'
 import { getApplicableMarketplaceRuleSet } from './marketplace-rules-service'
 import { resolveAssignmentPrice } from './assignment-pricing'
@@ -131,6 +132,7 @@ export async function runMarketplaceMatching(input: {
       },
     })
     if (!assignment) throw new MarketplaceServiceError('INVALID_STATE')
+    await requireNoHistoricalParticipation(transaction, assignment.requestId)
     if (!assignment.responseDeadline || assignment.responseDeadline <= now) throw new MarketplaceServiceError('DEADLINE_PASSED')
     if (!assignment.primarySpecialismId) throw new MarketplaceServiceError('VALIDATION_ERROR')
 
@@ -424,6 +426,7 @@ export async function applyMarketplaceMatchIntervention(input: {
       },
     })
     if (!run || run.candidates.length !== input.candidateIds.length) throw new MarketplaceServiceError('NOT_FOUND')
+    await requireNoHistoricalParticipation(transaction, run.assignment.requestId)
     const scope=await checkRunScope(transaction,run.assignment.id,run.assignmentSnapshot,now)
     const {capabilityCode}=z.object({capabilityCode:z.string()}).parse(run.assignmentSnapshot)
     for(const c of run.candidates) if (!await eligibleForScopedExpertise(transaction,c.providerProfileId,scope,invitationMatchFromFactors(capabilityCode,c.explanation).recipientExpertise,now)) throw new MarketplaceServiceError('NOT_SELECTABLE')

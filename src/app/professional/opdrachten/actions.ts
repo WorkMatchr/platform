@@ -27,51 +27,31 @@ async function actorForRequest(requestId: string) {
   }
 }
 
-async function mutateInterest(
-  formData: FormData,
-  operation: 'REGISTER' | 'WITHDRAW',
-) {
-  const parsed = requestInterestInputSchema.safeParse({
-    requestId: String(formData.get('requestId') ?? ''),
-  })
+export async function registerRequestInterestAction(formData: FormData) {
+  const parsed = requestInterestInputSchema.safeParse({ requestId: String(formData.get('requestId') ?? '') })
   if (!parsed.success) redirect('/professional/opdrachten')
-
   const actor = await actorForRequest(parsed.data.requestId)
   try {
-    if (operation === 'REGISTER') {
-      await registerRequestInterest({
-        actor,
-        requestId: parsed.data.requestId,
-      })
-    } else {
-      await withdrawRequestInterest({
-        actor,
-        requestId: parsed.data.requestId,
-      })
-    }
+    await registerRequestInterest({ actor, requestId: parsed.data.requestId })
   } catch (error) {
-    if (error instanceof RequestInterestServiceError) {
-      redirect('/professional/opdrachten')
-    }
-    throw error
+    if (!(error instanceof RequestInterestServiceError)) throw error
   }
-
-  revalidatePath('/professional/opdrachten')
-  revalidatePath(`/professional/opdrachten/${parsed.data.requestId}`)
-  revalidatePath('/aanvragen')
-  redirect(
-    `/professional/opdrachten/${parsed.data.requestId}?result=${
-      operation === 'REGISTER' ? 'interested' : 'withdrawn'
-    }`,
-  )
-}
-
-export async function registerRequestInterestAction(formData: FormData) {
-  return mutateInterest(formData, 'REGISTER')
+  redirect('/professional/opdrachten')
 }
 
 export async function withdrawRequestInterestAction(formData: FormData) {
-  return mutateInterest(formData, 'WITHDRAW')
+  const parsed = requestInterestInputSchema.safeParse({ requestId: String(formData.get('requestId') ?? '') })
+  if (!parsed.success) redirect('/professional/opdrachten')
+  const actor = await actorForRequest(parsed.data.requestId)
+  try {
+    await withdrawRequestInterest({ actor, requestId: parsed.data.requestId })
+  } catch (error) {
+    if (!(error instanceof RequestInterestServiceError)) throw error
+    redirect('/professional/opdrachten')
+  }
+  revalidatePath('/professional/opdrachten')
+  revalidatePath('/aanvragen')
+  redirect(`/professional/opdrachten/${parsed.data.requestId}?result=withdrawn`)
 }
 
 export async function claimRequestOfferSlotAction(formData: FormData) {
@@ -81,34 +61,10 @@ export async function claimRequestOfferSlotAction(formData: FormData) {
   if (!parsed.success) redirect('/professional/opdrachten')
 
   const actor = await actorForRequest(parsed.data.requestId)
-  let result:
-    | 'slot-claimed'
-    | 'slots-full'
-    | 'insufficient-credits'
-    | 'claim-error' =
-    'slot-claimed'
   try {
-    await claimRequestOfferSlot({
-      actor,
-      requestId: parsed.data.requestId,
-    })
+    await claimRequestOfferSlot({ actor, requestId: parsed.data.requestId })
   } catch (error) {
-    if (error instanceof RequestOfferSlotServiceError) {
-      result =
-        error.code === 'FULL'
-          ? 'slots-full'
-          : error.code === 'INSUFFICIENT_CREDITS'
-            ? 'insufficient-credits'
-            : 'claim-error'
-    } else {
-      throw error
-    }
+    if (!(error instanceof RequestOfferSlotServiceError)) throw error
   }
-
-  revalidatePath('/professional/opdrachten')
-  revalidatePath(`/professional/opdrachten/${parsed.data.requestId}`)
-  revalidatePath('/aanvragen')
-  redirect(
-    `/professional/opdrachten/${parsed.data.requestId}?result=${result}`,
-  )
+  redirect('/professional/opdrachten')
 }

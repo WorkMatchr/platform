@@ -1,3 +1,4 @@
+import { requireNoHistoricalParticipation } from '@/lib/requests/historical-participation'
 import { externalAssignmentId } from '@/lib/assignments/assignment-identity'
 import { checkRunScope, eligibleForScopedExpertise } from './assignment-scope-service'
 import { getPrisma } from '@/lib/prisma'
@@ -44,6 +45,7 @@ export async function acceptProviderInvitation(input: {
     const scope=await checkRunScope(transaction,invitation.assignmentId,invitation.matchRun.assignmentSnapshot,now)
     if(!await eligibleForScopedExpertise(transaction,invitation.providerProfileId,scope,(invitation.snapshot as Record<string,unknown>)?.recipientExpertise,now)) throw new MarketplaceServiceError('NOT_SELECTABLE')
     if (invitation.participation) return invitation.participation
+    await requireNoHistoricalParticipation(transaction, invitation.assignment.requestId)
     if (invitation.status !== 'INVITED') throw new MarketplaceServiceError('INVALID_STATE')
     if (invitation.deadlineAt <= now) throw new MarketplaceServiceError('DEADLINE_PASSED')
     if (access.providerProfile.selectabilityStatus !== 'SELECTABLE' || access.providerProfile.lifecycleStatus !== 'QUALIFIED') {

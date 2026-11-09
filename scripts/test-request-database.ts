@@ -298,62 +298,22 @@ async function main() {
       requestedStart: 'WITHIN_ONE_MONTH' as const,
       notes: 'Neem eerst contact op met de eigenaar.',
     }
-    const race = await Promise.all(
-      Array.from({ length: 6 }, () =>
-        requests.publishRequest({
-          viewer: ownerViewer,
-          publication,
-          at: new Date('2026-08-01T09:30:00Z'),
-        }),
-      ),
-    )
-    assert.equal(new Set(race.map((item) => item.id)).size, 1)
-    assert.equal(await prisma.request.count(), 1)
-    const created = await prisma.request.findUniqueOrThrow({
-      where: { id: race[0]!.id },
-      include: { events: true },
-    })
-    assert.match(created.requestNumber, /^WM-R-2026-\d{6}$/)
-    assert.equal(created.status, 'PUBLISHED')
-    assert.equal(created.tenantId, organization.id)
-    assert.equal(created.organizationId, organization.id)
-    assert.equal(created.primaryExpertise, 'Ergonoom')
-    assert.deepEqual(created.primaryExpertiseCodes, ['ergonoom'])
-    assert.deepEqual(created.additionalExpertise, [
-      'Arbeidsdeskundige',
-    ])
-    assert.deepEqual(created.additionalExpertiseCodes, [
-      'arbeidsdeskundige',
-    ])
-    assert.deepEqual(created.possibleExpertise, [
-      'Hoger Veiligheidskundige (HVK)',
-    ])
-    assert.deepEqual(created.possibleExpertiseCodes, [
-      'hogere-veiligheidskundige',
-    ])
-    assert.equal(created.events.length, 2)
-    assert.deepEqual(
-      new Set(created.events.map((event) => event.type)),
-      new Set([
-        'REQUEST_PUBLISHED',
-        'ELIGIBILITY_SNAPSHOT_CREATED',
-      ]),
-    )
-
-    const secondDossier = await createDossier('WM-2026-700003')
-    const secondRequest = await requests.publishRequest({
-      viewer: ownerViewer,
-      publication: {
-        ...publication,
-        adviceDossierId: secondDossier.id,
-      },
-      at: new Date('2026-08-01T09:31:00Z'),
-    })
-    assert.notEqual(secondRequest.requestNumber, created.requestNumber)
-    assert.equal(await prisma.request.count(), 2)
-
+    await Promise.all(Array.from({ length: 6 }, () => expectRequestError(
+      () => requests.publishRequest({ viewer: ownerViewer, publication }), 'CANONICAL_REQUEST_REQUIRED',
+    )))
+    assert.equal(await prisma.request.count(), 0)
+    // Existing publications remain addressable, even when their source has no canonical snapshot.
+    const created = await prisma.request.create({ data: {
+      requestNumber: 'WM-R-2026-700001', tenantId: organization.id, organizationId: organization.id,
+      adviceDossierId: dossier.id, status: 'PUBLISHED', title: dossier.subject, publicSummary: publication.publicSummary,
+      requestedStart: publication.requestedStart, publishedAt: new Date('2026-08-01T09:30:00Z'),
+      events: { create: { actorUserId: owner.id, type: 'REQUEST_PUBLISHED', idempotencyKey: 'fixture:historical-publication' } },
+    }, include: { events: true } })
+    const replay = await requests.publishRequest({ viewer: ownerViewer, publication })
+    assert.equal(replay.id, created.id)
+    assert.equal(await prisma.requestEvent.count({ where: { requestId: created.id } }), 1)
     const ownList = await requests.listOwnRequests(ownerViewer)
-    assert.equal(ownList.length, 2)
+    assert.equal(ownList.length, 1)
     assert.equal(
       await requests.listOwnRequests({
         userId: otherOwner.id,

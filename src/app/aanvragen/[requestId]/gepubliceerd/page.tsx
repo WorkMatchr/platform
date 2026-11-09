@@ -8,7 +8,6 @@ import { withdrawPublishedRequestAction } from '@/app/aanvragen/actions'
 import { requireClientAdviceDossierViewer } from '@/lib/advice-dossiers/advice-dossier-authorization'
 import {
   calculateWithdrawalRefund,
-  getCurrentMarketplaceRuleSet,
 } from '@/lib/marketplace/marketplace-rules-service'
 import { withdrawalReasonLabels } from '@/lib/marketplace/marketplace-reliability-service'
 import { requestStatusLabels } from '@/lib/requests/request-contract'
@@ -41,7 +40,6 @@ export default async function PublishedRequestPage({
     if (error instanceof RequestServiceError) notFound()
     throw error
   }
-  const marketplaceRules = await getCurrentMarketplaceRuleSet()
   const expectedRefund = request.offerSlots.reduce((total, slot) => {
     if (!slot.creditAmount || !slot.marketplaceRuleSet) return total
     return total + calculateWithdrawalRefund(
@@ -114,17 +112,11 @@ export default async function PublishedRequestPage({
             </div>
             <div>
               <dt className="font-semibold text-text-secondary">
-                Offerteplaatsen bezet
+                Historische offerteplaatsen
               </dt>
               <dd className="mt-1 text-brand-dark">
-                {request._count.offerSlots} / {marketplaceRules.maximumParticipants}
+                {request._count.offerSlots}
               </dd>
-            </div>
-            <div>
-              <dt className="font-semibold text-text-secondary">
-                Offertes ontvangen
-              </dt>
-              <dd className="mt-1 text-brand-dark">0</dd>
             </div>
           </dl>}
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">

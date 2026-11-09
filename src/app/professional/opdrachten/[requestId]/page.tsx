@@ -5,7 +5,7 @@ import { Container } from '@/components/layout/container'
 import { Section } from '@/components/layout/section'
 import { ActionForm, SubmitButton as Button } from '@/components/ui/action-form'
 import { LinkButton } from '@/components/ui/link-button'
-import { requireMarketplacePageMembership } from '@/lib/providers/provider-marketplace-page'
+import { requireOrganizationMembership } from '@/lib/organizations/organization-authorization'
 import {
   requestInterestStatusLabels,
 } from '@/lib/requests/request-interest-contract'
@@ -13,10 +13,9 @@ import {
   getEligibleRequestForProvider,
   RequestInterestServiceError,
 } from '@/lib/requests/request-interest-service'
+import { requestOfferSlotStatusLabels } from '@/lib/requests/request-offer-slot-contract'
 import { requestStartLabels } from '@/lib/requests/request-contract'
 import {
-  claimRequestOfferSlotAction,
-  registerRequestInterestAction,
   withdrawRequestInterestAction,
 } from '../actions'
 
@@ -35,7 +34,7 @@ export default async function ProviderRequestDetailPage({
   const { requestId } = await params
   const { result } = await searchParams
   const { user, activeMembership } =
-    await requireMarketplacePageMembership(
+    await requireOrganizationMembership(
       undefined,
       `/professional/opdrachten/${requestId}`,
     )
@@ -59,16 +58,11 @@ export default async function ProviderRequestDetailPage({
     detail.interest?.offerSlot?.status === 'CLAIMED'
       ? detail.interest.offerSlot
       : null
-  const offerSlotsFull =
-    detail.activeOfferSlotCount >=
-      detail.marketplaceRules.maximumParticipants &&
-    !claimedOfferSlot
-
   return (
     <Section spacing="compact">
       <Container size="narrow">
         <LinkButton href="/professional/opdrachten" variant="outline">
-          Terug naar passende aanvragen
+          Terug naar eerdere aanvragen
         </LinkButton>
 
         <article className="mt-5 rounded-card border border-border bg-surface p-5 sm:p-7">
@@ -78,15 +72,7 @@ export default async function ProviderRequestDetailPage({
           <h1 className="mt-1 text-heading-2 font-bold text-brand-dark">
             {request.title}
           </h1>
-          {result === 'interested' ? (
-            <p
-              role="status"
-              className="mt-5 rounded-control border border-success-border bg-success-subtle p-4 font-semibold text-brand-dark"
-            >
-              Interesse geregistreerd
-            </p>
-          ) : null}
-          {result === 'withdrawn' ? (
+          {result === 'withdrawn' && detail.interest.status === 'WITHDRAWN' ? (
             <p
               role="status"
               className="mt-5 rounded-control border border-border bg-surface-muted p-4 font-semibold text-brand-dark"
@@ -94,54 +80,6 @@ export default async function ProviderRequestDetailPage({
               Uw interesse is ingetrokken.
             </p>
           ) : null}
-          {result === 'slot-claimed' || claimedOfferSlot ? (
-            <div
-              role="status"
-              className="mt-5 rounded-control border border-success-border bg-success-subtle p-4 text-brand-dark"
-            >
-              <p className="font-semibold">
-                ✓ Offerteplaats succesvol geclaimd
-              </p>
-              <p className="mt-1 text-sm">
-                U kunt in de volgende stap uw offerte opstellen.
-              </p>
-            </div>
-          ) : null}
-          {result === 'slots-full' || offerSlotsFull ? (
-            <p
-              role="status"
-              className="mt-5 rounded-control border border-info-border bg-info-subtle p-4 font-semibold text-brand-dark"
-            >
-              Alle offerteplaatsen zijn momenteel bezet. Uw interesse
-              blijft zichtbaar.
-            </p>
-          ) : null}
-          {result === 'claim-error' ? (
-            <p
-              role="alert"
-              className="mt-5 rounded-control border border-error-border bg-error-subtle p-4 font-semibold text-brand-dark"
-            >
-              De offerteplaats kon niet worden geclaimd. Controleer of
-              de aanvraag en uw interesse nog actief zijn.
-            </p>
-          ) : null}
-          {result === 'insufficient-credits' ? (
-            <div
-              role="alert"
-              className="mt-5 rounded-control border border-error-border bg-error-subtle p-4 text-brand-dark"
-            >
-              <p className="font-semibold">
-                Uw organisatie heeft onvoldoende credits voor deze deelnameplaats.
-              </p>
-              <p className="mt-1 text-sm">
-                Er zijn geen credits afgeschreven en de gegevens van de opdrachtgever blijven afgeschermd.
-              </p>
-              <LinkButton className="mt-3" href="/credits" variant="outline">
-                Bekijk uw credits
-              </LinkButton>
-            </div>
-          ) : null}
-
           <section className="mt-6">
             <h2 className="text-xl font-bold text-brand-dark">
               Omschrijving
@@ -267,17 +205,7 @@ export default async function ProviderRequestDetailPage({
                 </div>
               ) : null}
             </section>
-          ) : (
-            <aside className="mt-6 rounded-card border border-info-border bg-info-subtle p-4 text-sm text-brand-dark">
-              U neemt hiermee één van de maximaal{' '}
-              {detail.marketplaceRules.maximumParticipants}{' '}
-              deelnameplaatsen in. De{' '}
-              {detail.marketplaceRules.participationPriceCredits} credits
-              worden direct afgeschreven. Na een succesvolle claim worden de contactgegevens
-              van de opdrachtgever beschikbaar, zodat u een offerte kunt uitbrengen.
-            </aside>
-          )}
-
+          ) : null}
           <div className="mt-6 border-t border-border pt-5">
             <p className="text-sm text-text-secondary">
               Status:{' '}
@@ -287,25 +215,12 @@ export default async function ProviderRequestDetailPage({
                   : 'Nog geen interesse'}
               </span>
             </p>
-            {claimedOfferSlot ? (
-              <p className="mt-3 text-sm text-text-secondary">
-                Uw organisatie heeft offerteplaats{' '}
-                {claimedOfferSlot.slotNumber} geclaimd.
-              </p>
-            ) : detail.canManage && interested ? (
+            {detail.interest.offerSlot && <p>{requestOfferSlotStatusLabels[detail.interest.offerSlot.status]} · plaats {detail.interest.offerSlot.slotNumber}</p>}
+            {detail.interest.offerSlot?.creditAmount != null && (
+              <p>Oorspronkelijke kosten: {detail.interest.offerSlot.creditAmount} credits.</p>
+            )}
+            {!claimedOfferSlot && detail.canManage && interested && request.status === 'PUBLISHED' ? (
               <div className="mt-4 flex flex-col items-start gap-3 sm:flex-row">
-                {!offerSlotsFull ? (
-                  <ActionForm action={claimRequestOfferSlotAction}>
-                    <input
-                      type="hidden"
-                      name="requestId"
-                      value={request.id}
-                    />
-                    <Button type="submit">
-                      Offerteplaats claimen
-                    </Button>
-                  </ActionForm>
-                ) : null}
                 <ActionForm action={withdrawRequestInterestAction}>
                   <input
                     type="hidden"
@@ -317,22 +232,8 @@ export default async function ProviderRequestDetailPage({
                   </Button>
                 </ActionForm>
               </div>
-            ) : detail.canManage ? (
-              <ActionForm
-                action={registerRequestInterestAction}
-                className="mt-4"
-              >
-                <input type="hidden" name="requestId" value={request.id} />
-                <Button type="submit">
-                  Ik heb interesse
-                </Button>
-              </ActionForm>
-            ) : (
-              <p className="mt-3 text-sm text-text-secondary">
-                U kunt deze aanvraag bekijken. Alleen een OWNER of
-                ADMIN kan namens de organisatie interesse beheren.
-              </p>
-            )}
+            ) : null}
+            <LinkButton href="/uitnodigingen" variant="outline">Naar mijn uitnodigingen</LinkButton>
           </div>
         </article>
       </Container>

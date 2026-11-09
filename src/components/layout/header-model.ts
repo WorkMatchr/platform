@@ -90,7 +90,7 @@ export function buildHeaderViewModel(
                 : []),
               ...(supportsProviderWork
                 ? [
-                    { href: '/professional/opdrachten', label: 'Beschikbare opdrachten' },
+                    { href: '/professional/opdrachten', label: 'Eerdere aanvragen' },
                     { href: '/uitnodigingen', label: 'Uitnodigingen' },
                   ]
                 : []),

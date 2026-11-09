@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation'
 import { Container } from '@/components/layout/container'
 import { Section } from '@/components/layout/section'
 import { Card } from '@/components/ui/card'
-import { requireMarketplacePageMembership } from '@/lib/providers/provider-marketplace-page'
+import { requireOrganizationMembership } from '@/lib/organizations/organization-authorization'
 import {
   requestInterestStatusLabels,
 } from '@/lib/requests/request-interest-contract'
@@ -16,7 +16,7 @@ import {
 import { requestStartLabels } from '@/lib/requests/request-contract'
 
 export const metadata: Metadata = {
-  title: 'Passende aanvragen | WorkMatchr',
+  title: 'Eerdere aanvragen | WorkMatchr',
   robots: { index: false, follow: false },
 }
 
@@ -27,7 +27,7 @@ const dateFormatter = new Intl.DateTimeFormat('nl-NL', {
 
 export default async function ProviderRequestsPage() {
   const { user, activeMembership } =
-    await requireMarketplacePageMembership(
+    await requireOrganizationMembership(
       undefined,
       '/professional/opdrachten',
     )
@@ -49,22 +49,20 @@ export default async function ProviderRequestsPage() {
           Professionele organisatie
         </p>
         <h1 className="mt-1 text-heading-2 font-bold text-brand-dark">
-          Passende aanvragen
+          Eerdere aanvragen
         </h1>
         <p className="mt-2 max-w-3xl text-text-secondary">
-          Bekijk geanonimiseerde aanvragen die aansluiten op de
-          gecontroleerde deskundigheid en het werkgebied van uw
-          organisatie.
+          Hier vindt u uw eerdere interesseaanmeldingen en offerteplaatsen. Bekijk
+          uw <Link className="underline" href="/uitnodigingen">uitnodigingen</Link> voor nieuwe opdrachten.
         </p>
 
         {eligibleRequests.length === 0 ? (
           <Card className="mt-7">
             <h2 className="text-xl font-bold text-brand-dark">
-              Geen passende aanvragen
+              Geen eerdere aanvragen
             </h2>
             <p className="mt-2 text-text-secondary">
-              Er staan momenteel geen gepubliceerde aanvragen in de
-              vastgelegde doelgroep van uw organisatie.
+              Uw organisatie heeft geen eerdere interesse geregistreerd.
             </p>
           </Card>
         ) : (

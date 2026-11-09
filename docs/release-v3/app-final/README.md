@@ -102,7 +102,9 @@ De zes definities zijn vergeleken met het aangeleverde revisie-2-document. Incid
 
 [PostgreSQL-integriteit](https://github.com/WorkMatchr/platform/actions/runs/42526035390) · [Financiële CI](https://github.com/WorkMatchr/platform/actions/runs/42526035407) · [Verificatie](https://github.com/WorkMatchr/platform/actions/runs/42526035396).
 
-## Openstaande vrijgavevoorwaarden
+## Historische bevinding bij de nachttest
+
+Het latere besluit en de afhandeling van bestaande rechten staan in [Uitfasering van interesse en betaalde offerteplaatsen](legacy-marketplace.md).
 
 De historische publicatieroute schrijft de geschiktheidsmomentopname bij publicatie. De scopecontrole vereist dan al een actuele afgeronde Marketplace-selectie. Voor dit oudere type aanvraag bestaat op dat moment geen gekoppelde selectie. Daardoor is nul geschikte aanbieders veilig en verwacht voor de RI&E-fixture, maar blijven de positieve downstreamcontroles voor interesse en betaalde offerteplaatsen onbewezen. Beide proeven zijn opnieuw uitgevoerd op de genoemde applicatiecommit. De eerste stopte bij de verwachting van meer dan één organisatie, de tweede bij de verwachting van minimaal zes. De reguliere browserroute gebruikt geselecteerde uitnodigingen en één directe deelnameaankoop.
 

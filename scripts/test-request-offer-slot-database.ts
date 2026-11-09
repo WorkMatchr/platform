@@ -1,4 +1,5 @@
 import 'dotenv/config'
+import { seedHistoricalRequest, seedHistoricalParticipants } from './fixtures/historical-request'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
 
@@ -105,7 +106,7 @@ async function main() {
       organizationRole: 'OWNER' as const,
     }
 
-    async function publishTestRequest(
+    async function createHistoricalRequest(
       sequence: number,
       at: Date,
     ) {
@@ -164,44 +165,7 @@ async function main() {
           completionStatus: 'COMPLETED_WITH_GUIDANCE',
         },
       })
-      return requestService.publishRequest({
-        viewer,
-        publication: {
-          adviceDossierId: dossier.id,
-          publicSummary:
-            'Wij zoeken ondersteuning bij een actuele risico-inventarisatie voor onze organisatie.',
-          requestedStart: 'IN_CONSULTATION',
-          notes:
-            'Neem bij interesse contact op met onze vaste contactpersoon.',
-        },
-        at,
-      })
-    }
-
-    async function actorsForRequest(requestId: string) {
-      const eligible =
-        await prisma.requestEligibleProvider.findMany({
-          where: { requestId },
-          orderBy: { providerOrganizationId: 'asc' },
-          include: {
-            providerOrganization: {
-              include: {
-                memberships: {
-                  where: {
-                    status: 'ACTIVE',
-                    role: 'OWNER',
-                  },
-                  take: 1,
-                },
-              },
-            },
-          },
-        })
-      assert.ok(eligible.length >= 6)
-      return eligible.map((item) => ({
-        userId: item.providerOrganization.memberships[0]!.userId,
-        organizationId: item.providerOrganizationId,
-      }))
+      return seedHistoricalRequest(prisma, dossier.id, viewer.organizationId, at)
     }
 
     async function fundActors(
@@ -243,197 +207,45 @@ async function main() {
       }
     }
 
-    const sequentialRequest = await publishTestRequest(
+    const sequentialRequest = await createHistoricalRequest(
       1,
       scenarioTime(0),
     )
-    const sequentialActors = await actorsForRequest(
-      sequentialRequest.id,
-    )
+    const sequentialActors = await seedHistoricalParticipants(prisma, sequentialRequest.id, 4)
     await fundActors(sequentialActors)
-    for (const actor of sequentialActors.slice(0, 4)) {
-      await interestService.registerRequestInterest({
-        actor,
-        requestId: sequentialRequest.id,
-      })
+    const rule = await (await import('../src/lib/marketplace/marketplace-rules-service')).getApplicableMarketplaceRuleSet(prisma, scenarioTime(0))
+    const slotIds: string[] = []
+    for (const [index, actor] of sequentialActors.slice(0, 3).entries()) {
+      const slot = await prisma.requestOfferSlot.create({ data: { requestId: sequentialRequest.id,
+        requestInterestId: actor.interestId, providerOrganizationId: actor.organizationId, slotNumber: index + 1,
+        claimedAt: scenarioTime(0), createdByUserId: actor.userId } })
+      const account = await prisma.creditAccount.findUniqueOrThrow({ where: { organizationId: actor.organizationId } })
+      const cost = rule.participationPriceCredits
+      const payment = await prisma.creditTransaction.create({ data: { creditAccountId: account.id, type: 'PARTICIPATION_PAYMENT',
+        amount: -cost, totalDelta: -cost, reservedDelta: 0, balanceBefore: 100, balanceAfter: 100 - cost,
+        availableBefore: 100, availableAfter: 100 - cost, reservedBefore: 0, reservedAfter: 0, spentBefore: 0, spentAfter: cost,
+        referenceType: 'RequestOfferSlot', referenceId: slot.id, requestId: sequentialRequest.id, offerSlotId: slot.id,
+        marketplaceRuleSetId: rule.id, reason: 'Historische synthetische deelname', idempotencyKey: 'history:payment:' + slot.id,
+        createdByUserId: actor.userId } })
+      await prisma.requestOfferSlot.update({ where: { id: slot.id }, data: { creditAmount: cost, marketplaceRuleSetId: rule.id, creditTransactionId: payment.id } })
+      await prisma.requestOfferSlotEvent.create({ data: { offerSlotId: slot.id, requestId: sequentialRequest.id,
+        providerOrganizationId: actor.organizationId, actorUserId: actor.userId, type: 'CLAIMED', toStatus: 'CLAIMED',
+        slotNumber: index + 1, idempotencyKey: 'history:slot:' + slot.id } })
+      slotIds.push(slot.id)
     }
-
-    const requesterBeforeClaim =
-      await interestService.getEligibleRequestForProvider(
-        sequentialActors[0]!,
-        sequentialRequest.id,
-      )
-    assert.equal(requesterBeforeClaim.requesterDetails, null)
-    assert.equal(
-      JSON.stringify(requesterBeforeClaim).includes(
-        clientMembership.organization.name,
-      ),
-      false,
-    )
-
-    const first = await offerSlotService.claimRequestOfferSlot({
-      actor: sequentialActors[0]!,
-      requestId: sequentialRequest.id,
-      at: scenarioTime(10),
-    })
-    const second = await offerSlotService.claimRequestOfferSlot({
-      actor: sequentialActors[1]!,
-      requestId: sequentialRequest.id,
-      at: scenarioTime(11),
-    })
-    const third = await offerSlotService.claimRequestOfferSlot({
-      actor: sequentialActors[2]!,
-      requestId: sequentialRequest.id,
-      at: scenarioTime(12),
-    })
-    assert.deepEqual(
-      [first.slotNumber, second.slotNumber, third.slotNumber],
-      [1, 2, 3],
-    )
-    assert.deepEqual(
-      [first.creditAmount, second.creditAmount, third.creditAmount],
-      [30, 30, 30],
-    )
-    await expectCode(
-      () =>
-        offerSlotService.claimRequestOfferSlot({
-          actor: sequentialActors[3]!,
-          requestId: sequentialRequest.id,
-        }),
-      'FULL',
-    )
-    const duplicate = await offerSlotService.claimRequestOfferSlot({
-      actor: sequentialActors[0]!,
-      requestId: sequentialRequest.id,
-    })
-    assert.equal(duplicate.id, first.id)
-    assert.equal(
-      await prisma.requestOfferSlot.count({
-        where: {
-          requestId: sequentialRequest.id,
-          providerOrganizationId:
-            sequentialActors[0]!.organizationId,
-        },
-      }),
-      1,
-    )
-    assert.equal(
-      await prisma.creditTransaction.count({
-        where: {
-          requestId: sequentialRequest.id,
-          type: 'PARTICIPATION_PAYMENT',
-        },
-      }),
-      3,
-    )
-    const fourthAccount = await prisma.creditAccount.findUniqueOrThrow({
-      where: { organizationId: sequentialActors[3]!.organizationId },
-    })
-    assert.equal(fourthAccount.availableBalance, 100)
-    assert.equal(fourthAccount.spentBalance, 0)
-
-    const requesterAfterClaim =
-      await interestService.getEligibleRequestForProvider(
-        sequentialActors[0]!,
-        sequentialRequest.id,
-      )
-    assert.ok(requesterAfterClaim.requesterDetails)
-    assert.equal(
-      requesterAfterClaim.requesterDetails.organizationName,
-      clientMembership.organization.tradeName ??
-        clientMembership.organization.name,
-    )
-    assert.equal(
-      requesterAfterClaim.requesterDetails.notes,
-      'Neem bij interesse contact op met onze vaste contactpersoon.',
-    )
-    const serializedAfterClaim = JSON.stringify(requesterAfterClaim)
-    assert.equal(
-      serializedAfterClaim.includes('originalHelpRequest'),
-      false,
-    )
-    assert.equal(serializedAfterClaim.includes('dossierCode'), false)
-
-    const nonInterestedActor = sequentialActors[4]!
-    await expectCode(
-      () =>
-        offerSlotService.claimRequestOfferSlot({
-          actor: nonInterestedActor,
-          requestId: sequentialRequest.id,
-        }),
-      'NOT_FOUND',
-    )
-
-    const noLongerSelectableActor = sequentialActors[5]!
-    await interestService.registerRequestInterest({
-      actor: noLongerSelectableActor,
-      requestId: sequentialRequest.id,
-    })
-    await prisma.providerProfile.update({
-      where: {
-        organizationId:
-          noLongerSelectableActor.organizationId,
-      },
-      data: { selectabilityStatus: 'NOT_SELECTABLE' },
-    })
-    await expectCode(
-      () =>
-        offerSlotService.claimRequestOfferSlot({
-          actor: noLongerSelectableActor,
-          requestId: sequentialRequest.id,
-        }),
-      'ACCESS_DENIED',
-    )
-
-    const member = await prisma.user.create({
-      data: {
-        email: 'm7d3-member@example.invalid',
-        displayName: 'M7D.3 lid',
-        emailVerified: true,
-        status: 'ACTIVE',
-      },
-    })
-    await prisma.organizationMembership.create({
-      data: {
-        userId: member.id,
-        organizationId: sequentialActors[3]!.organizationId,
-        role: 'MEMBER',
-        status: 'ACTIVE',
-      },
-    })
-    await expectCode(
-      () =>
-        offerSlotService.claimRequestOfferSlot({
-          actor: {
-            userId: member.id,
-            organizationId:
-              sequentialActors[3]!.organizationId,
-          },
-          requestId: sequentialRequest.id,
-        }),
-      'ACCESS_DENIED',
-    )
-    await expectCode(
-      () =>
-        offerSlotService.claimRequestOfferSlot({
-          actor: {
-            userId: sequentialActors[0]!.userId,
-            organizationId:
-              sequentialActors[3]!.organizationId,
-          },
-          requestId: sequentialRequest.id,
-        }),
-      'ACCESS_DENIED',
-    )
-    await expectCode(
-      () =>
-        interestService.withdrawRequestInterest({
-          actor: sequentialActors[0]!,
-          requestId: sequentialRequest.id,
-        }),
-      'SLOT_CLAIMED',
-    )
-
+    const { requireNoHistoricalParticipation } = await import('../src/lib/requests/historical-participation')
+    await expectCode(() => prisma.$transaction(tx => requireNoHistoricalParticipation(tx, sequentialRequest.id)), 'INVALID_STATE')
+    for (const actor of sequentialActors) {
+      const input = { actor, requestId: sequentialRequest.id }
+      await Promise.all(Array.from({ length: 4 }, () => expectCode(() => offerSlotService.claimRequestOfferSlot(input), 'LEGACY_ROUTE_CLOSED')))
+      const detail = await interestService.getEligibleRequestForProvider(actor, sequentialRequest.id)
+      assert.equal(detail.interest?.offerSlot?.id, slotIds[sequentialActors.indexOf(actor)])
+      assert.equal(detail.interest?.offerSlot?.creditAmount ?? 0, detail.interest?.offerSlot ? rule.participationPriceCredits : 0)
+    }
+    assert.equal(await prisma.creditTransaction.count({ where: { requestId: sequentialRequest.id } }), 3)
+    assert.equal(await prisma.creditReservation.count(), 0)
+    await expectCode(() => interestService.withdrawRequestInterest({ actor: sequentialActors[0]!, requestId: sequentialRequest.id }), 'SLOT_CLAIMED')
+    await expectCode(() => offerSlotService.claimRequestOfferSlot({ actor: { userId: viewer.userId, organizationId: sequentialActors[0]!.organizationId }, requestId: sequentialRequest.id }), 'ACCESS_DENIED')
     const ownSequentialRequest = await requestService.getOwnRequest(
       viewer,
       sequentialRequest.id,
@@ -442,7 +254,7 @@ async function main() {
 
     const firstEvent =
       await prisma.requestOfferSlotEvent.findFirstOrThrow({
-        where: { offerSlotId: first.id },
+        where: { offerSlotId: slotIds[0]! },
       })
     await assert.rejects(
       prisma.requestOfferSlotEvent.update({
@@ -518,138 +330,12 @@ async function main() {
       1,
     )
 
-    const concurrentRequest = await publishTestRequest(
-      2,
-      scenarioTime(60),
-    )
-    const concurrentActors = (
-      await actorsForRequest(concurrentRequest.id)
-    ).slice(0, 4)
-    await fundActors(concurrentActors)
-    const providerAdmin = await prisma.user.create({
-      data: {
-        email: 'm7d3-admin@example.invalid',
-        displayName: 'M7D.3 beheerder',
-        emailVerified: true,
-        status: 'ACTIVE',
-      },
-    })
-    await prisma.organizationMembership.create({
-      data: {
-        userId: providerAdmin.id,
-        organizationId: concurrentActors[0]!.organizationId,
-        role: 'ADMIN',
-        status: 'ACTIVE',
-      },
-    })
-    concurrentActors[0] = {
-      userId: providerAdmin.id,
-      organizationId: concurrentActors[0]!.organizationId,
-    }
-    for (const actor of concurrentActors) {
-      await interestService.registerRequestInterest({
-        actor,
-        requestId: concurrentRequest.id,
-      })
-    }
-    const race = await Promise.allSettled(
-      concurrentActors.map((actor) =>
-        offerSlotService.claimRequestOfferSlot({
-          actor,
-          requestId: concurrentRequest.id,
-          at: scenarioTime(70),
-        }),
-      ),
-    )
-    assert.equal(
-      race.filter((result) => result.status === 'fulfilled').length,
-      3,
-    )
-    assert.equal(
-      race.filter(
-        (result) =>
-          result.status === 'rejected' &&
-          result.reason instanceof
-            offerSlotService.RequestOfferSlotServiceError &&
-          result.reason.code === 'FULL',
-      ).length,
-      1,
-    )
-    const concurrentSlots = await prisma.requestOfferSlot.findMany({
-      where: {
-        requestId: concurrentRequest.id,
-        status: 'CLAIMED',
-      },
-      orderBy: { slotNumber: 'asc' },
-      include: { events: true },
-    })
-    assert.deepEqual(
-      concurrentSlots.map((slot) => slot.slotNumber),
-      [1, 2, 3],
-    )
-    assert.equal(
-      concurrentSlots.every((slot) => slot.events.length === 1),
-      true,
-    )
-    assert.equal(
-      await prisma.creditTransaction.count({
-        where: {
-          requestId: concurrentRequest.id,
-          type: 'PARTICIPATION_PAYMENT',
-        },
-      }),
-      3,
-    )
-    const concurrentAccounts = await prisma.creditAccount.findMany({
-      where: {
-        organizationId: {
-          in: concurrentActors.map((actor) => actor.organizationId),
-        },
-      },
-    })
-    assert.deepEqual(
-      concurrentAccounts
-        .map((account) => account.availableBalance)
-        .sort((a, b) => a - b),
-      [70, 70, 70, 100],
-    )
-
-    await prisma.request.update({
-      where: { id: concurrentRequest.id },
-      data: {
-        status: 'CANCELLED',
-        archivedAt: scenarioTime(80),
-      },
-    })
-    const unclaimedActor = concurrentActors.find(
-      (actor) =>
-        !concurrentSlots.some(
-          (slot) =>
-            slot.providerOrganizationId === actor.organizationId,
-        ),
-    )!
-    await expectCode(
-      () =>
-        offerSlotService.claimRequestOfferSlot({
-          actor: unclaimedActor,
-          requestId: concurrentRequest.id,
-        }),
-      'INVALID_STATUS',
-    )
-
-    assert.equal(await prisma.quote.count(), 0)
-    assert.equal(await prisma.creditReservation.count(), 0)
-    assert.equal(
-      await prisma.creditTransaction.count({
-        where: { type: 'PARTICIPATION_PAYMENT' },
-      }),
-      6,
-    )
-    assert.equal(await prisma.marketplaceMessage.count(), 0)
-
-    console.log(
-      'Marketplace-integriteit: slot 1-3, atomair credits betalen, 75%-teruggave, idempotente intrekking, transactionele vierde weigering, parallelle claims, privacy, rollen, tenantisolatie en append-only events geslaagd.',
-    )
+    const archived = await interestService.getEligibleRequestForProvider(sequentialActors[0]!, sequentialRequest.id)
+    assert.equal(archived.interest.offerSlot?.id, slotIds[0])
+    assert.equal(archived.interest.offerSlot?.creditAmount, rule.participationPriceCredits)
+    assert.equal(archived.request.status, 'CANCELLED')
+    assert.equal(archived.requesterDetails, null)
+    console.log('Drie historische betaalrechten en het auditspoor behouden; zestien aankoopverzoeken zonder extra afschrijving. Historische intrekking idempotent.')
   } finally {
     await prisma.$disconnect()
     const removed = runDataset('remove')

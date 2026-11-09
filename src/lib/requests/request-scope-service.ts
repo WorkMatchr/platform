@@ -4,8 +4,7 @@ import { invitationMatchFromFactors } from '@/lib/marketplace/assignment-purchas
 import { MarketplaceServiceError } from '@/lib/marketplace/marketplace-errors'
 import { blockedOnboardingProfiles } from '@/lib/providers/provider-marketplace-onboarding'
 
-// Legacy eligibility records cannot originate a second selection. Only candidates
-// admitted by the canonical current run may be exposed or buy an offer slot.
+// Retain the existing live scope check when disclosing requester contact details in the archive.
 export async function requestScopeCandidates(tx: Prisma.TransactionClient, requestId: string, at: Date) {
   const run = await tx.marketplaceMatchRun.findFirst({
     where: { assignment: { requestId }, status: 'COMPLETED' },
