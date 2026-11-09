@@ -26,9 +26,12 @@ export function validateOnline(p,target,now=Date.now()) {
   validateTargetPolicy(target)
   assert.equal(p.scope,onlineScope)
   assert.equal(target.onlineScope,onlineScope)
-  for(const key of [...targetFields,'runId','from','until','fingerprint','approvalReference']) assert.equal(p[key],target[key],'Online policy mismatch')
+  for(const key of [...targetFields,'runId','from','until','fingerprint','approvalReference','volumeId','volumeSerial']) assert.equal(p[key],target[key],'Online policy mismatch')
   assert.match(p.runId,/^d2c-[0-9]{13}-[a-f0-9]{8}$/)
   assert.match(p.fingerprint,/^(?:[A-F0-9]{40}|[A-F0-9]{64})$/)
+  assert.match(p.volumeSerial,/^[A-Fa-f0-9]{8}$/)
+  assert.ok(typeof p.volumeId==='string' && p.volumeId.length>0)
+  for(const utc of [p.from,p.until]) assert.match(utc,/Z$/)
   const start=Date.parse(p.from), end=Date.parse(p.until)
   assert.ok(start<=now && now<end && end-start<=900000,'Outside approved window')
   assert.equal(p.operatorHost,target.operatorHost)
@@ -73,6 +76,8 @@ async function stage(mode,config,execute,target) {
   const { host, database, backupRole, restoreOwner }=target
   assert.equal(process.platform,'win32')
   const privateRoot=path.join(process.env.LOCALAPPDATA,'WorkMatchr')
+  const marker=path.join(privateRoot,config.runId+'.online-used')
+  if(online) assert.ok(!fs.existsSync(marker),'Attempt already consumed')
   const archiveRoot=path.resolve(config.archiveRoot ?? path.join(privateRoot,'production-recovery'))
   const relative=path.relative(privateRoot,archiveRoot)
   assert.ok(/^C:\\/i.test(archiveRoot) && relative && !relative.startsWith('..') && !path.isAbsolute(relative))
@@ -128,7 +133,6 @@ async function stage(mode,config,execute,target) {
     try {
       if(online) {
         validateOnline(config,target)
-        const marker=path.join(privateRoot,config.runId+'.online-used')
         fs.writeFileSync(marker,config.approvalReference,{flag:'wx'})
       }
       const result=await encryptArchive({launch:(cmd,args)=>{const child=launch(cmd,args);if(password && cmd==='docker'){child.stdin.on('error',()=>{});child.stdin.write(password)}return child},source:'docker',sourceArgs:[...clientArgs,'pg_dump','--no-password','--format=custom','--lock-wait-timeout=5s','--serializable-deferrable'],gpg,keyring:config.publicKeyring,fingerprint:config.fingerprint,output:archive})

@@ -66,7 +66,7 @@ psql -U postgres -d fixture_db -v ON_ERROR_STOP=1 -c 'create table fixture(value
     $mode='online-backup'
     $plan.operatorHost=[Environment]::MachineName.ToLowerInvariant()
     $policy.operatorHost=$plan.operatorHost
-    docker exec $client psql -U postgres -v ON_ERROR_STOP=1 -c "alter role fixture_backup createdb password 'synthetic-fixture'" -c "alter database fixture_db set neon.project_id='fixture-project'" -c "alter database fixture_db set neon.branch_id='fixture-branch'" | Out-Null
+    docker exec $client psql -U postgres -v ON_ERROR_STOP=1 -c "alter role fixture_backup createdb createrole replication bypassrls password 'synthetic-fixture'" -c "alter database fixture_db set neon.project_id='fixture-project'" -c "alter database fixture_db set neon.branch_id='fixture-branch'" | Out-Null
     docker exec $client sh -ec 'sed -i "s/^host .*trust$/host all all 127.0.0.1\/32 scram-sha-256/" /var/lib/postgresql/fixture/pg_hba.conf; gosu postgres pg_ctl -D /var/lib/postgresql/fixture reload' | Out-Null
     $plan.Remove('writerPauseVerified')
     $plan.scope='D2C_SINGLE_ONLINE_EXPORT'
@@ -97,6 +97,26 @@ psql -U postgres -d fixture_db -v ON_ERROR_STOP=1 -c 'create table fixture(value
     } finally { docker exec $client mv /run/d2c/synthetic-ca /etc/ssl/certs/ca-certificates.crt }
   }
   "synthetic-fixture" | node scripts/d2c-archive-stage.mjs $mode "$dir/plan.json" --execute "$dir/policy.json"
+  if ($Online) {
+    $replayRefused=$false
+    try { "synthetic-fixture" | node scripts/d2c-archive-stage.mjs $mode "$dir/plan.json" --execute "$dir/policy.json" }
+    catch [System.Management.Automation.NativeCommandExitException] { $replayRefused=$true }
+    if (!$replayRefused) { throw 'Consumed approval accepted' }
+    $probeRun="d2c-$([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())-$suffix"
+    $probe=[IO.Path]::Combine($VolumeId,'WorkMatchr-Archief',"$probeRun.gpg")
+    $partial="$probe.partial"
+    # Model a process loss mid-copy with a truncated ciphertext prefix.
+    $stream=[IO.File]::Open($partial,'CreateNew','Write','None')
+    try {
+      try { $stream.WriteByte([IO.File]::ReadAllBytes($cardFile)[0]) } finally { $stream.Dispose() }
+      $partialRefused=$false
+      try { & "$PSScriptRoot/d2c-card.ps1" -VolumeId $VolumeId -Serial $Serial -RunId $probeRun } catch { $partialRefused=$true }
+      if (!$partialRefused -or [IO.File]::Exists($probe)) { throw 'Partial accepted' }
+    } finally { if ((Get-Volume -DriveLetter D).UniqueId -eq $VolumeId) { [IO.File]::Delete($partial) } }
+    $hashRefused=$false
+    try { & "$PSScriptRoot/d2c-card.ps1" -VolumeId $VolumeId -Serial $Serial -RunId $probeRun -Archive "$dir/backup.dump.gpg" -ExpectedHash ('0'*64) } catch { $hashRefused=$true }
+    if (!$hashRefused -or [IO.File]::Exists($probe)) { throw 'Wrong checksum accepted' }
+  }
   $manifest = Get-Content "$dir/manifest.json" -Raw | ConvertFrom-Json
   if ((Get-FileHash -LiteralPath $cardFile).Hash -ne $manifest.sha256) { throw 'Card digest differs' }
   $archiveBytes = [IO.File]::ReadAllBytes($cardFile)

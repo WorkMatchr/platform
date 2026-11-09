@@ -18,3 +18,13 @@ Operatorinvoer in PowerShell 7, na akkoord en met ingevulde private planpaden. Z
 $OutputEncoding = [Text.UTF8Encoding]::new($false)
 Read-Host -MaskInput | node scripts/d2c-archive-stage.mjs online-backup $planPath --execute $policyPath
 ```
+
+## Aftekenblad voor de operator
+
+Vul uitsluitend in het private dossier de exacte commit, project-ID, branch-ID, directe TLS-host, account, operatorhost, run-ID, UTC-van/tot, volume-GUID, serienummer en volledige ontvangerfingerprint in. Vergelijk deze waarden buiten het plan met de goedgekeurde bron. Neem volumeId en volumeSerial in beide beleidsbestanden op. Bevestig vooraf minimaal 5 GiB vrije stagingruimte en 3 GiB beschikbaar RAM volgens het hostrunbook. Reserveer op de kaart ruimte voor één volledig ciphertextarchief plus marge. Gebruik de actuele broninventaris voor de raming. Stop bij onbekende restbestanden van een eerdere poging.
+
+Leg vóór export per gebruikersschema de namen en typen van tabellen, partities, views, sequenties, functies, constraints, triggers en extensies vast. Controleer PG18, de volledige migratiereeks met checksums, RLS en effectieve leesrechten op tabellen, sequenties en large objects. Leg een DDL-vrij venster vast. Vergelijk later onder afzonderlijke toestemming de objectinventaris met de ontsleutelde archieftabel via pg_restore --list. Leg afwijkingen expliciet vast. Externe bestanden, providers, clusterrollen en de actuele stand na de snapshot vereisen eigen bewijs. Registreer UTC-start en -einde, succes van dump en encryptie, bytes, SHA-256 en kaartteruglezing. Een indicatie van ciphertextgrootte uit een synthetische fixture voorspelt de productieomvang niet.
+
+## Fysieke sleutelacceptatie
+
+De primaire beheerder en de achtervang gebruiken ieder hun eigen versleuteld medium, afkomstig uit twee afzonderlijke afgesloten locaties. Bewaar de ontgrendelgegevens apart. Laat ieder op een tweede beveiligd apparaat zonder toegang tot de oorspronkelijke laptop in een nieuwe tijdelijke geheugensleutelring de eigen kopie importeren. Vergelijk de volledige fingerprint onafhankelijk. Ontsleutel dezelfde willekeurige, vooraf gehashte proeftekst rechtstreeks naar een hashproces. Registreer rol, UTC-tijd, fingerprintcontrole, GPG-exitstatus en hashvergelijking. Sluit de agent, verwijder de eigen tijdelijke sleutelring en controleer afwezigheid van tijdelijke kopieën, swap- en logblootstelling. Geen private sleutel, passphrase of plaintext opnemen in het dossier. Alleen twee zelfstandige successen gelden als fysieke acceptatie.
