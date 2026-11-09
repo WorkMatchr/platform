@@ -46,8 +46,18 @@ try {
     createdRoles.push(role)
   }
   const provisioning = new Client({ connectionString: testUrl.href })
-  try { await provisioning.connect(); await configureSyntheticRoles(provisioning, runtimeRole, diagnosticRole) }
-  finally { await provisioning.end() }
+  try {
+    await provisioning.connect()
+    await configureSyntheticRoles(provisioning, runtimeRole, diagnosticRole)
+    // Force contenders to overlap only on the synthetic invoice failure marker.
+    if (process.env.WM_NOTIFICATION_BROWSER_ACCEPTANCE !== '1') await provisioning.query(`
+      CREATE FUNCTION test_delay_invoice_failure() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN PERFORM pg_sleep(0.35); RETURN NEW; END $$;
+      CREATE TRIGGER test_delay_invoice_failure BEFORE INSERT ON "FinancialEvent"
+      FOR EACH ROW WHEN (NEW."eventType" = 'INVOICE_EMAIL_FAILED')
+      EXECUTE FUNCTION test_delay_invoice_failure()
+    `)
+  } finally { await provisioning.end() }
   testUrl.searchParams.set('options', `-c role=${runtimeRole}`)
   process.env.DATABASE_URL = testUrl.href
   const { getPrisma } = await import('../src/lib/prisma')

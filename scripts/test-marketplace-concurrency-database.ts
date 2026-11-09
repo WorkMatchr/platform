@@ -218,6 +218,23 @@ async function main() {
     await assert.rejects(saveQuoteDraft({ ...draftInput, expectedQuoteVersion: unsubmitted.version }), { code: 'INVALID_STATE' })
     assert.equal(await prisma.quoteVersion.count({ where: { quoteId: unsubmitted.id } }), 1)
     assert.equal(await prisma.marketplaceNotification.count({ where: { recipientUserId: thirdProviderUser.id, type: 'QUOTE_REJECTED' } }), 0, 'A never-submitted draft is not a rejected offer')
+    // Direct service entry points must not rewrite pre-existing commercial obligations.
+    const { registerRequestInterest } = await import('../src/lib/requests/request-interest-service')
+    const { claimRequestOfferSlot } = await import('../src/lib/requests/request-offer-slot-service')
+    const history = () => prisma!.$transaction([
+      prisma!.creditTransaction.findMany({ where: { creditAccountId: providerCreditAccount.id }, orderBy: { id: 'asc' } }),
+      prisma!.creditReservation.findUniqueOrThrow({ where: { participationId: manualParticipation.id } }),
+      prisma!.quoteVersion.findMany({ where: { quoteId: { in: [quote.id, secondQuote.id] } }, orderBy: { id: 'asc' } }),
+      prisma!.awardDecision.findFirstOrThrow({ where: { assignmentId: acceptanceFixture.assignment.id } }),
+    ])
+    const beforeRetiredCalls = await history()
+    assert.equal(beforeRetiredCalls[1].status, 'ACTIVE')
+    assert.equal(beforeRetiredCalls[1].amount, 10)
+    const archivedInput = { actor: { userId: providerUser.id, organizationId: providerOrganization.id }, requestId: acceptanceFixture.assignment.id }
+    await Promise.all([registerRequestInterest, claimRequestOfferSlot].map(call =>
+      assert.rejects(call(archivedInput), { code: 'LEGACY_ROUTE_CLOSED' })))
+    assert.deepEqual(await history(), beforeRetiredCalls)
+    console.log('Historische afschrijving, actieve reservering, offerteversies en gunning ongewijzigd na directe oude serviceaanroepen.')
     const awardInput = { actorUserId: clientUser.id, clientOrganizationId: clientOrganization.id, assignmentId: acceptanceFixture.assignment.id, quoteId: quote.id, motivation: 'Deze fictieve offerte past aantoonbaar het beste.', idempotencyKey: awardKey }
     assert.equal((await awardMarketplaceQuote(awardInput)).quoteId, quote.id)
     await assert.rejects(() => awardMarketplaceQuote({ ...awardInput, actorUserId: secondProviderUser.id, clientOrganizationId: secondProviderOrganization.id }), { code: 'ACCESS_DENIED' })

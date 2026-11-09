@@ -4,7 +4,6 @@ import { Prisma } from '@/generated/prisma/client'
 import { financialInvoiceEmail, sendAuthEmail, type AuthEmailDeliveryResult } from '@/lib/email'
 import { getPrisma } from '@/lib/prisma'
 import { getPublicAppBaseUrl } from '@/lib/public-app-url'
-import { runSerializableFinancialTransaction } from './financial-transaction'
 
 type InvoiceEmailSender = (email: ReturnType<typeof financialInvoiceEmail>) => Promise<AuthEmailDeliveryResult>
 
@@ -13,7 +12,9 @@ function deliveryKey(invoiceId: string) {
 }
 
 export async function deliverFinancialInvoiceEmail(invoiceId: string, sender: InvoiceEmailSender = sendAuthEmail) {
-  return runSerializableFinancialTransaction(async (transaction) => {
+  // At READ COMMITTED the lookup after the lock sees the previous sender's commit.
+  // A snapshot taken while waiting could otherwise cause another provider call.
+  return getPrisma().$transaction(async (transaction) => {
     await transaction.$queryRaw(Prisma.sql`SELECT pg_advisory_xact_lock(hashtextextended(${`financial-invoice-email:${invoiceId}`}, 0))::text AS "lock"`)
     const delivered = await transaction.financialEvent.findUnique({ where: { idempotencyKey: deliveryKey(invoiceId) } })
     if (delivered) return { delivered: true, idempotent: true }
@@ -65,13 +66,13 @@ export async function deliverFinancialInvoiceEmail(invoiceId: string, sender: In
       },
     })
     return { delivered: true, idempotent: false }
-  })
+  }, { isolationLevel: 'ReadCommitted' })
 }
 
 export async function recordFinancialInvoiceEmailFailure(invoiceId: string, purchaseId: string, actorUserId: string | null) {
-  await getPrisma().financialEvent.upsert({
-    where: { idempotencyKey: `invoice-email-failed:${invoiceId}` },
-    create: {
+  await getPrisma().financialEvent.createMany({
+    skipDuplicates: true,
+    data: {
       actorUserId,
       purchaseId,
       invoiceId,
@@ -81,6 +82,5 @@ export async function recordFinancialInvoiceEmailFailure(invoiceId: string, purc
       idempotencyKey: `invoice-email-failed:${invoiceId}`,
       metadata: { retryable: true },
     },
-    update: {},
   })
 }
