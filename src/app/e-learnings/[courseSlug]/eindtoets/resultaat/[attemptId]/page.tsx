@@ -1,21 +1,21 @@
+import { findAcademyCourseByAttempt } from '@/lib/learning/academy-course-service'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Container } from '@/components/layout/container'
 import { Card } from '@/components/ui/card'
 import { requireLearningUser } from '@/lib/learning/learning-authorization'
-import { getFinalExamOverview, getFinalExamResult } from '@/lib/learning/learning-final-exam-service'
+import { getFinalExamResult } from '@/lib/learning/learning-final-exam-service'
 import { ensureCertificateForPassedExam, getMyLearningCertificate } from '@/lib/learning/learning-certificate-service'
 
 export default async function FinalExamResultPage({ params }: { params: Promise<{ courseSlug: string; attemptId: string }> }) {
   const { courseSlug, attemptId } = await params
   const user = await requireLearningUser(`/e-learnings/${courseSlug}/eindtoets/resultaat/${attemptId}`)
-  const [result, overview] = await Promise.all([
-    getFinalExamResult(user.id, attemptId),
-    getFinalExamOverview(user.id, courseSlug),
-  ])
-  if (!result || !overview) notFound()
-  if (result.passed) await ensureCertificateForPassedExam(user.id)
-  const certificate = result.passed ? await getMyLearningCertificate(user.id) : null
+  const course = await findAcademyCourseByAttempt(user.id, attemptId)
+  if (!course || course.slug !== courseSlug) notFound()
+  const result = await getFinalExamResult(user.id, attemptId)
+  if (!result) notFound()
+  if (result.passed) await ensureCertificateForPassedExam(user.id, course.code, course.courseVersionId)
+  const certificate = result.passed ? await getMyLearningCertificate(user.id, course.code, course.courseVersionId) : null
 
   return <Container className="py-10 sm:py-14">
     <Card className="mx-auto max-w-3xl space-y-6">
@@ -36,8 +36,8 @@ export default async function FinalExamResultPage({ params }: { params: Promise<
         </li>)}</ul>
         <p className="mt-3 text-sm leading-6 text-text-secondary">De toets toont geen antwoorden per vraag. Gebruik deze onderwerpen als richting voor herhaling.</p>
       </section>}
-      {result.passed && <div className="space-y-3 rounded-card border border-success/30 bg-success/10 p-4 leading-6"><p>U heeft de eindtoets behaald. Dit resultaat is geen beroepskwalificatie of certificering als arbokerndeskundige.</p>{certificate ? <Link className="inline-flex min-h-11 items-center rounded-control bg-brand-primary px-4 font-semibold text-text-on-dark" href={`/api/learning/certificates/${certificate.id}/pdf`}>Certificaat downloaden</Link> : <p>Vul uw voor- en achternaam in om uw certificaat uit te geven. <Link className="font-semibold text-brand-primary underline" href="/e-learnings/certificaat/gegevens">Naam invullen</Link></p>}</div>}
-      {!result.passed && <p className="text-sm text-text-secondary">U kunt de eindtoets opnieuw maken. Uw eerdere poging blijft in uw poginghistorie staan.</p>}
+      {result.passed && <div className="space-y-3 rounded-card border border-success/30 bg-success/10 p-4 leading-6"><p>U heeft de eindtoets behaald. Dit resultaat is geen beroepskwalificatie of certificering als arbokerndeskundige.</p>{certificate ? <Link className="inline-flex min-h-11 items-center rounded-control bg-brand-primary px-4 font-semibold text-text-on-dark" href={`/api/learning/certificates/${certificate.id}/pdf`}>Certificaat downloaden</Link> : <p>Vul uw voor- en achternaam in om uw certificaat uit te geven. <Link className="font-semibold text-brand-primary underline" href={`/e-learnings/certificaat/gegevens?course=${encodeURIComponent(course.code)}&version=${course.courseVersionId}`}>Naam invullen</Link></p>}</div>}
+      {!result.passed && <p className="text-sm text-text-secondary">Uw eerdere poging blijft in uw poginghistorie staan. Op de eindtoetspagina ziet u of een nieuwe poging beschikbaar is.</p>}
       <div className="flex flex-wrap gap-3">
         <Link href={`/e-learnings/${courseSlug}/eindtoets`} className="inline-flex min-h-11 items-center rounded-control border border-border px-4 font-semibold text-brand-primary">Terug naar eindtoets</Link>
         <Link href="/e-learnings/mijn" className="inline-flex min-h-11 items-center rounded-control bg-brand-primary px-4 font-semibold text-text-on-dark">Mijn e-learnings</Link>

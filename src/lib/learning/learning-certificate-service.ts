@@ -12,11 +12,11 @@ function newCertificateNumber(issuedAt: Date, courseCode: string) {
   return `WM-${courseCode === 'WL-001' ? 'RIE' : 'ACA'}-${issuedAt.getUTCFullYear()}-${randomBytes(12).toString('hex').toUpperCase()}`
 }
 
-export async function ensureCertificateForPassedExam(userId: string, courseCode = COURSE_CODE) {
+export async function ensureCertificateForPassedExam(userId: string, courseCode = COURSE_CODE, courseVersionId?: string) {
   const db = getPrisma()
   const eligibility = await db.learningExamAttempt.findFirst({
     where: {
-      userId, status: 'SUBMITTED', passed: true, submittedAt: { not: null },
+      userId, courseVersionId, status: 'SUBMITTED', passed: true, submittedAt: { not: null },
       examVersion: { exam: { code: `${courseCode}-FINAL`, course: { code: courseCode } } },
     },
     orderBy: [{ submittedAt: 'asc' }, { attemptNumber: 'asc' }, { id: 'asc' }],
@@ -43,7 +43,7 @@ export async function ensureCertificateForPassedExam(userId: string, courseCode 
   if (expectedChapters < 1 || completedChapters !== expectedChapters) return { certificate: null, needsName: false }
 
   const existing = await db.learningCertificate.findUnique({ where: { courseId_userId: { courseId: eligibility.examVersion.courseVersion.course.id, userId } } })
-  if (existing) return { certificate: existing, needsName: false }
+  if (existing) return { certificate: existing.enrollmentId === eligibility.enrollmentId ? existing : null, needsName: false }
 
   const profile = await db.learningProfile.findUnique({ where: { userId }, select: { firstName: true, lastName: true } })
   const firstName = profile?.firstName?.trim() ?? ''
@@ -53,7 +53,7 @@ export async function ensureCertificateForPassedExam(userId: string, courseCode 
   try {
     const certificate = await db.$transaction(async (transaction) => {
       const current = await transaction.learningCertificate.findUnique({ where: { courseId_userId: { courseId: eligibility.examVersion.courseVersion.course.id, userId } } })
-      if (current) return current
+      if (current) return current.enrollmentId === eligibility.enrollmentId ? current : null
       const design = await certificateDesignForIssue(transaction, eligibility.examVersion.courseVersion.course.id, courseCode)
       const created = await transaction.learningCertificate.create({
         data: {
@@ -88,15 +88,15 @@ export async function ensureCertificateForPassedExam(userId: string, courseCode 
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && ['P2002', 'P2034'].includes(error.code)) {
       const certificate = await db.learningCertificate.findUnique({ where: { courseId_userId: { courseId: eligibility.examVersion.courseVersion.course.id, userId } } })
-      if (certificate) return { certificate, needsName: false }
+      if (certificate) return { certificate: certificate.enrollmentId === eligibility.enrollmentId ? certificate : null, needsName: false }
     }
     throw error
   }
 }
 
-export async function getMyLearningCertificate(userId: string, courseCode = COURSE_CODE) {
+export async function getMyLearningCertificate(userId: string, courseCode = COURSE_CODE, courseVersionId?: string) {
   return getPrisma().learningCertificate.findFirst({
-    where: { userId, course: { code: courseCode }, status: 'ACTIVE' },
+    where: { userId, enrollment: { courseVersionId }, course: { code: courseCode }, status: 'ACTIVE' },
     select: { id: true, certificateNumber: true, firstName: true, lastName: true, courseTitle: true, issuedAt: true, status: true, templateVersion: true },
   })
 }
@@ -114,11 +114,11 @@ export async function getPublicLearningCertificate(certificateNumber: string) {
   })
 }
 
-export async function saveLearningCertificateName(userId: string, firstName: string, lastName: string, courseCode = COURSE_CODE) {
-  const eligibility = await ensureCertificateForPassedExam(userId, courseCode)
+export async function saveLearningCertificateName(userId: string, firstName: string, lastName: string, courseCode = COURSE_CODE, courseVersionId?: string) {
+  const eligibility = await ensureCertificateForPassedExam(userId, courseCode, courseVersionId)
   if (!eligibility.needsName) return eligibility
   const data = { firstName: firstName.trim(), lastName: lastName.trim() }
   if (!data.firstName || !data.lastName || data.firstName.length > 100 || data.lastName.length > 100) throw new Error('CERTIFICATE_NAME_INVALID')
   await getPrisma().learningProfile.upsert({ where: { userId }, create: { userId, ...data }, update: data })
-  return ensureCertificateForPassedExam(userId, courseCode)
+  return ensureCertificateForPassedExam(userId, courseCode, courseVersionId)
 }

@@ -1,3 +1,4 @@
+import { currentAcademyAccess } from './academy-access-policy'
 import 'server-only'
 import { getPrisma } from '@/lib/prisma'
 
@@ -26,11 +27,14 @@ export async function getPublishedLearningCourses(userId: string) {
 }
 
 export async function getPublishedLearningCourse(slug: string, userId: string) {
+  const pinned = await getPrisma().learningEnrollment.findFirst({
+    where: {userId, courseVersion: {course: {slug}}}, orderBy: {createdAt:'asc'}, select: {courseVersionId:true},
+  })
   return getPrisma().learningCourse.findFirst({
     where: { slug, status: 'PUBLISHED', versions: { some: { status: 'PUBLISHED' } } },
     include: {
       versions: {
-        where: { status: 'PUBLISHED' },
+        where: pinned ? {id:pinned.courseVersionId,status:{in:['RETIRED','PUBLISHED']}} : {status:'PUBLISHED'},
         orderBy: { publishedAt: 'desc' },
         take: 1,
         include: {
@@ -73,6 +77,7 @@ export async function getLearningChapter(slug: string, chapterSlug: string, user
       courseVersion: {
         status: { in: ['PUBLISHED', 'RETIRED'] },
         ...(version ? { version } : {}),
+        enrollments: { some: {userId, ...currentAcademyAccess()} },
         course: { slug, status: 'PUBLISHED' },
       },
     },
@@ -105,7 +110,7 @@ export async function getLearningChapter(slug: string, chapterSlug: string, user
   if (!chapter) return null
 
   const enrollment = await getPrisma().learningEnrollment.findFirst({
-    where: { userId, courseVersionId: chapter.courseVersionId },
+    where: { userId, ...currentAcademyAccess(), courseVersionId: chapter.courseVersionId },
     include: { questionAttempts: { where: { chapterId: chapter.id }, orderBy: { answeredAt: 'asc' } } },
   })
   if (!enrollment) return null

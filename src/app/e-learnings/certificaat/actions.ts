@@ -12,8 +12,12 @@ const nameSchema = z.object({
 
 export async function saveCertificateNameAction(formData: FormData) {
   const user = await requireLearningUser('/e-learnings/certificaat/gegevens')
+  const version = String(formData.get('courseVersionId') ?? '')
+  if (version && !/^[a-f0-9-]{36}$/i.test(version)) redirect('/e-learnings/mijn')
+  const courseCode = String(formData.get('courseCode') ?? 'WL-001')
+  if (!/^WL-\d{3}$/.test(courseCode)) redirect('/e-learnings/mijn')
   const parsed = nameSchema.safeParse({ firstName: formData.get('firstName'), lastName: formData.get('lastName') })
-  if (!parsed.success) redirect('/e-learnings/certificaat/gegevens?melding=naam')
-  await saveLearningCertificateName(user.id, parsed.data.firstName, parsed.data.lastName)
+  if (!parsed.success) redirect(`/e-learnings/certificaat/gegevens?melding=naam&course=${encodeURIComponent(courseCode)}&version=${encodeURIComponent(version)}`)
+  await saveLearningCertificateName(user.id, parsed.data.firstName, parsed.data.lastName, courseCode, version || undefined)
   redirect('/e-learnings/mijn?certificaat=beschikbaar')
 }

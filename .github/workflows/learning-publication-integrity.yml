@@ -53,7 +53,7 @@ jobs:
           GRANT SELECT,USAGE ON ALL SEQUENCES IN SCHEMA public TO academy_content_editor;
           SQL
           export LEARNING_TEST_DATABASE_URL="postgresql://academy_content_editor:synthetic-ci-only@127.0.0.1:5432/$db"
-          LEARNING_RUNTIME_ENABLED=true ACADEMY_RELEASE03_LOCAL_TEST=1 npx --no-install vitest run src/lib/learning/academy-release03.integration.test.ts
+          DATABASE_URL="$LEARNING_TEST_DATABASE_URL" LEARNING_RUNTIME_ENABLED=true ACADEMY_RELEASE03_LOCAL_TEST=1 ACADEMY_STUDENT_PILOT_ENABLED=true npx --no-install vitest run src/lib/learning/academy-release03.integration.test.ts src/lib/learning/learning-exam-runtime-version.test.ts
       - name: Pro renewals, rollback and concurrent webhook replay
         env:
           PG_SERVICE: ${{ job.services.postgres.id }}

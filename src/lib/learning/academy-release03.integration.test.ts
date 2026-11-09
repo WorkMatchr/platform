@@ -7,7 +7,8 @@ import { PrismaClient } from '@/generated/prisma/client'
 import { syntheticCourse } from './academy-authoring-fixture'
 import { authoringMetadata, prepareBundleRevision, readAuthoringVersion, saveAuthoringCourse, transitionAuthoringCourse } from './academy-authoring-service'
 import { buildLearningCertificatePdf } from './learning-certificate-pdf'
-import { getPublicLearningCertificate } from './learning-certificate-service'
+import { getFinalExamOverview, startFinalExamAttempt } from './learning-final-exam-service'
+import { getMyLearningCertificate, getPublicLearningCertificate } from './learning-certificate-service'
 import { verifyLocalImportMigrations, verifyLocalImportRole } from './academy-import-preflight'
 import { bindCertificateDesign, saveCertificateDesign, transitionCertificateDesign } from './certificate-design-service'
 import { standardCertificateDesign } from './certificate-design-contract'
@@ -101,4 +102,37 @@ describe.skipIf(!enabled)('V3 Academy-upgrade met bestaande inschrijving en uitg
     await bindCertificateDesign(cert.courseId,design.id)
     expect(await buildLearningCertificatePdf(await db.learningCertificate.findUniqueOrThrow({where:{id:cert.id}}))).toEqual(before)
   })
+  it.skipIf(process.env.ACADEMY_STUDENT_PILOT_ENABLED !== 'true')('publiceert de drie pilotversies pas na afronding; bewaart inschrijving, resultaten en historisch PDF', async () => {
+    state.actor = owner
+    const historical = await db.learningCertificate.findFirstOrThrow()
+    const oldPdf = await buildLearningCertificatePdf(historical)
+    const oldEnrollment = await db.learningEnrollment.findUniqueOrThrow({where:{id:historical.enrollmentId},include:{progress:{orderBy:{id:'asc'}},examAttempts:{orderBy:{id:'asc'}}}})
+    const template = await db.learningCertificateDesignBinding.findUniqueOrThrow({where:{scope:historical.courseId}})
+    for (const file of bundles) {
+      const bundle = validateAcademyBundle(JSON.parse(await readFile('content/academy/'+file+'.json','utf8')))
+      const v = await db.learningCourseVersion.findFirstOrThrow({where:{version:bundle.courseVersion,course:{code:bundle.definition.courseCode}}})
+      await transitionAuthoringCourse(v.id,1,'REVIEW','Controle in de geïsoleerde studentpilot')
+      await transitionAuthoringCourse(v.id,2,'APPROVED','Uitsluitend technische beoordeling met synthetische cursisten')
+      if (bundle.definition.courseCode === 'WL-001') {
+        const active = await db.learningEnrollment.create({data:{userId:outsider,courseVersionId:oldEnrollment.courseVersionId,status:'IN_PROGRESS',startedAt:new Date()}})
+        await expect(transitionAuthoringCourse(v.id,3,'PUBLISHED','Controle op lopende oude inschrijving')).rejects.toThrow('ACTIVE_ENROLLMENTS_REQUIRE_VERSION_PLAN')
+        await db.learningEnrollment.delete({where:{id:active.id}})
+      }
+      await bindCertificateDesign(v.courseId,template.designId)
+      await transitionAuthoringCourse(v.id,3,'PUBLISHED','Alleen in de geïsoleerde technische studentpilot')
+      expect(await getFinalExamOverview(oldEnrollment.userId, bundle.definition.slug, v.id)).toBeNull()
+      await expect(startFinalExamAttempt(oldEnrollment.userId, bundle.definition.slug, v.id)).rejects.toThrow('ENROLLMENT_REQUIRED')
+      expect(await getMyLearningCertificate(oldEnrollment.userId, bundle.definition.courseCode, v.id)).toBeNull()
+      expect(await db.learningExamVersion.count({where:{courseVersionId:v.id,status:'PUBLISHED'}})).toBe(1)
+    }
+    expect(await db.learningEnrollment.findUniqueOrThrow({where:{id:historical.enrollmentId},include:{progress:{orderBy:{id:'asc'}},examAttempts:{orderBy:{id:'asc'}}}})).toEqual(oldEnrollment)
+    expect(await db.learningCertificate.findUniqueOrThrow({where:{id:historical.id}})).toEqual(historical)
+    const overview = await getFinalExamOverview(oldEnrollment.userId, 'rie-in-de-praktijk', oldEnrollment.courseVersionId)
+    expect(overview?.examVersion.status).toBe('RETIRED')
+    expect(overview?.attempts.map(a=>a.id)).toEqual(expect.arrayContaining(oldEnrollment.examAttempts.map(a=>a.id)))
+    expect(await getMyLearningCertificate(oldEnrollment.userId, 'WL-001', oldEnrollment.courseVersionId)).toMatchObject({id:historical.id})
+    expect(await getPublicLearningCertificate(historical.certificateNumber)).toMatchObject({status:'ACTIVE',courseTitle:historical.courseTitle})
+    expect(await buildLearningCertificatePdf(historical)).toEqual(oldPdf)
+  },180000)
+
 })

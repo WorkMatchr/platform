@@ -66,6 +66,7 @@ export async function transitionCertificateDesign(id:string,revision:number,next
   const old=await tx.learningCertificateDesign.findUniqueOrThrow({where:{id}})
   if(old.revision!==revision || !canTransitionDesign(old.state as DesignState,next))throw Error('Deze overgang is niet toegestaan. Controleer de actuele versie.')
   if(certificateDesignChecksum(old.definition)!==old.checksum)throw Error('De ontwerpcontrole is mislukt.')
+  if(next==='ACTIVE' && designSchema.parse(old.definition).elements.some(e=>e.kind==='image')) throw Error('Een ontwerp met afbeeldingen kan pas worden geactiveerd na borging van de permanente opslag.')
   if(['REVIEW','APPROVED','ACTIVE'].includes(next)){
    await renderCertificateDesign(old.definition,demoCertificateValues,true)
    await renderCertificateDesign(old.definition,{...demoCertificateValues,'deelnemer.naam':('Lange deelnemersnaam ').repeat(9).slice(0,200),'cursus.titel':('Lange cursustitel ').repeat(16).slice(0,240)},true)
@@ -93,6 +94,7 @@ export async function bindCertificateDesign(scope:string,designId:string|null){
   if(scope!=='GLOBAL')await tx.learningCourse.findUniqueOrThrow({where:{id:scope}})
   if(designId){
    const design=await tx.learningCertificateDesign.findUniqueOrThrow({where:{id:designId}})
+   if(designSchema.parse(design.definition).elements.some(e=>e.kind==='image'))throw Error('Kies een tekst-/QR-ontwerp totdat permanente beeldopslag is geborgd.')
    if(design.state!=='ACTIVE')throw Error('Kies een actief, goedgekeurd sjabloon.')
    await tx.learningCertificateDesignBinding.upsert({where:{scope},create:{scope,designId},update:{designId}})
   }else await tx.learningCertificateDesignBinding.deleteMany({where:{scope}})

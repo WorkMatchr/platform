@@ -256,3 +256,4 @@ Zie [legacy intake naar gedeelde Simple Advice Flow](legacy-intake-unification.m
 - [Commerciële afronding: contactoutbox, ketenacceptatie en beheervoorwaarden](commercial-launch-finalization.md)
 
 - [Academy-editor op V3 en upgradebewijs](release-v3/app-final/academy-release-03.md)
+- [Academy-studentpilot: cursusversies, toetsdekking en overgang WL-001](release-v3/app-final/academy-release-04.md)
