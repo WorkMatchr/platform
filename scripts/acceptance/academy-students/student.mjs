@@ -115,11 +115,22 @@ if(!process.argv.includes('--administration-only')) for (const [code,slug,versio
  const path=await download.path();assert.ok(path)
  assert.equal((await readFile(path)).subarray(0,5).toString(),'%PDF-')
  console.log(code,'PASS eigen certificaat gedownload')
- const a=await open();const other=await register(a);await login(a,other)
- const denied=await a.goto(href)
- assert.equal(denied.status(),404)
- assert.deepEqual(await denied.json(),{error:'Niet gevonden.'})
- await guest.goto('/certificaat/'+cert.certificateNumber);await guest.getByRole('heading',{name:'Geldig certificaat'}).waitFor();await shot(guest,code+'-certificaat');console.log('PASS uitgegeven, eigen PDF en publieke verificatie');await a.context().close()
+ await guest.goto('/certificaat/'+cert.certificateNumber)
+ await guest.getByRole('heading',{name:'Geldig certificaat'}).waitFor()
+ await shot(guest,code+'-certificaat')
+ const a=await open(), other=await register(a)
+ await login(a,other)
+ // The login tab may still be redirecting. Use a fresh document in its authenticated context.
+ const separateTab=await a.context().newPage()
+ await separateTab.goto('/e-learnings/mijn',{waitUntil:'networkidle'})
+ const access=await separateTab.evaluate(async href=>{
+  const session=await fetch('/api/auth/get-session').then(response=>response.json())
+  const denied=await fetch(href,{redirect:'error'})
+  return {viewer:session?.user?.id,status:denied.status,error:(await denied.json()).error}
+ },href)
+ assert.deepEqual(access,{viewer:other.id,status:404,error:'Niet gevonden.'})
+ console.log('PASS eigen PDF, publieke verificatie en privédownload geweigerd aan aangemelde andere cursist')
+ await a.context().close()
  });await guest.context().close();await p.context().close()
 }
 }finally{await browser.close();await db.end()}
