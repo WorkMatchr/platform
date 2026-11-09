@@ -32,7 +32,17 @@ De comparator controleert de gereviewde 85→93-keten. Writerdrain, leases en id
 
 prepare-backup-role.sql is een afzonderlijk te autoriseren voorstel, standaard gesloten. Beperkte CONNECT/USAGE/SELECT, zonder superuser/createdb/createrole/replication/bypassrls. RLS, foreign tables, large objects en SECURITY DEFINER vereisen afzonderlijke review. Geen productieprivileges zijn door deze voorbereiding gewijzigd.
 
-## Acceptatie
+## Vastgesteld back-upbeleid — RELEASE-OPS-19
+
+Het Product Owner-besluit van 9 november 2026 geldt voor het maken en bewaren van back-ups. Gebruik de bestaande Windows/WSL-uitvoerder en de bestaande NTFS-kaart met archiefmap `D:\WorkMatchr-Archief`. GPG draait binnen de bestaande WSL-installatie. Dit beleid vereist geen BitLocker op C: of D:, Ubuntu-liveomgeving of extra opstartmedium.
+
+De uitvoerder streamt de PostgreSQL-export naar GPG. Alleen een voltooid lokaal versleuteld archief mag naar de kaart worden gekopieerd. Een run geldt pas als geslaagd na verificatie van de kaartidentiteit, teruglezen en vergelijken van de volledige SHA-256, definitieve naamgeving en registratie in het afzonderlijke lokale succesmanifest. Een achtergebleven versleutelde werkfile valt onder de onderbrekingsprocedure hieronder.
+
+De resterende voorbereiding betreft de afdwingbaar beperkte Neon-exportlogin met volledige leesdekking en het onafhankelijke herstelbewijs voor beide afzonderlijk bewaarde GPG-sleutelkopieën. De decryptiesleutels en ontgrendelgegevens blijven buiten D:. Rechtenwijzigingen en de productie-export vereisen elk afzonderlijke toestemming. De bestaande uitvoeringscontroles blijven gelden op het uitvoeringsmoment.
+
+Een volledige databaseherstelproef krijgt een afzonderlijke opdracht en acceptatie. De geslaagde synthetische archiefproef bewijst geen herstelbaarheid van de productiedatabase. De eerdere Linux-livevariant is geparkeerd tot een nieuw expliciet Product Owner-besluit.
+
+## Technische uitvoeringsdetails
 
 De Windows-uitvoerder gebruikt PowerShell 7 en `/usr/bin/gpg` in de WSL-distributie Ubuntu. Plaats de publieke sleutelring in een afgeschermde directory onder `/dev/shm` en vergelijk de fingerprint met het private sleutelregister. Het optionele `archiveRoot` in het operatorplan kiest een lokale submap onder `%LOCALAPPDATA%\WorkMatchr` op C:. Maak daar vooraf de afgeschermde runmap aan. Zet in het afzonderlijk gereviewde doelbeleid de Windows-volume-GUID (`volumeId`) en het NTFS-volumeserienummer (`volumeSerial`) van de kaart. Deze gegevens horen buiten Git.
 

@@ -1,5 +1,7 @@
 # Ubuntu-liveacceptatie van synthetisch PostgreSQL-herstel
 
+**Geparkeerd per RELEASE-OPS-19.** Dit document bewaart het eerdere proefontwerp. Verdere ontwikkeling en uitvoering vereisen een nieuw expliciet Product Owner-verzoek. Het [vastgestelde back-upbeleid](d2c-d3-production-backup-and-migration-preflight.md) bepaalt de huidige werkwijze.
+
 Doel is één offline proef op de fysieke laptop. Het programma genereert zelf de sleutel, het archief en 50.000 synthetische rijen. Het vraagt geen databaseadres of archief van de operator. Bron en leeg hersteldatabasetje staan binnen dezelfde tijdelijke netwerkarme omgeving (Docker network none). De proef vergelijkt rijen, bedragen, inhoudshash en constraintdefinities en controleert dat een bewust gewijzigde rij een afwijking oplevert. Voor de bestaande uitgebreidere financiële en rolacceptatie geldt het D2C-runbook.
 
 ## Voor het onderhoudsvenster
