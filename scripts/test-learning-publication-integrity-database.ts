@@ -35,7 +35,8 @@ const retention = '20260930100000_add_learning_retention'
 const finalExam = '20260927210000_add_learning_final_exam'
 const migrationRoot = path.resolve('prisma/migrations')
 const names = readdirSync(migrationRoot).filter((name) => /^\d/.test(name)).sort()
-assert.equal(names.at(-1), '20261106120000_repair_pro_financial_integrity', 'Review this staged regression when adding later migrations')
+assert.ok(names.includes('20261106120000_repair_pro_financial_integrity'))
+assert.equal(names.at(-1), '20261109181000_academy_enrollment_access', 'Review this staged regression when adding later migrations')
 const manifest = JSON.parse(readFileSync('docs/evidence/wp14/migration-checksums.json', 'utf8')) as {
   migrations: { name: string; lfSha256: string; productionChecksum: string | null }[]
 }
