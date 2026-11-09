@@ -1,7 +1,9 @@
 import {Client} from 'pg'
+import { checkAcademyAdministration } from './administration.mjs'
 import {pathToFileURL, fileURLToPath} from 'node:url'
 import {randomUUID,randomBytes} from 'node:crypto'
 import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import { spawn } from 'node:child_process'
 
@@ -39,16 +41,34 @@ async function login(p,act){
 const shot=(p,n)=>p.screenshot({path:root+n+'.png',animations:'disabled'})
 async function width(p){assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1))}
 try{
-for (const [code,slug,version] of [['WL-001','rie-in-de-praktijk','1.2'],['WL-002','preventiemedewerker-in-de-praktijk','WL-002-COURSE-1.3'],['WL-003','veilig-en-gezond-werken','WL-003-COURSE-1.1']]){
+const selectedCourse=process.argv.includes('--course') ? process.argv[process.argv.indexOf('--course')+1] : null
+await track('Academy-beheer', () => checkAcademyAdministration({db, open, login, pw, root}))
+if(!process.argv.includes('--administration-only')) for (const [code,slug,version] of [['WL-001','rie-in-de-praktijk','1.2'],['WL-002','preventiemedewerker-in-de-praktijk','WL-002-COURSE-1.3'],['WL-003','veilig-en-gezond-werken','WL-003-COURSE-1.1']]){
+ if(selectedCourse && code!==selectedCourse)continue
  const course='/e-learnings/'+slug, guest=await open(390);let p=await open(390)
  await track(code+' volledige studentroute',async()=>{
  const student=await register(p);console.log(code,'PASS registratie en lokale verificatie');await login(p,student)
  await p.goto('/e-learnings/aanbod');await p.getByRole('link',{name:'Bekijk opleiding'}).first().waitFor()
  await width(p);await shot(p,code+'-aanbod-mobiel')
- await p.getByRole('link',{name:'Bekijk opleiding'}).and(p.locator('a[href="'+course+'"]')).first().click();await p.getByRole('button',{name:'Start deze e-learning'}).click();await p.waitForURL('**/leren/**')
+ await p.getByRole('link',{name:'Bekijk opleiding'}).and(p.locator('a[href="'+course+'"]')).first().click();const secondTab=await p.context().newPage()
+ await secondTab.goto(course)
+ await Promise.all([p,secondTab].map(async tab=>{
+  await tab.getByRole('button',{name:'Start deze e-learning'}).click()
+  await tab.waitForURL('**/leren/**')
+ }))
+ assert.equal(new URL(p.url()).pathname,new URL(secondTab.url()).pathname)
+ const enrolled=await db.query('SELECT v.version FROM "LearningEnrollment" e JOIN "LearningCourseVersion" v ON v.id=e."courseVersionId" WHERE e."userId"=$1',[student.id])
+ assert.deepEqual(enrolled.rows,[{version}]);await secondTab.close()
+ console.log(code,'PASS twee inschrijfverzoeken, één versiegebonden inschrijving')
  const next=()=>p.getByRole('button',{name:/^(Volgende|Naar afronding)$/});await next().click();await p.waitForFunction(()=>Number(document.querySelector('[role=progressbar]')?.getAttribute('aria-valuenow'))>0)
  const progress=await p.locator('[role=progressbar]').getAttribute('aria-valuenow')
- await width(p);await shot(p,code+'-les-mobiel');await p.context().close();p=await open();await login(p,student);await p.goto(course);await p.getByRole('link',{name:'Verder waar u gebleven was'}).click();await p.waitForURL('**/leren/**');assert.equal(await p.locator('[role=progressbar]').getAttribute('aria-valuenow'),progress);console.log('PASS inschrijving, onderbroken sessie en hervatten')
+ await width(p);await shot(p,code+'-les-mobiel')
+ const lessonPath=new URL(p.url()).pathname
+ await p.goto('/account');await p.getByRole('button',{name:'Uitloggen',exact:true}).first().click()
+ await p.waitForURL(base+'/')
+ assert.equal((await db.query('SELECT count(*)::int AS n FROM "Session" WHERE "userId"=$1',[student.id])).rows[0].n,0)
+ await p.goto(lessonPath);await p.waitForURL(u=>u.pathname==='/inloggen')
+ await p.context().close();p=await open();await login(p,student);await p.goto(course);await p.getByRole('link',{name:'Verder waar u gebleven was'}).click();await p.waitForURL('**/leren/**');assert.equal(await p.locator('[role=progressbar]').getAttribute('aria-valuenow'),progress);assert.equal(new URL(p.url()).pathname,lessonPath);console.log('PASS uitloggen, sessie ingetrokken en eigen lespositie hervat')
  for(let ch=1;ch<=10;ch++){
   if(ch>1){await p.goto(course);const btn=p.getByRole('button',{name:'Start hoofdstuk '+ch,exact:true}); if(await btn.count())await btn.click();else await p.locator('section[aria-labelledby=available-chapters] li').nth(ch-1).getByRole('link').click();await p.waitForURL('**/leren/**')}
   for(let block=0;block<90;block++){
@@ -81,8 +101,25 @@ for (const [code,slug,version] of [['WL-001','rie-in-de-praktijk','1.2'],['WL-00
  await p.getByRole('button',{name:'Toets inleveren'}).click();await p.getByRole('button',{name:'Toch inleveren'}).click();await p.waitForURL('**/resultaat/**');await shot(p,code+'-eindtoets')
  await p.getByRole('link',{name:'Naam invullen'}).click();await p.locator('#firstName').fill('Synthetische');await p.locator('#lastName').fill('Cursist');await p.getByRole('button',{name:'Naam opslaan'}).click()
  await p.waitForURL('**/mijn?certificaat=beschikbaar');const cert=(await db.query('SELECT id,"certificateNumber","courseVersion","examVersion","templateVersion" FROM "LearningCertificate" WHERE "userId"=$1',[student.id])).rows[0];assert.ok(cert);assert.equal(cert.courseVersion,version);assert.equal(cert.examVersion,code+'-EXAM-'+version.split('-').at(-1));assert.equal(cert.templateVersion,'ACADEMY-DESIGN-1')
- const href=await p.getByRole('link',{name:'Certificaat downloaden'}).getAttribute('href');const pdf=await p.evaluate(async url=>{const r=await fetch(url);return [r.status,r.headers.get('content-type'),new TextDecoder().decode((await r.arrayBuffer()).slice(0,5))]},href);assert.deepEqual(pdf,[200,'application/pdf','%PDF-'])
- const a=await open();const other=await register(a);await login(a,other); const ownPdf=await p.locator('a[href*="/certificates/"]').first().getAttribute('href');assert.ok(ownPdf.endsWith('/pdf')); const forbidden=await a.evaluate(async url=>(await fetch(url)).status,ownPdf);assert.ok([403,404].includes(forbidden));await guest.goto('/certificaat/'+cert.certificateNumber);await guest.getByRole('heading',{name:'Geldig certificaat'}).waitFor();await shot(guest,code+'-certificaat');console.log('PASS uitgegeven, eigen PDF en publieke verificatie');await a.context().close()
+ const link=p.getByRole('link',{name:'Certificaat downloaden'})
+ const href=await link.getAttribute('href')
+ assert.equal(href,'/api/learning/certificates/'+cert.id+'/pdf')
+ const responseEvent=p.waitForResponse(response=>new URL(response.url()).pathname===href).then(response=>{
+  console.log(code,'certificaatdownload HTTP',response.status(),response.headers()['content-type'])
+  return response
+ })
+ const downloadEvent=p.waitForEvent('download',{timeout:18000})
+ const [response,download]=await Promise.all([responseEvent,downloadEvent,link.click()])
+ assert.equal(response.status(),200)
+ assert.equal(response.headers()['content-type'],'application/pdf')
+ const path=await download.path();assert.ok(path)
+ assert.equal((await readFile(path)).subarray(0,5).toString(),'%PDF-')
+ console.log(code,'PASS eigen certificaat gedownload')
+ const a=await open();const other=await register(a);await login(a,other)
+ const denied=await a.goto(href)
+ assert.equal(denied.status(),404)
+ assert.deepEqual(await denied.json(),{error:'Niet gevonden.'})
+ await guest.goto('/certificaat/'+cert.certificateNumber);await guest.getByRole('heading',{name:'Geldig certificaat'}).waitFor();await shot(guest,code+'-certificaat');console.log('PASS uitgegeven, eigen PDF en publieke verificatie');await a.context().close()
  });await guest.context().close();await p.context().close()
 }
 }finally{await browser.close();await db.end()}

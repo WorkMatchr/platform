@@ -1,7 +1,11 @@
 import subprocess as sp, os, time, uuid, secrets, pathlib, re, argparse
 parser=argparse.ArgumentParser(description='Academy: geïsoleerde PostgreSQL- en browseracceptatie')
 parser.add_argument('--database-only',action='store_true',help='Alleen migraties, rollen, historie en de drie versies testen.')
+parser.add_argument('--administration-only', action='store_true', help='Alleen de beheerbrowserroute na de databaseproef.')
+parser.add_argument('--course', choices=['WL-001','WL-002','WL-003'], help='Voer na beheeracceptatie één studentroute uit.')
 args=parser.parse_args()
+if sum(map(bool,[args.course,args.database_only,args.administration_only])) > 1:
+ parser.error('Selecteer één deelproef.')
 p=pathlib.Path.cwd()
 assert (p/'prisma/schema.prisma').is_file(), 'Run from repository root'
 folder=p/'.local-storage'/('academy-students-'+uuid.uuid4().hex)
@@ -42,7 +46,9 @@ try:
  run('integration',vit+['src/lib/learning/academy-release03.integration.test.ts'],p)
 
  env.update(NODE_ENV='production',BETTER_AUTH_URL='http://127.0.0.1',NEXT_PUBLIC_APP_URL='http://127.0.0.1')
- if not args.database_only:run('students',['node','scripts/acceptance/academy-students/student.mjs'],p)
+ if not args.database_only:
+  mode=['--administration-only'] if args.administration_only else ['--course',args.course] if args.course else []
+  run('administration' if args.administration_only else 'students',['node','scripts/acceptance/academy-students/student.mjs',*mode],p)
 
 finally:
  assert cli('docker','inspect','--format','{{index .Config.Labels "wm.academy04"}}',cid)==tag;cli('docker','rm','-fv',cid);print('cleanup verified',flush=True)

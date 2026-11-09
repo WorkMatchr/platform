@@ -8,7 +8,9 @@ import { syntheticCourse } from './academy-authoring-fixture'
 import { authoringMetadata, prepareBundleRevision, readAuthoringVersion, saveAuthoringCourse, transitionAuthoringCourse } from './academy-authoring-service'
 import { buildLearningCertificatePdf } from './learning-certificate-pdf'
 import { getFinalExamOverview, startFinalExamAttempt } from './learning-final-exam-service'
-import { getMyLearningCertificate, getPublicLearningCertificate } from './learning-certificate-service'
+import { getPublishedLearningCourse } from './learning-query-service'
+import { publicLearningCatalog } from '@/content/public-learning-catalog'
+import { ensureCertificateForPassedExam, getMyLearningCertificate, getPublicLearningCertificate } from './learning-certificate-service'
 import { verifyLocalImportMigrations, verifyLocalImportRole } from './academy-import-preflight'
 import { bindCertificateDesign, saveCertificateDesign, transitionCertificateDesign } from './certificate-design-service'
 import { standardCertificateDesign } from './certificate-design-contract'
@@ -134,5 +136,19 @@ describe.skipIf(!enabled)('V3 Academy-upgrade met bestaande inschrijving en uitg
     expect(await getPublicLearningCertificate(historical.certificateNumber)).toMatchObject({status:'ACTIVE',courseTitle:historical.courseTitle})
     expect(await buildLearningCertificatePdf(historical)).toEqual(oldPdf)
   },180000)
+
+  it('houdt de negen roadmapcursussen gesloten bij rechtstreeks opvragen van cursus, toets en certificaat', async () => {
+    const courses = publicLearningCatalog.filter(course => /^WL-(00[4-9]|01[0-2])$/.test(course.code))
+    expect(courses).toHaveLength(9)
+    const student = await db.learningEnrollment.findFirstOrThrow({select:{userId:true}})
+    for (const {code,slug} of courses) {
+      expect(await getPublishedLearningCourse(slug,student.userId)).toBeNull()
+      expect(await getFinalExamOverview(student.userId,slug)).toBeNull()
+      expect(await ensureCertificateForPassedExam(student.userId,code)).toEqual({certificate:null,needsName:false})
+    }
+    const reservedCodes = courses.map(course=>course.code)
+    expect(await db.learningEnrollment.count({where:{courseVersion:{course:{code:{in:reservedCodes}}}}})).toBe(0)
+    expect(await db.learningCertificate.count({where:{course:{code:{in:reservedCodes}}}})).toBe(0)
+  })
 
 })

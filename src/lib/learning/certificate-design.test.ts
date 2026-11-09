@@ -46,6 +46,36 @@ describe('certificate designer contract and PDF',()=>{
   const invalid=copy();Object.assign(invalid.elements[2],{font:'RemoteFont'});expect(designSchema.safeParse(invalid).success).toBe(false)
   await expect(renderCertificateDesign(copy(),{...demoCertificateValues,'deelnemer.naam':'😀'})).rejects.toThrow('teken')
  })
+ it.each([
+  ['WL-001','1.2','RI&E in de praktijk'],
+  ['WL-002','WL-002-COURSE-1.3','Preventiemedewerker in de praktijk'],
+  ['WL-003','WL-003-COURSE-1.1','Veilig en gezond werken'],
+ ])('drukt de uitgiftegegevens van %s af op het tekst-/QR-certificaat', async (courseCode,courseVersion,courseTitle) => {
+  const definition = copy()
+  definition.elements = definition.elements.filter(element => element.kind !== 'image')
+  const certificateNumber = 'WM-ACA-2026-0123456789ABCDEF01234567'
+  const bytes = await buildLearningCertificatePdf({
+   templateVersion: 'ACADEMY-DESIGN-1',
+   designSnapshot: { definition, checksum: certificateDesignChecksum(definition), courseCode },
+   firstName: 'Synthetische', lastName: 'Cursist', courseTitle, courseVersion, certificateNumber,
+   issuedAt: new Date('2026-11-04T12:00:00Z'),
+  })
+  const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs')
+  const task = getDocument({ data: new Uint8Array(bytes), useSystemFonts: true })
+  try {
+   const pdf = await task.promise
+   expect(pdf.numPages).toBe(1)
+   const page = await pdf.getPage(1)
+   const content = await page.getTextContent()
+   const text = content.items.flatMap(item => 'str' in item ? [item.str] : []).join(' ').replace(/\s+/g,' ')
+   for (const field of [courseCode,courseVersion,courseTitle,'Synthetische Cursist','4 november 2026',certificateNumber]) {
+    expect(text).toContain(field)
+   }
+   expect(text).toContain('geen wettelijke beroepskwalificatie')
+  } finally {
+   await task.destroy()
+  }
+ })
  it('renders only the pinned issued snapshot and refuses corruption',async()=>{
   const definition=copy(),snapshot={definition,checksum:certificateDesignChecksum(definition),courseCode:'WL-TEST'}
   const certificate={templateVersion:'ACADEMY-DESIGN-1',designSnapshot:snapshot,firstName:'Jan',lastName:'de Vries',courseTitle:'Veilig en gezond werken',courseVersion:'2',certificateNumber:'WM-ACA-2026-0123456789ABCDEF01234567',issuedAt:new Date('2026-11-04')}
