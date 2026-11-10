@@ -1,10 +1,11 @@
+import { historicalRecoveryDate } from './pro-historical-recovery'
 import { firstProPeriodEnd, resolveProInvoiceSource, recurringContractPeriod } from './pro-payment-source'
 import 'server-only'
 
 import { Prisma } from '@/generated/prisma/client'
 import { z } from 'zod'
 import { getPrisma } from '@/lib/prisma'
-import { requireProviderMarketplaceAccess } from '@/lib/marketplace/marketplace-authorization'
+import { requireMarketplacePlatformAdmin, requireProviderMarketplaceAccess } from '@/lib/marketplace/marketplace-authorization'
 import { MarketplaceServiceError } from '@/lib/marketplace/marketplace-errors'
 import { billingAddressSchema, WORKMATCHR_PRO_PLAN } from './financial-contract'
 import {
@@ -663,7 +664,23 @@ export async function retryPendingProRemoteSubscription(
   return activated
 }
 
+export async function recoverHistoricalProPayment(paymentId: string) {
+  const { requirePlatformAdministrator } = await import('@/lib/platform-admin/platform-admin-authorization')
+  const operator = await requirePlatformAdministrator('/platformbeheer/financien')
+  const date = historicalRecoveryDate(paymentId)
+  if (!date || process.env.PRO_RECOVERY_APPROVED_PAYMENT_ID !== paymentId) throw new Error('PRO_RECOVERY_PAYMENT_UNKNOWN')
+  const payment = await createMollieGateway().getPayment(paymentId)
+  if (payment.id !== paymentId || payment.mode !== 'live' || !payment.customerId || payment.status !== 'paid' || payment.currency !== 'EUR' || payment.amountValue !== '59.29'
+    || payment.createdAt?.slice(0, 10) !== date || [payment.amountRefunded, payment.amountChargedBack].some(
+      value => value && (value.value !== '0.00' || value.currency !== 'EUR'))) throw new Error('PRO_RECOVERY_SOURCE_MISMATCH')
+  return processRecurring(payment, operator.id)
+}
+
 export async function processRecurringProPayment(payment: MolliePaymentSnapshot) {
+  return processRecurring(payment)
+}
+
+async function processRecurring(payment: MolliePaymentSnapshot, recoveryActor?: string) {
   if (!payment.subscriptionId) throw new Error('MOLLIE_SUBSCRIPTION_ID_MISSING')
   const subscription = await getPrisma().professionalSubscription.findUnique({ where: { mollieSubscriptionId: payment.subscriptionId } })
   if (!subscription) throw new Error('UNKNOWN_MOLLIE_SUBSCRIPTION')
@@ -679,8 +696,13 @@ export async function processRecurringProPayment(payment: MolliePaymentSnapshot)
       if (current.mollieSubscriptionId !== payment.subscriptionId || current.mollieMandateId !== payment.mandateId
         || current.mollieMandateMethod !== payment.method || current.currency !== payment.currency
         || centsToMollieValue(current.amountInclVatCents) !== payment.amountValue) throw new Error('MOLLIE_PAYMENT_MISMATCH')
+      if (recoveryActor) await requireMarketplacePlatformAdmin(transaction, recoveryActor)
       const attempts = await transaction.professionalSubscriptionPayment.findMany({ where: { molliePaymentId: payment.id } })
       if (attempts.some(attempt => attempt.subscriptionId !== current.id)) throw new Error('MOLLIE_PAYMENT_MISMATCH')
+      const historicalPaid = payment.status === 'paid' && historicalRecoveryDate(payment.id)
+      if (historicalPaid && !recoveryActor && !attempts.some(attempt => attempt.status === 'PAID')) {
+        throw new Error('PRO_RECOVERY_OPERATOR_REQUIRED')
+      }
       let reversalRequiresReview = false
       for (const [kind, amount] of [['REFUND', payment.amountRefunded], ['CHARGEBACK', payment.amountChargedBack]] as const) {
         if (!amount) continue
@@ -697,6 +719,11 @@ export async function processRecurringProPayment(payment: MolliePaymentSnapshot)
       }
       const paid = attempts.find(attempt => attempt.status === 'PAID')
       if (paid) {
+        if (recoveryActor || historicalPaid) {
+          const prior = await transaction.financialInvoice.findUnique({ where: { subscriptionPaymentId: paid.id } })
+          if (!prior || !await transaction.financialEvent.findUnique({ where: { idempotencyKey: `pro-recovery-held:${prior.id}` } })) throw new Error('PRO_RECOVERY_EXISTING_RECORD_REVIEW')
+          return current
+        }
         await issueInvoiceForPaidSubscriptionPayment(transaction, paid.id)
         return current
       }
@@ -708,6 +735,13 @@ export async function processRecurringProPayment(payment: MolliePaymentSnapshot)
       const period = payment.status === 'paid'
         ? recurringContractPeriod(source.invoice.servicePeriodStart!, payment.createdAt)
         : { start: observedAt, end: null }
+      if (recoveryActor && (current.mollieCustomerId !== payment.customerId || current.status !== 'ACTIVE' || current.currentPeriodEnd?.getTime() !== period.start.getTime()
+        || current.amountExclVatCents !== 4900 || current.vatAmountCents !== 1029 || current.vatRateBps !== 2100)) {
+        throw new Error('PRO_RECOVERY_PERIOD_OR_TAX_MISMATCH')
+      }
+      if (recoveryActor && await transaction.professionalSubscriptionPayment.findFirst({
+        where: { subscriptionId: current.id, periodStart: period.start, status: 'PAID' },
+      })) throw new Error('PRO_RECOVERY_PERIOD_ALREADY_PAID')
       const key = `pro-payment-v2:${payment.id}:${payment.status}`
       const fingerprint = await import('node:crypto').then(({ createHash }) => createHash('sha256').update(JSON.stringify({ id: payment.id, status: payment.status, amount: payment.amountValue, subscriptionId: current.id })).digest('hex'))
       await transaction.professionalSubscriptionPayment.createMany({ skipDuplicates: true, data: {
@@ -723,7 +757,8 @@ export async function processRecurringProPayment(payment: MolliePaymentSnapshot)
         idempotencyKey: `pro-validated:${payment.id}:${payment.status}`, metadata: { paymentId: payment.id, sourceInvoiceId: source.invoice.id,
           providerCreatedAt: payment.createdAt, providerPaidAt: payment.paidAt, periodStart: period.start.toISOString(), periodEnd: period.end?.toISOString() ?? null, amountCents: current.amountInclVatCents } } })
       if (payment.status === 'paid' && period.end) {
-        await issueInvoiceForPaidSubscriptionPayment(transaction, record.id)
+        if (recoveryActor) await issueInvoiceForPaidSubscriptionPayment(transaction, record.id, new Date(), recoveryActor)
+        else await issueInvoiceForPaidSubscriptionPayment(transaction, record.id)
         // An older month's late payment is recorded, but cannot replace a newer period.
         const nextCycle = new Date(period.end)
         nextCycle.setUTCHours(0, 0, 0, 0)

@@ -114,3 +114,17 @@ export async function proFinancialCorrectionAction(formData: FormData) {
   revalidatePath('/platformbeheer/financien', 'layout')
   redirect(`${returnTo}?resultaat=${outcome}`)
 }
+
+export async function recoverHistoricalProAction(formData: FormData) {
+  const paymentId = z.string().regex(/^tr_[A-Za-z0-9]{1,64}$/).parse(formData.get('paymentId'))
+  const { recoverHistoricalProPayment } = await import('@/lib/finance/subscription-service')
+  await recoverHistoricalProPayment(paymentId)
+  revalidatePath('/platformbeheer/financien/facturen')
+}
+
+export async function releaseHistoricalProAction(formData: FormData) {
+  const invoiceId = z.string().uuid().parse(formData.get('invoiceId'))
+  const { releaseHistoricalInvoice } = await import('@/lib/finance/pro-historical-recovery')
+  await releaseHistoricalInvoice(invoiceId)
+  revalidatePath('/platformbeheer/financien/facturen')
+}

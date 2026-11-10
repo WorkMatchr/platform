@@ -89,7 +89,7 @@ describe('financiële documentnummering', () => {
       servicePeriodStart: new Date('2026-09-01'), servicePeriodEnd: new Date('2026-08-01') })).toThrow('INVOICE_V2_SERVICE_PERIOD_INVALID')
   })
 
-  it('bevriest een terugkerende Pro-dienstperiode in factuur en regel', async () => {
+  it.each([undefined, 'synthetic-operator'])('bewaart de Pro-dienstperiode en blokkeert alleen bij herstel door %s', async actor => {
     const createInvoice = vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({ id: 'invoice-pro', ...data }))
     const createLine = vi.fn()
     const transaction = {
@@ -116,7 +116,11 @@ describe('financiële documentnummering', () => {
       }) },
       financialJorttSync: { create: vi.fn() }, financialEvent: { create: vi.fn() },
     }
-    await issueInvoiceForPaidSubscriptionPayment(transaction as never, 'payment-pro', new Date('2026-08-31T12:00:00Z'))
+    await issueInvoiceForPaidSubscriptionPayment(transaction as never, 'payment-pro', new Date('2026-08-31T12:00:00Z'), actor)
+    expect(transaction.financialJorttSync.create).toHaveBeenCalledTimes(actor ? 0 : 1)
+    if (actor) expect(transaction.financialEvent.create).toHaveBeenCalledWith({ data: expect.objectContaining({
+      eventType: 'PRO_RECOVERY_JORTT_HELD', actorUserId: actor, invoiceId: 'invoice-pro',
+    }) })
     expect(createInvoice).toHaveBeenCalledWith({ data: expect.objectContaining({ snapshotVersion: 2,
       supplyDate: new Date('2026-09-01T00:00:00Z'), advancePaymentDate: new Date('2026-08-31T12:00:00Z'),
       servicePeriodStart: new Date('2026-09-01T00:00:00Z'), servicePeriodEnd: new Date('2026-10-01T00:00:00Z') }) })

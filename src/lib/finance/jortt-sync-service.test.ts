@@ -3,16 +3,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 vi.mock('server-only', () => ({}))
 
 const mocks = vi.hoisted(() => ({
-  queryRaw: vi.fn(), invoiceFind: vi.fn(), syncUpdate: vi.fn(), attemptCreate: vi.fn(), eventCreate: vi.fn(), eventUpsert: vi.fn(), syncFindMany: vi.fn(),
+  eventFind: vi.fn(), queueCreate: vi.fn(), authorize: vi.fn(), queryRaw: vi.fn(), invoiceFind: vi.fn(), syncUpdate: vi.fn(), attemptCreate: vi.fn(), eventCreate: vi.fn(), eventUpsert: vi.fn(), syncFindMany: vi.fn(),
 }))
 
 const prisma = {
   $transaction: vi.fn(async (callback: (transaction: unknown) => unknown) => callback({
     $queryRaw: mocks.queryRaw,
     financialInvoice: { findUnique: mocks.invoiceFind },
-    financialJorttSync: { update: mocks.syncUpdate },
+    financialJorttSync: { create: mocks.queueCreate, update: mocks.syncUpdate },
     financialJorttSyncAttempt: { create: mocks.attemptCreate },
-    financialEvent: { create: mocks.eventCreate, upsert: mocks.eventUpsert },
+    financialEvent: { findUnique: mocks.eventFind, create: mocks.eventCreate, upsert: mocks.eventUpsert },
   })),
   financialJorttSync: { findMany: mocks.syncFindMany },
 }
@@ -20,6 +20,10 @@ const prisma = {
 vi.mock('@/lib/prisma', () => ({ getPrisma: () => prisma }))
 
 import { retryDueJorttSyncs, syncFinancialInvoiceToJortt, type JorttGateway } from './jortt-sync-service'
+vi.mock('@/lib/platform-admin/platform-admin-authorization', () => ({ requirePlatformAdministrator: async () => ({ id: 'operator' }) }))
+vi.mock('@/lib/marketplace/marketplace-authorization', () => ({ requireMarketplacePlatformAdmin: mocks.authorize }))
+import { holdHistoricalInvoice, releaseHistoricalInvoice } from './pro-historical-recovery'
+import type { Prisma } from '@/generated/prisma/client'
 import { JorttProviderError } from './jortt-provider-diagnostics'
 
 function invoice(status = 'PENDING', updatedAt = new Date('2026-08-25T10:00:00Z')) {
@@ -34,6 +38,61 @@ function invoice(status = 'PENDING', updatedAt = new Date('2026-08-25T10:00:00Z'
 }
 
 describe('Jortt synchronisatieservice', () => {
+  it('weigert een tweede herstelverzending na een onzekere claim', async () => {
+    const policy = await import('./pro-historical-recovery')
+    const pin = vi.spyOn(policy, 'historicalRecoveryDate').mockReturnValue('2026-10-04')
+    const submitInvoice = vi.fn()
+    try {
+      for (const status of ['FAILED', 'PROCESSING', 'RETRY_REQUIRED']) {
+        const previous = invoice(status)
+        mocks.invoiceFind.mockResolvedValue({ ...previous, jorttSync: { ...previous.jorttSync, attemptCount: 1 } })
+        await expect(syncFinancialInvoiceToJortt(previous.id, { submitInvoice })).rejects.toThrow('PRO_RECOVERY_JORTT_ATTEMPT_REVIEW')
+      }
+      expect(submitInvoice).not.toHaveBeenCalled()
+    } finally {
+      pin.mockRestore()
+    }
+  })
+
+  it('houdt één herstelpost vast tot afzonderlijke vrijgave en verwerkt een reguliere factuur intussen', async () => {
+    const heldId = 'synthetic-held-invoice'
+    const eventStore = new Map<string, { invoiceId: string; eventType: string }>()
+    const queue = new Map<string, string>([['regular', 'PENDING']])
+    const submitInvoice = vi.fn().mockResolvedValue({ externalReference: 'fake-doc', remoteInvoiceNumber: 'F1' })
+    const gateway = { submitInvoice }
+    mocks.eventCreate.mockImplementation(async ({ data }) => { eventStore.set(data.idempotencyKey, data) })
+    mocks.eventFind.mockImplementation(async ({ where }) => eventStore.get(where.idempotencyKey))
+    mocks.queueCreate.mockImplementation(async ({ data }) => { queue.set(data.invoiceId, 'PENDING') })
+    mocks.invoiceFind.mockImplementation(async ({ where }) => {
+      const row = invoice(queue.get(where.id))
+      return { ...row, id: where.id, jorttSync: queue.has(where.id) ? { ...row.jorttSync, id: where.id } : null }
+    })
+    mocks.syncUpdate.mockImplementation(async ({ where, data }) => {
+      queue.set(where.id, data.status)
+      return { ...invoice().jorttSync, id: where.id, attemptCount: 1, ...data }
+    })
+    mocks.syncFindMany.mockImplementation(async ({ where }) => [...queue].filter(([, status]) => where.status.in.includes(status)).map(([invoiceId]) => ({ invoiceId })))
+    try {
+      await prisma.$transaction(tx => holdHistoricalInvoice(tx as Prisma.TransactionClient, heldId, 'operator'))
+      await expect(syncFinancialInvoiceToJortt(heldId, gateway)).rejects.toThrow('JORTT_SYNC_NOT_FOUND')
+      await retryDueJorttSyncs(gateway)
+      expect(submitInvoice.mock.calls.map(([payload]) => payload.invoiceId)).toEqual(['regular'])
+      expect(eventStore.get(`pro-recovery-held:${heldId}`)).toMatchObject({ eventType: 'PRO_RECOVERY_JORTT_HELD' })
+      await expect(releaseHistoricalInvoice(heldId)).rejects.toThrow('PRO_RECOVERY_RELEASE_NOT_APPROVED')
+      vi.stubEnv('PRO_RECOVERY_APPROVED_INVOICE_ID', heldId)
+      mocks.authorize.mockRejectedValueOnce(new Error('FORBIDDEN'))
+      await expect(releaseHistoricalInvoice(heldId)).rejects.toThrow('FORBIDDEN')
+      expect(queue.has(heldId)).toBe(false)
+      await releaseHistoricalInvoice(heldId)
+      await releaseHistoricalInvoice(heldId)
+      await retryDueJorttSyncs(gateway)
+      await syncFinancialInvoiceToJortt(heldId, gateway)
+      expect(mocks.queueCreate).toHaveBeenCalledTimes(1)
+      expect(submitInvoice.mock.calls.map(([payload]) => payload.invoiceId)).toEqual(['regular', heldId])
+    } finally {
+      vi.unstubAllEnvs()
+    }
+  })
   it('bewaart veilige providerdiagnostiek bij dezelfde poging zonder retrybeleid of identiteit te wijzigen', async () => {
     const gateway = { submitInvoice: vi.fn().mockRejectedValue(new JorttProviderError('CUSTOMER_CREATE', 422, 'params.invalid')) }
     await expect(syncFinancialInvoiceToJortt('invoice-id', gateway)).rejects.toThrow('JORTT_PROVIDER_REJECTED')

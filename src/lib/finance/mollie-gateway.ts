@@ -12,6 +12,8 @@ export type MolliePaymentState =
   | 'expired'
 
 export type MolliePaymentSnapshot = Readonly<{
+  customerId?: string | null
+  mode?: string
   amountRefunded?: Readonly<{ value: string; currency: string }>
   amountChargedBack?: Readonly<{ value: string; currency: string }>
   id: string
@@ -147,6 +149,8 @@ function subscriptionSnapshot(subscription: {
 }
 
 function paymentSnapshot(payment: {
+  customerId?: string | null
+  mode?: string
   amountRefunded?: { value: string; currency: string } | null
   amountChargedBack?: { value: string; currency: string } | null
   id: string
@@ -165,6 +169,8 @@ function paymentSnapshot(payment: {
   return Object.freeze({
     id: payment.id,
     status,
+    customerId: payment.customerId,
+    mode: payment.mode,
     amountValue: payment.amount.value,
     ...(payment.amountRefunded && { amountRefunded: payment.amountRefunded }),
     ...(payment.amountChargedBack && { amountChargedBack: payment.amountChargedBack }),

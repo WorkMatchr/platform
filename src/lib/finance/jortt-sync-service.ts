@@ -5,6 +5,8 @@ import { getPrisma } from '@/lib/prisma'
 import { isRetiredLegacyJorttSync } from './jortt-retirement-policy'
 import { JorttProviderError } from './jortt-provider-diagnostics'
 
+import { historicalRecoveryDate } from './pro-historical-recovery'
+
 const PROCESSING_LEASE_MS = 5 * 60 * 1000
 
 export type JorttInvoicePayload = Readonly<{
@@ -169,6 +171,9 @@ export async function syncFinancialInvoiceToJortt(
     if (!invoice?.jorttSync) throw new Error('JORTT_SYNC_NOT_FOUND')
     if (isRetiredLegacyJorttSync(invoice.jorttSync)) throw new Error('JORTT_SYNC_RETIRED')
     if (invoice.jorttSync.status === 'SYNCED') return { invoice, sync: invoice.jorttSync, idempotent: true }
+    if (historicalRecoveryDate(invoice.molliePaymentId) && invoice.jorttSync.attemptCount > 0) {
+      throw new Error('PRO_RECOVERY_JORTT_ATTEMPT_REVIEW')
+    }
     if (
       invoice.jorttSync.status === 'PROCESSING'
       && invoice.jorttSync.updatedAt.getTime() > claimedAt.getTime() - PROCESSING_LEASE_MS
@@ -219,7 +224,7 @@ export async function syncFinancialInvoiceToJortt(
       })
       await transaction.financialJorttSync.update({
         where: { id: claimed.sync.id },
-        data: { status: errorCode === 'JORTT_EXTERNAL_CONNECTOR_NOT_CONFIGURED' ? 'FAILED' : 'RETRY_REQUIRED', lastErrorCode: errorCode, nextAttemptAt: new Date(Date.now() + Math.min(86_400_000, 60_000 * 2 ** Math.min(attemptNumber, 10))) },
+        data: { status: historicalRecoveryDate(claimed.invoice.molliePaymentId) || errorCode === 'JORTT_EXTERNAL_CONNECTOR_NOT_CONFIGURED' ? 'FAILED' : 'RETRY_REQUIRED', lastErrorCode: errorCode, nextAttemptAt: new Date(Date.now() + Math.min(86_400_000, 60_000 * 2 ** Math.min(attemptNumber, 10))) },
       })
       await transaction.financialEvent.upsert({
         where: { idempotencyKey: `jortt-sync-failed:${invoiceId}:${attemptNumber}` },

@@ -6,6 +6,8 @@ import { WORKMATCHR_SELLER } from './financial-contract'
 import { mirrorCreditNoteSnapshot } from './credit-note-snapshot'
 import { resolveProInvoiceSource } from './pro-payment-source'
 
+import { holdHistoricalInvoice } from './pro-historical-recovery'
+
 type Transaction = Prisma.TransactionClient
 
 type InvoiceV2LineInput = Readonly<{
@@ -296,6 +298,7 @@ export async function issueInvoiceForPaidSubscriptionPayment(
   transaction: Transaction,
   subscriptionPaymentId: string,
   issuedAt = new Date(),
+  recoveryActor?: string,
 ) {
   const existing = await transaction.financialInvoice.findUnique({ where: { subscriptionPaymentId } })
   if (existing) return existing
@@ -360,7 +363,8 @@ export async function issueInvoiceForPaidSubscriptionPayment(
     },
   })
   await createInvoiceV2Details(transaction, invoice.id, line)
-  await transaction.financialJorttSync.create({ data: { invoiceId: invoice.id, technicalReference: `workmatchr-invoice:${invoice.id}` } })
+  if (recoveryActor) await holdHistoricalInvoice(transaction, invoice.id, recoveryActor)
+  else await transaction.financialJorttSync.create({ data: { invoiceId: invoice.id, technicalReference: `workmatchr-invoice:${invoice.id}` } })
   await transaction.financialEvent.create({
     data: {
       subscriptionId: payment.subscriptionId,

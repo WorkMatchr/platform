@@ -6,7 +6,7 @@ import { formatPlatformDate, paginationHref, parseDateBoundary, parsePage, singl
 import { financialDocumentTypeLabels, financialPaymentStatusLabels, financialPurchaseStatusLabels, financialStatusTone, financialSyncStatusLabels, financialSyncStatusTone } from '@/lib/finance/platform-financial-presentation'
 import { listPlatformFinancialInvoices } from '@/lib/finance/platform-financial-query-service'
 import { requirePlatformAdministrator } from '@/lib/platform-admin/platform-admin-authorization'
-import { retryPlatformJorttSyncAction } from '../actions'
+import { recoverHistoricalProAction, releaseHistoricalProAction, retryPlatformJorttSyncAction } from '../actions'
 import { isRetiredLegacyJorttSync } from '@/lib/finance/jortt-retirement-policy'
 
 const pathname = '/platformbeheer/financien/facturen'
@@ -23,6 +23,14 @@ export default async function PlatformFinancialInvoicesPage({ searchParams }: { 
 
   return <>
     <AdminPageHeader title="Facturen" description="Immutable factuursnapshots en creditnota’s met beveiligde PDF-download." />
+    {process.env.PRO_RECOVERY_APPROVED_PAYMENT_ID && <AdminSection title="Goedgekeurd Pro-herstel">
+      <form action={recoverHistoricalProAction}><label>Mollie-betaal-ID <input name="paymentId" required /></label>
+        <button type="submit">Betaling controleren en factuur vastleggen</button></form>
+    </AdminSection>}
+    {process.env.PRO_RECOVERY_APPROVED_INVOICE_ID && <AdminSection title="Vrijgave voor Jortt">
+      <form action={releaseHistoricalProAction}><label>Goedgekeurd intern factuur-ID <input name="invoiceId" required /></label>
+        <button type="submit">Overdracht van deze factuur toestaan</button></form>
+    </AdminSection>}
     <FilterForm>
       <FilterField name="documentType" label="Documenttype"><select className="min-h-10 rounded-control border border-border bg-surface px-3 text-sm" name="documentType" defaultValue={documentTypeValue ?? ''}><option value="">Alle documenten</option>{Object.values(FinancialDocumentType).map((type) => <option key={type} value={type}>{financialDocumentTypeLabels[type]}</option>)}</select></FilterField>
       <FilterField name="organization" label="Organisatie" defaultValue={organization} />

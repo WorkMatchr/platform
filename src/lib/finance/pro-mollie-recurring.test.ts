@@ -68,7 +68,8 @@ const transaction = {
     create: mocks.firstPaymentAttemptCreate,
   },
   professionalSubscriptionPayment: { createMany: mocks.paymentUpsert, findUniqueOrThrow: vi.fn(async () => ({ id: '50000000-0000-4000-8000-000000000001' })), findMany: vi.fn(async () => []), findFirst: vi.fn(async () => null) },
-  financialEvent: { upsert: mocks.eventUpsert, create: mocks.eventCreate, count: mocks.eventCount },
+  financialInvoice: { findUnique: vi.fn() },
+  financialEvent: { findUnique: vi.fn(), upsert: mocks.eventUpsert, create: mocks.eventCreate, count: mocks.eventCount },
   organizationMembership: { findMany: vi.fn(async () => []) },
   marketplaceNotification: { upsert: vi.fn() },
 }
@@ -85,10 +86,12 @@ vi.mock('@/lib/prisma', () => ({
 }))
 vi.mock('@/lib/marketplace/marketplace-authorization', () => ({
   requireProviderMarketplaceAccess: mocks.authorize,
+  requireMarketplacePlatformAdmin: mocks.authorize,
 }))
 vi.mock('./financial-transaction', () => ({
   runSerializableFinancialTransaction: (operation: (value: typeof transaction) => unknown) => operation(transaction),
 }))
+vi.mock('@/lib/platform-admin/platform-admin-authorization', () => ({ requirePlatformAdministrator: async () => ({ id: actorUserId }) }))
 vi.mock('./invoice-service', () => ({ issueInvoiceForPaidSubscriptionPayment: mocks.invoice }))
 vi.mock('./pro-first-payment-downstream-service', () => ({
   finalizeProFirstPaymentDownstream: mocks.finalizeDownstream,
@@ -640,6 +643,41 @@ describe('WorkMatchr Pro via first payment en recurring mandate', () => {
 
     expect(mocks.createSubscription).toHaveBeenCalledTimes(1)
     expect(current).toMatchObject({ status: 'ACTIVE', mollieSubscriptionId: 'sub_test' })
+  })
+
+  it('herstelt uitsluitend de goedgekeurde bestaande betaling via GET en geeft de blokkade atomair door', async () => {
+    const policy = await import('./pro-historical-recovery')
+    const mollie = await import('./mollie-gateway')
+    const { recoverHistoricalProPayment, processRecurringProPayment } = await import('./subscription-service')
+    const payment = { ...recurringPayment('paid'), id: 'tr_synthetic_recovery', customerId: 'cst_test', mode: 'live' }
+    current = { ...current, status: 'ACTIVE', currentPeriodEnd: new Date('2026-09-09T12:00:00Z'), mollieSubscriptionId: 'sub_test',
+      mollieMandateId: 'mdt_directdebit', mollieMandateMethod: 'directdebit', amountExclVatCents: 4900, vatAmountCents: 1029, vatRateBps: 2100 }
+    mocks.eventUpsert.mockResolvedValue({})
+    const read = vi.fn().mockResolvedValue(payment)
+    const date = vi.spyOn(policy, 'historicalRecoveryDate').mockReturnValue('2026-09-09')
+    const provider = vi.spyOn(mollie, 'createMollieGateway').mockReturnValue({ ...gateway(), getPayment: read })
+    try {
+      await expect(processRecurringProPayment(payment)).rejects.toThrow('PRO_RECOVERY_OPERATOR_REQUIRED')
+      await expect(recoverHistoricalProPayment(payment.id)).rejects.toThrow('PRO_RECOVERY_PAYMENT_UNKNOWN')
+      expect(read).not.toHaveBeenCalled()
+      vi.stubEnv('PRO_RECOVERY_APPROVED_PAYMENT_ID', payment.id)
+      await recoverHistoricalProPayment(payment.id)
+      expect(read).toHaveBeenCalledExactlyOnceWith(payment.id)
+      expect(mocks.invoice).toHaveBeenCalledWith(transaction, '50000000-0000-4000-8000-000000000001', expect.any(Date), actorUserId)
+      expect(current.currentPeriodEnd).toEqual(new Date('2026-10-09T12:00:00Z'))
+      transaction.professionalSubscriptionPayment.findMany.mockResolvedValueOnce([{ status: 'PAID', subscriptionId, id: 'synthetic-payment' }] as never)
+      transaction.financialInvoice.findUnique.mockResolvedValueOnce({ id: 'synthetic-invoice' })
+      transaction.financialEvent.findUnique.mockResolvedValueOnce({ eventType: 'PRO_RECOVERY_JORTT_HELD' })
+      await processRecurringProPayment(payment)
+      expect(mocks.invoice).toHaveBeenCalledTimes(1)
+      expect(mocks.paymentUpsert).toHaveBeenCalledTimes(1)
+      expect(mocks.createPayment).not.toHaveBeenCalled()
+      expect(mocks.createSubscription).not.toHaveBeenCalled()
+    } finally {
+      provider.mockRestore()
+      date.mockRestore()
+      vi.unstubAllEnvs()
+    }
   })
 
   it('verwerkt een succesvolle maandincasso en maakt de maandfactuur via de bestaande idempotente service', async () => {
