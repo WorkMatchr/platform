@@ -84,5 +84,21 @@ it.skipIf(process.env.RUN_FIN06_PG !== '1')('herhaalt een historische betaling o
     const submitInvoice=vi.fn()
     await expect(syncFinancialInvoiceToJortt(invoice.id,{submitInvoice})).rejects.toThrow('JORTT_SYNC_NOT_FOUND')
     expect(submitInvoice).not.toHaveBeenCalled()
+    const { retryDueJorttSyncs } = await import('../../src/lib/finance/jortt-sync-service')
+    const { releaseHistoricalInvoice } = await import('../../src/lib/finance/pro-historical-recovery')
+    submitInvoice.mockImplementation(async payload => ({
+      externalReference: 'fake-' + payload.invoiceId, remoteInvoiceNumber: 'TEST-' + payload.invoiceNumber,
+    }))
+    await retryDueJorttSyncs({ submitInvoice })
+    expect(submitInvoice.mock.calls.map(([payload]) => payload.paymentReference)).toEqual(['tr_p1retry'])
+    await expect(releaseHistoricalInvoice(invoice.id)).rejects.toThrow('PRO_RECOVERY_RELEASE_NOT_APPROVED')
+    vi.stubEnv('PRO_RECOVERY_APPROVED_INVOICE_ID', invoice.id)
+    await releaseHistoricalInvoice(invoice.id)
+    await releaseHistoricalInvoice(invoice.id)
+    await retryDueJorttSyncs({ submitInvoice })
+    await syncFinancialInvoiceToJortt(invoice.id, { submitInvoice })
+    expect(submitInvoice.mock.calls.map(([payload]) => payload.paymentReference)).toEqual(['tr_p1retry', id])
+    expect(await prisma.financialJorttSync.count({ where: { invoiceId: invoice.id, status: 'SYNCED', attemptCount: 1 } })).toBe(1)
+    expect(await prisma.financialEvent.count({ where: { invoiceId: invoice.id, eventType: 'PRO_RECOVERY_JORTT_RELEASED', actorUserId: admin.id } })).toBe(1)
   } finally {vi.unstubAllEnvs(); await prisma.$disconnect()}
 },60000)
