@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [Academy · besluitkaart voor de betaalde pilot](release-v3/app-final/academy-live-pilot-02.md)
+
 - [Homepage 2.0 — compacte lay-out en acceptatie](homepage-compact-v2.md)
 - [P1: Pro-incasso, creditfacturen en betaalreconciliatie](p1-financial-integrity-repair.md)
 

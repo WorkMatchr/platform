@@ -1,4 +1,4 @@
-import { isLocalPilot } from '@/lib/learning/learning-exam-runtime-version'
+import { pilotAreaAvailable } from '@/lib/learning/learning-exam-runtime-version'
 import { getPrisma } from '@/lib/prisma'
 import { PilotClock } from '@/components/learning/pilot-clock'
 import { findAcademyCourseByAttempt } from '@/lib/learning/academy-course-service'
@@ -17,7 +17,7 @@ export default async function FinalExamAttemptPage({ params }: { params: Promise
   if (!attempt) {
     redirect(`/e-learnings/${courseSlug}/eindtoets?melding=toegang`)
   }
-  const pilot=isLocalPilot() && await getPrisma().learningPilotAssignment.findUnique({where:{enrollmentId:attempt.enrollmentId},select:{id:true}})
+  const pilot=pilotAreaAvailable() && await getPrisma().learningPilotAssignment.findUnique({where:{enrollmentId:attempt.enrollmentId},select:{id:true}})
   return <Container className="py-8 sm:py-12">
     <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-brand-primary">Eindtoets — {course.title}</p>
     {pilot && <PilotClock enrollment={attempt.enrollmentId} target={attempt.id} exam/>}

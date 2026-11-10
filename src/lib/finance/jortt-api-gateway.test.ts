@@ -60,6 +60,29 @@ describe('Jortt API gateway', () => {
 
   afterEach(() => vi.unstubAllEnvs())
 
+  it('draagt een particuliere KOR-aankoop als vrijgestelde factuur over', async()=>{
+    const sale=payload({organizationId:null,academyTaxTreatment:'NL_KOR',amountExclVatCents:149,amountInclVatCents:149,vatAmountCents:0,vatRateBps:0,
+      lines:[{description:'Opleiding',quantity:1,unit:'cursus',unitPriceExclVatCents:14900,discountAmountCents:14751,netAmountExclVatCents:149,vatRateBps:0,vatAmountCents:0}]})
+    const fetcher=vi.fn(async (input:string|URL|Request,init?:RequestInit)=>{
+      const url=String(input)
+      if(url.endsWith('/token'))return response({access_token:'test'})
+      if(url.includes('?'))return response({data:[]})
+      if(url.endsWith('/customers')){
+        expect(JSON.parse(String(init?.body))).toMatchObject({is_private:true,reference:'workmatchr-private-invoice:'+sale.invoiceId})
+        return response({data:{id:'customer'}})
+      }
+      if(url.endsWith('/invoices')){
+        const document=JSON.parse(String(init?.body))
+        expect(document.introduction).toContain('kleineondernemersregeling')
+        expect(document.line_items).toHaveLength(2)
+        for(const line of document.line_items)expect(line.vat).toEqual({value:'0',category:'exempt'})
+        return response({data:{id:'invoice'}})
+      }
+      if(url.endsWith('/send'))return new Response(null,{status:200})
+      return response({data:{id:'invoice',reference:sale.invoiceNumber,remarks:sale.technicalReference,invoice_number:'J1'}})
+    })
+    expect((await new JorttApiGateway(fetcher).submitInvoice(sale,'synthetic')).remoteInvoiceNumber).toBe('J1')
+  })
   it('vraagt uitsluitend de noodzakelijke klant-, factuur- en administratiescopes aan', async () => {
     let requestedScope: string | null = null
     const fetcher = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {

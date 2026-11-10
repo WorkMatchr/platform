@@ -3,14 +3,14 @@ import { z } from 'zod'
 import { requireLearningUser } from '@/lib/learning/learning-authorization'
 import { getPrisma } from '@/lib/prisma'
 import { currentAcademyAccess } from '@/lib/learning/academy-access-policy'
-import { allowsAssignedPilot, isLocalPilot } from '@/lib/learning/learning-exam-runtime-version'
+import { allowsAssignedPilot, pilotAreaAvailable } from '@/lib/learning/learning-exam-runtime-version'
 import { measuredInterval } from '@/lib/learning/academy-pilot-time'
 
 const observation = z
   .object({ enrollment: z.uuid(), clock: z.uuid(), target: z.uuid(), exam: z.boolean(), pause: z.boolean() })
   .strict()
 export async function recordPilotObservation(input: z.input<typeof observation>) {
-  if (!isLocalPilot()) return
+  if (!pilotAreaAvailable()) return
   const event = observation.parse(input)
   const user = await requireLearningUser('/e-learnings/mijn')
   await getPrisma().$transaction(async (tx) => {

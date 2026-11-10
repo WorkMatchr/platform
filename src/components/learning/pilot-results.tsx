@@ -13,7 +13,19 @@ export async function PilotResults({ versionId, chapterCount }: { versionId: str
     include: {
       durations: true,
       user: { select: { displayName: true } },
-      discountCode: { select: { id: true } },
+      discountCode: {
+        select: {
+          id: true,
+          percentageBps: true,
+          purchases: {
+            select: {
+              id: true,
+              status: true,
+              invoice: { select: { invoiceNumber: true, jorttSync: { select: { status: true } } } },
+            },
+          },
+        },
+      },
       enrollment: {
         include: {
           examAttempts: { orderBy: { attemptNumber: 'asc' } },
@@ -45,7 +57,7 @@ export async function PilotResults({ versionId, chapterCount }: { versionId: str
     <section className="space-y-3 rounded border p-4">
       <h2>Studieduurpilot</h2>
       <p>
-        {rows.length}/12 aangewezen · {rows.filter((r) => r.e?.startedAt).length} begonnen ·{' '}
+        {rows.length} aangewezen voor deze versie · {rows.filter((r) => r.e?.startedAt).length} begonnen ·{' '}
         {rows.filter((r) => r.e?.completedAt).length} afgerond ·{' '}
         {rows.filter((r) => r.e?.accessRevokedAt && !r.e.completedAt).length} voortijdig beëindigd ·{' '}
         {rows.filter((r) => r.e?.startedAt && !r.full).length} onvolledige metingen.
@@ -73,9 +85,32 @@ export async function PilotResults({ versionId, chapterCount }: { versionId: str
             {g.user.displayName || 'Cursist'} · {e?.progress.length ?? 0}/{chapterCount} hoofdstukken
           </summary>
           <p>
-            Codereferentie {g.discountCode.id} ·{' '}
+            Korting {g.discountCode.percentageBps! / 100}% · Codereferentie {g.discountCode.id} ·{' '}
             {g.redeemedAt ? 'ingewisseld op ' + date(g.redeemedAt) : 'ongebruikt'}
           </p>
+          {g.paidSlot && (
+            <div>
+              <p>
+                Offline studieduur{' '}
+                {g.offlineMinutes === null ? 'nog niet ingevuld' : g.offlineMinutes + ' min'}.
+              </p>
+              {g.feedback && typeof g.feedback === 'object' && (
+                <ul>
+                  {Object.entries(g.feedback).map(([topic, value]) => (
+                    <li key={topic}>
+                      {topic}: {String(value)}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {g.discountCode.purchases.map((p) => (
+                <p key={p.id}>
+                  Betaling {p.status} · factuur {p.invoice?.invoiceNumber ?? 'nog niet beschikbaar'} · Jortt{' '}
+                  {p.invoice?.jorttSync?.status ?? 'nog niet ontvangen'}
+                </p>
+              ))}
+            </div>
+          )}
           <p>
             Start {date(e?.startedAt)} · afronding {date(e?.completedAt)} · certificaat{' '}
             {e?.certificates.some((c) => c.status === 'ACTIVE') ? 'geldig' : 'geen geldig certificaat'}.

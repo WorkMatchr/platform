@@ -12,6 +12,11 @@ import { getPublishedLearningCourse } from './learning-query-service'
 import { recordPilotObservation } from '@/app/e-learnings/pilot/time'
 import { currentAcademyAccess } from './academy-access-policy'
 import { assignPilot, redeemPilot } from './academy-pilot-service'
+import { startPaidPilot } from './academy-paid-checkout'
+import { processMolliePayment } from '@/lib/finance/financial-purchase-service'
+import { syncFinancialInvoiceToJortt } from '@/lib/finance/jortt-sync-service'
+import { reconcileJorttPayment } from '@/lib/finance/jortt-payment-service'
+import type { MollieGateway, MolliePaymentSnapshot } from '@/lib/finance/mollie-gateway'
 import { publicLearningCatalog } from '@/content/public-learning-catalog'
 import { ensureCertificateForPassedExam, getMyLearningCertificate, getPublicLearningCertificate } from './learning-certificate-service'
 import { verifyLocalImportMigrations, verifyLocalImportRole } from './academy-import-preflight'
@@ -21,6 +26,7 @@ import { validateAcademyBundle } from './academy-content-standard'
 
 const state = vi.hoisted(() => ({ actor: '' }))
 vi.mock('@/lib/learning/learning-authorization',()=>({requireLearningUser:async()=>({id:state.actor})}))
+vi.mock('@/lib/finance/financial-invoice-delivery-service',()=>({deliverFinancialInvoiceEmail:vi.fn(),recordFinancialInvoiceEmailFailure:vi.fn()}))
 vi.mock('server-only', () => ({}))
 vi.mock('@/lib/authorization', () => ({ getCurrentUser: async () => ({ id: state.actor }) }))
 vi.mock('@/lib/prisma', () => ({ getPrisma: () => db }))
@@ -228,6 +234,64 @@ describe.skipIf(!enabled)('V3 Academy-upgrade met bestaande inschrijving en uitg
       await db.discountCode.deleteMany({ where: { id: { in: grants.map(grant => grant.discountCodeId) } } })
       await db.user.deleteMany({ where: { id: { in: own.userId.in } } })
     }
+  })
+
+  it.skipIf(process.env.ACADEMY_PAID_DB_PROBE !== '1')('verwerkt drie persoonlijke betaalplaatsen, KOR-overgang, factuur, Jortt en terugboeking', async()=>{
+    const version = await db.learningCourseVersion.findFirstOrThrow({where:{version:'1.2-r07',status:'PUBLISHED'}})
+    const financialBefore = async()=>[await db.creditTransaction.count(),await db.professionalSubscription.count(),await db.professionalSubscriptionPayment.count()]
+    const before=await financialBefore()
+    const users=await Promise.all(Array.from({length:4},()=>db.user.create({data:{email:randomUUID()+'@example.invalid',emailVerified:true,status:'ACTIVE'}})))
+    const grant=(email:string)=>assignPilot(owner,{email,paid:true,versions:[version.id],maximumUses:1,validUntil:new Date(Date.now()+86400000)})
+    const first=await grant(users[0].email)
+    await grant(users[1].email)
+    const last=await Promise.allSettled(users.slice(2).map(u=>grant(u.email)))
+    expect(last.filter(r=>r.status==='fulfilled')).toHaveLength(1)
+    const request={versionId:version.id,code:first,organizationId:null,confirmed:true,billing:{organizationName:'Synthetische koper',addressLine:'Teststraat 1',postalCode:'1000 AA',city:'Teststad',countryCode:'NL'}}
+    let snapshot:MolliePaymentSnapshot
+    const fake={createPayment:vi.fn(async(input:Parameters<MollieGateway['createPayment']>[0])=>(snapshot={id:'tr_syntheticAcademy',status:'open',amountValue:input.amountValue,currency:input.currency,metadata:input.metadata,paidAt:null,createdAt:new Date().toISOString(),checkoutUrl:'http://127.0.0.1/checkout',subscriptionId:null,mandateId:null,method:null})),getPayment:async()=>snapshot}
+    await expect(startPaidPilot(users[1].id,request,fake)).rejects.toThrow()
+    await expect(startPaidPilot(users[0].id,{...request,organizationId:randomUUID()},fake)).rejects.toThrow()
+    const checkout=await startPaidPilot(users[0].id,request,fake)
+    expect(await startPaidPilot(users[0].id,request,fake)).toBe(checkout)
+    expect(fake.createPayment).toHaveBeenCalledTimes(1)
+    snapshot={...snapshot!,status:'failed'}
+    const webhook=()=>processMolliePayment(snapshot.id,fake as unknown as MollieGateway)
+    await webhook()
+    snapshot={...snapshot,status:'expired'}
+    await webhook()
+    expect(await db.learningEnrollment.count({where:{userId:users[0].id}})).toBe(0)
+    expect(await db.financialInvoice.count({where:{purchaseId:snapshot.metadata.purchaseId}})).toBe(0)
+    const org=await db.organization.findFirstOrThrow({where:{organizationType:'CLIENT',systemKey:null}})
+    await db.organizationMembership.create({data:{organizationId:org.id,userId:users[1].id,role:'OWNER',status:'ACTIVE'}})
+    const second=await db.learningPilotAssignment.findFirstOrThrow({where:{userId:users[1].id},include:{discountCode:true}})
+    const date = new Date().toISOString().slice(0,10)
+    const gateway={...fake,createPayment:async(input:Parameters<MollieGateway['createPayment']>[0])=>({...await fake.createPayment(input),id:'tr_paidOrg'})}
+    await startPaidPilot(users[1].id,{...request,code:second.discountCode.code,organizationId:org.id},gateway)
+    snapshot={...snapshot!,id:'tr_paidOrg',status:'paid',paidAt:new Date().toISOString()}
+    const id=snapshot.metadata.purchaseId!
+    // Prove a delayed callback uses the confirmed payment date, independent of checkout.
+    vi.stubEnv('ACADEMY_CONFIRMED_KOR_END_DATE',date)
+    vi.stubEnv('ACADEMY_KOR_END_DECISION_REF','synthetic-confirmation')
+    try {
+      await webhook(); await webhook()
+      const invoice=await db.financialInvoice.findUniqueOrThrow({where:{purchaseId:id}})
+      expect(invoice).toMatchObject({organizationId:org.id,customerOrganizationName:org.name,academyTaxTreatment:'NL_STANDARD',amountInclVatCents:149,vatAmountCents:26})
+      expect(await db.learningEnrollment.count({where:{userId:users[1].id}})).toBe(1)
+      const remoteId=randomUUID(),account=randomUUID()
+      await syncFinancialInvoiceToJortt(invoice.id,{submitInvoice:async payload=>{
+        expect(payload.amountInclVatCents).toBe(149);expect(payload.vatRateBps).toBe(2100)
+        return {externalReference:remoteId,remoteInvoiceNumber:'SYN-001'}
+      }})
+      const settled=await reconcileJorttPayment({actorUserId:owner,invoiceId:invoice.id,ledgerAccountId:account,bookDate:date,reason:'Synthetische boekingscontrole'},
+        {inspectPayment:async()=>({id:remoteId,reference:invoice.invoiceNumber,totalCents:149,dueCents:0,currency:'EUR',allowedLedgerAccounts:[account],bookings:[{id:randomUUID(),description:'workmatchr-payment:'+invoice.id,amountCents:149,ledgerAccountId:account,bookDate:date}]}),registerPayment:async()=>{throw Error('ALREADY_BOOKED')}})
+      expect(settled.status).toBe('CONFIRMED')
+      snapshot={...snapshot,amountRefunded:{value:'1.49',currency:'EUR'}}
+      await webhook()
+      expect(await db.learningEnrollment.count({where:{userId:users[1].id,...currentAcademyAccess()}})).toBe(0)
+      expect(await financialBefore()).toEqual(before)
+      const granted=await db.learningPilotAssignment.findUniqueOrThrow({where:{id:second.id}})
+      expect(granted.enrollmentId).not.toBeNull()
+    } finally {vi.unstubAllEnvs()}
   })
 
   it('houdt de negen roadmapcursussen gesloten bij rechtstreeks opvragen van cursus, toets en certificaat', async () => {

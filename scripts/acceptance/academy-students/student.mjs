@@ -13,9 +13,21 @@ assert.equal(url.username,'academy_content_editor');assert.equal(url.hostname,'1
 
 const emails = new Map(), nonce=randomBytes(32).toString('hex')
 const addr=async(s)=>{await new Promise(ok=>s.listen(0,'127.0.0.1',ok));return 'http://127.0.0.1:'+s.address().port}
-const sink=createServer(async(req,res)=>{if(req.headers.authorization!==nonce){res.writeHead(403).end();return}let raw='';for await(const b of req)raw+=b;const [email,link]=JSON.parse(raw);emails.set(email,link);res.end('ok')})
+const paidPilot=process.env.ACADEMY_PAID_PILOT==='synthetic'
+const payments=new Map()
+const sink=createServer(async(req,res)=>{if(req.headers.authorization!==nonce){res.writeHead(403).end();return}let raw='';for await(const b of req)raw+=b;if(req.url.startsWith('/fake/v2/payments')){
+ res.setHeader('Content-Type','application/json')
+ if(req.method==='POST' && req.url==='/fake/v2/payments'){
+   const body=JSON.parse(raw),id='tr_'+randomBytes(8).toString('hex')
+   assert.deepEqual(body.amount,{currency:'EUR',value:'1.49'})
+   const payment={resource:'payment',id,status:'open',amount:body.amount,metadata:body.metadata,mode:'test',
+     createdAt:new Date().toISOString(),_links:{self:{href:'https://api.mollie.com/v2/payments/'+id},checkout:{href:base+'/e-learnings/pilot?melding=synthetisch'}}}
+   payments.set(id,payment);res.writeHead(201).end(JSON.stringify(payment));return
+ }
+ const found=payments.get(req.url.split('/').at(-1));res.writeHead(found?200:404).end(JSON.stringify(found??{}));return
+ }const [email,link]=JSON.parse(raw);emails.set(email,link);res.end('ok')})
 const sinkUrl=await addr(sink);const tmp=createServer();const base=await addr(tmp);await new Promise(ok=>tmp.close(ok))
-const server=spawn(process.execPath,['--require',fileURLToPath(new URL('./providers.cjs',import.meta.url)),'node_modules/next/dist/bin/next','start','-H','127.0.0.1','-p',new URL(base).port],{env:{...process.env,BETTER_AUTH_URL:base,NEXT_PUBLIC_APP_URL:base,PILOT_SINK:sinkUrl,PILOT_NONCE:nonce,RESEND_API_KEY:'synthetic-only',AUTH_EMAIL_FROM:'pilot@example.invalid'},stdio:'ignore',windowsHide:true})
+const server=spawn(process.execPath,['--require',fileURLToPath(new URL('./providers.cjs',import.meta.url)),'node_modules/next/dist/bin/next','start','-H','127.0.0.1','-p',new URL(base).port],{env:{...process.env,BETTER_AUTH_URL:base,NEXT_PUBLIC_APP_URL:base,PILOT_SINK:sinkUrl,PILOT_NONCE:nonce,MOLLIE_WEBHOOK_BASE_URL:base,MOLLIE_REDIRECT_BASE_URL:base,RESEND_API_KEY:'synthetic-only',AUTH_EMAIL_FROM:'pilot@example.invalid'},stdio:'ignore',windowsHide:true})
 try {
 for (let i=0;i<120;i++){try{if((await fetch(base+'/inloggen')).ok)break}catch{}await new Promise(r=>setTimeout(r,500))}
 const db=new Client({connectionString:url.toString()}); await db.connect()
@@ -33,7 +45,7 @@ async function register(p){
 }
 async function open(width=1366){
  const ctx=await browser.newContext({baseURL:base,viewport:{width,height:900},serviceWorkers:'block'});await ctx.route('**/*',r=>new URL(r.request().url()).origin===base?r.continue():r.abort())
- const p=await ctx.newPage();p.setDefaultTimeout(9000);return p
+ const p=await ctx.newPage();p.setDefaultTimeout(20000);return p
 }
 async function login(p,act){
  await p.goto('/inloggen');await p.waitForLoadState('networkidle');await p.locator('#email').fill(act.email);await p.locator('#password').fill(pw);await p.getByRole('button',{name:'Inloggen',exact:true}).click();try{await p.waitForURL(u=>u.pathname!='/inloggen',{timeout:9000})}catch{console.log('Aanmeldfeedback',await p.locator('[role=alert]').allTextContents());await p.waitForTimeout(61500);await p.getByRole('button',{name:'Inloggen',exact:true}).click();await p.waitForURL(u=>u.pathname!='/inloggen')}
@@ -89,10 +101,40 @@ if(!process.argv.includes('--administration-only')) for (const [code,slug,legacy
    const promo=(await result.innerText()).match(/PILOT-[A-F0-9]{20}/)[0]
    await p.goto('/e-learnings/pilot',{waitUntil:'networkidle'})
    await p.getByLabel('Persoonlijke pilotcode').fill(promo)
-   await p.getByRole('button',{name:'Kosteloos inschrijven'}).click()
-   await p.waitForURL('**/e-learnings/mijn')
+   if (paidPilot) {
+      await p.getByLabel('Naam op factuur').fill('Synthetische Cursist')
+      await p.getByLabel('Straat en huisnummer').fill('Teststraat 1')
+      await p.getByLabel('Postcode').fill('1000 AA');await p.getByLabel('Woonplaats of vestigingsplaats').fill('Teststad')
+      await p.getByRole('checkbox').check();await p.getByRole('button',{name:/Betalen met Mollie/}).click()
+      await p.waitForURL('**/pilot?melding=synthetisch')
+      const payment=[...payments.values()].at(-1)
+      assert.equal((await db.query('SELECT id FROM "LearningEnrollment" WHERE "userId"=$1',[student.id])).rowCount,0)
+      payment.status='paid';payment.paidAt=new Date().toISOString()
+      const callback=()=>fetch(base+'/api/payments/mollie/webhook',{method:'POST',body:new URLSearchParams({id:payment.id})})
+      for(let i=0;i<2;i++){
+        const response=await callback()
+        if(!response.ok) {
+          const evidence=await db.query('SELECT p.status, EXISTS(SELECT 1 FROM "FinancialInvoice" i WHERE i."purchaseId"=p.id) AS invoiced, ARRAY(SELECT e."eventType" FROM "FinancialEvent" e WHERE e."purchaseId"=p.id) AS events FROM "FinancialPurchase" p WHERE p."molliePaymentId"=$1',[payment.id])
+          throw Error('Webhook '+response.status+' '+JSON.stringify(evidence.rows))
+        }
+      }
+      await p.goto('/e-learnings/pilot')
+      const invoiceLink=p.getByRole('link',{name:/Factuur .* downloaden/})
+      const invoicePath=await invoiceLink.getAttribute('href')
+      const [response,download]=await Promise.all([p.waitForResponse(r=>new URL(r.url()).pathname===invoicePath),p.waitForEvent('download'),invoiceLink.click()])
+      assert.equal(response.status(),200);assert.equal(response.headers()['content-type'],'application/pdf')
+      assert.equal((await readFile(await download.path())).subarray(0,4).toString(),'%PDF')
+      await p.getByText('Studietijd en feedback voor',{exact:false}).first().click()
+      await p.getByLabel('Totaal offline bestede minuten').fill('18')
+      for (const label of ['Inhoud','Moeilijkheid','Gebruiksgemak','Technische fouten','Onduidelijke toetsvragen']) await p.getByLabel(label,{exact:true}).selectOption('Geen opmerkingen')
+      await p.getByRole('button',{name:'Evaluatie opslaan'}).click()
+      await p.getByRole('status').filter({hasText:'Uw evaluatie is opgeslagen'}).waitFor()
+   } else {
+     await p.getByRole('button',{name:'Kosteloos inschrijven'}).click()
+     await p.waitForURL('**/e-learnings/mijn')
+   }
    const redeemed=await db.query('SELECT a."enrollmentId",d."percentageBps" FROM "LearningPilotAssignment" a JOIN "DiscountCode" d ON d.id=a."discountCodeId" WHERE a."userId"=$1',[student.id])
-   assert.equal(redeemed.rowCount,1);assert.ok(redeemed.rows[0].enrollmentId);assert.equal(redeemed.rows[0].percentageBps,10000)
+   assert.equal(redeemed.rowCount,1);assert.ok(redeemed.rows[0].enrollmentId);assert.equal(redeemed.rows[0].percentageBps,paidPilot ? 9900 : 10000)
  }
  await p.goto('/e-learnings/aanbod');await p.getByRole('link',{name:'Bekijk opleiding'}).first().waitFor()
  await width(p);await shot(p,code+'-aanbod-mobiel')
@@ -192,8 +234,11 @@ if(!process.argv.includes('--administration-only')) for (const [code,slug,legacy
    await row.getByText(/Eerste toets · 0\/50/).waitFor()
    await row.getByText(/Herkansing 1 · 50\/50/).waitFor()
    await row.getByText(/certificaat geldig/).waitFor()
-   assert.equal(Number((await db.query('SELECT count(*) AS n FROM "FinancialPurchase"')).rows[0].n),0)
-   console.log('PASS beheer, codegebruik, kosteloze inschrijving en nul financiële aankopen')
+   if(paidPilot) {
+     const sales=await db.query('SELECT p.status,i."vatAmountCents",i."amountInclVatCents",i."academyTaxTreatment" FROM "FinancialPurchase" p JOIN "FinancialInvoice" i ON i."purchaseId"=p.id WHERE p."createdByUserId"=$1',[student.id])
+     assert.deepEqual(sales.rows,[{status:'PAID',vatAmountCents:0,amountInclVatCents:149,academyTaxTreatment:'NL_KOR'}])
+   } else assert.equal(Number((await db.query('SELECT count(*) AS n FROM "FinancialPurchase"')).rows[0].n),0)
+   console.log(paidPilot ? 'PASS persoonlijke aankoop, één factuur, dubbele webhook en cursusafronding' : 'PASS beheer, codegebruik, kosteloze inschrijving en nul financiële aankopen')
  }
  await a.context().close()
  });await guest.context().close();await p.context().close()

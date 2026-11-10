@@ -61,7 +61,7 @@ export interface MollieGateway {
     description: string
     redirectUrl: string
     webhookUrl: string
-    metadata: { purchaseId: string; organizationId: string; subscriptionId?: string }
+    metadata: { purchaseId: string; organizationId?: string; subscriptionId?: string }
     idempotencyKey: string
     customerId?: string
     sequenceType?: 'oneoff' | 'first' | 'recurring'
