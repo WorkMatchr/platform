@@ -258,3 +258,4 @@ Zie [legacy intake naar gedeelde Simple Advice Flow](legacy-intake-unification.m
 - [Academy-editor op V3 en upgradebewijs](release-v3/app-final/academy-release-03.md)
 - [Academy-studentpilot: cursusversies, toetsdekking en overgang WL-001](release-v3/app-final/academy-release-04.md)
 - [Academy-nachtacceptatie en voorwaarden voor de commerciële pilot](release-v3/app-final/night-academy-01.md)
+- [Academy RELEASE-05: inhoudelijke beoordeling, 150 toetsvragen en pilotbesluit](release-v3/app-final/academy-release-05.md)
