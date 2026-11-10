@@ -1,5 +1,6 @@
 # Documentatie WorkMatchr
 
+- [Academy · opleidingen maken, beoordelen en rapporteren](release-v3/app-final/academy-management-01.md)
 - [Academy · besluitkaart voor de betaalde pilot](release-v3/app-final/academy-live-pilot-02.md)
 
 - [Homepage 2.0 — compacte lay-out en acceptatie](homepage-compact-v2.md)

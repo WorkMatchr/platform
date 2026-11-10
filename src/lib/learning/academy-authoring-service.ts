@@ -1,25 +1,25 @@
 import { isAcademyBundle, bundleHash, saveBundleDraft, verifyBundleDraft, publishBundleQuestions } from './academy-bundle-authoring'
 import { validateAcademyBundle, type AcademyCourseBundle } from './academy-content-standard'
 import 'server-only'
-import { allowsAssignedPilot, allowsStudentPilot, COURSE_CODE, COURSE_VERSION } from './learning-exam-runtime-version'
+import { allowsAssignedPilot, allowsStudentPilot, isLocalPilot, COURSE_CODE, COURSE_VERSION } from './learning-exam-runtime-version'
 import { createHash } from 'node:crypto'
 import { Prisma } from '@/generated/prisma/client'
 import { getPrisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/authorization'
 import { getPlatformOperatorContext } from '@/lib/platform-admin/platform-admin-authorization'
 import { isLearningRuntimeEnabled } from './learning-runtime-policy'
-import { authoringSchema, canTransition, type AuthoringCourse, type AuthoringState } from './academy-authoring-contract'
+import { parseAuthoringDraft, authoringSchema, canTransition, type AuthoringCourse, type AuthoringState } from './academy-authoring-contract'
 import { createAcademyDefinition } from './academy-course-definition'
 import { readLearningMedia } from './learning-media-storage'
 
-export type AuthoringMetadata = { authoring: { content: AuthoringCourse | AcademyCourseBundle; state: AuthoringState; revision: number; hash: string; reviewedBy?: string; reviewedAt?: string; reviewReason?: string }; academy: ReturnType<typeof createAcademyDefinition> }
+export type AuthoringMetadata = { authoring: { content: AuthoringCourse | AcademyCourseBundle; state: AuthoringState; revision: number; hash: string; reviewedBy?: string; reviewedAt?: string; reviewReason?: string; legalReference?:string }; academy: ReturnType<typeof createAcademyDefinition> }
 export async function requireAuthor() {
   if (!isLearningRuntimeEnabled()) throw new Error('LEARNING_DISABLED')
   const user = await getCurrentUser()
   if (!user) throw new Error('ACCESS_DENIED')
   return getPlatformOperatorContext(user.id)
 }
-export function contentHash(content: AuthoringCourse | AcademyCourseBundle) { if (isAcademyBundle(content)) return bundleHash(validateAcademyBundle(content)); return createHash('sha256').update(JSON.stringify(authoringSchema.parse(content))).digest('hex') }
+export function contentHash(content: AuthoringCourse | AcademyCourseBundle) { if (isAcademyBundle(content)) return bundleHash(validateAcademyBundle(content)); return createHash('sha256').update(JSON.stringify(parseAuthoringDraft(content))).digest('hex') }
 export function authoringMetadata(value: unknown): AuthoringMetadata {
   const metadata = value as AuthoringMetadata & { bundle?: unknown; bundleHash?: string }
   if (!metadata?.authoring && metadata?.bundle) {
@@ -28,7 +28,7 @@ export function authoringMetadata(value: unknown): AuthoringMetadata {
     return { academy: bundle.definition, authoring: { content: bundle, state: 'DRAFT', revision: 0, hash: bundleHash(bundle) } } as AuthoringMetadata
   }
   if (!metadata?.authoring || !metadata.academy) throw new Error('LEGACY_VERSION_READ_ONLY')
-  const content = isAcademyBundle(metadata.authoring.content) ? validateAcademyBundle(metadata.authoring.content) : authoringSchema.parse(metadata.authoring.content)
+  const content = isAcademyBundle(metadata.authoring.content) ? validateAcademyBundle(metadata.authoring.content) : parseAuthoringDraft(metadata.authoring.content)
   if (contentHash(content) !== metadata.authoring.hash) throw new Error('CONTENT_INTEGRITY_FAILED')
   return metadata
 }
@@ -44,7 +44,7 @@ export async function readAuthoringVersion(id: string) {
 export async function saveAuthoringCourse(raw: unknown, versionId?: string, expectedRevision = 0) {
   const actor = await requireAuthor()
   if (isAcademyBundle(raw)) return getPrisma().$transaction(tx => saveBundleDraft(tx, raw, actor.userId, versionId, expectedRevision), { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 180000 })
-  const input = authoringSchema.parse(raw)
+  const input = parseAuthoringDraft(raw)
   const db = getPrisma()
   return db.$transaction(async tx => {
     // Serialize all edits/publications for this identity, including first creation.
@@ -52,10 +52,12 @@ export async function saveAuthoringCourse(raw: unknown, versionId?: string, expe
     const previous = versionId ? await tx.learningCourseVersion.findUniqueOrThrow({where:{id:versionId},include:{course:true}}) : null
     if(previous && (previous.status!=='DRAFT' || previous.course.code!==input.code)) throw new Error('NEW_VERSION_REQUIRED')
     const old = previous ? authoringMetadata(previous.sourceMetadata) : null
+    if(old && !isAcademyBundle(old.authoring.content) && old.authoring.content.management && !input.management) throw Error('MANAGEMENT_INCOMPLETE')
     if(old && (old.authoring.state!=='DRAFT' || old.authoring.revision!==expectedRevision)) throw new Error('STALE_OR_LOCKED_DRAFT')
+    if(previous && old && isAcademyBundle(old.authoring.content)) throw Error('NEW_VERSION_REQUIRED')
     let course=await tx.learningCourse.findUnique({where:{code:input.code}})
     if(course && (course.slug!==input.slug || course.title!==input.title || course.description!==input.description)) {
-      if(await tx.learningCourseVersion.count({where:{courseId:course.id,status:{not:'DRAFT'}}})) throw new Error('PUBLISHED_IDENTITY_IMMUTABLE')
+      if(await tx.learningCourseVersion.count({where:{courseId:course.id, ...(previous ? {id:{not:previous.id}} : {})}})) throw new Error('PUBLISHED_IDENTITY_IMMUTABLE')
       course=await tx.learningCourse.update({where:{id:course.id},data:{slug:input.slug,title:input.title,description:input.description}})
     }
     course ??= await tx.learningCourse.create({data:{code:input.code,slug:input.slug,title:input.title,description:input.description}})
@@ -67,6 +69,11 @@ export async function saveAuthoringCourse(raw: unknown, versionId?: string, expe
     const metadata:AuthoringMetadata={academy:definition,authoring:{content:input,state:'DRAFT',revision:(old?.authoring.revision??0)+1,hash:contentHash(input)}}
     const version=previous ? await tx.learningCourseVersion.update({where:{id:previous.id},data:{version:input.version,sourceMetadata:json(metadata)}}) : await tx.learningCourseVersion.create({data:{courseId:course.id,version:input.version,sourceMetadata:json(metadata)}})
     if(await tx.learningEnrollment.count({where:{courseVersionId:version.id}})) throw new Error('DRAFT_HAS_ENROLLMENTS')
+    // Incomplete drafts live only in the existing revision document. Review requires a complete projection.
+    if (!authoringSchema.safeParse(input).success) {
+      await tx.marketplaceAuditEvent.create({data:{actorUserId:actor.userId,actorRole:'PLATFORM_ADMIN',entityType:'LearningCourseVersion',entityId:version.id,action:'ACADEMY_DRAFT_SAVED',metadata:{revision:metadata.authoring.revision,hash:metadata.authoring.hash}}})
+      return {id:version.id,revision:metadata.authoring.revision}
+    }
     const oldChapters=await tx.learningChapter.findMany({where:{courseVersionId:version.id},select:{id:true}})
     const oldExams=await tx.learningExamVersion.findMany({where:{courseVersionId:version.id},select:{id:true}})
     const ids=oldChapters.map(c=>c.id), examIds=oldExams.map(e=>e.id)
@@ -77,11 +84,11 @@ export async function saveAuthoringCourse(raw: unknown, versionId?: string, expe
     await tx.learningChapter.deleteMany({where:{id:{in:ids}}})
     await tx.learningQuestionOption.deleteMany({where:{questionId:{in:ownedQuestions.map(q=>q.id)}}})
     await tx.learningQuestion.deleteMany({where:{id:{in:ownedQuestions.map(q=>q.id)}}})
-    async function question(q:AuthoringCourse['questions'][number],code:string){return tx.learningQuestion.create({data:{code:`AUTH-${version.id}-${code}`,version:1,knowledgeArea:input.category,learningObjective:input.title,type:q.multiple?'MULTI_CHOICE':'SINGLE_CHOICE',questionText:q.text,explanation:q.explanation,correctAnswer:q.options.flatMap((o,i)=>o.correct?[String(i+1)]:[]),options:{create:q.options.map((o,i)=>({value:String(i+1),text:o.text,isCorrect:o.correct,position:i+1}))}}})}
+    async function question(q:AuthoringCourse['questions'][number],code:string){return tx.learningQuestion.create({data:{code:`AUTH-${version.id}-${code}`,version:1,knowledgeArea:input.category,learningObjective:q.objective || input.title,type:q.multiple?'MULTI_CHOICE':'SINGLE_CHOICE',questionText:q.text,explanation:q.explanation,correctAnswer:q.options.flatMap((o,i)=>o.correct?[String(i+1)]:[]),options:{create:q.options.map((o,i)=>({value:String(i+1),text:o.text,isCorrect:o.correct,position:i+1}))}}})}
     for(const [index,ch] of input.chapters.entries()){
       const check=await question(ch.check,`C${index+1}`)
       await tx.learningChapter.create({data:{courseVersionId:version.id,slug:`hoofdstuk-${index+1}`,title:ch.title,position:index+1,estimatedMinutes:ch.minutes,contentBlocks:{create:[
-        ...ch.lessons.map((l,i)=>({position:i+1,type:l.type,data:json({title:l.title,paragraphs:l.body.split('\n').filter(Boolean),src:l.media,alt:l.alt,captions:l.captions,transcript:l.body})})),
+        ...ch.lessons.map((l,i)=>({position:i+1,type:l.type,data:json({title:l.title,paragraphs:l.body.split('\n').filter(Boolean),src:l.media,alt:l.alt,captions:l.captions,transcript:l.body,objective:l.objective,format:l.format})})),
         {position:ch.lessons.length+1,type:ch.check.multiple?'MULTI_CHOICE':'SINGLE_CHOICE',questionId:check.id,data:{title:'Hoofdstukcheck',prompt:ch.check.text}},
       ]}}})
     }
@@ -118,6 +125,7 @@ async function verifyStoredContent(tx: Prisma.TransactionClient, id: string, con
   equal([version.version,version.course.code,version.course.slug,version.course.title,version.course.description],[content.version,content.code,content.slug,content.title,content.description])
   equal(version.chapters.length,content.chapters.length)
   const checkQuestion = (q:NonNullable<(typeof version.chapters)[number]['contentBlocks'][number]['question']>, expected:AuthoringCourse['questions'][number]) => {
+    equal(q.learningObjective,expected.objective || content.title)
     equal([q.questionText,q.explanation,q.type,q.correctAnswer,q.options.map(o=>({text:o.text,correct:o.isCorrect,value:o.value,position:o.position}))],
       [expected.text,expected.explanation,expected.multiple?'MULTI_CHOICE':'SINGLE_CHOICE',expected.options.flatMap((o,i)=>o.correct?[String(i+1)]:[]),expected.options.map((o,i)=>({text:o.text,correct:o.correct,value:String(i+1),position:i+1}))])
   }
@@ -125,7 +133,7 @@ async function verifyStoredContent(tx: Prisma.TransactionClient, id: string, con
     const expected=content.chapters[i]; equal([ch.title,ch.position,ch.estimatedMinutes,ch.contentBlocks.length],[expected.title,i+1,expected.minutes,expected.lessons.length+1])
     for(const [n,l] of expected.lessons.entries()){
       const b=ch.contentBlocks[n]; equal([b.position,b.type,b.questionId],[n+1,l.type,null]);
-      const data=b.data as Record<string,unknown>; equal([data.title,data.paragraphs,data.src,data.alt,data.captions,data.transcript],[l.title,l.body.split('\n').filter(Boolean),l.media,l.alt,l.captions,l.body])
+      const data=b.data as Record<string,unknown>; equal([data.format,data.objective],[l.format,l.objective]); equal([data.title,data.paragraphs,data.src,data.alt,data.captions,data.transcript],[l.title,l.body.split('\n').filter(Boolean),l.media,l.alt,l.captions,l.body])
     }
     const b=ch.contentBlocks.at(-1)!;equal([b.position,b.type,(b.data as Record<string,unknown>).prompt],[expected.lessons.length+1,expected.check.multiple?'MULTI_CHOICE':'SINGLE_CHOICE',expected.check.text]);if(!b.question)throw Error('REVIEW_CONTENT_DRIFT');checkQuestion(b.question,expected.check)
   }
@@ -136,7 +144,7 @@ async function verifyStoredContent(tx: Prisma.TransactionClient, id: string, con
   for(const src of media) if(!await readLearningMedia(src.slice('/learning-media/'.length)))throw Error('MEDIA_NOT_VERIFIED')
 }
 
-export async function transitionAuthoringCourse(id:string,revision:number,to:AuthoringState,reason:string){
+export async function transitionAuthoringCourse(id:string,revision:number,to:AuthoringState,reason:string,legalReference?:string){
   const actor=await requireAuthor()
   if(reason.trim().length<10||reason.length>2000)throw new Error('REVIEW_REASON_REQUIRED')
   return getPrisma().$transaction(async tx=>{
@@ -144,6 +152,18 @@ export async function transitionAuthoringCourse(id:string,revision:number,to:Aut
     await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`academy-author:${identity.course.code}`},0))::text`
     const version=await tx.learningCourseVersion.findUniqueOrThrow({where:{id}})
     const meta=authoringMetadata(version.sourceMetadata)
+    const content = meta.authoring.content
+    const management = !isAcademyBundle(content) ? content.management : undefined
+    if (management && ['REVIEW','APPROVED','PUBLISHED'].includes(to)) {
+      if (!authoringSchema.safeParse(content).success) throw Error('INCOMPLETE_LESSONS')
+      if (!management.objectives || !management.reviewer || management.regularGrossCents === null ||
+          !management.certificate || !management.audience || !management.description ||
+          (management.promotionalGrossCents !== null && management.promotionalGrossCents >= management.regularGrossCents))
+        throw Error('MANAGEMENT_INCOMPLETE')
+      if (management.certificate === 'COURSE_DESIGN' && !await tx.learningCertificateDesignBinding.findFirst({
+        where: { scope:version.courseId, design:{state:'ACTIVE'} }, select:{scope:true},
+      })) throw Error('MISSING_CERTIFICATE_DESIGN')
+    }
     const from=version.status==='DRAFT'?meta.authoring.state:version.status
     if(meta.authoring.revision!==revision || !canTransition(from,to))throw new Error('INVALID_TRANSITION')
     if(to!=='DRAFT'&&to!=='RETIRED') {
@@ -151,9 +171,14 @@ export async function transitionAuthoringCourse(id:string,revision:number,to:Aut
       else await verifyStoredContent(tx,id,meta.authoring.content)
     }
     const next={...meta,authoring:{...meta.authoring,state:to,revision:revision+1}}
-    if(to==='APPROVED')Object.assign(next.authoring,{reviewedBy:actor.userId,reviewedAt:new Date().toISOString(),reviewReason:reason.trim()})
-    if(to==='DRAFT'){delete next.authoring.reviewedBy;delete next.authoring.reviewedAt;delete next.authoring.reviewReason}
+    if (to==='APPROVED' && management) {
+      if (management.reviewer.toLowerCase() !== actor.email.toLowerCase()) throw Error('ASSIGNED_REVIEWER_REQUIRED')
+      if (management.legalReviewRequired && (!legalReference || legalReference.trim().length<10 || legalReference.length>500)) throw Error('LEGAL_REVIEW_REQUIRED')
+    }
+    if(to==='APPROVED')Object.assign(next.authoring,{reviewedBy:actor.userId,reviewedAt:new Date().toISOString(),reviewReason:reason.trim(),...(management?.legalReviewRequired?{legalReference:legalReference?.trim()}:{})})
+    if(to==='DRAFT'){delete next.authoring.reviewedBy;delete next.authoring.reviewedAt;delete next.authoring.reviewReason;delete next.authoring.legalReference}
     if (to === 'PUBLISHED' && (identity.course.code !== COURSE_CODE || version.version !== COURSE_VERSION)
+      && !(management && isLocalPilot() && !['WL-001','WL-002','WL-003'].includes(identity.course.code))
       && !(isAcademyBundle(meta.authoring.content) && (allowsStudentPilot(identity.course.code, version.version) || allowsAssignedPilot(identity.course.code, version.version)))) {
       throw Error(identity.course.code === COURSE_CODE ? 'HISTORICAL_STUDENT_ROUTE_ACTIVE' : 'STUDENT_EXAM_UNAVAILABLE')
     }

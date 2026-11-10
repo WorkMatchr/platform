@@ -54,7 +54,13 @@ export async function ensureCertificateForPassedExam(userId: string, courseCode 
     const certificate = await db.$transaction(async (transaction) => {
       const current = await transaction.learningCertificate.findUnique({ where: { courseId_userId: { courseId: eligibility.examVersion.courseVersion.course.id, userId } } })
       if (current) return current.enrollmentId === eligibility.enrollmentId ? current : null
-      const design = await certificateDesignForIssue(transaction, eligibility.examVersion.courseVersion.course.id, courseCode)
+      const meta = eligibility.examVersion.courseVersion.sourceMetadata
+      const authored = meta && typeof meta === 'object' && !Array.isArray(meta) ? meta.authoring : null
+      const content = authored && typeof authored === 'object' && !Array.isArray(authored) ? authored.content : null
+      const management = content && typeof content === 'object' && !Array.isArray(content) ? content.management : null
+      const choice = management && typeof management === 'object' && !Array.isArray(management) ? management.certificate : null
+      const design = choice === 'STANDARD' ? null : await certificateDesignForIssue(transaction, eligibility.examVersion.courseVersion.course.id, courseCode, choice === 'COURSE_DESIGN')
+      if (choice === 'COURSE_DESIGN' && !design) throw Error('CERTIFICATE_DESIGN_NOT_APPROVED')
       const created = await transaction.learningCertificate.create({
         data: {
           userId,

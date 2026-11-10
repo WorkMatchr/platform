@@ -78,11 +78,11 @@ async function secondClockCheck(p,db,userId){
 }
 try{
 const selectedCourse=process.argv.includes('--course') ? process.argv[process.argv.indexOf('--course')+1] : null
-await track('Academy-beheer', () => checkAcademyAdministration({db, open, login, pw, root}))
+await track('Academy-beheer', () => checkAcademyAdministration({db, open, login, pw, root, register}))
 const assigned=process.env.ACADEMY_TEST_ASSIGNED_PILOT==='1'
 const pilotAdmin=assigned?await open():null
 if(pilotAdmin) await login(pilotAdmin,await createTestAdministrator(db,pw))
-if(!process.argv.includes('--administration-only')) for (const [code,slug,legacyVersion] of [['WL-001','rie-in-de-praktijk','1.2'],['WL-002','preventiemedewerker-in-de-praktijk','WL-002-COURSE-1.3'],['WL-003','veilig-en-gezond-werken','WL-003-COURSE-1.1']]){
+if(!process.argv.includes('--administration-only') && !process.argv.includes('--management')) for (const [code,slug,legacyVersion] of [['WL-001','rie-in-de-praktijk','1.2'],['WL-002','preventiemedewerker-in-de-praktijk','WL-002-COURSE-1.3'],['WL-003','veilig-en-gezond-werken','WL-003-COURSE-1.1']]){
  const version=assigned?legacyVersion.split('-').at(-1)+'-r07':legacyVersion
  if(selectedCourse && code!==selectedCourse)continue
  const course='/e-learnings/'+slug, guest=await open(390);let p=await open(390)

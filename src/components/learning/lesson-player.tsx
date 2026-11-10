@@ -184,6 +184,14 @@ export function LessonContent({ block, index, onAnswered, readOnly = false }: { 
     return <QuestionInteraction block={block} onAnswered={onAnswered} readOnly={readOnly} />
   }
   if (block.type === 'HEADING') return <div className="space-y-4">{text(data, 'eyebrow') && <p className="text-sm font-semibold uppercase tracking-wide text-brand-primary">{text(data, 'eyebrow')}</p>}{index === 0 ? <h1 className="text-3xl font-bold leading-tight text-brand-dark sm:text-4xl">{text(data, 'title')}</h1> : <h2 className="text-2xl font-bold leading-tight text-brand-dark">{text(data, 'title')}</h2>}{text(data, 'subtitle') && <p className="text-lg leading-8 text-text-secondary">{text(data, 'subtitle')}</p>}{text(data, 'body') && <p className="leading-7">{text(data, 'body')}</p>}</div>
+  if (block.type === 'TEXT' && data.format === 'TABLE') {
+    const [headers,...rows] = strings(data.paragraphs).map(row=>row.split('|').map(cell=>cell.trim()))
+    return <div className="overflow-x-auto"><table><caption>{text(data,'title')}</caption><thead><tr>{headers?.map((cell,i)=><th key={i} scope="col" className="p-2">{cell}</th>)}</tr></thead><tbody>{rows.map((row,i)=><tr key={i}>{row.map((cell,n)=><td key={n} className="border p-2">{cell}</td>)}</tr>)}</tbody></table></div>
+  }
+  if (block.type==='TEXT' && ['EXAMPLE','ASSIGNMENT','SUMMARY'].includes(text(data,'format'))) {
+    const labels:Record<string,string>={EXAMPLE:'Praktijkvoorbeeld', ASSIGNMENT:'Praktijkopdracht', SUMMARY:'Samenvatting'}
+    return <section className="space-y-3"><p>{labels[text(data,'format')]}</p><h2 className="text-2xl font-bold">{text(data,'title')}</h2>{strings(data.paragraphs).map((line,i)=><p key={i}>{line}</p>)}</section>
+  }
   if (block.type === 'TEXT') return <section className="space-y-4">{text(data, 'title') && <h2 className="text-2xl font-bold text-brand-dark">{text(data, 'title')}</h2>}{strings(data.paragraphs).map((paragraph) => <p className="text-base leading-8" key={paragraph}>{paragraph}</p>)}</section>
   if (block.type === 'CALLOUT') return <aside className="rounded-card border border-brand-primary/25 bg-brand-primary-subtle p-5 sm:p-7" aria-label={text(data, 'label') || 'Toelichting'}><p className="mb-2 text-xs font-bold tracking-wider text-brand-primary">{text(data, 'label')}</p>{text(data, 'title') && <h2 className="mb-2 text-xl font-bold text-brand-dark">{text(data, 'title')}</h2>}{text(data, 'body') && <p className="leading-7">{text(data, 'body')}</p>}{strings(data.items).length > 0 && <ul className="mt-3 list-disc space-y-2 pl-5">{strings(data.items).map((item) => <li key={item}>{item}</li>)}</ul>}</aside>
   if (block.type === 'PROCESS') return <div className="space-y-7"><section className="space-y-4"><h2 className="text-2xl font-bold text-brand-dark">{text(data, 'title') || 'De stappen'}</h2><ol className="space-y-3">{strings(data.steps).map((step, position) => <li key={`${position}-${step}`} className="flex items-start gap-3 rounded-control border border-border bg-surface-subtle p-3"><span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-dark font-bold text-text-on-dark">{position + 1}</span><span className="pt-1 leading-6">{step}</span></li>)}</ol>{text(data, 'footer') && <p className="leading-7 text-text-secondary">{text(data, 'footer')}</p>}</section>{block.question && <QuestionInteraction block={block} onAnswered={onAnswered} readOnly={readOnly} />}</div>
@@ -249,7 +257,7 @@ export function LessonPlayer({
     }
   }, [index, chapterCompleted])
   const chaptersByPosition = new Map(chapterNavigation.map((chapter) => [chapter.position, chapter]))
-  const navigationItems = Array.from({ length: 10 }, (_, index) => {
+  const navigationItems = Array.from({ length: Math.max(courseSlug==='rie-in-de-praktijk'?10:0,...chaptersByPosition.keys()) }, (_, index) => {
     const position = index + 1
     const chapter = chaptersByPosition.get(position)
     return chapter

@@ -13,6 +13,7 @@ export default async function CoursesPage() {
     <p>Kies een cursusversie voor deelnemers, studievoortgang, eindtoetsen en certificaten.</p>
     <p><Link className="underline" href="/platformbeheer/academy/certificaten">Uitgegeven certificaten</Link></p>
     <Link className="underline" href="/platformbeheer/academy/certificaten/sjablonen">Certificaatsjablonen beheren</Link>
+    <p><a className="underline" href="#nieuwe-opleiding">Nieuwe opleiding</a></p>
     {courses.length === 0 && <p>Er zijn nog geen cursussen.</p>}
     {courses.map(course => <section key={course.id}>
       <h2 className="text-xl font-semibold">{course.code} · {course.title}</h2>
@@ -22,7 +23,7 @@ export default async function CoursesPage() {
     </section>)}
     {pilot.length>0 && <PilotForm paid={paidPilotEnabled()} versions={pilot}/>}
     <AcademyBundleImport />
-    <h2 className="text-2xl font-bold">Nieuwe cursus</h2>
+    <h2 id="nieuwe-opleiding" className="text-2xl font-bold">Nieuwe opleiding</h2>
     <AcademyCourseEditor />
   </section>
 }

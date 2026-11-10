@@ -1,7 +1,7 @@
 'use server'
 
 import { currentAcademyAccess } from '@/lib/learning/academy-access-policy'
-import { allowsStudentPilot, assignedPilotVersions, COURSE_CODE, COURSE_VERSION } from '@/lib/learning/learning-exam-runtime-version'
+import { allowsStudentPilot, isLocalPilot, assignedPilotVersions, COURSE_CODE, COURSE_VERSION } from '@/lib/learning/learning-exam-runtime-version'
 import { Prisma } from '@/generated/prisma/client'
 import { redirect } from 'next/navigation'
 import { requireLearningUser } from '@/lib/learning/learning-authorization'
@@ -37,7 +37,13 @@ export async function startLearningCourseAction(formData: FormData) {
       include: { chapters: { orderBy: { position: 'asc' } } },
     })
     if (!version || (requestedVersion && requestedVersion !== version.id)) return null
-    if (!pinned && !(course.code === COURSE_CODE && version.version === COURSE_VERSION) && !allowsStudentPilot(course.code, version.version)) return null
+    // Self-enrollment for newly authored courses is confined to the disposable classroom.
+    const metadata = version.sourceMetadata
+    const author = metadata && typeof metadata === 'object' && !Array.isArray(metadata) ? metadata.authoring : null
+    const locallyReviewed = isLocalPilot() && !['WL-001','WL-002','WL-003'].includes(course.code) &&
+      author && typeof author === 'object' && !Array.isArray(author) && author.state === 'PUBLISHED' &&
+      typeof author.content === 'object' && author.content && !Array.isArray(author.content) && Boolean(author.content.management) && await transaction.user.count({where:{id:user.id,status:'ACTIVE',emailVerified:true,email:{endsWith:'@example.invalid'}}})
+    if (!pinned && !locallyReviewed && !(course.code === COURSE_CODE && version.version === COURSE_VERSION) && !allowsStudentPilot(course.code, version.version)) return null
     if (assignedPilotVersions[course.code]===version.version && !await transaction.learningEnrollment.findFirst({
       where:{userId:user.id,courseVersionId:version.id,...currentAcademyAccess()},select:{id:true},
     })) return null
