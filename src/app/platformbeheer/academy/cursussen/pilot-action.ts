@@ -6,6 +6,7 @@ export async function assignPilotAction(_state: string, data: FormData) {
   try {
     const code = await assignPilot(actor.userId, {
       email: String(data.get('email')),
+      paid: data.get('mode') === 'paid',
       versions: data.getAll('version').map(String),
       maximumUses: Number(data.get('limit')),
       validUntil: new Date(String(data.get('until')) + 'T00:00:00Z'),

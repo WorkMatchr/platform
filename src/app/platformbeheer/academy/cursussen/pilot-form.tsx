@@ -2,7 +2,7 @@
 import { useActionState } from 'react'
 import { assignPilotAction } from './pilot-action'
 
-export function PilotForm({ versions }: { versions: { id: string; title: string }[] }) {
+export function PilotForm({ versions, paid }: { paid:boolean; versions: { id: string; title: string }[] }) {
   const [message, action, busy] = useActionState(assignPilotAction, '')
   return (
     <form action={action} className="space-y-3 rounded border p-4">
@@ -20,12 +20,13 @@ export function PilotForm({ versions }: { versions: { id: string; title: string 
       </fieldset>
       <label>
         Maximaal aantal inschrijvingen met deze code{' '}
-        <input type="number" name="limit" defaultValue={1} min={1} max={3} required />
+        <input type="number" name="limit" defaultValue={1} min={1} max={paid ? 1 : 3} required />
       </label>
       <label>
         Vervaldatum (00.00 UTC) <input type="date" name="until" required />
       </label>
-      <p>De code geeft deze cursist 100% korting op de aangewezen versies.</p>
+      <input type="hidden" name="mode" value={paid ? 'paid' : 'free'}/>
+      <p>{paid ? '99% korting voor één cursist en één opleiding. Maximaal drie cursisten in totaal.' : 'De code geeft deze cursist 100% korting op de aangewezen versies.'}</p>
       <button disabled={busy}>Pilotcode aanmaken</button>
       <p role="status">{message}</p>
     </form>

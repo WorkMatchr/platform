@@ -1,5 +1,7 @@
 import 'server-only'
 
+import { PILOT_GROSS_CENTS, pilotQuote, pilotAssessment } from '@/lib/learning/academy-paid-price'
+import { settlePaidPilot } from '@/lib/learning/academy-paid-checkout'
 import { createHash } from 'node:crypto'
 import { Prisma } from '@/generated/prisma/client'
 import { getPrisma } from '@/lib/prisma'
@@ -230,7 +232,7 @@ export async function createCreditPurchase(
         : `WorkMatchr ${purchase.packageLabel}`,
       redirectUrl,
       webhookUrl,
-      metadata: { purchaseId: purchase.id, organizationId: purchase.organizationId },
+      metadata: { purchaseId: purchase.id, organizationId: values.organizationId },
       idempotencyKey: `mollie-purchase-${purchase.id}`,
     })
   } catch (error) {
@@ -291,7 +293,7 @@ export async function createCreditPurchase(
   })
 }
 
-function fingerprintPayment(payment: MolliePaymentSnapshot) {
+function fingerprintPayment(payment: MolliePaymentSnapshot, academy = false) {
   return createHash('sha256').update(JSON.stringify({
     id: payment.id,
     status: payment.status,
@@ -299,6 +301,8 @@ function fingerprintPayment(payment: MolliePaymentSnapshot) {
     currency: payment.currency,
     metadata: payment.metadata,
     paidAt: payment.paidAt,
+    ...(academy && payment.amountRefunded && {amountRefunded:payment.amountRefunded}),
+    ...(academy && payment.amountChargedBack && {amountChargedBack:payment.amountChargedBack}),
     subscriptionId: payment.subscriptionId,
     mandateId: payment.mandateId,
     method: payment.method,
@@ -319,7 +323,7 @@ export async function processMolliePayment(
   if (!purchase) return processRecurringProPayment(payment)
   const amountCents = mollieValueToCents(payment.amountValue)
   const valid = payment.metadata.purchaseId === purchase.id
-    && payment.metadata.organizationId === purchase.organizationId
+    && (payment.metadata.organizationId ?? null) === purchase.organizationId
     && payment.currency === purchase.currency
     && amountCents === purchase.amountInclVatCents
   if (!valid) {
@@ -337,7 +341,7 @@ export async function processMolliePayment(
     })
     throw new Error('MOLLIE_PAYMENT_MISMATCH')
   }
-  const fingerprint = fingerprintPayment(payment)
+  const fingerprint = fingerprintPayment(payment, purchase.kind === "ACADEMY_COURSE")
   const result = await runSerializableFinancialTransaction(async (transaction) => {
     await lockKey(transaction, `purchase:${purchase.id}`)
     const current = await transaction.financialPurchase.findUniqueOrThrow({ where: { id: purchase.id } })
@@ -362,9 +366,22 @@ export async function processMolliePayment(
     }
     if (payment.status === 'paid') {
       if (current.status !== 'PAID') {
+        if (current.kind === 'ACADEMY_COURSE' && (!payment.paidAt || !Number.isFinite(Date.parse(payment.paidAt)))) throw Error('ACADEMY_VERIFIED_PAYMENT_DATE_REQUIRED')
+        const paidAt = payment.paidAt ? new Date(payment.paidAt) : new Date()
+        const terminalAt = new Date()
+        if (current.kind === 'ACADEMY_COURSE') {
+          const { at, basis } = pilotAssessment(current, paidAt, terminalAt)
+          const amounts = pilotQuote(PILOT_GROSS_CENTS, at)
+          if (amounts.amountInclVatCents !== current.amountInclVatCents) throw Error('PILOT_GROSS_MISMATCH')
+          await transaction.financialEvent.create({ data: {
+            purchaseId: current.id, eventType: 'ACADEMY_TAX_FINALIZED', result: 'SUCCEEDED',
+            idempotencyKey: `academy-tax:${current.id}`,
+            metadata: { ...amounts, basis, assessedAt: at.toISOString(), quotedVatRateBps: current.vatRateBps },
+          } })
+        }
         await transaction.financialPurchase.update({
           where: { id: current.id },
-          data: { status: 'PAID', paidAt: payment.paidAt ? new Date(payment.paidAt) : new Date(), terminalAt: new Date() },
+          data: { status: 'PAID', paidAt, terminalAt },
         })
       }
       if (current.kind === 'CREDIT_PACKAGE') {
@@ -382,7 +399,8 @@ export async function processMolliePayment(
         })
       }
       const invoice = await issueInvoiceForPaidPurchase(transaction, current.id)
-      return { purchaseId: current.id, kind: current.kind, status: 'PAID' as const, invoiceId: invoice.id }
+      const status = current.kind === 'ACADEMY_COURSE' ? await settlePaidPilot(transaction,current,payment) : 'PAID' as const
+      return { purchaseId: current.id, kind: current.kind, status, invoiceId: invoice.id }
     }
     if (['failed', 'canceled', 'expired'].includes(payment.status)) {
       const status = payment.status === 'canceled' ? 'CANCELED' : payment.status.toUpperCase() as 'FAILED' | 'EXPIRED'

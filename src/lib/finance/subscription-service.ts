@@ -1,4 +1,4 @@
-import { historicalRecoveryDate } from './pro-historical-recovery'
+import { historicalRecoveryDate, historicalTaxDecision } from './pro-historical-recovery'
 import { firstProPeriodEnd, resolveProInvoiceSource, recurringContractPeriod } from './pro-payment-source'
 import 'server-only'
 
@@ -735,27 +735,28 @@ async function processRecurring(payment: MolliePaymentSnapshot, recoveryActor?: 
       const period = payment.status === 'paid'
         ? recurringContractPeriod(source.invoice.servicePeriodStart!, payment.createdAt)
         : { start: observedAt, end: null }
-      if (recoveryActor && (current.mollieCustomerId !== payment.customerId || current.status !== 'ACTIVE' || current.currentPeriodEnd?.getTime() !== period.start.getTime()
-        || current.amountExclVatCents !== 4900 || current.vatAmountCents !== 1029 || current.vatRateBps !== 2100)) {
+      if (recoveryActor && (current.mollieCustomerId !== payment.customerId || current.status !== 'ACTIVE' || current.currentPeriodEnd?.getTime() !== period.start.getTime())) {
         throw new Error('PRO_RECOVERY_PERIOD_OR_TAX_MISMATCH')
       }
       if (recoveryActor && await transaction.professionalSubscriptionPayment.findFirst({
         where: { subscriptionId: current.id, periodStart: period.start, status: 'PAID' },
       })) throw new Error('PRO_RECOVERY_PERIOD_ALREADY_PAID')
+      const taxDecision = recoveryActor ? historicalTaxDecision(payment.id, observedAt.toISOString().slice(0, 10), current.amountInclVatCents) : null
+      const tax = taxDecision?.amounts ?? current
       const key = `pro-payment-v2:${payment.id}:${payment.status}`
       const fingerprint = await import('node:crypto').then(({ createHash }) => createHash('sha256').update(JSON.stringify({ id: payment.id, status: payment.status, amount: payment.amountValue, subscriptionId: current.id })).digest('hex'))
       await transaction.professionalSubscriptionPayment.createMany({ skipDuplicates: true, data: {
         subscriptionId: current.id, molliePaymentId: payment.id,
         status,
-        amountExclVatCents: current.amountExclVatCents, vatRateBps: current.vatRateBps,
-        vatAmountCents: current.vatAmountCents, amountInclVatCents: current.amountInclVatCents,
+        amountExclVatCents: tax.amountExclVatCents, vatRateBps: tax.vatRateBps,
+        vatAmountCents: tax.vatAmountCents, amountInclVatCents: current.amountInclVatCents,
         currency: current.currency, periodStart: period.start, periodEnd: period.end,
         payloadFingerprint: fingerprint, idempotencyKey: key,
       } })
       const record = await transaction.professionalSubscriptionPayment.findUniqueOrThrow({ where: { idempotencyKey: key } })
       await transaction.financialEvent.create({ data: { subscriptionId: current.id, eventType: 'PRO_PAYMENT_VALIDATED', result: record.status,
         idempotencyKey: `pro-validated:${payment.id}:${payment.status}`, metadata: { paymentId: payment.id, sourceInvoiceId: source.invoice.id,
-          providerCreatedAt: payment.createdAt, providerPaidAt: payment.paidAt, periodStart: period.start.toISOString(), periodEnd: period.end?.toISOString() ?? null, amountCents: current.amountInclVatCents } } })
+          ...(taxDecision && { taxDecision }), providerCreatedAt: payment.createdAt, providerPaidAt: payment.paidAt, periodStart: period.start.toISOString(), periodEnd: period.end?.toISOString() ?? null, amountCents: current.amountInclVatCents } } })
       if (payment.status === 'paid' && period.end) {
         if (recoveryActor) await issueInvoiceForPaidSubscriptionPayment(transaction, record.id, new Date(), recoveryActor)
         else await issueInvoiceForPaidSubscriptionPayment(transaction, record.id)

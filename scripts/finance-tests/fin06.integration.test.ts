@@ -61,6 +61,7 @@ it.skipIf(process.env.RUN_FIN06_PG !== '1')('herhaalt een historische betaling o
     mock.admin = admin.id
     const id = 'tr_fin06_synthetic'
     vi.stubEnv('PRO_RECOVERY_APPROVED_PAYMENT_ID',id)
+    vi.stubEnv('PRO_RECOVERY_TAX_DECISION', `${id}|2026-10-04|NL_KOR|5929|synthetic-review`)
     mock.read.mockResolvedValue({...recurring(id,'2026-10-04T19:00:48Z'),paidAt:'2026-10-06T06:00:00Z',customerId:'cst_p1',mode:'live'})
     const { recoverHistoricalProPayment } = await import('../../src/lib/finance/subscription-service')
     const wallets = () => Promise.all([prisma.creditAccount.findMany(),prisma.creditTransaction.findMany(),prisma.creditReservation.findMany()])
@@ -71,7 +72,7 @@ it.skipIf(process.env.RUN_FIN06_PG !== '1')('herhaalt een historische betaling o
     const invoices = await prisma.financialInvoice.findMany({where:{molliePaymentId:id},include:{jorttSync:true}})
     expect(invoices).toHaveLength(1)
     const invoice=invoices[0]
-    expect(invoice).toMatchObject({jorttSync:null,amountExclVatCents:4900,amountInclVatCents:5929,vatAmountCents:1029,organizationId:organization.id,documentType:'INVOICE'})
+    expect(invoice).toMatchObject({jorttSync:null,academyTaxTreatment:"NL_KOR",amountExclVatCents:5929,amountInclVatCents:5929,vatAmountCents:0,organizationId:organization.id,documentType:'INVOICE'})
     const audit = await prisma.financialEvent.findMany({where:{invoiceId:invoice.id}})
     expect(audit.map(e=>e.eventType).sort()).toEqual(['PRO_INVOICE_ISSUED','PRO_RECOVERY_JORTT_HELD'])
     expect(audit.find(e=>e.eventType==='PRO_RECOVERY_JORTT_HELD')?.actorUserId).toBe(admin.id)

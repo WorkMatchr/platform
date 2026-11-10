@@ -66,7 +66,7 @@ export async function getPlatformFinancialPaymentDetail(actorUserId: string, pur
       vatAmountCents: true,
       amountInclVatCents: true,
       organization: { select: { id: true, name: true } },
-      invoice: { select: { id: true, invoiceNumber: true } },
+      invoice: { select: { id: true, invoiceNumber: true, amountExclVatCents: true, vatAmountCents: true, vatRateBps: true } },
       refunds: {
         orderBy: { requestedAt: 'desc' },
         select: {
@@ -99,7 +99,10 @@ export async function getPlatformFinancialPaymentDetail(actorUserId: string, pur
         select: { id: true },
       }))
     : false
-  return { ...purchase, creditsUsedAfterPurchase }
+  const invoice = purchase.kind === 'ACADEMY_COURSE' ? purchase.invoice : null
+  return { ...purchase, creditsUsedAfterPurchase, ...(invoice && {
+    amountExclVatCents: invoice.amountExclVatCents, vatAmountCents: invoice.vatAmountCents, vatRateBps: invoice.vatRateBps,
+  }) }
 }
 
 export async function listPlatformFinancialInvoices(actorUserId: string, filters: FinancialInvoiceFilters = {}) {

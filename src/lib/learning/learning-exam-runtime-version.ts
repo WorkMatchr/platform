@@ -16,8 +16,15 @@ export const assignedPilotVersions: Readonly<Record<string,string>> = {
   'WL-001':'1.2-r07', 'WL-002':'1.3-r07', 'WL-003':'1.1-r07',
 }
 export function allowsAssignedPilot(code:string, version:string) {
-  return assignedPilotVersions[code] === version && isLocalPilot()
+  return assignedPilotVersions[code] === version && pilotAreaAvailable()
 }
+
+export function paidPilotEnabled() {
+  if (process.env.ACADEMY_PAID_PILOT === 'synthetic') return isLocalPilot() && Boolean(process.env.MOLLIE_API_KEY?.startsWith('test_'))
+  return process.env.ACADEMY_PAID_PILOT === 'approved-live-r07' && process.env.VERCEL_ENV === 'production' &&
+    process.env.LEARNING_RUNTIME_ENABLED === 'true' && Boolean(process.env.MOLLIE_API_KEY?.startsWith('live_'))
+}
+export function pilotAreaAvailable() { return isLocalPilot() || paidPilotEnabled() }
 
 export function isLocalPilot() {
   if (process.env.ACADEMY_STUDENT_PILOT_ENABLED !== 'true' || process.env.VERCEL || process.env.VERCEL_ENV) return false

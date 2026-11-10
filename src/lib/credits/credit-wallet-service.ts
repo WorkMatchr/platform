@@ -276,6 +276,7 @@ export async function recordVerifiedPurchaseCreditsInTransaction(
   if (purchase.creditedTransactionId) {
     return transaction.creditTransaction.findUniqueOrThrow({ where: { id: purchase.creditedTransactionId } })
   }
+  if (!purchase.organizationId) throw Error('CREDIT_ORGANIZATION_REQUIRED')
   const wallet = await ensureAndLockWallet(transaction, purchase.organizationId)
   const repeated = await transaction.creditTransaction.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
   if (repeated) {
@@ -432,6 +433,7 @@ export async function recordVerifiedDiscountBonusInTransaction(
   })
   const redemption = purchase?.discountRedemption
   if (!purchase || purchase.status !== 'PAID' || !redemption || redemption.bonusCredits < 1) return null
+  if (!purchase.organizationId) throw Error('CREDIT_ORGANIZATION_REQUIRED')
   const wallet = await ensureAndLockWallet(transaction, purchase.organizationId)
   const repeated = await transaction.creditTransaction.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
   if (repeated) return repeated

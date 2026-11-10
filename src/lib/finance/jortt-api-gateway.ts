@@ -200,6 +200,7 @@ export class JorttApiGateway implements JorttGateway, JorttPaymentGateway {
       const finalized = await this.waitForFinalInvoice(remote.data.id, payload, accessToken)
       return { externalReference: finalized.id, remoteInvoiceNumber: finalized.invoice_number! }
     }
+    const invoiceDate = payload.academyTaxTreatment ? (iso:string) => new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Amsterdam',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(iso)) : date
     let remoteId: string
     if (payload.documentType === 'CREDIT_NOTE') {
       if (!payload.originalInvoiceExternalReference) throw new Error('JORTT_ORIGINAL_INVOICE_NOT_SYNCED')
@@ -208,17 +209,17 @@ export class JorttApiGateway implements JorttGateway, JorttPaymentGateway {
       await this.request(`/invoices/${remoteId}`, accessToken, { method: 'PUT', body: JSON.stringify({ reference: payload.invoiceNumber, remarks: `WorkMatchr creditnota ${payload.invoiceNumber}; ${payload.technicalReference}` }) })
       await this.sendSelf(remoteId, accessToken)
     } else {
-      const customerReference = `workmatchr-org:${payload.organizationId}`
+      const customerReference = !payload.organizationId ? 'workmatchr-private-invoice:' + payload.invoiceId : `workmatchr-org:${payload.organizationId}`
       let customer = await this.findExact('customers', customerReference, accessToken)
       if (!customer) {
-        const created = await this.request<{ data: { id: string } }>('/customers', accessToken, { method: 'POST', body: JSON.stringify({ is_private: false, customer_name: payload.customer.organizationName, address_street: payload.customer.addressLine, address_postal_code: payload.customer.postalCode, address_city: payload.customer.city, address_country_code: payload.customer.countryCode, shift_vat: false, vat_number: payload.customer.vatId ?? undefined, coc_number: payload.customer.kvkNumber ?? undefined, payment_method_invoice: 'already_paid', reference: customerReference, default_ledger_account_id: config.ledgerAccountId }) })
+        const created = await this.request<{ data: { id: string } }>('/customers', accessToken, { method: 'POST', body: JSON.stringify({ is_private: !payload.organizationId, customer_name: payload.customer.organizationName, address_street: payload.customer.addressLine, address_postal_code: payload.customer.postalCode, address_city: payload.customer.city, address_country_code: payload.customer.countryCode, shift_vat: false, vat_number: payload.customer.vatId ?? undefined, coc_number: payload.customer.kvkNumber ?? undefined, payment_method_invoice: 'already_paid', reference: customerReference, default_ledger_account_id: config.ledgerAccountId }) })
         customer = { id: created.data.id, reference: customerReference }
       }
       const lineItems = payload.lines.flatMap((line) => [
-        { description: `${line.description} (${line.unit})`, quantity: String(line.quantity), amount: { amount: money(line.unitPriceExclVatCents), currency: payload.currency }, vat: { value: String(line.vatRateBps / 10_000), category: null }, ledger_account_id: config.ledgerAccountId },
-        ...(line.discountAmountCents > 0 ? [{ description: `Korting op ${line.description}`, quantity: '1', amount: { amount: money(-line.discountAmountCents), currency: payload.currency }, vat: { value: String(line.vatRateBps / 10_000), category: null }, ledger_account_id: config.ledgerAccountId }] : []),
+        { description: `${line.description} (${line.unit})`, quantity: String(line.quantity), amount: { amount: money(line.unitPriceExclVatCents), currency: payload.currency }, vat: { value: String(line.vatRateBps / 10_000), category: payload.academyTaxTreatment === "NL_KOR" ? "exempt" : null }, ledger_account_id: config.ledgerAccountId },
+        ...(line.discountAmountCents > 0 ? [{ description: `Korting op ${line.description}`, quantity: '1', amount: { amount: money(-line.discountAmountCents), currency: payload.currency }, vat: { value: String(line.vatRateBps / 10_000), category: payload.academyTaxTreatment === "NL_KOR" ? "exempt" : null }, ledger_account_id: config.ledgerAccountId }] : []),
       ])
-      const created = await this.request<{ data: { id: string } }>('/invoices', accessToken, { method: 'POST', body: JSON.stringify({ customer_id: customer.id, invoice_date: date(payload.issuedAt), delivery_period: payload.servicePeriodStart ? date(payload.servicePeriodStart) : payload.supplyDate ? date(payload.supplyDate) : date(payload.issuedAt), delivery_period_end: payload.servicePeriodEnd ? date(payload.servicePeriodEnd) : undefined, tradename_id: config.tradenameId, net_amounts: false, payment_method: 'already_paid', reference: payload.invoiceNumber, remarks: payload.paymentReference ? `WorkMatchr ${payload.invoiceNumber}; ${payload.technicalReference}; Mollie ${payload.paymentReference}` : `WorkMatchr ${payload.invoiceNumber}; ${payload.technicalReference}`, line_items: lineItems }) })
+      const created = await this.request<{ data: { id: string } }>('/invoices', accessToken, { method: 'POST', body: JSON.stringify({ customer_id: customer.id, invoice_date: invoiceDate(payload.issuedAt), delivery_period: payload.servicePeriodStart ? date(payload.servicePeriodStart) : payload.supplyDate ? invoiceDate(payload.supplyDate) : invoiceDate(payload.issuedAt), delivery_period_end: payload.servicePeriodEnd ? date(payload.servicePeriodEnd) : undefined, tradename_id: config.tradenameId, net_amounts: false, payment_method: 'already_paid', reference: payload.invoiceNumber, ...(payload.academyTaxTreatment === 'NL_KOR' ? { introduction: 'Feenstra Safety Consulting past de kleineondernemersregeling (KOR) toe.' } : {}), remarks: payload.paymentReference ? `WorkMatchr ${payload.invoiceNumber}; ${payload.technicalReference}; Mollie ${payload.paymentReference}` : `WorkMatchr ${payload.invoiceNumber}; ${payload.technicalReference}`, line_items: lineItems }) })
       remoteId = created.data.id
       await this.sendSelf(remoteId, accessToken)
     }

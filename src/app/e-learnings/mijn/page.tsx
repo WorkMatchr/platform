@@ -1,6 +1,6 @@
 import { startLearningCourseAction } from '@/app/e-learnings/actions'
 import { academyAccessExpired } from '@/lib/learning/academy-access-policy'
-import { isLocalPilot } from '@/lib/learning/learning-exam-runtime-version'
+import { pilotAreaAvailable } from '@/lib/learning/learning-exam-runtime-version'
 import Link from 'next/link'
 import { Container } from '@/components/layout/container'
 import { Card } from '@/components/ui/card'
@@ -33,7 +33,7 @@ export default async function MyLearningPage() {
     <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-brand-primary">E-learnings</p>
     <h1 className="text-3xl font-bold text-brand-dark sm:text-4xl">Mijn e-learnings</h1>
     <p className="mt-4 max-w-2xl text-lg leading-8 text-text-secondary">U kunt hier verdergaan met uw opleidingen en afgeronde hoofdstukken terugvinden.</p>
-    {isLocalPilot() && <Link href="/e-learnings/pilot">Mijn pilotuitnodigingen</Link>}
+    {pilotAreaAvailable() && <Link href="/e-learnings/pilot">Mijn pilotuitnodigingen</Link>}
     <div className="mt-8 space-y-5">
       {enrollments.map((enrollment, index) => {
         const { examOverview, retentionOverview, certificate } = details[index]

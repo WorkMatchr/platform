@@ -35,3 +35,15 @@ export async function releaseHistoricalInvoice(invoiceId: string) {
       result: 'AUTHORIZED', idempotencyKey: key } })
   })
 }
+
+export function historicalTaxDecision(paymentId: string, period: string, gross: number) {
+  const [id, month, treatment, net, reference] = (process.env.PRO_RECOVERY_TAX_DECISION ?? '').split('|')
+  if (id !== paymentId || month !== period || !reference?.trim() || !/^\d+$/.test(net)
+    || !['NL_KOR', 'NL_STANDARD'].includes(treatment)) throw Error('PRO_RECOVERY_TAX_REVIEW_REQUIRED')
+  const vatRateBps = treatment === 'NL_KOR' ? 0 : 2100
+  const amountExclVatCents = Number(net)
+  const vatAmountCents = Math.round(amountExclVatCents * vatRateBps / 10000)
+  if (!Number.isSafeInteger(amountExclVatCents) || amountExclVatCents + vatAmountCents !== gross)
+    throw Error('PRO_RECOVERY_TAX_TOTAL_MISMATCH')
+  return { amounts: { amountExclVatCents, vatAmountCents, vatRateBps }, reference, treatment, period }
+}

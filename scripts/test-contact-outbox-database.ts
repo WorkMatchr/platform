@@ -43,7 +43,7 @@ try {
   const baseline = process.argv.includes('--baseline-85')
   const migrationRoot = path.resolve('prisma/migrations')
   const allMigrations = readdirSync(migrationRoot).filter(name => /^\d/.test(name)).sort()
-  assert.equal(allMigrations.length, 102)
+  assert.equal(allMigrations.length, 103)
   const historical = JSON.parse(readFileSync('docs/evidence/wp14/migration-checksums.json', 'utf8')) as {
     migrations: { name: string; productionChecksum: string | null }[]
   }

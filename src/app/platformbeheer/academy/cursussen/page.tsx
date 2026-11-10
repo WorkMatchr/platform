@@ -1,6 +1,6 @@
 import { AcademyBundleImport } from '@/components/learning/academy-bundle-editor'
 import { AcademyCourseEditor } from '@/components/learning/academy-course-editor'
-import { allowsAssignedPilot } from '@/lib/learning/learning-exam-runtime-version'
+import { allowsAssignedPilot, paidPilotEnabled } from '@/lib/learning/learning-exam-runtime-version'
 import { PilotForm } from './pilot-form'
 import Link from 'next/link'
 import { readAcademyCourseIndex } from '@/lib/learning/academy-course-results'
@@ -20,7 +20,7 @@ export default async function CoursesPage() {
         <Link className="inline-flex min-h-11 items-center underline" href={`/platformbeheer/academy/cursussen/${version.id}`}>Versie {version.version}</Link>
       </li>)}</ul>
     </section>)}
-    {pilot.length>0 && <PilotForm versions={pilot}/>}
+    {pilot.length>0 && <PilotForm paid={paidPilotEnabled()} versions={pilot}/>}
     <AcademyBundleImport />
     <h2 className="text-2xl font-bold">Nieuwe cursus</h2>
     <AcademyCourseEditor />

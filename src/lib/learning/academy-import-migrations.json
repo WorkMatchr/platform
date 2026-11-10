@@ -712,5 +712,12 @@
       "256d1d5af0535441e3a8d0084b54ebd34389dce136a5add09d1949d7b6cd30e3",
       "40e12c5661c746e7023f6ff30102255d458b727bef6fc1ee97350fb0959320b3"
     ]
+  },
+  {
+    "name": "20261110193000_academy_paid_pilot",
+    "checksums": [
+      "176be28c06d25dda13b8446b3b81a148f6acf6ae2728aec68b234151bd6c0dd3",
+      "8e3e9ad3ab5e28e42cc74efac922fef94b5bc1723f01ce74e6d287f798cb2157"
+    ]
   }
 ]

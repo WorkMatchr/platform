@@ -645,6 +645,21 @@ describe('WorkMatchr Pro via first payment en recurring mandate', () => {
     expect(current).toMatchObject({ status: 'ACTIVE', mollieSubscriptionId: 'sub_test' })
   })
 
+  it('bindt het fiscale boekhoudbesluit aan één betaling en één termijn', async () => {
+    const { historicalTaxDecision } = await import('./pro-historical-recovery')
+    const id = 'synthetic-pro'
+    try {
+      vi.stubEnv('PRO_RECOVERY_TAX_DECISION', undefined)
+      expect(() => historicalTaxDecision(id, '2030-10-04', 5929)).toThrow('PRO_RECOVERY_TAX_REVIEW_REQUIRED')
+      vi.stubEnv('PRO_RECOVERY_TAX_DECISION', id + '|2030-10-04|NL_STANDARD|4900|decision')
+      expect(historicalTaxDecision(id, '2030-10-04', 5929).amounts.vatAmountCents).toBe(1029)
+      expect(() => historicalTaxDecision(id, '2030-11-04', 5929)).toThrow('PRO_RECOVERY_TAX_REVIEW_REQUIRED')
+      expect(() => historicalTaxDecision('other', '2030-10-04', 5929)).toThrow('PRO_RECOVERY_TAX_REVIEW_REQUIRED')
+      vi.stubEnv('PRO_RECOVERY_TAX_DECISION', id + '|2030-10-04|NL_KOR|4900|decision')
+      expect(() => historicalTaxDecision(id, '2030-10-04', 5929)).toThrow('PRO_RECOVERY_TAX_TOTAL_MISMATCH')
+    } finally { vi.unstubAllEnvs() }
+  })
+
   it('herstelt uitsluitend de goedgekeurde bestaande betaling via GET en geeft de blokkade atomair door', async () => {
     const policy = await import('./pro-historical-recovery')
     const mollie = await import('./mollie-gateway')
@@ -661,6 +676,7 @@ describe('WorkMatchr Pro via first payment en recurring mandate', () => {
       await expect(recoverHistoricalProPayment(payment.id)).rejects.toThrow('PRO_RECOVERY_PAYMENT_UNKNOWN')
       expect(read).not.toHaveBeenCalled()
       vi.stubEnv('PRO_RECOVERY_APPROVED_PAYMENT_ID', payment.id)
+      vi.stubEnv('PRO_RECOVERY_TAX_DECISION', `${payment.id}|2026-09-09|NL_KOR|5929|synthetic-review`)
       await recoverHistoricalProPayment(payment.id)
       expect(read).toHaveBeenCalledExactlyOnceWith(payment.id)
       expect(mocks.invoice).toHaveBeenCalledWith(transaction, '50000000-0000-4000-8000-000000000001', expect.any(Date), actorUserId)

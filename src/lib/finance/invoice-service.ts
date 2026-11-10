@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { z } from 'zod'
 import { Prisma } from '@/generated/prisma/client'
 import { MOLLIE_SANDBOX_ACCEPTANCE_PRICING } from './mollie-test-pricing'
 import { WORKMATCHR_SELLER } from './financial-contract'
@@ -9,6 +10,14 @@ import { resolveProInvoiceSource } from './pro-payment-source'
 import { holdHistoricalInvoice } from './pro-historical-recovery'
 
 type Transaction = Prisma.TransactionClient
+
+// The purchase snapshot remains immutable. Only the committed assessment can issue an Academy invoice.
+const cents = z.number().int().nonnegative()
+const academyAmounts = z.object({
+  baseAmountCents: cents, packageDiscountCents: cents, proDiscountCents: cents, discountCodeDiscountCents: cents,
+  amountExclVatCents: cents, amountInclVatCents: cents, vatRateBps: cents, vatAmountCents: cents, currency: z.literal('EUR'),
+})
+
 
 type InvoiceV2LineInput = Readonly<{
   description: string
@@ -121,26 +130,33 @@ export async function issueInvoiceForPaidPurchase(
 ) {
   const existing = await transaction.financialInvoice.findUnique({ where: { purchaseId } })
   if (existing) return existing
-  const purchase = await transaction.financialPurchase.findUnique({
+  const stored = await transaction.financialPurchase.findUnique({
     where: { id: purchaseId },
     include: { creditedTransaction: { select: { createdAt: true } } },
   })
-  if (!purchase || purchase.status !== 'PAID' || !purchase.molliePaymentId) throw new Error('PAID_PURCHASE_REQUIRED')
-  const paidAt = purchase.paidAt
+  if (!stored || stored.status !== 'PAID' || !stored.molliePaymentId) throw new Error('PAID_PURCHASE_REQUIRED')
+  const paidAt = stored.paidAt
   if (!paidAt) throw new Error('INVOICE_V2_PAYMENT_DATE_REQUIRED')
+  const assessment = stored.kind === 'ACADEMY_COURSE'
+    ? await transaction.financialEvent.findUniqueOrThrow({ where: { idempotencyKey: `academy-tax:${stored.id}` } })
+    : null
+  if (assessment && (assessment.purchaseId !== stored.id || assessment.eventType !== 'ACADEMY_TAX_FINALIZED')) throw Error('PILOT_TAX_EVENT_INVALID')
+  const purchase = assessment ? { ...stored, ...academyAmounts.parse(assessment.metadata) } : stored
+  if (purchase.amountInclVatCents !== stored.amountInclVatCents) throw Error('PILOT_GROSS_MISMATCH')
   const isCredits = purchase.kind === 'CREDIT_PACKAGE'
-  const supplyDate = isCredits ? purchase.creditedTransaction?.createdAt : paidAt
+  const supplyDate = isCredits ? purchase.creditedTransaction?.createdAt : purchase.kind === 'ACADEMY_COURSE' ? issuedAt : paidAt
   if (!supplyDate) throw new Error('INVOICE_V2_SUPPLY_DATE_REQUIRED')
-  const servicePeriodStart = isCredits ? null : paidAt
+  const isAcademy = purchase.kind === 'ACADEMY_COURSE'
+  const servicePeriodStart = purchase.kind === 'PRO_SUBSCRIPTION' ? paidAt : null
   const servicePeriodEnd = servicePeriodStart ? addUtcMonth(servicePeriodStart) : null
   if (isCredits && (purchase.credits < 1 || purchase.baseAmountCents % purchase.credits !== 0)) {
     throw new Error('INVOICE_V2_CREDIT_UNIT_PRICE_NOT_EXACT')
   }
   const totalDiscount = purchase.packageDiscountCents + purchase.proDiscountCents + purchase.discountCodeDiscountCents
   const line = buildInvoiceV2Line({
-    description: isCredits ? `${purchase.credits} WorkMatchr credits` : 'WorkMatchr Pro',
+    description: isCredits ? `${purchase.credits} WorkMatchr credits` : isAcademy ? purchase.packageLabel : 'WorkMatchr Pro',
     quantity: isCredits ? purchase.credits : 1,
-    unit: isCredits ? 'credit' : 'maand',
+    unit: isCredits ? 'credit' : isAcademy ? 'cursus' : 'maand',
     unitPriceExclVatCents: isCredits ? purchase.baseAmountCents / purchase.credits : purchase.baseAmountCents,
     discountAmountCents: totalDiscount,
     vatRateBps: purchase.vatRateBps,
@@ -159,6 +175,7 @@ export async function issueInvoiceForPaidPurchase(
       invoiceNumber: formatFinancialDocumentNumber(sequenceNumber, issuedAt),
       sequenceNumber,
       purchaseId: purchase.id,
+      academyTaxTreatment: isAcademy ? (purchase.vatRateBps === 0 ? 'NL_KOR' : 'NL_STANDARD') : null,
       organizationId: purchase.organizationId,
       issuedAt,
       snapshotVersion: 2,
@@ -210,6 +227,7 @@ export async function issueInvoiceForPaidPurchase(
         invoiceNumber: invoice.invoiceNumber,
         sequenceNumber,
         pricingMode: invoice.pricingMode,
+        ...(isAcademy && {taxTreatment:invoice.academyTaxTreatment, sellerDecision:process.env.ACADEMY_KOR_END_DECISION_REF || 'NL_KOR_CONFIRMED'}),
         pricingPolicy: invoice.pricingMode === 'MOLLIE_TEST_ACCEPTANCE'
           ? MOLLIE_SANDBOX_ACCEPTANCE_PRICING
           : 'STANDARD',
@@ -325,6 +343,7 @@ export async function issueInvoiceForPaidSubscriptionPayment(
       invoiceNumber: formatFinancialDocumentNumber(sequenceNumber, issuedAt),
       sequenceNumber,
       subscriptionPaymentId: payment.id,
+      ...(recoveryActor && { academyTaxTreatment: payment.vatRateBps === 0 ? 'NL_KOR' : 'NL_STANDARD' }),
       organizationId: payment.subscription.organizationId,
       issuedAt,
       snapshotVersion: 2,
