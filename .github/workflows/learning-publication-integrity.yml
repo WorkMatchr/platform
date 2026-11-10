@@ -32,6 +32,28 @@ jobs:
       - name: Restricted metadata helper and read-only diagnostic SQL
         run: node scripts/test-show-db-tree-privileges.mjs
       - run: npm run db:generate
+      - name: Academy authoring, historical certificates and protected version transitions
+        env:
+          PG_SERVICE: ${{ job.services.postgres.id }}
+        run: |
+          db="workmatchr_learning_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}"
+          docker exec "$PG_SERVICE" createdb -U postgres "$db"
+          export DATABASE_URL="${DATABASE_URL%/*}/$db"
+          npm run db:deploy
+          npm run seed:learning
+          npm run seed:learning:exam
+          npm run seed:learning:exam:v1.1
+          LEARNING_TEST_DATABASE_URL="$DATABASE_URL" npx --no-install vitest run src/lib/learning/learning-final-exam-runtime.integration.test.ts
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE ROLE academy_content_editor LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD 'synthetic-ci-only';
+          REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+          GRANT USAGE ON SCHEMA public TO academy_content_editor;
+          GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA public TO academy_content_editor;
+          REVOKE INSERT,UPDATE,DELETE ON _prisma_migrations FROM academy_content_editor;
+          GRANT SELECT,USAGE ON ALL SEQUENCES IN SCHEMA public TO academy_content_editor;
+          SQL
+          export LEARNING_TEST_DATABASE_URL="postgresql://academy_content_editor:synthetic-ci-only@127.0.0.1:5432/$db"
+          DATABASE_URL="$LEARNING_TEST_DATABASE_URL" LEARNING_RUNTIME_ENABLED=true ACADEMY_RELEASE03_LOCAL_TEST=1 ACADEMY_STUDENT_PILOT_ENABLED=true npx --no-install vitest run src/lib/learning/academy-release03.integration.test.ts src/lib/learning/learning-exam-runtime-version.test.ts
       - name: Pro renewals, rollback and concurrent webhook replay
         env:
           PG_SERVICE: ${{ job.services.postgres.id }}

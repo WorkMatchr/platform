@@ -42,11 +42,11 @@ export default async function LearningCoursePage({ params }: { params: Promise<{
                 ? firstBlockData.estimatedDurationLabel
                 : `Circa ${chapter.estimatedMinutes} minuten`
               const href = `/e-learnings/${course.slug}/leren/${chapter.slug}?version=${encodeURIComponent(version.version)}${chapterProgress?.status === 'COMPLETED' ? '&opnieuw=1' : ''}`
-              return <li key={chapter.id} className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-border bg-surface p-4">
+              return <li key={chapter.id} id={`hoofdstuk-${chapter.position}`} className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-border bg-surface p-4">
                 <div><p className="font-semibold text-brand-dark">Hoofdstuk {chapter.position} · {chapter.title}</p><p className="mt-1 text-sm text-text-secondary">{durationLabel}</p></div>
                 {isStarted
                   ? <Link className="inline-flex min-h-11 items-center rounded-control border border-border px-4 font-semibold text-brand-primary" href={href}>{chapterProgress?.status === 'COMPLETED' ? 'Opnieuw bekijken' : chapterProgress?.status === 'IN_PROGRESS' ? 'Verdergaan' : 'Open hoofdstuk'}</Link>
-                  : <form action={startLearningCourseAction}><input type="hidden" name="courseSlug" value={course.slug} /><input type="hidden" name="chapterSlug" value={chapter.slug} /><button type="submit" className="inline-flex min-h-11 items-center rounded-control border border-border px-4 font-semibold text-brand-primary">Start hoofdstuk {chapter.position}</button></form>}
+                  : <form action={startLearningCourseAction}><input type="hidden" name="courseSlug" value={course.slug} /><input type="hidden" name="courseVersionId" value={version.id} /><input type="hidden" name="chapterSlug" value={chapter.slug} /><button type="submit" className="inline-flex min-h-11 items-center rounded-control border border-border px-4 font-semibold text-brand-primary">Start hoofdstuk {chapter.position}</button></form>}
               </li>
             })}
           </ul>
@@ -61,7 +61,7 @@ export default async function LearningCoursePage({ params }: { params: Promise<{
         {isStarted && continueChapter && <p className="text-sm leading-6">Hoofdstuk {continueChapter.position} · {progress?.status === 'COMPLETED' ? 'afgerond' : `${progress?.progressPercentage ?? 0}% doorlopen`}</p>}
         {isStarted && continueChapter
           ? <Link className="flex min-h-11 items-center justify-center rounded-control bg-brand-primary px-4 text-center font-semibold text-text-on-dark" href={`/e-learnings/${course.slug}/leren/${continueChapter.slug}?version=${encodeURIComponent(version?.version ?? '')}${progress?.status === 'COMPLETED' ? '&opnieuw=1' : ''}`}>{progress?.status === 'COMPLETED' ? 'Hoofdstuk opnieuw bekijken' : 'Verder waar u gebleven was'}</Link>
-          : <form action={startLearningCourseAction}><input type="hidden" name="courseSlug" value={course.slug} /><button type="submit" className="inline-flex min-h-11 w-full items-center justify-center rounded-control bg-brand-primary px-4 font-semibold text-text-on-dark">Start deze e-learning</button></form>}
+          : <form action={startLearningCourseAction}><input type="hidden" name="courseSlug" value={course.slug} /><input type="hidden" name="courseVersionId" value={version.id} /><button type="submit" className="inline-flex min-h-11 w-full items-center justify-center rounded-control bg-brand-primary px-4 font-semibold text-text-on-dark">Start deze e-learning</button></form>}
         {examOverview?.eligible && <Link className="inline-flex min-h-11 w-full items-center justify-center rounded-control border border-brand-primary px-4 text-center font-semibold text-brand-primary" href={examOverview.activeAttempt ? `/e-learnings/${course.slug}/eindtoets/${examOverview.activeAttempt.id}` : `/e-learnings/${course.slug}/eindtoets`}>{examOverview.activeAttempt ? 'Hervat eindtoets' : examOverview.attempts.some((attempt) => attempt.passed) ? 'Bekijk uw eindtoets' : 'Start eindtoets'}</Link>}
         <Link className="block text-center text-sm font-semibold text-brand-primary hover:underline" href="/e-learnings/mijn">Mijn e-learnings</Link>
       </Card></aside>

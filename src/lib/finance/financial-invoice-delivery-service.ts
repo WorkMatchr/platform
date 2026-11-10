@@ -36,7 +36,7 @@ export async function deliverFinancialInvoiceEmail(invoiceId: string, sender: In
     } else if (!purchase || purchase.status !== 'PAID' || !purchase.paidAt) throw new Error('PAID_PURCHASE_INVOICE_REQUIRED')
     if (!invoice || !purchase) throw new Error('PAID_PURCHASE_INVOICE_REQUIRED')
     const recipient = purchase.createdByUser
-    const downloadUrl = new URL(`/credits/facturen/${invoice.id}/pdf`, getPublicAppBaseUrl()).toString()
+    const downloadUrl = new URL(purchase.kind === 'ACADEMY_COURSE' ? '/e-learnings/pilot/facturen/'+invoice.id : `/credits/facturen/${invoice.id}/pdf`, getPublicAppBaseUrl()).toString()
     const email = financialInvoiceEmail({
       to: recipient.email,
       recipientName: recipient.displayName?.trim() || 'gebruiker',

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { PDFDocument } from 'pdf-lib'
+import { PDFDocument, PDFRawStream, decodePDFRawStream } from 'pdf-lib'
 import { buildFinancialInvoicePdf, financialInvoicePdfFilename, type FinancialInvoicePdfSnapshot } from './financial-invoice-pdf'
 
 vi.mock('server-only', () => ({}))
@@ -75,6 +75,19 @@ describe('financiële factuur-pdf', () => {
       customerAddressLine: 'Een zeer lange straatnaam met toevoeging 123 bis en aanvullende adresaanduiding',
       amountExclVatCents: 9_500, vatAmountCents: 1_995, amountInclVatCents: 11_495, lines: [line], vatSummaries: [summary] })
     expect((await PDFDocument.load(pdf)).getPageCount()).toBeGreaterThan(0)
+  })
+
+  it('drukt de KOR-verklaring en pilotprijs af zonder btw-tarief of btw-bedrag',async()=>{
+    const line={id:'synthetic',invoiceId:'pilot',position:1,description:'Pilotcursus',quantity:1,unit:'cursus',unitPriceExclVatCents:14900,grossAmountExclVatCents:14900,discountAmountCents:14751,netAmountExclVatCents:149,vatRateBps:0,vatAmountCents:0,amountInclVatCents:149,servicePeriodStart:null,servicePeriodEnd:null,createdAt:invoice.issuedAt}
+    const document=await PDFDocument.load(await buildFinancialInvoicePdf({...invoice,academyTaxTreatment:'NL_KOR',snapshotVersion:2,supplyDate:invoice.issuedAt,amountExclVatCents:149,vatRateBps:0,vatAmountCents:0,amountInclVatCents:149,lines:[line],vatSummaries:[{id:'summary',invoiceId:'pilot',createdAt:invoice.issuedAt,vatRateBps:0,vatAmountCents:0,taxableAmountExclVatCents:149,amountInclVatCents:149}]}))
+    const texts=document.context.enumerateIndirectObjects().flatMap(([,obj])=>{
+      if(!(obj instanceof PDFRawStream) || obj.dict.get(document.context.obj('Subtype')))return []
+      const content=Buffer.from(decodePDFRawStream(obj).decode()).toString('latin1')
+      return Array.from(content.matchAll(/<([A-F0-9]+)> Tj/g),m=>Buffer.from(m[1],'hex').toString('latin1'))
+    }).join(' ')
+    expect(texts).toContain('kleineondernemersregeling (KOR)')
+    expect(texts).toContain('1,49')
+    expect(texts).not.toMatch(/btw\s*[\d%]|totaal btw|incl\. btw|excl\. btw/i)
   })
 
   it('rendert een Pro-factuur met immutable dienstperiode', async () => {

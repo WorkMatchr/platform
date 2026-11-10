@@ -1,5 +1,6 @@
 'use server'
 
+import { findAcademyCourseByAttempt } from '@/lib/learning/academy-course-service'
 import { redirect } from 'next/navigation'
 import { requireLearningUser } from '@/lib/learning/learning-authorization'
 import { saveFinalExamAnswer, startFinalExamAttempt, submitFinalExamAttempt, updateFinalExamPosition } from '@/lib/learning/learning-final-exam-service'
@@ -7,11 +8,11 @@ import { ensureCertificateForPassedExam } from '@/lib/learning/learning-certific
 
 const idPattern = /^[0-9a-f-]{36}$/i
 
-export async function startFinalExamAction(courseSlug: string) {
-  if (courseSlug !== 'rie-in-de-praktijk') redirect('/e-learnings')
+export async function startFinalExamAction(courseSlug: string, versionId: string) {
+  if (!idPattern.test(versionId) || !/^[a-z0-9-]{1,120}$/.test(courseSlug)) redirect('/e-learnings')
   const user = await requireLearningUser(`/e-learnings/${courseSlug}/eindtoets`)
   try {
-    const attempt = await startFinalExamAttempt(user.id)
+    const attempt = await startFinalExamAttempt(user.id, courseSlug, versionId)
     redirect(`/e-learnings/${courseSlug}/eindtoets/${attempt.id}`)
   } catch (error) {
     if (error instanceof Error && error.message.startsWith('NEXT_REDIRECT')) throw error
@@ -45,9 +46,11 @@ export async function submitFinalExamAction(attemptId: string) {
   if (!idPattern.test(attemptId)) return { ok: false as const, message: 'De toets kan niet worden ingeleverd.' }
   const user = await requireLearningUser('/e-learnings/mijn')
   try {
+    const course = await findAcademyCourseByAttempt(user.id, attemptId)
+    if (!course) return { ok: false as const, message: 'De toets is niet beschikbaar.' }
     const submitted = await submitFinalExamAttempt(user.id, attemptId)
-    if (submitted.passed) await ensureCertificateForPassedExam(user.id)
-    return { ok: true as const, href: `/e-learnings/rie-in-de-praktijk/eindtoets/resultaat/${attemptId}` }
+    if (submitted.passed) await ensureCertificateForPassedExam(user.id, course.code, course.courseVersionId)
+    return { ok: true as const, href: `/e-learnings/${course.slug}/eindtoets/resultaat/${attemptId}` }
   } catch {
     return { ok: false as const, message: 'De toets kon niet worden ingeleverd. Uw opgeslagen antwoorden zijn behouden.' }
   }

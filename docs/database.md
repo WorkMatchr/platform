@@ -491,3 +491,5 @@ Migratie `20261001210000_add_compliance_actions` voegt de operationele actielaag
 ## Compliance F4 (nog niet uitgerold)
 
 Nullable `ComplianceQuestionDefinition.visibilityCondition` bewaart versiegebonden zichtbaarheid. Geen bestaande data gewijzigd; zie [F4](compliance-f4-expanded-guide.md).
+
+De Academy-beheertak bouwt op de 96 V3-migraties voort. De vijf aanvullingen, beschermde historie en het geïsoleerde upgradebewijs staan in [Academy Release 03](release-v3/app-final/academy-release-03.md).

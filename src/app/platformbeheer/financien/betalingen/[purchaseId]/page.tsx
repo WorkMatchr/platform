@@ -41,7 +41,7 @@ export default async function PlatformFinancialPaymentDetailPage({ params, searc
       <div className="grid gap-5 xl:grid-cols-2">
         <AdminSection title="Aankoopgegevens">
           <dl className="grid gap-3 text-sm sm:grid-cols-2">
-            <div><dt className="text-text-secondary">Organisatie</dt><dd className="font-semibold text-brand-dark">{purchase.organization.name}</dd></div>
+            <div><dt className="text-text-secondary">Organisatie</dt><dd className="font-semibold text-brand-dark">{purchase.organization?.name ?? 'Particuliere koper'}</dd></div>
             <div><dt className="text-text-secondary">Type</dt><dd>{financialPurchaseKindLabels[purchase.kind]}</dd></div>
             <div><dt className="text-text-secondary">Omschrijving</dt><dd>{purchase.packageLabel}</dd></div>
             <div><dt className="text-text-secondary">Credits</dt><dd>{purchase.credits}</dd></div>

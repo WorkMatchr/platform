@@ -87,6 +87,7 @@ export async function applyMollieRefundSnapshot(refundId: string, snapshot: Moll
     if (current.status === status) return { refund: current, creditNote: current.creditNote, reviewRequired: false }
     if (current.status !== 'PENDING') throw new Error('REFUND_TERMINAL_STATE_CONFLICT')
 
+    if (!current.purchase.organizationId) throw Error('CREDIT_ORGANIZATION_REQUIRED')
     if (status === 'REFUNDED') {
       const ledger = await recordFinancialRefundCreditPhaseInTransaction(transaction, {
         refundId: current.id,
@@ -207,6 +208,7 @@ export async function refundWorkmatchrError(input: unknown, gateway: MollieGatew
       data: { id: refundId, purchaseId: purchase.id, approvedByUserId: values.actorUserId, reason: `${values.reasonCode}: ${values.reason}`, amountCents: purchase.amountInclVatCents, credits: purchase.credits, idempotencyKey: values.idempotencyKey },
       include: { purchase: true },
     })
+    if (!purchase.organizationId) throw Error('CREDIT_ORGANIZATION_REQUIRED')
     await recordFinancialRefundCreditPhaseInTransaction(transaction, { refundId, organizationId: purchase.organizationId, actorUserId: values.actorUserId, credits: purchase.credits, phase: 'RESERVE', reason: 'Credits gereserveerd voor goedgekeurde WorkMatchr-terugbetaling.' })
     await transaction.financialEvent.upsert({
       where: { idempotencyKey: `workmatchr-refund-requested:${refund.id}` },

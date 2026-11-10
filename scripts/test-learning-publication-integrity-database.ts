@@ -35,7 +35,10 @@ const retention = '20260930100000_add_learning_retention'
 const finalExam = '20260927210000_add_learning_final_exam'
 const migrationRoot = path.resolve('prisma/migrations')
 const names = readdirSync(migrationRoot).filter((name) => /^\d/.test(name)).sort()
-assert.equal(names.at(-1), '20261106120000_repair_pro_financial_integrity', 'Review this staged regression when adding later migrations')
+assert.ok(names.includes('20261106120000_repair_pro_financial_integrity'))
+assert.equal(names.at(-3), '20261109181000_academy_enrollment_access')
+assert.equal(names.at(-2), '20261110190000_academy_pilot_measurement')
+assert.equal(names.at(-1), '20261110193000_academy_paid_pilot', 'Review this staged regression when adding later migrations')
 const manifest = JSON.parse(readFileSync('docs/evidence/wp14/migration-checksums.json', 'utf8')) as {
   migrations: { name: string; lfSha256: string; productionChecksum: string | null }[]
 }
@@ -312,7 +315,7 @@ async function runDatabase(admin: Client, mode: 'upgrade' | 'fresh') {
         env: { ...process.env, DATABASE_URL: '', WP17_ACCEPTANCE_DATABASE_URL: target.toString() }, encoding: 'utf8', timeout: 30000,
       })
       assert.equal(acceptance.status, 0, 'WP17 read-only acceptance preflight failed')
-      console.log('WP17 ACCEPTANCE PREFLIGHT PASS: actual isolated 96-migration database; closed gates/no external credentials')
+      console.log('WP17 ACCEPTANCE PREFLIGHT PASS: actual isolated 103-migration database; closed gates/no external credentials')
       await configureSyntheticRoles(db, runtime, diagnostic)
       await assertSyntheticRoles(db, runtime, diagnostic)
       await restoreSyntheticDatabase(admin, db, database, exams)

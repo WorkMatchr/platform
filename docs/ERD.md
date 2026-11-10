@@ -774,3 +774,5 @@ De scan en haar resultaten blijven immutable. Alleen de operationele velden van 
 ## Compliance F4 (nog niet uitgerold)
 
 Nullable `ComplianceQuestionDefinition.visibilityCondition` bewaart versiegebonden zichtbaarheid. Geen bestaande data gewijzigd; zie [F4](compliance-f4-expanded-guide.md).
+
+**Academy-beheer.** Een cursusversie heeft importbewijzen. Een sjabloonversie verwijst naar de aanmaker en eventuele beoordelaar en kan aan een cursus of de algemene standaard zijn gekoppeld. Het uitgegeven certificaat bewaart zijn eigen ontwerpsnapshot. Zie [Academy Release 03](release-v3/app-final/academy-release-03.md).

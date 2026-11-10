@@ -1,3 +1,4 @@
+import { allowsAssignedPilot } from '@/lib/learning/learning-exam-runtime-version'
 import { redirect } from 'next/navigation'
 import { LessonPlayer } from '@/components/learning/lesson-player'
 import { requireLearningUser } from '@/lib/learning/learning-authorization'
@@ -34,6 +35,7 @@ export default async function LearningChapterPage({
   }
 
   return <LessonPlayer
+    pilotEnrollmentId={enrollment.status==='IN_PROGRESS' && allowsAssignedPilot(chapter.courseVersion.course.code,chapter.courseVersion.version)?enrollment.id:undefined}
     courseTitle={chapter.courseVersion.course.title}
     chapterId={chapter.id}
     chapterTitle={chapter.title}

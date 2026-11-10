@@ -101,6 +101,7 @@ export async function proFinancialCorrectionAction(formData: FormData) {
     } else if (values.data.operation === 'pro-payments') {
       const { getPrisma } = await import('@/lib/prisma')
       const invoice = await getPrisma().financialInvoice.findUniqueOrThrow({ where: { id: values.data.invoiceId } })
+      if (!invoice.organizationId) throw Error("PRO_ORGANIZATION_REQUIRED")
       const subscription = await getPrisma().professionalSubscription.findUniqueOrThrow({ where: { organizationId: invoice.organizationId } })
       const result = await reconcileProPayments({ ...common, subscriptionId: subscription.id, after: new Date(String(formData.get('after'))) })
       if (result.failed) outcome = 'controle-nodig'

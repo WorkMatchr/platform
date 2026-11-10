@@ -11,6 +11,9 @@ const PAGE_WIDTH = 841.89
 const LOGO_PATH = join(process.cwd(), 'public', 'branding', 'workmatchr-logo.png')
 
 export type LearningCertificatePdfData = {
+  designSnapshot?: unknown
+  correctionNotice?: string
+  courseVersion?: string
   templateVersion: string
   firstName: string
   lastName: string
@@ -19,9 +22,10 @@ export type LearningCertificatePdfData = {
   issuedAt: Date
 }
 
-export function learningCertificateFilename(firstName: string, lastName: string) {
+export function learningCertificateFilename(firstName: string, lastName: string, courseTitle = 'RIE in de praktijk') {
   const safe = `${firstName}-${lastName}`.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 80)
-  return `Certificaat-RIE-in-de-praktijk-${safe || 'deelnemer'}.pdf`
+  const safeCourse = courseTitle.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 80)
+  return `Certificaat-${safeCourse}-${safe || 'deelnemer'}.pdf`
 }
 
 function cleanPdfText(value: string) {
@@ -29,7 +33,23 @@ function cleanPdfText(value: string) {
 }
 
 export async function buildLearningCertificatePdf(certificate: LearningCertificatePdfData) {
-  if (certificate.templateVersion !== LEARNING_CERTIFICATE_TEMPLATE_VERSION) throw new Error('UNSUPPORTED_CERTIFICATE_TEMPLATE_VERSION')
+  if (certificate.templateVersion === 'ACADEMY-DESIGN-1') {
+    const { designSchema } = await import('./certificate-design-contract')
+    const { certificateDesignChecksum, renderCertificateDesign } = await import('./certificate-design-pdf')
+    const snapshot = certificate.designSnapshot as { definition?: unknown; checksum?: string; courseCode?: string } | null
+    if (!snapshot || !snapshot.courseCode || !certificate.courseVersion || certificateDesignChecksum(snapshot.definition) !== snapshot.checksum) throw Error('CERTIFICATE_DESIGN_INTEGRITY')
+    return renderCertificateDesign(designSchema.parse(snapshot.definition), {
+      'deelnemer.naam': cleanPdfText(certificate.firstName + ' ' + certificate.lastName),
+      'cursus.titel': cleanPdfText(certificate.courseTitle), 'cursus.code': snapshot.courseCode,
+      'cursus.versie': certificate.courseVersion,
+      datum: new Intl.DateTimeFormat('nl-NL', {dateStyle:'long',timeZone:'Europe/Amsterdam'}).format(certificate.issuedAt),
+      'certificaat.nummer': certificate.certificateNumber,
+      'certificaat.verificatie_url': new URL('/certificaat/' + encodeURIComponent(certificate.certificateNumber), getPublicAppBaseUrl()).toString(),
+    }, false, certificate.correctionNotice, certificate.issuedAt)
+  }
+  if (certificate.templateVersion !== LEARNING_CERTIFICATE_TEMPLATE_VERSION && certificate.templateVersion !== 'ACADEMY-CERT-1.0' && certificate.templateVersion !== 'ACADEMY-CERT-2.0') throw new Error('UNSUPPORTED_CERTIFICATE_TEMPLATE_VERSION')
+
+  if (certificate.templateVersion === 'ACADEMY-CERT-2.0' && !certificate.courseVersion?.trim()) throw new Error('CERTIFICATE_COURSE_VERSION_REQUIRED')
 
   const fullName = cleanPdfText(`${certificate.firstName} ${certificate.lastName}`)
   const courseTitle = cleanPdfText(certificate.courseTitle)
@@ -55,7 +75,7 @@ export async function buildLearningCertificatePdf(certificate: LearningCertifica
       displayTitle: true,
       pdfVersion: '1.7',
       info: {
-        Title: 'Certificaat RI&E in de praktijk',
+        Title: certificate.templateVersion === LEARNING_CERTIFICATE_TEMPLATE_VERSION ? 'Certificaat RI&E in de praktijk' : `Certificaat ${courseTitle}`,
         Author: 'WorkMatchr Learning',
         Subject: 'Certificaat van afronding',
         CreationDate: certificate.issuedAt,
@@ -107,7 +127,7 @@ export async function buildLearningCertificatePdf(certificate: LearningCertifica
 
     taggedText('P', 'LEARNING', { x: 232, y: 61, size: 12, font: 'Helvetica-Bold', color: colors.blue })
     taggedText('H1', 'CERTIFICAAT', { x: 56, y: 142, size: 34, font: 'Helvetica-Bold', color: colors.dark })
-    taggedText('H2', 'RI&E IN DE PRAKTIJK', { x: 58, y: 181, size: 16, font: 'Helvetica-Bold', color: colors.blue })
+    taggedText('H2', certificate.templateVersion === LEARNING_CERTIFICATE_TEMPLATE_VERSION ? 'RI&E IN DE PRAKTIJK' : courseTitle.toLocaleUpperCase('nl'), { x: 58, y: 181, size: 16, font: 'Helvetica-Bold', color: colors.blue })
     taggedText('P', 'Dit certificaat bevestigt dat', { x: 58, y: 230, size: 11, font: 'Helvetica', color: colors.muted })
     taggedText('H2', fullName, { x: 58, y: 248, width: nameWidth, size: fullNameSize, font: 'Helvetica-Bold', color: colors.dark })
     taggedText('P', bodyCopy, { x: 58, y: 290, width: 650, size: 12, font: 'Helvetica', color: colors.ink, lineGap: 5 })
@@ -115,7 +135,7 @@ export async function buildLearningCertificatePdf(certificate: LearningCertifica
     const rows = [
       ['Behaald op', dateText],
       ['Opleiding', courseTitle],
-      ['Omvang', '10 hoofdstukken + eindtoets'],
+      certificate.templateVersion === 'ACADEMY-CERT-2.0' ? ['Cursusversie', cleanPdfText(certificate.courseVersion ?? '')] : ['Omvang', '10 hoofdstukken + eindtoets'],
       ['Uitgegeven door', 'WorkMatchr Learning'],
     ] as const
     let rowY = 358
@@ -138,7 +158,10 @@ export async function buildLearningCertificatePdf(certificate: LearningCertifica
       x: PAGE_WIDTH - 198, y: 458, width: 145, size: 8, font: 'Helvetica', color: colors.muted, align: 'center',
     })
 
-    taggedText('P', LEARNING_CERTIFICATE_DISCLAIMER, {
+    if (certificate.correctionNotice) taggedText('P', cleanPdfText(certificate.correctionNotice), { x: 58, y: 480, width: 620, size: 9, font: 'Helvetica', color: colors.ink })
+
+    const disclaimer = certificate.templateVersion === LEARNING_CERTIFICATE_TEMPLATE_VERSION ? LEARNING_CERTIFICATE_DISCLAIMER : `Dit certificaat bevestigt de succesvolle afronding van de WorkMatchr-opleiding ‘${courseTitle}’ en de bijbehorende eindtoets. Het certificaat verleent geen wettelijke beroepskwalificatie, erkenning, accreditatie of bevoegdheid tot formele toetsing van een RI&E.`
+    taggedText('P', disclaimer, {
       x: 58, y: 510, width: PAGE_WIDTH - 116, size: 9, font: 'Helvetica', color: colors.muted, lineGap: 3,
     })
 

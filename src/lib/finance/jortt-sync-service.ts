@@ -12,7 +12,8 @@ export type JorttInvoicePayload = Readonly<{
   proCredit?: boolean
   technicalReference: string
   knownExternalReference: string | null
-  organizationId: string
+  organizationId: string | null
+  academyTaxTreatment?: string | null
   invoiceNumber: string
   documentType: 'INVOICE' | 'CREDIT_NOTE'
   pricingMode: 'STANDARD' | 'MOLLIE_TEST_ACCEPTANCE'
@@ -74,7 +75,8 @@ function buildPayload(invoice: {
   proCreditKey?: string | null
   packageLabel: string
   id: string
-  organizationId: string
+  organizationId: string | null
+  academyTaxTreatment?: string | null
   invoiceNumber: string
   documentType: 'INVOICE' | 'CREDIT_NOTE'
   pricingMode: 'STANDARD' | 'MOLLIE_TEST_ACCEPTANCE'
@@ -127,6 +129,7 @@ function buildPayload(invoice: {
     technicalReference: invoice.jorttSync?.technicalReference ?? `workmatchr-invoice:${invoice.id}`,
     knownExternalReference: invoice.jorttSync?.externalReference ?? null,
     organizationId: invoice.organizationId,
+    academyTaxTreatment: invoice.academyTaxTreatment,
     invoiceNumber: invoice.invoiceNumber,
     documentType: invoice.documentType,
     pricingMode: invoice.pricingMode,

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
   courseFindMany: vi.fn(),
@@ -19,8 +19,11 @@ import { getLearningChapter, getMyLearningEnrollments, getPublishedLearningCours
 
 describe('Learning-queryservice en eigenaarsgrenzen', () => {
   beforeEach(() => {
+    vi.stubEnv('ACADEMY_STUDENT_PILOT_ENABLED', 'false')
     vi.clearAllMocks()
   })
+
+  afterEach(() => vi.unstubAllEnvs())
 
   it('filtert catalogusvoortgang en inschrijvingen op de server-side User-ID', async () => {
     mocks.courseFindMany.mockResolvedValue([])
@@ -46,8 +49,22 @@ describe('Learning-queryservice en eigenaarsgrenzen', () => {
     mocks.enrollmentFindFirst.mockResolvedValue(null)
 
     await expect(getLearningChapter('rie-in-de-praktijk', 'waarom-een-rie', 'user-a')).resolves.toBeNull()
-    expect(mocks.enrollmentFindFirst).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: 'user-a', courseVersionId: 'version-1' } }))
+    const excluded = [
+      { course: { code: 'WL-001' }, version: '1.2-r07' },
+      { course: { code: 'WL-002' }, version: '1.3-r07' },
+      { course: { code: 'WL-003' }, version: '1.1-r07' },
+    ]
+    const access = {
+      userId: 'user-a',
+      AND: [{ OR: [{ courseVersion: { NOT: { OR: excluded } } }] }],
+      accessRevokedAt: null,
+      OR: [{ accessExpiresAt: null }, { accessExpiresAt: { gt: expect.any(Date) } }],
+    }
+    expect(mocks.enrollmentFindFirst).toHaveBeenCalledWith(expect.objectContaining({
+      where: { ...access, courseVersionId: 'version-1' },
+    }))
     const query = mocks.chapterFindFirst.mock.calls[0]?.[0]
+    expect(query.where.courseVersion.enrollments).toEqual({ some: access })
     expect(query.include.progress).toMatchObject({ where: { enrollment: { userId: 'user-a' } } })
     expect(query.include.contentBlocks.include.question.select).not.toHaveProperty('correctAnswer')
     expect(query.where.courseVersion.status).toEqual({ in: ['PUBLISHED', 'RETIRED'] })

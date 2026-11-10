@@ -687,6 +687,7 @@ enum CreditTransactionType {
 enum FinancialPurchaseKind {
   CREDIT_PACKAGE
   PRO_SUBSCRIPTION
+  ACADEMY_COURSE
 }
 
 enum FinancialPurchaseStatus {
@@ -1279,6 +1280,7 @@ enum KnowledgeAuditEventType {
 }
 
 model User {
+  pilotAssignments LearningPilotAssignment[]
   assignmentEmailEnabled Boolean @default(true)
   simpleAdviceIntakeRevisions IntakeSimpleAdviceRevision[]
   id                                 String                                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -1319,6 +1321,8 @@ model User {
   learningRetentionParticipations    LearningRetentionParticipation[]
   learningAnnualReminders            LearningAnnualReminder[]
   learningRetentionAnswers           LearningRetentionWeeklyAnswer[]
+  createdCertificateDesigns           LearningCertificateDesign[] @relation("CertificateDesignCreator")
+  reviewedCertificateDesigns          LearningCertificateDesign[] @relation("CertificateDesignReviewer")
   learningRetentionAnnualChecks      LearningRetentionAnnualCheck[]
   learningAnnualCheckAnswers         LearningRetentionAnnualAnswer[]
   assignedComplianceActions          ComplianceAction[]                   @relation("ComplianceActionAssignee")
@@ -4050,7 +4054,7 @@ model CreditTransaction {
 
 model FinancialPurchase {
   id                               String                                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizationId                   String                                        @db.Uuid
+  organizationId                   String?                                        @db.Uuid
   createdByUserId                  String                                        @db.Uuid
   kind                             FinancialPurchaseKind                         @default(CREDIT_PACKAGE)
   status                           FinancialPurchaseStatus                       @default(CREATED)
@@ -4085,7 +4089,7 @@ model FinancialPurchase {
   terminalAt                       DateTime?                                     @db.Timestamptz(3)
   createdAt                        DateTime                                      @default(now()) @db.Timestamptz(3)
   updatedAt                        DateTime                                      @updatedAt @db.Timestamptz(3)
-  organization                     Organization                                  @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  organization                     Organization?                                  @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   createdByUser                    User                                          @relation("FinancialPurchaseActor", fields: [createdByUserId], references: [id], onDelete: Restrict)
   discountCode                     DiscountCode?                                 @relation(fields: [discountCodeId], references: [id], onDelete: Restrict)
   creditedTransaction              CreditTransaction?                            @relation("FinancialPurchaseCredit", fields: [creditedTransactionId], references: [id], onDelete: Restrict)
@@ -4154,6 +4158,7 @@ model FinancialInvoiceCounter {
 }
 
 model FinancialInvoice {
+  academyTaxTreatment String?
   id                        String                           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   documentType              FinancialDocumentType            @default(INVOICE)
   pricingMode               FinancialPricingMode             @default(STANDARD)
@@ -4165,7 +4170,7 @@ model FinancialInvoice {
   proCreditKey              String?                          @unique @db.VarChar(160)
   proRefund                 FinancialRefund?                 @relation("ProCreditRefund")
   originalInvoiceId         String?                          @db.Uuid
-  organizationId            String                           @db.Uuid
+  organizationId            String?                           @db.Uuid
   issuedAt                  DateTime                         @db.Timestamptz(3)
   snapshotVersion           Int                              @default(1)
   supplyDate                DateTime?                        @db.Timestamptz(3)
@@ -4201,7 +4206,7 @@ model FinancialInvoice {
   currency                  String                           @db.Char(3)
   molliePaymentId           String?                          @db.VarChar(80)
   createdAt                 DateTime                         @default(now()) @db.Timestamptz(3)
-  organization              Organization                     @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  organization              Organization?                     @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   purchase                  FinancialPurchase?               @relation(fields: [purchaseId], references: [id], onDelete: Restrict)
   refund                    FinancialRefund?                 @relation(fields: [refundId], references: [id], onDelete: Restrict)
   subscriptionPayment       ProfessionalSubscriptionPayment? @relation(fields: [subscriptionPaymentId], references: [id], onDelete: Restrict)
@@ -4290,6 +4295,7 @@ model FinancialJorttSyncAttempt {
 }
 
 model DiscountCode {
+  pilotAssignments LearningPilotAssignment[]
   id                    String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   code                  String               @unique @db.VarChar(40)
   status                DiscountCodeStatus   @default(ACTIVE)
@@ -5835,6 +5841,42 @@ model RequestAssignmentHandoff {
   @@index([createdByUserId, createdAt])
 }
 
+model LearningPilotAssignment {
+  paidSlot          Int? @unique @db.SmallInt
+  regularGrossCents Int?
+  offlineMinutes    Int?
+  feedback          Json? @db.JsonB
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String   @db.Uuid
+  courseVersionId String   @db.Uuid
+  discountCodeId  String   @db.Uuid
+  enrollmentId    String?  @unique @db.Uuid
+  redeemedAt      DateTime? @db.Timestamptz(3)
+  lastPulseAt     DateTime? @db.Timestamptz(3)
+  lastContext     String?
+  clockId         String?  @db.Uuid
+  pauses          Int      @default(0)
+  gaps            Int      @default(0)
+  user            User @relation(fields: [userId], references: [id], onUpdate: NoAction, onDelete: Restrict)
+  courseVersion   LearningCourseVersion @relation(fields: [courseVersionId], references: [id], onUpdate: NoAction, onDelete: Restrict)
+  discountCode    DiscountCode @relation(fields: [discountCodeId], references: [id], onUpdate: NoAction, onDelete: Restrict)
+  enrollment      LearningEnrollment? @relation(fields: [enrollmentId, courseVersionId, userId], references: [id, courseVersionId, userId], onUpdate: NoAction, onDelete: Restrict)
+  durations       LearningPilotDuration[]
+
+  @@unique([userId, courseVersionId])
+  @@unique([enrollmentId, courseVersionId, userId])
+  @@index([discountCodeId])
+}
+
+model LearningPilotDuration {
+  assignmentId String @db.Uuid
+  context      String
+  activeMs     Int
+  assignment   LearningPilotAssignment @relation(fields: [assignmentId], references: [id], onUpdate: NoAction, onDelete: Cascade)
+
+  @@id([assignmentId, context])
+}
+
 model LearningProfile {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId    String   @unique @db.Uuid
@@ -5865,6 +5907,7 @@ model LearningCourse {
 }
 
 model LearningCourseVersion {
+  pilotAssignments LearningPilotAssignment[]
   id             String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   courseId       String                      @db.Uuid
   version        String                      @db.VarChar(40)
@@ -5878,6 +5921,9 @@ model LearningCourseVersion {
   chapters       LearningChapter[]
   enrollments    LearningEnrollment[]
   examVersions   LearningExamVersion[]
+
+  academyImports LearningAcademyImport[]
+  retentionParticipations LearningRetentionParticipation[]
 
   @@unique([courseId, version])
   @@unique([id, courseId])
@@ -5957,6 +6003,9 @@ model LearningQuestionOption {
 }
 
 model LearningEnrollment {
+  pilotAssignment LearningPilotAssignment?
+  accessRevokedAt DateTime? @db.Timestamptz(3)
+  accessExpiresAt DateTime? @db.Timestamptz(3)
   id                  String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId              String                       @db.Uuid
   courseVersionId     String                       @db.Uuid
@@ -6162,10 +6211,12 @@ model LearningRetentionProgramVersion {
   selectionPolicyVersion String                                 @db.VarChar(60)
   consentVersion         String                                 @db.VarChar(40)
   consentCopy            String                                 @db.Text
+  bankVersion            String?                                @db.VarChar(40)
   publishedAt            DateTime?                              @db.Timestamptz(3)
   createdAt              DateTime                               @default(now()) @db.Timestamptz(3)
   program                LearningRetentionProgram               @relation(fields: [programId, courseId], references: [id, courseId], onDelete: Restrict)
   participations         LearningRetentionParticipation[]
+  annualChecks           LearningRetentionAnnualCheck[]
 
   @@unique([id, courseId])
   @@index([programId, status, publishedAt])
@@ -6208,6 +6259,7 @@ model LearningRetentionParticipation {
   user                 User                                 @relation(fields: [userId], references: [id], onDelete: Restrict)
   enrollment           LearningEnrollment                   @relation(fields: [learningEnrollmentId, courseVersionId, userId], references: [id, courseVersionId, userId], onDelete: Restrict)
   programVersion       LearningRetentionProgramVersion      @relation(fields: [programVersionId, courseId], references: [id, courseId], onDelete: Restrict)
+  courseVersion        LearningCourseVersion                @relation(fields: [courseVersionId, courseId], references: [id, courseId], onDelete: Restrict, map: "LearningRetentionParticipation_course_version_course_fkey")
   weeklyChecks         LearningRetentionWeeklyCheck[]
 
   @@unique([learningEnrollmentId, programVersionId])
@@ -6303,6 +6355,7 @@ model LearningAnnualReminderConsentEvent {
 model LearningRetentionAnnualCheck {
   id             String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   reminderId     String                        @unique @db.Uuid
+  programVersionId String?                     @db.Uuid
   userId         String                        @db.Uuid
   checkVersion   String                        @default("WL-001-ANNUAL-CHECK-1.0") @db.VarChar(40)
   availableAt    DateTime                      @db.Timestamptz(3)
@@ -6312,10 +6365,12 @@ model LearningRetentionAnnualCheck {
   maxScore       Int                           @default(10)
   createdAt      DateTime                      @default(now()) @db.Timestamptz(3)
   reminder       LearningAnnualReminder       @relation(fields: [reminderId, userId], references: [id, userId], onDelete: Restrict)
+  programVersion LearningRetentionProgramVersion? @relation(fields: [programVersionId], references: [id], onDelete: Restrict)
   user           User                          @relation(fields: [userId], references: [id], onDelete: Restrict)
   questions      LearningRetentionAnnualQuestion[]
   answers        LearningRetentionAnnualAnswer[]
 
+  @@index([programVersionId])
   @@unique([id, userId])
   @@unique([reminderId, userId])
   @@index([userId, availableAt])
@@ -6353,6 +6408,7 @@ model LearningRetentionAnnualAnswer {
 }
 
 model LearningCertificate {
+  designSnapshot Json? @db.JsonB
   id                 String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId             String                    @db.Uuid
   courseId           String                    @db.Uuid
@@ -6377,4 +6433,42 @@ model LearningCertificate {
   @@unique([courseId, userId])
   @@index([userId, createdAt])
   @@index([status, issuedAt])
+}
+
+model LearningAcademyImport {
+  id              String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseVersionId String                @db.Uuid
+  bundleHash      String                @db.VarChar(64)
+  operatorReference String              @db.VarChar(120)
+  createdAt       DateTime              @default(now()) @db.Timestamptz(3)
+  courseVersion   LearningCourseVersion @relation(fields: [courseVersionId], references: [id], onDelete: Restrict)
+
+  @@unique([courseVersionId, bundleHash])
+}
+
+model LearningCertificateDesign {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  familyId String @db.Uuid
+  version Int
+  name String @db.VarChar(160)
+  state String @default("DRAFT") @db.VarChar(20)
+  revision Int @default(1)
+  definition Json @db.JsonB
+  checksum String @db.VarChar(64)
+  reviewedChecksum String? @db.VarChar(64)
+  createdBy String @db.Uuid
+  reviewedBy String? @db.Uuid
+  reviewedAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  creator User @relation("CertificateDesignCreator", fields: [createdBy], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  reviewer User? @relation("CertificateDesignReviewer", fields: [reviewedBy], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  bindings LearningCertificateDesignBinding[]
+  @@unique([familyId, version])
+}
+
+model LearningCertificateDesignBinding {
+  scope String @id @db.VarChar(48)
+  designId String @db.Uuid
+  design LearningCertificateDesign @relation(fields:[designId], references:[id], onDelete:Restrict, onUpdate:NoAction)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 }

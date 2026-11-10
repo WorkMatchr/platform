@@ -48,7 +48,7 @@ export type FinancialInvoicePdfSnapshot = Pick<FinancialInvoice,
   | 'vatRateBps'
   | 'vatAmountCents'
   | 'amountInclVatCents'
-> & { lines?: FinancialInvoiceLine[]; vatSummaries?: FinancialInvoiceVatSummary[] }
+> & { academyTaxTreatment?: string | null; lines?: FinancialInvoiceLine[]; vatSummaries?: FinancialInvoiceVatSummary[] }
 
 function normalize(value: string) {
   return value.replaceAll('\u0000', '').replaceAll('\u00a0', ' ').replaceAll('\u2011', '-').replaceAll('\u2013', '-')
@@ -276,6 +276,7 @@ async function buildSnapshotV2FinancialInvoicePdf(invoice: FinancialInvoicePdfSn
   drawSectionTitle('Factuuradres en leverancier')
   const gap = 14
   const cardWidth = (CONTENT_WIDTH - gap) / 2
+  const kor = invoice.academyTaxTreatment === 'NL_KOR'
   const supplier = `${invoice.sellerTradeName}\n${invoice.sellerLegalName}\n${invoice.sellerAddressLine}\n${invoice.sellerPostalCode} ${invoice.sellerCity}\n${invoice.sellerCountryCode}\nKvK ${invoice.sellerKvKNumber}\nBtw-id ${invoice.sellerVatId}`
   const customer = `${invoice.customerOrganizationName}\n${invoice.customerAddressLine}\n${invoice.customerPostalCode} ${invoice.customerCity}\n${invoice.customerCountryCode}${invoice.customerKvKNumber ? `\nKvK ${invoice.customerKvKNumber}` : ''}${invoice.customerVatId ? `\nBtw-id ${invoice.customerVatId}` : ''}`
   const supplierHeight = normalize(supplier).split('\n').flatMap((line) => wrapText(line, regular, 8.5, cardWidth - 28)).length * 11
@@ -305,13 +306,13 @@ async function buildSnapshotV2FinancialInvoicePdf(invoice: FinancialInvoicePdfSn
     const columns = [
       { label: 'Aantal', value: String(line.quantity), x: MARGIN_X + 12, width: 42 },
       { label: 'Eenheid', value: line.unit, x: MARGIN_X + 56, width: 48 },
-      { label: 'Prijs excl.', value: formatEuro(line.unitPriceExclVatCents), x: MARGIN_X + 108, width: 68 },
+      { label: kor ? 'Prijs' : 'Prijs excl.', value: formatEuro(line.unitPriceExclVatCents), x: MARGIN_X + 108, width: 68 },
       { label: 'Korting', value: line.discountAmountCents > 0 ? `-${formatEuro(line.discountAmountCents)}` : formatEuro(-line.discountAmountCents), x: MARGIN_X + 180, width: 62 },
       { label: 'Netto', value: formatEuro(line.netAmountExclVatCents), x: MARGIN_X + 246, width: 64 },
       { label: `Btw ${line.vatRateBps / 100}%`, value: formatEuro(line.vatAmountCents), x: MARGIN_X + 314, width: 66 },
-      { label: 'Incl. btw', value: formatEuro(line.amountInclVatCents), x: MARGIN_X + 384, width: 90 },
+      { label: kor ? 'Bedrag' : 'Incl. btw', value: formatEuro(line.amountInclVatCents), x: MARGIN_X + 384, width: 90 },
     ]
-    columns.forEach((column) => {
+    columns.filter(column => !kor || !column.label.startsWith('Btw ')).forEach((column) => {
       page.drawText(column.label, { x: column.x, y: detailY, size: 6.8, font: regular, color: muted })
       page.drawText(normalize(column.value), { x: column.x, y: detailY - 13, size: 7.8, font: bold, color: ink, maxWidth: column.width })
     })
@@ -331,11 +332,12 @@ async function buildSnapshotV2FinancialInvoicePdf(invoice: FinancialInvoicePdfSn
     page.drawText(normalize(value), { x: summaryX + summaryWidth - 14 - font.widthOfTextAtSize(normalize(value), size), y: summaryY, size, font, color: options.color ?? ink })
     summaryY -= 17
   }
-  summaryRow('Totaal excl. btw', formatEuro(invoice.amountExclVatCents))
-  invoice.vatSummaries.forEach((summary) => summaryRow(`Btw ${summary.vatRateBps / 100}%`, formatEuro(summary.vatAmountCents)))
+  if (kor) summaryRow('Vrijgesteld volgens de kleineondernemersregeling (KOR)', '')
+  else summaryRow('Totaal excl. btw', formatEuro(invoice.amountExclVatCents))
+  if (!kor) invoice.vatSummaries.forEach((summary) => summaryRow(`Btw ${summary.vatRateBps / 100}%`, formatEuro(summary.vatAmountCents)))
   page.drawLine({ start: { x: summaryX + 14, y: summaryY + 10 }, end: { x: summaryX + summaryWidth - 14, y: summaryY + 10 }, color: blue, thickness: 1 })
   summaryY -= 4
-  summaryRow('Totaal incl. btw', formatEuro(invoice.amountInclVatCents), { bold: true, size: 12, color: navy })
+  summaryRow(kor ? 'Totaal' : 'Totaal incl. btw', formatEuro(invoice.amountInclVatCents), { bold: true, size: 12, color: navy })
   y -= summaryHeight + 24
 
   const pages = document.getPages()

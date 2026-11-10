@@ -1,3 +1,4 @@
+import { isLearningRuntimeEnabled } from '@/lib/learning/learning-runtime-policy'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
@@ -71,6 +72,8 @@ export default async function PlatformAdminDashboardPage() {
           </div>
         </div>
       </header>
+
+      {isLearningRuntimeEnabled() && <Link href="/platformbeheer/academy/cursussen" className="inline-flex min-h-11 items-center underline">Academy · Cursussen en resultaten</Link>}
 
       <AdminSection
         title="Actie vereist"

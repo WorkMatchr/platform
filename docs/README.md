@@ -1,5 +1,7 @@
 # Documentatie WorkMatchr
 
+- [Academy · besluitkaart voor de betaalde pilot](release-v3/app-final/academy-live-pilot-02.md)
+
 - [Homepage 2.0 — compacte lay-out en acceptatie](homepage-compact-v2.md)
 - [P1: Pro-incasso, creditfacturen en betaalreconciliatie](p1-financial-integrity-repair.md)
 
@@ -254,3 +256,9 @@ Zie [legacy intake naar gedeelde Simple Advice Flow](legacy-intake-unification.m
 - [Compliance F4 — 46 claimreviews en read-only publicatiecontrole](compliance-f4-knowledge-publication.md)
 
 - [Commerciële afronding: contactoutbox, ketenacceptatie en beheervoorwaarden](commercial-launch-finalization.md)
+
+- [Afgeschermde Academy-pilot, studieduur en vrijgavevoorwaarden](release-v3/app-final/academy-pilot-01.md)
+- [Academy-editor op V3 en upgradebewijs](release-v3/app-final/academy-release-03.md)
+- [Academy-studentpilot: cursusversies, toetsdekking en overgang WL-001](release-v3/app-final/academy-release-04.md)
+- [Academy-nachtacceptatie en voorwaarden voor de commerciële pilot](release-v3/app-final/night-academy-01.md)
+- [Academy RELEASE-05: inhoudelijke beoordeling, 150 toetsvragen en pilotbesluit](release-v3/app-final/academy-release-05.md)

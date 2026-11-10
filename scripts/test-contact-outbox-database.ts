@@ -5,7 +5,6 @@ import { registerHooks } from 'node:module'
 import { copyFileSync, cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { Client } from 'pg'
-import { pendingMigrations } from './audit-d2c-preflight.mjs'
 import { contactRetentionFixture } from './fixtures/contact-retention-database'
 import type { PrismaClient } from '../src/generated/prisma/client'
 import type { AuthEmail } from '../src/lib/email'
@@ -44,11 +43,12 @@ try {
   const baseline = process.argv.includes('--baseline-85')
   const migrationRoot = path.resolve('prisma/migrations')
   const allMigrations = readdirSync(migrationRoot).filter(name => /^\d/.test(name)).sort()
-  assert.equal(allMigrations.length, 96)
-  const expectedMigrations = allMigrations.filter(name => !baseline || (!pendingMigrations.includes(name)
-    && name !== '20261102120000_add_closed_contact_audit_retention'
-    && name !== '20261103100000_add_closed_contact_decision_register'
-    && name !== '20261106120000_repair_pro_financial_integrity'))
+  assert.equal(allMigrations.length, 103)
+  const historical = JSON.parse(readFileSync('docs/evidence/wp14/migration-checksums.json', 'utf8')) as {
+    migrations: { name: string; productionChecksum: string | null }[]
+  }
+  const baselineNames = new Set(historical.migrations.filter(row => row.productionChecksum).map(row => row.name))
+  const expectedMigrations = baseline ? allMigrations.filter(name => baselineNames.has(name)) : allMigrations
   const migrateArgs = [process.env.npm_execpath!, 'run', 'db:deploy']
   if (baseline) {
     // Reconstruct the documented 85-migration state only in this newly created DB.

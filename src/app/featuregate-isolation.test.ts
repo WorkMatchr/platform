@@ -73,7 +73,7 @@ const learningEntrypoints: Array<[string, () => Promise<unknown>]> = [
   ['blok afronden', () => finishLearningBlockAction(id)],
   ['oefenantwoord', () => submitLearningAnswerAction(id, ['A'])],
   ['hoofdstuk afronden', () => completeLearningChapterAction(id)],
-  ['toets starten', () => startFinalExamAction(courseSlug)],
+  ['toets starten', () => startFinalExamAction(courseSlug, id)],
   ['toetsantwoord', () => saveFinalExamAnswerAction(id, id, ['A'])],
   ['toetspositie', () => updateFinalExamPositionAction(id, 1)],
   ['toets inleveren', () => submitFinalExamAction(id)],
