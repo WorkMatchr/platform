@@ -1279,6 +1279,7 @@ enum KnowledgeAuditEventType {
 }
 
 model User {
+  pilotAssignments LearningPilotAssignment[]
   assignmentEmailEnabled Boolean @default(true)
   simpleAdviceIntakeRevisions IntakeSimpleAdviceRevision[]
   id                                 String                                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -4292,6 +4293,7 @@ model FinancialJorttSyncAttempt {
 }
 
 model DiscountCode {
+  pilotAssignments LearningPilotAssignment[]
   id                    String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   code                  String               @unique @db.VarChar(40)
   status                DiscountCodeStatus   @default(ACTIVE)
@@ -5837,6 +5839,38 @@ model RequestAssignmentHandoff {
   @@index([createdByUserId, createdAt])
 }
 
+model LearningPilotAssignment {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String   @db.Uuid
+  courseVersionId String   @db.Uuid
+  discountCodeId  String   @db.Uuid
+  enrollmentId    String?  @unique @db.Uuid
+  redeemedAt      DateTime? @db.Timestamptz(3)
+  lastPulseAt     DateTime? @db.Timestamptz(3)
+  lastContext     String?
+  clockId         String?  @db.Uuid
+  pauses          Int      @default(0)
+  gaps            Int      @default(0)
+  user            User @relation(fields: [userId], references: [id], onUpdate: NoAction, onDelete: Restrict)
+  courseVersion   LearningCourseVersion @relation(fields: [courseVersionId], references: [id], onUpdate: NoAction, onDelete: Restrict)
+  discountCode    DiscountCode @relation(fields: [discountCodeId], references: [id], onUpdate: NoAction, onDelete: Restrict)
+  enrollment      LearningEnrollment? @relation(fields: [enrollmentId, courseVersionId, userId], references: [id, courseVersionId, userId], onUpdate: NoAction, onDelete: Restrict)
+  durations       LearningPilotDuration[]
+
+  @@unique([userId, courseVersionId])
+  @@unique([enrollmentId, courseVersionId, userId])
+  @@index([discountCodeId])
+}
+
+model LearningPilotDuration {
+  assignmentId String @db.Uuid
+  context      String
+  activeMs     Int
+  assignment   LearningPilotAssignment @relation(fields: [assignmentId], references: [id], onUpdate: NoAction, onDelete: Cascade)
+
+  @@id([assignmentId, context])
+}
+
 model LearningProfile {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId    String   @unique @db.Uuid
@@ -5867,6 +5901,7 @@ model LearningCourse {
 }
 
 model LearningCourseVersion {
+  pilotAssignments LearningPilotAssignment[]
   id             String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   courseId       String                      @db.Uuid
   version        String                      @db.VarChar(40)
@@ -5962,6 +5997,7 @@ model LearningQuestionOption {
 }
 
 model LearningEnrollment {
+  pilotAssignment LearningPilotAssignment?
   accessRevokedAt DateTime? @db.Timestamptz(3)
   accessExpiresAt DateTime? @db.Timestamptz(3)
   id                  String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid

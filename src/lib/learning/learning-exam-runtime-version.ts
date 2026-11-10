@@ -9,10 +9,21 @@ const pilotVersions: Readonly<Record<string, string>> = {
 // Self-enrollment in draft candidates is restricted to the disposable acceptance
 // database. Publishing in a real classroom requires a separate release decision.
 export function allowsStudentPilot(code: string, version: string): boolean {
-  if (pilotVersions[code] !== version || process.env.ACADEMY_STUDENT_PILOT_ENABLED !== 'true' || process.env.VERCEL || process.env.VERCEL_ENV) return false
+  return pilotVersions[code] === version && isLocalPilot()
+}
+
+export const assignedPilotVersions: Readonly<Record<string,string>> = {
+  'WL-001':'1.2-r07', 'WL-002':'1.3-r07', 'WL-003':'1.1-r07',
+}
+export function allowsAssignedPilot(code:string, version:string) {
+  return assignedPilotVersions[code] === version && isLocalPilot()
+}
+
+export function isLocalPilot() {
+  if (process.env.ACADEMY_STUDENT_PILOT_ENABLED !== 'true' || process.env.VERCEL || process.env.VERCEL_ENV) return false
   try {
     const url = new URL(process.env.DATABASE_URL ?? '')
-    return url.protocol === 'postgresql:' && url.hostname === '127.0.0.1' && url.username === 'academy_content_editor'
+    return url.protocol === 'postgresql:' && !url.search && !url.hash && url.hostname === '127.0.0.1' && url.username === 'academy_content_editor'
       && /^\/workmatchr_learning_\d+_\d+$/.test(url.pathname)
   } catch { return false }
 }

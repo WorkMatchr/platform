@@ -1,5 +1,12 @@
 import { currentAcademyAccess } from './academy-access-policy'
+import { assignedPilotVersions } from './learning-exam-runtime-version'
+import type { Prisma } from '@/generated/prisma/client'
 import 'server-only'
+
+function visibleVersion(userId:string): Prisma.LearningCourseVersionWhereInput {
+  const restricted=Object.entries(assignedPilotVersions).map(([code,version])=>({course:{code},version}))
+  return {OR:[{NOT:{OR:restricted}},{enrollments:{some:{userId,...currentAcademyAccess()}}}]}
+}
 import { getPrisma } from '@/lib/prisma'
 
 export const LEARNING_COURSE_SLUG = 'rie-in-de-praktijk'
@@ -7,11 +14,11 @@ export const LEARNING_CHAPTER_SLUG = 'waarom-een-rie'
 
 export async function getPublishedLearningCourses(userId: string) {
   return getPrisma().learningCourse.findMany({
-    where: { status: 'PUBLISHED', versions: { some: { status: 'PUBLISHED' } } },
+    where: { status: 'PUBLISHED', versions: { some: { status: 'PUBLISHED', ...visibleVersion(userId) } } },
     orderBy: { title: 'asc' },
     include: {
       versions: {
-        where: { status: 'PUBLISHED' },
+        where: { status: 'PUBLISHED', ...visibleVersion(userId) },
         orderBy: { publishedAt: 'desc' },
         take: 1,
         include: {
@@ -31,10 +38,11 @@ export async function getPublishedLearningCourse(slug: string, userId: string) {
     where: {userId, courseVersion: {course: {slug}}}, orderBy: {createdAt:'asc'}, select: {courseVersionId:true},
   })
   return getPrisma().learningCourse.findFirst({
-    where: { slug, status: 'PUBLISHED', versions: { some: { status: 'PUBLISHED' } } },
+    where: { slug, status: 'PUBLISHED', versions: { some: {status:'PUBLISHED'} },
+      AND: { versions: { some: { ...(pinned ? {id:pinned.courseVersionId} : {status:'PUBLISHED'}), ...visibleVersion(userId) } } } },
     include: {
       versions: {
-        where: pinned ? {id:pinned.courseVersionId,status:{in:['RETIRED','PUBLISHED']}} : {status:'PUBLISHED'},
+        where: pinned ? {id:pinned.courseVersionId,status:{in:['RETIRED','PUBLISHED']}} : {status:'PUBLISHED',...visibleVersion(userId)},
         orderBy: { publishedAt: 'desc' },
         take: 1,
         include: {

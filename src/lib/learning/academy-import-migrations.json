@@ -705,5 +705,12 @@
       "d8d3672d61aa40b2ad17a2fdd7f229fe9b2948b7f0d570c0f8c0e73fab22ff31",
       "7f11ec866beba94e28371b1d14a70ba8cf1ff57f3e60dc5a0244b346fd187c89"
     ]
+  },
+  {
+    "name": "20261110190000_academy_pilot_measurement",
+    "checksums": [
+      "256d1d5af0535441e3a8d0084b54ebd34389dce136a5add09d1949d7b6cd30e3",
+      "40e12c5661c746e7023f6ff30102255d458b727bef6fc1ee97350fb0959320b3"
+    ]
   }
 ]

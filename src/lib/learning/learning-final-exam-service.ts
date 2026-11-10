@@ -181,6 +181,7 @@ export async function getFinalExamPlayer(userId: string, attemptId: string) {
   return {
     id: attempt.id,
     attemptNumber: attempt.attemptNumber,
+    enrollmentId:attempt.enrollmentId,
     currentPosition: Math.min(Math.max(attempt.currentPosition, 1), attempt.examVersion.questionCount),
     startedAt: attempt.startedAt,
     questionCount: attempt.examVersion.questionCount,

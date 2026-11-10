@@ -1,7 +1,7 @@
 import { isAcademyBundle, bundleHash, saveBundleDraft, verifyBundleDraft, publishBundleQuestions } from './academy-bundle-authoring'
 import { validateAcademyBundle, type AcademyCourseBundle } from './academy-content-standard'
 import 'server-only'
-import { allowsStudentPilot, COURSE_CODE, COURSE_VERSION } from './learning-exam-runtime-version'
+import { allowsAssignedPilot, allowsStudentPilot, COURSE_CODE, COURSE_VERSION } from './learning-exam-runtime-version'
 import { createHash } from 'node:crypto'
 import { Prisma } from '@/generated/prisma/client'
 import { getPrisma } from '@/lib/prisma'
@@ -154,7 +154,7 @@ export async function transitionAuthoringCourse(id:string,revision:number,to:Aut
     if(to==='APPROVED')Object.assign(next.authoring,{reviewedBy:actor.userId,reviewedAt:new Date().toISOString(),reviewReason:reason.trim()})
     if(to==='DRAFT'){delete next.authoring.reviewedBy;delete next.authoring.reviewedAt;delete next.authoring.reviewReason}
     if (to === 'PUBLISHED' && (identity.course.code !== COURSE_CODE || version.version !== COURSE_VERSION)
-      && !(isAcademyBundle(meta.authoring.content) && allowsStudentPilot(identity.course.code, version.version))) {
+      && !(isAcademyBundle(meta.authoring.content) && (allowsStudentPilot(identity.course.code, version.version) || allowsAssignedPilot(identity.course.code, version.version)))) {
       throw Error(identity.course.code === COURSE_CODE ? 'HISTORICAL_STUDENT_ROUTE_ACTIVE' : 'STUDENT_EXAM_UNAVAILABLE')
     }
     if (to === 'RETIRED') {

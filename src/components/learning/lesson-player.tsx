@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import { safeLearningMedia } from '@/lib/learning/learning-media-policy'
+import { PilotClock } from './pilot-clock'
 import Link from 'next/link'
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
@@ -197,6 +198,7 @@ export function LessonContent({ block, index, onAnswered, readOnly = false }: { 
 
 export function LessonPlayer({
   courseTitle,
+  pilotEnrollmentId,
   chapterId,
   chapterTitle,
   chapterPosition,
@@ -213,6 +215,7 @@ export function LessonPlayer({
   readOnly = false,
 }: {
   courseTitle: string
+  pilotEnrollmentId?: string
   chapterId: string
   chapterTitle: string
   chapterPosition: number
@@ -311,6 +314,7 @@ export function LessonPlayer({
         <nav aria-label="Hoofdstuknavigatie" className="hidden rounded-card border border-border bg-surface p-4 lg:block"><p className="mb-3 text-xs font-bold uppercase tracking-wide text-text-secondary">Deze cursus</p><ol className="space-y-3 text-sm">{navigationItems}</ol></nav>
       </aside>
       <main ref={lessonRef} className="min-w-0">
+        {pilotEnrollmentId && current && <PilotClock enrollment={pilotEnrollmentId} target={current.id}/>}
         <div className="mb-6 space-y-2"><div className="flex items-center justify-between gap-3 text-sm"><span>Hoofdstuk {chapterPosition} van 10</span><span>{estimatedDurationLabel}</span></div><div className="h-2 overflow-hidden rounded-full bg-brand-primary-subtle" role="progressbar" aria-label="Hoofdstukvoortgang" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><div className="h-full bg-brand-primary transition-[width]" style={{ width: `${progress}%` }} /></div><p className="text-sm text-text-secondary">{progress}% van dit hoofdstuk doorlopen</p></div>
         {current ? <Card className="mx-auto max-w-3xl space-y-7" key={current.id}><LessonContent block={current} index={index} readOnly={readOnly} onAnswered={({ correct }) => {
           setCorrectQuestionIds((previous) => {

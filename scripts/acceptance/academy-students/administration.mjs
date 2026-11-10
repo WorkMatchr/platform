@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { join } from 'node:path'
 import { hashPassword } from 'better-auth/crypto'
 
-async function createTestAdministrator(db, password) {
+export async function createTestAdministrator(db, password) {
   const id = randomUUID()
   const email = id + '@example.invalid'
   const org = await db.query('SELECT id FROM "Organization" WHERE "systemKey"=$1', ['WORKMATCHR_PLATFORM'])
@@ -42,7 +42,7 @@ export async function checkAcademyAdministration({ db,open,login,pw,root }) {
       const save = page.getByRole('button',{name:'Concept opslaan',exact:true})
       const form = page.locator('form').filter({has:save})
       await fillFields(form,{
-        'Cursuscode (WL-nummer)':'WL-988',Adresnaam:'synthetische-cursus-988',
+        'Cursuscode (WL-nummer)':process.env.ACADEMY_TEST_ASSIGNED_PILOT==='1'?'WL-004':'WL-988',Adresnaam:'synthetische-cursus-988',
         Titel:'Synthetische cursus',Omschrijving:'Tijdelijke acceptatiecursus.',
         Categorie:'Oefening',Niveau:'Basis',Hoofdstuktitel:'Proefhoofdstuk',
         Lestitel:'Proefles',Lesinhoud:'Lees de synthetische toelichting.'
@@ -110,7 +110,7 @@ export async function checkAcademyAdministration({ db,open,login,pw,root }) {
       console.log('PASS deelnemer, toetsresultaat, historische verificatie, beheer-PDF en ontwerper')
     }
     async function importRevision() {
-      const published = await db.query('SELECT id FROM "LearningCourseVersion" WHERE version=$1 AND status=$2',['1.2','PUBLISHED'])
+      const published = await db.query('SELECT id FROM "LearningCourseVersion" WHERE version=$1 AND status=$2',[process.env.ACADEMY_TEST_ASSIGNED_PILOT==='1'?'1.2-r07':'1.2','PUBLISHED'])
       assert.equal(published.rowCount,1)
       await page.goto(catalog+'/'+published.rows[0].id)
       await page.getByLabel('Nieuwe conceptversie',{exact:true}).fill('1.2-night')

@@ -9,6 +9,9 @@ import { authoringMetadata, prepareBundleRevision, readAuthoringVersion, saveAut
 import { buildLearningCertificatePdf } from './learning-certificate-pdf'
 import { getFinalExamOverview, startFinalExamAttempt } from './learning-final-exam-service'
 import { getPublishedLearningCourse } from './learning-query-service'
+import { recordPilotObservation } from '@/app/e-learnings/pilot/time'
+import { currentAcademyAccess } from './academy-access-policy'
+import { assignPilot, redeemPilot } from './academy-pilot-service'
 import { publicLearningCatalog } from '@/content/public-learning-catalog'
 import { ensureCertificateForPassedExam, getMyLearningCertificate, getPublicLearningCertificate } from './learning-certificate-service'
 import { verifyLocalImportMigrations, verifyLocalImportRole } from './academy-import-preflight'
@@ -17,6 +20,7 @@ import { standardCertificateDesign } from './certificate-design-contract'
 import { validateAcademyBundle } from './academy-content-standard'
 
 const state = vi.hoisted(() => ({ actor: '' }))
+vi.mock('@/lib/learning/learning-authorization',()=>({requireLearningUser:async()=>({id:state.actor})}))
 vi.mock('server-only', () => ({}))
 vi.mock('@/lib/authorization', () => ({ getCurrentUser: async () => ({ id: state.actor }) }))
 vi.mock('@/lib/prisma', () => ({ getPrisma: () => db }))
@@ -25,7 +29,8 @@ let owner: string
 let member: string
 let outsider: string
 const enabled = process.env.ACADEMY_RELEASE03_LOCAL_TEST === '1'
-const bundles = ['WL-001_COURSE_1.2_DRAFT', 'WL-002_COURSE_1.3_DRAFT', 'WL-003_COURSE_1.1_DRAFT']
+const assignedPilot = process.env.ACADEMY_TEST_ASSIGNED_PILOT === '1'
+const bundles = assignedPilot ? ['release-07/WL-001_COURSE_1.2-r07_DRAFT','release-07/WL-002_COURSE_1.3-r07_DRAFT','release-07/WL-003_COURSE_1.1-r07_DRAFT'] : ['WL-001_COURSE_1.2_DRAFT', 'WL-002_COURSE_1.3_DRAFT', 'WL-003_COURSE_1.1_DRAFT']
 describe.skipIf(!enabled)('V3 Academy-upgrade met bestaande inschrijving en uitgifte', () => {
   beforeAll(async () => {
     const url = new URL(process.env.LEARNING_TEST_DATABASE_URL!)
@@ -136,6 +141,94 @@ describe.skipIf(!enabled)('V3 Academy-upgrade met bestaande inschrijving en uitg
     expect(await getPublicLearningCertificate(historical.certificateNumber)).toMatchObject({status:'ACTIVE',courseTitle:historical.courseTitle})
     expect(await buildLearningCertificatePdf(historical)).toEqual(oldPdf)
   },180000)
+
+  it.skipIf(!assignedPilot)('bindt kosteloze inschrijving aan persoon, versie, vervaldatum en één gelijktijdig gebruik', async () => {
+    const user=await db.user.create({data:{email:randomUUID()+'@example.invalid',emailVerified:true,status:'ACTIVE'}})
+    const versions=await db.learningCourseVersion.findMany({where:{status:'PUBLISHED',version:{endsWith:'-r07'}},orderBy:{version:'asc'}})
+    expect(versions).toHaveLength(3)
+    const [one,two,three]=versions
+    const input={email:user.email,versions:[one.id,two.id],maximumUses:1,validUntil:new Date(Date.now()+86400000)}
+    await expect(assignPilot(member,input)).rejects.toThrow()
+    const before=await db.financialPurchase.count()
+    const code=await assignPilot(owner,input)
+    expect(await redeemPilot(outsider,one.id,code)).toBe(false)
+    expect(await redeemPilot(user.id,three.id,code)).toBe(false)
+    const results=await Promise.all([one,two].map(v=>redeemPilot(user.id,v.id,code)))
+    expect(results.filter(Boolean)).toHaveLength(1)
+    expect(await redeemPilot(user.id,(results[0]?one:two).id,code)).toBe(true)
+    expect(await db.learningEnrollment.count({where:{userId:user.id}})).toBe(1)
+    expect(await db.financialPurchase.count()).toBe(before)
+    const chosen=results[0]?one:two
+    const enrollment=await db.learningEnrollment.findFirstOrThrow({where:{userId:user.id,courseVersionId:chosen.id}})
+    await db.learningEnrollment.update({where:{id:enrollment.id},data:{status:'IN_PROGRESS',startedAt:new Date()}})
+    const chapter=await db.learningChapter.findFirstOrThrow({where:{courseVersionId:chosen.id},orderBy:{position:'asc'},include:{contentBlocks:true}})
+    const reading=chapter.contentBlocks.find(b=>!b.questionId)!
+    const exercise=chapter.contentBlocks.find(b=>b.questionId)!
+    const event={enrollment:enrollment.id,clock:randomUUID(),target:reading.id,exam:false,pause:false}
+    vi.useFakeTimers({toFake:['Date']})
+    const start=Date.now()
+    try {
+      state.actor=outsider
+      await recordPilotObservation(event)
+      expect(await db.learningPilotAssignment.count({where:{enrollmentId:enrollment.id,lastPulseAt:{not:null}}})).toBe(0)
+      state.actor=user.id
+      await recordPilotObservation(event)
+      vi.setSystemTime(start+10000);await recordPilotObservation(event)
+      vi.setSystemTime(start+11000);await recordPilotObservation({...event,pause:true})
+      vi.setSystemTime(start+71000);await recordPilotObservation({...event,target:exercise.id})
+      vi.setSystemTime(start+76000);await recordPilotObservation({...event,target:exercise.id})
+      vi.setSystemTime(start+150000);await recordPilotObservation({...event,target:exercise.id})
+      const measured=await db.learningPilotAssignment.findFirstOrThrow({where:{enrollmentId:enrollment.id},include:{durations:true}})
+      expect(measured.gaps).toBe(1)
+      expect(measured.pauses).toBe(1)
+      const sum=(prefix:string)=>measured.durations.filter(d=>d.context.startsWith(prefix)).reduce((s,d)=>s+d.activeMs,0)
+      expect(sum('les:')).toBe(10000);expect(sum('oefening:')).toBe(5000)
+      expect(sum('pauze:')).toBe(60000);expect(sum('onbekend:')).toBe(74000)
+    } finally {vi.useRealTimers();state.actor=owner}
+    vi.stubEnv('ACADEMY_STUDENT_PILOT_ENABLED','false')
+    try {
+      expect(await db.learningEnrollment.count({where:{id:enrollment.id,...currentAcademyAccess()}})).toBe(0)
+      const identity=await db.learningCourse.findUniqueOrThrow({where:{id:chosen.courseId}})
+      expect(await getPublishedLearningCourse(identity.slug,user.id)).toBeNull()
+    } finally {vi.unstubAllEnvs()}
+    await db.learningEnrollment.update({where:{id:enrollment.id},data:{accessRevokedAt:new Date()}})
+    expect(await redeemPilot(user.id,chosen.id,code)).toBe(false)
+    const unused=await assignPilot(owner,{...input,versions:[three.id]})
+    await db.discountCode.update({where:{code:unused},data:{validFrom:new Date(Date.now()-7200000),validUntil:new Date(Date.now()-3600000)}})
+    expect(await redeemPilot(user.id,three.id,unused)).toBe(false)
+  })
+
+  it.skipIf(!assignedPilot)('wijst bij twee gelijktijdige aanvragen voor de laatste plaats maximaal twaalf cursisten aan', async () => {
+    const version = await db.learningCourseVersion.findFirstOrThrow({
+      where: { status: 'PUBLISHED', version: '1.2-r07' },
+    })
+    const where = { courseVersionId: version.id }
+    const occupied = await db.learningPilotAssignment.count({ where })
+    const candidates: { id: string; email: string }[] = []
+    const grant = (email: string) => assignPilot(owner, {
+      email, versions: [version.id], maximumUses: 1, validUntil: new Date(Date.now() + 86400000),
+    })
+    try {
+      for (let i = occupied; i <= 12; i++) {
+        const user = await db.user.create({
+          data: { email: randomUUID() + '@example.invalid', emailVerified: true, status: 'ACTIVE' },
+        })
+        candidates.push(user)
+        if (i < 11) await grant(user.email)
+      }
+      const lastSeat = await Promise.allSettled(candidates.slice(-2).map(user => grant(user.email)))
+      expect(lastSeat.filter(result => result.status === 'fulfilled')).toHaveLength(1)
+      const rejected = lastSeat.find(result => result.status === 'rejected')
+      expect(rejected?.reason.message).toBe('PILOT_FULL')
+      expect(await db.learningPilotAssignment.count({ where })).toBe(12)
+    } finally {
+      const own = { ...where, userId: { in: candidates.map(user => user.id) } }
+      const grants = await db.learningPilotAssignment.findMany({ where: own })
+      await db.learningPilotAssignment.deleteMany({ where: own })
+      await db.discountCode.deleteMany({ where: { id: { in: grants.map(grant => grant.discountCodeId) } } })
+      await db.user.deleteMany({ where: { id: { in: own.userId.in } } })
+    }
+  })
 
   it('houdt de negen roadmapcursussen gesloten bij rechtstreeks opvragen van cursus, toets en certificaat', async () => {
     const courses = publicLearningCatalog.filter(course => /^WL-(00[4-9]|01[0-2])$/.test(course.code))

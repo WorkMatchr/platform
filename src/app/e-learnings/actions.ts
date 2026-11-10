@@ -1,7 +1,7 @@
 'use server'
 
 import { currentAcademyAccess } from '@/lib/learning/academy-access-policy'
-import { allowsStudentPilot, COURSE_CODE, COURSE_VERSION } from '@/lib/learning/learning-exam-runtime-version'
+import { allowsStudentPilot, assignedPilotVersions, COURSE_CODE, COURSE_VERSION } from '@/lib/learning/learning-exam-runtime-version'
 import { Prisma } from '@/generated/prisma/client'
 import { redirect } from 'next/navigation'
 import { requireLearningUser } from '@/lib/learning/learning-authorization'
@@ -38,6 +38,9 @@ export async function startLearningCourseAction(formData: FormData) {
     })
     if (!version || (requestedVersion && requestedVersion !== version.id)) return null
     if (!pinned && !(course.code === COURSE_CODE && version.version === COURSE_VERSION) && !allowsStudentPilot(course.code, version.version)) return null
+    if (assignedPilotVersions[course.code]===version.version && !await transaction.learningEnrollment.findFirst({
+      where:{userId:user.id,courseVersionId:version.id,...currentAcademyAccess()},select:{id:true},
+    })) return null
     const selectedChapter = requestedChapterSlug ? version.chapters.find(c => c.slug === requestedChapterSlug) : version.chapters[0]
     if (!selectedChapter) return null
     await transaction.learningProfile.upsert({ where: { userId: user.id }, update: {}, create: { userId: user.id } })

@@ -1,3 +1,5 @@
+import { assignedPilotVersions, isLocalPilot } from './learning-exam-runtime-version'
+
 /** New orders only; null dates deliberately preserve historical rights. */
 export const ACADEMY_ACCESS_POLICY_VERSION = 'ACADEMY-ACCESS-2026-10-30'
 export function addAcademyCalendarYear(date: Date) {
@@ -8,7 +10,10 @@ export function addAcademyCalendarYear(date: Date) {
   return result
 }
 export function currentAcademyAccess(now = new Date()) {
-  return { accessRevokedAt: null, OR: [{ accessExpiresAt: null }, { accessExpiresAt: { gt: now } }] }
+  const restricted=Object.entries(assignedPilotVersions).map(([code,version])=>({course:{code},version}))
+  const permit = { pilotAssignment: { is: { redeemedAt: {not:null} } }, user:{email:{endsWith:'@example.invalid'},emailVerified:true} }
+  const access = [{ courseVersion: { NOT: { OR:restricted } } }, ...(isLocalPilot() ? [permit] : [])]
+  return { AND:[{OR:access}], accessRevokedAt: null, OR: [{ accessExpiresAt: null }, { accessExpiresAt: { gt: now } }] }
 }
 export function academyAccessExpired(enrollment: { accessExpiresAt?: Date | null }, now = new Date()) {
   return Boolean(enrollment.accessExpiresAt && enrollment.accessExpiresAt <= now)
