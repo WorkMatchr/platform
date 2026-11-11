@@ -1,0 +1,31 @@
+[Unit]
+Description=WorkMatchr Marketplace dispatchcontrole
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+ExecStart=/usr/bin/env node /opt/workmatchr-monitor/monitor-pi.mjs
+TimeoutStartSec=45s
+DynamicUser=yes
+StateDirectory=workmatchr-monitor
+StateDirectoryMode=0700
+UMask=0077
+LoadCredential=status-read:/etc/workmatchr-monitor/status-read
+LoadCredential=resend-send:/etc/workmatchr-monitor/resend-send
+LoadCredential=afzender:/etc/workmatchr-monitor/afzender
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+PrivateTmp=yes
+PrivateDevices=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+MemoryMax=160M
+TasksMax=32
+Nice=10
+LogNamespace=workmatchr-monitor

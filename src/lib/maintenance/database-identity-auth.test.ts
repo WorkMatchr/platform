@@ -92,10 +92,10 @@ describe('isolation from unchanged financial and mail maintenance routes', () =>
     expect(isDatabaseIdentityDiagnosticAuthorized(header)).toBe(false)
     expect((await financeCron(request(cron))).status).toBe(200)
     expect((await financeManual(request(finance))).status).toBe(200)
-    expect((await mailCron(request(cron))).status).toBe(200)
+    expect((await mailCron(request(cron))).status).toBe(404) // Default planner accepts GitHub POST only.
     expect((await mailDispatch(request(cron))).status).toBe(200)
     expect(services.finance).toHaveBeenCalledTimes(2)
-    expect(services.mail).toHaveBeenCalledTimes(2)
-    expect(services.contact).toHaveBeenCalledTimes(2)
+    expect(services.mail).toHaveBeenCalledTimes(1)
+    expect(services.contact).toHaveBeenCalledTimes(1)
   })
 })

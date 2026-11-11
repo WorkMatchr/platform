@@ -147,6 +147,37 @@ try {
   assert.equal((await deliverAssignmentEmails({ now: () => catchUp, send: accepted })).sent, 1)
   assert.equal((await deliverAssignmentEmails({ now: () => catchUp, send: accepted })).claimed, 0)
 
+  const { claimDispatchSlot, finishDispatch, readDispatchStatus } = await import('../src/lib/marketplace/dispatch-status')
+  const slot = Date.now()
+  for (let i = 0; i < 11; i++) await fixture()
+  const leased = await fixture()
+  await db.notificationOutbox.update({ where: { id: leased.job.id }, data: {
+    status: 'PROCESSING', leaseToken: randomUUID(), leaseUntil: new Date(slot - 900_000),
+  } })
+  const baseline = await readDispatchStatus()
+  assert.equal(baseline.status, 'NEVER')
+  assert.equal(baseline.ready, 11)
+  assert.equal(baseline.expiredLeases, 1)
+  const claims = await Promise.all([claimDispatchSlot(slot), claimDispatchSlot(slot)])
+  assert.equal(claims.filter(Boolean).length, 1)
+  const deliveryKeys = new Set<string>()
+  const fakeSend = async (email: AuthEmail) => {
+    assert.ok(email.idempotencyKey && !deliveryKeys.has(email.idempotencyKey))
+    deliveryKeys.add(email.idempotencyKey)
+    return { accepted: true as const, transport: 'RESEND' as const, status: 'ACCEPTED' as const, messageId: randomUUID() }
+  }
+  const first = await deliverAssignmentEmails({limit:10, send:fakeSend})
+  const second = await deliverAssignmentEmails({limit:10, send:fakeSend})
+  assert.deepEqual([first.sent, second.sent], [10, 2])
+  const totals = {claimed:12, sent:12, failed:0, retry:0}
+  await finishDispatch('COMPLETED', totals)
+  const end = await readDispatchStatus()
+  assert.ok(end.lastSuccessfulAt)
+  assert.deepEqual(end, {...end, status:'COMPLETED', ready:0, expiredLeases:0, counters:totals})
+  assert.deepEqual(await readDispatchStatus(), end)
+  assert.equal(await claimDispatchSlot(slot), false)
+  console.log('DISPATCH-02 PASS: unique parallel slot, expired lease, twelve unique fake sends, read-only status')
+
   for (const [code, status, retryable] of [
     ['EMAIL_PROVIDER_UNAVAILABLE', null, true], ['EMAIL_PROVIDER_REJECTED', 503, true],
     ['EMAIL_PROVIDER_REJECTED', 429, true], ['EMAIL_PROVIDER_REJECTED', 422, false],

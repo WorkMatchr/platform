@@ -37,6 +37,7 @@
     }
   },
   "crons": [
+    { "path": "/api/maintenance/marketplace", "schedule": "*/15 * * * *" },
     {
       "path": "/api/maintenance/finance",
       "schedule": "0 3 * * *"
