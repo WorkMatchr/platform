@@ -293,7 +293,7 @@ export async function createCreditPurchase(
   })
 }
 
-function fingerprintPayment(payment: MolliePaymentSnapshot, academy = false) {
+function fingerprintPayment(payment: MolliePaymentSnapshot, includeReversals = false) {
   return createHash('sha256').update(JSON.stringify({
     id: payment.id,
     status: payment.status,
@@ -301,8 +301,8 @@ function fingerprintPayment(payment: MolliePaymentSnapshot, academy = false) {
     currency: payment.currency,
     metadata: payment.metadata,
     paidAt: payment.paidAt,
-    ...(academy && payment.amountRefunded && {amountRefunded:payment.amountRefunded}),
-    ...(academy && payment.amountChargedBack && {amountChargedBack:payment.amountChargedBack}),
+    ...(includeReversals && payment.amountRefunded && {amountRefunded:payment.amountRefunded}),
+    ...(includeReversals && payment.amountChargedBack && {amountChargedBack:payment.amountChargedBack}),
     subscriptionId: payment.subscriptionId,
     mandateId: payment.mandateId,
     method: payment.method,
@@ -341,7 +341,7 @@ export async function processMolliePayment(
     })
     throw new Error('MOLLIE_PAYMENT_MISMATCH')
   }
-  const fingerprint = fingerprintPayment(payment, purchase.kind === "ACADEMY_COURSE")
+  const fingerprint = fingerprintPayment(payment, purchase.kind === 'ACADEMY_COURSE' || purchase.kind === 'CREDIT_PACKAGE')
   const result = await runSerializableFinancialTransaction(async (transaction) => {
     await lockKey(transaction, `purchase:${purchase.id}`)
     const current = await transaction.financialPurchase.findUniqueOrThrow({ where: { id: purchase.id } })
@@ -359,8 +359,29 @@ export async function processMolliePayment(
       },
       update: {},
     })
+    if (current.kind === 'CREDIT_PACKAGE' && (payment.amountChargedBack || payment.amountRefunded)) {
+      let reviewRequired = false
+      for (const [kind, amount] of [['CHARGEBACK', payment.amountChargedBack], ['REFUND', payment.amountRefunded]] as const) {
+        if (!amount) continue
+        const cents = mollieValueToCents(amount.value)
+        if (amount.currency !== current.currency || cents > amountCents) throw Error('MOLLIE_REVERSAL_MISMATCH')
+        if (cents === 0) continue
+        const key = `credit-reversal:${payment.id}:${kind}:${cents}`
+        await transaction.financialEvent.upsert({
+          where: { idempotencyKey: key }, update: {},
+          create: { purchaseId: current.id, eventType: 'CREDIT_PROVIDER_REVERSAL_OBSERVED', result: 'RECONCILE',
+            idempotencyKey: key, metadata: { kind, cents, currency: current.currency } },
+        })
+        reviewRequired = true
+      }
+      if (reviewRequired && !['REFUNDED', 'PARTIALLY_REFUNDED', 'REFUND_REVIEW_REQUIRED'].includes(current.status)) {
+        await transaction.financialPurchase.update({ where: { id: current.id }, data: { status: 'REFUND_REVIEW_REQUIRED' } })
+        return { purchaseId: current.id, kind: current.kind, status: 'REFUND_REVIEW_REQUIRED' as const, invoiceId: null }
+      }
+    }
     // A delayed payment observation cannot undo a completed payment or refund.
     if (['REFUND_REVIEW_REQUIRED', 'PARTIALLY_REFUNDED', 'REFUNDED'].includes(current.status)
+      || (['FAILED', 'CANCELED', 'EXPIRED'].includes(current.status) && ['open', 'pending'].includes(payment.status))
       || (current.status === 'PAID' && payment.status !== 'paid')) {
       return { purchaseId: current.id, kind: current.kind, status: current.status, invoiceId: null }
     }

@@ -95,7 +95,14 @@ export async function deliverAssignmentEmails(input: { limit?: number; now?: () 
         await tx.$queryRaw`SELECT p.id FROM "ProviderInvitation" i JOIN "ProviderProfile" p ON p.id=i."providerProfileId" WHERE i.id=${parsed.data.invitationId}::uuid FOR SHARE OF i,p`
         // Policy publication is infrequent; keep the effective set stable until dispatch.
         await tx.$executeRaw`LOCK TABLE "ProviderCapabilityRequirementConfig", "ProviderCapabilityQualificationRequirement", "ProviderTaxonomyVersion", "ProviderTaxonomyTerm" IN SHARE MODE`
-        const live=await tx.providerInvitation.findUniqueOrThrow({where:{id:parsed.data.invitationId},include:{matchRun:{select:{assignmentSnapshot:true}},matchCandidate:{select:{projectionId:true}}}})
+        const live = await tx.providerInvitation.findFirst({
+          where: {
+            id: parsed.data.invitationId,
+            assignment: { status: { in: ['MATCHING', 'AWAITING_RESPONSES', 'IN_SELECTION'] }, archivedAt: null, clientOrganization: { status: 'ACTIVE' } },
+          },
+          include: { matchRun: { select: { assignmentSnapshot: true } }, matchCandidate: { select: { projectionId: true } } },
+        })
+        if (!live) throw new MarketplaceServiceError('NOT_SELECTABLE')
         const at=clock()
         const scope=await checkRunScope(tx,live.assignmentId,live.matchRun.assignmentSnapshot,at)
         if(live.status!=='INVITED'||live.deadlineAt<=at || !await eligibleForScopedExpertise(tx,live.providerProfileId,scope,snapshot.recipientExpertise,at) ||

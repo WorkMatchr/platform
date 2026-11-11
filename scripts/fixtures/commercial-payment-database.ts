@@ -79,6 +79,10 @@ export async function fundCommercialFixture(db: PrismaClient, actor: { id: strin
     const pending = payments.get(canceled.molliePaymentId!)!
     payments.set(pending.id, { ...pending, status })
     await processMolliePayment(pending.id, gateway)
+    payments.set(pending.id, pending)
+    await processMolliePayment(pending.id, gateway)
+    assert.equal((await db.financialPurchase.findUniqueOrThrow({where:{id:canceled.id}})).status, status.toUpperCase(),
+      'Een vertraagde pending-waarneming mag een afgesloten betaalpoging niet heropenen')
     assert.equal(await db.creditTransaction.count({ where: { referenceId: canceled.id } }), 0)
     assert.equal(await db.financialInvoice.count({ where: { purchaseId: canceled.id } }), 0)
   }

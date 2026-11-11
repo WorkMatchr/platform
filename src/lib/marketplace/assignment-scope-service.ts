@@ -64,7 +64,17 @@ export async function readAssignmentScope(tx: Tx, id: string, service: string, n
   const { updatedAt, version, status, ...content } = a
   void updatedAt
   void version
-  void status
+  // A final award closes the assignment without changing its matching criteria.
+  // For read-only visibility, compare against its open, published snapshot.
+  if (!lock && status === 'AWARDED' && content.closedAt) {
+    const award = await tx.awardDecision.findUnique({
+      where: { assignmentId: id },
+      select: { status: true, decidedAt: true },
+    })
+    if (award?.status === 'FINAL' && award.decidedAt.getTime() === content.closedAt.getTime()) {
+      content.closedAt = null
+    }
+  }
   const revision = a.publishedRevision
   const specialistRows = [a.primarySpecialism, ...a.specialisms.map((s) => s.specialism)]
   const specialistsValid = specialistRows.every(

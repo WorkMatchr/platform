@@ -200,7 +200,7 @@ export async function getProviderInvitationDetail(userId: string, organizationId
         creditCost: true,providerProfileId:true,matchRun:{select:{assignmentSnapshot:true}},
         snapshot: true,
         deadlineAt: true,
-        participation: { select: { id: true, status: true, version: true, creditReservation: { select: { id: true } }, quote: { select: { id: true, status: true, version: true } }, messageChannel: { select: { id: true } } } },
+        participation: { select: { id: true, status: true, version: true, creditReservation: { select: { id: true, status: true } }, quote: { select: { id: true, status: true, version: true } }, messageChannel: { select: { id: true } } } },
         assignment: { select: {
           id: true, requestId: true, status: true, title: true, description: true, employeeCount: true, desiredStartDate: true, responseDeadline: true,
           locationCity: true, locationProvince: true, locationRegion: true, locationCount: true, allowsRemoteWork: true, maxSelections: true,
@@ -223,7 +223,14 @@ export async function getProviderInvitationDetail(userId: string, organizationId
     const stored = invitation.snapshot as Record<string, unknown>
     const preview = price.priceSnapshot ? assignmentPreviewSchema.parse(stored.preview) : toAssignmentPreview(invitation.assignment, price.credits)
     if (preview.priceCredits !== price.credits) throw new MarketplaceServiceError('INVALID_STATE')
-    const hasFullAccess = Boolean(invitation.participation && (invitation.participation.creditReservation || purchase))
+    const participation = invitation.participation
+    const reservation = participation?.creditReservation?.status
+    const hasFullAccess = Boolean(participation && !['WITHDRAWN', 'EXPIRED'].includes(participation.status)
+      && (reservation === 'ACTIVE' || reservation === 'CONSUMED' || purchase))
+    if (hasFullAccess && invitation.status !== 'INVITED'
+      && !await visibleScopedInvitation(tx, { ...invitation, assignmentId: invitation.assignment.id }, now)) {
+      throw new MarketplaceServiceError('NOT_SELECTABLE')
+    }
     return {
       membership,
       availableCredits: account?.availableBalance ?? 0,

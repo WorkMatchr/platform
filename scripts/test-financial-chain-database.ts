@@ -418,6 +418,17 @@ async function main() {
     assert.equal((await prisma.financialPurchase.findUniqueOrThrow({ where: { id: simulatedPurchase.id } })).status, 'PAID')
     assert.equal((await prisma.financialPurchase.findUniqueOrThrow({ where: { id: simulatedPurchase.id } })).creditedTransactionId, paidBefore.creditedTransactionId)
     await assert.rejects(() => createCreditPurchase({ actorUserId: secondUser.id, organizationId: organization.id, packageSku: 'CREDITS_25', idempotencyKey: simulatedPurchase.idempotencyKey, billingAddress: { organizationName: 'Synthetisch', addressLine: 'Teststraat 1', postalCode: '1000 AA', city: 'Testplaats', countryCode: 'NL' } }, gateway), { code: 'ACCESS_DENIED' })
+    providerState = 'paid'
+    const chargeback = { ...gateway, getPayment: async () => ({
+      ...await gateway.getPayment(simulatedPurchase.molliePaymentId!), amountChargedBack: { currency: 'EUR', value: '30.25' },
+    }) }
+    for (let retry = 0; retry < 2; retry++) await processMolliePayment(simulatedPurchase.molliePaymentId!, chargeback)
+    await processMolliePayment(simulatedPurchase.molliePaymentId!, gateway)
+    const reviewed = await prisma.financialPurchase.findUniqueOrThrow({ where: { id: simulatedPurchase.id } })
+    assert.equal(reviewed.status, 'REFUND_REVIEW_REQUIRED', 'Een bevestigde externe chargeback moet zichtbaar blijven bij replay')
+    assert.equal(await prisma.financialEvent.count({where:{purchaseId:reviewed.id,eventType:"CREDIT_PROVIDER_REVERSAL_OBSERVED"}}),1)
+    assert.equal(reviewed.creditedTransactionId, paidBefore.creditedTransactionId)
+    assert.equal(await prisma.financialInvoice.count({ where: { purchaseId: reviewed.id } }), 1)
     console.log('WP8/WP9: zes development-mailweigeringen behouden één ledger/factuur; geen vals SENT; één fake accepted delivery; replay zonder tweede mail; vertraagde pending geen terugval; vreemde checkoutactor geweigerd. Geen externe providercall.')
   } finally {
     if (prisma) await prisma.$disconnect()

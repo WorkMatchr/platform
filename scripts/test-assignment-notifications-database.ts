@@ -123,6 +123,22 @@ try {
   assert.equal(calls, 1); assert.equal(race.reduce((sum, r) => sum + r.sent, 0), 1)
   await deliverAssignmentEmails({ send: accepted }); assert.equal(calls, 1)
 
+  // Commit a cancellation between the initial eligibility read and the fenced provider call.
+  const cancelled = await fixture()
+  let dispatch: ReturnType<typeof deliverAssignmentEmails> | undefined
+  const callsBeforeCancellation = calls
+  await db.$transaction(async tx => {
+    await tx.$queryRaw`SELECT id FROM "Assignment" WHERE id=${cancelled.draft.id}::uuid FOR UPDATE`
+    dispatch = deliverAssignmentEmails({limit:1,send:accepted})
+    const until = Date.now() + 8000
+    while (!(await db!.notificationOutbox.findUniqueOrThrow({where:{id:cancelled.job.id}})).deliveryFingerprint) {
+      if (Date.now()>until) throw Error('Dispatch did not reach the final authorization check')
+      await new Promise(resolve=>setTimeout(resolve,20))
+    }
+    await tx.assignment.update({where:{id:cancelled.draft.id},data:{status:'CANCELLED'}})
+  },{timeout:12000})
+  assert.equal((await dispatch!)?.failed,1,'Een ingetrokken opdracht mag niet meer worden gemaild')
+  assert.equal(calls,callsBeforeCancellation)
   const deferred = await fixture()
   const tick = new Date()
   await db.notificationOutbox.update({ where: { id: deferred.job.id }, data: { availableAt: new Date(tick.getTime() + 5 * 60_000) } })
@@ -245,6 +261,12 @@ try {
   assert.deepEqual(additionalDetail.invitation.preview.additionalExpertises, ['Middelbare veiligheidskundige (MVK)'])
   assert.equal(additionalDetail.invitation.preview.expertise, 'Hogere veiligheidskundige (HVK)')
   assert.equal(additionalDetail.invitation.preview.assignmentId, published.id)
+  // Resume an abandoned claim on the same purchased-credit, published-assignment chain.
+  const abandoned = await db.notificationOutbox.updateMany({
+    where: { eventId: `INVITATION:${primaryInvitation.id}`, status:'PENDING' },
+    data:{status:'PROCESSING',leaseToken:randomUUID(),leaseUntil:new Date(0),attemptCount:1,firstAttemptAt:new Date()},
+  })
+  assert.equal(abandoned.count,1)
   const delivered: AuthEmail[] = []
   await deliverAssignmentEmails({ send: async email => { delivered.push(email); return { accepted: true, status: 'ACCEPTED', transport: 'RESEND', messageId: randomUUID() } } })
   assert.ok(delivered.some(email => email.subject === 'Nieuwe opdracht mogelijk relevant voor Middelbare veiligheidskundige (MVK) | WorkMatchr'))
@@ -284,6 +306,9 @@ try {
   await awardMarketplaceQuote(award)
   await assert.rejects(awardMarketplaceQuote({ ...award, actorUserId: additionalUser.id }), { code: 'ACCESS_DENIED' })
   assert.equal((await db.quote.findUniqueOrThrow({ where: { id: quote.id } })).status, 'AWARDED')
+  const winnerDetail = await getProviderInvitationDetail(user.id,providerOrg.id,primaryInvitation.id)
+  assert.ok(winnerDetail.invitation.fullAssignment)
+  await assert.rejects(getProviderInvitationDetail(additionalUser.id,additionalOrg.id,primaryInvitation.id),{code:'NOT_FOUND'})
   assert.equal(quote.assignmentId, handoff.assignmentId)
   assert.equal((await db.assignment.findUniqueOrThrow({ where: { id: handoff.assignmentId } })).status, 'AWARDED')
   assert.equal(await db.marketplaceAuditEvent.count({ where: { action: 'QUOTE_SUBMITTED', entityId: quote.id } }), 1)

@@ -294,12 +294,78 @@ async function main() {
     }
     assert.equal(await prisma.providerParticipation.count({ where: { assignmentId: acceptanceFixture.assignment.id } }), 3)
     assert.equal(await prisma.quote.count({ where: { assignmentId: acceptanceFixture.assignment.id } }), 3)
+    // Four distinct organisations compete for the three configured places.
+    const competitors = [
+      { org: providerOrganization, user: providerUser, data: provider },
+      { org: secondProviderOrganization, user: secondProviderUser, data: secondProvider },
+      { org: thirdProviderOrganization, user: thirdProviderUser, data: thirdProvider },
+      { org: fourthProviderOrganization, user: fourthProviderUser, data: fourthProvider },
+    ]
+    const race = await createInvitation(provider, providerOrganization.id)
+    assert.equal(race.assignment.maxSelections, 3)
+    const entries = [race]
+    for (const competitor of competitors.slice(1)) {
+      entries.push(await createInvitation(competitor.data, competitor.org.id, race.assignment.id))
+    }
+    const claim = (index: number) => acceptProviderInvitation({
+      actorUserId: competitors[index].user.id, providerOrganizationId: competitors[index].org.id,
+      invitationId: entries[index].invitation.id, idempotencyKey: randomUUID(),
+    })
+    const one = await claim(0)
+    const two = await claim(1)
+    const balance = (i: number) => prisma!.creditAccount.findUniqueOrThrow({ where: { organizationId: competitors[i].org.id } })
+    const before = await Promise.all([balance(2), balance(3)])
+    const last = await Promise.allSettled([claim(2), claim(3)])
+    assert.equal(last.filter(result => result.status === 'fulfilled').length, 1)
+    for (const [i,result] of last.entries()) {
+      const won = result.status === 'fulfilled'
+      assert.equal((await balance(i+2)).availableBalance, before[i].availableBalance - (won ? 25 : 0))
+      if (!won) await assert.rejects(claim(i+2), { code: 'FULL' })
+    }
+    assert.equal(await prisma.providerParticipation.count({where:{assignmentId:race.assignment.id}}),3)
+    const contenders = []
+    for (const [i, participation] of [one,two].entries()) {
+      const buyer = { actorUserId: competitors[i].user.id, providerOrganizationId: competitors[i].org.id }
+      const draft = await saveQuoteDraft({ ...draftInput, ...buyer, participationId:participation.id,
+        content:{ ...draftInput.content, validUntil:'2096-03-31' } })
+      await submitQuote({...buyer, quoteId:draft.id, expectedQuoteVersion:draft.version, idempotencyKey:randomUUID()})
+      contenders.push(draft.id)
+    }
+    const manager = await prisma.user.create({data:{email:randomUUID()+'@example.invalid',accountType:'CLIENT',status:'ACTIVE',
+      emailVerified:true,memberships:{create:{organizationId:clientOrganization.id,status:'ACTIVE',role:'ADMIN'}}}})
+    const decisions = await Promise.allSettled(contenders.map((quoteId,i) => awardMarketplaceQuote({
+      ...awardInput, actorUserId:i===0 ? clientUser.id : manager.id, assignmentId:race.assignment.id, quoteId, idempotencyKey:randomUUID(),
+    })))
+    assert.equal(decisions.filter(result=>result.status==='fulfilled').length,1)
+    const offers = await prisma.quote.findMany({where:{assignmentId:race.assignment.id},select:{status:true}})
+    assert.deepEqual(offers.map(offer=>offer.status).sort(),['AWARDED','REJECTED'])
+    assert.equal(await prisma.awardDecision.count({where:{assignmentId:race.assignment.id}}),1)
+    const finalAward = await prisma.awardDecision.findUniqueOrThrow({where:{assignmentId:race.assignment.id}})
+    const otherOffer = contenders.find(id=>id!==finalAward.quoteId)!
+    const changes = await Promise.allSettled([
+      prisma.awardDecision.update({where:{id:finalAward.id},data:{quoteId:otherOffer}}),
+      prisma.awardDecision.delete({where:{id:finalAward.id}}),
+    ])
+    assert.ok(changes.every(result=>result.status==='rejected'))
+    assert.deepEqual(await prisma.awardDecision.findUniqueOrThrow({where:{id:finalAward.id}}),finalAward)
+    console.log('PASS laatste plaats tussen twee organisaties en verschillende gunningen door twee beheerders')
+
+    const { withdrawProviderParticipation } = await import('../src/lib/marketplace/participation-service')
+    await withdrawProviderParticipation({ actorUserId:providerUser.id,providerOrganizationId:providerOrganization.id,
+      participationId:manualParticipation.id,expectedVersion:manualParticipation.version,reason:'Synthetische intrekking van de deelname.',idempotencyKey:randomUUID() })
+    const withdrawn = await getProviderInvitationDetail(providerUser.id, providerOrganization.id, reservationFixture.invitation.id)
+    assert.equal(withdrawn.invitation.fullAssignment, null, 'Een vrijgegeven reservering mag geen contactgegevens ontsluiten')
     // A changed assignment cannot progress even after a provider has already paid.
     const stale = await createInvitation(fourthProvider, fourthProviderOrganization.id)
     const bought = await acceptProviderInvitation({ actorUserId: fourthProviderUser.id, providerOrganizationId: fourthProviderOrganization.id, invitationId: stale.invitation.id, idempotencyKey: randomUUID() })
     const staleDraft = { ...draftInput, actorUserId: fourthProviderUser.id, providerOrganizationId: fourthProviderOrganization.id, participationId: bought.id }
     const stored = await saveQuoteDraft(staleDraft)
     const staleSubmit = { actorUserId: fourthProviderUser.id, providerOrganizationId: fourthProviderOrganization.id, quoteId: stored.id, expectedQuoteVersion: stored.version, idempotencyKey: randomUUID() }
+    await prisma.organization.update({where:{id:fourthProviderOrganization.id},data:{status:'SUSPENDED'}})
+    await assert.rejects(submitQuote(staleSubmit), {code:'ACCESS_DENIED'})
+    await assert.rejects(getProviderInvitationDetail(fourthProviderUser.id,fourthProviderOrganization.id,stale.invitation.id), {code:'ACCESS_DENIED'})
+    assert.equal((await prisma.quote.findUniqueOrThrow({where:{id:stored.id}})).status,'DRAFT')
+    await prisma.organization.update({where:{id:fourthProviderOrganization.id},data:{status:'ACTIVE'}})
     const staleAwardFixture = await createInvitation(fourthProvider, fourthProviderOrganization.id)
     const awardParticipation = await acceptProviderInvitation({ actorUserId: fourthProviderUser.id, providerOrganizationId: fourthProviderOrganization.id, invitationId: staleAwardFixture.invitation.id, idempotencyKey: randomUUID() })
     const awardDraft = await saveQuoteDraft({ ...staleDraft, participationId: awardParticipation.id })
@@ -311,6 +377,7 @@ async function main() {
     // Withdraw the mapped specialism after purchase and submission, with all database triggers enabled.
     await prisma.specialism.update({ where: { id: policy.specialismId }, data: { isActive: false } })
     await assert.rejects(saveQuoteDraft({ ...staleDraft, expectedQuoteVersion: stored.version }), { code: 'NOT_SELECTABLE' })
+    await assert.rejects(getProviderInvitationDetail(fourthProviderUser.id, fourthProviderOrganization.id, stale.invitation.id), { code: 'NOT_SELECTABLE' })
     await assert.rejects(submitQuote(staleSubmit), { code: 'NOT_SELECTABLE' })
     assert.equal((await prisma.quote.findUniqueOrThrow({ where: { id: stored.id } })).status, 'DRAFT')
     assert.equal(await prisma.creditTransaction.count({ where: { referenceId: bought.id, type: 'PARTICIPATION_PAYMENT' } }), 1)
