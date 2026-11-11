@@ -44,7 +44,7 @@ async function main() {
     process.env.DATABASE_URL = testUrl.toString()
     const { getPrisma } = await import('../src/lib/prisma')
     const { acceptProviderInvitation } = await import('../src/lib/marketplace/participation-service')
-    const { getProviderInvitationDetail, getClientQuotes, getProviderQuoteDetail } = await import('../src/lib/marketplace/dashboard-query-service')
+    const { getProviderParticipationForQuote, getProviderInvitationDetail, getClientQuotes, getProviderQuoteDetail } = await import('../src/lib/marketplace/dashboard-query-service')
     const { saveQuoteDraft, submitQuote } = await import('../src/lib/marketplace/quote-service')
     const { quoteValidityInputDate, quoteExpiryFromSqlDate } = await import('../src/lib/marketplace/quote-validity-date')
     const { awardMarketplaceQuote } = await import('../src/lib/marketplace/award-service')
@@ -360,6 +360,10 @@ async function main() {
     const bought = await acceptProviderInvitation({ actorUserId: fourthProviderUser.id, providerOrganizationId: fourthProviderOrganization.id, invitationId: stale.invitation.id, idempotencyKey: randomUUID() })
     const staleDraft = { ...draftInput, actorUserId: fourthProviderUser.id, providerOrganizationId: fourthProviderOrganization.id, participationId: bought.id }
     const stored = await saveQuoteDraft(staleDraft)
+    const readEditor = () => getProviderParticipationForQuote(fourthProviderUser.id, fourthProviderOrganization.id, bought.id)
+    const readDraft = () => getProviderQuoteDetail(fourthProviderUser.id, fourthProviderOrganization.id, stored.id)
+    assert.equal((await readEditor()).canEdit, true)
+    assert.equal((await readDraft()).quote.status, 'DRAFT')
     const staleSubmit = { actorUserId: fourthProviderUser.id, providerOrganizationId: fourthProviderOrganization.id, quoteId: stored.id, expectedQuoteVersion: stored.version, idempotencyKey: randomUUID() }
     await prisma.organization.update({where:{id:fourthProviderOrganization.id},data:{status:'SUSPENDED'}})
     await assert.rejects(submitQuote(staleSubmit), {code:'ACCESS_DENIED'})
@@ -376,6 +380,8 @@ async function main() {
     )
     // Withdraw the mapped specialism after purchase and submission, with all database triggers enabled.
     await prisma.specialism.update({ where: { id: policy.specialismId }, data: { isActive: false } })
+    await assert.rejects(readEditor(), { code: 'NOT_SELECTABLE' })
+    await assert.rejects(readDraft(), { code: 'NOT_SELECTABLE' })
     await assert.rejects(saveQuoteDraft({ ...staleDraft, expectedQuoteVersion: stored.version }), { code: 'NOT_SELECTABLE' })
     await assert.rejects(getProviderInvitationDetail(fourthProviderUser.id, fourthProviderOrganization.id, stale.invitation.id), { code: 'NOT_SELECTABLE' })
     await assert.rejects(submitQuote(staleSubmit), { code: 'NOT_SELECTABLE' })

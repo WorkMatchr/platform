@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { clientScope,reviewScope } from '@/lib/marketplace/assignment-scope-workflow'
-import { redirect } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { z } from 'zod'
 import { requireUser } from '@/lib/authorization'
 import { requireOrganizationMembership } from '@/lib/organizations/organization-authorization'
@@ -98,7 +98,10 @@ export async function saveQuoteDraftAction(formData: FormData) {
       terms: z.string().max(2000).optional().parse(formData.get('terms') || undefined),
       validUntil: z.iso.date().optional().parse(formData.get('validUntil') || undefined),
     },
-  }).catch(handleParticipationError)
+  }).catch(error => {
+    if (error instanceof MarketplaceServiceError && error.code === 'NOT_SELECTABLE') notFound()
+    return handleParticipationError(error)
+  })
   revalidatePath('/dashboard')
   redirect(`/offertes/${quote.id}`)
 }
