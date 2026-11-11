@@ -8,6 +8,7 @@ export async function assignPilotAction(_state: string, data: FormData) {
       email: String(data.get('email')),
       paid: data.get('mode') === 'paid',
       versions: data.getAll('version').map(String),
+      cohortEndsAt: data.get('cohortEnd') ? new Date(String(data.get('cohortEnd')) + 'T00:00:00Z') : undefined,
       maximumUses: Number(data.get('limit')),
       validUntil: new Date(String(data.get('until')) + 'T00:00:00Z'),
     })

@@ -31,10 +31,12 @@ async function checkout(data: FormData) {
 export function PaidPilotForm({
   version,
   title,
+  cohortEndsAt,
   buyers,
 }: {
   version: string
   title: string
+  cohortEndsAt: Date | null
   buyers: { id: string; name: string }[]
 }) {
   let quote
@@ -53,6 +55,8 @@ export function PaidPilotForm({
           : KOR_NOTICE}{' '}
         Te betalen {formatEuro(quote.amountInclVatCents)}.
       </p>
+      <p>Uw toegang begint op de bevestigde betaaldatum en duurt twaalf maanden. Als particulier kunt u uw aankoop via uw account herroepen. Bij herroeping binnen de bedenktijd van veertien dagen krijgt u ook na starten of afronden de volledige €1,49 terug.</p>
+      {cohortEndsAt && <p>De meetperiode sluit op {cohortEndsAt.toLocaleDateString('nl-NL',{ timeZone:'Europe/Amsterdam' })}. We wissen individuele metingen binnen dertig dagen nadat de meetperiode sluit. Rondt u eerder af of eindigt uw toegang eerder, dan gaat de termijn op die eerdere datum in.</p>}
       <p>De pilotbegeleider kan uw studievoortgang, toetsresultaten en gemeten studieduur zien.</p>
       <input type="hidden" name="version" value={version} />
       <label className="block">

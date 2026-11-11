@@ -4124,6 +4124,8 @@ model FinancialPaymentEvent {
 }
 
 model FinancialRefund {
+  academyWithdrawalEventId String? @unique @db.Uuid
+  academyWithdrawalEvent FinancialEvent? @relation("WithdrawalRefund", fields: [academyWithdrawalEventId], references: [id], onDelete: Restrict, onUpdate: NoAction)
   id                  String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   purchaseId          String?                @db.Uuid
   proCreditNoteId     String?                @unique @db.Uuid
@@ -4456,6 +4458,7 @@ model ProfessionalSubscriptionPayment {
 }
 
 model FinancialEvent {
+  academyWithdrawalRefund FinancialRefund? @relation("WithdrawalRefund")
   id             String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   actorUserId    String?                   @db.Uuid
   purchaseId     String?                   @db.Uuid
@@ -5842,6 +5845,8 @@ model RequestAssignmentHandoff {
 }
 
 model LearningPilotAssignment {
+  cohortEndsAt DateTime? @db.Timestamptz(3)
+  measurementsPurgedAt DateTime? @db.Timestamptz(3)
   paidSlot          Int? @unique @db.SmallInt
   regularGrossCents Int?
   offlineMinutes    Int?

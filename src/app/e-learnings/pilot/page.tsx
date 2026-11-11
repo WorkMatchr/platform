@@ -106,7 +106,7 @@ export default async function PilotPage({ searchParams }: { searchParams: Promis
       )}
       {melding === 'feedback' && <p role="status">Uw evaluatie is opgeslagen.</p>}
       {visible
-        .filter((g) => g.paidSlot && g.enrollment && !g.enrollment.accessRevokedAt)
+        .filter((g) => g.paidSlot && !g.measurementsPurgedAt && g.cohortEndsAt && g.cohortEndsAt > new Date() && g.enrollment && !g.enrollment.accessRevokedAt)
         .map((g) => (
           <PilotFeedback
             key={g.id}
@@ -141,12 +141,13 @@ export default async function PilotPage({ searchParams }: { searchParams: Promis
         ))}
       {visible
         .filter((g) => !g.enrollmentId)
-        .map(({ id, paidSlot, courseVersion: v }) =>
+        .map(({ id, paidSlot, cohortEndsAt, courseVersion: v }) =>
           paidSlot ? (
             <PaidPilotForm
               key={id}
               version={v.id}
               title={v.course.title + ' · ' + v.version}
+              cohortEndsAt={cohortEndsAt}
               buyers={buyers}
             />
           ) : (

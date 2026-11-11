@@ -8,7 +8,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ inv
   const { invoiceId } = await params
   const user = await requireLearningUser(`/e-learnings/pilot/facturen/${invoiceId}`)
   const invoice = await getPrisma().financialInvoice.findFirst({
-    where: { id: invoiceId, purchase:{kind:'ACADEMY_COURSE',createdByUserId:user.id},
+    where: { id: invoiceId, AND: [{ OR: [{ purchase:{kind:'ACADEMY_COURSE',createdByUserId:user.id} }, { refund:{academyWithdrawalEventId:{not:null},purchase:{kind:'ACADEMY_COURSE',organizationId:null,createdByUserId:user.id}} }] }],
       OR:[{organizationId:null},{organization:{status:'ACTIVE',memberships:{some:{userId:user.id,status:'ACTIVE',role:{in:['OWNER','ADMIN']}}}}}] },
     include: { lines: { orderBy: { position: 'asc' } }, vatSummaries: { orderBy: { vatRateBps: 'asc' } } },
   })

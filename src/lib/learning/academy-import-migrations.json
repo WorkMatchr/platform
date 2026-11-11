@@ -719,5 +719,12 @@
       "176be28c06d25dda13b8446b3b81a148f6acf6ae2728aec68b234151bd6c0dd3",
       "8e3e9ad3ab5e28e42cc74efac922fef94b5bc1723f01ce74e6d287f798cb2157"
     ]
+  },
+  {
+    "name": "20261112120000_academy_consumer_withdrawal",
+    "checksums": [
+      "00f7a2f027e8a94f1e848a629e402274ecc65eef142aeedef62b2093858502f8",
+      "499fd4516b88d78110b94520149eee78b60b543d03fa624fad6474a81d76cd42"
+    ]
   }
 ]

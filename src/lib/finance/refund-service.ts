@@ -44,6 +44,12 @@ export async function applyMollieRefundSnapshot(refundId: string, snapshot: Moll
       include: { purchase: true, creditNote: true, proCreditNote: true },
     })
     if (current.mollieRefundId && current.mollieRefundId !== snapshot.id) throw new Error('MOLLIE_REFUND_MISMATCH')
+    if (current.academyWithdrawalEventId) {
+      const source = snapshot.source
+      if (!source || source.refundId !== current.id || source.purchaseId !== current.purchaseId
+        || source.paymentId !== current.purchase?.molliePaymentId || source.currency !== current.purchase.currency
+        || source.amountValue !== centsToMollieValue(current.amountCents)) throw Error('ACADEMY_REFUND_PROVIDER_MISMATCH')
+    }
     const status = mapMollieRefundStatus(snapshot.status)
     const eventKey = `mollie-refund-status:${current.id}:${snapshot.status}`
     if (current.proCreditNoteId) {
@@ -87,6 +93,21 @@ export async function applyMollieRefundSnapshot(refundId: string, snapshot: Moll
     if (current.status === status) return { refund: current, creditNote: current.creditNote, reviewRequired: false }
     if (current.status !== 'PENDING') throw new Error('REFUND_TERMINAL_STATE_CONFLICT')
 
+    if (current.academyWithdrawalEventId) {
+      if (current.purchase.kind !== 'ACADEMY_COURSE' || current.purchase.organizationId || current.credits !== 0) throw Error('INVALID_ACADEMY_REFUND')
+      const refund = await transaction.financialRefund.update({ where: { id: current.id }, data: {
+        status, reconciliationRequired: false, mollieRefundId: snapshot.id, completedAt: status === 'REFUNDED' ? new Date() : null,
+      } })
+      let creditNote = null
+      if (status === 'REFUNDED') {
+        await transaction.financialPurchase.update({ where: { id: current.purchaseId }, data: { status, terminalAt: new Date() } })
+        creditNote = await issueCreditNoteForCompletedRefund(transaction, current.id)
+      }
+      await transaction.financialEvent.create({ data: { purchaseId: current.purchaseId, refundId: current.id,
+        invoiceId: creditNote?.id, actorUserId: current.approvedByUserId, eventType: 'ACADEMY_REFUND_STATUS',
+        result: status, idempotencyKey: eventKey } })
+      return { refund, creditNote, reviewRequired: status !== 'REFUNDED' }
+    }
     if (!current.purchase.organizationId) throw Error('CREDIT_ORGANIZATION_REQUIRED')
     if (status === 'REFUNDED') {
       const ledger = await recordFinancialRefundCreditPhaseInTransaction(transaction, {

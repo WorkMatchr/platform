@@ -18,6 +18,8 @@ export async function recordPilotObservation(input: z.input<typeof observation>)
     const grant = await tx.learningPilotAssignment.findFirst({
       where: {
         enrollmentId: event.enrollment,
+        measurementsPurgedAt: null,
+        OR: [{ paidSlot: null }, { cohortEndsAt: { gt: new Date() } }],
         userId: user.id,
         enrollment: { ...currentAcademyAccess(), status: 'IN_PROGRESS' },
       },

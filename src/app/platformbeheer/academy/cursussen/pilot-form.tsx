@@ -22,8 +22,11 @@ export function PilotForm({ versions, paid }: { paid:boolean; versions: { id: st
         Maximaal aantal inschrijvingen met deze code{' '}
         <input type="number" name="limit" defaultValue={1} min={1} max={paid ? 1 : 3} required />
       </label>
+      {paid && <label>
+        Einde meting betaald cohort (00.00 UTC) <input type="date" name="cohortEnd" required />
+      </label>}
       <label>
-        Vervaldatum (00.00 UTC) <input type="date" name="until" required />
+        Vervaldatum code (00.00 UTC) <input type="date" name="until" required />
       </label>
       <input type="hidden" name="mode" value={paid ? 'paid' : 'free'}/>
       <p>{paid ? '99% korting voor één cursist en één opleiding. Maximaal drie cursisten in totaal.' : 'De code geeft deze cursist 100% korting op de aangewezen versies.'}</p>

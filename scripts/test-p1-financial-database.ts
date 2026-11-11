@@ -261,8 +261,8 @@ async function main() {
     console.log('PASS independent cancellation; three audited credits with three Jortt jobs and unchanged wallet')
     deploySchema()
     const counts=await prisma.$queryRawUnsafe('SELECT count(*)::int AS applied FROM "_prisma_migrations" WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL')
-    assert.deepEqual(counts,[{applied:103}])
-    console.log('PASS 103 migrations, repeat deploy, cleanup in finally')
+    assert.deepEqual(counts,[{applied:104}])
+    console.log('PASS 104 migrations, repeat deploy, cleanup in finally')
   } finally {
     if (prisma) await prisma.$disconnect()
     await admin.query(`DROP DATABASE IF EXISTS "${databaseName}" WITH (FORCE)`)

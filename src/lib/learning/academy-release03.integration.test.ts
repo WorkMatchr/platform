@@ -12,6 +12,10 @@ import { getPublishedLearningCourse } from './learning-query-service'
 import { recordPilotObservation } from '@/app/e-learnings/pilot/time'
 import { currentAcademyAccess } from './academy-access-policy'
 import { assignPilot, redeemPilot } from './academy-pilot-service'
+import { startLearningCourseAction } from '@/app/e-learnings/actions'
+import { approveWithdrawal, requestWithdrawal, withdrawalReceipt } from './academy-withdrawal'
+import { purgePilotMeasurements } from './academy-measurement-retention'
+import { addAcademyCalendarYear } from './academy-access-policy'
 import { startPaidPilot } from './academy-paid-checkout'
 import { processMolliePayment } from '@/lib/finance/financial-purchase-service'
 import { syncFinancialInvoiceToJortt } from '@/lib/finance/jortt-sync-service'
@@ -241,7 +245,7 @@ describe.skipIf(!enabled)('V3 Academy-upgrade met bestaande inschrijving en uitg
     const financialBefore = async()=>[await db.creditTransaction.count(),await db.professionalSubscription.count(),await db.professionalSubscriptionPayment.count()]
     const before=await financialBefore()
     const users=await Promise.all(Array.from({length:4},()=>db.user.create({data:{email:randomUUID()+'@example.invalid',emailVerified:true,status:'ACTIVE'}})))
-    const grant=(email:string)=>assignPilot(owner,{email,paid:true,versions:[version.id],maximumUses:1,validUntil:new Date(Date.now()+86400000)})
+    const grant=(email:string)=>assignPilot(owner,{email,paid:true,cohortEndsAt:new Date(Date.now()+7*86400000),versions:[version.id],maximumUses:1,validUntil:new Date(Date.now()+86400000)})
     const first=await grant(users[0].email)
     await grant(users[1].email)
     const last=await Promise.allSettled(users.slice(2).map(u=>grant(u.email)))
@@ -261,6 +265,60 @@ describe.skipIf(!enabled)('V3 Academy-upgrade met bestaande inschrijving en uitg
     await webhook()
     expect(await db.learningEnrollment.count({where:{userId:users[0].id}})).toBe(0)
     expect(await db.financialInvoice.count({where:{purchaseId:snapshot.metadata.purchaseId}})).toBe(0)
+    const third = await db.learningPilotAssignment.findFirstOrThrow({where:{userId:{in:users.slice(2).map(u=>u.id)}},include:{discountCode:true,courseVersion:{include:{course:true}}}})
+    const historicCertificates = await db.learningCertificate.findMany({orderBy:{id:'asc'}})
+    expect(historicCertificates.length).toBeGreaterThan(0)
+    const pilotUser = third.userId
+    const buyerGateway = {...fake, createPayment:async(input:Parameters<MollieGateway['createPayment']>[0])=>
+      (snapshot={...await fake.createPayment(input),id:'tr_live03Consumer'})}
+    await startPaidPilot(pilotUser,{...request,code:third.discountCode.code},buyerGateway)
+    const paidAt = new Date()
+    snapshot={...snapshot!,status:'paid',paidAt:paidAt.toISOString()}
+    await webhook()
+    const purchaseId=snapshot.metadata.purchaseId!
+    const enrollment=await db.learningEnrollment.findFirstOrThrow({where:{userId:pilotUser}})
+    expect(enrollment.accessExpiresAt).toEqual(addAcademyCalendarYear(paidAt))
+    expect(await db.learningEnrollment.count({where:{id:enrollment.id,...currentAcademyAccess(enrollment.accessExpiresAt!)}})).toBe(0)
+    const form=new FormData()
+    form.set('courseSlug',third.courseVersion.course.slug)
+    form.set('courseVersionId',version.id)
+    state.actor=pilotUser
+    await expect(startLearningCourseAction(form)).rejects.toThrow('NEXT_REDIRECT')
+    expect(await db.learningChapterProgress.count({where:{enrollmentId:enrollment.id,status:'IN_PROGRESS'}})).toBe(1)
+    const original = await db.financialInvoice.findUniqueOrThrow({where:{purchaseId}})
+    expect(original).toMatchObject({amountInclVatCents:149,vatAmountCents:0,academyTaxTreatment:'NL_KOR'})
+    await expect(requestWithdrawal(users[0].id,purchaseId)).rejects.toThrow()
+    const receipts=await Promise.all([requestWithdrawal(pilotUser,purchaseId),requestWithdrawal(pilotUser,purchaseId)])
+    expect(receipts[0].id).toBe(receipts[1].id)
+    expect(await withdrawalReceipt(pilotUser,purchaseId)).toContain(receipts[0].createdAt.toISOString())
+    expect(await withdrawalReceipt(users[0].id,purchaseId)).toBeNull()
+    const refundGateway = {...buyerGateway,createRefund:vi.fn(async(input:Parameters<MollieGateway['createRefund']>[0])=>({id:'re_live03',status:'refunded' as const,
+      source:{...input.metadata,paymentId:input.paymentId,amountValue:input.amountValue,currency:input.currency}})),
+      findRefundByReference:async()=>null} as unknown as MollieGateway
+    await expect(approveWithdrawal(member,purchaseId,refundGateway)).rejects.toThrow()
+    expect(refundGateway.createRefund).not.toHaveBeenCalled()
+    await Promise.all([approveWithdrawal(owner,purchaseId,refundGateway),approveWithdrawal(owner,purchaseId,refundGateway)])
+    expect(await approveWithdrawal(owner,purchaseId,refundGateway)).toBe('REFUNDED')
+    expect(refundGateway.createRefund).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({paymentId:snapshot.id,amountValue:'1.49',currency:'EUR'}))
+    expect(await db.learningEnrollment.count({where:{id:enrollment.id,...currentAcademyAccess()}})).toBe(0)
+    const notes=await db.financialInvoice.findMany({where:{originalInvoiceId:original.id}})
+    expect(notes).toHaveLength(1)
+    expect(notes[0]).toMatchObject({amountInclVatCents:-149,academyTaxTreatment:'NL_KOR',vatAmountCents:0})
+    const jortt = {submitInvoice:vi.fn(async()=>({externalReference:randomUUID(),remoteInvoiceNumber:'SYN-03'}))}
+    await syncFinancialInvoiceToJortt(original.id,jortt)
+    await syncFinancialInvoiceToJortt(notes[0].id,jortt)
+    expect(jortt.submitInvoice).toHaveBeenLastCalledWith(expect.objectContaining({documentType:'CREDIT_NOTE',amountInclVatCents:-149,academyTaxTreatment:'NL_KOR'}),expect.any(String),expect.any(Object))
+    await db.learningPilotDuration.create({data:{assignmentId:third.id,context:'les:1',activeMs:60000}})
+    const revoked=await db.learningEnrollment.findUniqueOrThrow({where:{id:enrollment.id}})
+    const due=revoked.accessRevokedAt!.getTime()+29*86400000
+    expect(await purgePilotMeasurements(new Date(due-1))).toBe(0)
+    expect(await purgePilotMeasurements(new Date(due))).toBeGreaterThan(0)
+    expect(await purgePilotMeasurements(new Date(due))).toBe(0)
+    expect(await db.learningPilotDuration.count({where:{assignmentId:third.id}})).toBe(0)
+    expect(await db.learningChapterProgress.count({where:{enrollmentId:enrollment.id}})).toBe(1)
+    expect(await db.financialInvoice.findUnique({where:{id:original.id}})).toEqual(original)
+    expect(await db.learningCertificate.findMany({orderBy:{id:'asc'}})).toEqual(historicCertificates)
+    state.actor=owner
     const org=await db.organization.findFirstOrThrow({where:{organizationType:'CLIENT',systemKey:null}})
     await db.organizationMembership.create({data:{organizationId:org.id,userId:users[1].id,role:'OWNER',status:'ACTIVE'}})
     const second=await db.learningPilotAssignment.findFirstOrThrow({where:{userId:users[1].id},include:{discountCode:true}})

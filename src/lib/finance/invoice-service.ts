@@ -273,6 +273,7 @@ export async function issueCreditNoteForCompletedRefund(
       invoiceNumber: formatFinancialDocumentNumber(sequenceNumber, issuedAt),
       sequenceNumber,
       refundId: refund.id,
+      academyTaxTreatment: original.academyTaxTreatment,
       originalInvoiceId: original.id,
       organizationId: original.organizationId,
       issuedAt,

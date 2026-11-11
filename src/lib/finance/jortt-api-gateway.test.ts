@@ -403,6 +403,26 @@ describe('Jortt API gateway', () => {
     if(mismatch) {await expect(operation).rejects.toThrow('JORTT_CREDIT_TOTAL_MISMATCH');expect(sent).toBe(false)}
     else {expect(await operation).toEqual({externalReference:creditId,remoteInvoiceNumber:'C-SYNTHETIC'});expect(sent).toBe(true)}
   })
+  it.each([['NL_KOR', '-1.49'], ['NL_STANDARD', '-1.23']])('spiegelt een volledige particuliere creditnota met oorspronkelijke korting en btw %s', async (tax, net) => {
+    const sale = payload({ organizationId: null, academyTaxTreatment: tax, documentType: 'CREDIT_NOTE',
+      originalInvoiceExternalReference: 'original', amountExclVatCents: Math.round(Number(net)*100), amountInclVatCents: -149 })
+    const checkpoint = { claimCreation: vi.fn(), saveDraftId: vi.fn() }
+    let sent = false
+    const fetcher = vi.fn(async (url: unknown, init?: RequestInit) => {
+      const path = String(url)
+      if (path.includes('/oauth/token')) return response({access_token:'synthetic'})
+      if (path.includes('/invoices?')) return response({data:[]})
+      if (path.endsWith('/credit')) { expect(checkpoint.claimCreation).toHaveBeenCalledOnce(); return response({data:{id:'refund'}}) }
+      if (init?.method === 'PUT') { expect(JSON.parse(String(init.body))).not.toHaveProperty('line_items'); return response({}) }
+      if (path.endsWith('/send')) { sent = true; return response({}) }
+      return response({data:{ id:'refund', credited_invoice_id:'original', reference:sale.invoiceNumber, remarks:sale.technicalReference,
+        invoice_status: sent ? 'sent' : 'draft', invoice_number: sent ? 'SYN' : null,
+        invoice_total:{amount:net,currency:'EUR'},invoice_total_incl_vat:{amount:'-1.49',currency:'EUR'} }})
+    })
+    await expect(new JorttApiGateway(fetcher as typeof fetch).submitInvoice(sale,'synthetic',checkpoint)).resolves.toMatchObject({remoteInvoiceNumber:'SYN'})
+    expect(checkpoint.saveDraftId).toHaveBeenCalledExactlyOnceWith('refund')
+  })
+
   it('does not create another Pro credit after an uncertain creation', async () => {
     vi.stubEnv('PRO_FINANCIAL_CORRECTIONS_ENABLED','true')
     const fetcher=vi.fn(async (url:unknown)=>String(url).includes('/oauth/token')?response({access_token:'synthetic'}):response({data:[]}))

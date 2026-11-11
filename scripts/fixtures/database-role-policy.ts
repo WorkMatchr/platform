@@ -60,7 +60,7 @@ export async function assertSyntheticRoles(db: Client, runtime: string, diagnost
   } finally { await db.query('RESET ROLE') }
   await db.query(`SET ROLE "${diagnostic}"`)
   try {
-    assert.equal((await db.query('SELECT count(*)::int AS n FROM _prisma_migrations')).rows[0].n, 103)
+    assert.equal((await db.query('SELECT count(*)::int AS n FROM _prisma_migrations')).rows[0].n, 104)
     await db.query('SELECT current_database(),current_user FROM pg_catalog.pg_roles WHERE rolname=current_user')
     await deny('SELECT * FROM "User"')
     await deny('SELECT * FROM "Session"')

@@ -12,6 +12,7 @@ import {
   type MolliePaymentSnapshot,
 } from '@/lib/finance/mollie-gateway'
 import { allowsAssignedPilot, isLocalPilot, paidPilotEnabled } from './learning-exam-runtime-version'
+import { addAcademyCalendarYear } from './academy-access-policy'
 import { pilotQuote } from './academy-paid-price'
 
 const inputSchema = z.object({
@@ -52,7 +53,7 @@ export async function startPaidPilot(
       !allowsAssignedPilot(version.course.code, version.version) ||
       version.status !== 'PUBLISHED' ||
       version.course.status !== 'PUBLISHED' ||
-      !grant.regularGrossCents ||
+      !grant.regularGrossCents || !grant.cohortEndsAt || grant.cohortEndsAt <= new Date() ||
       discount.percentageBps !== 9900 ||
       discount.maximumUses !== 1 ||
       discount.applicablePackageSkus.join() !== 'ACADEMY_PAID_PILOT' ||
@@ -226,7 +227,7 @@ export async function settlePaidPilot(
     })
     return 'REFUND_REVIEW_REQUIRED' as const
   }
-  if (!grant.enrollmentId) {
+  if (!grant.enrollmentId && !await tx.financialRefund.findFirst({ where: { purchaseId: purchase.id, academyWithdrawalEventId: { not: null } } })) {
     const paidAt = payment.paidAt ? new Date(payment.paidAt) : null
     if (
       !paidAt ||
@@ -253,7 +254,7 @@ export async function settlePaidPilot(
     }
     await tx.$queryRaw`SELECT id FROM "User" WHERE id=${purchase.createdByUserId}::uuid FOR UPDATE`
     const enrollment = await tx.learningEnrollment.create({
-      data: { userId: purchase.createdByUserId, courseVersionId: grant.courseVersionId },
+      data: { userId: purchase.createdByUserId, courseVersionId: grant.courseVersionId, accessExpiresAt: addAcademyCalendarYear(paidAt) },
     })
     await tx.learningPilotAssignment.update({
       where: { id: grant.id },

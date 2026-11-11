@@ -14,11 +14,13 @@ const grantInput = z.object({
   paid: z.boolean().optional(),
   maximumUses: z.number().int().positive().max(3),
   validUntil: z.date(),
+  cohortEndsAt: z.date().optional(),
 })
 
 export async function assignPilot(actorId: string, input: z.input<typeof grantInput>) {
   if (input.paid ? !paidPilotEnabled() : !isLocalPilot()) throw Error('PILOT_DISABLED')
-  const { email, versions, maximumUses, validUntil } = grantInput.parse(input)
+  const { email, versions, maximumUses, validUntil, cohortEndsAt } = grantInput.parse(input)
+  if (input.paid && (!cohortEndsAt || cohortEndsAt < validUntil)) throw Error('PILOT_COHORT_END_REQUIRED')
   const ids = [...new Set(versions)].sort()
   if (input.paid && (ids.length !== 1 || maximumUses !== 1)) throw Error('PILOT_INPUT_INVALID')
   if (validUntil <= new Date() || maximumUses > ids.length) throw Error('PILOT_INPUT_INVALID')
@@ -76,6 +78,7 @@ export async function assignPilot(actorId: string, input: z.input<typeof grantIn
         userId: user.id,
         courseVersionId,
         paidSlot,
+        cohortEndsAt: input.paid ? cohortEndsAt : null,
         regularGrossCents: input.paid ? PILOT_GROSS_CENTS : null,
         discountCodeId: code.id,
       })),

@@ -42,7 +42,7 @@ try:
  ts=['node','node_modules/tsx/dist/cli.mjs'];vit=['node','node_modules/vitest/vitest.mjs','run']
  mig=['node','node_modules/prisma/build/index.js','migrate','deploy']
  for l,cmd in ([('baseline',mig)] if args.management else [('baseline',mig),('lessons',ts+['scripts/seed-learning.ts']),('exam',ts+['scripts/seed-learning-final-exam.ts']),('v11',ts+['scripts/seed-learning-final-exam-v1-1.ts']),('history',vit+['src/lib/learning/learning-final-exam-runtime.integration.test.ts'])]):run(l,cmd,p)
- assert sql('SELECT count(*) FROM _prisma_migrations WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL')=='103'
+ assert sql('SELECT count(*) FROM _prisma_migrations WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL')=='104'
  runtime=secrets.token_hex(32)
  perms='CREATE ROLE academy_content_editor LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD '+chr(39)+runtime+chr(39)+'; REVOKE CREATE ON SCHEMA public FROM PUBLIC; GRANT USAGE ON SCHEMA public TO academy_content_editor; GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA public TO academy_content_editor; REVOKE INSERT,UPDATE,DELETE ON _prisma_migrations FROM academy_content_editor; GRANT SELECT,USAGE ON ALL SEQUENCES IN SCHEMA public TO academy_content_editor;'
  proc=sp.run(['docker','exec','-i',cid,'psql','-Xq','-v','ON_ERROR_STOP=1','-U','postgres','-d',db],input=perms,text=True,capture_output=True);assert proc.returncode==0

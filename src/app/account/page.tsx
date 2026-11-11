@@ -39,6 +39,7 @@ export default async function AccountPage() {
         <section aria-labelledby="accountgegevens-heading">
           {preference && <AssignmentEmailPreference enabled={preference.assignmentEmailEnabled} />}
           <h2 id="accountgegevens-heading" className="font-semibold text-brand-dark">Mijn account</h2>
+          <a href="/account/academy-aankopen" className="underline">Academy-aankopen en herroeping</a>
           <dl className="mt-4 grid gap-4 sm:grid-cols-2">
             <Detail label="E-mailadres" value={model.email} />
             <Detail label="Verificatiestatus" value={model.emailVerificationLabel} />

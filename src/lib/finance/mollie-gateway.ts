@@ -54,7 +54,14 @@ export type MollieRefundState = 'queued' | 'pending' | 'processing' | 'refunded'
 export type MollieRefundSnapshot = Readonly<{
   id: string
   status: MollieRefundState
+  source?: { paymentId: string; refundId?: string; purchaseId?: string; amountValue: string; currency: string }
 }>
+
+function refundSnapshot(refund: { id: string; status: MollieRefundState; paymentId: string; metadata?: unknown; amount: { value: string; currency: string } }): MollieRefundSnapshot {
+  const parsed = z.object({ refundId: z.uuid(), purchaseId: z.uuid().optional() }).safeParse(refund.metadata)
+  return { id: refund.id, status: refund.status, source: { paymentId: refund.paymentId, ...parsed.data,
+    amountValue: refund.amount.value, currency: refund.amount.currency } }
+}
 
 export interface MollieGateway {
   createPayment(input: {
@@ -245,11 +252,11 @@ export function createMollieGateway(): MollieGateway {
         metadata: input.metadata,
         idempotencyKey: input.idempotencyKey,
       })
-      return { id: refund.id, status: refund.status }
+      return refundSnapshot(refund)
     },
     async getRefund(input) {
       const refund = await client.paymentRefunds.get(input.refundId, { paymentId: input.paymentId })
-      return { id: refund.id, status: refund.status }
+      return refundSnapshot(refund)
     },
     async listSubscriptionPayments(input) {
       const result: MolliePaymentSnapshot[] = []
@@ -269,7 +276,7 @@ export function createMollieGateway(): MollieGateway {
         const metadata = z.object({ refundId: z.string().uuid() }).safeParse(refund.metadata)
         if (metadata.success && metadata.data.refundId === input.refundId) {
           if (refund.amount.value !== input.amountValue || refund.amount.currency !== input.currency) throw new Error('MOLLIE_REFUND_MISMATCH')
-          matches.push({ id: refund.id, status: refund.status })
+          matches.push(refundSnapshot(refund))
         }
       }
       if (matches.length > 1) throw new Error('MOLLIE_REFUND_DUPLICATE_REMOTE')

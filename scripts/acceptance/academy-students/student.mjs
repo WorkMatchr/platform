@@ -94,6 +94,7 @@ if(!process.argv.includes('--administration-only') && !process.argv.includes('--
    await pilotAdmin.goto('/platformbeheer/academy/cursussen',{waitUntil:'networkidle'})
    await pilotAdmin.getByLabel(/E-mailadres van het geverifieerde/).fill(student.email)
    await pilotAdmin.getByRole('checkbox',{name:new RegExp(version.replaceAll('.','\\.'))}).check()
+   if (paidPilot) await pilotAdmin.getByLabel(/Einde meting/).fill(new Date(Date.now()+86400000*30).toISOString().slice(0,10))
    await pilotAdmin.getByLabel(/Vervaldatum/).fill(new Date(Date.now()+86400000*2).toISOString().slice(0,10))
    await pilotAdmin.getByRole('button',{name:'Pilotcode aanmaken'}).click()
    const result=pilotAdmin.getByRole('status').filter({hasText:/Persoonlijke code:/})

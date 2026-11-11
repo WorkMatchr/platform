@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { approveWithdrawal } from '@/lib/learning/academy-withdrawal'
+import { notFound, redirect } from 'next/navigation'
 import { startPlatformFinancialRefundAction } from '@/app/platformbeheer/financien/actions'
 import { AdminPageHeader, AdminSection, StatusPill } from '@/components/platform-admin/platform-admin-ui'
 import { Button } from '@/components/ui/button'
@@ -25,6 +26,14 @@ export default async function PlatformFinancialPaymentDetailPage({ params, searc
     searchParams,
   ])
   if (!purchase) notFound()
+  async function authorizeAcademyRefund(data: FormData) {
+    'use server'
+    const actor = await requirePlatformAdministrator(pathname)
+    if (data.get('authorize') !== 'yes') return
+    try { await approveWithdrawal(actor.id, purchaseId) }
+    catch { redirect(pathname + '?resultaat=herroeping-controleren') }
+    redirect(pathname)
+  }
   const canRefund = purchase.kind === 'CREDIT_PACKAGE' && purchase.status === 'PAID' && Boolean(purchase.molliePaymentId) && Boolean(purchase.creditedTransaction) && purchase.refunds.length === 0
 
   return (
@@ -60,6 +69,14 @@ export default async function PlatformFinancialPaymentDetailPage({ params, searc
           {purchase.creditedTransaction ? <dl className="mt-4 grid grid-cols-3 gap-3 text-sm"><div><dt className="text-text-secondary">Beschikbaar</dt><dd className="font-semibold">{purchase.creditedTransaction.creditAccount.availableBalance}</dd></div><div><dt className="text-text-secondary">Gereserveerd</dt><dd className="font-semibold">{purchase.creditedTransaction.creditAccount.reservedBalance}</dd></div><div><dt className="text-text-secondary">Besteed</dt><dd className="font-semibold">{purchase.creditedTransaction.creditAccount.spentBalance}</dd></div></dl> : null}
         </AdminSection>
       </div>
+      {purchase.events[0] && <AdminSection title="Herroeping particuliere opleiding">
+        <p>Ontvangen op {purchase.events[0].createdAt.toLocaleString('nl-NL', {timeZone:'Europe/Amsterdam'})}. Controleer de bedenktijd en eventuele verlenging aan de hand van de aankoopbevestiging.</p>
+        {query.resultaat === 'herroeping-controleren' && <p role="alert">Controleer de providerstatus en het restitutiedossier. Een eerdere poging kan zijn ontvangen.</p>}
+        {(!purchase.refunds.length || purchase.refunds.some(r => r.status === 'PENDING')) && <form action={authorizeAcademyRefund}>
+          <label><input type="checkbox" name="authorize" value="yes" required /> De herroeping is tijdig. Ik autoriseer volledige terugbetaling van €1,49 en beëindiging van de cursustoegang.</label>
+          <Button type="submit">Restitutie verwerken</Button>
+        </form>}
+      </AdminSection>}
       {purchase.refunds.length > 0 ? (
         <AdminSection title="Bestaande terugbetaling" description="Voor deze aankoop kan geen tweede terugbetaling worden gestart.">
           {purchase.refunds.map((refund) => <div className="flex flex-wrap items-center gap-3" key={refund.id}><StatusPill tone={financialStatusTone(refund.status)}>{financialPaymentStatusLabels[refund.status]}</StatusPill><Link className="font-semibold text-brand-primary hover:underline" href="/platformbeheer/financien/terugbetalingen">Bekijk terugbetalingen</Link></div>)}

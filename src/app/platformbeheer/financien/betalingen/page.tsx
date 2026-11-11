@@ -24,6 +24,7 @@ export default async function PlatformFinancialPaymentsPage({ searchParams }: { 
   const data = await listPlatformFinancialPayments(administrator.id, {
     page: parsePage(singleParam(params, 'page')),
     status: enumValue(statusValue, Object.values(FinancialPurchaseStatus)),
+    withdrawalOpen: singleParam(params, 'herroeping') === 'open',
     kind: enumValue(kindValue, Object.values(FinancialPurchaseKind)),
     organization,
     from: parseDateBoundary(from),
@@ -32,6 +33,7 @@ export default async function PlatformFinancialPaymentsPage({ searchParams }: { 
 
   return <>
     <AdminPageHeader title="Betalingen" description="Overzicht van individuele creditaankopen en eerste Pro-betalingen. Open een betaling voor details en beschikbare beheeracties." />
+    <Link className="underline" href={pathname + '?herroeping=open'}>Openstaande Academy-herroepingen</Link>
     <FilterForm>
       <FilterField name="status" label="Status"><select className="min-h-10 rounded-control border border-border bg-surface px-3 text-sm" name="status" defaultValue={statusValue ?? ''}><option value="">Alle statussen</option>{Object.values(FinancialPurchaseStatus).map((status) => <option key={status} value={status}>{financialPurchaseStatusLabels[status]}</option>)}</select></FilterField>
       <FilterField name="kind" label="Type"><select className="min-h-10 rounded-control border border-border bg-surface px-3 text-sm" name="kind" defaultValue={kindValue ?? ''}><option value="">Credits en Pro</option>{Object.values(FinancialPurchaseKind).map((kind) => <option key={kind} value={kind}>{financialPurchaseKindLabels[kind]}</option>)}</select></FilterField>

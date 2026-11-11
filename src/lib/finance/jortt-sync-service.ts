@@ -198,8 +198,12 @@ export async function syncFinancialInvoiceToJortt(
   try {
     const result = await gateway.submitInvoice(buildPayload(claimed.invoice), idempotencyKey, {
       async claimCreation() {
-        const created = await getPrisma().financialEvent.createMany({ data: { invoiceId, eventType: 'JORTT_PRO_CREDIT_CREATE_INTENT', result: 'PENDING', idempotencyKey: `jortt-pro-credit-create:${invoiceId}` }, skipDuplicates: true })
-        if (created.count !== 1) throw new Error('JORTT_PRO_CREDIT_CREATION_UNCERTAIN')
+        const academy = !claimed.invoice.organizationId && !!claimed.invoice.academyTaxTreatment
+        const created = await getPrisma().financialEvent.createMany({ data: { invoiceId,
+          eventType: academy ? 'JORTT_ACADEMY_CREDIT_CREATE_INTENT' : 'JORTT_PRO_CREDIT_CREATE_INTENT',
+          result: 'PENDING', idempotencyKey: (academy ? 'jortt-academy-credit-create:' : 'jortt-pro-credit-create:') + invoiceId,
+        }, skipDuplicates: true })
+        if (created.count !== 1) throw new Error(academy ? 'JORTT_ACADEMY_CREDIT_CREATION_UNCERTAIN' : 'JORTT_PRO_CREDIT_CREATION_UNCERTAIN')
       },
       async saveDraftId(id) {
         if (!/^[0-9a-f-]{36}$/i.test(id)) throw new Error('JORTT_INVALID_DRAFT_ID')

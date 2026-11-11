@@ -105,8 +105,9 @@ export class JorttApiGateway implements JorttGateway, JorttPaymentGateway {
 
 
 
-  private async submitProCredit(payload: JorttInvoicePayload, token: string, checkpoint?: JorttCreditCheckpoint) {
-    if (process.env.PRO_FINANCIAL_CORRECTIONS_ENABLED !== 'true' || !checkpoint) throw new Error('PRO_FINANCIAL_CORRECTIONS_DISABLED')
+  private async submitCheckedCredit(payload: JorttInvoicePayload, token: string, checkpoint?: JorttCreditCheckpoint) {
+    if (payload.proCredit && process.env.PRO_FINANCIAL_CORRECTIONS_ENABLED !== 'true') throw new Error('PRO_FINANCIAL_CORRECTIONS_DISABLED')
+    if (!checkpoint) throw new Error('JORTT_CREDIT_CHECKPOINT_REQUIRED')
     if (!payload.originalInvoiceExternalReference || payload.documentType !== 'CREDIT_NOTE') throw new Error('JORTT_ORIGINAL_INVOICE_NOT_SYNCED')
     type CreditRecord = JorttRecord & { credited_invoice_id: string; invoice_total_incl_vat: { amount: string; currency: string }; invoice_total: { amount: string; currency: string } }
     let id = payload.knownExternalReference ?? (await this.findTechnicalInvoice(payload.technicalReference, token))?.id
@@ -120,9 +121,11 @@ export class JorttApiGateway implements JorttGateway, JorttPaymentGateway {
     if (remote.credited_invoice_id !== payload.originalInvoiceExternalReference) throw new Error('JORTT_CREDIT_SOURCE_MISMATCH')
     if (remote.invoice_status === 'draft') {
       await this.request(`/invoices/${id}`, token, { method: 'PUT', body: JSON.stringify({ reference: payload.invoiceNumber,
-        invoice_date: date(payload.issuedAt), net_amounts: false, remarks: payload.technicalReference,
+        remarks: payload.technicalReference,
+        // Full Academy refunds retain the provider's mirrored discount lines and original VAT treatment.
+        ...(payload.proCredit && { invoice_date: date(payload.issuedAt), net_amounts: false,
         line_items: payload.lines.map(line => ({ description: line.description, quantity: String(line.quantity),
-          amount: { amount: money(line.unitPriceExclVatCents), currency: payload.currency }, vat: { value: String(line.vatRateBps / 10000), category: null } })),
+          amount: { amount: money(line.unitPriceExclVatCents), currency: payload.currency }, vat: { value: String(line.vatRateBps / 10000), category: null } })) }),
       }) })
       remote = (await this.request<{ data: CreditRecord }>(`/invoices/${id}`, token)).data
     }
@@ -177,7 +180,9 @@ export class JorttApiGateway implements JorttGateway, JorttPaymentGateway {
       }
     }
     const { accessToken, config } = await this.token()
-    if (payload.proCredit) return this.submitProCredit(payload, accessToken, checkpoint)
+    if (payload.proCredit || (payload.documentType === 'CREDIT_NOTE' && payload.academyTaxTreatment && !payload.organizationId)) {
+      return this.submitCheckedCredit(payload, accessToken, checkpoint)
+    }
     if (payload.knownExternalReference) {
       const known = await this.request<{ data: JorttRecord }>(`/invoices/${payload.knownExternalReference}`, accessToken)
       this.validateIdentity(known.data, payload, true)

@@ -52,7 +52,8 @@ export async function PilotResults({ versionId, chapterCount }: { versionId: str
     )
     return { g, e, times, chapters, lesson, practice, first, total, full }
   })
-  const stats = pilotDistribution(rows.filter((r) => r.full).map((r) => r.total))
+  const complete = rows.filter(r => r.full && !r.g.measurementsPurgedAt)
+  const stats = complete.length >= 3 ? pilotDistribution(complete.map(r => r.total)) : null
   return (
     <section className="space-y-3 rounded border p-4">
       <h2>Studieduurpilot</h2>
@@ -70,17 +71,11 @@ export async function PilotResults({ versionId, chapterCount }: { versionId: str
       <p>
         {stats
           ? 'Gemiddeld ' +
-            minutes(stats.mean) +
-            ' · mediaan ' +
-            minutes(stats.median) +
-            ' · kortste ' +
-            minutes(stats.min) +
-            ' · langste ' +
-            minutes(stats.max)
-          : 'Nog geen volledige metingen voor het groepsoverzicht.'}
+            Math.round(stats.mean / 900000) * 15 + ' minuten (afgerond op een kwartier)'
+          : 'Een groepsgemiddelde verschijnt vanaf drie volledige metingen.'}
       </p>
       {rows.map(({ g, e, times, chapters, lesson, practice, first, total, full }) => (
-        <details key={g.id}>
+        g.measurementsPurgedAt ? <p key={g.id}>De individuele pilotmeting is verwijderd.</p> : <details key={g.id}>
           <summary>
             {g.user.displayName || 'Cursist'} · {e?.progress.length ?? 0}/{chapterCount} hoofdstukken
           </summary>

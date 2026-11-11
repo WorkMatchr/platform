@@ -8,7 +8,7 @@ const PAGE_SIZE = 25
 
 type DateRange = { from?: Date; through?: Date }
 export type FinancialListResult<T> = { items: T[]; page: number; pageCount: number; total: number }
-export type FinancialPaymentFilters = DateRange & { page?: number; status?: FinancialPurchaseStatus; kind?: FinancialPurchaseKind; organization?: string }
+export type FinancialPaymentFilters = DateRange & { page?: number; status?: FinancialPurchaseStatus; kind?: FinancialPurchaseKind; withdrawalOpen?: boolean; organization?: string }
 export type FinancialInvoiceFilters = DateRange & { page?: number; documentType?: FinancialDocumentType; organization?: string }
 export type FinancialRefundFilters = DateRange & { page?: number; status?: FinancialPaymentStatus; organization?: string }
 
@@ -37,6 +37,7 @@ export async function listPlatformFinancialPayments(actorUserId: string, filters
   const where: Prisma.FinancialPurchaseWhereInput = {
     status: filters.status,
     kind: filters.kind,
+    ...(filters.withdrawalOpen && { events: { some: { eventType: 'ACADEMY_WITHDRAWAL_RECEIVED' } }, refunds: { none: { status: 'REFUNDED' } } }),
     createdAt: dateWhere(filters),
     organization: filters.organization ? { name: { contains: filters.organization, mode: 'insensitive' } } : undefined,
   }
@@ -67,6 +68,7 @@ export async function getPlatformFinancialPaymentDetail(actorUserId: string, pur
       amountInclVatCents: true,
       organization: { select: { id: true, name: true } },
       invoice: { select: { id: true, invoiceNumber: true, amountExclVatCents: true, vatAmountCents: true, vatRateBps: true } },
+      events: { where: { eventType: 'ACADEMY_WITHDRAWAL_RECEIVED' }, select: { createdAt: true } },
       refunds: {
         orderBy: { requestedAt: 'desc' },
         select: {

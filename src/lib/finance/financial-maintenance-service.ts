@@ -12,7 +12,7 @@ const RUN_LEASE_MS = 30 * 60 * 1000
 const RUN_RETENTION_MS = 90 * 24 * 60 * 60 * 1000
 type MaintenanceTrigger = 'SCHEDULER' | 'MANUAL_API'
 type CategoryResult = { processed: number; succeeded: number; failed: number; skipped?: boolean }
-type MaintenanceCounts = Record<'refunds' | 'cancellations' | 'suspensions' | 'jortt', CategoryResult>
+type MaintenanceCounts = Record<'academyMeasurements' | 'refunds' | 'cancellations' | 'suspensions' | 'jortt', CategoryResult>
 
 function safeErrorCode(error: unknown) {
   const message = error instanceof Error ? error.message : ''
@@ -57,6 +57,10 @@ export async function runFinancialMaintenance(
   if (!run) return { status: 'SKIPPED_CONCURRENT' as const, runId: null, counts: null }
 
   const results = []
+  if (process.env.ACADEMY_PILOT_RETENTION_ENABLED === 'true') {
+    const { purgePilotMeasurements } = await import('@/lib/learning/academy-measurement-retention')
+    results.push(await safelyRun('academyMeasurements', () => purgePilotMeasurements(at), count => ({ processed: count, succeeded: count, failed: 0 })))
+  }
   results.push(await safelyRun('refunds', () => reconcilePendingMollieRefunds(gateway), (value) => ({
     processed: value.inspected, succeeded: value.refunded + value.failed + value.canceled, failed: value.providerErrors,
   })))

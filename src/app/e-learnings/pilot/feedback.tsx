@@ -29,6 +29,8 @@ async function save(data: FormData) {
   await getPrisma().learningPilotAssignment.updateMany({
     where: {
       id: grant,
+      measurementsPurgedAt: null,
+      cohortEndsAt: { gt: new Date() },
       userId: user.id,
       paidSlot: { not: null },
       redeemedAt: { not: null },
