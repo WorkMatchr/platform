@@ -49,7 +49,7 @@ async function main() {
     const { quoteValidityInputDate, quoteExpiryFromSqlDate } = await import('../src/lib/marketplace/quote-validity-date')
     const { awardMarketplaceQuote } = await import('../src/lib/marketplace/award-service')
     const { sendMarketplaceMessage } = await import('../src/lib/marketplace/messaging-service')
-    const { correctMarketplaceCredits, grantMarketplaceCredits, reserveCreditsInTransaction } = await import('../src/lib/marketplace/credit-service')
+    const { correctMarketplaceCredits, grantMarketplaceCredits, releaseCreditReservationInTransaction, reserveCreditsInTransaction } = await import('../src/lib/marketplace/credit-service')
     const { createMarketplaceNotification, enqueueMarketplaceEmail, writeMarketplaceAudit } = await import('../src/lib/marketplace/marketplace-events')
     prisma = getPrisma()
 
@@ -351,10 +351,38 @@ async function main() {
     console.log('PASS laatste plaats tussen twee organisaties en verschillende gunningen door twee beheerders')
 
     const { withdrawProviderParticipation } = await import('../src/lib/marketplace/participation-service')
+    const legacyDraftInput = { ...draftInput, actorUserId: providerUser.id, providerOrganizationId: providerOrganization.id, participationId: manualParticipation.id }
+    const legacyDraft = await saveQuoteDraft(legacyDraftInput)
+    const readLegacyDraft = () => getProviderQuoteDetail(providerUser.id, providerOrganization.id, legacyDraft.id)
+    assert.equal((await readLegacyDraft()).quote.participation.assignment.title, reservationFixture.assignment.title)
     await withdrawProviderParticipation({ actorUserId:providerUser.id,providerOrganizationId:providerOrganization.id,
       participationId:manualParticipation.id,expectedVersion:manualParticipation.version,reason:'Synthetische intrekking van de deelname.',idempotencyKey:randomUUID() })
     const withdrawn = await getProviderInvitationDetail(providerUser.id, providerOrganization.id, reservationFixture.invitation.id)
     assert.equal(withdrawn.invitation.fullAssignment, null, 'Een vrijgegeven reservering mag geen contactgegevens ontsluiten')
+    assert.equal((await prisma.creditReservation.findUniqueOrThrow({ where: { participationId: manualParticipation.id } })).status, 'RELEASED')
+    await assert.rejects(readLegacyDraft(), { code: 'NOT_FOUND' })
+    await assert.rejects(saveQuoteDraft({ ...legacyDraftInput, expectedQuoteVersion: legacyDraft.version }), { code: 'NOT_FOUND' })
+    // Isolate the financial condition: the participation itself is still ACTIVE.
+    const unpaidFixture = await createInvitation(provider, providerOrganization.id)
+    const unpaidParticipation = await prisma.providerParticipation.create({ data: {
+      assignmentId: unpaidFixture.assignment.id, invitationId: unpaidFixture.invitation.id, providerProfileId: provider.profile.id,
+      providerOrganizationId: providerOrganization.id, createdByUserId: providerUser.id, idempotencyKey: randomUUID(),
+    } })
+    const reservation = await prisma.$transaction(tx => reserveCreditsInTransaction(tx, {
+      organizationId: providerOrganization.id, participationId: unpaidParticipation.id, amount: 1, actorUserId: providerUser.id, idempotencyKey: randomUUID(),
+    }))
+    const unpaidInput = { ...legacyDraftInput, participationId: unpaidParticipation.id }
+    const unpaidDraft = await saveQuoteDraft(unpaidInput)
+    await prisma.$transaction(tx => releaseCreditReservationInTransaction(tx, {
+      reservationId: reservation.id, actorUserId: providerUser.id, reason: 'Synthetische vrijgave voor toegangscontrole.', idempotencyKey: randomUUID(),
+    }))
+    assert.equal((await prisma.providerParticipation.findUniqueOrThrow({ where: { id: unpaidParticipation.id } })).status, 'ACTIVE')
+    await assert.rejects(getProviderQuoteDetail(providerUser.id, providerOrganization.id, unpaidDraft.id), { code: 'ACCESS_DENIED' })
+    await assert.rejects(getProviderParticipationForQuote(providerUser.id, providerOrganization.id, unpaidParticipation.id), { code: 'ACCESS_DENIED' })
+    await assert.rejects(saveQuoteDraft({ ...unpaidInput, expectedQuoteVersion: unpaidDraft.version }), { code: 'ACCESS_DENIED' })
+    await assert.rejects(submitQuote({ actorUserId: providerUser.id, providerOrganizationId: providerOrganization.id, quoteId: unpaidDraft.id, expectedQuoteVersion: unpaidDraft.version, idempotencyKey: randomUUID() }), { code: 'NOT_FOUND' })
+    assert.equal(await prisma.quoteVersion.count({ where: { quoteId: unpaidDraft.id } }), 1)
+    console.log('PASS CORE-05 ingetrokken deelname en afzonderlijk vrijgegeven reservering blokkeren concepttoegang.')
     // A changed assignment cannot progress even after a provider has already paid.
     const stale = await createInvitation(fourthProvider, fourthProviderOrganization.id)
     const bought = await acceptProviderInvitation({ actorUserId: fourthProviderUser.id, providerOrganizationId: fourthProviderOrganization.id, invitationId: stale.invitation.id, idempotencyKey: randomUUID() })

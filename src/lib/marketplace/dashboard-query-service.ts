@@ -1,4 +1,4 @@
-import { requireProviderParticipationAccess } from './marketplace-authorization'
+import { hasQuoteParticipationFunding, requireProviderParticipationAccess } from './marketplace-authorization'
 import { getMarketplaceNotifications } from './notification-service'
 import { currentMarketplaceProjections } from '@/lib/providers/provider-marketplace-onboarding'
 import { readInvitationPrice } from './assignment-pricing'
@@ -293,13 +293,9 @@ export async function getProviderParticipationForQuote(userId: string, organizat
     if (!participation) throw new MarketplaceServiceError('NOT_FOUND')
     const now = new Date()
     await requireCurrentInvitationScope(tx, participation.invitation, now, false)
-    const reservation = participation.creditReservation
-    const reserved = reservation?.status === 'ACTIVE' || reservation?.status === 'CONSUMED'
-    const purchase = reserved ? null : await tx.creditTransaction.findFirst({
-      where: { referenceType: 'ProviderParticipation', referenceId: participation.id, type: 'PARTICIPATION_PAYMENT' },
-      select: { id: true },
-    })
-    if (!reserved && !purchase) throw new MarketplaceServiceError('ACCESS_DENIED')
+    if (!await hasQuoteParticipationFunding(tx, participation.id, participation.creditReservation?.status)) {
+      throw new MarketplaceServiceError('ACCESS_DENIED')
+    }
     const canEdit = ['AWAITING_RESPONSES', 'IN_SELECTION'].includes(participation.assignment.status)
       && participation.invitation.deadlineAt > now && (!participation.quote || participation.quote.status === 'DRAFT')
     return { membership, participation: { ...participation, invitation: { deadlineAt: participation.invitation.deadlineAt } }, canEdit }
@@ -317,15 +313,20 @@ export async function getProviderQuoteDetail(userId: string, organizationId: str
         version: true,
         submittedAt: true,
         currentVersion: { select: { version: true, priceCents: true, priceExplanation: true, approach: true, planning: true, terms: true, validUntil: true } },
-        participation: { select: { id: true, status: true, invitation: { select: { ...invitationScopeSelect, deadlineAt: true } }, messageChannel: { select: { id: true } }, assignment: { select: { title: true, status: true } } } },
+        participation: { select: { id: true, status: true, creditReservation: { select: { status: true } }, invitation: { select: { ...invitationScopeSelect, deadlineAt: true } }, messageChannel: { select: { id: true } }, assignment: { select: { title: true, status: true } } } },
       },
     })
     if (!quote) throw new MarketplaceServiceError('NOT_FOUND')
     if (quote.status === 'DRAFT') {
+      if (quote.participation.status !== 'ACTIVE') throw new MarketplaceServiceError('NOT_FOUND')
+      if (!await hasQuoteParticipationFunding(tx, quote.participation.id, quote.participation.creditReservation?.status)) {
+        throw new MarketplaceServiceError('ACCESS_DENIED')
+      }
       await requireCurrentInvitationScope(tx, quote.participation.invitation, new Date(), false)
     }
     return { membership, quote: { ...quote, participation: {
-      ...quote.participation, invitation: { deadlineAt: quote.participation.invitation.deadlineAt },
+      id: quote.participation.id, status: quote.participation.status, assignment: quote.participation.assignment,
+      messageChannel: quote.participation.messageChannel, invitation: { deadlineAt: quote.participation.invitation.deadlineAt },
     } } }
   }, { isolationLevel: 'RepeatableRead' })
 }

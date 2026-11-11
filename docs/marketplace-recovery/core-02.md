@@ -35,3 +35,13 @@ De vijf CORE-01R-proeven zijn herhaald met Edge, een lokale productiebuild, Post
 | E — Vertraagde betaalstatus | PASS. Na `canceled` en daarna `pending` blijft de poging geannuleerd, met nul facturen en nul creditbijschrijvingen. |
 
 De gerichte PostgreSQL-regressie voor zowel de editor als het conceptdetail staat in `scripts/test-marketplace-concurrency-database.ts`. Voor een gestreamde niet-gevondenpagina kan de HTTP-envelop 200 zijn. De browserproef inspecteert daarom de drie responsvormen afzonderlijk.
+
+## CORE-05 — Ingetrokken conceptofferte
+
+De nulmeting van CORE-04R op `2b8e11a` vond de afgeschermde opdrachttitel in scherm, HTML en React-serverrespons van `/offertes/[quoteId]` na intrekking van een deelname. De detailopvraag toetste voor een concept het specialisme, maar miste de actuele deelname- en financieringscontrole.
+
+Voor een concept vereist de leestransactie nu een actieve eigen deelname, actuele diensttoelating en een geldige reservering of bestaande deelnameaankoop. De editor en het opslaan gebruiken dezelfde financieringscontrole. Bij definitief indienen telt de enkele aanwezigheid van een vrijgegeven reservering evenmin als recht. De historische leesroute voor een eigen gegunde offerte blijft beschikbaar.
+
+De PostgreSQL-regressie in `scripts/test-marketplace-concurrency-database.ts` controleert de ingetrokken deelname en afzonderlijk de situatie waarin de deelname actief blijft, terwijl de reservering is vrijgegeven en een aankoop ontbreekt. De laatste situatie weigert beide leesroutes en beide schrijfacties, met behoud van de oorspronkelijke conceptrevisie.
+
+De gerichte HTTP-hertest met Edge op de lokale productiebuild gaf na intrekking de niet-gevondenweergave. De gestreamde HTML en React-serverrespons hadden status 200 en bevatten evenmin als het zichtbare scherm de opdrachttitel, de geteste opdrachtdetails of het formulier. Opslaan en indienen vanuit twee vooraf geopende formulieren werden beide geweigerd (HTTP 500 zonder vertrouwelijke velden); het concept hield één revisie. Geldige indiening, tenantisolatie, weigering na specialismeverlies en historische inzage door de gegunde professional slaagden op dezelfde build.

@@ -1,4 +1,4 @@
-import type { Prisma } from '@/generated/prisma/client'
+import type { CreditReservationStatus, Prisma } from '@/generated/prisma/client'
 import { currentMarketplaceProjections } from '@/lib/providers/provider-marketplace-onboarding'
 import { MarketplaceServiceError } from './marketplace-errors'
 
@@ -87,4 +87,17 @@ export async function requireMarketplacePlatformAdmin(transaction: Prisma.Transa
   })
   if (!user) throw new MarketplaceServiceError('ACCESS_DENIED')
   return user
+}
+
+export async function hasQuoteParticipationFunding(
+  transaction: Prisma.TransactionClient,
+  participationId: string,
+  reservationStatus: CreditReservationStatus | undefined,
+) {
+  if (reservationStatus === 'ACTIVE' || reservationStatus === 'CONSUMED') return true
+  const purchase = await transaction.creditTransaction.findFirst({
+    where: { referenceType: 'ProviderParticipation', referenceId: participationId, type: 'PARTICIPATION_PAYMENT' },
+    select: { id: true },
+  })
+  return purchase !== null
 }
