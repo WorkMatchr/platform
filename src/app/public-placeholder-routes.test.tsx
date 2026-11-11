@@ -1,11 +1,9 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import ContactPage from './contact/page'
-import CookiesPage from './cookies/page'
 import AboutPage from './over-workmatchr/page'
 
 const placeholderRoutes = [
-  ['Cookies', CookiesPage],
   ['Over WorkMatchr', AboutPage],
 ] as const
 
