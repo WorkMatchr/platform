@@ -6316,7 +6316,7 @@
             "paragraphs": [
               "Te vaag: “Veiligheid heftrucks verbeteren.”",
               "Concreter: “Breng op kruisingen A en B een fysieke scheiding aan tussen heftruck- en voetgangersroutes.”",
-              "Voorbeeld voor het Plan van Aanpak. Houd voetgangers en heftrucks bij kruising A vanaf vandaag gescheiden met een tijdelijke route. De magazijnmanager onderzoekt uiterlijk 10 maart welke vaste scheiding past. De werkgever kiest op 12 maart de maatregel. De technische dienst brengt de gekozen scheiding uiterlijk 31 maart aan. In de eerste week van april controleert de magazijnmanager tijdens twee drukke diensten of verkeer en voetgangers daadwerkelijk gescheiden blijven. Bij een onveilige uitkomst regelt de werkgever direct passende bescherming en een vervolgactie."
+              "Voorbeeld voor het Plan van Aanpak. Houd voetgangers en heftrucks bij kruising A vanaf vandaag gescheiden met een tijdelijke route. De magazijnmanager onderzoekt uiterlijk 10 maart welke vaste scheiding past. De werkgever kiest op 12 maart de maatregel. De technische dienst brengt de gekozen scheiding uiterlijk 31 maart aan. In de eerste week van april controleert de magazijnmanager tijdens twee drukke diensten of heftrucks en voetgangers daadwerkelijk veilig gescheiden blijven. Bij een onveilige uitkomst regelt de werkgever direct passende bescherming en een vervolgactie."
             ]
           },
           "code": "WL001-H6-B011"
@@ -7983,7 +7983,7 @@
             "title": "Opstellen en toetsen zijn verschillende taken",
             "paragraphs": [
               "OPSTELLEN: risico’s in kaart brengen en beoordelen en een Plan van Aanpak maken.",
-              "Als de wettelijke toetsingsplicht geldt, laat de werkgever de RI&E met het Plan van Aanpak inhoudelijk toetsen. De toetser beoordeelt onder meer volledigheid, betrouwbaarheid en actualiteit en adviseert de werkgever. Controleer wie de toets uitvoert en voor welke risico’s die persoon bevoegd en deskundig is.",
+              "Als de wettelijke toetsingsplicht geldt, laat de werkgever de RI&E met het Plan van Aanpak inhoudelijk toetsen. De toetser beoordeelt onder meer volledigheid, betrouwbaarheid en actualiteit en adviseert de werkgever. Controleer wie de toets uitvoert en voor welke risico’s die persoon bevoegd en deskundig is. De werkgever blijft verantwoordelijk voor de RI&E en het Plan van Aanpak, ook wanneer deze door een deskundige zijn getoetst.",
               "Uitbesteden van het opstellen bewijst niet automatisch dat de vereiste toetsing is uitgevoerd. De wet stelt niet in alle situaties een afzonderlijke opsteller en toetser verplicht."
             ]
           },
@@ -17927,7 +17927,7 @@
         },
         {
           "value": "C",
-          "text": "De technische dienst brengt de scheiding uiterlijk 31 maart aan. De magazijnmanager controleert in de eerste week van april tijdens de piek of voetgangers en heftrucks gescheiden blijven.",
+          "text": "De technische dienst brengt de scheiding uiterlijk 31 maart aan. De magazijnmanager controleert in de eerste week van april tijdens de piekbelasting of heftrucks en voetgangers daadwerkelijk veilig gescheiden blijven.",
           "isCorrect": true
         },
         {
