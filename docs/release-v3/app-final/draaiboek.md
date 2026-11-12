@@ -1,6 +1,10 @@
 # WorkMatchr V3.0 — productiedraaiboek voor 104 migraties
 
-RELEASE-FINAL-04. De applicatiecommit is `97c5975c37cdcc4f17b832a00c1d273184011625`. De directe ouder is RELEASE-FINAL-03 (`d18e83150424c8999b5f60bf4887abe39597df93`). De finale documentatiecommit op `codex/release-final-04` is de te deployen versie. Leg diens volledige SHA bij goedkeuring vast en verifieer dat de enige delta met de applicatiecommit dit draaiboek is. Vernieuw de identificatie van de kandidaat in het private uitvoeringsblad.
+RELEASE-FINAL-05. **Te autoriseren en te deployen SHA: `5f70d5285e77b734c34d5b0398fcdfccb68a2bea`.** Gebruik deze vaste SHA op de lokale branch `codex/release-final-05` bij zowel de gesloten deployment als de latere configuratiedeployment. De aansluitende documentatiecommit legt deze SHA vast. Controleer voor uitvoering de deploymentmetadata tegen deze exacte SHA.
+
+De directe ouder is RELEASE-FINAL-04 (`557afbb41a0e423c4bba8a7b4d978ffdfcb1f3a4`). Uitsluitend de drie r07-conceptbundels zijn aangepast, met dezelfde Git-inhoud als de goedgekeurde Academy-broncommit `99a7a05fb849c3d22ec90c6f29af464582dbb7c7`. Het gaat om vier lespassages en twee antwoordoptieteksten. De drie revisies, 150 vraagidentiteiten en antwoordsleutels, certificaatbindingen en de volledige reeks van 104 migraties zijn behouden.
+
+De read-only vergelijking op 12 november wees opnieuw naar READY-deployment `dpl_9Mopcx7YVY24SjaT58ux3zCMw6Zp` voor www.workmatchr.nl, met productiecommit `ecf2f578c31f654298d4eaf071fc16b3022d5dd1`. Verifieer deze referentie opnieuw in het uitvoeringsvenster.
 
 Op 12 november 2026 bevestigde Vercel voor workmatchrs-projects het Pro-abonnement. Project platform heeft één geconfigureerde cron (finance, 03:00 UTC). De kandidaat voegt de tweede toe. Pro laat 100 definities per project en een interval vanaf één minuut toe. CRON_SECRET is in Production aanwezig. MARKETPLACE_DISPATCH_PLANNER en MARKETPLACE_MONITOR_SECRET ontbreken daar nog. De waarde en bruikbaarheid van geheimen zijn niet uitgelezen. Controleer bij de daadwerkelijke configuratiedeployment de cronhost van de nieuwe deployment en zorg dat de afscherming van oude hosts deze nieuwe host toelaat. [Vercel Cron-limieten](https://vercel.com/docs/schedules/cron-jobs/usage-and-pricing)
 
